@@ -749,7 +749,7 @@ internal static class SessionErrors
     /// extraction, and the asymmetry is honest, not lazy.</b> The measured
     /// total is a <i>download</i> figure -- the sum of three archives'
     /// <c>content-length</c> -- while the extracted tree is more than twice that
-    /// (207.3 MB down against 437.2 MiB on disk for chromium, re-measured
+    /// (208.8 MB down against 440.6 MiB on disk for chromium, re-measured 2026-10-03 at 1247 and previously 207.3 MB against 437.2 MiB,
     /// 2026-09-16 at rev 1244; previously 203.8 MB against 430.5 MiB at rev
     /// 1237), so a percentage
     /// against it would pass 100% and come back down while nothing was wrong. The

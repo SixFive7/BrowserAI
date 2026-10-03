@@ -285,12 +285,35 @@ internal sealed class ToolVerdictTests
         // denial withdrawn in the file is a red build and not a quiet
         // reversal -- and this move went through a snapshot diff and a review
         // first, which is what separates the two.
-        await Assert.That(denied.Count).IsEqualTo(1);
+        //
+        // ⚠️ TWO since 2026-10-03 (previously one), and this time somebody
+        // decided it: the maintainer removed `browser_resume` from the surface,
+        // in his words "I am leaning to remove playwrights own browser_resume and
+        // pause and similar from the tool list (and not pass them through). I do
+        // not see the utility and I do see a lot of possible confusion with our
+        // own resumtion tech", and then "P6 a" (only browser_resume goes). It is
+        // Playwright's debugger control and its name differs from BrowserAI's own
+        // `browserai_resume` by two letters. Planted red 2026-10-03 against the
+        // file as it stood, where the row was still `allow`.
+        await Assert.That(denied.Count).IsEqualTo(2);
 
-        // And it by name, because a count is satisfied by the wrong row. The
-        // date is the file's own, judged at the 0.0.79 surface.
+        // And them by name, because a count is satisfied by the wrong row. The
+        // dates are the file's own: `browser_annotate` judged at the 0.0.79
+        // surface, `browser_resume` at the 0.0.83 one.
         await Assert.That(denied.Select(row => row.Name).Order(StringComparer.Ordinal))
-            .IsEquivalentTo((string[])["browser_annotate"]);
+            .IsEquivalentTo((string[])["browser_annotate", "browser_resume"]);
+
+        // The second denial's reason is the measured one, liveness, and it says
+        // what the call waits for. It deliberately does NOT send a caller to
+        // browserai_resume: inside the wedge a pause leaves behind, that tool
+        // answers "already open" and changes nothing, so the sentence would be
+        // wrong exactly where a caller is most likely to read it.
+        var resume = denied.Single(row => row.Name == "browser_resume");
+
+        await Assert.That(resume.Why!).Contains("The reason is liveness");
+        await Assert.That(resume.Why!).Contains("next pause");
+        await Assert.That(resume.Why!).DoesNotContain("browserai_resume");
+        await Assert.That(resume.Since).IsEqualTo("2026-10-03");
     }
 
     [Test]

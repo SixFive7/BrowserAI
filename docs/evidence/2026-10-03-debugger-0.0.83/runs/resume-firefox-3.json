@@ -1,0 +1,122 @@
+{
+  "scenario": "resume",
+  "family": "firefox",
+  "run": "3",
+  "startedEpochMs": 1791005406154,
+  "steps": {
+    "init": {
+      "ok": true,
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "clientName": "dbgA-resume-firefox-3"
+    },
+    "toolsList": {
+      "count": 72,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "navigateStart": {
+      "answered": true,
+      "latencyMs": 1862,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:53213/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\firefox\\3\\session\\output\\page-2026-10-03T05-30-08-349Z.yml)",
+      "paused": false
+    },
+    "markers": {
+      "answered": true,
+      "latencyMs": 512,
+      "isError": false,
+      "text": "### Result | { |   \"ls\": \"kept\", |   \"ss\": \"kept\", |   \"ck\": \"dbgck=kept\" | }",
+      "paused": false
+    },
+    "arm": {
+      "answered": true,
+      "latencyMs": 509,
+      "isError": false,
+      "text": "### Result | \"armed\"",
+      "paused": false
+    },
+    "park": {
+      "parkedId": 6,
+      "sentAtMs": 6222,
+      "answeredWithin8s": false,
+      "serverSawParkedPath": [],
+      "snapshotAnswered": true,
+      "snapshotLatencyMs": 12,
+      "snapshotShowsPaused": true,
+      "pausedSection": "- Navigate 127.0.0.1:53213/p/parked at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\firefox\\3\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at"
+    },
+    "parkedAfterResume": {
+      "answered": true,
+      "latencyMs": 74,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:53213/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\firefox\\3\\session\\output\\page-2026-10-03T05-30-20-460Z.yml)",
+      "paused": false
+    },
+    "resumeWithin20s": {
+      "answered": false,
+      "waitedMs": 20000
+    },
+    "tabsWhileResumePending": {
+      "answered": true,
+      "latencyMs": 7,
+      "isError": false,
+      "text": "### Result | - 0: (current) [/p/parked](http://127.0.0.1:53213/p/parked)",
+      "paused": false
+    },
+    "closeWhileResumePending": {
+      "answered": true,
+      "latencyMs": 386,
+      "isError": false,
+      "text": "### Result | No open tabs. Navigate to a URL to create one.",
+      "paused": false
+    },
+    "resumeAfterClose": {
+      "answered": true,
+      "latencyMs": 384,
+      "isError": false,
+      "text": "",
+      "paused": false
+    },
+    "serverSawParkedPath": [
+      14249
+    ],
+    "final": {
+      "navigate": {
+        "answered": true,
+        "latencyMs": 1069,
+        "isError": false,
+        "text": "### Page | - Page URL: http://127.0.0.1:53213/p/check-resume | - Page Title: /p/check-resume | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\firefox\\3\\session\\output\\page-2026-10-03T05-30-41-935Z.yml)",
+        "paused": false
+      },
+      "markers": "### Result | { |   \"ls\": \"kept\", |   \"ss\": null, |   \"ck\": \"dbgck=kept\", |   \"url\": \"http://127.0.0.1:53213/p/check-resume\" | }",
+      "tabs": "### Result | - 0: (current) [/p/check-resume](http://127.0.0.1:53213/p/check-resume)",
+      "pausedStillShown": false
+    }
+  },
+  "versions": {
+    "node": "v24.21.0",
+    "mcp": "0.0.83",
+    "playwrightCore": "1.64.0-alpha-1790635538000"
+  },
+  "outcome": "completed",
+  "childExitedOnStdinEnd": true,
+  "stderrTail": "",
+  "http": [
+    {
+      "relMs": 2124,
+      "path": "/p/start"
+    },
+    {
+      "relMs": 14249,
+      "path": "/p/parked"
+    },
+    {
+      "relMs": 35714,
+      "path": "/p/check-resume"
+    }
+  ],
+  "endedRelMs": 37064
+}

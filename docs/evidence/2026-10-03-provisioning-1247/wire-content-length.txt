@@ -1,0 +1,7 @@
+HEAD chromium https://cdn.playwright.dev/builds/cft/155.0.8059.12/win64/chrome-win64.zip -> 200 content-length 207283631
+HEAD firefox https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/1553/firefox-win64.zip -> 200 content-length 129395456
+HEAD ffmpeg https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip -> 200 content-length 1411741
+HEAD winldd https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip -> 200 content-length 128684
+
+chromium total (chromium + ffmpeg + winldd) = 207283631 + 1411741 + 128684 = 208824056 b = 208.8 MB
+firefox  total (firefox  + ffmpeg + winldd) = 129395456 + 1411741 + 128684 = 130935881 b = 130.9 MB

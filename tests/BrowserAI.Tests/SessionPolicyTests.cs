@@ -145,19 +145,31 @@ internal sealed class SessionPolicyTests
     /// the paragraph above records the one time it was not.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 to 70 of 72 (previously 71 of 72), and it is
+    /// the first move in this constant that a decision made and not an
+    /// upstream release.</b> The maintainer removed <c>browser_resume</c>, so
+    /// the denominator held still and the numerator lost one, and
+    /// <see cref="Withholds"/> went 1 → 2 beside it.
+    /// </para>
+    /// <para>
     /// <b>Written down and not derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
     /// construction and could never fail. This one still can -- a refusal
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 71;
+    private const int Advertises = 70;
 
     /// <summary>
     /// How many tools this build withholds, written down beside
     /// <see cref="Advertises"/> and for the same reason.
     /// </summary>
     /// <remarks>
+    /// ⚠️ <b>Two since 2026-10-03, and this time the maintainer decided it</b>:
+    /// <c>browser_resume</c> joined <c>browser_annotate</c> as a <c>deny</c>
+    /// row, because it is Playwright's debugger control and its name is two
+    /// letters from BrowserAI's own <c>browserai_resume</c>. <i>Previously
+    /// "One again since 2026-09-21", which follows.</i>
     /// ⚠️ <b>One again since 2026-09-21</b>, and <b>nobody decided that</b>:
     /// <c>@playwright/mcp</c> 0.0.82 marked <c>browser_webmcp_call</c>
     /// <c>skillOnly</c>, so it left the exposed surface and its verdict row was
@@ -173,7 +185,7 @@ internal sealed class SessionPolicyTests
     /// about the size of the surface, and reading either half out of the file
     /// the claim is about would make it agree with itself.
     /// </remarks>
-    private const int Withholds = 1;
+    private const int Withholds = 2;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.
@@ -195,8 +207,10 @@ internal sealed class SessionPolicyTests
         var advertised = everything.Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)).ToList();
 
         // The denominators are stated before the numerator, and there are two of
-        // them: a fully-capable child exposes 73 tools, BrowserAI advertises 71
-        // of them, and every session permits all 71.
+        // them: a fully-capable child exposes 72 tools, BrowserAI advertises 70
+        // of them, and every session permits all 70. *(Corrected 2026-10-03,
+        // previously "exposes 73 tools, BrowserAI advertises 71 of them", whose
+        // first figure had disagreed with the constants above since 2026-09-21.)*
         await Assert.That(everything.Count).IsEqualTo(Advertises + Withholds);
         await Assert.That(advertised.Count).IsEqualTo(Advertises);
         await Assert.That(advertised.Count(tool => RepositoryVerdicts.Committed.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
@@ -494,6 +508,101 @@ internal sealed class SessionPolicyTests
             await Assert.That(sessions.SessionChildren.Sum(child =>
                 child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.ADenial.Name))).IsEqualTo(callsBefore);
         }
+    }
+
+    /// <summary>
+    /// Playwright's <c>browser_resume</c> is absent from the surface and refused
+    /// if named, and the refusal gives the measured reason, liveness.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-03 at the maintainer's decision</b>, in his words: "I am
+    /// leaning to remove playwrights own browser_resume and pause and similar from
+    /// the tool list (and not pass them through). I do not see the utility and I do
+    /// see a lot of possible confusion with our own resumtion tech." and then "P6
+    /// a", which keeps the removal to this one tool. It is Playwright's debugger
+    /// control: it releases a paused page and then waits for the next pause or for
+    /// the browser to close.
+    /// </para>
+    /// <para>
+    /// <b>By name, against the shipped file, because nothing else here fails if
+    /// the row goes back to <c>allow</c>.</b> The arm below proves a deny row is
+    /// read from the file, and the loops over <c>RepositoryVerdicts.TheDenials</c>
+    /// prove every shipped denial is absent from the surface; both stay green with
+    /// one row fewer to walk. <b>Planted red 2026-10-03</b> against the file as it
+    /// stood, with the row still <c>allow</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDebuggerResumeToolIsAbsentFromTheSurfaceAndRefusedOnLiveness()
+    {
+        const string DebuggerResume = "browser_resume";
+
+        // The session child would answer it, so a proxy that forwarded would
+        // visibly succeed here instead of failing for some other reason.
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools[DebuggerResume] = new FakeToolBehaviour());
+
+        // The surface child answers with upstream's own committed list, so the
+        // absence asserted below is a filter and not a double that never had
+        // the tool.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
+            sessions: sessions);
+
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+
+        var names = (advertised["tools"]?.AsArray() ?? [])
+            .Select(tool => (string?)tool?["name"] ?? string.Empty)
+            .ToList();
+
+        // Not vacuous: upstream's own list carries it, and BrowserAI's own
+        // resume tool is still advertised beside the gap.
+        await Assert.That(rig.SurfaceChild.ToolsListResult).Contains(DebuggerResume);
+        await Assert.That(names).DoesNotContain(DebuggerResume);
+        await Assert.That(names).Contains(SessionToolSurface.Resume);
+
+        // Nothing of it is left for a model to read: no entry, no description
+        // naming it.
+        await Assert.That(advertised.ToJsonString()).DoesNotContain(DebuggerResume);
+
+        var directory = Path.Combine(sessions.Root, "debugger-resume");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "reaches for Playwright's debugger resume tool by name",
+        });
+
+        var callsBefore = sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == DebuggerResume));
+
+        var refused = await CallAsync(rig, DebuggerResume, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
+        });
+
+        var text = TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        // The frame says it is not in the list, and the row's reason says why:
+        // the call waits for a pause or a close that nothing in a session sends.
+        await Assert.That(text).Contains("NOT in this server's tools/list");
+        await Assert.That(text).Contains("The reason is liveness");
+
+        // Nothing reached the child.
+        await Assert.That(sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == DebuggerResume))).IsEqualTo(callsBefore);
+
+        // And it is in the session's record, failed, carrying what the caller
+        // was told.
+        var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool == DebuggerResume);
+
+        await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(row.Failure).IsEqualTo(text);
     }
 
     // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record and

@@ -1,0 +1,122 @@
+{
+  "scenario": "resume",
+  "family": "chromium",
+  "run": "3",
+  "startedEpochMs": 1791005286870,
+  "steps": {
+    "init": {
+      "ok": true,
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "clientName": "dbgA-resume-chromium-3"
+    },
+    "toolsList": {
+      "count": 72,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "navigateStart": {
+      "answered": true,
+      "latencyMs": 430,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:61832/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\chromium\\3\\session\\output\\page-2026-10-03T05-28-07-622Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\chromium",
+      "paused": false
+    },
+    "markers": {
+      "answered": true,
+      "latencyMs": 511,
+      "isError": false,
+      "text": "### Result | { |   \"ls\": \"kept\", |   \"ss\": \"kept\", |   \"ck\": \"dbgck=kept\" | }",
+      "paused": false
+    },
+    "arm": {
+      "answered": true,
+      "latencyMs": 510,
+      "isError": false,
+      "text": "### Result | \"armed\"",
+      "paused": false
+    },
+    "park": {
+      "parkedId": 6,
+      "sentAtMs": 4786,
+      "answeredWithin8s": false,
+      "serverSawParkedPath": [],
+      "snapshotAnswered": true,
+      "snapshotLatencyMs": 8,
+      "snapshotShowsPaused": true,
+      "pausedSection": "- Navigate 127.0.0.1:61832/p/parked at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\chromium\\3\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at"
+    },
+    "parkedAfterResume": {
+      "answered": true,
+      "latencyMs": 51,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:61832/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\chromium\\3\\session\\output\\page-2026-10-03T05-28-19-712Z.yml)",
+      "paused": false
+    },
+    "resumeWithin20s": {
+      "answered": false,
+      "waitedMs": 20000
+    },
+    "tabsWhileResumePending": {
+      "answered": true,
+      "latencyMs": 5,
+      "isError": false,
+      "text": "### Result | - 0: (current) [/p/parked](http://127.0.0.1:61832/p/parked)",
+      "paused": false
+    },
+    "closeWhileResumePending": {
+      "answered": true,
+      "latencyMs": 174,
+      "isError": false,
+      "text": "### Result | No open tabs. Navigate to a URL to create one.",
+      "paused": false
+    },
+    "resumeAfterClose": {
+      "answered": true,
+      "latencyMs": 47,
+      "isError": false,
+      "text": "",
+      "paused": false
+    },
+    "serverSawParkedPath": [
+      12805
+    ],
+    "final": {
+      "navigate": {
+        "answered": true,
+        "latencyMs": 349,
+        "isError": false,
+        "text": "### Page | - Page URL: http://127.0.0.1:61832/p/check-resume | - Page Title: /p/check-resume | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\resume\\chromium\\3\\session\\output\\page-2026-10-03T05-28-40-256Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\r",
+        "paused": false
+      },
+      "markers": "### Result | { |   \"ls\": \"kept\", |   \"ss\": null, |   \"ck\": \"dbgck=kept\", |   \"url\": \"http://127.0.0.1:61832/p/check-resume\" | }",
+      "tabs": "### Result | - 0: (current) [/p/check-resume](http://127.0.0.1:61832/p/check-resume)",
+      "pausedStillShown": false
+    }
+  },
+  "versions": {
+    "node": "v24.21.0",
+    "mcp": "0.0.83",
+    "playwrightCore": "1.64.0-alpha-1790635538000"
+  },
+  "outcome": "completed",
+  "childExitedOnStdinEnd": true,
+  "stderrTail": "",
+  "http": [
+    {
+      "relMs": 709,
+      "path": "/p/start"
+    },
+    {
+      "relMs": 12805,
+      "path": "/p/parked"
+    },
+    {
+      "relMs": 33349,
+      "path": "/p/check-resume"
+    }
+  ],
+  "endedRelMs": 34405
+}

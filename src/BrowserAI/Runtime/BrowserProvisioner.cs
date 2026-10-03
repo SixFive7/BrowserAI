@@ -403,13 +403,20 @@ internal sealed class BrowserProvisioner : IDisposable
     /// (128,684 B), which both families download into the same root:
     /// </para>
     /// <list type="bullet">
-    /// <item><b>chromium</b> -- 205,733,764 + 1,411,741 + 128,684 =
-    /// 207,274,189 B. Re-measured 2026-09-16 at rev 1244 / 154.0.8037.0.</item>
-    /// <item><b>firefox</b> -- 127,961,896 + 1,411,741 + 128,684 =
-    /// 129,502,321 B. Re-measured 2026-09-16 at rev 1544 / 155.0, the same way
+    /// <item><b>chromium</b> -- 207,283,631 + 1,411,741 + 128,684 =
+    /// 208,824,056 B. Re-measured 2026-10-03 at rev 1247 / 155.0.8059.12.</item>
+    /// <item><b>firefox</b> -- 129,395,456 + 1,411,741 + 128,684 =
+    /// 130,935,881 B. Re-measured 2026-10-03 at rev 1553 / 156.0, the same way
     /// and on the same day as a clean provisioning run that produced
-    /// 362,120,889 B on disk, twice, byte-identical.</item>
+    /// 365,581,437 B on disk, twice, byte-identical.</item>
     /// </list>
+    /// <para>
+    /// <i>Corrected 2026-10-03 (previously "205,733,764 + 1,411,741 + 128,684 =
+    /// 207,274,189 B. Re-measured 2026-09-16 at rev 1244" and "127,961,896 +
+    /// 1,411,741 + 128,684 = 129,502,321 B. Re-measured 2026-09-16 at rev
+    /// 1544"). The firefox item had not followed the constant below when it moved
+    /// on 2026-09-17 and 2026-09-21.</i>
+    /// </para>
     /// <para>
     /// <b>Both figures are for one family into an empty root, which is the
     /// predicate and not an accident.</b> A machine that already has the other
@@ -469,6 +476,17 @@ internal sealed class BrowserProvisioner : IDisposable
     public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
         new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
         {
+            // ⚠️ Corrected 2026-10-03 (previously 207_274_189 for Chromium and
+            // 130_934_199 for Firefox, measured at chromium 1246 / 154.0.8037.0
+            // and firefox 1549 / 156.0). Re-measured 2026-10-03 at chromium 1247 /
+            // 155.0.8059.12 and firefox 1553 / 156.0 under playwright-core
+            // 1.64.0-alpha-1790635538000, on the @playwright/mcp 0.0.83 roll.
+            // CHROMIUM MOVED FOR THE FIRST TIME SINCE 1244, BY 1,549,867 BYTES:
+            // 1247 is a new browserVersion, and Chromium's archive is keyed on the
+            // version. Firefox moved by 1,682 bytes, a rebuild of the same 156.0.
+            // The rendered Chromium figure moves 207.3 MB -> 208.8 MB and the
+            // Firefox one stays 130.9 MB.
+            //
             // ⚠️ Corrected 2026-09-21 (previously 129_502_648 for Firefox,
             // measured at firefox 1548 / 155.0). Re-measured 2026-09-21 at
             // chromium 1246 / 154.0.8037.0 and firefox 1549 / 156.0 under
@@ -499,8 +517,8 @@ internal sealed class BrowserProvisioner : IDisposable
             // docs/probes/2026-09-16-provisioning is the rig, and
             // ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes
             // is what stops these drifting from the kb article again.
-            [ProvisionedBrowsers.Chromium] = 207_274_189,
-            [ProvisionedBrowsers.Firefox] = 130_934_199,
+            [ProvisionedBrowsers.Chromium] = 208_824_056,
+            [ProvisionedBrowsers.Firefox] = 130_935_881,
         };
 
     public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =

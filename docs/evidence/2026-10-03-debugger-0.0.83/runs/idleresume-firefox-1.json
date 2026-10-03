@@ -1,0 +1,96 @@
+{
+  "scenario": "idleresume",
+  "family": "firefox",
+  "run": "1",
+  "startedEpochMs": 1791005671312,
+  "steps": {
+    "init": {
+      "ok": true,
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "clientName": "dbgA-idleresume-firefox-1"
+    },
+    "toolsList": {
+      "count": 72,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "navigateStart": {
+      "answered": true,
+      "latencyMs": 2200,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:61454/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\firefox\\1\\session\\output\\page-2026-10-03T05-34-33-893Z.yml)",
+      "paused": false
+    },
+    "markers": {
+      "answered": true,
+      "latencyMs": 513,
+      "isError": false,
+      "text": "### Result | { |   \"ls\": \"kept\", |   \"ss\": \"kept\", |   \"ck\": \"dbgck=kept\" | }",
+      "paused": false
+    },
+    "arm": {
+      "answered": true,
+      "latencyMs": 509,
+      "isError": false,
+      "text": "### Result | \"armed\"",
+      "paused": false
+    },
+    "park": {
+      "parkedId": 6,
+      "sentAtMs": 6611,
+      "answeredWithin8s": false,
+      "serverSawParkedPath": [],
+      "snapshotAnswered": true,
+      "snapshotLatencyMs": 12,
+      "snapshotShowsPaused": true,
+      "pausedSection": "- Navigate 127.0.0.1:61454/p/parked at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\firefox\\1\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at"
+    },
+    "parkedAfterResume": {
+      "answered": true,
+      "latencyMs": 73,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:61454/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\firefox\\1\\session\\output\\page-2026-10-03T05-34-46-010Z.yml)",
+      "paused": false
+    },
+    "resumeWithin30s": {
+      "answered": true,
+      "latencyMs": 12407,
+      "isError": false,
+      "text": "",
+      "paused": false
+    },
+    "navigateAfter": {
+      "answered": true,
+      "latencyMs": 1042,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:61454/p/after-idle | - Page Title: /p/after-idle | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\firefox\\1\\session\\output\\page-2026-10-03T05-34-59-386Z.yml)",
+      "paused": false
+    }
+  },
+  "versions": {
+    "node": "v24.21.0",
+    "mcp": "0.0.83",
+    "playwrightCore": "1.64.0-alpha-1790635538000"
+  },
+  "outcome": "completed",
+  "childExitedOnStdinEnd": true,
+  "stderrTail": "",
+  "http": [
+    {
+      "relMs": 2492,
+      "path": "/p/start"
+    },
+    {
+      "relMs": 14640,
+      "path": "/p/parked"
+    },
+    {
+      "relMs": 28011,
+      "path": "/p/after-idle"
+    }
+  ],
+  "endedRelMs": 28833
+}

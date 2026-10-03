@@ -66,7 +66,7 @@ internal sealed class UpdateService
     /// <remarks>
     /// Sized against a link, not a payload: 30 minutes carries
     /// <b>112.4 MB</b> at ~500 kbit/s, which is slower than any link this
-    /// product is usable on -- a first-run browser provisioning of 207.3 MB has
+    /// product is usable on -- a first-run browser provisioning of 208.8 MB has
     /// to succeed on the same connection before BrowserAI works at all
     /// (<i>corrected 2026-09-17, previously "203.8 MB"; re-measured 2026-09-16 at
     /// chromium 1244, and the figure the server renders is

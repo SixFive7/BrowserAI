@@ -1,0 +1,33 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+// Scratch: one line per run of the 0.0.83 debugger batch, the fields the review cites.
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const root = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload';
+const s = (st) => !st ? '-' : st.answered ? `${st.isError ? 'ERR' : 'ok'} ${st.latencyMs}ms` : `none ${st.waitedMs}ms`;
+const lines = [];
+for (const scenario of fs.readdirSync(root)) {
+  for (const family of fs.readdirSync(path.join(root, scenario))) {
+    for (const run of fs.readdirSync(path.join(root, scenario, family)).filter((r) => /^\d+$/.test(r))) {
+      const file = path.join(root, scenario, family, run, 'result.json');
+      if (!fs.existsSync(file)) { lines.push(`${scenario}\t${family}\t${run}\tNO RESULT`); continue; }
+      const r = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const t = r.steps;
+      const v = r.versions ? `${r.versions.mcp}/${r.versions.playwrightCore}` : '?';
+      let cols;
+      if (scenario === 'resume') {
+        cols = [`release ${s(t.parkedAfterResume)}`, `resume20s ${s(t.resumeWithin20s)}`, `tabsWhilePending ${s(t.tabsWhileResumePending)}`, `close ${s(t.closeWhileResumePending)}`, `resumeAfterClose ${s(t.resumeAfterClose)}`, `parkedPathHitAt ${JSON.stringify(t.serverSawParkedPath)}`];
+      } else if (scenario === 'armedcloseresume') {
+        const te = (st) => st && st.text && st.text.includes("reading 'waitForInitialized'") ? 'TypeError' : (st && st.text ? st.text.slice(0, 40) : '');
+        cols = [`close ${s(t.closeAsFirstCallAfterArm)}`, `snapshot ${s(t.snapshotInWedge)} ${te(t.snapshotInWedge)}`, `getConfig ${s(t.getConfigInWedge)}`, `tabsNew ${s(t.tabsNewInWedge)}`, `secondClose ${s(t.secondCloseInWedge)}`, `snapshot2 ${s(t.snapshotAfterSecondClose)} ${te(t.snapshotAfterSecondClose)}`, `resume ${s(t.resumeInWedge)}`, `firstClose ${s(t.firstCloseAfterResume)}`, `navigate ${s(t.navigateAfter)}`];
+      } else if (scenario === 'idleresume') {
+        cols = [`release ${s(t.parkedAfterResume)}`, `resume30s ${s(t.resumeWithin30s)}`, `navigateAfter ${s(t.navigateAfter)}`];
+      } else cols = [JSON.stringify(t).slice(0, 200)];
+      lines.push([scenario, family, run, v, r.outcome, `stdinExit ${r.childExitedOnStdinEnd}`, ...cols].join('\t'));
+    }
+  }
+}
+const out = lines.join('\n') + '\n';
+fs.writeFileSync('C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\aggregate.tsv', out);
+process.stdout.write(out);

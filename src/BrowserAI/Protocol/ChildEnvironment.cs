@@ -152,7 +152,7 @@ internal static class ChildEnvironment
     /// <para>
     /// The proxy and CA names are inherited because without them a machine behind
     /// TLS inspection cannot provision a browser at all -- first-run provisioning
-    /// downloads 207.3 MB from three hosts -- <i>corrected 2026-09-17, previously
+    /// downloads 208.8 MB from three hosts -- <i>corrected 2026-10-03 at chromium 1247, previously 207.3 MB; corrected 2026-09-17, previously
     /// "203.8 MB", and the live figure is
     /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> and not
     /// this sentence</i> -- and SOCKS is unsupported on that path

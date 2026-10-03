@@ -1,0 +1,18 @@
+armedcloseresume	chromium	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 39ms TypeError	getConfig ok 3ms	tabsNew ok 41ms	secondClose ok 3ms	snapshot2 ERR 38ms TypeError	resume ok 57ms	firstClose ok 197ms	navigate ok 402ms
+armedcloseresume	chromium	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 49ms TypeError	getConfig ok 3ms	tabsNew ok 46ms	secondClose ok 3ms	snapshot2 ERR 51ms TypeError	resume ok 78ms	firstClose ok 249ms	navigate ok 428ms
+armedcloseresume	chromium	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 34ms TypeError	getConfig ok 2ms	tabsNew ok 31ms	secondClose ok 2ms	snapshot2 ERR 34ms TypeError	resume ok 57ms	firstClose ok 195ms	navigate ok 391ms
+armedcloseresume	firefox	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 178ms TypeError	getConfig ok 2ms	tabsNew ok 214ms	secondClose ok 2ms	snapshot2 ERR 184ms TypeError	resume ok 448ms	firstClose ok 450ms	navigate ok 1016ms
+armedcloseresume	firefox	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 215ms TypeError	getConfig ok 2ms	tabsNew ok 202ms	secondClose ok 2ms	snapshot2 ERR 214ms TypeError	resume ok 473ms	firstClose ok 475ms	navigate ok 1085ms
+armedcloseresume	firefox	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	close none 10000ms	snapshot ERR 233ms TypeError	getConfig ok 4ms	tabsNew ok 247ms	secondClose ok 2ms	snapshot2 ERR 215ms TypeError	resume ok 510ms	firstClose ok 512ms	navigate ok 1021ms
+idleresume	chromium	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 42ms	resume30s ok 12039ms	navigateAfter ok 1360ms
+idleresume	chromium	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 57ms	resume30s ok 12042ms	navigateAfter ok 1401ms
+idleresume	chromium	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 51ms	resume30s ok 12038ms	navigateAfter ok 1353ms
+idleresume	firefox	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 73ms	resume30s ok 12407ms	navigateAfter ok 1042ms
+idleresume	firefox	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 69ms	resume30s ok 12357ms	navigateAfter ok 975ms
+idleresume	firefox	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 74ms	resume30s ok 12370ms	navigateAfter ok 1282ms
+resume	chromium	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 43ms	resume20s none 20000ms	tabsWhilePending ok 5ms	close ok 162ms	resumeAfterClose ok 43ms	parkedPathHitAt [13373]
+resume	chromium	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 43ms	resume20s none 20000ms	tabsWhilePending ok 5ms	close ok 149ms	resumeAfterClose ok 40ms	parkedPathHitAt [12802]
+resume	chromium	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 51ms	resume20s none 20000ms	tabsWhilePending ok 5ms	close ok 174ms	resumeAfterClose ok 47ms	parkedPathHitAt [12805]
+resume	firefox	1	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 69ms	resume20s none 20000ms	tabsWhilePending ok 6ms	close ok 432ms	resumeAfterClose ok 431ms	parkedPathHitAt [14561]
+resume	firefox	2	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 69ms	resume20s none 20000ms	tabsWhilePending ok 6ms	close ok 395ms	resumeAfterClose ok 393ms	parkedPathHitAt [14262]
+resume	firefox	3	0.0.83/1.64.0-alpha-1790635538000	completed	stdinExit true	release ok 74ms	resume20s none 20000ms	tabsWhilePending ok 7ms	close ok 386ms	resumeAfterClose ok 384ms	parkedPathHitAt [14249]

@@ -1,0 +1,96 @@
+{
+  "scenario": "idleresume",
+  "family": "chromium",
+  "run": "2",
+  "startedEpochMs": 1791005609783,
+  "steps": {
+    "init": {
+      "ok": true,
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "clientName": "dbgA-idleresume-chromium-2"
+    },
+    "toolsList": {
+      "count": 72,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "navigateStart": {
+      "answered": true,
+      "latencyMs": 459,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:49601/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\chromium\\2\\session\\output\\page-2026-10-03T05-33-30-607Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\",
+      "paused": false
+    },
+    "markers": {
+      "answered": true,
+      "latencyMs": 510,
+      "isError": false,
+      "text": "### Result | { |   \"ls\": \"kept\", |   \"ss\": \"kept\", |   \"ck\": \"dbgck=kept\" | }",
+      "paused": false
+    },
+    "arm": {
+      "answered": true,
+      "latencyMs": 506,
+      "isError": false,
+      "text": "### Result | \"armed\"",
+      "paused": false
+    },
+    "park": {
+      "parkedId": 6,
+      "sentAtMs": 4849,
+      "answeredWithin8s": false,
+      "serverSawParkedPath": [],
+      "snapshotAnswered": true,
+      "snapshotLatencyMs": 9,
+      "snapshotShowsPaused": true,
+      "pausedSection": "- Navigate 127.0.0.1:49601/p/parked at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\chromium\\2\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at"
+    },
+    "parkedAfterResume": {
+      "answered": true,
+      "latencyMs": 57,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:49601/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\chromium\\2\\session\\output\\page-2026-10-03T05-33-42-696Z.yml)",
+      "paused": false
+    },
+    "resumeWithin30s": {
+      "answered": true,
+      "latencyMs": 12042,
+      "isError": false,
+      "text": "",
+      "paused": false
+    },
+    "navigateAfter": {
+      "answered": true,
+      "latencyMs": 1401,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:49601/p/after-idle | - Page Title: /p/after-idle | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\idleresume\\chromium\\2\\session\\output\\page-2026-10-03T05-33-56-082Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\i",
+      "paused": false
+    }
+  },
+  "versions": {
+    "node": "v24.21.0",
+    "mcp": "0.0.83",
+    "playwrightCore": "1.64.0-alpha-1790635538000"
+  },
+  "outcome": "completed",
+  "childExitedOnStdinEnd": true,
+  "stderrTail": "",
+  "http": [
+    {
+      "relMs": 769,
+      "path": "/p/start"
+    },
+    {
+      "relMs": 12869,
+      "path": "/p/parked"
+    },
+    {
+      "relMs": 26253,
+      "path": "/p/after-idle"
+    }
+  ],
+  "endedRelMs": 27055
+}

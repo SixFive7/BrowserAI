@@ -1,0 +1,136 @@
+{
+  "scenario": "armedcloseresume",
+  "family": "chromium",
+  "run": "2",
+  "startedEpochMs": 1791005467651,
+  "steps": {
+    "init": {
+      "ok": true,
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "clientName": "dbgA-armedcloseresume-chromium-2"
+    },
+    "toolsList": {
+      "count": 72,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "navigateStart": {
+      "answered": true,
+      "latencyMs": 481,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:57513/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armedcloseresume\\chromium\\2\\session\\output\\page-2026-10-03T05-31-08-482Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armed",
+      "paused": false
+    },
+    "markers": {
+      "answered": true,
+      "latencyMs": 557,
+      "isError": false,
+      "text": "### Result | { |   \"ls\": \"kept\", |   \"ss\": \"kept\", |   \"ck\": \"dbgck=kept\" | }",
+      "paused": false
+    },
+    "arm": {
+      "answered": true,
+      "latencyMs": 507,
+      "isError": false,
+      "text": "### Result | \"armed\"",
+      "paused": false
+    },
+    "closeAsFirstCallAfterArm": {
+      "answered": false,
+      "waitedMs": 10000
+    },
+    "snapshotInWedge": {
+      "answered": true,
+      "latencyMs": 49,
+      "isError": true,
+      "text": "### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')",
+      "paused": false
+    },
+    "getConfigInWedge": {
+      "answered": true,
+      "latencyMs": 3,
+      "isError": false,
+      "paused": true
+    },
+    "tabsNewInWedge": {
+      "answered": true,
+      "latencyMs": 46,
+      "isError": false,
+      "text": "### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armedcloseresume\\chromium\\2\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at",
+      "paused": true
+    },
+    "secondCloseInWedge": {
+      "answered": true,
+      "latencyMs": 3,
+      "isError": false,
+      "text": "### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armedcloseresume\\chromium\\2\\session\\async C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\rv\\payload\\mcp\\node_modules\\playwright-core\\lib\\coreBundle.js:73913 | - Use any tools to explore and interact, resume by calling resume/step-over/pause-at",
+      "paused": true
+    },
+    "snapshotAfterSecondClose": {
+      "answered": true,
+      "latencyMs": 51,
+      "isError": true,
+      "text": "### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')",
+      "paused": false
+    },
+    "resumeInWedge": {
+      "answered": true,
+      "latencyMs": 78,
+      "isError": false,
+      "text": "",
+      "paused": false
+    },
+    "firstCloseAfterResume": {
+      "answered": true,
+      "latencyMs": 249,
+      "isError": false,
+      "text": "### Result | No open tabs. Navigate to a URL to create one.",
+      "paused": false
+    },
+    "navigateAfter": {
+      "answered": true,
+      "latencyMs": 428,
+      "isError": false,
+      "text": "### Page | - Page URL: http://127.0.0.1:57513/p/after-wedge | - Page Title: /p/after-wedge | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armedcloseresume\\chromium\\2\\session\\output\\page-2026-10-03T05-31-23-405Z.yml) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\p",
+      "paused": false
+    },
+    "final": {
+      "navigate": {
+        "answered": true,
+        "latencyMs": 54,
+        "isError": false,
+        "text": "### Page | - Page URL: http://127.0.0.1:57513/p/check-armedcloseresume | - Page Title: /p/check-armedcloseresume | ### Snapshot | - [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger\\runs\\payload\\armedcloseresume\\chromium\\2\\session\\output\\page-2026-10-03T05-31-23-459Z.yml)",
+        "paused": false
+      },
+      "markers": "### Result | { |   \"ls\": \"kept\", |   \"ss\": null, |   \"ck\": \"dbgck=kept\", |   \"url\": \"http://127.0.0.1:57513/p/check-armedcloseresume\" | }",
+      "tabs": "### Result | - 0: (current) [/p/check-armedcloseresume](http://127.0.0.1:57513/p/check-armedcloseresume)",
+      "pausedStillShown": false
+    }
+  },
+  "versions": {
+    "node": "v24.21.0",
+    "mcp": "0.0.83",
+    "playwrightCore": "1.64.0-alpha-1790635538000"
+  },
+  "outcome": "completed",
+  "childExitedOnStdinEnd": true,
+  "stderrTail": "",
+  "http": [
+    {
+      "relMs": 777,
+      "path": "/p/start"
+    },
+    {
+      "relMs": 15699,
+      "path": "/p/after-wedge"
+    },
+    {
+      "relMs": 15768,
+      "path": "/p/check-armedcloseresume"
+    }
+  ],
+  "endedRelMs": 17331
+}

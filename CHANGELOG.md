@@ -630,6 +630,32 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- ⬆️ **The payload rolled to `@playwright/mcp` 0.0.83, Chromium moved to 155, and Velopack to 1.2.161.**
+  `playwright-core` and `playwright` resolve to `1.64.0-alpha-1790635538000`, the version 0.0.83
+  pins for both. Chromium **1246 -> 1247** with `browserVersion` **154.0.8037.0 -> 155.0.8059.12**,
+  firefox **1549 -> 1553** at the same 156.0, webkit 2365 -> 2368, and `ffmpeg` 1011 and `winldd`
+  1007 unmoved. Upstream added, removed and renamed no tool: `browser_find` can write its results
+  to a file through a new `filename`, and `browser_wait_for` says so when it caps a wait at 30 s.
+
+  EVERY MACHINE RE-PROVISIONS CHROMIUM, AND THIS TIME IT IS A NEW ARCHIVE. The first-run download
+  was re-measured at **208.8 MB** (208,824,056 B, previously 207.3 MB) and 440.61 MiB on disk;
+  Firefox is 130.9 MB as before. `BrowserProvisioner.FirstRunDownloadBytes` quotes the new figure to
+  every caller refused while provisioning runs, and its anchor test was watched red against the old
+  one first.
+
+  Upstream fixes that reach a session with nothing to configure: a dialog that opens while a page
+  loads is reported to the caller and no longer costs the navigation timeout; closing a browser
+  while a download runs no longer crashes the child; a page's WebMCP tools are read afresh on every
+  call, which is the path `browserai_page_tool` takes, and they work with Chromium 155;
+  `browser_run_code_unsafe` can use `setTimeout`, `URL`, `fetch` and other ordinary globals; and
+  Chromium makes two fewer background requests to Google.
+
+  Velopack 1.2.161 changes one Rust file, the operating-system architecture check on a Windows
+  without `IsWow64Process2`; nothing on the update, apply or downgrade paths moved, and no file of
+  the C# library changed. ⚠️ **Packing now needs `vpk` 1.2.161**: `New-Release.ps1` refuses a tool
+  that does not match the library, and the global tool on the build machine is still 1.2.158.
+  [Review](upstream-review.json), [evidence](docs/evidence/2026-10-03-provisioning-1247/README.md).
+
 - 🔧 **`mcp-registration.json` records one entry per client, and no single outcome for both.**
   Schema 2. The per-client fields -- `outcome`, `isWhatWasAskedFor`, `client`, `command` and
   `detail` -- moved into a `clients` array keyed `claude-code` and `codex`, and the top level
@@ -1110,6 +1136,21 @@ release body; nothing else depends on it.
   Track C leaves [`TODO.md`](TODO.md)'s zoom-out tree, and phases 3 and 4 wait on track B.
 
 ### Removed
+
+- 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
+  The maintainer's decision, in his words: *"I am leaning to remove playwrights own browser_resume
+  and pause and similar from the tool list (and not pass them through). I do not see the utility
+  and I do see a lot of possible confusion with our own resumtion tech."*, and then *"P6 a"*. It is
+  Playwright's debugger control: it releases a paused page and then waits for the next pause or for
+  the browser to close, which in a headless session can be an hour. A `deny` row in
+  `tool-verdicts.json` takes it out of `tools/list` and refuses it at the door with that reason,
+  measured on 0.0.83, so BrowserAI advertises 70 of the 72 tools upstream exposes.
+  `browserai_resume`, BrowserAI's own, is unaffected.
+
+  ⚠️ **One consequence is an open hazard**: a debugger pause that a close meets first leaves the
+  session unable to load a page, and since this change no tool a caller can reach releases it.
+  Nothing in an ordinary session arms a pause; `browser_run_code_unsafe` can.
+  [Evidence](docs/evidence/2026-10-03-debugger-0.0.83/README.md).
 
 - 🗑️ **The server's own installer exit is deleted, because it could never fire on a real install.**
   Q276, the maintainer's words verbatim: *"Q276 a"*. `Main` exited 0 as `Startup[8]` when

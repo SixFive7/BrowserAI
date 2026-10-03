@@ -134,6 +134,18 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277
       Extended in 2.1.281: https://code.claude.com/docs/en/changelog#2-1-281
       Remaining differences: https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
+- [ ] **Move the global `vpk` tool to 1.2.161.** Velopack 1.2.161 was
+      adopted on 2026-10-03 and `build/New-Release.ps1` refuses a `vpk` whose
+      version is not the library's. The review that night packed with a copy
+      installed into `.work/rv-scratch/vpk-1.2.161`, first on PATH for its own
+      processes only, because the night's rules forbade a global install. Every
+      gate needs a `vpk` 1.2.161 until this is done:
+      `dotnet tool update -g vpk --version 1.2.161`, then delete the copy.
+- [ ] **Re-take the rows the 0.0.83 roll left `[STALE]`** in
+      [the re-verification index](kb/re-verification.md): 6, 22, 32, 34, 38, 95,
+      103, 109, 115, 121's Chromium half, 122, 127's window time, 140, 141,
+      152 and 163 to 166. Each carries its reason in place; three of them put a
+      window on the screen and need a person at the desk.
 
 ### Research that exists only under `.work`, owed to `docs/evidence/` and `kb/` before the session closes
 

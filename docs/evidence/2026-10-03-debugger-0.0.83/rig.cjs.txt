@@ -1,0 +1,584 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+// Scratch rig: drives one @playwright/mcp child over stdio, the way BrowserAI does
+// (a generated --config plus --sandbox, an allowlisted environment), and measures
+// what a debugger pause does to a session and what gets an agent out of one.
+// Headless only. Everything it writes is under its own run directory.
+// Usage: node rig.cjs <scenario> <chromium|firefox> <runId> <runDir> <mcpPackageDir> <browsersPath>
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const { spawn } = require('child_process');
+
+const [SCENARIO, FAMILY, RUN_ID, RUN_DIR, MCP_DIR, BROWSERS] = process.argv.slice(2);
+const SCRATCH = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\rv-scratch\\debugger';
+const under = (p) => !!p && path.resolve(p).toLowerCase().startsWith(SCRATCH.toLowerCase() + path.sep);
+if (!under(RUN_DIR)) { console.error('REFUSING: run dir outside scratch'); process.exit(2); }
+
+const t0 = Date.now();
+const rel = () => Date.now() - t0;
+fs.mkdirSync(RUN_DIR, { recursive: true });
+const LOG = path.join(RUN_DIR, 'rig.log');
+const WIRE = path.join(RUN_DIR, 'wire.jsonl');
+const HTTPLOG = path.join(RUN_DIR, 'http.tsv');
+const RESULT = path.join(RUN_DIR, 'result.json');
+fs.writeFileSync(LOG, '');
+fs.writeFileSync(WIRE, '');
+fs.writeFileSync(HTTPLOG, 'epochMs\trelMs\tpath\n');
+const log = (...a) => fs.appendFileSync(LOG, `[${String(rel()).padStart(7)} ms] ` + a.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(' ') + '\n');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const result = { scenario: SCENARIO, family: FAMILY, run: RUN_ID, startedEpochMs: t0, steps: {} };
+const step = (k, v) => { result.steps[k] = v; fs.writeFileSync(RESULT, JSON.stringify(result, null, 2)); };
+
+async function waitForGo() {
+  const flag = path.join(RUN_DIR, 'go.flag');
+  for (let i = 0; i < 300; i++) { if (fs.existsSync(flag)) return; await sleep(100); }
+  throw new Error('no go.flag from the supervisor within 30 s');
+}
+
+// ---- page server -------------------------------------------------------------
+const requests = [];
+const server = http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x');
+  if (u.pathname === '/favicon.ico') { res.writeHead(404); return res.end(); }
+  requests.push({ at: Date.now(), path: u.pathname });
+  fs.appendFileSync(HTTPLOG, `${Date.now()}\t${rel()}\t${u.pathname}\n`);
+  res.writeHead(200, { 'content-type': 'text/html' });
+  res.end(`<!doctype html><title>${u.pathname}</title><h1>${u.pathname}</h1>`);
+});
+const fetched = (p) => requests.filter((r) => r.path === p).map((r) => r.at - t0);
+
+// ---- the child ---------------------------------------------------------------
+function childEnv() {
+  // BrowserAI's allowlist (src/BrowserAI/Protocol/ChildEnvironment.cs), with the
+  // write locations moved into scratch.
+  const inherit = ['SystemRoot', 'windir', 'SystemDrive', 'COMSPEC', 'PATH', 'PATHEXT', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'OS',
+    'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH', 'PUBLIC', 'ProgramData', 'ALLUSERSPROFILE', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432',
+    'CommonProgramFiles', 'CommonProgramFiles(x86)', 'CommonProgramW6432', 'USERNAME', 'USERDOMAIN', 'COMPUTERNAME', 'SESSIONNAME'];
+  const env = {};
+  for (const k of inherit) if (process.env[k] !== undefined) env[k] = process.env[k];
+  env.TEMP = path.join(SCRATCH, 'tmp');
+  env.TMP = path.join(SCRATCH, 'tmp');
+  env.LOCALAPPDATA = path.join(SCRATCH, 'localappdata');
+  env.APPDATA = path.join(SCRATCH, 'appdata');
+  env.PWTEST_SERVER_REGISTRY = path.join(SCRATCH, 'registry');
+  env.PLAYWRIGHT_BROWSERS_PATH = BROWSERS;
+  env.PLAYWRIGHT_SKIP_BROWSER_GC = '1';
+  env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1';
+  env.MOZ_DISABLE_SAFE_MODE_KEY = '1';
+  for (const k of ['TEMP', 'TMP', 'LOCALAPPDATA', 'APPDATA', 'PWTEST_SERVER_REGISTRY']) if (!under(env[k])) throw new Error(`${k} not under scratch`);
+  return env;
+}
+
+function writeConfig(dir) {
+  const firefox = FAMILY === 'firefox';
+  const launchOptions = firefox
+    ? { firefoxUserPrefs: { 'toolkit.winRegisterApplicationRestart': false, 'signon.rememberSignons': false }, headless: true, downloadsPath: path.join(dir, 'downloads') }
+    : { channel: 'chrome-for-testing', args: ['--enable-automation', '--disable-blink-features=AutomationControlled'], headless: true, downloadsPath: path.join(dir, 'downloads') };
+  const contextOptions = { viewport: { width: 1280, height: 720 }, locale: 'en-US', ignoreHTTPSErrors: false };
+  if (!firefox) contextOptions.permissions = ['clipboard-read'];
+  const cfg = {
+    browser: { browserName: FAMILY, userDataDir: path.join(dir, 'profile'), launchOptions, contextOptions },
+    capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'],
+    outputDir: path.join(dir, 'output'),
+    saveSession: false,
+    allowUnrestrictedFileAccess: false,
+    console: { level: 'debug' },
+    snapshot: { boxes: true },
+    codegen: 'none',
+    filePaths: 'absolute',
+    // BrowserAI writes upstream's own hour (BrowserConfiguration.IdleTimeoutMilliseconds);
+    // the idle scenarios shorten it to watch what upstream's timer does to a parked call.
+    timeouts: { idle: SCENARIO.startsWith('idle') ? 12000 : 3600000 },
+    webmcp: true,
+  };
+  for (const d of [cfg.browser.userDataDir, cfg.outputDir, launchOptions.downloadsPath]) fs.mkdirSync(d, { recursive: true });
+  const file = path.join(dir, 'config.json');
+  fs.writeFileSync(file, JSON.stringify(cfg, null, 2));
+  return file;
+}
+
+class Mcp {
+  constructor(label, args, cwd) {
+    this.label = label;
+    this.proc = spawn(process.execPath, [path.join(MCP_DIR, 'cli.js'), ...args], { cwd, env: childEnv(), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    this.spawnedAt = rel();
+    this.exitAt = null;
+    this.proc.on('exit', (code, sig) => { this.exitAt = rel(); log(`${label} child exit code=${code} sig=${sig}`); });
+    this.nextId = 1; this.pending = new Map(); this.buf = ''; this.stderr = '';
+    this.proc.stdout.on('data', (d) => {
+      this.buf += String(d);
+      let i;
+      while ((i = this.buf.indexOf('\n')) >= 0) {
+        const line = this.buf.slice(0, i); this.buf = this.buf.slice(i + 1);
+        if (!line.trim()) continue;
+        let msg; try { msg = JSON.parse(line); } catch { continue; }
+        fs.appendFileSync(WIRE, JSON.stringify({ dir: 'in', who: label, relMs: rel(), msg: trimMsg(msg) }) + '\n');
+        if (msg.id !== undefined && this.pending.has(msg.id)) { const r = this.pending.get(msg.id); this.pending.delete(msg.id); r(msg); }
+      }
+    });
+    this.proc.stderr.on('data', (d) => { this.stderr += String(d); });
+    this.proc.stdin.on('error', () => {});
+  }
+  send(method, params) {
+    const id = this.nextId++;
+    const sentAt = rel();
+    const frame = { jsonrpc: '2.0', id, method, params };
+    fs.appendFileSync(WIRE, JSON.stringify({ dir: 'out', who: this.label, relMs: sentAt, msg: frame }) + '\n');
+    const promise = new Promise((r) => { this.pending.set(id, r); this.proc.stdin.write(JSON.stringify(frame) + '\n'); })
+      .then((msg) => ({ msg, sentAt, answeredAt: rel() }));
+    return { id, sentAt, promise };
+  }
+  notify(method, params) {
+    const frame = { jsonrpc: '2.0', method, params };
+    fs.appendFileSync(WIRE, JSON.stringify({ dir: 'out', who: this.label, relMs: rel(), msg: frame }) + '\n');
+    this.proc.stdin.write(JSON.stringify(frame) + '\n');
+  }
+  call(name, args) { return this.send('tools/call', { name, arguments: args || {} }); }
+  async init(clientName) {
+    const r = await bounded(this.send('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: clientName, version: '0' } }).promise, 30000);
+    this.notify('notifications/initialized', {});
+    return r;
+  }
+}
+function trimMsg(msg) {
+  const s = JSON.stringify(msg);
+  return s.length > 6000 ? { truncated: true, head: s.slice(0, 6000) } : msg;
+}
+const text = (r) => { try { return (r.msg.result.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n'); } catch { return r && r.msg ? JSON.stringify(r.msg).slice(0, 2000) : ''; } };
+const isErr = (r) => !!(r && r.msg && (r.msg.error || (r.msg.result && r.msg.result.isError)));
+const short = (s, n = 300) => String(s).replace(/\r?\n/g, ' | ').slice(0, n);
+const bounded = (p, ms) => Promise.race([p.then((r) => ({ ok: true, ...r })), sleep(ms).then(() => ({ ok: false, timedOutAfterMs: ms }))]);
+const summary = (r, from) => r.ok ? { answered: true, latencyMs: r.answeredAt - (from ?? r.sentAt), isError: isErr(r), text: short(text(r), 400), paused: /### Paused/.test(text(r)) } : { answered: false, waitedMs: r.timedOutAfterMs };
+
+let A; // the session's child
+let base;
+
+// The arm. 0.0.82's browser_run_code_unsafe runs the snippet in a vm context
+// holding only `page` (no setTimeout -- 0.0.83 added exposedGlobals), so the
+// delay is a floating page.waitForTimeout: the call returns at once and the
+// pause is requested 1.5 s later, so that an ordinary later call is the one
+// that meets it, as with the dashboard's pause button.
+const ARM_CODE = "async (page) => { page.waitForTimeout(1500).then(() => page.context().debugger.requestPause()).catch(() => {}); return 'armed'; }";
+const RESUME_CODE = "async (page) => { await page.context().debugger.resume(); return 'resumed from code'; }";
+
+async function callBounded(name, args, ms) { const c = A.call(name, args); const r = await bounded(c.promise, ms); return { c, r, s: summary(r) }; }
+
+async function startSession(label) {
+  const dir = path.join(RUN_DIR, 'session');
+  fs.mkdirSync(dir, { recursive: true });
+  const cfg = writeConfig(dir);
+  A = new Mcp('A', ['--config', cfg, '--sandbox'], dir);
+  const clientName = `dbgA-${SCENARIO}-${FAMILY}-${RUN_ID}`;
+  const init = await A.init(clientName);
+  step('init', { ok: init.ok, serverInfo: init.ok ? init.msg.result.serverInfo : null, clientName });
+  const list = await bounded(A.send('tools/list', {}).promise, 30000);
+  const names = list.ok ? list.msg.result.tools.map((t) => t.name) : [];
+  step('toolsList', { count: names.length, hasResume: names.includes('browser_resume'), hasRunCode: names.includes('browser_run_code_unsafe') });
+  const nav0 = await callBounded('browser_navigate', { url: `${base}/p/start` }, 90000);
+  step('navigateStart', nav0.s);
+  const mark = await callBounded('browser_evaluate', { function: "() => { localStorage.setItem('dbg-ls', 'kept'); sessionStorage.setItem('dbg-ss', 'kept'); document.cookie = 'dbgck=kept; max-age=86400; path=/'; return { ls: localStorage.getItem('dbg-ls'), ss: sessionStorage.getItem('dbg-ss'), ck: document.cookie }; }" }, 20000);
+  step('markers', mark.s);
+  return clientName;
+}
+
+// Arms a pause the way the dashboard's pause button does, from code, then sends
+// an ordinary call that meets it.
+async function armAndPark(tag = 'parked') {
+  const arm = await callBounded('browser_run_code_unsafe', { code: ARM_CODE }, 20000);
+  step('arm', arm.s);
+  await sleep(3000);
+  const parked = A.call('browser_navigate', { url: `${base}/p/${tag}` });
+  const early = await bounded(parked.promise, 8000);
+  const snap = await callBounded('browser_snapshot', {}, 15000);
+  const snapText = snap.r.ok ? text(snap.r) : '';
+  if (RUN_ID === '1') fs.writeFileSync(path.join(RUN_DIR, 'snapshot-while-parked.txt'), snapText);
+  const pausedLine = (snapText.split('### Paused')[1] || '').trim().split(/\r?\n/).slice(0, 2).join(' | ');
+  step('park', { parkedId: parked.id, sentAtMs: parked.sentAt, answeredWithin8s: early.ok, serverSawParkedPath: fetched(`/p/${tag}`), snapshotAnswered: snap.r.ok, snapshotLatencyMs: snap.s.latencyMs, snapshotShowsPaused: /### Paused/.test(snapText), pausedSection: short(pausedLine, 400) });
+  return parked;
+}
+
+async function finalCheck(tag) {
+  const nav = await callBounded('browser_navigate', { url: `${base}/p/check-${tag}` }, 90000);
+  const ev = await callBounded('browser_evaluate', { function: "() => ({ ls: localStorage.getItem('dbg-ls'), ss: sessionStorage.getItem('dbg-ss'), ck: document.cookie, url: location.href })" }, 20000);
+  const tabs = await callBounded('browser_tabs', { action: 'list' }, 20000);
+  return { navigate: nav.s, markers: ev.s.text, tabs: tabs.s.text, pausedStillShown: nav.s.paused || ev.s.paused || tabs.s.paused };
+}
+
+async function closeAndWatch(parked, label) {
+  const close = A.call('browser_close', {});
+  const cr = await bounded(close.promise, 30000);
+  const late = parked ? await bounded(parked.promise, 10000) : null;
+  return { close: summary(cr), parkedAfterClose: late ? summary(late, close.sentAt) : null };
+}
+
+// ---- scenarios -----------------------------------------------------------------
+const scenarios = {
+  // Control: the way out BrowserAI forwards today.
+  async resume() {
+    await startSession();
+    const parked = await armAndPark();
+    const res = A.call('browser_resume', {});
+    const p = await bounded(parked.promise, 15000);
+    step('parkedAfterResume', summary(p, res.sentAt));
+    const r1 = await bounded(res.promise, 20000);
+    step('resumeWithin20s', summary(r1));
+    const tabs = await callBounded('browser_tabs', { action: 'list' }, 15000);
+    step('tabsWhileResumePending', tabs.s);
+    const close = A.call('browser_close', {});
+    const cr = await bounded(close.promise, 30000);
+    step('closeWhileResumePending', summary(cr));
+    const r2 = await bounded(res.promise, 15000);
+    step('resumeAfterClose', summary(r2, close.sentAt));
+    step('serverSawParkedPath', fetched('/p/parked'));
+    step('final', await finalCheck('resume'));
+  },
+  async close() {
+    await startSession();
+    const parked = await armAndPark();
+    const close = A.call('browser_close', {});
+    const cr = await bounded(close.promise, 30000);
+    step('close', summary(cr));
+    const p = await bounded(parked.promise, 15000);
+    step('parkedAfterClose', summary(p, close.sentAt));
+    step('serverSawParkedPath', fetched('/p/parked'));
+    step('final', await finalCheck('close'));
+    step('serverSawParkedPathAtEnd', fetched('/p/parked'));
+  },
+  async cancel() {
+    await startSession();
+    const parked = await armAndPark();
+    const cancelAt = rel();
+    A.notify('notifications/cancelled', { requestId: parked.id, reason: 'dbg rig: the caller gave up on this call' });
+    const p = await bounded(parked.promise, 5000);
+    step('parkedAfterCancel', summary(p, cancelAt));
+    const snap1 = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfterCancel', { ...snap1.s, text: undefined });
+    const nav2 = await callBounded('browser_navigate', { url: `${base}/p/after-cancel` }, 20000);
+    step('navigateAfterCancel', nav2.s);
+    await sleep(3000);
+    const snap2 = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfterCancelPlus3s', { ...snap2.s, text: undefined });
+    step('final', await finalCheck('cancel'));
+    step('serverSawParkedPathBeforeClose', fetched('/p/parked'));
+    step('closeAtEnd', await closeAndWatch(parked));
+    step('serverSawParkedPathAfterClose', fetched('/p/parked'));
+    const relaunch = await callBounded('browser_navigate', { url: `${base}/p/relaunch` }, 90000);
+    step('navigateAfterClose', relaunch.s);
+  },
+  async navigate() {
+    await startSession();
+    const parked = await armAndPark();
+    const nav2 = await callBounded('browser_navigate', { url: `${base}/p/second` }, 20000);
+    step('secondNavigate', nav2.s);
+    const p = await bounded(parked.promise, 8000);
+    step('parkedAfterSecondNavigate', summary(p, nav2.c.sentAt));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfterSecondNavigate', { ...snap.s, text: short(snap.s.text, 200) });
+    step('serverSawParkedPath', fetched('/p/parked'));
+    step('final', await finalCheck('navigate'));
+    step('closeAtEnd', await closeAndWatch(parked));
+    step('serverSawParkedPathAfterClose', fetched('/p/parked'));
+  },
+  async tabs() {
+    await startSession();
+    const parked = await armAndPark();
+    step('tabsList', (await callBounded('browser_tabs', { action: 'list' }, 15000)).s);
+    step('tabsNew', (await callBounded('browser_tabs', { action: 'new', url: `${base}/p/newtab` }, 30000)).s);
+    step('tabsSelect0', (await callBounded('browser_tabs', { action: 'select', index: 0 }, 15000)).s);
+    const tc = await callBounded('browser_tabs', { action: 'close', index: 0 }, 30000);
+    step('tabsClose0', tc.s);
+    const p = await bounded(parked.promise, 10000);
+    step('parkedAfterTabClose', summary(p, tc.c.sentAt));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfterTabClose', { ...snap.s, text: short(snap.s.text, 200) });
+    step('serverSawParkedPath', fetched('/p/parked'));
+    step('final', await finalCheck('tabs'));
+    step('closeAtEnd', await closeAndWatch(p.ok ? null : parked));
+  },
+  async runcode() {
+    await startSession();
+    const parked = await armAndPark();
+    const rc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed from code'; }" }, 15000);
+    step('runCodeResume', rc.s);
+    const p = await bounded(parked.promise, 15000);
+    step('parkedAfterRunCodeResume', summary(p, rc.c.sentAt));
+    step('serverSawParkedPath', fetched('/p/parked'));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfter', { ...snap.s, text: undefined });
+    step('final', await finalCheck('runcode'));
+  },
+  // BrowserAI's own teardown (destroy, server exit) ends the child; this is the
+  // child's side of that: stdin closed while a call is parked.
+  async stdin() {
+    await startSession();
+    const parked = await armAndPark();
+    const endAt = rel();
+    A.proc.stdin.end();
+    const p = await bounded(parked.promise, 10000);
+    step('parkedAfterStdinEnd', summary(p, endAt));
+    for (let i = 0; i < 60 && A.exitAt === null; i++) await sleep(500);
+    step('childExit', { exited: A.exitAt !== null, exitAfterMs: A.exitAt !== null ? A.exitAt - endAt : null });
+    step('serverSawParkedPath', fetched('/p/parked'));
+  },
+  async notpaused() {
+    await startSession();
+    for (const [k, args] of [['plain', {}], ['step', { step: true }], ['location', { location: 'example.spec.ts:42' }]]) {
+      const r = await callBounded('browser_resume', args, 10000);
+      step(`resume_${k}`, r.s);
+    }
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-notpaused` }, 15000);
+    step('navigateAfter', nav.s);
+  },
+  async direct() {
+    await startSession();
+    const rc = A.call('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.requestPause(); return 'armed directly'; }" });
+    const early = await bounded(rc.promise, 8000);
+    step('runCodeDirectWithin8s', summary(early));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    const st = snap.r.ok ? text(snap.r) : '';
+    step('snapshot', { answered: snap.r.ok, paused: /### Paused/.test(st), pausedSection: short((st.split('### Paused')[1] || '').trim(), 300) });
+    const rel2 = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+    step('releaseByCode', rel2.s);
+    const late = early.ok ? early : await bounded(rc.promise, 15000);
+    step('runCodeDirectAfterRelease', summary(late, rel2.c.sentAt));
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-direct` }, 15000);
+    step('navigateAfter', nav.s);
+  },
+  async pagepause() {
+    await startSession();
+    const pp1c = A.call('browser_run_code_unsafe', { code: "async (page) => { await page.pause(); return 'returned from page.pause()'; }" });
+    const pp1 = await bounded(pp1c.promise, 8000);
+    step('pagePauseFreshContext', summary(pp1));
+    if (!pp1.ok) {
+      const rel1 = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+      step('releaseFresh', rel1.s);
+      step('pagePauseFreshAfterRelease', summary(await bounded(pp1c.promise, 15000), rel1.c.sentAt));
+    }
+    // One pause-and-release cycle enables the context's debugger for its lifetime.
+    const parked = await armAndPark();
+    const relc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+    step('cycleRelease', relc.s);
+    step('cycleParkedAnswered', summary(await bounded(parked.promise, 15000), relc.c.sentAt));
+    const pp2c = A.call('browser_run_code_unsafe', { code: "async (page) => { await page.pause(); return 'returned from page.pause()'; }" });
+    const pp2 = await bounded(pp2c.promise, 8000);
+    step('pagePauseAfterCycle', summary(pp2));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    const st = snap.r.ok ? text(snap.r) : '';
+    step('snapshotAfterPagePause', { answered: snap.r.ok, paused: /### Paused/.test(st), pausedSection: short((st.split('### Paused')[1] || '').trim(), 300) });
+    if (!pp2.ok) {
+      const rel2 = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+      step('release2', rel2.s);
+      step('pagePauseAfterCycleReleased', summary(await bounded(pp2c.promise, 15000), rel2.c.sentAt));
+    }
+  },
+  async step() {
+    await startSession();
+    const parked = await armAndPark();
+    const st = A.call('browser_resume', { step: true });
+    step('parkedAfterStepResume', summary(await bounded(parked.promise, 15000), st.sentAt));
+    step('stepResumeWithin5s', summary(await bounded(st.promise, 5000)));
+    const nav2 = A.call('browser_navigate', { url: `${base}/p/step-next` });
+    const n2 = await bounded(nav2.promise, 8000);
+    step('nextCallAfterStep', { ...summary(n2), serverSaw: fetched('/p/step-next') });
+    step('stepResumeAfterNextCall', summary(await bounded(st.promise, 8000), nav2.sentAt));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    const sttext = snap.r.ok ? text(snap.r) : '';
+    step('snapshot', { paused: /### Paused/.test(sttext), pausedSection: short((sttext.split('### Paused')[1] || '').trim(), 300) });
+    const relc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+    step('releaseByCode', relc.s);
+    if (!n2.ok) step('nextCallAfterRelease', summary(await bounded(nav2.promise, 15000), relc.c.sentAt));
+  },
+  async location() {
+    await startSession();
+    const parked = await armAndPark();
+    const lc = A.call('browser_resume', { location: 'coreBundle.js' });
+    step('parkedAfterLocationResume', summary(await bounded(parked.promise, 15000), lc.sentAt));
+    step('locationResumeWithin5s', summary(await bounded(lc.promise, 5000)));
+    const nav2 = A.call('browser_navigate', { url: `${base}/p/location-next` });
+    const n2 = await bounded(nav2.promise, 8000);
+    step('nextCallAfterLocation', { ...summary(n2), serverSaw: fetched('/p/location-next') });
+    step('locationResumeAfterNextCall', summary(await bounded(lc.promise, 8000), nav2.sentAt));
+    const relc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 15000);
+    step('releaseByCode', relc.s);
+    if (!n2.ok) step('nextCallAfterRelease', summary(await bounded(nav2.promise, 15000), relc.c.sentAt));
+  },
+  // A parked call left alone for more than twice upstream's 60 s navigation
+  // timeout (coreBundle.js:74084): does anything bound it?
+  async longpark() {
+    await startSession();
+    const parked = await armAndPark();
+    const from = rel();
+    const checks = [];
+    let answered = null;
+    for (const at of [30000, 60000, 90000, 130000]) {
+      const r = await bounded(parked.promise, Math.max(0, at - (rel() - from)));
+      checks.push({ atMs: rel() - from, answered: r.ok });
+      if (r.ok) { answered = summary(r, from); break; }
+    }
+    step('parkedChecks', { checks, answered });
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    step('snapshotAfterWait', { ...snap.s, text: undefined });
+    step('serverSawParkedPath', fetched('/p/parked'));
+    step('closeAtEnd', await closeAndWatch(answered ? null : parked));
+  },
+  // Upstream's own idle timer (here 12 s, BrowserAI writes 1 h) fires from the
+  // last call's START, whatever is in flight. What does it do to a parked call?
+  async idleparked() {
+    await startSession();
+    const parked = await armAndPark();
+    const watchFrom = rel();
+    const p = await bounded(parked.promise, 30000);
+    step('parkedWithin30sOfIdleTimer', summary(p, watchFrom));
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-idle` }, 90000);
+    step('navigateAfter', nav.s);
+    step('serverSawParkedPath', fetched('/p/parked'));
+  },
+  // ... and to a browser_resume left waiting after it released the parked call.
+  async idleresume() {
+    await startSession();
+    const parked = await armAndPark();
+    const res = A.call('browser_resume', {});
+    step('parkedAfterResume', summary(await bounded(parked.promise, 15000), res.sentAt));
+    const r = await bounded(res.promise, 30000);
+    step('resumeWithin30s', summary(r, res.sentAt));
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-idle` }, 90000);
+    step('navigateAfter', nav.s);
+  },
+  // What the look-alike tools write, and whether set_storage_state's wipe
+  // outlives the browser (the profile is the session's).
+  async artifacts() {
+    await startSession();
+    const ss = await callBounded('browser_storage_state', {}, 20000);
+    const ssFile = (text(ss.r).match(/\[Storage state\]\(([^)]+)\)/) || [])[1];
+    let ssContent = '';
+    try { ssContent = fs.readFileSync(ssFile, 'utf8'); } catch {}
+    step('storageState', { ...ss.s, file: ssFile, bytes: ssContent.length, holdsCookieValue: ssContent.includes('dbgck') && ssContent.includes('kept'), holdsLocalStorage: ssContent.includes('dbg-ls') });
+    const cfg = await callBounded('browser_get_config', {}, 15000);
+    const ct = cfg.r.ok ? text(cfg.r) : '';
+    if (RUN_ID === '1') fs.writeFileSync(path.join(RUN_DIR, 'get-config.txt'), ct);
+    step('getConfig', { answered: cfg.s.answered, bytes: ct.length, showsProfilePath: ct.includes('session\\\\profile') || ct.includes('session\\profile'), saveSessionFalse: /"saveSession":\s*false/.test(ct), headlessTrue: /"headless":\s*true/.test(ct) });
+    const ts = await callBounded('browser_start_tracing', {}, 20000);
+    step('startTracing', ts.s);
+    step('tracedNavigate', (await callBounded('browser_navigate', { url: `${base}/p/traced` }, 20000)).s);
+    const te = await callBounded('browser_stop_tracing', {}, 30000);
+    step('stopTracing', te.s);
+    const tracesDir = path.join(RUN_DIR, 'session', 'output', 'traces');
+    const files = [];
+    let holds = false;
+    const walk = (d) => { let es = []; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch {} for (const e of es) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else { const c = fs.readFileSync(p); files.push({ name: path.relative(tracesDir, p), bytes: c.length }); if (c.includes('dbgck=kept')) holds = true; } } };
+    walk(tracesDir);
+    step('traceFiles', { count: files.length, files: files.slice(0, 12), holdsCookieValue: holds });
+    const empty = path.join(RUN_DIR, 'session', 'output', 'empty-state.json');
+    fs.writeFileSync(empty, JSON.stringify({ cookies: [], origins: [] }));
+    const set = await callBounded('browser_set_storage_state', { filename: empty }, 20000);
+    step('setStorageStateEmpty', set.s);
+    const after = await callBounded('browser_evaluate', { function: "() => ({ ls: localStorage.getItem('dbg-ls'), ss: sessionStorage.getItem('dbg-ss'), ck: document.cookie })" }, 20000);
+    step('markersAfterSet', after.s.text);
+    step('close', (await callBounded('browser_close', {}, 30000)).s);
+    step('final', await finalCheck('artifacts'));
+  },
+  // A pause armed and not yet met, and the first call after it is a close --
+  // which is what BrowserAI's own idle close sends.
+  async armedclose() {
+    await startSession();
+    const arm = await callBounded('browser_run_code_unsafe', { code: ARM_CODE }, 20000);
+    step('arm', arm.s);
+    await sleep(3000);
+    const close = A.call('browser_close', {});
+    const early = await bounded(close.promise, 10000);
+    step('closeAsFirstCallAfterArm', summary(early));
+    const snap = await callBounded('browser_snapshot', {}, 15000);
+    const st = snap.r.ok ? text(snap.r) : '';
+    if (RUN_ID === '1') fs.writeFileSync(path.join(RUN_DIR, 'snapshot-while-close-parked.txt'), st);
+    step('snapshotWhileCloseParked', { ...snap.s, text: short(st, 300), pausedSection: short((st.split('### Paused')[1] || '').trim(), 300) });
+    step('tabsWhileCloseParked', (await callBounded('browser_tabs', { action: 'list' }, 15000)).s);
+    const rc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed'; }" }, 20000);
+    step('releaseByCode', rc.s);
+    const late = early.ok ? early : await bounded(close.promise, 15000);
+    step('closeAfterRelease', summary(late, rc.c.sentAt));
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-armedclose` }, 90000);
+    step('navigateAfter', nav.s);
+  },
+  // The same wedge, and what gets out of it: a second close, then browser_resume.
+  async armedcloseresume() {
+    await startSession();
+    const arm = await callBounded('browser_run_code_unsafe', { code: ARM_CODE }, 20000);
+    step('arm', arm.s);
+    await sleep(3000);
+    const close = A.call('browser_close', {});
+    const early = await bounded(close.promise, 10000);
+    step('closeAsFirstCallAfterArm', summary(early));
+    step('snapshotInWedge', (await callBounded('browser_snapshot', {}, 15000)).s);
+    step('getConfigInWedge', { ...(await callBounded('browser_get_config', {}, 15000)).s, text: undefined });
+    step('tabsNewInWedge', (await callBounded('browser_tabs', { action: 'new' }, 15000)).s);
+    step('secondCloseInWedge', (await callBounded('browser_close', {}, 15000)).s);
+    step('snapshotAfterSecondClose', (await callBounded('browser_snapshot', {}, 15000)).s);
+    const res = A.call('browser_resume', {});
+    const rr = await bounded(res.promise, 20000);
+    step('resumeInWedge', summary(rr));
+    const late = early.ok ? early : await bounded(close.promise, 10000);
+    step('firstCloseAfterResume', summary(late, res.sentAt));
+    const nav = await callBounded('browser_navigate', { url: `${base}/p/after-wedge` }, 90000);
+    step('navigateAfter', nav.s);
+    step('final', await finalCheck('armedcloseresume'));
+  },
+  // A second @playwright/mcp attached to the session's browser by its registry
+  // title arms the pause; the session's own next call parks.
+  async endpoint() {
+    const clientName = await startSession();
+    const dirB = path.join(RUN_DIR, 'attached');
+    fs.mkdirSync(path.join(dirB, 'output'), { recursive: true });
+    const B = new Mcp('B', [`--endpoint=${clientName}`, `--output-dir=${path.join(dirB, 'output')}`, '--caps=devtools'], dirB);
+    const ib = await B.init('dbgB');
+    step('attachInit', { ok: ib.ok });
+    const tb = await bounded(B.call('browser_tabs', { action: 'list' }).promise, 30000);
+    step('attachTabs', summary(tb));
+    const armB = await bounded(B.call('browser_run_code_unsafe', { code: ARM_CODE }).promise, 20000);
+    step('armFromB', summary(armB));
+    await sleep(3000);
+    const parked = A.call('browser_navigate', { url: `${base}/p/parked` });
+    const early = await bounded(parked.promise, 8000);
+    step('parkInA', { answeredWithin8s: early.ok, serverSaw: fetched('/p/parked') });
+    // B goes away without resuming, as a dashboard tab or a CLI would.
+    B.proc.stdin.end();
+    for (let i = 0; i < 40 && B.exitAt === null; i++) await sleep(250);
+    step('attachedExited', { exited: B.exitAt !== null });
+    const still = await bounded(parked.promise, 5000);
+    step('parkedAfterAttachedLeft', summary(still));
+    const rc = await callBounded('browser_run_code_unsafe', { code: "async (page) => { await page.context().debugger.resume(); return 'resumed from A'; }" }, 15000);
+    step('releaseFromA', rc.s);
+    step('parkedAfterRelease', summary(await bounded(parked.promise, 15000), rc.c.sentAt));
+  },
+};
+
+(async () => {
+  await waitForGo();
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  base = `http://127.0.0.1:${server.address().port}`;
+  log('start', { SCENARIO, FAMILY, RUN_ID, node: process.version, mcp: require(path.join(MCP_DIR, 'package.json')).version });
+  result.versions = { node: process.version, mcp: require(path.join(MCP_DIR, 'package.json')).version, playwrightCore: require(path.join(MCP_DIR, '..', '..', 'playwright-core', 'package.json')).version };
+  const fn = scenarios[SCENARIO];
+  if (!fn) throw new Error('unknown scenario ' + SCENARIO);
+  try {
+    await fn();
+    result.outcome = 'completed';
+  } catch (e) {
+    result.outcome = 'failed: ' + String(e && e.stack || e);
+    log('FAILED', String(e && e.stack || e));
+  }
+  // Teardown: stdin first, which is upstream's own graceful path; the job object
+  // the supervisor holds takes whatever does not go.
+  if (A && A.exitAt === null) {
+    A.proc.stdin.end();
+    for (let i = 0; i < 40 && A.exitAt === null; i++) await sleep(250);
+    result.childExitedOnStdinEnd = A.exitAt !== null;
+  }
+  result.stderrTail = A ? A.stderr.slice(-3000) : '';
+  result.http = requests.map((r) => ({ relMs: r.at - t0, path: r.path }));
+  result.endedRelMs = rel();
+  fs.writeFileSync(RESULT, JSON.stringify(result, null, 2));
+  server.close();
+  setTimeout(() => process.exit(0), 200);
+})().catch((e) => { log('FATAL', String(e && e.stack || e)); process.exit(1); });

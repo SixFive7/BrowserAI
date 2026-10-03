@@ -62,7 +62,7 @@ Three caveats that bear on the design, none of which the charter had:
 
 - ⚠️ **A repair or overwrite install destroys them.** `install.rs` renames a
   non-empty root to `{root}.{random16}` and, on success, **deletes it**. Re-running
-  `Setup.exe` over an existing install therefore costs a **207.3 MB re-download**
+  `Setup.exe` over an existing install therefore costs a **208.8 MB re-download** (re-measured 2026-10-03 at chromium 1247, previously 207.3 MB)
   (*corrected 2026-09-17 @ chromium 1244, previously "a **203.8 MB
   re-download**"*; the figure follows
   [the measured first-run download](../playwright/provisioning-and-timings.md#first-run-provisioning)

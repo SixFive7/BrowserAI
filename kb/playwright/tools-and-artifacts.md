@@ -304,8 +304,17 @@ feature"*. `[FLOATS]`
 
 ### What a BrowserAI session permits, after its own filtering
 
-**Re-measured 2026-09-17 @ `@playwright/mcp` 0.0.81 / `playwright-core`
-1.64.0-alpha-2026-09-17: 72 of 74, one row.** ⚠️ **Corrected 2026-09-17
+**Re-measured 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+1.64.0-alpha-1790635538000: 70 of 72, one row**, through
+`SessionPolicyTests` against the regenerated snapshot and the shipped verdicts
+file. ⚠️ **Corrected 2026-10-03 (previously "Re-measured 2026-09-17 @
+`@playwright/mcp` 0.0.81 / `playwright-core` 1.64.0-alpha-2026-09-17: 72 of 74,
+one row")** -- two moves since that reading, and this lead missed the first. On
+2026-09-21 upstream made `browser_webmcp_list` and `browser_webmcp_call`
+`skillOnly`, which took both figures down by two to 71 of 72 and the withheld set
+back to one. On 2026-10-03 the maintainer denied `browser_resume`, so the
+denominator held at 72, the numerator went 71 → 70, and the withheld set is two:
+`browser_annotate` and `browser_resume`, both on liveness. ⚠️ **Corrected 2026-09-17
 (previously "Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.81 / `playwright-core`
 1.64.0-alpha-2026-09-14: 71 of 73, one row")** -- the
 [dated `playwright-core` override](../../DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
@@ -1144,6 +1153,59 @@ context that is not paused: the debugger's `doResume`, `next` and `runTo` each
 throw `Debugger is not paused` first (:13277, :13282, :13289; read, not run).
 Whether code a caller supplies through `browser_run_code_unsafe` can arm one was
 not run. `[FLOATS]`
+
+✅ **Re-measured 2026-10-03 at `@playwright/mcp` 0.0.83 / `playwright-core`
+1.64.0-alpha-1790635538000, chromium 1247 and firefox 1553, headless, 3 runs per
+family**, through a raw child configured the way BrowserAI configures one, and the
+shape held in all six: the paused navigation was released 43 to 74 ms after
+`browser_resume` was sent, `browser_resume` itself had no answer 20 s later, and it
+answered 40 to 431 ms after a `browser_close`. With upstream's idle timer set to
+12 s, a pending `browser_resume` answered 12,038 to 12,407 ms after it was sent, in
+six more runs: the timer counts from the last call's start and fires with that
+call still in flight. The released navigation reached the page server only when it
+was released, 8,017 to 8,028 ms after it was sent, which is when the rig sent
+`browser_resume`. **The handler is byte-identical
+between 1.64.0-alpha-1789764292000 and 1.64.0-alpha-1790635538000**, and so is the
+debugger code it calls. ⚠️ **And code a caller supplies CAN arm a pause**, which
+this entry left not run: `page.context().debugger.requestPause()` from
+`browser_run_code_unsafe` armed one in every one of those runs.
+
+⚠️ **`browser_resume` is `deny` since 2026-10-03**, at the maintainer's decision,
+in his words: *"I am leaning to remove playwrights own browser_resume and pause
+and similar from the tool list (and not pass them through). I do not see the
+utility and I do see a lot of possible confusion with our own resumtion tech."*,
+and then *"P6 a"*, which keeps the removal to this one tool. Its `why` in
+[`tool-verdicts.json`](../../tool-verdicts.json) is the liveness reading above.
+What a pause left behind does to a session that has no `browser_resume` is the
+entry below.
+
+### A pause met first by a close wedges the session, and nothing in BrowserAI's surface releases it -- measured 2026-10-03
+
+Measured 2026-10-03 at `@playwright/mcp` 0.0.83 / `playwright-core`
+1.64.0-alpha-1790635538000, chromium 1247 and firefox 1553, headless, 3 runs per
+family, through a raw child configured the way BrowserAI configures one. A pause
+was armed from `browser_run_code_unsafe` and the first call after it was a
+`browser_close`, which is the call BrowserAI's own idle close sends
+(`LiveSession.CloseBrowserAsync`). In all six runs:
+
+- **The close parked**: no answer after 10 s.
+- **Every page tool then failed at once**: `browser_snapshot` answered in 34 to
+  233 ms with `TypeError: Cannot read properties of undefined (reading
+  'waitForInitialized')`, before and after a second close.
+- **A second close did nothing**: it answered in 2 to 3 ms with *No open tabs*
+  and a `### Paused` section naming the parked close.
+- `browser_get_config` and `browser_tabs` still answered.
+- **`browser_resume` got the session out**: it answered in 57 to 510 ms, the parked
+  close then answered, and the next `browser_navigate` worked.
+
+So since `browser_resume` left the surface, **no tool a caller can reach releases
+this**. The child still exits when its stdin closes: the debugger-tools research
+measured that at 0.75 to 1.5 s with a call paused, on 0.0.82, and it was not
+re-taken on 0.0.83. That is the path `browserai_destroy` and the server's own exit
+take. The fix belongs to the idle-close redesign, which under the maintainer's P4 b
+tears the whole child down through its stdin and its job. The hazard is
+[a row of its own](../../HAZARDS.md#hazard-index), and re-verification row 167
+re-establishes this entry. `[FLOATS]`
 
 ### A close from the dashboard leaves the session on a blank page, and no call fails
 

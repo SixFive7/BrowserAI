@@ -135,7 +135,7 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 71 of 72 is what DECISIONS records
+        // Stated as a number as well, because 70 of 72 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
         // say so. *(Corrected 2026-09-21, previously 72 of 74, and this is the
         // first time it has gone DOWN: @playwright/mcp 0.0.82 marked
@@ -155,8 +155,11 @@ internal sealed class VerticalSliceTests
         // denominator moved by two and this number by one. Corrected earlier the
         // same day from 68 of 69 -- 0.0.80 added browser_start_recording and
         // browser_stop_recording and both were judged `allow`; corrected
-        // 2026-08-20 before that, previously 58 of 59.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 71);
+        // 2026-08-20 before that, previously 58 of 59.)* *(Corrected 2026-10-03,
+        // previously 71 of 72: the maintainer removed browser_resume, so the
+        // denominator held still and this number lost one. It is the first move
+        // here that a decision made and not an upstream release.)*
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 70);
 
         // ⚠️ And every withheld tool is absent from the REAL binary's real
         // answer, named individually. The list comparison above would also catch

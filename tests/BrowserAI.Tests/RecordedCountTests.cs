@@ -576,9 +576,14 @@ internal sealed partial class RecordedCountTests
         // back. The number is spelled here because the sentence in DECISIONS.md
         // publishes the DIFFERENCE and a difference is satisfied by both halves
         // moving together.
+        //
+        // ⚠️ `withheld` is 2 since 2026-10-03 (previously 1), and this time the
+        // maintainer decided it: `browser_resume` is denied beside
+        // `browser_annotate`, because it is Playwright's debugger control and its
+        // name is two letters from BrowserAI's own `browserai_resume`.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
         await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
-        await Assert.That(withheld).IsEqualTo(1);
+        await Assert.That(withheld).IsEqualTo(2);
     }
 
     /// <summary>

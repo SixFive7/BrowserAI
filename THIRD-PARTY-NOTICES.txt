@@ -36,9 +36,15 @@ build/payload/package-lock.json by ThirdPartyNoticeTests, so a fourth package
 arriving in the payload is a red build here rather than a name nobody noticed
 was missing.
 
-This payload resolved playwright 1.64.0-alpha-1789764292000 and playwright-core
-1.64.0-alpha-1789764292000. The two agree, which is what @playwright/mcp 0.0.82
+This payload resolved playwright 1.64.0-alpha-1790635538000 and playwright-core
+1.64.0-alpha-1790635538000. The two agree, which is what @playwright/mcp 0.0.83
 declares for both and is the ordinary state.
+Corrected 2026-10-03 (previously "This payload resolved playwright
+1.64.0-alpha-1789764292000 and playwright-core 1.64.0-alpha-1789764292000 ...
+which is what @playwright/mcp 0.0.82 declares for both"), when the payload rolled
+to 0.0.83. The licence files of all three packages were re-read in the rolled
+payload that day and are byte-identical to 0.0.82's: the same six files apiece in
+playwright-core and playwright, and LICENSE alone in @playwright/mcp.
 Corrected 2026-09-21 (previously "This payload resolved playwright
 1.64.0-alpha-2026-09-14 and playwright-core 1.64.0-alpha-2026-09-17. The two
 differ on purpose: an npm overrides entry in build/payload/package.json pins
@@ -105,7 +111,7 @@ Apache-2.0 section 6 grants no trademark rights, and the inherited browser_*
 tool names surface upstream branding directly in BrowserAI's own API, which is
 why this disclaimer ships rather than being left to the repository.
 
-Velopack 1.2.158 - MIT
+Velopack 1.2.161 - MIT
 ----------------------
 
 Velopack is a NuGet dependency compiled into BrowserAI.exe. It has no file of
@@ -113,18 +119,20 @@ its own anywhere in this artifact, and MIT requires its notice to travel with
 the binary, so the whole licence is reproduced here.
 
 Copied verbatim from the commit velopack.nuspec records as the source of the
-resolved package - repository commit 3c7f52c1bf17d10ad21b794b006d5ebd1a879a3b:
-https://raw.githubusercontent.com/velopack/velopack/3c7f52c1bf17d10ad21b794b006d5ebd1a879a3b/LICENSE
-Retrieved 2026-09-22 against Velopack 1.2.158.
+resolved package - repository commit 92d6a1c91716729d449034df5c50307dcce39493:
+https://raw.githubusercontent.com/velopack/velopack/92d6a1c91716729d449034df5c50307dcce39493/LICENSE
+Retrieved 2026-10-03 against Velopack 1.2.161.
 Re-fetched that day from the package's own nuspec repository commit, and the
 text below is UNCHANGED: 1,091 bytes, SHA-256
 91845db83551c877ebbb1118e0fb92e4e527290d23b995c55dcd438b3293943f, byte for byte
-what the 1.2.0 commit served, with the same two copyright lines and the same
-years. Nothing in this block moved but the version, the commit and this
+what the 1.2.158 and 1.2.0 commits served, with the same two copyright lines and
+the same years. Nothing in this block moved but the version, the commit and this
 paragraph. The version above is asserted against src/BrowserAI/packages.lock.json
 by ThirdPartyNoticeTests, so a Velopack bump is a red build until this text has
 been re-fetched.
-Previously "Retrieved 2026-08-16 against Velopack 1.2.0.", at repository commit
+Previously "Retrieved 2026-09-22 against Velopack 1.2.158.", at repository commit
+3c7f52c1bf17d10ad21b794b006d5ebd1a879a3b, and before that "Retrieved 2026-08-16
+against Velopack 1.2.0.", at repository commit
 f2edcbcafb81da5b3c884aaea330e225ad91d8b6.
 
 Copyright © 2021 Caelan Sayler

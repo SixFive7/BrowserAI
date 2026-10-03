@@ -791,7 +791,7 @@ so that it only downloads once per hour. I don't want to hammer the servers.
 Especially if we are going to run this more with more tests now."*
 
 `FirstRunProvisioningTests` provisions Chromium into an **empty** browsers root
-through the published binary, which is **207.3 MB** off Playwright's CDN every
+through the published binary, which is **208.8 MB** off Playwright's CDN every
 run (*re-measured 2026-09-16 at chromium 1244; previously 203.8 MB*) ([kb](kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
 That was one run a day. It is about to be dozens.
 

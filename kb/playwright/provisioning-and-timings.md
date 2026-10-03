@@ -170,6 +170,21 @@ throws. `[FLOATS]`
 
 ## First-run provisioning
 
+> ✅ **Re-measured 2026-10-03 at chromium 1247 and firefox 1553**, on the
+> `@playwright/mcp` 0.0.82 -> 0.0.83 roll (`playwright-core`
+> 1.64.0-alpha-1789764292000 -> 1.64.0-alpha-1790635538000). Two clean runs per
+> family through the same rig, byte-identical within each pair, plus a `HEAD` on
+> each of the four archives. **Chromium moved this time, for the first roll since
+> 1244**: 1247 carries a new `browserVersion`, 154.0.8037.0 -> **155.0.8059.12**,
+> and `cftUrl()` is keyed on the version, so the archive is a new archive:
+> `+1,549,867` B on the wire, `+3,540,290` B and **one file fewer** in the
+> Chromium tree. **Firefox is a rebuild** of the same 156.0: `+1,682` B on the
+> wire and `+1,512` B on disk, with the file count unchanged at 63. `ffmpeg`
+> **1011** and `winldd` **1007** did not move. The rig is
+> [`docs/probes/2026-09-16-provisioning`](../../docs/probes/2026-09-16-provisioning/README.md)
+> and the run is
+> [`docs/evidence/2026-10-03-provisioning-1247`](../../docs/evidence/2026-10-03-provisioning-1247/README.md).
+>
 > ✅ **Re-measured 2026-09-21 at chromium 1246 and firefox 1549**, on the
 > `@playwright/mcp` 0.0.81 -> 0.0.82 roll that retired the dated
 > `playwright-core` override. Two clean runs per family through the same rig,
@@ -199,10 +214,21 @@ throws. `[FLOATS]`
 > and the run is
 > [`docs/evidence/2026-09-17-provisioning-1245`](../../docs/evidence/2026-09-17-provisioning-1245/README.md).
 
-**Re-measured 2026-09-21 by exact `content-length` from the CDN: 207.3 MB
-down.** `chrome-win64.zip` 205,733,764 B + `ffmpeg-win64.zip` 1,411,741 B +
-`winldd-win64.zip` 128,684 B = **207,274,189 B**, at chromium **1246** /
-154.0.8037.0, ffmpeg **1011**, winldd **1007**, under `playwright-core`
+**Re-measured 2026-10-03 by exact `content-length` from the CDN: 208.8 MB
+down.** `chrome-win64.zip` 207,283,631 B + `ffmpeg-win64.zip` 1,411,741 B +
+`winldd-win64.zip` 128,684 B = **208,824,056 B**, at chromium **1247** /
+155.0.8059.12, ffmpeg **1011**, winldd **1007**, under `playwright-core`
+1.64.0-alpha-1790635538000 and `@playwright/mcp` 0.0.83. *Corrected 2026-10-03
+@ chromium 1247 (previously "Re-measured 2026-09-21 ... 207.3 MB down ...
+`chrome-win64.zip` 205,733,764 B ... = 207,274,189 B, at chromium 1246 /
+154.0.8037.0"): the version moved, so the archive did, `+1,549,867` B; the two
+shared archives are byte-identical, which is the control for the one that
+moved.* Arithmetic for slower links, re-derived from that total: **2 m 47 s at
+10 Mbps, 27 m 51 s at 1 Mbps** *(previously 2 m 46 s and 27 m 38 s)*.
+
+*The 2026-09-21 reading, kept as it was written:* `chrome-win64.zip`
+205,733,764 B + `ffmpeg-win64.zip` 1,411,741 B + `winldd-win64.zip` 128,684 B
+= 207,274,189 B, at chromium 1246 / 154.0.8037.0, under `playwright-core`
 1.64.0-alpha-1789764292000 and `@playwright/mcp` 0.0.82. *Verified 2026-09-21 @
 chromium 1246 -- **every byte of it is unchanged from the 2026-09-17 reading at
 1245 and the 2026-09-16 one at 1244**, because all three archives are the same
@@ -213,12 +239,15 @@ this number, which is the pattern and not a coincidence.* *Corrected
 `playwright-core` 1.64.0-alpha-2026-09-17 and `@playwright/mcp` 0.0.81"): every
 figure in the sentence is unchanged and the versions it was taken at are not.* Arithmetic for slower
 links: **2 m 46 s at 10 Mbps, 27 m 38 s at 1 Mbps**.
+
 Peak disk during provisioning is **~640 MiB**, while the archive and the
 extracted tree coexist. ***Relabelled 2026-08-18: that is arithmetic, not a
 measurement*** -- nobody has sampled free space across a provisioning run, and the
-sum does not land where the number does (207,274,189 B is 197.67 MiB, plus the
+sum did not land where the number does (207,274,189 B is 197.67 MiB, plus the
 437.24 MiB extracted tree, is ~635 MiB; 640 is 5 × 128 MiB, a round number the
-arithmetic does not give). It also assumes an ordering nobody observed: that the
+arithmetic does not give). *Re-derived 2026-10-03 @ chromium 1247: 208,824,056 B
+is 199.15 MiB, plus the 440.61 MiB tree measured below, is 639.76 MiB, so at this
+revision the sum does land on the round number. It is still arithmetic.* It also assumes an ordering nobody observed: that the
 archive is fully present before extraction begins and is removed afterwards.
 ⚠️ **It gates nothing any more, and the `[UNVERIFIED]` ask it carried is closed
 as moot.** *Corrected 2026-09-17 (previously "**It matters because it ships as a
@@ -264,6 +293,17 @@ the peak is arithmetic that nothing acts on.
 > one the other three use. Confirmed against upstream's own output and not
 > derived: the installer prints the URL it fetched, and it is that string to the
 > byte. The three revision-keyed archives are unaffected.
+
+⚠️ `Corrected 2026-10-03 @ chromium 1247 (previously "**458,475,923 B across 316
+files**", the reading at 1246, 1245 and 1244)`. **On disk it is now 440.61 MiB:
+462,016,225 B across 315 files**, over two clean runs into an empty root that came
+back identical to each other -- `chromium-1247` 458,240,242 B (437.01 MiB) across
+307 files, `ffmpeg-1011` 3,517,342 B across 4, `winldd-1007` 258,560 B across 3,
+and `.links` 81 B. **The Chromium tree grew by 3,540,290 B and lost one file**;
+the two shared components are unchanged to the byte and the file, which is the
+control. `.links` is 12 B longer because this run's payload sat in a git worktree
+with a longer path, which is the reason given below for comparing the three
+component subtrees and never the root total.
 
 ✅ `Verified 2026-09-21 @ chromium 1246 -- **458,475,923 B across 316 files,
 byte-identical and file-identical to the 1245 and 1244 readings**, over two clean
@@ -315,9 +355,12 @@ tree; the two shared components are unchanged to the byte and the file.
 > conflations that cancelled. It is now stated in one unit above, and the first
 > attempt at this correction wrote "≈ 548 MB" by mixing them the other way.
 
-**End to end it takes 11.28 s and 11.31 s on a ~300 Mbps link**, measured twice
-on 2026-09-21 at chromium **1246** into an empty browsers root, exit 0 both
-times. *Corrected 2026-09-21 @ chromium 1246 (previously "**11.29 s and 12.51 s**
+**End to end it takes 13.25 s and 17.05 s on this machine's link**, measured twice
+on 2026-10-03 at chromium **1247** into an empty browsers root, exit 0 both
+times. *Corrected 2026-10-03 @ chromium 1247 (previously "**11.28 s and 11.31 s**
+... measured twice on 2026-09-21 at chromium **1246**")*: 1.5 MB more on the wire
+does not explain four seconds, and the second run was the slower one, so this is
+the machine and the link on the day. *Corrected 2026-09-21 @ chromium 1246 (previously "**11.29 s and 12.51 s**
 ... measured twice on 2026-09-17 at chromium **1245**"); corrected 2026-09-17 @
 chromium 1245 (previously "**10.81 s and 10.60 s** ... measured twice on
 2026-09-16")* -- and **the bytes did not move at all**, so
@@ -354,22 +397,34 @@ is the rig. `[FLOATS]` `[MACHINE]`
 
 ### Firefox, measured the same way -- 2026-08-19
 
-**Firefox provisioning is 130,934,199 B down = 130.9 MB, and 365,579,913 B =
-348.64 MiB on disk across 71 files.** Re-measured 2026-09-21 at Firefox rev
-**1549** / 156.0, ffmpeg **1011**, winldd **1007**, under `playwright-core`
-1.64.0-alpha-1789764292000 and `@playwright/mcp` 0.0.82, by two clean runs of
+**Firefox provisioning is 130,935,881 B down = 130.9 MB, and 365,581,437 B =
+348.65 MiB on disk across 71 files.** Re-measured 2026-10-03 at Firefox rev
+**1553** / 156.0, ffmpeg **1011**, winldd **1007**, under `playwright-core`
+1.64.0-alpha-1790635538000 and `@playwright/mcp` 0.0.83, by two clean runs of
 `node.exe cli.js install-browser firefox --no-shell --no-progress` into an empty
 `PLAYWRIGHT_BROWSERS_PATH` -- **byte-identical across both runs** -- with the wire
 figure taken from the exact `content-length` of each archive, which is how
-[Chromium's 207.3 MB](#first-run-provisioning) was taken:
+[Chromium's 208.8 MB](#first-run-provisioning) was taken:
 
 | Archive / directory | Down (`content-length`) | On disk | Files |
 |---|---:|---:|---:|
-| `firefox-win64.zip` → `firefox-1549` | 129,393,774 B | 361,803,942 B (345.04 MiB) | 63 |
+| `firefox-win64.zip` → `firefox-1553` | 129,395,456 B | 361,805,454 B (345.04 MiB) | 63 |
 | `ffmpeg-win64.zip` → `ffmpeg-1011` | 1,411,741 B | 3,517,342 B (3.35 MiB) | 4 |
 | `winldd-win64.zip` → `winldd-1007` | 128,684 B | 258,560 B (0.25 MiB) | 3 |
-| `.links` | - | 69 B | 1 |
-| **total** | **130,934,199 B = 130.9 MB** | **365,579,913 B = 348.64 MiB** | **71** |
+| `.links` | - | 81 B | 1 |
+| **total** | **130,935,881 B = 130.9 MB** | **365,581,437 B = 348.65 MiB** | **71** |
+
+⚠️ `Corrected 2026-10-03 @ firefox 1553 / 156.0 · playwright-core
+1.64.0-alpha-1790635538000 · @playwright/mcp 0.0.83 (previously "**Firefox
+provisioning is 130,934,199 B down = 130.9 MB, and 365,579,913 B = 348.64 MiB on
+disk across 71 files**", measured 2026-09-21 at firefox rev **1549**, with
+`firefox-1549` at 129,393,774 B down and 361,803,942 B on disk across 63 files,
+and `.links` at 69 B)`. **A rebuild of the same Firefox 156.0**: `+1,682` B on
+the wire and `+1,512` B on disk, all of it inside the Firefox tree, with the file
+count unchanged at 63 and the two shared components unchanged to the byte. The
+rounded MB is unchanged; the root's MiB ticks 348.64 → 348.65, of which 12 B is
+`.links` recording a longer payload path. **Chromium moved 1246 → 1247 on the
+same roll and DID move this time**, because its `browserVersion` did.
 
 ⚠️ `Corrected 2026-09-21 @ firefox 1549 / 156.0 · playwright-core
 1.64.0-alpha-1789764292000 · @playwright/mcp 0.0.82 (previously "**Firefox
@@ -445,6 +500,12 @@ has Chromium pays. `BrowserProvisioner.FirstRunDownloadSizes` quotes
 [Chromium's 207.3 MB](#first-run-provisioning) -- one family into an empty root --
 and the 1.5 MB between them cannot change a caller's decision about waiting.
 CI quotes the incremental one, because there the Chromium step runs first.
+*Re-read 2026-10-03 @ firefox 1553, by addition: the archive alone is
+129,395,456 B = 129.4 MB by `HEAD`, the figure `BrowserProvisioner.FirstRunDownloadSizes`
+quotes for the family is **130.9 MB**, and Chromium's is **208.8 MB**. The
+129.5, 128.0 and 207.3 MB in this paragraph are the 2026-09-16 readings, and the
+third run that established "nothing else" is still unrepeated. There has been no
+CI since 2026-08-20.*
 
 **`.links` is path-dependent and is not a constant.** It holds the absolute path
 of the `playwright-core` package that requested the install -- **69 B in both
@@ -452,11 +513,16 @@ families on 2026-09-16**, from this repository's assembled payload, against the
 95 B the 2026-08-19 Firefox run recorded from a longer one. Compare the three
 component subtrees, not the root total, when comparing across machines.
 
-**Against Chromium: 62.5% of the download and 79.0% of the disk.** Slow-link
-arithmetic, stated as arithmetic: **1 m 44 s at 10 Mbps, 17 m 16 s at 1 Mbps**.
-Peak disk while archive and tree coexist would be ~469 MiB, which is *arithmetic
+**Against Chromium: 62.7% of the download and 79.1% of the disk.** Slow-link
+arithmetic, stated as arithmetic: **1 m 45 s at 10 Mbps, 17 m 27 s at 1 Mbps**.
+Peak disk while archive and tree coexist would be ~474 MiB, which is *arithmetic
 and not a measurement* for exactly the reason [the Chromium
 figure](#first-run-provisioning) is -- nobody has sampled free space across a run.
+*Corrected 2026-10-03, re-derived from the pair measured that day at chromium 1247
+and firefox 1553 (previously "62.5% of the download and 79.0% of the disk ...
+**1 m 44 s at 10 Mbps, 17 m 16 s at 1 Mbps** ... ~469 MiB"). Those four were
+derived from the 2026-09-16 pair and were not re-derived on 2026-09-21, when both
+inputs moved, so they had been stale for twelve days.*
 *Corrected 2026-09-17 (previously "`SessionManager.RequiredFreeBytes` stays at
 640 MiB for both families: it is sized on the larger, both of Firefox's halves
 are smaller, and a per-family bound would refuse nothing this one permits.")* --
@@ -466,8 +532,14 @@ a bound anything enforces. *`Corrected 2026-09-16 (previously "62.4%
 of the download ... **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps** ... would be
 ~461 MiB")`, all four re-derived from the new measured pair.*
 
-**End to end it took 7.25 s and 6.80 s** on the same ~300 Mbps link, exit 0 both
-times, against Chromium's 11.28 s and 11.31 s. `[FLOATS]` `[MACHINE]`
+**End to end it took 7.94 s and 7.46 s** on this machine's link, exit 0 both
+times, against Chromium's 13.25 s and 17.05 s in the same session. `[FLOATS]` `[MACHINE]`
+
+> ⚠️ `Corrected 2026-10-03 @ firefox 1553 (previously "**End to end it took
+> 7.25 s and 6.80 s** on the same ~300 Mbps link ... against Chromium's 11.28 s
+> and 11.31 s", measured 2026-09-21 at rev 1549)`. The download grew by 1,682
+> bytes and the pair moved by more than half a second, which is the link and the
+> machine and not the revision.
 
 > ⚠️ `Corrected 2026-09-21 @ firefox 1549 (previously "**End to end it took
 > 6.91 s and 6.95 s** ... against Chromium's 11.29 s and 12.51 s", measured

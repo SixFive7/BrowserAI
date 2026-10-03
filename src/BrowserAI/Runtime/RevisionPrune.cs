@@ -34,7 +34,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// deletes any registry directory not referenced from <c>.links</c> and the blast
 /// radius of that is <i>our own Chromium</i>. Turning it off is right and it hands
 /// us the job it was doing: without this, every <c>browsers.json</c> bump strands
-/// <b>437.24 MiB</b> per machine, forever, and nothing anywhere says so.
+/// <b>440.61 MiB</b> per machine, forever, and nothing anywhere says so.
 /// <i>Re-measured 2026-09-16 at chromium 1244 (previously <b>430.48 MiB</b> at
 /// rev 1237).</i>
 /// </para>
