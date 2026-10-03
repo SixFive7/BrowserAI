@@ -97,9 +97,11 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       replaced the window (Q319 b).**
 - [ ] **A view-only look at a headless session, Q317 c's second part.** Taken
       by the process that holds the session, on a person's request, and logged
-      with a `why`. **What to do:** three measurements come first; the ledger
-      records their number and not their subjects, so ask the maintainer which
-      three before taking them.
+      with a `why`. **What to do:** three measurements come first, as they were
+      put to the maintainer on 2026-10-01 and recovered from the session's
+      transcript on 2026-10-03: the look's effect on an agent call that is
+      running; whether the overwritten file really leaves nothing behind; and
+      the cost per picture on Chromium and Firefox.
 - [ ] **Phase 3, the toast, Q254 with Q339.** Its *Review* opens a new tab the
       way a Start Menu click does, through the COM activator of the toast's
       design. **What to do:** build it after the tab, against
@@ -126,10 +128,6 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **The three reports Q356 drafted**, to Claude Code, Codex and
       `@playwright/mcp`, none posted. **What to do:** his review; posting under
       his name needs his word, as Q357 did.
-- [ ] **Which option Q309 b was.** He answered *"Q309 b"* on 2026-09-25 to how
-      an error is shown; the ledger records the letter and the recommendation,
-      one plain sentence with the raw text under *Show details*, and not what b
-      was. **What to do:** ask him, and complete its row in `DECISIONS.md`.
 - [ ] **The night's own decisions, for his review.** Q356's second half --
       (c) not built, and whether the 30-second Chromium cookie window under a
       hard kill matters enough to revisit it -- and the choices the coordinator
