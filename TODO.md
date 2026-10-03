@@ -251,7 +251,10 @@ is named as candidates and says so.
       **What is already there to build on**: `LiveInstances` is the census,
       `UpdateService` already distinguishes *Alone* from *StagedButNotAlone*, and
       the configuration window is a `TaskDialog` today -- a page of sessions is a
-      new surface in it, not a new application. The Windows toast properties that
+      new surface in it, not a new application. ⚠️ *Changed 2026-10-03: the page belongs to the
+      browser tab, which replaces the window (Q315 a, Q317 c), and the toast's
+      Review opens a new tab (Q339); both are items in
+      [the zoom-out section](#decided-and-the-work-that-follows).* The Windows toast properties that
       decide the layout are measured in
       [kb](kb/windows/notifications.md).
 
