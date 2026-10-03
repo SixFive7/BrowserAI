@@ -74,13 +74,6 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       calls for one; whether Chromium closes the tab a real Start Menu click
       opened, once a newer one replaces it, which no run here can open; and the
       trace viewer link on the sessions page (Q317 c).
-- [ ] **A view-only look at a headless session, Q317 c's second part.** Taken
-      by the process that holds the session, on a person's request, and logged
-      with a `why`. **What to do:** three measurements come first, as they were
-      put to the maintainer on 2026-10-01 and recovered from the session's
-      transcript on 2026-10-03: the look's effect on an agent call that is
-      running; whether the overwritten file really leaves nothing behind; and
-      the cost per picture on Chromium and Firefox.
 - [ ] **Phase 3, the toast, Q254 with Q339.** Its *Review* opens a new tab the
       way a Start Menu click does, through the COM activator of the toast's
       design. **What to do:** build it after the tab, against

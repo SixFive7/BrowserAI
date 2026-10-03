@@ -1,0 +1,21 @@
+chromium: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+chromium: 20 pictures, 62 to 88 ms (median 74), 60271 to 60271 bytes, errors 0
+chromium: files before 5, after twenty-two pictures 6, at the end 63
+chromium: navigate to a page that answers in four seconds #0: alone 4065 ms ok, with a picture 4147 ms ok, the picture 3238 ms ok
+chromium: navigate to a page that answers in four seconds #1: alone 4129 ms ok, with a picture 4077 ms ok, the picture 3125 ms ok
+chromium: navigate to a page that answers in four seconds #2: alone 4124 ms ok, with a picture 4097 ms ok, the picture 3138 ms ok
+chromium: wait for three seconds #0: alone 3015 ms ok, with a picture 3015 ms ok, the picture 89 ms ok
+chromium: wait for three seconds #1: alone 3013 ms ok, with a picture 3014 ms ok, the picture 64 ms ok
+chromium: wait for three seconds #2: alone 3014 ms ok, with a picture 3026 ms ok, the picture 72 ms ok
+chromium: evaluate a script that keeps the page busy for three seconds #0: alone 3509 ms ok, with a picture 3507 ms ok, the picture 2066 ms ok
+chromium: evaluate a script that keeps the page busy for three seconds #1: alone 3508 ms ok, with a picture 3508 ms ok, the picture 2062 ms ok
+chromium: evaluate a script that keeps the page busy for three seconds #2: alone 3512 ms ok, with a picture 3507 ms ok, the picture 2069 ms ok
+chromium: an agent taking its own screenshot #0: alone 77 ms ok, with a picture 82 ms ok, the picture 82 ms ok
+chromium: an agent taking its own screenshot #1: alone 80 ms ok, with a picture 80 ms ok, the picture 76 ms ok
+chromium: an agent taking its own screenshot #2: alone 83 ms ok, with a picture 78 ms ok, the picture 70 ms ok
+chromium: events during the agent call #0: alone [page yes, console yes, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page yes, console yes, download yes]
+chromium: events during the agent call #1: alone [page yes, console yes, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page yes, console yes, download yes]
+chromium: events during the agent call #2: alone [page yes, console yes, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page yes, console yes, download yes]
+chromium: events between two agent calls #0: alone [page no, console no, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page no, console no, download yes]
+chromium: events between two agent calls #1: alone [page no, console no, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page no, console no, download yes]
+chromium: events between two agent calls #2: alone [page no, console no, download yes]; with a picture, the agent's answer [page no, console no, download no] and the picture's [page no, console no, download yes]

@@ -1502,6 +1502,53 @@ at 0.0.83, and what a headed window shows while paused.
 family through `rig.cjs`, and `summarize.cjs` writes the aggregate table every
 number above is read from.
 
+## A picture of a headless session beside an agent's call -- measured 2026-10-03
+
+`[FLOATS]` **A `browser_take_screenshot` sent to a session's child while an
+agent's call runs, or between two of its calls, takes away what the agent's
+next answer would have said about the page: a changed title or address, new
+console lines, and a download.** Every answer of the child reports what happened
+in the page since the answer before it, and the picture's answer is an answer.
+Measured through BrowserAI's published server 1.1.1-alpha.0.173 over
+`@playwright/mcp` 0.0.83 (`playwright-core` 1.64.0-alpha-1790635538000),
+headless, in Chrome for Testing 155.0.8059.12 (`chromium-1247`) and Playwright's
+Firefox 156.0 (`firefox-1553`), three rounds a case in each. These are Q317 c's
+three measurements of the view-only look, and the first is why the look is not
+built ([the decision](../../DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser)).
+[Evidence](../../docs/evidence/2026-10-03-look/README.md),
+[rig](../../docs/probes/2026-10-03-look/README.md).
+
+| What the page did | The agent's answer, alone | The agent's answer, with a picture taken meanwhile | The picture's answer |
+|---|---|---|---|
+| Logged to the console, retitled itself and started a download, all inside the agent's call, which then waited 3 s | the page, the console and the download: 3 of 3 in both | **none of the three**: 3 of 3 in both | all three: 3 of 3 in both |
+| The same, between two agent calls, read by the next one | the download in Chromium; the page and the download in Firefox | **none**: 3 of 3 in both | what the agent's answer had alone, in each |
+
+- **Time and errors: the picture changed neither for the agent's call**, 3 of 3
+  in both families. A navigation to a page that answered in four seconds took
+  4,065 to 4,147 ms alone and with a picture, a three-second wait 3,013 to
+  3,049 ms, a script keeping the page busy for three seconds 3,507 to 3,574 ms,
+  with one Firefox call alone at 8,245 ms, and an agent's own screenshot 31 to
+  83 ms. No call failed. **The picture waited instead**: in Chromium for the
+  navigation, 3,125 to 3,238 ms, and for the busy script, 2,062 to 2,069 ms; in
+  Firefox for the busy script, 2,031 to 2,040 ms, and not for the navigation,
+  25 to 41 ms.
+- **A picture written over one file left nothing else behind**: 22 pictures
+  named `look.png` left one file in the session's folder, `output\look.png`,
+  written over each time, and the only other change outside the browser's
+  profile, which the listing leaves out, was the session record's write-ahead
+  log, 49,472 to 243,112 bytes, where BrowserAI records each call with its
+  `why`. Both families.
+- **What one picture costs**, of a page of 60 rows at CSS scale as PNG, over
+  the last 20 of 22: Chromium 62 to 88 ms, median 74, 60,271 bytes; Firefox 28
+  to 80 ms, median 34, 56,191 bytes.
+
+**Read in the source as well**: `Tab.captureSnapshot` in `playwright-core`'s
+`lib/coreBundle.js` takes the console log's new lines and the tab's recent
+events for every answer, a screenshot's included, and `Tab.headerSnapshot`
+marks the title and address as reported once an answer carries them (read
+2026-10-03 at 1.64.0-alpha-1790635538000). **Re-establish** with the rig, one run
+per family under the suite lock; a new `@playwright/mcp` is a new measurement.
+
 ## Every artifact pointer a tool result carries is absolute -- measured 2026-09-17
 
 **`filePaths: "absolute"` makes every one of them absolute, and two of the shapes

@@ -1,0 +1,1706 @@
+{
+  "family": "firefox",
+  "base": "http://127.0.0.1:54524",
+  "started": "2026-10-03T19:47:08.225Z",
+  "serverInfo": {
+    "name": "BrowserAI",
+    "version": "1.1.1-alpha.0.173"
+  },
+  "tools": 78,
+  "cost": [
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 48,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 44,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 45,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 54,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 55,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 80,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 48,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 55,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 30,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 33,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 34,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 34,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 31,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 29,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 28,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 61,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 31,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 29,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 30,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    },
+    {
+      "tool": "browser_take_screenshot",
+      "ms": 30,
+      "isError": false,
+      "error": null,
+      "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+      "url": null,
+      "reported": {
+        "sections": [
+          "Result"
+        ],
+        "page": false,
+        "console": false,
+        "download": false
+      },
+      "bytes": 56191,
+      "where": [
+        "output\\look.png"
+      ]
+    }
+  ],
+  "files": {
+    "before": [
+      {
+        "file": "browserai.data",
+        "bytes": 4096
+      },
+      {
+        "file": "browserai.data-shm",
+        "bytes": 32768
+      },
+      {
+        "file": "browserai.data-wal",
+        "bytes": 49472
+      },
+      {
+        "file": "browserai.lock",
+        "bytes": 104
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-11-461Z.yml",
+        "bytes": 5233
+      }
+    ],
+    "after": [
+      {
+        "file": "browserai.data",
+        "bytes": 4096
+      },
+      {
+        "file": "browserai.data-shm",
+        "bytes": 32768
+      },
+      {
+        "file": "browserai.data-wal",
+        "bytes": 243112
+      },
+      {
+        "file": "browserai.lock",
+        "bytes": 104
+      },
+      {
+        "file": "output\\look.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-11-461Z.yml",
+        "bytes": 5233
+      }
+    ],
+    "end": [
+      {
+        "file": "browserai.data",
+        "bytes": 4096
+      },
+      {
+        "file": "browserai.data-shm",
+        "bytes": 32768
+      },
+      {
+        "file": "browserai.data-wal",
+        "bytes": 885832
+      },
+      {
+        "file": "browserai.lock",
+        "bytes": 104
+      },
+      {
+        "file": "downloads\\0c583a2d-333a-481e-9a99-0f629ff85879",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\2ac2f009-cd8f-4965-aa06-3099f60c1977",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\392ed156-5ddc-48f9-8262-6aab206754b3",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\4630055c-364b-4b0b-834e-44c39dd468fc",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\5cc8b9c1-13af-4960-9c05-310ee688adeb",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\9ecd114a-4778-4aeb-ace1-080acee96b62",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\a348377b-6817-45ab-b16c-749519386d40",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\a35c1361-5035-47eb-95be-180416fa1bd9",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\bcd0058c-1d15-4636-ad66-2a62f67cb3e5",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\c348a08f-2c1c-4e6e-91a4-66516d860530",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\eeebb53d-09e1-41ee-91ad-39adbe51e5a1",
+        "bytes": 25
+      },
+      {
+        "file": "downloads\\f95ee8b9-2ab6-40e3-ab46-a0e6626f2f5e",
+        "bytes": 25
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-24-943Z.log",
+        "bytes": 116
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-28-562Z.log",
+        "bytes": 115
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-32-176Z.log",
+        "bytes": 116
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-35-751Z.log",
+        "bytes": 115
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-39-332Z.log",
+        "bytes": 115
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-42-942Z.log",
+        "bytes": 114
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-46-532Z.log",
+        "bytes": 116
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-50-141Z.log",
+        "bytes": 117
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-53-780Z.log",
+        "bytes": 116
+      },
+      {
+        "file": "output\\console-2026-10-03T19-48-57-384Z.log",
+        "bytes": 117
+      },
+      {
+        "file": "output\\console-2026-10-03T19-49-01-022Z.log",
+        "bytes": 115
+      },
+      {
+        "file": "output\\console-2026-10-03T19-49-04-620Z.log",
+        "bytes": 116
+      },
+      {
+        "file": "output\\look.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-11-461Z.yml",
+        "bytes": 5233
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-13-079Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-17-156Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-21-249Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-25-326Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-29-403Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-33-502Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-37-581Z.yml",
+        "bytes": 42
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-37-671Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-40-717Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-43-765Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-46-799Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-49-821Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-52-840Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-47-55-861Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-21-755Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-21-788Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-22-836Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-22-869Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-23-905Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-23-939Z.png",
+        "bytes": 56191
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-25-038Z.yml",
+        "bytes": 5357
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-28-649Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-32-237Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-35-815Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-39-421Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-43-014Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-46-614Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-50-222Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-53-852Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-48-57-459Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-49-01-094Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\page-2026-10-03T19-49-04-687Z.yml",
+        "bytes": 5419
+      },
+      {
+        "file": "output\\rig-download.txt",
+        "bytes": 25
+      }
+    ]
+  },
+  "beside": [
+    {
+      "label": "navigate to a page that answers in four seconds",
+      "round": 0,
+      "alone": {
+        "tool": "browser_navigate",
+        "ms": 4080,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.04308838337154952 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.04308838337154952",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_navigate",
+        "ms": 4090,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.786961936840366 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.786961936840366",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 41,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/slow?0.04308838337154952",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "navigate to a page that answers in four seconds",
+      "round": 1,
+      "alone": {
+        "tool": "browser_navigate",
+        "ms": 4078,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.775168420747949 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.775168420747949",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_navigate",
+        "ms": 4076,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.5694602275307608 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.5694602275307608",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 25,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/slow?0.775168420747949",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "navigate to a page that answers in four seconds",
+      "round": 2,
+      "alone": {
+        "tool": "browser_navigate",
+        "ms": 4100,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.5182398348445318 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.5182398348445318",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_navigate",
+        "ms": 4079,
+        "isError": false,
+        "error": null,
+        "head": "### Page | - Page URL: http://127.0.0.1:54524/slow?0.41849118389892903 | - Page Title: slow",
+        "url": "http://127.0.0.1:54524/slow?0.41849118389892903",
+        "reported": {
+          "sections": [
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 41,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/slow?0.5182398348445318",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "wait for three seconds",
+      "round": 0,
+      "alone": {
+        "tool": "browser_wait_for",
+        "ms": 3049,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_wait_for",
+        "ms": 3044,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 41,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "wait for three seconds",
+      "round": 1,
+      "alone": {
+        "tool": "browser_wait_for",
+        "ms": 3035,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_wait_for",
+        "ms": 3020,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 38,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "wait for three seconds",
+      "round": 2,
+      "alone": {
+        "tool": "browser_wait_for",
+        "ms": 3019,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_wait_for",
+        "ms": 3021,
+        "isError": false,
+        "error": null,
+        "head": "### Result | Waited for 3 seconds | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Snapshot"
+          ],
+          "page": true,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 37,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "evaluate a script that keeps the page busy for three seconds",
+      "round": 0,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 3514,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3510,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 2036,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "evaluate a script that keeps the page busy for three seconds",
+      "round": 1,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 3510,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3574,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 2040,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "evaluate a script that keeps the page busy for three seconds",
+      "round": 2,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 8245,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3509,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 2031,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "an agent taking its own screenshot",
+      "round": 0,
+      "alone": {
+        "tool": "browser_take_screenshot",
+        "ms": 35,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-21-755Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_take_screenshot",
+        "ms": 31,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-21-788Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 33,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "an agent taking its own screenshot",
+      "round": 1,
+      "alone": {
+        "tool": "browser_take_screenshot",
+        "ms": 45,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-22-836Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_take_screenshot",
+        "ms": 35,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-22-869Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 36,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    },
+    {
+      "label": "an agent taking its own screenshot",
+      "round": 2,
+      "alone": {
+        "tool": "browser_take_screenshot",
+        "ms": 32,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-23-905Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "withPicture": {
+        "tool": "browser_take_screenshot",
+        "ms": 34,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\page-2026-10-03T19-48-23-939Z.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 31,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png)",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      }
+    }
+  ],
+  "events": [
+    {
+      "label": "events during the agent call",
+      "round": 0,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 3518,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3523,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 31,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      }
+    },
+    {
+      "label": "events during the agent call",
+      "round": 1,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 3510,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3513,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 32,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      }
+    },
+    {
+      "label": "events during the agent call",
+      "round": 2,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 3516,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 3513,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"done\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 68,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": true,
+          "download": true
+        }
+      }
+    },
+    {
+      "label": "events between two agent calls",
+      "round": 0,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 509,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.6616296356967417\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 509,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.08262434769861304\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 34,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      }
+    },
+    {
+      "label": "events between two agent calls",
+      "round": 1,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 512,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.7899802411123065\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 509,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.4662001253497775\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 36,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      }
+    },
+    {
+      "label": "events between two agent calls",
+      "round": 2,
+      "alone": {
+        "tool": "browser_evaluate",
+        "ms": 509,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.6490731945481473\" | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      },
+      "withPicture": {
+        "tool": "browser_evaluate",
+        "ms": 513,
+        "isError": false,
+        "error": null,
+        "head": "### Result | \"retitled between 0.3775171186309477\"",
+        "url": null,
+        "reported": {
+          "sections": [
+            "Result"
+          ],
+          "page": false,
+          "console": false,
+          "download": false
+        }
+      },
+      "picture": {
+        "tool": "browser_take_screenshot",
+        "ms": 42,
+        "isError": false,
+        "error": null,
+        "head": "### Result | - [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\tab\\.work\\look-run\\look-firefox\\output\\look.png) | ### Page",
+        "url": "http://127.0.0.1:54524/",
+        "reported": {
+          "sections": [
+            "Result",
+            "Page",
+            "Events"
+          ],
+          "page": true,
+          "console": false,
+          "download": true
+        }
+      }
+    }
+  ],
+  "init": {
+    "isError": false
+  },
+  "userAgent": "### Result\n\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\"",
+  "finished": "2026-10-03T19:49:09.153Z"
+}

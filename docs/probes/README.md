@@ -163,6 +163,13 @@ process the harness found by parent pid, a method name, case labels and log even
 names, while the one launch passes `/PID` on the next line. **The scan would now
 flag eleven files, and still only `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-04.* **Thirty-three**, counted as its subdirectories,
+when [`2026-10-03-look`](2026-10-03-look/README.md) arrived. It went through the
+real scan the same way, copied under `build/` with `observe.ps1` beside it as the
+positive control and removed after: the scan named `observe.ps1` and no file of the
+rig. **The scan would still flag eleven files, and only `observe.ps1` selects a
+process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -238,3 +245,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-pipe-instances`](2026-10-03-pipe-instances/README.md) | How many callers one pipe created the way BrowserAI creates its pipes holds at once, past the 255 its instances are created with | |
 | [`2026-10-03-durability`](2026-10-03-durability/README.md) | How soon each store of each browser reaches disk with and without every lever found, what a hard kill does to session restore, what the levers cost, and what a job's I/O counters count | a false positive |
 | [`2026-10-03-coordinator-survival`](2026-10-03-coordinator-survival/README.md) | The client-exit rig with a coordinator stand-in started by a scratch logon task, a host in that coordinator's job and browsers nested below it: whether they outlive every way a client ends its server, and whether the coordinator's death ends them | false positives |
+| [`2026-10-03-look`](2026-10-03-look/README.md) | A picture of a headless session taken beside an agent's call: what it takes from the agent's next answer, what it leaves in the session's folder, and what one picture costs in each family | |
