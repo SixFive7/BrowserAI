@@ -72,14 +72,6 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       mechanism test recorded as the second named exception to the plant-it-red
       rule, and a live check that fails a run whenever a Firefox starts in safe
       mode.
-- [ ] **Q313: a report to Playwright about the safe-mode hang.**
-      [microsoft/playwright#40882](https://github.com/microsoft/playwright/issues/40882),
-      a Firefox hang in `newPage` on Windows 11, was closed as not planned on
-      2026-06-15 because nobody could reproduce it, and its symptom is not quite
-      ours. Recommended: once Q312 lands, draft a new issue with the cause, a
-      reproduction and the one-line fix, plus a short comment on #40882 pointing
-      at it, and show the maintainer the exact text of both; nothing is posted
-      without that go-ahead.
 
 ### Paused work
 
@@ -1100,6 +1092,38 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       the form of the path a tool result names them by. It is worth watching
       because it is the same class of report in the other tracker, so how it is
       handled is the triage signal this item is waiting for.
+
+- [ ] **WATCH [microsoft/playwright#43089](https://github.com/microsoft/playwright/issues/43089),
+      the Firefox safe-mode hang.** Posted 2026-10-03 under SixFive7 on the
+      maintainer's word (Q313 and Q357), with the reproduction in a public
+      [gist](https://gist.github.com/SixFive7/a80adceb13f39d360713dad9ff57b102).
+      Measured against Playwright 1.63.0 and `playwright-core`
+      1.64.0-alpha-1790635538000: a Shift key held while Firefox starts sends it
+      into safe mode, whose dialog is invisible in headless mode, so a persistent
+      launch hangs until its timeout. The issue asks for
+      `MOZ_DISABLE_SAFE_MODE_KEY=1` in `Firefox.amendEnvironment`, the line Q312
+      adds to BrowserAI's own `ChildEnvironment.Forced`. The comment drafted for
+      [#40882](https://github.com/microsoft/playwright/issues/40882) was not
+      posted. **What to do:** check the issue at least once a week until it
+      closes, and bring any question from the Playwright team to the maintainer,
+      because a reply goes out under his name and needs his word. When a release
+      carries the fix, the upstream review decides whether BrowserAI's own line
+      stays. If the issue is closed without a fix, record the reason here and
+      keep the line.
+- [ ] **WATCH our comment on
+      [microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047),
+      closed shadow roots.** Posted 2026-10-03 under SixFive7 on the maintainer's
+      word (Q313 and Q357) as
+      [this comment](https://github.com/microsoft/playwright/issues/23047#issuecomment-5964078825).
+      Measured with `playwright-core` 1.63.0 and `@playwright/mcp` 0.0.83:
+      content inside a closed shadow root is missing from `ariaSnapshot()` and
+      from `browser_snapshot`, although the browser's own accessibility tree has
+      it, so an agent can neither see it nor get a ref for it. The issue is a
+      feature request, open since 2023 and labelled `P3-collecting-feedback`.
+      **What to do:** check it at least once a week for replies, and bring any
+      question to the maintainer. A fix would change what `browser_snapshot`
+      returns, so the upstream review that adopts one re-runs the page from the
+      comment.
 
 ---
 
