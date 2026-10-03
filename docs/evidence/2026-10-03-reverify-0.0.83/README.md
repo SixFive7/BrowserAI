@@ -80,7 +80,7 @@ is these rows. The lane released the suite lock at 13:46:41Z and was stopped at
 
 ## What was cut, and what was left out
 
-- **The user-profile path**, replaced by `%USERPROFILE%`, in 41 files, and the
+- **The user-profile path**, replaced by `%USERPROFILE%`, in 32 files, and the
   user name where `ls -l` printed it as the owner, in one. Those files are stored
   under a `.trimmed.` name and `originals.sha256` carries each original's digest.
 - **Terminal escapes**, in `runs/batch1/row140.trimmed.log`, where Playwright
@@ -95,10 +95,10 @@ is these rows. The lane released the suite lock at 13:46:41Z and was stopped at
 - **Left out by directory**: every browser profile and session directory the rigs
   created, the scratch browser trees of row 140, the scratch copy of
   `chromium-headless-shell-1247`, the MCP output directories, the scratch client
-  configuration row 127 handed the app, and the two Chromium and one Firefox
-  source checkouts the source reads ran against (fetched at depth 1:
-  `chromium/src` tags `152.0.7977.8` at `690eeba1` and `155.0.8059.12` at
-  `384c8207`, `mozilla-firefox` at `3bf8f468`).
+  configuration row 127 handed the app, and the two source checkouts the source
+  reads ran against, each fetched at depth 1: `chromium/src` with its tags
+  `152.0.7977.8` at `690eeba1` and `155.0.8059.12` at `384c8207`, and
+  `mozilla-firefox` at `3bf8f468`.
 - **Left out whole**: `batch1-driver.log` and `batch3-driver.log`, which repeat
   the batch timelines kept under `runs/`; and an earlier comparison file for row
   6 that compared the context with its line numbers only partly removed, replaced

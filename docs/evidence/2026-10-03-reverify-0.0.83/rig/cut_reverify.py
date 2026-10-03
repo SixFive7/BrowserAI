@@ -64,8 +64,10 @@ def put(src, rel, rig=False):
             # The foreground window while no window of the launched tree held it
             # belonged to some other program on the desktop; its title is cut,
             # its class and pid are kept.
-            new = re.sub(r"(fgInTree=False fg=\[hwnd=0x[0-9A-Fa-f]+ pid=\d+ class=\S+ title=)[^\]]*\]", r"\1<cut>]", new)
-            changes.append("titles of windows outside the launched tree")
+            replaced = re.sub(r"(fgInTree=False fg=\[hwnd=0x[0-9A-Fa-f]+ pid=\d+ class=\S+ title=)[^\]]*\]", r"\1<cut>]", new)
+            if replaced != new:
+                new = replaced
+                changes.append("titles of windows outside the launched tree")
         if "\x1b" in new:
             raise SystemExit(f"an escape byte survived in {src}")
         if changes:
@@ -106,9 +108,14 @@ def tree(src_dir, rel_dir, rig=False, skip=()):
             put(src, rel, rig=rig)
 
 
+# Everything but the batch's README is regenerated on every run.
 if os.path.exists(DST):
-    shutil.rmtree(DST)
-os.makedirs(DST)
+    for name in os.listdir(DST):
+        if name == "README.md":
+            continue
+        path = os.path.join(DST, name)
+        shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
+os.makedirs(DST, exist_ok=True)
 
 out = os.path.join(S, "out")
 # The batch logs, one directory per batch.

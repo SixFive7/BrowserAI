@@ -55,4 +55,3 @@ bef632ac58e45801ce5e423e630595aca34d0d707a9caacd6a4034336aea9f0b  rig/row32/mcp-
 84810d8fcb8c5952c13a0dbc36a4fb0cd8d348b080bc749dbd007b63aceec209  rig/row95/cookie-probe.js  ->  rig/row95/cookie-probe.js  (SPDX header added)
 80c391c3af022f0585d4e3627d0979951e379132314d73415fad4792ceff0c6b  rig/row95/read-store.js  ->  rig/row95/read-store.js  (SPDX header added)
 b19c1a01b676a64bf27734e224e30208860541f5c6beb56716c741c96bcaa1b1  rig/row152-pw.sh  ->  rig/row152-pw.sh  (SPDX header added)
-25ab4b45c92c0b1dc67c1047f289dd82ec3cc33f6f8d6c167442770ef7196502  rig/cut_reverify.py  ->  rig/cut_reverify.trimmed.py  (titles of windows outside the launched tree)
