@@ -173,7 +173,7 @@ for f in ("containment-chromium.json", "containment-firefox.json"):
 put(os.path.join(RV, "gate.ps1"), os.path.join("rv-gate", "gate.ps1"), rig=True)
 # The rigs as they ran, and the driver of the row 152 raw arms.
 tree(os.path.join(S, "rigs"), "rig", rig=True)
-for f in ("row152-pw.sh", "cut_reverify.py", "inventory.py"):
+for f in ("row152-pw.sh", "row152-pw-run.sh", "take-lock.sh", "cut_reverify.py", "inventory.py"):
     put(os.path.join(S, "rigs2", f), os.path.join("rig", f), rig=True)
 
 with open(os.path.join(DST, "originals.sha256"), "w", encoding="utf-8", newline="\n") as f:

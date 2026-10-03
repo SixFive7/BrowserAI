@@ -959,8 +959,10 @@ explicitly, and why the round-trip test asserts both.
 > with its ephemeral port, and `navigator.webdriver` `false` in both arms. The
 > append the trap above turns on is unchanged in the 0.0.83 bundle
 > (`coreBundle.js:74335`, previously :73755): the switch is pushed only when no
-> configured argument already contains `--disable-blink-features`. ⚠️ **The
-> headed arms were not re-run**, because nothing may put a window on the screen
+> configured argument already contains `--disable-blink-features`. Through raw
+> `playwright-core`, headless, `navigator.webdriver` reads `true` without that
+> switch and `false` with it, and it is the only one of the 43 properties that
+> differs between the two, as at 1246. ⚠️ **The headed arms were not re-run**, because nothing may put a window on the screen
 > today; the headed reading above stands at chromium 1246, and
 > [row 152](../re-verification.md) keeps its staleness mark for that half. The
 > arms: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).

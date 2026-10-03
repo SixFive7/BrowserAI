@@ -1,1 +1,5 @@
-2026-10-03T18:45:34Z waiting for the suite lock
+2026-10-03T21:50:38Z BEGIN pw headless-plain --headless
+2026-10-03T21:50:42Z END pw headless-plain exit=0
+2026-10-03T21:50:42Z BEGIN pw headless-nab --headless --nab
+2026-10-03T21:50:45Z END pw headless-nab exit=0
+2026-10-03T21:50:45Z DONE

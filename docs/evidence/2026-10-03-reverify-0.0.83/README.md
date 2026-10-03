@@ -8,7 +8,7 @@
 of that morning stamped `[STALE]`: 6, 22, 32, 34, 38, 95, 103, 109, 115, 121's
 Chromium half, 122, 127's window time, 140, 141, 152's headless half and 163 to
 166, and the records rows 5 and 66 are stamped from. Taken 2026-10-03 between
-13:17Z and 13:46Z, plus the raw half of row 152 later that evening, at
+13:17Z and 13:46Z, plus the raw `playwright-core` half of row 152 at 21:50Z, at
 `@playwright/mcp` **0.0.83**, `playwright-core` **1.64.0-alpha-1790635538000**,
 node **v24.21.0**, Chrome for Testing **155.0.8059.12** (`chromium-1247`) and
 Firefox **156.0** (`firefox-1553`), on Windows 11. The payload was the review's
@@ -58,6 +58,15 @@ in the earlier evidence batches with the revision constants, the repository path
 and the scratch locations changed, which is what `rig/patch_rigs.py` did;
 rows 32, 95, 109, 115, 121 and 127 were written that day for the procedure the
 row states.
+
+**Row 152's raw `playwright-core` arms ran from `rig/row152-pw-run.sh`** at
+21:50:38Z to 21:50:45Z, after `rig/take-lock.sh` took the suite lock at
+21:50:31Z and left it held; that script's remark names a `release-lock.sh` that
+was never written, and the lock is released by removing `owner.txt` and then
+the directory. `rig/row152-pw.sh` is the earlier driver of the same two arms. Its
+log read only *waiting for the suite lock*, stamped 18:45:34Z, when it was
+stopped that evening at the maintainer's request, so it ran neither arm;
+`row152/pw/driver.log` is the later run's.
 
 ## What appeared on the screen, and for how long
 
