@@ -1030,6 +1030,17 @@ measurement [the browser-idle timer](../../ARCHITECTURE.md#sessions)
 rests on -- if the relaunch were not implicit, the timer would be a way of
 breaking a session and not a way of reclaiming memory.
 
+⚠️ **Since 2026-10-03 BrowserAI no longer rests on that relaunch.** *Added
+2026-10-03 by addition; the measurement above stands as measured.* A field report
+of 2026-10-01 met what a navigation hides: the call after an idle close ran on
+`about:blank`, and a script written for the page the agent had left failed with
+nothing saying why. Under the maintainer's P4 b the idle close now ends the whole
+child, `node` included, and sends no `browser_close`; under his P2 a the next call
+is refused until `browserai_resume`, which starts a new child whose browser reopens
+the tabs through the browsers' own session restore
+([below](#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03)).
+`LiveSession` and `BrowserIdleTimer` carry it, and `SessionCloseTests` holds it.
+
 ⚠️ **`browser_close`'s own result text reads as though it closed a tab, and it
 does not.** It answers *"No open tabs. Navigate to a URL to create one."* with
 `await page.close()` as the code it ran -- yet every process under the browsers
@@ -1479,6 +1490,18 @@ local tabs open.
 ⚠️ **Not established:** whether the restore options survive a browser that was
 killed and not closed, which is how a client ends a session; what a restored
 page re-runs on load, beyond the one POST; and what a headed window does.
+
+✅ **Built 2026-10-03.** Every session launch carries the options measured above:
+`BrowserConfiguration.RestoreLastSessionSwitch` for Chromium,
+`BrowserConfiguration.FirefoxSessionRestorePreferences` for Firefox, and
+`BrowserConfiguration.DefaultPageArgument` in `ignoreDefaultArgs` for both. The
+idle close sent `browser_close` when this was measured, as the first sentence of
+this entry says; since the same day it ends the whole child instead, which is the
+design B column above and keeps the same stores.
+`SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed`
+holds the restore through the product against a real Chromium and Firefox, and
+`ConfigRoundTripTests.EverySessionLaunchCarriesTheBrowsersOwnRestoreAndAHeadedOneNoIdleTimeout`
+holds the options in the generator.
 
 **Re-establish** with the rig: `batch.js` runs a plan of scenarios, each a real
 `@playwright/mcp` child driven over stdio for one version and family;

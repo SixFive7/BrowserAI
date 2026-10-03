@@ -194,13 +194,104 @@ internal sealed class SessionManager : IAsyncDisposable
     /// is the guard, and it exists because every other arm in that file asserts
     /// against this constant and would stay green through any rewrite of it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "...Nothing that lived in the old
+    /// process survived it either: no page is open, there are no tabs, and
+    /// anything a previous call left on a page is gone. Navigate again before you
+    /// act on what you see.").</b> Since that day every launch carries the
+    /// browser's own session restore, so the next browser reopens the tabs its
+    /// profile last recorded and "there are no tabs" is not promised either way;
+    /// <see cref="WhatTheFirstBrowserCallReopens"/> follows this note and says
+    /// what to do about it. And the resume that writes this now opens the session
+    /// again at the settings it was asked for, instead of relaunching the old
+    /// launch.
+    /// </para>
     /// </remarks>
     public const string ChildWasRelaunched =
-        "the browser server for this session had died and was relaunched. The session's directory, profile and log are on disk and "
+        "the browser server for this session had died, and this resume started a new one with the per-run settings it asked for. The session's directory, profile and log are on disk and "
         + "unchanged -- but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance "
         + "to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
-        + "Read any stored value back before you rely on it. Nothing that lived in the old process survived it either: no page is open, "
-        + "there are no tabs, and anything a previous call left on a page is gone. Navigate again before you act on what you see.";
+        + "Read any stored value back before you rely on it. Nothing that lived only in the old process survived it: anything a previous call left on a page is gone.";
+
+    /// <summary>
+    /// What every resume that starts a child says about the browser that child
+    /// will start.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P1, the maintainer's words of 2026-10-03, verbatim:</b> <i>"Restore as
+    /// much as possible without adding lot's of complexity. So basically, use
+    /// whatever playwright offers in capabilities. For the rest make sure we
+    /// communicate clearly to the llm what has happenend when redirecting to the
+    /// resume call."</i> The restore is the browser's own and starts with the
+    /// browser, at the first browser call; this is the half that is said.
+    /// </para>
+    /// <para>
+    /// <b>What it warns of is what the restore measured as not bringing back</b>,
+    /// 2026-10-03: refs from earlier snapshots were invalid in every run, and the
+    /// selected tab was not reliably the one that had been.
+    /// </para>
+    /// </remarks>
+    public const string WhatTheFirstBrowserCallReopens =
+        "the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. "
+        + "Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.";
+
+    /// <summary>
+    /// What a resume says when the session's browser is up and so nothing it
+    /// was asked for could be applied.
+    /// </summary>
+    /// <remarks>
+    /// Q324 a: the browser is left alone, and an argument that differs from what
+    /// it was launched with is refused by name before this is reached. What
+    /// arrives here asked for nothing different.
+    /// </remarks>
+    public const string BrowserIsUpSoNothingWasApplied =
+        "this session is open in this BrowserAI and its browser is up, so no per-run setting was applied: they take effect only when a browser starts. "
+        + "To change one, call browser_close on this session and then browserai_resume again with it.";
+
+    /// <summary>
+    /// What a resume says when no browser has started and the settings it asked
+    /// for are the ones the session already has.
+    /// </summary>
+    public const string NothingNeededApplying =
+        "this session is open in this BrowserAI and its browser has not started yet; the per-run settings this call asked for are the ones it will start with, so nothing needed applying.";
+
+    /// <summary>
+    /// What a resume says when it applied its settings to a session that had no
+    /// browser up, by starting a new child.
+    /// </summary>
+    /// <remarks>
+    /// Q324 c: with no browser up there is nothing a new child can take away.
+    /// </remarks>
+    public const string AppliedWithNoBrowserUp =
+        "no browser was up in this session, so this resume applied the per-run settings it was asked for by starting a new browser server. No page was open to lose.";
+
+    /// <summary>
+    /// What a resume says when it opened a session whose browser had been closed
+    /// by the idle timer or by the caller.
+    /// </summary>
+    /// <remarks>
+    /// <b>What it says was kept is what was measured after these two closes</b>,
+    /// 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83: the reopened tabs
+    /// kept their history, <c>sessionStorage</c>, typed text and session cookies,
+    /// 24 of 24, and the profile kept persistent cookies, <c>localStorage</c> and
+    /// IndexedDB. A form POST came back as an error page in Chromium and was
+    /// fetched again without its data in Firefox.
+    /// </remarks>
+    /// <param name="closure">How and when the browser was closed.</param>
+    /// <returns>The note, without its <c>NOTE: </c> prefix.</returns>
+    public static string ResumedAfterAClose(SessionClosure closure)
+    {
+        ArgumentNullException.ThrowIfNull(closure);
+
+        var how = closure.Cause is SessionCloseCause.Idle
+            ? $"BrowserAI closed this session's browser at {SessionErrors.When(closure.At)} after {SessionErrors.Duration(closure.IdlePeriod)} with no call"
+            : $"this session's browser was closed at {SessionErrors.When(closure.At)} by a {LiveSession.BrowserCloseTool} call";
+
+        return $"{how}, and this resume started a new browser server with the per-run settings it asked for. "
+            + "Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. "
+            + "A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.";
+    }
 
     /// <summary>
     /// The courtesy line a session gets when the BrowserAI serving it now is not
@@ -660,6 +751,26 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Every session at once, each one's browser asked to close first --
+    /// e2 of P7, 2026-10-03.</b> <i>Corrected 2026-10-03 (previously one session
+    /// after another, each closed through its child's stdin with up to 5 s to
+    /// exit).</i> Measured that day in 491 runs: Claude Code 2.1.288 kills the
+    /// server's tree 0.53 to 1.15 s after it closes the server's input, so the
+    /// second session in a sequence was never reached, and the first was ended
+    /// through its stdin -- on which <c>@playwright/mcp</c> force-kills its own
+    /// browser about 0.1 s later. A browser closed by its own tool flushes what
+    /// it holds, so each session first gets a <c>browser_close</c> bounded by
+    /// <see cref="LiveSession.ShutdownCloseBudget"/>, and the teardown after it
+    /// is the one there always was.
+    /// </para>
+    /// <para>
+    /// <b>The bound is what keeps a wedged browser from holding a shutdown.</b>
+    /// A close that meets an armed debugger pause never answers; past the bound
+    /// the child is ended through its stdin, which a paused child obeys.
+    /// </para>
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) is not 0)
@@ -667,12 +778,22 @@ internal sealed class SessionManager : IAsyncDisposable
             return;
         }
 
+        var sessions = new List<LiveSession>();
+
         foreach (var key in _live.Keys)
         {
             if (_live.TryRemove(key, out var session))
             {
-                await session.DisposeAsync().ConfigureAwait(false);
+                sessions.Add(session);
             }
+        }
+
+        await Task.WhenAll(sessions.Select(shutDownAsync)).ConfigureAwait(false);
+
+        static async Task shutDownAsync(LiveSession session)
+        {
+            await session.CloseTheBrowserForShutdownAsync().ConfigureAwait(false);
+            await session.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -774,10 +895,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // half of that refusal the ungated look above cannot guarantee.
                     RefuseAnExistingRecord = true,
                 },
-                headed,
-                tracing,
-                run,
-                debug,
+                new SessionRunSettings(headed, tracing, debug, run),
                 createdHere: true,
                 SpellingNote(named, location, verdict) is { } note ? [note] : [],
                 held,
@@ -826,23 +944,15 @@ internal sealed class SessionManager : IAsyncDisposable
             // schema and not by a sentence about a thing this build has.
             Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
 
+            var requested = new SessionRunSettings(headed, tracing ?? false, debug, run);
+            var notes = new List<string>();
+            var createdHere = false;
+            var noticeGiven = false;
+
             if (_live.TryGetValue(location.Key, out var already))
             {
-                SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
-
-                // ⚠️ THE ROW IS WRITTEN `in-flight` AND SETTLED, exactly as a
-                // forwarded call's is, because one outcome vocabulary across
-                // every row is what lets `browserai_catch_up` say "no answer was
-                // recorded" without having to know which tool wrote which row.
-                var row = already.Lock.Append(SessionToolSurface.Resume, why);
-
-                if (appended is not null)
-                {
-                    already.Lock.AppendPurpose(RecordText.Sanitise(appended));
-                }
-
                 // ⚠️ THE QUESTION THIS PATH USED TO ASK WAS THE WRONG ONE, AND
-                // SINCE 2026-09-17 IT ASKS BOTH. `do I already own this
+                // SINCE 2026-09-17 IT ASKS MORE THAN ONE. `do I already own this
                 // directory` is still yes when the child behind it has died --
                 // the session is in this process's own index and the live marker
                 // is this process's -- so the answer was "nothing was changed",
@@ -850,39 +960,91 @@ internal sealed class SessionManager : IAsyncDisposable
                 // at all. Measured 2026-09-17; see HAZARDS.md and
                 // docs/evidence/2026-09-17-resume-wedge.
                 //
+                // ⚠️ AND SINCE 2026-10-03 IT ALSO ASKS WHETHER A BROWSER IS UP,
+                // Q324 a then c, the maintainer's words of 2026-10-03, verbatim:
+                // "Q324 your recommendation". The per-run settings live in a
+                // config a child reads once, so they can be applied only by
+                // starting a child, and starting one ends whatever browser is up.
+                // So a browser that is up and was not closed keeps everything,
+                // and a setting asked for that differs from the one in use is
+                // refused by name; with no browser up -- closed by the timer or
+                // by the caller, a child that died, or one that never started a
+                // browser -- the settings are applied by opening the session
+                // again below. A field report of 2026-10-01 had met the old
+                // shape: two resumes asking for a window, both answered "nothing
+                // was changed" with no error, and a session that stayed headless.
+                //
                 // The liveness question is asked of the transport and the
-                // process handle and not of a pid lookup, so a child on its
-                // way out counts as alive until one of the two says otherwise.
-                // See ChildConnection.ChildHasGone.
-                if (already.Child.ChildHasGone)
+                // process handle and not of a pid lookup, so a child on its way
+                // out counts as alive until one of the two says otherwise. See
+                // ChildConnection.ChildHasGone.
+                // Asked once: the job is the kernel's, and two readings either
+                // side of a browser starting would answer two different questions.
+                var browserUp = already.BrowserIsOpen;
+
+                var reopen = already.Closed is not null
+                    || already.Child.ChildHasGone
+                    || (!browserUp && requested != already.Settings);
+
+                if (!reopen)
                 {
-                    try
+                    SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
+
+                    // ⚠️ THE ROW IS WRITTEN `in-flight` AND SETTLED, exactly as a
+                    // forwarded call's is, because one outcome vocabulary across
+                    // every row is what lets `browserai_catch_up` say "no answer
+                    // was recorded" without having to know which tool wrote it.
+                    var row = already.Lock.Append(SessionToolSurface.Resume, why);
+
+                    // Only the arguments the caller actually passed: an omitted
+                    // one is a default, and a bare resume must never be refused
+                    // for, or take away, a window a person has open.
+                    if (browserUp && Unapplied(arguments, already.Settings, requested) is { Count: > 0 } unapplied)
                     {
-                        await RelaunchAsync(already, location, cancellationToken).ConfigureAwait(false);
+                        var refusal = SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(location.FullPath, unapplied);
+
+                        already.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
+
+                        return new ToolOutcome(refusal, IsError: true);
                     }
-                    catch (Exception failure) when (failure is not OperationCanceledException)
+
+                    if (appended is not null)
                     {
-                        SessionToolLog.ChildNotRelaunched(already.Logger, location.FullPath, failure);
-
-                        already.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(failure.Message));
-
-                        return new ToolOutcome(
-                            SessionErrors.BrowserServerCouldNotBeRelaunched(location.FullPath, failure.Message),
-                            IsError: true);
+                        already.Lock.AppendPurpose(RecordText.Sanitise(appended));
                     }
 
                     already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                     return new ToolOutcome(
-                        Describe(already, [ChildWasRelaunched]),
+                        Describe(already, [browserUp ? BrowserIsUpSoNothingWasApplied : NothingNeededApplying]),
                         IsError: false);
                 }
 
-                already.Lock.Settle(row, SessionStore.Successful, failure: null);
+                // Opened again from scratch, and that IS the restart: the whole
+                // session is torn down -- its child through its stdin and then
+                // its job, which a paused or wedged child obeys -- and the path
+                // below takes the directory again, at this call's settings and
+                // log level, with a child and a config of its own. Who created
+                // the session and whether the notice was given carry across,
+                // because the connection did not change.
+                //
+                // ⚠️ THE DIRECTORY IS UNHELD FOR AN INSTANT, between this
+                // teardown and the acquisition below, which is the one cost of
+                // reusing the open path instead of swapping a child under a held
+                // lock. A peer that takes it in that instant is answered by the
+                // acquisition's own refusal naming the holder, and the session is
+                // then that peer's, which is the truth.
+                notes.Add(already.Closed is { } closure
+                    ? ResumedAfterAClose(closure)
+                    : already.Child.ChildHasGone ? ChildWasRelaunched : AppliedWithNoBrowserUp);
 
-                return new ToolOutcome(
-                    Describe(already, ["This session is already open in this BrowserAI; nothing was changed."]),
-                    IsError: false);
+                createdHere = already.CreatedHere;
+                noticeGiven = already.NoticeGiven;
+
+                if (_live.TryRemove(new KeyValuePair<string, LiveSession>(location.Key, already)))
+                {
+                    await already.TearDownAsync(ServerRegistryReap.AfterResume).ConfigureAwait(false);
+                }
             }
 
             var record = SessionLock.ReadRecord(location)
@@ -890,7 +1052,6 @@ internal sealed class SessionManager : IAsyncDisposable
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
                     + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists -- {SessionToolSurface.List} will show what is under a path.");
 
-            var notes = new List<string>();
             string? movedFrom = null;
 
             if (SpellingNote(named, location, verdict) is { } spelling)
@@ -953,6 +1114,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // silently truncated the sentence the caller had just written.
             var purpose = appended is null ? record.Purpose : RecordText.Sanitise(appended);
 
+            // Every resume that reaches this line starts a child, and the
+            // browser that child starts reopens what its profile last recorded.
+            notes.Add(WhatTheFirstBrowserCallReopens);
+
             // Ownership moves here, by the mechanism `init` documents.
             var held = claim;
             claim = null;
@@ -965,16 +1130,14 @@ internal sealed class SessionManager : IAsyncDisposable
                     Purpose = purpose,
                     Entry = new SessionCall(SessionToolSurface.Resume, why),
                 },
-                headed,
-                tracing ?? false,
-                run,
-                debug,
-                createdHere: false,
+                requested,
+                createdHere,
                 notes,
                 held,
                 cancellationToken,
                 movedFrom,
-                why).ConfigureAwait(false);
+                why,
+                noticeGiven).ConfigureAwait(false);
         }
         finally
         {
@@ -2278,16 +2441,14 @@ internal sealed class SessionManager : IAsyncDisposable
     private async Task<ToolOutcome> OpenAsync(
         SessionPath location,
         SessionLockRequest request,
-        bool headed,
-        bool tracing,
-        RunOptions run,
-        bool debug,
+        SessionRunSettings settings,
         bool createdHere,
         IReadOnlyList<string> notes,
         MaintenanceLock claim,
         CancellationToken cancellationToken,
         string? movedFrom = null,
-        string? why = null)
+        string? why = null,
+        bool noticeGiven = false)
     {
         // Nothing below is owned by anyone until the session is in the
         // dictionary, and the finally disposes whatever is left. That is the only
@@ -2306,7 +2467,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // this call asked for. An earlier version acquired first and logged
             // the acquisition at the process-wide level, which left a `debug`
             // session's records starting mid-story.
-            logging = _environment.OpenSessionLog(location.FullPath, debug ? LogLevel.Debug : LogLevel.Information);
+            logging = _environment.OpenSessionLog(location.FullPath, settings.Debug ? LogLevel.Debug : LogLevel.Information);
             var sessionLogger = logging.Factory.CreateLogger<SessionManager>();
 
             if (movedFrom is not null)
@@ -2326,7 +2487,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // The family comes from the session's own record and not from a
             // constant: `resume` reads it out of the record, and a profile
             // belongs to the browser that made it.
-            var config = BrowserConfiguration.ForSession(location, headed, request.Browser, tracing, run);
+            var config = BrowserConfiguration.ForSession(location, settings.Headed, request.Browser, settings.Tracing, settings.Run);
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -2348,7 +2509,14 @@ internal sealed class SessionManager : IAsyncDisposable
                 Path.Combine(location.FullPath, SessionLayout.OutputFolderName),
                 configFile,
                 config,
-                name: $"playwright-mcp[{location.Hash[..8]}]");
+                name: $"playwright-mcp[{location.Hash[..8]}]",
+
+                // ⚠️ P5 a, 2026-10-03: the child's temporary folder is inside
+                // this run's own directory, so what a killed browser launch
+                // leaves -- an empty `playwright-artifacts-*` each time, measured
+                // that day -- is removed with the directory and not left in the
+                // user's %TEMP% for ever.
+                temporaryDirectory: Path.Combine(_environment.InstanceDirectory, ChildLaunch.TemporaryFolderName));
 
             // CA2000 is disabled for these two statements and nothing else.
             // Ownership moves into the live session and then into the dictionary
@@ -2364,7 +2532,10 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, child, options, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock, _reap);
+            session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap)
+            {
+                NoticeGiven = noticeGiven,
+            };
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -2384,7 +2555,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // directory was for.
             held.SettleOpening(SessionStore.Successful, failure: null);
             _index.Record(location);
-            SessionToolLog.Opened(sessionLogger, location.FullPath, headed, createdHere);
+            SessionToolLog.Opened(sessionLogger, location.FullPath, settings.Headed, createdHere);
 
             if (why is not null)
             {
@@ -2469,47 +2640,6 @@ internal sealed class SessionManager : IAsyncDisposable
         acquired?.SettleOpening(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString()));
 
     /// <summary>
-    /// Starts a new child for a session whose own has died, and hands it over.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The same launch, not a fresh one.</b> The options are the ones the
-    /// session was opened with -- <see cref="LiveSession.Launch"/> -- so the
-    /// replacement child gets the same payload, the same browsers root, the same
-    /// generated config file and the same working directory. Rebuilding them
-    /// here would make a relaunch a different launch the day anything above
-    /// changes.
-    /// </para>
-    /// <para>
-    /// <b>Nothing about the session's identity moves.</b> The directory lock is
-    /// still held, the record is untouched and the index entry stays: this
-    /// replaces the process behind the session, never the session.
-    /// </para>
-    /// </remarks>
-    /// <param name="session">The live session whose child has gone.</param>
-    /// <param name="location">Its directory.</param>
-    /// <param name="cancellationToken">Cancels the launch.</param>
-    /// <returns>A task that completes once the new child is driving the session.</returns>
-    private async Task RelaunchAsync(LiveSession session, SessionPath location, CancellationToken cancellationToken)
-    {
-        // CA2000 for the same reason the opening launch disables it: ownership
-        // moves into the live session, whose disposal is an await in a finally
-        // and is not followed by the rule's dataflow.
-#pragma warning disable CA2000
-        var replacement = await _environment.ConnectChild(
-            session.Launch,
-            session.Logging.Factory,
-            ChildRequestIdPrefix(location),
-            _relay,
-            cancellationToken).ConfigureAwait(false);
-#pragma warning restore CA2000
-
-        await session.ReplaceChildAsync(replacement).ConfigureAwait(false);
-
-        SessionToolLog.ChildRelaunched(session.Logger, location.FullPath, replacement.ProcessId ?? 0);
-    }
-
-    /// <summary>
     /// The namespace this session's outgoing request ids are allocated in.
     /// </summary>
     /// <remarks>
@@ -2555,6 +2685,11 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("Session ready. Pass session='").Append(session.Location.FullPath).Append("' on every browser tool call.\n")
             .Append("  directory: ").Append(session.Location.FullPath).Append('\n')
             .Append("  browser: ").Append(record.Browser).Append('\n')
+
+            // ⚠️ ADDED 2026-10-03. The field report of 2026-10-01 had nothing
+            // in this answer to tell it the session had come back headless.
+            .Append("  headed: ").Append(session.Settings.Headed ? "true -- a window is open for this run, and it is never closed for being idle" : "false")
+            .Append('\n')
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName))
             .Append(" -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n")
@@ -3185,6 +3320,48 @@ internal sealed class SessionManager : IAsyncDisposable
         CaptureNetwork = Flag(arguments, "captureNetwork") ?? false,
     };
 
+    /// <summary>
+    /// Every per-run argument a call actually passed that differs from what the
+    /// session's browser was launched with, as one clause each.
+    /// </summary>
+    /// <remarks>
+    /// <b>Passed, not defaulted.</b> An argument the caller left out is compared
+    /// as nothing at all: read as its default, a bare resume of a headed session
+    /// would be refused for asking for no window, which is the opposite of what a
+    /// caller who said nothing meant.
+    /// </remarks>
+    /// <param name="arguments">The call's arguments, as they arrived.</param>
+    /// <param name="running">What the session's child was launched with.</param>
+    /// <param name="requested">What this call asked for, defaults included.</param>
+    /// <returns>One clause per differing argument, naming both values; empty when nothing differs.</returns>
+    private static List<string> Unapplied(JsonObject? arguments, SessionRunSettings running, SessionRunSettings requested)
+    {
+        var unapplied = new List<string>();
+
+        compare("headed", shown(running.Headed), shown(requested.Headed));
+        compare("tracing", shown(running.Tracing), shown(requested.Tracing));
+        compare("debug", shown(running.Debug), shown(requested.Debug));
+        compare("viewport", $"'{running.Run.Viewport}'", $"'{requested.Run.Viewport}'");
+        compare("locale", $"'{running.Run.Locale}'", $"'{requested.Run.Locale}'");
+        compare("timezone", zone(running.Run.TimeZone), zone(requested.Run.TimeZone));
+        compare("ignoreHTTPSErrors", shown(running.Run.IgnoreHttpsErrors), shown(requested.Run.IgnoreHttpsErrors));
+        compare("captureNetwork", shown(running.Run.CaptureNetwork), shown(requested.Run.CaptureNetwork));
+
+        return unapplied;
+
+        void compare(string name, string inUse, string asked)
+        {
+            if (arguments?[name] is not null && !string.Equals(inUse, asked, StringComparison.Ordinal))
+            {
+                unapplied.Add($"'{name}' is {inUse} and you asked for {asked}");
+            }
+        }
+
+        static string shown(bool value) => value ? "true" : "false";
+
+        static string zone(string? value) => value is null ? "the browser's own" : $"'{value}'";
+    }
+
     /// <summary>The viewport a call named, or the default.</summary>
     /// <remarks>
     /// <b>Refused, not clamped.</b> A caller that wrote <c>1920</c> meant
@@ -3245,35 +3422,6 @@ internal sealed class SessionToolException : Exception
 /// <remarks>Event ids start at 40, after <see cref="SessionLog"/>'s 1-8 and <see cref="SessionIndexLog"/>'s 20s.</remarks>
 internal static partial class SessionToolLog
 {
-    /// <summary>
-    /// A resume found this session's child dead and started another.
-    /// </summary>
-    /// <remarks>
-    /// <b>It goes to the session's own log, at Information</b>, because the gap
-    /// it explains is in that log: the rows either side of it were answered by
-    /// two different processes, and without this line the second one's silence
-    /// about the first one's pages reads as a fault.
-    /// </remarks>
-    /// <param name="logger">The session's own logger.</param>
-    /// <param name="directory">The session directory.</param>
-    /// <param name="processId">The new child's process id, or 0 when the child is not a process.</param>
-    [LoggerMessage(EventId = 49, Level = LogLevel.Information, Message = "The browser server for {Directory} had died; a replacement was started as pid {ProcessId}.")]
-    public static partial void ChildRelaunched(ILogger logger, string directory, int processId);
-
-    /// <summary>
-    /// A resume found this session's child dead and could not start another.
-    /// </summary>
-    /// <remarks>
-    /// <b>Error, and the session stays open.</b> The directory is still held and
-    /// the record is still there, so the caller can try again; what it may not
-    /// do is go on believing a browser is behind the session.
-    /// </remarks>
-    /// <param name="logger">The session's own logger.</param>
-    /// <param name="directory">The session directory.</param>
-    /// <param name="failure">Why the launch failed.</param>
-    [LoggerMessage(EventId = 50, Level = LogLevel.Error, Message = "The browser server for {Directory} had died and a replacement could not be started.")]
-    public static partial void ChildNotRelaunched(ILogger logger, string directory, Exception failure);
-
     /// <summary>A session was opened, by init or by resume.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="directory">The session directory.</param>
@@ -3381,4 +3529,12 @@ internal static partial class SessionToolLog
         Level = LogLevel.Warning,
         Message = "Whether {Browser} is provisioned could not be determined; the call was allowed through, not refused on a guess.")]
     public static partial void ProvisioningUnreadable(ILogger logger, string browser, Exception failure);
+
+    // Ids 49 and 50 were `ChildRelaunched` and `ChildNotRelaunched`, written by
+    // the in-place relaunch a resume made from 2026-09-17 when it met a dead
+    // child. Since 2026-10-03 that resume opens the session again through the
+    // ordinary open path, which records the open itself, and nothing writes
+    // either; the ids are not reused for anything else.
+    //
+    // RETIRED-EVENT-IDS: 49, 50
 }

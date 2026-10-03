@@ -52,6 +52,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private readonly List<ChildConnection> _realChildren = [];
     private readonly List<SessionLogging> _logs = [];
     private readonly List<ChildProcessOptions> _launches = [];
+
+    /// <summary>Each connection the rig handed the product, and the double behind it.</summary>
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<ChildConnection, FakePlaywrightChild> _doubles = [];
     private readonly Lock _gate = new();
     private readonly ILoggerFactory _provisioningLog;
 
@@ -238,15 +241,26 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                     _launches.Add(options);
                 }
 
-                return await ChildConnection.ConnectAsync(
+                var connection = await ChildConnection.ConnectAsync(
                     new PipeClientTransport(hop, loggerFactory),
                     loggerFactory,
                     idPrefix,
                     relay,
                     cancellationToken).ConfigureAwait(false);
+
+                _doubles.Add(connection, child);
+
+                return connection;
             },
+
+            // ⚠️ THE DOUBLE ANSWERS, because a double has no job for the
+            // kernel to count -- and since 2026-10-03 whether a browser is up
+            // decides whether an idle close, a resume, a caller's close or a
+            // shutdown does anything at all. See FakePlaywrightChild.BrowserIsOpen.
+            BrowserIsOpen = connection => _doubles.TryGetValue(connection, out var child) && child.BrowserIsOpen,
         };
     }
+
 
     /// <summary>What the proxy is handed.</summary>
     public SessionEnvironment Environment { get; private init; }

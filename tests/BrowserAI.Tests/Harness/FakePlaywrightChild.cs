@@ -173,6 +173,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
     private Task _loop = Task.CompletedTask;
     private int _disposed;
+    private int _browserIsOpen;
 
     /// <summary>Wires the double onto one hop's server end.</summary>
     /// <param name="link">The hop whose server end this child occupies.</param>
@@ -274,6 +275,35 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
     /// <summary>Whether the read loop has ended.</summary>
     public bool HasStopped => _loop.IsCompleted;
+
+    /// <summary>
+    /// Whether this double has a browser up, by upstream's rule: any tool call
+    /// brings one up, and an answered <c>browser_close</c> takes it down.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What the rig answers <c>SessionEnvironment.BrowserIsOpen</c> with</b>,
+    /// added 2026-10-03 when that question started deciding four things: whether
+    /// the idle close does anything, whether a resume applies its settings,
+    /// whether a caller's close is forwarded and whether a shutdown asks the
+    /// browser to close. A double has no job to count, so without this every one
+    /// of those arms would read <i>no browser</i> and be unreachable in the rig.
+    /// </para>
+    /// <para>
+    /// <b>The rule is upstream's, measured 2026-10-03</b>: it creates the browser
+    /// before it dispatches any tool call, <c>browser_close</c> included -- which
+    /// is why a close with no browser up starts one. The double does not copy
+    /// that last part: a close with nothing up leaves nothing up here, because the
+    /// product no longer forwards one.
+    /// </para>
+    /// </remarks>
+    public bool BrowserIsOpen => Volatile.Read(ref _browserIsOpen) is 1;
+
+    /// <summary>
+    /// Whether a tool call brings a browser up. True, as upstream's does; false
+    /// for the arm about a child with only <c>node</c> in it.
+    /// </summary>
+    public bool CallsOpenABrowser { get; set; } = true;
 
     /// <summary>Starts serving.</summary>
     public void Start() => _loop = Task.Run(RunAsync, CancellationToken.None);
@@ -455,6 +485,11 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             _tools.Add(toolName ?? "<none>");
         }
 
+        if (CallsOpenABrowser && !string.Equals(toolName, ClosingTool, StringComparison.Ordinal))
+        {
+            Volatile.Write(ref _browserIsOpen, 1);
+        }
+
         if (toolName is null || !Tools.TryGetValue(toolName, out var behaviour))
         {
             await _channel.WriteFrameAsync(
@@ -547,9 +582,18 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             ? Error(id, code, behaviour.ErrorMessage, behaviour.RawErrorData)
             : Result(id, behaviour.RawResult ?? """{"content":[{"type":"text","text":"ok"}]}""");
 
+        // A close takes the browser down before it answers, as upstream's does.
+        if (string.Equals(ToolNameOf(request), ClosingTool, StringComparison.Ordinal))
+        {
+            Volatile.Write(ref _browserIsOpen, 0);
+        }
+
         await _channel.WriteFrameAsync(frame, _stopping.Token);
         return true;
     }
+
+    /// <summary>Upstream's own close, spelled as upstream spells it.</summary>
+    private const string ClosingTool = "browser_close";
 
     /// <summary>
     /// The capability set this double advertises, which is the real child's,

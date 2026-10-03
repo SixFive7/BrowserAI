@@ -277,13 +277,18 @@ internal sealed class StraySweep
                 // start: a browser this pass ended belonged to a session that
                 // crashed, so its descriptor in Playwright's registry is dead and
                 // nothing else will ever unlink it. Started detached and never
-                // awaited, like the other three, and only when something really
-                // was terminated -- a pass that spared everything made nothing
-                // dead. See `ServerRegistryReap`.
-                if (result.Terminated.Count is not 0)
-                {
-                    _reap?.Start(ServerRegistryReap.AfterSweep);
-                }
+                // awaited, like the other three.
+                //
+                // ⚠️ AND SINCE 2026-10-03 ON EVERY PASS THAT HAD THE GATE, P5 a.
+                // Corrected 2026-10-03 (previously "and only when something
+                // really was terminated -- a pass that spared everything made
+                // nothing dead"). A BrowserAI its client killed made dead
+                // descriptors without any pass ending anything: the client ended
+                // the browsers, and no close path ran. The pass is the startup's
+                // one moment with the machine-wide gate, so one process reaps and
+                // every other that starts at the same moment pays an acquire and
+                // leaves. See `ServerRegistryReap.AtStartup`.
+                _reap?.Start(result.Terminated.Count is not 0 ? ServerRegistryReap.AfterSweep : ServerRegistryReap.AtStartup);
 
                 return result;
             }

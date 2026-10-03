@@ -1207,6 +1207,20 @@ tears the whole child down through its stdin and its job. The hazard is
 [a row of its own](../../HAZARDS.md#hazard-index), and re-verification row 167
 re-establishes this entry. `[FLOATS]`
 
+✅ **Since 2026-10-03 `browserai_resume` gets a session out of it.** *Added
+2026-10-03 by addition; the measurements above stand as measured.* The idle close
+sends no `browser_close` any more, so it cannot meet a pause this way, and a
+caller's own `browser_close` marks the session closed before it is forwarded: the
+call after a close that never answers is refused with a sentence naming
+`browserai_resume`, and the resume ends that child through its stdin and starts a
+new one. The parked close itself is answered with the failure: the SDK ends a
+request still waiting when its client is disposed, and `ChildConnection.AskAsync`
+reports that as the child not answering instead of passing it on as a
+cancellation the caller never made.
+`SessionCloseTests.ACloseThatNeverAnswersLeavesASessionTheResumeRecovers` holds it
+with a child that holds the close open; that a real paused child obeys its stdin
+is the 0.0.82 measurement above and was not re-taken through the product.
+
 ### A close from the dashboard leaves the session on a blank page, and no call fails
 
 Measured:
@@ -1746,11 +1760,21 @@ already on record in this article.
 | `--codegen` | `typescript` | `none` |
 | `--file-paths` | `relative` | `absolute`, so a pointer in a tool result means something to a caller |
 | `--snapshot-boxes` | off | `false`, written explicitly, and a model asks `browser_snapshot` for `boxes: true` on the call that needs coordinates -- *corrected 2026-10-03, Q322 a (previously "on"): `browser_snapshot` returns its snapshot inline, and boxes on cost 175,611 tokens against 105,804 off over nine pages, measured 2026-09-25 at `@playwright/mcp` 0.0.82, Chrome for Testing 154.0.8037.0, `o200k_base` as a proxy tokenizer* |
-| `--idle-timeout` | 3,600,000 ms | the same number, written so it is on the record, and unreachable behind BrowserAI's own 10-minute timer |
+| `--idle-timeout` | 3,600,000 ms for a headless launch, none for a headed one | 3,600,000 ms for a headless launch, unreachable behind BrowserAI's own 10-minute timer, and 0 for a headed one, which upstream reads as none, since 2026-10-03 (Q326 a: BrowserAI's own timer is never armed for a headed session). *Corrected 2026-10-03 (previously "3,600,000 ms" and "the same number, written so it is on the record, and unreachable behind BrowserAI's own 10-minute timer")* |
 | `--no-webmcp` | webmcp on | webmcp on, written as a stance |
 | `--allow-unrestricted-file-access` | off | `false`, written explicitly |
 | `--output-max-size` | unset | left unset **deliberately**, so upstream's recursive oldest-first deleter never runs |
 | `--isolated` | off | never set, ever: it puts the profile in a temp directory deleted on close |
+
+⚠️ **Added 2026-10-03: three launch options beside the nine, none of them a
+command-line option.** Every Chromium launch adds `--restore-last-session` and
+`--enable-aggressive-domstorage-flushing` to its `args`, every Firefox launch
+writes three `browser.sessionstore` preferences, and both drop `about:blank` from
+Playwright's default arguments. The first, third and fourth are the browsers' own
+session restore and the second keeps `localStorage` safe from a kill after about a
+second; what each was measured doing is in
+[the timings article](provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03)
+and [its hard-kill entry](provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03).
 
 ### The tool surface, counted three ways
 

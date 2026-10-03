@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Sessions;
@@ -230,6 +229,13 @@ internal sealed partial class BrowserIdleTimerTests
     /// that meets an outstanding call is the product keeping its promise, and the
     /// count assertion at the end is what makes it a bounded claim.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>What "closed" means moved on 2026-10-03, P4 b.</b> <i>Corrected
+    /// 2026-10-03 (previously the close was read off the double receiving a
+    /// <c>browser_close</c>).</i> The close ends the session's whole child now,
+    /// so the double's read loop stopping is the event, and a
+    /// <c>browser_close</c> reaching it would be the old close coming back.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -277,37 +283,53 @@ internal sealed partial class BrowserIdleTimerTests
 
             clock.AdvanceTicks(ShortPeriod.Ticks - ManualClock.OneTick);
 
-            await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+            await Assert.That(child.HasStopped).IsFalse();
         }
+
+        // Every frame the caller has had so far, for the silence asserted below.
+        var framesBefore = harness.Client.FramesReceived.Count;
 
         // And now nothing at all.
         await WaitUntilAsync(
             () =>
             {
                 clock.Advance(ShortPeriod);
-                return child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+                return child.HasStopped;
             },
             TestDefaults.InProcessHang,
-            "the idle close never reached the child, however far the clock was moved");
+            "the idle close never ended the session's child, however far the clock was moved");
 
         // One close, and only one, however long it is left: the timer is one-shot
         // and stays disarmed until the next call. Twenty periods is twenty
         // chances for a timer that wrongly re-armed, and the round trip after
-        // them is a real exchange through the same server and the same child --
-        // so anything the close path had queued has been through the child's loop
-        // by the time the count is read.
+        // them is a real exchange through the same server -- so anything the
+        // close path had queued has been through by the time the count is read.
         clock.Advance(ShortPeriod * 20);
 
         _ = await harness.Client.RoundTripAsync("tools/list");
 
-        await Assert.That(child.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
-
         // The evidence a caller would see, which is none: the close is
-        // BrowserAI's own call to its own child and no frame about it reaches
-        // the client.
-        var toTheCaller = string.Concat(harness.Client.FramesReceived.Select(Encoding.UTF8.GetString));
+        // BrowserAI's own and no frame about it reaches the client, so the one
+        // frame since the count above is the answer to the list.
+        //
+        // ⚠️ Corrected 2026-10-03 (previously no frame anywhere could contain
+        // the close tool's name). `browserai_resume`'s own description names
+        // `browser_close` since that day, as the way to apply a setting while a
+        // browser is up, so the name is in every tool list a caller is sent.
+        await Assert.That(harness.Client.FramesReceived.Count).IsEqualTo(framesBefore + 1);
 
-        await Assert.That(toTheCaller).DoesNotContain(LiveSession.BrowserCloseTool);
+        await WaitUntilAsync(
+            () => RecordedSession.LogOf(session).Any(row => row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+            TestDefaults.InProcessHang,
+            "the idle close never settled its row");
+
+        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+
+        // ⚠️ AND IT NEVER ASKED THE CHILD TO CLOSE ANYTHING, P4 b: a
+        // `browser_close` that meets an armed debugger pause never answers, and
+        // the close that ends the child through its stdin cannot be wedged that
+        // way.
+        await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
     }
 
     /// <summary>
@@ -381,10 +403,10 @@ internal sealed partial class BrowserIdleTimerTests
             () =>
             {
                 clock.Advance(ShortPeriod);
-                return child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+                return child.HasStopped;
             },
             TestDefaults.InProcessHang,
-            "the idle close never reached the child, however far the clock was moved");
+            "the idle close never ended the session's child, however far the clock was moved");
 
         // The row is settled on the way back, so the read waits for the outcome
         // and not for a duration -- bounded by the suite's own hang detector
@@ -406,6 +428,13 @@ internal sealed partial class BrowserIdleTimerTests
         // is a row that reads as a caller's call.
         await Assert.That(closes[0].Why).Contains("idle");
         await Assert.That(closes[0].Why).Contains("BrowserAI");
+
+        // ⚠️ AND IT NAMES THE WAY BACK AND PROMISES NOTHING IT CANNOT KEEP,
+        // added 2026-10-03. The sentence it replaces said "Nothing was lost --
+        // the next call relaunches the browser and answers normally", and a
+        // field report met the next call running on about:blank.
+        await Assert.That(closes[0].Why).Contains(SessionToolSurface.Resume);
+        await Assert.That(closes[0].Why).DoesNotContain("Nothing was lost");
 
         // And the reader a caller actually uses sees it, which is the whole
         // finding: catch_up's log half is what says "this is what BrowserAI did".
@@ -490,7 +519,7 @@ internal sealed partial class BrowserIdleTimerTests
         // the line below.
         clock.Advance(ShortPeriod * 3);
 
-        await Assert.That(harness.Child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+        await Assert.That(harness.Child.HasStopped).IsFalse();
 
         held.SetResult();
 
@@ -508,40 +537,38 @@ internal sealed partial class BrowserIdleTimerTests
             () =>
             {
                 clock.Advance(ShortPeriod);
-                return harness.Child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+                return harness.Child.HasStopped;
             },
             TestDefaults.InProcessHang,
             "the timer never re-armed after the held call was answered, however far the clock was moved");
     }
 
     /// <summary>
-    /// Against a <b>real</b> browser: idle past the period leaves no browser
-    /// process and the node child still running, and the next call succeeds
-    /// without ever saying the browser is closed.
+    /// Against a <b>real</b> browser: idle past the period ends the session's
+    /// whole child, node included, the next call is refused with the way back,
+    /// and the resume starts a child whose browser answers.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Both facts are asserted because either alone is the wrong outcome.</b>
-    /// A session with no browser and no node child has been torn down, not idled;
-    /// a session with both is one where the timer did nothing. The pair is what
-    /// §C asks for.
-    /// </para>
-    /// <para>
-    /// <b>The relaunch is upstream's, and this test is what establishes that</b> --
-    /// there is no relaunch code in this repository. Playwright creates the
-    /// browser lazily on first use, so the call after an idle close simply works.
-    /// Measured separately at ~0.41 s
-    /// ([kb](../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "idle past the period leaves no
+    /// browser process and the node child still running, and the next call
+    /// succeeds without ever saying the browser is closed").</b> Under the
+    /// maintainer's P4 b the close ends the whole child, and under his P2 a the
+    /// next call is refused until <c>browserai_resume</c>. Both halves of the old
+    /// pair are now the wrong outcome: a node child still alive is a close that
+    /// held 124 MB for nothing, and a call that silently relaunched is the field
+    /// report's blank page.
     /// </para>
     /// <para>
     /// <b>Every question about processes is asked of this session's own job</b>,
     /// never of the machine: the suite runs several browsers in parallel and an
-    /// image-path scan cannot tell one session's Chromium from another's.
+    /// image-path scan cannot tell one session's Chromium from another's. The
+    /// node child is asked by its own <c>(pid, creation time)</c>.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks()
+    public async Task AnIdleSessionEndsItsWholeChildAndTheNextCallIsRefusedUntilResume()
     {
         // A machine that has never been provisioned proves nothing here, so this
         // reports as SKIPPED and not as a pass -- and as a failure under
@@ -550,15 +577,8 @@ internal sealed partial class BrowserIdleTimerTests
         SuiteEnvironment.RequireProvisionedChromium();
 
         // ⚠️ A clock this test moves by hand, so the close happens exactly when
-        // this test asks for it and at no other moment.
-        //
-        // Corrected 2026-08-17 (previously a real 3 s period). Every census
-        // below is a question about a live browser, and with a real period the
-        // timer was racing them: at full parallelism the relaunch on the last
-        // line took longer than the period, so the browser was closed again
-        // before it could be counted and the test failed reporting zero
-        // browsers -- with the product having done exactly what it promises,
-        // twice. The period is nominal now; nothing waits for it.
+        // this test asks for it and at no other moment. See the history of the
+        // arm this replaced: a real 3 s period raced every census below.
         var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
 
@@ -575,71 +595,253 @@ internal sealed partial class BrowserIdleTimerTests
             ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session!, ["why"] = "the suite exercising this call" },
         });
 
-        // ⚠️ **There is deliberately no assertion here that the close came no
-        // sooner than a period after this answer**, and two full-suite runs are
-        // why. A client-side stopwatch measures from the moment the *test* is
-        // scheduled to observe the answer, not from the moment the product sent
-        // it -- and under this machine's known starvation those differ by
-        // seconds: the first version failed at 1.71 s and then at 0.55 s against
-        // a 3 s period while the timer was behaving correctly. The reset
-        // property is asserted where both clocks are the product's, in the
-        // in-process tests above; what this test owns is the pair of facts a
-        // real browser is needed for.
         await Assert.That((bool?)navigate["isError"]).IsNotEqualTo(true);
 
         var child = rig.RealSessionChildren.Single();
         var node = child.ProcessId!.Value;
         var nodeCreated = ProcessIdentity.CreationTimeOf(node);
 
-        // A real browser really is up. Anything below this that finds zero
-        // browsers would otherwise pass vacuously.
+        // A real browser really is up, read off the job before anything is
+        // closed: a census of a job that is already gone would pass vacuously.
+        var members = child.JobProcessIds()
+            .Where(pid => pid != node)
+            .Select(pid => (Pid: pid, Created: TryCreationTimeOf(pid)))
+            .Where(entry => entry.Created is not null)
+            .Select(entry => (entry.Pid, Created: entry.Created!.Value))
+            .ToList();
+
         await Assert.That(BrowsersIn(child, rig).Count).IsGreaterThan(0);
 
         // Now, and only now, the session goes idle. The clock is advanced until
-        // the browser has actually gone and not once: the proxy releases its
+        // the node child has actually gone and not once: the proxy releases its
         // in-flight scope after the caller's answer is on the wire, so an advance
         // that lands while a call is still outstanding re-arms for a whole
-        // period -- correctly -- and the wait is what absorbs that. What is being
-        // waited for afterwards is a real process tree dying, which is real time
-        // and is bounded by the teardown patience.
+        // period -- correctly. What is waited for afterwards is a real process
+        // tree ending, which is real time and is bounded by the teardown patience.
         await WaitUntilAsync(
             () =>
             {
                 clock.Advance(period);
-                return BrowsersIn(child, rig).Count is 0;
+                return !ProcessIdentity.IsAlive(node, nodeCreated);
             },
             TeardownPatience,
-            "the browser was still running long after the session went idle");
+            "the node child was still running long after the session went idle");
 
-        // ⚠️ Confirmed a second time, not believed the first. The scan
-        // behind it opens ~600 processes, and one transient failure to open the
-        // browser's own would read as "the browser is gone" while it was
-        // running -- the same class of false answer that makes an image-NAME
-        // match unacceptable, arriving through a legitimate one.
-        await Task.Delay(250);
+        // The browser tree went with it: every process the job held is gone.
+        var survivors = new List<int>();
 
-        await Assert.That(BrowsersIn(child, rig).Count).IsEqualTo(0);
+        await WaitUntilAsync(
+            () =>
+            {
+                survivors = [.. members.Where(entry => ProcessIdentity.IsAlive(entry.Pid, entry.Created)).Select(entry => entry.Pid)];
+                return survivors.Count is 0;
+            },
+            TeardownPatience,
+            "something in the session's job outlived the idle close");
 
-        // The half a browser count cannot make: the node child is still there,
-        // so this was an idle close, not a teardown.
-        await Assert.That(ProcessIdentity.IsAlive(node, nodeCreated)).IsTrue();
-        await Assert.That(child.JobProcessIds()).Contains(node);
+        await Assert.That(string.Join(", ", survivors)).IsEmpty();
 
-        // And the whole reason the timer is safe to have. Not "it did not
-        // throw": the answer must carry no closed-browser wording on any path,
-        // because a model reads this text and would give up on the session.
+        // And the next call is refused, naming the way back.
+        var refused = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session!, ["why"] = "the suite calling a closed session" },
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
+
+        var resumed = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.Resume,
+            ["arguments"] = new JsonObject { ["directory"] = harness.Session!, ["why"] = "the suite resuming the session the timer closed" },
+        });
+
+        await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
+        await Assert.That(rig.RealSessionChildren.Count).IsEqualTo(2);
+
         var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
             ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session!, ["why"] = "the suite exercising this call" },
         });
 
-        var text = string.Join("\n", (again["content"]?.AsArray() ?? []).Select(block => (string?)block!["text"] ?? string.Empty));
+        await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
+        await Assert.That(BrowsersIn(rig.RealSessionChildren[^1], rig).Count).IsGreaterThan(0);
+    }
+
+    /// <summary>
+    /// When the timer fires with only the node child in the job, it closes
+    /// nothing, writes no row and leaves the session answering.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q327 a, the maintainer's words of 2026-10-03, verbatim: "Q327 a".</b>
+    /// Until then a timer that fired with nothing up still wrote a row saying
+    /// BrowserAI had closed the browser, and sent a <c>browser_close</c> that
+    /// started a browser in order to close it. The double is told that its calls
+    /// start no browser, which is the state a crashed or already-closed browser
+    /// leaves; the record at debug level is the only trace the timer leaves, and
+    /// it is what tells this arm the timer fired at all.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnIdleTimerThatFindsOnlyTheNodeChildClosesNothingAndWritesNoRow()
+    {
+        var clock = new ManualClock();
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.CallsOpenABrowser = false;
+            },
+            opensDefaultSession: false,
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        var session = Path.Combine(rig.Root, "nothing-up");
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browserai_init",
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "a session whose browser is not up when the timer fires",
+                ["debug"] = true,
+            },
+        });
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session, ["why"] = "the call that arms the timer" },
+        });
+
+        await WaitUntilAsync(
+            () =>
+            {
+                clock.Advance(ShortPeriod);
+                return harness.Logs.Logged("so nothing was closed and no row was written");
+            },
+            TestDefaults.InProcessHang,
+            "the timer never fired, however far the clock was moved");
+
+        var child = rig.SessionChildren[^1];
+
+        await Assert.That(child.HasStopped).IsFalse();
+        await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+        await Assert.That(RecordedSession.LogOf(session).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsFalse();
+
+        // And the session was not closed: the next call reaches the same child.
+        var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session, ["why"] = "the call after a timer that closed nothing" },
+        });
 
         await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
-        await Assert.That(text.ToUpperInvariant()).DoesNotContain("BROWSER IS CLOSED");
-        await Assert.That(text.ToUpperInvariant()).DoesNotContain("HAS BEEN CLOSED");
-        await Assert.That(BrowsersIn(child, rig).Count).IsGreaterThan(0);
+        await Assert.That(child.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// A headed session is never idle-closed, and its config turns upstream's own
+    /// idle timeout off as well; a headless one keeps both.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q326 a, the maintainer's words of 2026-10-03, verbatim: "Q326 a - the
+    /// timer is there to conserve system resources the user cannot see. Also,
+    /// interactive windows mostly hold user state so they are super
+    /// valuable."</b> A field report of 2026-10-01 had an agent calling something
+    /// every four minutes to keep a window open while a person signed in.
+    /// </para>
+    /// <para>
+    /// <b>Fifty periods with a browser up is fifty chances</b> for a timer that
+    /// was armed after all, and the headless session beside it, under the same
+    /// clock, is the control that shows the clock was able to close one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHeadedSessionIsNeverIdleClosedAndItsConfigTurnsUpstreamsTimeoutOff()
+    {
+        var clock = new ManualClock();
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
+            opensDefaultSession: false,
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        var headed = Path.Combine(rig.Root, "headed");
+        var headless = Path.Combine(rig.Root, "headless");
+
+        foreach (var (directory, window) in new[] { (headed, true), (headless, false) })
+        {
+            _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+            {
+                ["name"] = "browserai_init",
+                ["arguments"] = new JsonObject
+                {
+                    ["directory"] = directory,
+                    ["purpose"] = "a session left idle under the same clock as its neighbour",
+                    ["headed"] = window,
+                },
+            });
+
+            _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+            {
+                ["name"] = "browser_navigate",
+                ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = directory, ["why"] = "the call that starts the browser" },
+            });
+        }
+
+        var headedChild = rig.SessionChildren[0];
+        var headlessChild = rig.SessionChildren[1];
+
+        await WaitUntilAsync(
+            () =>
+            {
+                clock.Advance(ShortPeriod);
+                return headlessChild.HasStopped;
+            },
+            TestDefaults.InProcessHang,
+            "the headless control was never idle-closed, so this clock could not have closed the headed one either");
+
+        clock.Advance(ShortPeriod * 50);
+
+        _ = await harness.Client.RoundTripAsync("tools/list");
+
+        await Assert.That(headedChild.HasStopped).IsFalse();
+        await Assert.That(RecordedSession.LogOf(headed).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsFalse();
+
+        // And the browser's own timer is off for the headed launch and upstream's
+        // hour for the headless one.
+        await Assert.That((int?)ConfigOf(rig.Launches[0])["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.NoIdleTimeout);
+        await Assert.That((int?)ConfigOf(rig.Launches[1])["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.IdleTimeoutMilliseconds);
+
+        var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = headed, ["why"] = "the call after fifty idle periods" },
+        });
+
+        await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
+    }
+
+    /// <summary>The generated config a launch was given, read back off disk.</summary>
+    /// <param name="launch">The launch, as the rig recorded it.</param>
+    /// <returns>The config.</returns>
+    private static JsonObject ConfigOf(BrowserAI.Protocol.ChildProcessOptions launch)
+    {
+        var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
+
+        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
     }
 
     /// <summary>

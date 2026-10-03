@@ -1117,8 +1117,20 @@ internal static class SessionErrors
     /// </para>
     /// <para>
     /// <b>And it says what the replacement will not bring back.</b> The profile
-    /// is on disk and survives; the pages, the tabs and anything a script left
-    /// in memory were in the process that died.
+    /// is on disk; what was only in the process that died is not.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "The session's profile, files and
+    /// log are all still on disk, so cookies and stored state survive -- but no
+    /// page is open in a new browser server, so navigate again before you act on
+    /// what you see.").</b> Both halves were wrong. A browser that did not shut
+    /// down cleanly loses what it had not flushed: measured 2026-09-22 and again
+    /// 2026-10-03, a killed Chromium needs a cookie on disk for about 30 s and
+    /// <c>localStorage</c> for about 5 s before a kill cannot take it, and session
+    /// cookies never are. And since the same day the next browser reopens the
+    /// tabs its profile last recorded, so "no page is open" is no longer
+    /// promised either way. <c>SessionManager.ChildWasRelaunched</c> was
+    /// corrected the same way on 2026-09-22 and this one was missed.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool that was not forwarded.</param>
@@ -1127,25 +1139,113 @@ internal static class SessionErrors
     public static string BrowserServerHasGone(string tool, string path) =>
         $"The browser server for '{path}' has ended, so '{tool}' was not forwarded and nothing in the browser changed. "
         + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
-        + "The session's profile, files and log are all still on disk, so cookies and stored state survive -- but no page is open in a new browser server, so navigate again before you act on what you see.";
+        + "The session's profile, files and log are on disk, but a browser that ends without a clean close keeps only what it had already flushed: "
+        + "recent cookie and localStorage writes may be gone, so read any stored value back before you rely on it.";
 
     /// <summary>
-    /// Row 7's companion -- the session's browser server had died and a
-    /// replacement would not start.
+    /// Row 7's third companion -- the session's browser was closed, by the idle
+    /// timer or by the caller's own <c>browser_close</c>, and nothing has
+    /// resumed it.
     /// </summary>
     /// <remarks>
-    /// <b>The session is still open, and the sentence has to say so.</b> The
-    /// directory is still held by this process, its record is intact and its log
-    /// is still being written; what is missing is the process that drives a
-    /// browser. A caller told only <i>could not start</i> would reasonably
-    /// conclude the session was lost and go and make another one beside it.
+    /// <para>
+    /// <b>P2 a, the maintainer's words of 2026-10-03 verbatim: "p2 a"</b>, on a
+    /// proposal he had made himself: <i>"Add the automatic close to the log when
+    /// the close happens. Then ask the calling llm to first call resume
+    /// explaining that this is required after 10 min. of inactivity."</i> So the
+    /// refusal says nothing was run, names <c>browserai_resume</c> exactly, names
+    /// the period when the timer closed it, and says what was kept and what was
+    /// lost. P3 b gives the caller's own close the same refusal.
+    /// </para>
+    /// <para>
+    /// <b>What it says was kept and lost is measured, 2026-10-03, at
+    /// <c>@playwright/mcp</c> 0.0.82 and 0.0.83 over both families.</b> Across
+    /// either close and a new child, the browser's own session restore brought
+    /// the tabs back with their history, <c>sessionStorage</c>, typed text, scroll
+    /// position and session cookies, 24 of 24; the profile kept persistent
+    /// cookies, <c>localStorage</c> and IndexedDB; refs from earlier snapshots
+    /// were invalid in every run; and a page that was a form POST came back as an
+    /// error page in Chromium and was fetched again without its data in Firefox.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was not forwarded.</param>
+    /// <param name="path">The session directory.</param>
+    /// <param name="closure">How and when the browser was closed.</param>
+    /// <returns>The refusal.</returns>
+    public static string SessionWasClosed(string tool, string path, SessionClosure closure)
+    {
+        ArgumentNullException.ThrowIfNull(closure);
+
+        var how = closure.Cause is SessionCloseCause.Idle
+            ? $"BrowserAI closed this session's browser at {When(closure.At)} because no browser call had reached it for {Duration(closure.IdlePeriod)}; it closes an idle headless browser so that one nobody is using does not hold memory. "
+            : $"This session's browser was closed at {When(closure.At)} by a {LiveSession.BrowserCloseTool} call. ";
+
+        return $"'{tool}' was not run: nothing was sent to the browser. {how}"
+            + $"Call {SessionToolSurface.Resume} with directory='{path}' first, then repeat this call. "
+            + "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the first browser call after the resume reopens the tabs that were open, with their history, sessionStorage, typed text and session cookies. "
+            + "Lost: refs from earlier snapshots, so call browser_tabs and browser_snapshot before you act; which tab was selected; and a page that was the answer to a form POST, which does not come back as it was.";
+    }
+
+    /// <summary>
+    /// Q324 a -- a resume of a session whose browser is up, asked for per-run
+    /// settings that browser was not launched with.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's words of 2026-10-03, verbatim: "Q324 your
+    /// recommendation"</b>, which was to apply nothing while a browser is up, say
+    /// so, and refuse when the settings asked for differ, then to apply them once
+    /// no browser is up. A per-run setting is read by a child once, at its start,
+    /// so applying one means starting a new child, and that ends the browser and
+    /// whatever a person is doing in its window.
+    /// </para>
+    /// <para>
+    /// <b>Only the arguments the call actually passed are compared.</b> An
+    /// omitted one would otherwise read as its default, and a bare resume of a
+    /// headed session would be refused for asking for no window. A field report
+    /// of 2026-10-01 is what this answers: two resumes asking for a window were
+    /// both told "nothing was changed", with no error, and the session stayed
+    /// headless.
+    /// </para>
     /// </remarks>
     /// <param name="path">The session directory.</param>
-    /// <param name="why">What failed.</param>
+    /// <param name="unapplied">One clause per argument that differs, naming both values.</param>
     /// <returns>The refusal.</returns>
-    public static string BrowserServerCouldNotBeRelaunched(string path, string why) =>
-        $"The browser server for '{path}' had died, and starting a replacement failed: {why} The session itself is untouched -- this BrowserAI still holds the directory, and its profile, files and log are all still there. "
-        + $"Browser calls on this session will fail until one starts. Call {SessionToolSurface.Resume} on the same directory to try again; if it keeps failing, {SessionToolSurface.Destroy} the session and open a new one, and the reason is in the session's own log.";
+    public static string ResumeCannotApplyWhileTheBrowserIsUp(string path, IReadOnlyList<string> unapplied)
+    {
+        ArgumentNullException.ThrowIfNull(unapplied);
+
+        return $"'{path}' is open in this BrowserAI and its browser is up, so {SessionToolSurface.Resume} applied nothing and changed nothing. "
+            + $"It was asked for per-run settings this browser was not launched with: {string.Join("; ", unapplied)}. "
+            + $"A per-run setting takes effect only when a browser starts. To apply them, call {LiveSession.BrowserCloseTool} on this session and then {SessionToolSurface.Resume} again with the same arguments; "
+            + "the first browser call after that reopens the tabs. To keep this browser as it is, leave those arguments out.";
+    }
+
+    /// <summary>
+    /// A moment, as every BrowserAI answer spells one.
+    /// </summary>
+    /// <param name="at">The moment.</param>
+    /// <returns>The round-trip form, which is what <c>browserai_resume</c> and <c>browserai_catch_up</c> print.</returns>
+    internal static string When(DateTimeOffset at) => at.ToString("O", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// A period, in the unit a reader would use for it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Interpolated, and the idle close's own row is not.</b> That row is
+    /// written into a record and read back forever, while this is said once, about
+    /// the session the caller named: the shipped ten minutes in the product, and
+    /// whatever the suite set in a rig, which is the truth there too.
+    /// </remarks>
+    /// <param name="period">The period, or <see langword="null"/> when there was none.</param>
+    /// <returns>Whole minutes when it is whole minutes, seconds otherwise.</returns>
+    internal static string Duration(TimeSpan? period) => period switch
+    {
+        null => "the idle period",
+        { TotalMinutes: 1 } => "1 minute",
+        { } whole when whole.Ticks % TimeSpan.TicksPerMinute is 0 => $"{whole.TotalMinutes.ToString(CultureInfo.InvariantCulture)} minutes",
+        { } other => $"{other.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds",
+    };
 
     /// <summary>Row 8 -- somebody else holds the directory.</summary>
     /// <param name="path">The session directory.</param>

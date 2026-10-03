@@ -964,15 +964,30 @@ internal sealed partial class SaturationTests
 
                     browsers = BrowsersIn(client);
 
-                    // Close, then launch again. The relaunch is upstream's own
-                    // lazy creation and it is the half that says the close was a
-                    // close and not a teardown: a session whose browser
-                    // cannot come back has been broken by the close.
+                    // Close, resume, then launch again: a session whose browser
+                    // cannot come back has been broken by the close. Corrected
+                    // 2026-10-03 with P3 b (previously "Close, then launch again.
+                    // The relaunch is upstream's own lazy creation and it is the
+                    // half that says the close was a close and not a teardown"):
+                    // the caller's own close now closes the session, every call
+                    // is refused until browserai_resume starts a new child, and
+                    // the way back is that resume.
                     _ = await client.RoundTripAsync("tools/call", new JsonObject
                     {
                         ["name"] = LiveSession.BrowserCloseTool,
                         ["arguments"] = new JsonObject { ["session"] = Session, ["why"] = "the suite exercising this call" },
                     });
+
+                    var resumed = await client.RoundTripAsync("tools/call", new JsonObject
+                    {
+                        ["name"] = SessionToolSurface.Resume,
+                        ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite resuming after its own close" },
+                    });
+
+                    if ((bool?)resumed["isError"] is true)
+                    {
+                        return report with { Failure = $"browserai_resume was refused after browser_close: {TextOf(resumed)}" };
+                    }
 
                     var again = await client.RoundTripAsync("tools/call", new JsonObject
                     {
@@ -982,7 +997,7 @@ internal sealed partial class SaturationTests
 
                     if ((bool?)again["isError"] is true)
                     {
-                        return report with { Failure = $"the browser did not come back after browser_close: {TextOf(again)}" };
+                        return report with { Failure = $"the browser did not come back after browser_close and browserai_resume: {TextOf(again)}" };
                     }
 
                     browsers = Math.Max(browsers, BrowsersIn(client));

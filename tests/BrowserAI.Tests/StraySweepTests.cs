@@ -437,6 +437,46 @@ internal sealed class StraySweepTests
         await Assert.That(result.Summary).Contains("liveMarkers=[-]");
     }
 
+    /// <summary>
+    /// A pass that had the gate starts Playwright's registry reap even when it
+    /// ended nothing, which is the startup's collection of what a killed run
+    /// left behind.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P5 a, the maintainer's words of 2026-10-03, verbatim: "p5 a".</b> A
+    /// client that kills BrowserAI runs no close path, so no reap follows the
+    /// browsers it took down; measured that day, the hard-kill research's killed
+    /// runs left a descriptor in 115 of 120 registries. Until today a pass started
+    /// a reap only when it had itself ended a browser.
+    /// </para>
+    /// <para>
+    /// <b>The reap is handed a payload with nothing in it</b>, so it is recorded
+    /// as unable to start, naming the cause it was started for, and no
+    /// <c>node</c> runs and no registry is touched: what this arm holds is that the
+    /// pass asked for one, and why. <see cref="ServerRegistryReapTests"/> holds
+    /// what a reap that does run does.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [NotInParallel(SweepGroup)]
+    public async Task APassThatHadTheGateStartsTheRegistryReapEvenWhenItEndedNothing()
+    {
+        using var scratch = ScratchDirectory.Create("sweep-startup-reap");
+        using var records = new CapturingLoggerProvider();
+        using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(records));
+
+        var reap = new ServerRegistryReap(new PayloadLayout(scratch.Path), factory.CreateLogger<ServerRegistryReap>());
+
+        var result = await OnItsOwnThreadAsync(() =>
+            new StraySweep([], index: null, NullLogger.Instance, reap: reap).Run(GatePatience));
+
+        await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
+        await Assert.That(result.Terminated.Count).IsEqualTo(0);
+        await Assert.That(records.Logged($"No server-registry reap after {ServerRegistryReap.AtStartup}")).IsTrue();
+    }
+
     [Test]
     public async Task TheSweepMutexIsNamedOnceInTheProductAndEveryEntryPointReachesThatName()
     {

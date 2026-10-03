@@ -111,14 +111,23 @@ internal sealed class DeadChildTests
     }
 
     /// <summary>
-    /// A resume against a session whose child is <b>healthy</b> is still the
-    /// no-op it always was.
+    /// A resume against a session whose child is <b>healthy</b>, asking for what
+    /// the session already has, starts nothing.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The control for the arm above, and it is not decoration.</b> A
     /// liveness check that answered <i>dead</i> too readily would relaunch a
     /// working child on every resume -- throwing away the browser, the page and
     /// the tab the caller was about to pick up, while reporting a repair.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "is still the no-op it always
+    /// was", asserting <i>nothing was changed</i>).</b> A resume can apply
+    /// per-run settings now (Q324 c), so the no-op is the case where there is
+    /// nothing to apply, and it says that in words of its own; see
+    /// <c>SessionCloseTests</c> for a resume that does apply something.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -141,7 +150,7 @@ internal sealed class DeadChildTests
             ["why"] = "the suite exercising a resume against a session that is fine",
         }));
 
-        await Assert.That(resumed).Contains("nothing was changed");
+        await Assert.That(resumed).Contains(SessionManager.NothingNeededApplying);
         await Assert.That(resumed).DoesNotContain(SessionManager.ChildWasRelaunched);
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
     }

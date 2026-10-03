@@ -103,6 +103,60 @@ internal sealed class ConfigRoundTripTests
         }
     }
 
+    /// <summary>
+    /// Every session launch carries the browser's own session restore, Chromium's
+    /// launches flush DOM storage early, and a headed launch turns upstream's
+    /// idle timeout off.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's P1, Q326 a and the root's e1, all 2026-10-03.</b> The
+    /// restore is a launch option and nothing else in BrowserAI drives it, so a
+    /// generator that dropped any of these keys would leave every other
+    /// assertion green while every resume came back on a blank page, a write a
+    /// kill could take sat unflushed for five seconds longer, or a person's
+    /// window closed after an hour without a call.
+    /// </para>
+    /// <para>
+    /// <b>Generator-level, like the arm above</b>, so deleting one key and
+    /// watching this go red is one build and no browser. That the child honours
+    /// the keys is <see cref="EveryGeneratedOpinionComesBackFromTheChild"/>'s,
+    /// and that the restore actually restores is
+    /// <c>SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed</c>'s.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EverySessionLaunchCarriesTheBrowsersOwnRestoreAndAHeadedOneNoIdleTimeout()
+    {
+        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-restore"));
+
+        var chromium = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, tracing: false, RunOptions.Default).Json)!;
+        var firefox = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, tracing: false, RunOptions.Default).Json)!;
+        var headed = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: true, ProvisionedBrowsers.Chromium, tracing: false, RunOptions.Default).Json)!;
+
+        var arguments = chromium["browser"]!["launchOptions"]!["args"]!.AsArray().Select(node => (string?)node).ToList();
+
+        await Assert.That(arguments).Contains("--restore-last-session");
+        await Assert.That(arguments).Contains("--enable-aggressive-domstorage-flushing");
+
+        foreach (var family in new[] { chromium, firefox })
+        {
+            await Assert.That(string.Join(",", family["browser"]!["launchOptions"]!["ignoreDefaultArgs"]!.AsArray().Select(node => (string?)node)))
+                .IsEqualTo("about:blank");
+        }
+
+        var preferences = firefox["browser"]!["launchOptions"]!["firefoxUserPrefs"]!;
+
+        await Assert.That((bool?)preferences["browser.sessionstore.resume_session_once"]).IsTrue();
+        await Assert.That((bool?)preferences["browser.sessionstore.restore_on_demand"]).IsFalse();
+        await Assert.That((bool?)preferences["browser.sessionstore.restore_tabs_lazily"]).IsFalse();
+
+        // Upstream's hour for a headless launch, and nothing for a headed one.
+        await Assert.That((int?)chromium["timeouts"]!["idle"]).IsEqualTo(3_600_000);
+        await Assert.That((int?)headed["timeouts"]!["idle"]).IsEqualTo(0);
+    }
+
     [Test]
     public async Task TheChildResolvesOurChannelAndOurProfileRatherThanADefault()
     {

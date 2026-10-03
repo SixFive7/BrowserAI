@@ -719,18 +719,29 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
-    /// Row 7's companion -- a resume that met a dead child and could not start a
-    /// replacement.
+    /// Row 7 again, from a resume -- a session whose child died, resumed while
+    /// a new child will not start.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously this provoked
+    /// <c>BrowserServerCouldNotBeRelaunched</c>, "the session is still open and
+    /// still held, so the fix is to resume again").</b> A resume that meets a dead
+    /// child now opens the session again through the ordinary open path, so a new
+    /// child that will not start leaves the directory released exactly as a
+    /// failed <c>init</c> does, and row 7's own sentence is the true one. The row
+    /// it replaces is deleted with the in-place relaunch that produced it.
+    /// </para>
+    /// <para>
     /// <b>It needs a session that opened and then lost its child</b>, which is
     /// why the rig refuses the <i>next</i> child and not every one:
     /// <see cref="RigSessionEnvironment.Failing"/> cannot reach this path at
     /// all, because nothing it stands up ever becomes a live session.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheRelaunchFailureRowIsEmittedByAResumeWhoseReplacementWillNotStart()
+    public async Task ARuntimeThatWillNotStartForAResumeGetsRowSevenAndLeavesTheDirectoryFree()
     {
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -740,7 +751,7 @@ internal sealed partial class ErrorCatalogueTests
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["purpose"] = "meets a replacement child that will not start",
+            ["purpose"] = "meets a new child that will not start",
         });
 
         await sessions.SessionChildren[0].DisposeAsync();
@@ -751,15 +762,133 @@ internal sealed partial class ErrorCatalogueTests
         var answer = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = directory,
-            ["why"] = "the suite provoking a relaunch that cannot start",
+            ["why"] = "the suite provoking a resume whose new child cannot start",
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
 
         Match(
             TextOf(answer),
-            nameof(SessionErrors.BrowserServerCouldNotBeRelaunched),
-            SessionErrors.BrowserServerCouldNotBeRelaunched(SessionPath.For(directory).FullPath, "spawn EFTYPE"));
+            nameof(SessionErrors.BrowserRuntimeDidNotStart),
+            SessionErrors.BrowserRuntimeDidNotStart(SessionPath.For(directory).FullPath, "IOException: spawn EFTYPE"));
+
+        // Recoverable in one turn, which is what the sentence promises: the
+        // directory was released, so the same resume succeeds once a child can
+        // start.
+        var again = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming once a child can start again",
+        });
+
+        await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
+    }
+
+    /// <summary>
+    /// Row 7's third companion -- a call after the session's browser was closed,
+    /// refused with the way back and what was kept and lost.
+    /// </summary>
+    /// <remarks>
+    /// <b>Provoked by the caller's own close</b>, because the moment it names is
+    /// then the moment a clock nobody moves reads, and the whole sentence can be
+    /// compared; the idle close's wording, with the period in it, is
+    /// <c>SessionCloseTests</c>'s.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClosedSessionRowIsEmittedByACallAfterTheCallersOwnClose()
+    {
+        var clock = new ManualClock();
+
+        await using var sessions = RigSessionEnvironment.Create(
+            child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+            },
+            opensDefaultSession: false,
+            clock: clock);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "closed");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a call after its browser was closed",
+        });
+
+        foreach (var tool in new[] { "browser_navigate", LiveSession.BrowserCloseTool, "browser_navigate" })
+        {
+            var answer = await CallAsync(rig, tool, new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = directory,
+                [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+                ["url"] = "data:text/html,x",
+            });
+
+            if (tool is LiveSession.BrowserCloseTool || (bool?)answer["isError"] is not true)
+            {
+                continue;
+            }
+
+            Match(
+                TextOf(answer),
+                nameof(SessionErrors.SessionWasClosed),
+                SessionErrors.SessionWasClosed(
+                    "browser_navigate",
+                    SessionPath.For(directory).FullPath,
+                    new SessionClosure(SessionCloseCause.Caller, clock.GetUtcNow(), BrowserIdleTimer.DefaultIdlePeriod)));
+        }
+
+        await Assert.That(Triggered.Contains(nameof(SessionErrors.SessionWasClosed))).IsTrue();
+    }
+
+    /// <summary>
+    /// Q324 a's row -- a resume of a session whose browser is up, asked for a
+    /// per-run setting that browser was not launched with.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "browser-up");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a resume that asks for a window while its browser is up",
+        });
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite starting the browser",
+            ["url"] = "data:text/html,x",
+        });
+
+        var answer = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite asking for a window on a browser that is up",
+            ["headed"] = true,
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp),
+            SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
+                SessionPath.For(directory).FullPath,
+                ["'headed' is false and you asked for true"]));
     }
 
     /// <summary>
@@ -1403,6 +1532,10 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheAnnotationLivenessRowIsEmittedByARealCallNamingAToolThatIsNotAdvertised))]
     [DependsOn(nameof(TheLockRowsAreEmittedByRealLockConditions))]
     [DependsOn(nameof(TheBrowserRuntimeFailureRowIsEmittedByAChildThatCannotStart))]
+    [DependsOn(nameof(ARuntimeThatWillNotStartForAResumeGetsRowSevenAndLeavesTheDirectoryFree))]
+    [DependsOn(nameof(TheDeadBrowserServerRowIsEmittedByACallForwardedAfterTheChildDied))]
+    [DependsOn(nameof(TheClosedSessionRowIsEmittedByACallAfterTheCallersOwnClose))]
+    [DependsOn(nameof(TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp))]
     [DependsOn(nameof(APurposeIsCappedStrippedAndFramedAsRecordedData))]
     [DependsOn(nameof(TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen))]
     [DependsOn(nameof(AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning))]
@@ -1591,7 +1724,18 @@ internal sealed partial class ErrorCatalogueTests
         // that will most likely answer the next call: `UpdateIsBeingInstalled` is
         // said by a server that is ending, and this by one that serves once the
         // updater has gone. Two different futures, two recoveries.
-        await Assert.That(rows.Count).IsEqualTo(36);
+        //
+        // ⚠️ **Corrected 2026-10-03 again, to 37 (previously 36)**, when the idle
+        // close and resume work was rebased onto Q296 c.
+        // `BrowserServerCouldNotBeRelaunched` went: a resume that meets a dead
+        // child now opens the session again through the ordinary open path, so a
+        // new child that will not start releases the directory, and row 7's own
+        // sentence is the true one. Two arrived: `SessionWasClosed`, the refusal
+        // after the idle close or the caller's own close, which says nothing was
+        // run, names `browserai_resume` and says what was kept and lost (P2 a,
+        // P3 b); and `ResumeCannotApplyWhileTheBrowserIsUp`, which names each
+        // per-run setting a resume could not apply while a browser is up (Q324 a).
+        await Assert.That(rows.Count).IsEqualTo(37);
     }
 
     /// <summary>

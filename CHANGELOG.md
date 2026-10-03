@@ -1201,6 +1201,60 @@ release body; nothing else depends on it.
   twenty-one failure modes they name or the night's research measured are open rows in
   [the hazard index](HAZARDS.md#hazard-index), beside the wedge the upstream review wrote.
 
+- 🔧 **An idle session's browser server is ended, and its calls are refused until `browserai_resume`.**
+  P4 b, P2 a and P3 b, the maintainer's words verbatim: *"p2 a / p3 b / p4 b"*. After ten minutes
+  with no call, BrowserAI used to send upstream's `browser_close`, keep the `node` child, and let the
+  next call start a new browser on `about:blank` without a word, which a field report met as a
+  script failing on the wrong page. Now the whole child is ended, through its stdin and then its
+  job: that frees the `node` child's 124 MB as well, and it cannot be wedged by an armed debugger
+  pause the way a `browser_close` is. The next browser call is refused with a sentence that says
+  nothing was run, names `browserai_resume` and the period, and says what was kept and what was
+  lost. The caller's own `browser_close` closes the session the same way, and one sent with no
+  browser up is answered at once and not forwarded, because forwarding it starts a browser in order
+  to close it. The row the idle close writes no longer says *"Nothing was lost"*.
+
+  **The resume brings the tabs back through the browsers' own session restore.** P1, the
+  maintainer's words verbatim: *"Restore as much as possible without adding lot's of complexity. So
+  basically, use whatever playwright offers in capabilities."* Every session launch carries
+  Chromium's `--restore-last-session` or Firefox's three session-store preferences, with Playwright's
+  default blank page dropped so tabs do not pile up. Measured on 2026-10-03 at `@playwright/mcp`
+  0.0.82 and 0.0.83: tabs, history, `sessionStorage`, typed text, scroll and session cookies came
+  back, 24 of 24. Refs from earlier snapshots do not, and the resume's answer says to call
+  `browser_tabs` and `browser_snapshot` before acting. **A headed session is never idle-closed**,
+  Q326 a, and its config sets upstream's own idle timeout to zero, which upstream reads as none. **A
+  session whose close never answers is recovered by `browserai_resume`**, which ends that child
+  through its stdin, and the parked call is answered with the failure instead of being left
+  outstanding.
+  [kb](kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03),
+  [the wedge](kb/playwright/tools-and-artifacts.md#a-pause-met-first-by-a-close-wedges-the-session-and-nothing-in-browserais-surface-releases-it----measured-2026-10-03).
+
+- 🔧 **A resume applies per-run settings with no browser up, and refuses those it cannot apply with one.**
+  Q324, the maintainer's words verbatim: *"Q324 your recommendation"*. A resume of a session this
+  server held used to drop every per-run argument, `headed` included, and answer *"nothing was
+  changed"*; the field report met two such answers and a session that stayed headless. While the
+  session's browser is up, a resume applies nothing and refuses by name each argument it was passed
+  that differs from what the browser was launched with, giving both values and the way to apply
+  them; a bare resume is never refused. With no browser up, after a close, after a child died or
+  before one started, it opens the session again at the settings it was asked for, and its answer
+  gains a `headed:` line. `SessionErrors.BrowserServerCouldNotBeRelaunched` goes with the in-place
+  relaunch it belonged to: a new child that will not start leaves the directory free, and row 7's
+  own sentence says so. The catalogue gains `SessionWasClosed` and
+  `ResumeCannotApplyWhileTheBrowserIsUp` and loses the relaunch row, so its census is 37.
+
+- 🔧 **A shutdown asks every open browser to close itself, all at once, before it ends the children.**
+  e1 and e2 of P7, decided by the root session on 2026-10-03 for the maintainer's review, against
+  his words *"b + e and if e is impossible or difficult c. But it all needs to be done in a super
+  safe way so we don't permanently leak stuff."* Claude Code kills a server's tree 0.53 to 1.15 s
+  after closing its input, measured that day, while BrowserAI ended its sessions one after another
+  with up to 5 s each, so a second session was never reached and every browser was killed with
+  whatever it had not flushed. Each open browser now gets its own `browser_close` first, in
+  parallel, bounded at one second so a close that meets an armed pause cannot hold the shutdown,
+  and the teardown after it is unchanged. Chromium also launches with
+  `--enable-aggressive-domstorage-flushing`, which measured `localStorage` safe from a kill one
+  second after a write instead of five. Neither shortens the 30 s a Chromium cookie needs, and a
+  client that kills without warning, as Codex always does, still takes what was not flushed.
+  [kb](kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03).
+
 ### Removed
 
 - 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
@@ -1397,6 +1451,26 @@ release body; nothing else depends on it.
   adding a legacy `RELEASES` on the default Windows channel, which reads no list at all, and it
   cannot remove the feed upload, which is wanted. The file itself stays on disk; what changed is
   what it names.
+
+- 🐛 **A killed launch leaves nothing in the user's `%TEMP%`, and the registry is reaped at startup.**
+  P5 a, the maintainer's words verbatim: *"p5 a"*. Every browser launch a kill ended left an empty
+  `playwright-artifacts-*` behind in the temporary folder its child was given, which was the user's
+  own, measured on 2026-10-03. A session's child is given a `temp` folder inside the run's own
+  directory now, which a clean exit deletes and the next start sweeps. A client that kills BrowserAI
+  runs no close path either, so the browsers it took down kept their descriptors in Playwright's
+  registry until a later close reaped them; the startup sweep now starts that reap on every pass
+  that has the machine-wide gate, so one process reaps while the others starting beside it do not.
+
+- 🐛 **A session with no browser up no longer reads as having one.**
+  Found on 2026-10-03 while the shutdown's reap arm was being planted red. Every reader of *is a
+  browser up* counted the processes in the session child's job against one, and Windows puts a
+  console host in that job beside `node`, so the job holds two processes before any browser starts
+  and two again after a close. Every real session therefore read as having a browser: a
+  `browser_close` with nothing open was forwarded and started a browser in order to close it, a
+  resume refused per-run settings it could have applied, every teardown started a registry reap,
+  and a server's pipe described every session it held as having a browser up. The count is now
+  taken against what the job held at the child's handshake. The in-process arms ask a double and
+  could not see it; a new arm asks a real child, and was watched red against the old count.
 
 ## [1.1.0] - 2026-09-23
 

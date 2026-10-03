@@ -256,8 +256,129 @@ internal static class BrowserConfiguration
     /// and the next tool call answered normally in 354 ms. So the alarming
     /// sentence is not a reason to omit the key.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Headless launches only since 2026-10-03; a headed launch writes
+    /// <see cref="NoIdleTimeout"/>.</b> <i>Corrected 2026-10-03 (previously
+    /// "Writing it makes the headed case carry an hour it would not otherwise
+    /// have -- which is still unreachable behind ten minutes").</i> Q326 a stops
+    /// BrowserAI's own timer for a headed session, so the hour became the one
+    /// timer left, and it would close a window a person is using after an hour
+    /// without a call. See <see cref="NoIdleTimeout"/>.
+    /// </para>
     /// </remarks>
     public const int IdleTimeoutMilliseconds = 3_600_000;
+
+    /// <summary>
+    /// What a <b>headed</b> launch writes for upstream's idle timeout: zero, which
+    /// upstream reads as no idle close at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q326 a, the maintainer's words of 2026-10-03, verbatim:</b> <i>"Q326 a -
+    /// the timer is there to conserve system resources the user cannot see.
+    /// Also, interactive windows mostly hold user state so they are super
+    /// valuable."</i> BrowserAI never arms its own timer for a headed session, and
+    /// this is the other half: the hour written into every launch until today
+    /// would otherwise close the window after an hour without a call.
+    /// </para>
+    /// <para>
+    /// <b>Zero and not an omitted key</b>, for the reason
+    /// <see cref="IdleTimeoutMilliseconds"/> is written at all: an omission
+    /// records no decision and <c>browser_get_config</c> cannot read it back.
+    /// Upstream's own default for a headed launch is the same answer, so this
+    /// changes nothing upstream would not have done. Read 2026-10-03 at
+    /// <c>@playwright/mcp</c> 0.0.83 / <c>playwright-core</c>
+    /// 1.64.0-alpha-1790635538000, <c>coreBundle.js</c> lines 75347-75348:
+    /// <c>config.timeouts?.idle ?? (...)</c> and then <c>if (idleTimeout)</c>,
+    /// so zero arms nothing (lines 74767-74768 at 0.0.82). Read, not run.
+    /// </para>
+    /// </remarks>
+    public const int NoIdleTimeout = 0;
+
+    /// <summary>
+    /// The Chromium switch that reopens a profile's last session at launch.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P1, the maintainer's words of 2026-10-03, verbatim:</b> <i>"Restore as
+    /// much as possible without adding lot's of complexity. So basically, use
+    /// whatever playwright offers in capabilities."</i> This is the browser's own
+    /// session restore, reached through a launch option, so BrowserAI drives
+    /// nothing and replays nothing.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83,
+    /// chromium 1246 and 1247</b>, with <see cref="DefaultPageArgument"/> ignored
+    /// beside it: across a clean close and across a new child, the tabs came back
+    /// with their history, <c>sessionStorage</c>, typed text, scroll position and
+    /// session cookies, 24 of 24 and 12 of 12 across children. What does not come
+    /// back: refs from earlier snapshots, which tab was selected, and a page that
+    /// was a form POST, which Chromium reopens as <c>chrome-error://chromewebdata/</c>.
+    /// With nothing to restore, Chromium starts on <c>chrome://new-tab-page/</c>
+    /// (<see href="../../../docs/evidence/2026-10-03-state-across-close/results/P-caller-close-teardown-resume.txt">evidence</see>,
+    /// and the <see href="../../../kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03">kb entry</see> for the rest).
+    /// </para>
+    /// </remarks>
+    public const string RestoreLastSessionSwitch = "--restore-last-session";
+
+    /// <summary>
+    /// The Chromium switch that flushes <c>localStorage</c> to disk within about a
+    /// second, with no rate limit.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>e1 of P7, decided by the root session 2026-10-03 for the maintainer's
+    /// review</b>, against his words: <i>"b + e and if e is impossible or
+    /// difficult c. But it all needs to be done in a super safe way so we don't
+    /// permanently leak stuff."</i> A client that ends BrowserAI kills its
+    /// browsers, so what matters is how long a write needs on disk before a kill
+    /// cannot take it.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-10-03 at chromium 1246 (154.0.8037.0), through
+    /// <c>playwright-core</c> directly, killing the job a set time after a
+    /// write.</b> Without the switch <c>localStorage</c> survived from about 5 s,
+    /// and a second batch written ten seconds later only from about 55 s, under
+    /// Chromium's commit rate limit; with it, both from about 1 s. Cookies are
+    /// unchanged by it: about 30 s, a fixed interval in Chromium's code
+    /// (<see href="../../../kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03">kb</see>).
+    /// </para>
+    /// </remarks>
+    public const string AggressiveDomStorageFlushingSwitch = "--enable-aggressive-domstorage-flushing";
+
+    /// <summary>
+    /// The argument Playwright adds to open one blank page at launch, which every
+    /// session launch tells it to leave out.
+    /// </summary>
+    /// <remarks>
+    /// <b>Without this the restore piles tabs up</b>: the browser reopens the last
+    /// session and Playwright adds its own blank page beside it, so every close and
+    /// resume adds one more. Measured 2026-10-03 with
+    /// <see cref="RestoreLastSessionSwitch"/> and the Firefox session-store
+    /// preferences, both families: the variants that kept the blank page grew by
+    /// one tab per cycle and the ones that dropped it did not.
+    /// </remarks>
+    public const string DefaultPageArgument = "about:blank";
+
+    /// <summary>
+    /// The Firefox preferences that reopen a profile's last session at launch,
+    /// eagerly and all at once.
+    /// </summary>
+    /// <remarks>
+    /// <b>Firefox's half of <see cref="RestoreLastSessionSwitch"/>, measured the
+    /// same day in the same rig at firefox 1549 and 1553.</b> The first resumes
+    /// the last session once, and since every launch writes it again, the restore
+    /// held across every cycle the rig ran. The other two stop Firefox restoring
+    /// a tab only when it is selected, which would leave every tab but one empty
+    /// until something clicked it. A page that was a form POST is fetched again
+    /// with a GET.
+    /// </remarks>
+    public static IReadOnlyList<KeyValuePair<string, bool>> FirefoxSessionRestorePreferences { get; } =
+    [
+        new("browser.sessionstore.resume_session_once", true),
+        new("browser.sessionstore.restore_on_demand", false),
+        new("browser.sessionstore.restore_tabs_lazily", false),
+    ];
 
     /// <summary>
     /// The permissions every context is granted, hard-coded.
@@ -486,11 +607,20 @@ internal static class BrowserConfiguration
     /// the prompt still appears
     /// ([kb](../../../kb/playwright/configuration.md#the-password-save-prompt-and-what-actually-suppresses-it----measured-2026-09-23)).
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Four since 2026-10-03 (previously the pair above).</b>
+    /// <see cref="RestoreLastSessionSwitch"/> is the browser's own session
+    /// restore and <see cref="AggressiveDomStorageFlushingSwitch"/> shortens how
+    /// long a <c>localStorage</c> write needs on disk; see each constant for what
+    /// was measured.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<string> ChromiumArguments { get; } =
     [
         "--enable-automation",
         "--disable-blink-features=AutomationControlled",
+        RestoreLastSessionSwitch,
+        AggressiveDomStorageFlushingSwitch,
     ];
 
     /// <param name="browser">The family, as upstream names it.</param>
@@ -505,7 +635,13 @@ internal static class BrowserConfiguration
                 $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RestartRegistrationPreference}",
                 $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RememberSignonsPreference}",
             }
+                .Concat(FirefoxSessionRestorePreferences.Select(preference => $"browser.launchOptions.firefoxUserPrefs.{preference.Key}"))
             : ["browser.launchOptions.channel", "browser.launchOptions.args"],
+
+        // Added 2026-10-03 with the session restore: without it the restore piles
+        // up a blank tab per cycle, so a generator that dropped it would degrade
+        // every resume and fail nothing else.
+        "browser.launchOptions.ignoreDefaultArgs",
         "browser.launchOptions.headless",
         "browser.launchOptions.downloadsPath",
         "browser.contextOptions.viewport.width",
@@ -738,6 +874,15 @@ internal static class BrowserConfiguration
                 // navigation. See FirefoxProfile.RememberSignonsPreference for
                 // what was and was not established about it.
                 writer.WriteBoolean(FirefoxProfile.RememberSignonsPreference, false);
+
+                // The session restore, delivered the same way and for the same
+                // reason: in force before the browser decides what to open. See
+                // FirefoxSessionRestorePreferences.
+                foreach (var (name, value) in FirefoxSessionRestorePreferences)
+                {
+                    writer.WriteBoolean(name, value);
+                }
+
                 writer.WriteEndObject();
             }
             else
@@ -753,6 +898,12 @@ internal static class BrowserConfiguration
 
                 writer.WriteEndArray();
             }
+
+            // Both families. A restored session plus Playwright's own blank page
+            // is one tab more after every close; see DefaultPageArgument.
+            writer.WriteStartArray("ignoreDefaultArgs");
+            writer.WriteStringValue(DefaultPageArgument);
+            writer.WriteEndArray();
 
             writer.WriteBoolean("headless", request.Headless);
             writer.WriteString("downloadsPath", request.DownloadsDirectory);
@@ -904,17 +1055,20 @@ internal static class BrowserConfiguration
             // named against a working directory the reader does not have.
             writer.WriteString("filePaths", FilePaths);
 
-            // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN AND NOT OMITTED, AND IT
-            // CANNOT FIRE. See `IdleTimeoutMilliseconds`: BrowserAI's own timer
-            // is ten minutes and both are reset by a tool call, so upstream's
-            // hour is unreachable under the shipped configuration. The key is
-            // written anyway because an omission records no decision and
-            // `browser_get_config` cannot read back a key the file never
-            // carried -- the same argument as `allowUnrestrictedFileAccess` two
-            // blocks up, and the day upstream's default moves this is a red
-            // build and not a behaviour change nobody chose.
+            // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN AND NOT OMITTED, AND FOR A
+            // HEADLESS LAUNCH IT CANNOT FIRE. See `IdleTimeoutMilliseconds`:
+            // BrowserAI's own timer is ten minutes and both are reset by a tool
+            // call, so upstream's hour is unreachable under the shipped
+            // configuration. The key is written anyway because an omission
+            // records no decision and `browser_get_config` cannot read back a key
+            // the file never carried -- the same argument as
+            // `allowUnrestrictedFileAccess` two blocks up.
+            //
+            // ⚠️ A HEADED LAUNCH WRITES ZERO since 2026-10-03, Q326 a: BrowserAI
+            // no longer arms its own timer for one, so the hour would have been
+            // the timer that closes a person's window. See `NoIdleTimeout`.
             writer.WriteStartObject("timeouts");
-            writer.WriteNumber("idle", IdleTimeoutMilliseconds);
+            writer.WriteNumber("idle", request.Headless ? IdleTimeoutMilliseconds : NoIdleTimeout);
             writer.WriteEndObject();
 
             // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN AND NOT OMITTED, AND THIS

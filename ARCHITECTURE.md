@@ -388,6 +388,25 @@ no tabs -- and a replacement that will not start is
 `SessionErrors.BrowserServerCouldNotBeRelaunched`, which says the session is
 still open. `DeadChildTests` drives both directions.
 
+⚠️ **Corrected 2026-10-03, by addition: the swap above is gone, and a resume that
+needs a new child opens the session again.** The paragraph above is the design of
+2026-09-17 and is left as written. Since 2026-10-03 a resume that meets a session
+this process holds asks three things -- has it been closed (`LiveSession.Closed`),
+has its child gone, and is a browser up (`LiveSession.BrowserIsOpen`). With a
+browser up it applies nothing, and refuses by name a per-run argument it was
+passed that differs (Q324 a, `SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp`).
+Otherwise -- closed, dead, or a child with no browser asked for settings it does
+not have -- it tears the whole `LiveSession` down with `LiveSession.TearDownAsync`
+and goes on through the ordinary open path, which takes the directory again at
+this call's settings, log level and config (Q324 c). That is what replaced
+`LiveSession.Launch` and `ReplaceChildAsync`, and it is also why
+`BrowserServerCouldNotBeRelaunched` is deleted: a new child that will not start
+leaves the directory released, and `SessionErrors.BrowserRuntimeDidNotStart` is
+the true sentence. **The one cost** is an instant between the teardown and the
+acquisition in which the directory is unheld; a peer that takes it then is
+answered by the acquisition's own refusal, and the session is that peer's.
+`SessionCloseTests` drives every branch.
+
 **Our own files reject what they do not recognise.** ⚠️ *Corrected 2026-08-26
 (previously "`LockRecord.Read` is a hand-written `Utf8JsonReader` parse that
 refuses an unknown key at any of the three levels, a missing key, an **empty
@@ -762,6 +781,18 @@ the browser and keeps the node child; the relaunch on the next call is upstream'
 own lazy creation, so nothing was built for it. Teardown is stdin EOF plus a
 client-liveness watcher -- an `OpenProcess` handle signalled on the client's exit,
 never a poll and never a ping -- and there is deliberately no close tool.
+
+⚠️ **Corrected 2026-10-03, by addition (the paragraph above is the design until
+that day).** The idle timer ends the whole child, `node` included, and only for a
+headless session with a browser up (P4 b, Q326 a, Q327 a); `LiveSession` does it
+and `BrowserIdleTimer` decides only when. After it, and after the caller's own
+`browser_close`, `LiveSession.Closed` is set and `BrowserProxy` refuses every
+forwarded call with `SessionErrors.SessionWasClosed` until `browserai_resume`
+(P2 a, P3 b); the resume's new child reopens the tabs through the browsers' own
+session restore, which `BrowserConfiguration` writes into every launch (P1). A
+shutdown sends every open browser its own `browser_close` at once, bounded by
+`LiveSession.ShutdownCloseBudget`, before the teardown
+(`SessionManager.DisposeAsync`, e2 of P7).
 
 ### `browserai_page_tool`, and how a page tool's name is resolved
 

@@ -987,6 +987,28 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ A CLOSED SESSION REFUSES EVERY FORWARDED CALL UNTIL
+        // `browserai_resume`, P2 a and P3 b, the maintainer's words of
+        // 2026-10-03, verbatim: "p2 a / p3 b". Added that day. Before it, the
+        // call after an idle close relaunched a browser on `about:blank` and
+        // answered as though nothing had happened, which a field report met as
+        // a script failing on the wrong page with nothing saying why.
+        //
+        // BEFORE provisioning and the dead-child check, because a closed
+        // session's child is gone on purpose and the refusal that says so is the
+        // one that names the way back. And it is a refusal and not a relaunch
+        // because the per-run settings are applied, and the tabs restored, by
+        // the resume and by nothing else.
+        if (live.Closed is { } closure)
+        {
+            var closed = SessionErrors.SessionWasClosed(tool, live.Location.FullPath, closure);
+
+            ProxyLog.SessionWasClosed(live.Logger, tool, live.Location.FullPath);
+            Refused(live, tool, why, closed);
+            await RefuseAsync(caller, request.Id, closed, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // First-run provisioning, and it happens before the child hears about
         // the call for the same reason the liveness decision does: a browser tool
         // forwarded now would block inside the child's own launch for the whole
@@ -1090,6 +1112,37 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ THE CALLER'S OWN CLOSE, P3 b, the maintainer's words of 2026-10-03,
+        // verbatim: "p3 b". Treated like the idle close: the session is closed
+        // BEFORE the call goes out, so a close that never answers -- the
+        // armed-close wedge, 12 of 12 on 0.0.82 and 6 of 6 on 0.0.83 -- still
+        // leaves every later call refused with a sentence naming
+        // `browserai_resume`, which ends that child through its stdin.
+        //
+        // And with no browser up it is not forwarded at all: upstream starts a
+        // browser in order to close it, measured 2026-10-03 at 8 to 9 browser
+        // processes, a network capture rewritten empty and a registry
+        // descriptor nothing reaps. Nothing was open, so like the idle close
+        // with only the node child left, it closes nothing and leaves the
+        // session open.
+        var callersClose = string.Equals(tool, LiveSession.BrowserCloseTool, StringComparison.Ordinal);
+
+        if (callersClose)
+        {
+            if (!live.BrowserIsOpen)
+            {
+                live.Lock.Settle(row, SessionStore.Successful, failure: null);
+
+                await caller.SendMessageAsync(
+                    new JsonRpcResponse { Id = request.Id, Result = TextResult(LiveSession.NothingWasOpenToClose, isError: false) },
+                    cancellationToken).ConfigureAwait(false);
+
+                return;
+            }
+
+            live.ClosedByTheCaller();
+        }
+
         var outcome = SessionStore.InFlight;
         byte[]? payload = null;
 
@@ -1132,7 +1185,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // browser and never keeps one warm -- and the scope holds the call
             // outstanding across the await, so a navigation that outlives the
             // whole period cannot have the browser closed underneath it.
-            using var driving = live.Idle.Call();
+            //
+            // ⚠️ NO TIMER AT ALL ON A HEADED SESSION since 2026-10-03, Q326 a, so
+            // there is nothing to reset there.
+            using var driving = live.Idle?.Call();
 
             // ⚠️ THE ONE CALL WHOSE NAME IS NOT THE NAME THAT GOES OUT, and the
             // rewrite is upstream's own: a page tool's wire name is `webmcp_` and
@@ -1242,6 +1298,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 outcome is SessionStore.InFlight
                     ? Encoding.UTF8.GetBytes("The call did not reach the child, or the caller cancelled it before an answer arrived. BrowserAI never saw a result.")
                     : payload);
+
+            // After the answer and the row, and never before: the caller's
+            // close has been answered, so ending the child now takes only a
+            // node process with no browser left in it.
+            if (callersClose)
+            {
+                await live.EndTheChildAfterTheCallersCloseAsync().ConfigureAwait(false);
+            }
         }
     }
 
@@ -1739,6 +1803,16 @@ internal static partial class ProxyLog
         Level = LogLevel.Error,
         Message = "'{Method}' was not forwarded: the browser server for {Session} has gone. Nothing was sent to it.")]
     public static partial void ChildHasGone(ILogger logger, string method, string session);
+
+    /// <summary>A call was refused because this session's browser was closed and nothing has resumed it.</summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="method">The tool that was refused.</param>
+    /// <param name="session">The session directory.</param>
+    [LoggerMessage(
+        EventId = 22,
+        Level = LogLevel.Information,
+        Message = "'{Method}' was not forwarded: the browser for {Session} was closed, and browser calls are refused until browserai_resume.")]
+    public static partial void SessionWasClosed(ILogger logger, string method, string session);
 
     /// <summary>A tool call named a session this process is not driving.</summary>
     /// <param name="logger">Where to write.</param>

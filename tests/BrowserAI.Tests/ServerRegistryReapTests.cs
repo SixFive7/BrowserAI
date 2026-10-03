@@ -68,14 +68,24 @@ internal sealed class ServerRegistryReapTests
     /// </remarks>
     private const int StaleDescriptorsPlanted = 1_000;
 
-    /// <summary>Matches the identity <c>ReapLog.Started</c> writes.</summary>
+    /// <summary>Matches the identity <c>ReapLog.Started</c> writes after a destroy.</summary>
     /// <remarks>
+    /// <para>
     /// The pair and not the pid: the process log is machine-wide and retained for
     /// thirty days, so a bare number in it is an identity only until Windows
     /// re-uses it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Keyed on the destroy's own cause since 2026-10-03 (previously any
+    /// <c>reaper=</c> in the slice's records).</b> The startup sweep starts a reap
+    /// of its own since that day (P5 a), so the first identity in the records can
+    /// be that one, and every assertion below would then be about a reap the
+    /// destroy did not start -- the ordering one passing because the startup's
+    /// record comes first.
+    /// </para>
     /// </remarks>
     private static readonly Regex ReaperIdentity =
-        new(@"reaper=(?<pid>\d+)@(?<created>-?\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        new(Regex.Escape(ServerRegistryReap.AfterDestroy) + @", detached and not awaited: reaper=(?<pid>\d+)@(?<created>-?\d+)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
     /// A destroy reaps every dead descriptor in Playwright's registry, spares the
@@ -154,7 +164,7 @@ internal sealed class ServerRegistryReapTests
         // ⚠️ THE ORDERING, READ OUT OF THE LOG. The reap is recorded before the
         // destroy's own record, so it was started inside the close -- and the
         // close went on to finish afterwards.
-        await Assert.That(RecordIndex(records, "server-registry reap"))
+        await Assert.That(RecordIndex(records, $"server-registry reap after {ServerRegistryReap.AfterDestroy}"))
             .IsLessThan(RecordIndex(records, "Session destroyed at"))
             .Because($"the reap should be started during the close and not after it, and the records are:{Environment.NewLine}{records}");
 
@@ -207,6 +217,62 @@ internal sealed class ServerRegistryReapTests
         });
 
         await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
+    }
+
+    /// <summary>
+    /// A shutdown that closes its browsers before it ends their children still
+    /// starts the reap their descriptors need.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-03 with e2 of P7</b>, which sends every open browser its
+    /// own <c>browser_close</c> before the teardown. The teardown starts a reap
+    /// only for a browser it still finds up, and a persistent profile's
+    /// descriptor is never deleted on close, so a shutdown whose closes all
+    /// succeeded would have stopped reaping at all: the shape the 2026-09-24 row
+    /// was closed against, for a client going away or a shutdown.
+    /// </para>
+    /// <para>
+    /// <b>Read off the slice's own records, as the destroy arm above is.</b> The
+    /// end of input is the shutdown a client asks for; nothing here kills
+    /// anything.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AShutdownThatClosesItsBrowsersFirstStillReapsThem()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireProvisionedChromium();
+
+        PublishedSlice.EnsureFresh();
+
+        using var scratch = ScratchDirectory.Create("t7-reap-shutdown");
+
+        var registry = Path.Combine(scratch.Path, "registry");
+        _ = Directory.CreateDirectory(registry);
+
+        var environment = PublishedSlice.InheritedEnvironment();
+        environment[ServerRegistryReap.RegistryDirectoryVariable] = registry;
+
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], scratch.Path, environment);
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        var session = Path.Combine(scratch.Path, "closed-at-shutdown");
+
+        await OpenWithABrowserAsync(client, session, "the session whose browser a shutdown closes first");
+
+        var pid = client.ProcessId;
+        var created = ProcessIdentity.CreationTimeOf(pid);
+
+        await Assert.That(await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+
+        var records = ProcessLogRecords.For(pid, created);
+
+        await Assert.That(records)
+            .Contains($"server-registry reap after {ServerRegistryReap.AfterTeardown}")
+            .Because($"a shutdown that closed its browser first must still reap its descriptor, and the slice's records are:{Environment.NewLine}{records}");
     }
 
     /// <summary>

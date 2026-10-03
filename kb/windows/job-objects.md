@@ -226,6 +226,18 @@ re-runs it. `[FLOATS]`
 > carries a `conhost.exe` per launched process. It is contained like everything
 > else; it is noted because a member list read for the first time otherwise
 > reads as a leak. `[MACHINE]`
+>
+> **Measured again 2026-10-03, and it is the count every reader of *is a browser
+> up* has to start from.** A session child's job holds two processes once its
+> handshake has finished, `node.exe` and its `conhost.exe`, and two again once a
+> `browser_close` has answered, at `@playwright/mcp` 0.0.82 and 0.0.83 in every
+> run of both families
+> ([the batch](../../docs/evidence/2026-10-03-state-across-close/README.md)).
+> Until that day the product counted the job against one, so every real session
+> read as having a browser up; `ChildConnection.HoldsMoreThanItsOwnProcesses`
+> counts against what the job held at the handshake. Re-establish with
+> `SessionCloseTests.ARealChildWithNoBrowserReadsAsNoneAndOneWithAPageReadsAsOne`.
+> `[MACHINE]`
 
 **A cleanup path in a `finally` is one this design guarantees will sometimes not
 run.** Observed the same day, and it is the containment contract biting its own

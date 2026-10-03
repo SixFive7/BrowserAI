@@ -1,10 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Logging;
-using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Storage;
@@ -45,17 +43,15 @@ internal sealed class LiveSession : IAsyncDisposable
     /// session exists, whatever browser family it uses.
     /// </param>
     /// <param name="child">The child driving this session. This object owns it.</param>
-    /// <param name="launch">
-    /// Exactly what that child was launched with, kept so a child that has died can
-    /// be replaced by one started the same way and not one assembled again from
-    /// arguments that may since have moved.
-    /// </param>
+    /// <param name="settings">The per-run arguments that child was launched with.</param>
     /// <param name="logging">This session's own logging stack. This object owns it.</param>
     /// <param name="config">The config the child was started with.</param>
     /// <param name="configFile">Where that config was written.</param>
     /// <param name="createdHere">Whether this connection is the one that created the session.</param>
-    /// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
-    /// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
+    /// <param name="environment">
+    /// Where the idle period, the clock and the question <i>is a browser up</i>
+    /// come from. The product's own values in the product; the suite's in a rig.
+    /// </param>
     /// <param name="reap">
     /// Playwright's own registry reaper, started detached whenever a close here
     /// really put a browser tree down. This object does not own it: one reap
@@ -67,55 +63,47 @@ internal sealed class LiveSession : IAsyncDisposable
         SessionLock sessionLock,
         MaintenanceLock browsersClaim,
         ChildConnection child,
-        ChildProcessOptions launch,
+        SessionRunSettings settings,
         SessionLogging logging,
         GeneratedConfig config,
         string configFile,
         bool createdHere,
-        TimeSpan idlePeriod,
-        TimeProvider clock,
+        SessionEnvironment environment,
         ServerRegistryReap reap)
     {
         ArgumentNullException.ThrowIfNull(logging);
+        ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(reap);
 
         Location = location;
         Lock = sessionLock;
         BrowsersClaim = browsersClaim;
-        _child = child;
-        Launch = launch;
+        Child = child;
+        Settings = settings;
         Logging = logging;
         Config = config;
         ConfigFile = configFile;
         CreatedHere = createdHere;
         _reap = reap;
+        _browserIsOpen = environment.BrowserIsOpen;
+        _clock = environment.Clock;
         Logger = logging.Factory.CreateLogger<LiveSession>();
 
-        // ⚠️ LAST, AND IT READS `Child` , NOT THE ARGUMENT. The timer
-        // outlives any one child: a resume that meets a dead child swaps a new
-        // one in, and a callback that had captured the original would keep
-        // sending browser_close into a transport whose peer is gone.
-        Idle = new BrowserIdleTimer(
-            location.FullPath,
-            idlePeriod,
-            async token =>
-            {
-                var closed = await CloseBrowserAsync(Child, sessionLock, token).ConfigureAwait(false);
-
-                // ⚠️ AFTER the close and never before it, and only when there was
-                // something in the job besides the node child -- which is what
-                // says a browser tree was up and is now dead, and therefore that
-                // upstream's registry holds a descriptor nothing else will ever
-                // unlink. A close that found no browser wrote no descriptor.
-                if (closed.ProcessesBefore > 1)
-                {
-                    _reap.Start(ServerRegistryReap.AfterIdleClose);
-                }
-
-                return closed;
-            },
-            logging.Factory.CreateLogger<BrowserIdleTimer>(),
-            clock);
+        // ⚠️ NO TIMER AT ALL FOR A HEADED SESSION, Q326 a, the maintainer's
+        // words of 2026-10-03, verbatim: "Q326 a - the timer is there to
+        // conserve system resources the user cannot see. Also, interactive
+        // windows mostly hold user state so they are super valuable." Not a
+        // timer that is never armed: an object that does not exist cannot be
+        // armed by a call nobody thought about. Its config writes upstream's own
+        // idle timeout as zero for the same reason (BrowserConfiguration).
+        Idle = settings.Headed
+            ? null
+            : new BrowserIdleTimer(
+                location.FullPath,
+                environment.BrowserIdlePeriod,
+                CloseForIdleAsync,
+                logging.Factory.CreateLogger<BrowserIdleTimer>(),
+                environment.Clock);
     }
 
     /// <summary>
@@ -150,13 +138,81 @@ internal sealed class LiveSession : IAsyncDisposable
     /// a model-facing record on every close -- and the fact a reader needs is
     /// <i>why there is a gap here</i>, which the sentence carries without it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "...so the browser tree was released
+    /// and the node child kept. Nothing was lost -- the next call relaunches the
+    /// browser and answers normally.").</b> Both halves stopped being true. The
+    /// field report of 2026-10-01 showed the next call running on
+    /// <c>about:blank</c>, and the 2026-10-03 measurement showed pages, tabs,
+    /// <c>sessionStorage</c>, typed text and session cookies gone after that
+    /// close. And under P4 b the close ends the whole child and the next call is
+    /// refused until <c>browserai_resume</c>, whose restore is what brings the tabs
+    /// back. So the row says what happened and what the reader of the log does
+    /// next, and nothing about what was kept that a measurement would have to
+    /// back.
+    /// </para>
     /// </remarks>
     public const string IdleCloseWhy =
         "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
-        + "so the browser tree was released and the node child kept. Nothing was lost -- the next call relaunches the browser and answers normally.";
+        + "so it ended the browser server, node child included. Every browser call is refused until browserai_resume starts a new one, "
+        + "and the browser's own session restore then reopens the tabs that were open.";
+
+    /// <summary>
+    /// What a caller's own <c>browser_close</c> is answered with when no browser
+    /// was open to close.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not forwarded, because forwarding it would start a browser.</b> Measured
+    /// 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83: a
+    /// <c>browser_close</c> with no browser up launched 8 to 9 browser processes in
+    /// order to close them, rewrote a network capture empty and left a registry
+    /// descriptor nothing reaps. In a headed session that is a window that appears
+    /// and goes again.
+    /// </para>
+    /// <para>
+    /// <b>An answer and not a refusal</b>, so it lives here and not in
+    /// <c>SessionErrors</c>: closing what is not open has done what it was asked.
+    /// And it does NOT close the session, which is the idle close's rule applied
+    /// to the caller's (P3 b): a timer that finds only the node child does nothing,
+    /// and so does this.
+    /// </para>
+    /// </remarks>
+    public const string NothingWasOpenToClose =
+        "No browser was open in this session, so there was nothing to close and none was started in order to close it. "
+        + "The session is unchanged: the next browser call starts a browser as usual.";
+
+    /// <summary>
+    /// How long a shutdown waits for each session's own <c>browser_close</c>
+    /// before it ends the child anyway.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>e2 of P7, decided by the root session 2026-10-03 for the maintainer's
+    /// review.</b> A client gives BrowserAI almost no time at its end: Claude
+    /// Code 2.1.288 starts <c>taskkill /T /F</c> on the server 0.53 to 1.15 s after
+    /// it closes the server's input, and Codex gives none. A browser that is
+    /// closed by its own tool flushes what it holds; one that is killed keeps a
+    /// cookie only if it had been on disk for about 30 s. Measured 2026-10-03:
+    /// a <c>browser_close</c> took 151 to 915 ms on Chromium and 444 to 1,163 ms
+    /// on Firefox (<see href="../../../kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03">kb</see>),
+    /// and sessions are closed all at once, so this is about the window there is.
+    /// </para>
+    /// <para>
+    /// <b>The bound is the other half, and it is not optional.</b> A
+    /// <c>browser_close</c> that meets an armed debugger pause never answers --
+    /// 12 of 12 on 0.0.82 and 6 of 6 on 0.0.83 -- so an unbounded one would hang a
+    /// shutdown. Past the bound the child is ended through its stdin and its job
+    /// exactly as before.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan ShutdownCloseBudget { get; } = TimeSpan.FromSeconds(1);
 
     private readonly ServerRegistryReap _reap;
-    private ChildConnection _child;
+    private readonly Func<ChildConnection, bool> _browserIsOpen;
+    private readonly TimeProvider _clock;
+    private SessionClosure? _closed;
+    private int _reapOwed;
     private int _disposed;
 
     /// <summary>The canonicalised session directory. It is the identity.</summary>
@@ -177,24 +233,47 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </remarks>
     public MaintenanceLock BrowsersClaim { get; }
 
-    /// <summary>The <c>@playwright/mcp</c> child driving it, which is not the same one for the session's whole life.</summary>
+    /// <summary>The <c>@playwright/mcp</c> child driving it, for this object's whole life.</summary>
     /// <remarks>
-    /// ⚠️ <b>Replaceable since 2026-09-17, and everything that reads it has to
-    /// read it through this property and not capture it.</b>
-    /// <see cref="ReplaceChildAsync"/> swaps in a child started by
-    /// <c>browserai_resume</c> after the original died; a caller holding the old
-    /// reference would go on talking to a transport whose peer is gone, which is
-    /// the wedge the replacement exists to end.
+    /// ⚠️ <b>One child per <see cref="LiveSession"/> again since 2026-10-03
+    /// (previously replaceable, through a <c>ReplaceChildAsync</c> that a resume
+    /// meeting a dead child used from 2026-09-17).</b> A resume that needs a new
+    /// child now tears this whole object down and opens the session again, which
+    /// is also what applies a new run's settings, so there is no swap left to get
+    /// wrong.
     /// </remarks>
-    public ChildConnection Child => Volatile.Read(ref _child);
+    public ChildConnection Child { get; }
 
-    /// <summary>What this session's child was launched with.</summary>
+    /// <summary>The per-run arguments this session's child was launched with.</summary>
     /// <remarks>
-    /// <b>Kept, not recomputed</b>, so a relaunch is the same launch: the
-    /// same payload, the same browsers root, the same generated config file and
-    /// the same working directory, down to the bytes on the command line.
+    /// <b>Kept so a resume can compare and not guess.</b> Q324 a: while a browser
+    /// is up a resume applies nothing, and refuses a setting it was asked for that
+    /// differs from the one in use, naming both.
     /// </remarks>
-    public ChildProcessOptions Launch { get; }
+    public SessionRunSettings Settings { get; }
+
+    /// <summary>
+    /// How this session's browser was closed, or <see langword="null"/> while it
+    /// has not been.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P2 a and P3 b, the maintainer's words of 2026-10-03, verbatim: "p2 a /
+    /// p3 b".</b> After the idle close or the caller's own <c>browser_close</c>,
+    /// every forwarded call is refused until <c>browserai_resume</c>, and the
+    /// refusal says why and what to do. It is never cleared on this object:
+    /// the resume that ends it replaces the object.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Set before anything is closed, and that ordering is what makes the
+    /// armed-close wedge recoverable.</b> A <c>browser_close</c> that meets an
+    /// armed debugger pause never answers and leaves every page tool failing; the
+    /// session is already closed by then, so the next call is refused with a
+    /// sentence naming <c>browserai_resume</c>, and the resume ends that child
+    /// through its stdin, which a paused child still obeys.
+    /// </para>
+    /// </remarks>
+    public SessionClosure? Closed => Volatile.Read(ref _closed);
 
     /// <summary>
     /// A logger writing into this session's own log, built once.
@@ -230,8 +309,9 @@ internal sealed class LiveSession : IAsyncDisposable
     public bool NoticeGiven { get; set; }
 
     /// <summary>
-    /// The one timer: this session's browser is closed once nothing has driven it
-    /// for <see cref="BrowserIdleTimer.Period"/>, and the node child is kept.
+    /// The one timer: this session's browser server is ended once nothing has
+    /// driven it for <see cref="BrowserIdleTimer.Period"/>. <see langword="null"/>
+    /// for a headed session, which is never idle-closed.
     /// </summary>
     /// <remarks>
     /// It belongs to this lifetime and not to the manager because everything
@@ -239,17 +319,18 @@ internal sealed class LiveSession : IAsyncDisposable
     /// timer owned anywhere else would need a way to name a session that has
     /// already gone.
     /// </remarks>
-    public BrowserIdleTimer Idle { get; }
+    public BrowserIdleTimer? Idle { get; }
 
     /// <summary>
     /// Whether this session's browser server has a browser up: anything in the
-    /// child's job besides the node child itself.
+    /// child's job beyond the child's own processes.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The predicate the teardown below reads, and the count the idle
-    /// timer's own evidence is</b> -- <c>11 → 1</c> processes after a close -- so
-    /// a description and a teardown agree on what <i>a browser is open</i> means.
+    /// <b>The predicate the idle close, the teardown, a resume and the server's
+    /// pipe all read</b>, so they agree on what <i>a browser is open</i> means. It
+    /// is <see cref="SessionEnvironment.BrowserIsOpen"/>, which asks the kernel for
+    /// the job's members in the product and asks a double in the in-process rig.
     /// </para>
     /// <para>
     /// <b>A job that cannot be read answers <see langword="false"/></b>, because
@@ -265,7 +346,7 @@ internal sealed class LiveSession : IAsyncDisposable
         {
             try
             {
-                return Child.JobProcessIds().Count > 1;
+                return _browserIsOpen(Child);
             }
             catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or ObjectDisposedException)
             {
@@ -275,38 +356,92 @@ internal sealed class LiveSession : IAsyncDisposable
     }
 
     /// <summary>
-    /// Swaps in a child started to replace one that died, and tears the dead one
-    /// down.
+    /// Records that the caller's own <c>browser_close</c> is about to close this
+    /// session's browser, before it is sent.
+    /// </summary>
+    /// <remarks>
+    /// <b>P3 b, the maintainer's words of 2026-10-03, verbatim: "p3 b".</b> The
+    /// caller's close is treated like the idle close: every later call is refused
+    /// until <c>browserai_resume</c>, which starts the browser again and lets its
+    /// own session restore reopen the tabs. Marked before the close is forwarded,
+    /// so a close that never answers still leaves a session the resume can
+    /// recover; see <see cref="Closed"/>.
+    /// </remarks>
+    public void ClosedByTheCaller() =>
+        _ = Interlocked.CompareExchange(ref _closed, new SessionClosure(SessionCloseCause.Caller, _clock.GetUtcNow(), Idle?.Period), null);
+
+    /// <summary>
+    /// Ends this session's child once the caller's own <c>browser_close</c> has
+    /// been answered, so a closed session holds no node process either.
+    /// </summary>
+    /// <remarks>
+    /// <b>The same teardown the idle close makes</b>, and cheap here: the browser
+    /// has already gone, so the node child exits in about 20 ms once its stdin
+    /// closes (measured 2026-10-03, 14 to 36 ms over twelve runs). A session that
+    /// is closed holds nothing until the resume that opens it again.
+    /// </remarks>
+    /// <returns>A task that completes once the child is gone.</returns>
+    public async Task EndTheChildAfterTheCallersCloseAsync()
+    {
+        if (Closed is { Cause: SessionCloseCause.Caller })
+        {
+            await Child.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Sends this session's browser its own <c>browser_close</c>, bounded, so a
+    /// shutdown lets the browser flush before the child is ended.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The old connection is disposed and not dropped, and that is the
-    /// containment half, not tidiness.</b> Disposing it closes the job
-    /// handle, and closing the job handle is what ends anything still alive
-    /// inside it -- a browser tree whose <c>node</c> parent died but which the
-    /// kernel has not been told about is exactly the state this method is
-    /// reached in.
+    /// <b>e2 of P7. Only where there is a browser to close and nothing has closed
+    /// it already</b>: a closed session's browser is gone or wedged, and a
+    /// <c>browser_close</c> with no browser up starts one in order to close it.
     /// </para>
     /// <para>
-    /// <b>The swap happens first.</b> A call arriving mid-replacement reaches
-    /// the new child and not the one being torn down, which is the ordering
-    /// a caller can actually be answered under.
+    /// <b>It writes no row.</b> A teardown has never written one, and the time
+    /// this runs in is the second a client gives before it kills the tree, which
+    /// is not the moment to add a database write to every session.
     /// </para>
     /// </remarks>
-    /// <param name="replacement">The child to drive this session from now on. This object owns it.</param>
-    /// <returns>A task that completes once the dead child has been torn down.</returns>
-    public async ValueTask ReplaceChildAsync(ChildConnection replacement)
+    /// <returns>A task that completes once the close has answered or the bound has passed.</returns>
+    public async Task CloseTheBrowserForShutdownAsync()
     {
-        ArgumentNullException.ThrowIfNull(replacement);
-
-        var previous = Interlocked.Exchange(ref _child, replacement);
-
-        if (ReferenceEquals(previous, replacement))
+        if (Closed is not null || !BrowserIsOpen)
         {
             return;
         }
 
-        await previous.DisposeAsync().ConfigureAwait(false);
+        // ⚠️ THE REAP IS OWED NOW, because the close below takes the browser
+        // down before the teardown looks. The teardown starts a reap only for a
+        // browser it still finds up, and a clean close leaves its descriptor in
+        // Playwright's registry all the same (a persistent profile's is never
+        // deleted on close), so without this a shutdown that closed its browsers
+        // first would stop reaping them. The kernel's count and not
+        // `BrowserIsOpen`, for the reason the teardown gives.
+        if (TheJobHoldsABrowser())
+        {
+            Volatile.Write(ref _reapOwed, 1);
+        }
+
+        using var bound = new CancellationTokenSource(ShutdownCloseBudget);
+
+        try
+        {
+            _ = await Child.AskAsync(
+                RequestMethods.ToolsCall,
+                new JsonObject
+                {
+                    ["name"] = BrowserCloseTool,
+                    ["arguments"] = new JsonObject(),
+                },
+                bound.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            IdleLog.ShutdownCloseUnanswered(Logger, Location.FullPath, ShutdownCloseBudget);
+        }
     }
 
     /// <inheritdoc />
@@ -336,16 +471,27 @@ internal sealed class LiveSession : IAsyncDisposable
             return;
         }
 
-        // The timer first, so it cannot send a close into a child that is being
+        // The timer first, so it cannot start a close of a child that is being
         // torn down -- and so a close already in flight is waited for here
         // instead of failing noisily against a closed transport.
-        await Idle.DisposeAsync().ConfigureAwait(false);
+        if (Idle is not null)
+        {
+            await Idle.DisposeAsync().ConfigureAwait(false);
+        }
 
         // ⚠️ READ BEFORE THE CHILD GOES, because afterwards there is no job to
-        // ask. More than the node child in it means a browser tree is about to
-        // die, and therefore that a descriptor in Playwright's registry is about
-        // to become one nothing else will ever unlink -- see the reap below.
-        var browserWasUp = Child.JobProcessIds().Count > 1;
+        // ask. More than the child's own processes in it means a browser tree is
+        // about to die, and therefore that a descriptor in Playwright's registry
+        // is about to become one nothing else will ever unlink -- see the reap
+        // below. Corrected 2026-10-03 (previously "More than the node child in
+        // it"): a console host shares the job with node, so the count against
+        // one started a reap for every session, browser or not.
+        //
+        // ⚠️ THE KERNEL'S COUNT AND NOT `BrowserIsOpen`, because the reap is
+        // a real process run against a real registry: a double that says a
+        // browser is up has written no descriptor, and the in-process rig must
+        // never start a reaper on the strength of one.
+        var browserWasUp = TheJobHoldsABrowser() || Volatile.Read(ref _reapOwed) is 1;
 
         // The child next. Disposing it closes the child's stdin, which is
         // upstream's own graceful teardown path, and then closes the job handle,
@@ -381,93 +527,135 @@ internal sealed class LiveSession : IAsyncDisposable
     }
 
     /// <summary>
-    /// Closes this session's browser and keeps its node child, by calling
-    /// upstream's own tool.
+    /// The idle close: ends this session's whole browser server, node child
+    /// included, when a browser is up -- and does nothing at all when one is not.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The tool is the mechanism, and nothing else would be.</b> Killing the
-    /// browser out of the job would take the node child with it -- the job is per
-    /// child, which is the containment contract -- and there is no other lever:
-    /// Playwright owns the browser process, so asking Playwright is the only way
-    /// to put it down without putting the session down too.
+    /// ⚠️ <b>P4 b, the maintainer's words of 2026-10-03, verbatim: "p4 b - unless
+    /// this causes state loss. If that is the case research the differences
+    /// between a and b. Go for b but report back in the morning for me to
+    /// reconsider."</b> <i>Corrected 2026-10-03 (previously this sent upstream's
+    /// own <c>browser_close</c> and kept the node child, "the tool is the
+    /// mechanism, and nothing else would be").</i> Measured the same day: ending
+    /// the whole child keeps exactly what that close kept, 12 of 12 runs, frees
+    /// about 124 MB of working set (176 MB private) per idle session that the
+    /// node child held, and costs 0.3 to 0.5 s at the resume that starts a new
+    /// one. And it never sends a <c>browser_close</c>, which is the half that
+    /// matters most: a <c>browser_close</c> that meets an armed debugger pause
+    /// never answers and wedges the session (12 of 12 on 0.0.82, 6 of 6 on
+    /// 0.0.83), while a child whose stdin closes exits in 0.75 to 1.5 s even
+    /// while paused (measured on 0.0.82 and not re-taken on 0.0.83).
     /// </para>
     /// <para>
-    /// <b>Measured 2026-08-16 against <c>@playwright/mcp</c> 0.0.79, twice.</b>
-    /// The tool's own result text reads <c>await page.close()</c> and <i>"No open
-    /// tabs"</i>, which reads as closing a tab and is not: closing the last page
-    /// tears the persistent context down, and every process under the browsers
-    /// root goes with it while the node child stays. Called again with no browser
-    /// open it answers the same text and is not an error, so a close that races
-    /// anything costs a round trip and not a failure.
+    /// <b>The teardown is the one every other end of a session uses</b>: stdin
+    /// closed, which is upstream's own graceful path, then up to the child's
+    /// shutdown bound for it to exit, then the job. See
+    /// <c>ChildProcessSession.ShutdownPeerAsync</c>.
+    /// </para>
+    /// <para>
+    /// <b>Q327 a: with only the node child left there is nothing to close</b>, so
+    /// it writes no row, closes nothing and leaves the session open. A session in
+    /// that state answers its next call as it always did.
     /// </para>
     /// <para>
     /// ⚠️ <b>IT WRITES A ROW, and it wrote nothing at all until 2026-08-26.</b>
-    /// The close talks to the child directly and never touched
-    /// <see cref="Lock"/>; while <c>browserai.log</c> existed the event survived
-    /// there, and P2 deleted that file -- so an autonomous browser close became
-    /// invisible in the only record there is, and a reader met an unexplained gap
-    /// in wall-clock time followed by a silent relaunch.
-    /// </para>
-    /// <para>
-    /// <b>Written the way every forwarded call's row is written</b>:
-    /// <c>in-flight</c> before the call reaches the child, settled from the
-    /// child's own answer. The ordering is not decoration here either -- a close
-    /// that hangs, or one whose child has died, leaves the row unsettled, which
-    /// is exactly the state <c>browserai_catch_up</c> renders as <i>"no answer
-    /// was recorded"</i>. Writing it afterwards would lose precisely the closes
-    /// anybody investigates.
+    /// While <c>browserai.log</c> existed the event survived there, and P2 deleted
+    /// that file -- so an autonomous close became invisible in the only record
+    /// there is. Written <c>in-flight</c> before the teardown and settled after it,
+    /// so a teardown that hangs leaves the state <c>browserai_catch_up</c> renders
+    /// as <i>"no answer was recorded"</i>.
     /// </para>
     /// <para>
     /// ⚠️ <b>A record that cannot be written does NOT stop the close, and that is
-    /// the opposite of the rule at the caller's door.</b> A forwarded call is
-    /// refused when its row will not write, because the caller can retry and a
-    /// gap nobody is told about is worse. There is no caller here and nothing to
-    /// refuse to: declining to close would leave a browser tree up for the life
-    /// of the session to protect a log line. The failure is logged and the close
-    /// proceeds.
+    /// the opposite of the rule at the caller's door.</b> There is no caller here
+    /// and nothing to refuse to: declining to close would leave a browser tree up
+    /// for the life of the session to protect a log line. The failure is logged
+    /// and the close proceeds.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The residual race is narrowed and not removed, as it was before.</b>
+    /// A call that passes the door in the microseconds between the timer's second
+    /// look and <see cref="Closed"/> being set is forwarded into a child that is
+    /// being ended, and is answered with the transport's failure; the call after
+    /// it is refused with the sentence that names <c>browserai_resume</c>.
     /// </para>
     /// </remarks>
-    private static async Task<BrowserCloseResult> CloseBrowserAsync(
-        ChildConnection child,
-        SessionLock sessionLock,
-        CancellationToken cancellationToken)
+    /// <param name="cancellationToken">Cancelled by a teardown that starts while this runs.</param>
+    /// <returns>What went, or <see langword="null"/> when there was nothing to close.</returns>
+    private async Task<BrowserCloseResult?> CloseForIdleAsync(CancellationToken cancellationToken)
     {
-        var before = child.JobProcessIds().Count;
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (Closed is not null || !BrowserIsOpen)
+        {
+            return null;
+        }
+
+        var before = ProcessesInTheJob();
+        var browserWasUp = TheJobHoldsABrowser();
+
+        _ = Interlocked.CompareExchange(
+            ref _closed,
+            new SessionClosure(SessionCloseCause.Idle, _clock.GetUtcNow(), Idle?.Period),
+            null);
+
         long? row = null;
 
         try
         {
-            row = sessionLock.Append(BrowserCloseTool, IdleCloseWhy);
+            row = Lock.Append(BrowserCloseTool, IdleCloseWhy);
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
-            SessionLog.IdleCloseNotRecorded(sessionLock.Logger, sessionLock.Location.FullPath, failure);
+            SessionLog.IdleCloseNotRecorded(Lock.Logger, Lock.Location.FullPath, failure);
         }
 
-        var answer = await child.AskAsync(
-            RequestMethods.ToolsCall,
-            new JsonObject
-            {
-                ["name"] = BrowserCloseTool,
-                ["arguments"] = new JsonObject(),
-            },
-            cancellationToken).ConfigureAwait(false);
+        await Child.DisposeAsync().ConfigureAwait(false);
 
-        if (answer.Response is null)
+        Settle(Lock, row, SessionStore.Successful, failure: null);
+
+        // ⚠️ AFTER the teardown and never before it: a browser tree was up and is
+        // now dead, so upstream's registry holds a descriptor nothing else will
+        // ever unlink. Asked of the kernel's count for the reason the teardown
+        // gives: a double's browser wrote no descriptor.
+        if (browserWasUp)
         {
-            var why = answer.ProtocolFailure?.Message
-                ?? answer.TransportFailure?.Message
-                ?? "the child answered with neither a result nor an error";
-
-            Settle(sessionLock, row, SessionStore.Failed, Encoding.UTF8.GetBytes(why));
-
-            return new BrowserCloseResult(before, child.JobProcessIds().Count, why);
+            _reap.Start(ServerRegistryReap.AfterIdleClose);
         }
 
-        Settle(sessionLock, row, SessionStore.Successful, failure: null);
+        return new BrowserCloseResult(before, ProcessesInTheJob());
+    }
 
-        return new BrowserCloseResult(before, child.JobProcessIds().Count, Failure: null);
+    /// <summary>
+    /// Whether the kernel counts a browser in the child's job, for the reap: a
+    /// double's browser wrote no descriptor, so this never asks the seam.
+    /// </summary>
+    /// <returns>Whether processes beyond the child's own are in the job, or false once it cannot be read.</returns>
+    private bool TheJobHoldsABrowser()
+    {
+        try
+        {
+            return Child.HoldsMoreThanItsOwnProcesses();
+        }
+        catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>How many processes the child's job holds, for the idle close's log line.</summary>
+    /// <returns>The count, or zero once the job cannot be read.</returns>
+    private int ProcessesInTheJob()
+    {
+        try
+        {
+            return Child.JobProcessIds().Count;
+        }
+        catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or ObjectDisposedException)
+        {
+            return 0;
+        }
     }
 
     /// <summary>Settles the idle close's row, when one was written.</summary>
@@ -499,3 +687,34 @@ internal sealed class LiveSession : IAsyncDisposable
         }
     }
 }
+
+/// <summary>
+/// The per-run arguments one child of a session was launched with.
+/// </summary>
+/// <remarks>
+/// <b>A record, so two of them compare by value</b> -- which is the whole of how a
+/// resume decides whether it has anything to apply. None of it is written to the
+/// session's record: every run says what it wants, and this is what the current
+/// run said.
+/// </remarks>
+/// <param name="Headed">Whether the browser has a window.</param>
+/// <param name="Tracing">Whether upstream records the run, as <c>saveSession</c>.</param>
+/// <param name="Debug">Whether this session's own log is at debug level.</param>
+/// <param name="Run">Everything else a caller can set per run.</param>
+internal sealed record SessionRunSettings(bool Headed, bool Tracing, bool Debug, RunOptions Run);
+
+/// <summary>Who closed a session's browser.</summary>
+internal enum SessionCloseCause
+{
+    /// <summary>BrowserAI's own idle timer, after a headless session went unused.</summary>
+    Idle,
+
+    /// <summary>The caller's own <c>browser_close</c>.</summary>
+    Caller,
+}
+
+/// <summary>How and when a session's browser was closed.</summary>
+/// <param name="Cause">Who closed it.</param>
+/// <param name="At">When.</param>
+/// <param name="IdlePeriod">The session's idle period, which the refusal names after an idle close.</param>
+internal sealed record SessionClosure(SessionCloseCause Cause, DateTimeOffset At, TimeSpan? IdlePeriod);

@@ -44,6 +44,12 @@ internal sealed class ChildConnection : IAsyncDisposable
     private readonly IAsyncDisposable _progressRelay;
     private readonly string _idPrefix;
 
+    /// <summary>
+    /// How many processes the job held once the handshake had finished, before any
+    /// call could start a browser: node, and the console host Windows puts beside it.
+    /// </summary>
+    private readonly int _ownProcesses;
+
     private long _requests;
     private int _disposed;
 
@@ -59,6 +65,7 @@ internal sealed class ChildConnection : IAsyncDisposable
         _logger = logger;
         _idPrefix = idPrefix;
         NegotiatedProtocolVersion = client.NegotiatedProtocolVersion;
+        _ownProcesses = JobProcessIds().Count;
 
         // The child→caller direction, and the only one the SDK gives no
         // server-side seam for: McpClientOptions has no Filters. A *named*
@@ -189,10 +196,39 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// of asserting that a browser went. It is also the only question about
     /// browser processes this product can ask <i>per session</i>: an image-path
     /// scan of the machine cannot tell one session's Chromium from another's.
+    /// <i>Corrected 2026-10-03 by addition: the idle close reports
+    /// <c>11 → 0</c> since it ends the whole child, and the node child never stood
+    /// alone in the job. See <see cref="HoldsMoreThanItsOwnProcesses"/>.</i>
     /// </remarks>
     /// <returns>The pids, or empty when the child is not a process.</returns>
     public IReadOnlyList<int> JobProcessIds() =>
         (_link.Session as ChildProcessSession)?.Job.ProcessIds() ?? [];
+
+    /// <summary>
+    /// Whether the job holds more processes than the child had of its own when it
+    /// connected: a browser, or what is left of one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Counted against the child's own processes and never against one.</b>
+    /// <i>Corrected 2026-10-03 (previously every reader asked whether the job held
+    /// more than one process, "anything in the child's job besides the node child
+    /// itself")</i>: Windows puts a console host in the job beside node
+    /// ([kb](../../../kb/windows/job-objects.md)), so the job holds two processes
+    /// before any browser starts and two again after a <c>browser_close</c>,
+    /// measured 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83 in every run
+    /// of both families. Counted against one, every real child read as having a
+    /// browser up, and a <c>browser_close</c> sent on that reading starts a browser
+    /// in order to close it.
+    /// </para>
+    /// <para>
+    /// <b>Read at the handshake</b>, because no browser can be up before the first
+    /// call, so whatever the job holds then is the child's own. A child that is not
+    /// a process holds nothing and reads <see langword="false"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>Whether processes beyond the child's own are in its job.</returns>
+    public bool HoldsMoreThanItsOwnProcesses() => JobProcessIds().Count > _ownProcesses;
 
     /// <summary>Connects to a child over a transport and completes the handshake.</summary>
     /// <param name="transport">The transport. The SDK client owns it once this returns.</param>
@@ -298,10 +334,23 @@ internal sealed class ChildConnection : IAsyncDisposable
                 Payload = TakePayload(childId, wantError: false),
             };
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             await AnnounceCancellationAsync(name).ConfigureAwait(false);
             throw;
+        }
+        catch (OperationCanceledException failure)
+        {
+            // ⚠️ NOT THE CALLER'S, added 2026-10-03. The SDK ends a request it
+            // is still waiting on with a TaskCanceledException when its own
+            // client is disposed -- watched that day in the rig, from
+            // `McpSessionHandler.SendRequestAsync` -- which is what happens to a
+            // call outstanding when a resume or a shutdown ends the child under
+            // it, and the armed-close wedge is exactly that call. Rethrown, it
+            // reached the caller's server as a cancellation the caller never
+            // made, and the caller was answered with nothing at all. It is the
+            // child failing to answer, and is reported as that.
+            return new ChildAnswer { TransportFailure = failure };
         }
         catch (McpProtocolException failure)
         {

@@ -6,10 +6,18 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// The <b>only</b> timer in BrowserAI: a session's browser is closed once it has
-/// gone unused for <see cref="DefaultIdlePeriod"/>, and the node child is kept.
+/// The <b>only</b> timer in BrowserAI: a headless session's browser server is
+/// ended once it has gone unused for <see cref="DefaultIdlePeriod"/>.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-03 (previously "a session's browser is closed once it
+/// has gone unused for <see cref="DefaultIdlePeriod"/>, and the node child is
+/// kept").</b> Under the maintainer's P4 b the close ends the whole child, under
+/// his P2 a every call after it is refused until <c>browserai_resume</c>, and
+/// under his Q326 a a headed session has no timer at all. What the close does is
+/// <c>LiveSession</c>'s; this type decides only <i>when</i>.
+/// </para>
 /// <para>
 /// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
 /// session TTL and no reclaim window -- <b>reclaim is forever</b>, because the
@@ -24,16 +32,18 @@ namespace BrowserAI.Sessions;
 /// <c>browserai_list</c> and <c>browserai_destroy</c> matter here more, not less.
 /// </para>
 /// <para>
-/// <b>The relaunch is implicit, and that is what makes the timer safe to have at
-/// all.</b> Measured 2026-08-16 twice against <c>@playwright/mcp</c> 0.0.79 with
-/// <c>chromium-1237</c>: <c>browser_close</c> takes the whole browser tree down --
-/// 8 then 7 processes to zero, 378.3 MB then 369.4 MB of browser working set to
-/// zero -- leaves the node child running, and the <i>next</i> tool call brings the
-/// browser back in 416 ms then 409 ms with no error and no
-/// <i>"browser is closed"</i> anywhere. Nothing in BrowserAI relaunches
-/// anything: Playwright creates the browser lazily on first use, so the recovery
-/// is upstream's own behaviour and not a thing this product had to build
-/// ([kb: timings](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+/// ⚠️ <b>The relaunch is no longer implicit, and that is the field report's
+/// finding acted on.</b> <i>Corrected 2026-10-03 (previously "The relaunch is
+/// implicit, and that is what makes the timer safe to have at all ... the next
+/// tool call brings the browser back in 416 ms then 409 ms with no error and no
+/// browser is closed anywhere").</i> The measurement of 2026-08-16 stands -- a
+/// <c>browser_close</c> took 8 then 7 processes and 378.3 then 369.4 MB to zero,
+/// and the next call relaunched in 416 then 409 ms -- and it was taken with a
+/// navigation as the next call, which works from any page. A field report of
+/// 2026-10-01 met the case it did not cover: a call that depended on the page it
+/// left ran on <c>about:blank</c>, and nothing said why. So a closed session now
+/// refuses every call with a sentence naming <c>browserai_resume</c>, and the
+/// browser's own session restore brings the tabs back at the resume.
 /// </para>
 /// <para>
 /// <b>It starts disarmed.</b> A session that has been opened and never driven has
@@ -47,8 +57,11 @@ namespace BrowserAI.Sessions;
 /// navigation that outlives the whole period cannot have the browser closed
 /// underneath it. The residual window -- a call that arrives in the microseconds
 /// between the decision to close and the close being sent -- is <i>narrowed</i> by
-/// a second check and not eliminated, and it is harmless for the reason above:
-/// the caller's next call relaunches the browser and answers normally.
+/// a second check and not eliminated. <i>Corrected 2026-10-03 (previously "and it
+/// is harmless for the reason above: the caller's next call relaunches the
+/// browser and answers normally").</i> That call is now answered with the
+/// transport's own failure, and the one after it is refused with the sentence
+/// naming <c>browserai_resume</c>.
 /// </para>
 /// <para>
 /// <b>The clock is a constructor parameter, and that is the only reason this
@@ -80,13 +93,16 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// It closes the browser and keeps the node child. Re-measured 2026-08-16,
-    /// that is ~496 MB → ~118 MB, with the next call bringing the browser back in
-    /// ~0.41 s
-    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) --
-    /// so the period is long enough that ordinary think-time between calls never
-    /// closes a browser, and the cost of being wrong is under half a second on a
-    /// relaunch the caller cannot see.
+    /// It ends the browser server, node child included. Re-measured 2026-08-16,
+    /// the browser alone was ~496 MB → ~118 MB
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)),
+    /// and on 2026-10-03 the node child was another ~124 MB of working set
+    /// (176 MB private) that the close now frees as well. The period is long
+    /// enough that ordinary think-time between calls never closes a browser.
+    /// <i>Corrected 2026-10-03 (previously "and the cost of being wrong is under
+    /// half a second on a relaunch the caller cannot see").</i> The cost of being
+    /// wrong is now a refused call and a <c>browserai_resume</c>, which starts a
+    /// new child in 0.3 to 0.5 s more than the relaunch used to take.
     /// </para>
     /// <para>
     /// The suite drives the timer in milliseconds through
@@ -103,7 +119,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 
     private readonly Lock _gate = new();
     private readonly string _session;
-    private readonly Func<CancellationToken, Task<BrowserCloseResult>> _closeBrowser;
+    private readonly Func<CancellationToken, Task<BrowserCloseResult?>> _closeBrowser;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
     private readonly CancellationTokenSource _stopping = new();
@@ -124,7 +140,10 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// <summary>Creates a session's timer, disarmed.</summary>
     /// <param name="session">The session directory, for the log.</param>
     /// <param name="period">How long idle is. The shipped value is <see cref="DefaultIdlePeriod"/>.</param>
-    /// <param name="closeBrowser">Closes the browser and leaves the node child. Reports what went away.</param>
+    /// <param name="closeBrowser">
+    /// Ends the browser server and reports what went away, or answers
+    /// <see langword="null"/> when there was no browser to close.
+    /// </param>
     /// <param name="logger">This session's own logger.</param>
     /// <param name="time">
     /// The clock this timer reads and schedules against.
@@ -134,7 +153,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     public BrowserIdleTimer(
         string session,
         TimeSpan period,
-        Func<CancellationToken, Task<BrowserCloseResult>> closeBrowser,
+        Func<CancellationToken, Task<BrowserCloseResult?>> closeBrowser,
         ILogger logger,
         TimeProvider time)
     {
@@ -306,11 +325,11 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
                 }
             }
 
-            var result = await _closeBrowser(_stopping.Token).ConfigureAwait(false);
-
-            if (result.Failure is { } failure)
+            // Null is Q327 a: only the node child was left, so nothing was
+            // closed, no row was written and nothing is counted.
+            if (await _closeBrowser(_stopping.Token).ConfigureAwait(false) is not { } result)
             {
-                IdleLog.CloseRefused(_logger, _session, failure);
+                IdleLog.NothingToClose(_logger, _session, Period);
                 return;
             }
 
@@ -321,7 +340,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
         {
             // Teardown cancelled it. The job object takes the browser instead.
         }
-#pragma warning disable CA1031 // A browser that will not close is a log line: the session stays usable, and the next call relaunches whatever did go.
+#pragma warning disable CA1031 // A close that fails is a log line; the teardown that follows it ends the job either way.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
@@ -363,20 +382,21 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 /// <summary>What one idle close did, as evidence and not as an assumption.</summary>
 /// <remarks>
 /// <b>The two counts are the whole point.</b> "The browser was closed" is a claim
-/// no log line can support on its own; <c>11 → 1</c> processes left in the child's
-/// job says the browser tree went and the node child stayed, which is exactly the
-/// pair of facts this timer promises and either alone is the wrong outcome.
+/// no log line can support on its own; <c>11 → 0</c> processes left in the
+/// child's job says the browser tree went and the node child with it, which is
+/// what the close promises since 2026-10-03. <i>Corrected 2026-10-03 (previously
+/// "<c>11 → 1</c> ... the browser tree went and the node child stayed"), with
+/// the close.</i>
 /// </remarks>
 /// <param name="ProcessesBefore">Processes in the child's job before the close.</param>
-/// <param name="ProcessesAfter">Processes left in it afterwards, which should be the node child alone.</param>
-/// <param name="Failure">Why nothing was closed, when nothing was.</param>
-internal readonly record struct BrowserCloseResult(int ProcessesBefore, int ProcessesAfter, string? Failure);
+/// <param name="ProcessesAfter">Processes left in it afterwards, which should be none.</param>
+internal readonly record struct BrowserCloseResult(int ProcessesBefore, int ProcessesAfter);
 
 /// <summary>Source-generated log messages for the browser-idle timer.</summary>
 /// <remarks>Event ids start at 60, after <see cref="SessionToolLog"/>'s 40s.</remarks>
 internal static partial class IdleLog
 {
-    /// <summary>A session's browser was closed because nothing had driven it.</summary>
+    /// <summary>A session's browser server was ended because nothing had driven it.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="session">The session directory.</param>
     /// <param name="period">How long it had been idle.</param>
@@ -385,18 +405,8 @@ internal static partial class IdleLog
     [LoggerMessage(
         EventId = 60,
         Level = LogLevel.Information,
-        Message = "Browser closed after {Period} idle on the session at {Session}; its node child is still running. Processes in that child's job: {Before} → {After}. The next tool call relaunches the browser, which is upstream's own behaviour and costs ~0.4 s.")]
+        Message = "Browser server ended after {Period} idle on the session at {Session}, node child included. Processes in that child's job: {Before} → {After}. Browser calls are refused until browserai_resume starts a new one.")]
     public static partial void BrowserClosed(ILogger logger, string session, TimeSpan period, int before, int after);
-
-    /// <summary>The child answered the close with an error.</summary>
-    /// <param name="logger">Where it goes.</param>
-    /// <param name="session">The session directory.</param>
-    /// <param name="reason">What the child said.</param>
-    [LoggerMessage(
-        EventId = 61,
-        Level = LogLevel.Warning,
-        Message = "The browser on the session at {Session} was not closed after going idle: {Reason}. The session is unaffected and the browser stays open until something else takes it down.")]
-    public static partial void CloseRefused(ILogger logger, string session, string reason);
 
     /// <summary>The close could not be sent at all.</summary>
     /// <param name="logger">Where it goes.</param>
@@ -405,6 +415,33 @@ internal static partial class IdleLog
     [LoggerMessage(
         EventId = 62,
         Level = LogLevel.Warning,
-        Message = "The idle close on the session at {Session} failed. The session is unaffected; its browser stays open until the job object takes it down.")]
+        Message = "The idle close on the session at {Session} failed. Its child is ended by the session's own teardown and its job object either way.")]
     public static partial void CloseFailed(ILogger logger, string session, Exception failure);
+
+    /// <summary>The timer fired and found only the node child: nothing to close.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="period">How long it had been idle.</param>
+    [LoggerMessage(
+        EventId = 63,
+        Level = LogLevel.Debug,
+        Message = "The session at {Session} was idle for {Period} with no browser up, so nothing was closed and no row was written.")]
+    public static partial void NothingToClose(ILogger logger, string session, TimeSpan period);
+
+    /// <summary>A shutdown's own <c>browser_close</c> did not answer within its bound.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="budget">How long it was given.</param>
+    [LoggerMessage(
+        EventId = 64,
+        Level = LogLevel.Warning,
+        Message = "The browser on the session at {Session} did not answer its close within {Budget} at shutdown; its child is ended through its stdin and its job anyway.")]
+    public static partial void ShutdownCloseUnanswered(ILogger logger, string session, TimeSpan budget);
+
+    // Id 61 was `CloseRefused`, the child answering the idle close's
+    // `browser_close` with an error. The idle close sends no `browser_close`
+    // since 2026-10-03, so nothing can produce it, and the id is not reused for
+    // anything else.
+    //
+    // RETIRED-EVENT-IDS: 61
 }

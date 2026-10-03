@@ -132,6 +132,39 @@ internal sealed class ServerRegistryReap(PayloadLayout payload, ILogger logger)
     public const string AfterSweep = "the stray sweep ended browsers no session accounted for";
 
     /// <summary>
+    /// A resume ended a session's child in order to start a new one.
+    /// </summary>
+    /// <remarks>
+    /// Added 2026-10-03 with the resume that opens a session again. A browser is
+    /// up at that moment only when the caller's own close never finished, which
+    /// is the armed-close wedge the resume exists to recover.
+    /// </remarks>
+    public const string AfterResume = "a resume ended a session's browser server to start a new one";
+
+    /// <summary>
+    /// BrowserAI started, and its startup sweep collects what a run that was
+    /// killed left behind.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P5 a, the maintainer's words of 2026-10-03, verbatim: "p5 a"</b>, to
+    /// clean the cheap leftovers at the next start. A client that kills
+    /// BrowserAI -- Claude Code at the end of a conversation, Codex always --
+    /// runs no close path, so no reap follows the browsers it took down, and
+    /// their descriptors stay until something calls <c>list()</c>. Measured
+    /// 2026-10-03 by the hard-kill research: 115 of the 120 registries its killed
+    /// runs left held a descriptor, and one <c>list()</c> collected each in 88 to
+    /// 175 ms (<see href="../../../kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03">kb</see>).
+    /// </para>
+    /// <para>
+    /// <b>Started by the startup sweep's pass and by nothing else</b>, so the
+    /// sweep's own machine-wide gate bounds it: a pass that cannot have the gate
+    /// does nothing, and so starts no reap either.
+    /// </para>
+    /// </remarks>
+    public const string AtStartup = "BrowserAI started, which collects what a run that was killed left behind";
+
+    /// <summary>
     /// The script the detached <c>node</c> runs: upstream's reaper, and nothing
     /// around it.
     /// </summary>

@@ -237,7 +237,9 @@ internal sealed record ClientIdentity(string? Name, string? Title, string? Versi
 /// <param name="Directory">The session directory, which is its identity.</param>
 /// <param name="Purpose">What its record says it is for.</param>
 /// <param name="BrowserOpen">
-/// Whether its browser server has a browser up: more than the node child in the
-/// child's job, the same predicate a teardown uses.
+/// Whether its browser server has a browser up: more processes in the child's job
+/// than the child had of its own at its handshake, the same predicate a teardown
+/// uses. <i>Corrected 2026-10-03 (previously "more than the node child in the
+/// child's job"), when a console host was found beside node in every job.</i>
 /// </param>
 internal sealed record HeldSession(string Directory, string? Purpose, bool BrowserOpen);

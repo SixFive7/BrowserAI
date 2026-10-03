@@ -126,6 +126,35 @@ internal sealed record SessionEnvironment
     public TimeProvider Clock { get; init; } = TimeProvider.System;
 
     /// <summary>
+    /// Whether a session's child has a browser up: anything in its job beyond the
+    /// processes the child had of its own when it connected.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one question the idle close, a resume, a caller's
+    /// <c>browser_close</c> and a shutdown all turn on since 2026-10-03.</b> An
+    /// idle close with no browser up does nothing (Q327 a); a resume applies its
+    /// per-run settings only when none is up (Q324 a then c); a caller's close
+    /// with none up is not forwarded, because forwarding it would start one; and
+    /// a shutdown asks only a browser that is up to close itself.
+    /// </para>
+    /// <para>
+    /// <b>A seam of the same kind as <see cref="ConnectChild"/>, and for the same
+    /// reason.</b> The in-process rig's children are doubles with no job, so the
+    /// kernel's answer there is always <i>no</i>, and every arm above would be
+    /// unreachable at the speed the rig exists for. The default is the kernel's
+    /// own membership list, and the real-browser arms prove it separately.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-03 (previously the default was "anything in its job
+    /// besides the node child itself", a count against one)</i>: the job holds a
+    /// console host beside node, so that read yes for every real child. See
+    /// <see cref="ChildConnection.HoldsMoreThanItsOwnProcesses"/>.
+    /// </para>
+    /// </remarks>
+    public Func<ChildConnection, bool> BrowserIsOpen { get; init; } = static child => child.HoldsMoreThanItsOwnProcesses();
+
+    /// <summary>
     /// Starts one session's <c>@playwright/mcp</c> child and completes the
     /// handshake with it.
     /// </summary>

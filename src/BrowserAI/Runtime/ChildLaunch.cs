@@ -77,6 +77,29 @@ internal static class ChildLaunch
     /// </summary>
     public const string BrowsersPathVariable = "PLAYWRIGHT_BROWSERS_PATH";
 
+    /// <summary>
+    /// The folder inside this run's own directory that a session's child is
+    /// given as its <c>TEMP</c> and <c>TMP</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>P5 a, the maintainer's words of 2026-10-03, verbatim: "p5 a".</b>
+    /// Measured that day by the hard-kill research: every browser launch a kill
+    /// ends leaves one empty <c>playwright-artifacts-*</c> directory in the
+    /// temporary folder its child was given, which was the user's own
+    /// <c>%TEMP%</c>, and nothing ever removed one -- upstream removes it only on
+    /// a clean close.
+    /// </para>
+    /// <para>
+    /// <b>Inside the run's directory, so its fate is the directory's.</b> A run
+    /// that ends cleanly deletes that directory, and one that is killed has it
+    /// swept at the next start (<see cref="InstanceDirectory"/>). The same move
+    /// <see cref="BrowserProvisioner"/> already makes for the install child's
+    /// download, for a different reason.
+    /// </para>
+    /// </remarks>
+    public const string TemporaryFolderName = "temp";
+
     /// <summary>Builds the options one child is started with.</summary>
     /// <param name="payload">Where <c>node.exe</c> and <c>cli.js</c> live.</param>
     /// <param name="browsersDirectory">
@@ -99,6 +122,11 @@ internal static class ChildLaunch
     /// <param name="config">The generated config, from <see cref="BrowserConfiguration"/>.</param>
     /// <param name="name">The transport's name in diagnostics.</param>
     /// <param name="standardErrorLines">Where the child's stderr is delivered.</param>
+    /// <param name="temporaryDirectory">
+    /// The child's <c>TEMP</c> and <c>TMP</c>, created here, or
+    /// <see langword="null"/> to inherit this process's. A session's child gets
+    /// one inside the run's own directory; see <see cref="TemporaryFolderName"/>.
+    /// </param>
     /// <returns>Everything <see cref="DirectStdioClientTransport"/> needs.</returns>
     /// <exception cref="ArgumentException"><paramref name="browsersDirectory"/> is not absolute.</exception>
     /// <exception cref="FileNotFoundException">The payload is incomplete.</exception>
@@ -109,7 +137,8 @@ internal static class ChildLaunch
         string configFile,
         GeneratedConfig config,
         string name = "playwright-mcp",
-        Action<string>? standardErrorLines = null)
+        Action<string>? standardErrorLines = null,
+        string? temporaryDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(browsersDirectory);
@@ -141,6 +170,19 @@ internal static class ChildLaunch
 
         BrowserConfiguration.WriteTo(configFile, config);
 
+        List<KeyValuePair<string, string>> variables = [new(BrowsersPathVariable, browsersDirectory)];
+
+        if (temporaryDirectory is not null)
+        {
+            _ = Directory.CreateDirectory(temporaryDirectory);
+
+            // Both names, because Node reads TEMP first and TMP second and an
+            // inherited TMP would otherwise win where only TMP is set -- the
+            // same pair BrowserProvisioner hands the install child.
+            variables.Add(new("TEMP", temporaryDirectory));
+            variables.Add(new("TMP", temporaryDirectory));
+        }
+
         return new ChildProcessOptions
         {
             Command = payload.NodeExecutable,
@@ -159,8 +201,7 @@ internal static class ChildLaunch
                 // capabilities the generator just wrote.
             ],
             WorkingDirectory = workingDirectory,
-            Environment = ChildEnvironment.Build(
-                [new KeyValuePair<string, string>(BrowsersPathVariable, browsersDirectory)]),
+            Environment = ChildEnvironment.Build(variables),
             StandardErrorLines = standardErrorLines,
             Name = name,
         };
