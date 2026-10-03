@@ -83,10 +83,13 @@ the other five are identical to the probe record's apart from its header.
   user-profile path and the user name in the two `isolation/` files, stored under
   `.trimmed.` names, and the two-line SPDX header added to every rig file of a
   kind the header rule covers.
-- **One rig file is stored under another name**: the terminal batch generator is
-  `rig/gen-tui.js.txt`, because its line 103 calls `SCEN[sc](run)`, which the
-  repository's link scan reads in any `.js` file as a Markdown link to a file
-  named `run`. Its bytes are unchanged; its digest is in `originals.sha256`.
+- **Two rig files are stored under another name**: the batch generators are
+  `rig/gen.js.txt` and `rig/gen-tui.js.txt`, because line 137 of the first and
+  line 103 of the second call `SCEN[sc](run)`, which the repository's link scan
+  reads in any `.js` file as a Markdown link to a file named `run`. Their bytes
+  are unchanged; their digests are in `originals.sha256`. *Corrected 2026-10-03
+  (previously "One rig file is stored under another name", naming the terminal
+  generator alone): the scan found the same call in the first generator.*
 
 ## Privacy
 

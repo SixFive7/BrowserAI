@@ -150,13 +150,14 @@ for batch, run in RUNS:
                "# The whole log is listed in left-out.sha256.\n")
         write(os.path.join("runs", batch, run, "claude-debug.excerpt.txt"), (hdr + text).encode("utf-8"))
 
-for f in ("phserver.js", "ccmodel.js", "gen.js", "summarize.py", "table.py", "render.py", "rollup.py"):
+for f in ("phserver.js", "ccmodel.js", "summarize.py", "table.py", "render.py", "rollup.py"):
     put(os.path.join(Q, "rig", f), os.path.join("rig", f), rig=True)
 # Stored under a .txt name: line 103 calls SCEN[sc](run), which the repository's
 # link scan reads, in any .js file, as a Markdown link to a file named run.
-gt = os.path.join(Q, "rig", "gen-tui.js")
-put(gt, os.path.join("rig", "gen-tui.js.txt"))
-originals.append((sha(open(gt, "rb").read()), "rig/gen-tui.js", "rig/gen-tui.js.txt", "renamed, because the link scan reads SCEN[sc](run) on line 103 as a link"))
+for f, line in (("gen.js", 137), ("gen-tui.js", 103)):
+    gt = os.path.join(Q, "rig", f)
+    put(gt, os.path.join("rig", f + ".txt"))
+    originals.append((sha(open(gt, "rb").read()), "rig/" + f, "rig/" + f + ".txt", f"renamed, because the link scan reads SCEN[sc](run) on line {line} as a link"))
 for f in ("Harness.cs", "Pty.cs"):
     put(os.path.join(Q, "rig", "ExitRig", f), os.path.join("rig", "ExitRig", f), rig=True)
 off = os.path.join(Q, "code", "offsets-claude.tsv")
