@@ -1,0 +1,59 @@
+tools: 72
+{"initMs":349.8679,"firstNavigateMs":489.69079999999997,"snapshotMs":7.780200000000036,"navChars":395,"snapChars":2058}
+--- navigate response
+### Page
+- Page URL: http://127.0.0.1:65103/form.html
+- Page Title: Sign in fixture
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\zoomout\d\bench\out\pw-smoke-output\page-2026-09-25T04-02-34-088Z.yml)
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\zoomout\d\bench\out\pw-smoke-output\console-2026-09-25T04-02-33-989Z.log#L1-L2
+--- snapshot response
+### Page
+- Page URL: http://127.0.0.1:65103/form.html
+- Page Title: Sign in fixture
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1] [box=32,32,1856,472]:
+  - banner [ref=e2] [box=32,32,1856,18]:
+    - navigation "Main" [ref=e3] [box=32,32,1856,18]:
+      - link "Home" [ref=e4] [cursor=pointer] [box=32,32,43,17]:
+        - /url: "#home"
+      - text: "|"
+      - link "Pricing" [ref=e5] [cursor=pointer] [box=88,32,49,17]:
+        - /url: "#pricing"
+      - text: "|"
+      - link "Docs" [ref=e6] [cursor=pointer] [box=150,32,36,17]:
+        - /url: "#docs"
+  - main [ref=e7] [box=32,71,1856,399]:
+    - heading "Sign in" [level=1] [ref=e8] [box=32,71,1856,37]
+    - generic [ref=e9] [box=32,130,1856,185]:
+      - generic [ref=e10] [box=32,130,1856,18]: Email address
+      - textbox "Email address" [ref=e11] [box=32,148,177,21]:
+        - /placeholder: you@example.com
+      - generic [ref=e12] [box=32,178,1856,18]: Password
+      - textbox "Password" [ref=e13] [box=32,196,177,21]
+      - generic [ref=e14] [box=32,227,1856,18]: Plan
+      - combobox "Plan" [ref=e15] [box=32,245,55,19]:
+        - option "Free" [selected] [box=0,0,0,0]
+        - option "Pro" [box=0,0,0,0]
+        - option "Team" [box=0,0,0,0]
+      - generic [ref=e16] [box=32,274,1856,20]:
+        - checkbox "Remember me" [ref=e17] [box=36,277,13,13]
+        - text: Remember me
+      - button "Sign in" [ref=e18] [box=32,294,57,21]
+      - button "Count" [ref=e19] [box=93,294,52,21]
+      - text: "0"
+    - status [ref=e20] [box=32,331,1856,18]: idle
+    - generic [ref=e21] [box=32,369,1856,102]:
+      - heading "Why sign in" [level=2] [ref=e22] [box=32,369,1856,28]
+      - list [ref=e23] [box=32,416,1856,54]:
+        - listitem [ref=e24] [box=72,416,1816,18]: Sync your settings
+        - listitem [ref=e25] [box=72,434,1816,18]: Keep your history
+        - listitem [ref=e26] [box=72,452,1816,18]: Share with your team
+  - contentinfo [ref=e27] [box=32,486,1856,18]:
+    - paragraph [ref=e28] [box=32,486,1856,18]: Footer text © fixture
+```
+{"count":10,"workingSetMiB":582.5,"privateMiB":388.4,"byName":{"node.exe":1,"conhost.exe":1,"chrome.exe":8}}

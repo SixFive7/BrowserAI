@@ -1,0 +1,32 @@
+{
+  "numStartups": 42,
+  "installMethod": "native",
+  "autoUpdates": false,
+  "projects": {
+    "C:/work/demo": {
+      "allowedTools": [],
+      "mcpServers": {}
+    }
+  },
+  "mcpServers": {
+    "other": {
+      "type": "stdio",
+      "command": "C:\\Tools\\other\\other-mcp.exe",
+      "args": [
+        "--flag"
+      ],
+      "env": {}
+    },
+    "browserai": {
+      "type": "stdio",
+      "command": "D:OtherBrowserAI.appcurrentBrowserAI.Server.exe",
+      "args": [
+        "--my-own-flag"
+      ],
+      "env": {
+        "MINE": "1"
+      }
+    }
+  },
+  "userID": "seed"
+}

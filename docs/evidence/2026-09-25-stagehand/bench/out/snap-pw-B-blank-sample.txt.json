@@ -1,0 +1,4 @@
+{
+ "navText": "### Page\n- Page URL: http://127.0.0.1:61196/blank.html\n- Page Title: blank\n- Console: 1 errors, 0 warnings\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\out\\pw-snap-B-output\\page-2026-09-25T04-05-43-267Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\out\\pw-snap-B-output\\console-2026-09-25T04-05-43-173Z.log#L1",
+ "text": "### Page\n- Page URL: http://127.0.0.1:61196/blank.html\n- Page Title: blank\n- Console: 1 errors, 0 warnings\n### Snapshot\n```yaml\n- paragraph [ref=e2] [box=8,16,1904,18]: ready\n```"
+}

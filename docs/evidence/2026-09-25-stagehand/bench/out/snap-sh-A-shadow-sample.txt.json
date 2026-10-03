@@ -1,0 +1,3 @@
+{
+ "tree": "[0-33390] RootWebArea: Shadow fixture\n  [0-33391] scrollable, html\n    [0-33395] body\n      [0-33396] heading: Shadow DOM\n      [0-33381] paragraph\n        [0-33386] StaticText: Open shadow text\n      [0-33382] button: Open shadow button\n      [0-33383] paragraph\n        [0-33388] StaticText: Closed shadow text\n      [0-33384] button: Closed shadow button"
+}

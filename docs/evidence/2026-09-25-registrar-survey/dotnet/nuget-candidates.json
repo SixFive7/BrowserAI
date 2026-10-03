@@ -1,0 +1,3513 @@
+[
+ {
+  "id": "Microi.net",
+  "version": "8.3.12",
+  "downloads": 1802286,
+  "authors": [
+   "Microi"
+  ],
+  "verified": false,
+  "description": "🔥 AI 深度融合 V8引擎 的开源低代码平台 - Microi吾码。AI 本地 V8引擎 编程（VS Code Copilot/Cursor/Claude + MCP + Skills）、AI 在线编程、AI 数据分析。官网：https://microi.net",
+  "projectUrl": "https://microi.net/",
+  "q": "claude code"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer",
+  "version": "1.1.5",
+  "downloads": 72446,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "JD.SemanticKernel.Extensions.Plugins",
+  "version": "0.1.132",
+  "downloads": 70402,
+  "authors": [
+   "JD"
+  ],
+  "verified": false,
+  "description": "Load Claude Code .claude-plugin directories into Semantic Kernel. Orchestrates skill, hook, and MCP server loading from plugin manifests with dependency resolution.",
+  "projectUrl": "https://github.com/JerrettDavis/JD.SemanticKernel.Extensions",
+  "q": "claude code"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.win-x64",
+  "version": "1.1.5",
+  "downloads": 64038,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "JD.SemanticKernel.Extensions.Mcp",
+  "version": "0.1.132",
+  "downloads": 61839,
+  "authors": [
+   "JD"
+  ],
+  "verified": false,
+  "description": "First-class Model Context Protocol (MCP) support for Semantic Kernel. Discover, connect, and invoke MCP tools from multiple providers (Claude Code, Claude Desktop, VS Code, Codex, Copilot, JD Canonical) and surface them as native KernelPlugin / KernelFunction primitives.",
+  "projectUrl": "https://github.com/JerrettDavis/JD.SemanticKernel.Extensions",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Sbroenne.ExcelMcp.McpServer",
+  "version": "2.0.8",
+  "downloads": 50877,
+  "authors": [
+   "Stefan Broenner"
+  ],
+  "verified": false,
+  "description": "Excel automation for AI assistants - manage Sheets, Power Query, DAX, VBA, Tables, Ranges, Formatting, Validation and more. Requires Excel to be installed. Only runs on Windows.",
+  "projectUrl": "https://excelmcpserver.dev/",
+  "q": "mcp install"
+ },
+ {
+  "id": "claudomat",
+  "version": "2026.9.22.3",
+  "downloads": 49696,
+  "authors": [
+   "Wcom.ClaudeAutomater"
+  ],
+  "verified": false,
+  "description": "Claude Code CLI global tool: boards and PR automation for Azure DevOps, batch/run prompts, budget and rate-limit handling, agent roles, MCP feed sync, and built-in azdo/complexity MCP servers",
+  "q": "claude code"
+ },
+ {
+  "id": "Zakira.Imprint.Sdk",
+  "version": "1.0.5-preview",
+  "downloads": 40040,
+  "authors": [
+   "Moaid Hathot"
+  ],
+  "verified": false,
+  "description": "SDK for Imprint AI Skills packages. Provides MSBuild tasks for copying skill files, prompts, and merging MCP server configurations at build time. Skill package authors reference this SDK to get standardized copy/clean/MCP-merge behavior without duplicating MSBuild logic.",
+  "projectUrl": "https://moaidhathot.github.io/Zakira.Imprint/",
+  "q": "mcp config"
+ },
+ {
+  "id": "CleanCodeJN.GenericApis",
+  "version": "6.5.4",
+  "downloads": 26855,
+  "authors": [
+   "Jörg Nieveler"
+  ],
+  "verified": false,
+  "description": "Build production-ready .NET Web APIs in minutes, not days. CleanCodeJN.GenericApis is the ultimate full-stack API framework combining REST (Minimal APIs + MVC Controllers), GraphQL (HotChocolate), and MCP (Model Context Protocol) — all from a single generic setup. Powered by MediatR CQRS, Mapster, FluentValidation, and Entity Framework, it eliminates boilerplate for GET, GET by ID, POST, PUT, PATCH, and DELETE operations across every layer. Built-in pipeline behaviors deliver transparent caching and structured logging out of the box. The integrated AI Proxy streams responses from Anthropic Claude directly through your API, while the MCP server automatically exposes all your CRUD endpoints as discoverable tools for AI assistants like Claude, Cursor, and Copilot. Designed around the Integration Operation Segregation Principle (IOSP) for clean, testable, and maintainable business logic — at any scale.",
+  "projectUrl": "https://github.com/decius999/CleanCodeJN-Generic-Apis",
+  "q": "claude code"
+ },
+ {
+  "id": "CSharpEssentials.LoggerHelper",
+  "version": "5.2.6",
+  "downloads": 26128,
+  "authors": [
+   "Alessandro Chiodo"
+  ],
+  "verified": false,
+  "description": "Stop wiring Serilog by hand. Add 3 lines of JSON and every ILogger<T> routes logs where they belong — errors to Email, info to Console, traces to Seq. 9 sinks, zero boilerplate. New in 5.1.0: built-in MCP (Model Context Protocol) server — point Claude, Cursor, or any AI assistant at POST /mcp to query sink health, errors, and config with natural language. The only .NET logging library with native AI tooling.",
+  "projectUrl": "https://www.loggerhelper.it/",
+  "q": "mcp config"
+ },
+ {
+  "id": "NextGenSoftware.OASIS.API.DNA",
+  "version": "2.0.0",
+  "downloads": 13606,
+  "authors": [
+   "David Ellams (NextGen Software Ltd)"
+  ],
+  "verified": false,
+  "description": "OASIS DNA configuration model — strongly-typed binding for OASIS_DNA.json that controls provider selection, failover, load-balancing, replication, encryption and all core OASIS engine settings.",
+  "projectUrl": "https://github.com/NextGenSoftwareUK/Our-World-OASIS-API-HoloNET-HoloUnity-And-.NET-HDK",
+  "q": "mcp config"
+ },
+ {
+  "id": "RoslynMcp.Server",
+  "version": "0.6.4",
+  "downloads": 12122,
+  "authors": [
+   "Joshua Ramirez"
+  ],
+  "verified": false,
+  "description": "MCP Server for Roslyn-powered C# refactoring operations. Install as a global tool to use with Claude Code, Claude Desktop, or other MCP clients. Provides 50 tools: 27 refactoring operations, 5 code navigation tools, 6 analysis and metrics tools, 4 code generation tools, and 8 code conversion tools.",
+  "projectUrl": "https://github.com/JoshuaRamirez/RoslynMcpServer",
+  "q": "mcp install"
+ },
+ {
+  "id": "CrestApps.AgentSkills.Mcp.OrchardCore",
+  "version": "1.2.0",
+  "downloads": 10669,
+  "authors": [
+   "Mike Alhayek"
+  ],
+  "verified": false,
+  "description": "Exposes Orchard Core agent skills to MCP servers at runtime. Loads skills from the package output and registers them as MCP prompts and resources. Built on top of CrestApps.AgentSkills.Mcp.",
+  "projectUrl": "https://github.com/CrestApps/CrestApps.AgentSkills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.osx-arm64",
+  "version": "1.1.5",
+  "downloads": 10252,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "CWM.RoslynNavigator",
+  "version": "0.8.0",
+  "downloads": 9574,
+  "authors": [
+   "Mukesh Murugan"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol (MCP) server that gives AI coding assistants semantic understanding of .NET codebases via Roslyn. 20 read-only tools for symbol navigation, reference finding, type hierarchy, dependency graphs, anti-pattern detection, dead code analysis, diagnostics, file outlines, symbol source extraction, NuGet package inventory, endpoint maps, and DI registration analysis — all returning token-optimized responses. Part of the dotnet-claude-kit ecosystem.",
+  "projectUrl": "https://github.com/codewithmukesh/dotnet-claude-kit",
+  "q": "claude code"
+ },
+ {
+  "id": "AgentRecall",
+  "version": "2.12.0",
+  "downloads": 9472,
+  "authors": [
+   "Akbar Dizaji"
+  ],
+  "verified": false,
+  "description": "A local-first memory and learning system for AI coding agents, with an MCP server for Claude Code.",
+  "projectUrl": "https://github.com/AkbarDizaji/AgentRecall",
+  "q": "claude code"
+ },
+ {
+  "id": "Elarion.Settings",
+  "version": "0.2.7",
+  "downloads": 9366,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "Runtime-changeable settings for Elarion: a swappable key/value store with in-process change notification (the sink side) and an AOT-clean typed accessor (the consuming side), supporting global and per-user scopes.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp settings"
+ },
+ {
+  "id": "Elarion.Settings.EntityFrameworkCore",
+  "version": "0.2.7",
+  "downloads": 8382,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "EF Core database backend for Elarion settings: a relational, provider-neutral ISettingsStore with optimistic concurrency, reusing the in-process change source for in-process change notification.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp settings"
+ },
+ {
+  "id": "CSharpEssentials.LoggerHelper.Sink.Console",
+  "version": "5.2.6",
+  "downloads": 8180,
+  "authors": [
+   "Alessandro Chiodo"
+  ],
+  "verified": false,
+  "description": "See your logs in color, instantly. Add Console to your LoggerHelper routes and get beautiful, level-filtered colored output — zero configuration beyond a single JSON entry. Auto-registered via [ModuleInitializer]: no code changes, just add the NuGet. Part of the CSharpEssentials.LoggerHelper ecosystem with 9 pluggable sinks and now a built-in MCP server for AI assistant integration.",
+  "projectUrl": "https://www.loggerhelper.it/",
+  "q": "mcp config"
+ },
+ {
+  "id": "MCPInvoke",
+  "version": "2.1.0",
+  "downloads": 7918,
+  "authors": [
+   "MCPInvoke Contributors"
+  ],
+  "verified": false,
+  "description": "MCPInvoke is a complete Model Context Protocol (MCP) server implementation for ASP.NET Core applications with enhanced runtime parameter binding capabilities. Version 2.1.0 inherits Claude Code CLI compatibility fixes from MCPBuckle 2.1.0, resolving optional route parameter parsing issues. Features schema-aware parameter binding that mirrors ASP.NET Core's parameter binding logic exactly, supporting route parameters, complex objects, validation, and intelligent error handling. Includes runtime parameter source detection, comprehensive model validation, and seamless integration with MCPBuckle 2.1.0+ for accurate tool discovery and execution.",
+  "projectUrl": "https://github.com/grparry/MCPInvoke",
+  "q": "mcp json"
+ },
+ {
+  "id": "Elarion.Settings.Configuration",
+  "version": "0.2.7",
+  "downloads": 7895,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "IConfiguration adapter for Elarion settings: surfaces global settings as an IConfiguration provider with IChangeToken reload (so IOptionsMonitor and the scheduler's variable substitution pick up runtime changes), over any ISettingsStore backend.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Elarion.FeatureFlags.OpenFeature",
+  "version": "0.2.7",
+  "downloads": 7595,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "OpenFeature-backed default for Elarion feature-flag gating: implements IFeatureFlagService over the OpenFeature IFeatureClient and maps Elarion's ICurrentUser into the OpenFeature EvaluationContext (targeting key + UserId/Groups), so [FeatureGate] works with any OpenFeature provider (LaunchDarkly, ConfigCat, flagd, Microsoft.FeatureManagement, ...). Opt-in via AddElarionOpenFeature; bring your own OpenFeature provider.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp config"
+ },
+ {
+  "id": "CrestApps.AgentSkills.OrchardCore",
+  "version": "1.2.0",
+  "downloads": 7433,
+  "authors": [
+   "Mike Alhayek"
+  ],
+  "verified": false,
+  "description": "Distributes shared AI agent guardrail and instruction files for Orchard Core development. Skills are copied into the solution-root .agents/skills folder on install and update. No runtime dependency.",
+  "projectUrl": "https://github.com/CrestApps/CrestApps.AgentSkills",
+  "q": "mcp install"
+ },
+ {
+  "id": "Elarion.FeatureFlags.FeatureManagement",
+  "version": "0.2.7",
+  "downloads": 7229,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "Batteries-included default for Elarion feature flags: wires the OpenFeature Microsoft.FeatureManagement provider behind Elarion's OpenFeature-backed IFeatureFlagService, so [FeatureGate] reads config-driven feature flags out of the box. Opt-in via AddElarionFeatureManagement; built on Elarion.FeatureFlags.OpenFeature, so swapping to another OpenFeature provider (LaunchDarkly, ConfigCat, flagd, ...) needs no gating changes.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp config"
+ },
+ {
+  "id": "uno.studio",
+  "version": "3.3.0-dev.620",
+  "downloads": 6786,
+  "authors": [
+   "Uno Platform"
+  ],
+  "verified": true,
+  "description": "Command-line client for Uno Studio. Builds an application the way Studio builds it - headlessly, on your own machine or CI runner - and composes a shareable link to the result. Also configures a stock Git client to work with Studio Projects using the Uno Platform license already installed on the machine. Includes MCP server mode.",
+  "projectUrl": "https://platform.uno/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Ananke.Abstractions",
+  "version": "0.9.0",
+  "downloads": 6755,
+  "authors": [
+   "sevensamurai"
+  ],
+  "verified": false,
+  "description": "Shared interfaces and contracts for the Ananke distributed framework — IDistributedLock, IKeyValueDataAdapter, IChannelReader/Writer, and configuration types.",
+  "projectUrl": "https://nnke.io/",
+  "q": "mcp config"
+ },
+ {
+  "id": "MCPBuckle",
+  "version": "2.1.0",
+  "downloads": 6647,
+  "authors": [
+   "MCPBuckle Contributors"
+  ],
+  "verified": false,
+  "description": "MCPBuckle is a comprehensive .NET library that generates Model Context Protocol (MCP) JSON from ASP.NET Core API metadata with enhanced parameter binding analysis. Version 2.1.0 fixes Claude Code CLI compatibility issues with optional route parameters and adds support for nullable type mapping in route parameters. Features include automatic detection of route parameters, query parameters, body parameters, and headers using ASP.NET Core reflection patterns. Fully compatible with MCPInvoke 2.0.0+ for complete MCP tool discovery and execution.",
+  "projectUrl": "https://github.com/grparry/MCPBuckle",
+  "q": "mcp json"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.linux-x64",
+  "version": "1.1.5",
+  "downloads": 6536,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Elarion.Settings.PostgreSql",
+  "version": "0.2.7",
+  "downloads": 6479,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "PostgreSQL LISTEN/NOTIFY change source for Elarion settings: a settings write on one node fires IChangeToken watchers on every node, and a write inside a transaction is notified only on commit (NOTIFY is transactional). The multi-instance companion to the EF Core settings store.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp settings"
+ },
+ {
+  "id": "MCPify",
+  "version": "0.0.15-preview",
+  "downloads": 6177,
+  "authors": [
+   "Abdullah D."
+  ],
+  "verified": false,
+  "description": "Turn any ASP.NET Core API or OpenAPI spec into a Model Context Protocol (MCP) server. Seamlessly integrates with Claude Desktop and other MCP clients.",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Elarion.ClientEvents",
+  "version": "0.2.7",
+  "downloads": 6141,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "Client events for Elarion: after-commit facts projected to connected clients as at-most-once hints — topic catalog, canonical-JSON publisher, and the in-process subscription registry behind the replaceable broadcaster seam (ADR-0043).",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Kuestenlogik.Bowire.Mcp",
+  "version": "2.7.0",
+  "downloads": 6079,
+  "authors": [
+   "Kuestenlogik"
+  ],
+  "verified": true,
+  "description": "Bowire.Mcp — exposes the Bowire workbench itself as an MCP server, so AI agents (Claude Desktop, Cursor, Copilot) can drive discovery, invocation, recording, mocking, and replay through the Model Context Protocol. Sibling of Kuestenlogik.Bowire.Mock; the third row of the MCP surface area: Bowire as MCP server for its own operations (Kuestenlogik.Bowire.Protocol.Mcp covers the other two — Bowire as MCP client and as MCP adapter for fremd-protocols). Built on the official ModelContextProtocol C# SDK (2.0.x, MCP revision 2026-07-28). Mount via `services.AddBowireMcp() + endpoints.MapBowireMcp(...)` for the Streamable-HTTP transport, or run `bowire mcp serve` for stdio.",
+  "projectUrl": "https://bowire.io/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Kuestenlogik.Bowire.Protocol.Mcp",
+  "version": "2.7.0",
+  "downloads": 5971,
+  "authors": [
+   "Kuestenlogik"
+  ],
+  "verified": true,
+  "description": "Bowire MCP protocol plugin -- exposes discovered API services as MCP tools for AI agents (Claude, Copilot, Cursor).",
+  "projectUrl": "https://bowire.io/",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "McpInstallGenerator",
+  "version": "1.1.1",
+  "downloads": 4996,
+  "authors": [
+   "MCP Install Generator"
+  ],
+  "verified": false,
+  "description": "A library to generate MCP (Model Context Protocol) server install URLs, CLI commands, and configuration files for VS Code, VS Code Insiders, Visual Studio, and Cursor.",
+  "q": "mcp install"
+ },
+ {
+  "id": "Mcp.Gateway.Tools",
+  "version": "1.8.7",
+  "downloads": 4363,
+  "authors": [
+   "ARKo AS - AHelse Development Team"
+  ],
+  "verified": false,
+  "description": "Production-ready Model Context Protocol (MCP) Gateway library for .NET 10. Enables AI assistants like GitHub Copilot and Claude Desktop to discover and invoke custom tools via HTTP, WebSocket, SSE, and stdio transports.",
+  "projectUrl": "https://github.com/eyjolfurgudnivatne/mcp.gateway",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Elarion.Connections",
+  "version": "0.2.7",
+  "downloads": 4280,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "Bidirectional client-connection kernel for Elarion: the node-local connection registry with lifecycle observer dispatch, and the client-events bridge that makes any connection adapter a peer delivery leg of SSE — transport-neutral by design (ADR-0053).",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.win-arm64",
+  "version": "1.1.5",
+  "downloads": 4124,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "dotnet-assembly-mcp",
+  "version": "0.23.0",
+  "downloads": 4043,
+  "authors": [
+   "dotnet-assembly-mcp contributors"
+  ],
+  "verified": false,
+  "description": "MCP server exposing dotnet-assembly-mcp Core navigation primitives. Supports stdio (local tool installs) and Streamable HTTP (Docker / sidecar) transports.",
+  "projectUrl": "https://github.com/pedrosakuma/dotnet-assembly-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "codemap-mcp",
+  "version": "2.8.1",
+  "downloads": 3665,
+  "authors": [
+   "Branimir Bajt"
+  ],
+  "verified": false,
+  "description": "CodeMap is a Roslyn-powered MCP (Model Context Protocol) server that turns any MCP-compatible AI agent into a semantic code navigator for C#, VB.NET, and F# solutions.\n\nInstead of reading source files, agents call 26 focused MCP tools to query symbols, call graphs, type hierarchies, and architectural facts (HTTP endpoints, config keys, DB tables, DI registrations, middleware, retry policies, log templates) — directly from a Roslyn-built semantic index stored in memory-mapped binary segments (v2 engine, zero native DLL dependencies). Mixed-language solutions (.sln / .slnx containing both C# and VB.NET projects) are indexed in a single pass. SQLite fallback available via CODEMAP_ENGINE=sqlite.\n\nAverage token savings: 90%+ vs raw file reading. On production codebases: 95–99%+.\n\nKey capabilities:\n- symbols.search / symbols.get_card / symbols.get_context — find and understand any symbol\n- graph.trace_feature — full annotated feature flow in one call\n- refs.find / graph.callers / graph.callees — precise reference and call chain navigation\n- codemap.summarize / codemap.export / index.diff — codebase overview and semantic PR diffs\n- Workspace mode — see uncommitted edits via incremental overlay (~63ms refresh)\n- Shared baseline cache — index once, reuse across machines (CODEMAP_CACHE_DIR)\n\nUsage: add 'codemap-mcp' as an MCP server in your AI agent config. See README for setup.",
+  "projectUrl": "https://github.com/bbajt/csharp-code-map",
+  "q": "mcp config"
+ },
+ {
+  "id": "Keincheck.Core",
+  "version": "0.12.0",
+  "downloads": 3638,
+  "authors": [
+   "Keincheck"
+  ],
+  "verified": false,
+  "description": "The framework-FREE UI introspection engine for Keincheck: control registry, CSS-ish selectors, property serialization, the MCP tool set, and the neutral IUiAdapter / IUiDispatcher seam. Framework adapters (Avalonia, WPF) live in sibling packages.",
+  "projectUrl": "https://github.com/DVSProductions/Keincheck",
+  "q": "mcp registry"
+ },
+ {
+  "id": "SharpNinja.McpServer.Client",
+  "version": "1.4.37",
+  "downloads": 3544,
+  "authors": [
+   "SharpNinja"
+  ],
+  "verified": false,
+  "description": "Typed REST client for McpServer — covers all MCP Server API endpoints including TODO management, context search, session logging, repository operations, GitHub integration, workspace management, tool registry, and sync.",
+  "projectUrl": "https://github.com/sharpninja/McpServer",
+  "q": "mcp registry"
+ },
+ {
+  "id": "maf-doctor",
+  "version": "1.15.0",
+  "downloads": 3534,
+  "authors": [
+   "joslat"
+  ],
+  "verified": false,
+  "description": "MAF Doctor — a .NET global tool and MCP server for Microsoft Agent Framework (MAF). Diagnoses, explains, and auto-fixes MAF agents and workflows: A-F health grades, deterministic Roslyn rewriters, anti-pattern and fan-out scanning, and a self-updating obsolete-API registry. Use it from Copilot / Claude / Cursor via MCP, or standalone as a CLI.",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Elarion.Connections.AspNetCore",
+  "version": "0.2.7",
+  "downloads": 3455,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "WebSocket connection adapter for Elarion: MapElarionConnectionSocket accepts long-lived device or browser links, runs the app's handshake authenticator, and wires the connection into the transport-neutral kernel (registry, observers, client-events bridge) — the app writes only codec and authenticator (ADR-0053).",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp registry"
+ },
+ {
+  "id": "EasyReasy.Claude.AgentSdk",
+  "version": "1.5.3",
+  "downloads": 3395,
+  "authors": [
+   "Adam Tovatt"
+  ],
+  "verified": false,
+  "description": "A .NET SDK for interacting with Claude Code CLI. Provides simple QueryAsync() API, bidirectional client, hooks, tool permissions, and in-process MCP server support.",
+  "projectUrl": "https://github.com/AdamTovatt/easy-reasy-claude-agent-sdk",
+  "q": "claude code"
+ },
+ {
+  "id": "anythink-mcp",
+  "version": "0.2.21",
+  "downloads": 3365,
+  "authors": [
+   "Anythink"
+  ],
+  "verified": false,
+  "description": "Anythink MCP server — manage the Anythink all-in-one backend (databases, authentication, data and search, users and roles, files, workflows, integrations, payments, and REST APIs) from AI assistants and agents. Replace stitched-together services with one streamlined backend-as-a-service, configured with a little help from AI.",
+  "projectUrl": "https://github.com/anythink-cloud/anythink-cli",
+  "q": "mcp config"
+ },
+ {
+  "id": "IBeam.Ai.Services",
+  "version": "2.13.0",
+  "downloads": 3362,
+  "authors": [
+   "MedPAC Technologies"
+  ],
+  "verified": false,
+  "description": "Agent tool registry, authorization, and MCP service orchestration for IBeam-backed applications.",
+  "projectUrl": "https://github.com/MedPACTech/IBeam",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Kuestenlogik.Bowire.Ai",
+  "version": "2.7.0",
+  "downloads": 3252,
+  "authors": [
+   "Kuestenlogik"
+  ],
+  "verified": true,
+  "description": "AI integration for Bowire — registers a Microsoft.Extensions.AI IChatClient and exposes the workbench's chat / probe endpoints. This core package ships only the seam + the default Ollama / LM Studio connector via OllamaSharp (auto-detect on 127.0.0.1:11434 / :1234). Cloud providers and the MCP-client-reversal seam ship as separate optional packages so embedded hosts only pay for what they install: Kuestenlogik.Bowire.Ai.OpenAi for OpenAI + OpenRouter, Kuestenlogik.Bowire.Ai.Anthropic for Claude, Kuestenlogik.Bowire.Ai.Mcp for MCP-as-gateway. Embedded hosts can also register their own IChatClient before AddBowireAi() to reuse existing AI infrastructure. Same opt-in shape as the protocol plugins.",
+  "projectUrl": "https://bowire.io/",
+  "q": "mcp install"
+ },
+ {
+  "id": "FieldCure.AssistStudio.Runner",
+  "version": "2.0.4",
+  "downloads": 3163,
+  "authors": [
+   "Jong Hyun Kim"
+  ],
+  "verified": false,
+  "description": "Windows-only headless LLM task automation engine with scheduling. Executes natural language tasks on schedule via Windows Task Scheduler and sends results through configured channels.",
+  "projectUrl": "https://github.com/fieldcure/fieldcure-assiststudio-runner",
+  "q": "mcp config"
+ },
+ {
+  "id": "McpLense",
+  "version": "0.21.1",
+  "downloads": 3059,
+  "authors": [
+   "Moaid Hathot"
+  ],
+  "verified": false,
+  "description": "Library powering the McpLense CLI: scans MCP servers for auth surface, capabilities, TLS posture, OAuth metadata, and other facts useful for security / risk classification. Reference this package to integrate scanning into your own tooling or to register custom IScanCheck implementations.",
+  "projectUrl": "https://github.com/MoaidHathot/McpLense",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.linux-arm64",
+  "version": "1.1.5",
+  "downloads": 3023,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "RagKit",
+  "version": "1.5.0",
+  "downloads": 2947,
+  "authors": [
+   "JavierFrauca"
+  ],
+  "verified": false,
+  "description": "RAG agéntico llave en mano para .NET: configura dos LLM (compatible OpenAI), define dominios/perfiles/guardarails, ingesta documentos y pregunta. Embeddings, troceado, recuperación híbrida y enrutado en query-time resueltos por ti.",
+  "projectUrl": "https://github.com/JavierFrauca/ragkit",
+  "q": "mcp config"
+ },
+ {
+  "id": "Microsoft.PowerApps.CanvasAuthoring.McpServer.linux-musl-x64",
+  "version": "1.1.5",
+  "downloads": 2889,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "An MCP server for AI-assisted authoring of Power Apps canvas apps. Connects AI coding assistants to the Power Apps authoring service over stdio, enabling  them to validate .pa.yaml files, browse available controls and their properties, discover APIs/connectors and data sources, and sync app state from live coauthoring sessions. \nDesigned for use with GitHub Copilot CLI, Claude Code, and other MCP-compatible tools.\n\nSecurity:\nYour credentials are always handled securely through the official Microsoft Authentication Library (MSAL) - we never store or manage tokens directly.\n\nMCP is a new and developing standard. As with all new technology standards, you should review the security of any systems that integrate with MCP servers, such as MCP hosts, clients, agents, AI applications, and models and confirm that they comply with system requirements, standards, and expectations.\nYou should follow Microsoft security guidance for MCP servers, including enabling Entra ID authentication, secure token management, and network isolation. Refer to Microsoft Security Documentation for details.",
+  "projectUrl": "https://github.com/microsoft/power-platform-skills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "CrestApps.OrchardCore.AgentSkills",
+  "version": "1.0.0-beta-0010",
+  "downloads": 2849,
+  "authors": [
+   "Mike Alhayek"
+  ],
+  "verified": false,
+  "description": "Distributes shared AI agent guardrail and instruction files for Orchard Core development. Skills are copied into the solution-root .agents/skills folder on install and update. No runtime dependency.",
+  "projectUrl": "https://github.com/CrestApps/CrestApps.OrchardCore.AgentSkills",
+  "q": "mcp install"
+ },
+ {
+  "id": "Shiny.Net.HttpServer.CommandLine",
+  "version": "1.4.0",
+  "downloads": 2762,
+  "authors": [
+   "aritchie,ShinyLib"
+  ],
+  "verified": true,
+  "description": "Serves a directory over HTTP from the command line: a browser file manager with upload, rename and delete, and the same address mounts as a WebDAV drive in Finder or Explorer. Basic auth, per-operation permissions (read/create/update/delete), optional TLS and a public tunnel. Installs as a .NET tool.",
+  "projectUrl": "https://shinylib.net/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Zonit.Extensions.Ai.Sdk",
+  "version": "10.8.1",
+  "downloads": 2748,
+  "authors": [
+   "Zonit"
+  ],
+  "verified": false,
+  "description": "Opt-in support for running Zonit.Extensions.Ai agents through the Claude Agent SDK / Claude Code CLI (claude -p). Hosts your tools (ITool) as a secured loopback MCP server so the CLI-driven agent can call your C# code. Hand-rolled (HttpListener + System.Text.Json), no ASP.NET Core, AOT/trim-clean.",
+  "projectUrl": "https://github.com/Zonit/Zonit.Extensions.Ai",
+  "q": "claude code"
+ },
+ {
+  "id": "Daqifi.Mcp",
+  "version": "1.8.0",
+  "downloads": 2721,
+  "authors": [
+   "DAQiFi"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server for DAQiFi Nyquist data-acquisition devices. Lets an AI agent discover, connect, configure channels, read live measurements, and run on-device SD-card logging.",
+  "projectUrl": "https://github.com/daqifi/daqifi-core",
+  "q": "mcp config"
+ },
+ {
+  "id": "Ananke",
+  "version": "0.9.0",
+  "downloads": 2711,
+  "authors": [
+   "sevensamurai"
+  ],
+  "verified": false,
+  "description": "Ananke — distributed state machine + workflow orchestration for .NET. Install this meta-package to get StateMachine, Orchestration, and the Bridge integration layer in one step.",
+  "projectUrl": "https://nnke.io/",
+  "q": "mcp install"
+ },
+ {
+  "id": "EncySoftware.ExtensionStoreMcp",
+  "version": "0.2.16",
+  "downloads": 2640,
+  "authors": [
+   "EncySoftware"
+  ],
+  "verified": false,
+  "description": "MCP server for Cursor: create, publish and track ENCY extensions in the ENCY Extension Store",
+  "projectUrl": "https://github.com/EncySoftware/ency-extension-mcp",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Kuestenlogik.Bowire.Ai.Mcp",
+  "version": "2.7.0",
+  "downloads": 2602,
+  "authors": [
+   "Kuestenlogik"
+  ],
+  "verified": true,
+  "description": "MCP-client-reversal provider for Kuestenlogik.Bowire.Ai (#25 Phase 4). Routes chat through a user-controlled MCP host (stdio command or http URL) by calling the first tool whose name reads as a chat / completion / sampling gateway. Add via `AddBowireAiMcp()` after `AddBowireAi()`. Bowire core + Kuestenlogik.Bowire.Ai stay free of the ModelContextProtocol SDK; only installs that need the MCP path pay for it.",
+  "projectUrl": "https://bowire.io/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Mcp.AspNetCore.MultiHost",
+  "version": "0.2.0-preview",
+  "downloads": 2507,
+  "authors": [
+   "Vladimir Gondarev"
+  ],
+  "verified": false,
+  "description": "Host multiple MCP (Model Context Protocol) servers with distinct tool sets and configurations in a single ASP.NET Core application.",
+  "projectUrl": "https://github.com/relusion/Mcp.AspNetCore.MultiHost",
+  "q": "mcp config"
+ },
+ {
+  "id": "DotnetFastMCP",
+  "version": "2.1.1",
+  "downloads": 2495,
+  "authors": [
+   "TekSpry"
+  ],
+  "verified": false,
+  "description": "A .NET framework for building Model Context Protocol (MCP) servers quickly and easily. v2.1.1: Fix McpClient.CallToolAsync deserialization for primitives, strings, and POCOs. v2.1: Automatic DI registration and [McpDescription] attributes.",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Rtfm.Mcp",
+  "version": "1.13.0",
+  "downloads": 2494,
+  "authors": [
+   "Alex"
+  ],
+  "verified": false,
+  "description": "RTFM stdio MCP server — exposes the RTFM document index (search_docs and friends) to any MCP-capable client (Claude Code, Cursor, VS Code, Zed, Windsurf, Claude Desktop, and more).",
+  "q": "claude desktop"
+ },
+ {
+  "id": "AJGit.Claude.AgentSdk",
+  "version": "0.6.1",
+  "downloads": 2427,
+  "authors": [
+   "AJGit"
+  ],
+  "verified": false,
+  "description": "A C# SDK for building intelligent agents with Claude Code CLI. Provides session\n      management, bidirectional communication, custom MCP tools, hooks, subagents, and structured\n      outputs.",
+  "projectUrl": "https://github.com/ajgit/Claude.AgentSdk",
+  "q": "claude code"
+ },
+ {
+  "id": "HexMaster.DesignGuidelines.Server",
+  "version": "1.1.2",
+  "downloads": 2367,
+  "authors": [
+   "Eduard Keilholz"
+  ],
+  "verified": false,
+  "description": "MCP Server implementing Model Context Protocol over JSON-RPC stdio. Exposes design guideline documents (ADRs, recommendations, structures) as tools for AI assistants like GitHub Copilot. Install as a .NET tool for seamless integration.",
+  "projectUrl": "https://github.com/nikneem/hexmaster-design-guidelines",
+  "q": "mcp install"
+ },
+ {
+  "id": "vvvv-mcp",
+  "version": "1.3.0",
+  "downloads": 2360,
+  "authors": [
+   "digital.wannabe"
+  ],
+  "verified": false,
+  "description": "MCP server for vvvv gamma. Builds whole connected patch subgraphs in one call (build_patch) verified against the live instance; live node registry with exact pins + real types (19k nodes) via the VL.MCP.HDE editor extension; offline catalog fallback; Gray Book knowledge base; C# node + SDSL shader generation. Works without a vvvv installation for knowledge and patch tools.",
+  "projectUrl": "https://github.com/digitalwannabe/mcp-gamma-server",
+  "q": "mcp install"
+ },
+ {
+  "id": "udp-cicd-mcp",
+  "version": "1.14.0",
+  "downloads": 2349,
+  "authors": [
+   "UDP"
+  ],
+  "verified": false,
+  "description": "MCP server exposing UDP-CICD operations as tools for Claude Code, Cursor, and other MCP clients.",
+  "projectUrl": "https://patrickgallucci.github.io/udp-cicd/",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Kentico.Xperience.ComponentRegistry.MCP",
+  "version": "1.0.1",
+  "downloads": 2236,
+  "authors": [
+   "Kentico Software"
+  ],
+  "verified": true,
+  "description": "Adds MCP tools for Xperience Component Registry.",
+  "projectUrl": "https://github.com/Kentico/xperience-by-kentico-component-registry",
+  "q": "mcp registry"
+ },
+ {
+  "id": "GameMcpServer",
+  "version": "1.0.8",
+  "downloads": 2181,
+  "authors": [
+   "moonolgerd"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol server that discovers and manages installed games on Windows PC from various platforms including Steam, Epic Games, GOG, Windows Store/Xbox, and other installed programs.",
+  "projectUrl": "https://github.com/moonolgerd/game-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "Sbroenne.PowerPointMcp.McpServer",
+  "version": "0.2.0",
+  "downloads": 2159,
+  "authors": [
+   "Stefan Broenner"
+  ],
+  "verified": false,
+  "description": "PowerPoint automation for AI assistants - slides, shapes, text, tables, charts, images, notes, layouts, and slide-to-image export for visual verification. Requires PowerPoint to be installed. Only runs on Windows.",
+  "projectUrl": "https://github.com/sbroenne/mcp-server-powerpoint",
+  "q": "mcp install"
+ },
+ {
+  "id": "VenEl.AssistantMCP",
+  "version": "1.4.1",
+  "downloads": 2084,
+  "authors": [
+   "Venkatesh Ellur"
+  ],
+  "verified": false,
+  "description": "MCP Server Assistant for interacting with various platforms via Anthropic / Claude Desktop.",
+  "q": "claude desktop"
+ },
+ {
+  "id": "GroupDocs.Markdown.Mcp",
+  "version": "26.9.0",
+  "downloads": 2082,
+  "authors": [
+   "GroupDocs Contributors"
+  ],
+  "verified": true,
+  "description": "MCP server exposing GroupDocs.Markdown for .NET — convert PDF, DOCX, XLSX, EPUB, MOBI, and 20+ document formats to clean, structured Markdown via AI agents. Exposes ConvertToMarkdown and GetDocumentInfo tools to Claude, Cursor, GitHub Copilot, and other MCP agents.",
+  "projectUrl": "https://github.com/groupdocs-markdown/GroupDocs.Markdown.Mcp",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "ShinyDocDbMcp",
+  "version": "14.0.0",
+  "downloads": 2040,
+  "authors": [
+   "aritchie,ShinyLib"
+  ],
+  "verified": false,
+  "description": "An MCP (Model Context Protocol) server for Shiny.DocumentDb stores, over stdio. Point Claude Code, Claude Desktop, Copilot or any MCP client at a store and let it explore and query the data — read-only by default, with page caps and per-collection scope filters.",
+  "projectUrl": "https://shinylib.net/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "AspNetCoreDebuggerMcp",
+  "version": "1.4.0",
+  "downloads": 2007,
+  "authors": [
+   "magna-nz"
+  ],
+  "verified": false,
+  "description": "MIT-licensed MCP (Model Context Protocol) server that gives AI agents (Claude, Cursor, Copilot, etc.) interactive .NET / ASP.NET Core debugging. Wraps Samsung's netcoredbg over the Debug Adapter Protocol (DAP). 26 tools: launch/attach, breakpoints (line, function, exception, data), stepping, thread inspection, stack traces, expression evaluation, variable mutation, exception autopsy, hang/deadlock analysis, server-side request tracing, and process output capture. Install as a .NET global tool and point any MCP-compatible AI at your running app.",
+  "projectUrl": "https://github.com/magna-nz/aspnetcore-debugger-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "VL.MCP.HDE",
+  "version": "0.3.10",
+  "downloads": 2000,
+  "authors": [
+   "digital.wannabe"
+  ],
+  "verified": false,
+  "description": "vvvv gamma editor extension for AI-assisted patching. Hosts the MCP bridge inside vvvv:\n\nBridge (localhost:7123, always on) — exposes the live session to any MCP client (VS Code +\nKilo, Claude Desktop, Cursor, etc.): documents, compile errors with element mapping, the live\nnode registry (~19k nodes with exact pins + real types), and build_patch (one-call subgraph\nbuilding, verified against the running instance).\n\nAlt+C — Chat: launches Open WebUI as an embedded browser panel, pre-connected to the full\nMCP tool set (incl. build_patch). Requires uv (https://astral.sh/uv).\n\nPairs with the vvvv-mcp dotnet tool. Experimental preview — breaking changes expected.",
+  "projectUrl": "https://github.com/digitalwannabe/mcp-gamma-server",
+  "q": "claude desktop"
+ },
+ {
+  "id": "LivingDocs.Mcp",
+  "version": "2.1.1",
+  "downloads": 1995,
+  "authors": [
+   "dinesh-mys"
+  ],
+  "verified": false,
+  "description": "AI-powered knowledge hub for enterprise teams. Indexes Slack, Teams, Email, GitHub, and Confluence. Detects stale docs, knowledge gaps, and departure risk. Works as an MCP server for Claude Desktop, Claude Code, and GitHub Copilot.",
+  "projectUrl": "https://github.com/dinesh-mys/livingdocs",
+  "q": "claude desktop"
+ },
+ {
+  "id": "GeneXus.Next.CLI",
+  "version": "1.2.0",
+  "downloads": 1952,
+  "authors": [
+   "GeneXus"
+  ],
+  "verified": true,
+  "description": "Retired. This package has been replaced by GeneXus.CLI, which installs the `gx` command. Installing this version only prints migration instructions.",
+  "projectUrl": "https://docs.genexus.com/en/wiki?61619,GeneXus+for+Agents",
+  "q": "mcp install"
+ },
+ {
+  "id": "ProjectInsight.MCP",
+  "version": "1.3.4",
+  "downloads": 1941,
+  "authors": [
+   "Applied Visions Inc"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) Server for Project Insight integration with AI assistants like GitHub Copilot, Claude, and VS Code.",
+  "projectUrl": "https://github.com/alext-avi/Project-Insight-MCP",
+  "q": "claude code"
+ },
+ {
+  "id": "Shiny.DocumentDb.Mcp",
+  "version": "14.0.0",
+  "downloads": 1937,
+  "authors": [
+   "aritchie,ShinyLib"
+  ],
+  "verified": true,
+  "description": "MCP (Model Context Protocol) server over Shiny.DocumentDb — exposes the Extensions.AI tool surface, plus resources and prompts, to Claude Code / Claude Desktop / Copilot and any other MCP client. Read-only by default, with a non-removable per-type scope.",
+  "projectUrl": "https://shinylib.net/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Edict.Mcp",
+  "version": "2.0.0",
+  "downloads": 1824,
+  "authors": [
+   "Malcolm McNeely"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol server for the Edict CQRS framework. Install as a dotnet tool and wire into .mcp.json so an AI agent can query an Edict-based solution's handlers, route keys, silo wiring, glossary, and ADRs.",
+  "projectUrl": "https://github.com/MalcolmMcNeely/Edict",
+  "q": "mcp install"
+ },
+ {
+  "id": "WiseOwl.Demeanor",
+  "version": "6.1.1",
+  "downloads": 1796,
+  "authors": [
+   "Brent Rector (Wise Owl Software)"
+  ],
+  "verified": true,
+  "description": "Wise Owl Demeanor (known as Demeanor for .NET, Enterprise Edition through 5.x) is the original .NET obfuscator, shipping since 1999. Demeanor protects your intellectual property without breaking your app: it reads the compiled assembly first, recognizes framework patterns (ASP.NET Core, EF Core, Blazor, WPF, WinForms, MAUI, System.Text.Json, COM), and tells you in plain English what obfuscates cleanly, what breaks, and what code changes would fix it. Then it obfuscates: renames identifiers, encrypts strings, constants, and resources, obfuscates control flow, and injects anti-tamper and anti-debug protections. Per-company Enterprise licensing — one annual key, unlimited developers and build agents, no phone-home, no machine locking, no activation server. Optional Large Language Model (LLM) integration via a built-in MCP (Model Context Protocol) server lets customers who already use an MCP-capable AI assistant — Claude Code, Claude Desktop, Cursor, Windsurf, Continue.dev — drive the audit as a conversation; runs locally over stdio. Editions: Community (single-assembly renaming) / Enterprise (per company, full transform suite). Pricing and purchase: https://www.wiseowlsoftware.com/pricing.",
+  "projectUrl": "https://www.wiseowlsoftware.com/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Oakrey.Microchip.Mcp2221.Wrapper",
+  "version": "3.0.1",
+  "downloads": 1776,
+  "authors": [
+   "Oakrey"
+  ],
+  "verified": false,
+  "description": "A .NET wrapper for the Microchip MCP2221 USB-to-I2C/UART bridge. Exposes I2C read/write, full SMBus protocol, 4-pin GPIO, 3-channel ADC, 5-bit DAC, chip and NVRAM settings, and access control via extension methods on Mcp2221Handle (SafeHandle). Bundles x86 and x64 native DLLs.",
+  "projectUrl": "http://www.oakrey.cz/opkg_drivers_microchip",
+  "q": "mcp settings"
+ },
+ {
+  "id": "Orleans.Lattice.Api.Mcp.Telemetry",
+  "version": "9.8.0",
+  "downloads": 1766,
+  "authors": [
+   "Orleans.Lattice.Api.Mcp.Telemetry"
+  ],
+  "verified": false,
+  "description": "Optional, opt-in telemetry add-on for Orleans.Lattice.Api.Mcp. Exposes cluster OpenTelemetry metrics as MCP tools by proxying a read-only Prometheus/PromQL-compatible backend, with a dual-credential trust boundary that stamps the configured backend credential and never forwards the caller's Lattice credential. Registered with AddTelemetryTools(...).",
+  "projectUrl": "https://nsta1.github.io/Orleans.Lattice/",
+  "q": "mcp config"
+ },
+ {
+  "id": "codegiveness.mssql-mcp",
+  "version": "0.5.5",
+  "downloads": 1748,
+  "authors": [
+   "codegiveness"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol (MCP) server for Microsoft SQL Server, built in C#/.NET 10. Lets AI agents (Claude Desktop, Cursor, etc.) safely query and interact with SQL Server databases through a controlled tool surface.",
+  "projectUrl": "https://github.com/codegiveness/mssql-mcp",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Lyntai.Tools.Mcp.Hosting",
+  "version": "3.1.0",
+  "downloads": 1733,
+  "authors": [
+   "Jiarong Gu"
+  ],
+  "verified": false,
+  "description": "The OUTBOUND half of Lyntai's MCP support: hosts the app's registered Lyntai ITools as an ephemeral, localhost-only HTTP MCP server so a CLI provider that runs its own agent loop can call them. Provider-neutral — a per-CLI IMcpCliDialect supplies the flags and config-file shapes (Lyntai.Providers.Default ships one for `claude`). Wired via builder.AddMcpToolHost(dialect). Runs on System.Net.HttpListener, so it needs NO ASP.NET Core.",
+  "projectUrl": "https://github.com/JiarongGu/Lyntai",
+  "q": "mcp config"
+ },
+ {
+  "id": "redb.Route.Llm.Mcp",
+  "version": "4.1.1",
+  "downloads": 1718,
+  "authors": [
+   "redbase"
+  ],
+  "verified": true,
+  "description": "MCP (Model Context Protocol) client connector for redb.Route.Llm. Spawns external MCP servers (stdio + HTTP+SSE), discovers their tools via tools/list, and registers them as ILlmToolDescriptor entries so the agent picks them up like any native tool. Inherits redb.Route audit/governance/observability for free.",
+  "q": "mcpServers"
+ },
+ {
+  "id": "spm",
+  "version": "0.4.0",
+  "downloads": 1699,
+  "authors": [
+   "Adam Kuroczycki"
+  ],
+  "verified": false,
+  "description": "spm (Skill and Plugin Manager) — a CLI, interactive REPL, and MCP server that installs AI agent skills from Git catalogs into every coding agent on your machine, following the open agent-skills conventions: one shared .agents/skills copy plus a link per agent. Find a skill by intent with ranked search, deploy it across every detected agent at once, keep deployments healthy with doctor/cleanup, or run spm as an MCP server so an agent can search and install skills itself.",
+  "projectUrl": "https://github.com/hiadamhere/spm",
+  "q": "mcp install"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.win-x64",
+  "version": "1.1.0",
+  "downloads": 1656,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server",
+  "version": "1.1.0",
+  "downloads": 1655,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "SignsOfAI.Mcp",
+  "version": "0.8.1",
+  "downloads": 1651,
+  "authors": [
+   "Pedro Hernández (PeopleWorks)"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server for Signs of AI Writing. Exposes the engine as tools — analyze text for AI tells, check originality between documents, search the sign catalog, extract distinctive phrases, and (optionally, via the hosted API) measure perplexity and find paraphrases — to Claude Desktop and any MCP client.",
+  "projectUrl": "https://github.com/peopleworks/SignsofAI",
+  "q": "claude desktop"
+ },
+ {
+  "id": "PptMcp.McpServer",
+  "version": "1.1.0",
+  "downloads": 1631,
+  "authors": [
+   "Torsten Mahr"
+  ],
+  "verified": false,
+  "description": "PowerPoint automation for AI assistants - manage Slides, Shapes, Text, Charts, and more. Requires PowerPoint to be installed. Only runs on Windows.",
+  "projectUrl": "https://github.com/torstenmahr/mcp-server-ppt",
+  "q": "mcp install"
+ },
+ {
+  "id": "AzDo",
+  "version": "1.3.1",
+  "downloads": 1630,
+  "authors": [
+   "Paolino Salamone"
+  ],
+  "verified": false,
+  "description": "CLI + MCP server in C#/.NET 8 per Azure DevOps — configurazione centrale, zero file per repo.",
+  "projectUrl": "https://azdo.lupala.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.win-arm64",
+  "version": "1.1.0",
+  "downloads": 1605,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "Lyntai",
+  "version": "3.5.1",
+  "downloads": 1593,
+  "authors": [
+   "Jiarong Gu"
+  ],
+  "verified": false,
+  "description": "The recommended STARTING set for Lyntai — not the whole library (5 of 11 packages). You get: the core library, the basic backends (the claude/codex CLIs, any OpenAI-shaped endpoint for chat, embeddings or reranking, Ollama's native API, an in-process model2vec embedder), both halves of MCP, IN-MEMORY storage, and FILE storage you switch on by naming a root (UseFileSystemStorage). Two things to know: nothing persists until you name that root (UseInMemoryStorage keeps storage in process), and for a database ADD Lyntai.Storage.Sqlite (or .Postgres); and image/video/audio generation is NOT included — add Lyntai.Generation. Also opt-in: Lyntai.Providers.LlamaSharp (in-process GGUF), Lyntai.Providers.Onnx (in-process transformers) and Lyntai.Secrets.Dpapi (Windows). Everything left out is left out because it drags a native payload, a platform-specific API, or a dependency an application that did not ask for that feature should not carry.",
+  "projectUrl": "https://github.com/JiarongGu/Lyntai",
+  "q": "codex mcp"
+ },
+ {
+  "id": "EdgeHop",
+  "version": "0.1.23-alpha",
+  "downloads": 1559,
+  "authors": [
+   "Michael Stoner"
+  ],
+  "verified": false,
+  "description": "EdgeHop — Stop grepping. Start knowing. A code-graph tool: a Roslyn C#/Razor + native oxc JS/TS extractor feeding a pluggable graph store (SQLite default / Neo4j), plus an MCP server that exposes the graph to Claude Code. One `edgehop` command for indexing, querying, and serving.",
+  "q": "claude code"
+ },
+ {
+  "id": "Oakrey.Microchip.Mcp2210.Wrapper",
+  "version": "3.0.1",
+  "downloads": 1554,
+  "authors": [
+   "Oakrey"
+  ],
+  "verified": false,
+  "description": "A .NET wrapper for the Microchip MCP2210 USB-to-SPI bridge. Exposes SPI data transfer, GPIO pin read/write, EEPROM access, chip and NVRAM settings, and access control via extension methods on Mcp2210Handle (SafeHandle). Bundles x86 and x64 native DLLs with automatic runtime dispatch.",
+  "projectUrl": "http://www.oakrey.cz/opkg_drivers_microchip",
+  "q": "mcp settings"
+ },
+ {
+  "id": "Microsoft.Windows.EventTracing.MCP",
+  "version": "0.7.23",
+  "downloads": 1521,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "A .NET tool that provides a Model Context Protocol (MCP) server for analyzing Windows Event Tracing (ETL) performance data. Install with 'dnx Microsoft.Windows.EventTracing.MCP@version --yes' or 'dotnet tool install -g Microsoft.Windows.EventTracing.MCP'.",
+  "projectUrl": "https://aka.ms/TraceProcessing",
+  "q": "mcp install"
+ },
+ {
+  "id": "AndersonN.Omni.Blazor.Mcp",
+  "version": "0.12.0",
+  "downloads": 1520,
+  "authors": [
+   "Anderson Fernandes do Nascimento"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server for the AndersonN.Omni.Blazor component library. Exposes versioned catalog metadata plus component and configuration API discovery tools to AI agents (Cursor, Claude Code, Copilot) over stdio, backed by an embedded component manifest.",
+  "projectUrl": "https://github.com/afernandes/Omni.Blazor",
+  "q": "mcp config"
+ },
+ {
+  "id": "SignalSentinel.Scanner",
+  "version": "3.0.4",
+  "downloads": 1502,
+  "authors": [
+   "Signal Coding Limited"
+  ],
+  "verified": false,
+  "description": "Fast, deterministic, offline-capable first-pass security aid for MCP servers and Agent Skill authors. 47 security rules aligned with OWASP Agentic AI Top 10 (ASI) and OWASP Agentic Skills Top 10 (AST). v3.0 adds prompt/resource/instructions injection coverage, skill forensics (SHA256SUMS, file artefacts), homoglyph and description-overlap detection, fetch-to-exec pipeline taint, opt-in OSV dependency lookups, error-channel injection, server-source sink analysis, A2A agent card evaluation, policy presets, a versioned scoring rubric (--rubric), markdown-aware segmentation for skill rules, and discovery across Claude Code, Gemini CLI, OpenCode, VS Code/Copilot and Amazon Q configurations.",
+  "projectUrl": "https://github.com/SignalCoding/signal-sentinel-scanner",
+  "q": "mcp config"
+ },
+ {
+  "id": "RagKit.Mcp",
+  "version": "1.5.0",
+  "downloads": 1473,
+  "authors": [
+   "JavierFrauca"
+  ],
+  "verified": false,
+  "description": "Cliente MCP (Model Context Protocol) por stdio para RagKit: conecta servidores MCP externos y registra sus herramientas en el bucle de agente. Cliente JSON-RPC propio, sin SDK.",
+  "projectUrl": "https://github.com/JavierFrauca/ragkit",
+  "q": "mcp json"
+ },
+ {
+  "id": "Precept.Mcp",
+  "version": "0.12.0",
+  "downloads": 1357,
+  "authors": [
+   "autom3tion"
+  ],
+  "verified": false,
+  "description": "MCP server for Precept test projects: diagnoses the configuration faults that do not report themselves, and explains environment resolution, parallelism, filters and test data to a coding agent.",
+  "projectUrl": "https://autom3tion.github.io/precept-docs/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Wikidown.Mcp",
+  "version": "0.7.0",
+  "downloads": 1341,
+  "authors": [
+   "markdav-is"
+  ],
+  "verified": false,
+  "description": "Stdio Model Context Protocol server that exposes Wikidown.Core tools (list, read, write, new, move, delete, reorder, search, walk) to Claude Code, Claude Desktop, VS Code (Copilot), and other MCP hosts.",
+  "projectUrl": "https://github.com/markdav-is/Wikidown",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Mcp.FleetLint",
+  "version": "0.3.0",
+  "downloads": 1339,
+  "authors": [
+   "StaticBit"
+  ],
+  "verified": false,
+  "description": "Cross-repo consistency CI gate for the MCP fleet: validates that each repo's OAuth scope, /mcp endpoint hostname, OAuth-callback port, and authorization-server URL match the canonical fleet inventory (fleet-lint.json at mcp-tooling root). Catches typos in hostnames, port collisions, and config-vs-doc drift across the four cloud MCPs.",
+  "projectUrl": "https://github.com/Platonenkov/mcp-tooling",
+  "q": "mcp config"
+ },
+ {
+  "id": "TestAtlas.Cli",
+  "version": "0.1.11",
+  "downloads": 1339,
+  "authors": [
+   "Karthik Kalaiyarasu"
+  ],
+  "verified": false,
+  "description": "TestAtlas CLI (`testatlas`) — statically analyses a .NET test-automation solution and emits a queryable semantic map as a single SQLite file: projects and their dependency edges, Gherkin features/scenarios/steps, step-definition bindings, page objects, API clients, and the call/usage edges between them. Then answers questions over the map — search, change-impact (blast radius), a self-contained HTML report and dependency graph, and stats. Offline, deterministic, zero-config.",
+  "projectUrl": "https://github.com/Karzone/TestAtlas",
+  "q": "mcp config"
+ },
+ {
+  "id": "Mcp.ToolsDoc",
+  "version": "0.1.1",
+  "downloads": 1324,
+  "authors": [
+   "StaticBit"
+  ],
+  "verified": false,
+  "description": "Config-driven generator + CI sync-check for MCP tool reference docs. Reflects over [McpServerToolType]/[McpServerTool]/[Description] attributes (Roslyn, syntax-only) and renders a TOOLS.generated.md; --check fails CI on drift. Reusable across .NET ModelContextProtocol MCP servers.",
+  "q": "mcp config"
+ },
+ {
+  "id": "Sbroenne.PowerPointMcp.CLI",
+  "version": "0.2.0",
+  "downloads": 1311,
+  "authors": [
+   "Stefan Broenner"
+  ],
+  "verified": false,
+  "description": "Command-line PowerPoint automation built on the PowerPoint MCP engine. Requires PowerPoint to be installed. Only runs on Windows.",
+  "projectUrl": "https://github.com/sbroenne/mcp-server-powerpoint",
+  "q": "mcp install"
+ },
+ {
+  "id": "CSharpLspMcp",
+  "version": "1.0.0",
+  "downloads": 1308,
+  "authors": [
+   "HYMMA"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server providing C# and XAML language intelligence for AI assistants like Claude. Exposes IntelliSense, diagnostics, and code analysis through the standardized MCP protocol.",
+  "projectUrl": "https://github.com/HYMMA/csharp-lsp-mcp",
+  "q": "claude code"
+ },
+ {
+  "id": "Orleans.Lattice.Api.Replication",
+  "version": "9.8.0",
+  "downloads": 1258,
+  "authors": [
+   "Orleans.Lattice.Api.Replication"
+  ],
+  "verified": false,
+  "description": "Optional transport-agnostic control facade add-on for Orleans.Lattice runtime per-tree replication configuration. Implements the ILatticeReplicationControl contract over the replication engine's config-authoring seam: an authorized operator can enable replication for a tree (fixing its wire merge mode), disable it, and inspect the runtime replicated-tree set. Authoring is authorized fail-closed through the shared Lattice access gate (default-deny anonymous); the gRPC and MCP transports adapt over this single surface.",
+  "projectUrl": "https://nsta1.github.io/Orleans.Lattice/",
+  "q": "mcp config"
+ },
+ {
+  "id": "McpDocMind",
+  "version": "1.0.4",
+  "downloads": 1252,
+  "authors": [
+   "Valeriy Nashchokin"
+  ],
+  "verified": false,
+  "description": "Interactive installer for McpDocMind — MCP server for .NET API documentation search. Ingests .NET DLLs, Markdown, Git repos into local SQLite and exposes hybrid search via Model Context Protocol.",
+  "q": "mcp install"
+ },
+ {
+  "id": "IonBlazor.Mcp",
+  "version": "0.887.15",
+  "downloads": 1240,
+  "authors": [
+   "wdcossey"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server that exposes the IonBlazor component library as AI-callable tools (list, find, get metadata) for use with Claude Code, Claude Desktop, and other MCP clients.",
+  "projectUrl": "https://github.com/wdcossey/ionblazor",
+  "q": "claude desktop"
+ },
+ {
+  "id": "dotnet-native-mcp",
+  "version": "0.6.0",
+  "downloads": 1237,
+  "authors": [
+   "dotnet-native-mcp contributors"
+  ],
+  "verified": false,
+  "description": "MCP server exposing dotnet-native-mcp Core native-binary navigation primitives (PE/ELF/Mach-O, x86_64+ARM64). Supports stdio (local tool installs) and Streamable HTTP (Docker / sidecar) transports.",
+  "projectUrl": "https://github.com/pedrosakuma/dotnet-native-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "Thalos.NET.Mcp",
+  "version": "0.10.0",
+  "downloads": 1203,
+  "authors": [
+   "Marcel Roozekrans"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol servers (stdio, http) as Thalos.NET tool sources. Loads Claude Code-style .mcp.json.",
+  "projectUrl": "https://github.com/MarcelRoozekrans/Thalos.NET",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Mcp.Server.MauiDevEnv",
+  "version": "0.1.0",
+  "downloads": 1185,
+  "authors": [
+   "Redth"
+  ],
+  "verified": false,
+  "description": ".NET MAUI MCP (Model Context Protocol) Server including tools for evaluating and configuring MAUI developer environment dependencies",
+  "projectUrl": "https://github.com/redth/NetMcpServers",
+  "q": "mcp config"
+ },
+ {
+  "id": "DevOnBike.Overfit.Mcp",
+  "version": "10.1.0",
+  "downloads": 1180,
+  "authors": [
+   "DevOnBike"
+  ],
+  "verified": false,
+  "description": "A dependency-free MCP (Model Context Protocol) stdio server for the in-process Overfit LLM runtime — typed JSON-RPC 2.0 contracts with source-generated System.Text.Json serialization, no SDK dependency, no reflection, Native-AOT verified. Exposes local, zero-egress tools to MCP hosts (Claude Code, Claude Desktop, IDEs): ask a local GGUF model, query private documents with RAG citations, transcribe audio with Whisper — all in pure .NET on the CPU. Dual-licensed (AGPL-3.0-or-later / commercial).",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Mcp.LinkCheck",
+  "version": "0.1.1",
+  "downloads": 1176,
+  "authors": [
+   "StaticBit"
+  ],
+  "verified": false,
+  "description": "Markdown link integrity CI gate for MCP repos: every [text](path) link must resolve to a real file, every [text](path#anchor) must hit a real heading (GitHub-flavored slug). Catches stale paths, mis-typed anchors, broken cross-repo references. Optional external HTTPS verification. Config-less defaults; opt-in linkcheck.json for exceptions.",
+  "projectUrl": "https://github.com/Platonenkov/mcp-tooling",
+  "q": "mcp config"
+ },
+ {
+  "id": "SqlServerMcp",
+  "version": "1.0.6",
+  "downloads": 1173,
+  "authors": [
+   "Nithish"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol (MCP) server for SQL Server. Exposes schema inspection, safe read-only queries, and query plan analysis as MCP tools. Install as a dotnet tool and connect from any MCP-compatible AI client.",
+  "projectUrl": "https://github.com/Nithish1206/SqlServerMcp.NuGet",
+  "q": "mcp install"
+ },
+ {
+  "id": "Microsoft.Windows.EventTracing.MCP.win-x64",
+  "version": "0.7.23",
+  "downloads": 1114,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "A .NET tool that provides a Model Context Protocol (MCP) server for analyzing Windows Event Tracing (ETL) performance data. Install with 'dnx Microsoft.Windows.EventTracing.MCP@version --yes' or 'dotnet tool install -g Microsoft.Windows.EventTracing.MCP'.",
+  "projectUrl": "https://aka.ms/TraceProcessing",
+  "q": "mcp install"
+ },
+ {
+  "id": "Fdw.Aegis.McpServer",
+  "version": "1.1.0-rc.1",
+  "downloads": 1114,
+  "authors": [
+   "Fdw Team"
+  ],
+  "verified": false,
+  "description": "Standalone stdio MCP server exposing the Aegis Gateway's deterministic approval-policy evaluation and secret-below-the-boundary injection (Phase 1: PreApproved commands only, ConfigurationDb-free).",
+  "q": "mcp config"
+ },
+ {
+  "id": "Koshi.Agents",
+  "version": "0.9.1",
+  "downloads": 1084,
+  "authors": [
+   "Koshi Contributors"
+  ],
+  "verified": false,
+  "description": "Installs the Koshi sub-agent personas (librarian, memory-keeper, context-packer, quality-coach, orchestrator) into Claude Code and GitHub Copilot CLI configurations. Companion tool to Koshi.Mcp.",
+  "projectUrl": "https://github.com/jsharma1105/Koshi",
+  "q": "mcp install"
+ },
+ {
+  "id": "bee-ai",
+  "version": "1.1.0",
+  "downloads": 1041,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Koshi.Mcp",
+  "version": "0.9.1",
+  "downloads": 1014,
+  "authors": [
+   "Koshi Contributors"
+  ],
+  "verified": false,
+  "description": "Koshi (講師) is a Model Context Protocol server that brings retrieval, context engineering, persistent memory, and quality scoring to any MCP-compatible AI client (Claude Code, Copilot CLI, Cursor, Windsurf, etc.). 100% offline — no API keys, no embeddings, no cloud required.",
+  "projectUrl": "https://github.com/jsharma1105/Koshi",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "WebReaper.Mcp",
+  "version": "11.3.2",
+  "downloads": 1006,
+  "authors": [
+   "Alex Pavlov"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server satellite for WebReaper. Exposes scrape / map / extract as MCP tools over stdio for Cursor / Claude Desktop / Copilot Studio. Interop adapter; the primary agent surface remains the WebReaper CLI (ADR-0043). Satellite (ADR-0009); heavy MCP SDK deps quarantined; core stays AOT-clean.",
+  "projectUrl": "https://webreaper.ai/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "WeavePort.Hosting",
+  "version": "0.8.0",
+  "downloads": 1000,
+  "authors": [
+   "WeavePort contributors"
+  ],
+  "verified": false,
+  "description": "Embedded WeavePort plugin hosting, worker lifecycle and installed artifact resolution.",
+  "projectUrl": "https://github.com/yesbert/WeavePort",
+  "q": "mcp install"
+ },
+ {
+  "id": "PPDS.Mcp",
+  "version": "1.2.1",
+  "downloads": 953,
+  "authors": [
+   "Josh Smith"
+  ],
+  "verified": false,
+  "description": "MCP server exposing Power Platform capabilities for AI assistant integration.\n      Enables Claude Code and other MCP clients to query Dataverse, analyze plugins, and explore\n      metadata through natural language.",
+  "projectUrl": "https://github.com/joshsmithxrm/power-platform-developer-suite",
+  "q": "claude code"
+ },
+ {
+  "id": "bee-ai.osx-arm64",
+  "version": "1.1.0",
+  "downloads": 952,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "CursorMCPMonitor",
+  "version": "0.1.2",
+  "downloads": 945,
+  "authors": [
+   "willibrandon"
+  ],
+  "verified": false,
+  "description": "A monitoring tool for Cursor MCP logs that provides real-time tracking of log files with filtering and structured output.",
+  "projectUrl": "https://github.com/willibrandon/CursorMCPMonitor",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "bee-ai.osx-x64",
+  "version": "1.1.0",
+  "downloads": 944,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "DevKit-Tool",
+  "version": "2.2.0",
+  "downloads": 941,
+  "authors": [
+   "Can Gultekin"
+  ],
+  "verified": false,
+  "description": "Developer Toolkit and AI Code Integration Platform. Local dev workflow automation with Claude Desktop MCP integration. Project scaffolding, file import, Git, Docker, Azure deploy, DB schema, API test, and more.",
+  "projectUrl": "https://github.com/canjrgultekin/DevKit",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Boltway.Federation.Google",
+  "version": "0.5.1",
+  "downloads": 937,
+  "authors": [
+   "Tobii (Truong To)"
+  ],
+  "verified": false,
+  "description": "Google as an upstream identity provider: the configured values for Boltway.Federation.Oidc, and\n      nothing else. It carries no protocol code of its own, which is what makes Google not a special\n      case here — another provider is a package this size.",
+  "projectUrl": "https://github.com/TobiiNT/Boltway",
+  "q": "mcp config"
+ },
+ {
+  "id": "bee-ai.win-x64",
+  "version": "1.1.0",
+  "downloads": 934,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "CrestApps.OrchardCore.AgentSkills.Mcp",
+  "version": "1.0.0-beta-0010",
+  "downloads": 918,
+  "authors": [
+   "Mike Alhayek"
+  ],
+  "verified": false,
+  "description": "Exposes Orchard Core agent skills to MCP servers at runtime. Loads skills from the package output and registers them as MCP prompts and resources. Built on top of CrestApps.AgentSkills.Mcp.",
+  "projectUrl": "https://github.com/CrestApps/CrestApps.OrchardCore.AgentSkills",
+  "q": "mcpServers"
+ },
+ {
+  "id": "bee-ai.linux-arm64",
+  "version": "1.1.0",
+  "downloads": 911,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "bee-ai.linux-x64",
+  "version": "1.1.0",
+  "downloads": 908,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Shiny.Net.HttpServer.Proxy",
+  "version": "1.4.0",
+  "downloads": 905,
+  "authors": [
+   "aritchie,ShinyLib"
+  ],
+  "verified": true,
+  "description": "Reverse proxy for Shiny.Net.HttpServer — destination clusters, load balancing, active and passive health checks, session affinity, a transform pipeline, WebSocket and HTTP upgrade forwarding, and IConfiguration-driven routes with hot reload. Trim- and AOT-clean, with no reflection-based configuration binding.",
+  "projectUrl": "https://shinylib.net/",
+  "q": "mcp config"
+ },
+ {
+  "id": "bee-ai.win-arm64",
+  "version": "1.1.0",
+  "downloads": 896,
+  "authors": [
+   "Atilla Kartal"
+  ],
+  "verified": false,
+  "description": "Config-driven development CLI with local context tools and explicit AI provider profiles.",
+  "projectUrl": "https://bee.fusapp.com/",
+  "q": "mcp config"
+ },
+ {
+  "id": "HorizunMsProjectMcp",
+  "version": "1.2.1",
+  "downloads": 893,
+  "authors": [
+   "Horizun"
+  ],
+  "verified": false,
+  "description": "MCP server for Microsoft Project schedules. Reads and writes .mpp, MSPDI, Primavera XER/PMXML\n      and more with no Java runtime and no Microsoft Project installed. Includes a critical-path\n      engine, the DCMA 14-point schedule assessment, earned value, verified writes, and a BIM bridge\n      for 4D.",
+  "projectUrl": "https://github.com/HorizunGroup/horizun-msproject-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "Shelfbound.Steam",
+  "version": "0.8.1",
+  "downloads": 888,
+  "authors": [
+   "Wolfsblvt"
+  ],
+  "verified": false,
+  "description": "Shelfbound local Steam scanner: discovers Steam installs and builds snapshots.",
+  "projectUrl": "https://github.com/Wolfsblvt/shelfbound-steam",
+  "q": "mcp install"
+ },
+ {
+  "id": "dotnet-coverage-mcp",
+  "version": "1.0.0",
+  "downloads": 885,
+  "authors": [
+   "Hyeonu Cha"
+  ],
+  "verified": false,
+  "description": "An MCP (Model Context Protocol) server that exposes .NET code coverage tooling as callable tools for AI assistants such as Claude Code or Gemini CLI. Run dotnet test, parse Cobertura XML, identify uncovered branches, diff coverage between runs, and append test code — all via MCP tools.",
+  "projectUrl": "https://github.com/Hyeonu-Cha/dotnet-coverage-mcp",
+  "q": "claude code"
+ },
+ {
+  "id": "Foundgine.Providers",
+  "version": "2.2.1",
+  "downloads": 863,
+  "authors": [
+   "Foundgine"
+  ],
+  "verified": false,
+  "description": "Foundgine.Providers contains the concrete provider and integration implementations for Foundgine v2. It includes storage providers and adapters, AI/model and MCP tooling integrations, and Elasticsearch and vector-store support. It also carries the Foundgine AOT source generator as a build-time analyzer inside the NuGet package, so consumers do not install a separate generator package and the generator is not a runtime dependency. Foundgine.Providers depends only on Foundgine.Core and Foundgine.Runtime; secure GraphQL/Hot Chocolate execution lives in Foundgine.Extensions alongside GraphQL translation. Consumers are expected to choose and configure the provider(s) matching their application and supply the semantic model and runtime configuration required by Foundgine.",
+  "projectUrl": "https://github.com/CristianBarragan/Foundgine",
+  "q": "mcp install"
+ },
+ {
+  "id": "BogDB.Acop.Mcp.Server",
+  "version": "1.4.0",
+  "downloads": 859,
+  "authors": [
+   "Beyond Ordinary Software Solutions"
+  ],
+  "verified": false,
+  "description": "Reference Model Context Protocol (MCP) server for the Agentic Code Orchestration Protocol (ACOP). Exposes the ACOP coordination write surface — claim, complete, create work item, accept handoff, post blackboard — over stdio JSON-RPC, so MCP-capable agents (Claude Code, Codex, custom harnesses) can drive coordination state via tool calls. Coordination authority is delegated to a pluggable backend adapter; the shipped HTTP adapter targets any ACOP-compatible coordination middleware via a configurable base URI.",
+  "projectUrl": "https://beyond-ordinary.com/bogdb",
+  "q": "mcp config"
+ },
+ {
+  "id": "Foundgine.Extensions",
+  "version": "2.2.1",
+  "downloads": 848,
+  "authors": [
+   "Foundgine"
+  ],
+  "verified": false,
+  "description": "Foundgine.Extensions contains optional framework integrations for Foundgine v2. The current package provides the Hot Chocolate GraphQL integration: translating GraphQL operations into Foundgine semantic intent, and the secure query/mutation executors that run that intent through the Foundgine authorization/execution boundary. It does not replace the Foundgine execution/runtime layer and does not provide storage providers. Consumers are expected to have Foundgine.Core and Foundgine.Runtime installed and to configure their GraphQL server and semantic model; concrete storage/AI/MCP provider execution is supplied separately by Foundgine.Providers.",
+  "projectUrl": "https://github.com/CristianBarragan/Foundgine",
+  "q": "mcp install"
+ },
+ {
+  "id": "PrimusSaaS.Security",
+  "version": "3.0.1",
+  "downloads": 830,
+  "authors": [
+   "Akki (Mohd Aakib Khan)"
+  ],
+  "verified": false,
+  "description": "Offline, zero-infrastructure .NET SAST scanner embedded directly in your SDK.\n      Unlike SonarQube (Java 17 + PostgreSQL + 2 GB RAM), Primus Security activates\n      with one NuGet package and one line of code.\n\n      v2.1.0 ships 60 Roslyn-based SAST analyzers, 100 secret-detection patterns,\n      SARIF 2.1.0 export, OWASP Top 10 2021 compliance report, configurable quality\n      gates, A–E security ratings, persistent suppression store, baseline delta, and\n      a 40-rule catalog with before/after code patches — all offline, air-gap safe.\n\n      Beats SonarQube Community Edition for .NET on: SARIF export, OWASP report,\n      CWE/PCI-DSS compliance, AI-agent MCP tools, and zero server infrastructure.",
+  "projectUrl": "https://primussaas.com/security",
+  "q": "mcp config"
+ },
+ {
+  "id": "COA.Mcp.VSCodeBridge",
+  "version": "1.1.9",
+  "downloads": 805,
+  "authors": [
+   "COA Development Team"
+  ],
+  "verified": false,
+  "description": "Client library for sending rich visualizations to VS Code via MCP-VSCode Bridge Extension",
+  "projectUrl": "https://github.com/your-org/MCP-VSCode-Bridge",
+  "q": "vscode mcp"
+ },
+ {
+  "id": "CSharpEssentials.LoggerHelper.MCP",
+  "version": "5.2.2",
+  "downloads": 803,
+  "authors": [
+   "Alessandro Chiodo"
+  ],
+  "verified": false,
+  "description": "Give your AI assistant eyes AND hands on your logs. CSharpEssentials.LoggerHelper.MCP exposes 7 MCP tools over HTTP — letting Claude, Cursor, Copilot, and any MCP-compatible client inspect sink health, search logs, change log levels, and toggle sinks at runtime with natural language. New in 5.2.0: loggerhelper_set_log_level, loggerhelper_search_logs (queries the in-memory ring buffer), loggerhelper_toggle_sink — the only .NET logging library where AI can control logging, not just read it.",
+  "projectUrl": "https://www.loggerhelper.com/",
+  "q": "mcp json"
+ },
+ {
+  "id": "Pveska.Claude.AgentSdk",
+  "version": "0.1.1",
+  "downloads": 788,
+  "authors": [
+   "Elias Bachaalany"
+  ],
+  "verified": false,
+  "description": "A .NET SDK for interacting with Claude Code CLI. Provides simple QueryAsync() API, bidirectional client, hooks, tool permissions, and in-process MCP server support.",
+  "projectUrl": "https://github.com/0xeb/claude-agent-sdk-dotnet",
+  "q": "claude code"
+ },
+ {
+  "id": "WeShare.Agent",
+  "version": "2.0.0",
+  "downloads": 780,
+  "authors": [
+   "WeShare"
+  ],
+  "verified": false,
+  "description": "Meta package for the WeShare Agent Framework v2.0 (MAF-based). Installs Abstractions, Core, Mcp.Client, Tools, and Memory.",
+  "q": "mcp install"
+ },
+ {
+  "id": "WpfDevPackMcp",
+  "version": "0.1.3",
+  "downloads": 778,
+  "authors": [
+   "christian289"
+  ],
+  "verified": false,
+  "description": "A .NET 10 stdio Model Context Protocol (MCP) server that serves the WPF Dev Pack plugin's WPF knowledge topics. It reads plain-markdown topics from a local clone of christian289/dotnet-with-claudecode (the repo-root knowledge/ directory) and exposes list/get/search/refresh tools. Configure the local clone path via /wpf-dev-pack:set-repo-path (or the WPFDEVPACK_REPO_PATH environment variable).",
+  "projectUrl": "https://github.com/christian289/dotnet-with-claudecode/tree/main/mcp",
+  "q": "mcp config"
+ },
+ {
+  "id": "AIGuiders.Cdp.Core",
+  "version": "0.4.22",
+  "downloads": 742,
+  "authors": [
+   "Dmitry Karataev,AIGuiders"
+  ],
+  "verified": false,
+  "description": "Cognitive Dev Platform shared catalog: Memory.*/dev tool affordances, phase×object×language ranking (Cursor CDP MCP + Cascade IDE).",
+  "projectUrl": "https://github.com/AI-Guiders/guiders-core",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Microsoft.McpServer.ProjectTemplates.11.0",
+  "version": "11.0.0-rc.1.26425.128",
+  "downloads": 737,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "MCP Server Template Pack for Microsoft Template Engine\n\nTo install the templates in this package, run 'dotnet new --install Microsoft.McpServer.ProjectTemplates.11.0::11.0.0-rc.1.26425.128'.",
+  "projectUrl": "https://asp.net/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Microsoft.McpServer.ProjectTemplates.10.0",
+  "version": "10.0.12",
+  "downloads": 726,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "MCP Server Template Pack for Microsoft Template Engine\n\nTo install the templates in this package, run 'dotnet new --install Microsoft.McpServer.ProjectTemplates.10.0::10.0.12'.\n\nThis package was built from the source code at https://github.com/dotnet/dotnet/tree/95017c711e6afc1085133d440e42b4bd78155701",
+  "projectUrl": "https://asp.net/",
+  "q": "mcp install"
+ },
+ {
+  "id": "FredsMCP",
+  "version": "1.4.0",
+  "downloads": 723,
+  "authors": [
+   "Paul Ramin"
+  ],
+  "verified": false,
+  "description": "MCP server exposing find, grep, sed, and AWK tools for AI coding assistants. Install as a dotnet tool, point Claude Code or Copilot at it.",
+  "projectUrl": "https://github.com/pramin/fred",
+  "q": "mcp install"
+ },
+ {
+  "id": "Irihi.Eureka.McpServer",
+  "version": "0.2.0-beta",
+  "downloads": 719,
+  "authors": [
+   "Irihi Tech"
+  ],
+  "verified": true,
+  "description": "MCP (Model Context Protocol) server implementation for Irihi.Eureka. Install as a dotnet tool to use with MCP-compatible clients.",
+  "q": "mcp install"
+ },
+ {
+  "id": "MsBuildGraphMcp",
+  "version": "1.1.3",
+  "downloads": 713,
+  "authors": [
+   "FlorinVica"
+  ],
+  "verified": false,
+  "description": "MCP server for MSBuild project graph analysis — exposes dependency graphs, shared imports, TFM compatibility, configuration diffs, and build issue detection to LLM-powered coding assistants.",
+  "projectUrl": "https://github.com/FlorinVica/msbuild-graph-mcp",
+  "q": "mcp config"
+ },
+ {
+  "id": "wt-mcp",
+  "version": "0.1.1-beta",
+  "downloads": 685,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "AgentPack",
+  "version": "0.3.3",
+  "downloads": 683,
+  "authors": [
+   "AgentPack"
+  ],
+  "verified": false,
+  "description": "Catalog-first installer for reviewed AI skills, hooks, MCP servers, instructions, prompts, rules, and agents.",
+  "projectUrl": "https://github.com/svennijhuis/AgentPack",
+  "q": "mcp install"
+ },
+ {
+  "id": "xaml-styler-mcp",
+  "version": "1.1.3",
+  "downloads": 665,
+  "authors": [
+   "Howon Lee"
+  ],
+  "verified": false,
+  "description": "MCP server and provider installer for formatting XAML through XamlStyler.",
+  "projectUrl": "https://github.com/airtaxi/XamlStylerMcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "ForeverTools.Mcp",
+  "version": "1.4.0",
+  "downloads": 660,
+  "authors": [
+   "ForeverTools"
+  ],
+  "verified": false,
+  "description": "ForeverTools MCP Server — 13 AI tools: summarize, translate, sentiment, OCR, speech-to-text, text-to-speech, image generation, web fetch, keyword extraction, code explain, paraphrase, Markdown→HTML, JSON formatting to Claude Code and any MCP-compatible client. Bring your own AI/ML API key. Install as a .NET tool: dotnet tool install -g ForeverTools.Mcp",
+  "projectUrl": "https://github.com/ForeverTools/ForeverTools",
+  "q": "mcp install"
+ },
+ {
+  "id": "ClaudeAgentSdk.CSharp",
+  "version": "0.1.0-preview.7",
+  "downloads": 658,
+  "authors": [
+   "harayuu9"
+  ],
+  "verified": false,
+  "description": "C# SDK for integrating with Claude Code CLI. A port of the official claude-agent-sdk-python.",
+  "projectUrl": "https://github.com/harayuu9/claude-agent-sdk-csharp",
+  "q": "claude code"
+ },
+ {
+  "id": "Microsoft.Agents.CopilotStudio.Mcp",
+  "version": "1.0.1",
+  "downloads": 647,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "Enables MCP clients like GitHub Copilot or Claude Desktop to use published Microsoft Copilot Studio agents as Model Context Protocol (MCP) servers. This proxy handles OAuth authentication so your MCP client can securely connect to Copilot Studio.",
+  "projectUrl": "https://aka.ms/mcsmcpproxynuget",
+  "q": "claude desktop"
+ },
+ {
+  "id": "RedditAdsMcp",
+  "version": "1.1.1",
+  "downloads": 644,
+  "authors": [
+   "Mike Kerchenski"
+  ],
+  "verified": false,
+  "description": "MCP server for the Reddit Ads API. Provides tools to list accounts, campaigns, ad groups, ads, and pull performance reports — designed for use with Claude Code and other MCP clients.",
+  "projectUrl": "https://github.com/mkerchenski/RedditAdsMcp",
+  "q": "claude code"
+ },
+ {
+  "id": "Orleans.Lattice.Api.Telemetry",
+  "version": "9.8.0",
+  "downloads": 619,
+  "authors": [
+   "Orleans.Lattice.Api.Telemetry"
+  ],
+  "verified": false,
+  "description": "Transport-neutral telemetry facade for Orleans.Lattice. Implements the ILatticeTelemetry contract over a curated, server-authored named-query catalogue that is selected by id and never accepts raw PromQL from any caller, scopes every evaluation to a tenant the facade derives server-side from the authenticated caller (honouring a cross-tenant or single-tenant request only after platform-operator validation and otherwise degrading fail-closed), and executes through the read-only Prometheus / PromQL-compatible backend client. Also holds the dual-credential trust boundary that stamps the configured backend credential and never a caller's Lattice credential, the range and step guardrails, and the fail-closed metric-access allow-list. Depends on no transport, so every binding (the MCP tool group, the gRPC service, and client heads) adapts over the same machinery instead of forking it.",
+  "projectUrl": "https://nsta1.github.io/Orleans.Lattice/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Ave.DotnetTool.DotX",
+  "version": "0.0.4",
+  "downloads": 607,
+  "authors": [
+   "Aad Versteeg"
+  ],
+  "verified": false,
+  "description": "Execute .NET tools without installation - optimized for MCP servers. Automatically updates to latest version unless pinned.",
+  "projectUrl": "https://github.com/aadversteeg/dotx",
+  "q": "mcp install"
+ },
+ {
+  "id": "wt-mcp.win-x64",
+  "version": "0.1.1-beta",
+  "downloads": 596,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "wt-mcp.win-arm64",
+  "version": "0.1.1-beta",
+  "downloads": 585,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "wt-mcp.linux-musl-x64",
+  "version": "0.1.1-beta",
+  "downloads": 581,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "EncySoftware.DmcMcp",
+  "version": "0.5.0",
+  "downloads": 578,
+  "authors": [
+   "EncySoftware"
+  ],
+  "verified": false,
+  "description": "MCP server for Cursor and Claude Code: publish post-processors to Digital Machine Center",
+  "projectUrl": "https://github.com/EncySoftware/dmc-mcp",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "wt-mcp.osx-arm64",
+  "version": "0.1.1-beta",
+  "downloads": 574,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "AIGuiders.Cdp.ScriptableIde",
+  "version": "0.1.64",
+  "downloads": 574,
+  "authors": [
+   "Dmitry Karataev,AIGuiders"
+  ],
+  "verified": false,
+  "description": "CSX allowlist host for CDP: Debug/Roslyn/Git/Verify/Symbol/SemanticMap/Work/Refactor/Annotate/Insert/Fix/Generate/Body/Settings/Packages/Projects/Solutions facades over IScriptToolBus. CodeAnchor + BracketLocate.",
+  "projectUrl": "https://github.com/AI-Guiders/guiders-core",
+  "q": "mcp settings"
+ },
+ {
+  "id": "wt-mcp.linux-arm64",
+  "version": "0.1.1-beta",
+  "downloads": 564,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "wt-mcp.linux-x64",
+  "version": "0.1.1-beta",
+  "downloads": 562,
+  "authors": [
+   "carlos-zamora"
+  ],
+  "verified": false,
+  "description": "An MCP server that helps reference and manage Windows Terminal settings and other terminal-related customizations.",
+  "projectUrl": "https://github.com/carlos-zamora/wt-mcp",
+  "q": "mcp settings"
+ },
+ {
+  "id": "Dignite.Vault.Extract.Mcp",
+  "version": "0.3.2",
+  "downloads": 561,
+  "authors": [
+   "Dignite"
+  ],
+  "verified": false,
+  "description": "MCP server exit of Dignite Vault Extract: exposes documents, document types, and cabinets as resources and provides structured metadata/extracted-field search tools for Claude Desktop, Cursor, and any MCP client. Endpoint mapping (MapMcp) stays in the host application.",
+  "projectUrl": "https://github.com/dignite-projects/vault-extract",
+  "q": "claude desktop"
+ },
+ {
+  "id": "OKF4net.Mcp",
+  "version": "0.5.0",
+  "downloads": 555,
+  "authors": [
+   "Julien CHABLE"
+  ],
+  "verified": false,
+  "description": "Local MCP (Model Context Protocol) server that exposes an OKF knowledge bundle to Claude Desktop / Claude Code as read/write tools.",
+  "projectUrl": "https://github.com/jchable/okf4net",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Throne.Mcp.Stdio",
+  "version": "0.4.0",
+  "downloads": 554,
+  "authors": [
+   "gently-whitesnow"
+  ],
+  "verified": false,
+  "description": "STDIO→HTTP MCP proxy for Throne.Api. Lets STDIO-only MCP clients (Claude Desktop, Claude Code, Cursor, Codex) talk to a locally running Throne instance.",
+  "projectUrl": "https://github.com/gently-whitesnow/throne",
+  "q": "claude desktop"
+ },
+ {
+  "id": "MyRegistry.Mcp.AspNetCore.MultiHost",
+  "version": "1.0.0",
+  "downloads": 552,
+  "authors": [
+   "Yilmaz Yavuz"
+  ],
+  "verified": false,
+  "description": "Host multiple MCP (Model Context Protocol) servers with distinct tool sets and configurations in a single ASP.NET Core application.",
+  "projectUrl": "https://github.com/relusion/Mcp.AspNetCore.MultiHost",
+  "q": "mcp config"
+ },
+ {
+  "id": "Microsoft.Windows.EventTracing.MCP.win-arm64",
+  "version": "0.7.23",
+  "downloads": 551,
+  "authors": [
+   "Microsoft"
+  ],
+  "verified": true,
+  "description": "A .NET tool that provides a Model Context Protocol (MCP) server for analyzing Windows Event Tracing (ETL) performance data. Install with 'dnx Microsoft.Windows.EventTracing.MCP@version --yes' or 'dotnet tool install -g Microsoft.Windows.EventTracing.MCP'.",
+  "projectUrl": "https://aka.ms/TraceProcessing",
+  "q": "mcp install"
+ },
+ {
+  "id": "Elekto.Mcp.Sql",
+  "version": "2.0.1",
+  "downloads": 544,
+  "authors": [
+   "Elekto Produtos Financeiros"
+  ],
+  "verified": true,
+  "description": "Read-only MCP server for SQL Server 2022+ introspection and querying.\n      Exposes schema metadata, DDL definitions, dependency graphs, index health diagnostics,\n      data profiling and data queries via the Model Context Protocol (stdio transport),\n      enabling AI assistants such as GitHub Copilot and Claude to understand your database\n      structure without storing credentials in the repository.\n      Zero-config for .NET projects: automatically reads ConnectionStrings from\n      appsettings.json, web.config and App.config.",
+  "projectUrl": "https://github.com/elekto-com-br/elekto-mcp-sql",
+  "q": "mcp config"
+ },
+ {
+  "id": "AgentJournal",
+  "version": "1.0.10",
+  "downloads": 520,
+  "authors": [
+   "Agent Journal Contributors"
+  ],
+  "verified": false,
+  "description": "A .NET global tool and MCP server for indexing, searching, and exporting AI agent conversation sessions. Supports Claude Code, GitHub Copilot CLI, with hybrid lexical/semantic search and temporal decay.",
+  "projectUrl": "https://github.com/brendankowitz/agent-session-search-tools",
+  "q": "claude code"
+ },
+ {
+  "id": "Pixelbadger.ClaudeAgentSdk",
+  "version": "0.3.2",
+  "downloads": 511,
+  "authors": [
+   "Pixelbadger"
+  ],
+  "verified": false,
+  "description": "C# port of the Anthropic Claude Agent SDK — same tools, agent loop, and context management as Claude Code, for .NET.",
+  "projectUrl": "https://github.com/pixelbadger/Pixelbadger.ClaudeAgentSdk",
+  "q": "claude code"
+ },
+ {
+  "id": "DarbotLabs.Browser.MCP",
+  "version": "0.2.0",
+  "downloads": 510,
+  "authors": [
+   "DarbotLabs"
+  ],
+  "verified": false,
+  "description": "🤖 Your Autonomous Browser Companion - 29 AI-driven autonomous browser tools for Model Context Protocol (MCP) servers. Provides intelligent autonomous browser capabilities for MCP-enabled applications with work profile support and VS Code GitHub Copilot agent mode integration.",
+  "projectUrl": "https://github.com/darbotlabs/darbot-browser-mcp",
+  "q": "mcpServers"
+ },
+ {
+  "id": "McpServers.Playground",
+  "version": "2026.226.5",
+  "downloads": 498,
+  "authors": [
+   "Lance McCarthy"
+  ],
+  "verified": false,
+  "description": "A practical demo that shows you how to develop, publish, and use MCP servers.",
+  "projectUrl": "https://github.com/LanceMcCarthy/McpServers",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Analytixus.Mcp",
+  "version": "0.8.2",
+  "downloads": 493,
+  "authors": [
+   "Analytixus"
+  ],
+  "verified": false,
+  "description": "Standalone MCP server exposing the Analytixus DnAML repository (read/write nodes, tree navigation, solution listing) to MCP clients such as Claude Desktop, Cursor, and VS Code Copilot Chat. Launch with `analytixus-mcp --stdio`.",
+  "q": "claude desktop"
+ },
+ {
+  "id": "SprutTechnology.ExtensionStoreMcp",
+  "version": "0.2.3",
+  "downloads": 489,
+  "authors": [
+   "SprutCAM Tech"
+  ],
+  "verified": false,
+  "description": "MCP server for Cursor: create, publish and track СПРУТКАМ extensions in the СПРУТКАМ Extension Store",
+  "projectUrl": "https://gitverse.ru/spruttechnology/sprutcam-extension-mcp",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Antidrift.ZeroMcp",
+  "version": "0.3.0",
+  "downloads": 481,
+  "authors": [
+   "Antidrift"
+  ],
+  "verified": false,
+  "description": "Zero-config MCP runtime for .NET",
+  "projectUrl": "https://github.com/antidrift-dev/zeromcp",
+  "q": "mcp config"
+ },
+ {
+  "id": "Dev.Tools.Mcp",
+  "version": "0.0.5",
+  "downloads": 479,
+  "authors": [
+   "Sergii Chevkota"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol (MCP) server exposing all Dev.Tools utilities to AI assistants (Claude, Cursor, and any MCP-compatible host). Install with `dotnet tool install -g Dev.Tools.Mcp` and register as `dev-tools-mcp` in your AI config.",
+  "projectUrl": "https://github.com/dobermanch/dev-tools",
+  "q": "mcp install"
+ },
+ {
+  "id": "WordMcp.McpServer",
+  "version": "0.2.0",
+  "downloads": 464,
+  "authors": [
+   "Torsten Mahr"
+  ],
+  "verified": false,
+  "description": "Microsoft Word automation for AI assistants - manage documents, text, paragraphs and tables. Requires Word to be installed. Only runs on Windows.",
+  "projectUrl": "https://github.com/trsdn/mcp-server-word",
+  "q": "mcp install"
+ },
+ {
+  "id": "Dignite.Vault.Extract.Installer",
+  "version": "0.3.2",
+  "downloads": 459,
+  "authors": [
+   "Dignite"
+  ],
+  "verified": false,
+  "description": "ABP Studio module installer package for Dignite Vault Extract, carrying the module definition files used when installing the module into a solution.",
+  "projectUrl": "https://github.com/dignite-projects/vault-extract",
+  "q": "mcp install"
+ },
+ {
+  "id": "DevJoy.Mcp.Config",
+  "version": "0.7.0",
+  "downloads": 446,
+  "authors": [
+   "DevJoy"
+  ],
+  "verified": false,
+  "description": "A comprehensive configuration management library for Model Context Protocol (MCP) servers and clients. Provides robust support for client configurations, server environments, and library management with security features for sensitive data detection. Version 0.7.0 adds client-specific distribution capabilities allowing targeted configuration deployment to specific MCP clients.",
+  "projectUrl": "https://github.com/jamaynor/DevJoy.Mcp.Config",
+  "q": "mcp config"
+ },
+ {
+  "id": "ByteAid.b4.Roslyn",
+  "version": "0.3.0",
+  "downloads": 445,
+  "authors": [
+   "ByteAid"
+  ],
+  "verified": false,
+  "description": "MCP (stdio) server that exposes Roslyn-powered tools to work with .NET solutions: persistent in-memory semantic models, solution pre-compilation, navigation, refactoring, diagnostics, file edits, builds and test execution. Install as a dotnet tool and start with: b4-roslyn start (or 'b4 roslyn start' via the b4 dispatcher)",
+  "q": "mcp install"
+ },
+ {
+  "id": "AnyProtocol.SchemaRegistry.Abstraction",
+  "version": "1.0.4",
+  "downloads": 441,
+  "authors": [
+   "Mehmet Can Kanpolat"
+  ],
+  "verified": false,
+  "description": "AnyProtocol is a .NET messaging and communication library for building protocol-flexible distributed applications.",
+  "projectUrl": "https://github.com/MCKanpolat/AnyProtocol",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Google.Cloud.AgentRegistry.V1",
+  "version": "1.0.0",
+  "downloads": 432,
+  "authors": [
+   "Google LLC"
+  ],
+  "verified": true,
+  "description": "Agent Registry is a centralized, unified catalog that lets you store, discover, and govern Model Context Protocol (MCP) servers, tools, and AI agents within Google Cloud.",
+  "projectUrl": "https://github.com/googleapis/google-cloud-dotnet",
+  "q": "mcp registry"
+ },
+ {
+  "id": "fluent-icons-mcp",
+  "version": "1.0.2",
+  "downloads": 431,
+  "authors": [
+   "Howon Lee"
+  ],
+  "verified": false,
+  "description": "MCP server and provider installer for searching Windows Fluent Icons from WinUI Gallery metadata.",
+  "projectUrl": "https://github.com/airtaxi/FluentIconsMcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "DBPilot",
+  "version": "0.5.5",
+  "downloads": 420,
+  "authors": [
+   "SkyChenSky"
+  ],
+  "verified": false,
+  "description": "DBPilot — self-hosted database autonomous diagnostics platform (Alibaba Cloud DAS-style) for SQL Server, MySQL and PostgreSQL: performance trends, AAS insight, Top SQL, query-plan change tracking, blocking/deadlock analysis and a read-only MCP server for AI agents. Metapackage: references DBPilot.AspNetCore plus all engine packages (SqlServer, MySql, PostgreSql, Sqlite) for one-line install.",
+  "projectUrl": "https://github.com/SkyChenSky/DBPilot",
+  "q": "mcp install"
+ },
+ {
+  "id": "EventGridStudio.McpServer",
+  "version": "1.3.0",
+  "downloads": 415,
+  "authors": [
+   "Event Grid Studio Team"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server for Event Grid Studio. Allows Claude Desktop and other MCP clients to query archived Event Grid events.",
+  "q": "claude desktop"
+ },
+ {
+  "id": "AppReviewFetch.Mcp",
+  "version": "1.1.4",
+  "downloads": 398,
+  "authors": [
+   "praeclarum"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server for AppReviewFetch. Enables AI assistants like GitHub Copilot and Claude to access app review data from App Store Connect and Google Play. Install globally with: dotnet tool install -g AppReviewFetch.Mcp",
+  "projectUrl": "https://github.com/praeclarum/AppReviewFetch",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server",
+  "version": "3.0.0",
+  "downloads": 392,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "GitLab MCP server: GitLab REST v4 and GraphQL as Model Context Protocol tools. A .NET tool wrapping the native Go binary; install with dotnet tool install or run with dnx.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Truvio.Commerce.MCP",
+  "version": "0.6.1-BETA",
+  "downloads": 383,
+  "authors": [
+   "Dynamicweb Software A/S"
+  ],
+  "verified": false,
+  "description": "Brings AI to the Dynamicweb 10 backend: the Dynamo assistant inside the administration UI, plus an MCP (Model Context Protocol) server for external AI clients. Dynamo is an AI chat assistant built into the admin, helping editors and administrators enrich products, manage content and commerce, build data models, look up documentation, and automate everyday backend tasks in natural language — using your own API key for Anthropic Claude, OpenAI, or Google Gemini models. The MCP server lets external assistants and agents — Claude, ChatGPT, Copilot, Cursor, or any MCP-compatible client — securely connect to the solution's /admin/mcp endpoint with a Dynamicweb sign-in and use the same tools. Tool coverage spans the whole platform: PIM and product data, e-commerce (shops, prices, discounts, orders, shipping and payment), content (pages, paragraphs, item types), users and groups, media files, email marketing, integration, dashboards, health checks, and searchable Dynamicweb documentation. All operations go through Dynamicweb's standard services and respect the signed-in user's permissions.",
+  "projectUrl": "https://doc.dynamicweb.dev/AI/index.html",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Voxa.Mcp",
+  "version": "0.7.2-alpha",
+  "downloads": 380,
+  "authors": [
+   "Voxa contributors"
+  ],
+  "verified": false,
+  "description": "A Model Context Protocol (MCP) server that gives any MCP-aware agent a voice and ears via Voxa's keyless local speech tier: voxa_speak (text → WAV) and voxa_transcribe (WAV → text). Runs over stdio; install with `dotnet tool install -g Voxa.Mcp` and register `voxa-mcp` as an MCP server.",
+  "q": "mcp install"
+ },
+ {
+  "id": "TextStack.Mcp",
+  "version": "1.1.0",
+  "downloads": 376,
+  "authors": [
+   "TextStack"
+  ],
+  "verified": false,
+  "description": "TextStack MCP server — work with your TextStack reading library from Claude Desktop / Cursor / any MCP client. Search and read both the public catalog and the books you uploaded, ask grounded questions, manage highlights and vocabulary — and write conclusions back into a book so they are still there when you return. Speaks stdio or remote HTTP.",
+  "q": "claude desktop"
+ },
+ {
+  "id": "PowerPortalsPro.Mcp",
+  "version": "9.1.0",
+  "downloads": 375,
+  "authors": [
+   "Power Portals Pro"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol server for PowerPortalsPro. Gives AI coding agents the component API reference, working code samples and conventions for both the Blazor and React stacks, plus Dataverse metadata read live from the environment the project is already configured against. Reads are metadata-only; writes reach only the framework's own portal-role and website configuration tables, and deletions ask the user to confirm.",
+  "projectUrl": "https://github.com/orgs/Power-Portals-Pro",
+  "q": "mcp config"
+ },
+ {
+  "id": "charpcodemap",
+  "version": "3.0.3",
+  "downloads": 375,
+  "authors": [
+   "netor.me"
+  ],
+  "verified": false,
+  "description": "CodeMap is a Roslyn-powered MCP (Model Context Protocol) server that turns any MCP-compatible AI agent into a semantic code navigator for C#, VB.NET, and F# solutions.\n\nInstead of reading source files, agents call 29 focused MCP tools to query symbols, call graphs, type hierarchies, architectural facts, and explicitly scoped repository diagnostics — directly from a Roslyn-built semantic index stored in memory-mapped binary segments (v2 engine, zero native DLL dependencies). Mixed-language solutions (.sln / .slnx containing both C# and VB.NET projects) are indexed in a single pass.\n\nAverage token savings: 90%+ vs raw file reading. On production codebases: 95–99%+.\n\nKey capabilities:\n- md_cs_mp_symbols_search / md_cs_mp_symbols_get_card / md_cs_mp_symbols_get_context — find and understand any symbol\n- md_cs_mp_graph_trace_feature — full annotated feature flow in one call\n- md_cs_mp_refs_find / md_cs_mp_graph_callers / md_cs_mp_graph_callees — precise reference and call chain navigation\n- md_cs_mp_codemap_summarize / md_cs_mp_codemap_export / md_cs_mp_index_diff — codebase overview and semantic PR diffs\n- Workspace mode — see uncommitted edits via incremental overlay (~63ms refresh)\n- Repository-local cache by default (.codemap), with explicit data-root override via CODEMAP_DATA_DIR\n\nUsage: add 'charpcodemap' as an MCP server in your AI agent config. See README for setup.",
+  "projectUrl": "https://github.com/bbajt/csharp-code-map",
+  "q": "mcp config"
+ },
+ {
+  "id": "Caveman.Mcp",
+  "version": "1.4.4",
+  "downloads": 374,
+  "authors": [
+   "Francesco Paolo Passaro"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server for Caveman — exposes NLP token compression, language detection, content routing, summarization, retrieval and code skeletonization as MCP tools for Claude Code, OpenCode, Cursor, and any MCP-compatible agent.",
+  "projectUrl": "https://github.com/francescopaolopassaro/caveman",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "DotnetMcpServer",
+  "version": "2.0.0",
+  "downloads": 364,
+  "authors": [
+   "Argha Sarkar"
+  ],
+  "verified": false,
+  "description": "MCP server for .NET 8 — filesystem, SQL, HTTP, datetime, git, text, and more tools for AI assistants (Claude, Copilot, Cursor, ChatGPT)",
+  "projectUrl": "https://argha713.github.io/dotnet-mcp-server/",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "ClawSharp.Core",
+  "version": "0.1.0",
+  "downloads": 350,
+  "authors": [
+   "James Burton"
+  ],
+  "verified": false,
+  "description": "ClawSharp core library — security sandbox, configuration, diagnostics, plugin system, skill engine, and MCP prompt templates for building custom MCP tool servers",
+  "projectUrl": "https://github.com/jamesburton/ClawSharp",
+  "q": "mcp config"
+ },
+ {
+  "id": "McpEngramMemory",
+  "version": "2.0.0",
+  "downloads": 344,
+  "authors": [
+   "wyckit"
+  ],
+  "verified": false,
+  "description": "Cognitive memory MCP server with vector search, knowledge graph, lifecycle management, and hierarchical expert routing. Install as a dotnet global tool for single-line setup.",
+  "projectUrl": "https://github.com/wyckit/mcp-engram-memory",
+  "q": "mcp install"
+ },
+ {
+  "id": "SentinelCoreMCP.win-x64",
+  "version": "0.1.3",
+  "downloads": 341,
+  "authors": [
+   "SentinelCoreMCP"
+  ],
+  "verified": false,
+  "description": "SentinelCoreMCP is a Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP). It must be used with Sentinel Core Platform",
+  "q": "mcp config"
+ },
+ {
+  "id": "mcp-sonarqube",
+  "version": "1.1.1",
+  "downloads": 335,
+  "authors": [
+   "Marko Lahma"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol server for SonarQube Cloud - projects, quality gates, issues, security hotspots, measures and coverage, plus issue triage - with a deliberately small, auditable dependency tree. Native AOT binaries are published to GitHub Releases; this package is the `dnx mcp-sonarqube` convenience channel (the id differs from the product name because SonarSource holds both the SonarQube* and SonarCloud* reserved package-id prefixes on nuget.org; the installed command is still `sonarqube-mcp`).",
+  "projectUrl": "https://github.com/lahma/sonarqube-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "NugetDocsMcp",
+  "version": "1.1.0",
+  "downloads": 333,
+  "authors": [
+   "Adam Tovatt"
+  ],
+  "verified": false,
+  "description": "A tool for finding documentation for locally-installed NuGet packages. Works as both a CLI tool and MCP server.",
+  "projectUrl": "https://github.com/AdamTovatt/nuget-docs-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "BuildingBlocks.Telemetry",
+  "version": "1.0.2",
+  "downloads": 329,
+  "authors": [
+   "Mohammad Hasan Hosseini"
+  ],
+  "verified": false,
+  "description": "Config-driven OpenTelemetry metrics, logging, and tracing for .NET. Stable instrumentations (ASP.NET Core, HttpClient, Runtime, Npgsql, SqlClient) plus source-only Mediator, MCP, EventBus, and MassTransit; OTLP, Console, and Azure Monitor exporters.",
+  "projectUrl": "https://github.com/Maxofpower/FeatureFusion",
+  "q": "mcp config"
+ },
+ {
+  "id": "KY.AI.Updater",
+  "version": "1.2.0",
+  "downloads": 328,
+  "authors": [
+   "KY-Programming"
+  ],
+  "verified": true,
+  "description": "One command to update the whole KY.AI tool suite: updates itself first, then every other installed ky-ai-* tool.",
+  "projectUrl": "https://github.com/KY-Programming/AI",
+  "q": "mcp install"
+ },
+ {
+  "id": "McpEngramMemory.Synthesis.Onnx",
+  "version": "2.0.0",
+  "downloads": 321,
+  "authors": [
+   "wyckit"
+  ],
+  "verified": false,
+  "description": "In-process ONNX Runtime GenAI text-generation backend for MCP Engram Memory synthesis. Optional companion to McpEngramMemory.Core: install it only if you want map-reduce memory synthesis to run fully in-process instead of against an Ollama daemon. Carries the ONNX Runtime GenAI native runtimes, which are large — see the package README.",
+  "projectUrl": "https://github.com/wyckit/mcp-engram-memory",
+  "q": "mcp install"
+ },
+ {
+  "id": "Keincheck.Remote",
+  "version": "0.12.0",
+  "downloads": 321,
+  "authors": [
+   "Keincheck"
+  ],
+  "verified": false,
+  "description": "Opt-in remote transport for Keincheck: mutually-authenticated TLS between a Keincheck client and a hub on another machine. Install this package ONLY in apps you want to be remotely debuggable — an app that does not reference it links no networking code at all.",
+  "projectUrl": "https://github.com/DVSProductions/Keincheck",
+  "q": "mcp install"
+ },
+ {
+  "id": "Contextify.Config.AppSettings",
+  "version": "1.0.1",
+  "downloads": 314,
+  "authors": [
+   "Contextify Team"
+  ],
+  "verified": false,
+  "description": "Package Description",
+  "projectUrl": "https://github.com/atakanatali/contextify-net",
+  "q": "mcp config"
+ },
+ {
+  "id": "dotnet-tool-secrets-scan",
+  "version": "1.0.1",
+  "downloads": 302,
+  "authors": [
+   "Luke Baard"
+  ],
+  "verified": false,
+  "description": ".NET-first hardcoded-secret scanner. Detects secrets in source files and git history; reports location only — never values. Install with: dotnet tool install -g dotnet-tool-secrets-scan. Not to be confused with dotnet user-secrets.",
+  "projectUrl": "https://github.com/baardie/SecretsChecker",
+  "q": "mcp install"
+ },
+ {
+  "id": "DevBitsLab.Mcp.SourceGraph.Sdk",
+  "version": "2.2.0",
+  "downloads": 300,
+  "authors": [
+   "DevBitsLab"
+  ],
+  "verified": false,
+  "description": "Plugin SDK for DevBitsLab.Mcp.SourceGraph. Public contracts (ILanguageIndexer, ICodeAnalyzer, IMcpToolPlugin, INodeKindMapper, IModuleResolver, ITreeSitterGrammarConfig) plus the IndexEvent discriminated union, LanguageIndexerOptions, and helper base classes for authoring third-party plugins. Targets netstandard2.0 so a single plugin DLL works with every supported host version.",
+  "projectUrl": "https://github.com/Jak3b0/DevBitsLab.Mcp.SourceGraph",
+  "q": "mcp config"
+ },
+ {
+  "id": "mcp-hub",
+  "version": "0.1.0",
+  "downloads": 292,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "UnityAgentClient.Core",
+  "version": "0.2.0",
+  "downloads": 292,
+  "authors": [
+   "yetsmarch"
+  ],
+  "verified": false,
+  "description": "Core engine for Unity Agent Client — ACP protocol, MCP tool registry, meta-tool routing, skill system, and utilities.",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Samwise",
+  "version": "0.7.0",
+  "downloads": 287,
+  "authors": [
+   "Vitor Paulino"
+  ],
+  "verified": false,
+  "description": "Samwise is the loyal tool that helps a developer carry their work: it bootstraps a repository's AI-assistant setup (skills, hooks, MCP servers, settings) for Claude Code, and (via renderers) for OpenAI Codex and GitHub Copilot. Vendor- and org-neutral core; org-specific values are supplied at init time via flags/prompts or an optional --overlay file. Idempotent and re-runnable.",
+  "projectUrl": "https://github.com/vpaulino/ai-tools",
+  "q": "codex mcp"
+ },
+ {
+  "id": "libgen-mcp",
+  "version": "2.0.1",
+  "downloads": 286,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "libgen-mcp: federated search, citation and reading of books and papers across Library Genesis and open-access sources, as Model Context Protocol tools. A .NET tool wrapping the native Go binary; install with dotnet tool install or run with dnx.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Contextify.Config.Consul",
+  "version": "1.0.1",
+  "downloads": 285,
+  "authors": [
+   "Contextify Team"
+  ],
+  "verified": false,
+  "description": "Package Description",
+  "projectUrl": "https://github.com/atakanatali/contextify-net",
+  "q": "mcp config"
+ },
+ {
+  "id": "github-repo-structure-mcp",
+  "version": "1.0.1",
+  "downloads": 281,
+  "authors": [
+   "Howon Lee"
+  ],
+  "verified": false,
+  "description": "MCP server and provider installer for fetching GitHub repository directory structures via the git/trees API.",
+  "projectUrl": "https://github.com/airtaxi/GithubRepoStructureMcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "AIKit.Mcp",
+  "version": "0.0.3",
+  "downloads": 280,
+  "authors": [
+   "Admir Durmishi"
+  ],
+  "verified": false,
+  "description": "A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies MCP server configuration with fluent builder patterns and helper classes.",
+  "q": "mcp config"
+ },
+ {
+  "id": "SentinelCoreMCP",
+  "version": "0.1.3",
+  "downloads": 279,
+  "authors": [
+   "SentinelCoreMCP"
+  ],
+  "verified": false,
+  "description": "SentinelCoreMCP is a Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP). It must be used with Sentinel Core Platform",
+  "q": "mcp config"
+ },
+ {
+  "id": "NextGenSoftware.OASIS.STAR.DNA",
+  "version": "2.0.0",
+  "downloads": 278,
+  "authors": [
+   "David Ellams (NextGen Software Ltd)"
+  ],
+  "verified": false,
+  "description": "STAR DNA configuration model — strongly-typed binding for STAR_DNA.json governing OAPP templates, Zomes, Holons, and STAR ODK build-time settings.",
+  "projectUrl": "https://github.com/NextGenSoftwareUK/Our-World-OASIS-API-HoloNET-HoloUnity-And-.NET-HDK",
+  "q": "mcp config"
+ },
+ {
+  "id": "CliCatalog.Mcp",
+  "version": "0.1.3",
+  "downloads": 277,
+  "authors": [
+   "dotutils"
+  ],
+  "verified": false,
+  "description": "An MCP server that catalogs the command-line tools available on the current machine (availability, shadowing, version, capabilities) and suggests how to install missing ones.",
+  "projectUrl": "https://github.com/dotutils/list-cli-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "libgen-mcp.win-arm64",
+  "version": "2.0.1",
+  "downloads": 277,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The win-arm64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for win-arm64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "atlassian-onprem-mcp",
+  "version": "1.0.1",
+  "downloads": 276,
+  "authors": [
+   "Mohammed Khalil"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server for Atlassian on-premise installations (Confluence, Jira, Bitbucket Server). Provides AI assistants (GitHub Copilot, Claude, etc.) with 60+ tools for full CRUD operations: search, create, update, delete pages/issues/PRs, manage branches, comments, labels, worklogs, transitions, and more. Supports PAT and Basic authentication.",
+  "projectUrl": "https://github.com/atlassian-onprem-mcp/atlassian-onprem-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "Emissary.Mcp",
+  "version": "0.1.0-preview.4",
+  "downloads": 275,
+  "authors": [
+   "Emissary Contributors"
+  ],
+  "verified": false,
+  "description": "Expose Emissary agents and their tools as a Model Context Protocol (MCP) stdio server — callable from Claude Code, Claude Desktop, and any MCP host.",
+  "projectUrl": "https://github.com/zcsizmadia/Emissary",
+  "q": "claude desktop"
+ },
+ {
+  "id": "libgen-mcp.osx-arm64",
+  "version": "2.0.1",
+  "downloads": 274,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The osx-arm64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for osx-arm64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "libgen-mcp.win-x64",
+  "version": "2.0.1",
+  "downloads": 271,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The win-x64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for win-x64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "WiseOwl.Demeanor.linux-x64",
+  "version": "6.1.1",
+  "downloads": 271,
+  "authors": [
+   "Brent Rector (Wise Owl Software)"
+  ],
+  "verified": true,
+  "description": "Wise Owl Demeanor (known as Demeanor for .NET, Enterprise Edition through 5.x) is the original .NET obfuscator, shipping since 1999. Demeanor protects your intellectual property without breaking your app: it reads the compiled assembly first, recognizes framework patterns (ASP.NET Core, EF Core, Blazor, WPF, WinForms, MAUI, System.Text.Json, COM), and tells you in plain English what obfuscates cleanly, what breaks, and what code changes would fix it. Then it obfuscates: renames identifiers, encrypts strings, constants, and resources, obfuscates control flow, and injects anti-tamper and anti-debug protections. Per-company Enterprise licensing — one annual key, unlimited developers and build agents, no phone-home, no machine locking, no activation server. Optional Large Language Model (LLM) integration via a built-in MCP (Model Context Protocol) server lets customers who already use an MCP-capable AI assistant — Claude Code, Claude Desktop, Cursor, Windsurf, Continue.dev — drive the audit as a conversation; runs locally over stdio. Editions: Community (single-assembly renaming) / Enterprise (per company, full transform suite). Pricing and purchase: https://www.wiseowlsoftware.com/pricing.",
+  "projectUrl": "https://www.wiseowlsoftware.com/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "WiseOwl.Demeanor.win-x64",
+  "version": "6.1.1",
+  "downloads": 267,
+  "authors": [
+   "Brent Rector (Wise Owl Software)"
+  ],
+  "verified": true,
+  "description": "Wise Owl Demeanor (known as Demeanor for .NET, Enterprise Edition through 5.x) is the original .NET obfuscator, shipping since 1999. Demeanor protects your intellectual property without breaking your app: it reads the compiled assembly first, recognizes framework patterns (ASP.NET Core, EF Core, Blazor, WPF, WinForms, MAUI, System.Text.Json, COM), and tells you in plain English what obfuscates cleanly, what breaks, and what code changes would fix it. Then it obfuscates: renames identifiers, encrypts strings, constants, and resources, obfuscates control flow, and injects anti-tamper and anti-debug protections. Per-company Enterprise licensing — one annual key, unlimited developers and build agents, no phone-home, no machine locking, no activation server. Optional Large Language Model (LLM) integration via a built-in MCP (Model Context Protocol) server lets customers who already use an MCP-capable AI assistant — Claude Code, Claude Desktop, Cursor, Windsurf, Continue.dev — drive the audit as a conversation; runs locally over stdio. Editions: Community (single-assembly renaming) / Enterprise (per company, full transform suite). Pricing and purchase: https://www.wiseowlsoftware.com/pricing.",
+  "projectUrl": "https://www.wiseowlsoftware.com/",
+  "q": "claude desktop"
+ },
+ {
+  "id": "libgen-mcp.linux-x64",
+  "version": "2.0.1",
+  "downloads": 262,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The linux-x64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for linux-x64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.osx-arm64",
+  "version": "1.1.0",
+  "downloads": 257,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.osx-x64",
+  "version": "1.1.0",
+  "downloads": 256,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.linux-arm64",
+  "version": "1.1.0",
+  "downloads": 252,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "CP.CodexComputerRun.Mcp.Server.linux-x64",
+  "version": "1.1.0",
+  "downloads": 251,
+  "authors": [
+   "Chris Pulman"
+  ],
+  "verified": false,
+  "description": "MCP server for Codex desktop control: screenshots, mouse, keyboard, clipboard paste, cursor position, visible window discovery, and a bundled Codex Skill. Windows uses native Win32 APIs; Linux and macOS use best-effort desktop command adapters.",
+  "projectUrl": "https://github.com/ChrisPulman/CodexComputerRunMCPServer",
+  "q": "codex mcp"
+ },
+ {
+  "id": "tool-secrets-scan-mcp",
+  "version": "1.0.1",
+  "downloads": 249,
+  "authors": [
+   "Luke Baard"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server exposing secret-scanning tools (scan_for_secrets, scan_git_history) to Claude Code. Reports location only — never values; PII is stripped at the wire boundary. Install with: dotnet tool install -g tool-secrets-scan-mcp, then register in .claude/settings.json.",
+  "projectUrl": "https://github.com/baardie/SecretsChecker",
+  "q": "mcp install"
+ },
+ {
+  "id": "Asynkron.McpDebugger",
+  "version": "0.1.0",
+  "downloads": 247,
+  "authors": [
+   "Asynkron"
+  ],
+  "verified": false,
+  "description": "AI-controlled cooperative debugger via MCP. Install as a global tool and use with Claude Code or other MCP-compatible AI assistants to inspect and control breakpoints in your .NET applications.",
+  "projectUrl": "https://github.com/asynkron/Asynkron.McpDebugger",
+  "q": "mcp install"
+ },
+ {
+  "id": "AIGuiders.Cli",
+  "version": "1.1.1",
+  "downloads": 247,
+  "authors": [
+   "AIGuiders"
+  ],
+  "verified": false,
+  "description": "Shared MCP host argv helpers (--config resolution, help flags).",
+  "projectUrl": "https://github.com/AI-Guiders/guiders-assist",
+  "q": "mcp config"
+ },
+ {
+  "id": "libgen-mcp.linux-arm64",
+  "version": "2.0.1",
+  "downloads": 244,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The linux-arm64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for linux-arm64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "OpenApiToOcelot.Core",
+  "version": "0.1.5",
+  "downloads": 243,
+  "authors": [
+   "OpenAPISpecMCP Contributors"
+  ],
+  "verified": false,
+  "description": "Converts OpenAPI 2/3 specifications into Ocelot API gateway configuration (ocelot.json).",
+  "projectUrl": "https://github.com/Wael-Sha3pan/openapi-ocelot-generator",
+  "q": "mcp config"
+ },
+ {
+  "id": "Caveman.PrivacyGuard.Mcp",
+  "version": "1.3.0",
+  "downloads": 239,
+  "authors": [
+   "Francesco Paolo Passaro"
+  ],
+  "verified": false,
+  "description": "MCP (Model Context Protocol) server for Caveman.PrivacyGuard — exposes PII detection/masking, session-based restore, AI-transparency notices, and prompt-injection screening as MCP tools for Claude Code, OpenCode, Cursor, and any MCP-compatible agent.",
+  "projectUrl": "https://github.com/francescopaolopassaro/Caveman.PrivacyGuard",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "SentinelCoreMCP.win-arm64",
+  "version": "0.1.3",
+  "downloads": 237,
+  "authors": [
+   "SentinelCoreMCP"
+  ],
+  "verified": false,
+  "description": "SentinelCoreMCP is a Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP). It must be used with Sentinel Core Platform",
+  "q": "mcp config"
+ },
+ {
+  "id": "libgen-mcp.osx-x64",
+  "version": "2.0.1",
+  "downloads": 234,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The osx-x64 binary of libgen-mcp. This package is selected by the libgen-mcp tool package for osx-x64 hosts; install libgen-mcp instead.",
+  "projectUrl": "https://jmrp.io/docs/libgen-mcp/",
+  "q": "mcp install"
+ },
+ {
+  "id": "TotalRecall.Mcp",
+  "version": "2.7.0-preview.1",
+  "downloads": 234,
+  "authors": [
+   "Lyndon Swan <magic.monkee.magic@gmail.com>"
+  ],
+  "verified": false,
+  "description": "An MCP server that gives AI coding agents persistent memory — and measures their behaviour. Ships 37 Model Context Protocol tools over stdio for .NET test-coverage uplift, plus a behaviour observatory (tool-call telemetry, cycle detection, deterministic eval grading) and a reflection-based scanner (assembly, Cobertura coverage, test inventory). Reads canonical cross-language scanner JSONL (docs/SCANNER_SCHEMA.md) so the same MCP server works with sibling Python and TypeScript scanners. Install as a global .NET tool: `dotnet tool install -g TotalRecall.Mcp` then point `.vscode/mcp.json` at `total-recall`.",
+  "projectUrl": "https://github.com/monk-eee/Total.Recall.MCP",
+  "q": "mcp install"
+ },
+ {
+  "id": "CircleAI.Hosting.Mcp",
+  "version": "3.6.0",
+  "downloads": 234,
+  "authors": [
+   "The Geek Network"
+  ],
+  "verified": false,
+  "description": "(3.2.0) MCP (Model Context Protocol) JSON-RPC 2.0 endpoint mapping for ASP.NET Core hosts. Lift from CircleUp's MapMcpApi — vault-specific tool surface generalised: hosts register IMcpTool implementations + IMcpResourceProvider via DI, the substrate handles initialize / notifications/initialized / tools/list / tools/call / resources/list / resources/read dispatch. Single + batch JSON-RPC support.",
+  "projectUrl": "https://github.com/bhengubv/CircleAI",
+  "q": "mcp json"
+ },
+ {
+  "id": "gitlab-mcp-server.linux-x64",
+  "version": "3.0.0",
+  "downloads": 225,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The linux-x64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for linux-x64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Testimize.MCP.Server",
+  "version": "1.1.10",
+  "downloads": 221,
+  "authors": [
+   "Anton Angelov"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server exposing Testimize test-data generation to AI assistants (Claude Code, GitHub Copilot, Cursor). Also runs as a standalone REST API. Install as a .NET global tool: `dotnet tool install --global Testimize.MCP.Server`.",
+  "projectUrl": "https://github.com/AutomateThePlanet/Testimize",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server.linux-arm64",
+  "version": "3.0.0",
+  "downloads": 221,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The linux-arm64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for linux-arm64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server.osx-x64",
+  "version": "3.0.0",
+  "downloads": 221,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The osx-x64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for osx-x64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server.win-x64",
+  "version": "3.0.0",
+  "downloads": 218,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The win-x64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for win-x64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server.win-arm64",
+  "version": "3.0.0",
+  "downloads": 215,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The win-arm64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for win-arm64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "gitlab-mcp-server.osx-arm64",
+  "version": "3.0.0",
+  "downloads": 215,
+  "authors": [
+   "jmrplens"
+  ],
+  "verified": false,
+  "description": "The osx-arm64 binary of gitlab-mcp-server. This package is selected by the gitlab-mcp-server tool package for osx-arm64 hosts; install gitlab-mcp-server instead.",
+  "projectUrl": "https://jmrp.io/docs/gitlab-mcp-server/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Rag.NET.Cli",
+  "version": "1.0.0",
+  "downloads": 210,
+  "authors": [
+   "Marcel Roozekrans"
+  ],
+  "verified": false,
+  "description": "Command-line tool for Rag.NET (`ragnet`): ingest a file or directory into, and retrieve chunks from, a configured pipeline — appsettings.json or environment variables, the same seam Rag.NET.Mcp.Tool uses.",
+  "projectUrl": "https://github.com/MarcelRoozekrans/Rag.NET",
+  "q": "mcp config"
+ },
+ {
+  "id": "ClaudeSharp",
+  "version": "0.2.1",
+  "downloads": 207,
+  "authors": [
+   "hmennen90"
+  ],
+  "verified": false,
+  "description": "A native Claude Code alternative built in C#/.NET with Terminal.Gui TUI. Features: streaming agent loop, 11 built-in tools, MCP server integration, SQLite long-term memory with FTS5, hooks and skills plugin system, permission dialogs, and cross-platform shell support.",
+  "projectUrl": "https://github.com/hmennen90/ClaudeSharp",
+  "q": "claude code"
+ },
+ {
+  "id": "Rag.NET.Mcp.Tool",
+  "version": "1.0.0",
+  "downloads": 201,
+  "authors": [
+   "Marcel Roozekrans"
+  ],
+  "verified": false,
+  "description": "Self-contained MCP server for Rag.NET, configured entirely via appsettings.json or environment variables — an OpenAI-compatible chat/embedding endpoint plus InMemory, Qdrant, or PgVector.",
+  "projectUrl": "https://github.com/MarcelRoozekrans/Rag.NET",
+  "q": "mcp config"
+ },
+ {
+  "id": "ClawSharp.ServiceDefaults",
+  "version": "0.1.0",
+  "downloads": 195,
+  "authors": [
+   "James Burton"
+  ],
+  "verified": false,
+  "description": "ClawSharp Aspire service defaults — shared OpenTelemetry, health checks, HTTP resilience, and service discovery configuration",
+  "projectUrl": "https://github.com/jamesburton/ClawSharp",
+  "q": "mcp config"
+ },
+ {
+  "id": "Truvio.Commerce.BuyingAssistant",
+  "version": "0.2.1-beta",
+  "downloads": 182,
+  "authors": [
+   "JustDynamics"
+  ],
+  "verified": false,
+  "description": "Truvio Buying Assistant: an AI buying assistant for Dynamicweb 10 storefronts, by JustDynamics.\n\nA shopper describes what they need in plain language (\"everything to open a 20,000 gallon pool\", \"1,800 sq ft gable roof, full tear-off\", \"replacement union set for a 1 HP pump\", \"same as my last order but for 32 squares\"). The assistant searches the live catalog, sizes the job with your own rules, prices every line at that customer's prices with quantity breaks, checks stock per location and returns a cart-ready proposal with a live activity feed, the reasoning per line, and one \"Add all to cart\" button. The shopper can change quantities or drop lines (re-priced live with quantity breaks) before adding, and follow-up questions refine the same, edited proposal. Everything the model proposes is re-priced by the platform before it reaches the cart.\n\nSET UP WITH DYNAMO (recommended)\nAfter installing and restarting, open Dynamo (the backend AI assistant) and type:\n\n    /truvio-buying-assistant-setup\n\nor simply \"Set up the buying assistant for this site\". The app ships a Dynamo skill that checks the installation, reads your catalog, drafts the business instructions and skills for your products, places the assistant on the product details page and on an \"Ask\" landing page, walks you through the one manual step (the Anthropic API key, unless Dynamo's own key can be reused) and verifies a first storefront run with you.\n\nWHAT IS IN THE BOX\n- \"Buying Assistant\" paragraph (item type Truvio_BuyingAssistant) with editor fields for copy, example prompts, mode (product page or standalone), business instructions and skills (\"## Skill: ...\" sections that say when they apply and how to size that kind of request).\n- Built-in tools that run inside the host: catalog search, product detail with specs and variants, price at quantity (price providers, customer agreements and quantity breaks apply), stock per stock location, categories, the shopper's account and cart, recent orders for reorders.\n- Optional MCP connection (Direct from the host, or Anthropic's connector) with a tool allowlist and a write guard, so the assistant can use backend tools such as documentation search.\n- Settings screen under Settings > Apps > Buying Assistant: API key, model (claude-opus-5-5 by default), effort, global instructions and skills, search query, MCP, limits, anonymous access, logging.\n- Swift 2 paragraph layout, JS and CSS served by the app; a status file Dynamo can read to verify the configuration and the last run.\n\nRequires Dynamicweb 10.27 or newer and a restart after installation. Uses the Anthropic API (a key is required; the Dynamo key is reused when present). Source and documentation: https://github.com/justdynamics/Truvio.Commerce.BuyingAssistant",
+  "projectUrl": "https://github.com/justdynamics/Truvio.Commerce.BuyingAssistant",
+  "q": "mcp install"
+ },
+ {
+  "id": "AiMemoryMcp",
+  "version": "1.0.0",
+  "downloads": 180,
+  "authors": [
+   "Sravan Chenna"
+  ],
+  "verified": false,
+  "description": "A local MCP server that gives any AI assistant (Claude, Cursor, VS Code Copilot) persistent memory — save and retrieve Q&A responses across sessions using a local SQLite database.",
+  "q": "cursor mcp"
+ },
+ {
+  "id": "Tracon.Mcp",
+  "version": "1.0.0-preview.3",
+  "downloads": 179,
+  "authors": [
+   "Faruk Atasoy"
+  ],
+  "verified": true,
+  "description": "Model Context Protocol client for Tracon. It discovers tools from remote MCP servers and lists them with code-registered tools. It requires approval by default.",
+  "projectUrl": "https://tracon.dev/",
+  "q": "mcpServers"
+ },
+ {
+  "id": "SapGui.Wrapper.Mcp",
+  "version": "1.1.0",
+  "downloads": 172,
+  "authors": [
+   "alexrivax"
+  ],
+  "verified": false,
+  "description": "MCP stdio server for SapGui.Wrapper — exposes SAP GUI scripting as 18 Model Context Protocol tools consumable by Claude Desktop, VS Code Copilot, Cursor, and any other MCP-compatible host.",
+  "projectUrl": "https://github.com/alexrivax/SapGui.Wrapper",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Juvina.SemanticKernel",
+  "version": "0.1.1",
+  "downloads": 165,
+  "authors": [
+   "Juvina"
+  ],
+  "verified": false,
+  "description": "Persistent local memory for Semantic Kernel agents — a plugin exposing recall and encode functions backed by the locally installed Juvina memory engine. Your memories stay in a local database on your machine; model calls go only to the endpoint you configure. No cloud, no telemetry.",
+  "projectUrl": "https://juvina.ai/",
+  "q": "mcp install"
+ },
+ {
+  "id": "Codout.Framework.Mcp",
+  "version": "6.2.4",
+  "downloads": 154,
+  "authors": [
+   "Clovis Coli Jr"
+  ],
+  "verified": false,
+  "description": "Servidor MCP (Model Context Protocol) que expõe a constituição, catálogo, padrões de tela, recipes e referências ouro do ecossistema Codout para clientes como Claude Code, Claude Desktop, VSCode e Cursor.",
+  "projectUrl": "https://github.com/Codout/Codout.Framework",
+  "q": "claude desktop"
+ },
+ {
+  "id": "Andy.Tools.Mcp",
+  "version": "2026.9.9-rc.105",
+  "downloads": 146,
+  "authors": [
+   "Rivoli AI"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) client integration for Andy.Tools. Discovers tools from external MCP servers and registers them in the Andy.Tools registry.",
+  "projectUrl": "https://github.com/rivoli-ai/andy-tools",
+  "q": "mcpServers"
+ },
+ {
+  "id": "SourceIntelligence.Installer",
+  "version": "1.0.0",
+  "downloads": 143,
+  "authors": [
+   "SourceIntelligence.Installer"
+  ],
+  "verified": false,
+  "description": "Cross-platform service installer for the SourceIntelligence MCP Server",
+  "projectUrl": "https://github.com/BasitNaeem/SourceIntelligence",
+  "q": "mcp install"
+ },
+ {
+  "id": "Holwon.RoslynMcp.Server",
+  "version": "0.5.0",
+  "downloads": 141,
+  "authors": [
+   "Joshua Ramirez"
+  ],
+  "verified": false,
+  "description": "MCP Server for Roslyn-powered C# refactoring operations. Install as a global tool to use with Claude Code, Claude Desktop, or other MCP clients. Provides 41 tools: 19 refactoring operations, 5 code navigation tools, 6 analysis and metrics tools, 4 code generation tools, and 7 code conversion tools.",
+  "projectUrl": "https://github.com/holwon/RoslynMcpServer",
+  "q": "mcp install"
+ },
+ {
+  "id": "DotNetCodeReviewer.McpServer",
+  "version": "1.0.0",
+  "downloads": 139,
+  "authors": [
+   "DotNetCodeReviewer"
+  ],
+  "verified": false,
+  "description": "An MCP (Model Context Protocol) server that performs deep static code review of C#/.NET source using Roslyn. Plugs into AI coding tools such as Claude, Cursor, and Cline to review code for bugs, security issues, performance problems, and design smells.",
+  "projectUrl": "https://dotnetcodereviewer-api.azurewebsites.net/",
+  "q": "claude code"
+ },
+ {
+  "id": "GodotMcp",
+  "version": "0.1.0",
+  "downloads": 135,
+  "authors": [
+   "Vladyslav Zaiets"
+  ],
+  "verified": false,
+  "description": "MCP server for Godot 4 projects: scene tree inspection, node and property editing, resource and script tools - works on project files directly, no Godot install required.",
+  "projectUrl": "https://github.com/Sarmkadan/godot-mcp",
+  "q": "mcp install"
+ },
+ {
+  "id": "mcp-hub.linux-x64",
+  "version": "0.1.0",
+  "downloads": 135,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Const24.GhidraSharp.Mcp",
+  "version": "0.7.0",
+  "downloads": 131,
+  "authors": [
+   "Const24"
+  ],
+  "verified": false,
+  "description": "An MCP (Model Context Protocol) server for GhidraSharp: headless Ghidra reverse-engineering exposed as stdio tools an LLM agent drives directly (open a program, find strings, walk xrefs, decompile, chase the call chain, read bytes, record findings). Install as a dotnet tool: ghidrasharp-mcp. Needs a ghidrasharp-server (Const24.GhidraSharp.Server or the Release zip), a Ghidra 12.1+ install, and JDK 21+.",
+  "projectUrl": "https://github.com/Const24/GhidraSharp",
+  "q": "mcp install"
+ },
+ {
+  "id": "Cairn.Mcp",
+  "version": "0.11.0",
+  "downloads": 130,
+  "authors": [
+   "Jonah Largen"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol integration for Cairn — exposes the state- and authorization-gated affordances your link configurations declare as MCP tools, so AI agents can discover and invoke exactly the actions the current caller is allowed to see.",
+  "projectUrl": "https://github.com/JonahLargen/Cairn",
+  "q": "mcp config"
+ },
+ {
+  "id": "mcp-hub.win-x64",
+  "version": "0.1.0",
+  "downloads": 130,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "Creatio.ComponentRegistry",
+  "version": "0.1.0",
+  "downloads": 129,
+  "authors": [
+   "ATF"
+  ],
+  "verified": false,
+  "description": "Curated Freedom UI component catalog consumed by the clio MCP server.",
+  "q": "mcp registry"
+ },
+ {
+  "id": "AIGuiders.AgentTaskKnowledge.Core",
+  "version": "0.3.1",
+  "downloads": 128,
+  "authors": [
+   "Dmitry Karataev,AIGuiders"
+  ],
+  "verified": false,
+  "description": "TaskKnowledge store: markdown cards (analytics + task DAG). Workspace-aware central store via TOML --config; legacy per-workspace .task-knowledge/ without config.",
+  "projectUrl": "https://github.com/AI-Guiders/guiders-core",
+  "q": "mcp config"
+ },
+ {
+  "id": "mcp-hub.osx-x64",
+  "version": "0.1.0",
+  "downloads": 127,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "XamlVisualEditor.McpExtension",
+  "version": "0.1.0",
+  "downloads": 124,
+  "authors": [
+   "Wiesław Šoltés"
+  ],
+  "verified": false,
+  "description": "MCP extension panel and runtime configuration",
+  "projectUrl": "https://github.com/wieslawsoltes/XamlVisualEditor",
+  "q": "mcp config"
+ },
+ {
+  "id": "mcp-hub.linux-arm64",
+  "version": "0.1.0",
+  "downloads": 124,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "mcp-hub.osx-arm64",
+  "version": "0.1.0",
+  "downloads": 124,
+  "authors": [
+   "Oleg Ageev"
+  ],
+  "verified": false,
+  "description": "Expose registered upstream MCP servers behind a stable local stdio MCP hub surface.",
+  "projectUrl": "https://github.com/cNoNim/mcp-hub",
+  "q": "mcpServers"
+ },
+ {
+  "id": "JSdotNet.MCP.Publish",
+  "version": "1.0.12",
+  "downloads": 123,
+  "authors": [
+   "Eduard Keilholz"
+  ],
+  "verified": false,
+  "description": "Model Context Protocol (MCP) server that publishes agent results to a configurable file location. Integrates with GitHub Copilot and other MCP-compatible AI tools.",
+  "projectUrl": "https://github.com/JSdotNet/Project-Guidelines-MCP",
+  "q": "mcp config"
+ },
+ {
+  "id": "Google.Cloud.ApiRegistry.V1",
+  "version": "1.0.0-beta01",
+  "downloads": 119,
+  "authors": [
+   "Google LLC"
+  ],
+  "verified": true,
+  "description": "Recommended Google client library to access the Cloud API Registry API (v1). Cloud API Registry lets you discover, govern, use, and monitor Model Context Protocol (MCP) servers and tools provided by Google, or by your organization through Apigee API hub.",
+  "projectUrl": "https://github.com/googleapis/google-cloud-dotnet",
+  "q": "mcp registry"
+ },
+ {
+  "id": "AgentMemory.McpHost",
+  "version": "1.5.0",
+  "downloads": 113,
+  "authors": [
+   "Jose Luis Latorre Millas"
+  ],
+  "verified": false,
+  "description": "Turnkey MCP server for AgentMemory for .NET — runs the 25 memory tools over stdio or HTTP against Neo4j, configured entirely by environment variables. Install with `dotnet tool install -g AgentMemory.McpHost`.",
+  "projectUrl": "https://github.com/joslat/agent-memory-dotnet",
+  "q": "mcp install"
+ },
+ {
+  "id": "PollySdk.AgentFramework.Extensions.Tools.Mcp",
+  "version": "0.1.3",
+  "downloads": 112,
+  "authors": [
+   "Chengchao Zhu"
+  ],
+  "verified": false,
+  "description": "MCP Tool provider and server-registry integration.",
+  "projectUrl": "https://github.com/BunnySoft/Playground/tree/main/sources/Polly",
+  "q": "mcp registry"
+ },
+ {
+  "id": "Google.Cloud.ApiRegistry.V1Beta",
+  "version": "1.0.0-beta01",
+  "downloads": 111,
+  "authors": [
+   "Google LLC"
+  ],
+  "verified": true,
+  "description": "Recommended Google client library to access the Cloud API Registry API (v1beta). Cloud API Registry lets you discover, govern, use, and monitor Model Context Protocol (MCP) servers and tools provided by Google, or by your organization through Apigee API hub.",
+  "projectUrl": "https://github.com/googleapis/google-cloud-dotnet",
+  "q": "mcp registry"
+ },
+ {
+  "id": "claude-roslyn-lsp",
+  "version": "0.1.0",
+  "downloads": 108,
+  "authors": [
+   "Marko Lahma"
+  ],
+  "verified": false,
+  "description": "Roslyn C# language server adapter for Claude Code and other agents. Runs as an LSP server (`claude-roslyn-lsp lsp`) that mediates Microsoft's roslyn-language-server so navigation and edit-time diagnostics work reliably, and as an MCP server (`claude-roslyn-lsp mcp`) that exposes semantic refactoring - rename, code actions, fix-all, formatting and on-demand diagnostics - to models that would otherwise reach for grep and sed. Pure BCL, Native AOT, no compiler packages of its own.",
+  "projectUrl": "https://github.com/lahma/claude-roslyn-lsp",
+  "q": "claude code"
+ },
+ {
+  "id": "AssistantHub.Core",
+  "version": "0.16.1",
+  "downloads": 104,
+  "authors": [
+   "Joel Christner"
+  ],
+  "verified": false,
+  "description": "AssistantHub core library including models, database, settings, services, and helpers.",
+  "projectUrl": "https://github.com/jchristn/AssistantHub",
+  "q": "mcp settings"
+ },
+ {
+  "id": "Elarion.WebPush",
+  "version": "0.2.7",
+  "downloads": 96,
+  "authors": [
+   "Simon Wimmesberger"
+  ],
+  "verified": false,
+  "description": "Web Push for Elarion (RFC 8030/8291/8292, ADR-0076): VAPID key management (configuration → store → generate, race-safe), the IPushSubscriptionStore seam with an in-memory default, and IWebPushSender — aes128gcm encryption and VAPID signing on the .NET crypto primitives, bounded fan-out, and cleanup of subscriptions the push service reports gone. No third-party push SDK.",
+  "projectUrl": "https://elarion.wimmesberger.dev/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Blazor.WebMcpKit",
+  "version": "1.0.0-preview.1",
+  "downloads": 95,
+  "authors": [
+   "Progress Software Corporation"
+  ],
+  "verified": false,
+  "description": "Created by the Telerik UI for Blazor team, Blazor.WebMCPKit is an open-source library that enables any Blazor component to expose WebMCP tools and become agent-aware.\n      JS-free C# API to register Blazor component methods as WebMCP tools\n      for document.modelContext in Chrome. Supports attribute-based and\n      programmatic registration, JSON Schema generation, cross-origin exposure\n      controls, and full tool lifecycle management.",
+  "q": "mcp json"
+ },
+ {
+  "id": "PolishOpenData.Core",
+  "version": "1.1.0",
+  "downloads": 92,
+  "authors": [
+   "JacekSmi"
+  ],
+  "verified": true,
+  "description": "Offline parsing and validation of Polish identifiers: NIP, REGON, KRS number, NRB bank account and land-registry (księga wieczysta, KW) numbers with the official court-code table. Unofficial; not affiliated with the Polish government.",
+  "projectUrl": "https://github.com/JacekSmi/PolishOpenData",
+  "q": "mcp registry"
+ },
+ {
+  "id": "AccsoDotnetRuntimeMcp",
+  "version": "1.0.0",
+  "downloads": 84,
+  "authors": [
+   "Accso"
+  ],
+  "verified": false,
+  "description": "A .NET class library that enables developers to add an MCP server to any .NET host application, exposing live runtime information (such as the effective application configuration) to MCP-compatible clients like AI agents and developer tools.",
+  "projectUrl": "https://github.com/accso/accso-dotnet-runtime-mcp",
+  "q": "mcp config"
+ },
+ {
+  "id": "BogMem.Slices",
+  "version": "0.1.0-preview.3",
+  "downloads": 84,
+  "authors": [
+   "Beyond Ordinary Software Solutions"
+  ],
+  "verified": false,
+  "description": "Embedded BogMem runtime for BogDB-backed palace storage, hybrid recall, graph memory, project mining, registry routing, and MCP dispatch.",
+  "projectUrl": "https://github.com/BeyondOrdinary/BogMem",
+  "q": "mcp registry"
+ },
+ {
+  "id": "NacosMcpRouter",
+  "version": "1.0.0",
+  "downloads": 44,
+  "authors": [
+   "nacos-mcp-router contributors"
+  ],
+  "verified": false,
+  "description": "A .NET 10 MCP server that searches, installs, and proxies MCP servers registered in Nacos. Connects to Nacos, discovers downstream MCP servers, and exposes them through Model Context Protocol tools.",
+  "q": "mcp install"
+ },
+ {
+  "id": "ToolUp.AI.McpHost",
+  "version": "0.23.0",
+  "downloads": 43,
+  "authors": [
+   "Andrew J. Willshire"
+  ],
+  "verified": true,
+  "description": "Opt-in Model Context Protocol server host for ToolUp.Platform — projects the registered AI tool surface to external agent stacks over JSON-RPC 2.0, with per-agent principals, default-deny tool grants, budgets, rate limits and a complete per-interaction audit trail. Off unless composed; zero cost when unused.",
+  "projectUrl": "https://github.com/ToolUp-Forge/toolup-forge",
+  "q": "mcp json"
+ },
+ {
+  "id": "Wangdefa.Memory.Mcp",
+  "version": "1.0.0",
+  "downloads": 42,
+  "authors": [
+   "wangdefa"
+  ],
+  "verified": false,
+  "description": "Local-first five-layer memory engine for agents, exposed over MCP (stdio). Installs the Wangdefa.Memory core package automatically.",
+  "projectUrl": "https://github.com/VinsonWild/Wangdefa.Memory",
+  "q": "mcp install"
+ },
+ {
+  "id": "Ironbrain.MailCal.Mcp",
+  "version": "0.1.1",
+  "downloads": 38,
+  "authors": [
+   "kern-services"
+  ],
+  "verified": false,
+  "description": "MCP stdio server (ironbrain-mailcal-mcp) for Cursor and other MCP clients — IMAP/SMTP + CalDAV. Companion CLI: Ironbrain.MailCal.Cli. Shared config ~/.config/ironbrain/mailcal.json.",
+  "projectUrl": "https://www.ironbrain.de/mailcal/",
+  "q": "mcp config"
+ },
+ {
+  "id": "Ironbrain.MailCal.Cli",
+  "version": "0.1.1",
+  "downloads": 38,
+  "authors": [
+   "kern-services"
+  ],
+  "verified": false,
+  "description": "CLI (ironbrain-mailcal) for IMAP/SMTP + CalDAV against self-hosted servers. For scripts, cron, CI, and bot hosts that shell out. Companion MCP tool: Ironbrain.MailCal.Mcp. Shared config ~/.config/ironbrain/mailcal.json.",
+  "projectUrl": "https://www.ironbrain.de/mailcal/",
+  "q": "mcp config"
+ },
+ {
+  "id": "TerraPDF.Mcp",
+  "version": "1.0.0",
+  "downloads": 0,
+  "authors": [
+   "Saheb Ansari"
+  ],
+  "verified": true,
+  "description": "Model Context Protocol server for TerraPDF. Gives MCP clients (GitHub Copilot,\n      Cursor, Claude Code, VS Code, LangChain via langchain-mcp-adapters) two\n      capabilities: create PDF files from a validated JSON document description,\n      and look up the verified TerraPDF C# API and recipes while writing code.",
+  "projectUrl": "https://github.com/sahebansari/TerraPDF",
+  "q": "mcp json"
+ }
+]

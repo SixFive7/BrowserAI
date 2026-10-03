@@ -1,0 +1,362 @@
+[
+ {
+  "page": "blank",
+  "n_pw": 10,
+  "n_sh": 10,
+  "pw_snapMs": 4,
+  "sh_snapMs": 8,
+  "pw_navMs": 39.9,
+  "sh_navMs": 20,
+  "pw_bodyTok_boxes": 22,
+  "pw_bodyTok_noBoxes": 10,
+  "sh_bodyTok": 40,
+  "pw_bodyChars_boxes": 48,
+  "pw_bodyChars_noBoxes": 29,
+  "sh_bodyChars": 103,
+  "pw_responseTok": 59,
+  "pw_navResponseTok": 82,
+  "pw_refs": 0,
+  "sh_ids": 10,
+  "sh_vs_pw_boxes_tokens": 1.82,
+  "sh_vs_pw_noBoxes_tokens": 4,
+  "pw_mem_privMiB": [
+   382,
+   385.9
+  ],
+  "sh_mem_privMiB": [
+   537.1,
+   537.1
+  ],
+  "pw_mem_wsMiB": [
+   587.1,
+   587.5
+  ],
+  "sh_mem_wsMiB": [
+   748.3,
+   736.9
+  ],
+  "pw_procs": 11,
+  "sh_procs": 11,
+  "errors_pw": 0
+ },
+ {
+  "page": "form",
+  "n_pw": 10,
+  "n_sh": 10,
+  "pw_snapMs": 6.4,
+  "sh_snapMs": 12.4,
+  "pw_navMs": 48.3,
+  "sh_navMs": 24,
+  "pw_bodyTok_boxes": 820,
+  "pw_bodyTok_noBoxes": 460,
+  "sh_bodyTok": 482,
+  "pw_bodyChars_boxes": 1973,
+  "pw_bodyChars_noBoxes": 1362,
+  "sh_bodyChars": 1567,
+  "pw_responseTok": 858,
+  "pw_navResponseTok": 139,
+  "pw_refs": 0,
+  "sh_ids": 89,
+  "sh_vs_pw_boxes_tokens": 0.59,
+  "sh_vs_pw_noBoxes_tokens": 1.05,
+  "pw_mem_privMiB": [
+   452.2,
+   453.8
+  ],
+  "sh_mem_privMiB": [
+   580.1,
+   583.7
+  ],
+  "pw_mem_wsMiB": [
+   625.9,
+   626.9
+  ],
+  "sh_mem_wsMiB": [
+   775.7,
+   764.4
+  ],
+  "pw_procs": 11,
+  "sh_procs": 11,
+  "errors_pw": 0
+ },
+ {
+  "page": "table",
+  "n_pw": 10,
+  "n_sh": 10,
+  "pw_snapMs": 274.5,
+  "sh_snapMs": 402.8,
+  "pw_navMs": 430.5,
+  "sh_navMs": 98.2,
+  "pw_bodyTok_boxes": 109675,
+  "pw_bodyTok_noBoxes": 61837,
+  "sh_bodyTok": 50325,
+  "pw_bodyChars_boxes": 254187,
+  "pw_bodyChars_noBoxes": 170928,
+  "sh_bodyChars": 142924,
+  "pw_responseTok": 109711,
+  "pw_navResponseTok": 82,
+  "pw_refs": 0,
+  "sh_ids": 6524,
+  "sh_vs_pw_boxes_tokens": 0.46,
+  "sh_vs_pw_noBoxes_tokens": 0.81,
+  "pw_mem_privMiB": [
+   594.7,
+   598.7
+  ],
+  "sh_mem_privMiB": [
+   703,
+   708.2
+  ],
+  "pw_mem_wsMiB": [
+   742.2,
+   745.1
+  ],
+  "sh_mem_wsMiB": [
+   892.5,
+   882.6
+  ],
+  "pw_procs": 11,
+  "sh_procs": 11,
+  "errors_pw": 0
+ },
+ {
+  "page": "iframes",
+  "n_pw": 10,
+  "n_sh": 10,
+  "pw_snapMs": 11.5,
+  "sh_snapMs": 16.4,
+  "pw_navMs": 99.5,
+  "sh_navMs": 39.3,
+  "pw_bodyTok_boxes": 346,
+  "pw_bodyTok_noBoxes": 200,
+  "sh_bodyTok": 258,
+  "pw_bodyChars_boxes": 821,
+  "pw_bodyChars_noBoxes": 575,
+  "sh_bodyChars": 858,
+  "pw_responseTok": 384,
+  "pw_navResponseTok": 84,
+  "pw_refs": 0,
+  "sh_ids": 45,
+  "sh_vs_pw_boxes_tokens": 0.75,
+  "sh_vs_pw_noBoxes_tokens": 1.29,
+  "pw_mem_privMiB": [
+   769.3,
+   780.6
+  ],
+  "sh_mem_privMiB": [
+   879.5,
+   885
+  ],
+  "pw_mem_wsMiB": [
+   907.1,
+   926.5
+  ],
+  "sh_mem_wsMiB": [
+   1059.4,
+   1049.5
+  ],
+  "pw_procs": 11,
+  "sh_procs": 11,
+  "errors_pw": 0
+ },
+ {
+  "page": "shadow",
+  "n_pw": 10,
+  "n_sh": 10,
+  "pw_snapMs": 4.6,
+  "sh_snapMs": 23.6,
+  "pw_navMs": 43.9,
+  "sh_navMs": 22.8,
+  "pw_bodyTok_boxes": 129,
+  "pw_bodyTok_noBoxes": 70,
+  "sh_bodyTok": 117,
+  "pw_bodyChars_boxes": 291,
+  "pw_bodyChars_noBoxes": 195,
+  "sh_bodyChars": 357,
+  "pw_responseTok": 166,
+  "pw_navResponseTok": 83,
+  "pw_refs": 0,
+  "sh_ids": 72,
+  "sh_vs_pw_boxes_tokens": 0.91,
+  "sh_vs_pw_noBoxes_tokens": 1.67,
+  "pw_mem_privMiB": [
+   781.9,
+   791.9
+  ],
+  "sh_mem_privMiB": [
+   889.8,
+   873.1
+  ],
+  "pw_mem_wsMiB": [
+   919.3,
+   937.8
+  ],
+  "sh_mem_wsMiB": [
+   1070.2,
+   1058.6
+  ],
+  "pw_procs": 11,
+  "sh_procs": 11,
+  "errors_pw": 0
+ },
+ {
+  "page": "example.com",
+  "n_pw": 6,
+  "n_sh": 6,
+  "pw_snapMs": 4.9,
+  "sh_snapMs": 20.4,
+  "pw_navMs": 52.2,
+  "sh_navMs": 23.6,
+  "pw_bodyTok_boxes": 155,
+  "pw_bodyTok_noBoxes": 96,
+  "sh_bodyTok": 94,
+  "pw_bodyChars_boxes": 439,
+  "pw_bodyChars_noBoxes": 330,
+  "sh_bodyChars": 319,
+  "pw_responseTok": 182,
+  "pw_navResponseTok": 72,
+  "pw_refs": 0,
+  "sh_ids": 57,
+  "sh_vs_pw_boxes_tokens": 0.61,
+  "sh_vs_pw_noBoxes_tokens": 0.98,
+  "pw_mem_privMiB": [
+   519.2,
+   510
+  ],
+  "sh_mem_privMiB": [
+   897.4,
+   857
+  ],
+  "pw_mem_wsMiB": [
+   647.4,
+   651
+  ],
+  "sh_mem_wsMiB": [
+   1132.8,
+   1093.5
+  ],
+  "pw_procs": 11,
+  "sh_procs": 12,
+  "errors_pw": 0
+ },
+ {
+  "page": "wikipedia-playwright",
+  "n_pw": 6,
+  "n_sh": 6,
+  "pw_snapMs": 113,
+  "sh_snapMs": 637.1,
+  "pw_navMs": 390.8,
+  "sh_navMs": 163.3,
+  "pw_bodyTok_boxes": 24305,
+  "pw_bodyTok_noBoxes": 16812,
+  "sh_bodyTok": 14296,
+  "pw_bodyChars_boxes": 75562,
+  "pw_bodyChars_noBoxes": 62112,
+  "sh_bodyChars": 57312,
+  "pw_responseTok": 24343,
+  "pw_navResponseTok": 84,
+  "pw_refs": 0,
+  "sh_ids": 9645,
+  "sh_vs_pw_boxes_tokens": 0.59,
+  "sh_vs_pw_noBoxes_tokens": 0.85,
+  "pw_mem_privMiB": [
+   606.6,
+   600.4
+  ],
+  "sh_mem_privMiB": [
+   979,
+   989.8
+  ],
+  "pw_mem_wsMiB": [
+   764.3,
+   766.2
+  ],
+  "sh_mem_wsMiB": [
+   1282.9,
+   1265
+  ],
+  "pw_procs": 11,
+  "sh_procs": 13,
+  "errors_pw": 0
+ },
+ {
+  "page": "hn-front",
+  "n_pw": 6,
+  "n_sh": 6,
+  "pw_snapMs": 72.7,
+  "sh_snapMs": 356.5,
+  "pw_navMs": 432.8,
+  "sh_navMs": 381.6,
+  "pw_bodyTok_boxes": 20355,
+  "pw_bodyTok_noBoxes": 13490,
+  "sh_bodyTok": 9595,
+  "pw_bodyChars_boxes": 61918,
+  "pw_bodyChars_noBoxes": 49327,
+  "sh_bodyChars": 34455,
+  "pw_responseTok": 20385,
+  "pw_navResponseTok": 76,
+  "pw_refs": 0,
+  "sh_ids": 3693,
+  "sh_vs_pw_boxes_tokens": 0.47,
+  "sh_vs_pw_noBoxes_tokens": 0.71,
+  "pw_mem_privMiB": [
+   561.6,
+   562.8
+  ],
+  "sh_mem_privMiB": [
+   1133.9,
+   1153.2
+  ],
+  "pw_mem_wsMiB": [
+   707.7,
+   710
+  ],
+  "sh_mem_wsMiB": [
+   1462,
+   1481
+  ],
+  "pw_procs": 11,
+  "sh_procs": 14,
+  "errors_pw": 0
+ },
+ {
+  "page": "github-stagehand",
+  "n_pw": 6,
+  "n_sh": 6,
+  "pw_snapMs": 194.5,
+  "sh_snapMs": 1082.9,
+  "pw_navMs": 780.7,
+  "sh_navMs": 487.1,
+  "pw_bodyTok_boxes": 19804,
+  "pw_bodyTok_noBoxes": 12829,
+  "sh_bodyTok": 17246,
+  "pw_bodyChars_boxes": 63577,
+  "pw_bodyChars_noBoxes": 50985,
+  "sh_bodyChars": 75133,
+  "pw_responseTok": 19876,
+  "pw_navResponseTok": 118,
+  "pw_refs": 0,
+  "sh_ids": 14511,
+  "sh_vs_pw_boxes_tokens": 0.87,
+  "sh_vs_pw_noBoxes_tokens": 1.34,
+  "pw_mem_privMiB": [
+   732,
+   719.9
+  ],
+  "sh_mem_privMiB": [
+   1407.4,
+   1419.4
+  ],
+  "pw_mem_wsMiB": [
+   894.8,
+   890.4
+  ],
+  "sh_mem_wsMiB": [
+   1778,
+   1778.6
+  ],
+  "pw_procs": 11,
+  "sh_procs": 15,
+  "errors_pw": 0
+ }
+]

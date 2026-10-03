@@ -1,0 +1,5 @@
+[info] Installing MCP server "browserai" for codex
+[info] Config written to: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t8-toml10\Zoë O'Brien\.codex\config.toml
+
+ > Successfully installed MCP server "browserai" in codex
+

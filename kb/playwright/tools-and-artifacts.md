@@ -1796,6 +1796,58 @@ the registry through the tool registry, and the wire set out of
 which floats**, and the per-option verdicts move with this repository, so the
 column that ages first is the one naming files and line numbers in `src/`.
 
+## What a snapshot and a click cost through BrowserAI's configuration -- measured 2026-09-25
+
+`[FLOATS]` `@playwright/mcp` **0.0.82** with `playwright-core`
+1.64.0-alpha-1789764292000, in BrowserAI's configuration, against Chrome for
+Testing **154.0.8037.0** headless at 1920x1080, node v26.7.0. Tokens are counted
+with OpenAI's `o200k_base` tokenizer as a stand-in, **not Anthropic's**. Taken
+for the Stagehand comparison (track D of the zoom-out).
+[Evidence](../../docs/evidence/2026-09-25-stagehand/README.md),
+[rig](../../docs/probes/2026-09-25-stagehand/README.md).
+
+**`browser_snapshot` returns the whole snapshot inline**, so its size is what a
+model pays, and `snapshot.boxes` on, which BrowserAI writes, adds 45 to 78% on
+the large pages. Medians of 6 to 10 runs per page:
+
+| Page | Boxes on | Boxes off |
+|---|--:|--:|
+| A local form | 820 | 460 |
+| A local table of 500 rows | 109,675 | 61,837 |
+| A Wikipedia article | 24,305 | 16,812 |
+| The Hacker News front page | 20,355 | 13,490 |
+| A GitHub repository page | 19,804 | 12,829 |
+| **All nine pages, blank included** | **175,611** | **105,804** |
+
+**A per-call `boxes: false` overrides the configuration**: on the table page the
+same call went from 101,700 tokens to 53,862 with no box left in it. Link URLs
+are 17 to 25% of a snapshot of a link-heavy page.
+
+**A click costs the settle wait.** Through BrowserAI's configuration,
+`browser_click` took a median 535.5 ms over 15 clicks, and that is upstream's
+500 ms settle; at a settle of 100 ms it took 125.7 ms and at 0 ms 25.0 ms, every
+click counted by the page itself.
+
+**The other figures of the comparison, for Playwright's side:** the 72 tools'
+definitions cost 8,178 tokens; a child spawned the way BrowserAI spawns one
+reached its first page in a median 736 ms over five warm runs; a close took 155
+to 184 ms and left the profile's `exit_type` *Normal*, 6 of 6; and a click that
+raised `alert()` answered in 59 ms with a modal state that
+`browser_handle_dialog` then accepted.
+
+⛔ **What the comparison measured of Stagehand 4.1.0 is kept as the reason it
+was dropped**, Q318, decided 2026-10-01: its snapshot was 13% smaller than
+Playwright's without boxes, mostly by leaving out link URLs, and carried the
+content of closed shadow roots; its launch took 2,960 ms against 736; it closed
+by killing the tree after 3 s, so 7 of 7 profiles recorded *Crashed*; it
+listened on a loopback debugging port with `--remote-allow-origins=*`, which an
+unrelated process read without a credential; and a page's `alert()` hung its
+click for 20 s and every later call on that page.
+
+**Re-establish** with the rig: `bench-snap-pw.mjs` and `knobs.mjs` drive a child
+in BrowserAI's configuration over the local fixtures and the three public pages,
+and write the summaries in the evidence's `bench/out/`.
+
 ## Artifacts and output-directory behaviour
 
 All read from the shipped bundle or observed against a real child. `[FLOATS]`

@@ -1,0 +1,18 @@
+[i] Installing to user scope (~/.apm/)
+[!] User-scope primitives are fully supported by claude, kiro, gemini, 
+grok-build, grok-cloud, agent-skills, openclaw, hermes, copilot-cowork, 
+copilot-app. Partially supported: copilot, cursor, opencode, antigravity, 
+codex, windsurf.
+Some primitives are not supported: cursor (instructions); opencode (hooks); 
+antigravity (instructions, hooks); windsurf (instructions)
+[>] Installing dependencies from apm.yml...
+[!] Policy enforcement disabled by --no-policy for this invocation. This does 
+NOT bypass apm audit --ci. CI will still fail the PR for the same policy 
+violation.
+  [+] <project root> (local)
+  |-- (files unchanged)
+  [i] Skipped inactive experimental resolver for target 'copilot-cowork' during
+lockfile reconciliation.
+  [i] Skipped inactive experimental resolver for target 'copilot-app' during 
+lockfile reconciliation.
+[i] No changes -- install state already up to date in 0.1s.

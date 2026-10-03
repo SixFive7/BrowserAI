@@ -1,0 +1,29 @@
+{
+  "numStartups": 42,
+  "installMethod": "native",
+  "projects": {
+    "C:/work/demo": {
+      "allowedTools": [],
+      "mcpServers": {}
+    }
+  },
+  "mcpServers": {
+    "other": {
+      "type": "stdio",
+      "command": "C:\\Tools\\other\\other-mcp.exe",
+      "args": [
+        "--flag"
+      ],
+      "env": {}
+    }
+  },
+  "userID": "seed",
+  "firstStartTime": "2026-09-25T04:00:45.857Z",
+  "firstStartVersion": "2.1.282",
+  "machineID": "d533b28b297e766dab958c69622745096945f0bbffc6f720ce2ec20d5cf2bd9a",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "seenNotifications": {},
+  "hasResetAutoModeOptInForDefaultOffer": true,
+  "migrationVersion": 14
+}

@@ -1,0 +1,59 @@
+[i] Installing to user scope (~/.apm/)
+[!] User-scope primitives are fully supported by claude, kiro, gemini, 
+grok-build, grok-cloud, agent-skills, openclaw, hermes, copilot-cowork, 
+copilot-app. Partially supported: copilot, cursor, opencode, antigravity, 
+codex, windsurf.
+Some primitives are not supported: cursor (instructions); opencode (hooks); 
+antigravity (instructions, hooks); windsurf (instructions)
+[>] Installing dependencies from apm.yml...
+Parsed apm.yml: 0 APM deps, 1 MCP deps
+Resolved 0 direct dependencies (no transitive)
+Phase: resolve -> 0.007s
+[!] Policy enforcement disabled by --no-policy for this invocation. This does 
+NOT bypass apm audit --ci. CI will still fail the PR for the same policy 
+violation.
+Phase: policy_gate -> 0.001s
+Active global targets: claude (~/./), codex (~/.codex/)
+Lockfile: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t5-apm\Zoë 
+O'Brien\.apm\apm.lock.yaml
+Phase: targets -> 0.003s
+Copilot native registration: unavailable (copilot target not selected)
+Phase: copilot_activate -> 0.000s
+Phase: policy_target_check -> 0.000s
+Phase: download -> 0.000s
+  [+] <project root> (local)
+Integrating local .apm/ content...
+  |-- (files unchanged)
+Phase: integrate -> 0.024s
+Skipping .gitignore update (global scope install).
+Phase: cleanup -> 0.000s
+Phase: post_deps_local -> 0.000s
+Phase: audit -> 0.000s
+Phase: copilot_plugins -> 0.000s
+[#] Perf: 3 walks, 0 file matches, 9 files visited, 0.004s total walk time
+[#] Perf:   .apm: 3 walk(s) (4ms, 9 files visited, 0 matched)
+[#] Perf: discovery: 4 call(s) (1 unique base(s), 3 cache hit(s), 75%)
+Phase: finalize -> 0.004s
+[!] Policy enforcement disabled by --no-policy for this invocation. This does 
+NOT bypass apm audit --ci. CI will still fail the PR for the same policy 
+violation.
++- MCP Servers (1)
+[i] Targeting declared targets from apm.yml: claude, codex
+|  [>]  browserai (self-defined, stdio)
+|     +- Configuring for Claude, Codex...
+Successfully configured MCP server 'browserai' for Claude Code
+  + browserai
+[*] Configured MCP server 'browserai' for Codex CLI
+  + browserai
+|  [+]  browserai -> Claude, Codex (configured)
+[*] Configured 1 server
+No LSP dependencies found in apm.yml
+  [i] Skipped inactive experimental resolver for target 'copilot-cowork' during
+lockfile reconciliation.
+    +- To include it, enable 'copilot-cowork' and select target 
+'copilot-cowork' for this install.
+  [i] Skipped inactive experimental resolver for target 'copilot-app' during 
+lockfile reconciliation.
+    +- To include it, enable 'copilot-app' and select target 'copilot-app' for 
+this install.
+[*] Installed 1 MCP server in 0.8s.

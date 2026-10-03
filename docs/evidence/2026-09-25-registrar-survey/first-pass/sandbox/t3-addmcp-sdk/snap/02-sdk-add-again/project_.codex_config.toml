@@ -1,0 +1,7 @@
+[mcp_servers.teammate]
+command = "npx"
+args = [ "-y", "@example/teammate-mcp" ]
+
+[mcp_servers.browserai]
+command = "BrowserAI.Server.exe"
+args = [ ]

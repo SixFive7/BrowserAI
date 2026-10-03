@@ -1,0 +1,17 @@
+[c1-add-user] rc=0 ms=365 :: claude mcp add browserai --scope user -- C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+[c2-add-user-again] rc=1 ms=242 :: claude mcp add browserai --scope user -- C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+[c3-add-project] rc=0 ms=279 :: claude mcp add browserai --scope project -- ${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe
+[c3b-add-project-again] rc=1 ms=246 :: claude mcp add browserai --scope project -- ${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe
+[c4-remove-project] rc=0 ms=312 :: claude mcp remove browserai --scope project
+[c5-remove-user] rc=0 ms=296 :: claude mcp remove browserai --scope user
+[c6-remove-user-again] rc=1 ms=275 :: claude mcp remove browserai --scope user
+[x0-version] rc=0 ms=462 :: codex --version
+[x1-add-user] rc=0 ms=88 :: codex mcp add browserai -- C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+[x2-add-user-again] rc=0 ms=115 :: codex mcp add browserai -- C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+[x3-list-json] rc=0 ms=82 :: codex mcp list --json
+[x4-get-json] rc=0 ms=89 :: codex mcp get browserai --json
+[x5-add-project] rc=0 ms=95 :: env CODEX_HOME=C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\project\.codex codex mcp add browserai -- BrowserAI.Server.exe
+[x6-list-project] rc=0 ms=128 :: env CODEX_HOME=C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\project\.codex codex mcp list --json
+[x7-remove-project] rc=0 ms=86 :: env CODEX_HOME=C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\project\.codex codex mcp remove browserai
+[x8-remove-user] rc=0 ms=83 :: codex mcp remove browserai
+[x9-remove-user-again] rc=0 ms=79 :: codex mcp remove browserai

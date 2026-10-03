@@ -1,0 +1,1 @@
+{"success":false,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t8-toml10\\Zoë O'Brien\\.codex\\config.toml","error":"Inline lists must be a single type, not a mix of string and integer at row 19, col 24, pos 445:\n18: model_reasoning_effort = \"low\"\n19> example_mixed = [\"a\", 1]\n                           ^\n20: \n\n"}

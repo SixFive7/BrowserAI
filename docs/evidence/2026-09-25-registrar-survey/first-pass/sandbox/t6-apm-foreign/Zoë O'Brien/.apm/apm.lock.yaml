@@ -1,0 +1,5 @@
+lockfile_version: '1'
+apm_version: 0.31.0
+dependencies: []
+deployments: []
+mcp_target_servers: {}

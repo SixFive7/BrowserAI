@@ -1,0 +1,27 @@
+{
+  "numStartups": 42,
+  "installMethod": "native",
+  "autoUpdates": false,
+  "projects": {
+    "C:/work/demo": {
+      "allowedTools": [],
+      "mcpServers": {}
+    }
+  },
+  "mcpServers": {
+    "other": {
+      "type": "stdio",
+      "command": "C:\\Tools\\other\\other-mcp.exe",
+      "args": [
+        "--flag"
+      ],
+      "env": {}
+    },
+    "browserai": {
+      "type": "stdio",
+      "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t5-apm\\Zo\u00eb O'Brien\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe",
+      "args": []
+    }
+  },
+  "userID": "seed"
+}

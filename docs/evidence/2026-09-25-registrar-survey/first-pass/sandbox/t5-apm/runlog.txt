@@ -1,0 +1,5 @@
+[p0-version] rc=0 ms=1060 :: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\apm\x\apm-windows-x86_64\apm.exe --version
+[p0-help-install] rc=0 ms=1249 :: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\apm\x\apm-windows-x86_64\apm.exe install --help
+[p1-install-global] rc=2 ms=973 :: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\apm\x\apm-windows-x86_64\apm.exe install -g -t claude,codex --mcp browserai -- C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t5-apm\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+[p2-install-global-manifest] rc=127 ms=326251 :: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\apm\x\apm-windows-x86_64\apm.exe install -g
+[p4-codex-parses-apm] rc=0 ms=87 :: codex mcp list --json

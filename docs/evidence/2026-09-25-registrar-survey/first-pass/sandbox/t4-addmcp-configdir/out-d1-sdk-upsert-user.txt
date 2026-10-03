@@ -1,0 +1,1 @@
+{"success":true,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t4-addmcp-configdir\\Zoë O'Brien\\.claude.json"}

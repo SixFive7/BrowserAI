@@ -1,0 +1,15 @@
+OK neon-solutions/add-mcp@HEAD commit=ad92a0127ec94f5663dec00fba35736b606968d3 files=220 at 2026-10-01T11:36:47Z
+OK PrefectHQ/fastmcp@HEAD commit=9488a2619154b7728be80c725fc7473069a1e645 files=1779 at 2026-10-01T11:36:52Z
+OK modelcontextprotocol/python-sdk@HEAD commit=d639cf7f97f77388fa7da60c0f9b04f8837b77fd files=1676 at 2026-10-01T11:36:55Z
+OK docker/mcp-gateway@HEAD commit=a34df45d4ec0e941a9853ad768c4f6cd818966b3 files=6789 at 2026-10-01T11:37:13Z
+OK modelcontextprotocol/go-sdk@HEAD commit=53effc04ea258b9ee618886702e03abc4306a160 files=226 at 2026-10-01T11:38:59Z
+OK modelcontextprotocol/rust-sdk@HEAD commit=ae2f9c9b45a2c98d24ee345406e79f507c9f9282 files=289 at 2026-10-01T11:38:59Z
+OK modelcontextprotocol/csharp-sdk@HEAD commit=c40ee044fd415c70da5176c749cb5ef02f2b59f6 files=884 at 2026-10-01T11:39:00Z
+OK modelcontextprotocol/typescript-sdk@HEAD commit=433eb413dc305ebeb93b8ebcde0095a8fc0d5fa0 files=1149 at 2026-10-01T11:39:01Z
+OK ahujasid/blender-mcp@HEAD commit=60d2a31b4632a7bc178f3dd636f7e68dfb5c8ae4 files=55 at 2026-10-01T11:41:56Z
+OK upstash/context7@HEAD commit=cddd28639423fd31691d1a8bb4ac8c10f1b76e57 files=503 at 2026-10-01T11:41:58Z
+OK oraios/serena@HEAD commit=d0f7f92631c23dc4c5ed0b5ccd35bc623b19a809 files=1124 at 2026-10-01T11:41:58Z
+OK getsentry/XcodeBuildMCP@HEAD commit=d13ff0c707b0681769cf31da0eb42c4f94ceafff files=1837 at 2026-10-01T11:41:59Z
+OK wonderwhy-er/DesktopCommanderMCP@HEAD commit=c774c3b505de990219637ecdc9a830c8772fae9d files=324 at 2026-10-01T11:41:59Z
+OK suiflex/kurir@HEAD commit=97ed870aa4850235894edb82b53c4969b2ecf0f6 files=48 at 2026-10-01T11:53:27Z
+OK IvanMurzak/MCP-Plugin-dotnet@HEAD commit=93a6212b4d0f9338b8e154d55dc92adcb865d652 files=664 at 2026-10-01T11:53:36Z

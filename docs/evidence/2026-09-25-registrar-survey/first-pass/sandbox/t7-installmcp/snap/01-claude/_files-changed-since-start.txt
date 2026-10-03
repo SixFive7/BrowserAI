@@ -1,0 +1,3 @@
+./out-i1-claude.txt
+./runlog.txt
+./Zoë O'Brien/.claude.json

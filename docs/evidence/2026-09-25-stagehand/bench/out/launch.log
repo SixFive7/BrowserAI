@@ -1,0 +1,35 @@
+{
+ "pwMcpSpawned": {
+  "n": 5,
+  "min": 687.9,
+  "median": 736.1,
+  "p90": 775.9,
+  "max": 775.9,
+  "mean": 728.3
+ },
+ "shSpawned": {
+  "n": 5,
+  "min": 1095.3,
+  "median": 2960.2,
+  "p90": 3343,
+  "max": 3343,
+  "mean": 2694.4
+ },
+ "pwLib": {
+  "n": 5,
+  "min": 329.4,
+  "median": 339.3,
+  "p90": 402.5,
+  "max": 402.5,
+  "mean": 351.4
+ },
+ "shLib": {
+  "n": 5,
+  "min": 748.8,
+  "median": 2656.1,
+  "p90": 2771.9,
+  "max": 2771.9,
+  "mean": 2300.5
+ }
+}
+shSpawnedParts [{"importMs":259,"launchMs":658,"createMs":68,"gotoMs":32,"inProcessTotalMs":1018},{"importMs":255,"launchMs":663,"createMs":1940,"gotoMs":30,"inProcessTotalMs":2888},{"importMs":245,"launchMs":696,"createMs":1885,"gotoMs":30,"inProcessTotalMs":2856},{"importMs":238,"launchMs":897,"createMs":2098,"gotoMs":33,"inProcessTotalMs":3267},{"importMs":244,"launchMs":681,"createMs":2106,"gotoMs":35,"inProcessTotalMs":3066}]

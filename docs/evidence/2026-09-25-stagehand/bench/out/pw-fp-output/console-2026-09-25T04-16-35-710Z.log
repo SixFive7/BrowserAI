@@ -1,0 +1,2 @@
+[     100ms] [DEBUG] Error: probe @ http://127.0.0.1:58378/fp.html:16
+[     123ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:58378/favicon.ico:0

@@ -1,0 +1,4 @@
+# project codex config, committed by the team
+[mcp_servers.teammate]
+command = "npx"
+args = ["-y", "@example/teammate-mcp"]

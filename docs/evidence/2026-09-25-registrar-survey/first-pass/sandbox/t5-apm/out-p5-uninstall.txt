@@ -1,0 +1,6 @@
+[i] Uninstalling from user scope (~/.apm/)
+[>] Uninstalling 1 package(s)...
+[x] Invalid package format: browserai. Use 'owner/repo', 
+'plugin-name@marketplace', a local path, or a key copied from 'apm deps list'.
+[x] Uninstall aborted: 1 requested package(s) could not be selected. Resolve 
+the errors above and retry; no changes were made.

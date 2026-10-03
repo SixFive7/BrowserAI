@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><title>fp</title></head><body><pre id="fp">pending</pre>
+<script>
+(function(){
+  const out={};
+  try{ out.webdriver=navigator.webdriver; }catch(e){ out.webdriver='ERR'; }
+  out.ua=navigator.userAgent;
+  try{ out.brands=(navigator.userAgentData&&navigator.userAgentData.brands||[]).map(b=>b.brand+' '+b.version); }catch(e){ out.brands='ERR'; }
+  out.plugins=navigator.plugins.length; out.mimeTypes=navigator.mimeTypes.length;
+  out.languages=navigator.languages; out.hardwareConcurrency=navigator.hardwareConcurrency;
+  out.chrome=typeof window.chrome; out.chromeKeys=window.chrome?Object.keys(window.chrome):null;
+  out.notification=typeof Notification!=='undefined'?Notification.permission:'n/a';
+  out.screen=[screen.width,screen.height,screen.availWidth,screen.availHeight,screen.colorDepth];
+  out.window=[outerWidth,outerHeight,innerWidth,innerHeight,devicePixelRatio];
+  try{ const c=document.createElement('canvas').getContext('webgl'); const d=c&&c.getExtension('WEBGL_debug_renderer_info'); out.webgl=d?[c.getParameter(d.UNMASKED_VENDOR_WEBGL),c.getParameter(d.UNMASKED_RENDERER_WEBGL)]:null; }catch(e){ out.webgl='ERR'; }
+  out.suspiciousGlobals=Object.getOwnPropertyNames(window).filter(n=>/playwright|stagehand|__pw|cdc_|puppeteer|__driver|selenium|nightmare|phantom|__webdriver/i.test(n));
+  out.htmlAttributes=Array.from(document.documentElement.attributes).map(a=>a.name);
+  let stackRead=false; const err=new Error('probe'); Object.defineProperty(err,'stack',{get(){ stackRead=true; return 'x'; }}); console.debug(err);
+  const write=()=>{ out.domAttrsAfter=Array.from(document.querySelectorAll('[data-stagehand-mask],[data-stagehand-style],[data-sh-tag]')).length; document.getElementById('fp').textContent=JSON.stringify(out); };
+  write();
+  setTimeout(()=>{ out.cdpConsoleStackGetterRead=stackRead; out.perm='pending';
+    (navigator.permissions?navigator.permissions.query({name:'notifications'}).then(s=>{out.perm=s.state;}):Promise.resolve()).catch(()=>{out.perm='ERR';}).finally(()=>{
+      (navigator.userAgentData&&navigator.userAgentData.getHighEntropyValues?navigator.userAgentData.getHighEntropyValues(['fullVersionList','platformVersion']).then(h=>{out.fullVersionList=(h.fullVersionList||[]).map(b=>b.brand+' '+b.version);out.platformVersion=h.platformVersion;}):Promise.resolve()).catch(()=>{}).finally(()=>{ out.done=true; write(); });
+    });
+  }, 50);
+})();
+</script></body></html>

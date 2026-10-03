@@ -1,0 +1,13 @@
+./.t1
+./out-p0-help-install.txt
+./out-p0-version.txt
+./out-p1-install-global.txt
+./out-p2-install-global-manifest.txt
+./runlog.txt
+./tmp/.apm_empty_gitconfig
+./tmp/system-commandline-sentinel-files/dotnet-suggest-registration-git-credential-manager, Version=2.9.1.0, Culture=neutral, PublicKeyToken=null
+./Zoë O'Brien/.apm/.apm-lifecycle.lock
+./Zoë O'Brien/.apm/apm.yml
+./Zoë O'Brien/.apm/config.json
+./Zoë O'Brien/AppData/Local/apm/cache/last_version_check
+./Zoë O'Brien/AppData/Local/NVIDIA/DXCache/5d8aa91ceef9f2f8.nvph

@@ -1,0 +1,71 @@
+.
+./.t0
+./.t1
+./out-p0-help-install.txt
+./out-p0-version.txt
+./out-p1-install-global.txt
+./out-p2-install-global-manifest.txt
+./project
+./project/.codex
+./project/.codex/config.toml
+./project/.git
+./project/.git/config
+./project/.git/description
+./project/.git/HEAD
+./project/.git/hooks
+./project/.git/hooks/applypatch-msg.sample
+./project/.git/hooks/commit-msg.sample
+./project/.git/hooks/fsmonitor-watchman.sample
+./project/.git/hooks/post-update.sample
+./project/.git/hooks/pre-applypatch.sample
+./project/.git/hooks/pre-commit.sample
+./project/.git/hooks/pre-merge-commit.sample
+./project/.git/hooks/pre-push.sample
+./project/.git/hooks/pre-rebase.sample
+./project/.git/hooks/pre-receive.sample
+./project/.git/hooks/prepare-commit-msg.sample
+./project/.git/hooks/push-to-checkout.sample
+./project/.git/hooks/sendemail-validate.sample
+./project/.git/hooks/update.sample
+./project/.git/info
+./project/.git/info/exclude
+./project/.git/objects
+./project/.git/objects/info
+./project/.git/objects/pack
+./project/.git/refs
+./project/.git/refs/heads
+./project/.git/refs/tags
+./project/.mcp.json
+./runlog.txt
+./tmp
+./tmp/.apm_empty_gitconfig
+./tmp/system-commandline-sentinel-files
+./tmp/system-commandline-sentinel-files/dotnet-suggest-registration-git-credential-manager, Version=2.9.1.0, Culture=neutral, PublicKeyToken=null
+./Zoë O'Brien
+./Zoë O'Brien/.apm
+./Zoë O'Brien/.apm/.apm-lifecycle.lock
+./Zoë O'Brien/.apm/apm.yml
+./Zoë O'Brien/.apm/apm_modules
+./Zoë O'Brien/.apm/config.json
+./Zoë O'Brien/.claude.json
+./Zoë O'Brien/.codex
+./Zoë O'Brien/.codex/config.toml
+./Zoë O'Brien/AppData
+./Zoë O'Brien/AppData/Local
+./Zoë O'Brien/AppData/Local/apm
+./Zoë O'Brien/AppData/Local/apm/cache
+./Zoë O'Brien/AppData/Local/apm/cache/git
+./Zoë O'Brien/AppData/Local/apm/cache/git/checkouts_v1
+./Zoë O'Brien/AppData/Local/apm/cache/git/db_v1
+./Zoë O'Brien/AppData/Local/apm/cache/http_v1
+./Zoë O'Brien/AppData/Local/apm/cache/last_version_check
+./Zoë O'Brien/AppData/Local/BrowserAI.app
+./Zoë O'Brien/AppData/Local/BrowserAI.app/current
+./Zoë O'Brien/AppData/Local/BrowserAI.app/current/BrowserAI.Server.exe
+./Zoë O'Brien/AppData/Local/NVIDIA
+./Zoë O'Brien/AppData/Local/NVIDIA/DXCache
+./Zoë O'Brien/AppData/Local/NVIDIA/DXCache/5d8aa91ceef9f2f8.nvph
+./Zoë O'Brien/AppData/locallow
+./Zoë O'Brien/AppData/locallow/NVIDIA
+./Zoë O'Brien/AppData/locallow/NVIDIA/DXCache
+./Zoë O'Brien/AppData/Roaming

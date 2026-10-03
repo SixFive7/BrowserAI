@@ -1,0 +1,35 @@
+
+ █████╗ ██████╗ ██████╗       ███╗   ███╗ ██████╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗      ████╗ ████║██╔════╝██╔══██╗
+███████║██║  ██║██║  ██║█████╗██╔████╔██║██║     ██████╔╝
+██╔══██║██║  ██║██║  ██║╚════╝██║╚██╔╝██║██║     ██╔═══╝ 
+██║  ██║██████╔╝██████╔╝      ██║ ╚═╝ ██║╚██████╗██║     
+╚═╝  ╚═╝╚═════╝ ╚═════╝       ╚═╝     ╚═╝ ╚═════╝╚═╝     
+
+│
+◇  Source: ${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe (local)
+│
+●  Server name: browserai
+
+│
+◇  Installation Summary ─╮
+│                        │
+│  Server: browserai     │
+│  Type: local           │
+│  Scope: Project        │
+│  Agents: Claude Code   │
+│                        │
+├────────────────────────╯
+│
+◇  Installation complete
+
+│
+◇  Installed to 1 agent ────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                   │
+│  ✓ Claude Code: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t2-addmcp\project\.mcp.json  │
+│                                                                                                   │
+├───────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+│
+└  Done!
+

@@ -1,0 +1,3 @@
+[t1-codex-accepts] rc=0 ms=85 :: codex mcp list --json
+[t2-addmcp-sdk] rc=0 ms=125 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t8-toml10\one.mjs
+[t3-installmcp] rc=0 ms=178 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\install-mcp\node_modules\install-mcp\bin\run C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t8-toml10\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe --client codex --name browserai --yes

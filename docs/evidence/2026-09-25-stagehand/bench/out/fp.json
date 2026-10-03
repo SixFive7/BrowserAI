@@ -1,0 +1,136 @@
+{
+ "playwrightMcp": {
+  "webdriver": false,
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "brands": [
+   "Not A(Brand 99",
+   "Chromium 154"
+  ],
+  "plugins": 5,
+  "mimeTypes": 2,
+  "languages": [
+   "en-GB",
+   "en-US",
+   "en"
+  ],
+  "hardwareConcurrency": 32,
+  "chrome": "object",
+  "chromeKeys": [
+   "loadTimes",
+   "csi",
+   "app"
+  ],
+  "notification": "default",
+  "screen": [
+   1920,
+   1080,
+   1920,
+   1080,
+   24
+  ],
+  "window": [
+   0,
+   0,
+   1920,
+   1080,
+   1
+  ],
+  "webgl": [
+   "Google Inc. (NVIDIA)",
+   "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  ],
+  "suspiciousGlobals": [],
+  "htmlAttributes": [],
+  "domAttrsAfter": 0,
+  "cdpConsoleStackGetterRead": false,
+  "perm": "prompt",
+  "fullVersionList": [
+   "Not A(Brand 99.0.0.0",
+   "Chromium 154.0.8037.0"
+  ],
+  "platformVersion": "19.0.0",
+  "done": true
+ },
+ "stagehand": {
+  "webdriver": false,
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "brands": [
+   "Not A(Brand 99",
+   "Chromium 154"
+  ],
+  "plugins": 5,
+  "mimeTypes": 2,
+  "languages": [
+   "en-GB"
+  ],
+  "hardwareConcurrency": 32,
+  "chrome": "object",
+  "chromeKeys": [
+   "loadTimes",
+   "csi",
+   "app"
+  ],
+  "notification": "default",
+  "screen": [
+   800,
+   600,
+   800,
+   600,
+   24
+  ],
+  "window": [
+   1920,
+   1080,
+   1904,
+   929,
+   1
+  ],
+  "webgl": [
+   "Google Inc. (NVIDIA)",
+   "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  ],
+  "suspiciousGlobals": [],
+  "htmlAttributes": [],
+  "domAttrsAfter": 0,
+  "cdpConsoleStackGetterRead": false,
+  "perm": "prompt",
+  "fullVersionList": [
+   "Not A(Brand 99.0.0.0",
+   "Chromium 154.0.8037.0"
+  ],
+  "platformVersion": "19.0.0",
+  "done": true
+ },
+ "stagehandNetlog": {
+  "bytes": 849258,
+  "mentionsExampleCom": 99,
+  "v1traces": 28,
+  "hosts": [
+   "https://update.googleapis.com",
+   "https://www.google.com",
+   "https://accounts.google.com",
+   "https://google.com",
+   "https://encrypted-tbn0.gstatic.com",
+   "https://encrypted-tbn1.gstatic.com",
+   "https://encrypted-tbn2.gstatic.com",
+   "https://encrypted-tbn3.gstatic.com",
+   "https://fonts.gstatic.com",
+   "https://m.google.com",
+   "https://play.google.com",
+   "https://www.gstatic.com",
+   "https://www.youtube.com",
+   "https://csp.withgoogle.com",
+   "https://apis.google.com",
+   "https://ssl.gstatic.com",
+   "https://www.googletagmanager.com",
+   "https://www.google-analytics.com",
+   "http://127.0.0.1",
+   "https://example.com",
+   "https://android.clients.google.com"
+  ]
+ },
+ "noAutomationControl": {
+  "status": null,
+  "err": "https://bit.ly/31yqMJR.: Access is denied. (0x5)\r\n[90196:85036:0925/061704.507:ERROR:content\\browser\\network_service_instance_impl.cc:653] Network service crashed or was terminated, restarting service.\r\n[90196:102796:0925/061707.242:ERROR:google_apis\\gcm\\engine\\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR\r\n[90196:102796:0925/061727.450:ERROR:google_apis\\gcm\\engine\\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT\r\n"
+ }
+}

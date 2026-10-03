@@ -1,0 +1,16 @@
+neon-solutions/add-mcp	Apache-2.0	304	29	2026-09-18T23:05:54Z	false	main	The open MCP config tool - npx add-mcp
+supermemoryai/install-mcp	MIT	195	4	2026-04-17T02:42:21Z	false	main	A simple CLI to install MCP servers into any client - auth included!
+paoloricciuti/mcp-add		27	3	2026-03-17T14:03:31Z	false	main	Universal cli to add an MCP server to a variety of clients
+arcadeai-labs/smithery-cli	AGPL-3.0	836	49	2026-05-31T07:11:36Z	false	main	Install, manage and develop MCP servers and skills for agents
+pathintegral-institute/mcpm.sh	MIT	1007	94	2026-08-22T16:02:39Z	false	main	CLI MCP package manager & registry for all platforms and all clients. Search & configure MCP servers. Advanced Router & Profile features.
+michaellatman/mcp-get	MIT	506	0	2026-06-17T19:22:44Z	true	main	Archived: mcp-get is no longer maintained.
+stacklok/toolhive	Apache-2.0	2206	373	2026-09-24T22:03:43Z	false	main	ToolHive is an enterprise-grade platform for running and managing Model Context Protocol (MCP) servers.
+mcp-router/mcp-router	NOASSERTION	2147	47	2026-09-18T13:50:23Z	true	main	MCP Router — development, support and security updates ended 2026-09-18. Historical source and final release for existing users.
+docker/mcp-gateway	MIT	1583	145	2026-09-23T16:47:37Z	false	main	docker mcp CLI plugin / MCP Gateway
+microsoft/apm	MIT	3892	229	2026-09-24T13:15:26Z	false	main	Agent Package Manager
+modelcontextprotocol/registry	NOASSERTION	7282	169	2026-09-23T23:33:30Z	false	main	A community driven registry service for Model Context Protocol (MCP) servers.
+modelcontextprotocol/mcpb	NOASSERTION	2121	101	2026-05-26T14:13:36Z	false	main	Desktop Extensions: One-click local MCP server installation in desktop apps
+intellectronica/ruler	MIT	2932	13	2026-09-23T17:22:19Z	false	main	Ruler — apply the same rules to all coding agents
+dyoshikawa/rulesync	MIT	1470	47	2026-09-24T13:07:05Z	false	main	A Utility CLI for AI Coding Agents
+milisp/mcp-linker	AGPL-3.0	327	8	2026-09-09T22:53:33Z	false	main	mcp store manager, add & syncs MCP server configurations across clients like Claude code, Cursor💡mcphub
+anaisbetts/mcp-installer	MIT	1534	23	2024-11-26T20:05:09Z	false	main	An MCP server that installs other MCP servers for you

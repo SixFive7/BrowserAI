@@ -1,0 +1,8 @@
+[!] Policy enforcement disabled by --no-policy for this invocation. This does 
+NOT bypass apm audit --ci. CI will still fail the PR for the same policy 
+violation.
+[!] Install interrupted after 0.0s.
+Usage: apm.exe install [OPTIONS] [PACKAGES]...
+Try 'apm.exe install --help' for help.
+
+Error: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t5-apm\project\apm.yml: no apm.yml found. Run 'apm init' first.

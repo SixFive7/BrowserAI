@@ -1,0 +1,15 @@
+
+ █████╗ ██████╗ ██████╗       ███╗   ███╗ ██████╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗      ████╗ ████║██╔════╝██╔══██╗
+███████║██║  ██║██║  ██║█████╗██╔████╔██║██║     ██████╔╝
+██╔══██║██║  ██║██║  ██║╚════╝██║╚██╔╝██║██║     ██╔═══╝ 
+██║  ██║██████╔╝██████╔╝      ██║ ╚═╝ ██║╚██████╗██║     
+╚═╝  ╚═╝╚═════╝ ╚═════╝       ╚═╝     ╚═╝ ╚═════╝╚═╝     
+
+│
+▲  `.mcp.json` is shared by Claude Code and GitHub Copilot CLI. Removing a server from either removes it for both.
+│
+●  Removing 2 servers matching 'browserai'
+│
+◆  Removed 2 servers from 2 agents
+

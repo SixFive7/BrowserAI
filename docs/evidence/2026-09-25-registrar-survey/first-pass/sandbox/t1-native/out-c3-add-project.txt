@@ -1,0 +1,2 @@
+Added stdio MCP server browserai with command: ${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe  to project config
+File modified: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\project\.mcp.json

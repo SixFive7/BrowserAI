@@ -1,0 +1,4 @@
+{
+ "navText": "### Page\n- Page URL: https://example.com/\n- Page Title: Example Domain\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\out\\pw-snap-A-output\\page-2026-09-25T04-04-19-092Z.yml)",
+ "text": "### Page\n- Page URL: https://example.com/\n- Page Title: Example Domain\n### Snapshot\n```yaml\n- generic [ref=f35e2] [box=384,162,1152,106]:\n  - heading \"Example Domain\" [level=1] [ref=f35e3] [box=384,162,1152,32]\n  - paragraph [ref=f35e4] [box=384,210,1152,21]: This domain is for use in documentation examples without needing permission. Avoid use in operations.\n  - paragraph [ref=f35e5] [box=384,247,1152,21]:\n    - link \"Learn more\" [ref=f35e6] [cursor=pointer] [box=384,247,80,21]:\n      - /url: https://iana.org/domains/example\n```"
+}

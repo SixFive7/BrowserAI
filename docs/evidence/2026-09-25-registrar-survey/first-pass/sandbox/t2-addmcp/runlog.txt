@@ -1,0 +1,10 @@
+[a0-version] rc=0 ms=685 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js --version
+[a1-add-global] rc=0 ms=165 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t2-addmcp\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe -g -a claude-code -a codex -n browserai -y
+[a2-add-global-again] rc=0 ms=165 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t2-addmcp\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe -g -a claude-code -a codex -n browserai -y
+[a3-list-global] rc=0 ms=180 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js list -g -a claude-code -a codex
+[a4-add-project-claude] rc=0 ms=186 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js ${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe -a claude-code -n browserai -y
+[a5-add-project-codex] rc=0 ms=154 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js BrowserAI.Server.exe -a codex -n browserai -y
+[a6-list-project] rc=0 ms=162 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js list -a claude-code -a codex
+[a7-remove-project] rc=0 ms=157 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js remove browserai -a claude-code -a codex -y
+[a8-remove-global] rc=0 ms=149 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js remove browserai -g -a claude-code -a codex -y
+[a9-remove-global-again] rc=0 ms=144 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\pkgs\add-mcp\node_modules\add-mcp\dist\index.js remove browserai -g -a claude-code -a codex -y

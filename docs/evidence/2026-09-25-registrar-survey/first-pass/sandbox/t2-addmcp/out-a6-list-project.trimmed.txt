@@ -1,0 +1,15 @@
+
+ █████╗ ██████╗ ██████╗       ███╗   ███╗ ██████╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗      ████╗ ████║██╔════╝██╔══██╗
+███████║██║  ██║██║  ██║█████╗██╔████╔██║██║     ██████╔╝
+██╔══██║██║  ██║██║  ██║╚════╝██║╚██╔╝██║██║     ██╔═══╝ 
+██║  ██║██████╔╝██████╔╝      ██║ ╚═╝ ██║╚██████╗██║     
+╚═╝  ╚═╝╚═════╝ ╚═════╝       ╚═╝     ╚═╝ ╚═════╝╚═╝     
+
+Claude Code:
+  - teammate-server (@example/teammate-mcp)
+  - browserai (${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe)
+Codex:
+  - teammate (@example/teammate-mcp)
+  - browserai (BrowserAI.Server.exe)
+

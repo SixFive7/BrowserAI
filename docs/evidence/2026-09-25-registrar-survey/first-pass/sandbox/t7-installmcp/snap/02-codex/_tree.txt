@@ -1,0 +1,47 @@
+.
+./.t0
+./out-i1-claude.txt
+./out-i2-codex.txt
+./project
+./project/.codex
+./project/.codex/config.toml
+./project/.git
+./project/.git/config
+./project/.git/description
+./project/.git/HEAD
+./project/.git/hooks
+./project/.git/hooks/applypatch-msg.sample
+./project/.git/hooks/commit-msg.sample
+./project/.git/hooks/fsmonitor-watchman.sample
+./project/.git/hooks/post-update.sample
+./project/.git/hooks/pre-applypatch.sample
+./project/.git/hooks/pre-commit.sample
+./project/.git/hooks/pre-merge-commit.sample
+./project/.git/hooks/pre-push.sample
+./project/.git/hooks/pre-rebase.sample
+./project/.git/hooks/pre-receive.sample
+./project/.git/hooks/prepare-commit-msg.sample
+./project/.git/hooks/push-to-checkout.sample
+./project/.git/hooks/sendemail-validate.sample
+./project/.git/hooks/update.sample
+./project/.git/info
+./project/.git/info/exclude
+./project/.git/objects
+./project/.git/objects/info
+./project/.git/objects/pack
+./project/.git/refs
+./project/.git/refs/heads
+./project/.git/refs/tags
+./project/.mcp.json
+./runlog.txt
+./tmp
+./Zoë O'Brien
+./Zoë O'Brien/.claude.json
+./Zoë O'Brien/.codex
+./Zoë O'Brien/.codex/config.toml
+./Zoë O'Brien/AppData
+./Zoë O'Brien/AppData/Local
+./Zoë O'Brien/AppData/Local/BrowserAI.app
+./Zoë O'Brien/AppData/Local/BrowserAI.app/current
+./Zoë O'Brien/AppData/Local/BrowserAI.app/current/BrowserAI.Server.exe
+./Zoë O'Brien/AppData/Roaming

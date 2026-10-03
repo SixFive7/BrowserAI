@@ -1,0 +1,13 @@
+model = "gpt-5.5"
+approval_policy = "on-request"
+
+[projects."C:\\work\\demo"]
+trust_level = "trusted"
+
+[mcp_servers.other]
+command = "C:\\Tools\\other\\other-mcp.exe"
+args = [ "--flag" ]
+startup_timeout_sec = 20
+
+  [mcp_servers.other.env]
+  FOO = "bar"

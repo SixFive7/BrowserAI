@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "teammate-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@example/teammate-mcp"
+      ]
+    },
+    "browserai": {
+      "command": "${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe",
+      "args": []
+    }
+  }
+}

@@ -1,0 +1,422 @@
+{
+ "tool": "stagehand-4.1.0",
+ "round": "B",
+ "results": [
+  {
+   "page": "blank",
+   "rep": 0,
+   "navMs": 34,
+   "snapMs": 12.7,
+   "bodyChars": 101,
+   "bodyTokens": 40,
+   "ids": 10
+  },
+  {
+   "page": "blank",
+   "rep": 1,
+   "navMs": 20.5,
+   "snapMs": 9.1,
+   "bodyChars": 103,
+   "bodyTokens": 40,
+   "ids": 10
+  },
+  {
+   "page": "blank",
+   "rep": 2,
+   "navMs": 18.8,
+   "snapMs": 7.2,
+   "bodyChars": 103,
+   "bodyTokens": 40,
+   "ids": 10
+  },
+  {
+   "page": "blank",
+   "rep": 3,
+   "navMs": 20,
+   "snapMs": 10.8,
+   "bodyChars": 103,
+   "bodyTokens": 40,
+   "ids": 10
+  },
+  {
+   "page": "blank",
+   "rep": 4,
+   "navMs": 21.2,
+   "snapMs": 7.8,
+   "bodyChars": 103,
+   "bodyTokens": 40,
+   "ids": 10
+  },
+  {
+   "page": "form",
+   "rep": 0,
+   "navMs": 34.4,
+   "snapMs": 17.1,
+   "bodyChars": 1536,
+   "bodyTokens": 482,
+   "ids": 89
+  },
+  {
+   "page": "form",
+   "rep": 1,
+   "navMs": 24,
+   "snapMs": 12.4,
+   "bodyChars": 1567,
+   "bodyTokens": 482,
+   "ids": 89
+  },
+  {
+   "page": "form",
+   "rep": 2,
+   "navMs": 24.9,
+   "snapMs": 11,
+   "bodyChars": 1567,
+   "bodyTokens": 482,
+   "ids": 89
+  },
+  {
+   "page": "form",
+   "rep": 3,
+   "navMs": 21.3,
+   "snapMs": 12.8,
+   "bodyChars": 1567,
+   "bodyTokens": 482,
+   "ids": 89
+  },
+  {
+   "page": "form",
+   "rep": 4,
+   "navMs": 23.1,
+   "snapMs": 12.7,
+   "bodyChars": 1567,
+   "bodyTokens": 482,
+   "ids": 89
+  },
+  {
+   "page": "table",
+   "rep": 0,
+   "navMs": 121.9,
+   "snapMs": 393.5,
+   "bodyChars": 138911,
+   "bodyTokens": 50325,
+   "ids": 6524
+  },
+  {
+   "page": "table",
+   "rep": 1,
+   "navMs": 101.4,
+   "snapMs": 448,
+   "bodyChars": 142484,
+   "bodyTokens": 50325,
+   "ids": 6524
+  },
+  {
+   "page": "table",
+   "rep": 2,
+   "navMs": 105.2,
+   "snapMs": 435.6,
+   "bodyChars": 142924,
+   "bodyTokens": 50325,
+   "ids": 6524
+  },
+  {
+   "page": "table",
+   "rep": 3,
+   "navMs": 127,
+   "snapMs": 425.3,
+   "bodyChars": 142924,
+   "bodyTokens": 50325,
+   "ids": 6524
+  },
+  {
+   "page": "table",
+   "rep": 4,
+   "navMs": 84.7,
+   "snapMs": 365.1,
+   "bodyChars": 142924,
+   "bodyTokens": 50325,
+   "ids": 6524
+  },
+  {
+   "page": "iframes",
+   "rep": 0,
+   "navMs": 40.7,
+   "snapMs": 15.5,
+   "bodyChars": 858,
+   "bodyTokens": 258,
+   "ids": 45
+  },
+  {
+   "page": "iframes",
+   "rep": 1,
+   "navMs": 35.6,
+   "snapMs": 15.1,
+   "bodyChars": 858,
+   "bodyTokens": 258,
+   "ids": 45
+  },
+  {
+   "page": "iframes",
+   "rep": 2,
+   "navMs": 33.5,
+   "snapMs": 16.3,
+   "bodyChars": 858,
+   "bodyTokens": 258,
+   "ids": 45
+  },
+  {
+   "page": "iframes",
+   "rep": 3,
+   "navMs": 30.7,
+   "snapMs": 14.2,
+   "bodyChars": 858,
+   "bodyTokens": 258,
+   "ids": 45
+  },
+  {
+   "page": "iframes",
+   "rep": 4,
+   "navMs": 30.4,
+   "snapMs": 14.5,
+   "bodyChars": 863,
+   "bodyTokens": 258,
+   "ids": 45
+  },
+  {
+   "page": "shadow",
+   "rep": 0,
+   "navMs": 24.1,
+   "snapMs": 18,
+   "bodyChars": 357,
+   "bodyTokens": 117,
+   "ids": 72
+  },
+  {
+   "page": "shadow",
+   "rep": 1,
+   "navMs": 24.1,
+   "snapMs": 31.8,
+   "bodyChars": 357,
+   "bodyTokens": 117,
+   "ids": 72
+  },
+  {
+   "page": "shadow",
+   "rep": 2,
+   "navMs": 23.2,
+   "snapMs": 23.6,
+   "bodyChars": 357,
+   "bodyTokens": 117,
+   "ids": 72
+  },
+  {
+   "page": "shadow",
+   "rep": 3,
+   "navMs": 21.6,
+   "snapMs": 22.7,
+   "bodyChars": 357,
+   "bodyTokens": 117,
+   "ids": 72
+  },
+  {
+   "page": "shadow",
+   "rep": 4,
+   "navMs": 21.7,
+   "snapMs": 22,
+   "bodyChars": 357,
+   "bodyTokens": 117,
+   "ids": 72
+  },
+  {
+   "page": "example.com",
+   "rep": 0,
+   "navMs": 60.7,
+   "snapMs": 20.4,
+   "bodyChars": 316,
+   "bodyTokens": 94,
+   "ids": 57
+  },
+  {
+   "page": "example.com",
+   "rep": 1,
+   "navMs": 22.3,
+   "snapMs": 19.6,
+   "bodyChars": 319,
+   "bodyTokens": 94,
+   "ids": 57
+  },
+  {
+   "page": "example.com",
+   "rep": 2,
+   "navMs": 23.6,
+   "snapMs": 21.3,
+   "bodyChars": 319,
+   "bodyTokens": 94,
+   "ids": 57
+  },
+  {
+   "page": "wikipedia-playwright",
+   "rep": 0,
+   "navMs": 212.8,
+   "snapMs": 734.8,
+   "bodyChars": 98130,
+   "bodyTokens": 22071,
+   "ids": 9627
+  },
+  {
+   "page": "wikipedia-playwright",
+   "rep": 1,
+   "navMs": 139.1,
+   "snapMs": 771.7,
+   "bodyChars": 57312,
+   "bodyTokens": 14296,
+   "ids": 9645
+  },
+  {
+   "page": "wikipedia-playwright",
+   "rep": 2,
+   "navMs": 163.3,
+   "snapMs": 637.1,
+   "bodyChars": 60313,
+   "bodyTokens": 15071,
+   "ids": 9681
+  },
+  {
+   "page": "hn-front",
+   "rep": 0,
+   "navMs": 781.4,
+   "snapMs": 415.4,
+   "bodyChars": 33833,
+   "bodyTokens": 9028,
+   "ids": 3693
+  },
+  {
+   "page": "hn-front",
+   "rep": 1,
+   "navMs": 192.8,
+   "snapMs": 356.5,
+   "bodyChars": 34455,
+   "bodyTokens": 9595,
+   "ids": 3693
+  },
+  {
+   "page": "hn-front",
+   "rep": 2,
+   "navMs": 381.6,
+   "snapMs": 641.8,
+   "bodyChars": 34455,
+   "bodyTokens": 9595,
+   "ids": 3693
+  },
+  {
+   "page": "github-stagehand",
+   "rep": 0,
+   "navMs": 1465.5,
+   "snapMs": 1318.8,
+   "bodyChars": 61678,
+   "bodyTokens": 14659,
+   "ids": 14511
+  },
+  {
+   "page": "github-stagehand",
+   "rep": 1,
+   "navMs": 487.1,
+   "snapMs": 1076.7,
+   "bodyChars": 74421,
+   "bodyTokens": 17246,
+   "ids": 14511
+  },
+  {
+   "page": "github-stagehand",
+   "rep": 2,
+   "navMs": 374.5,
+   "snapMs": 1082.9,
+   "bodyChars": 75574,
+   "bodyTokens": 17246,
+   "ids": 14511
+  }
+ ],
+ "memory": {
+  "blank": {
+   "count": 10,
+   "workingSetMiB": 736.9,
+   "privateMiB": 537.1,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 9
+   }
+  },
+  "form": {
+   "count": 10,
+   "workingSetMiB": 764.4,
+   "privateMiB": 583.7,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 9
+   }
+  },
+  "table": {
+   "count": 10,
+   "workingSetMiB": 882.6,
+   "privateMiB": 708.2,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 9
+   }
+  },
+  "iframes": {
+   "count": 10,
+   "workingSetMiB": 1049.5,
+   "privateMiB": 885,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 9
+   }
+  },
+  "shadow": {
+   "count": 10,
+   "workingSetMiB": 1058.6,
+   "privateMiB": 873.1,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 9
+   }
+  },
+  "example.com": {
+   "count": 11,
+   "workingSetMiB": 1093.5,
+   "privateMiB": 857,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 10
+   }
+  },
+  "wikipedia-playwright": {
+   "count": 12,
+   "workingSetMiB": 1265,
+   "privateMiB": 989.8,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 11
+   }
+  },
+  "hn-front": {
+   "count": 14,
+   "workingSetMiB": 1481,
+   "privateMiB": 1153.2,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 13
+   }
+  },
+  "github-stagehand": {
+   "count": 15,
+   "workingSetMiB": 1778.6,
+   "privateMiB": 1419.4,
+   "byName": {
+    "node.exe": 1,
+    "chrome.exe": 14
+   }
+  }
+ }
+}

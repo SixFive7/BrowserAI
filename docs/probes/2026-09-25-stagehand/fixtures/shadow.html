@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Shadow fixture</title></head><body><h1>Shadow DOM</h1>
+<open-box></open-box><closed-box></closed-box>
+<script>
+customElements.define('open-box', class extends HTMLElement { constructor(){ super(); const r=this.attachShadow({mode:'open'}); r.innerHTML='<p>Open shadow text</p><button type="button">Open shadow button</button>'; } });
+customElements.define('closed-box', class extends HTMLElement { constructor(){ super(); const r=this.attachShadow({mode:'closed'}); r.innerHTML='<p>Closed shadow text</p><button type="button">Closed shadow button</button>'; } });
+</script></body></html>

@@ -1,0 +1,4 @@
+neon-solutions/add-mcp open_issues=8 open_prs=21 commits_since_2026-06-27(max100)=35 contributors(<=100)=10
+microsoft/apm open_issues=169 open_prs=60 commits_since_2026-06-27(max100)=100 contributors(<=100)=100
+supermemoryai/install-mcp open_issues=3 open_prs=1 commits_since_2026-06-27(max100)=0 contributors(<=100)=9
+pathintegral-institute/mcpm.sh open_issues=47 open_prs=47 commits_since_2026-06-27(max100)=0 contributors(<=100)=31

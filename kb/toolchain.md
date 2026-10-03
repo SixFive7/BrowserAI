@@ -97,6 +97,27 @@ row's own re-establish procedure, *resolve and then
 `git diff --exit-code -- "**/packages.lock.json"`*, is exactly the command that
 sees this.
 
+## A fresh `DOTNET_CLI_HOME` writes the real user `PATH` -- measured 2026-09-25
+
+`[FLOATS]` **Pointing `DOTNET_CLI_HOME` at a scratch folder does not keep the SDK
+off the machine.** A research rig ran `dotnet package search` with it set, to
+keep the SDK's state out of the user profile, and the SDK's first-use step
+appended `<that folder>\.dotnet\tools` to `HKCU\Environment\Path`, the real
+value every process the user starts afterwards reads. A fresh folder is a first
+use, so every new one repeats it. Found by a hash of the value taken before and
+after; the value was rebuilt, checked against the first hash, written back and
+broadcast. Microsoft documents the step: the CLI "tries to add the default
+location to the PATH environment variable on its first usage", and
+`DOTNET_ADD_GLOBAL_TOOLS_TO_PATH` defaults to `true`
+([troubleshooting](https://learn.microsoft.com/dotnet/core/tools/troubleshoot-usage-issues),
+[environment variables](https://learn.microsoft.com/dotnet/core/tools/dotnet-environment-variables#net-sdk-and-cli-environment-variables),
+read 2026-10-03). **So a rig that sets `DOTNET_CLI_HOME` sets
+`DOTNET_ADD_GLOBAL_TOOLS_TO_PATH=false` with it, or leaves it unset.** The SDK
+version was not recorded. [Evidence](../docs/evidence/2026-09-25-registrar-survey/README.md),
+`first-pass/notes/INCIDENTS.md`. **Re-establish only as a disposable Windows
+user**: hash `HKCU\Environment\Path`, run any `dotnet` command under a new
+`DOTNET_CLI_HOME`, and hash it again.
+
 ## npm, for a vendored payload
 
 **npm keys a lock file's root package on the empty string, and PowerShell's

@@ -1,0 +1,10 @@
+name: user-scope
+version: 0.0.0
+targets: [claude, codex]
+dependencies:
+  mcp:
+    - name: browserai
+      registry: false
+      transport: stdio
+      command: "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t5-apm\\Zoë O'Brien\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe"
+      args: []

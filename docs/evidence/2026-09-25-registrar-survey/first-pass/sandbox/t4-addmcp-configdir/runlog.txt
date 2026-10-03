@@ -1,0 +1,2 @@
+[d1-sdk-upsert-user] rc=0 ms=155 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t4-addmcp-configdir\one.mjs
+[d2-claude-sees-it-by-removing] rc=1 ms=413 :: claude mcp remove browserai --scope user

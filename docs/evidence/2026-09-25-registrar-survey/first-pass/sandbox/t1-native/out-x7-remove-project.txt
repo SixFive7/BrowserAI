@@ -1,0 +1,1 @@
+Removed global MCP server 'browserai'.

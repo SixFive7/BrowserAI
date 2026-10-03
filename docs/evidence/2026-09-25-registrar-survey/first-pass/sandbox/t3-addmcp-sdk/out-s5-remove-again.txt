@@ -1,0 +1,4 @@
+remove claude-code global          {"success":true,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t3-addmcp-sdk\\Zoë O'Brien\\.claude.json","removed":false}
+remove codex global                {"success":true,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t3-addmcp-sdk\\Zoë O'Brien\\.codex\\config.toml","removed":false}
+remove claude-code project         {"success":true,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t3-addmcp-sdk\\project\\.mcp.json","removed":false}
+remove codex project               {"success":true,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t3-addmcp-sdk\\project\\.codex\\config.toml","removed":false}

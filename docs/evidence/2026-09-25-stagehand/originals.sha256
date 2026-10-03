@@ -1,0 +1,2 @@
+f36c00cd7c61788dcdba3ed4599a71aa8e69f3ee522f2f26f58619ee802da4d5       35808  REPORT.md  ->  REPORT.md  (two-line SPDX header added)
+d69453bede381b67efde24bb612b1717b1ffcca6cd361bdb01243d2649af6b51         846  bench/out/pw-install-chromium.log  ->  bench/out/pw-install-chromium.trimmed.log  (6 terminal escape sequence(s) removed)

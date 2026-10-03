@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Dialog fixture</title></head><body>
+<button id="alert" type="button" onclick="alert('hello from the page'); document.getElementById('after').textContent='alert returned';">Open alert</button>
+<button id="confirm" type="button" onclick="document.getElementById('after').textContent='confirm returned '+confirm('Proceed?');">Open confirm</button>
+<p id="after">not yet</p></body></html>

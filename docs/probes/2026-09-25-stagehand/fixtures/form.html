@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sign in fixture</title>
+<style>body{font-family:sans-serif;margin:2em} label{display:block;margin-top:.6em}</style></head>
+<body>
+<header><nav aria-label="Main"><a href="#home">Home</a> | <a href="#pricing">Pricing</a> | <a href="#docs">Docs</a></nav></header>
+<main>
+<h1>Sign in</h1>
+<form id="f" onsubmit="event.preventDefault(); document.getElementById('status').textContent='submitted:'+document.getElementById('email').value;">
+  <label for="email">Email address</label><input id="email" name="email" type="email" placeholder="you@example.com">
+  <label for="password">Password</label><input id="password" name="password" type="password">
+  <label for="plan">Plan</label><select id="plan" name="plan"><option value="free">Free</option><option value="pro">Pro</option><option value="team">Team</option></select>
+  <label><input id="remember" type="checkbox"> Remember me</label>
+  <button id="submit" type="submit">Sign in</button>
+  <button id="counter" type="button" onclick="this.dataset.n=(+this.dataset.n||0)+1; document.getElementById('count').textContent=this.dataset.n">Count</button>
+  <span id="count">0</span>
+</form>
+<p id="status" role="status">idle</p>
+<section><h2>Why sign in</h2><ul><li>Sync your settings</li><li>Keep your history</li><li>Share with your team</li></ul></section>
+</main>
+<footer><p>Footer text &copy; fixture</p></footer>
+</body></html>

@@ -1,0 +1,10 @@
+shFresh {"launchMs":653.3967,"createMs":45.378999999999905,"stagehandCloseMs":16.693699999999808,"browserCloseMs":4059.6080999999995,"exitType":"Crashed"}
+shFresh {"launchMs":586.8515999999981,"createMs":37.27560000000085,"stagehandCloseMs":14.00930000000153,"browserCloseMs":3905.305699999997,"exitType":"Crashed"}
+shFresh {"launchMs":607.045299999998,"createMs":35.42609999999695,"stagehandCloseMs":15.11200000000099,"browserCloseMs":4467.246299999999,"exitType":"Crashed"}
+shReused {"launchMs":794.6718000000037,"createMs":44.403299999998126,"stagehandCloseMs":12.447500000002037,"browserCloseMs":4079.9315999999963,"exitType":"Crashed"}
+shReused {"launchMs":529.1896999999881,"createMs":32.17300000000978,"stagehandCloseMs":14.535799999997835,"browserCloseMs":3987.089000000007,"exitType":"Crashed"}
+shReused {"launchMs":526.1840000000084,"createMs":69.88719999999739,"stagehandCloseMs":14.33299999999872,"browserCloseMs":3973.0742000000027,"exitType":"Crashed"}
+shReused {"launchMs":499.97789999999804,"createMs":77.43869999999879,"stagehandCloseMs":14.227499999993597,"browserCloseMs":3964.145199999999,"exitType":"Crashed"}
+pwReused {"launchMs":349.4456000000064,"closeMs":159.34480000000622,"exitType":"Normal"}
+pwReused {"launchMs":319.5417999999918,"closeMs":184.1696000000229,"exitType":"Normal"}
+pwReused {"launchMs":321.48259999998845,"closeMs":155.3399999999965,"exitType":"Normal"}

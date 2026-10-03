@@ -67,6 +67,13 @@ in `left-out.sha256`.
 [`2026-10-03-client-exit`](2026-10-03-client-exit/README.md) are the first of
 them, and every batch the index lists below them is one too.
 
+⚠️ *Corrected 2026-10-03 by addition (previously "in two named ways").* **A third
+way arrived with [`2026-09-25-stagehand`](2026-09-25-stagehand/README.md) and
+[`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md)**: a file
+the SPDX rule covers keeps its name with the two header lines added, and its
+original's digest is in `originals.sha256` too. `registrar-survey` also lists two
+left-out files under changed names, and its README says why.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
@@ -121,3 +128,5 @@ negation silently drops evidence from the tree.
 | [`2026-09-25-client-behaviour`](2026-09-25-client-behaviour/README.md) | Q296 and Q304: what Claude Code and Codex do with a failed `tools/list` at the first connection and with five other shapes of an updating server, and a Codex started before and after an install reaching a bare-name project entry | [kb](../../kb/mcp/protocol.md#what-each-client-does-when-toolslist-fails-at-the-first-connection----measured-2026-09-25), [re-verification row 173](../../kb/re-verification.md) |
 | [`2026-10-03-upstream-reports`](2026-10-03-upstream-reports/README.md) | Q313 and Q357: the measurements behind the three upstream posts of 2026-10-03, the Firefox safe-mode check at two more builds, closed shadow roots in snapshots, add-mcp and `CLAUDE_CONFIG_DIR`, the attach by name at 0.0.83, and the texts as posted | [kb](../../kb/playwright/tools-and-artifacts.md#content-in-a-closed-shadow-root-is-missing-from-the-snapshot----measured-2026-10-03), [re-verification rows 168 and 174](../../kb/re-verification.md) |
 | [`2026-10-01-field-report`](2026-10-01-field-report/README.md) | Sidequest E: a field report about `browserai_resume` and the idle close, checked against v1.1.0, master and next and against the two sessions' exported records | [kb](../../kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03), [`DECISIONS.md`](../../DECISIONS.md), [`HAZARDS.md`](../../HAZARDS.md#hazard-index) |
+| [`2026-09-25-stagehand`](2026-09-25-stagehand/README.md) | Track D of the zoom-out: Stagehand 4 against Playwright on one Chrome for Testing, kept for what a snapshot and a click cost through BrowserAI's configuration | [kb](../../kb/playwright/tools-and-artifacts.md#what-a-snapshot-and-a-click-cost-through-browserais-configuration----measured-2026-09-25), [re-verification row 175](../../kb/re-verification.md) |
+| [`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md) | Track A of the zoom-out: the clients' own registration commands and three registrars in a sandbox home, the NuGet search, the second look, and the user `PATH` a first `dotnet` run wrote | [kb](../../kb/mcp/protocol.md#the-clients-own-registration-commands-in-a-sandbox-and-the-tools-that-would-register-for-them----measured-2026-09-25), [kb](../../kb/toolchain.md#a-fresh-dotnet_cli_home-writes-the-real-user-path----measured-2026-09-25), [re-verification rows 176 and 177](../../kb/re-verification.md) |

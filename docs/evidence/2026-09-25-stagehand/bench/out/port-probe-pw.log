@@ -1,0 +1,11 @@
+{
+ "84480": {
+  "browserPid": 84480,
+  "port": "",
+  "listeners": [],
+  "remoteAllowOrigins": "",
+  "unsafeExtensionDebugging": false,
+  "remoteDebuggingPipe": true,
+  "headless": "--headless"
+ }
+}

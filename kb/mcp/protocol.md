@@ -999,6 +999,64 @@ server instance and `tools\summarize.py` and `tools\ranges.py` print the table.
 The positive controls in `runs\controls` are the first thing to run: each
 signature the analysis reads, planted by a fake client.
 
+## The clients' own registration commands in a sandbox, and the tools that would register for them -- measured 2026-09-25
+
+`[FLOATS]` **Claude Code 2.1.282** and **codex-cli 0.155.0-alpha.9.2**, copied into
+scratch and run under a sandbox home named `Zoë O'Brien`, to put a space, an
+apostrophe and a non-ASCII letter in every path, with a seeded configuration
+holding comments, trust tables and another install's entries. No `claude mcp
+get` or `list`, which start servers. Taken for the zoom-out's track A, whether a
+library or tool should register BrowserAI; the answer was no, and on 2026-10-01
+the maintainer chose a small command-line program of his own (Q330 to Q333 in
+[`DECISIONS.md`](../../DECISIONS.md)).
+[Evidence](../../docs/evidence/2026-09-25-registrar-survey/README.md),
+[rig](../../docs/probes/2026-09-25-registrar-survey/README.md).
+
+**The clients' own commands, which BrowserAI drives:** Claude Code's `add` and
+`remove` took 242 to 365 ms each, and Codex's `add`, `remove`, `list` and `get`
+79 to 128 ms, against the 613 to 671 ms recorded at Claude Code 2.1.233
+([above](#registering-browserai-with-the-client)). Claude Code refused a second
+`add` with *"already exists"* and a second `remove` with *"No MCP server named"*,
+and kept a project entry's `${LOCALAPPDATA}` as written; Codex succeeded every
+time and stored the apostrophe path as a `'''...'''` literal that read back
+intact. ⚠️ **Codex's own `add` rewrites the server tables**: the comment above
+another server's table, a comment at the end of one of its lines and the project
+file's header comment were gone, and `startup_timeout_sec = 20` came back as
+`20.0`; the comments at the top of the file survived. ⚠️ **Claude Code resets a
+configuration it cannot parse**: with `~/.claude.json` not valid JSON it moved the
+file to `backups\.claude.json.corrupted.<ms>` and started a fresh one.
+
+⛔ **What the third-party registrars did is kept as why none was adopted.** All
+three were run against the same sandbox:
+
+| Tool | What it did |
+|---|---|
+| add-mcp 2.4.0 | Correct JSON and TOML escaping, and a second add left the files byte-identical. But it ignored `CLAUDE_CONFIG_DIR`, so Claude Code then reported no such server; it rewrote the Codex file from scratch, comments gone, with a plain write; it refused a mixed-type array, which is valid TOML 1.0 and which Codex reads; its command line turned both of BrowserAI's project spellings into `npx -y <spelling>`; with no `~/.claude` folder its list returned nothing for Claude Code and its remove left the entry and reported success; and it replaced another install's `browserai` entry silently |
+| APM 0.31.0 | Refused a path with a space on its command line; started Git Credential Manager, which put sign-in windows on the desktop, until git's credential helpers were disabled; rewrote the whole `~/.claude.json`, writing `ë` as `ë`; kept Codex's comments but added `id = ""` and an empty `env` table; looked the name up at `api.mcp.github.com` on every install; and reported another install's entry as already configured |
+| install-mcp 1.10.2 | Split the path at the space in both clients and reported success, and on the TOML 1.0 file wiped the Codex configuration down to one broken `browserai` table |
+
+add-mcp **2.4.1** still ignored `CLAUDE_CONFIG_DIR` against Claude Code 2.1.288 on
+2026-10-03 ([evidence](../../docs/evidence/2026-10-03-upstream-reports/README.md));
+that is [neon-solutions/add-mcp#130](https://github.com/neon-solutions/add-mcp/issues/130).
+
+**Read and not run, on 2026-10-01, in a second look that tried to find the
+wheel:** kurir 0.3.0 registers but has no remove and no presence check;
+agent-install 0.0.8 shares add-mcp's gaps; the newest self-installing products,
+Blender's and Serena's among them, drive `claude mcp add` and `codex mcp add`
+and read the files only to classify what is there; and no MCP SDK ships a
+registrar. Neither client offers an all-users registration of a local
+executable, so *system wide* means per user.
+
+⚠️ **Not established:** whether Claude Code launches an entry add-mcp wrote
+without a `type`; a write racing a running Claude Code on `~/.claude.json`;
+codex-cli 0.157.0, which was read and not run; and APM's project writes after
+`apm init`.
+
+**Re-establish** with the rig: `sandbox-env.sh` builds the sandbox home,
+`seed.sh` writes the seeded configuration, and `snap.sh` copies every
+configuration file after each step; each step's output and the copies are in the
+evidence's `first-pass/sandbox/`.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

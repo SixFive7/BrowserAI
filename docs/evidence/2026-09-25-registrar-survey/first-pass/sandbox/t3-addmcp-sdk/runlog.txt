@@ -1,0 +1,8 @@
+[s0-detect] rc=0 ms=152 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs detect
+[s1-add] rc=0 ms=143 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs add
+[s2-add-again] rc=0 ms=133 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs add
+[s3-list] rc=0 ms=140 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs list
+[s4-remove] rc=0 ms=145 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs remove
+[s5-remove-again] rc=0 ms=130 :: node C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sdk-test.mjs remove
+[v1-codex-parses-addmcp-output] rc=0 ms=102 :: codex mcp list --json
+[v2-codex-get] rc=0 ms=89 :: codex mcp get other --json

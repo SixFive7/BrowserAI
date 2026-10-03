@@ -1,0 +1,38 @@
+[
+ {
+  "launchMs": 720,
+  "createMs": 47,
+  "gotoMs": 43,
+  "closeMs": 4273
+ },
+ {
+  "launchMs": 666,
+  "createMs": 79,
+  "gotoMs": 40,
+  "closeMs": 4181
+ },
+ {
+  "launchMs": 634,
+  "createMs": 1948,
+  "gotoMs": 27,
+  "closeMs": 4084
+ },
+ {
+  "launchMs": 618,
+  "createMs": 1931,
+  "gotoMs": 32,
+  "closeMs": 3994
+ },
+ {
+  "launchMs": 631,
+  "createMs": 2118,
+  "gotoMs": 30,
+  "closeMs": 8986
+ },
+ {
+  "launchMs": 596,
+  "createMs": 44,
+  "gotoMs": 49,
+  "closeMs": 4413
+ }
+]

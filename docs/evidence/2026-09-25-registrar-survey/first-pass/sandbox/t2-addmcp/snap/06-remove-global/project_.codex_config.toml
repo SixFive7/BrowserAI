@@ -1,0 +1,3 @@
+[mcp_servers.teammate]
+command = "npx"
+args = [ "-y", "@example/teammate-mcp" ]

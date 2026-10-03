@@ -1,0 +1,924 @@
+{
+ "pw": [
+  {
+   "rep": 0,
+   "name": "form",
+   "total": {
+    "n": 11,
+    "privMiB": 400.8,
+    "wsMiB": 617.6
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 126.1,
+     "wsMiB": 120.6
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 44.8,
+     "wsMiB": 130
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 110.3,
+     "wsMiB": 93
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.2,
+     "wsMiB": 40.1
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19.1
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 89.7,
+     "wsMiB": 186.1
+    }
+   }
+  },
+  {
+   "rep": 0,
+   "name": "table",
+   "total": {
+    "n": 11,
+    "privMiB": 511.9,
+    "wsMiB": 717.5
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 145.3,
+     "wsMiB": 141
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 46.2,
+     "wsMiB": 129.8
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.5
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 123.6,
+     "wsMiB": 92.2
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.4,
+     "wsMiB": 40.1
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19.5
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 166.8,
+     "wsMiB": 266.3
+    }
+   }
+  },
+  {
+   "rep": 0,
+   "name": "wikipedia",
+   "total": {
+    "n": 11,
+    "privMiB": 527.7,
+    "wsMiB": 724.8
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 139.7,
+     "wsMiB": 134.1
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 46,
+     "wsMiB": 132.1
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.5
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 157.1,
+     "wsMiB": 101
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 16.4,
+     "wsMiB": 41.9
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 10.5,
+     "wsMiB": 21.3
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 152,
+     "wsMiB": 265.8
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "form",
+   "total": {
+    "n": 11,
+    "privMiB": 399.3,
+    "wsMiB": 620.7
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 125.3,
+     "wsMiB": 122.7
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 46.6,
+     "wsMiB": 132.5
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 109.8,
+     "wsMiB": 93.2
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.3,
+     "wsMiB": 40.1
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19.1
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 87.5,
+     "wsMiB": 184.4
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "table",
+   "total": {
+    "n": 11,
+    "privMiB": 504.4,
+    "wsMiB": 713.3
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 142.9,
+     "wsMiB": 139.3
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 45.1,
+     "wsMiB": 129.4
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 122.7,
+     "wsMiB": 93.2
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.3,
+     "wsMiB": 40.1
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19.1
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 163.9,
+     "wsMiB": 263.5
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "wikipedia",
+   "total": {
+    "n": 10,
+    "privMiB": 540.8,
+    "wsMiB": 731.3
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 139.7,
+     "wsMiB": 136.6
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 46.8,
+     "wsMiB": 131.9
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 154.9,
+     "wsMiB": 100.5
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 16.4,
+     "wsMiB": 41.9
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 10.5,
+     "wsMiB": 21.2
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 168.8,
+     "wsMiB": 281.2
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "form",
+   "total": {
+    "n": 10,
+    "privMiB": 391.9,
+    "wsMiB": 604.5
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 125.2,
+     "wsMiB": 122.7
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 45.7,
+     "wsMiB": 131.8
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 110.2,
+     "wsMiB": 92.4
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.8,
+     "wsMiB": 40.8
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 82.7,
+     "wsMiB": 179.8
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "table",
+   "total": {
+    "n": 10,
+    "privMiB": 503.1,
+    "wsMiB": 701.3
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 144.6,
+     "wsMiB": 140.5
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 48,
+     "wsMiB": 132.2
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 121.8,
+     "wsMiB": 91.3
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 15.5,
+     "wsMiB": 40.2
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 8.6,
+     "wsMiB": 19
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 161,
+     "wsMiB": 260
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "wikipedia",
+   "total": {
+    "n": 10,
+    "privMiB": 528.3,
+    "wsMiB": 718.1
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 138.5,
+     "wsMiB": 134.3
+    },
+    "conhost.exe": {
+     "n": 1,
+     "privMiB": 1.2,
+     "wsMiB": 8.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 46.5,
+     "wsMiB": 132.1
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 155.1,
+     "wsMiB": 99.6
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 16.3,
+     "wsMiB": 41.8
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 10.9,
+     "wsMiB": 21.5
+    },
+    "chrome renderer": {
+     "n": 3,
+     "privMiB": 157.3,
+     "wsMiB": 270.8
+    }
+   }
+  }
+ ],
+ "sh": [
+  {
+   "rep": 0,
+   "name": "form",
+   "total": {
+    "n": 11,
+    "privMiB": 467.9,
+    "wsMiB": 750.5
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 106.7,
+     "wsMiB": 99.2
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 51.3,
+     "wsMiB": 142.4
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 92.5,
+     "wsMiB": 93.7
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.3,
+     "wsMiB": 20
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 16.8,
+     "wsMiB": 42.8
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 123.2,
+     "wsMiB": 240.7
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 65.6,
+     "wsMiB": 101.9
+    }
+   }
+  },
+  {
+   "rep": 0,
+   "name": "table",
+   "total": {
+    "n": 12,
+    "privMiB": 587.3,
+    "wsMiB": 880
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 118.5,
+     "wsMiB": 113.9
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 64.1,
+     "wsMiB": 151.3
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 95.7,
+     "wsMiB": 94.8
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.2,
+     "wsMiB": 20.1
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 17.3,
+     "wsMiB": 43.6
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 175.1,
+     "wsMiB": 294
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 102.5,
+     "wsMiB": 141.9
+    }
+   }
+  },
+  {
+   "rep": 0,
+   "name": "wikipedia",
+   "total": {
+    "n": 12,
+    "privMiB": 569.7,
+    "wsMiB": 878.3
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 92,
+     "wsMiB": 89.7
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 58.1,
+     "wsMiB": 148.1
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.5
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 112.8,
+     "wsMiB": 101.6
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 11.2,
+     "wsMiB": 22.3
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 18.7,
+     "wsMiB": 45.5
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 188,
+     "wsMiB": 325.7
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 84.1,
+     "wsMiB": 124.9
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "form",
+   "total": {
+    "n": 12,
+    "privMiB": 458.2,
+    "wsMiB": 757.2
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 93.5,
+     "wsMiB": 89.8
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 53.1,
+     "wsMiB": 143.6
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 94,
+     "wsMiB": 94.4
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.2,
+     "wsMiB": 20.1
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 17,
+     "wsMiB": 43.1
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 123.2,
+     "wsMiB": 244.5
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 63.3,
+     "wsMiB": 101.2
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "table",
+   "total": {
+    "n": 12,
+    "privMiB": 565.8,
+    "wsMiB": 862.5
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 96.5,
+     "wsMiB": 93.5
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 64.6,
+     "wsMiB": 152
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 95.5,
+     "wsMiB": 94.9
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.6,
+     "wsMiB": 20.4
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 17.2,
+     "wsMiB": 43.5
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 176.1,
+     "wsMiB": 296.4
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 101.4,
+     "wsMiB": 141.4
+    }
+   }
+  },
+  {
+   "rep": 1,
+   "name": "wikipedia",
+   "total": {
+    "n": 11,
+    "privMiB": 573.2,
+    "wsMiB": 868.8
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 93,
+     "wsMiB": 90.7
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 58.7,
+     "wsMiB": 148.4
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 113.5,
+     "wsMiB": 100.1
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 11.2,
+     "wsMiB": 22.2
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 19,
+     "wsMiB": 45.6
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 189.5,
+     "wsMiB": 326
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 85.9,
+     "wsMiB": 125.9
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "form",
+   "total": {
+    "n": 11,
+    "privMiB": 454.8,
+    "wsMiB": 746.1
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 94.9,
+     "wsMiB": 92.3
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 51.6,
+     "wsMiB": 142.4
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 93.3,
+     "wsMiB": 95
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.3,
+     "wsMiB": 20
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 17.3,
+     "wsMiB": 43.3
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 125,
+     "wsMiB": 244.2
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 61,
+     "wsMiB": 99.1
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "table",
+   "total": {
+    "n": 11,
+    "privMiB": 551.4,
+    "wsMiB": 838.8
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 93.6,
+     "wsMiB": 90.9
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 64.9,
+     "wsMiB": 152
+    },
+    "chrome crashpad-handler": {
+     "n": 1,
+     "privMiB": 2.5,
+     "wsMiB": 9.8
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 96.3,
+     "wsMiB": 94.8
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 9.3,
+     "wsMiB": 20
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 17.3,
+     "wsMiB": 43.3
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 167,
+     "wsMiB": 286.5
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 100.7,
+     "wsMiB": 141.4
+    }
+   }
+  },
+  {
+   "rep": 2,
+   "name": "wikipedia",
+   "total": {
+    "n": 12,
+    "privMiB": 603.3,
+    "wsMiB": 899.8
+   },
+   "by": {
+    "node (driver/host)": {
+     "n": 1,
+     "privMiB": 97.2,
+     "wsMiB": 94.8
+    },
+    "chrome browser": {
+     "n": 1,
+     "privMiB": 61.3,
+     "wsMiB": 150.2
+    },
+    "chrome crashpad-handler": {
+     "n": 2,
+     "privMiB": 4.8,
+     "wsMiB": 20.4
+    },
+    "chrome gpu-process": {
+     "n": 1,
+     "privMiB": 118.3,
+     "wsMiB": 100.2
+    },
+    "chrome utility:StorageService": {
+     "n": 1,
+     "privMiB": 11.2,
+     "wsMiB": 22.3
+    },
+    "chrome utility:NetworkService": {
+     "n": 1,
+     "privMiB": 18.7,
+     "wsMiB": 45.5
+    },
+    "chrome renderer": {
+     "n": 4,
+     "privMiB": 196.4,
+     "wsMiB": 332.3
+    },
+    "chrome extension renderer": {
+     "n": 1,
+     "privMiB": 95.5,
+     "wsMiB": 134.1
+    }
+   }
+  }
+ ]
+}

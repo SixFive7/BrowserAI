@@ -1,0 +1,40 @@
+{
+ "perCallBoxes": {
+  "configBoxesOn_default": 101700,
+  "configBoxesOn_callBoxesFalse": 53862,
+  "boxesPresentInOverride": false
+ },
+ "settle_default500": {
+  "click": {
+   "n": 15,
+   "min": 521.3,
+   "median": 535.5,
+   "p90": 548.1,
+   "max": 789,
+   "mean": 552
+  },
+  "count": "### Result\n\"15\""
+ },
+ "settle_100": {
+  "click": {
+   "n": 15,
+   "min": 123.6,
+   "median": 125.7,
+   "p90": 141.4,
+   "max": 171.7,
+   "mean": 133.6
+  },
+  "count": "### Result\n\"15\""
+ },
+ "settle_0": {
+  "click": {
+   "n": 15,
+   "min": 22.9,
+   "median": 25,
+   "p90": 36.8,
+   "max": 200.4,
+   "mean": 37.4
+  },
+  "count": "### Result\n\"15\""
+ }
+}

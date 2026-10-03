@@ -1,0 +1,17 @@
+{
+  "name": "browserai",
+  "enabled": true,
+  "disabled_reason": null,
+  "transport": {
+    "type": "stdio",
+    "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t1-native\\Zoë O'Brien\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe",
+    "args": [],
+    "env": null,
+    "env_vars": [],
+    "cwd": null
+  },
+  "enabled_tools": null,
+  "disabled_tools": null,
+  "startup_timeout_sec": null,
+  "tool_timeout_sec": null
+}

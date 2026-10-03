@@ -1,0 +1,36 @@
+
+ █████╗ ██████╗ ██████╗       ███╗   ███╗ ██████╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗      ████╗ ████║██╔════╝██╔══██╗
+███████║██║  ██║██║  ██║█████╗██╔████╔██║██║     ██████╔╝
+██╔══██║██║  ██║██║  ██║╚════╝██║╚██╔╝██║██║     ██╔═══╝ 
+██║  ██║██████╔╝██████╔╝      ██║ ╚═╝ ██║╚██████╗██║     
+╚═╝  ╚═╝╚═════╝ ╚═════╝       ╚═╝     ╚═╝ ╚═════╝╚═╝     
+
+│
+◇  Source: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t2-addmcp\Zoë O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe (local)
+│
+●  Server name: browserai
+
+│
+◇  Installation Summary ───────╮
+│                              │
+│  Server: browserai           │
+│  Type: local                 │
+│  Scope: Global               │
+│  Agents: Claude Code, Codex  │
+│                              │
+├──────────────────────────────╯
+│
+◇  Installation complete
+
+│
+◇  Installed to 2 agents ─────────╮
+│                                 │
+│  ✓ Claude Code: ~\.claude.json  │
+│  ✓ Codex: ~\.codex\config.toml  │
+│                                 │
+├─────────────────────────────────╯
+
+│
+└  Done!
+

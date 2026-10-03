@@ -1,0 +1,139 @@
+blank 0 nav 31 snap 12 chars 101
+blank 1 nav 17 snap 7 chars 103
+blank 2 nav 14 snap 8 chars 103
+blank 3 nav 16 snap 7 chars 103
+blank 4 nav 16 snap 6 chars 103
+form 0 nav 29 snap 15 chars 1536
+form 1 nav 21 snap 11 chars 1567
+form 2 nav 20 snap 11 chars 1567
+form 3 nav 24 snap 12 chars 1567
+form 4 nav 22 snap 11 chars 1567
+table 0 nav 63 snap 487 chars 138911
+table 1 nav 75 snap 360 chars 142484
+table 2 nav 72 snap 335 chars 142924
+table 3 nav 98 snap 363 chars 142924
+table 4 nav 96 snap 403 chars 142924
+iframes 0 nav 47 snap 17 chars 858
+iframes 1 nav 40 snap 17 chars 858
+iframes 2 nav 42 snap 19 chars 858
+iframes 3 nav 39 snap 16 chars 858
+iframes 4 nav 39 snap 18 chars 863
+[stagehand] ERROR CDP response failed {"requestId":274,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":278,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":280,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":284,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":286,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":287,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+shadow 0 nav 27 snap 18 chars 357
+[stagehand] ERROR CDP response failed {"requestId":297,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":301,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":303,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":307,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":309,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":310,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+shadow 1 nav 22 snap 24 chars 357
+[stagehand] ERROR CDP response failed {"requestId":320,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":324,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":326,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":330,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":332,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":333,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+shadow 2 nav 22 snap 24 chars 357
+[stagehand] ERROR CDP response failed {"requestId":343,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":347,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":349,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":353,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":355,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":356,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+shadow 3 nav 23 snap 20 chars 357
+[stagehand] ERROR CDP response failed {"requestId":366,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":370,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":372,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":376,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":378,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":379,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+shadow 4 nav 23 snap 25 chars 357
+[stagehand] ERROR CDP response failed {"requestId":389,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":393,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":395,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":399,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":401,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":402,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+example.com 0 nav 65 snap 19 chars 316
+[stagehand] ERROR CDP response failed {"requestId":412,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":416,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":418,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":422,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":424,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":425,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+example.com 1 nav 19 snap 24 chars 319
+[stagehand] ERROR CDP response failed {"requestId":435,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":439,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":441,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":445,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":447,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":448,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+example.com 2 nav 18 snap 18 chars 319
+[stagehand] ERROR CDP response failed {"requestId":459,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":463,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":465,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":469,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":471,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":472,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+wikipedia-playwright 0 nav 176 snap 598 chars 53541
+[stagehand] ERROR CDP response failed {"requestId":483,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":487,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":489,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":493,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":495,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":496,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+wikipedia-playwright 1 nav 144 snap 570 chars 57312
+[stagehand] ERROR CDP response failed {"requestId":507,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":511,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":513,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":517,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":519,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":520,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+wikipedia-playwright 2 nav 105 snap 536 chars 57312
+[stagehand] ERROR CDP response failed {"requestId":533,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":537,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":539,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":543,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":545,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":546,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+hn-front 0 nav 832 snap 176 chars 33833
+[stagehand] ERROR CDP response failed {"requestId":556,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":560,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":562,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":566,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":568,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":569,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+hn-front 1 nav 183 snap 211 chars 34455
+[stagehand] ERROR CDP response failed {"requestId":579,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":583,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":585,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":589,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":591,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":592,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+hn-front 2 nav 330 snap 210 chars 34455
+[stagehand] ERROR CDP response failed {"requestId":605,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":609,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":611,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":615,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":617,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":618,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+github-stagehand 0 nav 984 snap 1126 chars 66158
+[stagehand] ERROR CDP response failed {"requestId":630,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":634,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":636,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":640,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":642,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":643,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+github-stagehand 1 nav 447 snap 918 chars 75133
+[stagehand] ERROR CDP response failed {"requestId":655,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":659,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":661,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":665,"method":"Accessibility.getFullAXTree","error":"-32602 Frame with the given frameId is not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":667,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+[stagehand] ERROR CDP response failed {"requestId":668,"method":"DOM.getFrameOwner","error":"-32000 Frame with the given id was not found.","targetId":"66E187428E15E612247F21661C36A6CD"}
+github-stagehand 2 nav 342 snap 887 chars 75574

@@ -1,0 +1,2 @@
+Removed MCP server browserai from user config
+File modified: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t1-native\Zoë O'Brien\.claude.json

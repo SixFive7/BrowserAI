@@ -1,0 +1,5 @@
+./out-i1-claude.txt
+./out-i2-codex.txt
+./runlog.txt
+./Zoë O'Brien/.claude.json
+./Zoë O'Brien/.codex/config.toml

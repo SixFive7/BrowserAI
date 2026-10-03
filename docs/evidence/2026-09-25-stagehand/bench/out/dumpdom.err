@@ -1,0 +1,11 @@
+[92936:70272:0925/061848.965:ERROR:sandbox\policy\win\sandbox_win.cc:804] Sandbox cannot access executable C:\Source\SixFive7\BrowserAI\.work\zoomout\d\bench\browsers\chromium-1246\chrome-win64\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)
+[92936:46804:0925/061849.007:ERROR:content\browser\network_service_instance_impl.cc:653] Network service crashed or was terminated, restarting service.
+[92936:93404:0925/061851.632:ERROR:google_apis\gcm\engine\mcs_client.cc:702]   Error code: 401  Error message: Authentication Failed: wrong_secret
+[92936:93404:0925/061851.632:ERROR:google_apis\gcm\engine\mcs_client.cc:704] Failed to log in to GCM, resetting connection.
+[92936:93404:0925/061851.648:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[92936:93404:0925/061851.649:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[92936:93404:0925/061851.652:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[92936:93404:0925/061913.379:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[92936:93404:0925/061959.780:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[92936:93404:0925/062134.097:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[92936:93404:0925/062454.287:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT

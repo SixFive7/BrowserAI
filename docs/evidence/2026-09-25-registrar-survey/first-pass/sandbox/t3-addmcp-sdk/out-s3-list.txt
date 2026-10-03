@@ -1,0 +1,4 @@
+global claude-code detected=false C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t3-addmcp-sdk\Zoë O'Brien\.claude.json [] 
+global codex detected=true C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t3-addmcp-sdk\Zoë O'Brien\.codex\config.toml [["other","C:\\Tools\\other\\other-mcp.exe --flag"],["browserai","C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t3-addmcp-sdk\\Zoë O'Brien\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe"]] 
+project claude-code detected=true C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t3-addmcp-sdk\project\.mcp.json [["teammate-server","@example/teammate-mcp"],["browserai","${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe"]] 
+project codex detected=true C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t3-addmcp-sdk\project\.codex\config.toml [["teammate","@example/teammate-mcp"],["browserai","BrowserAI.Server.exe"]] 

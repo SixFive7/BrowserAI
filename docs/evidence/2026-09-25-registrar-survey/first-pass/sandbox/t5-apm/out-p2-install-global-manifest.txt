@@ -1,0 +1,8 @@
+[i] Installing to user scope (~/.apm/)
+[!] User-scope primitives are fully supported by claude, kiro, gemini, 
+grok-build, grok-cloud, agent-skills, openclaw, hermes, copilot-cowork, 
+copilot-app. Partially supported: copilot, cursor, opencode, antigravity, 
+codex, windsurf.
+Some primitives are not supported: cursor (instructions); opencode (hooks); 
+antigravity (instructions, hooks); windsurf (instructions)
+[>] Installing dependencies from apm.yml...

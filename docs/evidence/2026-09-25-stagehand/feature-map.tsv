@@ -1,0 +1,81 @@
+#	tool	browserai_verdict	stagehand_v4_offers	reachable_through_facade	outcome	evidence
+1	browser_close	allow	page.close(); browser.close()	run code	Has	PAGE close(); CTX close()
+2	browser_resize	allow	page.setViewportSize(w,h); browse viewport	run code	Has	PAGE setViewportSize(); CLI
+3	browser_get_config	allow	nothing reports a resolved configuration; facade session_info is runner-only, not in tools/list	no	Lacks	FAC SESSION_INFO_TOOL_NAME
+4	browser_console_messages	allow	page.on("console") subscription only; no history, no level filter	run code	Partial	PAGE on(); MIG 251
+5	browser_cookie_list	allow	context.cookies(urls?) filtered by URL	run code	Has	CTX cookies()
+6	browser_cookie_get	allow	context.cookies() then select by name	run code	Has	CTX cookies()
+7	browser_cookie_set	allow	context.addCookies([...])	run code	Has	CTX addCookies()
+8	browser_cookie_delete	allow	context.clearCookies({name,domain,path})	run code	Has	CTX clearCookies()
+9	browser_cookie_clear	allow	context.clearCookies()	run code	Has	CTX clearCookies()
+10	browser_resume	allow	no pause, no Inspector	no	Lacks	MIG 310
+11	browser_highlight	allow	locator.highlight({durationMs}) temporary; browse highlight	run code	Partial	LOC highlight()
+12	browser_hide_highlight	allow	no explicit removal; expires after durationMs	no	Partial	LOC highlight()
+13	browser_annotate	deny	no dashboard, no annotation mode	no	Lacks	MIG 310
+14	browser_handle_dialog	allow	no dialog API; measured alert() hangs every later call on the page	no	Lacks	MIG 294; BENCH dialog.json
+15	browser_emulate_media	allow	no emulation API, no CDP escape hatch	no	Lacks	MIG 558; SRC; issue 2744
+16	browser_evaluate	allow	page.evaluate(fn,arg); element form by selector only	run code	Has	PAGE evaluate(); MIG 320
+17	browser_file_upload	allow	locator.setInputFiles(); no file-chooser event	run code	Has	LOC setInputFiles(); MIG 304
+18	browser_drop	allow	no external drop of files or MIME data	no	Lacks	PAGE dragAndDrop()
+19	browser_find	allow	browse snapshot --filter (CLI only)	CLI only	Partial	CLI
+20	browser_fill_form	allow	facade run actions fill/select batch; checkboxes by click	run actions	Partial	FAC RUN_INPUT_SCHEMA; MIG 534
+21	browser_press_key	allow	page.keyPress(); facade press action	run actions	Has	PAGE keyPress()
+22	browser_type	allow	locator.fill()/type(); submit via keyPress	run actions	Has	LOC fill(), type()
+23	browser_mouse_move_xy	allow	page.hover(x,y)	run code	Has	PAGE hover()
+24	browser_mouse_click_xy	allow	page.click(x,y,{button,clickCount})	run code	Has	PAGE click()
+25	browser_mouse_drag_xy	allow	page.dragAndDrop(fromX,fromY,toX,toY)	run code	Has	PAGE dragAndDrop()
+26	browser_mouse_down	allow	not exposed	no	Lacks	PAGE; SRC understudy/page.ts
+27	browser_mouse_up	allow	not exposed	no	Lacks	PAGE; SRC
+28	browser_mouse_wheel	allow	page.scroll(x,y,dx,dy)	run code	Has	PAGE scroll()
+29	browser_navigate	allow	page.goto(); default domcontentloaded	run code	Has	PAGE goto(); MIG 230
+30	browser_navigate_back	allow	page.goBack()	run code	Has	PAGE goBack()
+31	browser_network_requests	allow	SDK none; browse network on captures to a directory	CLI only	Partial	MIG 251, 558; CLI
+32	browser_network_request	allow	SDK none; CLI capture files carry headers and bodies	CLI only	Partial	CLI
+33	browser_network_state_set	allow	no offline emulation	no	Lacks	SRC
+34	browser_pdf_save	allow	no page.pdf(); PR 2819 open	no	Lacks	MIG 602, 954
+35	browser_start_recording	allow	no recorder, no codegen	no	Lacks	MIG 23
+36	browser_stop_recording	allow	no recorder	no	Lacks	MIG 23
+37	browser_route	allow	no interception or mocking; setDomainPolicy blocks domains, fail-open (3002), bypassable (2945)	no	Lacks	MIG 279
+38	browser_route_list	allow	getDomainPolicy lists domains, not routes	no	Lacks	CTX getDomainPolicy()
+39	browser_unroute	allow	no routes	no	Lacks	MIG 279
+40	browser_run_code_unsafe	allow	facade run code: Playwright-shaped subset inside the extension service worker; experimentalBatch()	run code	Partial	FAC; SH experimentalBatch()
+41	browser_take_screenshot	allow	page.screenshot({fullPage,clip,mask,type,quality,scale}); element by clip only	screenshot	Has	PAGE screenshot()
+42	browser_snapshot	allow	page.snapshot(): different format, no link URLs, pierces closed shadow roots	snapshot	Has	PAGE snapshot(); BENCH
+43	browser_click	allow	locator.click({button,clickCount}); no modifiers, no auto-wait, first match	run actions	Partial	LOC click(); MIG 228, 452
+44	browser_drag	allow	locator.centroid() + page.dragAndDrop	run code	Partial	MIG 637
+45	browser_hover	allow	locator.hover()	run actions	Has	LOC hover()
+46	browser_select_option	allow	locator.selectOption()	run actions	Has	LOC selectOption()
+47	browser_generate_locator	allow	XPath from xpathMap; observe() needs a model	snapshot	Partial	PAGE snapshot(); SH observe()
+48	browser_storage_state	allow	no storageState(); cookies plus evaluate	run code	Partial	MIG 286
+49	browser_set_storage_state	allow	addCookies plus evaluate	run code	Partial	MIG 286
+50	browser_tabs	allow	context.pages/newPage/setActivePage, page.close; browse tab	run code	Has	CTX; CLI
+51	browser_start_tracing	allow	no Playwright trace; OTel spans are different; replay is cloud-only	no	Lacks	MIG 310, 954
+52	browser_stop_tracing	allow	no Playwright trace	no	Lacks	MIG 954
+53	browser_verify_element_visible	allow	no expect(); no getByRole in the SDK	run code	Partial	MIG 255-265, 612
+54	browser_verify_text_visible	allow	locator("text=...").isVisible()	run code	Partial	LOC isVisible()
+55	browser_verify_list_visible	allow	composition of reads	run code	Partial	MIG 255
+56	browser_verify_value	allow	inputValue()/isChecked() then compare	run code	Partial	LOC inputValue()
+57	browser_start_video	allow	no video	no	Lacks	MIG 954
+58	browser_stop_video	allow	no video	no	Lacks	MIG 954
+59	browser_video_chapter	allow	no video	no	Lacks	MIG 954
+60	browser_video_show_actions	allow	browse cursor overlay only	CLI only	Partial	CLI
+61	browser_video_hide_actions	allow	cursor command has no off switch	no	Lacks	CLI; src/commands/cursor.ts
+62	browser_wait_for	allow	waitForTimeout(); waitForSelector("text=...",{state})	run code	Has	PAGE waitForSelector()
+63	browser_localstorage_list	allow	page.evaluate	run code	Partial	PAGE evaluate()
+64	browser_localstorage_get	allow	page.evaluate	run code	Partial	PAGE evaluate()
+65	browser_localstorage_set	allow	page.evaluate	run code	Partial	PAGE evaluate()
+66	browser_localstorage_delete	allow	page.evaluate	run code	Partial	PAGE evaluate()
+67	browser_localstorage_clear	allow	page.evaluate	run code	Partial	PAGE evaluate()
+68	browser_sessionstorage_list	allow	page.evaluate	run code	Partial	PAGE evaluate()
+69	browser_sessionstorage_get	allow	page.evaluate	run code	Partial	PAGE evaluate()
+70	browser_sessionstorage_set	allow	page.evaluate	run code	Partial	PAGE evaluate()
+71	browser_sessionstorage_delete	allow	page.evaluate	run code	Partial	PAGE evaluate()
+72	browser_sessionstorage_clear	allow	page.evaluate	run code	Partial	PAGE evaluate()
+73	browserai_init	answer	launch({userDataDir}) profile dir; browse --session; no purpose/record/lock/per-run args	n/a	Partial	localBrowser.ts; CLI
+74	browserai_resume	answer	relaunch same userDataDir; measured: extension persisted, every close Crashed	n/a	Partial	BENCH profile.json
+75	browserai_list	answer	nothing lists sessions under a directory	n/a	Lacks	CLI
+76	browserai_destroy	answer	temp profile removed on close; named profile never deleted	n/a	Lacks	localBrowser.ts removeProfile
+77	browserai_catch_up	answer	no session log; OTel spans and metrics() are not a record	n/a	Lacks	SH metrics()
+78	browserai_set_purpose	answer	nothing	n/a	Lacks	none
+79	browserai_page_tool	answer	page.tools({timeout}), tool.invoke(), invocation.result()/cancel()	run code	Has	PAGE tools(); WMCP
+80	browserai_reinstall_browser	answer	no provisioning at all	n/a	Lacks	MIG 154

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "other",
+    "enabled": true,
+    "disabled_reason": null,
+    "transport": {
+      "type": "stdio",
+      "command": "C:\\Tools\\other\\other-mcp.exe",
+      "args": [
+        "--flag"
+      ],
+      "env": {
+        "FOO": "bar"
+      },
+      "env_vars": [],
+      "cwd": null
+    },
+    "startup_timeout_sec": 20.0,
+    "tool_timeout_sec": null,
+    "auth_status": "unsupported"
+  }
+]

@@ -117,6 +117,16 @@ process. The second, whose only spelling of the eight is a `Win32_Process` walk 
 parent pid, passed. **The scan would now flag eight files, and still only
 `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-03, last of the night.* **Twenty-eight**, counted as its
+subdirectories, when [`2026-09-25-stagehand`](2026-09-25-stagehand/README.md)
+and [`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md)
+arrived. The first went through the real scan the same way and was flagged in
+one file, a false positive: `bench-mem.mjs` names each process of a tree it
+launched by its image for a memory breakdown, after finding the tree by parent
+pid. The second carries none of the eight spellings, by a search that found
+them in the first, so the scan has nothing to read in it. **The scan would now
+flag nine files, and still only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -186,3 +196,5 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-debugger-tools`](2026-10-03-debugger-tools/README.md) | A pause armed from inside a session, and what each tool does to the call it parks | |
 | [`2026-09-25-client-behaviour`](2026-09-25-client-behaviour/README.md) | Real clients against a stand-in for an updating server, and a Codex started on either side of an install | false positives |
 | [`2026-10-03-upstream-reports`](2026-10-03-upstream-reports/README.md) | The reproductions behind the three upstream posts: Firefox safe mode at two more builds, closed shadow roots, add-mcp and `CLAUDE_CONFIG_DIR`, and the attach by name | |
+| [`2026-09-25-stagehand`](2026-09-25-stagehand/README.md) | One Chrome for Testing driven by Playwright in BrowserAI's configuration and by Stagehand: snapshot tokens and time, the settle wait, launch, memory, actions and the debugging port | a false positive |
+| [`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md) | The clients' own registration commands and three registrars against a seeded sandbox home, with a copy of every configuration file after each step | |

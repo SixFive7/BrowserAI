@@ -1,0 +1,31 @@
+nuget mcp register 41
+nuget mcp registration 14
+nuget AgentConfig 23
+nuget agent config mcp 12
+nuget mcp add 102
+nuget mcp client registration 2
+nuget coding agent mcp 41
+nuget claude.json 50
+nuget codex config.toml 0
+nuget mcp host config 9
+nuget agent harness 46
+nuget mcp server installer 5
+nuget mcp onboarding 3
+nuget mcp deploy client 0
+nuget McpPlugin 68
+nuget mcp bundle 32
+nuget mcpb 5
+npm add mcp server claude code codex 2195250
+npm mcp installer cli agents 487128
+npm install mcp server clients 1741613
+npm mcp config writer 374925
+npm mcp register client 402812
+npm mcp setup claude cursor codex 383194
+npm agent config mcp sync 487687
+npm mcp client config library 950640
+crates mcp install 6049
+crates mcp config 4005
+crates mcp client config 2563
+crates mcp register 2059
+crates mcp setup 2498
+crates agent config mcp 3245

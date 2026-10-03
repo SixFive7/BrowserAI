@@ -1,0 +1,10 @@
+[!] Install interrupted after 0.1s.
+Usage: apm.exe install [OPTIONS] [PACKAGES]...
+Try 'apm.exe install --help' for help.
+
+Error: 'command' contains whitespace in MCP dependency 'browserai'.
+  Rule: 'command' must be a single binary path -- APM does not split on whitespace. Use 'args' for additional arguments.
+  Got:  command='C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t5-apm\\Zoë' (1 additional args)
+  Fix:  command: C:\Source\SixFive7\BrowserAI\.work\zoomout\a\sandbox\t5-apm\Zoë
+        args: ["O'Brien\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe"]
+  See:  https://microsoft.github.io/apm/guides/mcp-servers/

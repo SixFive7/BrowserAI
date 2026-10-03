@@ -1,0 +1,66 @@
+{
+ "stagehand": [
+  {
+   "label": "click #alert",
+   "ok": false,
+   "ms": 20008,
+   "error": "TIMEOUT click #alert after 20000 ms"
+  },
+  {
+   "label": "read #after",
+   "ok": false,
+   "ms": 15003,
+   "error": "TIMEOUT read #after after 15000 ms"
+  },
+  {
+   "label": "evaluate document.title",
+   "ok": false,
+   "ms": 15009,
+   "error": "TIMEOUT evaluate document.title after 15000 ms"
+  },
+  {
+   "label": "click #confirm",
+   "ok": false,
+   "ms": 20003,
+   "error": "TIMEOUT click #confirm after 20000 ms"
+  },
+  {
+   "label": "read #after (2)",
+   "ok": false,
+   "ms": 15002,
+   "error": "TIMEOUT read #after (2) after 15000 ms"
+  },
+  {
+   "label": "goto blank",
+   "ok": true,
+   "ms": 38,
+   "value": "navigated"
+  },
+  {
+   "label": "snapshot after",
+   "ok": true,
+   "ms": 18,
+   "value": "[0-4] RootWebArea: blank\n  [0-6] scrollable, html\n    [0-12] paragraph\n      [0-13] StaticText: ready"
+  }
+ ],
+ "playwrightMcp": [
+  {
+   "label": "browser_click Open alert",
+   "ok": true,
+   "ms": 59,
+   "value": "### Page\n- Page URL: http://127.0.0.1:63616/dialog.html\n- Console: 1 errors, 0 warnings\n### Modal state\n- [\"alert\" dialog with message \"hello from the page\"]: can be handled by browser_handle_dialog\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\out\\pw-dialog-output\\page-2026-09-25T04-16-03-995Z.yml)"
+  },
+  {
+   "label": "browser_handle_dialog accept",
+   "ok": true,
+   "ms": 521,
+   "value": "### Page\n- Page URL: http://127.0.0.1:63616/dialog.html\n- Page Title: Dialog fixture\n- Console: 1 errors, 0 warnings"
+  },
+  {
+   "label": "browser_evaluate #after",
+   "ok": true,
+   "ms": 509,
+   "value": "### Result\n\"alert returned\""
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+[stagehand] INFO stagehand.init
+{"launchMs":1157.0146,"createMs":38.28230000000008,"gotoMs":49.54559999999992,"snapshotMs":24.22109999999998,"treeChars":1512}
+[0-2] RootWebArea: Sign in fixture
+  [0-11] scrollable, html
+    [0-18] body
+      [0-19] banner
+        [0-20] navigation: Main
+          [0-21] link: Home
+          [0-23] StaticText: |
+          [0-24] link: Pricing
+          [0-26] StaticText: |
+          [0-27] link: Docs
+      [0-29] main
+        [0-30] heading: Sign in
+        [0-3] form
+          [0-32] LabelText
+            [0-33] StaticText: Email address
+          [0-4] textbox: Email address
+          [0-38] LabelText
+            [0-39] StaticText: Password
+          [0-5] textbox: Password
+          [0-42] LabelText
+            [0-43] StaticText: Plan
+          [0-6] select: Plan
+            [0-48] MenuListPopup
+              [0-50] option: Free [selected]
+              [0-51] option: Pro
+              [0-52] option: Team
+          [0-7] checkbox: Remember me
+          [0-8] button: Sign in
+          [0-9] button: Count
+          [0-75] StaticText: 0
+        [0-76] status
+          [0-77] StaticText: idle
+        [0-78] section
+          [0-79] heading: Why sign in
+          [0-81] list
+            [0-82] listitem
+              [0-83] ListMarker: •
+              [0-84] StaticText: Sync your settings
+            [0-85] listitem
+              [0-86] ListMarker: •
+              [0-87] StaticText: Keep your history
+            [0-88] listitem
+              [0-89] ListMarker: •
+              [0-90] StaticText: Share with your team
+      [0-91] contentinfo
+        [0-92] paragraph
+          [0-93] StaticText: Footer text © fixture
+xpathMap sample [["0-2","/"],["0-10","/html[1]"],["0-11","/html[1]"],["0-12","/html[1]/head[1]"],["0-13","/html[1]/head[1]/meta[1]"]]
+{"count":12,"workingSetMiB":796.6,"privateMiB":586,"byName":{"node.exe":1,"chrome.exe":9,"powershell.exe":1,"conhost.exe":1}}
+[stagehand] INFO stagehand.close

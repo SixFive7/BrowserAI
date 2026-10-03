@@ -1,0 +1,38 @@
+{
+ "browser": {
+  "browserName": "chromium",
+  "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\profiles\\pw-knob-settle-100",
+  "launchOptions": {
+   "channel": "chrome-for-testing",
+   "headless": true
+  },
+  "contextOptions": {
+   "viewport": {
+    "width": 1920,
+    "height": 1080
+   }
+  }
+ },
+ "capabilities": [
+  "config",
+  "vision",
+  "devtools",
+  "storage",
+  "network",
+  "pdf",
+  "testing"
+ ],
+ "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\d\\bench\\out\\pw-knob-settle-100-output",
+ "console": {
+  "level": "debug"
+ },
+ "codegen": "none",
+ "filePaths": "absolute",
+ "snapshot": {
+  "boxes": true
+ },
+ "allowUnrestrictedFileAccess": false,
+ "timeouts": {
+  "settle": 100
+ }
+}

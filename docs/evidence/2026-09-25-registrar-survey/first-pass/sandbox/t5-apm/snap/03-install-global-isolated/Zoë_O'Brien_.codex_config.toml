@@ -1,0 +1,22 @@
+# my codex config -- hand-edited, keep these comments
+model = "gpt-5.5"   # the model I use
+approval_policy = "on-request"
+
+[projects.'C:\work\demo']
+trust_level = "trusted"
+
+# a server I added by hand
+[mcp_servers.other]
+command = 'C:\Tools\other\other-mcp.exe'   # literal string on purpose
+args = ["--flag"]
+startup_timeout_sec = 20
+
+[mcp_servers.other.env]
+FOO = "bar"
+
+[mcp_servers.browserai]
+command = "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\a\\sandbox\\t5-apm\\Zoë O'Brien\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe"
+args = []
+id = ""
+
+[mcp_servers.browserai.env]
