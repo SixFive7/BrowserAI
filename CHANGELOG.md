@@ -1135,6 +1135,19 @@ release body; nothing else depends on it.
 
   Track C leaves [`TODO.md`](TODO.md)'s zoom-out tree, and phases 3 and 4 wait on track B.
 
+- 📝 **The zoom-out's answers are decisions of record, and what they found is in the hazard index.**
+  Between 2026-10-01 and 2026-10-03 the maintainer answered the zoom-out of 2026-09-25 and every
+  question it raised, and [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it)
+  carries each answer in his words, in four new sections: what the zoom-out settled for sessions,
+  idle closes and a client's exit; RegisterAI, a command-line program of its own that takes over
+  registering BrowserAI with its clients; a management interface in a tab of the person's own
+  browser, which replaces the configuration window; and how the work is decided and what was posted
+  upstream. ⚠️ **No release is cut until that tab has replaced the window**, because the window can
+  run a link a repository planted in its project file, and it is not fixed in place. Nothing in the
+  product changes with this entry; the work the answers set is in [`TODO.md`](TODO.md), and
+  twenty-one failure modes they name or the night's research measured are open rows in
+  [the hazard index](HAZARDS.md#hazard-index), beside the wedge the upstream review wrote.
+
 ### Removed
 
 - 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**

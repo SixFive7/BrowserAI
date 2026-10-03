@@ -21,57 +21,120 @@ about an external source needs the date and version it was true at.
 
 ## The zoom-out, and the work waiting on it
 
-Written 2026-09-25, before a compaction of the root session, as the tree the
-maintainer asked for: *"Before you do give me the durably saved todo tree."* Its
-open questions would normally sit in
-[`DECISIONS.md`](DECISIONS.md#open-design-decisions); they are here because he
-asked for one tree, and each moves there once he answers it. The measured facts
-below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
-1.64.0-alpha-1789764292000, Velopack 1.2.158, Claude Code 2.1.282 and
-`codex-cli` 0.155.0-alpha.9.2; the session's record is its
-[ledger](docs/ledger/2026-09-24-development-session.md).
+Written 2026-09-25 as the tree the maintainer asked for before a compaction --
+*"Before you do give me the durably saved todo tree."* -- and rewritten
+2026-10-03 once he had answered it. Every question the zoom-out raised is
+settled in [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it)
+and the three sections after it, each row with his words; this is the work
+those decisions set, and the little that is still his to choose. The session's
+record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 
-### Next: the zoom-out, three research tracks
+### Decided, and the work that follows
 
-- [ ] **A. A maintained registrar for MCP servers.** Find a library or tool that
-      registers servers with Claude Code, Codex and the other harnesses people
-      use, at user and project scope, and whether BrowserAI can lean on it
-      instead of its own registration code.
-- [ ] **B. A local web management interface**, in place of the task-dialog
-      configuration window.
-- [ ] **D. [Hacker News item 49756671](https://news.ycombinator.com/item?id=49756671)
-      as a Playwright replacement.** Deep research into the downsides, and a
-      detailed pros and cons comparison.
+- [ ] **The four decided fixes: Q296 c, Q297 b, Q312 b and Q322 a.** A server
+      started during an update answers `tools/list` with its real list,
+      refuses every call while the install's `Update.exe` runs, and keeps
+      serving once it has gone. A server's pipe serves its connections in
+      parallel, which closes the never-closing-caller row in the
+      [hazard index](HAZARDS.md#hazard-index). `MOZ_DISABLE_SAFE_MODE_KEY=1`
+      goes into `ChildEnvironment.Forced` with a test that it is there, a live
+      check fails any run in which a Firefox starts in safe mode, and the
+      `AGENTS.md` paragraph that says *exactly one exception* names the second.
+      Snapshot boxes go off by default, BrowserAI's `instructions` gain the
+      sentence about asking for them before the coordinate tools, and
+      `README.md` and `BrowserConfiguration`'s remark lose the claim that their
+      cost is deferred. **What to do:** each planted red first, except the
+      safe-mode line, which is the named exception; then the rows each one
+      closes.
+- [ ] **The idle close and resume redesign: Q324, Q325, Q326 a and Q327 a.**
+      The idle close ends the session's whole child (P4 b); every forwarded
+      call after a close, the caller's own `browser_close` included, is refused
+      until `browserai_resume` (P2 a, P3 b), with a sentence that names the
+      tool and the ten minutes and says what was lost and what was kept;
+      resume restores through the launch options the research measured (P1):
+      Chromium's `--restore-last-session`, Firefox's
+      `browser.sessionstore.resume_session_once` with `restore_on_demand` and
+      `restore_tabs_lazily` off, and `about:blank` dropped from the default
+      arguments. A resume of a held session names what it did not apply and
+      refuses a change it cannot make, then applies it whenever no browser is
+      open (Q324 a then c). The idle timer is never armed for a headed launch,
+      and upstream's idle hour is written as `0` for one (Q326 a). With only
+      the `node` child in the job, the timer writes no row and sends nothing
+      (Q327 a). A session child's `TEMP` and `TMP` move inside its instance
+      directory, and Playwright's registry is reaped at startup (P5 a).
+      `LiveSession.IdleCloseWhy` and the relaunch sentences stop saying that
+      nothing was lost: session cookies are not kept by a browser that ends
+      uncleanly. **What to do:** build it in that order with an arm per part,
+      each planted red first, and close the field report's four rows and the
+      wedge, close-with-no-browser, capture and temp rows as each part lands.
+- [ ] **What a client's exit costs a session, Q356.** Chromium's
+      `--enable-aggressive-domstorage-flushing` on every launch, and at the end
+      of the server's input a `browser_close` on every live session at once,
+      bounded at about 1 s, before today's shutdown path; together they are
+      measured to get every write to disk inside Claude Code's window. **What
+      to do:** build both with arms that kill the server the way Claude Code
+      does and read the profile back; the process outside the client's tree,
+      direction (c), is not built.
+- [ ] **The browser tab, Q315 a, which replaces the configuration window.**
+      Kestrel from ASP.NET Core's empty builder, plain request handlers, no
+      OpenAPI (Q340 b, Q341 b, Q342 c, Q343); the secret address handed over
+      through the coordinator's pipe, and nothing else (Q334 a, Q335 a); the
+      coordinator alive while a tab is connected and one minute after the last
+      one closes, with an update applied and the tab told when nothing runs
+      from the install (Q336 a); the newest tab wins, and after an update a new
+      tab (Q337 a, Q338 b). On it: a status page that says when an offered
+      version is older (Q308 a) and that a Codex started before the install
+      needs restarting (Q314 b); a staged update with a link that installs it
+      (Q310 a); folder choice through the native picker the coordinator opens
+      (Q311), checked on the real desktop for focus; and BrowserAI's own
+      sessions page with links to session files and the trace viewer (Q317 c).
+      What the 2026-09-24 rendering found about states carries over: a first
+      run that always claims success, a feed folder with no manifest read as
+      up to date, and a hung check that shows *Checking* with no way to cancel.
+      **What to do:** build it host-neutral, write the hazard row Q335 a
+      calls for with the listener, then delete the task-dialog window, which
+      closes the link-hole row. ⚠️ **No release is cut until the tab has
+      replaced the window (Q319 b).**
+- [ ] **A view-only look at a headless session, Q317 c's second part.** Taken
+      by the process that holds the session, on a person's request, and logged
+      with a `why`. **What to do:** three measurements come first; the ledger
+      records their number and not their subjects, so ask the maintainer which
+      three before taking them.
+- [ ] **Phase 3, the toast, Q254 with Q339.** Its *Review* opens a new tab the
+      way a Start Menu click does, through the COM activator of the toast's
+      design. **What to do:** build it after the tab, against
+      [`docs/design/toast-2026-09-24`](docs/design/toast-2026-09-24/README.md).
+- [ ] **RegisterAI's half inside BrowserAI.** Once RegisterAI's own steps are
+      done: the build fetches its release file and checks it against the
+      release's checksum list, with a local path while it is private (Q349);
+      a row in `drift-check.json` and `upstream-review.json` and one test that
+      fails on a changed output schema (Q350); BrowserAI's own registration
+      code deleted, after a full gate, except the PATH edit, which stays
+      (Q348). **What to do:** follow RegisterAI's plan, steps 6 to 8.
 
-### Open questions, each with the recommendation already given
+### Still open, and the maintainer's to choose
 
-- [ ] **Q296: what an updating server answers to `tools/list`.** Measured: an
-      error leaves Claude Code with zero tools for the session. Recommended: the
-      real list, calls refused, and keep serving once the updater exits; the
-      minimum is the real list with calls refused.
-- [ ] **Q297: a pipe caller that connects and never closes.** Recommended: a
-      server-side deadline, not parallel serving.
-- [ ] **Q304, the follow-up: a Codex started before the install never finds the
-      bare name**, 3 of 3, not with a new thread and not with a reload.
-      Recommended: keep Q294 b, and have the window tell the person to restart
-      that Codex.
-- [ ] **Q307: the window's layout.** Held for the zoom-out. If the window stays
-      native, recommended: a status home and one page per client, with Sessions
-      as its own page.
-- [ ] **Q308: rollback.** `AllowVersionDowngrade` is on
-      (`VelopackUpdateClient.cs:59`), so a server applies a downgrade unattended,
-      when alone, whenever GitHub's Latest release is lower than the installed
-      version. Recommended: turn it off and roll forward.
-- [ ] **Q310: show a staged update in the window.** Recommended: yes, with an
-      install link.
-- [ ] **Q311: removing BrowserAI from a project.** Recommended: one
-      folder-picker button that removes BrowserAI's entries for every client in
-      that folder and says what it did.
-- [ ] **Q312: the Firefox safe-mode fix.** Recommended:
-      `MOZ_DISABLE_SAFE_MODE_KEY=1` in `ChildEnvironment.Forced`, with a
-      mechanism test recorded as the second named exception to the plant-it-red
-      rule, and a live check that fails a run whenever a Firefox starts in safe
-      mode.
+- [ ] **The look-alike tools report.** Eleven tools ranked by how likely a
+      model is to confuse them with BrowserAI's own, each with a reason and a
+      recommendation; `browser_resume` is the only one denied so far (Q321 with
+      P6 a). **What to do:** put the report in front of him and record each
+      choice in `DECISIONS.md` and `tool-verdicts.json`.
+- [ ] **The two reports to the Microsoft Security Response Center (Q358).**
+      One for the dashboard WebSocket's missing `Origin` check, one for
+      `--host` switching its `Host` check off; prepared and not sent. **What to
+      do:** his review, then sending is his act.
+- [ ] **The three reports Q356 drafted**, to Claude Code, Codex and
+      `@playwright/mcp`, none posted. **What to do:** his review; posting under
+      his name needs his word, as Q357 did.
+- [ ] **Which option Q309 b was.** He answered *"Q309 b"* on 2026-09-25 to how
+      an error is shown; the ledger records the letter and the recommendation,
+      one plain sentence with the raw text under *Show details*, and not what b
+      was. **What to do:** ask him, and complete its row in `DECISIONS.md`.
+- [ ] **The night's own decisions, for his review.** Q356's second half --
+      (c) not built, and whether the 30-second Chromium cookie window under a
+      hard kill matters enough to revisit it -- and the choices the coordinator
+      core's writer made inside the design, which its rows in `DECISIONS.md`
+      name. **What to do:** walk him through them and record each answer.
 
 ### Paused work
 
@@ -79,15 +142,9 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       `21de415`, and step 6, the records and the measurements, landed on
       2026-10-03. Owed: step 7, a two-shell gate over the coordinator core, and
       `master` fast-forwarded to the commit that passed it.
-- [ ] **Phase 3, the toast, and phase 4, the sessions page and window.** Not
-      started; both wait on track B. Track C is decided, and what it leaves
-      open for phase 4 is in
-      [its row](DECISIONS.md#processes-browsers-and-session-modes). Q309 b and
-      the defects the Q303 rendering found go with phase 4.
 
 ### Small fixes, ready once decided or scheduled
 
-- [ ] **The Firefox safe-mode line**, once Q312 is decided.
 - [ ] **Clearance reading 8 matches two task-name patterns only**,
       `BrowserAI.app sign-in *` and `BrowserAI.app.test *`, so a leftover
       `BrowserAI.app.test.planted` task passes unseen.
@@ -163,7 +220,8 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
   [bringing CI back](#continuous-integration)**, both kept on this list by the
   maintainer on 2026-09-23.
 - **The [feature-catalogue candidates](#the-next-version)**, waiting on his pick.
-- **Release 1.1.1 is not cut.** Only the maintainer drives a release.
+- **Release 1.1.1 is not cut.** Only the maintainer drives a release, and none is
+  cut until the browser tab has replaced the configuration window (Q319 b).
 
 ---
 
@@ -211,7 +269,7 @@ is named as candidates and says so.
       | **The `cli-client` command surface** | 102 commands that map onto the same tools, shipped in the package and not run by this product. A trace or replay lane would be built out of it |
       | **`--allowed-origins` and `--blocked-origins`** | A per-session boundary on where a browser may go. Today there is none, and a session's reach is whatever the caller navigates to |
       | **`--device`** | 207 device descriptors, of which this product uses none; a session is 1920x1080 desktop Chromium or Firefox and nothing else |
-      | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case |
+      | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case ⚠️ *Declined 2026-10-03 by Q323, verbatim: "Q323 leave it to upstream. they have thought about it and I want to drift with their defaults."* |
 
 ---
 
