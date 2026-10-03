@@ -46,6 +46,19 @@
     -->
     <PackageReference Include="SourceGear.sqlite3" />
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+    <!--
+      THE SAME SHARED FRAMEWORK THE TEST HOST RUNS ON, added 2026-10-03. The
+      probe runs from the test host's own folder, and since the configuration app
+      took ASP.NET Core's framework for the browser tab's listener (Q340 b), the
+      test host gets Microsoft.Extensions.Logging from that framework and the
+      build copies no package copy of it beside the host. A probe whose runtime
+      configuration named the base framework alone then failed to load
+      Microsoft.Extensions.Logging.Abstractions at its first log line, in every
+      mode: the ordinary gate of 2026-10-03 on the tab's first step read eleven
+      reds of that shape before it was stopped. With this the probe resolves the
+      assembly where the host does.
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <!-- The suite's own bans, the same file the test host reads: a probe is
          test code, and a toast raised from one would reach the screen the same
          way. Added 2026-09-24 with Q278. -->

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Updates;
@@ -11,8 +12,14 @@ namespace BrowserAI.App;
 /// <summary>How the app was started, as its arguments say.</summary>
 internal enum StartMode
 {
-    /// <summary>By a person: the Start Menu, the installer's last step, a double click. It shows the window.</summary>
+    /// <summary>By a person: the Start Menu, the installer's last step, a double click. It opens a tab on the status page.</summary>
     User,
+
+    /// <summary>
+    /// By a person, for the sessions page: <c>--sessions</c>, which is what the update
+    /// toast's <i>Review</i> starts the app with (Q339). It opens a tab on the sessions page.
+    /// </summary>
+    Sessions,
 
     /// <summary>By the per-user logon task at sign-in, <c>--sign-in</c>. It shows nothing.</summary>
     SignIn,
@@ -47,19 +54,39 @@ internal static class StartModes
 
         return args.Contains(CoordinatorProtocol.CoordinateArgument, StringComparer.Ordinal) ? StartMode.Coordinate
             : args.Contains(CoordinatorProtocol.SignInArgument, StringComparer.Ordinal) ? StartMode.SignIn
+            : args.Contains(CoordinatorProtocol.SessionsArgument, StringComparer.Ordinal) ? StartMode.Sessions
             : StartMode.User;
     }
 
     /// <summary>The verb a start in this mode hands to a coordinator that is already running.</summary>
     /// <param name="mode">The mode.</param>
-    /// <returns><see cref="CoordinatorVerb.Show"/> for a person's start, <see cref="CoordinatorVerb.Recheck"/> for every other.</returns>
-    public static CoordinatorVerb VerbOf(StartMode mode) => mode is StartMode.User ? CoordinatorVerb.Show : CoordinatorVerb.Recheck;
+    /// <returns>
+    /// <see cref="CoordinatorVerb.Show"/> for a person's start, <see cref="CoordinatorVerb.Sessions"/>
+    /// for one asking for the sessions page, and <see cref="CoordinatorVerb.Recheck"/> for every other.
+    /// </returns>
+    public static CoordinatorVerb VerbOf(StartMode mode) => mode switch
+    {
+        StartMode.User => CoordinatorVerb.Show,
+        StartMode.Sessions => CoordinatorVerb.Sessions,
+        _ => CoordinatorVerb.Recheck,
+    };
+
+    /// <summary>Whether a person made this start, so it opens a tab.</summary>
+    /// <param name="mode">The mode.</param>
+    /// <returns>Whether it is a person's start.</returns>
+    public static bool IsAPersons(StartMode mode) => mode is StartMode.User or StartMode.Sessions;
+
+    /// <summary>The page a tab opens on for a verb.</summary>
+    /// <param name="verb">The verb.</param>
+    /// <returns>The page.</returns>
+    public static PageKind PageOf(CoordinatorVerb verb) => verb is CoordinatorVerb.Sessions ? PageKind.Sessions : PageKind.Status;
 }
 
-/// <summary>The coordinator's window, as the coordinator sees it.</summary>
+/// <summary>The configuration window, as the page's registration link opens it.</summary>
 /// <remarks>
-/// <b>A seam, so that a <c>show</c> in the suite is a recorded call and never a
-/// window.</b> The product's is <see cref="ConfigurationWindow"/>.
+/// <b>A seam, so that the suite records the call and never opens a window.</b> The
+/// product's is <see cref="ConfigurationWindow"/>, which the browser tab still sends a
+/// person to for registration until the tab covers it.
 /// </remarks>
 internal interface ICoordinatorWindow
 {
@@ -68,10 +95,46 @@ internal interface ICoordinatorWindow
     int Show();
 }
 
+/// <summary>The page, as the coordinator's loop sees it.</summary>
+/// <remarks>
+/// <b>Everything the loop asks of the browser tab, and nothing about HTTP.</b> The
+/// product's is <see cref="PageService"/>; the suite drives the loop with a page it
+/// scripts, and the page with a loop of its own.
+/// </remarks>
+internal interface ICoordinatorPage
+{
+    /// <summary>Whether a listener is up.</summary>
+    bool IsServing { get; }
+
+    /// <summary>Runs what the page queued for the coordinator's own thread.</summary>
+    void RunQueuedWork();
+
+    /// <summary>Whether an install the page started has handed over to the updater, so the coordinator has to exit.</summary>
+    /// <returns>Whether it has.</returns>
+    bool IsExitRequested();
+
+    /// <summary>Tells the page what this pass found staged.</summary>
+    /// <param name="pending">The staged package, or <see langword="null"/>.</param>
+    void Staged(UpdateCandidate? pending);
+
+    /// <summary>Ends the listener once no tab is connected and the linger has run out.</summary>
+    /// <param name="final">Whether the coordinator stops with it, after which nothing more is handed out.</param>
+    /// <returns>Whether no listener is up now.</returns>
+    bool TryStop(bool final);
+
+    /// <summary>Says one last thing to every tab and ends their streams; nothing is handed out after it.</summary>
+    /// <param name="sentence">What to say.</param>
+    void Tell(string sentence);
+}
+
 /// <summary>Why the coordinator stopped.</summary>
 internal enum CoordinatorEnd
 {
-    /// <summary>No newer package is staged, so there is nothing to coordinate.</summary>
+    /// <summary>
+    /// No newer package is staged and no tab is open, so there is nothing to
+    /// coordinate. <i>Corrected 2026-10-03 (previously "No newer package is staged,
+    /// so there is nothing to coordinate"), when the page's tabs joined the loop.</i>
+    /// </summary>
     NothingPending,
 
     /// <summary>Nothing else ran from the install, and the staged package was handed to Velopack.</summary>
@@ -91,12 +154,25 @@ internal enum CoordinatorEnd
 /// applies, silent and without a restart, when that scan is empty, and stops;
 /// and otherwise holds a handle on every process it found and waits on those
 /// handles and the pipe's own. Any exit and any verb is a new pass. The toast
-/// (phase 3) and the graceful close with its page (phase 4) are not here.
+/// (phase 3) is not here.
 /// </para>
 /// <para>
-/// <b>No timer.</b> The one timer in the update lane is the server's
-/// (DECISIONS, <i>Instance teardown</i>); the coordinator sleeps in the kernel
-/// until a process it holds exits or a verb arrives.
+/// ⚠️ <b>The browser tab joined the loop on 2026-10-03 -- Q336 a, the maintainer's
+/// words verbatim: <i>"Q336 a - also make sure that an exist only happens after 1
+/// min. of a tab closed so a reload keeps working (because that does not take 1
+/// min.)"</i>.</b> With nothing staged the loop runs for as long as the page has a
+/// listener, and the listener ends once no tab is connected and a minute has
+/// passed. The coordinator is in the live census for as long as its page serves,
+/// so a server finishing an update pass wakes it instead of applying out from
+/// under the tab. An open tab does not hold an update back: when the scan is empty
+/// the tab is told, and the package is handed over as before.
+/// </para>
+/// <para>
+/// <b>One timer, and it is the page's.</b> <i>Corrected 2026-10-03 (previously
+/// "No timer. The one timer in the update lane is the server's").</i> The
+/// coordinator still sleeps in the kernel; what wakes it now is also the page,
+/// through the inbox, when a tab arrives or leaves, when the minute runs out, or
+/// when an action needs the coordinator's own thread.
 /// </para>
 /// <para>
 /// ⚠️ <b>At most 63 processes are waited on at once</b>, with the pipe's handle the
@@ -129,18 +205,31 @@ internal enum CoordinatorEnd
 /// <param name="inbox">The verbs the pipe has taken.</param>
 /// <param name="staged">Whether a newer package is on disk, and the apply.</param>
 /// <param name="scan">The path scan under the install root, this process left out.</param>
-/// <param name="window">The window a <c>show</c> opens.</param>
+/// <param name="page">The browser tab's page, which a <c>show</c> hands out on the pipe's own thread.</param>
 /// <param name="logger">Where the coordinator reports.</param>
 internal sealed class CoordinatorLoop(
     string installRoot,
     CoordinatorInbox inbox,
     IStagedUpdates staged,
     Func<RootScan> scan,
-    ICoordinatorWindow window,
+    ICoordinatorPage page,
     ILogger logger)
 {
     /// <summary>The most process handles one wait holds: the kernel's 64, less the pipe's.</summary>
     public const int ProcessesPerWait = 63;
+
+    /// <summary>
+    /// Called each time a pass ends in a wait, just before the wait: the suite's
+    /// view of a loop that looked and decided to go on. <see langword="null"/> in
+    /// the product.
+    /// </summary>
+    /// <remarks>
+    /// <b>A seam for one question a clock cannot answer honestly</b>: whether a pass
+    /// that ran decided to stop. With it, an arm forces a pass and knows the loop is
+    /// still running when this is called, and without it the only witness would be a
+    /// wait for something that should not happen.
+    /// </remarks>
+    internal Action? Waiting { get; init; }
 
     /// <summary>Runs until there is nothing left to coordinate, or the package has been handed over.</summary>
     /// <returns>Why it stopped.</returns>
@@ -154,18 +243,39 @@ internal sealed class CoordinatorLoop(
 
             while (true)
             {
-                while (inbox.TryTake(out var arrival))
+                // Every verb is a reason to look again. A show was answered on the
+                // pipe's own thread, which handed out the tab before this one woke.
+                while (inbox.TryTake(out _))
                 {
-                    if (arrival!.Verb is CoordinatorVerb.Show)
-                    {
-                        _ = window.Show();
-                    }
                 }
 
-                if (staged.Pending() is not { } pending)
+                page.RunQueuedWork();
+
+                if (page.IsExitRequested())
                 {
-                    CoordinatorLog.Stopping(logger, "no newer package is staged, so there is nothing to coordinate.");
-                    return CoordinatorEnd.NothingPending;
+                    CoordinatorLog.Stopping(logger, "an install started from the page handed over to Update.exe, which applies it once this process exits and starts BrowserAI again.");
+                    return CoordinatorEnd.Applied;
+                }
+
+                var pending = staged.Pending();
+
+                page.Staged(pending);
+
+                if (pending is null)
+                {
+                    if (page.TryStop(final: true))
+                    {
+                        CoordinatorLog.Stopping(logger, "no newer package is staged and no tab is open, so there is nothing to coordinate.");
+                        return CoordinatorEnd.NothingPending;
+                    }
+
+                    // Serving a tab: in the census, so a server finishing its update
+                    // pass wakes this process instead of applying on its own exit.
+                    member ??= LiveInstances.Join(installRoot, logger);
+
+                    Waiting?.Invoke();
+                    _ = WaitHandle.WaitAny([inbox.Arrived]);
+                    continue;
                 }
 
                 member ??= LiveInstances.Join(installRoot, logger);
@@ -174,6 +284,10 @@ internal sealed class CoordinatorLoop(
 
                 if (found.Held.Count is 0 && found.Unresolved.Count is 0)
                 {
+                    // An open tab does not hold the update back (Q336 a). It is told,
+                    // and it says to open BrowserAI again from the Start Menu.
+                    page.Tell($"BrowserAI {pending.Version} is being installed, so this page has stopped. Open BrowserAI from the Start Menu again once it is done.");
+
                     staged.ApplyAfterThisProcessExits(pending);
 
                     var handed = $"{pending.Version} is staged and nothing else runs from this install, so it was handed to Update.exe, silent and with no restart, to apply once this process exits.";
@@ -181,6 +295,10 @@ internal sealed class CoordinatorLoop(
                     CoordinatorLog.Stopping(logger, handed);
                     return CoordinatorEnd.Applied;
                 }
+
+                // The listener ends once no tab is left, and the coordinator stays
+                // for the apply. A later show starts a new one.
+                _ = page.TryStop(final: false);
 
                 if (found.Held.Count != waitedOn)
                 {
@@ -193,6 +311,7 @@ internal sealed class CoordinatorLoop(
 
                 WaitHandle[] handles = [inbox.Arrived, .. found.Held.Take(ProcessesPerWait)];
 
+                Waiting?.Invoke();
                 _ = WaitHandle.WaitAny(handles);
             }
         }

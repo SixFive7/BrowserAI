@@ -171,11 +171,16 @@ internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
     {
         ArgumentNullException.ThrowIfNull(candidate);
 
-        if (candidate.Native is not UpdateInfo info)
+        // ⚠️ A STAGED PACKAGE TOO SINCE 2026-10-03: the browser tab offers a package
+        // a server already downloaded with a link that installs it (Q310 a), and that
+        // candidate carries the asset itself, the way the coordinator's does.
+        var asset = candidate.Native switch
         {
-            throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it.");
-        }
+            UpdateInfo info => info.TargetFullRelease,
+            VelopackAsset staged => staged,
+            _ => throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it."),
+        };
 
-        _manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: true, restart: true);
+        _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: true);
     }
 }

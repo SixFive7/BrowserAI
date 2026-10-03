@@ -41,26 +41,25 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       whether a kill-and-read-back arm can be written as a hang detector, and
       build it if it can; the process outside the client's tree, direction (c),
       is not built by decision.
-- [ ] **The browser tab, Q315 a, which replaces the configuration window.**
-      Kestrel from ASP.NET Core's empty builder, plain request handlers, no
-      OpenAPI (Q340 b, Q341 b, Q342 c, Q343); the secret address handed over
-      through the coordinator's pipe, and nothing else (Q334 a, Q335 a); the
-      coordinator alive while a tab is connected and one minute after the last
-      one closes, with an update applied and the tab told when nothing runs
-      from the install (Q336 a); the newest tab wins, and after an update a new
-      tab (Q337 a, Q338 b). On it: a status page that says when an offered
-      version is older (Q308 a) and that a Codex started before the install
-      needs restarting (Q314 b); a staged update with a link that installs it
-      (Q310 a); folder choice through the native picker the coordinator opens
-      (Q311), checked on the real desktop for focus; and BrowserAI's own
-      sessions page with links to session files and the trace viewer (Q317 c).
-      What the 2026-09-24 rendering found about states carries over: a first
-      run that always claims success, a feed folder with no manifest read as
-      up to date, and a hung check that shows *Checking* with no way to cancel.
-      **What to do:** build it host-neutral, write the hazard row Q335 a
-      calls for with the listener, then delete the task-dialog window, which
-      closes the link-hole row. ⚠️ **No release is cut until the tab has
-      replaced the window (Q319 b).**
+- [ ] **The browser tab, Q315 a: what is left of replacing the configuration
+      window.** Built on 2026-10-03, in `src/BrowserAI.App/Page/`: the listener,
+      its gate and its token (Q340 b, Q341 b, Q342 c, Q343, Q334 a, Q335 a, with
+      the other-users hazard row); the coordinator's minute and the newest tab
+      winning (Q336 a, Q337 a, Q338 b); the status page with the update section
+      (Q308 a, Q309 b, Q310 a) and the two states the 2026-09-24 rendering found
+      in it, a feed folder with no release list read as up to date and a hung
+      check with no way out; the sessions page (Q317 c's first part); and the
+      `--sessions` entry point the toast's *Review* will start (Q339). **What is
+      left**: registration in the tab, both clients at both scopes with Q309 b's
+      Codex error line and Q314 b's sentence about a Codex started before the
+      install, once BrowserAI calls RegisterAI; the folder picker for a project,
+      opened by the coordinator with a topmost owner (Q311), and a look at its
+      focus on the real desktop; the first-run note saying what registration
+      really did, which today says only that BrowserAI is installed; the trace
+      viewer link on the sessions page; and then deleting the task-dialog window,
+      still opened from the tab for registration. Deleting it closes the
+      link-hole row in [the hazard index](HAZARDS.md#hazard-index). ⚠️ **No
+      release is cut until the tab has replaced the window (Q319 b).**
 - [ ] **A view-only look at a headless session, Q317 c's second part.** Taken
       by the process that holds the session, on a person's request, and logged
       with a `why`. **What to do:** three measurements come first, as they were
@@ -72,6 +71,8 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       way a Start Menu click does, through the COM activator of the toast's
       design. **What to do:** build it after the tab, against
       [`docs/design/toast-2026-09-24`](docs/design/toast-2026-09-24/README.md).
+      The entry point exists since 2026-10-03: `BrowserAI.exe --sessions` is a
+      person's start that opens a tab on the sessions page.
 
 ### Still open, and the maintainer's to choose
 

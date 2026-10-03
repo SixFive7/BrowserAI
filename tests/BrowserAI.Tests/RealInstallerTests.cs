@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using BrowserAI.App.Page;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Registration;
@@ -263,8 +264,9 @@ internal sealed partial class RealInstallerTests
                     .Select(shortcut => $"{shortcut.Key}\t{Convert.ToHexString(SHA256.HashData(shortcut.Value))}"));
 
     /// <summary>
-    /// The installed main executable opens one task dialog, owns no console
-    /// window, and closes when it is asked to.
+    /// The installed main executable serves its page at the address it was handed,
+    /// shows no window of its own and no console, counts in the census while it
+    /// serves, and exits a minute after its last tab has gone.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -273,8 +275,19 @@ internal sealed partial class RealInstallerTests
     /// <c>CREATE_UNICODE_ENVIRONMENT</c> and nothing else, and on 2026-09-15
     /// that put a <b>1506×1490 Windows Terminal window</b> on the user's screen,
     /// serving nobody, for 215 seconds. The window is gone because the main
-    /// executable is a Windows-subsystem binary now, and what this asserts is
-    /// the visible half of that: one dialog, and nothing else.
+    /// executable is a Windows-subsystem binary now.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Rewritten 2026-10-03 for the browser tab -- Q315 a, the maintainer's
+    /// words verbatim: <i>"Q315 a"</i></b> (previously <i>opens one task dialog, owns
+    /// no console window, and closes when it is asked to</i>). A person's start opens
+    /// a tab in the person's own browser and no window of its own, so what the arm
+    /// asserts moved with it: the page answers at the address the start was handed,
+    /// the executable shows no top-level window at all on its desktop, and it leaves
+    /// a minute after its last tab closes (Q336 a), with exit code 0. The start
+    /// carries <c>--write-address</c>, which writes the address to a file and opens
+    /// nothing, because a browser tab is exactly what this suite may never put on
+    /// the screen of the person at the machine.
     /// </para>
     /// <para>
     /// ⚠️ <b>It installs SILENTLY and launches the binary itself, deliberately.</b>
@@ -290,45 +303,28 @@ internal sealed partial class RealInstallerTests
     /// terminal set to Windows Terminal, a console allocated to a process shows
     /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
     /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
-    /// screen while two windows were on it. So this arm does not claim to detect
-    /// a console by looking for its window. What carries that guarantee is
+    /// screen while two windows were on it. What carries that guarantee is
     /// <c>TaskDialogLayoutTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>,
     /// which reads the subsystem out of the binary -- the cause and not the
-    /// symptom. The by-pid check below is kept because it is free and because it
-    /// would catch the one case the subsystem cannot: this process calling
-    /// <c>AllocConsole</c> itself.
+    /// symptom.
     /// </para>
     /// <para>
     /// ⚠️ <b>The app runs on a desktop nobody is looking at, since 2026-09-24 --
-    /// Q279.</b> <i>Previously it was started with <c>Process.Start</c> and
-    /// <c>CreateNoWindow = true</c> from the test host, on the host's own desktop,
-    /// and found through <c>EnumWindows</c>.</i> <c>CreateNoWindow</c> does nothing
-    /// for a Windows-subsystem binary, so for nine days this dialog came up on the
-    /// interactive desktop in every full run with the release installer and asked
-    /// for the foreground -- the testbed stealing focus from the person using the
-    /// machine, which the maintainer ruled out in as many words. The desktop is
-    /// created with <c>CreateDesktopW</c> and the app launched through
-    /// <c>JobLauncher</c> with <c>STARTUPINFO.lpDesktop</c> naming it; the dialog is
-    /// found with <c>EnumDesktopWindows</c> and closed by a thread attached to the
-    /// desktop, and the desktop is closed when the arm ends. Every assertion is the
-    /// one it was. Watched red first: the unmodified arm, run in a host on a private
-    /// desktop so that its dialog stayed off the screen, exited 10 under
-    /// <see cref="WindowWatch"/> naming the <c>#32770</c>.
+    /// Q279</b>, created with <c>CreateDesktopW</c> and launched through
+    /// <c>JobLauncher</c> with <c>STARTUPINFO.lpDesktop</c> naming it. Two windows on
+    /// that desktop are the input framework's and are left out by class, as they
+    /// were when the arm looked for a dialog.
     /// </para>
     /// <para>
-    /// <b>Two windows on that desktop are the input framework's, and they are named
-    /// and not counted as the app's.</b> A desktop with no taskbar gets the input
-    /// indicator from inside the process that has focus there: measured
-    /// 2026-09-24, a <c>UAC_InputIndicatorOverlayWnd</c> at 0x0 and a
-    /// <c>UAC Input Indicator</c> at 50x50 showed in the app's own pid about 40 to
-    /// 60 ms after the dialog. They are not the app's user interface, and the claim
-    /// that the app shows exactly one window of its own is kept by leaving out those
-    /// two classes and no other.
+    /// <b>The minute is the product's own</b> (<see cref="PageTabs.ProductLinger"/>),
+    /// so this arm waits it out once; the wait is bounded by
+    /// <see cref="TestDefaults.ProcessHang"/>, a hang detector, and nothing asserts
+    /// how long the exit took.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow()
+    public async Task TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn()
     {
         var setup = SuiteEnvironment.RequireReleaseInstaller();
 
@@ -359,16 +355,15 @@ internal sealed partial class RealInstallerTests
                 .IsEqualTo(0);
 
             var app = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+            var addressFile = Path.Combine(logs.Path, "address.txt");
 
             await Assert.That(File.Exists(app)).IsTrue();
 
-            // ⚠️ ON A DESKTOP OF ITS OWN, Q279: a Windows-subsystem binary shows its
-            // window whatever CreateNoWindow says, and only a desktop nobody is
-            // looking at keeps it off the maintainer's screen. The environment is
-            // this process's, sandbox included, as Process.Start used to hand it on.
+            // ⚠️ ON A DESKTOP OF ITS OWN, Q279, and with --write-address: the start
+            // writes the address it would have opened and opens nothing.
             using var desktop = PrivateDesktop.Create("real-install-window");
             using var job = JobObject.CreateKillOnClose();
-            using var process = desktop.Launch(job, app, [], installRoot.Path, PublishedSlice.InheritedEnvironment());
+            using var process = desktop.Launch(job, app, [PageOpener.WriteAddressArgument, addressFile], installRoot.Path, PublishedSlice.InheritedEnvironment());
 
             // Drained, because a pipe nobody reads can stop a child that writes to
             // it; the app is a GUI binary and is not expected to.
@@ -376,61 +371,62 @@ internal sealed partial class RealInstallerTests
 
             try
             {
-                var dialog = await WaitForTheDialogAsync(desktop, process.Id);
+                var address = await WaitForTheAddressAsync(addressFile, process);
 
-                await Assert.That(dialog).IsNotEqualTo(nint.Zero);
+                await Assert.That(address).IsNotNull();
 
-                var owned = desktop.TopLevelWindows()
-                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id)
-                    .Select(TopLevelWindows.ClassNameOf)
-                    .ToList();
+                var uri = new Uri(address!);
+                var page = await RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
 
-                // Exactly one VISIBLE top-level window of the app's own, and it is
-                // the dialog. The invisible ones are the input-method windows every
-                // GUI process on this machine carries; the two input-indicator
-                // classes are the input framework's on a desktop with no taskbar,
-                // named in the remarks and left out by name.
+                await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
+                await Assert.That(page.Body).Contains("<h1>BrowserAI ");
+
+                // No visible top-level window of the app's own: the invisible ones are
+                // the input-method windows every GUI process on this machine carries,
+                // and the two input-indicator classes are the input framework's on a
+                // desktop with no taskbar, named in the remarks and left out by name.
                 var visible = desktop.TopLevelWindows()
                     .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id && TopLevelWindows.IsVisible(window))
                     .Select(TopLevelWindows.ClassNameOf)
                     .Where(name => !InputIndicatorClasses.Contains(name, StringComparer.Ordinal))
                     .ToList();
 
-                await Assert.That(string.Join(", ", visible)).IsEqualTo(TaskDialogWindowClass);
+                await Assert.That(string.Join(", ", visible)).IsEmpty();
 
-                // And no console window of its own. See the remarks for exactly
-                // how much this does and does not prove.
+                var owned = desktop.TopLevelWindows()
+                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id)
+                    .Select(TopLevelWindows.ClassNameOf)
+                    .ToList();
+
                 await Assert.That(owned.Where(name =>
                         name is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow"))
                     .IsEmpty();
 
-                // ⚠️ AND IT IS IN THE LIVE-INSTANCE CENSUS WHILE THE WINDOW IS
-                // OPEN, which is what stops a server's update lane applying an
-                // update out from under somebody who is reading the dialog:
-                // Velopack's apply ends in `force_stop_package`, which kills by
-                // image path under the install root and would take the window
-                // with it, mid-click.
-                //
-                // Asserted from OUTSIDE the process, on the marker file it holds
-                // -- the same file `LiveInstances.Census` counts -- because the
-                // census is a property of the directory and not of any one
-                // process's opinion of itself.
+                // ⚠️ AND IT IS IN THE LIVE-INSTANCE CENSUS WHILE IT SERVES A PAGE,
+                // which is what stops a server's update lane applying an update out
+                // from under a tab: Velopack's apply ends in `force_stop_package`,
+                // which kills by image path under the install root. Asserted from
+                // OUTSIDE the process, on the marker file it holds.
                 var live = LiveInstances.DirectoryUnder(installRoot.Path);
 
-                await Assert.That(Directory.Exists(live)).IsTrue();
-                await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsTrue();
+                await Assert.That(await WaitForAsync(() => Directory.Exists(live) && Directory.EnumerateFiles(live, "*.live").Any())).IsTrue();
 
-                // Posted from a thread attached to the app's desktop: window
-                // messages travel between processes of one desktop.
-                await Assert.That(desktop.Close(dialog)).IsTrue();
+                // A tab connects and closes: the minute starts, and then it leaves.
+                var token = uri.AbsolutePath.Trim('/');
+
+                using (var tab = await RawEventStream.OpenAsync(uri.Port, token, tab: 1))
+                {
+                    await Assert.That(tab.Status).IsEqualTo(200);
+                    await Assert.That(await tab.NextNamedAsync(PageEvents.State)).IsNotNull();
+                }
 
                 await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
                 await drained;
                 await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
 
-                // And it leaves the census on the way out. The marker is
-                // released by the handle closing, so this is a property of the
-                // process ending and not of any cleanup it performs.
+                // And it leaves the census on the way out. The marker is released by
+                // the handle closing, so this is a property of the process ending and
+                // not of any cleanup it performs.
                 await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsFalse();
             }
             finally
@@ -453,14 +449,6 @@ internal sealed partial class RealInstallerTests
         }
     }
 
-    /// <summary>The window class a task dialog is.</summary>
-    /// <remarks>
-    /// <c>#32770</c> is the Windows dialog class, and a task dialog is a dialog.
-    /// It is spelled once here so the assertion and the failure message cannot
-    /// say different things.
-    /// </remarks>
-    private const string TaskDialogWindowClass = "#32770";
-
     /// <summary>Reads both of a launched child's output pipes to their end.</summary>
     /// <param name="process">The child.</param>
     /// <returns>A task that completes when both pipes have closed.</returns>
@@ -474,37 +462,54 @@ internal sealed partial class RealInstallerTests
     private static readonly string[] InputIndicatorClasses = ["UAC_InputIndicatorOverlayWnd", "UAC Input Indicator"];
 
     /// <summary>
-    /// Waits for the dialog to appear on the app's desktop, polling instead of
-    /// sleeping once.
+    /// Waits for the address file a start with <c>--write-address</c> writes, or for
+    /// the start to exit without writing it.
     /// </summary>
-    /// <remarks>
-    /// <b>A single sleep is what made this flake by hand.</b> Two runs of the
-    /// same probe on 2026-09-15 disagreed at a fixed 2.5 s and agreed at 500 ms
-    /// when polled, because the window arrives whenever the shell gets round to
-    /// it. The bound is a hang detector and not a promptness claim.
-    /// </remarks>
-    private static async Task<nint> WaitForTheDialogAsync(PrivateDesktop desktop, int processId)
+    /// <param name="file">The file.</param>
+    /// <param name="process">The start.</param>
+    /// <returns>The address, or <see langword="null"/> when none was written.</returns>
+    /// <remarks>Polled, and bounded by a hang detector that is not a promptness claim.</remarks>
+    private static async Task<string?> WaitForTheAddressAsync(string file, LaunchedProcess process)
     {
         var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
         while (DateTime.UtcNow < deadline)
         {
-            foreach (var window in desktop.TopLevelWindows())
+            if (File.Exists(file) && (await File.ReadAllTextAsync(file)) is { Length: > 0 } address)
             {
-                if (TopLevelWindows.ProcessIdOf(window) == processId
-                    && TopLevelWindows.IsVisible(window)
-                    && string.Equals(TopLevelWindows.ClassNameOf(window), TaskDialogWindowClass, StringComparison.Ordinal))
-                {
-                    return window;
-                }
+                return address;
+            }
+
+            if (process.HasExited)
+            {
+                return null;
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(100));
         }
 
-        return nint.Zero;
+        return null;
     }
 
+    /// <summary>Polls a condition until it holds or the hang detector runs out.</summary>
+    /// <param name="condition">The condition.</param>
+    /// <returns>Whether it held.</returns>
+    private static async Task<bool> WaitForAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
+
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline)
+            {
+                return false;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
+        }
+
+        return true;
+    }
 
     /// <summary>
     /// Two installs of one pack id into two roots share one Add/Remove key, and

@@ -122,6 +122,83 @@ Evidence: `second-pass/run/s1`, `s2`, `f*`, `rc*`, `rf*` and the zipped fuzz
 log `z1`. **Re-establish** with `stest`, `ffcheck.mjs`, `fuzz.mjs` and
 `resume.mjs` against `probes/sprobe`; a new browser build is a new measurement.
 
+## The product's listener under attack -- measured 2026-10-03
+
+`[FLOATS]` **The listener BrowserAI ships is Kestrel from ASP.NET Core's empty
+builder (Q340 b), and its one gate refuses every shape the prototype's refused,
+with a 404 that carries nothing; what Kestrel cannot parse it answers itself,
+before the gate is asked.** Measured from raw sockets against
+`BrowserAI.App.Page.PageListener` running in the test host, ASP.NET Core and the
+.NET runtime 10.0.12, SDK 10.0.401, Windows 11 build 26300, by
+`PageListenerTests` on every run:
+
+- **Admitted**: the page with the token and `Host: 127.0.0.1:<port>`, and a JSON
+  write carrying our `Origin` and `Sec-Fetch-Site: same-origin`. Each answer
+  carries the fixed security headers, and none carries `Server`, `Set-Cookie` or
+  a CORS header.
+- **A 404 with an empty body, and no route reached**: no token; a wrong token of
+  the right length; the token with no closing slash, behind a dot segment, or
+  percent-encoded; an absolute-form target; `Host: localhost`; an attacker's
+  `Host`; HTTP/1.0 with no `Host`; another `Origin` on a read or a write; a write
+  with no `Origin`; a form content type; a body one byte over 64 KB; a chunked
+  body; a preflight; `PUT`; a route that does not exist.
+- **Answered by Kestrel before the gate, empty, and no route reached**: two
+  `Host` headers, `400`; an HTTP/1.1 request with no `Host`, `400`; a header
+  block over the 8 KB limit, `431`; bytes that are not HTTP, `400`. The
+  prototype's raw socket answered these with its own `404`.
+- **The socket**: the same port on `[::1]` refused the connection. A second
+  socket of the same user binding `127.0.0.1` and the port was refused, with
+  `WSAEACCES` when it asked to share and `WSAEADDRINUSE` when it did not, and a
+  wildcard bound to the same port succeeded beside it and received no
+  connection made to `127.0.0.1`.
+- ⚠️ **Exclusive use is asked for and its effect was not seen**: a listening
+  socket of our own on `127.0.0.1`, bound with and without
+  `SO_EXCLUSIVEADDRUSE`, got the same answer to every second bind above in both
+  cases, so on this build the refusal is Windows' default and the flag adds
+  nothing a same-user test can observe. What another Windows user can do is not
+  measured: one account.
+- **Size**: the published `BrowserAI.exe` with the page is 14,852,096 bytes,
+  against 10,987,520 for the same SDK's publish of `798aa5b`, whose app code is
+  the code this change was rebased onto: +3,864,576, against the 3,490,816 the first pass measured for
+  Kestrel's empty builder alone.
+
+**Re-establish** with the four arms of `PageListenerTests`, which are the
+measurement and run on every build, the two sockets of our own included; the
+size is two publishes, one either side of the change.
+
+### The page in two real browsers -- measured 2026-10-03
+
+`[FLOATS]` **In Chrome for Testing 155.0.8059.12 (`chromium-1247`) and
+Playwright's Firefox 156.0 (`firefox-1553`), driven headless through a BrowserAI
+session, the page's script ran under its own content security policy, its event
+stream connected, a click posted through the gate and its answer came back into
+the page, and a tab a newer one replaced called `window.close()`.** The write
+passing the gate is the measurement of what each browser's `fetch` sends: our
+exact `Origin`, `Sec-Fetch-Site: same-origin` and `Content-Type: application/json`.
+`PageBrowserTests` takes it on every run, once per family.
+
+- **Whether the replaced tab then went was the engine's.** The HTML standard
+  lets a script close a tab only when a script opened it or its session history
+  holds one document. Firefox closed the replaced tab both ways the arm opened
+  it: as the session's own first tab, and as a new tab given the address, whose
+  `history.length` read 1. Chromium closed neither. Its new tab given the address
+  read `history.length` 2, the blank page the tab began on and the page, and the
+  session's first tab was still open when the arm's thirty-minute hang detector
+  ran out. The page then says it was replaced, which is what it is written to do
+  when the browser refuses.
+- A new blank tab whose one entry a script replaced with the address never
+  connected in either engine within the minute that run waited. The gate's
+  answer to it was not read, so why is not established.
+- **A tab the shell opens for a person's start was not measured**: the suite
+  cannot open one. Whether Chromium closes the tab a real start opened is for a
+  person's own browser to show.
+
+**Re-establish** with the two arms of `PageBrowserTests`, which hold that the
+replaced page asks to close and accept either answer from the engine; the
+history readings are a one-off assertion `() => history.length` in the tab the
+arm opens, and the hang is the arm's own first form, which waited for the tab to
+go.
+
 ## Chrome for Testing calls Google while idle, and one switch stops it -- measured 2026-10-01
 
 `[FLOATS]` Chrome for Testing 154.0.8037.0 on a local page for eight idle

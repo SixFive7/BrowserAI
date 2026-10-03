@@ -60,6 +60,15 @@ internal sealed class CoordinatorInbox : IDisposable
         _ = _arrived.Set();
     }
 
+    /// <summary>Wakes whoever waits, with no verb: something else the coordinator watches changed.</summary>
+    /// <remarks>
+    /// <b>One handle for the coordinator to wait on, not two.</b> The page's tabs
+    /// arriving and leaving, its linger running out and its work for the
+    /// coordinator's own thread all wake the loop through this, so the loop's wait
+    /// keeps the pipe's handle and 63 processes' and nothing more.
+    /// </remarks>
+    public void Wake() => _ = _arrived.Set();
+
     /// <summary>Takes the oldest verb.</summary>
     /// <param name="arrival">The verb, when there was one.</param>
     /// <returns>Whether there was one.</returns>

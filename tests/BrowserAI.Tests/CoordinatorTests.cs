@@ -7,6 +7,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using BrowserAI.App;
 using BrowserAI.App.Interop;
+using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Registration;
@@ -30,12 +31,13 @@ namespace BrowserAI.Tests;
 /// sends <c>show</c> or <c>recheck</c>, and exits.
 /// </para>
 /// <para>
-/// <b>Headless, both halves.</b> The foreground grant and the window are seams
-/// here, so a <c>show</c> is a recorded call and never a window, and a grant is a
-/// recorded pid and never a call to Windows. The one arm that drives the
+/// <b>Headless, both halves.</b> The foreground grant and the page are seams
+/// here, so a <c>show</c> hands out an address the arm made up and never a tab, and a
+/// grant is a recorded pid and never a call to Windows. The one arm that drives the
 /// published app starts it on a private desktop, as a second start against a
-/// coordinator this host holds, so a regression that opened the window would open
-/// it where nobody is looking.
+/// coordinator this host holds, and only ever hands it an address together with the
+/// argument that writes the address to a file, so a regression that opened it would
+/// open it where nobody is looking.
 /// </para>
 /// </remarks>
 internal sealed class CoordinatorTests
@@ -313,28 +315,30 @@ internal sealed class CoordinatorTests
     }
 
     /// <summary>
-    /// A person's second start grants the coordinator the foreground and asks for
-    /// its window; a hidden one grants nothing and asks it to look again; and the
-    /// coordinator stops once nothing is staged.
+    /// A person's second start grants the coordinator the foreground and gets the
+    /// address of a new tab back; a start for the sessions page gets one on that
+    /// page; a hidden one grants nothing, gets no address and asks it to look again;
+    /// and the coordinator stops once nothing is staged.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The coordinator here is the product's own loop</b>, on a thread of this
-    /// host, holding the pipe through <see cref="CoordinatorStart.Settle"/>, with a
-    /// staged update the arm controls and a window that records. The grant records
-    /// the pid it would have handed <c>AllowSetForegroundWindow</c>, which in one
-    /// process is this process's own. One stand-in the scan reports runs from the
-    /// install the whole time, so the loop waits and never applies.
+    /// <b>Q334 a, the maintainer's words verbatim: <i>"Q334 a"</i></b>: the address is
+    /// handed over through the coordinator's pipe and nowhere else, and the start the
+    /// person made opens it. The coordinator here is the product's own loop on a
+    /// thread of this host, holding the pipe through <see cref="CoordinatorStart.Settle"/>
+    /// with a hand-out that records which page it was asked for and answers an
+    /// address the arm made up. One stand-in the scan reports runs from the install
+    /// the whole time, so the loop waits and never applies.
     /// </para>
     /// <para>
     /// <b>The order is asserted, not only the calls</b>: the grant is made before
-    /// the window is asked for, because a grant after the coordinator had called
-    /// <c>SetForegroundWindow</c> would be one Windows had already refused.
+    /// the tab is handed out, because the grant is made on the connection, before a
+    /// byte of the verb is sent.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task APersonsStartGrantsTheForegroundAndAsksForTheWindowAndAHiddenOneAsksToLookAgain()
+    public async Task APersonsStartGrantsTheForegroundAndGetsATabsAddressAndAHiddenOneAsksToLookAgain()
     {
         using var root = ScratchDirectory.Create("coordinator-show");
         using var inbox = new CoordinatorInbox();
@@ -342,14 +346,23 @@ internal sealed class CoordinatorTests
 
         var events = new ConcurrentQueue<string>();
         var staged = new ScriptedStaged { Candidate = Candidate("9.9.9") };
-        using var window = new RecordedWindow(events);
-        var start = CoordinatorStart.Settle(root.Path, inbox, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang);
+        var page = new ScriptedPage();
+        var handedOut = 0;
+
+        string? handOut(CoordinatorVerb asked)
+        {
+            var tab = Interlocked.Increment(ref handedOut);
+            events.Enqueue($"hand out {asked} {tab}");
+            return $"http://127.0.0.1:1/token/{(asked is CoordinatorVerb.Sessions ? "sessions" : string.Empty)}?tab={tab}";
+        }
+
+        var start = CoordinatorStart.Settle(root.Path, inbox, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang, handOut);
 
         await Assert.That(start.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator);
 
         using var pipe = start.Pipe;
 
-        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, blocker.Next, window, NullLogger.Instance));
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, blocker.Next, page, NullLogger.Instance));
 
         // A person's start.
         using (var person = new CoordinatorInbox())
@@ -358,20 +371,34 @@ internal sealed class CoordinatorTests
             var handed = CoordinatorStart.Settle(root.Path, person, CoordinatorVerb.Show, grant, NullLogger.Instance, TestDefaults.InProcessHang);
 
             await Assert.That(handed.Outcome).IsEqualTo(CoordinatorStartOutcome.HandedOver).Because(handed.Why);
+            await Assert.That(handed.HandOver!.Address).IsEqualTo("http://127.0.0.1:1/token/?tab=1");
             await Assert.That(grant.Granted.ToArray()).IsEquivalentTo([Environment.ProcessId]);
-            await Assert.That(await window.ShownAsync(1)).IsTrue();
-            await Assert.That(string.Join(", ", events)).IsEqualTo($"grant {Environment.ProcessId}, show");
+            await Assert.That(string.Join(", ", events)).IsEqualTo($"grant {Environment.ProcessId}, hand out Show 1");
         }
 
-        // A hidden start: no grant, no window.
+        // The update toast's Review: a tab on the sessions page, the way a person's start asks.
+        using (var review = new CoordinatorInbox())
+        {
+            var grant = new RecordedGrant(events);
+            var handed = CoordinatorStart.Settle(root.Path, review, CoordinatorVerb.Sessions, grant, NullLogger.Instance, TestDefaults.InProcessHang);
+
+            await Assert.That(handed.Outcome).IsEqualTo(CoordinatorStartOutcome.HandedOver).Because(handed.Why);
+            await Assert.That(handed.HandOver!.Address).IsEqualTo("http://127.0.0.1:1/token/sessions?tab=2");
+            await Assert.That(grant.Granted.ToArray()).IsEquivalentTo([Environment.ProcessId]);
+        }
+
+        // A hidden start: no grant and no address.
         using (var hidden = new CoordinatorInbox())
         {
             var grant = new RecordedGrant(events);
             var handed = CoordinatorStart.Settle(root.Path, hidden, CoordinatorVerb.Recheck, grant, NullLogger.Instance, TestDefaults.InProcessHang);
 
             await Assert.That(handed.Outcome).IsEqualTo(CoordinatorStartOutcome.HandedOver).Because(handed.Why);
+            await Assert.That(handed.HandOver!.Address).IsNull();
             await Assert.That(grant.Granted.IsEmpty).IsTrue();
         }
+
+        await Assert.That(Volatile.Read(ref handedOut)).IsEqualTo(2);
 
         // Nothing staged any more, and a recheck is what makes the loop see it.
         staged.Candidate = null;
@@ -380,8 +407,54 @@ internal sealed class CoordinatorTests
 
         await Assert.That(last.Outcome).IsEqualTo(HandOverOutcome.Answered).Because(last.Why);
         await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.NothingPending);
-        await Assert.That(window.Shows).IsEqualTo(1);
         await Assert.That(staged.Applies).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// A coordinator that has decided to stop refuses a verb asking for a tab, and the
+    /// start that met the refusal waits it out and becomes the coordinator itself.
+    /// </summary>
+    /// <remarks>
+    /// <b>The window this closes is the one between the coordinator deciding to stop
+    /// and letting its pipe go</b>: a person's start that lands in it would otherwise
+    /// be told nothing it can act on. The stopping coordinator here refuses, and lets
+    /// its pipe go once it has refused; the start's next attempt creates the pipe.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStartThatMeetsAStoppingCoordinatorWaitsItOutAndBecomesTheCoordinator()
+    {
+        using var root = ScratchDirectory.Create("coordinator-stopping");
+        using var inbox = new CoordinatorInbox();
+        using var refused = new ManualResetEventSlim();
+
+        var start = CoordinatorStart.Settle(
+            root.Path, inbox, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang, _ =>
+            {
+                refused.Set();
+                return null;
+            });
+
+        await Assert.That(start.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator);
+
+        // The stopping coordinator lets its pipe go once it has refused.
+        var letGo = Task.Run(() =>
+        {
+            _ = refused.Wait(TestDefaults.InProcessHang);
+            start.Pipe!.Dispose();
+        });
+
+        using var next = new CoordinatorInbox();
+
+        var person = CoordinatorStart.Settle(
+            root.Path, next, CoordinatorVerb.Show, grant: null, NullLogger.Instance, TestDefaults.InProcessHang, _ => "http://127.0.0.1:1/token/?tab=1");
+
+        await letGo;
+
+        await Assert.That(refused.IsSet).IsTrue();
+        await Assert.That(person.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator).Because(person.Why);
+
+        person.Pipe!.Dispose();
     }
 
     /// <summary>
@@ -412,7 +485,6 @@ internal sealed class CoordinatorTests
         using var logs = new CapturingLoggerProvider();
         using var scanned = new SemaphoreSlim(0);
         using var censusRead = new ManualResetEventSlim();
-        using var window = new RecordedWindow(new ConcurrentQueue<string>());
         using var scope = new JobObjectScope();
 
         var (standIn, _) = await PlantedProcess.StartInAsync(scope, Path.Combine(root.Path, RegistrationTarget.CurrentDirectoryName), root.Path);
@@ -438,7 +510,7 @@ internal sealed class CoordinatorTests
 
                 return found;
             },
-            window,
+            new ScriptedPage(),
             logs.CreateLogger("coordinator")));
 
         await Assert.That(await scanned.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
@@ -497,9 +569,8 @@ internal sealed class CoordinatorTests
         using var root = ScratchDirectory.Create("coordinator-nothing");
         using var inbox = new CoordinatorInbox();
         using var scan = new ScriptedScan(root.Path, standIns: 1);
-        using var window = new RecordedWindow(new ConcurrentQueue<string>());
 
-        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, NothingStaged.Instance, scan.Next, window, NullLogger.Instance));
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, NothingStaged.Instance, scan.Next, new ScriptedPage(), NullLogger.Instance));
 
         await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.NothingPending);
         await Assert.That(scan.Passes.Count).IsEqualTo(0);
@@ -528,10 +599,9 @@ internal sealed class CoordinatorTests
         using var inbox = new CoordinatorInbox();
         using var logs = new CapturingLoggerProvider();
         using var scan = new ScriptedScan(root.Path, StandIns);
-        using var window = new RecordedWindow(new ConcurrentQueue<string>());
 
         var staged = new ScriptedStaged { Candidate = Candidate("9.9.9") };
-        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, scan.Next, window, logs.CreateLogger("coordinator")));
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, scan.Next, new ScriptedPage(), logs.CreateLogger("coordinator")));
 
         // The first pass holds all seventy.
         await Assert.That(await scan.PassesAsync(1, run)).IsTrue();
@@ -631,18 +701,25 @@ internal sealed class CoordinatorTests
     /// The published app, started as a second start, hands its verb to the
     /// coordinator this host holds and exits: <c>recheck</c> for
     /// <c>--coordinate</c> and <c>--sign-in</c>, <c>show</c> for a start with no
-    /// arguments.
+    /// arguments and <c>sessions</c> for <c>--sessions</c>; and a person's start that
+    /// is handed an address writes it where <c>--write-address</c> says and opens
+    /// nothing.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The one arm on the published binary</b>, because it is the only place
-    /// the mode parsing and the settle are wired together. The scratch data root
-    /// is the child's own root through <c>BROWSERAI_ROOT</c>, set on the child
-    /// alone, which is also the root an uninstalled app keys its coordinator to.
+    /// the mode parsing, the settle and the delivery of the address are wired
+    /// together. The scratch data root is the child's own root through
+    /// <c>BROWSERAI_ROOT</c>, set on the child alone, which is also the root an
+    /// uninstalled app keys its coordinator to.
     /// </para>
     /// <para>
-    /// <b>On a private desktop</b>: the start with no arguments is a person's start,
-    /// and a regression that made it the coordinator would open the dialog.
+    /// ⚠️ <b>The coordinator here hands out no address until the last start, and that
+    /// one carries <c>--write-address</c></b>: a person's start that is handed an
+    /// address opens it with the shell, and a browser tab is exactly what this suite
+    /// may never put on the screen of the person at the machine. Every start is on a
+    /// private desktop besides, so a regression that opened anything would open it
+    /// where nobody is looking.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -654,48 +731,88 @@ internal sealed class CoordinatorTests
         using var root = ScratchDirectory.Create("coordinator-published");
         using var inbox = new CoordinatorInbox();
 
-        var start = CoordinatorStart.Settle(root.Path, inbox, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang);
-
-        await Assert.That(start.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator);
-
-        using var pipe = start.Pipe;
-
         var environment = PublishedSlice.InheritedEnvironment();
 
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
         environment[RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(root.Path, "codex")).FullName;
+
+        using var desktop = PrivateDesktop.Create("coordinator-second-start");
+
+        // A coordinator with no page: every start is acknowledged and none is handed an address.
+        var start = CoordinatorStart.Settle(root.Path, inbox, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang);
+
+        await Assert.That(start.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator);
 
         (string[] Arguments, CoordinatorVerb Verb)[] starts =
         [
             ([CoordinatorProtocol.CoordinateArgument], CoordinatorVerb.Recheck),
             ([CoordinatorProtocol.SignInArgument, "$(Arg0)"], CoordinatorVerb.Recheck),
             ([], CoordinatorVerb.Show),
+            ([CoordinatorProtocol.SessionsArgument], CoordinatorVerb.Sessions),
         ];
 
-        using var desktop = PrivateDesktop.Create("coordinator-second-start");
-
-        foreach (var (arguments, verb) in starts)
+        using (start.Pipe)
         {
-            using var job = JobObject.CreateKillOnClose();
-            using var process = desktop.Launch(job, PublishedSlice.AppExecutable, arguments, root.Path, environment);
+            foreach (var (arguments, verb) in starts)
+            {
+                var (processId, exitCode) = await RunToExitAsync(desktop, arguments, root.Path, environment);
 
-            var drained = Task.WhenAll(
-                process.StandardOutput.CopyToAsync(Stream.Null),
-                process.StandardError.CopyToAsync(Stream.Null));
+                await Assert.That(exitCode).IsEqualTo(0);
 
-            await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
-            await drained;
-            await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
+                var arrived = await DrainAsync(inbox, 1);
 
-            var arrived = await DrainAsync(inbox, 1);
-
-            await Assert.That(arrived.Count).IsEqualTo(1);
-            await Assert.That(arrived[0].Verb).IsEqualTo(verb);
-            await Assert.That(arrived[0].From).IsEqualTo(process.Id);
+                await Assert.That(arrived.Count).IsEqualTo(1);
+                await Assert.That(arrived[0].Verb).IsEqualTo(verb);
+                await Assert.That(arrived[0].From).IsEqualTo(processId);
+            }
         }
 
-        // Nothing the three starts did reached a window on their desktop.
+        // A coordinator with a page: a person's start is handed an address, and with
+        // --write-address it writes it there and opens nothing.
+        var address = "http://127.0.0.1:1/the-token/?tab=7";
+        var file = Path.Combine(root.Path, "address.txt");
+
+        using var withPage = new CoordinatorInbox();
+
+        var serving = CoordinatorStart.Settle(root.Path, withPage, CoordinatorVerb.Recheck, grant: null, NullLogger.Instance, TestDefaults.InProcessHang, _ => address);
+
+        await Assert.That(serving.Outcome).IsEqualTo(CoordinatorStartOutcome.Coordinator);
+
+        using (serving.Pipe)
+        {
+            var (_, exitCode) = await RunToExitAsync(desktop, [PageOpener.WriteAddressArgument, file], root.Path, environment);
+
+            await Assert.That(exitCode).IsEqualTo(0);
+            await Assert.That(await File.ReadAllTextAsync(file)).IsEqualTo(address);
+        }
+
+        // Nothing any start did reached a window on their desktop.
         await Assert.That(desktop.TopLevelWindows().Count).IsEqualTo(0);
+    }
+
+    /// <summary>Starts the published app on a private desktop in a job of its own and waits for it to exit.</summary>
+    /// <param name="desktop">The desktop.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <param name="workingDirectory">Its working directory.</param>
+    /// <param name="environment">Its environment.</param>
+    /// <returns>Its pid and its exit code.</returns>
+    private static async Task<(int ProcessId, int? ExitCode)> RunToExitAsync(
+        PrivateDesktop desktop,
+        string[] arguments,
+        string workingDirectory,
+        Dictionary<string, string> environment)
+    {
+        using var job = JobObject.CreateKillOnClose();
+        using var process = desktop.Launch(job, PublishedSlice.AppExecutable, arguments, workingDirectory, environment);
+
+        var drained = Task.WhenAll(
+            process.StandardOutput.CopyToAsync(Stream.Null),
+            process.StandardError.CopyToAsync(Stream.Null));
+
+        await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await drained;
+
+        return (process.Id, process.TryReadExitCode());
     }
 
     /// <summary>Takes verbs out of an inbox until there are enough, or the hang detector runs out.</summary>
@@ -922,37 +1039,29 @@ internal sealed class CoordinatorTests
         }
     }
 
-    /// <summary>A window that records each time it is shown.</summary>
-    /// <param name="events">Where the order of calls is kept.</param>
-    private sealed class RecordedWindow(ConcurrentQueue<string> events) : ICoordinatorWindow, IDisposable
+    /// <summary>
+    /// A page with no listener: it never serves, so the loop stops as soon as nothing
+    /// is staged, and it records what the loop told it.
+    /// </summary>
+    private sealed class ScriptedPage : ICoordinatorPage
     {
-        private readonly SemaphoreSlim _shown = new(0);
-        private int _shows;
+        public ConcurrentQueue<string> Told { get; } = new();
 
-        public void Dispose() => _shown.Dispose();
+        public bool IsServing => false;
 
-        public int Shows => Volatile.Read(ref _shows);
-
-        public int Show()
+        public void RunQueuedWork()
         {
-            events.Enqueue("show");
-            _ = Interlocked.Increment(ref _shows);
-            _shown.Release();
-            return 0;
         }
 
-        public async Task<bool> ShownAsync(int times)
-        {
-            for (var index = 0; index < times; index++)
-            {
-                if (!await _shown.WaitAsync(TestDefaults.InProcessHang))
-                {
-                    return false;
-                }
-            }
+        public bool IsExitRequested() => false;
 
-            return true;
+        public void Staged(UpdateCandidate? pending)
+        {
         }
+
+        public bool TryStop(bool final) => true;
+
+        public void Tell(string sentence) => Told.Enqueue(sentence);
     }
 
     /// <summary>A foreground grant that records the pid it would have granted.</summary>

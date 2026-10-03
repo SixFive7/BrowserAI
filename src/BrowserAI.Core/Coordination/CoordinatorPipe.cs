@@ -49,6 +49,12 @@ internal sealed class CoordinatorPipe : IDisposable
     /// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
     /// <param name="inbox">Where each verb goes once acknowledged.</param>
     /// <param name="logger">Where the pipe reports.</param>
+    /// <param name="addressFor">
+    /// Hands out a tab for a verb that asks for one and answers its address, or
+    /// <see langword="null"/> once the coordinator is stopping. <see langword="null"/>
+    /// itself for a coordinator with no page, whose acknowledgement then carries no
+    /// address.
+    /// </param>
     /// <returns>The pipe. Holding it is being the coordinator.</returns>
     /// <exception cref="IOException">
     /// The pipe was not created: <c>0x80070005</c> when a coordinator already holds
@@ -56,24 +62,26 @@ internal sealed class CoordinatorPipe : IDisposable
     /// with Q368 a (previously "<c>0x800700E7</c> when a coordinator already holds
     /// the name, and <c>0x80070005</c> when somebody else created it first").</i>
     /// </exception>
-    public static CoordinatorPipe Open(string installRoot, CoordinatorInbox inbox, ILogger logger)
+    public static CoordinatorPipe Open(string installRoot, CoordinatorInbox inbox, ILogger logger, Func<CoordinatorVerb, string?>? addressFor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(inbox);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return new CoordinatorPipe(ServerPipe.OpenNamed(CoordinatorProtocol.NameFor(installRoot), new Answers(inbox, logger), logger));
+        return new CoordinatorPipe(ServerPipe.OpenNamed(CoordinatorProtocol.NameFor(installRoot), new Answers(inbox, addressFor, logger), logger));
     }
 
     /// <summary>Stops serving, which is letting another process become the coordinator.</summary>
     public void Dispose() => _pipe.Dispose();
 
-    /// <summary>The coordinator's two verbs.</summary>
+    /// <summary>The coordinator's three verbs.</summary>
     /// <param name="inbox">Where each goes.</param>
+    /// <param name="addressFor">Hands out a tab, or <see langword="null"/> for a coordinator with no page.</param>
     /// <param name="logger">Where each is recorded.</param>
-    private sealed class Answers(CoordinatorInbox inbox, ILogger logger) : IPipeAnswers
+    private sealed class Answers(CoordinatorInbox inbox, Func<CoordinatorVerb, string?>? addressFor, ILogger logger) : IPipeAnswers
     {
-        public IReadOnlyList<string> Verbs { get; } = [CoordinatorProtocol.ShowVerb, CoordinatorProtocol.RecheckVerb];
+        public IReadOnlyList<string> Verbs { get; } =
+            [CoordinatorProtocol.ShowVerb, CoordinatorProtocol.RecheckVerb, CoordinatorProtocol.SessionsVerb];
 
         public ServerPipeReply? Answer(string verb, int? clientProcessId)
         {
@@ -84,8 +92,24 @@ internal sealed class CoordinatorPipe : IDisposable
 
             CoordinatorLog.Asked(logger, verb, clientProcessId ?? 0);
 
+            // THE ADDRESS IS HANDED OUT HERE, ON THE PIPE'S THREAD, before the
+            // answer is written (Q334 a). The pipe's DACL admits the current user
+            // alone, which is what makes this the only way the token leaves this
+            // process.
+            string? address = null;
+
+            if (CoordinatorProtocol.AsksForATab(taken) && addressFor is not null)
+            {
+                address = addressFor(taken);
+
+                if (address is null)
+                {
+                    return new ServerPipeReply(ServerPipeProtocol.Refused(verb, CoordinatorProtocol.StoppingRefusal));
+                }
+            }
+
             return new ServerPipeReply(
-                CoordinatorProtocol.Acknowledged(taken, Environment.ProcessId),
+                CoordinatorProtocol.Acknowledged(taken, Environment.ProcessId, address),
                 () => inbox.Post(taken, clientProcessId));
         }
     }

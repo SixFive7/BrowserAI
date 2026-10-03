@@ -26,3 +26,16 @@
 T:Windows.UI.Notifications.ToastNotificationManager;No ordinary test raises a real toast: the shell draws it over whatever the person at the machine is doing, and the window watch cannot attribute it to the run. Test through the notifier seam the toast work brings; one suppressed toast read back from history is a release-run arm, not an ordinary one.
 T:Windows.UI.Notifications.ToastNotificationManagerForUser;No ordinary test raises a real toast. Same rule as ToastNotificationManager.
 T:Windows.UI.Notifications.ToastNotifier;No ordinary test raises a real toast. Same rule as ToastNotificationManager.
+;
+; NO TEST OPENS A BROWSER TAB, AN EXPLORER WINDOW OR A FOLDER PICKER. Added
+; 2026-10-03 with the browser tab (Q315 a). The shell hands an address to the
+; person's own default browser, which may already be running on the real desktop
+; and opens the tab there; the window watch cannot attribute that window to the
+; run, because it belongs to the person's browser. Every arm drives the page over
+; raw HTTP or through a headless session, and hands the page a desktop that
+; records what it was asked to open. A test that needs the address a real start
+; was handed passes --write-address, which writes it to a file and opens nothing.
+M:BrowserAI.App.Interop.ShellInterop.OpenUrl(System.String);No test opens a real browser tab: the person's browser draws it on the real desktop, where the window watch cannot attribute it. Record the address through PageOpener.Deliver with an open delegate the test owns, or pass --write-address to a real start.
+M:BrowserAI.App.Interop.ShellInterop.OpenInExplorer(System.String);No test opens a real Explorer window. Hand the page a desktop that records the folder it was asked to open.
+M:BrowserAI.App.Interop.ShellInterop.PickFolder(System.IntPtr,System.String);No test opens a real folder picker. Hand the caller a picker that answers what the test decides.
+T:BrowserAI.App.Page.DesktopPageHost;No test uses the page's real desktop: every call it queues opens something on the person's screen. Hand the page a desktop that records what it was asked for.

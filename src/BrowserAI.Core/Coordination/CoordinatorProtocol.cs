@@ -15,6 +15,12 @@ internal enum CoordinatorVerb
 
     /// <summary>Look again. A start nobody watches, and a server whose update is blocked, ask this.</summary>
     Recheck,
+
+    /// <summary>
+    /// Hand out a tab on the sessions page. What the update toast's <i>Review</i>
+    /// asks, the way a Start Menu click asks <see cref="Show"/> (Q339).
+    /// </summary>
+    Sessions,
 }
 
 /// <summary>
@@ -53,7 +59,48 @@ internal static class CoordinatorProtocol
     public const string NamePrefix = @"\\.\pipe\BrowserAI-Coordinator-";
 
     /// <summary>The version of this protocol, carried in every acknowledgement.</summary>
-    public const int Version = 1;
+    /// <remarks>
+    /// <b>2 since 2026-10-03</b> (previously <c>1</c>): the acknowledgement of a
+    /// verb that asks for a tab carries the page's address, Q334 a, and
+    /// <c>sessions</c> is a third verb. A reader of version 1 ignores the member it
+    /// does not know, so an older second start meeting a newer coordinator hands
+    /// over as it always did and opens nothing.
+    /// </remarks>
+    public const int Version = 2;
+
+    /// <summary>The verb the update toast's <i>Review</i> sends: a tab on the sessions page.</summary>
+    public const string SessionsVerb = "sessions";
+
+    /// <summary>The member of an acknowledgement that carries the page's address.</summary>
+    public const string AddressField = "address";
+
+    /// <summary>
+    /// The refusal a coordinator gives a verb asking for a tab once it has decided
+    /// to stop.
+    /// </summary>
+    /// <remarks>
+    /// <b>A start that meets it tries again</b>: the coordinator lets its pipe go
+    /// moments after deciding, and the next attempt either creates the pipe or meets
+    /// the coordinator that did.
+    /// </remarks>
+    public const string StoppingRefusal = "The coordinator is stopping, so it hands out no page; this start becomes the coordinator once it has gone.";
+
+    /// <summary>
+    /// How long a start waits for a verb that asks for a tab: <b>10 s</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Longer than <see cref="ServerPipeProtocol.CallBound"/> on purpose.</b>
+    /// Such a verb may start the page's listener inside the coordinator before it is
+    /// answered, and that is Kestrel starting, not a pipe answering from memory. The
+    /// bound is a hang detector for a person's start: a coordinator that has not
+    /// answered by then is not starting a listener.
+    /// </remarks>
+    public static TimeSpan HandOutBound { get; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Whether a verb asks the coordinator for a tab.</summary>
+    /// <param name="verb">The verb.</param>
+    /// <returns>Whether its acknowledgement carries an address.</returns>
+    public static bool AsksForATab(CoordinatorVerb verb) => verb is CoordinatorVerb.Show or CoordinatorVerb.Sessions;
 
     /// <summary>The verb a start the person made sends.</summary>
     public const string ShowVerb = "show";
@@ -73,6 +120,13 @@ internal static class CoordinatorProtocol
     /// </summary>
     public const string CoordinateArgument = "--coordinate";
 
+    /// <summary>
+    /// The argument that makes a person's start open the sessions page: what the
+    /// update toast's <i>Review</i> starts the app with, the way the Start Menu
+    /// starts it with nothing (Q339).
+    /// </summary>
+    public const string SessionsArgument = "--sessions";
+
     /// <summary>The coordinator's pipe for one install root.</summary>
     /// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
     /// <returns>The full pipe name.</returns>
@@ -85,7 +139,12 @@ internal static class CoordinatorProtocol
     /// <summary>A verb as the pipe spells it.</summary>
     /// <param name="verb">The verb.</param>
     /// <returns>Its word.</returns>
-    public static string Spelling(CoordinatorVerb verb) => verb is CoordinatorVerb.Show ? ShowVerb : RecheckVerb;
+    public static string Spelling(CoordinatorVerb verb) => verb switch
+    {
+        CoordinatorVerb.Show => ShowVerb,
+        CoordinatorVerb.Sessions => SessionsVerb,
+        _ => RecheckVerb,
+    };
 
     /// <summary>The verb a request line names, or <see langword="null"/>.</summary>
     /// <param name="line">The request, without its newline.</param>
@@ -94,6 +153,7 @@ internal static class CoordinatorProtocol
     {
         ShowVerb => CoordinatorVerb.Show,
         RecheckVerb => CoordinatorVerb.Recheck,
+        SessionsVerb => CoordinatorVerb.Sessions,
         _ => null,
     };
 
@@ -102,16 +162,22 @@ internal static class CoordinatorProtocol
     /// <returns>Its word and a newline, in ASCII.</returns>
     public static byte[] Request(CoordinatorVerb verb) => Encoding.ASCII.GetBytes(Spelling(verb) + "\n");
 
-    /// <summary>The coordinator's answer: the verb it took, and its pid.</summary>
+    /// <summary>The coordinator's answer: the verb it took, its pid, and the page's address when it handed one out.</summary>
     /// <param name="verb">The verb it took.</param>
     /// <param name="processId">The coordinator's pid.</param>
+    /// <param name="address">The address of the tab it handed out, or <see langword="null"/>.</param>
     /// <returns>The answer's JSON.</returns>
-    public static byte[] Acknowledged(CoordinatorVerb verb, int processId) =>
+    public static byte[] Acknowledged(CoordinatorVerb verb, int processId, string? address = null) =>
         ServerPipeProtocol.Json(writer =>
         {
             writer.WriteString(ServerPipeProtocol.Fields.Answer, Spelling(verb));
             writer.WriteNumber(ServerPipeProtocol.Fields.Protocol, Version);
             writer.WriteNumber(ServerPipeProtocol.Fields.ProcessId, processId);
+
+            if (address is not null)
+            {
+                writer.WriteString(AddressField, address);
+            }
         });
 
     /// <summary>Reads an answer to a verb.</summary>
@@ -120,11 +186,22 @@ internal static class CoordinatorProtocol
     /// <param name="processId">The pid the coordinator gave, when it acknowledged.</param>
     /// <param name="why">Why it did not acknowledge, when it did not.</param>
     /// <returns>Whether the answer acknowledged that verb.</returns>
-    public static bool TryReadAcknowledgement(byte[] body, CoordinatorVerb verb, out int processId, out string why)
+    public static bool TryReadAcknowledgement(byte[] body, CoordinatorVerb verb, out int processId, out string why) =>
+        TryReadAcknowledgement(body, verb, out processId, out _, out why);
+
+    /// <summary>Reads an answer to a verb, with the address it carries.</summary>
+    /// <param name="body">The answer's JSON.</param>
+    /// <param name="verb">The verb that was sent.</param>
+    /// <param name="processId">The pid the coordinator gave, when it acknowledged.</param>
+    /// <param name="address">The page's address, when the answer carried one.</param>
+    /// <param name="why">Why it did not acknowledge, when it did not.</param>
+    /// <returns>Whether the answer acknowledged that verb.</returns>
+    public static bool TryReadAcknowledgement(byte[] body, CoordinatorVerb verb, out int processId, out string? address, out string why)
     {
         ArgumentNullException.ThrowIfNull(body);
 
         processId = 0;
+        address = null;
 
         try
         {
@@ -149,6 +226,9 @@ internal static class CoordinatorProtocol
                 return false;
             }
 
+            address = root.TryGetProperty(AddressField, out var handed) && handed.ValueKind is JsonValueKind.String
+                ? handed.GetString()
+                : null;
             why = string.Empty;
             return true;
         }

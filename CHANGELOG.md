@@ -40,6 +40,39 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **A Start Menu click opens BrowserAI's page in your own browser.**
+  Q315 a, the maintainer's words verbatim: *"Q315 a"*. A start a person makes now opens a tab
+  in the default browser, at an address on `127.0.0.1` that BrowserAI makes for it, and opens
+  no window of its own. The page shows the installed version, the install, data and log folders
+  with a button that opens each, the server a client starts, and an update section: a check
+  that can be stopped while it waits, a version on offer said to be older when it is (Q308 a),
+  a package a server has already downloaded with a button that installs it (Q310 a), a failure
+  as one sentence with the raw text under *Show details* (Q309 b), and a feed folder with no
+  release list said to have none, where the window read it as up to date. Installing asks
+  every running server to stop through its own pipe first, and the restart opens a new tab
+  (Q338 b).
+
+  **A second page lists every BrowserAI server running from the install**: its client, when it
+  last answered a call, the sessions it holds with their purposes and whether a browser is open,
+  a button for each session's folder, and the traces each has written. It warns where closing a
+  server costs a Codex thread its server and where a server may be in the middle of a task, and
+  closes only the servers a person selects (Q317 c). `BrowserAI.exe --sessions` opens a tab on
+  that page, which is what the update toast's *Review* will start (Q339). Registration with
+  Claude Code and Codex is still in the configuration window, opened from the page's
+  registration link, until it moves into the page.
+
+  **The page proves itself by its address, and nothing else gets in (Q334 a, Q335 a).** The
+  listener is Kestrel from ASP.NET Core's empty builder (Q340 b), on `127.0.0.1` alone and a
+  port Windows picks. Its address carries 256 random bits made for each listener and handed out
+  only through the coordinator's pipe, which admits the current user alone. One gate runs before
+  any route: the token, exactly one `Host` of `127.0.0.1` and the port, a browser's
+  `Sec-Fetch-Site` from the page itself or from outside the browser, and on a write our own
+  `Origin`, a JSON body and at most 64 KB. Everything it does not admit gets a 404 with nothing
+  in it, and no cookie is ever set. Another Windows user on the machine can reach the port and
+  is kept out by the token alone, which is a hazard row of its own. The hidden process stays
+  while a tab is connected and stops a minute after the last one closes, so a reload keeps
+  working (Q336 a), and a newer tab tells an older one to close itself (Q337 a).
+
 - ✨ **Every server answers on a named pipe of its own: who it is, what it holds, and a stop.**
   Q284 a, the maintainer's words verbatim: *"Q284 a"*. A server opens
   `\\.\pipe\BrowserAI-<its live marker's name>` right after it joins the census, through raw

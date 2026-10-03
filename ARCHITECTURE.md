@@ -147,7 +147,7 @@ been re-pointed and not left dangling.)*
 | Binary | What it is | Who starts it |
 |---|---|---|
 | `BrowserAI.Server.exe` | The MCP server this whole document is about: console subsystem, stdio, no window on any path | A **client**, by the absolute path in its own configuration. No installer ever launches it |
-| `BrowserAI.exe` | The **configuration app**: Windows subsystem, one task dialog, `--report` for a headless status file | `Setup.exe` after a non-silent install, the root stub, `Update.exe start`, the Start Menu -- and all four Velopack hooks run on it |
+| `BrowserAI.exe` | The **configuration app**: Windows subsystem, the coordinator, and the listener behind [the browser tab](#the-browser-tab); `--report` for a headless status file. *Corrected 2026-10-03 (previously "one task dialog"): a person's start opens a tab in the default browser, and the task dialog is reached only from the tab's registration link until registration moves into the tab* | `Setup.exe` after a non-silent install, the root stub, `Update.exe start`, the Start Menu -- and all four Velopack hooks run on it |
 | `BrowserAI.Core.dll` | Neither, and linked into both: the data root, the registration, the update feed, the live census, the log | - |
 
 **The cut is where it is for a measured reason.** Velopack starts `--mainExe`
@@ -176,7 +176,8 @@ mid-click. The server's lane defers while the census is non-empty; the app's own
 apply is `restart: true`, which is the opposite, and the button says what that
 costs. *Added 2026-09-25:* the coordinator's apply loop is a member too, from the
 first pass that finds a package staged until it stops, so a server finishing its
-own update pass counts it and wakes it instead of applying.
+own update pass counts it and wakes it instead of applying. *Added 2026-10-03:* and so is a coordinator
+whose page is serving a tab, for the same reason and for as long as the page serves.
 
 | Concern | Implemented by |
 |---|---|
@@ -184,6 +185,11 @@ own update pass counts it and wakes it instead of applying.
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
 | The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* -- *and `Coordinator.cs` added 2026-09-25: the three start modes, the sign-in step and the apply loop, under [Updates](#updates)* |
 | The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
+| The browser tab: its listener and the one gate before any route -- **added 2026-10-03, Q315 a, Q340 b, Q334 a and Q335 a** | `src/BrowserAI.App/Page/{PageListener, PageGate}.cs` |
+| The tabs: which is newest, which are connected, and the coordinator's minute -- **added 2026-10-03, Q336 a and Q337 a** | `src/BrowserAI.App/Page/PageTabs.cs`, asked by `CoordinatorLoop` through `ICoordinatorPage` in `src/BrowserAI.App/Coordinator.cs` |
+| What the page says and what its buttons do -- **added 2026-10-03, Q308 a, Q309 b, Q310 a and Q317 c** | `src/BrowserAI.App/Page/{PageService, PageContent, PageAssets, PageModel}.cs` |
+| The page's seams onto Velopack, the running servers and the desktop | `src/BrowserAI.App/Page/{VelopackPageUpdates, CensusPageSessions, DesktopPageHost}.cs`; the suite's stand-ins are `tests/BrowserAI.Tests/Harness/PageRig.cs` |
+| Handing out a tab's address, and a person's start opening it -- **added 2026-10-03, Q334 a** | `CoordinatorPipe` and `CoordinatorProtocol.AddressField` in `src/BrowserAI.Core/Coordination/`, through `CoordinatorStart.Settle`'s `addressFor`; `src/BrowserAI.App/Page/PageOpener.cs`, with `--write-address` for a start that must open nothing |
 | Removing BrowserAI from a project you pick -- **added 2026-09-24, Q289 b** | `ConfigurationSession.UnregisterFromAProject` in `src/BrowserAI.App/Program.cs`, offered by `ConfigurationDialog.Command.UnregisterFromAProject` when `ClientState.MayUnregisterFromAProject`; the session is handed its picker, image path and re-read, and `ConfigurationSession.Attach` is the host the suite dispatches into |
 | Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/{RegistrationReading, RegistrationView}.cs`, through RegisterAI's `status` -- *corrected 2026-10-03 (previously `src/BrowserAI.Core/Registration/McpRegistryView.cs`), when RegisterAI took the reading over: one `status` run for every client's user scope and one per project, read by `RegistrationReader`* |
 | Telling a console binary from a window one | `src/BrowserAI.Core/Runtime/PeSubsystem.cs` |
@@ -1255,6 +1261,22 @@ sorted out of it, so it would be the first thing evicted.
 `FlatOutputTests.NothingBrowserAiGeneratesCanTurnEvictionOn` holds the config
 door and `ChildEnvironmentTests` holds the environment one.
 
+## The browser tab
+
+**Q315 a, the maintainer's words verbatim: *"Q315 a"*: a tab in whatever browser the person
+uses replaces the configuration window -- built 2026-10-03, all but registration.** The coordinator
+owns a `PageService`, which starts a Kestrel listener on `127.0.0.1` the first time an address is
+handed out and stops it a minute after the last tab has gone. The address is
+`http://127.0.0.1:<port>/<token>/?tab=<n>`: a fresh 256-bit token per listener, handed out only
+through the coordinator's pipe, and the next tab number, so the newest tab can tell the older ones
+to close. One gate runs before any route and answers everything it does not admit with an empty
+404; no cookie is set, no CORS header is sent, and the page carries no inline script or style.
+The page is server-rendered HTML, a stylesheet and one short script; the script keeps one event
+stream open, replaces the page's main part with each state it is sent, and posts the action a
+button names as JSON. A button names what it acts on by a name the page was given, a folder's
+role or a digest of a session's directory, and never by a path. What it rests on:
+[kb](kb/windows/loopback-page.md#the-products-listener-under-attack----measured-2026-10-03).
+
 ## Updates
 
 | Concern | Implemented by |
@@ -1266,7 +1288,7 @@ door and `ChildEnvironmentTests` holds the environment one.
 | Each server's pipe: `describe` answered from memory, `stop` acknowledged and then acted on -- **added 2026-09-24, Q284 a** | `src/BrowserAI.Core/Coordination/{ServerPipe, ServerPipeProtocol, ServerDescription}.cs` and `src/BrowserAI.Core/Interop/NamedPipes.cs`; the server's half is `src/BrowserAI/Proxy/{ServerActivity, ServerPipeResponder}.cs`, `BrowserProxy.HeldSessions` and `SessionManager.Held`, opened by `Program.Main` straight after the live join |
 | Asking a server: the census first, the pipe's owner checked, the whole call bounded | `src/BrowserAI.Core/Coordination/ServerPipeClient.cs` and `LiveInstances.IsMarkerHeld`, which the configuration app links as well |
 | What a server does about an update -- **added 2026-09-24, Q286 b**: calls in flight when a stop arrives are refused with a sentence, and a server started while its install's `Update.exe` runs lists its real tools, refuses every call until the updater goes and then serves -- *corrected 2026-10-03, Q296 c (previously "refuses every call, starts nothing and ends when the updater goes", implemented by `Program.ServeWhileUpdatingAsync` over `src/BrowserAI/Proxy/UpdateInProgressServer.cs`, both deleted that day)* | `BrowserProxy.RefuseCallsInFlightForAnUpdateAsync` and its door out, `Program.StopThroughThePipeAsync`, `Program.FindTheUpdater` over `BrowserProcesses.FirstRunning` and `WatchedProcess`, `BrowserProxy.RefuseCallsWhileAnUpdateInstalls` and `BrowserProxy.TheUpdateHasGone`, called from `Program.Main` and from its watch on the updater, and the two catalogue rows `SessionErrors.UpdateIsBeingInstalled` and `SessionErrors.UpdateIsStillInstalling` |
-| The coordinator: which process it is, and a second start handing over -- **added 2026-09-25, Q280 b and Q284 a** | `CoordinatorStart.Settle` and `CoordinatorClient` in `src/BrowserAI.Core/Coordination/CoordinatorClient.cs`, beside `{CoordinatorProtocol, CoordinatorPipe, CoordinatorInbox}.cs`; the app's half is `StartModes` and `ConfigurationWindow` in `src/BrowserAI.App/{Coordinator, Program}.cs`, and `src/BrowserAI.App/Interop/Foreground.cs`, which grants a pid the foreground and raises the window |
+| The coordinator: which process it is, and a second start handing over -- **added 2026-09-25, Q280 b and Q284 a** | `CoordinatorStart.Settle` and `CoordinatorClient` in `src/BrowserAI.Core/Coordination/CoordinatorClient.cs`, beside `{CoordinatorProtocol, CoordinatorPipe, CoordinatorInbox}.cs`; the app's half is `StartModes` and `ConfigurationWindow` in `src/BrowserAI.App/{Coordinator, Program}.cs`, and `src/BrowserAI.App/Interop/Foreground.cs`, which grants a pid the foreground and raises the window. *Added 2026-10-03:* a person's start gets a tab's address back and opens it, through `PageOpener` |
 | The per-user logon task -- **added 2026-09-25, Q282 a** | `src/BrowserAI.Core/Registration/{SignInTask, LogonTasks}.cs` over `src/BrowserAI.Core/Interop/TaskScheduler.cs`, called from `HookRegistration.Run` for every intent and written into the installer's own log by `VelopackStartup.Mirror`; the pack id the task is named for is `InstallLocation.AppId`, and the root's key is `LiveInstances.RootKeyFor` |
 | The sign-in step and the apply loop -- **added 2026-09-25, Q282 a and Q285 a** | `SignInStep` and `CoordinatorLoop` in `src/BrowserAI.App/Coordinator.cs`, over `IStagedUpdates` -- `VelopackUpdateClient` in the product, `NothingStaged` without a feed -- and `BrowserProcesses.HeldUnder`, which returns a `RootScan` of `HeldProcess` handles |
 | A blocked server waking the coordinator -- **added 2026-09-25, Q283 a** | `src/BrowserAI.Core/Coordination/CoordinatorWake.cs`, which `UpdateService` calls when a pass stages a package it may not apply |
@@ -1303,11 +1325,13 @@ gate and the logon task's name end in too, so one install has one coordinator an
 roots of one pack id have two. Every start of `BrowserAI.exe` that is not a hook or a
 report settles it first: it creates the pipe, or it connects, learns the holder's pid,
 grants it the foreground when a person made the start, hands over `show` or `recheck`
-and exits. A hidden start -- `--sign-in` from the logon task at sign-in, `--coordinate`
+and exits. *Added 2026-10-03:* `show`, and `sessions` from `--sessions`, are answered with
+the address of a new tab, which the start the person made opens. A hidden start -- `--sign-in` from the logon task at sign-in, `--coordinate`
 from a blocked server through the same task -- runs the sign-in step once, or the apply
 loop until nothing is staged. The loop holds a handle on every process under the
 install root and waits on those handles and its own pipe, with no timer, and applies
-only on a pass whose scan finds nothing. What each number rests on:
+only on a pass whose scan finds nothing. *Corrected 2026-10-03 by addition:* the page's
+minute after its last tab (Q336 a) is the one timer, and it wakes the loop through the inbox. What each number rests on:
 [kb](kb/windows/processes.md#the-task-scheduler-from-a-nativeaot-process-through-com----measured-2026-09-24).
 
 Per-user to `%LocalAppData%`, never `--msi`. ⚠️ **`--shortcuts StartMenuRoot`

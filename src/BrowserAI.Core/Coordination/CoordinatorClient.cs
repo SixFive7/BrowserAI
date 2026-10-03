@@ -45,7 +45,16 @@ internal enum HandOverOutcome
 /// <param name="Why">One sentence, for every outcome.</param>
 /// <param name="CoordinatorProcessId">The coordinator's pid, when it was learned.</param>
 /// <param name="Elapsed">How long it took, connect included.</param>
-internal sealed record HandOver(HandOverOutcome Outcome, string Why, int? CoordinatorProcessId, TimeSpan Elapsed);
+/// <param name="Address">
+/// The address of the tab the coordinator handed out, for a verb that asks for one
+/// and a coordinator that has a page; <see langword="null"/> otherwise.
+/// </param>
+internal sealed record HandOver(HandOverOutcome Outcome, string Why, int? CoordinatorProcessId, TimeSpan Elapsed, string? Address = null)
+{
+    /// <summary>Whether the coordinator refused because it is stopping, so a new start may take its place.</summary>
+    public bool CoordinatorIsStopping =>
+        Outcome is HandOverOutcome.Refused && string.Equals(Why, CoordinatorProtocol.StoppingRefusal, StringComparison.Ordinal);
+}
 
 /// <summary>
 /// Asks the coordinator of an install root to show its window or to look again.
@@ -64,7 +73,11 @@ internal static class CoordinatorClient
     /// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
     /// <param name="verb">What to ask.</param>
     /// <param name="grant">The foreground grant for a show, or <see langword="null"/> for none.</param>
-    /// <param name="bound">The whole call's bound, <see cref="ServerPipeProtocol.CallBound"/> by default.</param>
+    /// <param name="bound">
+    /// The whole call's bound: <see cref="CoordinatorProtocol.HandOutBound"/> by default
+    /// for a verb that asks for a tab, and <see cref="ServerPipeProtocol.CallBound"/>
+    /// for every other.
+    /// </param>
     /// <param name="cancellationToken">Ends the call early.</param>
     /// <returns>What came back.</returns>
     public static async Task<HandOver> SendAsync(
@@ -85,10 +98,10 @@ internal static class CoordinatorClient
             CoordinatorProtocol.Request(verb),
             spelling,
             clock,
-            bound ?? ServerPipeProtocol.CallBound,
+            bound ?? (CoordinatorProtocol.AsksForATab(verb) ? CoordinatorProtocol.HandOutBound : ServerPipeProtocol.CallBound),
             serving =>
             {
-                if (verb is CoordinatorVerb.Show && grant is not null && serving is { } coordinator)
+                if (CoordinatorProtocol.AsksForATab(verb) && grant is not null && serving is { } coordinator)
                 {
                     _ = grant.Allow(coordinator);
                 }
@@ -106,12 +119,13 @@ internal static class CoordinatorClient
                 clock.Elapsed);
         }
 
-        return CoordinatorProtocol.TryReadAcknowledgement(body, verb, out var acknowledgedBy, out var why)
+        return CoordinatorProtocol.TryReadAcknowledgement(body, verb, out var acknowledgedBy, out var address, out var why)
             ? new HandOver(
                 HandOverOutcome.Answered,
                 string.Create(CultureInfo.InvariantCulture, $"The coordinator, pid {acknowledgedBy}, took '{spelling}'."),
                 acknowledgedBy,
-                clock.Elapsed)
+                clock.Elapsed,
+                address)
             : new HandOver(HandOverOutcome.Refused, why, exchange.ServerProcessId, clock.Elapsed);
     }
 }
@@ -151,6 +165,22 @@ internal sealed record CoordinatorStart(
     public const int Attempts = 3;
 
     /// <summary>
+    /// How many times a start that met a stopping coordinator tries again, each
+    /// after <see cref="StoppingPause"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Forty pauses of 50 ms, two seconds in all</b>: a coordinator that refused
+    /// because it is stopping lets its pipe go as soon as its own thread sees the
+    /// decision, and a start that still finds the pipe there after that has met
+    /// something other than a stop, and settles on neither.
+    /// </remarks>
+    public const int StoppingAttempts = 40;
+
+    /// <summary>The pause between two tries at a stopping coordinator.</summary>
+    /// <remarks>A polling interval and not a bound: <see cref="StoppingAttempts"/> is the bound.</remarks>
+    public static TimeSpan StoppingPause { get; } = TimeSpan.FromMilliseconds(50);
+
+    /// <summary>
     /// Becomes the coordinator of an install root, or hands one verb to the
     /// process that already is.
     /// </summary>
@@ -160,10 +190,14 @@ internal sealed record CoordinatorStart(
     /// <param name="grant">The foreground grant for a show, or <see langword="null"/>.</param>
     /// <param name="logger">Where the outcome is recorded.</param>
     /// <param name="bound">
-    /// Each hand-over's bound. <see cref="ServerPipeProtocol.CallBound"/> in the
-    /// product, which passes none; the suite's arms pass their own hang detector,
-    /// since their host is under a load no second start is, the way
-    /// <see cref="ServerPipeClient.DescribeAsync"/>'s callers do.
+    /// Each hand-over's bound. The product passes none, which is
+    /// <see cref="CoordinatorClient.SendAsync"/>'s default for the verb; the suite's
+    /// arms pass their own hang detector, since their host is under a load no second
+    /// start is, the way <see cref="ServerPipeClient.DescribeAsync"/>'s callers do.
+    /// </param>
+    /// <param name="addressFor">
+    /// What hands out a tab if this process becomes the coordinator, or
+    /// <see langword="null"/> for a coordinator with no page.
     /// </param>
     /// <returns>What was settled. <see cref="Pipe"/> is the caller's to dispose.</returns>
     public static CoordinatorStart Settle(
@@ -172,7 +206,8 @@ internal sealed record CoordinatorStart(
         CoordinatorVerb verb,
         IForegroundGrant? grant,
         ILogger logger,
-        TimeSpan? bound = null)
+        TimeSpan? bound = null,
+        Func<CoordinatorVerb, string?>? addressFor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(inbox);
@@ -181,9 +216,11 @@ internal sealed record CoordinatorStart(
         var reasons = new List<string>();
         var spelling = CoordinatorProtocol.Spelling(verb);
 
+        var stopping = 0;
+
         for (var attempt = 0; attempt < Attempts; attempt++)
         {
-            if (TryHold(installRoot, inbox, logger, reasons) is { } held)
+            if (TryHold(installRoot, inbox, logger, reasons, addressFor) is { } held)
             {
                 return held;
             }
@@ -200,6 +237,16 @@ internal sealed record CoordinatorStart(
                 CoordinatorLog.HandedOver(logger, spelling, coordinator, milliseconds);
 
                 return new CoordinatorStart(CoordinatorStartOutcome.HandedOver, null, handed, handed.Why);
+            }
+
+            // A coordinator that has decided to stop lets its pipe go a moment later.
+            // Waiting it out is a new attempt, not a failure, as long as it is brief.
+            if (handed.CoordinatorIsStopping && stopping < StoppingAttempts)
+            {
+                stopping++;
+                attempt--;
+                Thread.Sleep(StoppingPause);
+                continue;
             }
 
             reasons.Add(handed.Why);
@@ -224,14 +271,20 @@ internal sealed record CoordinatorStart(
     /// <param name="inbox">Where its verbs go.</param>
     /// <param name="logger">Where the pipe reports.</param>
     /// <param name="reasons">Where a refusal is recorded.</param>
+    /// <param name="addressFor">What hands out a tab, or <see langword="null"/>.</param>
     /// <returns>The settled start, or <see langword="null"/> when the name is held.</returns>
-    private static CoordinatorStart? TryHold(string installRoot, CoordinatorInbox inbox, ILogger logger, List<string> reasons)
+    private static CoordinatorStart? TryHold(
+        string installRoot,
+        CoordinatorInbox inbox,
+        ILogger logger,
+        List<string> reasons,
+        Func<CoordinatorVerb, string?>? addressFor)
     {
         CoordinatorPipe? pipe = null;
 
         try
         {
-            pipe = CoordinatorPipe.Open(installRoot, inbox, logger);
+            pipe = CoordinatorPipe.Open(installRoot, inbox, logger, addressFor);
 
             var held = new CoordinatorStart(CoordinatorStartOutcome.Coordinator, pipe, null, $"This process holds {pipe.Name}.");
 

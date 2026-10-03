@@ -6,10 +6,16 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// The <b>only</b> timer in BrowserAI: a headless session's browser server is
-/// ended once it has gone unused for <see cref="DefaultIdlePeriod"/>.
+/// The server's one timer: a headless session's browser server is ended once it
+/// has gone unused for <see cref="DefaultIdlePeriod"/>.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-03 (previously "The <b>only</b> timer in
+/// BrowserAI").</b> The configuration app's coordinator has one too since that
+/// day: the minute it waits after the last browser tab closes before it stops
+/// (Q336 a). This is still the server's only one.
+/// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-10-03 (previously "a session's browser is closed once it
 /// has gone unused for <see cref="DefaultIdlePeriod"/>, and the node child is
@@ -112,7 +118,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// eagerly is invisible -- the next call silently relaunches it.
     /// </para>
     /// </remarks>
-    public static TimeSpan DefaultIdlePeriod { get; } = TimeSpan.FromMinutes(10);
+    public static TimeSpan DefaultIdlePeriod => SessionTimes.BrowserIdlePeriod;
 
     /// <summary>How long a close is given before teardown stops waiting for it.</summary>
     /// <remarks>

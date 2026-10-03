@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.App.Interop;
+using BrowserAI.App.Page;
 using BrowserAI.App.Ui;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
@@ -20,10 +21,14 @@ namespace BrowserAI.App;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Three modes, decided by the arguments and the environment, and only one of
-/// them has a window.</b> A hook runs headless and exits; <c>--report</c> writes
-/// a file and exits; anything else opens the dialog. Nothing else is a mode, and
-/// nothing about the dialog runs on any other path.
+/// <b>Three modes, decided by the arguments and the environment, and none of them
+/// opens a window by itself.</b> A hook runs headless and exits; <c>--report</c>
+/// writes a file and exits; anything else settles who the coordinator is, and a
+/// person's start then opens a tab in the person's own browser.
+/// <i>Corrected 2026-10-03 (previously "and only one of them has a window ...
+/// anything else opens the dialog"), Q315 a: the browser tab replaces the window as
+/// what a start opens, and the window is reached from the tab for registration until
+/// the tab covers that too.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>And every start that is neither a hook nor a report settles who the
@@ -179,49 +184,84 @@ internal static class Program
 
         var occasion = restarted ? Occasion.AfterUpdate : firstRun ? Occasion.FirstRun : Occasion.Ordinary;
 
-        // ⚠️ WHO THE COORDINATOR IS, SETTLED BEFORE ANY WINDOW -- Q280 b, Q284 a,
-        // 2026-09-25. Holding the pipe is being the coordinator. A start that finds
-        // it held hands its verb over and exits here, so a second Start Menu click
-        // brings the running window forward instead of opening another one, and a
-        // hidden start that is not needed costs a few milliseconds. The root is the
-        // census's own: the install root, or the data root of a build that is not
-        // installed, which is what keeps a scratch BROWSERAI_ROOT one coordinator.
+        // ⚠️ WHO THE COORDINATOR IS, SETTLED BEFORE ANYTHING IS OPENED -- Q280 b,
+        // Q284 a, 2026-09-25. Holding the pipe is being the coordinator. A start that
+        // finds it held hands its verb over and exits here; a person's start gets the
+        // address of a new tab back (Q334 a, Q337 a) and opens it, and a hidden start
+        // that is not needed costs a few milliseconds. The root is the census's own:
+        // the install root, or the data root of a build that is not installed, which
+        // is what keeps a scratch BROWSERAI_ROOT one coordinator.
         var mode = StartModes.Of(args);
         var root = InstallLocation.RootAppDir ?? paths.RootAppDir;
+        var person = StartModes.IsAPersons(mode);
+        var verb = StartModes.VerbOf(mode);
+        var writeAddress = PageOpener.WriteAddressFrom(args);
+        var feed = UpdateConfiguration.Resolve(logger);
 
         using var inbox = new CoordinatorInbox();
+
+        // ⚠️ THE PAGE EXISTS BEFORE THE PIPE, AND STARTS NOTHING UNTIL ASKED -- Q315 a,
+        // 2026-10-03. The pipe hands out tabs from its first connection on, so the
+        // page it hands them out of has to be there first; its listener starts on the
+        // first hand-out and not before.
+        using var page = new PageService(
+            PageOpener.FactsFor(paths),
+            occasion,
+            new VelopackPageUpdates(feed, InstallLocation.IsInstalled),
+            new CensusPageSessions(root, TimeProvider.System),
+            new DesktopPageHost(inbox, new ConfigurationWindow(tool, paths, logger, Occasion.Ordinary, inbox), logger),
+            inbox.Wake,
+            TimeProvider.System,
+            PageTabs.ProductLinger,
+            logger);
 
         var start = CoordinatorStart.Settle(
             root,
             inbox,
-            StartModes.VerbOf(mode),
-            mode is StartMode.User ? Foreground.Grant : null,
-            logger);
+            verb,
+            person ? Foreground.Grant : null,
+            logger,
+            addressFor: asked => page.HandOut(StartModes.PageOf(asked)));
 
         if (start.Outcome is CoordinatorStartOutcome.HandedOver)
         {
+            if (person)
+            {
+                _ = PageOpener.Deliver(start.HandOver?.Address, writeAddress, ShellInterop.OpenUrl, logger);
+            }
+
             return 0;
         }
 
         using var pipe = start.Pipe;
 
-        var window = new ConfigurationWindow(tool, paths, logger, occasion, inbox);
+        RootScan scanRoot() => BrowserProcesses.HeldUnder(root, Environment.ProcessId);
 
         if (pipe is null)
         {
             // Neither the coordinator nor handed over, and the log says why. A
-            // person still gets the window they asked for; a hidden start has
-            // nothing to do without the pipe.
-            return mode is StartMode.User ? window.Show() : 1;
+            // person still gets the tab they asked for, served by this process alone
+            // until it closes; a hidden start has nothing to do without the pipe.
+            if (!person)
+            {
+                return 1;
+            }
+
+            _ = PageOpener.Deliver(page.HandOut(StartModes.PageOf(verb)), writeAddress, ShellInterop.OpenUrl, logger);
+            _ = new CoordinatorLoop(root, inbox, NothingStaged.Instance, scanRoot, page, logger).Run();
+            return 0;
         }
 
         var started = mode.ToString();
 
         CoordinatorLog.Became(logger, pipe.Name, started);
 
-        var shown = mode is StartMode.User ? window.Show() : 0;
+        if (person)
+        {
+            _ = PageOpener.Deliver(page.HandOut(StartModes.PageOf(verb)), writeAddress, ShellInterop.OpenUrl, logger);
+        }
 
-        IStagedUpdates staged = UpdateConfiguration.Resolve(logger) is { } feed
+        IStagedUpdates staged = feed is not null
             ? new VelopackUpdateClient(feed)
             : NothingStaged.Instance;
 
@@ -229,28 +269,28 @@ internal static class Program
         // package and nothing else running from the install is handed to Update.exe
         // and this process exits so it can apply; anything else is logged and this
         // process exits too. The one exception is a verb that reached the pipe during
-        // the pass -- a person's start asking for the window, or a blocked server's
-        // start handing over its recheck -- which the loop below then answers, since
-        // the start that sent it has already exited.
-        RootScan scanRoot() => BrowserProcesses.HeldUnder(root, Environment.ProcessId);
-
+        // the pass -- a person's start asking for a tab, or a blocked server's start
+        // handing over its recheck -- which the loop below then answers, since the
+        // start that sent it has already exited.
         if (mode is StartMode.SignIn)
         {
             var signIn = SignInStep.Run(staged, scanRoot, logger);
 
-            if (signIn.Outcome is SignInOutcome.Applied || inbox.IsEmpty)
+            if (signIn.Outcome is SignInOutcome.Applied || (inbox.IsEmpty && !page.IsServing))
             {
                 return 0;
             }
         }
 
-        // ⚠️ THE APPLY LOOP -- Q285 a, 2026-09-25, phase 2's minimal form. It waits on
-        // every process the scan holds and on the pipe, re-scans on each exit and each
-        // verb, applies once nothing else runs from the install, and stops when nothing
-        // is staged. A build with no update feed has nothing staged, so it stops at once.
-        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, window, logger).Run();
+        // ⚠️ THE APPLY LOOP -- Q285 a, 2026-09-25, and since 2026-10-03 the tab's loop
+        // too (Q336 a). It waits on every process the scan holds and on the pipe,
+        // re-scans on each exit and each verb, applies once nothing else runs from the
+        // install, and stops when nothing is staged and no tab has been open for a
+        // minute. A build with no update feed has nothing staged, so it stops as soon
+        // as its page has nobody left.
+        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, page, logger).Run();
 
-        return shown;
+        return 0;
     }
 
     /// <summary>
