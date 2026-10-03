@@ -1157,6 +1157,23 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       question to the maintainer. A fix would change what `browser_snapshot`
       returns, so the upstream review that adopts one re-runs the page from the
       comment.
+- [ ] **WATCH https://github.com/anthropics/claude-code/issues/99238, the
+      Windows stdio MCP tree-kill.** On Windows, Claude Code tree-kills a stdio
+      MCP server before its stdin is closed. Posted 2026-10-03. Watch for a
+      maintainer reply.
+- [ ] **WATCH https://github.com/openai/codex/issues/48524#issuecomment-5969839400,
+      our Windows comment on Codex server-shutdown issue #48524.** Posted
+      2026-10-03. Watch for a reply.
+- [ ] **WATCH https://github.com/microsoft/playwright/issues/43098, the Windows
+      Playwright MCP browser kill.** On Windows, the stdio server force-kills
+      its own browser 1 ms after the graceful close begins. Posted 2026-10-03.
+      Watch for a reply.
+- [ ] **WATCH the Microsoft response to report 1, sent 2026-10-03 to
+      secure@microsoft.com.** The Playwright dashboard control WebSocket
+      performs no Origin check. Watch for a response.
+- [ ] **WATCH the Microsoft response to report 2, sent 2026-10-03 to
+      secure@microsoft.com.** A non-loopback --host silently disables the
+      dashboard Host-header allowlist. Watch for a response.
 
 ---
 
