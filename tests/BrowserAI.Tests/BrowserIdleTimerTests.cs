@@ -54,6 +54,12 @@ internal sealed partial class BrowserIdleTimerTests
     private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
     /// <summary>
+    /// What the session's log says when the idle close's own <c>browser_close</c>
+    /// ran out its cap, and nothing else says.
+    /// </summary>
+    private const string UnansweredIdleClose = "did not answer its idle close within";
+
+    /// <summary>
     /// The shipped period is what §C says, and nothing in the product moves it.
     /// </summary>
     /// <remarks>
@@ -235,6 +241,11 @@ internal sealed partial class BrowserIdleTimerTests
     /// <c>browser_close</c>).</i> The close ends the session's whole child now,
     /// so the double's read loop stopping is the event, and a
     /// <c>browser_close</c> reaching it would be the old close coming back.
+    /// ⚠️ <i>Corrected again the same day, Q367 a (previously "and a
+    /// <c>browser_close</c> reaching it would be the old close coming back").</i>
+    /// The close asks the browser to close itself before it ends the child, so
+    /// exactly one <c>browser_close</c> reaches the double, and the child ending is
+    /// still the event.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -325,11 +336,13 @@ internal sealed partial class BrowserIdleTimerTests
 
         await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
 
-        // ⚠️ AND IT NEVER ASKED THE CHILD TO CLOSE ANYTHING, P4 b: a
-        // `browser_close` that meets an armed debugger pause never answers, and
-        // the close that ends the child through its stdin cannot be wedged that
-        // way.
-        await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+        // ⚠️ AND IT ASKED THE BROWSER TO CLOSE ITSELF, ONCE, Q367 a. Corrected
+        // 2026-10-03 (previously "AND IT NEVER ASKED THE CHILD TO CLOSE ANYTHING,
+        // P4 b", asserting no `browser_close` at all). The close ends the whole
+        // child still, and asks the browser first, so it flushes what it holds;
+        // a close that meets an armed debugger pause and never answers is cut off
+        // by the cap, which the arms below hold.
+        await Assert.That(child.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
     }
 
     /// <summary>
@@ -544,6 +557,307 @@ internal sealed partial class BrowserIdleTimerTests
     }
 
     /// <summary>
+    /// The idle close asks the browser to close itself first, waits for the answer
+    /// for as long as its cap allows, and ends the child as soon as the browser
+    /// has answered.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q367 a, decided 2026-10-03 by the maintainer, in his words: <i>"Q367 a -
+    /// but why just 1 sec.? Why not be very gracefull here?"</i></b> Until then the
+    /// idle close ended the child through its stdin with no close first, and the
+    /// research had a stdin end lose a store in 1 of 16 Chromium and 1 of 19
+    /// Firefox runs, where a <c>browser_close</c> first kept everything, 6 of 6.
+    /// </para>
+    /// <para>
+    /// <b>Generous, and both halves of that are asserted.</b> The double holds the
+    /// close open; the clock is stopped one tick short of the cap the close armed,
+    /// and the child is still running. Then the double answers and the clock does
+    /// not move again, so the child ending can only be the answer ending the wait.
+    /// A close that ignored the answer and sat out its whole cap would leave this
+    /// arm waiting on the hang detector.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnIdleCloseAsksTheBrowserToCloseItselfAndEndsTheChildOnceItHasAnswered()
+    {
+        var clock = new ManualClock();
+        var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = answer.Task };
+            },
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the call that starts the browser and arms the timer" },
+        });
+
+        var child = harness.Child;
+
+        await ClockUntilTheIdleCloseArmsItsCapAsync(clock, child);
+
+        await WaitUntilAsync(
+            () => child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool) || child.HasStopped,
+            TestDefaults.InProcessHang,
+            "the idle close neither asked the browser to close nor ended the child");
+
+        await Assert.That(child.ToolCallsReceived).Contains(LiveSession.BrowserCloseTool);
+
+        // One tick short of the cap the close armed, and the child is still there.
+        var left = clock.UntilTheNewestTimerFires();
+
+        await Assert.That(left.HasValue)
+            .IsTrue()
+            .Because("the cap the idle close armed was no longer running once the close had reached the child, so nothing was waiting for the answer");
+        await Assert.That(left!.Value).IsLessThanOrEqualTo(LiveSession.IdleCloseBudget);
+
+        clock.AdvanceTicks(left.Value.Ticks - ManualClock.OneTick);
+
+        _ = await harness.Client.RoundTripAsync("tools/list");
+
+        await Assert.That(child.HasStopped).IsFalse();
+
+        // The browser answers, and the clock is not moved again.
+        answer.SetResult();
+
+        await WaitUntilAsync(
+            () => child.HasStopped,
+            TestDefaults.InProcessHang,
+            "the idle close did not end the child once the browser had answered its close");
+
+        await Assert.That(child.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+        await Assert.That(child.BrowserIsOpen).IsFalse();
+        await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
+
+        await WaitUntilAsync(
+            () => RecordedSession.LogOf(harness.Session!).Any(row =>
+                row.Tool == LiveSession.BrowserCloseTool && row.Outcome == SessionStore.Successful),
+            TestDefaults.InProcessHang,
+            "the idle close never settled its row");
+    }
+
+    /// <summary>
+    /// An idle close whose <c>browser_close</c> never answers -- an armed debugger
+    /// pause -- still ends the child, once its thirty-second cap has run out and
+    /// not before.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The cap exists for this case alone.</b> A pause armed in the browser
+    /// parks the next action, a close included: measured 2026-10-03, a
+    /// <c>browser_close</c> after an armed pause had no answer after 10 s, 12 of 12
+    /// on <c>@playwright/mcp</c> 0.0.82 and 6 of 6 on 0.0.83, and a child whose
+    /// stdin closed exited 0.75 to 1.5 s later even while paused. The double holds
+    /// the close open, which is the one property of the pause this layer can
+    /// reproduce, and the shipped value is asserted here because the suite drives
+    /// the cap through the clock and never waits it out.
+    /// </para>
+    /// <para>
+    /// <b>The child is told the close was cancelled</b>, by the close's own request
+    /// id, before its stdin is closed: what a caller's cancellation sends, and the
+    /// last thing a paused child that will not answer is asked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnIdleCloseThatIsNeverAnsweredEndsTheChildWhenItsCapRunsOut()
+    {
+        await Assert.That(LiveSession.IdleCloseBudget).IsEqualTo(TimeSpan.FromSeconds(30));
+
+        var clock = new ManualClock();
+        var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = never.Task };
+            },
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the call that starts the browser and arms the timer" },
+        });
+
+        var child = harness.Child;
+
+        await ClockUntilTheIdleCloseArmsItsCapAsync(clock, child);
+
+        await WaitUntilAsync(
+            () => child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool) || child.HasStopped,
+            TestDefaults.InProcessHang,
+            "the idle close neither asked the browser to close nor ended the child");
+
+        await Assert.That(child.ToolCallsReceived).Contains(LiveSession.BrowserCloseTool);
+
+        var left = clock.UntilTheNewestTimerFires();
+
+        await Assert.That(left.HasValue)
+            .IsTrue()
+            .Because("the cap the idle close armed was no longer running once the close had reached the child, so nothing was waiting for the answer");
+
+        clock.AdvanceTicks(left!.Value.Ticks - ManualClock.OneTick);
+
+        _ = await harness.Client.RoundTripAsync("tools/list");
+
+        await Assert.That(child.HasStopped).IsFalse();
+
+        // The cap runs out.
+        clock.AdvanceTicks(ManualClock.OneTick);
+
+        await WaitUntilAsync(
+            () => child.HasStopped,
+            TestDefaults.InProcessHang,
+            "the idle close did not end the child once its cap had run out");
+
+        await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsTrue();
+        await Assert.That(child.MethodsReceived).Contains("notifications/cancelled");
+
+        // And the session is closed the way any idle close leaves it: the row is
+        // settled, and the next call is refused with the way back.
+        await WaitUntilAsync(
+            () => RecordedSession.LogOf(harness.Session!).Any(row =>
+                row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+            TestDefaults.InProcessHang,
+            "the idle close never settled its row");
+
+        var refused = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the call after an idle close the browser never answered" },
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
+    }
+
+    /// <summary>
+    /// A resume that arrives while the idle close is still waiting for its
+    /// <c>browser_close</c> ends that wait at once, and does not sit out the cap.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every call to a closed session is refused with a sentence naming
+    /// <c>browserai_resume</c></b>, so a caller who meets the session while its
+    /// close is parked on an armed pause resumes it, and the resume tears the
+    /// session down first. The close is waited on with the teardown's own
+    /// cancellation, so the teardown ends the wait the moment it starts.
+    /// </para>
+    /// <para>
+    /// <b>No duration is asserted, and the evidence is what the cancellation
+    /// leaves.</b> A wait the teardown cancels tells the child its close was
+    /// cancelled, by that close's own id, before the child is ended; a wait it
+    /// merely abandoned would have held the resume for the timer's own 20 s
+    /// teardown bound and then ended the child with nothing said to it. The clock
+    /// is not moved at all after the close is asked for, so the cap cannot be what
+    /// ended it either.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce()
+    {
+        var clock = new ManualClock();
+        var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = never.Task };
+            },
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the call that starts the browser and arms the timer" },
+        });
+
+        var first = harness.Child;
+
+        await ClockUntilTheIdleCloseArmsItsCapAsync(clock, first);
+
+        await WaitUntilAsync(
+            () => first.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool) || first.HasStopped,
+            TestDefaults.InProcessHang,
+            "the idle close neither asked the browser to close nor ended the child");
+
+        await Assert.That(first.ToolCallsReceived).Contains(LiveSession.BrowserCloseTool);
+        await Assert.That(first.HasStopped).IsFalse();
+
+        var resumed = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.Resume,
+            ["arguments"] = new JsonObject { ["directory"] = harness.Session!, ["why"] = "the suite resuming a session whose idle close is still waiting" },
+        });
+
+        await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
+        await Assert.That(rig.SessionChildren.Count).IsEqualTo(2);
+
+        await WaitUntilAsync(
+            () => first.HasStopped,
+            TestDefaults.InProcessHang,
+            "the resume did not end the child whose idle close was still waiting");
+
+        await Assert.That(first.MethodsReceived).Contains("notifications/cancelled");
+        await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
+    }
+
+    /// <summary>
+    /// Moves the clock a period at a time until the idle close has armed its cap
+    /// or the child has stopped, and never once the cap is armed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Asked before the clock moves, every time.</b> The close runs on a
+    /// thread of its own once the timer fires, so a loop that moved first and
+    /// looked second could run the cap down by a period for every turn it took
+    /// the close to arm it; asked first, the most this can move past the cap's
+    /// own start is the one advance the close armed it inside. And the arm reads
+    /// how far the cap is from firing off the clock itself, so even that cannot
+    /// make "one tick short" mean anything else.
+    /// </remarks>
+    /// <param name="clock">The session's clock.</param>
+    /// <param name="child">The session's double.</param>
+    /// <returns>A task that completes once the cap is armed or the child has stopped.</returns>
+    private static Task ClockUntilTheIdleCloseArmsItsCapAsync(ManualClock clock, FakePlaywrightChild child)
+    {
+        var timers = clock.TimersCreated;
+
+        return WaitUntilAsync(
+            () =>
+            {
+                if (clock.TimersCreated > timers || child.HasStopped)
+                {
+                    return true;
+                }
+
+                clock.Advance(ShortPeriod);
+                return clock.TimersCreated > timers || child.HasStopped;
+            },
+            TestDefaults.InProcessHang,
+            "the idle close neither armed a cap nor ended the child, however far the clock was moved");
+    }
+
+    /// <summary>
     /// Against a <b>real</b> browser: idle past the period ends the session's
     /// whole child, node included, the next call is refused with the way back,
     /// and the resume starts a child whose browser answers.
@@ -612,20 +926,39 @@ internal sealed partial class BrowserIdleTimerTests
 
         await Assert.That(BrowsersIn(child, rig).Count).IsGreaterThan(0);
 
-        // Now, and only now, the session goes idle. The clock is advanced until
-        // the node child has actually gone and not once: the proxy releases its
-        // in-flight scope after the caller's answer is on the wire, so an advance
-        // that lands while a call is still outstanding re-arms for a whole
-        // period -- correctly. What is waited for afterwards is a real process
-        // tree ending, which is real time and is bounded by the teardown patience.
+        // Now, and only now, the session goes idle. The clock is advanced a period
+        // at a time and not once: the proxy releases its in-flight scope after the
+        // caller's answer is on the wire, so an advance that lands while a call is
+        // still outstanding re-arms for a whole period -- correctly. ⚠️ And it
+        // stops the moment the idle close arms its cap (Q367 a, added 2026-10-03):
+        // the close asks the real browser to close itself, and a clock moved on
+        // from there would run the cap down under a close that is still being
+        // answered. What is waited for afterwards is a real process tree ending,
+        // which is real time and is bounded by the teardown patience.
+        var timers = clock.TimersCreated;
+
         await WaitUntilAsync(
             () =>
             {
+                if (clock.TimersCreated > timers || !ProcessIdentity.IsAlive(node, nodeCreated))
+                {
+                    return true;
+                }
+
                 clock.Advance(period);
-                return !ProcessIdentity.IsAlive(node, nodeCreated);
+                return clock.TimersCreated > timers || !ProcessIdentity.IsAlive(node, nodeCreated);
             },
             TeardownPatience,
+            "the idle close never asked the browser to close and the node child was still running, however far the clock was moved");
+
+        await WaitUntilAsync(
+            () => !ProcessIdentity.IsAlive(node, nodeCreated),
+            TeardownPatience,
             "the node child was still running long after the session went idle");
+
+        // The clock never reached the cap, so nothing but the real browser's own
+        // answer to its close can have let the child be ended.
+        await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
 
         // The browser tree went with it: every process the job held is gone.
         var survivors = new List<int>();

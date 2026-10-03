@@ -1041,6 +1041,33 @@ the tabs through the browsers' own session restore
 ([below](#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03)).
 `LiveSession` and `BrowserIdleTimer` carry it, and `SessionCloseTests` holds it.
 
+⚠️ **And since later the same day the idle close asks the browser to close itself
+first, for up to thirty seconds** -- *added 2026-10-03 by addition, Q367 a, the
+maintainer's words verbatim: "Q367 a - but why just 1 sec.? Why not be very
+gracefull here?"* The sentence above says it sends no `browser_close`; it sends
+one now, waits for the answer, and then ends the whole child as before. **Why:**
+a child ended through its stdin with no close first lost a store in 1 of 16
+Chromium and 1 of 19 Firefox runs, and a `browser_close` first kept everything,
+6 of 6 ([below](#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03)).
+**Why thirty seconds and not the shutdown's one:** that second is what Claude
+Code leaves a server before it kills the tree, 0.53 to 1.15 s; at idle nobody is
+waiting. A call that arrives meanwhile is refused at once with the sentence naming
+`browserai_resume`, and a resume, a destroy or a shutdown that starts meanwhile
+ends the wait at once. The slowest close the
+[state-across-close batch](../../docs/evidence/2026-10-03-state-across-close/README.md)
+timed answered in 1,163 ms on Firefox and 915 ms on Chromium, so the cap costs
+nothing while a close is answered, and is about 26 times the slowest. It bounds
+the one close that never answers, the one that meets
+[an armed debugger pause](tools-and-artifacts.md#a-pause-met-first-by-a-close-wedges-the-session-and-nothing-in-browserais-surface-releases-it----measured-2026-10-03):
+there it is how long a wedged browser and its child outlive the idle period,
+thirty seconds after ten minutes, before the child is ended through its stdin,
+which a paused child obeys. `LiveSession.IdleCloseBudget` is the cap;
+`BrowserIdleTimerTests.AnIdleCloseAsksTheBrowserToCloseItselfAndEndsTheChildOnceItHasAnswered`,
+`.AnIdleCloseThatIsNeverAnsweredEndsTheChildWhenItsCapRunsOut` and
+`.AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce` hold it against a
+child that answers, one that never does, and a resume in between. **Not re-measured:** what the close keeps when it answers was measured
+through a raw child, and is not re-taken through the product here.
+
 ⚠️ **`browser_close`'s own result text reads as though it closed a tab, and it
 does not.** It answers *"No open tabs. Navigate to a URL to create one."* with
 `await page.close()` as the code it ran -- yet every process under the browsers
@@ -1497,7 +1524,10 @@ page re-runs on load, beyond the one POST; and what a headed window does.
 `BrowserConfiguration.DefaultPageArgument` in `ignoreDefaultArgs` for both. The
 idle close sent `browser_close` when this was measured, as the first sentence of
 this entry says; since the same day it ends the whole child instead, which is the
-design B column above and keeps the same stores.
+design B column above and keeps the same stores. *Added by addition, Q367 a:* and
+since later that day it sends the `browser_close` first as well, waits up to
+thirty seconds for the answer, and then ends the whole child
+([above](#timings-spawn-resume-idle-close-proxy-overhead)).
 `SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed`
 holds the restore through the product against a real Chromium and Firefox, and
 `ConfigRoundTripTests.EverySessionLaunchCarriesTheBrowsersOwnRestoreAndAHeadedOneNoIdleTimeout`

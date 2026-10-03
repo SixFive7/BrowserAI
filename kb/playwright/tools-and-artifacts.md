@@ -1221,6 +1221,20 @@ cancellation the caller never made.
 with a child that holds the close open; that a real paused child obeys its stdin
 is the 0.0.82 measurement above and was not re-taken through the product.
 
+⚠️ *Corrected 2026-10-03, later the same day, by addition (previously "The idle
+close sends no `browser_close` any more, so it cannot meet a pause this
+way").* **It sends one again, under Q367 a, and a pause can meet it for thirty
+seconds and no longer.** The idle close marks the session closed, sends
+`browser_close` and waits at most `LiveSession.IdleCloseBudget` for the answer.
+A close that meets an armed pause runs the cap out; the child is then told the
+close was cancelled, by the close's own request id, and ended through its stdin,
+and the next call is refused naming `browserai_resume`, as after any close. A
+resume that arrives while the close is still waiting ends the wait at once.
+`BrowserIdleTimerTests.AnIdleCloseThatIsNeverAnsweredEndsTheChildWhenItsCapRunsOut`
+and `.AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce` hold both with a
+child that holds the close open; that a real paused child obeys its stdin is
+still the 0.0.82 measurement.
+
 ### A close from the dashboard leaves the session on a blank page, and no call fails
 
 Measured:

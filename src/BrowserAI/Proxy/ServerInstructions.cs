@@ -143,6 +143,26 @@ namespace BrowserAI.Proxy;
 /// any wire measured it, and the next addition has to find its own space.
 /// </para>
 /// <para>
+/// ⚠️ <b>The tracing clause says what it writes since 2026-10-03 -- Q371 a, the
+/// maintainer's words verbatim: <i>"Q371 a"</i> -- and two clauses were tightened
+/// to pay for it, recorded here and not left to a diff.</b> It said <i>"'tracing:
+/// true' records the run"</i>, and what <c>tracing</c> switches on is upstream's
+/// <c>saveSession</c>: a <c>session.md</c> that logs the calls, which the trace
+/// viewer cannot open, so a model that wanted a trace got that and no trace. It
+/// now says so and names <c>browser_start_tracing</c>; the two parameter
+/// descriptions carry the rest, <c>browser_stop_tracing</c> included. The clause
+/// grew by 53 characters against 11 of headroom. Cut: <i>", both per-run"</i>,
+/// 14, which said again what <i>"Nothing chosen at init binds a later call"</i>
+/// says at the start of the same sentence, as the 2026-10-03 cut above did; <i>"It
+/// goes in the session's record"</i> became <i>"It is recorded"</i>, 17, the
+/// clause after it naming the tool that reads the record back; and <i>"refuses a
+/// directory that is already a session"</i> became <i>"refuses an existing
+/// session"</i>, 18. <b>Nothing that tells a model what to DO was touched.</b>
+/// <b>2,041 characters, 7 of headroom</b>, computed from this file's own text
+/// and before any wire measured it, and the next addition has to find its own
+/// space.
+/// </para>
+/// <para>
 /// <b>The deletion line is the short half of a rule stated in three places.</b>
 /// Settled 2026-09-21: BrowserAI never deletes a session on its own, so the
 /// agent that created one destroys it when the work is done, and promptly when
@@ -209,7 +229,7 @@ internal static class ServerInstructions
         $"""
         BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
-        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run.
+        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' logs the calls to session.md; for a trace, use browser_start_tracing.
 
         'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.
 
@@ -219,11 +239,11 @@ internal static class ServerInstructions
 
         Supply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.
 
-        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
+        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It is recorded, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
 
         WARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.
 
-        {SessionToolSurface.Init} refuses a directory that is already a session and directs you to {SessionToolSurface.Resume}; {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.SetPurpose} rewrites what one says it is for, and {SessionToolSurface.Destroy} deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.
+        {SessionToolSurface.Init} refuses an existing session and directs you to {SessionToolSurface.Resume}; {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.SetPurpose} rewrites what one says it is for, and {SessionToolSurface.Destroy} deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.
         """;
 
     /// <summary>How many characters <see cref="Text"/> costs of the budget.</summary>

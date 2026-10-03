@@ -48,6 +48,8 @@ internal sealed class ManualClock : TimeProvider
     private readonly List<ManualTimer> _timers = [];
 
     private long _now;
+    private int _created;
+    private ManualTimer? _newest;
 
     /// <summary>One tick, in this clock's units, for "just short of" arithmetic.</summary>
     /// <remarks>
@@ -91,10 +93,49 @@ internal sealed class ManualClock : TimeProvider
         lock (_gate)
         {
             _timers.Add(timer);
+            _created++;
+            _newest = timer;
         }
 
         _ = timer.Change(dueTime, period);
         return timer;
+    }
+
+    /// <summary>How many timers have been created on this clock, disposed ones included.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03 for the idle close's cap, Q367 a.</b> The close arms a
+    /// timer of its own on the session's clock when it asks the browser to close,
+    /// so a count that grows is the one synchronous sign an arm can read that the
+    /// close has got that far -- and an arm that went on moving the clock after it
+    /// would run the cap down by however far it moved.
+    /// </remarks>
+    public int TimersCreated
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _created;
+            }
+        }
+    }
+
+    /// <summary>
+    /// How far this clock has to move before the timer created last fires, or
+    /// <see langword="null"/> when that timer is not armed.
+    /// </summary>
+    /// <remarks>
+    /// What lets an arm stop <i>one tick short</i> of a deadline the product
+    /// set by itself, which is the only reading of "not before" that cannot be
+    /// satisfied by a clock that happened not to move far enough.
+    /// </remarks>
+    /// <returns>The time left, or <see langword="null"/>.</returns>
+    public TimeSpan? UntilTheNewestTimerFires()
+    {
+        lock (_gate)
+        {
+            return _newest?.DueAt is { } due ? TimeSpan.FromTicks(due - _now) : null;
+        }
     }
 
     /// <summary>

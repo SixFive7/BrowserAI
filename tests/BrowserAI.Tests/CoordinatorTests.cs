@@ -81,20 +81,33 @@ internal sealed class CoordinatorTests
     /// <summary>
     /// The coordinator's pipe has a server pipe's three properties: one DACL entry
     /// for the current user, the refusal of remote clients visible from the client
-    /// end, and a second creation refused while it is held.
+    /// end, and a second coordinator refused while it is held.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Through the product's own open</b>, which is the server pipe's creation,
     /// so this is the arm that fails if the coordinator's pipe is ever created some
     /// other way. The framework's default pipe is the positive control for both
     /// readings, the way <see cref="ServerPipeTests"/> uses it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Renamed and corrected 2026-10-03 with Q368 a (previously
+    /// <c>TheCoordinatorsPipeIsOwnerOnlyRefusesRemoteClientsAndHasOneInstance</c>,
+    /// expecting <c>0x800700E7</c>).</b> The coordinator's pipe serves its
+    /// connections in parallel now, as a server's has since Q297 b, so it is
+    /// created with room for more than one instance and <i>one instance per
+    /// name</i> no longer keeps a second coordinator out.
+    /// <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> does: a second open asks for the first
+    /// instance of a name that already has one, and Windows answers
+    /// <c>ERROR_ACCESS_DENIED</c>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheCoordinatorsPipeIsOwnerOnlyRefusesRemoteClientsAndHasOneInstance()
+    public async Task TheCoordinatorsPipeIsOwnerOnlyRefusesRemoteClientsAndRefusesASecondCoordinator()
     {
         const uint RejectRemote = 0x8;
-        const int PipeBusy = unchecked((int)0x800700E7);
+        const int AccessDenied = unchecked((int)0x80070005);
 
         using var root = ScratchDirectory.Create("coordinator-pipe");
         using var inbox = new CoordinatorInbox();
@@ -119,7 +132,7 @@ internal sealed class CoordinatorTests
 
         var refused = Assert.Throws<IOException>(() => CoordinatorPipe.Open(root.Path, second, NullLogger.Instance).Dispose());
 
-        await Assert.That(refused.HResult).IsEqualTo(PipeBusy);
+        await Assert.That(refused.HResult).IsEqualTo(AccessDenied);
 
         // The positive control: the framework's default pipe, read by the same two readers.
         var control = $"BrowserAI-coordinator-control-{Guid.NewGuid():N}";
@@ -134,6 +147,70 @@ internal sealed class CoordinatorTests
 
         await Assert.That(ServerPipeRig.DaclOf(reader.SafePipeHandle).Count).IsGreaterThan(1);
         await Assert.That(ServerPipeRig.FlagsOf(reader.SafePipeHandle) & RejectRemote).IsEqualTo(0u);
+    }
+
+    /// <summary>
+    /// A caller that connects to the coordinator's pipe and never finishes blocks
+    /// no other start: with one caller silent, and then another that asked and
+    /// never read its answer, a start hands its verb over each time, and each verb
+    /// reaches the inbox.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q368 a, decided 2026-10-03 by the maintainer, in his words: <i>"Q368
+    /// a"</i>.</b> The coordinator's pipe serves its connections in parallel, the
+    /// way a server's has since Q297 b. Until then one thread served one instance,
+    /// reading each request to its newline and each answer until the client closed,
+    /// so a caller that connected and stopped there held the coordinator's pipe for
+    /// as long as it liked, and every second start met a busy pipe, ran out its
+    /// bound and settled on neither.
+    /// </para>
+    /// <para>
+    /// <b>Two callers, because the old thread could be held at two places</b>:
+    /// reading a request that never ends, and draining an answer nobody reads.
+    /// Either one alone held it. The bound handed to each start is the suite's hang
+    /// detector and not the product's 500 ms, for the reason
+    /// <see cref="CoordinatorStart.Settle"/> gives for its own: the host is loaded,
+    /// and the claim is that the hand-over comes at all. <b>The inbox is the half an
+    /// acknowledgement cannot stand in for</b>: a verb is posted only once its
+    /// caller has read the answer and closed its end, so the two callers that never
+    /// finish post nothing, and each start that did posts once.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACallerThatConnectsToTheCoordinatorAndNeverFinishesBlocksNoOtherStart()
+    {
+        using var root = ScratchDirectory.Create("coordinator-parallel");
+        using var inbox = new CoordinatorInbox();
+        using var pipe = CoordinatorPipe.Open(root.Path, inbox, NullLogger.Instance);
+
+        // ---- A caller that connects and sends nothing.
+        using var silent = new NamedPipeClientStream(".", ServerPipeRig.ShortName(pipe.Name), PipeDirection.InOut);
+        await silent.ConnectAsync(TestDefaults.InProcessHang, CancellationToken.None);
+
+        var first = await CoordinatorClient.SendAsync(root.Path, CoordinatorVerb.Recheck, grant: null, TestDefaults.InProcessHang);
+
+        await Assert.That(first.Outcome).IsEqualTo(HandOverOutcome.Answered).Because(first.Why);
+        await Assert.That(first.CoordinatorProcessId).IsEqualTo(Environment.ProcessId);
+
+        // ---- And one that asks, and never reads its answer or closes.
+        using var unread = new NamedPipeClientStream(".", ServerPipeRig.ShortName(pipe.Name), PipeDirection.InOut);
+        await unread.ConnectAsync(TestDefaults.InProcessHang, CancellationToken.None);
+        await unread.WriteAsync(CoordinatorProtocol.Request(CoordinatorVerb.Show));
+        await unread.FlushAsync();
+
+        var second = await CoordinatorClient.SendAsync(root.Path, CoordinatorVerb.Recheck, grant: null, TestDefaults.InProcessHang);
+
+        await Assert.That(second.Outcome).IsEqualTo(HandOverOutcome.Answered).Because(second.Why);
+
+        // Two verbs handed over and read, two posted; the two callers that never
+        // finished posted nothing.
+        var arrived = await DrainAsync(inbox, 2);
+
+        await Assert.That(arrived.Count).IsEqualTo(2);
+        await Assert.That(arrived.All(arrival => arrival.Verb is CoordinatorVerb.Recheck)).IsTrue();
+        await Assert.That(inbox.IsEmpty).IsTrue();
     }
 
     /// <summary>

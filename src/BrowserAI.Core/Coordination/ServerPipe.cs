@@ -30,9 +30,13 @@ internal interface IServerPipeResponder
 /// <remarks>
 /// <b>Two pipes share one serving loop since 2026-09-25</b>: each server's, which
 /// answers <c>describe</c> and <c>stop</c>, and the coordinator's, which answers
-/// <c>show</c> and <c>recheck</c> (Q284 a). The loop, the framing, the
-/// security descriptor and the one-instance rule are the same for both, so the
-/// only thing a pipe supplies is this table.
+/// <c>show</c> and <c>recheck</c> (Q284 a). The loop, the framing and the
+/// security descriptor are the same for both, so the only thing a pipe supplies
+/// is this table. <i>Corrected 2026-10-03 with Q368 a (previously "The loop, the
+/// framing, the security descriptor and the one-instance rule are the same for
+/// both").</i> There is no one-instance rule left: both pipes serve their
+/// connections in parallel, and an implementation of this table is called from as
+/// many threads at once as there are callers.
 /// </remarks>
 internal interface IPipeAnswers
 {
@@ -51,10 +55,15 @@ internal interface IPipeAnswers
 
 /// <summary>
 /// One named pipe: one request per connection and a length-prefixed answer,
-/// served on one thread for the coordinator's and on a thread per connection for a
-/// server's.
+/// served on a thread per connection.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <i>Corrected 2026-10-03 with Q368 a (previously "served on one thread for
+/// the coordinator's and on a thread per connection for a server's").</i> Both
+/// pipes serve in parallel now, so there is one shape and the one-thread loop is
+/// gone.
+/// </para>
 /// <para>
 /// <b>The thread owns the pipe handle, and closes it itself on the way
 /// out.</b> The handle is synchronous, and closing a synchronous handle
@@ -68,7 +77,8 @@ internal interface IPipeAnswers
 /// pipe discards whatever the client has not read yet, so after writing, the
 /// thread reads until the client closes its end. A client that never closes
 /// holds the thread; BrowserAI's own client closes as soon as it has the answer
-/// or its bound runs out.
+/// or its bound runs out. <i>Since Q297 b it holds the thread serving its own
+/// connection and nothing else, see below.</i>
 /// </para>
 /// <para>
 /// <b>A pipe that cannot be created is not a server that cannot start.</b> The
@@ -90,32 +100,50 @@ internal interface IPipeAnswers
 /// instance of ours. The coordinator's pipe was not part of the decision and keeps
 /// one instance and one thread.
 /// </para>
+/// <para>
+/// ⚠️ <b>AND THE COORDINATOR'S PIPE SERVES IN PARALLEL TOO SINCE 2026-10-03 --
+/// Q368 a, the maintainer's words verbatim: <i>"Q368 a"</i></b> (previously the
+/// last sentence above, and the one-instance loop it named). A caller that
+/// connected to the coordinator's pipe and never finished held its one thread, so
+/// no other start could hand a verb over until it let go. Both pipes now open
+/// through <see cref="NamedPipes.CreateParallelServer"/> and share this loop, and
+/// <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is what keeps a second coordinator off
+/// the coordinator's name, refused with <c>0x80070005</c> as a second server is.
+/// </para>
+/// <para>
+/// ⚠️ <b>The number of callers held at once has no ceiling of ours or Windows' --
+/// corrected 2026-10-03</b> (previously a retry interval, "How long the listener
+/// waits before asking again when every instance Windows allows is busy", and a
+/// warning, event 7, "255 callers holding a server's pipe at once is not ordinary
+/// traffic, and the next caller waits until one lets go"). Every instance is
+/// created with <c>PIPE_UNLIMITED_INSTANCES</c>,
+/// whose value is 255 and whose meaning is that the instances are limited only by
+/// system resources, and so measured: 2,000 callers held connected at once on one
+/// pipe created this way, where a cap of 254 refused the 255th instance with
+/// <c>ERROR_PIPE_BUSY</c>
+/// (<see href="../../../kb/windows/processes.md#a-pipe-created-with-pipe_unlimited_instances-holds-more-than-255-callers----measured-2026-10-03">kb</see>).
+/// The wait for a free instance could never be reached and is gone with its
+/// warning. What a caller costs is its connection's thread. An instance Windows
+/// refuses to create for want of resources ends the listener through its
+/// catch-all, recorded as <see cref="ServerPipeLog.Failed"/>, which was never
+/// provoked here.
+/// </para>
 /// </remarks>
 internal sealed class ServerPipe : IDisposable
 {
-    /// <summary>How long the listener waits before asking again when every instance Windows allows is busy.</summary>
-    /// <remarks>
-    /// <b>A retry interval and not a bound</b>: the connected caller waits for as
-    /// long as every other instance is held, and that wait is the caller's own
-    /// bound to end. A stop is seen within one interval.
-    /// </remarks>
-    private static readonly TimeSpan InstanceRetry = TimeSpan.FromMilliseconds(100);
-
     private readonly IPipeAnswers _answers;
     private readonly ILogger _logger;
     private readonly Thread _thread;
-    private readonly bool _parallel;
 
     private SafeFileHandle? _pipe;
     private int _stopping;
 
-    private ServerPipe(string name, SafeFileHandle pipe, IPipeAnswers answers, ILogger logger, bool parallel)
+    private ServerPipe(string name, SafeFileHandle pipe, IPipeAnswers answers, ILogger logger)
     {
         Name = name;
         _pipe = pipe;
         _answers = answers;
         _logger = logger;
-        _parallel = parallel;
 
         _thread = new Thread(Serve)
         {
@@ -163,25 +191,29 @@ internal sealed class ServerPipe : IDisposable
         ArgumentNullException.ThrowIfNull(responder);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return Start(name, NamedPipes.CreateParallelServer(name), new ServerAnswers(responder, name, logger), logger, parallel: true);
+        return OpenNamed(name, new ServerAnswers(responder, name, logger), logger);
     }
 
     /// <summary>Creates a pipe under an exact name and serves it with a table of answers.</summary>
     /// <remarks>
     /// <b>What the coordinator's pipe opens through</b>, and what the overload
     /// taking a server's responder is one case of. The creation is
-    /// <c>NamedPipes.CreateServer</c> for every pipe, so the coordinator's gets the
-    /// first-instance flag, the refusal of remote clients and the current user's
-    /// DACL with nothing to remember.
+    /// <see cref="NamedPipes.CreateParallelServer"/> for every pipe, so the
+    /// coordinator's gets the first-instance flag, the refusal of remote clients,
+    /// the current user's DACL and the parallel serving with nothing to remember.
+    /// <i>Corrected 2026-10-03 with Q368 a (previously <c>NamedPipes.CreateServer</c>,
+    /// one instance, which is gone).</i>
     /// </remarks>
     /// <param name="name">The full pipe name.</param>
     /// <param name="answers">What each request is answered with.</param>
     /// <param name="logger">Where the pipe reports.</param>
-    /// <returns>The serving pipe.</returns>
+    /// <returns>The serving pipe, which serves its connections in parallel.</returns>
     /// <exception cref="IOException">
     /// The pipe was not created. <see cref="Exception.HResult"/> is Windows' own
-    /// answer: <c>0x800700E7</c> when an instance of the name already exists, and
-    /// <c>0x80070005</c> when somebody else created the name first.
+    /// answer: <c>0x80070005</c> when an instance of the name already exists,
+    /// ours or somebody else's. <i>Corrected 2026-10-03 with Q368 a (previously
+    /// "<c>0x800700E7</c> when an instance of the name already exists, and
+    /// <c>0x80070005</c> when somebody else created the name first").</i>
     /// </exception>
     public static ServerPipe OpenNamed(string name, IPipeAnswers answers, ILogger logger)
     {
@@ -189,7 +221,7 @@ internal sealed class ServerPipe : IDisposable
         ArgumentNullException.ThrowIfNull(answers);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return Start(name, NamedPipes.CreateServer(name), answers, logger, parallel: false);
+        return Start(name, NamedPipes.CreateParallelServer(name), answers, logger);
     }
 
     /// <summary>Wraps a created first instance and starts its thread.</summary>
@@ -197,13 +229,12 @@ internal sealed class ServerPipe : IDisposable
     /// <param name="handle">The first instance. Owned from here, and disposed if the start fails.</param>
     /// <param name="answers">What each request is answered with.</param>
     /// <param name="logger">Where the pipe reports.</param>
-    /// <param name="parallel">Whether each connection is served on a thread of its own.</param>
     /// <returns>The serving pipe.</returns>
-    private static ServerPipe Start(string name, SafeFileHandle handle, IPipeAnswers answers, ILogger logger, bool parallel)
+    private static ServerPipe Start(string name, SafeFileHandle handle, IPipeAnswers answers, ILogger logger)
     {
         try
         {
-            var pipe = new ServerPipe(name, handle, answers, logger, parallel);
+            var pipe = new ServerPipe(name, handle, answers, logger);
 
             var verbs = string.Join(" and ", answers.Verbs);
 
@@ -221,10 +252,13 @@ internal sealed class ServerPipe : IDisposable
 
     /// <summary>Stops serving.</summary>
     /// <remarks>
-    /// It does not wait for the thread. A thread blocked on a client that has
-    /// not closed its end finishes with that client and then sees the request
-    /// to stop; the process going away takes it regardless, because it is a
-    /// background thread.
+    /// It does not wait for the listener or for a connection's thread. A
+    /// connection whose client has not closed its end finishes with that client;
+    /// the process going away takes every one of them regardless, because they
+    /// are background threads. <i>Corrected 2026-10-03 with Q368 a (previously "A
+    /// thread blocked on a client that has not closed its end finishes with that
+    /// client and then sees the request to stop"), which described the
+    /// one-thread loop.</i>
     /// </remarks>
     public void Dispose()
     {
@@ -233,87 +267,30 @@ internal sealed class ServerPipe : IDisposable
             return;
         }
 
-        // Wake a listener that is waiting for a client: connect once and let
-        // go. A pipe that is busy with somebody else answers this with
-        // ERROR_PIPE_BUSY, and the thread then sees the request to stop as soon
-        // as that client is done.
+        // Wake the listener: connect once and let go. Corrected 2026-10-03 with
+        // Q368 a (previously "A pipe that is busy with somebody else answers this
+        // with ERROR_PIPE_BUSY, and the thread then sees the request to stop as
+        // soon as that client is done"). However many callers hold the other
+        // instances, the listener is either waiting on one of its own that nobody
+        // is connected to, which this connect wakes, or between two waits, where
+        // it reads the request to stop before it waits again.
         using var wake = NamedPipes.OpenClient(Name, out _);
     }
 
-    private void Serve()
-    {
-        if (_parallel)
-        {
-            ServeInParallel();
-            return;
-        }
-
-        var pipe = _pipe!;
-
-        try
-        {
-            using var stream = new FileStream(pipe, FileAccess.ReadWrite, bufferSize: 0, isAsync: false);
-
-            // The stream owns the handle from here and closes it on the way out.
-            _pipe = null;
-
-            while (Volatile.Read(ref _stopping) is 0)
-            {
-                if (!NamedPipes.WaitForClient(pipe))
-                {
-                    NamedPipes.Disconnect(pipe);
-                    continue;
-                }
-
-                if (Volatile.Read(ref _stopping) is not 0)
-                {
-                    NamedPipes.Disconnect(pipe);
-                    break;
-                }
-
-                var after = AnswerOne(stream, NamedPipes.ClientProcessIdOf(pipe));
-
-                NamedPipes.Disconnect(pipe);
-
-                // ⚠️ AFTER the disconnect, so the client has its whole answer
-                // before anything this reply asked for begins. For stop, this is
-                // the stop.
-                after?.Invoke();
-            }
-        }
-#pragma warning disable CA1031 // The thread boundary: a pipe that fails is a log record and a coordinator that cannot see this one process, never a crash of the server serving a client.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            try
-            {
-                ServerPipeLog.Failed(_logger, Name, failure);
-            }
-#pragma warning disable CA1031 // A logger that throws must not defeat the catch-all that was reporting through it.
-            catch (Exception)
-#pragma warning restore CA1031
-            {
-            }
-        }
-        finally
-        {
-            _pipe?.Dispose();
-        }
-    }
-
     /// <summary>
-    /// The listening thread of a parallel pipe: wait for a client, make the next
-    /// instance, hand the connected one to a thread of its own, listen again.
+    /// The listening thread: wait for a client, make the next instance, hand the
+    /// connected one to a thread of its own, listen again.
     /// </summary>
     /// <remarks>
     /// <b>The next instance is made before the connected one is handed over</b>,
     /// so this thread holds an instance of the name at every moment and the
     /// creation without <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> can only ever join our
-    /// own pipe. When every instance Windows allows is busy, the connected client
-    /// waits here until one is let go: its own bound ends that wait for it, and this
-    /// thread goes on asking.
+    /// own pipe. <i>Corrected 2026-10-03 (previously "When every instance Windows
+    /// allows is busy, the connected client waits here until one is let go: its own
+    /// bound ends that wait for it, and this thread goes on asking").</i> No such
+    /// state exists: see the type's remarks, and the measurement they link.
     /// </remarks>
-    private void ServeInParallel()
+    private void Serve()
     {
         var listening = _pipe!;
         _pipe = null;
@@ -334,14 +311,7 @@ internal sealed class ServerPipe : IDisposable
                     break;
                 }
 
-                var next = NextInstance();
-
-                if (next is null)
-                {
-                    // A stop arrived while every instance was busy.
-                    NamedPipes.Disconnect(listening);
-                    break;
-                }
+                var next = NamedPipes.CreateParallelInstance(Name);
 
                 // The connected instance belongs to its own thread from here.
                 new Connection(this, listening).Start();
@@ -367,37 +337,6 @@ internal sealed class ServerPipe : IDisposable
         {
             listening.Dispose();
         }
-    }
-
-    /// <summary>
-    /// One more instance of this pipe, asked for again while every instance
-    /// Windows allows is busy, or <see langword="null"/> once a stop has arrived.
-    /// </summary>
-    /// <returns>The new instance, owned by the caller.</returns>
-    /// <exception cref="IOException">Windows refused the instance for a reason other than every instance being busy.</exception>
-    private SafeFileHandle? NextInstance()
-    {
-        var reported = false;
-
-        while (Volatile.Read(ref _stopping) is 0)
-        {
-            try
-            {
-                return NamedPipes.CreateParallelInstance(Name);
-            }
-            catch (IOException busy) when ((busy.HResult & 0xFFFF) is NamedPipes.ErrorPipeBusy)
-            {
-                if (!reported)
-                {
-                    ServerPipeLog.EveryInstanceBusy(_logger, Name);
-                    reported = true;
-                }
-
-                Thread.Sleep(InstanceRetry);
-            }
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -639,19 +578,6 @@ internal static partial class ServerPipeLog
         Message = "A stop arrived on {Name} and was acknowledged; this server now ends its conversation the way a client leaving ends it.")]
     public static partial void StopRequested(ILogger logger, string name);
 
-    /// <summary>Every instance Windows allows for a parallel pipe is held by a caller.</summary>
-    /// <remarks>
-    /// <b>Warning, once per wait</b>: 255 callers holding a server's pipe at once is
-    /// not ordinary traffic, and the next caller waits until one lets go.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="name">The pipe's full name.</param>
-    [LoggerMessage(
-        EventId = 7,
-        Level = LogLevel.Warning,
-        Message = "Every instance Windows allows for {Name} is held by a caller, so the caller that connected last waits until one lets go. The pipe goes on serving.")]
-    public static partial void EveryInstanceBusy(ILogger logger, string name);
-
     /// <summary>One connection of a parallel pipe failed, and only that connection was lost.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="name">The pipe's full name.</param>
@@ -661,4 +587,13 @@ internal static partial class ServerPipeLog
         Level = LogLevel.Warning,
         Message = "A connection to {Name} failed and was dropped. The pipe goes on serving every other caller.")]
     public static partial void ConnectionFailed(ILogger logger, string name, Exception failure);
+
+    // Id 7 was `EveryInstanceBusy`, a warning that every instance Windows allows
+    // for a parallel pipe was held and the next caller waited for one to let go.
+    // Removed 2026-10-03 with the wait it reported: a pipe created with
+    // PIPE_UNLIMITED_INSTANCES has no such ceiling, measured to 2,000 callers held
+    // at once, so nothing can produce it, and the id is not reused for anything
+    // else.
+    //
+    // RETIRED-EVENT-IDS: 7
 }

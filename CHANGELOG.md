@@ -683,6 +683,12 @@ release body; nothing else depends on it.
   with one caller silent, a describe from another waited out the suite's whole five-minute hang
   detector and came back with no answer. The hazard row for it closes.
 
+  ⚠️ ***Corrected 2026-10-03, before any release carried it (previously "up to 255 at once,
+  Windows' own ceiling" and "The coordinator's pipe was not part of the decision and keeps one
+  instance").*** 255 is `PIPE_UNLIMITED_INSTANCES`, which sets no ceiling, measured to 2,000
+  callers held at once; and the coordinator's pipe serves in parallel too since Q368 a. See the
+  entry for it below.
+
 - ⬆️ **The payload rolled to `@playwright/mcp` 0.0.83, Chromium moved to 155, and Velopack to 1.2.161.**
   `playwright-core` and `playwright` resolve to `1.64.0-alpha-1790635538000`, the version 0.0.83
   pins for both. Chromium **1246 -> 1247** with `browserVersion` **154.0.8037.0 -> 155.0.8059.12**,
@@ -1225,6 +1231,11 @@ release body; nothing else depends on it.
   session whose close never answers is recovered by `browserai_resume`**, which ends that child
   through its stdin, and the parked call is answered with the failure instead of being left
   outstanding.
+
+  ⚠️ ***Corrected 2026-10-03, before any release carried it (previously "and it cannot be wedged
+  by an armed debugger pause the way a `browser_close` is").*** The idle close sends the
+  browser its own `browser_close` first again, Q367 a, and a pause can hold that close for
+  thirty seconds before the child is ended. See the entry for it below.
   [kb](kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03),
   [the wedge](kb/playwright/tools-and-artifacts.md#a-pause-met-first-by-a-close-wedges-the-session-and-nothing-in-browserais-surface-releases-it----measured-2026-10-03).
 
@@ -1254,6 +1265,56 @@ release body; nothing else depends on it.
   second after a write instead of five. Neither shortens the 30 s a Chromium cookie needs, and a
   client that kills without warning, as Codex always does, still takes what was not flushed.
   [kb](kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03).
+
+- 🔧 **The idle close asks the browser to close itself first, and waits up to thirty seconds for it.**
+  Q367 a, the maintainer's words verbatim: *"Q367 a - but why just 1 sec.? Why not be very
+  gracefull here?"* After ten idle minutes BrowserAI ended a session's whole child through its
+  stdin with no close first, and in the research of 2026-10-03 an end like that lost a store in 1
+  of 16 Chromium and 1 of 19 Firefox runs, where a `browser_close` first kept everything, 6 of 6.
+  Now the session is marked closed, the browser is sent its own `browser_close`, and the child is
+  ended once the browser has answered or thirty seconds have passed. Thirty because nobody is
+  waiting: a call that arrives meanwhile is refused at once with the sentence naming
+  `browserai_resume`, a resume, a destroy or a shutdown ends the wait at once, and the slowest close
+  timed that night answered in 1,163 ms. The cap is there for the armed debugger pause alone, whose
+  close never answers: such a session is held thirty seconds past its ten idle minutes and then
+  ended through its stdin, which a paused child obeys, with a warning in its log, event 65.
+  Watched red first against the close as it stood: the four arms that hold it found no
+  `browser_close` asked for. Then each half on its own: with the close sent and not waited for,
+  the cap was gone before the close reached the child; with the cap armed and wired to nothing,
+  the child was never ended and the arm waited out the five-minute hang detector; and with the
+  wait deaf to a teardown, a resume took the idle timer's whole 20 s teardown bound and the child
+  was never told its close was cancelled.
+
+- 🔧 **The coordinator's pipe serves its connections in parallel too, and no pipe of ours stops at 255.**
+  Q368 a, the maintainer's words verbatim: *"Q368 a"*. A caller that connected to the coordinator's
+  pipe and never finished held its one thread, so every other start of the app met a busy pipe until
+  its bound ran out and then settled on neither. The coordinator's pipe now shares the server pipe's
+  loop, an instance and a thread per connection, and `FILE_FLAG_FIRST_PIPE_INSTANCE` alone keeps a
+  second coordinator off the name, refused with `0x80070005` where one instance per name answered
+  `0x800700E7`. **There is no ceiling at 255.** That number is `PIPE_UNLIMITED_INSTANCES`, which
+  Microsoft documents as limited only by system resources, and a probe creating pipes the way
+  BrowserAI does held 2,000 callers on one name at once, where a cap of 254 had its 255th instance
+  refused. The server pipe's wait for a free instance and its warning, event 7, could never be
+  reached and are removed; what a caller costs is the thread its connection is served on.
+  [kb](kb/windows/processes.md#a-pipe-created-with-pipe_unlimited_instances-holds-more-than-255-callers----measured-2026-10-03).
+  Watched red first against the one-instance pipe: with one caller silent, a start's hand-over
+  waited out the suite's whole five-minute hang detector and came back with no answer, and a second
+  coordinator was refused with `0x800700E7` where `0x80070005` was expected. The arm that holds
+  300 callers on one server pipe was green against the tree as it stood, whose server pipe already
+  created its instances this way, and went red with the instance count planted at 254, when the
+  255th caller waited out the hang detector.
+
+- 🔧 **`tracing` says it writes `session.md`, a log of the calls, and names the tools that record a trace.**
+  Q371 a, the maintainer's words verbatim: *"Q371 a"*. The argument switches on upstream's
+  `saveSession`, which writes a Markdown log of each tool call, with its arguments and what it
+  returned, into a folder of the session's output directory; the trace viewer cannot open it. Its two
+  descriptions said *"Record this session into its output directory"* and the instructions
+  *"'tracing: true' records the run"*, so a model that wanted a trace turned it on and got the log.
+  Both descriptions and the instructions now say what it writes and that it is not a trace, and name
+  `browser_start_tracing` and `browser_stop_tracing`; the name stays. Two clauses of the instructions
+  were tightened to make the room, and the string is 2,041 characters of the 2,048 the client reads.
+  Watched red first: against the texts as they stood, the arm named ten missing phrases, four in
+  each tool's description and two in the instructions.
 
 ### Removed
 

@@ -1,0 +1,11 @@
+started 2026-10-03T13:22:57.4820133+00:00 pid 16416 runtime 10.0.12 os Microsoft Windows 10.0.26300
+nMaxInstances 254 (a real cap: the positive control), out 65536, in 4096, timeout 0, DACL D:P(A;;GA;;;<current user SID>)
+
+== target 300 connected instances on \\.\pipe\BrowserAI-instance-probe-5925a9099c644093bb6beedb37526115
+     100 connected at      25.3 ms
+     200 connected at      27.0 ms
+     254 connected at      27.9 ms
+   STOPPED with 254 connected: instance 255 was refused by CreateNamedPipeW: 231 All pipe instances are busy.
+   handles held by this process: 724 (before the target: 215)
+   RESULT target 300: 254 connected at once, refused, 38.1 ms
+finished 2026-10-03T13:22:57.5294401+00:00

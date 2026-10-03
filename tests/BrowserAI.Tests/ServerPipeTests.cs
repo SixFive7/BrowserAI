@@ -240,8 +240,11 @@ internal sealed class ServerPipeTests
     /// server out. <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is, in both arms: a second
     /// <see cref="ServerPipe.OpenNamed(string, IServerPipeResponder, Microsoft.Extensions.Logging.ILogger)"/>
     /// asks for the first instance of a name that already has one, and Windows
-    /// answers <c>ERROR_ACCESS_DENIED</c>. The coordinator's pipe keeps one
-    /// instance, and <c>CoordinatorTests</c> still holds its <c>ERROR_PIPE_BUSY</c>.
+    /// answers <c>ERROR_ACCESS_DENIED</c>. <i>Corrected 2026-10-03 with Q368 a
+    /// (previously "The coordinator's pipe keeps one instance, and
+    /// <c>CoordinatorTests</c> still holds its <c>ERROR_PIPE_BUSY</c>").</i> The
+    /// coordinator's pipe serves in parallel too, and <c>CoordinatorTests</c> holds
+    /// the same <c>ERROR_ACCESS_DENIED</c> for a second coordinator.
     /// </para>
     /// <para>
     /// <b>Two arms, because a name can be taken two ways.</b> The second arm is
@@ -448,6 +451,72 @@ internal sealed class ServerPipeTests
         }
 
         await Assert.That(responder.Stops).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// A server's pipe holds more callers at once than 255, the number its
+    /// instances are created with, and still answers the next one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>255 is <c>PIPE_UNLIMITED_INSTANCES</c>, and not a ceiling.</b> The remark
+    /// beside <c>NamedPipes.UnlimitedInstances</c> read it as <i>"Windows' own
+    /// ceiling of 255"</i> until 2026-10-03, and the serving loop carried a wait for
+    /// an instance to come free that nothing could ever reach. Microsoft documents
+    /// the value as the one that leaves the instances limited only by system
+    /// resources, and a probe creating pipes exactly as this tree creates them
+    /// measured that on 2026-10-03: 300, 600, 1,000 and 2,000 instances held
+    /// connected at once and one more caller each, where the same probe with a cap
+    /// of 254 had its 255th instance refused with <c>ERROR_PIPE_BUSY</c>
+    /// (<c>kb/windows/processes.md</c>).
+    /// </para>
+    /// <para>
+    /// <b>This holds it through the product's own serving loop</b>, which gives
+    /// every connected caller a thread of its own, so the arm costs this host one
+    /// thread per silent caller while it runs. Each caller's connect and the last
+    /// describe are bounded by the hang detector, for the reason the arm above
+    /// gives.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APipeHoldsMoreCallersThan255AtOnceAndStillAnswersTheNext()
+    {
+        // Past 255 by a margin a stray off-by-one cannot hide in.
+        const int Callers = 300;
+
+        using var root = ScratchDirectory.Create("pipe-many");
+        using var live = LiveInstances.Join(root.Path, NullLogger.Instance)!;
+        using var responder = new ScriptedResponder();
+        using var pipe = ServerPipe.Open(live.OwnFile, responder, NullLogger.Instance);
+
+        var silent = new List<NamedPipeClientStream>();
+
+        try
+        {
+            for (var caller = 0; caller < Callers; caller++)
+            {
+                var client = new NamedPipeClientStream(".", ServerPipeRig.ShortName(pipe.Name), PipeDirection.InOut);
+
+                silent.Add(client);
+
+                await client.ConnectAsync(TestDefaults.InProcessHang, CancellationToken.None);
+            }
+
+            await Assert.That(silent.Count(client => client.IsConnected)).IsEqualTo(Callers);
+
+            var next = await ServerPipeClient.DescribeAsync(live.OwnFile, TestDefaults.InProcessHang);
+
+            await Assert.That(next.Outcome).IsEqualTo(ServerPipeOutcome.Answered).Because(next.Why);
+            await Assert.That(next.Description!.ProcessId).IsEqualTo(Environment.ProcessId);
+        }
+        finally
+        {
+            foreach (var client in silent)
+            {
+                await client.DisposeAsync();
+            }
+        }
     }
 
     /// <summary>

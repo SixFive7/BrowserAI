@@ -89,12 +89,29 @@ internal static partial class NamedPipes
 
     /// <summary>
     /// How many instances a pipe that serves its connections in parallel may have
-    /// at once: <c>PIPE_UNLIMITED_INSTANCES</c>, which is Windows' own ceiling of
-    /// 255.
+    /// at once: <c>PIPE_UNLIMITED_INSTANCES</c>, whose value is 255 and which leaves
+    /// the number limited only by system resources.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Every instance of one name has to be created with the same number</b>, so
     /// it is a constant and not a choice made per instance.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "<c>PIPE_UNLIMITED_INSTANCES</c>, which
+    /// is Windows' own ceiling of 255").</b> 255 is the value of the constant, and
+    /// the constant means no ceiling. Microsoft's documentation of
+    /// <c>CreateNamedPipeW</c>, read 2026-10-03: <i>"Acceptable values are in the
+    /// range 1 through PIPE_UNLIMITED_INSTANCES (255). If this parameter is
+    /// PIPE_UNLIMITED_INSTANCES, the number of pipe instances that can be created
+    /// is limited only by the availability of system resources."</i> Measured the
+    /// same day on Windows 11 10.0.26300 with a probe passing exactly the arguments
+    /// <see cref="Create"/> passes: 300, 600, 1,000 and 2,000 instances held
+    /// connected at once on one name, and one more caller each, with no refusal;
+    /// and the probe's positive control, the same pipe with a cap of 254, had its
+    /// 255th instance refused with <c>ERROR_PIPE_BUSY</c>
+    /// (<see href="../../../kb/windows/processes.md#a-pipe-created-with-pipe_unlimited_instances-holds-more-than-255-callers----measured-2026-10-03">kb</see>).
+    /// </para>
     /// </remarks>
     public const uint UnlimitedInstances = 255;
 
@@ -104,46 +121,25 @@ internal static partial class NamedPipes
     private const uint SddlRevision1 = 1;
 
     /// <summary>
-    /// Creates the one and only instance of a pipe, readable and writable by the
-    /// current user and nobody else, and refused to other machines.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>One instance, synchronous, and that shape is the whole server.</b>
-    /// A second client waits for the first to finish; eight simultaneous
-    /// clients against one instance were served one after another, the last in
-    /// 1.08 ms, measured 2026-09-24. The handle is not overlapped because the one
-    /// thread that serves it blocks on it and does nothing else.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The coordinator's pipe only, since 2026-10-03</b> (previously every
-    /// pipe of ours). A server's pipe serves in parallel and is created by
-    /// <see cref="CreateParallelServer"/>, Q297 b; the coordinator's was not part
-    /// of that decision and keeps one instance.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>It throws the HRESULT Windows answered, so a caller can tell a
-    /// name in use from anything else.</b> A second instance under a name this
-    /// process or another already serves is <c>0x800700E7</c>,
-    /// <c>ERROR_PIPE_BUSY</c>.
-    /// </para>
-    /// </remarks>
-    /// <param name="name">The full pipe name, <c>\\.\pipe\...</c>.</param>
-    /// <returns>The server end. The caller owns it.</returns>
-    /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
-    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    public static SafeFileHandle CreateServer(string name) => Create(name, FileFlagFirstPipeInstance, maxInstances: 1);
-
-    /// <summary>
     /// Creates the first instance of a pipe that serves its connections in
-    /// parallel, with the same three properties as <see cref="CreateServer"/>.
+    /// parallel: readable and writable by the current user and nobody else, and
+    /// refused to other machines.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Q297 b, decided 2026-10-03 by the maintainer, in his words: <i>"Q297
-    /// b"</i>.</b> A server's pipe takes up to <see cref="UnlimitedInstances"/>
-    /// connections at once, so a caller that connects and never finishes holds
-    /// its own instance and nobody else's.
+    /// b"</i>.</b> A server's pipe takes as many connections at once as
+    /// <see cref="UnlimitedInstances"/> allows, which is no ceiling, so a caller
+    /// that connects and never finishes holds its own instance and nobody else's.
+    /// <i>Corrected 2026-10-03 (previously "takes up to
+    /// <see cref="UnlimitedInstances"/> connections at once").</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Every pipe of ours since 2026-10-03, Q368 a, the maintainer's words
+    /// verbatim: <i>"Q368 a"</i>.</b> The coordinator's pipe was created by a
+    /// one-instance <c>CreateServer</c> until that day, which kept one instance per
+    /// name and answered a second creation with <c>0x800700E7</c>; it is gone with
+    /// its last caller.
     /// </para>
     /// <para>
     /// ⚠️ <b><c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is still on this creation and
@@ -165,14 +161,22 @@ internal static partial class NamedPipes
     /// serves, for the next connection.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b>Without <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c>, and safe only while the
     /// caller still holds an instance of the name.</b> A creation without the flag
     /// joins whatever pipe carries the name, so it is made only by the thread that
     /// holds an instance open at that moment: the name has then never been without
     /// one of ours since <see cref="CreateParallelServer"/> made it, and nobody
-    /// else can have created it in between. When every instance Windows allows is
+    /// else can have created it in between.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-03 (previously "When every instance Windows allows is
     /// already in use this throws with <c>0x800700E7</c>,
-    /// <c>ERROR_PIPE_BUSY</c>.
+    /// <c>ERROR_PIPE_BUSY</c>").</i> Created with
+    /// <see cref="UnlimitedInstances"/>, a pipe has no such moment: measured to
+    /// 2,000 instances held at once, see that constant. What is left to refuse an
+    /// instance is the system running out of the resources one takes.
+    /// </para>
     /// </remarks>
     /// <param name="name">The full pipe name, exactly as <see cref="CreateParallelServer"/> was given it.</param>
     /// <returns>The new server end. The caller owns it.</returns>

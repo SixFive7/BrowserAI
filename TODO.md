@@ -85,8 +85,10 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **The look-alike tools report.** Eleven tools ranked by how likely a
       model is to confuse them with BrowserAI's own, each with a reason and a
       recommendation; `browser_resume` is the only one denied so far (Q321 with
-      P6 a). **What to do:** put the report in front of him and record each
-      choice in `DECISIONS.md` and `tool-verdicts.json`.
+      P6 a), and item 5, BrowserAI's own `tracing`, is described honestly since
+      Q371 a, with its new wording still for him to check. **What to do:** put
+      the report in front of him and record each choice in `DECISIONS.md` and
+      `tool-verdicts.json`.
 - [ ] **The two reports to the Microsoft Security Response Center (Q358).**
       One for the dashboard WebSocket's missing `Origin` check, one for
       `--host` switching its `Host` check off; prepared and not sent. **What to
@@ -94,15 +96,6 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **The three reports Q356 drafted**, to Claude Code, Codex and
       `@playwright/mcp`, none posted. **What to do:** his review; posting under
       his name needs his word, as Q357 did.
-- [ ] **The coordinator's own pipe and a caller that never finishes.** Q297 b
-      named the per-server pipe, which serves in parallel since `b3ef12f`; the
-      coordinator's pipe is still single-instance, and an open hazard row says
-      so. **What to do:** ask him whether it serves in parallel too.
-- [ ] **A clean close first at idle (P4 b's report-back).** The idle close ends
-      the whole child without asking the browser to close itself first; in the
-      research, 1 of 16 Chromium and 1 of 19 Firefox ends of input lost a
-      store. **What to do:** ask him whether the idle close sends the same
-      1-second-bounded `browser_close` the shutdown sends.
 - [ ] **The night's own decisions, for his review.** Q356's second half --
       (c) not built, and whether the 30-second Chromium cookie window under a
       hard kill matters enough to revisit it -- and the choices the coordinator

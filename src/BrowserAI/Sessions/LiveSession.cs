@@ -208,6 +208,42 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </remarks>
     public static TimeSpan ShutdownCloseBudget { get; } = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// How long the idle close waits for the browser to answer its own
+    /// <c>browser_close</c> before it ends the child anyway.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q367 a, decided 2026-10-03 by the maintainer, in his words verbatim:
+    /// <i>"Q367 a - but why just 1 sec.? Why not be very gracefull here?"</i></b>
+    /// The idle close asks the browser to close itself before it ends the child,
+    /// because a browser closed by its own tool flushes what it holds: in the
+    /// research of 2026-10-03 a child ended through its stdin with no close first
+    /// lost a store in 1 of 16 Chromium and 1 of 19 Firefox runs, where a
+    /// <c>browser_close</c> first kept everything, 6 of 6
+    /// (<see href="../../../kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03">kb</see>).
+    /// </para>
+    /// <para>
+    /// <b>Why thirty seconds, and not the second <see cref="ShutdownCloseBudget"/>
+    /// gives.</b> That second is what a client leaves a server before it kills the
+    /// tree, 0.53 to 1.15 s for Claude Code; at idle nobody is waiting on the
+    /// answer. A call that arrives meanwhile is refused at once with the sentence
+    /// naming <c>browserai_resume</c>, because <see cref="Closed"/> is set before
+    /// the close is sent, and the teardown a resume, a destroy or a shutdown starts
+    /// ends the wait the moment it begins. So the cap costs nothing while a close is
+    /// answered, and the slowest close the state-across-close batch of 2026-10-03
+    /// timed answered in 1,163 ms (Firefox at 0.0.83; Chromium's slowest there was
+    /// 915 ms): the cap is about 26 times that. It bounds one case alone: a
+    /// debugger pause armed in the browser parks the close
+    /// and it never answers, 12 of 12 on <c>@playwright/mcp</c> 0.0.82 and 6 of 6
+    /// on 0.0.83. There the cap is how long a wedged browser and its child are held
+    /// past the idle period before the child is ended through its stdin, which a
+    /// paused child obeys, and thirty seconds is a twentieth of the ten idle
+    /// minutes that came before it.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan IdleCloseBudget { get; } = TimeSpan.FromSeconds(30);
+
     private readonly ServerRegistryReap _reap;
     private readonly Func<ChildConnection, bool> _browserIsOpen;
     private readonly TimeProvider _clock;
@@ -548,6 +584,16 @@ internal sealed class LiveSession : IAsyncDisposable
     /// while paused (measured on 0.0.82 and not re-taken on 0.0.83).
     /// </para>
     /// <para>
+    /// ⚠️ <b>It asks the browser to close itself first again since 2026-10-03,
+    /// Q367 a</b> (previously "And it never sends a <c>browser_close</c>, which is
+    /// the half that matters most", the sentence above). The whole child still
+    /// goes, and the wedge stays bounded: the close is sent with
+    /// <see cref="Closed"/> already set, waited on for at most
+    /// <see cref="IdleCloseBudget"/>, and cut short by a teardown that starts
+    /// meanwhile, and past either the child is ended exactly as before. A close
+    /// that meets an armed pause therefore costs thirty seconds and no session.
+    /// </para>
+    /// <para>
     /// <b>The teardown is the one every other end of a session uses</b>: stdin
     /// closed, which is upstream's own graceful path, then up to the child's
     /// shutdown bound for it to exit, then the job. See
@@ -611,6 +657,8 @@ internal sealed class LiveSession : IAsyncDisposable
             SessionLog.IdleCloseNotRecorded(Lock.Logger, Lock.Location.FullPath, failure);
         }
 
+        await AskTheBrowserToCloseAsync(cancellationToken).ConfigureAwait(false);
+
         await Child.DisposeAsync().ConfigureAwait(false);
 
         Settle(Lock, row, SessionStore.Successful, failure: null);
@@ -625,6 +673,66 @@ internal sealed class LiveSession : IAsyncDisposable
         }
 
         return new BrowserCloseResult(before, ProcessesInTheJob());
+    }
+
+    /// <summary>
+    /// The idle close's own <c>browser_close</c>: sent, and waited on until the
+    /// browser answers, <see cref="IdleCloseBudget"/> passes or a teardown starts.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The cap reads the session's own clock</b>, the one the idle timer reads,
+    /// so the suite drives it the way it drives the period and never waits it out.
+    /// </para>
+    /// <para>
+    /// <b>A teardown ends the wait at once, and it is the only thing besides the
+    /// cap that does.</b> The token is the idle timer's, cancelled when the session
+    /// is torn down, so a resume, a destroy or a shutdown meeting a close that is
+    /// still waiting -- the armed-pause case -- does not sit out the cap or the
+    /// timer's own teardown bound behind it. The child is then told the close was
+    /// cancelled, by the id BrowserAI put on it, as any cancelled call is.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What a shutdown does not get here, named and not handled.</b> A
+    /// shutdown asks each open browser to close within
+    /// <see cref="ShutdownCloseBudget"/>, and skips a session already closed, so a
+    /// shutdown that lands while this close is being answered ends the child in the
+    /// middle of the answer. The window is the close's own duration, measured at up
+    /// to 1,163 ms, and it opens once per idle close.
+    /// </para>
+    /// <para>
+    /// <b>Whatever the answer says, the child is ended next</b>, so an error
+    /// answer is not reported: it would describe a browser the very next line
+    /// takes down anyway.
+    /// </para>
+    /// </remarks>
+    /// <param name="teardown">Cancelled by a teardown that starts while this waits.</param>
+    /// <returns>A task that completes once the close has answered, the cap has passed or a teardown has begun.</returns>
+    private async Task AskTheBrowserToCloseAsync(CancellationToken teardown)
+    {
+        using var cap = new CancellationTokenSource(IdleCloseBudget, _clock);
+        using var either = CancellationTokenSource.CreateLinkedTokenSource(cap.Token, teardown);
+
+        try
+        {
+            _ = await Child.AskAsync(
+                RequestMethods.ToolsCall,
+                new JsonObject
+                {
+                    ["name"] = BrowserCloseTool,
+                    ["arguments"] = new JsonObject(),
+                },
+                either.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!teardown.IsCancellationRequested)
+        {
+            IdleLog.IdleCloseUnanswered(Logger, Location.FullPath, IdleCloseBudget);
+        }
+        catch (OperationCanceledException)
+        {
+            // A teardown began. The idle close ends the child next all the same,
+            // and the teardown, which waits for the idle close, finds it ended.
+        }
     }
 
     /// <summary>

@@ -794,6 +794,13 @@ shutdown sends every open browser its own `browser_close` at once, bounded by
 `LiveSession.ShutdownCloseBudget`, before the teardown
 (`SessionManager.DisposeAsync`, e2 of P7).
 
+⚠️ **Added 2026-10-03, later the same day, Q367 a.** The idle close asks the
+browser to close itself before it ends the child: `LiveSession` marks the session
+closed, sends `browser_close` and waits for the answer for at most
+`LiveSession.IdleCloseBudget`, thirty seconds, on the session's own clock, and a
+teardown that starts meanwhile ends the wait through the idle timer's own
+cancellation. Past either, the child is ended as above.
+
 ### `browserai_page_tool`, and how a page tool's name is resolved
 
 | Concern | Implemented by |
@@ -1263,6 +1270,18 @@ else, `PIPE_REJECT_REMOTE_CLIENTS` refuses other machines, and
 `stop` is `Program.RequestStop`, the same cancellation a client leaving fires, so
 there is one graceful path and not two. What each number rests on:
 [kb](kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24).
+
+⚠️ *Corrected 2026-10-03 by addition (previously "One instance, one thread, one
+request per connection" in the paragraph above).* A server's pipe serves its
+connections in parallel since Q297 b, and the coordinator's since Q368 a: the
+listening thread makes the next instance before it hands the connected one to a
+thread of its own, so one caller that never finishes holds one instance and one
+thread and nobody else's. Every instance is created with
+`PIPE_UNLIMITED_INSTANCES`, which is 255 by value and no ceiling by meaning,
+measured to 2,000 callers held at once
+([kb](kb/windows/processes.md#a-pipe-created-with-pipe_unlimited_instances-holds-more-than-255-callers----measured-2026-10-03)),
+and `FILE_FLAG_FIRST_PIPE_INSTANCE` is what keeps a second server, or a second
+coordinator, off a name. `ServerPipe` is the one loop for both.
 
 **The coordinator is the configuration app holding one pipe, and holding it is the
 whole of being the coordinator -- 2026-09-25.** `\\.\pipe\BrowserAI-Coordinator-<key>`,

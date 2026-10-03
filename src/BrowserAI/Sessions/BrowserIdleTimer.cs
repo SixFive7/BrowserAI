@@ -115,6 +115,14 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     public static TimeSpan DefaultIdlePeriod { get; } = TimeSpan.FromMinutes(10);
 
     /// <summary>How long a close is given before teardown stops waiting for it.</summary>
+    /// <remarks>
+    /// <b>Shorter than the close's own cap, and that is not a contradiction --
+    /// added 2026-10-03 with Q367 a.</b> The idle close waits up to
+    /// <c>LiveSession.IdleCloseBudget</c>, thirty seconds, for the browser to answer
+    /// its <c>browser_close</c>, and that wait is cancelled by the very token this
+    /// type's disposal cancels first; what this bound then covers is the rest of
+    /// the close, the child ended through its stdin and its job.
+    /// </remarks>
     private static readonly TimeSpan CloseBudget = TimeSpan.FromSeconds(20);
 
     private readonly Lock _gate = new();
@@ -438,10 +446,31 @@ internal static partial class IdleLog
         Message = "The browser on the session at {Session} did not answer its close within {Budget} at shutdown; its child is ended through its stdin and its job anyway.")]
     public static partial void ShutdownCloseUnanswered(ILogger logger, string session, TimeSpan budget);
 
+    /// <summary>The idle close's own <c>browser_close</c> did not answer within its cap.</summary>
+    /// <remarks>
+    /// <b>The armed-pause case, Q367 a.</b> Warning, because the browser was ended
+    /// without the flush the close was asked for, and that is what a reader of the
+    /// log looking for a lost cookie needs to find.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="budget">How long it was given.</param>
+    [LoggerMessage(
+        EventId = 65,
+        Level = LogLevel.Warning,
+        Message = "The browser on the session at {Session} did not answer its idle close within {Budget}; its child is ended through its stdin and its job anyway.")]
+    public static partial void IdleCloseUnanswered(ILogger logger, string session, TimeSpan budget);
+
     // Id 61 was `CloseRefused`, the child answering the idle close's
     // `browser_close` with an error. The idle close sends no `browser_close`
     // since 2026-10-03, so nothing can produce it, and the id is not reused for
     // anything else.
+    //
+    // ⚠️ Corrected the same day, Q367 a (previously "The idle close sends no
+    // `browser_close` since 2026-10-03, so nothing can produce it"): it sends one
+    // again, and an error answer is still not reported, because the child is
+    // ended next whatever the answer says. 61 stays retired; the cap running out
+    // is 65.
     //
     // RETIRED-EVENT-IDS: 61
 }

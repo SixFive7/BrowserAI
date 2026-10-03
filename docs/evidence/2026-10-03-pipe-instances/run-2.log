@@ -1,0 +1,82 @@
+started 2026-10-03T13:23:04.9502454+00:00 pid 65216 runtime 10.0.12 os Microsoft Windows 10.0.26300
+nMaxInstances 255 (PIPE_UNLIMITED_INSTANCES), out 65536, in 4096, timeout 0, DACL D:P(A;;GA;;;<current user SID>)
+
+== target 300 connected instances on \\.\pipe\BrowserAI-instance-probe-6621c74076c5494b90a6222545ee9b37
+     100 connected at      20.8 ms
+     200 connected at      22.5 ms
+     254 connected at      23.3 ms
+     255 connected at      23.4 ms
+     256 connected at      23.4 ms
+     257 connected at      23.4 ms
+     300 connected at      24.1 ms
+   one more caller, number 301: connected
+   bytes through connection 300: server read 'ping', client read 'pong'
+   handles held by this process: 847 (before the target: 214)
+   RESULT target 300: 300 connected at once, no refusal, 36.3 ms
+
+== target 600 connected instances on \\.\pipe\BrowserAI-instance-probe-11f3ab2827744ab7bcdfbbe2931f491f
+     100 connected at      10.8 ms
+     200 connected at      12.2 ms
+     254 connected at      13.0 ms
+     255 connected at      13.1 ms
+     256 connected at      13.1 ms
+     257 connected at      13.1 ms
+     300 connected at      13.8 ms
+     400 connected at      15.2 ms
+     500 connected at      16.7 ms
+     600 connected at      18.1 ms
+   one more caller, number 601: connected
+   bytes through connection 600: server read 'ping', client read 'pong'
+   handles held by this process: 1447 (before the target: 248)
+   RESULT target 600: 600 connected at once, no refusal, 27.2 ms
+
+== target 1000 connected instances on \\.\pipe\BrowserAI-instance-probe-f67a4c178dd648ccbef0752160495367
+     100 connected at      10.6 ms
+     200 connected at      12.1 ms
+     254 connected at      12.9 ms
+     255 connected at      12.9 ms
+     256 connected at      12.9 ms
+     257 connected at      13.0 ms
+     300 connected at      13.6 ms
+     400 connected at      15.1 ms
+     500 connected at      16.5 ms
+     600 connected at      18.0 ms
+     700 connected at      19.5 ms
+     800 connected at      20.9 ms
+     900 connected at      22.4 ms
+    1000 connected at      23.8 ms
+   one more caller, number 1001: connected
+   bytes through connection 1000: server read 'ping', client read 'pong'
+   handles held by this process: 2247 (before the target: 248)
+   RESULT target 1000: 1000 connected at once, no refusal, 32.3 ms
+
+== target 2000 connected instances on \\.\pipe\BrowserAI-instance-probe-78dd43ff17bb4a569fbdfd015c89fbd5
+     100 connected at      10.4 ms
+     200 connected at      11.9 ms
+     254 connected at      12.7 ms
+     255 connected at      12.7 ms
+     256 connected at      12.7 ms
+     257 connected at      12.7 ms
+     300 connected at      13.3 ms
+     400 connected at      14.8 ms
+     500 connected at      16.2 ms
+     600 connected at      17.6 ms
+     700 connected at      19.0 ms
+     800 connected at      20.5 ms
+     900 connected at      22.0 ms
+    1000 connected at      23.4 ms
+    1100 connected at      24.8 ms
+    1200 connected at      26.2 ms
+    1300 connected at      27.6 ms
+    1400 connected at      29.1 ms
+    1500 connected at      30.4 ms
+    1600 connected at      31.9 ms
+    1700 connected at      33.4 ms
+    1800 connected at      34.8 ms
+    1900 connected at      36.2 ms
+    2000 connected at      37.6 ms
+   one more caller, number 2001: connected
+   bytes through connection 2000: server read 'ping', client read 'pong'
+   handles held by this process: 4247 (before the target: 248)
+   RESULT target 2000: 2000 connected at once, no refusal, 46.4 ms
+finished 2026-10-03T13:23:05.1142053+00:00

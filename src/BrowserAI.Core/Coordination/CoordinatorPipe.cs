@@ -23,6 +23,18 @@ namespace BrowserAI.Coordination;
 /// <c>PIPE_REJECT_REMOTE_CLIENTS</c>, one instance and a DACL whose one entry is
 /// the current user, through <see cref="ServerPipe.OpenNamed(string, IPipeAnswers, ILogger)"/>.
 /// </para>
+/// <para>
+/// ⚠️ <b>Served in parallel since 2026-10-03 -- Q368 a, the maintainer's words
+/// verbatim: <i>"Q368 a"</i></b> (previously "one instance" in the paragraph
+/// above). A caller that connected and never finished held the one thread, so no
+/// other start could hand a verb over until it let go and each met a busy pipe
+/// until its own bound ran out. Every connection now has an instance and a thread
+/// of its own, as a server's has had since Q297 b, and
+/// <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> alone is the single-instance guard: a
+/// second process asking for the name is refused while any instance of it
+/// stands. <b>Verbs from two connections can reach the inbox at once</b>, which
+/// <see cref="CoordinatorInbox"/> takes under its own lock.
+/// </para>
 /// </remarks>
 internal sealed class CoordinatorPipe : IDisposable
 {
@@ -39,8 +51,10 @@ internal sealed class CoordinatorPipe : IDisposable
     /// <param name="logger">Where the pipe reports.</param>
     /// <returns>The pipe. Holding it is being the coordinator.</returns>
     /// <exception cref="IOException">
-    /// The pipe was not created: <c>0x800700E7</c> when a coordinator already holds
-    /// the name, and <c>0x80070005</c> when somebody else created it first.
+    /// The pipe was not created: <c>0x80070005</c> when a coordinator already holds
+    /// the name and when somebody else created it first. <i>Corrected 2026-10-03
+    /// with Q368 a (previously "<c>0x800700E7</c> when a coordinator already holds
+    /// the name, and <c>0x80070005</c> when somebody else created it first").</i>
     /// </exception>
     public static CoordinatorPipe Open(string installRoot, CoordinatorInbox inbox, ILogger logger)
     {

@@ -1491,6 +1491,52 @@ mutex and in 0.17 to 0.19 ms through the pipe. The pid is what the Q284 design
 needs, because a second start has to grant the first the right to take the
 foreground before it asks it to show its window.
 
+### A pipe created with `PIPE_UNLIMITED_INSTANCES` holds more than 255 callers -- measured 2026-10-03
+
+`[STABLE]` Windows 11 Pro 10.0.26300, .NET 10.0.12, one process, 2026-10-03
+between 13:22Z and 13:24Z.
+[Evidence](../../docs/evidence/2026-10-03-pipe-instances/README.md),
+[rig](../../docs/probes/2026-10-03-pipe-instances/README.md).
+
+**255 is the value of `PIPE_UNLIMITED_INSTANCES`, and it is not a ceiling.**
+Microsoft's documentation of `CreateNamedPipeW`, `nMaxInstances`, read the same
+day: *"Acceptable values are in the range 1 through PIPE_UNLIMITED_INSTANCES
+(255). If this parameter is PIPE_UNLIMITED_INSTANCES, the number of pipe instances
+that can be created is limited only by the availability of system resources."*
+Until that day BrowserAI's remarks read the number as *"Windows' own ceiling of
+255"*, and its server pipe carried a wait and a warning, event 7, for a caller
+past it; the remark is corrected, and the wait and the warning are gone.
+
+The probe creates instances exactly as `NamedPipes` does -- `PIPE_ACCESS_DUPLEX`,
+`FILE_FLAG_FIRST_PIPE_INSTANCE` on the first instance only,
+`PIPE_REJECT_REMOTE_CLIENTS` as the whole pipe mode, 64 KiB out and 4 KiB in, a
+default timeout of 0 and a DACL whose one entry is the current user -- and opens
+each client the way `NamedPipes.OpenClient` does. It listens the way
+`ServerPipe` does: a client connects to the one listening instance, the next
+instance is made, and the connected one is kept, so every instance stays
+connected until the target is reached.
+
+| `nMaxInstances` | Target | Held connected at once | One more caller | Bytes through the last connection | Wall time |
+|---|--:|--:|---|---|--:|
+| 255 | 300 | **300** | connected | both ways | 36.3 ms |
+| 255 | 600 | **600** | connected | both ways | 27.2 ms |
+| 255 | 1,000 | **1,000** | connected | both ways | 32.3 ms |
+| 255 | 2,000 | **2,000** | connected | both ways | 46.4 ms |
+| **254**, the positive control | 300 | **254**, and the 255th instance refused with `ERROR_PIPE_BUSY` (231), *"All pipe instances are busy"* | - | - | 38.1 ms |
+
+The control is what makes *no refusal* mean something: the same probe, with the
+one number changed to a real cap, sees the refusal at exactly the instance the cap
+predicts. Each held connection cost the probe two handles, 4,247 at 2,000
+against 248 before. **What it does not measure** is where system resources run
+out, which was not pushed for on a machine other work shares, and the cost of
+the thread `ServerPipe` gives every connection, which the probe has no
+equivalent of. `ServerPipeTests.APipeHoldsMoreCallersThan255AtOnceAndStillAnswersTheNext`
+holds 300 silent callers through the product's own pipe on every run.
+
+**Re-establish it** with the rig: `dotnet run instances.cs -- 300 600 1000 2000`,
+then `dotnet run instances.cs -- --max 254 300` for the control. Each target runs
+on a fresh pipe name and closes every handle before the next.
+
 ### Inside a client's job
 
 `JOBREPORT` in the batch: a prototype started from the review's own shell was in a

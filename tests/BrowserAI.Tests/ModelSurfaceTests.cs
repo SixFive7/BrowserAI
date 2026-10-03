@@ -715,6 +715,134 @@ internal sealed class ModelSurfaceTests
         "browser_mouse_*_xy",
     ];
 
+    /// <summary>
+    /// The <c>tracing</c> argument says what it really writes -- upstream's
+    /// <c>session.md</c>, a log of the run's calls -- says it is not a trace, and
+    /// names the tools that record one, on both tools that take it and in the
+    /// instructions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q371 a, decided 2026-10-03 by the maintainer, in his words: <i>"Q371
+    /// a"</i>.</b> The argument keeps its name and is described honestly. Until
+    /// then both descriptions said <i>"Record this session into its output
+    /// directory"</i> and the instructions said <i>"'tracing: true' records the
+    /// run"</i>, while what it switches on is upstream's <c>saveSession</c>: a
+    /// <c>session.md</c> in a <c>session-&lt;milliseconds&gt;</c> folder of the
+    /// output directory, the calls' arguments and what each returned, which the
+    /// trace viewer cannot open. A model that wanted a trace and turned this on got
+    /// that and no trace. Found 2026-10-03 by the research into look-alike tools.
+    /// </para>
+    /// <para>
+    /// <b>Four checks, because each can go stale on its own.</b> The phrases, as
+    /// <see cref="TheInstructionsTellAModelToAskForBoxesBeforeACoordinateTool"/>
+    /// asserts its own; the two named tools, which must be in the surface this
+    /// build advertises and <c>allow</c> in the verdict file, since a description
+    /// naming a tool a caller cannot call sends it to a refusal; the generator,
+    /// which must go on writing <c>tracing</c> as <c>saveSession</c>; and
+    /// upstream's own code, read out of the assembled payload, which must go on
+    /// writing <c>session.md</c> for that key. The payload half comes last, so a
+    /// machine without the payload checks the other three before it skips.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheTracingArgumentSaysWhatItWritesAndNamesTheToolsThatRecordATrace()
+    {
+        var missing = new List<string>();
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+
+        foreach (var tool in new[] { SessionToolSurface.Init, SessionToolSurface.Resume })
+        {
+            var description = (string?)advertised[tool]?["inputSchema"]?["properties"]?["tracing"]?["description"] ?? string.Empty;
+
+            foreach (var phrase in RequiredTracingPhrases)
+            {
+                if (!description.Contains(phrase, StringComparison.Ordinal))
+                {
+                    missing.Add($"{tool}'s 'tracing' description does not say '{phrase}'");
+                }
+            }
+        }
+
+        foreach (var phrase in RequiredTracingInstructionPhrases)
+        {
+            if (!ServerInstructions.Text.Contains(phrase, StringComparison.Ordinal))
+            {
+                missing.Add($"the server instructions do not say '{phrase}' about 'tracing'");
+            }
+        }
+
+        foreach (var tool in new[] { "browser_start_tracing", "browser_stop_tracing" })
+        {
+            if (!advertised.ContainsKey(tool))
+            {
+                missing.Add($"{tool} is not in the surface this build advertises, so the descriptions send a model to a tool it cannot call");
+            }
+
+            if (!RepositoryVerdicts.Committed.Decide(tool).IsAllowed)
+            {
+                missing.Add($"{tool} is not 'allow' in tool-verdicts.json, so the descriptions send a model to a refusal");
+            }
+        }
+
+        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-tracing"));
+
+        foreach (var tracing in new[] { true, false })
+        {
+            var config = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, tracing, RunOptions.Default).Json)!;
+
+            if ((bool?)config["saveSession"] != tracing)
+            {
+                missing.Add($"'tracing: {(tracing ? "true" : "false")}' generates saveSession {config["saveSession"]?.ToJsonString() ?? "<absent>"}, so the descriptions no longer say what it switches on");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+        // ---- Upstream's half, out of the code that actually runs.
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var bundle = await File.ReadAllTextAsync(Path.Combine(
+            RepositoryPayload.Layout.Root,
+            "mcp",
+            "node_modules",
+            "playwright-core",
+            "lib",
+            "coreBundle.js"));
+
+        await Assert.That(bundle).Contains("this._config.saveSession ? await SessionLog.create(", StringComparison.Ordinal);
+        await Assert.That(bundle).Contains("`session-${Date.now()}`", StringComparison.Ordinal);
+        await Assert.That(bundle).Contains(", \"session.md\");", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// What each <c>tracing</c> description has to keep saying, however it is
+    /// reworded: the file it writes, and the two tools that record a trace.
+    /// </summary>
+    private static readonly string[] RequiredTracingPhrases =
+    [
+        "session.md",
+        "not a Playwright trace",
+        "browser_start_tracing",
+        "browser_stop_tracing",
+    ];
+
+    /// <summary>
+    /// What the instructions have to keep saying about <c>tracing</c>, in the room
+    /// they have: the file it writes, and the tool that starts a trace.
+    /// </summary>
+    private static readonly string[] RequiredTracingInstructionPhrases =
+    [
+        "'tracing: true'",
+        "session.md",
+        "browser_start_tracing",
+    ];
+
     [Test]
     public async Task EveryToolDescriptionFitsTheSameBudget()
     {

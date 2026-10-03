@@ -469,6 +469,29 @@ directory"*.
 > `saveSession` and not to a trace. Re-establish with the same grep at each
 > bump; a restored trace option is a reason to revisit the mapping. `[FLOATS]`
 
+⚠️ **What `saveSession` writes, and what BrowserAI's `tracing` now says about
+it** -- *added 2026-10-03 by addition, Q371 a, the maintainer's words verbatim:
+"Q371 a"*. Read that day at `@playwright/mcp` **0.0.83** (`playwright-core`
+1.64.0-alpha-1790635538000) in the payload's `coreBundle.js`, not run: with the
+key on, the backend creates a `SessionLog` (`:67528`), which makes a folder
+named `session-<Date.now()>` in the output directory (`:67462`) and appends one
+Markdown section per tool call to `session.md` in it (`:67458`): the tool's
+name, its arguments as JSON, and the parsed answer -- its result, error, the
+Playwright code it ran, tabs, page, events, modal state and any attachments,
+with the snapshot file read in and the answer's own text left out
+(`parseResponse`, `:67129`). **None of that is a trace, and the trace viewer
+cannot open it.** A trace is `browser_start_tracing` and `browser_stop_tracing`,
+which wrote one under the output directory's `traces` folder and linked it from
+the stop's answer in
+[the debugger-tools batch](../../docs/evidence/2026-10-03-debugger-tools/README.md)
+at 0.0.82. Until that day both `tracing` descriptions said *"Record this session
+into its output directory"* and the instructions *"'tracing: true' records the
+run"*, so a model that wanted a trace turned this on and got a `session.md`.
+They now say what is written and name the two tools.
+`ModelSurfaceTests.TheTracingArgumentSaysWhatItWritesAndNamesTheToolsThatRecordATrace`
+reads the three bundle lines on every build, so an upstream rename is a red build
+and not a description gone stale; row 67 carries the mapping.
+
 **`browser_get_config` answers Markdown with JSON inside it, not JSON.** The tool
 body is `response.addTextResult(JSON.stringify(context.config, null, 2))`, but
 the response builder prefixes every text section with `### <title>` before it

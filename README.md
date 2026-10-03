@@ -187,7 +187,7 @@ not an accident.
 | `timezone` | this machine's | The IANA time zone. Windows's own identifier is converted; on a host where that conversion is unavailable the key is omitted and not guessed, because a Windows identifier fails the launch |
 | `ignoreHTTPSErrors` | `false` | Whether TLS certificate errors are continued past |
 | `captureNetwork` | `false` | Whether this run writes an **HTTP Archive**. Three things before you turn it on: it **changes what the site does**, because service workers are blocked while it is on; it takes effect at the **next browser launch** and is never retroactive; and the file is a **plaintext credential dump**. Each launch gets its own timestamped filename in the session's `output\` directory, so resuming a session cannot overwrite the previous run's capture |
-| `tracing` | `false` | Whether upstream records the session into the output directory |
+| `tracing` | `false` | Whether upstream writes `session.md`, a Markdown log of the run's tool calls with their arguments and what each returned, into a folder of the session's `output\` directory. **It is not a Playwright trace**, and the trace viewer cannot open it: `browser_start_tracing` and `browser_stop_tracing` record one. *Corrected 2026-10-03, Q371 a (previously "Whether upstream records the session into the output directory").* |
 | `debug` | `false` | Whether this session's own log level is raised |
 
 **`serviceWorkers: "block"` is not optional beside `recordHar`.** A request served out of a worker's cache never reaches the network layer the archive is written from, so without the block the capture is **silently incomplete** -- and incomplete in the direction that matters, because the requests a worker serves are the repeat ones a reader is looking for.
