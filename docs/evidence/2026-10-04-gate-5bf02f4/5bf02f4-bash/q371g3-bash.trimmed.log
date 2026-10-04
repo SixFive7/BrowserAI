@@ -1,0 +1,98 @@
+Running tests from c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath (101ms)
+  [Test Failure] ArgumentException: 'C:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\.work\test-scratch\walk-limit-c60343407e9e4a31ab0d32737e95c90e\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L' is 242 characters, and a session directory may be at most 240. BrowserAI creates 'browserai.data' and 'output' inside the directory you name, and Windows still bounds a database open and a child's working directory at 260 characters even where .NET does not -- so the directory would be created and the session would then fail to open, with a message about the browser, not about the path. Name a path at least 2 character(s) shorter.
+  from c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentException: 'C:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\.work\test-scratch\walk-limit-c60343407e9e4a31ab0d32737e95c90e\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L' is 242 characters, and a session directory may be at most 240. BrowserAI creates 'browserai.data' and 'output' inside the directory you name, and Windows still bounds a database open and a child's working directory at 260 characters even where .NET does not -- so the directory would be created and the session would then fail to open, with a message about the browser, not about the path. Name a path at least 2 character(s) shorter.
+    at BrowserAI.Sessions.SessionPath.For(String canonical) in c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\src\BrowserAI.Core\Sessions\SessionPath.cs:240
+    at BrowserAI.Tests.CanonicalPathTests.TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath() in c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\CanonicalPathTests.cs:634
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed AChromiumTreeIsContainedAndItsProfileDeletesCleanly (10s 200ms)
+  [Test Failure] AssertionException: Expected to be true
+but found False
+
+at Assert.That((bool?)row!["inOurJob"] is true).IsTrue()
+  from c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That((bool?)row!["inOurJob"] is true).IsTrue()
+    at BrowserAI.Tests.BrowserContainmentTests.RunAsync(String browser, String expectedExecutable) in c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\BrowserContainmentTests.cs:313
+    at BrowserAI.Tests.BrowserContainmentTests.AChromiumTreeIsContainedAndItsProfileDeletesCleanly() in c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\BrowserContainmentTests.cs:88
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 2 error(s) (4m 33s 855ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+    repository payload  PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\payload\payload.json
+    Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.206-full.nupkg
+    client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+    release installer   PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\Releases\test-pack\BrowserAI.test-installer.exe
+    git                 PRESENT  git -C c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate rev-parse --is-inside-work-tree said true
+    Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+    publish freshness   FRESH      exe 2026-10-04T13:37:38.410Z is 1m39s newer than the newest of 151 inputs (third-party\sqlite\sqlite3.h, 2026-10-04T13:35:58.823Z) · exe and tree both 1.1.1-alpha.0.206 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CACHED   seeded from a tree the CDN served 5 min ago; nothing was downloaded in this run (12.5 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+    drive letter        LOWER c:\  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=lower and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 109,454 MiB (43.0%) · end 111,119 MiB (43.7%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 5138 events, 0 about visible root windows and none of them this run's, 135 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 120 scans, 638 processes read under the browsers root and the scratch roots
+    installer lock      HELD     held by pid=73496 created=134355949786581587, alive, the holder named in BROWSERAI_INSTALLER_LOCK_HELD: this run neither waited for it nor lets it go
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 981
+  failed: 2
+  succeeded: 979
+  skipped: 0
+  duration: 4m 34s 323ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\payload\payload.json
+  Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.206-full.nupkg
+  client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+  release installer   PRESENT  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\Releases\test-pack\BrowserAI.test-installer.exe
+  git                 PRESENT  git -C c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-04T13:37:38.410Z is 1m39s newer than the newest of 151 inputs (third-party\sqlite\sqlite3.h, 2026-10-04T13:35:58.823Z) · exe and tree both 1.1.1-alpha.0.206 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     CACHED   seeded from a tree the CDN served 5 min ago; nothing was downloaded in this run (12.5 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+  drive letter        LOWER c:\  c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd c:\Source\SixFive7\BrowserAI\.work\wt\q371-gate\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=lower and it took, so this half is a different instrument from the other
+  filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 109,454 MiB (43.0%) · end 111,119 MiB (43.7%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 5138 events, 0 about visible root windows and none of them this run's, 135 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 120 scans, 638 processes read under the browsers root and the scratch roots
+  installer lock      HELD     held by pid=73496 created=134355949786581587, alive, the holder named in BROWSERAI_INSTALLER_LOCK_HELD: this run neither waited for it nor lets it go
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================

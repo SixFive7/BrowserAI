@@ -1,0 +1,20 @@
+=== HEAD 5bf02f48 0 uncommitted
+=== PUBLISH 13:36:23
+=== server publish exit 1
+=== app publish exit 0
+=== LOCK TAKEN 13:37:29
+=== PS HALF 13:37:29
+=== PS HALF exit 1 13:37:33
+=== BASH HALF 13:37:33
+=== BASH HALF exit 1 13:37:37
+=== GATE DONE 13:37:37
+=== LOCK RELEASED 13:37:38
+=== server publish exit 0
+=== app publish exit 0
+=== LOCK TAKEN 13:37:43
+=== PS HALF 13:37:43
+=== PS HALF exit 0 13:42:58
+=== BASH HALF 13:42:58
+=== BASH HALF exit 0 13:48:44
+=== GATE DONE 13:48:44
+=== LOCK RELEASED 13:48:44
