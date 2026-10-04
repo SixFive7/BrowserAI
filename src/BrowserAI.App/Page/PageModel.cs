@@ -83,7 +83,22 @@ internal sealed record TraceEntry(string Id, string Name, string Path);
 /// <param name="Purpose">What its record says it is for.</param>
 /// <param name="BrowserOpen">Whether a browser is up on it.</param>
 /// <param name="Traces">The traces under its output folder.</param>
-internal sealed record SessionEntry(string Id, string Directory, string? Purpose, bool BrowserOpen, IReadOnlyList<TraceEntry> Traces);
+/// <param name="Headed">Whether its browser has a window.</param>
+/// <param name="Kept">Whether its client has gone and the session host keeps it (Q366 b).</param>
+/// <param name="DrivenBy">What the client driving it called itself, as the session host saw it.</param>
+/// <param name="DrivenThrough">The pid of the server that client relays through.</param>
+/// <param name="IdleCloseAt">When its idle close ends it if no call comes first.</param>
+internal sealed record SessionEntry(
+    string Id,
+    string Directory,
+    string? Purpose,
+    bool BrowserOpen,
+    IReadOnlyList<TraceEntry> Traces,
+    bool Headed = false,
+    bool Kept = false,
+    string? DrivenBy = null,
+    int? DrivenThrough = null,
+    DateTimeOffset? IdleCloseAt = null);
 
 /// <summary>Which client a server serves, as far as the page cares.</summary>
 internal enum ClientKind
@@ -104,14 +119,29 @@ internal enum ClientKind
 /// <param name="Description">What it said about itself.</param>
 /// <param name="Kind">Which client it serves.</param>
 /// <param name="RecentlyActive">Whether it answered a call within the browser-idle period, or is answering one now.</param>
-/// <param name="Sessions">The sessions it holds.</param>
+/// <param name="Sessions">
+/// The sessions it holds, or for a server that relays to the session host, the
+/// host's sessions its client drives.
+/// </param>
+/// <param name="KnownAs">
+/// What its client called itself as the session host saw it, for a server that
+/// relays and so never reads its client's handshake.
+/// </param>
 internal sealed record ServerEntry(
     string Id,
     string Marker,
     ServerDescription Description,
     ClientKind Kind,
     bool RecentlyActive,
-    IReadOnlyList<SessionEntry> Sessions);
+    IReadOnlyList<SessionEntry> Sessions,
+    string? KnownAs = null)
+{
+    /// <summary>Whether this is the session host, which the page offers no close for.</summary>
+    public bool IsHost => string.Equals(Description.Role, ServerDescription.Roles.Host, StringComparison.Ordinal);
+
+    /// <summary>Whether this server relays its client to the session host.</summary>
+    public bool IsRelay => string.Equals(Description.Role, ServerDescription.Roles.Relay, StringComparison.Ordinal);
+}
 
 /// <summary>Everything the sessions page shows, read at one moment.</summary>
 /// <param name="ReadAt">When it was read.</param>

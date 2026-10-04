@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using BrowserAI.App;
 using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
+using BrowserAI.Coordination;
 using BrowserAI.Registration;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,9 +17,15 @@ internal sealed class PageRig : IDisposable
 {
     private readonly ScratchDirectory _scratch = ScratchDirectory.Create("page-rig");
 
-    public PageRig(CapturingLoggerProvider? logs = null, Action? wake = null, IPageRegistration? registration = null, Occasion occasion = Occasion.Ordinary)
+    public PageRig(
+        CapturingLoggerProvider? logs = null,
+        Action? wake = null,
+        IPageRegistration? registration = null,
+        Occasion occasion = Occasion.Ordinary,
+        bool sessionHost = false)
     {
         Registration = registration ?? new FakeRegistration();
+        HostHold = sessionHost ? new RecordingHostHold(() => (Sessions.Closed.Count, Updates.Installed.Count)) : null;
 
         Facts = new PageFacts
         {
@@ -40,8 +47,14 @@ internal sealed class PageRig : IDisposable
             wake ?? (() => { }),
             Clock,
             PageTabs.ProductLinger,
-            logs?.CreateLogger("page") ?? NullLogger.Instance);
+            logs?.CreateLogger("page") ?? NullLogger.Instance)
+        {
+            SessionHost = HostHold,
+        };
     }
+
+    /// <summary>The coordinator's hold on the session host, when the arm asked for one.</summary>
+    public RecordingHostHold? HostHold { get; }
 
     public PageFacts Facts { get; }
 
@@ -92,8 +105,43 @@ internal sealed class PageRig : IDisposable
     public void Dispose()
     {
         Page.Dispose();
+        HostHold?.Dispose();
         _scratch.Dispose();
     }
+}
+
+/// <summary>
+/// The coordinator's hold on the session host, recorded: each stop is taken down with
+/// how many servers the rig had been asked to close and how many installs it had
+/// handed over by then.
+/// </summary>
+/// <param name="progress">Reads those two counts.</param>
+internal sealed class RecordingHostHold(Func<(int Closed, int Installed)> progress) : ISessionHostHold, IDisposable
+{
+    private readonly ManualResetEvent _running = new(initialState: false);
+    private int _reopens;
+
+    /// <inheritdoc />
+    public WaitHandle? Running => _running;
+
+    /// <summary>Every stop, with what had happened before it.</summary>
+    public ConcurrentQueue<(int Closed, int Installed)> Stops { get; } = new();
+
+    /// <summary>How many times a host was let start again.</summary>
+    public int Reopens => Volatile.Read(ref _reopens);
+
+    /// <inheritdoc />
+    public bool StopForUpdate()
+    {
+        Stops.Enqueue(progress());
+        return true;
+    }
+
+    /// <inheritdoc />
+    public void Reopen() => _ = Interlocked.Increment(ref _reopens);
+
+    /// <inheritdoc />
+    public void Dispose() => _running.Dispose();
 }
 
 /// <summary>The update machinery, scripted.</summary>
@@ -123,8 +171,16 @@ internal sealed class FakeUpdates : IPageUpdates
 
     public UpdateCandidate? Staged() => StagedCandidate;
 
+    /// <summary>When set, an install fails with this sentence and hands nothing over.</summary>
+    public string? FailInstall { get; set; }
+
     public Task InstallAsync(UpdateCandidate candidate, CancellationToken cancellationToken)
     {
+        if (FailInstall is { } why)
+        {
+            return Task.FromException(new InvalidOperationException(why));
+        }
+
         Installed.Enqueue(candidate);
         return Task.CompletedTask;
     }

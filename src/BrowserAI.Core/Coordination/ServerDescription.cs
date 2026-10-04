@@ -36,6 +36,12 @@ namespace BrowserAI.Coordination;
 /// <param name="LastToolCall">When a tool call last arrived or was answered, or <see langword="null"/> when none has.</param>
 /// <param name="CallsInFlight">How many tool calls it is answering right now.</param>
 /// <param name="Sessions">Every session it holds.</param>
+/// <param name="Role">
+/// One of <see cref="Roles"/>: a server that holds its own sessions, the session
+/// host, or a server that relays its client to the host. <i>Added 2026-10-04 for
+/// the session host (Q366 b), so the sessions page can tell the three apart</i>; an
+/// answer without it is a server's.
+/// </param>
 internal sealed record ServerDescription(
     int Protocol,
     int ProcessId,
@@ -48,7 +54,8 @@ internal sealed record ServerDescription(
     DateTimeOffset? Started,
     DateTimeOffset? LastToolCall,
     int CallsInFlight,
-    IReadOnlyList<HeldSession> Sessions)
+    IReadOnlyList<HeldSession> Sessions,
+    string Role = ServerDescription.Roles.Server)
 {
     /// <summary>Writes this description as the body of a <c>describe</c> answer.</summary>
     /// <returns>The answer's JSON.</returns>
@@ -62,6 +69,7 @@ internal sealed record ServerDescription(
             writer.WriteString(Members.Version, Version);
             writer.WriteString(Members.Image, ImagePath);
             writer.WriteString(Members.State, State);
+            writer.WriteString(Members.Role, Role);
 
             if (Client is { } client)
             {
@@ -89,6 +97,20 @@ internal sealed record ServerDescription(
                 writer.WriteString(Members.Directory, session.Directory);
                 WriteNullable(writer, Members.Purpose, session.Purpose);
                 writer.WriteBoolean(Members.BrowserOpen, session.BrowserOpen);
+                writer.WriteBoolean(Members.Headed, session.Headed);
+                writer.WriteBoolean(Members.Kept, session.Kept);
+                WriteNullable(writer, Members.DrivenBy, session.DrivenBy);
+
+                if (session.DrivenThrough is { } through)
+                {
+                    writer.WriteNumber(Members.DrivenThrough, through);
+                }
+                else
+                {
+                    writer.WriteNull(Members.DrivenThrough);
+                }
+
+                WriteInstant(writer, Members.IdleCloseAt, session.IdleCloseAt);
                 writer.WriteEndObject();
             }
 
@@ -123,10 +145,19 @@ internal sealed record ServerDescription(
 
             foreach (var session in answer.GetProperty(Members.Sessions).EnumerateArray())
             {
+                // What a server of 2026-10-03 or later adds is read when it is there:
+                // an older server describes sessions a client of its own drives.
                 sessions.Add(new HeldSession(
                     session.GetProperty(Members.Directory).GetString() ?? string.Empty,
                     Nullable(session, Members.Purpose),
-                    session.GetProperty(Members.BrowserOpen).GetBoolean()));
+                    session.GetProperty(Members.BrowserOpen).GetBoolean(),
+                    Headed: Optional(session, Members.Headed) is { ValueKind: JsonValueKind.True },
+                    Kept: Optional(session, Members.Kept) is { ValueKind: JsonValueKind.True },
+                    DrivenBy: Optional(session, Members.DrivenBy) is { ValueKind: JsonValueKind.String } by ? by.GetString() : null,
+                    DrivenThrough: Optional(session, Members.DrivenThrough) is { ValueKind: JsonValueKind.Number } through && through.TryGetInt32(out var pid) ? pid : null,
+                    IdleCloseAt: Optional(session, Members.IdleCloseAt) is { ValueKind: JsonValueKind.String } at
+                        ? DateTimeOffset.Parse(at.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                        : null));
             }
 
             return new ServerDescription(
@@ -141,7 +172,8 @@ internal sealed record ServerDescription(
                 Instant(answer, Members.Started),
                 Instant(answer, Members.LastToolCall),
                 answer.GetProperty(Members.CallsInFlight).GetInt32(),
-                sessions);
+                sessions,
+                Optional(answer, Members.Role) is { ValueKind: JsonValueKind.String } role ? role.GetString() ?? Roles.Server : Roles.Server);
         }
         catch (Exception failure) when (failure is KeyNotFoundException or InvalidOperationException)
         {
@@ -172,6 +204,9 @@ internal sealed record ServerDescription(
             writer.WriteNull(name);
         }
     }
+
+    private static JsonElement? Optional(JsonElement owner, string name) =>
+        owner.TryGetProperty(name, out var value) ? value : null;
 
     private static string? Nullable(JsonElement owner, string name) =>
         owner.GetProperty(name) is { ValueKind: JsonValueKind.String } value ? value.GetString() : null;
@@ -206,6 +241,25 @@ internal sealed record ServerDescription(
         public const string Stopping = "stopping";
     }
 
+    /// <summary>The words <c>role</c> can carry.</summary>
+    public static class Roles
+    {
+        /// <summary>A server a client started, holding its own sessions.</summary>
+        public const string Server = "server";
+
+        /// <summary>
+        /// The session host the coordinator starts (Q366 b), holding the sessions of
+        /// every client that reaches it.
+        /// </summary>
+        public const string Host = "host";
+
+        /// <summary>
+        /// A server a client started that relays its client to the session host and
+        /// holds no session of its own.
+        /// </summary>
+        public const string Relay = "relay";
+    }
+
     /// <summary>The member names a description uses, spelled once.</summary>
     private static class Members
     {
@@ -224,6 +278,12 @@ internal sealed record ServerDescription(
         public const string Directory = "directory";
         public const string Purpose = "purpose";
         public const string BrowserOpen = "browserOpen";
+        public const string Role = "role";
+        public const string Headed = "headed";
+        public const string Kept = "kept";
+        public const string DrivenBy = "drivenBy";
+        public const string DrivenThrough = "drivenThrough";
+        public const string IdleCloseAt = "idleCloseAt";
     }
 }
 
@@ -242,4 +302,23 @@ internal sealed record ClientIdentity(string? Name, string? Title, string? Versi
 /// uses. <i>Corrected 2026-10-03 (previously "more than the node child in the
 /// child's job"), when a console host was found beside node in every job.</i>
 /// </param>
-internal sealed record HeldSession(string Directory, string? Purpose, bool BrowserOpen);
+/// <param name="Headed">Whether its browser has a window, which no idle close ends (Q326 a).</param>
+/// <param name="Kept">
+/// Whether its client has gone and the session host keeps it, browser and all, for
+/// the next client that names it (Q366 b).
+/// </param>
+/// <param name="DrivenBy">What the client that drives it called itself, or <see langword="null"/> when none does or it has not said.</param>
+/// <param name="DrivenThrough">The pid of the BrowserAI server that client relays through, when Windows said.</param>
+/// <param name="IdleCloseAt">
+/// When its idle close ends it if no call comes first, or <see langword="null"/>
+/// for a headed session, while a call runs, and once the close has run.
+/// </param>
+internal sealed record HeldSession(
+    string Directory,
+    string? Purpose,
+    bool BrowserOpen,
+    bool Headed = false,
+    bool Kept = false,
+    string? DrivenBy = null,
+    int? DrivenThrough = null,
+    DateTimeOffset? IdleCloseAt = null);

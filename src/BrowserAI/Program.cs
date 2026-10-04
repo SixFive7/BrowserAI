@@ -425,6 +425,7 @@ internal static partial class Program
             if (host is not null)
             {
                 HostLog.Relaying(logger, relayTo);
+                responder.Role = ServerDescription.Roles.Relay;
                 activity.Serving();
                 StartTheUpdateLane(installRoot, live, updateLogger, stopping);
 

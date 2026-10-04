@@ -328,6 +328,134 @@ internal sealed class PageServiceTests
     }
 
     /// <summary>
+    /// With the session host, the sessions page shows the host with every session it
+    /// holds, a session whose client has gone as kept and what ends it, and each
+    /// client's server with the sessions its client drives; it offers no close for the
+    /// host, and a close sent for it closes nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Asked by the root session on 2026-10-03, when option c (Q366 b) arrived</b>:
+    /// the page shows the sessions kept for a client that has gone for what they are.
+    /// A server a client starts relays to the host and never reads its client's
+    /// handshake, so the host's description is what names that client.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSessionsPageShowsTheHostsKeptSessionsForWhatTheyAreAndOffersNoCloseForTheHost()
+    {
+        using var rig = new PageRig();
+
+        var closesAt = Now.AddMinutes(7);
+        var host = Description(
+            900,
+            ServerDescription.Roles.Host,
+            [
+                new HeldSession(@"C:\sessions\driven", "reads the docs", BrowserOpen: true, DrivenBy: "claude-code", DrivenThrough: 301, IdleCloseAt: Now.AddMinutes(9)),
+                new HeldSession(@"C:\sessions\kept", "checks the shop", BrowserOpen: true, Kept: true, IdleCloseAt: closesAt),
+                new HeldSession(@"C:\sessions\window", "fills the form", BrowserOpen: true, Headed: true, Kept: true),
+            ]);
+
+        rig.Sessions.Snapshot = CensusPageSessions.Compose(
+            Now,
+            [
+                (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, [])),
+                (@"C:\install\live\900-0.live", host),
+                (@"C:\install\live\302-0.live", Description(302, ServerDescription.Roles.Relay, [])),
+            ],
+            []);
+
+        var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
+        var body = page.Body;
+
+        await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
+
+        // The host comes first, says what it is, and has no box to close it with.
+        await Assert.That(body).Contains("BrowserAI's session host</strong>, pid 900");
+        await Assert.That(body).Contains(PageContent.Text(PageContent.HostSentence));
+        await Assert.That(body).DoesNotContain("value=\"900-1\"");
+        await Assert.That(body.IndexOf("pid 900", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
+
+        // Each kept session says so, and what ends it.
+        var at = closesAt.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        await Assert.That(body).Contains(PageContent.Text($"{PageContent.KeptSentence}, and its browser was left as it was. {PageContent.KeptTakeOver} Until then its idle close ends it at about {at}."));
+        await Assert.That(body).Contains(PageContent.Text($"{PageContent.KeptSentence}, and its window is still open. {PageContent.KeptTakeOver} Until then it ends when its window is closed."));
+        await Assert.That(body.Split("<li class=\"kept\">").Length - 1).IsEqualTo(2);
+
+        // The driven one names its client under the host, and is listed under that client's server as well.
+        await Assert.That(body).Contains(PageContent.Text("Driven by claude-code through its server, pid 301."));
+        await Assert.That(body).Contains("value=\"301-1\"> claude-code, pid 301");
+        await Assert.That(body).Contains(PageContent.Text(PageContent.RelaySentence));
+        await Assert.That(body.Split(PageContent.Text(PageContent.RelayRecentWarning)).Length - 1).IsEqualTo(1);
+        await Assert.That(body.Split("reads the docs").Length - 1).IsEqualTo(2);
+        await Assert.That(body).Contains("value=\"302-1\">");
+        await Assert.That(body).Contains("Its client drives no session the host holds.");
+
+        // A close sent for the host closes nothing; the client's server is closed.
+        using var stream = await rig.StreamAsync(rig.Gate.Root + "sessions", 1, "sessions");
+
+        await rig.ActAsync("""{"action":"close-servers","servers":["900-1","301-1"]}""");
+
+        await Assert.That(await StateContainingAsync(stream, "The server was asked to close.")).IsNotNull();
+        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
+    }
+
+    /// <summary>
+    /// An install from the page asks every client's server to stop, then has the
+    /// session host close every browser and end through the coordinator's hold on it,
+    /// and only then hands over; an install that fails lets a host start again.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q366 b's rule for updates, the way the coordinator's own apply has it</b>: the
+    /// host and its children run from the install root, so an apply stops them, every
+    /// browser closed cleanly first. The page's install link is the second way an
+    /// apply starts in the coordinator, and without this the hand-over ends the
+    /// coordinator and its job takes the host down mid-close.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver()
+    {
+        using var rig = new PageRig(sessionHost: true);
+
+        rig.Updates.StagedCandidate = Candidate("9.2.0");
+        rig.Sessions.Snapshot = CensusPageSessions.Compose(
+            Now,
+            [
+                (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, [])),
+                (@"C:\install\live\900-0.live", Description(900, ServerDescription.Roles.Host, [])),
+            ],
+            []);
+
+        // The page reads what is staged when it is loaded, as a person's tab does.
+        await Assert.That((await PageRig.GetAsync(rig.HandOut())).Body).Contains("BrowserAI 9.2.0 is downloaded and ready to install.");
+
+        using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
+
+        // An install that fails: the client's server was asked, the host was stopped
+        // after it, and a host may start again.
+        rig.Updates.FailInstall = "The package could not be downloaded.";
+
+        await rig.ActAsync("""{"action":"install-update","version":"9.2.0"}""");
+
+        await Assert.That(await StateContainingAsync(stream, "The package could not be downloaded.")).IsNotNull();
+        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
+        await Assert.That(rig.HostHold!.Stops.ToArray()).IsEquivalentTo([(1, 0)]);
+        await Assert.That(rig.HostHold.Reopens).IsEqualTo(1);
+
+        // One that goes through: the server, then the host, then the hand-over, and no reopen.
+        rig.Updates.FailInstall = null;
+
+        await rig.ActAsync("""{"action":"install-update","version":"9.2.0"}""");
+
+        await Assert.That(await stream.NextNamedAsync(PageEvents.Closing)).IsNotNull();
+        await Assert.That(rig.Updates.Installed.Select(candidate => candidate.Version).ToArray()).IsEquivalentTo(["9.2.0"]);
+        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1", "301-1"]);
+        await Assert.That(rig.HostHold.Stops.ToArray()).IsEquivalentTo([(1, 0), (2, 0)]);
+        await Assert.That(rig.HostHold.Reopens).IsEqualTo(1);
+    }
+
+    /// <summary>
     /// A button names a folder, a session or a server by a name the page was given,
     /// never by a path: the three folders open where the facts say, a session opens
     /// its own directory, and a path sent in their place is a bare 404.
@@ -656,6 +784,23 @@ internal sealed class PageServiceTests
         DeltaCount = 0,
         FullPackageSize = 1,
     };
+
+    /// <summary>A description from a server of the given role, holding the given sessions.</summary>
+    private static ServerDescription Description(int pid, string role, IReadOnlyList<HeldSession> sessions) =>
+        new(
+            ServerPipeProtocol.Version,
+            pid,
+            1,
+            "9.0.0",
+            @"C:\install\current\BrowserAI.Server.exe",
+            ServerDescription.States.Serving,
+            null,
+            @"C:\work",
+            Now.AddHours(-3),
+            null,
+            0,
+            sessions,
+            role);
 
     private static ServerEntry Server(int pid, string? client, DateTimeOffset? lastCall, string? purpose = "reads the docs", int inFlight = 0)
     {

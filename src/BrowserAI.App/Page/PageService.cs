@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using BrowserAI.App.Interop;
+using BrowserAI.Coordination;
 using BrowserAI.Registration;
 using BrowserAI.Updates;
 using Microsoft.AspNetCore.Http;
@@ -137,6 +138,12 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private RegistrationSnapshot? _registration;
     private string? _registering;
     private bool _readingRegistration;
+
+    /// <summary>
+    /// The coordinator's hold on the session host, or <see langword="null"/> where
+    /// there is none: an install stops the host through it (Q366 b).
+    /// </summary>
+    internal ISessionHostHold? SessionHost { get; init; }
 
     /// <summary>A page for one coordinator.</summary>
     /// <param name="facts">What does not change.</param>
@@ -738,21 +745,41 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
     /// <summary>Installs one candidate: every server asked to stop first, then the hand-over.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Each running server is asked to stop through its pipe before the
     /// updater is started</b>, so a call it is answering gets Q286 b's sentence and
     /// its browsers close themselves. The updater's own kill pass ends whatever is
     /// left once this process has gone, which is what Velopack does on every apply.
+    /// </para>
+    /// <para>
+    /// <b>The session host is this process's own (Q366 b)</b>, and it is stopped the
+    /// way the coordinator's own apply stops it: after the servers, through
+    /// <see cref="ISessionHostHold.StopForUpdate"/>, which has it close every
+    /// browser, waits for it to end and starts no other. Without that, the hand-over
+    /// ends this process and its job takes the host and every browser down
+    /// mid-close. An install that does not happen lets a host start again.
+    /// <i>Added 2026-10-04, the day after the session host arrived.</i>
+    /// </para>
     /// </remarks>
     /// <param name="candidate">What to install.</param>
     private async Task InstallAsync(UpdateCandidate candidate)
     {
+        var hold = SessionHost;
+        var holding = false;
+
         try
         {
             var running = await _sessions.ReadAsync(CancellationToken.None).ConfigureAwait(false);
 
-            foreach (var server in running.Servers)
+            foreach (var server in running.Servers.Where(server => !server.IsHost))
             {
                 _ = await _sessions.CloseAsync(server, CancellationToken.None).ConfigureAwait(false);
+            }
+
+            if (hold is not null)
+            {
+                holding = true;
+                _ = hold.StopForUpdate();
             }
 
             // Bounded by the server's own tripwire for the same download, the bound the
@@ -765,6 +792,11 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         catch (Exception failure)
 #pragma warning restore CA1031
         {
+            if (holding)
+            {
+                hold!.Reopen();
+            }
+
             lock (_gate)
             {
                 _update = new UpdateView(UpdateStage.InstallFailed, candidate.Version, Details: failure.Message);
@@ -1058,7 +1090,9 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
         lock (_gate)
         {
-            chosen = [.. ids.Select(_snapshot.ServerById).OfType<ServerEntry>()];
+            // The session host is not a server a person closes from here (Q366 b):
+            // closing it ends every client's sessions, and the page offers no box for it.
+            chosen = [.. ids.Select(_snapshot.ServerById).OfType<ServerEntry>().Where(server => !server.IsHost)];
         }
 
         if (chosen.Count is 0)

@@ -58,7 +58,7 @@ internal sealed class CensusPageSessions(string installRoot, TimeProvider clock)
             (Marker: marker, Answer: await ServerPipeClient.DescribeAsync(marker, null, cancellationToken).ConfigureAwait(false))))
             .ConfigureAwait(false);
 
-        var servers = new List<ServerEntry>();
+        var answered = new List<(string Marker, ServerDescription Description)>();
         var unanswered = new List<string>();
 
         foreach (var (marker, answer) in answers)
@@ -66,7 +66,7 @@ internal sealed class CensusPageSessions(string installRoot, TimeProvider clock)
             switch (answer.Outcome)
             {
                 case ServerPipeOutcome.Answered when answer.Description is { } description:
-                    servers.Add(Entry(marker, description, now));
+                    answered.Add((marker, description));
                     break;
 
                 case ServerPipeOutcome.NotRunning:
@@ -80,10 +80,41 @@ internal sealed class CensusPageSessions(string installRoot, TimeProvider clock)
             }
         }
 
-        return new SessionsSnapshot(
-            now,
-            [.. servers.OrderByDescending(server => server.Description.LastToolCall ?? DateTimeOffset.MinValue)],
-            unanswered);
+        return Compose(now, answered, unanswered);
+    }
+
+    /// <summary>The page's servers from what each one said.</summary>
+    /// <remarks>
+    /// <b>Q366 b: a server that relays to the session host holds nothing</b> and never
+    /// reads its client's handshake, so the host's own description is what says which
+    /// of its sessions that client drives and what the client called itself. The
+    /// host comes first, then every other server, most recent call first.
+    /// </remarks>
+    /// <param name="now">When the servers were asked.</param>
+    /// <param name="answered">Every server that answered, with its live marker.</param>
+    /// <param name="unanswered">One sentence per server that did not.</param>
+    /// <returns>The snapshot.</returns>
+    internal static SessionsSnapshot Compose(
+        DateTimeOffset now,
+        IReadOnlyList<(string Marker, ServerDescription Description)> answered,
+        IReadOnlyList<string> unanswered)
+    {
+        ArgumentNullException.ThrowIfNull(answered);
+
+        var hosted = answered
+            .Where(server => string.Equals(server.Description.Role, ServerDescription.Roles.Host, StringComparison.Ordinal))
+            .SelectMany(server => server.Description.Sessions)
+            .ToList();
+
+        var servers = answered
+            .Select(server => string.Equals(server.Description.Role, ServerDescription.Roles.Relay, StringComparison.Ordinal)
+                ? RelayEntry(server.Marker, server.Description, hosted, now)
+                : Entry(server.Marker, server.Description, now))
+            .OrderByDescending(server => server.IsHost)
+            .ThenByDescending(server => server.Description.LastToolCall ?? DateTimeOffset.MinValue)
+            .ToList();
+
+        return new SessionsSnapshot(now, servers, unanswered);
     }
 
     /// <inheritdoc />
@@ -119,13 +150,52 @@ internal sealed class CensusPageSessions(string installRoot, TimeProvider clock)
             description,
             kind,
             recent,
-            [.. description.Sessions.Select(session => new SessionEntry(
-                IdOf(session.Directory),
-                session.Directory,
-                session.Purpose,
-                session.BrowserOpen,
-                TracesIn(session.Directory)))]);
+            [.. description.Sessions.Select(Session)]);
     }
+
+    /// <summary>What the page shows about a server that relays its client to the session host.</summary>
+    /// <param name="marker">Its live marker.</param>
+    /// <param name="description">What it said, which names no client and no session.</param>
+    /// <param name="hosted">Every session the session host described.</param>
+    /// <param name="now">When it was asked.</param>
+    /// <returns>The entry, with the host's sessions its client drives.</returns>
+    internal static ServerEntry RelayEntry(string marker, ServerDescription description, IReadOnlyList<HeldSession> hosted, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(description);
+        ArgumentNullException.ThrowIfNull(hosted);
+
+        var driven = hosted.Where(session => session.DrivenThrough == description.ProcessId).ToList();
+        var client = driven.Select(session => session.DrivenBy).FirstOrDefault(name => name is { Length: > 0 });
+        var kind = KnownClients.Matches(client, KnownClients.Codex) ? ClientKind.Codex
+            : KnownClients.Matches(client, KnownClients.ClaudeCode) ? ClientKind.ClaudeCode
+            : ClientKind.Other;
+
+        // Q269's predicate, read off the host: a headless session's idle close lies
+        // ahead only within the browser-idle period after its last call.
+        var recent = driven.Any(session => session.IdleCloseAt is { } at && at > now);
+
+        return new ServerEntry(
+            string.Create(CultureInfo.InvariantCulture, $"{description.ProcessId}-{description.CreatedFileTime}"),
+            marker,
+            description,
+            kind,
+            recent,
+            [.. driven.Select(Session)],
+            client);
+    }
+
+    private static SessionEntry Session(HeldSession session) =>
+        new(
+            IdOf(session.Directory),
+            session.Directory,
+            session.Purpose,
+            session.BrowserOpen,
+            TracesIn(session.Directory),
+            session.Headed,
+            session.Kept,
+            session.DrivenBy,
+            session.DrivenThrough,
+            session.IdleCloseAt);
 
     /// <summary>An opaque, stable name for a path.</summary>
     /// <param name="path">The path.</param>

@@ -476,7 +476,8 @@ internal sealed class SessionManager : IAsyncDisposable
 
     /// <summary>
     /// Every session this process holds right now: its directory, what its
-    /// record says it is for, and whether its browser is open.
+    /// record says it is for, whether its browser is open, and who drives it or
+    /// that it is kept and until when.
     /// </summary>
     /// <remarks>
     /// <b>Read from memory for the server's pipe, and it takes no lock.</b> The
@@ -487,10 +488,20 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     /// <returns>One entry per held session, in no particular order.</returns>
     public IReadOnlyList<Coordination.HeldSession> Held() =>
-        [.. _live.Values.Select(live => new Coordination.HeldSession(
-            live.Location.FullPath,
-            live.Lock.Record.Purpose,
-            live.BrowserIsOpen))];
+        [.. _live.Values.Select(static live =>
+        {
+            var driving = live.AttachedTo;
+
+            return new Coordination.HeldSession(
+                live.Location.FullPath,
+                live.Lock.Record.Purpose,
+                live.BrowserIsOpen,
+                Headed: live.Settings.Headed,
+                Kept: live.IsDetached,
+                DrivenBy: driving?.ClientName,
+                DrivenThrough: driving?.ClientProcessId,
+                IdleCloseAt: live.Idle?.ClosesAt);
+        })];
 
     /// <summary>
     /// Why a <c>session</c> argument resolved to nothing, in terms the caller can

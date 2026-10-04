@@ -59,6 +59,13 @@ release body; nothing else depends on it.
   closes only the servers a person selects (Q317 c). `BrowserAI.exe --sessions` opens a tab on
   that page, which is what the update toast's *Review* will start (Q339).
 
+  **With the session host, that page shows what the host keeps.** The host comes first, with
+  every session it holds: one a client drives names the client, and one whose client has gone
+  is marked kept, with the time its idle close ends it, or that it ends when its window is
+  closed. Each client's server lists the sessions its client drives, and closing it ends only
+  its connection. The page offers no close for the host, and an install from the page has the
+  host close every browser and end before it hands over.
+
   **Registration lives on the status page, and the configuration window is gone (Q319 b).** Each
   client has its own section: what it has, for all your projects and in the project the page was
   started in, and buttons that each name their client, to register or unregister for all your

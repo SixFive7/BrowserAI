@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Coordination;
 using BrowserAI.Sessions;
@@ -37,6 +38,73 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ServerPipeTests
 {
+    /// <summary>
+    /// A description carries what kind of server answered and, for each session, who
+    /// drives it or that the session host keeps it and when its idle close ends it;
+    /// an answer from a server that says none of that reads as a server's own
+    /// sessions, driven by its client.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-04 for the session host (Q366 b)</b>, so the sessions page can
+    /// show a session kept for a client that has gone for what it is. The second half
+    /// is an answer as a server written before that day writes it, which the page
+    /// still has to read while an update is pending.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADescriptionSaysWhoDrivesEachSessionOrThatItIsKeptAndAnOlderOneReadsAsAServers()
+    {
+        var closesAt = new DateTimeOffset(2026, 10, 3, 23, 40, 0, TimeSpan.Zero);
+        var description = new ServerDescription(
+            ServerPipeProtocol.Version,
+            4242,
+            7,
+            "9.0.0",
+            @"C:\install\current\BrowserAI.Server.exe",
+            ServerDescription.States.Serving,
+            null,
+            @"C:\install",
+            closesAt.AddHours(-1),
+            null,
+            0,
+            [
+                new HeldSession(@"C:\sessions\driven", "reads the docs", BrowserOpen: true, DrivenBy: "claude-code", DrivenThrough: 5150, IdleCloseAt: closesAt),
+                new HeldSession(@"C:\sessions\kept", "checks the shop", BrowserOpen: true, Kept: true, IdleCloseAt: closesAt),
+                new HeldSession(@"C:\sessions\window", null, BrowserOpen: true, Headed: true, Kept: true),
+            ],
+            ServerDescription.Roles.Host);
+
+        using var written = JsonDocument.Parse(description.ToJson());
+        var read = ServerDescription.Parse(written.RootElement);
+
+        await Assert.That(read.Role).IsEqualTo(ServerDescription.Roles.Host);
+        await Assert.That(read.Sessions.Count).IsEqualTo(3);
+        await Assert.That(read.Sessions[0]).IsEqualTo(description.Sessions[0]);
+        await Assert.That(read.Sessions[1]).IsEqualTo(description.Sessions[1]);
+        await Assert.That(read.Sessions[2]).IsEqualTo(description.Sessions[2]);
+
+        // As a server written before the session host writes it: none of the new members.
+        var older = JsonNode.Parse(description.ToJson())!.AsObject();
+
+        _ = older.Remove("role");
+
+        foreach (var session in older["sessions"]!.AsArray())
+        {
+            foreach (var member in new[] { "headed", "kept", "drivenBy", "drivenThrough", "idleCloseAt" })
+            {
+                _ = session!.AsObject().Remove(member);
+            }
+        }
+
+        using var olderDocument = JsonDocument.Parse(older.ToJsonString());
+        var olderRead = ServerDescription.Parse(olderDocument.RootElement);
+
+        await Assert.That(olderRead.Role).IsEqualTo(ServerDescription.Roles.Server);
+        await Assert.That(olderRead.Sessions.All(session => !session.Kept && !session.Headed && session.DrivenBy is null && session.IdleCloseAt is null)).IsTrue();
+        await Assert.That(olderRead.Sessions.Select(session => session.Directory).ToArray())
+            .IsEquivalentTo(description.Sessions.Select(session => session.Directory).ToArray());
+    }
+
     /// <summary>
     /// A published server describes itself with what the harness gave it: the
     /// client's name, title and version, its working directory, and then the

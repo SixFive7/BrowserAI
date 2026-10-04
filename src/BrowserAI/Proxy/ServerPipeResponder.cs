@@ -37,6 +37,13 @@ internal sealed class ServerPipeResponder(ServerActivity activity, Action stop) 
 
     private Func<IReadOnlyList<HeldSession>>? _sessions;
 
+    /// <summary>
+    /// What kind of server this is, one of <see cref="ServerDescription.Roles"/>: set
+    /// by the session host at its start and by a server once it relays to the host.
+    /// A reference written once, so a description read meanwhile has one value or the other.
+    /// </summary>
+    public string Role { get; set; } = ServerDescription.Roles.Server;
+
     /// <summary>Where the sessions this server holds are read from, once there is one.</summary>
     /// <param name="sessions">Answers the list at the moment of asking.</param>
     public void AttachSessions(Func<IReadOnlyList<HeldSession>> sessions)
@@ -62,7 +69,8 @@ internal sealed class ServerPipeResponder(ServerActivity activity, Action stop) 
             now.Started,
             now.LastToolCall,
             now.CallsInFlight,
-            Volatile.Read(ref _sessions)?.Invoke() ?? []);
+            Volatile.Read(ref _sessions)?.Invoke() ?? [],
+            Role);
 
         return new ServerPipeReply(description.ToJson());
     }

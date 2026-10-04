@@ -409,8 +409,9 @@ internal static class PageContent
         var sessions = view.Sessions;
 
         _ = html.Append("<h1>Sessions</h1>\n")
-            .Append("<p>Every BrowserAI server running from this install, the client that started it, and the sessions it holds. ")
-            .Append("Closing a server ends its browsers. BrowserAI closes nothing on its own.</p>\n");
+            .Append("<p>Every BrowserAI server running from this install, the client that started it, and its sessions. ")
+            .Append("Closing a server that holds its own sessions ends their browsers. Where the session host holds them, ")
+            .Append("closing a client's server ends only its connection, and the host keeps the sessions it drove.</p>\n");
 
         AppendNote(html, view.Note);
 
@@ -460,6 +461,7 @@ internal static class PageContent
         var client = server.Description.Client;
         var name = client?.Title is { Length: > 0 } title ? title
             : client?.Name is { Length: > 0 } named ? named
+            : server.KnownAs is { Length: > 0 } known ? known
             : "A client that has not said what it is";
 
         return client?.Version is { Length: > 0 } version ? $"{name} {version}" : name;
@@ -489,14 +491,85 @@ internal static class PageContent
     public const string RecentWarning =
         "This server answered a call in the last ten minutes and may be in the middle of a task. Closing it ends its browser.";
 
+    /// <summary>The warning a server that relays to the session host carries when its client was busy.</summary>
+    public const string RelayRecentWarning =
+        "Its client made a call in the last ten minutes and may be in the middle of a task. Closing this server fails a call it is answering; the session host keeps the sessions.";
+
+    /// <summary>What the page says of the session host.</summary>
+    public const string HostSentence =
+        "It holds the sessions of every client that reaches BrowserAI through it, and ends a minute after its last session and its last client have gone. The page offers no close for it, because closing it would end every session below.";
+
+    /// <summary>What the page says of a server that relays to the session host.</summary>
+    public const string RelaySentence =
+        "The session host holds its sessions. Closing this server ends its client's connection, and the host keeps them.";
+
+    /// <summary>The start of what the page says of a session the host keeps.</summary>
+    public const string KeptSentence = "Kept: its client has gone";
+
+    /// <summary>What a person can do about a kept session.</summary>
+    public const string KeptTakeOver = "A client that names this session takes it over.";
+
+    /// <summary>The words that say how a session stands, after its purpose.</summary>
+    /// <param name="session">The session.</param>
+    /// <param name="underHost">Whether it is listed under the session host, which names who drives it.</param>
+    /// <returns>The sentence, or <see langword="null"/> when there is nothing to add.</returns>
+    public static string? StateOf(SessionEntry session, bool underHost)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (session.Kept)
+        {
+            return session.Headed
+                ? $"{KeptSentence}, and its window is still open. {KeptTakeOver} Until then it ends when its window is closed."
+                : session.IdleCloseAt is { } at
+                    ? $"{KeptSentence}, and its browser was left as it was. {KeptTakeOver} Until then its idle close ends it at about {at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}."
+                    : $"{KeptSentence}, and its browser was left as it was. {KeptTakeOver}";
+        }
+
+        return underHost && session.DrivenBy is { Length: > 0 } client
+            ? session.DrivenThrough is { } through
+                ? $"Driven by {client} through its server, pid {through.ToString(CultureInfo.InvariantCulture)}."
+                : $"Driven by {client}."
+            : null;
+    }
+
     private static void AppendServer(StringBuilder html, ServerEntry server, DateTimeOffset now)
     {
         var description = server.Description;
 
+        if (server.IsHost)
+        {
+            _ = html.Append("<li class=\"server host\"><p><strong>BrowserAI's session host</strong>, pid ")
+                .Append(description.ProcessId.ToString(CultureInfo.InvariantCulture)).Append("</p>\n<p>").Append(Text(HostSentence)).Append("</p>\n");
+            AppendSessions(html, server, underHost: true);
+            _ = html.Append("</li>\n");
+            return;
+        }
+
         _ = html.Append("<li class=\"server\"><label><input type=\"checkbox\" name=\"server\" value=\"").Append(Text(server.Id)).Append("\"> ")
             .Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture))
-            .Append("</label>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ")
-            .Append(Text(description.LastToolCall is { } last ? $"Last call {Ago(last, now)}." : "No call yet."));
+            .Append("</label>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ");
+
+        if (server.IsRelay)
+        {
+            _ = html.Append(Text(RelaySentence)).Append("</p>\n");
+
+            if (server.Kind is ClientKind.Codex)
+            {
+                _ = html.Append("<p class=\"warning\">").Append(Text(CodexWarning)).Append("</p>\n");
+            }
+
+            if (server.RecentlyActive)
+            {
+                _ = html.Append("<p class=\"warning\">").Append(Text(RelayRecentWarning)).Append("</p>\n");
+            }
+
+            AppendSessions(html, server, underHost: false);
+            _ = html.Append("</li>\n");
+            return;
+        }
+
+        _ = html.Append(Text(description.LastToolCall is { } last ? $"Last call {Ago(last, now)}." : "No call yet."));
 
         if (description.CallsInFlight > 0)
         {
@@ -515,35 +588,46 @@ internal static class PageContent
             _ = html.Append("<p class=\"warning\">").Append(Text(RecentWarning)).Append("</p>\n");
         }
 
+        AppendSessions(html, server, underHost: false);
+        _ = html.Append("</li>\n");
+    }
+
+    private static void AppendSessions(StringBuilder html, ServerEntry server, bool underHost)
+    {
         if (server.Sessions.Count is 0)
         {
-            _ = html.Append("<p class=\"muted\">It holds no session.</p>\n");
+            _ = html.Append("<p class=\"muted\">")
+                .Append(server.IsRelay ? "Its client drives no session the host holds." : "It holds no session.")
+                .Append("</p>\n");
+            return;
         }
-        else
+
+        _ = html.Append("<ul class=\"sessions\">\n");
+
+        foreach (var session in server.Sessions)
         {
-            _ = html.Append("<ul class=\"sessions\">\n");
+            _ = html.Append(session.Kept ? "<li class=\"kept\"><strong>" : "<li><strong>")
+                .Append(Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded"))
+                .Append("</strong> <span class=\"muted\">").Append(session.BrowserOpen ? "browser open" : "no browser open")
+                .Append("</span><br><code>").Append(Text(session.Directory)).Append("</code> ")
+                .Append(Button("open-session", "Open its folder", ("session", session.Id)));
 
-            foreach (var session in server.Sessions)
+            if (StateOf(session, underHost) is { } state)
             {
-                _ = html.Append("<li><strong>").Append(Text(session.Purpose is { Length: > 0 } purpose ? purpose : "No purpose recorded"))
-                    .Append("</strong> <span class=\"muted\">").Append(session.BrowserOpen ? "browser open" : "no browser open")
-                    .Append("</span><br><code>").Append(Text(session.Directory)).Append("</code> ")
-                    .Append(Button("open-session", "Open its folder", ("session", session.Id)));
-
-                if (session.Traces.Count > 0)
-                {
-                    _ = html.Append("<br><span class=\"muted\">Traces in its output folder: ")
-                        .Append(Text(string.Join(", ", session.Traces.Select(trace => trace.Name))))
-                        .Append("</span>");
-                }
-
-                _ = html.Append("</li>\n");
+                _ = html.Append("<br>").Append(Text(state));
             }
 
-            _ = html.Append("</ul>\n");
+            if (session.Traces.Count > 0)
+            {
+                _ = html.Append("<br><span class=\"muted\">Traces in its output folder: ")
+                    .Append(Text(string.Join(", ", session.Traces.Select(trace => trace.Name))))
+                    .Append("</span>");
+            }
+
+            _ = html.Append("</li>\n");
         }
 
-        _ = html.Append("</li>\n");
+        _ = html.Append("</ul>\n");
     }
 
     private static string Button(string action, string label, params (string Name, string Value)[] data)

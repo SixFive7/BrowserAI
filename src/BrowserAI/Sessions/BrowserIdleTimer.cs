@@ -197,6 +197,33 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     public int Closes => Volatile.Read(ref _closes);
 
     /// <summary>
+    /// When the idle close fires if no call comes first, or <see langword="null"/>
+    /// while a call runs, while a close runs, and when no deadline lies ahead.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read for a description, so a person can see when a session nobody drives
+    /// will end</b> (Q366 b). The deadline is the one the timer itself fires on,
+    /// read under the same lock, and turned into a time on the timer's own clock.
+    /// </remarks>
+    public DateTimeOffset? ClosesAt
+    {
+        get
+        {
+            lock (_gate)
+            {
+                if (Volatile.Read(ref _disposed) is not 0 || _closing || _inFlight > 0)
+                {
+                    return null;
+                }
+
+                var remaining = _time.GetElapsedTime(_time.GetTimestamp(), Deadline);
+
+                return remaining > TimeSpan.Zero ? _time.GetUtcNow() + remaining : null;
+            }
+        }
+    }
+
+    /// <summary>
     /// Marks one tool call as driving this session, and resets the period at both
     /// ends of it.
     /// </summary>

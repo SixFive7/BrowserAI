@@ -230,7 +230,12 @@ internal static class Program
             inbox.Wake,
             TimeProvider.System,
             PageTabs.ProductLinger,
-            logger);
+            logger)
+        {
+            // An install from the page stops the session host the way this
+            // process's own apply does (Q366 b).
+            SessionHost = keeper,
+        };
 
         var start = CoordinatorStart.Settle(
             root,

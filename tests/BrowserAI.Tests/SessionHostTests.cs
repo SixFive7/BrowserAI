@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -262,6 +263,72 @@ internal sealed class SessionHostTests
     }
 
     /// <summary>
+    /// The host says, of every session it holds, which client drives it and through
+    /// which server, and of a session whose client has gone that it is kept, with the
+    /// time its idle close ends it, or none for a headed one.
+    /// </summary>
+    /// <remarks>
+    /// <b>What the sessions page reads to show a kept session for what it is</b>, asked
+    /// by the root session on 2026-10-03 when option c arrived. The time is the idle
+    /// timer's own deadline, read under its lock on the rig's clock.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHostSaysWhoDrivesEachSessionAndThatOneWhoseClientWentIsKeptAndUntilWhen()
+    {
+        var clock = new ManualClock();
+
+        await using var sessions = NewSessions(browserIdlePeriod: ShortPeriod, clock: clock);
+        await using var rig = await SessionHostRig.StartAsync(sessions);
+
+        var client = await rig.ConnectAsync("claude-code");
+        var headless = await OpenAsync(client, sessions, "described-headless");
+        var headed = await OpenAsync(client, sessions, "described-headed", headed: true);
+
+        await NavigateAsync(client, headless);
+        await NavigateAsync(client, headed);
+
+        // Driven: both name the client and the server it relays through. The idle
+        // close is read once the call's own scope has been released.
+        var idleCloseAt = clock.GetUtcNow() + ShortPeriod;
+
+        await WaitUntilAsync(
+            () => Held(rig, headless).IdleCloseAt == idleCloseAt,
+            "the headless session never said its idle close lies a period after its last call");
+
+        var drivenHeadless = Held(rig, headless);
+        var drivenHeaded = Held(rig, headed);
+
+        await Assert.That(drivenHeadless.Kept).IsFalse();
+        await Assert.That(drivenHeadless.Headed).IsFalse();
+        await Assert.That(drivenHeadless.DrivenBy).IsEqualTo("claude-code");
+        await Assert.That(drivenHeadless.DrivenThrough).IsNotNull();
+        await Assert.That(drivenHeaded.Kept).IsFalse();
+        await Assert.That(drivenHeaded.Headed).IsTrue();
+        await Assert.That(drivenHeaded.DrivenBy).IsEqualTo("claude-code");
+        await Assert.That(drivenHeaded.DrivenThrough).IsEqualTo(drivenHeadless.DrivenThrough);
+        await Assert.That(drivenHeaded.IdleCloseAt).IsNull();
+
+        // The client goes: both are kept, nobody drives them, and what ends each is said.
+        await client.EndAsync();
+
+        await WaitUntilAsync(
+            () => Held(rig, headless).Kept && Held(rig, headed).Kept,
+            "the sessions whose client went were never described as kept");
+
+        var keptHeadless = Held(rig, headless);
+        var keptHeaded = Held(rig, headed);
+
+        await Assert.That(keptHeadless.BrowserOpen).IsTrue();
+        await Assert.That(keptHeadless.DrivenBy).IsNull();
+        await Assert.That(keptHeadless.DrivenThrough).IsNull();
+        await Assert.That(keptHeadless.IdleCloseAt).IsEqualTo(idleCloseAt);
+        await Assert.That(keptHeaded.BrowserOpen).IsTrue();
+        await Assert.That(keptHeaded.DrivenBy).IsNull();
+        await Assert.That(keptHeaded.IdleCloseAt).IsNull();
+    }
+
+    /// <summary>
     /// A headed session whose client went is kept for as long as its window is open,
     /// and let go at the first look after the person has closed it.
     /// </summary>
@@ -487,6 +554,16 @@ internal sealed class SessionHostTests
             throw new InvalidOperationException($"The navigation on '{directory}' failed: {HostConnection.TextOf(answer)}");
         }
     }
+
+    /// <summary>What the host says of one session it holds.</summary>
+    /// <param name="rig">The rig.</param>
+    /// <param name="directory">The session.</param>
+    /// <returns>The description.</returns>
+    private static HeldSession Held(SessionHostRig rig, string directory) =>
+        rig.Host.Sessions.Held().Single(session => string.Equals(
+            Path.GetFullPath(session.Directory),
+            Path.GetFullPath(directory),
+            StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Asserts that the host let a session go: not held, its child ended, its directory free.</summary>
     /// <param name="rig">The rig.</param>

@@ -228,6 +228,18 @@ out because the loop stops it before an apply, so a host a server asked for duri
 the sign-in pass would read as nothing running; the step reports that it is not
 alone, and the loop, which closes every browser first, applies.
 
+⚠️ *Added 2026-10-04, by the browser tab's lane.* **The page's install
+link is a second way an apply starts in the coordinator, and it stops the host the
+same way**: every server a client started is asked to stop through its pipe, then
+the coordinator's hold has the host close every browser and end, and only then is
+the package handed over; an install that fails lets a host start again. Before
+that, the hand-over ended the coordinator and its job took the host down mid-close.
+**The sessions page shows the host, the servers that relay to it and the sessions
+the host keeps**, from a description that now says what kind of server answered
+and, per session, who drives it or that it is kept and until when; the page offers
+no close for the host. The decision of record is the sessions page's row in
+[`DECISIONS.md`](../../../DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser).
+
 ## The coordinator's own lifetime
 
 Q336 a keeps the coordinator one minute after the last tab closes. It now also
