@@ -1,0 +1,6 @@
+2026-10-04T02:23:33.062Z DESKTOP WinSta0\BrowserAI-lifetime-row152-pw-headed-auto-aca445a16e0a4e5282572d9079452608
+2026-10-04T02:23:33.114Z START pid=94060 app=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\lifetime\rig\row152\fp.mjs pw headed-auto --enable-automation
+2026-10-04T02:23:34.150Z PRIVATE pids=11 windows=3 pid=90432 hwnd=0x2b19ca class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=90432 hwnd=0x2f234e class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=90432 hwnd=0x460d10 class=Chrome_WidgetWin_1 rect=10,10,1306,944 title=fp – Google Chrome for Testing
+2026-10-04T02:23:35.162Z PRIVATE pids=2 windows=0 
+2026-10-04T02:23:36.057Z SUMMARY exit=0 ticks=3 maxJobPids=11 ticksWithPrivateWindows=1 leaked=False
+2026-10-04T02:23:36.064Z END processes still in the job before it closed: 0

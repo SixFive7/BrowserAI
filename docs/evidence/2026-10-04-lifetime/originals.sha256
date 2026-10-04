@@ -1,0 +1,7 @@
+758103bc1182fa4ff5b9f93d716806e40bb42ad7a31cad74ba187bbba17f42c1  row152/direct-plain/fp.log  -> fp.trimmed.log: the user profile path replaced by %USERPROFILE%, 1 time(s)
+036549596504d54e2342af78d60a08bb5d9572d40c8274c6663aea5fd59f9d69  tall/chromium-r1/result.json  -> result.trimmed.json: the user profile path replaced by %USERPROFILE%, 1 time(s)
+caca9dbd7bf4c3790f8a582e66f721cace9000229147d44528058c12cac3c220  tall/chromium-r2/result.json  -> result.trimmed.json: the user profile path replaced by %USERPROFILE%, 1 time(s)
+381846d6e272b45df2a2e54dda82ac5a75f1d130fb11ac5b903b690f60dea883  tall/firefox-r1/result.json  -> result.trimmed.json: the user profile path replaced by %USERPROFILE%, 1 time(s)
+684eb6f154b0c6d087a2cd7e1c42e1fee4a71ebfe1342aed988b588c58fab0c3  tall/firefox-r2/result.json  -> result.trimmed.json: the user profile path replaced by %USERPROFILE%, 1 time(s)
+23fce3d61de6fd96c440c21d1059b15d2f02fa1d14cb52709a2f64c453a5785d  tall/firefox-r1/calls.log  -> calls.trimmed.log: 2 terminal colour escape(s) removed
+428405385256fb5bbefeeba2f81ef05d17f608035ef9743dc9132f129cc10448  tall/firefox-r2/calls.log  -> calls.trimmed.log: 2 terminal colour escape(s) removed

@@ -1,0 +1,24 @@
+{
+ "file": "runs/main/tall-chromium-r1/rig/tall-chromium-r1.png",
+ "height": 50000,
+ "rows_at_or_below_16384": 33616,
+ "rows_identical_to_the_row_16384_above": 33616,
+ "first_row_that_differs": null,
+ "control_rows_above_16384_identical_to_the_row_1000_above": 0,
+ "control_rows_checked": 15384,
+ "pixel_at_16383": [
+  163,
+  0,
+  128
+ ],
+ "pixel_at_16384": [
+  0,
+  0,
+  128
+ ],
+ "pixel_at_0": [
+  0,
+  0,
+  128
+ ]
+}

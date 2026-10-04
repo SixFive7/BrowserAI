@@ -1,0 +1,4 @@
+2026-10-04T02:23:08.547Z DESKTOP WinSta0\BrowserAI-lifetime-tall-firefox-r2-bcb3d633b58c4cd7a60bea740f9f0f00
+2026-10-04T02:23:08.596Z START pid=77876 app=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\lifetime\rig\tall.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe browser=firefox height=50000 run=r2 out=C:\Source\SixFive7\BrowserAI\.work\lifetime\runs\main\tall-firefox-r2\rig sessions=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions
+2026-10-04T02:23:14.515Z SUMMARY exit=0 ticks=6 maxJobPids=16 ticksWithPrivateWindows=0 leaked=False
+2026-10-04T02:23:14.524Z END processes still in the job before it closed: 0

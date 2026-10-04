@@ -1,0 +1,107 @@
+{
+ "file": "runs/main/tall-chromium-r1/rig/tall-chromium-r1.png",
+ "width": 1920,
+ "height": 50000,
+ "bands_checked": 500,
+ "bands_correct": 164,
+ "bands_wrong": 336,
+ "wrong_that_match_a_16384_repeat": 336,
+ "first_wrong": {
+  "band": 164,
+  "y": 16450,
+  "shows": 0
+ },
+ "last_correct_y": 16350,
+ "samples": [
+  {
+   "band": 0,
+   "y": 50,
+   "shows": 0
+  },
+  {
+   "band": 1,
+   "y": 150,
+   "shows": 1
+  },
+  {
+   "band": 162,
+   "y": 16250,
+   "shows": 162
+  },
+  {
+   "band": 163,
+   "y": 16350,
+   "shows": 163
+  },
+  {
+   "band": 164,
+   "y": 16450,
+   "shows": 0
+  },
+  {
+   "band": 165,
+   "y": 16550,
+   "shows": 1
+  },
+  {
+   "band": 166,
+   "y": 16650,
+   "shows": 2
+  },
+  {
+   "band": 200,
+   "y": 20050,
+   "shows": 36
+  },
+  {
+   "band": 327,
+   "y": 32750,
+   "shows": 163
+  },
+  {
+   "band": 328,
+   "y": 32850,
+   "shows": 0
+  },
+  {
+   "band": 329,
+   "y": 32950,
+   "shows": 1
+  },
+  {
+   "band": 330,
+   "y": 33050,
+   "shows": 2
+  },
+  {
+   "band": 400,
+   "y": 40050,
+   "shows": 72
+  },
+  {
+   "band": 491,
+   "y": 49150,
+   "shows": 163
+  },
+  {
+   "band": 492,
+   "y": 49250,
+   "shows": 0
+  },
+  {
+   "band": 493,
+   "y": 49350,
+   "shows": 1
+  },
+  {
+   "band": 494,
+   "y": 49450,
+   "shows": 2
+  },
+  {
+   "band": 499,
+   "y": 49950,
+   "shows": 7
+  }
+ ]
+}

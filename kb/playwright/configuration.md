@@ -967,6 +967,29 @@ explicitly, and why the round-trip test asserts both.
 > [row 152](../re-verification.md) keeps its staleness mark for that half. The
 > arms: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
+> ✅ *Verified 2026-10-04 for the HEADED half @ Chrome for Testing 155.0.8059.12
+> (`chromium-1247`), `@playwright/mcp` 0.0.83, on a desktop of the rig's own that
+> was never on the screen (Q382 b).* Through the product's own funnel, headed,
+> the switch changed nothing a page or a server can see: 43 of 43 JS-visible
+> properties identical with and without it, 13 of the 14 headers of the page
+> request identical, the fourteenth `host` with its ephemeral port, and
+> `navigator.webdriver` `false` in both arms. Through raw `playwright-core`,
+> headed, `webdriver` reads `true` without
+> `--disable-blink-features=AutomationControlled` and `false` with it, with and
+> without `--enable-automation`, and it is the only one of the 43 that moves.
+> **The private desktop showed the page what the visible one did**: against the
+> same six arms taken on the visible desktop on 2026-09-24 at chromium 1246, the
+> only properties that differ are the four that carry the version (`userAgent`,
+> `appVersion` and the two client-hint brand lists) and the only headers that
+> differ are `user-agent`, `sec-ch-ua`, `accept`, which gained `image/jxl`, and
+> `host`; window and screen sizes, device pixel ratio, the WebGL renderer (the
+> machine's own GPU through Direct3D 11) and the notification permission are the
+> same. Each arm ran a visible Chrome window on the private desktop and none on
+> the visible one, in its window census. The `direct` arm, Chrome started with
+> nothing driving it, reported nothing in two minutes, as it reported nothing on
+> 2026-09-24. Row 152's staleness mark is cleared. The arms:
+> [the batch](../../docs/evidence/2026-10-04-lifetime/README.md).
+
 ### The Google arms, and what they did not establish
 
 **Eight arms, interleaved, from one residential address**: the product funnel with

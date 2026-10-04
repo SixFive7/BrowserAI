@@ -1,0 +1,5 @@
+2026-10-04T02:23:09.660Z call browserai_init 441ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\tall-firefox-r2' on every browser tool call. directory: C:\Source\SixFive7\B
+2026-10-04T02:23:12.542Z call browser_navigate 2880ms isError=false ### Page - Page URL: http://127.0.0.1:51432/tall?h=50000 - Page Title: tall ready 50000 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\se
+2026-10-04T02:23:13.067Z call browser_evaluate 523ms isError=false ### Result "{\"title\":\"tall ready 50000\",\"scrollHeight\":50000,\"scrollWidth\":1920,\"inner\":[1920,1080],\"dpr\":1,\"ua\":\"Mozilla/5.0 (Windows NT 10.0; W
+2026-10-04T02:23:13.099Z call browser_take_screenshot 31ms isError=true ### Error Error: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767 Call log:  - taking page screenshot
+2026-10-04T02:23:13.940Z call browserai_destroy 839ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\tall-firefox-r2' (31.9 MiB). Its purpose was: Q380 rig: a 50000 px local page scr

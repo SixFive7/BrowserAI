@@ -1,0 +1,5 @@
+2026-10-04T02:22:48.889Z call browserai_init 406ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\tall-chromium-r1' on every browser tool call. directory: C:\Source\SixFive7\
+2026-10-04T02:22:49.903Z call browser_navigate 1012ms isError=false ### Page - Page URL: http://127.0.0.1:50245/tall?h=50000 - Page Title: tall ready 50000 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\se
+2026-10-04T02:22:50.412Z call browser_evaluate 508ms isError=false ### Result "{\"title\":\"tall ready 50000\",\"scrollHeight\":50000,\"scrollWidth\":1920,\"inner\":[1920,1080],\"dpr\":1,\"ua\":\"Mozilla/5.0 (Windows NT 10.0; W
+2026-10-04T02:22:52.079Z call browser_take_screenshot 1666ms isError=false ### Result - [Screenshot of full page](C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\tall-chromium-r1\output\tall-chromium-r1.png)
+2026-10-04T02:22:52.938Z call browserai_destroy 854ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\tall-chromium-r1' (14.8 MiB). Its purpose was: Q380 rig: a 50000 px local page sc

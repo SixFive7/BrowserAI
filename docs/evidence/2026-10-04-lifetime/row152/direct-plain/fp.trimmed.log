@@ -1,0 +1,5 @@
+[fp] mode=direct arm=plain rest=[] origin=http://127.0.0.1:62132/
+[fp] %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe --user-data-dir=C:\Source\SixFive7\BrowserAI\.work\lifetime\rig\row152\fp\direct-plain\profile --no-first-run --no-default-browser-check http://127.0.0.1:62132/
+[fp] chrome pid 71244
+[fp] reported=false
+[fp] request headers: {}

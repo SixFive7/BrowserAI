@@ -712,6 +712,82 @@ tell a format limit from a broken rig. `[FLOATS]`
 > 768,991 bytes. So the Chromium change this entry waits for is not in 155; the
 > run is in [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
+### A full-page screenshot past 16,384 px repeats its first 16,384 rows in Chromium, and Firefox refuses one past 32,767 px -- measured 2026-10-04
+
+`[FLOATS]` `@playwright/mcp` **0.0.83**, `playwright-core`
+**1.64.0-alpha-1790635538000**, Chrome for Testing **155.0.8059.12**
+(`chromium-1247`) and Firefox **156.0** (`firefox-1553`), through
+`BrowserAI.Server.exe` published from `e30380a`, headless, at the default
+1920x1080 viewport. Q380 a. [Evidence](../../docs/evidence/2026-10-04-lifetime/README.md),
+[rig](../../docs/probes/2026-10-04-lifetime/README.md).
+
+**The question, from the maintainer's Q380**: a full-page screenshot of a very
+tall page had been seen outside BrowserAI, with the same Playwright and Chromium,
+to repeat every 16,384 px. Taken here through the product, with a local page of
+500 bands of 100 px, each a solid colour that encodes its own index, and
+`browser_take_screenshot` with `fullPage: true`, `type: "png"` and a `filename`:
+
+| Family | Runs | What came back | `isError` |
+|---|---|---|---|
+| Chromium | 2 of 2 | A 1920x50000 PNG of 2,274,703 bytes, the two byte-identical. **Every one of the 33,616 pixel rows at or below 16,384 px is identical to the row 16,384 px above it**; the 164 bands above the seam are the right ones and all 336 below it show band `floor((y mod 16384) / 100)` | `false` |
+| Firefox | 2 of 2 | No image and no file: *"Protocol error (Page.screenshot): Cannot take screenshot larger than 32767"* | `true` |
+
+**The control is what makes the Chromium row mean anything**: above the seam, 0
+of 15,384 rows are identical to the row 1,000 px above them, so the comparison
+can tell different rows apart. The row at 16,383 px is band 163's colour and the
+row at 16,384 px band 0's, and a crop across the seam at 32,768 px is
+byte-identical to one across 16,384 px.
+
+⚠️ **Chromium's answer reads as a success, and the image looks right at a
+glance.** Its height is the document's, the first third is correct, and the rest
+is the top of the page again, so a model reading it has no sign that two thirds
+of what it sees is not the page it asked about. Firefox fails honestly, at a
+higher bound.
+
+**Why, as far as it was read.** Playwright takes a full Chromium page as one
+`Page.captureScreenshot` with a clip of the whole document and
+`captureBeyondViewport` (`coreBundle.js:38687` at 1.64.0-alpha-1790635538000),
+and Chromium's own issue for the limit says *"The 16384px limit stems from the
+maximum texture size used by the compositor"*. The headless Chromium here is
+`chrome.exe` with `--headless`, not `chrome-headless-shell`.
+
+**BrowserAI is on the path for the consequence and not for the cause**, as with
+the WebP entry above: it forwards the call byte for byte, and its own
+instructions say that `fullPage: true` leaves at full document height and that
+nothing downscales it, which is true of the size and silent about the content.
+
+**Upstream, read 2026-10-04:**
+
+- [microsoft/playwright#13496](https://github.com/microsoft/playwright/issues/13496),
+  *"Screenshot fails (sometimes silently) in headed mode when screenshot is larger
+  than 16384 pixels high"*, opened 2022-04-12 and closed two days later in favour
+  of Chromium's issue 770769, which is now
+  [issues.chromium.org/issues/41347676](https://issues.chromium.org/issues/41347676),
+  *"Allow screenshots larger than 16384px tall"*, opened 2017-10-02 and last
+  modified 2025-09-13.
+- [microsoft/playwright#26521](https://github.com/microsoft/playwright/issues/26521),
+  *"Long screen screenshots are not taken correctly in headed mode"*, opened
+  2023-08-17; a maintainer filed Chromium 1474015, now
+  [issues.chromium.org/issues/40279193](https://issues.chromium.org/issues/40279193),
+  *"Screenshots are cut off if height is > 2^15 pixels"*, opened 2023-08-18 and
+  last modified 2025-06-10. The Playwright issue was closed 2026-05-04 in a sweep
+  of issues with few upvotes.
+- [microsoft/playwright#32373](https://github.com/microsoft/playwright/issues/32373),
+  *"bigger size screenshot is incomplete"*, closed as not planned 2026-05-07
+  after a maintainer called it *"a known Chromium limitation"* and linked
+  41347676.
+- [puppeteer/puppeteer#1576](https://github.com/puppeteer/puppeteer/issues/1576),
+  *"fullPage screenshot duplicates page"*, open since 2017-12-11.
+
+Two of the Playwright issues describe it in headed mode only; this reading is
+headless. The two Chromium issues' status fields were not read, because the
+tracker serves them as numbers this reading could not map with confidence.
+
+**Re-establish** with the rig: `tall.mjs` for each family under the suite lock,
+then `tall_check.py` and `tall_repeat.py` over the image. The control in
+`tall_repeat.py` is not optional: a check that finds every row equal to another
+one proves nothing until it has been shown to find rows that differ.
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache
