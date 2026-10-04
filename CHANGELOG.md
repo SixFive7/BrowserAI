@@ -1609,16 +1609,17 @@ release body; nothing else depends on it.
 - 🔧 **`browserai_catch_up` names every file in a session that can hold something sensitive.**
   4 a, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
   other logs? Name everythign sensitive."* Until then it named the cookie store, HTTP Archives,
-  saved logins, traces and transcripts. It now names the profile whole, with its cookie store, and
-  one line per kind for everything under the session that can hold what a person typed, signed in
+  saved logins, traces and transcripts. It now names the profile whole, with its cookie store or
+  without one, for its history, cache, storage and tabs to restore, and one line per kind for everything under the session that can hold what a person typed, signed in
   with or read: HTTP Archives, saved logins, traces, transcripts, what the network tools saved,
   logs, page snapshots, screenshots, PDFs, videos, files saved by name, downloads in flight and
   BrowserAI's own record. Each line says what that kind holds, measured that day in one headless
   session per family: a page snapshot taken after typing held the typed password in Chromium and
   Firefox alike, and the trace's line now names its action log, which held it too. Ten files of a
   kind are named by path and the rest counted. Watched red first: the arm that lays out one file of
-  every kind found ten of its lines missing, eight of them for kinds the answer named nowhere, and
-  the arm on the four older kinds read the old trace line.
+  every kind found ten of its lines missing, eight of them for kinds the answer named nowhere, the
+  arm on the four older kinds read the old trace line, and the arm on a profile with no cookie
+  store found it answered with the line that says nothing has signed in.
   [kb](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials),
   [evidence](docs/evidence/2026-10-04-q371-sensitive-files/README.md).
 

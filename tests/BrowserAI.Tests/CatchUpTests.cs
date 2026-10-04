@@ -340,6 +340,71 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
+    /// A profile with no cookie store is named too, for what else a profile holds;
+    /// and a profile with no file in it is not.
+    /// </summary>
+    /// <remarks>
+    /// <b>4 a, the maintainer's words of 2026-10-04: <i>"Name everythign
+    /// sensitive."</i></b> Until then a profile was named only beside its cookie
+    /// store, while history, the cache, the sites' storage and the tabs to restore
+    /// are not cookies: the run of 2026-10-04 found the token in a page's address
+    /// in Chromium's history, and the typed user name in the tabs it keeps to
+    /// restore. The control is a session whose profile holds no file, which
+    /// is still answered with the line that says nothing has signed in.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProfileWithNoCookieStoreIsNamedForWhatElseItHolds()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var browsed = Path.Combine(sessions.Root, "browsed-without-cookies");
+        var untouched = Path.Combine(sessions.Root, "never-browsed");
+
+        foreach (var directory in new[] { browsed, untouched })
+        {
+            _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = "a profile without a cookie store",
+            });
+        }
+
+        // Chromium's history and one of the tabs it keeps to restore, and no cookie store.
+        var history = Path.Combine(browsed, SessionLayout.ProfileFolderName, "Default", "History");
+        var tabs = Path.Combine(browsed, SessionLayout.ProfileFolderName, "Default", "Sessions", "Tabs_13435601225400354");
+
+        foreach (var file in new[] { history, tabs })
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            await File.WriteAllTextAsync(file, "visited");
+        }
+
+        async Task<string> catchUp(string directory) => TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading back a profile without a cookie store",
+            ["session"] = directory,
+        }));
+
+        const string NothingSignedIn = "  no cookie store in the profile, so nothing has signed in through this session yet.\n";
+
+        var named = await catchUp(browsed);
+
+        await Assert.That(named).Contains(
+            $"  ⚠️ SENSITIVE: '{SessionLayout.ProfileFolderName}' is the browser profile ({Sizes.Describe(new FileInfo(history).Length + new FileInfo(tabs).Length)}). "
+            + "It has no cookie store, so nothing has signed in through this session yet, and it can still hold the sites' stored data, the history of the pages visited, "
+            + $"the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.\n");
+        await Assert.That(named).DoesNotContain(NothingSignedIn);
+
+        // The control: a profile with no file in it holds nothing to name.
+        var empty = await catchUp(untouched);
+
+        await Assert.That(empty).Contains(NothingSignedIn);
+        await Assert.That(empty).DoesNotContain("is the browser profile");
+    }
+
+    /// <summary>
     /// What the trace's line says it holds, since 4 a named its action log.
     /// </summary>
     private const string TraceHolds =

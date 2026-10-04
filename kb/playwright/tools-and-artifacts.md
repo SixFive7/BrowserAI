@@ -354,8 +354,8 @@ Firefox's compressed session store
 
 `browserai_catch_up` names every one of these since 2026-10-04, one warning line
 per kind in the style he approved for Q365.4, each saying what the kind holds;
-the profile and a trace are named whole, ten files of a kind by path and the rest
-by count. For one file the saved login's, the transcript's and the archive's lines
+the profile and a trace are named whole, the profile with its cookie store or
+without one, ten files of a kind by path and the rest by count. For one file the saved login's, the transcript's and the archive's lines
 read as before; the trace's now names its action log, and the cookie store's line
 became the profile's. Row 193 carries it. `[FLOATS]`
 

@@ -1947,9 +1947,19 @@ internal sealed class SessionManager : IAsyncDisposable
         // not any cookie tool appears above -- cookies arrive from navigation.
         // browserai_destroy is what removes it."): 4 a, every file that can hold
         // something sensitive, and the profile holds more than cookies.
-        _ = text.Append(contents.Profile is { } profile && contents.CookieStore is { } store
-            ? $"  ⚠️ CREDENTIALS: '{profile.RelativePath}' is the browser profile ({Sizes.Describe(profile.Bytes)}). It holds the cookie store at '{store}', so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.\n"
-            : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
+        //
+        // ⚠️ AND WITHOUT A COOKIE STORE TOO, since 2026-10-04 (previously "no
+        // cookie store in the profile, so nothing has signed in through this session
+        // yet." for every profile without one, files or not): a profile holds
+        // history, the cache, the sites' storage and the tabs to restore, and none
+        // of them is a cookie. Only a profile with no file in it is still answered
+        // that way.
+        _ = text.Append((contents.Profile, contents.CookieStore) switch
+        {
+            ({ } profile, { } store) => $"  ⚠️ CREDENTIALS: '{profile.RelativePath}' is the browser profile ({Sizes.Describe(profile.Bytes)}). It holds the cookie store at '{store}', so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.\n",
+            ({ } profile, null) => $"  ⚠️ SENSITIVE: '{profile.RelativePath}' is the browser profile ({Sizes.Describe(profile.Bytes)}). It has no cookie store, so nothing has signed in through this session yet, and it can still hold the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.\n",
+            _ => "  no cookie store in the profile, so nothing has signed in through this session yet.\n",
+        });
 
         // ⚠️ ONE LINE PER KIND, since 2026-10-04, the maintainer's words
         // verbatim: "1 a / 2 b / 3 a / 4 a - is there not also sessions.md or other
