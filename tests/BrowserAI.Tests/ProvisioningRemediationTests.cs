@@ -273,7 +273,7 @@ internal sealed class ProvisioningRemediationTests
             session,
             headed: false,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default);
 
         BrowserConfiguration.WriteTo(configFile, config);

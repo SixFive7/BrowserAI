@@ -52,6 +52,13 @@ internal sealed class ModelSurfaceTests
     /// not a silent widening.
     /// </para>
     /// <para>
+    /// ⚠️ <b>And it takes a required <c>why</c> since 2026-10-04</b>, the
+    /// maintainer's words of 2026-10-03: <i>"browserai_catch_up should take a why.
+    /// All other tool calls are fine like they are now when it comes to the why
+    /// argument."</i> The row above changed with that decision, which is the
+    /// widening it was here to make deliberate.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>Changed 2026-08-20: <c>mode</c> is gone from <c>init</c> and
     /// <c>headed</c> is on both.</b> Session modes were deleted, every
     /// capability is granted to every session, and headedness became a per-run
@@ -73,6 +80,14 @@ internal sealed class ModelSurfaceTests
     /// session to turn tracing on for one afternoon.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Changed 2026-10-04: <c>tracing</c> is <c>transcript</c> on both
+    /// tools.</b> Q371 c, the maintainer's words of 2026-10-03 verbatim: <i>"I like
+    /// option c and the rename to transcript."</i> What the argument switches on
+    /// is upstream's <c>saveSession</c>, a <c>session.md</c> transcript of the run's
+    /// browser calls, and no Playwright trace; the old name is not accepted, like
+    /// any other name the schema does not carry.
+    /// </para>
+    /// <para>
     /// Recorded here because §H.2 is a plan section and this is what outlives
     /// it. The reason a signature table lives in the suite at all is that the
     /// arguments are the half of the model-facing surface nothing measured: the
@@ -84,15 +99,15 @@ internal sealed class ModelSurfaceTests
     private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
     [
         (SessionToolSurface.Init,
-            ["directory", "purpose", "headed", "browser", "tracing", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug"],
+            ["directory", "purpose", "headed", "browser", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug"],
             ["directory", "purpose"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "why", "headed", "debug", "tracing", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
+            ["directory", "purpose", "why", "headed", "debug", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
             ["directory", "why"]),
-        (SessionToolSurface.CatchUp, ["session", "page"], ["session"]),
+        (SessionToolSurface.CatchUp, ["session", "page", "why"], ["session", "why"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
-        (SessionToolSurface.SetPurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),
+        (SessionToolSurface.ChangePurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),
         (SessionToolSurface.ReinstallBrowser, ["browser"], ["browser"]),
         (SessionToolSurface.PageTool,
             ["session", "name", "arguments", "page", "why"],
@@ -234,6 +249,19 @@ internal sealed class ModelSurfaceTests
     ];
 
     /// <summary>
+    /// The five test-writing helpers the maintainer dropped on 2026-10-03,
+    /// Q365.2 a, written down here for the same reason the ten above are.
+    /// </summary>
+    private static readonly string[] TheTestHelpersDropped =
+    [
+        "browser_generate_locator",
+        "browser_verify_element_visible",
+        "browser_verify_text_visible",
+        "browser_verify_list_visible",
+        "browser_verify_value",
+    ];
+
+    /// <summary>
     /// Every capability is granted to every session, and the ten tools that
     /// arrived with the last three of them are in the surface a model reads.
     /// </summary>
@@ -277,11 +305,21 @@ internal sealed class ModelSurfaceTests
             .Where(tool => !TheNewlyGrantedTen.Contains(tool, StringComparer.Ordinal))
             .Select(tool => $"the product lists '{tool}' as newly granted and this test does not expect it"));
 
-        // 2. Each of the ten, by name, in the surface a model receives. A count
-        //    is satisfied by the wrong tool as easily as by the right one.
+        // 2. Each of the ten, by name, in the surface a model receives -- except
+        //    the five test-writing helpers, denied on 2026-10-03 by the
+        //    maintainer's Q365.2 a: "Drop browser_verify_element_visible,
+        //    browser_verify_text_visiblem, browser_verify_list_visible,
+        //    browser_verify_value and browser_generate_locator per your
+        //    recommendation." Those are granted to the child and kept out of the
+        //    list, which is what a deny row does. A count is satisfied by the
+        //    wrong tool as easily as by the right one, so each is named.
         missing.AddRange(TheNewlyGrantedTen
-            .Where(tool => !advertised.ContainsKey(tool))
+            .Where(tool => !TheTestHelpersDropped.Contains(tool, StringComparer.Ordinal) && !advertised.ContainsKey(tool))
             .Select(tool => $"'{tool}' is not in the advertised surface"));
+
+        missing.AddRange(TheTestHelpersDropped
+            .Where(advertised.ContainsKey)
+            .Select(tool => $"'{tool}' was dropped by Q365.2 a and is still in the advertised surface"));
 
         // 3. And in the child a session is actually launched with, which is the
         //    half that decides whether the call works. A tool in `tools/list`
@@ -320,24 +358,37 @@ internal sealed class ModelSurfaceTests
             missing.Add("browser_run_code_unsafe is not in upstream's default surface, so the claim that it is core is stale");
         }
 
-        // 6. The response-mocking warning is in the server instructions, which
-        //    are BrowserAI's own string, and NOT appended to browser_route's
-        //    description, which passes through byte for byte.
-        if (!ServerInstructions.Text.Contains("browser_route", StringComparison.Ordinal))
+        // 6. The response-mocking warning is a BrowserAI note on the two tools it
+        //    is about since 2026-10-04 -- the maintainer's words of 2026-10-03:
+        //    "Rewrite the instructions according to b." -- and no longer in the
+        //    server instructions. Upstream's own description comes first and
+        //    unchanged, the note after it, marked as BrowserAI's. Previously the
+        //    warning was in the instructions and browser_route's description was
+        //    held to upstream's bytes.
+        foreach (var (tool, phrases) in new[]
         {
-            missing.Add("the server instructions do not name browser_route");
+            ("browser_route", (string[])["mocked response", "browser_unroute", "'why'"]),
+            ("browser_network_state_set", (string[])["offline", "'why'"]),
+        })
+        {
+            var upstream = UpstreamSurface.SnapshotDescriptions().Single(entry => entry.Name == tool).Description;
+            var description = (string?)advertised[tool]?["description"] ?? string.Empty;
+
+            if (!description.StartsWith(upstream + SessionToolSurface.NoteMarker, StringComparison.Ordinal))
+            {
+                missing.Add($"{tool}'s description is not upstream's own bytes followed by a BrowserAI note");
+            }
+
+            var note = description.Length > upstream.Length ? description[upstream.Length..] : string.Empty;
+
+            missing.AddRange(phrases
+                .Where(phrase => !note.Contains(phrase, StringComparison.Ordinal))
+                .Select(phrase => $"{tool}'s BrowserAI note does not say '{phrase}'"));
         }
 
-        if (!ServerInstructions.Text.Contains("mocked response", StringComparison.Ordinal))
+        if (ServerInstructions.Text.Contains("browser_route", StringComparison.Ordinal))
         {
-            missing.Add("the server instructions do not warn that a mocked response renders as if it came from the server");
-        }
-
-        var upstreamRoute = UpstreamSurface.SnapshotDescriptions().Single(tool => tool.Name == "browser_route").Description;
-
-        if ((string?)advertised["browser_route"]?["description"] != upstreamRoute)
-        {
-            missing.Add("browser_route's description is not upstream's own bytes");
+            missing.Add("the server instructions still carry the mocking warning, which moved to the tools it is about");
         }
 
         // 7. Headedness changes the window and nothing else. A generated config
@@ -390,8 +441,17 @@ internal sealed class ModelSurfaceTests
         // number is stated: a base one higher than the surface warrants would
         // mean a denial had stopped withholding, and one lower would mean a
         // tool had never arrived.
+        //
+        // ⚠️ And five fewer from 2026-10-04: the test-writing helpers are denied
+        // by Q365.2 a and so leave the surface. Re-counted off the rewrite, not
+        // decremented: 65.
+        //
+        // ⚠️ The base is 59 since 2026-10-04 (previously 60): the maintainer's
+        // Q365.1 a denied browser_set_storage_state, which is `storage` and not
+        // one of the ten, so the base lost one the way it did for
+        // browser_resume. 64.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(60 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(59 + TheNewlyGrantedTen.Length - TheTestHelpersDropped.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
@@ -402,7 +462,7 @@ internal sealed class ModelSurfaceTests
             SessionPath.For(Path.Combine(ScratchRoot.Path, $"capabilities-{(headed ? "headed" : "headless")}")),
             headed,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default)
         .Opinions.Single(opinion => opinion.Path == "capabilities").Value.ToJsonString();
 
@@ -467,6 +527,100 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>
+    /// The server instructions are the lean text of the maintainer's rewrite b,
+    /// which keeps only rules that span tools.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"About the
+    /// server instructions. Rewrite the instructions according to b. Then on the
+    /// why, keep the server instruction simple. The tool arguments will teach the
+    /// model the exceptions anyway."</i> So the text says every call takes a
+    /// <c>why</c>, and the schemas of the three that do not carry one show the
+    /// exceptions. The advice for one tool moved to that tool: the full-page cost
+    /// to <c>browser_take_screenshot</c>, the boxes line to the coordinate tools,
+    /// the mocking warning to <c>browser_route</c> and
+    /// <c>browser_network_state_set</c>, and the directory and purpose paragraph
+    /// to <c>browserai_init</c>'s arguments.
+    /// </para>
+    /// <para>
+    /// <b>Asserted whole, and that is deliberate for a text this short</b>: it is
+    /// his, it was approved as a whole, and a change to it is a change he makes.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstructionsAreTheLeanTextThatKeepsOnlyRulesSpanningTools()
+    {
+        const string Expected =
+            "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. "
+            + "Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\n"
+            + "Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: "
+            + "call it when you arrive at a session you did not create, and before you destroy one.\n\n"
+            + "BrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\n"
+            + "Nothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login.";
+
+        await Assert.That(ServerInstructions.Text).IsEqualTo(Expected);
+        await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
+
+        // Every tool the text names is one this build has.
+        foreach (var tool in new[] { SessionToolSurface.Init, SessionToolSurface.Resume, SessionToolSurface.CatchUp, SessionToolSurface.ReinstallBrowser, SessionToolSurface.Destroy })
+        {
+            await Assert.That(Expected).Contains(tool);
+        }
+    }
+
+    /// <summary>
+    /// The directory and purpose advice is on <c>browserai_init</c>'s own
+    /// arguments, and on <c>browserai_resume</c>'s purpose.
+    /// </summary>
+    /// <remarks>
+    /// <b>Moved 2026-10-04 out of the instructions</b> by the maintainer's
+    /// rewrite b. The paragraph was: <i>"Supply an absolute directory and a
+    /// one-sentence 'purpose'. The directory IS the session -- its profile,
+    /// screenshots, downloads and log live there -- so name it for the work, and
+    /// write the purpose for the next agent that meets it."</i> Each half is now on
+    /// the argument it is about.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDirectoryAndPurposeAdviceIsOnTheArgumentsItIsAbout()
+    {
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+
+        string described(string tool, string argument) =>
+            (string?)advertised[tool]?["inputSchema"]?["properties"]?[argument]?["description"] ?? string.Empty;
+
+        var missing = new List<string>();
+
+        foreach (var (tool, argument, phrase) in new[]
+        {
+            (SessionToolSurface.Init, "directory", "Absolute path"),
+            (SessionToolSurface.Init, "directory", "The directory IS the session"),
+            (SessionToolSurface.Init, "directory", "name it for the work"),
+            (SessionToolSurface.Init, "purpose", "One sentence"),
+            (SessionToolSurface.Init, "purpose", "the next agent that meets it"),
+            (SessionToolSurface.Resume, "purpose", "the next agent that meets it"),
+        })
+        {
+            if (!described(tool, argument).Contains(phrase, StringComparison.Ordinal))
+            {
+                missing.Add($"{tool}'s '{argument}' does not say '{phrase}'");
+            }
+        }
+
+        if (ServerInstructions.Text.Contains("Supply an absolute directory", StringComparison.Ordinal))
+        {
+            missing.Add("the server instructions still carry the directory and purpose paragraph, which moved to the arguments");
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+    }
+
+    /// <summary>
     /// The model is told, before it calls anything, that BrowserAI owns the
     /// browsers and that <c>browserai_reinstall_browser</c> is the repair.
     /// </summary>
@@ -499,11 +653,19 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task TheBrowserInstallationSentenceIsInTheInstructionsAndInsideTheBudget()
     {
+        // ⚠️ REWRITTEN 2026-10-04 with the instructions -- the maintainer's words
+        // of 2026-10-03: "Rewrite the instructions according to b." -- and the
+        // sentence is the positive one: what BrowserAI does and what to call.
+        // Previously "Browsers are managed by BrowserAI -- never install any
+        // yourself (no `npx playwright install`). If the browser installation is
+        // broken, `browserai_reinstall_browser` is the repair." The npx example
+        // is gone from the one string that reaches a model first; upstream's own
+        // install advice is still replaced in an answer by ProvisioningRemediation.
         const string Sentence =
-            "Browsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). "
-            + "If the browser installation is broken, `browserai_reinstall_browser` is the repair.";
+            "BrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.";
 
         await Assert.That(ServerInstructions.Text).Contains(Sentence);
+        await Assert.That(ServerInstructions.Text).DoesNotContain("npx");
 
         // The sentence names the tool that actually exists, and not a name
         // somebody typed: a repair a model cannot call is worse than none.
@@ -569,20 +731,24 @@ internal sealed class ModelSurfaceTests
     /// <c>filename</c> is the way to pay nothing -- which is the actionable half
     /// and the half the old sentence never had.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>MOVED 2026-10-04 onto the tool, and both halves above are inverted
+    /// by it</b> -- the maintainer's words of 2026-10-03: <i>"Rewrite the
+    /// instructions according to b."</i>, a lean text that keeps only rules
+    /// spanning tools, with the advice for one tool moved to that tool. It is a
+    /// BrowserAI note now, declared beside the tool's verdict in
+    /// <c>tool-verdicts.json</c> and appended after upstream's own description,
+    /// which still comes first and unchanged. <i>Previously the arm was
+    /// TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription</i>,
+    /// asserting the sentence in the instructions and upstream's bytes alone on
+    /// the tool.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription()
+    public async Task TheFullPageScreenshotCostIsANoteOnTheScreenshotToolAndNotInTheInstructions()
     {
         var missing = new List<string>();
-
-        foreach (var required in RequiredFullPageCostPhrases)
-        {
-            if (!ServerInstructions.Text.Contains(required, StringComparison.Ordinal))
-            {
-                missing.Add($"the server instructions no longer say '{required}', so nothing tells a model what a full-page screenshot costs before it takes one");
-            }
-        }
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
@@ -590,10 +756,26 @@ internal sealed class ModelSurfaceTests
         var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
         var upstreamScreenshot = UpstreamSurface.SnapshotDescriptions()
             .Single(tool => tool.Name == "browser_take_screenshot").Description;
+        var description = (string?)advertised["browser_take_screenshot"]?["description"] ?? string.Empty;
 
-        if ((string?)advertised["browser_take_screenshot"]?["description"] != upstreamScreenshot)
+        if (!description.StartsWith(upstreamScreenshot + SessionToolSurface.NoteMarker, StringComparison.Ordinal))
         {
-            missing.Add("browser_take_screenshot's description is not upstream's own bytes -- the cost sentence belongs in the instructions, not appended to the tool");
+            missing.Add("browser_take_screenshot's description is not upstream's own bytes followed by a BrowserAI note");
+        }
+
+        var note = description.Length > upstreamScreenshot.Length ? description[upstreamScreenshot.Length..] : string.Empty;
+
+        foreach (var required in RequiredFullPageCostPhrases)
+        {
+            if (!note.Contains(required, StringComparison.Ordinal))
+            {
+                missing.Add($"browser_take_screenshot's BrowserAI note does not say '{required}', so nothing tells a model what a full-page screenshot costs before it takes one");
+            }
+
+            if (ServerInstructions.Text.Contains(required, StringComparison.Ordinal))
+            {
+                missing.Add($"the server instructions still say '{required}', which moved to the tool it is about");
+            }
         }
 
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
@@ -611,9 +793,8 @@ internal sealed class ModelSurfaceTests
     ];
 
     /// <summary>
-    /// The instructions tell a model to ask <c>browser_snapshot</c> for boxes
-    /// before it reaches for a coordinate tool, and both names in that sentence
-    /// are real.
+    /// Every coordinate tool tells a model to ask <c>browser_snapshot</c> for
+    /// boxes first, and both names in that note are real.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -631,7 +812,7 @@ internal sealed class ModelSurfaceTests
     /// </para>
     /// <para>
     /// <b>The phrases are asserted and not the whole sentence</b>, for the reason
-    /// <see cref="TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription"/>
+    /// <see cref="TheFullPageScreenshotCostIsANoteOnTheScreenshotToolAndNotInTheInstructions"/>
     /// gives. <b>And both names are held against upstream's own snapshot</b>:
     /// <c>browser_snapshot</c> really takes a boolean <c>boxes</c>, and the glob
     /// matches tools that exist and that require a coordinate. A sentence naming a
@@ -641,17 +822,15 @@ internal sealed class ModelSurfaceTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheInstructionsTellAModelToAskForBoxesBeforeACoordinateTool()
+    public async Task EveryCoordinateToolCarriesANoteToAskForBoxesFirst()
     {
+        // ⚠️ MOVED 2026-10-04 from the instructions to the tools it is about,
+        // as a BrowserAI note -- the maintainer's words of 2026-10-03: "Rewrite
+        // the instructions according to b." Previously the arm was
+        // TheInstructionsTellAModelToAskForBoxesBeforeACoordinateTool, with the
+        // sentence "Call browser_snapshot with 'boxes: true' before a
+        // browser_mouse_*_xy tool." in the instructions.
         var missing = new List<string>();
-
-        foreach (var required in RequiredBoxesPhrases)
-        {
-            if (!ServerInstructions.Text.Contains(required, StringComparison.Ordinal))
-            {
-                missing.Add($"the server instructions do not say '{required}', so nothing tells a model to ask browser_snapshot for boxes before it uses a coordinate tool");
-            }
-        }
 
         var tools = JsonNode.Parse(UpstreamSurface.SnapshotToolsListResult())!["tools"]!.AsArray().OfType<JsonObject>().ToList();
 
@@ -659,7 +838,7 @@ internal sealed class ModelSurfaceTests
 
         if ((string?)snapshot["inputSchema"]?["properties"]?["boxes"]?["type"] != "boolean")
         {
-            missing.Add("browser_snapshot no longer takes a boolean 'boxes' in upstream's snapshot, so the sentence names a parameter that is not there");
+            missing.Add("browser_snapshot no longer takes a boolean 'boxes' in upstream's snapshot, so the note names a parameter that is not there");
         }
 
         var coordinateTools = tools
@@ -670,84 +849,86 @@ internal sealed class ModelSurfaceTests
 
         if (coordinateTools.Count is 0)
         {
-            missing.Add("no tool in upstream's snapshot matches browser_mouse_*_xy, so the sentence names a family of tools that is not there");
+            missing.Add("no tool in upstream's snapshot matches browser_mouse_*_xy, so the note is on a family of tools that is not there");
         }
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
 
         foreach (var tool in coordinateTools)
         {
+            var name = (string)tool["name"]!;
             var required = (tool["inputSchema"]?["required"]?.AsArray() ?? []).Select(node => (string?)node).ToList();
 
             if (!required.Contains("x") && !required.Contains("startX"))
             {
-                missing.Add($"{(string?)tool["name"]} matches browser_mouse_*_xy and requires no coordinate");
+                missing.Add($"{name} matches browser_mouse_*_xy and requires no coordinate");
             }
+
+            var upstream = (string?)tool["description"] ?? string.Empty;
+            var description = (string?)advertised[name]?["description"] ?? string.Empty;
+
+            if (!description.StartsWith(upstream + SessionToolSurface.NoteMarker, StringComparison.Ordinal))
+            {
+                missing.Add($"{name}'s description is not upstream's own bytes followed by a BrowserAI note");
+                continue;
+            }
+
+            missing.AddRange(RequiredBoxesPhrases
+                .Where(phrase => !description[upstream.Length..].Contains(phrase, StringComparison.Ordinal))
+                .Select(phrase => $"{name}'s BrowserAI note does not say '{phrase}'"));
+        }
+
+        if (ServerInstructions.Text.Contains("'boxes: true'", StringComparison.Ordinal))
+        {
+            missing.Add("the server instructions still carry the boxes line, which moved to the tools it is about");
         }
 
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
-
-        // The budget, asserted again here because this is a change that spends it.
-        await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
-
-        // And it survives the wire, and not only the constant.
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync();
-
-        var initialize = await rig.Client.RoundTripAsync("initialize", new JsonObject
-        {
-            ["protocolVersion"] = TestDefaults.CallerProtocolVersion,
-            ["capabilities"] = new JsonObject(),
-            ["clientInfo"] = new JsonObject { ["name"] = "boxes-sentence-probe", ["version"] = "0" },
-        });
-
-        foreach (var required in RequiredBoxesPhrases)
-        {
-            await Assert.That((string?)initialize["instructions"]).Contains(required);
-        }
     }
 
     /// <summary>
-    /// What the boxes line has to keep saying, however it is reworded: the tool to
-    /// call, the argument to pass, and the tools it comes before.
+    /// What the boxes note has to keep saying, however it is reworded: the tool to
+    /// call and the argument to pass.
     /// </summary>
     private static readonly string[] RequiredBoxesPhrases =
     [
         "browser_snapshot",
         "'boxes: true'",
-        "browser_mouse_*_xy",
     ];
 
     /// <summary>
-    /// The <c>tracing</c> argument says what it really writes -- upstream's
-    /// <c>session.md</c>, a log of the run's calls -- says it is not a trace, and
-    /// names the tools that record one, on both tools that take it and in the
-    /// instructions.
+    /// The <c>transcript</c> argument says what it writes -- upstream's
+    /// <c>session.md</c>, every browser call of the run with its arguments and its
+    /// result -- and that typed passwords land in it, on both tools that take it;
+    /// <c>tracing</c> is advertised nowhere, and the instructions say nothing
+    /// about either.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Q371 a, decided 2026-10-03 by the maintainer, in his words: <i>"Q371
-    /// a"</i>.</b> The argument keeps its name and is described honestly. Until
-    /// then both descriptions said <i>"Record this session into its output
-    /// directory"</i> and the instructions said <i>"'tracing: true' records the
-    /// run"</i>, while what it switches on is upstream's <c>saveSession</c>: a
-    /// <c>session.md</c> in a <c>session-&lt;milliseconds&gt;</c> folder of the
-    /// output directory, the calls' arguments and what each returned, which the
-    /// trace viewer cannot open. A model that wanted a trace and turned this on got
-    /// that and no trace. Found 2026-10-03 by the research into look-alike tools.
+    /// <b>Q371 c, decided 2026-10-03 by the maintainer, in his words: <i>"I like
+    /// option c and the rename to transcript."</i></b> Option c was to rename the
+    /// argument to what it does, shorten both descriptions, and drop the clause the
+    /// instructions carried about it. It switches on upstream's <c>saveSession</c>,
+    /// a <c>session.md</c> in a <c>session-&lt;milliseconds&gt;</c> folder of the
+    /// output directory, and never a Playwright trace; under its old name both
+    /// descriptions had to say what it was not, which is the sign of a wrong name.
     /// </para>
     /// <para>
-    /// <b>Four checks, because each can go stale on its own.</b> The phrases, as
-    /// <see cref="TheInstructionsTellAModelToAskForBoxesBeforeACoordinateTool"/>
-    /// asserts its own; the two named tools, which must be in the surface this
-    /// build advertises and <c>allow</c> in the verdict file, since a description
-    /// naming a tool a caller cannot call sends it to a refusal; the generator,
-    /// which must go on writing <c>tracing</c> as <c>saveSession</c>; and
-    /// upstream's own code, read out of the assembled payload, which must go on
-    /// writing <c>session.md</c> for that key. The payload half comes last, so a
-    /// machine without the payload checks the other three before it skips.
+    /// <b>Five checks, because each can go stale on its own.</b> The phrases, on
+    /// both tools and identical between them; the absence of the old name from
+    /// both schemas and of either name from the instructions; the generator, which
+    /// must go on writing <c>transcript</c> as <c>saveSession</c>; and upstream's
+    /// own code, read out of the assembled payload, which must go on writing
+    /// <c>session.md</c> for that key. The payload half comes last, so a machine
+    /// without the payload checks the others before it skips.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheTracingArgumentSaysWhatItWritesAndNamesTheToolsThatRecordATrace()
+    public async Task TheTranscriptArgumentSaysWhatItWritesAndThatTypedPasswordsLandInIt()
     {
         var missing = new List<string>();
 
@@ -755,50 +936,64 @@ internal sealed class ModelSurfaceTests
             child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
 
         var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var descriptions = new List<string>();
 
         foreach (var tool in new[] { SessionToolSurface.Init, SessionToolSurface.Resume })
         {
-            var description = (string?)advertised[tool]?["inputSchema"]?["properties"]?["tracing"]?["description"] ?? string.Empty;
+            var properties = advertised[tool]?["inputSchema"]?["properties"]?.AsObject();
+            var description = (string?)properties?["transcript"]?["description"];
 
-            foreach (var phrase in RequiredTracingPhrases)
+            if (description is null)
+            {
+                missing.Add($"{tool} advertises no 'transcript'");
+                continue;
+            }
+
+            descriptions.Add(description);
+
+            foreach (var phrase in RequiredTranscriptPhrases)
             {
                 if (!description.Contains(phrase, StringComparison.Ordinal))
                 {
-                    missing.Add($"{tool}'s 'tracing' description does not say '{phrase}'");
+                    missing.Add($"{tool}'s 'transcript' description does not say '{phrase}'");
                 }
             }
-        }
 
-        foreach (var phrase in RequiredTracingInstructionPhrases)
-        {
-            if (!ServerInstructions.Text.Contains(phrase, StringComparison.Ordinal))
+            foreach (var phrase in ForbiddenTranscriptPhrases)
             {
-                missing.Add($"the server instructions do not say '{phrase}' about 'tracing'");
+                if (description.Contains(phrase, StringComparison.Ordinal))
+                {
+                    missing.Add($"{tool}'s 'transcript' description still says '{phrase}', which the rename made unnecessary");
+                }
+            }
+
+            if (properties!.ContainsKey("tracing"))
+            {
+                missing.Add($"{tool} still advertises 'tracing'");
             }
         }
 
-        foreach (var tool in new[] { "browser_start_tracing", "browser_stop_tracing" })
+        if (descriptions.Distinct(StringComparer.Ordinal).Count() > 1)
         {
-            if (!advertised.ContainsKey(tool))
-            {
-                missing.Add($"{tool} is not in the surface this build advertises, so the descriptions send a model to a tool it cannot call");
-            }
-
-            if (!RepositoryVerdicts.Committed.Decide(tool).IsAllowed)
-            {
-                missing.Add($"{tool} is not 'allow' in tool-verdicts.json, so the descriptions send a model to a refusal");
-            }
+            missing.Add("browserai_init and browserai_resume describe 'transcript' in two different texts");
         }
 
-        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-tracing"));
-
-        foreach (var tracing in new[] { true, false })
+        if (ServerInstructions.Text.Contains("tracing", StringComparison.Ordinal)
+            || ServerInstructions.Text.Contains("transcript", StringComparison.Ordinal)
+            || ServerInstructions.Text.Contains("session.md", StringComparison.Ordinal))
         {
-            var config = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, tracing, RunOptions.Default).Json)!;
+            missing.Add("the server instructions still carry a clause about the transcript, which Q371 c dropped");
+        }
 
-            if ((bool?)config["saveSession"] != tracing)
+        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-transcript"));
+
+        foreach (var transcript in new[] { true, false })
+        {
+            var config = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, transcript, RunOptions.Default).Json)!;
+
+            if ((bool?)config["saveSession"] != transcript)
             {
-                missing.Add($"'tracing: {(tracing ? "true" : "false")}' generates saveSession {config["saveSession"]?.ToJsonString() ?? "<absent>"}, so the descriptions no longer say what it switches on");
+                missing.Add($"'transcript: {(transcript ? "true" : "false")}' generates saveSession {config["saveSession"]?.ToJsonString() ?? "<absent>"}, so the description no longer says what it switches on");
             }
         }
 
@@ -821,26 +1016,26 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>
-    /// What each <c>tracing</c> description has to keep saying, however it is
-    /// reworded: the file it writes, and the two tools that record a trace.
+    /// What the <c>transcript</c> description has to keep saying, however it is
+    /// reworded: the file it writes, and that what is typed into a page is in it.
     /// </summary>
-    private static readonly string[] RequiredTracingPhrases =
+    private static readonly string[] RequiredTranscriptPhrases =
     [
         "session.md",
-        "not a Playwright trace",
-        "browser_start_tracing",
-        "browser_stop_tracing",
+        "passwords included",
+        "plain text",
+        "Defaults to false",
     ];
 
     /// <summary>
-    /// What the instructions have to keep saying about <c>tracing</c>, in the room
-    /// they have: the file it writes, and the tool that starts a trace.
+    /// What the <c>transcript</c> description must no longer carry: the
+    /// explanation of what it is not, which the old name made necessary.
     /// </summary>
-    private static readonly string[] RequiredTracingInstructionPhrases =
+    private static readonly string[] ForbiddenTranscriptPhrases =
     [
-        "'tracing: true'",
-        "session.md",
+        "Playwright trace",
         "browser_start_tracing",
+        "browser_stop_tracing",
     ];
 
     [Test]
@@ -1012,7 +1207,9 @@ internal sealed class ModelSurfaceTests
     private static readonly (string Surface, string Phrase)[] RequiredDeletionResponsibilityPhrases =
     [
         // The one short line, in the channel that arrives before the first call.
-        ("instructions", "Nothing else ever deletes a session"),
+        // ⚠️ Since 2026-10-04 (previously "Nothing else ever deletes a session"),
+        // the lean instructions of the maintainer's rewrite b.
+        ("instructions", "Nothing but browserai_destroy deletes a session"),
         ("instructions", "destroy yours when the work is done"),
         ("instructions", "promptly if it held a login"),
 
@@ -1534,9 +1731,21 @@ internal sealed class ModelSurfaceTests
             // day), so equality is now true and is the stronger claim: a prefix
             // check passes anything appended, which is what would come back if
             // the hook were reintroduced by habit.
-            if (!string.Equals(rewritten, original, StringComparison.Ordinal))
+            //
+            // ⚠️ AND A NOTE IS APPENDED SINCE 2026-10-04, deliberately and never by
+            // habit: the maintainer's rewrite b of the instructions moved the
+            // advice for one tool onto that tool, declared beside its verdict in
+            // tool-verdicts.json. So a tool with a note is upstream's own bytes,
+            // the marker and the note -- equality, still, and against the note the
+            // file declares, so nothing else can ride along -- and every other
+            // tool is upstream's own bytes alone.
+            var expected = RepositoryVerdicts.Committed.Find(name)?.Note is { } note
+                ? original + SessionToolSurface.NoteMarker + note
+                : original;
+
+            if (!string.Equals(rewritten, expected, StringComparison.Ordinal))
             {
-                offenders.Add($"{name}: the advertised description is no longer upstream's own, byte for byte");
+                offenders.Add($"{name}: the advertised description is not upstream's own, byte for byte{(expected.Length == original.Length ? string.Empty : ", followed by the note tool-verdicts.json declares")}");
             }
         }
 
@@ -1784,6 +1993,43 @@ internal sealed class ModelSurfaceTests
         // arrive unasserted.
         await Assert.That(TheAuthoredSignatures.Select(signature => signature.Tool).Order(StringComparer.Ordinal))
             .IsEquivalentTo(SessionToolSurface.Names.Order(StringComparer.Ordinal).ToArray());
+    }
+
+    /// <summary>
+    /// Every schema in the surface says it takes nothing it does not list, which
+    /// is what BrowserAI enforces.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's rule of 2026-10-03, in his words:</b> <i>"I'd expect
+    /// that any call carrying any parameter or argument that we do not recognize
+    /// would be refused actively with a syntax error."</i> BrowserAI refuses such a
+    /// call since 2026-10-04 (<c>UnrecognisedArgumentTests</c>), so a schema that
+    /// left <c>additionalProperties</c> open would tell a model it may send what
+    /// the server then refuses.
+    /// </para>
+    /// <para>
+    /// <b>Upstream's 72 already said so</b>, every one of them, in the snapshot
+    /// read 2026-10-04; BrowserAI's own eight did not, which is the half this
+    /// arm was planted red against. The sub-object <c>browserai_page_tool</c>
+    /// hands to a page is deliberately open: its shape is the page's.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EverySchemaInTheSurfaceSaysItTakesNothingItDoesNotList()
+    {
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var open = advertised
+            .Where(tool => tool.Value?["inputSchema"]?["additionalProperties"]?.GetValueKind() is not System.Text.Json.JsonValueKind.False)
+            .Select(tool => tool.Key)
+            .ToList();
+
+        await Assert.That(advertised.Count).IsGreaterThan(SessionToolSurface.Names.Count);
+        await Assert.That(string.Join(", ", open)).IsEmpty();
     }
 
     /// <summary>

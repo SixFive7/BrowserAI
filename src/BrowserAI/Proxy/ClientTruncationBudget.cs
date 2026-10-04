@@ -122,4 +122,34 @@ internal static class ClientTruncationBudget
     /// be cited as one.
     /// </remarks>
     public const int ParameterDescriptionCharacters = Characters;
+
+    /// <summary>
+    /// The longest error result, in UTF-16 characters, the measured clients hand
+    /// a model whole.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Measured 2026-10-03</b> with a stub MCP server whose one tool answered
+    /// with an error result of a chosen length, built from the real tools array,
+    /// through Claude Code 2.1.288 (<c>-p</c>, and the stream-json transport with
+    /// the VS Code extension's environment) and Codex 0.160.0 and
+    /// 0.155.0-alpha.9.2 (<c>exec</c>), each against a local API stub that
+    /// recorded what the model was sent. Claude Code passed 10,100 characters
+    /// whole and cut 12,000 and more to the first and last 5,000 or so, with
+    /// <c>... [N characters truncated] ...</c> between them, 9 of 9 at 12,000 and
+    /// at 110,000 across both transports. Codex passed 10,100 whole and cut
+    /// anything from 12,000 up to about 12,000 characters, first and last, with a
+    /// marker that named the wrong number. An ordinary result passed Claude Code
+    /// whole up to 50,000 characters and was replaced by a file and a 2 KB preview
+    /// at 60,000. The rig is described in <c>kb/mcp/protocol.md</c>.
+    /// </para>
+    /// <para>
+    /// <b>So a refusal BrowserAI writes stays under this</b>, and the largest
+    /// one it can write -- the refusal of an argument a schema does not have,
+    /// which carries the tool's whole definition -- is held to it for every tool
+    /// in the surface by <c>UnrecognisedArgumentTests</c>. A refusal over it would
+    /// reach a model with its middle cut out.
+    /// </para>
+    /// </remarks>
+    public const int ErrorResultCharacters = 10_000;
 }

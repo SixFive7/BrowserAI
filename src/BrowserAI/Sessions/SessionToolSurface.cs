@@ -66,7 +66,14 @@ internal static class SessionToolSurface
     public const string Destroy = "browserai_destroy";
 
     /// <summary>Replaces a session's recorded purpose.</summary>
-    public const string SetPurpose = "browserai_set_purpose";
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-10-04 (previously <c>SetPurpose</c>,
+    /// <c>"browserai_set_purpose"</c>)</b>, the maintainer's words of 2026-10-03
+    /// verbatim: <i>"rename browserai_set_purpose to browserai_change_purpose"</i>.
+    /// There is no alias: a call naming the old tool is answered like any tool
+    /// this BrowserAI does not have.
+    /// </remarks>
+    public const string ChangePurpose = "browserai_change_purpose";
 
     /// <summary>
     /// Answers <i>what were we doing here, and what is here now</i> for one
@@ -235,7 +242,7 @@ internal static class SessionToolSurface
     /// <c>init</c> takes no separate <see cref="WhyParameter"/> -- the purpose
     /// <i>is</i> why the session exists -- so <c>SessionManager.Entry</c> drops it
     /// from the arguments it records for that one tool. On <see cref="Resume"/>
-    /// and <see cref="SetPurpose"/> the two are genuinely different values and
+    /// and <see cref="ChangePurpose"/> the two are genuinely different values and
     /// both are recorded.
     /// </para>
     /// </remarks>
@@ -262,6 +269,20 @@ internal static class SessionToolSurface
 
     /// <summary>The prefix that marks a tool as one of ours.</summary>
     public const string Prefix = "browserai_";
+
+    /// <summary>
+    /// What comes between an upstream tool's own description and the note
+    /// BrowserAI appends to it, marking the note as BrowserAI's.
+    /// </summary>
+    /// <remarks>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words: <i>"Rewrite the
+    /// instructions according to b."</i></b> The advice that concerns one tool
+    /// moved out of the instructions onto that tool, as a note declared beside
+    /// its verdict in <c>tool-verdicts.json</c>. Upstream's own text comes first
+    /// and unchanged, so a reader of the description can always tell which words
+    /// are whose.
+    /// </remarks>
+    public const string NoteMarker = "\n\nBrowserAI note: ";
 
     /// <summary>
     /// How long BrowserAI waits for a page tool to answer before abandoning the
@@ -398,7 +419,7 @@ internal static class SessionToolSurface
     /// creating, reopening and reading a session come before deleting one, and
     /// reaching into a page comes after all of them.
     /// </remarks>
-    public static IReadOnlyList<string> Names { get; } = [Init, Resume, CatchUp, List, Destroy, SetPurpose, ReinstallBrowser, PageTool];
+    public static IReadOnlyList<string> Names { get; } = [Init, Resume, CatchUp, List, Destroy, ChangePurpose, ReinstallBrowser, PageTool];
 
     /// <summary>Whether a tool name is one BrowserAI answers itself.</summary>
     /// <remarks>
@@ -429,6 +450,14 @@ internal static class SessionToolSurface
     /// <c>SessionPolicyTests.AnUnjudgedAuthoredNameIsRefusedAtTheVerdictDoorAndRecordedOnItsSession</c>
     /// asserts both halves.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Since 2026-10-04 such a name is answered before the verdict door</b>,
+    /// as a tool BrowserAI does not have (<c>SessionErrors.ToolDoesNotExist</c>),
+    /// the maintainer's decision of 2026-10-03, and it is still recorded on the
+    /// session it names when it names one. The arm above is
+    /// <c>SessionPolicyTests.ANameBrowserAiDoesNotHaveIsToldSoPlainlyWithOrWithoutASession</c>
+    /// since the same day, and it asserts both halves of that.
+    /// </para>
     /// </remarks>
     /// <param name="name">The tool name from a <c>tools/call</c>.</param>
     /// <returns>Whether BrowserAI answers it itself.</returns>
@@ -448,6 +477,11 @@ internal static class SessionToolSurface
     /// answered with is <i>"this needs a session"</i>, which sends a caller to
     /// supply one for a tool that does not exist. It gets
     /// <see cref="NotOneOfOurs"/> instead, which names the seven that do.
+    /// ⚠️ <i>Corrected 2026-10-04 by addition:</i> it gets
+    /// <c>SessionErrors.ToolDoesNotExist</c> at the door instead, the answer any
+    /// name BrowserAI does not have gets, and the prefix question is what lets the
+    /// door give that answer to a <c>browserai_</c> name even when the child's list
+    /// could not be read.
     /// </remarks>
     /// <param name="name">The tool name from a <c>tools/call</c>.</param>
     /// <returns>Whether it begins <see cref="Prefix"/>.</returns>
@@ -464,6 +498,10 @@ internal static class SessionToolSurface
     /// that got past routing, and <c>BrowserProxy</c> produces it for a name that
     /// arrived with no session at all -- and a caller meeting two wordings for one
     /// mistake would reasonably think they were two different mistakes.
+    /// ⚠️ <i>Corrected 2026-10-04 by addition:</i> <c>BrowserProxy</c> no longer
+    /// produces it, because a name that is not one of ours is told it does not exist
+    /// before it is routed, so the default arm is the one caller left, and no name
+    /// the proxy routes to the session manager reaches it.
     /// </remarks>
     /// <param name="tool">The name the caller sent.</param>
     /// <returns>The refusal.</returns>
@@ -522,6 +560,7 @@ internal static class SessionToolSurface
                     }
 
                     InjectSession(definition);
+                    AppendNote(definition, verdicts);
                 }
 
                 rewritten.Add(tool);
@@ -542,6 +581,38 @@ internal static class SessionToolSurface
         + "This is the session: BrowserAI has no default and will not guess one.";
 
     /// <summary>
+    /// What <c>transcript</c> writes, said once and given to both tools that
+    /// take it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q371 c, decided 2026-10-03 by the maintainer, in his words: <i>"I like
+    /// option c and the rename to transcript."</i></b> The argument was
+    /// <c>tracing</c> until 2026-10-04, and what it switches on is upstream's
+    /// <c>saveSession</c>: a <c>session.md</c> that records the run's calls and
+    /// is no Playwright trace. Under the old name both descriptions had to say
+    /// what it was not; under this one they say what it is, and what is in it --
+    /// every argument, so a typed password.
+    /// </para>
+    /// <para>
+    /// <i>Previously, on <c>browserai_init</c>: "Write session.md, a Markdown log
+    /// of every tool call this run makes with its arguments and what it returned,
+    /// snapshots included, into a new folder in the session's output directory.
+    /// Defaults to false. It is not a Playwright trace, and the trace viewer cannot
+    /// open it: for a trace, call browser_start_tracing and, when done,
+    /// browser_stop_tracing. A property of this run, not of the session."</i>, and
+    /// the same on <c>browserai_resume</c> with <i>"Like every per-run argument it
+    /// takes effect when a browser starts, so on a session whose browser is up it
+    /// needs browser_close first."</i> in place of the last sentence.
+    /// </para>
+    /// </remarks>
+    private const string TranscriptDescription =
+        "Write session.md, a Markdown transcript of this run: every browser tool call with its arguments and its result, page snapshots and screenshots included; a call that fails can be missing. "
+        + "It goes in a new folder per run, output\\session-<time in milliseconds>, inside the session folder. "
+        + "Text typed into the page, passwords included, is stored in it as plain text. Defaults to false. "
+        + "Lasts until this browser closes; a later browserai_resume starts without it unless it is passed again.";
+
+    /// <summary>
     /// What <c>why</c> asks for, on an upstream browser tool.
     /// </summary>
     /// <remarks>
@@ -560,6 +631,8 @@ internal static class SessionToolSurface
 
     private const string NameMember = "name";
 
+    private const string DescriptionMember = "description";
+
     // ⚠️ DELETED 2026-08-18: `AppendModeNote`, which appended
     // `SessionToolPolicy.Note(name)` -- a sentence naming the modes
     // `browser_annotate` worked in -- to the one upstream description this build
@@ -575,6 +648,45 @@ internal static class SessionToolSurface
     // ModelSurfaceTests.EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll.
     // Restoring the tool means restoring this method with it -- the tool's own
     // `why` in tool-verdicts.json says what that would take.
+    /// <summary>
+    /// Appends the note <c>tool-verdicts.json</c> declares for a tool to the
+    /// description the child gave it, after <see cref="NoteMarker"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>An append path again, since 2026-10-04, and the deletion recorded
+    /// above <see cref="InjectSession"/> stands for what it was about.</b> The
+    /// maintainer's words of 2026-10-03: <i>"Rewrite the instructions according to
+    /// b."</i> -- a lean server instructions text that keeps only rules spanning
+    /// tools, with the advice that concerns one tool moved onto that tool.
+    /// <c>AppendModeNote</c> was deleted because the one tool it wrote on had left
+    /// the list; this writes on tools that are in it, from a field a person sets
+    /// beside the tool's verdict, and never from a constant here.
+    /// </para>
+    /// <para>
+    /// <b>Upstream's own text first and unchanged</b>, so the description is
+    /// upstream's bytes, the marker and the note, and nothing else -- which
+    /// <c>ModelSurfaceTests</c> and <c>LosslessPassthroughTests</c> hold as an
+    /// equality. A note is not a schema: nothing about the tool's arguments
+    /// changes, and the schema still comes from the child.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The child's own tool node, rewritten in place.</param>
+    /// <param name="verdicts">What this build ships a judgement for.</param>
+    private static void AppendNote(JsonObject tool, ToolVerdicts verdicts)
+    {
+        if (verdicts.Find((tool[NameMember] as JsonValue)?.GetValue<string>())?.Note is not { } note)
+        {
+            return;
+        }
+
+        var upstream = tool[DescriptionMember] is JsonValue value && value.GetValueKind() is System.Text.Json.JsonValueKind.String
+            ? value.GetValue<string>()
+            : string.Empty;
+
+        tool[DescriptionMember] = upstream + NoteMarker + note;
+    }
+
     private static void InjectSession(JsonObject tool)
     {
         if (tool[SchemaMember] is not JsonObject schema)
@@ -643,20 +755,32 @@ internal static class SessionToolSurface
             + "Its 'output' folder is the only place a tool may read a file from or write one to: for browser_file_upload to send a file, copy it in there first -- and the copy goes when the session does. "
             + $"There is no default directory and no fallback; an empty, relative or unusable path is refused, not turned into one that happens to work. If the directory is already a session, this refuses and tells you to call {Resume} -- being made to say so is the point. "
             + "Every capability this server can grant is granted to every session, so there is nothing to choose and nothing bound that a later call has to live with. "
-            + "Nothing about the browser is bound either: 'headed', 'tracing', 'debug', 'viewport', 'locale', 'timezone', 'ignoreHTTPSErrors' and 'captureNetwork' are all per-run, none is recorded, and the same arguments are accepted again on browserai_resume. "
+            + "Nothing about the browser is bound either: 'headed', 'transcript', 'debug', 'viewport', 'locale', 'timezone', 'ignoreHTTPSErrors' and 'captureNetwork' are all per-run, none is recorded, and the same arguments are accepted again on browserai_resume. "
             + "SECURITY: name a NEW directory. A path on a network drive is refused and nothing else about it is validated: one that already holds a browser profile -- the user's real Chrome profile, or a copy -- becomes this session's, and that session then drives its live cookies and logins, as can any agent given the path. "
             + $"RETENTION: nothing here expires and BrowserAI never deletes a session directory, so destroying it is your job: the agent that made a session destroys it when the work is done, and promptly when it held a login, because the cookies and logins are in the profile on disk until then. {Destroy} takes the whole directory, screenshots and downloads included, so move out anything worth keeping first; {List} shows what has accumulated, and its size.",
             new JsonObject
             {
-                ["directory"] = Property("string", "Absolute path of the session directory, on a LOCAL drive. It is created if it does not exist. This is also the session's name, so make it say what the session is for -- 'checkout-flow-bug' beats a timestamp. A network path or a mapped network drive is refused, because one unreachable share stalls every session sharing that directory. Any other spelling of a local directory is taken as the directory it names, and the answer tells you the name BrowserAI recorded."),
-                ["purpose"] = Property("string", "The session's STANDING description: one sentence saying what this directory is for, which browserai_list shows six weeks from now and which whoever resumes it reads first. It is also the first entry in this session's log -- init takes no separate 'why', because the purpose IS why the session exists. Write it for a stranger: 'reproducing the checkout 500 on staging' beats 'testing'."),
+                // ⚠️ 2026-10-04: the directory half of the instructions' old paragraph
+                // ("Supply an absolute directory and a one-sentence 'purpose'. The
+                // directory IS the session -- its profile, screenshots, downloads and
+                // log live there -- so name it for the work, and write the purpose for
+                // the next agent that meets it.") moved here by the maintainer's
+                // rewrite b. Previously: "Absolute path of the session directory, on a
+                // LOCAL drive. It is created if it does not exist. This is also the
+                // session's name, so make it say what the session is for --
+                // 'checkout-flow-bug' beats a timestamp. ..."
+                ["directory"] = Property("string", "Absolute path of the session directory, on a LOCAL drive. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work: 'checkout-flow-bug' beats a timestamp. It is created if it does not exist. A network path or a mapped network drive is refused, because one unreachable share stalls every session sharing that directory. Any other spelling of a local directory is taken as the directory it names, and the answer tells you the name BrowserAI recorded."),
+                // ⚠️ 2026-10-04, the purpose half of the same paragraph. Previously:
+                // "The session's STANDING description: one sentence saying what this
+                // directory is for, which browserai_list shows six weeks from now and
+                // which whoever resumes it reads first. ... Write it for a stranger:
+                // 'reproducing the checkout 500 on staging' beats 'testing'."
+                ["purpose"] = Property("string", "One sentence: the session's STANDING description, saying what this directory is for. Write it for the next agent that meets it: browserai_list shows it six weeks from now, and whoever resumes the session reads it first. It is also the first entry in this session's log -- init takes no separate 'why', because the purpose IS why the session exists. 'reproducing the checkout 500 on staging' beats 'testing'."),
                 ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false. It is a property of THIS launch and is not recorded: the same session can be resumed headed tomorrow and headless the day after, and nothing on disk changes either way. Turn it on when a human is going to watch, sign in, or clear something the agent cannot; a headed browser is never closed for being idle. A window is not a security control and this server makes no claim that it is -- every session gets every tool, headed or not."),
                 ["browser"] = Enumerated($"The browser family, permanent for the directory's life -- a profile belongs to the browser that made it, so this cannot be changed on resume. Defaults to '{SessionManager.DefaultBrowser}'. Each family is downloaded once per machine on first use ({string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}), so naming the other one for the first time starts a download and the first browser call is refused until it lands.", ProvisionedBrowsers.Families),
-                // ⚠️ Q371 a, 2026-10-03 (previously "Record this session into its
-                // output directory. A property of this run, not of the session;
-                // defaults to false."): what it switches on is upstream's
-                // saveSession, and a model that wanted a trace got a session.md.
-                ["tracing"] = Property("boolean", "Write session.md, a Markdown log of every tool call this run makes with its arguments and what it returned, snapshots included, into a new folder in the session's output directory. Defaults to false. It is not a Playwright trace, and the trace viewer cannot open it: for a trace, call browser_start_tracing and, when done, browser_stop_tracing. A property of this run, not of the session."),
+                // ⚠️ Q371 c, 2026-10-04: `tracing` is `transcript`. See
+                // TranscriptDescription for what both descriptions said before.
+                ["transcript"] = Property("boolean", TranscriptDescription),
                 ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browser_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
                 ["viewport"] = Property("string", $"The browser window's size in CSS pixels, written WIDTHxHEIGHT. Defaults to '{BrowserConfiguration.DefaultViewport}', between {ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)} on each side. IT DECIDES WHAT A SCREENSHOT COSTS YOU, measured through this server: 1920x1080 arrives as 2,691 visual tokens, 1280x720 as 1,196, and 2560x1440 as 4,784 -- which is exactly the per-image cap, with no headroom. What you set is what you get: nothing downscales the image on the way back, so a larger viewport is a larger bill on every screenshot, not a sharper one. Set it smaller when you are taking many screenshots and larger only when the layout genuinely needs it."),
                 ["locale"] = Property("string", $"The BCP-47 locale the browser reports and formats dates and numbers with -- 'en-GB', 'de-DE'. Defaults to this machine's, which is '{BrowserConfiguration.HostLocale}'. Set it only when you are deliberately testing another market: left alone, the page sees what a person at this keyboard would see, and changing it changes what a site serves."),
@@ -679,13 +803,12 @@ internal static class SessionToolSurface
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of an existing session directory, on a LOCAL drive -- the same refusal as init, and any other spelling of it is taken as the directory it names."),
-                ["purpose"] = Property("string", "Optional, and NOT the same thing as 'why'. This is the session's STANDING description -- what the directory is for, shown by browserai_list six weeks from now. Given here it is APPENDED to the recorded purpose, not replacing it, so the directory keeps saying what it has been for. Leave it out unless what the session is FOR has changed; if you only want to say why you are opening it now, that is 'why'."),
+                ["purpose"] = Property("string", "Optional, and NOT the same thing as 'why'. This is the session's STANDING description -- what the directory is for, in one sentence written for the next agent that meets it, shown by browserai_list six weeks from now. Given here it is APPENDED to the recorded purpose, not replacing it, so the directory keeps saying what it has been for. Leave it out unless what the session is FOR has changed; if you only want to say why you are opening it now, that is 'why'."),
                 [WhyParameter] = Property("string", "Required, and NOT the same thing as 'purpose'. This is DISPOSABLE: why you are taking this session over at this moment, one short clause -- \"picking up the checkout bug after the overnight run stopped\". It becomes one entry in this session's log, in order, beside the browser calls that follow it; it does not change what the session says it is for and nothing shows it in a listing."),
                 ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false, and it is NOT read back from what the session was last time -- every run says what it wants. Accepted here as well as on init because the case that matters is a session created headless that now needs a human to sign in: if its browser is up, call browser_close first, and the window opens on the tabs it had."),
                 ["debug"] = Property("boolean", "Raise this session's own log level for this run. Defaults to false. Like every per-run argument it takes effect when a browser starts, so on a session whose browser is up it needs browser_close first."),
-                // ⚠️ Q371 a, 2026-10-03 (previously "Record this run of the session
-                // into its output directory. Defaults to false."), as on init.
-                ["tracing"] = Property("boolean", "Write session.md, a Markdown log of every tool call this run makes with its arguments and what it returned, snapshots included, into a new folder in the session's output directory. Defaults to false. It is not a Playwright trace, and the trace viewer cannot open it: for a trace, call browser_start_tracing and, when done, browser_stop_tracing. Like every per-run argument it takes effect when a browser starts, so on a session whose browser is up it needs browser_close first."),
+                // ⚠️ Q371 c, 2026-10-04, as on init.
+                ["transcript"] = Property("boolean", TranscriptDescription),
                 ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browser_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
                 ["viewport"] = Property("string", $"The browser window's size in CSS pixels, written WIDTHxHEIGHT. Defaults to '{BrowserConfiguration.DefaultViewport}', between {ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)} on each side. IT DECIDES WHAT A SCREENSHOT COSTS YOU, measured through this server: 1920x1080 arrives as 2,691 visual tokens, 1280x720 as 1,196, and 2560x1440 as 4,784 -- which is exactly the per-image cap, with no headroom. What you set is what you get: nothing downscales the image on the way back, so a larger viewport is a larger bill on every screenshot, not a sharper one. Set it smaller when you are taking many screenshots and larger only when the layout genuinely needs it."),
                 ["locale"] = Property("string", $"The BCP-47 locale the browser reports and formats dates and numbers with -- 'en-GB', 'de-DE'. Defaults to this machine's, which is '{BrowserConfiguration.HostLocale}'. Set it only when you are deliberately testing another market: left alone, the page sees what a person at this keyboard would see, and changing it changes what a site serves."),
@@ -699,16 +822,20 @@ internal static class SessionToolSurface
             "Read back what a session was doing, and what is in its directory now.",
             $"Answers two questions no other tool answers together: WHAT WAS DONE HERE, from the session's own ordered log -- every call, in order, with what the caller said each was for and whether it worked -- and WHAT IS HERE NOW, from walking the directory: its age, its size, the size of its output, and a breakdown by kind. "
             + $"CALL IT when you arrive at a session you did not create, after {Resume} or any time you are handed a directory another agent was driving: the recorded 'purpose' says what it was FOR and this says what was actually DONE. And BEFORE {Destroy}, because the sizes are the only thing that says what you are about to delete. "
-            + "THE TWO ROUTINELY DISAGREE, AND THAT IS THE POINT. Cookies arrive from NAVIGATION, not from tools, so a session whose log shows no cookie call can hold a live signed-in profile -- this reports the profile's cookie store when there is one, and names any HTTP Archive (.har): every request and response, headers included, in clear text. "
+            + "THE TWO ROUTINELY DISAGREE, AND THAT IS THE POINT. Cookies arrive from NAVIGATION, not from tools, so a session whose log shows no cookie call can hold a live signed-in profile -- this reports the profile's cookie store when there is one, and names every file that holds login data in clear text: an HTTP Archive (.har), a saved login written by browser_storage_state, a Playwright trace, and a transcript's session.md. "
             + "THE LOG IS PAGED AND NOTHING IS ELIDED: ~100 entries a page, numbered from the OLDEST entry, each page saying which it is, how many there are and the call that fetches the next. Page 1 also carries the volatile half -- the walk, the in-use line, the ages -- so two pages cannot disagree. "
             + "PAGE 1 ALSO SAYS WHEN THE SESSION WAS LAST WRITTEN BY A DIFFERENT BROWSERAI BUILD than the one answering you: that is not a fault and needs no repair, but it means the tool list you are calling from may predate this server, so ask for it again. "
-            + "It takes no lock it can be refused by, so it works on a session another BrowserAI is driving, and it takes no 'why'. One caveat: reading a session whose holder died recovers its write-ahead log, which can leave a small '-shm' file beside the record.",
+            + "It takes no lock it can be refused by, so it works on a session another BrowserAI is driving; its 'why' is written to the session's log when this BrowserAI holds the session. One caveat: reading a session whose holder died recovers its write-ahead log, which can leave a small '-shm' file beside the record.",
             new JsonObject
             {
                 [SessionParameter] = Property("string", "Absolute path of the session directory to read. It need not be a session this BrowserAI opened, and it need not be closed."),
                 [PageParameter] = Property("integer", "Which page of the log to read, counting from 1 at the OLDEST entry. Leave it out for page 1. Every page names the call that fetches the next one, so you never have to work a number out; and because the numbering starts at the oldest entry, a page you have already read never changes when the session goes on working."),
+
+                // ⚠️ ADDED 2026-10-04, the maintainer's words of 2026-10-03:
+                // "browserai_catch_up should take a why."
+                [WhyParameter] = Property("string", "Why you are catching up on this session -- not what catch_up does. One short clause: \"picking up the checkout bug another agent left\" beats \"reading the log\". It goes in this session's log after this answer, when this BrowserAI holds the session."),
             },
-            [SessionParameter]);
+            [SessionParameter, WhyParameter]);
 
         yield return Tool(
             List,
@@ -736,7 +863,7 @@ internal static class SessionToolSurface
             ["directory", WhyParameter]);
 
         yield return Tool(
-            SetPurpose,
+            ChangePurpose,
             "Replace a session's recorded purpose.",
             "Rewrites what the session says it is for. The previous purpose is kept in the session's history, not lost, and is returned to you. Works on a session that is running and on one that is not.",
             new JsonObject
@@ -806,6 +933,12 @@ internal static class SessionToolSurface
                 ["type"] = "object",
                 ["properties"] = properties,
                 ["required"] = requiredNames,
+
+                // ⚠️ ADDED 2026-10-04, with the refusal it describes: a call that
+                // carries an argument a schema does not list is refused, and a
+                // schema that left this open would tell a model it may send what
+                // the server then refuses. Upstream's own schemas all say so.
+                ["additionalProperties"] = false,
             },
         };
     }

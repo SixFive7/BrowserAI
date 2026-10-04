@@ -264,11 +264,21 @@ internal sealed class SessionToolTests
     /// and a directory that is not a session at all.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b>Renamed 2026-08-20 from
     /// <c>ResumeRefusesAModeArgumentAndADirectoryThatIsNotASession</c>.</b>
     /// <c>mode</c> is not an argument anywhere any more, so there is nothing to
     /// refuse. <c>browser</c> still is, and it is the one that always carried
     /// the real reason: a profile on disk belongs to the browser that made it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And since 2026-10-04 it is refused as an argument resume's
+    /// schema does not have</b> (previously by a sentence of its own, asserted here
+    /// as <i>"the profile on disk belongs to it"</i>). The maintainer's rule of
+    /// 2026-10-03 refuses every argument a schema does not carry as a syntax error,
+    /// before the tool runs, with the tool's whole definition; resume's
+    /// description in that definition is what says why.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -279,7 +289,8 @@ internal sealed class SessionToolTests
         var run = await SessionRun.SharedAsync();
 
         await Assert.That(run.IsError("resumeWithBrowser")).IsTrue();
-        await Assert.That(run.Text("resumeWithBrowser")).Contains("the profile on disk belongs to it");
+        await Assert.That(run.Text("resumeWithBrowser")).StartsWith("Syntax error: 'browserai_resume' has no argument named 'browser'");
+        await Assert.That(run.Text("resumeWithBrowser")).Contains("a profile on disk belongs to its browser");
 
         await Assert.That(run.IsError("resumeNotASession")).IsTrue();
         await Assert.That(run.Text("resumeNotASession")).Contains(SessionLayout.LockFileName);

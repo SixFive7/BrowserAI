@@ -302,8 +302,45 @@ verbatim -- encoded, split across nodes, or hashed -- is not redacted at all.
 Upstream says as much in `config.d.ts`: *"a convenience and not a security
 feature"*. `[FLOATS]`
 
+**Four kinds of file in a session's output hold login data in clear text, and
+`browserai_catch_up` names each one** -- *added 2026-10-04, Q365.4, the
+maintainer's words verbatim: "Now about Q365.4. Let's mention all files."*
+Measured 2026-10-03 at `@playwright/mcp` 0.0.83 through a published BrowserAI,
+one headless Chromium session against a page served on `127.0.0.1` with sample
+credentials, and again 2026-10-04
+([evidence](../../docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md)):
+
+| File | Where | What it held |
+|---|---|---|
+| A saved login, written by `browser_storage_state` | a `.json` anywhere under `output\`, here `login-state.json`, 278 bytes for one origin and one cookie | the cookie's value |
+| A Playwright trace, from `browser_start_tracing` and `browser_stop_tracing` | `output\traces\trace-<milliseconds>.trace` and `.network`, with resources and a screencast beside them | the **action log held the typed user name and password**; the **network log held the cookie**, in the request that sent it back, and was 0 bytes in the run where nothing loaded while the trace recorded |
+| A transcript, from `transcript: true` | `output\session-<milliseconds>\session.md` | every succeeded call's arguments, so the typed password ([kb](configuration.md#defaults-that-are-not-what-they-look-like)) |
+| An HTTP Archive, from `captureNetwork: true` | `output\`, one timestamped `.har` per launch | not part of these runs; it records every header of every request, which is why the argument's own description calls it a plaintext credential dump |
+
+`browserai_catch_up` finds the first by its shape and not its name: an object
+with `cookies` and `origins` arrays, read from any `.json` of at most 32 MiB
+under `output\`. It
+names the trace as its folder, because the folder is what has to go, and a
+`session.md` only where upstream writes one. The three lines it adds are the
+maintainer's, approved verbatim on 2026-10-03, and a fourth already named the
+archive. ⚠️ **The trace's line names the network log and not the action
+log**, which this measurement found holds typed text too; that wording is his to
+change and is put to him. Row 193 carries it. `[FLOATS]`
+
 ### What a BrowserAI session permits, after its own filtering
 
+**Re-measured 2026-10-04 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+1.64.0-alpha-1790635538000: 64 of 72, one row**, through `SessionPolicyTests`
+against the snapshot and the shipped verdicts file. ⚠️ **Corrected
+2026-10-04 (previously "Re-measured 2026-10-03 ... 70 of 72, one row")**: the
+denominator held at 72 and the maintainer denied six more, so the withheld set is
+eight. The five test-writing helpers went on 2026-10-03, Q365.2 a
+(`browser_generate_locator` and the four `browser_verify_*`), because BrowserAI
+drives a browser for tasks and does not write Playwright tests; and
+`browser_set_storage_state` went on 2026-10-04, Q365.1 a, because it clears the
+profile's cookies and site storage before it loads a saved file, so an old file
+replaces a newer login. Since 2026-10-04 a denied tool is answered the way a tool
+BrowserAI does not have is answered. The sentence it corrects follows.
 **Re-measured 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
 1.64.0-alpha-1790635538000: 70 of 72, one row**, through
 `SessionPolicyTests` against the regenerated snapshot and the shipped verdicts
@@ -1979,7 +2016,9 @@ tool is in the dump for the day somebody asks whether it could.
   `--timeout-settle` (500 ms).
 - **A key plus a product decision about what it means for a session**:
   `--allowed-origins`, `--blocked-origins`, `--secrets`, `--storage-state`
-  (`browser_set_storage_state` is granted instead), `--proxy-server`,
+  (`browser_set_storage_state` is granted instead; *corrected 2026-10-04 by
+  addition: it is denied since that day, Q365.1 a, so neither is reached*),
+  `--proxy-server`,
   `--block-service-workers` as an independent control and not only alongside a
   HAR capture.
 - **Structurally out of reach here**: `--port`, `--host` and `--allowed-hosts`

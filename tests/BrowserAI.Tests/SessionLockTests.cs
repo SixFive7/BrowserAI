@@ -880,7 +880,7 @@ internal sealed class SessionLockTests
     /// True</c>, and <b>zero</b> <c>Session lock acquired</c> lines -- in the two
     /// 2026-08-29 files alone, <b>2,081 of 2,081</b>. The reason is structural:
     /// the only acquisitions that reach that file are <c>destroy</c> and
-    /// <c>set_purpose</c>, and both dispose the live session and re-acquire, so
+    /// <c>change_purpose</c>, and both dispose the live session and re-acquire, so
     /// the guard on disk names the very process about to take the directory.
     /// Every one of them was written <i>previous holder was PID n, still
     /// running: True</i>, which names the one event on this path worth waking up
@@ -1622,7 +1622,7 @@ internal sealed class SessionLockTests
 
         await Assert.That(rewriteReturnedMidDelete).IsFalse()
             .Because(
-                "browserai_destroy's release-and-delete and browserai_set_purpose's rewrite are the two halves of "
+                "browserai_destroy's release-and-delete and browserai_change_purpose's rewrite are the two halves of "
                 + "adversarial review B4, and a rewrite that answers while the delete is still running answered by "
                 + "reading _disposed unsynchronised -- the same read whose other outcome leaks the handle");
 
@@ -1758,7 +1758,7 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// <b>Both arms, because a refusal that refuses everything is not a fix.</b>
-    /// `resume`, `destroy` and `set_purpose` all take a directory that already
+    /// `resume`, `destroy` and `change_purpose` all take a directory that already
     /// has a record and must keep doing so; only `init` sets the flag.
     /// </para>
     /// <para>
@@ -1806,7 +1806,7 @@ internal sealed class SessionLockTests
         await Assert.That(await File.ReadAllTextAsync(path.LockFile)).IsEqualTo(before);
 
         // The other arm: without the flag the same directory is reclaimed, which
-        // is what `resume`, `destroy` and `set_purpose` all depend on.
+        // is what `resume`, `destroy` and `change_purpose` all depend on.
         var reclaimed = SessionLock.TryAcquire(path, Request("a resume"), NullLogger.Instance);
 
         try

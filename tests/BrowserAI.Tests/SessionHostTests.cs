@@ -402,9 +402,68 @@ internal sealed class SessionHostTests
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(text);
         await Assert.That(text).Contains(SessionManager.KeptWhileItsClientWasAway);
-        await Assert.That(text).Contains(SessionManager.BrowserIsUpSoNothingWasApplied);
+
+        // ⚠️ Since 2026-10-04 the no-op leads with the maintainer's words, "the
+        // session is already live" (previously SessionManager.BrowserIsUpSoNothingWasApplied).
+        await Assert.That(text).StartsWith(SessionManager.AlreadyLive(browserUp: true, purposeChanged: false));
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("the resume started no child");
         await Assert.That(rig.Host.Sessions.Find(directory)!.AttachedTo).IsEqualTo(second.Proxy.Connection);
+    }
+
+    /// <summary>
+    /// A resume of a KEPT session that asks for a setting its browser was not
+    /// started with is refused by the maintainer's text, and one that asks for
+    /// nothing different is answered "the session is already live".
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's rule of 2026-10-03 covers a kept session too</b>, because
+    /// a resume of one goes through the same branch once the claim has taken it
+    /// over: in his words, <i>"A resume on an active session is fine and a noop and
+    /// returns "the session is already live" if and only if there are no
+    /// conflicting settings."</i> Lane c left this arm for the lane that built the
+    /// texts, 2026-10-04.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AResumeOfAKeptSessionIsRefusedOnAConflictingSettingAndAlreadyLiveWithout()
+    {
+        await using var sessions = NewSessions();
+        await using var rig = await SessionHostRig.StartAsync(sessions);
+
+        var first = await rig.ConnectAsync();
+        var directory = await OpenAsync(first, sessions, "kept-and-resumed-with-settings");
+
+        await NavigateAsync(first, directory);
+        await first.EndAsync();
+
+        var second = await rig.ConnectAsync();
+
+        var refused = await second.CallAsync("browserai_resume", new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite asking a kept session for a window",
+            ["headed"] = true,
+        });
+
+        var refusal = HostConnection.TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue().Because(refusal);
+        await Assert.That(refusal).IsEqualTo(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
+            SessionPath.For(directory).FullPath,
+            ["'headed' (running: false, asked: true)"]));
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("a refused resume starts no child");
+
+        var bare = await second.CallAsync("browserai_resume", new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming the kept session without asking for anything",
+        });
+
+        var text = HostConnection.TextOf(bare);
+
+        await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true).Because(text);
+        await Assert.That(text).StartsWith("The session is already live");
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("the resume started no child");
     }
 
     /// <summary>

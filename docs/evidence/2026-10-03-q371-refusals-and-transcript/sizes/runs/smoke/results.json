@@ -1,0 +1,37 @@
+[
+ {
+  "name": "ccP-60000-r1",
+  "client": "ccP",
+  "size": 60000,
+  "found": true,
+  "request": 2,
+  "is_error": true,
+  "length": 10040,
+  "start": "BIG-START-60000 The tools this BrowserAI serves, as tools/list answers them:\n[{\"name\":\"browser_close\",\"description\":\"Close the page\",\"inputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\",\"description\":\"The session directory, ",
+  "end": "lready says that. One short clause: \\\"checking whether the login survived the redirect\\\" beats \\\"clicking the submit button\\\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only whic\nBIG-END-60000",
+  "served": 60000
+ },
+ {
+  "name": "ccS-60000-r1",
+  "client": "ccS",
+  "size": 60000,
+  "found": true,
+  "request": 2,
+  "is_error": true,
+  "length": 10040,
+  "start": "BIG-START-60000 The tools this BrowserAI serves, as tools/list answers them:\n[{\"name\":\"browser_close\",\"description\":\"Close the page\",\"inputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\",\"description\":\"The session directory, ",
+  "end": "lready says that. One short clause: \\\"checking whether the login survived the redirect\\\" beats \\\"clicking the submit button\\\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only whic\nBIG-END-60000",
+  "served": 60000
+ },
+ {
+  "name": "cx160-60000-r1",
+  "client": "cx160",
+  "size": 60000,
+  "found": true,
+  "request": 2,
+  "length": 12018,
+  "start": "Wall time: 0.0163 seconds\nOutput:\nBIG-START-60000 The tools this BrowserAI serves, as tools/list answers them:\n[{\"name\":\"browser_close\",\"description\":\"Close the page\",\"inputSchema\":{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\",\"des",
+  "end": "lready says that. One short clause: \\\"checking whether the login survived the redirect\\\" beats \\\"clicking the submit button\\\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only whic\nBIG-END-60000",
+  "served": 60000
+ }
+]

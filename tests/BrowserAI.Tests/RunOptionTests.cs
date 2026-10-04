@@ -187,7 +187,7 @@ internal sealed partial class RunOptionTests
             session,
             headed: false,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default with { CaptureNetwork = true });
 
         await Assert.That(config.HarPath).IsNotNull();
@@ -227,7 +227,7 @@ internal sealed partial class RunOptionTests
                 SessionPath.For(Path.Combine(ScratchRoot.Path, $"hard-coded-{browser}-{headed}")),
                 headed,
                 browser,
-                tracing: false,
+                transcript: false,
                 RunOptions.Default)
             .Opinions.ToDictionary(opinion => opinion.Path, opinion => opinion.Value.ToJsonString(), StringComparer.Ordinal);
 
@@ -332,7 +332,7 @@ internal sealed partial class RunOptionTests
                 SessionPath.For(Path.Combine(ScratchRoot.Path, $"run-options-{Guid.NewGuid():N}")),
                 headed: false,
                 SessionManager.DefaultBrowser,
-                tracing: false,
+                transcript: false,
                 run)
             .Opinions.ToDictionary(opinion => opinion.Path, opinion => opinion.Value.ToJsonString(), StringComparer.Ordinal);
 

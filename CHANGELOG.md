@@ -801,6 +801,11 @@ release body; nothing else depends on it.
   read `true` for all four sessions it builds, and the instructions arm named the phrases it
   could not find.
 
+  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "the server instructions
+  gained one sentence, `Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy
+  tool.`").*** The sentence is a BrowserAI note on the three coordinate tools now, with the
+  instructions rewrite below.
+
 - 🔧 **A server that starts during an update lists its real tools, and serves once the updater has gone.**
   Q296 c, the maintainer's words verbatim: *"Q296 c"*. Until now such a server answered
   `tools/list` with a JSON-RPC error carrying the update sentence, started no child, and ended
@@ -1400,6 +1405,12 @@ release body; nothing else depends on it.
   own sentence says so. The catalogue gains `SessionWasClosed` and
   `ResumeCannotApplyWhileTheBrowserIsUp` and loses the relaunch row, so its census is 37.
 
+  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "a bare resume is never
+  refused" and "With no browser up, after a close, after a child died or before one started, it
+  opens the session again at the settings it was asked for").*** A resume of a session this
+  server holds is now the maintainer's no-op unless a setting conflicts, and a bare one with no
+  browser up is the no-op too; the refusal is his draft. See the entry for it below.
+
 - 🔧 **A shutdown asks every open browser to close itself, all at once, before it ends the children.**
   e1 and e2 of P7, decided by the root session on 2026-10-03 for the maintainer's review, against
   his words *"b + e and if e is impossible or difficult c. But it all needs to be done in a super
@@ -1464,6 +1475,9 @@ release body; nothing else depends on it.
   Watched red first: against the texts as they stood, the arm named ten missing phrases, four in
   each tool's description and two in the instructions.
 
+  ⚠️ ***Superseded 2026-10-04, before any release carried it.*** The argument is `transcript`
+  and the instructions say nothing about it; see the entry for it below.
+
 - 🔧 **Every clean close BrowserAI makes now gives the browser a minute.**
   D4.1 and D4.2, the maintainer's words verbatim: *"Make it a roomy 1 min. We want everything
   nicely saved to disk even on a slow system."* and *"Same 1 min. under option d (lane c)"*. The
@@ -1484,6 +1498,100 @@ release body; nothing else depends on it.
   one second; the session host's close read thirty seconds, the coordinator's wait for the host
   sixty, and a teardown's wait for a close in flight twenty.
 
+- 💥 **`tracing` is `transcript`, and one short text says what the file holds.**
+  Q371 c, the maintainer's words verbatim: *"I like option c and the rename to transcript."*
+  `browserai_init` and `browserai_resume` take `transcript`, described the same way on both:
+  *"Write session.md, a Markdown transcript of this run: every browser tool call with its arguments
+  and its result, page snapshots and screenshots included; a call that fails can be missing. It goes
+  in a new folder per run, output\session-&lt;time in milliseconds&gt;, inside the session folder. Text
+  typed into the page, passwords included, is stored in it as plain text. Defaults to false. Lasts
+  until this browser closes; a later browserai_resume starts without it unless it is passed
+  again."* **A caller that still sends `tracing` is refused**, as an argument the tool does not
+  have, and nothing names the old argument. The text was checked against a real run before it was
+  final: a screenshot is in the file as base64, and a call that failed is not in it.
+  [kb](kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like),
+  [evidence](docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md). Watched red first:
+  both tools advertised no `transcript`, the instructions still carried the clause, and the arm
+  that holds each authored tool's argument set named `tracing` where `transcript` was specified.
+
+- 💥 **An argument a tool does not have is refused, naming it and giving the tool's whole definition.**
+  The maintainer's words verbatim: *"I'd expect that any call carrying any parameter or argument
+  that we do not recognize would be refused actively with a syntax error. This would teach the LLM
+  it has somethign wrong. Also, I do not like us keeping history and translating certen arguments
+  for historical sake. The product is what it is and the llm needs to learn to use it."*, then Q371.5
+  b for the definition. Measured first, through the published binary at `d8a0101a`: an unknown
+  argument on `browserai_list` and on `browser_navigate` was dropped without a word and the call
+  ran. Now every argument name a call carries is checked against the tool's schema as this
+  BrowserAI's own `tools/list` serves it, before anything runs, and the answer is an error result
+  that opens *"Syntax error:"*, names each unknown argument, and gives the tool's description and
+  every argument with its own, generated from the live list. Every authored schema now says
+  `additionalProperties: false`, as upstream's 72 already did. **`browser` on `browserai_resume`
+  is answered by it too**, so `ArgumentNotAcceptedOnResume` is deleted and the error catalogue's
+  census is 38: `ToolDoesNotExist` and `UnrecognisedArguments` arrived, `ToolIsDenied` and that
+  row went. What a call leaves out is not checked, because upstream marks some arguments with a
+  default as required. [kb](kb/mcp/protocol.md#an-argument-a-tools-schema-does-not-have----measured-2026-10-03).
+  Watched red first: an unknown argument on an authored tool and on a forwarded one both ran, a
+  misspelled `session` met the missing-session refusal, and every authored schema left
+  `additionalProperties` open.
+
+- 🔧 **A call to a tool BrowserAI does not have is told so plainly, and so is a call to a denied one.**
+  The maintainer's words verbatim: *"Calls to a tool BrowserAI doesn't have: a) Yes, in the same
+  lane."* Such a call met the refusal written for a listed tool with no verdict, which called it a
+  gap a human must adjudicate and said not to retry. It now gets *"BrowserAI has no tool '<name>',
+  so nothing ran. Use the tools in your tool list."* and one sentence saying that after an update a
+  tool the client's own list does not show cannot be called until the person reconnects BrowserAI
+  or starts a new conversation. `browserai_set_purpose`, an invented name and a denied tool all get
+  it. **A denied tool's answer is a proposal put to the maintainer**: it no longer quotes the deny's
+  `why`, which stays in `tool-verdicts.json` as the record of the judgement. A listed tool with no
+  verdict keeps a shortened refusal of its own, because it can only be a defect in the build.
+  Watched red first: an unknown name met the old gap text, with and without a session, and each
+  denied tool met *"is deliberately NOT in this server's tools/list"*.
+
+- 🔧 **A resume of a live session changes nothing unless a setting conflicts, and then names the setting.**
+  The maintainer's words verbatim: *"Ok, lets stick with these rules: A resume on an active
+  session is fine and a noop and returns "the session is already live" if and only if there are no
+  conflicting settings. So the same settings or no settings given or a mix. If any of the settings
+  are different the resume is refused with an explicit message that the models needs to call close
+  and then resume with the different settings. Name the parameters that triggered this refusal.
+  Also explain in the response that this will close and re-open the playwright browser."* The
+  answer opens *"The session is already live, so nothing changed"* and says what that means for its
+  browser. A setting that differs is refused in his words, naming each with its running and asked
+  values, and the refusal no longer tells a model to resume again without the settings. A session
+  the host kept after its client went is answered the same way. With no browser started yet, a
+  differing setting still reopens the session at the settings asked for, which is for his review.
+  Watched red first: the browser-up refusal read as the old sentence, and both no-browser arms got
+  a reopen where the no-op was expected.
+
+- 🔧 **`browserai_catch_up` takes a `why`, and names every file that holds login data in clear text.**
+  The maintainer's words verbatim: *"browserai_catch_up should take a why. All other tool calls
+  are fine like they are now when it comes to the why argument."*, and Q365.4: *"Now about Q365.4.
+  Let's mention all files."* The `why` is required, and the read's own row goes in the session's
+  log once the answer is read; on a session another BrowserAI holds it goes to this BrowserAI's own
+  log. Beside the HTTP Archive it already named, catch_up names a saved login written by
+  `browser_storage_state`, a Playwright trace's folder and a transcript's `session.md`, each in the
+  line he approved. [kb](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials).
+  Watched red first: none of the three files was named, and a call with a `why` was refused as an
+  argument catch_up did not have.
+
+- 🔧 **The server instructions keep only what spans tools, and six tools carry a BrowserAI note.**
+  The maintainer's words verbatim: *"About the server instructions. Rewrite the instructions
+  according to b. Then on the why, keep the server instruction simple. The tool arguments will
+  teach the model the exceptions anyway."* The instructions are his draft b, 833 characters in four
+  paragraphs where they were 2,041 in nine. The directory and purpose advice is on `browserai_init`'s
+  `directory` and `purpose` and resume's `purpose`. The full-page screenshot cost, the boxes advice
+  and the route and offline warnings are notes appended after upstream's own description of
+  `browser_take_screenshot`, the three `browser_mouse_*_xy` tools, `browser_route` and
+  `browser_network_state_set`, marked `BrowserAI note:`. A note is a new optional field beside an
+  `allow` verdict in `tool-verdicts.json`, and a note anywhere else stops the server at startup
+  naming the file. Watched red first: the instructions arm read the old text, no tool carried a
+  note, and the loader accepted a note on a denied tool, on an authored one and one that was not a
+  string.
+
+- 💥 **`browserai_set_purpose` is `browserai_change_purpose`.**
+  The maintainer's words verbatim: *"rename browserai_set_purpose to browserai_change_purpose"*.
+  There is no alias, and the old name is answered as a tool BrowserAI does not have. Watched red
+  first: the list carried no `browserai_change_purpose`.
+
 ### Removed
 
 - 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
@@ -1495,6 +1603,28 @@ release body; nothing else depends on it.
   `tool-verdicts.json` takes it out of `tools/list` and refuses it at the door with that reason,
   measured on 0.0.83, so BrowserAI advertises 70 of the 72 tools upstream exposes.
   `browserai_resume`, BrowserAI's own, is unaffected.
+
+  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "refuses it at the door
+  with that reason" and "advertises 70 of the 72").*** A call naming it is answered the way a
+  call naming a tool BrowserAI does not have is answered, and BrowserAI advertises 64 of the 72;
+  see the two entries below.
+
+- 🗑️ **The five test-writing helpers are no longer offered.**
+  Q365.2 a, the maintainer's words verbatim: *"Drop browser_verify_element_visible,
+  browser_verify_text_visiblem, browser_verify_list_visible, browser_verify_value and
+  browser_generate_locator per your recommendation."* Each is a `deny` row whose reason is that
+  BrowserAI drives a browser for tasks and does not write Playwright tests, so they leave
+  `tools/list`, and a call naming one is answered like a tool BrowserAI does not have. Watched red
+  first: the verdict file held two denials where seven were expected, and the five were still in
+  the advertised surface.
+
+- 🗑️ **`browser_set_storage_state` is no longer offered.**
+  Q365.1 a, the maintainer's words verbatim: *"Q365.1 a"*, and Q365.3: *"no further changes
+  besides what I already told you"*. It wipes the profile's cookies and site storage before it
+  loads a saved file, so an old file replaces a newer login, and BrowserAI's profile already keeps
+  logins. BrowserAI now offers 64 of the 72 tools upstream exposes. `browser_storage_state`, which
+  saves a login, stays. Watched red first: the verdict file held seven denials where eight were
+  expected, and the surface counted 65 where 64 were.
 
   ⚠️ **One consequence is an open hazard**: a debugger pause that a close meets first leaves the
   session unable to load a page, and since this change no tool a caller can reach releases it.

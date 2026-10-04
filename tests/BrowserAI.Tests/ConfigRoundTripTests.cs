@@ -85,7 +85,7 @@ internal sealed class ConfigRoundTripTests
                 SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-shape")),
                 headed: false,
                 browser,
-                tracing: true,
+                transcript: true,
                 RunOptions.Default);
 
             var written = config.Opinions
@@ -137,9 +137,9 @@ internal sealed class ConfigRoundTripTests
     {
         var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-restore"));
 
-        var chromium = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, tracing: false, RunOptions.Default).Json)!;
-        var firefox = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, tracing: false, RunOptions.Default).Json)!;
-        var headed = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: true, ProvisionedBrowsers.Chromium, tracing: false, RunOptions.Default).Json)!;
+        var chromium = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, transcript: false, RunOptions.Default).Json)!;
+        var firefox = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, transcript: false, RunOptions.Default).Json)!;
+        var headed = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: true, ProvisionedBrowsers.Chromium, transcript: false, RunOptions.Default).Json)!;
 
         var arguments = chromium["browser"]!["launchOptions"]!["args"]!.AsArray().Select(node => (string?)node).ToList();
 
@@ -303,7 +303,7 @@ internal sealed class ConfigRoundTripTests
                     SessionPath.For(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
                     headed,
                     browser,
-                    tracing: false,
+                    transcript: false,
                     RunOptions.Default);
 
                 check($"{browser}/headed={headed}", config);
@@ -367,7 +367,7 @@ internal sealed class ConfigRoundTripTests
             SessionPath.For(Path.Combine(run.Root, "alpha")),
             headed: false,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default);
 
     /// <summary>The child's own merged config, as <c>browser_get_config</c> reported it.</summary>

@@ -238,24 +238,44 @@ internal sealed class SessionManager : IAsyncDisposable
         + "Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.";
 
     /// <summary>
-    /// What a resume says when the session's browser is up and so nothing it
-    /// was asked for could be applied.
+    /// What a resume of a session this BrowserAI already has live answers, when
+    /// nothing it passed conflicts with what the session runs with: the first
+    /// line of the answer.
     /// </summary>
     /// <remarks>
-    /// Q324 a: the browser is left alone, and an argument that differs from what
-    /// it was launched with is refused by name before this is reached. What
-    /// arrives here asked for nothing different.
+    /// <para>
+    /// <b>The maintainer's rule of 2026-10-03, in his words:</b> <i>"A resume on
+    /// an active session is fine and a noop and returns "the session is already
+    /// live" if and only if there are no conflicting settings. So the same
+    /// settings or no settings given or a mix."</i> So the answer leads with his
+    /// words and says nothing changed. A setting that does conflict is
+    /// <see cref="SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp"/>.
+    /// </para>
+    /// <para>
+    /// <b>A purpose is the one thing such a resume still changes</b>, because
+    /// <c>purpose</c> is a statement in the record and no setting of the run, and
+    /// the answer says so instead of claiming nothing changed. A decision taken
+    /// 2026-10-04 for the maintainer's review.
+    /// </para>
     /// </remarks>
-    public const string BrowserIsUpSoNothingWasApplied =
-        "this session is open in this BrowserAI and its browser is up, so no per-run setting was applied: they take effect only when a browser starts. "
-        + "To change one, call browser_close on this session and then browserai_resume again with it.";
+    /// <param name="browserUp">Whether the session's browser is up.</param>
+    /// <param name="purposeChanged">Whether the call passed a purpose, which was recorded.</param>
+    /// <returns>The line, without a <c>NOTE: </c> prefix.</returns>
+    public static string AlreadyLive(bool browserUp, bool purposeChanged) =>
+        $"The session is already live, so nothing changed{(purposeChanged ? " but its recorded purpose, which is now the one you passed" : string.Empty)}: "
+        + (browserUp
+            ? "its browser, its tabs and its settings are as they were."
+            : "its browser has not started yet, and the first browser call starts it with the settings the session already has.");
 
-    /// <summary>
-    /// What a resume says when no browser has started and the settings it asked
-    /// for are the ones the session already has.
-    /// </summary>
-    public const string NothingNeededApplying =
-        "this session is open in this BrowserAI and its browser has not started yet; the per-run settings this call asked for are the ones it will start with, so nothing needed applying.";
+    // ⚠️ DELETED 2026-10-04: `BrowserIsUpSoNothingWasApplied` and
+    // `NothingNeededApplying`, the two notes a resume of a live session answered
+    // with since Q324 a -- "this session is open in this BrowserAI and its browser
+    // is up, so no per-run setting was applied: they take effect only when a
+    // browser starts. To change one, call browser_close on this session and then
+    // browserai_resume again with it." and "this session is open in this BrowserAI
+    // and its browser has not started yet; the per-run settings this call asked
+    // for are the ones it will start with, so nothing needed applying." Both are
+    // `AlreadyLive` above now, which leads with the maintainer's own words.
 
     /// <summary>
     /// What a resume says when it applied its settings to a session that had no
@@ -575,7 +595,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// how large the download is and that the same call will work shortly. What
     /// keeps a downloading session inspectable is BrowserAI's <b>own</b> tools:
     /// <c>browserai_list</c>, <c>browserai_resume</c> and
-    /// <c>browserai_set_purpose</c> answer throughout, because none of them needs
+    /// <c>browserai_change_purpose</c> answer throughout, because none of them needs
     /// a browser.
     /// </para>
     /// <para>
@@ -767,7 +787,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.CatchUp => CatchUp(arguments),
                 SessionToolSurface.List => List(arguments),
                 SessionToolSurface.Destroy => await DestroyAsync(connection, arguments).ConfigureAwait(false),
-                SessionToolSurface.SetPurpose => await SetPurposeAsync(connection, arguments).ConfigureAwait(false),
+                SessionToolSurface.ChangePurpose => await ChangePurposeAsync(connection, arguments).ConfigureAwait(false),
                 SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(arguments, cancellationToken).ConfigureAwait(false),
                 _ => new ToolOutcome(SessionToolSurface.NotOneOfOurs(tool), IsError: true),
             };
@@ -1026,7 +1046,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var purpose = Required(arguments, "purpose");
             var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
             var headed = Flag(arguments, "headed") ?? false;
-            var tracing = Flag(arguments, "tracing") ?? false;
+            var transcript = Flag(arguments, "transcript") ?? false;
             var run = Run(arguments);
             var debug = Flag(arguments, "debug") ?? false;
 
@@ -1094,7 +1114,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // half of that refusal the ungated look above cannot guarantee.
                     RefuseAnExistingRecord = true,
                 },
-                new SessionRunSettings(headed, tracing, debug, run),
+                new SessionRunSettings(headed, transcript, debug, run),
                 createdHere: true,
                 SpellingNote(named, location, verdict) is { } note ? [note] : [],
                 held,
@@ -1129,7 +1149,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var appended = Optional(arguments, "purpose");
             var debug = Flag(arguments, "debug") ?? false;
             var headed = Flag(arguments, "headed") ?? false;
-            var tracing = Flag(arguments, "tracing");
+            var transcript = Flag(arguments, "transcript") ?? false;
             var run = Run(arguments);
 
             // A profile is browser-specific and a session cannot change what it is,
@@ -1141,9 +1161,16 @@ internal sealed class SessionManager : IAsyncDisposable
             // It is neither refused nor accepted now: there is no such argument
             // and no such property, so a caller that sends one is answered by the
             // schema and not by a sentence about a thing this build has.
-            Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
+            //
+            // ⚠️ AND SO IS `browser`, SINCE 2026-10-04 (previously refused
+            // here by `Refuse(arguments, "browser", "the browser is bound at init
+            // and the profile on disk belongs to it")`, Row 10). Resume's schema
+            // has no `browser`, and an argument a schema does not have is refused
+            // as a syntax error before this method runs -- the maintainer's rule of
+            // 2026-10-03 -- so the line could not be reached. The refusal carries
+            // resume's own definition, whose description says why.
 
-            var requested = new SessionRunSettings(headed, tracing ?? false, debug, run);
+            var requested = new SessionRunSettings(headed, transcript, debug, run);
             var notes = new List<string>();
             var createdHere = false;
             var noticeGiven = false;
@@ -1224,6 +1251,22 @@ internal sealed class SessionManager : IAsyncDisposable
                 // shape: two resumes asking for a window, both answered "nothing
                 // was changed" with no error, and a session that stayed headless.
                 //
+                // ⚠️ AND SINCE 2026-10-04 ONLY THE ARGUMENTS THE CALL PASSED
+                // DECIDE ANYTHING, with a browser up or not -- the maintainer's
+                // rule of 2026-10-03, in his words: "A resume on an active session
+                // is fine and a noop and returns "the session is already live" if
+                // and only if there are no conflicting settings. So the same
+                // settings or no settings given or a mix. If any of the settings
+                // are different the resume is refused with an explicit message
+                // that the models needs to call close and then resume with the
+                // different settings." Until then a resume with no browser up
+                // compared the call's DEFAULTS with the running settings, so a bare
+                // resume of a session started at another viewport was opened again
+                // at the default one. With no browser up, a setting that does
+                // differ is still applied by opening the session again (Q324 c):
+                // there is no Playwright browser to close and nothing to lose, which
+                // is a decision of 2026-10-04 kept for his review.
+                //
                 // The liveness question is asked of the transport and the
                 // process handle and not of a pid lookup, so a child on its way
                 // out counts as alive until one of the two says otherwise. See
@@ -1231,10 +1274,11 @@ internal sealed class SessionManager : IAsyncDisposable
                 // Asked once: the job is the kernel's, and two readings either
                 // side of a browser starting would answer two different questions.
                 var browserUp = already.BrowserIsOpen;
+                var conflicting = Unapplied(arguments, already.Settings, requested);
 
                 var reopen = already.Closed is not null
                     || already.Child.ChildHasGone
-                    || (!browserUp && requested != already.Settings);
+                    || (!browserUp && conflicting.Count > 0);
 
                 if (!reopen)
                 {
@@ -1248,10 +1292,11 @@ internal sealed class SessionManager : IAsyncDisposable
 
                     // Only the arguments the caller actually passed: an omitted
                     // one is a default, and a bare resume must never be refused
-                    // for, or take away, a window a person has open.
-                    if (browserUp && Unapplied(arguments, already.Settings, requested) is { Count: > 0 } unapplied)
+                    // for, or take away, a window a person has open. Reached with
+                    // a conflict only while a browser is up, by the condition above.
+                    if (conflicting.Count > 0)
                     {
-                        var refusal = SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(location.FullPath, unapplied);
+                        var refusal = SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(location.FullPath, conflicting);
 
                         already.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
 
@@ -1266,7 +1311,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                     return new ToolOutcome(
-                        Describe(already, [.. notes, browserUp ? BrowserIsUpSoNothingWasApplied : NothingNeededApplying]),
+                        Describe(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null)),
                         IsError: false);
                 }
 
@@ -1363,7 +1408,7 @@ internal sealed class SessionManager : IAsyncDisposable
             if (!SamePath(record.Directory, location))
             {
                 notes.Add(Directory.Exists(record.Directory)
-                    ? $"This directory is a COPY of the session at '{record.Directory}', which still exists -- the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
+                    ? $"This directory is a COPY of the session at '{record.Directory}', which still exists -- the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.ChangePurpose} to say what this copy is for."
                     : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
 
                 // Recorded, not logged here. The interesting record is the
@@ -1479,6 +1524,43 @@ internal sealed class SessionManager : IAsyncDisposable
     private ToolOutcome CatchUp(JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, SessionToolSurface.SessionParameter), SessionToolSurface.SessionParameter);
+        var why = Why(arguments, SessionToolSurface.CatchUp);
+        var answer = ReadBack(location, arguments);
+
+        // ⚠️ THE WHY IS RECORDED SINCE 2026-10-04, the maintainer's words of
+        // 2026-10-03: "browserai_catch_up should take a why." Written AFTER the
+        // answer was read, so the answer reports what was done before the caller
+        // arrived and not the caller's own read. Only on a session this process
+        // holds: the holder is the one writer of a session's record, and this tool
+        // still takes no lock it can be refused by -- a session another BrowserAI
+        // drives, or nobody does, gets the why in this BrowserAI's own log, the
+        // way a change of purpose on a closed session does. That split is a
+        // decision of 2026-10-04 for the maintainer's review.
+        if (_live.TryGetValue(location.Key, out var held))
+        {
+            SessionToolLog.Why(held.Logger, SessionToolSurface.CatchUp, why);
+
+            var row = held.Lock.Append(SessionToolSurface.CatchUp, why);
+
+            held.Lock.Settle(row, SessionStore.Successful, failure: null);
+        }
+        else
+        {
+            SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.CatchUp, location.FullPath, why);
+        }
+
+        return answer;
+    }
+
+    /// <summary>
+    /// What <c>browserai_catch_up</c> answers: the log page asked for, and on
+    /// page 1 the directory as it is now.
+    /// </summary>
+    /// <param name="location">The session directory.</param>
+    /// <param name="arguments">The call's arguments, for the page.</param>
+    /// <returns>The answer.</returns>
+    private ToolOutcome ReadBack(SessionPath location, JsonObject? arguments)
+    {
         var asked = Number(arguments, SessionToolSurface.PageParameter);
 
         var record = SessionLock.ReadRecord(location)
@@ -1767,6 +1849,33 @@ internal sealed class SessionManager : IAsyncDisposable
             _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(archive.RelativePath).Append("' is an HTTP Archive (")
                 .Append(Sizes.Describe(archive.Bytes))
                 .Append("). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n");
+        }
+
+        // ⚠️ Q365.4 a, 2026-10-04 -- the maintainer's words of 2026-10-03
+        // verbatim: "Now about Q365.4. Let's mention all files." -- and the
+        // three lines below are his approved wording, "Q365.4 now look good".
+        // Measured that day through the published binary at @playwright/mcp
+        // 0.0.83: the saved login held the cookie value, and the transcript and
+        // the trace's action log held the typed password (kb).
+        foreach (var saved in contents.SavedLogins)
+        {
+            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(saved.RelativePath).Append("' is a saved login written by browser_storage_state (")
+                .Append(Sizes.Describe(saved.Bytes))
+                .Append("). It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n");
+        }
+
+        foreach (var trace in contents.Traces)
+        {
+            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(trace.RelativePath).Append("' is a Playwright trace (")
+                .Append(Sizes.Describe(trace.Bytes))
+                .Append("). Its network log holds every request and response with their headers, so session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n");
+        }
+
+        foreach (var transcript in contents.Transcripts)
+        {
+            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(transcript.RelativePath).Append("' is a transcript (")
+                .Append(Sizes.Describe(transcript.Bytes))
+                .Append("). It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n");
         }
     }
 
@@ -2146,11 +2255,11 @@ internal sealed class SessionManager : IAsyncDisposable
                 IsError: true);
     }
 
-    private async Task<ToolOutcome> SetPurposeAsync(CallerConnection connection, JsonObject? arguments)
+    private async Task<ToolOutcome> ChangePurposeAsync(CallerConnection connection, JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, "session"), "session");
         var purpose = RecordText.Sanitise(Required(arguments, "purpose"));
-        var why = Why(arguments, SessionToolSurface.SetPurpose);
+        var why = Why(arguments, SessionToolSurface.ChangePurpose);
 
         // Q366 b: the claim a destroy asks, for the same reason.
         if (_live.TryGetValue(location.Key, out var named))
@@ -2159,7 +2268,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 case SessionClaim.HeldElsewhere:
                     return new ToolOutcome(
-                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.SetPurpose, location.FullPath, holder!.Describe()),
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.ChangePurpose, location.FullPath, holder!.Describe()),
                         IsError: true);
 
                 case SessionClaim.Releasing:
@@ -2181,12 +2290,12 @@ internal sealed class SessionManager : IAsyncDisposable
             // and a reader that lands between them finds a purpose change whose
             // explanation has ALREADY arrived, which is the harmless order. The
             // reverse would show a purpose nothing accounts for.
-            var row = live.Lock.Append(SessionToolSurface.SetPurpose, why);
+            var row = live.Lock.Append(SessionToolSurface.ChangePurpose, why);
 
             live.Lock.AppendPurpose(purpose);
             live.Lock.Settle(row, SessionStore.Successful, failure: null);
 
-            SessionToolLog.Why(live.Logger, SessionToolSurface.SetPurpose, why);
+            SessionToolLog.Why(live.Logger, SessionToolSurface.ChangePurpose, why);
             SessionToolLog.PurposeChanged(_logger, location.FullPath, previous, purpose);
 
             return new ToolOutcome($"Purpose of '{location.FullPath}' is now: {purpose}\nIt was: {previous}", IsError: false);
@@ -2202,7 +2311,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 Browser = recorded.Browser,
                 Purpose = purpose,
-                Entry = new SessionCall(SessionToolSurface.SetPurpose, why),
+                Entry = new SessionCall(SessionToolSurface.ChangePurpose, why),
             },
             _logger);
 
@@ -2219,7 +2328,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // session is torn down. The line carries the directory for that reason:
         // it lands in a machine-wide file beside every other session's, where a
         // scoped logger would not have needed saying.
-        SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.SetPurpose, location.FullPath, why);
+        SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.ChangePurpose, location.FullPath, why);
         SessionToolLog.PurposeChanged(_logger, location.FullPath, recorded.Purpose, purpose);
 
         return new ToolOutcome(
@@ -2808,7 +2917,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // The family comes from the session's own record and not from a
             // constant: `resume` reads it out of the record, and a profile
             // belongs to the browser that made it.
-            var config = BrowserConfiguration.ForSession(location, settings.Headed, request.Browser, settings.Tracing, settings.Run);
+            var config = BrowserConfiguration.ForSession(location, settings.Headed, request.Browser, settings.Transcript, settings.Run);
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -3002,10 +3111,18 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <returns>The prefix.</returns>
     private static string ChildRequestIdPrefix(SessionPath location) => $"browserai-{location.Hash[..8]}-";
 
-    private string Describe(LiveSession session, IReadOnlyList<string> notes)
+    private string Describe(LiveSession session, IReadOnlyList<string> notes, string? lead = null)
     {
         var record = session.Lock.Record;
         var text = new StringBuilder();
+
+        // The answer's first line, when the call has one thing to say before
+        // anything else: since 2026-10-04 that is a resume of a session that is
+        // already live, which leads with the maintainer's own words.
+        if (lead is not null)
+        {
+            _ = text.Append(lead).Append('\n');
+        }
 
         foreach (var note in notes)
         {
@@ -3378,7 +3495,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ⚠️ <b>Every door takes this route since 2026-08-26 -- previously
     /// <c>init</c> and <c>resume</c> went through a second entry point
     /// (<c>ResolveToOpen</c>) that ran the boundary refusals, and
-    /// <c>destroy</c>, <c>set_purpose</c>, <c>catch_up</c> and <c>list</c> did
+    /// <c>destroy</c>, <c>change_purpose</c>, <c>catch_up</c> and <c>list</c> did
     /// not.</b> The split existed so that a session created on a share by a
     /// build older than the refusals stayed removable. Nothing was ever
     /// distributed, so that population is empty -- and the cost of the split was
@@ -3585,14 +3702,6 @@ internal sealed class SessionManager : IAsyncDisposable
         };
     }
 
-    private static void Refuse(JsonObject? arguments, string name, string why)
-    {
-        if (arguments?[name] is not null)
-        {
-            throw new SessionToolException(SessionErrors.ArgumentNotAcceptedOnResume(name, why));
-        }
-    }
-
     /// <summary>
     /// The family a call named, normalised to the spelling upstream uses.
     /// </summary>
@@ -3675,10 +3784,19 @@ internal sealed class SessionManager : IAsyncDisposable
     /// session's browser was launched with, as one clause each.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Passed, not defaulted.</b> An argument the caller left out is compared
     /// as nothing at all: read as its default, a bare resume of a headed session
     /// would be refused for asking for no window, which is the opposite of what a
     /// caller who said nothing meant.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Each clause is <c>'name' (running: value, asked: value)</c> since
+    /// 2026-10-04</b> <i>(previously "'name' is value and you asked for
+    /// value")</i>, the shape of the maintainer's own draft of the refusal, and a
+    /// value a caller wrote -- a locale, a time zone -- is escaped, because it is
+    /// quoted back into a model's context.
+    /// </para>
     /// </remarks>
     /// <param name="arguments">The call's arguments, as they arrived.</param>
     /// <param name="running">What the session's child was launched with.</param>
@@ -3689,10 +3807,10 @@ internal sealed class SessionManager : IAsyncDisposable
         var unapplied = new List<string>();
 
         compare("headed", shown(running.Headed), shown(requested.Headed));
-        compare("tracing", shown(running.Tracing), shown(requested.Tracing));
+        compare("transcript", shown(running.Transcript), shown(requested.Transcript));
         compare("debug", shown(running.Debug), shown(requested.Debug));
-        compare("viewport", $"'{running.Run.Viewport}'", $"'{requested.Run.Viewport}'");
-        compare("locale", $"'{running.Run.Locale}'", $"'{requested.Run.Locale}'");
+        compare("viewport", running.Run.Viewport.ToString(), requested.Run.Viewport.ToString());
+        compare("locale", RecordText.Escape(running.Run.Locale), RecordText.Escape(requested.Run.Locale));
         compare("timezone", zone(running.Run.TimeZone), zone(requested.Run.TimeZone));
         compare("ignoreHTTPSErrors", shown(running.Run.IgnoreHttpsErrors), shown(requested.Run.IgnoreHttpsErrors));
         compare("captureNetwork", shown(running.Run.CaptureNetwork), shown(requested.Run.CaptureNetwork));
@@ -3703,13 +3821,13 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (arguments?[name] is not null && !string.Equals(inUse, asked, StringComparison.Ordinal))
             {
-                unapplied.Add($"'{name}' is {inUse} and you asked for {asked}");
+                unapplied.Add($"'{name}' (running: {inUse}, asked: {asked})");
             }
         }
 
         static string shown(bool value) => value ? "true" : "false";
 
-        static string zone(string? value) => value is null ? "the browser's own" : $"'{value}'";
+        static string zone(string? value) => value is null ? "the browser's own" : RecordText.Escape(value);
     }
 
     /// <summary>The viewport a call named, or the default.</summary>
@@ -3811,7 +3929,7 @@ internal static partial class SessionToolLog
     /// <remarks>
     /// <b>It names the directory because it has to.</b> A closed session has no
     /// log of its own open, so this goes to the machine-wide process log, where
-    /// a line saying only <i>"browserai_set_purpose: because X"</i> could be
+    /// a line saying only <i>"browserai_change_purpose: because X"</i> could be
     /// about any session on the machine.
     /// </remarks>
     /// <param name="logger">The process log.</param>

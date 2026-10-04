@@ -1,0 +1,188 @@
+// Lane q371: does a client hand a large MCP tool result to the model whole?
+// Derived from lane q369's rig (.work\q369\rig: ccmodel.js, cxmodel.js, gen.js, cx-batch.js),
+// copied, not edited. Every client runs with a scratch home, a local API stub, a clean
+// allowlisted environment and no window.
+//
+// node sizes.js <batch> <client[,client...]> <size[,size...]> <reps>
+//   clients: ccP (claude -p) | ccS (claude stream-json with the VS Code extension's environment)
+//            | cx160 (codex exec 0.160.0) | cx155 (codex exec 0.155.0-alpha.9.2)
+'use strict';
+const fs = require('fs');
+const path = require('path').win32;
+const { spawn } = require('child_process');
+
+const [batch, clientArg, sizeArg, repsArg] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q371-scratch\\sizes';
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const PROJ = `${S}\\proj`;
+const CLAUDE = `${S}\\bin\\claude-2.1.288.exe`;
+const CODEX = { cx160: `${S}\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe`, cx155: `${S}\\bin\\codex155\\codex.exe` };
+const CC_PORT = 8975;
+const CX_PORT = 8976;
+const BATCH = `${S}\\runs\\${batch}`;
+const POLICY = `${BATCH}\\policy.json`;
+fs.mkdirSync(BATCH, { recursive: true });
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const plog = (s) => fs.appendFileSync(`${BATCH}\\progress.log`, `${new Date().toISOString()} ${s}\n`);
+
+const ALLOW = ['ALLUSERSPROFILE', 'COMPUTERNAME', 'ComSpec', 'CommonProgramFiles', 'CommonProgramFiles(x86)', 'CommonProgramW6432', 'HOMEDRIVE', 'HOMEPATH', 'NUMBER_OF_PROCESSORS', 'OS', 'Path', 'PATHEXT', 'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL', 'PROCESSOR_REVISION', 'ProgramData', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'PUBLIC', 'SystemDrive', 'SystemRoot', 'USERDOMAIN', 'USERNAME', 'USERPROFILE', 'windir'];
+function cleanEnv(extra) {
+  const e = {};
+  for (const [k, v] of Object.entries(process.env)) if (ALLOW.some((a) => a.toLowerCase() === k.toLowerCase())) e[k] = v;
+  return Object.assign(e, {
+    DISABLE_AUTOUPDATER: '1', TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`, APPDATA: `${S}\\appdata\\roaming`, LOCALAPPDATA: `${S}\\appdata\\local`,
+    GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1', GIT_CEILING_DIRECTORIES: S, NO_COLOR: '1',
+  }, extra);
+}
+
+let IS_ERROR = '1';
+const serverEnv = (run, size) => ({ BIG_CHARS: String(size), BIG_TEMPLATE: `${S}\\template.json`, BIG_LOG: `${run}\\big.log`, BIG_IS_ERROR: IS_ERROR });
+
+function seed() {
+  return JSON.stringify({
+    hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: false,
+    customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] },
+    lastReleaseNotesSeen: '2.1.288',
+    projects: { [PROJ.replace(/\\/g, '/')]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [] } },
+  });
+}
+
+function codexToml(run, size) {
+  const env = Object.entries(serverEnv(run, size)).map(([k, v]) => `${k} = '${v}'`).join(', ');
+  return `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${CX_PORT}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+command = '${NODE}'
+args = ['${S}\\bigserver.js']
+env = { ${env} }
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+
+[projects.'${PROJ}']
+trust_level = "trusted"
+
+[projects.'${PROJ.toLowerCase()}']
+trust_level = "trusted"
+`;
+}
+
+function spawnLogged(exe, args, env, run, tag, timeoutMs, stdinLines) {
+  return new Promise((resolve) => {
+    const out = fs.openSync(`${run}\\${tag}.out`, 'a');
+    const err = fs.openSync(`${run}\\${tag}.err`, 'a');
+    const piped = Array.isArray(stdinLines);
+    const p = spawn(exe, args, { env, cwd: PROJ, windowsHide: true, stdio: [piped ? 'pipe' : 'ignore', piped ? 'pipe' : out, err] });
+    plog(`SPAWN ${tag} pid=${p.pid}`);
+    let text = '';
+    if (piped) {
+      p.stdout.on('data', (c) => { const s = c.toString('utf8'); text += s; fs.writeSync(out, s); });
+      (async () => {
+        for (const step of stdinLines) {
+          if (step.send) p.stdin.write(step.send + '\n');
+          if (step.waitFor) {
+            const until = Date.now() + (step.timeoutMs || 120000);
+            while (!text.includes(step.waitFor) && Date.now() < until) await sleep(200);
+            if (!text.includes(step.waitFor)) plog(`WAIT TIMEOUT ${tag} for ${step.waitFor}`);
+          }
+        }
+        p.stdin.end();
+      })();
+    }
+    const t = setTimeout(() => { plog(`TIMEOUT ${tag} pid=${p.pid}, ending it by its handle`); p.kill(); }, timeoutMs);
+    p.on('exit', (code) => { clearTimeout(t); fs.closeSync(out); fs.closeSync(err); plog(`EXIT ${tag} pid=${p.pid} code=${code}`); resolve(code); });
+  });
+}
+
+function lastToolResult(run, kind) {
+  const file = `${run}\\model.requests.jsonl`;
+  if (!fs.existsSync(file)) return { found: false, note: 'no model requests were logged' };
+  const lines = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const body = JSON.parse(lines[i]).body;
+    if (kind === 'cc') {
+      for (const m of body.messages || []) for (const b of Array.isArray(m.content) ? m.content : []) {
+        if (b && b.type === 'tool_result') {
+          const text = typeof b.content === 'string' ? b.content : (b.content || []).map((x) => x.text ?? `[${x.type}]`).join('');
+          return { found: true, request: i + 1, is_error: b.is_error === true, length: text.length, start: text.slice(0, 300), end: text.slice(-300) };
+        }
+      }
+    } else {
+      for (const it of body.input || []) if (it && it.type === 'function_call_output') {
+        const o = it.output;
+        const text = typeof o === 'string' ? o : Array.isArray(o) ? o.map((x) => x.text ?? '').join('\n') : JSON.stringify(o);
+        return { found: true, request: i + 1, length: text.length, start: text.slice(0, 300), end: text.slice(-300) };
+      }
+    }
+  }
+  return { found: false, note: 'no tool result in any request' };
+}
+
+(async () => {
+  const stubOut = fs.openSync(`${BATCH}\\stubs.out`, 'a');
+  const cc = spawn(NODE, [`${S}\\ccmodel.js`], { env: cleanEnv({ STUB_PORT: String(CC_PORT), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCH, STUB_TAG: 'stub-fallback' }), windowsHide: true, stdio: ['ignore', stubOut, stubOut] });
+  const cx = spawn(NODE, [`${S}\\cxmodel.js`], { env: cleanEnv({ STUB_PORT: String(CX_PORT), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCH, STUB_TAG: 'stub-fallback' }), windowsHide: true, stdio: ['ignore', stubOut, stubOut] });
+  plog(`STUBS cc pid=${cc.pid} port=${CC_PORT}, cx pid=${cx.pid} port=${CX_PORT}`);
+  await sleep(1500);
+  const results = [];
+  try {
+    for (const size of sizeArg.split(',').map(Number)) for (const spec of clientArg.split(',')) for (let r = 1; r <= Number(repsArg); r++) {
+      const [client, flavour] = spec.split('+');
+      IS_ERROR = flavour === 'ok' ? '0' : '1';
+      const name = `${client}${flavour ? '-' + flavour : ''}-${size}-r${r}`;
+      const run = `${BATCH}\\${name}`;
+      fs.mkdirSync(run, { recursive: true });
+      plog(`RUN_START ${name}`);
+      if (client.startsWith('cc')) {
+        fs.mkdirSync(`${run}\\cfg`, { recursive: true });
+        fs.writeFileSync(`${run}\\cfg\\.claude.json`, seed());
+        fs.writeFileSync(`${run}\\mcp.json`, JSON.stringify({ mcpServers: { browserai: { type: 'stdio', command: NODE, args: [`${S}\\bigserver.js`], env: serverEnv(run, size) } } }));
+        fs.writeFileSync(POLICY, JSON.stringify({ logDir: run, tag: 'model', prefix: 'mcp__browserai__', realTool: 'mcp__browserai__browserai_list', realPerTurn: 1, directory: 'C:/q371-probe' }));
+        const env = cleanEnv({
+          CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${S}\\cfg\\codex-unused`,
+          ANTHROPIC_BASE_URL: `http://127.0.0.1:${CC_PORT}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+        });
+        const common = ['--mcp-config', `${run}\\mcp.json`, '--strict-mcp-config', '--tools', '', '--allowedTools', 'mcp__browserai__browserai_list', '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet'];
+        if (client === 'ccP') {
+          await spawnLogged(CLAUDE, ['-p', '--output-format', 'stream-json', '--verbose', ...common, 'Use the browserai tools.'], env, run, 'claude', 240000);
+        } else {
+          Object.assign(env, { CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.288', MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1' });
+          const user = JSON.stringify({ type: 'user', session_id: '', message: { role: 'user', content: [{ type: 'text', text: 'Use the browserai tools.' }] }, parent_tool_use_id: null });
+          const init = JSON.stringify({ type: 'control_request', request_id: 'req_1', request: { subtype: 'initialize' } });
+          await spawnLogged(CLAUDE, ['--output-format', 'stream-json', '--verbose', '--input-format', 'stream-json', ...common], env, run, 'claude', 240000,
+            [{ send: init, waitFor: '"type":"control_response"', timeoutMs: 60000 }, { send: user, waitFor: '"type":"result"', timeoutMs: 180000 }]);
+        }
+        results.push(Object.assign({ name, client, isError: IS_ERROR === '1', size }, lastToolResult(run, 'cc')));
+      } else {
+        fs.mkdirSync(`${run}\\home`, { recursive: true });
+        fs.writeFileSync(`${run}\\home\\config.toml`, codexToml(run, size));
+        fs.writeFileSync(POLICY, JSON.stringify({ logDir: run, tag: 'model', server: 'browserai', realTool: 'browserai_list', directory: 'C:/q371-probe' }));
+        const env = cleanEnv({ CODEX_HOME: `${run}\\home`, CLAUDE_CONFIG_DIR: `${S}\\cfg\\claude-unused`, STUB_KEY: 'not-a-real-key' });
+        await spawnLogged(CODEX[client], ['exec', '--json', '--skip-git-repo-check', '--dangerously-bypass-approvals-and-sandbox', '-C', PROJ, 'Use the browserai tools.'], env, run, 'codex', 240000);
+        results.push(Object.assign({ name, client, isError: IS_ERROR === '1', size }, lastToolResult(run, 'cx')));
+      }
+      const served = fs.existsSync(`${run}\\big.log`) ? (fs.readFileSync(`${run}\\big.log`, 'utf8').match(/served=(\d+)/) || [])[1] : null;
+      results[results.length - 1].served = served ? Number(served) : null;
+      plog(`RUN_END ${name} ${JSON.stringify({ served: results[results.length - 1].served, length: results[results.length - 1].length })}`);
+      fs.writeFileSync(`${BATCH}\\results.json`, JSON.stringify(results, null, 1));
+      await sleep(1000);
+    }
+  } finally {
+    cc.kill();
+    cx.kill();
+    plog('BATCH_DONE');
+  }
+})();

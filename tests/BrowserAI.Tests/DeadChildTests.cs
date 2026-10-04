@@ -128,6 +128,11 @@ internal sealed class DeadChildTests
     /// nothing to apply, and it says that in words of its own; see
     /// <c>SessionCloseTests</c> for a resume that does apply something.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And the words are the maintainer's since 2026-10-04</b> (previously
+    /// <c>SessionManager.NothingNeededApplying</c>): <i>"the session is already
+    /// live"</i>, from his rule of 2026-10-03 for a resume on an active session.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -150,7 +155,7 @@ internal sealed class DeadChildTests
             ["why"] = "the suite exercising a resume against a session that is fine",
         }));
 
-        await Assert.That(resumed).Contains(SessionManager.NothingNeededApplying);
+        await Assert.That(resumed).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
         await Assert.That(resumed).DoesNotContain(SessionManager.ChildWasRelaunched);
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
     }

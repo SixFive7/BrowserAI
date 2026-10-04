@@ -1,0 +1,242 @@
+// Lane q371 scratch driver. Drives a published BrowserAI.Server.exe over stdio,
+// headless Chromium, against a page this script serves on 127.0.0.1 only. No real
+// site, no real credential, no window.
+//
+// node drive.cjs <exe> <scratchRoot> <before|after> <reportPath>
+'use strict';
+
+const { spawn } = require('child_process');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+
+const [exe, root, phase, reportPath] = process.argv.slice(2);
+const after = phase === 'after';
+
+const PASSWORD = 'q371-typed-password-SAMPLE';
+const USER = 'q371-sample-user';
+const COOKIE = 'Q371-SAMPLE-COOKIE-VALUE';
+
+fs.mkdirSync(root, { recursive: true });
+
+const report = { phase, exe, root, startedUtc: new Date().toISOString(), steps: [] };
+
+const page = '<!doctype html><title>q371 sample form</title><h1>Sign in (local test page)</h1>'
+  + '<form onsubmit="return false"><label>User <input id="user" name="user"></label> '
+  + '<label>Password <input id="pw" name="pw" type="password"></label></form>';
+
+const server = http.createServer((req, res) => {
+  report.served = (report.served ?? 0) + 1;
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Set-Cookie': `q371session=${COOKIE}; Path=/; HttpOnly; Max-Age=3600`,
+  });
+  res.end(page);
+});
+
+let child;
+let buffer = '';
+const pending = new Map();
+let stderr = '';
+let nextId = 1;
+
+function request(method, params, timeoutMs = 180000) {
+  const id = nextId++;
+  const frame = JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n';
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`timeout on ${method}`)); }, timeoutMs);
+    pending.set(id, (message) => { clearTimeout(timer); resolve(message); });
+    child.stdin.write(frame);
+  });
+}
+function notify(method, params) {
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+}
+function textOf(message) {
+  const content = message?.result?.content ?? [];
+  return content.filter((block) => block.type === 'text').map((block) => block.text).join('\n');
+}
+async function call(label, name, args) {
+  const started = Date.now();
+  const message = await request('tools/call', { name, arguments: args });
+  const step = {
+    label,
+    name,
+    arguments: args,
+    isError: message?.result?.isError === true,
+    error: message.error ?? null,
+    text: textOf(message),
+    ms: Date.now() - started,
+  };
+  report.steps.push(step);
+  return step;
+}
+
+function walk(dir, base, into) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walk(full, base, into);
+    else into.push({ path: path.relative(base, full), bytes: fs.statSync(full).size });
+  }
+  return into;
+}
+
+(async () => {
+  try {
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${server.address().port}/`;
+    report.url = url;
+
+    child = spawn(exe, [], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    report.serverPid = child.pid;
+    child.stdout.on('data', (chunk) => {
+      buffer += chunk.toString('utf8');
+      let at;
+      while ((at = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, at).trim();
+        buffer = buffer.slice(at + 1);
+        if (!line) continue;
+        let message;
+        try { message = JSON.parse(line); } catch { report.steps.push({ unparsed: line }); continue; }
+        if (message.id !== undefined && pending.has(message.id)) {
+          pending.get(message.id)(message);
+          pending.delete(message.id);
+        }
+      }
+    });
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString('utf8'); });
+
+    const init = await request('initialize', {
+      protocolVersion: '2025-06-18',
+      capabilities: {},
+      clientInfo: { name: 'q371-driver', version: '0' },
+    });
+    report.serverInfo = init.result?.serverInfo;
+    report.instructions = init.result?.instructions;
+    report.instructionsLength = init.result?.instructions?.length;
+    notify('notifications/initialized', {});
+
+    const list = await request('tools/list', {});
+    const tools = list.result?.tools ?? [];
+    report.toolsListFull = tools;
+    report.toolsListChars = JSON.stringify(tools).length;
+    report.toolCount = tools.length;
+    report.schemas = {};
+    for (const tool of tools) {
+      if (['browserai_init', 'browserai_resume', 'browserai_list', 'browserai_catch_up', 'browser_navigate', 'browser_type', 'browser_snapshot'].includes(tool.name)) {
+        report.schemas[tool.name] = {
+          properties: Object.keys(tool.inputSchema?.properties ?? {}),
+          required: tool.inputSchema?.required ?? [],
+          additionalProperties: tool.inputSchema?.additionalProperties ?? '<absent>',
+          transcriptDescription: tool.inputSchema?.properties?.transcript?.description,
+          tracingDescription: tool.inputSchema?.properties?.tracing?.description,
+        };
+      }
+    }
+
+    const directory = path.join(root, after ? 'q371-transcript' : 'q371-before');
+    const why = 'lane q371 measuring argument handling and what a session writes';
+
+    // 1. An authored tool with an argument its schema does not have.
+    await call('authoredUnknown', 'browserai_list', { directory: root, bogusArgument: 'q371' });
+
+    // 2. The session. The old build takes 'tracing'; the new one is asked with the
+    //    old name first, which it must refuse, and then with 'transcript'.
+    if (after) {
+      await call('initWithOldName', 'browserai_init', { directory: path.join(root, 'q371-old-name'), purpose: 'lane q371: a call still passing the old argument name', tracing: true });
+    }
+    const initArgs = { directory, purpose: 'lane q371: a transcript sample against a local test page' };
+    initArgs[after ? 'transcript' : 'tracing'] = true;
+    await call('init', 'browserai_init', initArgs);
+
+    // 3. A forwarded tool with an argument its schema does not have.
+    const unknownForwarded = await call('forwardedUnknown', 'browser_navigate', { session: directory, why, url, bogusArgument: 'q371' });
+    if (unknownForwarded.isError) {
+      await call('navigate', 'browser_navigate', { session: directory, why, url });
+    }
+
+    const first = await call('snapshot1', 'browser_snapshot', { session: directory, why });
+    const refs = [...first.text.matchAll(/textbox "([^"]*)" \[ref=([^\]]+)\]/g)].map((m) => ({ label: m[1], ref: m[2] }));
+    report.textboxes = refs;
+    let user = refs.find((r) => /user/i.test(r.label));
+    let password = refs.find((r) => /password/i.test(r.label));
+
+    await call('startTracing', 'browser_start_tracing', { session: directory, why });
+    // A navigation while the trace records, so its network log carries a request
+    // that sends the cookie the first load set.
+    await call('navigateWhileTracing', 'browser_navigate', { session: directory, why, url });
+    if (after) {
+      const again = await call('snapshotWhileTracing', 'browser_snapshot', { session: directory, why });
+      const fresh = [...again.text.matchAll(/textbox "([^"]*)" \[ref=([^\]]+)\]/g)].map((m) => ({ label: m[1], ref: m[2] }));
+      if (fresh.length) { refs.length = 0; refs.push(...fresh); }
+    }
+    user = refs.find((r) => /user/i.test(r.label));
+    password = refs.find((r) => /password/i.test(r.label));
+    if (user) {
+      await call('typeUser', 'browser_type', { session: directory, why, element: 'User field', target: user.ref, text: USER });
+    }
+    if (password) {
+      await call('typePassword', 'browser_type', { session: directory, why, element: 'Password field', target: password.ref, text: PASSWORD });
+    }
+    await call('snapshot2', 'browser_snapshot', { session: directory, why });
+    // A call that fails inside upstream, to see whether a failure reaches session.md.
+    await call('clickMissingRef', 'browser_click', { session: directory, why, element: 'a ref that is not on the page', target: 'e9999' });
+    await call('screenshot', 'browser_take_screenshot', { session: directory, why, type: 'png' });
+    await call('stopTracing', 'browser_stop_tracing', { session: directory, why });
+    await call('storageState', 'browser_storage_state', { session: directory, why, filename: 'login-state.json' });
+    await call('catchUp', 'browserai_catch_up', after ? { session: directory, why: 'lane q371: what does this session hold now' } : { session: directory });
+    if (after) {
+      await call('oldPurposeTool', 'browserai_set_purpose', { session: directory, purpose: 'a purpose', why });
+      await call('deniedTool', 'browser_verify_value', { session: directory, why, type: 'textbox', element: 'User field', target: 'f2e5', value: 'x' });
+      await call('inventedTool', 'browser_frobnicate', { session: directory, why });
+      const shot = (report.toolsListFull || []).find((t) => t.name === 'browser_take_screenshot');
+      report.screenshotDescription = shot ? shot.description : null;
+    }
+
+    // 4. What the run wrote, and which files carry the typed password or the cookie value.
+    report.outputListing = fs.existsSync(path.join(directory, 'output')) ? walk(path.join(directory, 'output'), directory, []) : [];
+    report.secretsByFile = [];
+    for (const file of report.outputListing) {
+      const bytes = fs.readFileSync(path.join(directory, file.path));
+      const text = bytes.toString('latin1');
+      report.secretsByFile.push({
+        path: file.path,
+        bytes: file.bytes,
+        password: text.includes(PASSWORD),
+        user: text.includes(USER),
+        cookie: text.includes(COOKIE),
+      });
+    }
+
+    const sampleDir = path.join(path.dirname(reportPath), `sample-${phase}`);
+    fs.mkdirSync(sampleDir, { recursive: true });
+    for (const file of report.outputListing.filter((f) => f.path.endsWith('session.md'))) {
+      const target = path.join(sampleDir, 'session.md');
+      fs.copyFileSync(path.join(directory, file.path), target);
+      report.copiedTranscript = { from: file.path, to: target };
+    }
+
+    await call('destroy', 'browserai_destroy', { directory, why: 'lane q371: the sample is copied out, and the session held a typed password and a cookie' });
+    if (fs.existsSync(path.join(root, 'q371-old-name', 'browserai.lock'))) {
+      await call('destroyOldName', 'browserai_destroy', { directory: path.join(root, 'q371-old-name'), why: 'lane q371: cleaning up a session the old name created' });
+    }
+  } catch (failure) {
+    report.failure = String(failure && failure.stack || failure);
+  } finally {
+    if (child) {
+      child.stdin.end();
+      const exited = await new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(false), 30000);
+        child.once('exit', (code) => { clearTimeout(timer); report.exitCode = code; resolve(true); });
+      });
+      if (!exited) {
+        report.killedAfterTimeout = true;
+        child.kill();
+      }
+    }
+    server.close();
+    report.stderr = stderr;
+    report.endedUtc = new Date().toISOString();
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  }
+})();

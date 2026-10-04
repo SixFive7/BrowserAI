@@ -1353,10 +1353,14 @@ internal sealed class LiveSession : IAsyncDisposable
 /// run said.
 /// </remarks>
 /// <param name="Headed">Whether the browser has a window.</param>
-/// <param name="Tracing">Whether upstream records the run, as <c>saveSession</c>.</param>
+/// <param name="Transcript">
+/// Whether upstream writes <c>session.md</c>, its <c>saveSession</c>. ⚠️
+/// <i>Renamed 2026-10-04 (previously <c>Tracing</c>, "Whether upstream records
+/// the run")</i>, with the argument it carries, Q371 c.
+/// </param>
 /// <param name="Debug">Whether this session's own log is at debug level.</param>
 /// <param name="Run">Everything else a caller can set per run.</param>
-internal sealed record SessionRunSettings(bool Headed, bool Tracing, bool Debug, RunOptions Run);
+internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run);
 
 /// <summary>Whether a connection may drive a session the host holds.</summary>
 internal enum SessionClaim

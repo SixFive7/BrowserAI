@@ -1,0 +1,23 @@
+=== ORDINARY RUN c3-ps starting 01:39:01 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=68256 created=134355443410786538).
+installer lock held: pid=68256 created=134355443410786538
+vpk pack of BrowserAI.app.test took 9.9 s.
+vpk pack of the twin took 9 s.
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\c\.work\clearance\c3-ps-before.txt
+scratch released after 2s
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\c\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+C:\Source\SixFive7\BrowserAI\.work\wt\c\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (4m 36s 382ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\c\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 959
+  failed: 0
+  succeeded: 959
+  skipped: 0
+  duration: 4m 37s 018ms
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\c\.work\clearance\c3-ps-after.txt
+=== ORDINARY RUN c3-ps done 01:44:36, clearance clean ===
+Let go of C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=68256 created=134355443410786538).
+ORDINARY-PS-DONE

@@ -1663,6 +1663,12 @@ BrowserAI's own string and therefore the only channel available: upstream
 descriptions pass through byte for byte, and [the rewrite path that could have
 appended to `browser_route`'s description was deleted on
 2026-08-18](DECISIONS.md#licence-release-policy-and-the-tool-surface).
+⚠️ *Corrected 2026-10-04 by addition:* the warning is appended to
+`browser_route`'s description now, and to `browser_network_state_set`'s, as a
+BrowserAI note declared beside the tool's verdict, since the maintainer had the
+instructions rewritten down to the rules that span tools
+([the row](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it)).
+Upstream's own text still arrives unchanged in front of it.
 
 **How to reverse it.** One list, in one file: remove a capability from
 `BrowserConfiguration.GrantedCapabilities`. Three tests fail and each names what

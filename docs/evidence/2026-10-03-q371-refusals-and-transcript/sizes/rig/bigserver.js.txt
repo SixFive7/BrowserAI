@@ -1,0 +1,64 @@
+// Lane q371: a stub MCP server (stdio, newline-delimited JSON-RPC) whose one tool answers with a
+// text of a chosen size, built from a realistic tools-array JSON, with a marker at each end so a
+// truncation anywhere is visible. Never BrowserAI.
+//   BIG_CHARS     the answer's length in UTF-16 characters
+//   BIG_TEMPLATE  the JSON text repeated to make it
+//   BIG_IS_ERROR  "1" (default) answers isError true, as a refusal does
+//   BIG_LOG       where to append what was served
+'use strict';
+const fs = require('fs');
+
+const SIZE = Number(process.env.BIG_CHARS || 100000);
+const IS_ERROR = process.env.BIG_IS_ERROR !== '0';
+const TEMPLATE = fs.readFileSync(process.env.BIG_TEMPLATE, 'utf8');
+const LOG = process.env.BIG_LOG || 'big.log';
+
+const head = `BIG-START-${SIZE} The tools this BrowserAI serves, as tools/list answers them:\n`;
+const tail = `\nBIG-END-${SIZE}`;
+let body = '';
+while (body.length < SIZE - head.length - tail.length) body += TEMPLATE;
+body = body.slice(0, SIZE - head.length - tail.length);
+const PAYLOAD = head + body + tail;
+
+const log = (s) => fs.appendFileSync(LOG, `${new Date().toISOString()} pid=${process.pid} ${s}\n`);
+log(`START size=${PAYLOAD.length} isError=${IS_ERROR}`);
+
+let buffer = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => {
+  buffer += chunk;
+  let at;
+  while ((at = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, at).trim();
+    buffer = buffer.slice(at + 1);
+    if (!line) continue;
+    let message;
+    try { message = JSON.parse(line); } catch { log(`UNPARSED ${line.slice(0, 200)}`); continue; }
+    handle(message);
+  }
+});
+process.stdin.on('end', () => { log('STDIN END'); process.exit(0); });
+
+function send(message) { process.stdout.write(JSON.stringify(message) + '\n'); }
+
+function handle(m) {
+  if (m.id === undefined) { log(`NOTE ${m.method}`); return; }
+  log(`REQ ${m.method}`);
+  switch (m.method) {
+    case 'initialize':
+      send({ jsonrpc: '2.0', id: m.id, result: { protocolVersion: m.params?.protocolVersion || '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'browserai', version: '0.0.0-q371' } } });
+      return;
+    case 'tools/list':
+      send({ jsonrpc: '2.0', id: m.id, result: { tools: [{ name: 'browserai_list', description: 'List sessions under a directory.', inputSchema: { type: 'object', properties: { directory: { type: 'string', description: 'Absolute path.' } }, required: ['directory'], additionalProperties: false } }] } });
+      return;
+    case 'tools/call':
+      log(`CALL ${m.params?.name} served=${PAYLOAD.length}`);
+      send({ jsonrpc: '2.0', id: m.id, result: { content: [{ type: 'text', text: PAYLOAD }], isError: IS_ERROR } });
+      return;
+    case 'ping':
+      send({ jsonrpc: '2.0', id: m.id, result: {} });
+      return;
+    default:
+      send({ jsonrpc: '2.0', id: m.id, error: { code: -32601, message: `no ${m.method}` } });
+  }
+}

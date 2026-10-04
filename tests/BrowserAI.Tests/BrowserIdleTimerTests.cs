@@ -454,7 +454,7 @@ internal sealed partial class BrowserIdleTimerTests
         var text = TextOf(await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = SessionToolSurface.CatchUp,
-            ["arguments"] = new JsonObject { ["session"] = session },
+            ["arguments"] = new JsonObject { ["session"] = session, ["why"] = "the suite reading back what the idle close wrote" },
         }));
 
         await Assert.That(text).Contains(LiveSession.BrowserCloseTool);

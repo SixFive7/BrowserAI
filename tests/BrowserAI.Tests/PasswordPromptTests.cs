@@ -211,7 +211,7 @@ internal sealed class PasswordPromptTests
         string browser = ProvisionedBrowsers.Chromium)
     {
         var session = NewSession(scratch, label, browser, guards);
-        var config = BrowserConfiguration.ForSession(session, headed: false, browser, tracing: false, RunOptions.Default);
+        var config = BrowserConfiguration.ForSession(session, headed: false, browser, transcript: false, RunOptions.Default);
         var configFile = Path.Combine(scratch.Path, $"playwright-mcp-{label}.json");
 
         if (!withArguments)

@@ -152,13 +152,25 @@ internal sealed class SessionPolicyTests
     /// <see cref="Withholds"/> went 1 → 2 beside it.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-10-04 to 65 of 72 (previously 70 of 72)</b>, the
+    /// second move a decision made: the maintainer's Q365.2 a dropped the five
+    /// test-writing helpers, so the numerator lost five and
+    /// <see cref="Withholds"/> went 2 → 7 beside it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-04 a second time, to 64 of 72 (previously 65 of
+    /// 72)</b>: the maintainer's Q365.1 a denied <c>browser_set_storage_state</c>,
+    /// which wipes the profile's cookies and site storage before it loads a saved
+    /// file, so the numerator lost one and <see cref="Withholds"/> went 7 → 8.
+    /// </para>
+    /// <para>
     /// <b>Written down and not derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
     /// construction and could never fail. This one still can -- a refusal
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 70;
+    private const int Advertises = 64;
 
     /// <summary>
     /// How many tools this build withholds, written down beside
@@ -185,7 +197,15 @@ internal sealed class SessionPolicyTests
     /// about the size of the surface, and reading either half out of the file
     /// the claim is about would make it agree with itself.
     /// </remarks>
-    private const int Withholds = 2;
+    // ⚠️ Seven since 2026-10-04 (previously two): Q365.2 a, the maintainer's
+    // words of 2026-10-03 verbatim, "Drop browser_verify_element_visible,
+    // browser_verify_text_visiblem, browser_verify_list_visible,
+    // browser_verify_value and browser_generate_locator per your recommendation."
+    // ⚠️ Eight since 2026-10-04 a second time (previously seven): Q365.1 a, the
+    // maintainer's words verbatim, "Q365.1 a" -- browser_set_storage_state is
+    // denied, because it replaces the profile's logins with whatever an older
+    // saved file holds.
+    private const int Withholds = 8;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.
@@ -327,109 +347,156 @@ internal sealed class SessionPolicyTests
         // same name again, and a model that believes it retries until something
         // else stops it. Asserted as LITERALS and not against
         // SessionErrors.ToolHasNoVerdict(), because comparing a sentence to the
-        // method that produces it cannot tell true from false; these two say the
-        // caller is told not to retry, and that the disproved clause is gone.
-        await Assert.That(TextOf(answer)).Contains("retrying it will fail");
+        // method that produces it cannot tell true from false; these say the
+        // caller is told the fault is the build's and that a retry fails the
+        // same way, and that the disproved clause is gone.
+        //
+        // ⚠️ Shortened 2026-10-04 (previously asserted "retrying it will fail"),
+        // when a name BrowserAI does not have at all got a refusal of its own
+        // and this one was left to the one case it is true of: a name the list
+        // carries and the verdicts file does not.
+        await Assert.That(TextOf(answer)).Contains("defect in this build");
+        await Assert.That(TextOf(answer)).Contains("refused the same way every time");
         await Assert.That(TextOf(answer)).DoesNotContain("every tool in that list reaches the browser");
     }
 
     /// <summary>
-    /// An unjudged <c>browserai_</c> name reaches the verdict door and is
-    /// recorded there, like every other unjudged name.
+    /// A name BrowserAI does not have -- in its own namespace or anybody's -- is
+    /// told so plainly, with a session or without one, and recorded on the
+    /// session it named.
     /// </summary>
     /// <remarks>
     /// <para>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words: <i>"Calls to a tool
+    /// BrowserAI doesn't have: a) Yes, in the same lane."</i></b> Until then such a
+    /// call met the verdict door's sentence for a tool with no verdict, which called
+    /// it a gap a human had to adjudicate and told the caller to stop: wrong advice
+    /// for a list from another server or a name a model made up. And with no
+    /// session it met <i>"this needs a session"</i> for an upstream-looking name,
+    /// which sends a caller to supply one for a tool that is not there.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>The short-circuit in front of the door was a PREFIX test until
-    /// 2026-08-26</b>, so <c>browserai_zzz</c> never reached the verdict at all:
-    /// it landed on <c>SessionManager.InvokeAsync</c>'s default arm, was refused
-    /// with a good sentence, and <b>wrote no log row</b> -- because no session had
-    /// been resolved at that point. An unjudged <i>upstream</i> name was recorded
-    /// on the session it named. Same class of caller mistake, two different
-    /// records, and the difference was invisible.
-    /// </para>
-    /// <para>
-    /// <b>It is an exact match against <c>SessionToolSurface.Names</c> now</b>,
-    /// which also makes the <c>answer</c> rows of <c>tool-verdicts.json</c>
-    /// load-bearing at run time and not build-time only: a name in the
-    /// authored namespace that nobody judged is deny-by-defaulted like anything
-    /// else.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The residual is stated and not closed.</b> A call naming
-    /// <c>browserai_zzz</c> with <b>no</b> resolvable session still writes
-    /// nothing, and cannot: there is no session directory to write it into.
-    /// That half is asserted below too, so the boundary is a recorded property
-    /// and not a gap somebody rediscovers.
+    /// 2026-08-26</b>, so <c>browserai_zzz</c> wrote no log row while an unjudged
+    /// <i>upstream</i> name was recorded on the session it named. Both are
+    /// recorded now, by the same refusal; with no resolvable session there is
+    /// still nowhere to write one, and that half is asserted too.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnUnjudgedAuthoredNameIsRefusedAtTheVerdictDoorAndRecordedOnItsSession()
+    public async Task ANameBrowserAiDoesNotHaveIsToldSoPlainlyWithOrWithoutASession()
     {
-        const string NeverAuthored = "browserai_zzz";
-
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var directory = Path.Combine(sessions.Root, "unjudged-authored-name");
+        var directory = Path.Combine(sessions.Root, "a-name-that-does-not-exist");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["purpose"] = "meets a browserai_ name nobody judged",
+            ["purpose"] = "meets names this BrowserAI does not have",
         });
 
-        var answer = await CallAsync(rig, NeverAuthored, new JsonObject
+        foreach (var invented in new[] { "browserai_zzz", "browser_frobnicate" })
         {
-            ["session"] = directory,
-            ["why"] = "the suite exercising this call",
-        });
+            var answer = await CallAsync(rig, invented, new JsonObject
+            {
+                ["session"] = directory,
+                ["why"] = "the suite exercising this call",
+            });
 
-        // The verdict door's own sentence, and not the session manager's "that
-        // is not a BrowserAI session tool" -- which is how this is distinguished
-        // from the arm it replaces.
-        await Assert.That((bool?)answer["isError"]).IsTrue();
-        await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+            await Assert.That((bool?)answer["isError"]).IsTrue();
+            await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
 
-        // And the row, which is the half that did not exist. The caller's own
-        // string is kept verbatim, because "what did it try to call" is exactly
-        // what a reader of the record wants.
-        var recorded = RecordedSession.LogOf(directory)
-            .Where(row => row.Tool == NeverAuthored)
-            .ToList();
+            // The maintainer's own wording, Q371.6 c, as literals: the name, that
+            // nothing ran, the tool list as the place to look, and why a tool the
+            // caller expected may be missing from it.
+            await Assert.That(TextOf(answer)).StartsWith($"BrowserAI has no tool '{invented}', so nothing ran. Use the tools in your tool list.");
+            await Assert.That(TextOf(answer)).Contains("reconnects BrowserAI or starts a new conversation");
 
-        await Assert.That(recorded.Count).IsEqualTo(1);
-        await Assert.That(recorded[0].Outcome).IsEqualTo(SessionStore.Failed);
-        await Assert.That(recorded[0].Failure!).IsEqualTo(SessionErrors.ToolHasNoVerdict());
-        await Assert.That(recorded[0].Why).IsEqualTo("the suite exercising this call");
+            // No history and no guess: no other name is suggested.
+            await Assert.That(TextOf(answer)).DoesNotContain("did you mean");
+            await Assert.That(TextOf(answer)).DoesNotContain("renamed");
 
-        // ⚠️ THE POSITIVE CONTROL. The seven real authored tools still
-        // short-circuit ahead of the door -- an exact match and not no match
-        // at all -- so this is a narrowing and not a deletion.
+            // Nothing reached a child, and the record keeps the caller's own
+            // string, because "what did it try to call" is what a reader wants.
+            await Assert.That(sessions.SessionChildren.Any(child =>
+                child.ToolCallsReceived.Contains(invented, StringComparer.Ordinal))).IsFalse();
+
+            var recorded = RecordedSession.LogOf(directory).Where(row => row.Tool == invented).ToList();
+
+            await Assert.That(recorded.Count).IsEqualTo(1);
+            await Assert.That(recorded[0].Outcome).IsEqualTo(SessionStore.Failed);
+            await Assert.That(recorded[0].Failure!).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
+            await Assert.That(recorded[0].Why).IsEqualTo("the suite exercising this call");
+
+            // ⚠️ With no session: the same answer, and not "this needs a
+            // session", which would send a caller to supply one for a tool that
+            // is not there. Nothing is recorded, because there is nowhere to.
+            var noSession = await CallAsync(rig, invented, new JsonObject { ["why"] = "the suite exercising this call" });
+
+            await Assert.That((bool?)noSession["isError"]).IsTrue();
+            await Assert.That(TextOf(noSession)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
+            await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == invented)).IsEqualTo(1);
+        }
+
+        // ⚠️ THE POSITIVE CONTROLS. A real authored tool still answers, and an
+        // ordinary browser tool with no session still gets the session-missing
+        // sentence, so the plain answer is narrow and not a replacement.
         var listed = await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root });
 
         await Assert.That((bool?)listed["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(listed)).Contains(directory);
 
-        // ⚠️ THE RESIDUAL, asserted, not described: with no session there
-        // is nowhere to write a row and the verdict door cannot be reached, so
-        // the answer is the one that names the seven tools that DO exist. It is
-        // deliberately not "this needs a session" -- that would send a caller to
-        // supply one for a tool that is not there, which is a second wasted turn
-        // and not a recovery, and it is what this door answered for one run
-        // while the exact-match change was being made.
-        var noSession = await CallAsync(rig, NeverAuthored, new JsonObject { ["why"] = "the suite exercising this call" });
-
-        await Assert.That((bool?)noSession["isError"]).IsTrue();
-        await Assert.That(TextOf(noSession)).IsEqualTo(SessionToolSurface.NotOneOfOurs(NeverAuthored));
-        await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == NeverAuthored)).IsEqualTo(1);
-
-        // And an ordinary browser tool with no session still gets the
-        // session-missing sentence, so the branch above is narrow and not a
-        // replacement.
         var browserToolNoSession = await CallAsync(rig, "browser_navigate", new JsonObject { ["why"] = "the suite exercising this call" });
 
         await Assert.That(TextOf(browserToolNoSession)).IsEqualTo(SessionErrors.SessionMissing("browser_navigate"));
+    }
+
+    /// <summary>
+    /// The purpose tool is <c>browserai_change_purpose</c>, and the name it had
+    /// before is a tool this BrowserAI does not have.
+    /// </summary>
+    /// <remarks>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words: <i>"rename
+    /// browserai_set_purpose to browserai_change_purpose"</i></b>, with no alias
+    /// and no mention of the old name in any model-facing text: a call to it is
+    /// answered as any unknown tool is.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePurposeToolIsChangePurposeAndTheOldNameIsAToolBrowserAiDoesNotHave()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+        var names = (advertised["tools"]?.AsArray() ?? []).Select(tool => (string?)tool?["name"] ?? string.Empty).ToList();
+
+        await Assert.That(names).Contains("browserai_change_purpose");
+        await Assert.That(names).DoesNotContain("browserai_set_purpose");
+        await Assert.That(advertised.ToJsonString()).DoesNotContain("set_purpose");
+
+        var old = await CallAsync(rig, "browserai_set_purpose", new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["purpose"] = "a purpose the old name must not record",
+            ["why"] = "the suite calling the tool by its old name",
+        });
+
+        await Assert.That((bool?)old["isError"]).IsTrue();
+        await Assert.That(TextOf(old)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_set_purpose"));
+
+        var changed = await CallAsync(rig, "browserai_change_purpose", new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["purpose"] = "the purpose the new name records",
+            ["why"] = "the suite calling the tool by its name",
+        });
+
+        await Assert.That((bool?)changed["isError"]).IsNotEqualTo(true);
+        await Assert.That(SessionLock.ReadRecord(SessionPath.For(rig.Session!))!.Purpose).IsEqualTo("the purpose the new name records");
     }
 
     [Test]
@@ -494,14 +561,14 @@ internal sealed class SessionPolicyTests
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
 
-            // ⚠️ The sentence has to say LIVENESS, and it has to say the tool is
-            // not in the list. A model told "not permitted" goes looking for a
-            // permission to acquire; a model told the tool broke retries; a
-            // model told the call cannot return acts on it in one turn.
-            await Assert.That(text).Contains("NOT in this server's tools/list");
-            await Assert.That(text).Contains("liveness rather than security");
-            await Assert.That(text).Contains("no self-timeout");
-            await Assert.That(text).Contains("browser_take_screenshot");
+            // ⚠️ SINCE 2026-10-04 A DENIED TOOL IS ANSWERED LIKE ANY TOOL THIS
+            // BROWSERAI DOES NOT HAVE, under the maintainer's directive of
+            // 2026-10-03 that a tool BrowserAI does not offer should look to the
+            // model like any other it does not have. Previously the answer was
+            // the deny row's own `why` behind "is deliberately NOT in this server's
+            // tools/list", and this arm asserted it said liveness. The `why` stays
+            // in tool-verdicts.json as the human record.
+            await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name));
 
             // Nothing reached the child: a refusal that forwarded first and hid
             // the answer would still have hung.
@@ -535,7 +602,7 @@ internal sealed class SessionPolicyTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheDebuggerResumeToolIsAbsentFromTheSurfaceAndRefusedOnLiveness()
+    public async Task TheDebuggerResumeToolIsAbsentFromTheSurfaceAndAnsweredAsAToolBrowserAiDoesNotHave()
     {
         const string DebuggerResume = "browser_resume";
 
@@ -588,10 +655,10 @@ internal sealed class SessionPolicyTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
-        // The frame says it is not in the list, and the row's reason says why:
-        // the call waits for a pause or a close that nothing in a session sends.
-        await Assert.That(text).Contains("NOT in this server's tools/list");
-        await Assert.That(text).Contains("The reason is liveness");
+        // ⚠️ Answered like any tool this BrowserAI does not have, since
+        // 2026-10-04 (previously "NOT in this server's tools/list" and the row's
+        // own reason, "The reason is liveness"). The reason stays in the file.
+        await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(DebuggerResume));
 
         // Nothing reached the child.
         await Assert.That(sessions.SessionChildren.Sum(child =>
@@ -718,10 +785,13 @@ internal sealed class SessionPolicyTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
-        // The file's own `why` is the refusal, behind BrowserAI's own first
-        // sentence. Equality and not Contains: a frame that swallowed the
-        // reason would still contain the frame.
-        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolIsDenied(Denied, Why));
+        // ⚠️ Since 2026-10-04 the answer is the one any tool this BrowserAI does
+        // not have gets, and the file's `why` is no part of it: the row is read
+        // from the file, which is what this arm proves, and the reason stays in
+        // the file as the human record. Previously the file's own `why` was the
+        // refusal, behind BrowserAI's own first sentence.
+        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolDoesNotExist(Denied));
+        await Assert.That(TextOf(refused)).DoesNotContain(Why);
 
         // Nothing reached the child.
         await Assert.That(sessions.SessionChildren.Sum(child =>
@@ -760,6 +830,13 @@ internal sealed class SessionPolicyTests
     /// typo. Neither reaches the child, and neither is a browser upstream would
     /// have launched before telling us the tool does not exist.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And since 2026-10-04 the two are answered differently</b>, by the
+    /// maintainer's decision of 2026-10-03: <i>"Calls to a tool BrowserAI doesn't
+    /// have: a) Yes, in the same lane."</i> The first is a defect in the build and
+    /// keeps a short refusal saying so; the second is told plainly that the tool
+    /// does not exist in this BrowserAI.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -790,7 +867,15 @@ internal sealed class SessionPolicyTests
         // asserted and not left to the remark above.
         await Assert.That(names).Contains(Unjudged);
 
-        foreach (var tool in new[] { Unjudged, Nowhere })
+        // ⚠️ TWO DIFFERENT ANSWERS SINCE 2026-10-04, because they are two
+        // different faults. A name the list carries and the verdicts file does
+        // not is a defect in the build; a name the list does not carry at all is
+        // a tool this BrowserAI does not have, and the caller is told so plainly.
+        foreach (var (tool, expected) in new[]
+        {
+            (Unjudged, SessionErrors.ToolHasNoVerdict()),
+            (Nowhere, SessionErrors.ToolDoesNotExist(Nowhere)),
+        })
         {
             var before = RecordedSession.LogOf(rig.Session!).Count;
             var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(received => received == tool));
@@ -802,12 +887,18 @@ internal sealed class SessionPolicyTests
             });
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
-            await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+            await Assert.That(TextOf(refused)).IsEqualTo(expected);
 
-            // ⚠️ The caller's own string is NOT in the answer. It is the one
-            // refusal whose subject is a name the caller invented, and the
-            // answer is read by a model.
-            await Assert.That(TextOf(refused)).DoesNotContain(tool);
+            // ⚠️ The listed tool's refusal quotes no name; the plain one names
+            // the tool, in the maintainer's own wording of 2026-10-03 (Q371.6 c).
+            if (tool == Unjudged)
+            {
+                await Assert.That(TextOf(refused)).DoesNotContain(tool);
+            }
+            else
+            {
+                await Assert.That(TextOf(refused)).Contains($"'{tool}'");
+            }
 
             // Nothing reached the child -- which is the whole point: upstream
             // creates the browser context before it looks the name up.
@@ -1014,15 +1105,26 @@ internal sealed class SessionPolicyTests
                         expected[directories[name]] = expected.GetValueOrDefault(directories[name]) + 1;
                     }
 
+                    // ⚠️ No `round` argument since 2026-10-04 (previously every
+                    // probe carried one): an argument a schema does not have is
+                    // refused since that day, and `browser_navigate` is in the list
+                    // this rig's run-level child advertises. It gets the one argument
+                    // its schema has instead; nothing ever read `round`.
+                    var arguments = new JsonObject
+                    {
+                        ["session"] = directories[name],
+                        ["why"] = "the suite exercising this call",
+                    };
+
+                    if (tool == "browser_navigate")
+                    {
+                        arguments["url"] = $"data:text/html,{round}";
+                    }
+
                     requests.Add(("tools/call", new JsonObject
                     {
                         ["name"] = tool,
-                        ["arguments"] = new JsonObject
-                        {
-                            ["session"] = directories[name],
-                            ["why"] = "the suite exercising this call",
-                            ["round"] = round,
-                        },
+                        ["arguments"] = arguments,
                     }));
                 }
             }

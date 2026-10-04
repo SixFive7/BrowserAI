@@ -93,7 +93,9 @@ that can be lowered at the moment of asking; `codegen` is `none`, which strips a
 `### Ran Playwright code` block from every response for a feature this product
 does not have; `snapshot.boxes` is `false`, upstream's own default, and a model
 that needs coordinates passes `boxes: true` to `browser_snapshot` on that call,
-as the server instructions tell it to -- *corrected 2026-10-03, Q322 a (previously
+as the server instructions tell it to (*since 2026-10-04 a BrowserAI note on each
+coordinate tool tells it, with the instructions rewritten down to the rules that
+span tools*) -- *corrected 2026-10-03, Q322 a (previously
 "`snapshot.boxes` is `true`, whose cost is deferred behind a link and which the
 `vision` capability's six coordinate tools are unusable without"): the cost was
 paid inline on every `browser_snapshot`, measured in the README's paragraph on
@@ -255,7 +257,12 @@ request**, and forwards what is left unchanged. Nothing is added to the answer:
 no note, no scan of the text for filenames, no path handling, no filename
 rewrite. `LosslessPassthroughTests` asserts the property as *byte-identical*,
 not as *byte-identical plus exactly one appended block*, which is what it
-asserted while artifact routing existed.
+asserted while artifact routing existed. ⚠️ *Added 2026-10-04 by addition:*
+**the door also reads the argument names**, against the tool's schema as this
+server's own `tools/list` serves it. A call carrying one the schema does not have
+is refused there and never forwarded, by the maintainer's rule of 2026-10-03, so
+what is forwarded unchanged is a call whose every name the schema lists
+(`ToolSignatures`, `UnrecognisedArgumentTests`).
 
 ⚠️ **THE ONE EXCEPTION, and it is named here so that it stays one: the
 provisioning remediation rewrite.** When a child answers a call by telling the
@@ -278,9 +285,13 @@ If upstream rewords its advice, that is a red build at the next upstream review,
 not a rewrite that quietly stopped firing.
 
 **The model is told, on a surface the client does not truncate.** The server
-`instructions` carry it: *"Browsers are managed by BrowserAI -- never install any
-yourself (no `npx playwright install`). If the browser installation is broken,
-`browserai_reinstall_browser` is the repair."*
+`instructions` carry it: *"BrowserAI manages its own browsers. If a browser is
+missing or broken, call browserai_reinstall_browser."* *Corrected 2026-10-04 with
+the maintainer's instructions rewrite b (previously "Browsers are managed by
+BrowserAI -- never install any yourself (no `npx playwright install`). If the
+browser installation is broken, `browserai_reinstall_browser` is the repair.").*
+The rewrite above is what keeps upstream's `npx` advice from reaching a model, so
+the instructions no longer name the command at all.
 
 **There is one outgoing filter, and it removes a capability the SDK adds behind
 our back.** `McpServerImpl` builds its own `ServerCapabilities` and gates
@@ -460,7 +471,8 @@ names a recovery and says that repeating the call will fail identically.
 
 **Eight authored tools, and `session` and `why` are both mandatory.**
 `browserai_init`, `browserai_resume`, `browserai_catch_up`, `browserai_list`,
-`browserai_destroy`, `browserai_set_purpose`, `browserai_reinstall_browser` and
+`browserai_destroy`, `browserai_change_purpose` (*`browserai_set_purpose` until
+2026-10-04, renamed with no alias*), `browserai_reinstall_browser` and
 [`browserai_page_tool`](#browserai_page_tool-and-how-a-page-tools-name-is-resolved)
 *(the eighth, 2026-09-21)*. **Two** parameters are
 injected into every upstream tool's raw `inputSchema`, appended in that order so
@@ -472,8 +484,9 @@ either -- from a clone because the request object is the SDK's and may still be
 read afterwards. *(`why` added 2026-08-20.)*
 
 **`why` is on calls that NAME a session and nowhere else.** Every upstream
-browser tool, plus `browserai_resume`, `browserai_destroy` and
-`browserai_set_purpose`. Not `browserai_list`, which is directory-scoped, nor
+browser tool, plus `browserai_resume`, `browserai_destroy`,
+`browserai_change_purpose` and, since 2026-10-04 by the maintainer's decision,
+`browserai_catch_up`. Not `browserai_list`, which is directory-scoped, nor
 `browserai_reinstall_browser`, which is machine-scoped: neither has a session
 record to write into. Not `browserai_init`, which asks for `purpose` instead --
 two mandatory free-text fields on one call gets one thoughtful answer and one
@@ -556,7 +569,7 @@ the ages -- appears on page 1 only.
 unmistakable.** A `purpose` is the session's standing description -- what
 `browserai_list` shows six weeks later, and what whoever resumes the directory
 reads first. A `why` is why you are doing this *right now*, it is one entry in
-the log, and nothing shows it in a listing. `browserai_set_purpose` takes both,
+the log, and nothing shows it in a listing. `browserai_change_purpose` takes both,
 which is where they collide, so its two descriptions carry the same example on
 both sides of the line: *"the original login bug turned out to be a redirect
 loop"* is a `why`; *"tracking the checkout redirect loop on staging"* is a
@@ -600,9 +613,12 @@ which is deliberate and has a visible transient -- see
 
 `init` takes a required directory and purpose with
 no default and no fallback, an optional `browser` defaulting to `chromium`, and
-the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
+the three per-run booleans `headed`, `transcript` and `debug`; `resume` takes the
 same three and reads `browser` from `browserai.data`, **refusing it as an
-argument**, because a profile is browser-specific. *(Corrected 2026-08-20,
+argument**, because a profile is browser-specific. *Corrected 2026-10-04 by
+addition: `transcript` was `tracing` until Q371 c, and `browser` on `resume` is
+refused since that day as an argument resume's schema does not have, by the
+syntax error every such argument gets, where it had a sentence of its own.* *(Corrected 2026-08-20,
 previously "a required directory, purpose and mode ... `resume` reads mode and
 browser ... and **refuses them as arguments**": session modes were deleted, and
 `browser` is now the only thing `resume` refuses.)*
@@ -755,7 +771,10 @@ what the file says, not about what the code decides. ⚠️ **`browser_annotate`
 the only `deny` this build shipped until 2026-09-15** *(previously "is still the
 only `deny` this build ships")*; `browser_webmcp_call` is the second, and the
 reasoning that was a doc comment beside a C# constant is now each row's own
-`why`, which **is** the refusal a caller reads. Implemented by `ToolVerdicts`, `SessionToolSurface.Rewrite` and
+`why`, which **is** the refusal a caller reads. *Corrected 2026-10-04 by addition:
+eight `deny` rows since that day, and a call naming a denied tool gets the answer
+a call naming a tool BrowserAI does not have gets, so the `why` is the record of
+the judgement and no caller reads it.* Implemented by `ToolVerdicts`, `SessionToolSurface.Rewrite` and
 `BrowserProxy.AnswerToolsCallAsync`; the section below is what the file buys that
 a constant could not.
 
@@ -769,12 +788,25 @@ a constant could not.
 | Getting the tracked copy into the payload | `CopyToolVerdictsIntoThePayload`, in `src/BrowserAI/BrowserAI.csproj` |
 | The door, and the advertised list | `BrowserProxy.AnswerToolsCallAsync`, `SessionToolSurface.Rewrite` |
 | That it agrees with the golden snapshot, both directions | `ToolVerdictTests` |
+| A BrowserAI note appended to an allowed tool's description, *added 2026-10-04* | `ToolVerdicts`, `SessionToolSurface.Rewrite` |
+| A name no list carries, and an argument a schema does not have, refused before anything runs, *added 2026-10-04* | `BrowserProxy.AnswerToolsCallAsync`, `src/BrowserAI/Sessions/ToolSignatures.cs`, `SessionErrors.ToolDoesNotExist`, `SessionErrors.UnrecognisedArguments` |
 
 **Three verdicts.** `allow` forwards the call to the child of the session it
 names, byte-identical. `deny` refuses it at BrowserAI's door **and** drops the
 tool from `tools/list` entirely -- dropped, not disabled, because a tool that can
 never succeed costs attention and description budget for as long as it is in the
 list -- carrying the row's own `why` as the refusal and a `since` as provenance.
+⚠️ *Corrected 2026-10-04 by addition, three ways.* **A denied tool is answered
+like a name BrowserAI does not have**, *"BrowserAI has no tool '<name>', so
+nothing ran. Use the tools in your tool list."* with one sentence about a
+client's own list going stale after an update, and its `why` stays the human
+record; this was proposed to the maintainer and is his to approve. **A name in no
+list this server serves, with no row, gets the same answer**, and only a name
+that is listed and has no row keeps the defect refusal below. **An `allow` row
+may carry a `note`**, BrowserAI's advice about that one tool, appended at run time
+after upstream's own description behind `BrowserAI note: `; upstream's text and
+schema still come from the child, and a note on a `deny` or `answer` row stops the
+server at startup naming the file.
 `answer` is one of BrowserAI's own eight. ⚠️ *Corrected 2026-09-21
 (previously "`answer` is one of BrowserAI's own seven, which never had a child to
 reach").* Seven of the eight never had one and
@@ -1005,7 +1037,7 @@ create-or-take gate, and an `AbandonedMutexException` on it is a distinct
 
 **One process's own two callers are serialised in process, and that is a
 different lock from the gate.** `SessionManager` deliberately serialises nothing
--- `_live` is a `ConcurrentDictionary` -- so a `browserai_set_purpose` and a
+-- `_live` is a `ConcurrentDictionary` -- so a `browserai_change_purpose` and a
 `browserai_destroy` naming one session reach one `SessionLock` at once.
 `Append`, `Settle`, `SettleOpening`, `AppendPurpose`, `ReleaseAndDelete` and
 `Dispose` therefore each hold `SessionLock._inProcess` for their whole body,

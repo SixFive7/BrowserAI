@@ -467,7 +467,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         // ⚠️ EVERY DOOR, and that is the change this arm records. Until
         // 2026-08-26 the two boundary refusals ran at `init` and `resume` only
-        // -- `destroy`, `set_purpose`, `catch_up` and `list` reached the
+        // -- `destroy`, `change_purpose`, `catch_up` and `list` reached the
         // per-directory gate, and the filesystem, with a caller-supplied path
         // nobody had asked the volume question about. The split was taken to
         // keep a pre-guard session on a share removable; nothing was ever
@@ -500,8 +500,8 @@ internal sealed partial class ErrorCatalogueTests
         [
             (SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
             (SessionToolSurface.Destroy, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
-            (SessionToolSurface.SetPurpose, new JsonObject { ["session"] = Share, ["purpose"] = "should never be recorded", ["why"] = "the suite exercising this call" }),
-            (SessionToolSurface.CatchUp, new JsonObject { ["session"] = Share }),
+            (SessionToolSurface.ChangePurpose, new JsonObject { ["session"] = Share, ["purpose"] = "should never be recorded", ["why"] = "the suite exercising this call" }),
+            (SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", ["session"] = Share }),
             (SessionToolSurface.List, new JsonObject { ["directory"] = Share }),
         ];
 
@@ -590,7 +590,15 @@ internal sealed partial class ErrorCatalogueTests
                 record.LastUsed,
                 record.Purpose));
 
-        // Row 10 -- an argument resume does not accept.
+        // ⚠️ Row 10 -- `ArgumentNotAcceptedOnResume` -- was deleted on
+        // 2026-10-04 (previously this call provoked it, and the answer read
+        // "'browser' cannot be set on browserai_resume, because the browser is
+        // bound at init and the profile on disk belongs to it. Nothing was
+        // changed."). Its one argument is not in resume's schema, and since the
+        // maintainer's rule of 2026-10-03 an argument a schema does not have is
+        // refused as a syntax error before the tool runs, so the row could no
+        // longer be reached. The same call is answered by that refusal, and the
+        // definition it carries is resume's own, which says why.
         var withBrowser = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["why"] = "the suite exercising this call",
@@ -599,9 +607,10 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         await Assert.That((bool?)withBrowser["isError"]).IsTrue();
-        await Assert.That(TextOf(withBrowser)).Contains("cannot be set on");
-        await Assert.That(TextOf(withBrowser)).Contains("the profile on disk belongs to it");
-        Record(nameof(SessionErrors.ArgumentNotAcceptedOnResume));
+        await Assert.That(TextOf(withBrowser)).StartsWith("Syntax error: 'browserai_resume' has no argument named 'browser'");
+        await Assert.That(TextOf(withBrowser)).Contains("'browser' is NOT an argument");
+        await Assert.That(TextOf(withBrowser)).DoesNotContain("cannot be set on");
+        Record(nameof(SessionErrors.UnrecognisedArguments));
 
         // ⚠️ Row 15 -- DirectoryIsACopy -- was deleted on 2026-08-18 with
         // `acknowledgeCopy`, so its provocation is deleted too, not left
@@ -645,18 +654,25 @@ internal sealed partial class ErrorCatalogueTests
 
         var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
 
+        // ⚠️ Since 2026-10-04 a denied tool is answered like any tool this
+        // BrowserAI does not have, so this provokes `ToolDoesNotExist` and the
+        // row it used to provoke, `ToolIsDenied`, is gone from the catalogue.
         await Assert.That((bool?)refused["isError"]).IsTrue();
         Match(
             TextOf(refused),
-            nameof(SessionErrors.ToolIsDenied),
-            SessionErrors.ToolIsDenied(RepositoryVerdicts.ADenial.Name, RepositoryVerdicts.Committed.Find(RepositoryVerdicts.ADenial.Name)!.Why!));
+            nameof(SessionErrors.ToolDoesNotExist),
+            SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name));
 
         // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
         // "a tool this build has never heard of is FORWARDED now , not
         // refused, so nothing of ours is in that answer at all"). Deny-by-default
         // came back as a verdict and not as a permission -- see
-        // ToolVerdicts -- so a name with no row is refused at the door, and this
-        // is the provocation for the row that says so.
+        // ToolVerdicts -- so a name with no row is refused at the door.
+        //
+        // ⚠️ And since 2026-10-04 a name that is in no list and has no row is
+        // told plainly that the tool does not exist in this BrowserAI, by the
+        // maintainer's decision of 2026-10-03; the verdict door's own sentence
+        // is left to a name the list carries, provoked in the arm below.
         var unknown = await CallAsync(rig, "browser_not_a_real_tool", new JsonObject
         {
             ["session"] = directory,
@@ -666,7 +682,82 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(sessions.SessionChildren.Any(child =>
             child.ToolCallsReceived.Contains("browser_not_a_real_tool", StringComparer.Ordinal))).IsFalse();
 
-        Match(TextOf(unknown), nameof(SessionErrors.ToolHasNoVerdict), SessionErrors.ToolHasNoVerdict());
+        Match(TextOf(unknown), nameof(SessionErrors.ToolDoesNotExist), SessionErrors.ToolDoesNotExist("browser_not_a_real_tool"));
+    }
+
+    /// <summary>
+    /// The two rows a call meets when the tool list says one thing and the call
+    /// another: a listed tool with no verdict, and an argument the listed schema
+    /// does not have.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The first is a defect in a build, and the provocation has to make
+    /// one.</b> <c>ToolVerdictTests</c> holds the committed verdicts file against
+    /// the golden snapshot in both directions, so the run's own child is given a
+    /// list carrying a name the file has no row for.
+    /// </para>
+    /// <para>
+    /// <b>The second is the maintainer's rule of 2026-10-03, in his words:</b>
+    /// <i>"I'd expect that any call carrying any parameter or argument that we do
+    /// not recognize would be refused actively with a syntax error."</i> The
+    /// expected text is built from the same list the call was checked against,
+    /// read back over the wire, because the refusal names what that list accepts.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheMissingVerdictAndTheUnrecognisedArgumentRowsAreEmittedByRealCalls()
+    {
+        const string Unjudged = "browser_a_tool_from_the_future";
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.Tools[Unjudged] = new FakeToolBehaviour();
+            child.Tools["browser_navigate"] = new FakeToolBehaviour();
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult =
+                """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"],"additionalProperties":false}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""",
+            sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "list-and-call-disagree");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a listed tool with no verdict and an argument no schema has",
+        });
+
+        var unjudged = await CallAsync(rig, Unjudged, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
+        });
+
+        await Assert.That(sessions.SessionChildren.Any(child =>
+            child.ToolCallsReceived.Contains(Unjudged, StringComparer.Ordinal))).IsFalse();
+
+        Match(TextOf(unjudged), nameof(SessionErrors.ToolHasNoVerdict), SessionErrors.ToolHasNoVerdict());
+
+        var listed = ToolSignatures.From(await rig.Client.RoundTripAsync("tools/list", new JsonObject()));
+
+        var extra = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
+            ["url"] = "data:text/html,x",
+            ["notAnArgument"] = 1,
+        });
+
+        await Assert.That(sessions.SessionChildren.Any(child =>
+            child.ToolCallsReceived.Contains("browser_navigate", StringComparer.Ordinal))).IsFalse();
+
+        Match(
+            TextOf(extra),
+            nameof(SessionErrors.UnrecognisedArguments),
+            SessionErrors.UnrecognisedArguments("browser_navigate", ["notAnArgument"], listed.Find("browser_navigate")!));
     }
 
     [Test]
@@ -968,7 +1059,7 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp),
             SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
                 SessionPath.For(directory).FullPath,
-                ["'headed' is false and you asked for true"]));
+                ["'headed' (running: false, asked: true)"]));
     }
 
     /// <summary>
@@ -1419,7 +1510,7 @@ internal sealed partial class ErrorCatalogueTests
             session,
             headed: false,
             ProvisionedBrowsers.Firefox,
-            tracing: false,
+            transcript: false,
             RunOptions.Default);
 
         var ready = Path.Combine(scratch.Path, "holder.json");
@@ -1456,7 +1547,7 @@ internal sealed partial class ErrorCatalogueTests
             unreadable,
             headed: false,
             ProvisionedBrowsers.Firefox,
-            tracing: false,
+            transcript: false,
             RunOptions.Default));
 
         await Assert.That(opaque).IsNotNull();
@@ -1867,6 +1958,19 @@ internal sealed partial class ErrorCatalogueTests
         // a lock another process holds is refused between processes, naming that
         // client. One row whatever the tool, resume and destroy included, because
         // the condition and its recovery are the same.
+        //
+        // ⚠️ **Corrected 2026-10-04 to 39 (previously 38).** Two arrived and one
+        // went. `ToolDoesNotExist` answers a name this BrowserAI does not have, in
+        // the maintainer's wording (Q371.6 c), and a denied tool since the same
+        // day; `UnrecognisedArguments` refuses an argument a tool's schema does
+        // not carry and gives the tool's whole definition (his rule of 2026-10-03
+        // and Q371.5 b). `ToolIsDenied` went: a denied tool's own `why` is the
+        // human record in tool-verdicts.json and no longer the answer.
+        //
+        // ⚠️ **Corrected 2026-10-04 a second time, to 38 (previously 39).**
+        // `ArgumentNotAcceptedOnResume`, Row 10, went: its one argument, `browser`
+        // on resume, is not in resume's schema, so the syntax error above answers
+        // it first and the row could not be reached.
         await Assert.That(rows.Count).IsEqualTo(38);
     }
 

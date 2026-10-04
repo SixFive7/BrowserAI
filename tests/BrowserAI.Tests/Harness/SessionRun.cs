@@ -187,7 +187,7 @@ internal sealed record SessionRun
                     ["browser"] = SessionManager.DefaultBrowser,
                 }).ConfigureAwait(false);
 
-            answers["setPurpose"] = await CallAsync(client, SessionToolSurface.SetPurpose, new JsonObject
+            answers["setPurpose"] = await CallAsync(client, SessionToolSurface.ChangePurpose, new JsonObject
             {
                 ["session"] = alpha,
                 ["why"] = "the suite exercising this call",
@@ -220,6 +220,7 @@ internal sealed record SessionRun
             // capture rig does not have.
             answers["catchUp"] = await CallAsync(client, SessionToolSurface.CatchUp, new JsonObject
             {
+                ["why"] = "the suite reading back what this session did",
                 [SessionToolSurface.SessionParameter] = alpha,
             }).ConfigureAwait(false);
 
@@ -306,12 +307,15 @@ internal sealed record SessionRun
                 ["directory"] = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify),
             }).ConfigureAwait(false);
 
+            // ⚠️ `tracing` is `transcript` since 2026-10-04, and `consoleLevel`,
+            // gone from every schema since 2026-08-20, is out of this call too:
+            // an argument a schema does not have is refused since the same day,
+            // and this init has to succeed for the destroy below to mean anything.
             answers["initBeta"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = beta,
                 ["purpose"] = "the session that gets destroyed",
-                ["tracing"] = true,
-                ["consoleLevel"] = "debug",
+                ["transcript"] = true,
                 ["debug"] = true,
             }).ConfigureAwait(false);
 

@@ -1,0 +1,20 @@
+=== ORDINARY RUN c2-bash starting 01:30:46 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=98768 created=134355438462657672).
+installer lock held: pid=98768 created=134355438462657672
+vpk pack of BrowserAI.app.test took 11 s.
+vpk pack of the twin took 10.8 s.
+scratch released after 2s
+Running tests from c:\Source\SixFive7\BrowserAI\.work\wt\c\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+c:\Source\SixFive7\BrowserAI\.work\wt\c\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (4m 51s 530ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\c\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 959
+  failed: 0
+  succeeded: 959
+  skipped: 0
+  duration: 4m 52s 210ms
+=== ORDINARY RUN c2-bash done 01:36:51, clearance clean ===
+ORDINARY-BASH-DONE

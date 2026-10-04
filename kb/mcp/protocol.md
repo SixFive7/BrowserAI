@@ -1151,6 +1151,80 @@ codex-cli 0.157.0, which was read and not run; and APM's project writes after
 configuration file after each step; each step's output and the copies are in the
 evidence's `first-pass/sandbox/`.
 
+## How much of a tool result each client hands its model -- measured 2026-10-03
+
+`[FLOATS]` **Claude Code 2.1.288** through `claude -p` and through the
+stream-json transport with the VS Code extension's environment, and
+**codex-cli 0.160.0** and **0.155.0-alpha.9.2** through `codex exec`, Windows 11.
+74 runs, 2026-10-03 from 23:24Z to 23:34Z, of a stub MCP server whose one tool
+answered with a text of a chosen length, made from BrowserAI's real tools array
+between a start marker and an end marker, either as an error result
+(`isError: true`, the form a refusal takes) or as an ordinary one. Every client
+ran with its configuration in a scratch folder against a local API stub that
+recorded what the model was sent, so no model was called. Lane q371, for the
+maintainer's Q369.3 c and Q371.6 c.
+[Evidence](../../docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md).
+
+| Client | Error result | Ordinary result |
+|---|---|---|
+| Claude Code, both transports | **Whole up to 10,100 characters**, 9 of 9 runs from 9,000 to 10,100. **12,000 and more are cut to 10,039 to 10,041**: the first and the last 5,000 or so, with `... [N characters truncated] ...` between them, 18 of 18 runs from 12,000 to 120,000 | **Whole up to 50,000**, 12 of 12 runs. At 60,000 and 120,000 the result is written to a file and the model gets `<persisted-output>` with the file's path and a preview of about 2,000 characters, 3 of 3 |
+| Codex, 0.160.0 and 0.155.0-alpha.9.2 alike | **Whole up to 10,100**, after its own 34-character `Wall time ... Output:` prefix. **12,000 and more are cut to 12,018 characters, prefix included**, keeping both ends around a marker that counts tokens | The same as an error result: Codex does not tell the two apart in what it sends |
+
+⚠️ **This is a different budget from [the 2,048 characters per
+description](#what-2kb-each-means----measured-2026-08-18--claude-code-21234)**:
+that one applies to the `instructions` and to each tool description; this one to
+what a call returns. **What it decided:** a refusal that appended BrowserAI's
+whole current tool list, 110,386 characters for 73 tools on 2026-10-04, would
+reach a model with its middle cut out through both clients, so it was not built,
+and the maintainer has the measured limits instead. Every refusal BrowserAI
+writes is held under 10,000 characters, `ClientTruncationBudget.ErrorResultCharacters`,
+and the largest, the refusal of an argument a schema does not have with the
+tool's whole definition, is checked against it for every tool by
+`UnrecognisedArgumentTests`.
+
+⚠️ **Not established.** The exact cut points: Claude Code's lies
+somewhere between 10,100 and 12,000 for an error result and between 50,000 and
+60,000 for an ordinary one, and Codex's at or just below 12,000; no run sat
+between. Whether the cut is counted in characters or in tokens. The VS Code
+extension itself and the Codex desktop app were not driven.
+
+**Re-establish** with the batch's rig: `node sizes.js <batch> <clients> <sizes>
+<repeats>` starts both API stubs, runs each client against `bigserver.js` at each
+size, and writes `results.json` with the length each model was sent and its first
+and last 300 characters. Row 192 carries it.
+
+## An argument a tool's schema does not have -- measured 2026-10-03
+
+**Before 2026-10-04 it was dropped without a word, and the call ran.** Measured
+2026-10-03 at 23:19Z through BrowserAI 1.1.1-alpha.0.188 published at
+`d8a0101a`, `@playwright/mcp` 0.0.83: `browserai_list` with an extra
+`bogusArgument` answered as if it had not been sent, and so did
+`browser_navigate`, whose page loaded. BrowserAI forwarded the argument as it
+came, and upstream's schema validation dropped it, which is what a zod object
+does with a key it does not declare. A caller that misspelled an argument, or
+sent one a later build had renamed, was never told.
+[Evidence](../../docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md).
+
+**Since 2026-10-04 it is refused before anything runs.** The maintainer's
+decision of 2026-10-03, in his words: *"I'd expect that any call carrying any
+parameter or argument that we do not recognize would be refused actively with a
+syntax error. This would teach the LLM it has somethign wrong. Also, I do not
+like us keeping history and translating certen arguments for historical sake.
+The product is what it is and the llm needs to learn to use it."* BrowserAI
+checks every argument name a call carries against the tool's schema as its own
+`tools/list` serves it, the session and why it adds included, and answers an
+error result that names every argument the schema does not have and gives the
+tool's whole current definition, Q371.5 b. Measured again on 2026-10-04 at 00:10Z
+through the build that does it: both calls above, and `browserai_init` with the
+old `tracing`, were refused that way. Upstream's own validation is not changed
+and is now not reached for an unknown name. What a call leaves out is not
+checked: upstream marks some arguments that have a default as required, five of
+them in the snapshot read 2026-10-04, `browser_take_screenshot`'s `scale` among
+them, and refusing those would refuse calls upstream accepts.
+`UnrecognisedArgumentTests` holds the refusal for an authored tool and for a
+forwarded one, that the list the caller was given decides, and the refusal's
+size against the budget above for every tool.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

@@ -849,13 +849,16 @@ internal sealed class ReinstallBrowserTests
 
         await Assert.That(string.Join(", ", unrouted)).IsEmpty();
 
-        // Deny-by-default in the authored half of the surface. The prefix match
-        // is what routes a call here at all, so a name nobody implemented must
-        // be refused and not forwarded to the child as an upstream tool.
+        // Deny-by-default in the authored half of the surface. A name nobody
+        // implemented must be refused and not forwarded to the child as an
+        // upstream tool -- and since 2026-10-04 it is told plainly that the tool
+        // does not exist here (previously "is not a BrowserAI session tool",
+        // which the dispatch's own default arm still says of a listed tool it
+        // does not route, and which the loop above looks for).
         var invented = await CallAsync(rig, "browserai_do_something_nobody_built", []);
 
         await Assert.That((bool?)invented["isError"]).IsTrue();
-        await Assert.That(TextOf(invented)).Contains("is not a BrowserAI session tool");
+        await Assert.That(TextOf(invented)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_do_something_nobody_built"));
     }
 
     /// <summary>

@@ -163,6 +163,30 @@ namespace BrowserAI.Proxy;
 /// space.
 /// </para>
 /// <para>
+/// ⚠️ <b>REWRITTEN 2026-10-04 as the maintainer's "b": a lean text that keeps
+/// only rules spanning tools.</b> His words of 2026-10-03, verbatim: <i>"About
+/// the server instructions. Rewrite the instructions according to b. Then on the
+/// why, keep the server instruction simple. The tool arguments will teach the
+/// model the exceptions anyway."</i> The same night, Q371 c (<i>"I like option c
+/// and the rename to transcript."</i>) had already dropped the tracing clause.
+/// What went where, so that nothing is lost by moving: the full-page cost and
+/// the <c>filename</c> lever are a BrowserAI note on <c>browser_take_screenshot</c>;
+/// the boxes line is a note on each <c>browser_mouse_*_xy</c> tool; the mocking
+/// warning is a note on <c>browser_route</c> and on
+/// <c>browser_network_state_set</c> -- each declared beside the tool's verdict in
+/// <c>tool-verdicts.json</c> and appended after upstream's own description. The
+/// directory and purpose paragraph is on <c>browserai_init</c>'s two arguments
+/// and on <c>browserai_resume</c>'s purpose. <i>"Every session gets every tool"</i>,
+/// the per-run sentence about <c>headed</c>, the <c>npx playwright install</c>
+/// example and the first half of the roll-call -- init refusing a directory that
+/// is already a session -- are gone: init's own refusal says the last, and the
+/// argument descriptions say the rest. <i>"Every call takes a 'why'"</i> is
+/// deliberately simple; the three tools that take none show it in their
+/// schemas. <b>The text before this rewrite, 2,041 characters</b>, was the nine
+/// paragraphs this file's history above describes. <b>Now 833 characters, 1,215
+/// of headroom</b>, computed from this file's own text.
+/// </para>
+/// <para>
 /// <b>The deletion line is the short half of a rule stated in three places.</b>
 /// Settled 2026-09-21: BrowserAI never deletes a session on its own, so the
 /// agent that created one destroys it when the work is done, and promptly when
@@ -206,6 +230,13 @@ namespace BrowserAI.Proxy;
 /// halves: the sentence is in this string, and
 /// <c>browser_take_screenshot</c>'s description is still upstream's own bytes.
 /// </para>
+/// <para>
+/// ⚠️ <b>And since 2026-10-04 it is appended there, deliberately</b>, by
+/// the maintainer's rewrite b: as a note declared beside the tool's verdict, after
+/// upstream's own bytes, which still come first and unchanged. The paragraph above
+/// is left as written because it records why a habit was refused; what replaced
+/// it is a decision, and <c>SessionToolSurface.AppendNote</c> says how it differs.
+/// </para>
 /// </remarks>
 internal static class ServerInstructions
 {
@@ -227,23 +258,13 @@ internal static class ServerInstructions
     /// <summary>The instructions sent on <c>initialize</c>.</summary>
     public static string Text { get; } =
         $"""
-        BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
+        BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with {SessionToolSurface.Init} for a new session or {SessionToolSurface.Resume} for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.
 
-        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' logs the calls to session.md; for a trace, use browser_start_tracing.
+        Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.
 
-        'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.
+        BrowserAI manages its own browsers. If a browser is missing or broken, call {SessionToolSurface.ReinstallBrowser}.
 
-        Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.
-
-        Browsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.
-
-        Supply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.
-
-        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It is recorded, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
-
-        WARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.
-
-        {SessionToolSurface.Init} refuses an existing session and directs you to {SessionToolSurface.Resume}; {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.SetPurpose} rewrites what one says it is for, and {SessionToolSurface.Destroy} deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.
+        Nothing but {SessionToolSurface.Destroy} deletes a session: destroy yours when the work is done, and promptly if it held a login.
         """;
 
     /// <summary>How many characters <see cref="Text"/> costs of the budget.</summary>

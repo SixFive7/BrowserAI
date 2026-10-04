@@ -69,6 +69,7 @@ internal sealed class CatchUpTests
 
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         }));
 
@@ -118,6 +119,95 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
+    /// Every file that holds login data in clear text is named: the saved login
+    /// <c>browser_storage_state</c> writes, a Playwright trace, and a transcript --
+    /// and a file that only looks like one of them is not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q365.4 a, decided 2026-10-03 by the maintainer, in his words: <i>"Now
+    /// about Q365.4. Let's mention all files."</i></b> Until then the answer named
+    /// the profile's cookie store and any HTTP Archive, and nothing else -- while a
+    /// saved login holds the cookie values, a trace's network log holds every
+    /// header, and a transcript holds every argument a call was given, so a typed
+    /// password. The three lines are his approved wording, asserted whole.
+    /// </para>
+    /// <para>
+    /// <b>The saved login is recognised by what it holds and not by its
+    /// name</b>, because <c>browser_storage_state</c> writes whatever
+    /// <c>filename</c> it is given: Playwright's storage state is an object with a
+    /// <c>cookies</c> array and an <c>origins</c> array. The controls are a JSON
+    /// file of another shape and a <c>session.md</c> outside a
+    /// <c>session-&lt;milliseconds&gt;</c> folder.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryFileThatHoldsLoginDataInClearTextIsNamed()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "all-the-files");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "holds every kind of file with login data in it",
+        });
+
+        var output = Path.Combine(directory, SessionLayout.OutputFolderName);
+
+        // A saved login under a name the caller chose, and a JSON of another shape.
+        var saved = Path.Combine(output, "login-state.json");
+        await File.WriteAllTextAsync(saved, """{"cookies":[{"name":"sid","value":"secret","domain":"127.0.0.1","path":"/","expires":-1,"httpOnly":true,"secure":false,"sameSite":"Lax"}],"origins":[]}""");
+        await File.WriteAllTextAsync(Path.Combine(output, "report.json"), """{"cookies":3,"rows":[1,2,3]}""");
+
+        // A trace, as browser_start_tracing lays one out.
+        var traces = Path.Combine(output, "traces");
+        _ = Directory.CreateDirectory(Path.Combine(traces, "resources"));
+        await File.WriteAllTextAsync(Path.Combine(traces, "trace-1791000000000.trace"), "{}");
+        await File.WriteAllTextAsync(Path.Combine(traces, "trace-1791000000000.network"), "{}");
+        await File.WriteAllTextAsync(Path.Combine(traces, "resources", "0a1b2c"), "body");
+
+        // A transcript, and a session.md somewhere a transcript never is.
+        var transcript = Path.Combine(output, "session-1791000000000", "session.md");
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(transcript)!);
+        await File.WriteAllTextAsync(transcript, "### Tool call: browser_type\n- Args\n");
+        _ = Directory.CreateDirectory(Path.Combine(output, "notes"));
+        await File.WriteAllTextAsync(Path.Combine(output, "notes", "session.md"), "notes");
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading back what this session did",
+            ["session"] = directory,
+        }));
+
+        static long sizeOf(string path) => new FileInfo(path).Length;
+
+        var traceBytes = Directory.EnumerateFiles(traces, "*", SearchOption.AllDirectories).Sum(sizeOf);
+
+        await Assert.That(text).Contains(
+            $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "login-state.json")}' is a saved login written by browser_storage_state ({Sizes.Describe(sizeOf(saved))}). "
+            + "It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n");
+
+        await Assert.That(text).Contains(
+            $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "traces")}' is a Playwright trace ({Sizes.Describe(traceBytes)}). "
+            + "Its network log holds every request and response with their headers, so session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n");
+
+        await Assert.That(text).Contains(
+            $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "session-1791000000000", "session.md")}' is a transcript ({Sizes.Describe(sizeOf(transcript))}). "
+            + "It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n");
+
+        // ⚠️ THE CONTROLS: a JSON of another shape and a session.md outside a
+        // transcript folder are not named, and the trace is named once and not
+        // once per file in it.
+        await Assert.That(text).DoesNotContain("report.json' is");
+        await Assert.That(text).DoesNotContain($"'{Path.Combine(SessionLayout.OutputFolderName, "notes", "session.md")}' is");
+        await Assert.That(text.Split("is a Playwright trace").Length - 1).IsEqualTo(1);
+    }
+
+    /// <summary>
     /// It changes nothing -- not the record, not the log -- and works on a session
     /// something else is holding.
     /// </summary>
@@ -153,6 +243,7 @@ internal sealed class CatchUpTests
         // exactly what a writing implementation would have to contend for.
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         }));
 
@@ -160,11 +251,76 @@ internal sealed class CatchUpTests
         await Assert.That(ReadSharing(file)).IsEquivalentTo(before);
         await Assert.That(File.GetLastWriteTimeUtc(file)).IsEqualTo(written);
 
-        // The record's own log did not gain a row for the read.
+        // ⚠️ AND THE LOG GAINS THE READ'S OWN ROW SINCE 2026-10-04, written after
+        // the answer was read so the answer does not report itself -- the
+        // maintainer's words of 2026-10-03: "browserai_catch_up should take a
+        // why." Previously the log gained nothing, and this arm asserted that.
+        // The guard file above is still untouched: the row goes into the record
+        // this BrowserAI already holds open.
         var log = RecordedSession.LogOf(directory);
 
-        await Assert.That(log.Count).IsEqualTo(1);
-        await Assert.That(log.Any(entry => entry.Tool == SessionToolSurface.CatchUp)).IsFalse();
+        await Assert.That(log.Count).IsEqualTo(2);
+        await Assert.That(text).DoesNotContain("the suite reading back what this session did");
+        await Assert.That(log[^1].Tool).IsEqualTo(SessionToolSurface.CatchUp);
+        await Assert.That(log[^1].Why).IsEqualTo("the suite reading back what this session did");
+        await Assert.That(log[^1].Outcome).IsEqualTo(SessionStore.Successful);
+    }
+
+    /// <summary>
+    /// <c>browserai_catch_up</c> refuses a call with no <c>why</c>, and a session
+    /// this BrowserAI does not hold is read without a row being written to it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"browserai_catch_up
+    /// should take a why. All other tool calls are fine like they are now when it
+    /// comes to the why argument."</i> It is required, as on every other call that
+    /// names a session, and recorded on the session the way every call is.
+    /// </para>
+    /// <para>
+    /// <b>Only the holder writes a session's record</b>, so a session nobody in
+    /// this process holds is read and not written: the <c>why</c> goes to this
+    /// BrowserAI's own log instead. A decision of 2026-10-04 for the maintainer's
+    /// review.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ItTakesARequiredWhyAndWritesNoRowToASessionItDoesNotHold()
+    {
+        var root = Path.Combine(ScratchRoot.Path, $"catch-up-why-{Guid.NewGuid():N}");
+        var directory = Path.Combine(root, "held-elsewhere-then-released");
+
+        // Made by one BrowserAI, which then goes away and releases it.
+        await using (var first = RigSessionEnvironment.Create(opensDefaultSession: false))
+        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: first))
+        {
+            _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = "a session read by a BrowserAI that does not hold it",
+            });
+        }
+
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var reader = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var refused = await CallAsync(reader, SessionToolSurface.CatchUp, new JsonObject { ["session"] = directory });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.WhyMissing(SessionToolSurface.CatchUp));
+
+        var before = RecordedSession.LogOf(directory).Count;
+
+        var read = await CallAsync(reader, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite reading a session this BrowserAI does not hold",
+        });
+
+        await Assert.That((bool?)read["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(read)).Contains("a session read by a BrowserAI that does not hold it");
+        await Assert.That(RecordedSession.LogOf(directory).Count).IsEqualTo(before);
     }
 
     /// <summary>
@@ -218,6 +374,7 @@ internal sealed class CatchUpTests
 
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         }));
 
@@ -237,7 +394,7 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
-    /// A purpose set by <c>browserai_resume</c> or <c>browserai_set_purpose</c>
+    /// A purpose set by <c>browserai_resume</c> or <c>browserai_change_purpose</c>
     /// is still recoverable, and still dated, from the record alone.
     /// </summary>
     /// <remarks>
@@ -281,7 +438,7 @@ internal sealed class CatchUpTests
             ["why"] = "picking this up after the overnight run stopped",
         });
 
-        _ = await CallAsync(rig, SessionToolSurface.SetPurpose, new JsonObject
+        _ = await CallAsync(rig, SessionToolSurface.ChangePurpose, new JsonObject
         {
             ["session"] = directory,
             ["purpose"] = "tracking the checkout redirect loop on staging",
@@ -290,6 +447,7 @@ internal sealed class CatchUpTests
 
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         }));
 
@@ -319,8 +477,10 @@ internal sealed class CatchUpTests
             await Assert.That(earlier.At).IsLessThanOrEqualTo(later.At);
         }
 
+        // ⚠️ And the catch_up above, since 2026-10-04: it takes a why and writes
+        // its own row after it has read.
         await Assert.That(RecordedSession.LogOf(directory).Select(entry => entry.Tool).ToArray())
-            .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume, SessionToolSurface.SetPurpose]);
+            .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume, SessionToolSurface.ChangePurpose, SessionToolSurface.CatchUp]);
     }
 
     /// <summary>
@@ -382,7 +542,7 @@ internal sealed class CatchUpTests
             });
         }
 
-        var first = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["session"] = directory }));
+        var first = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", ["session"] = directory }));
 
         // Page 1 by default, and it says which page it is, how many there are,
         // and the call that fetches the next.
@@ -402,12 +562,15 @@ internal sealed class CatchUpTests
 
         var second = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
             [SessionToolSurface.PageParameter] = 2,
         }));
 
+        // ⚠️ 122 and not 121 since 2026-10-04: each catch_up writes its own row
+        // AFTER it has read, so the first read above is the 122nd entry by now.
         await Assert.That(second).Contains("page 2 of 2");
-        await Assert.That(second).Contains("entries 101-121 of 121");
+        await Assert.That(second).Contains("entries 101-122 of 122");
         await Assert.That(second).Contains("this is the last page");
         await Assert.That(second).Contains($"call number {(Calls - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
@@ -425,18 +588,19 @@ internal sealed class CatchUpTests
             ["why"] = "a call that lands after page 1 was read",
         });
 
-        var again = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["session"] = directory }));
+        var again = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", ["session"] = directory }));
 
         // The one thing on page 1 that MAY move is the total, because there is a
         // new entry; the entries themselves are the same set in the same order.
         await Assert.That(Entries(again)).IsEquivalentTo(Entries(first));
-        await Assert.That(again).Contains("entries 1-100 of 122");
+        await Assert.That(again).Contains("entries 1-100 of 124");
         await Assert.That(again).DoesNotContain("a call that lands after page 1 was read");
 
         // Out of range is a refusal that names the range and says which end the
         // numbering starts from.
         var refused = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
             [SessionToolSurface.PageParameter] = 9,
         });
@@ -485,6 +649,7 @@ internal sealed class CatchUpTests
         // 2^32 + 1, which truncates to 1 -- the page that exists.
         var wrapped = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
             [SessionToolSurface.PageParameter] = 4294967297L,
         });
@@ -497,6 +662,7 @@ internal sealed class CatchUpTests
         // arrived and not what the cast made of it.
         var negative = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
             [SessionToolSurface.PageParameter] = 2147483648L,
         });
@@ -510,6 +676,7 @@ internal sealed class CatchUpTests
         // arms above.
         var page1 = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
             [SessionToolSurface.PageParameter] = 1,
         });
@@ -573,6 +740,7 @@ internal sealed class CatchUpTests
 
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         }));
 
@@ -606,6 +774,7 @@ internal sealed class CatchUpTests
 
         var answer = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
+            ["why"] = "the suite reading back what this session did",
             ["session"] = directory,
         });
 

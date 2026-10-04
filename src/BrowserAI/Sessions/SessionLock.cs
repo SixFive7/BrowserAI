@@ -67,7 +67,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>Two callers on one session are the design, so this object is thread-safe
 /// about its own lifetime.</b> Nothing above <c>SessionManager</c> serialises
-/// tool calls, so a <c>browserai_set_purpose</c> and a
+/// tool calls, so a <c>browserai_change_purpose</c> and a
 /// <c>browserai_destroy</c> naming the same directory arrive at one instance
 /// concurrently. Every writing path and <b>both</b> disposal paths hold
 /// <see cref="_inProcess"/> for their whole body -- which is
@@ -1230,7 +1230,7 @@ internal sealed class SessionLock : IDisposable
     /// ⚠️ <b>Two records, one outcome, and the split arrived 2026-08-30.</b>
     /// A process re-taking a directory <i>it itself</i> last held is by far the
     /// commonest arrival here -- every <c>destroy</c> and every
-    /// <c>set_purpose</c> disposes the live session and re-acquires, so the
+    /// <c>change_purpose</c> disposes the live session and re-acquires, so the
     /// guard on disk names this very process -- and it was logged with the same
     /// sentence as a genuine takeover: <i>previous holder was PID n, still
     /// running: True</i>. That is true word by word and false as a whole. It
@@ -1424,7 +1424,7 @@ internal sealed record SessionLockRequest
     /// <b>Null means "take the directory and say nothing", and exactly one
     /// caller wants that:</b> <c>browserai_destroy</c>, which takes the record
     /// in order to delete it. Every other path has something to record --
-    /// <c>init</c> its purpose, <c>resume</c> and <c>set_purpose</c> their
+    /// <c>init</c> its purpose, <c>resume</c> and <c>change_purpose</c> their
     /// <c>why</c> -- and a path that took the directory without saying why it
     /// did would be a gap in the one stream this record exists to keep whole.
     /// </remarks>
@@ -1643,7 +1643,7 @@ internal static partial class SessionLog
     /// <see cref="Reclaimed"/>, because the two are different events wearing
     /// one outcome.</b> A reclaim is <i>somebody else's directory is now
     /// ours</i>; this is <i>we are back in a directory we never left the
-    /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
+    /// machine holding</i>. Every <c>destroy</c> and every <c>change_purpose</c>
     /// produces one, so on the machine-wide log this is not the rare case -- it
     /// is nearly the only case, and until 2026-08-30 every one of them was
     /// logged as a reclaim from a live process. The figures, with the predicate

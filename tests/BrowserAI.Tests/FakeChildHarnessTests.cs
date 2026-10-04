@@ -475,7 +475,7 @@ internal sealed class FakeChildHarnessTests
             SessionPath.For(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),
             real.DefaultSessionHeaded,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default);
 
         await Assert.That(generated.Opinions
@@ -518,7 +518,16 @@ internal sealed class FakeChildHarnessTests
     /// </remarks>
     private static JsonObject Call(McpTestHarness rig, string tool)
     {
-        var arguments = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" };
+        // ⚠️ `url` only where the tool takes one, since 2026-10-04 (previously
+        // every call carried it). An argument a tool's schema does not have is
+        // refused since that day before anything is forwarded, by the
+        // maintainer's rule of 2026-10-03, and the double's `browser_snapshot`
+        // takes no `url`: the two arms that call it went red on that refusal in
+        // both halves of the gate that change first met, with the double's answer
+        // never asked for.
+        var arguments = tool is "browser_navigate"
+            ? new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" }
+            : [];
 
         if (rig.Session is { } session)
         {

@@ -61,7 +61,7 @@ internal sealed class SessionLogTests
             ["why"] = "establishing that the page loads at all",
         });
 
-        _ = await CallAsync(rig, SessionToolSurface.SetPurpose, new JsonObject
+        _ = await CallAsync(rig, SessionToolSurface.ChangePurpose, new JsonObject
         {
             ["session"] = directory,
             ["purpose"] = "tracking the checkout redirect loop on staging",
@@ -85,7 +85,7 @@ internal sealed class SessionLogTests
             .IsEquivalentTo([
                 SessionToolSurface.Init,
                 "browser_navigate",
-                SessionToolSurface.SetPurpose,
+                SessionToolSurface.ChangePurpose,
                 "browser_navigate",
             ]);
 

@@ -86,6 +86,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
     private int _disposed;
 
     /// <summary>
+    /// What every tool in the surface takes, read off the list this server last
+    /// answered <c>tools/list</c> with, or <see langword="null"/> before the first.
+    /// </summary>
+    /// <remarks>
+    /// One list for the whole run: the surface is static, and every reading of it
+    /// is the same list. See <see cref="SignaturesAsync"/>.
+    /// </remarks>
+    private ToolSignatures? _signatures;
+
+    /// <summary>
     /// Whether this connection has asked for a tool list since its handshake.
     /// </summary>
     /// <remarks>
@@ -860,10 +870,78 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
 
         var result = response.Result as JsonObject ?? [];
+        var rewritten = SessionToolSurface.Rewrite(result, _verdicts);
+
+        // The list a call is checked against is the list a caller was given,
+        // read here before it goes out. See ToolSignatures.
+        Volatile.Write(ref _signatures, ToolSignatures.From(rewritten));
 
         await caller.SendMessageAsync(
-            new JsonRpcResponse { Id = request.Id, Result = SessionToolSurface.Rewrite(result, _verdicts) },
+            new JsonRpcResponse { Id = request.Id, Result = rewritten },
             cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// What every tool in the surface takes, read off the list this server
+    /// answers <c>tools/list</c> with.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The list a caller was given, and asked for here only when this
+    /// connection never asked.</b> <see cref="AnswerToolsListAsync"/> keeps what
+    /// it sent; a call that arrives first asks the run's own child for the same
+    /// list and rewrites it the same way, because the surface is one static list
+    /// and either reading is that list.
+    /// </para>
+    /// <para>
+    /// <b>A child that cannot answer leaves BrowserAI's own tools still
+    /// checked</b>: their schemas are this build's, so the authored half of the
+    /// list is read with no child at all, and a forwarded tool is then judged by
+    /// the verdicts file alone. That is logged, and the next call asks again.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>The signatures, never <see langword="null"/>.</returns>
+    private async Task<ToolSignatures> SignaturesAsync(CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _signatures) is { } known)
+        {
+            return known;
+        }
+
+        var answer = await _surface.AskAsync(RequestMethods.ToolsList, null, cancellationToken).ConfigureAwait(false);
+
+        if (answer.Response?.Result is JsonObject result)
+        {
+            var read = ToolSignatures.From(SessionToolSurface.Rewrite(result, _verdicts));
+
+            Volatile.Write(ref _signatures, read);
+            return read;
+        }
+
+        ProxyLog.ToolListUnreadable(_logger);
+
+        return ToolSignatures.From(SessionToolSurface.Rewrite([], _verdicts), carriesTheChildsTools: false);
+    }
+
+    /// <summary>
+    /// Writes a refusal made before any session was resolved onto the session
+    /// the call named, when this process holds it.
+    /// </summary>
+    /// <param name="session">The <c>session</c> the call carried, if any.</param>
+    /// <param name="tool">The tool, as the caller spelled it.</param>
+    /// <param name="why">What the caller said it was for.</param>
+    /// <param name="refusal">What the caller is told.</param>
+    /// <returns>The session's own logger, or the machine-wide one when there is none.</returns>
+    private ILogger RecordOnTheNamedSession(string? session, string tool, string? why, string refusal)
+    {
+        if (string.IsNullOrWhiteSpace(session) || _sessions.Find(session) is not { } named)
+        {
+            return _logger;
+        }
+
+        Refused(named, tool, why, refusal);
+        return named.Logger;
     }
 
     private async Task AnswerToolsCallAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
@@ -893,6 +971,67 @@ internal sealed class BrowserProxy : IAsyncDisposable
         {
             ProxyLog.SessionMissing(_logger, "<unreadable>");
             await RefuseAsync(caller, request.Id, wrongKind.Message, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var signatures = await SignaturesAsync(cancellationToken).ConfigureAwait(false);
+        var signature = signatures.Find(name);
+
+        // ⚠️ A TOOL THIS BROWSERAI DOES NOT HAVE IS TOLD SO PLAINLY, since
+        // 2026-10-04 -- the maintainer's decision of 2026-10-03, in his words:
+        // "Calls to a tool BrowserAI doesn't have: a) Yes, in the same lane." A
+        // name that is in neither the list this server advertises nor its
+        // verdicts file is no tool of this build, and the answer says so and sends
+        // the caller to its tool list. Until then such a name met the verdict
+        // door's sentence for a gap a human must adjudicate, or, with no session,
+        // "this needs a session". A name in BrowserAI's own namespace is judged
+        // by the authored names alone, which need no list; any other name needs
+        // the list, and with no list the verdict door decides, as before.
+        //
+        // ⚠️ AND A DENIED TOOL IS ANSWERED THE SAME WAY, since the same day: a
+        // tool BrowserAI does not offer should look to a model like any other it
+        // does not have, and a deny row's `why` is the human record in the file.
+        // A deny row is known without the list, so it is answered here whether
+        // or not the list could be read.
+        var verdict = _verdicts.Find(name);
+
+        if (signature is null
+            && !SessionToolSurface.IsAuthored(name)
+            && verdict is not { Kind: ToolVerdictKind.Allow }
+            && (verdict is { Kind: ToolVerdictKind.Deny } || signatures.CarriesTheChildsTools || SessionToolSurface.IsInTheAuthoredNamespace(name)))
+        {
+            var named = name ?? "<none>";
+            var absent = SessionErrors.ToolDoesNotExist(named);
+            var recordedIn = RecordOnTheNamedSession(session, named, why, absent);
+
+            ProxyLog.ToolDoesNotExist(recordedIn, named);
+            await RefuseAsync(caller, request.Id, absent, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // ⚠️ AN ARGUMENT THE TOOL'S SCHEMA DOES NOT HAVE IS REFUSED, and nothing
+        // runs -- since 2026-10-04, the maintainer's words of 2026-10-03: "I'd
+        // expect that any call carrying any parameter or argument that we do not
+        // recognize would be refused actively with a syntax error." Checked against
+        // the schema the caller was given -- for a forwarded tool, upstream's with
+        // `session` and `why` added -- and BEFORE every other refusal, because a
+        // misspelt `session` is then told both what it sent and what is required.
+        // Measured the day before, through the published binary at d8a0101a: an
+        // unknown argument on `browserai_list` and on `browser_navigate` was
+        // dropped without a word, and upstream's own parse strips one too.
+        if (signature?.Unrecognised(arguments) is { Count: > 0 } unrecognised)
+        {
+            var refusal = SessionErrors.UnrecognisedArguments(signature.Name, unrecognised, signature);
+
+            // An authored tool's arguments name no `session` the proxy reads, and
+            // its refusals are its own; a forwarded call's is recorded on the
+            // session it named, as every refused forwarded call is.
+            var logger = SessionToolSurface.IsAuthored(name) && !string.Equals(name, SessionToolSurface.PageTool, StringComparison.Ordinal)
+                ? _logger
+                : RecordOnTheNamedSession(session, signature.Name, why, refusal);
+
+            ProxyLog.UnrecognisedArguments(logger, signature.Name, string.Join(", ", unrecognised));
+            await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -934,19 +1073,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // about any one session.
             ProxyLog.SessionMissing(_logger, tool);
 
-            // ⚠️ A NAME IN BROWSERAI'S OWN NAMESPACE THAT IS NOT ONE OF THE SEVEN
-            // GETS THE SENTENCE THAT NAMES THEM, and this branch is the whole of
-            // what the 2026-08-26 exact-match change left behind. With a session,
-            // `browserai_zzz` now reaches the verdict door, is deny-by-defaulted
-            // and is recorded; with no session there is nothing to route to and
-            // nowhere to write a row -- and "this needs a session" would send a
-            // caller to supply one for a tool that does not exist, which is a
-            // second wasted turn and not a recovery.
-            var refusal = SessionToolSurface.IsInTheAuthoredNamespace(name) && !SessionToolSurface.IsAuthored(name)
-                ? SessionToolSurface.NotOneOfOurs(tool)
-                : SessionErrors.SessionMissing(tool);
-
-            await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
+            // ⚠️ DELETED 2026-10-04: the branch that answered a `browserai_`
+            // name that is not one of ours with `SessionToolSurface.NotOneOfOurs`
+            // instead of "this needs a session". Such a name is told it does not
+            // exist above, with or without a session, so what reaches here is a
+            // tool this BrowserAI has.
+            await RefuseAsync(caller, request.Id, SessionErrors.SessionMissing(tool), cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2060,6 +2192,46 @@ internal static partial class ProxyLog
         Level = LogLevel.Information,
         Message = "'{Tool}' arrived while an update is being installed and was refused; nothing was forwarded.")]
     public static partial void RefusedForAnUpdate(ILogger logger, string tool);
+
+    /// <summary>A call named a tool this BrowserAI does not have.</summary>
+    /// <remarks>
+    /// <b>Information, like <see cref="ToolRefused"/>:</b> the refusal is the
+    /// mechanism working. The name goes here verbatim, as it does on the
+    /// session's own row when the call named a session this process holds.
+    /// </remarks>
+    /// <param name="logger">The named session's own logger, or the machine-wide one.</param>
+    /// <param name="tool">The name the caller sent.</param>
+    [LoggerMessage(
+        EventId = 26,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' is not a tool this BrowserAI has; the call was refused and nothing ran.")]
+    public static partial void ToolDoesNotExist(ILogger logger, string tool);
+
+    /// <summary>A call carried arguments its tool's schema does not have.</summary>
+    /// <remarks>
+    /// <b>Warning, like <see cref="WhyMissing"/>:</b> the refusal is correct, and
+    /// a caller that keeps sending names a schema does not carry is a client not
+    /// reading the schema, which has to be visible without turning anything on.
+    /// </remarks>
+    /// <param name="logger">The named session's own logger, or the machine-wide one.</param>
+    /// <param name="tool">The tool.</param>
+    /// <param name="arguments">The names its schema does not have, as the caller sent them.</param>
+    [LoggerMessage(
+        EventId = 27,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' arrived with arguments its schema does not have ({Arguments}); the call was refused and nothing ran.")]
+    public static partial void UnrecognisedArguments(ILogger logger, string tool, string arguments);
+
+    /// <summary>
+    /// The run's own child did not answer <c>tools/list</c>, so a call was checked
+    /// against BrowserAI's own tools and the verdicts file only.
+    /// </summary>
+    /// <param name="logger">Where to write.</param>
+    [LoggerMessage(
+        EventId = 25,
+        Level = LogLevel.Warning,
+        Message = "The run's own child did not answer tools/list, so this call was checked against BrowserAI's own tools and tool-verdicts.json only; the next call asks again.")]
+    public static partial void ToolListUnreadable(ILogger logger);
 
     /// <summary>A refusal for a call cut off by a stop could not be written.</summary>
     /// <param name="logger">Where to write.</param>

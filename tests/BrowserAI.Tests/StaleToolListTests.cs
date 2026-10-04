@@ -224,7 +224,7 @@ internal sealed class StaleToolListTests
         var older = PlantASessionWrittenBy(sessions, "q261-catchup-older", AnOlderBuild);
         var same = PlantASessionWrittenBy(sessions, "q261-catchup-same", BuildVersion.Current);
 
-        var read = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { [SessionToolSurface.SessionParameter] = older });
+        var read = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", [SessionToolSurface.SessionParameter] = older });
 
         await Assert.That((bool?)read["isError"]).IsFalse();
         await Assert.That(TextOf(read)).Contains(SessionManager.ServedByADifferentVersion(AnOlderBuild));
@@ -235,7 +235,7 @@ internal sealed class StaleToolListTests
         await Assert.That(after.BrowserAiVersion).IsEqualTo(AnOlderBuild);
         await Assert.That(after.BrowserAiVersionHistory.Count).IsEqualTo(1);
 
-        var quiet = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { [SessionToolSurface.SessionParameter] = same });
+        var quiet = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", [SessionToolSurface.SessionParameter] = same });
 
         await Assert.That(TextOf(quiet)).DoesNotContain("the BrowserAI serving you now is");
     }

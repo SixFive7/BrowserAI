@@ -25,8 +25,11 @@ internal enum ToolVerdictKind
 /// <param name="Name">The tool name, exactly as the shipped file spells it.</param>
 /// <param name="Kind">Where the call is answered.</param>
 /// <param name="Why">
-/// On a <see cref="ToolVerdictKind.Deny"/>, the reason a caller reads -- the
-/// whole of the refusal below BrowserAI's own first sentence. <see langword="null"/>
+/// On a <see cref="ToolVerdictKind.Deny"/>, the reason the tool is denied. ⚠️
+/// <i>Corrected 2026-10-04 (previously "the reason a caller reads -- the whole of
+/// the refusal below BrowserAI's own first sentence")</i>: a denied tool is
+/// answered like any tool this BrowserAI does not have since that day, so the
+/// reason is the human record and no model reads it. <see langword="null"/>
 /// otherwise; a <c>deny</c> without one does not load.
 /// </param>
 /// <param name="Since">
@@ -34,7 +37,14 @@ internal enum ToolVerdictKind
 /// It is provenance for a person reading the file and is deliberately absent
 /// from the refusal, which is written for a model deciding what to do next.
 /// </param>
-internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Why, string? Since);
+/// <param name="Note">
+/// On an <see cref="ToolVerdictKind.Allow"/>, a short note BrowserAI appends to
+/// the tool's own description, after <see cref="SessionToolSurface.NoteMarker"/>;
+/// <see langword="null"/> when there is none. Added 2026-10-04 with the
+/// maintainer's rewrite b of the instructions, which moved the advice for one
+/// tool onto that tool.
+/// </param>
+internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Why, string? Since, string? Note = null);
 
 /// <summary>
 /// Every tool BrowserAI knows of, read from the <c>tool-verdicts.json</c> that
@@ -107,6 +117,7 @@ internal sealed class ToolVerdicts
     private const string VerdictMember = "verdict";
     private const string WhyMember = "why";
     private const string SinceMember = "since";
+    private const string NoteMember = "note";
     private const string SchemaVersionMember = "schemaVersion";
     private const string JudgedAgainstMember = "judgedAgainst";
 
@@ -330,7 +341,14 @@ internal sealed class ToolVerdicts
         Find(tool) switch
         {
             { Kind: ToolVerdictKind.Allow } => ToolDecision.Allowed,
-            { Kind: ToolVerdictKind.Deny } denied => ToolDecision.Refused(SessionErrors.ToolIsDenied(denied.Name, denied.Why!)),
+            // ⚠️ A DENIED TOOL IS ANSWERED LIKE A TOOL THIS BROWSERAI DOES NOT
+            // HAVE, since 2026-10-04 (previously with SessionErrors.ToolIsDenied,
+            // the row's own `why` behind "is deliberately NOT in this server's
+            // tools/list"): a tool BrowserAI does not offer should look to a model
+            // like any other it does not have. The `why` stays in the file as the
+            // human record. BrowserProxy answers a denied name before it reaches
+            // here; this arm says the same thing if anything else asks.
+            { Kind: ToolVerdictKind.Deny } denied => ToolDecision.Refused(SessionErrors.ToolDoesNotExist(denied.Name)),
             _ => ToolDecision.Refused(SessionErrors.ToolHasNoVerdict()),
         };
 
@@ -455,10 +473,11 @@ internal sealed class ToolVerdicts
 
         var why = Optional(row.Value, WhyMember);
         var since = Optional(row.Value, SinceMember);
+        var note = Note(origin, member, row, kind);
 
         if (kind is not ToolVerdictKind.Deny)
         {
-            return new ToolVerdict(row.Name, kind, why, since);
+            return new ToolVerdict(row.Name, kind, why, since, note);
         }
 
         // A denial with no reason is the shape this whole file exists to
@@ -475,6 +494,39 @@ internal sealed class ToolVerdicts
         return since is { Length: > 0 }
             ? new ToolVerdict(row.Name, kind, why, since)
             : throw Unreadable(origin, $"'{member}.{row.Name}' is denied and carries no '{SinceMember}' saying when that was judged");
+    }
+
+    /// <summary>
+    /// A row's BrowserAI note, or <see langword="null"/> when it has none.
+    /// </summary>
+    /// <remarks>
+    /// <b>A non-empty string on an <c>allow</c> row, and nowhere else.</b> The
+    /// note is appended to the description of a tool BrowserAI forwards; on a
+    /// denied tool it would describe a tool nobody is shown, and on one of
+    /// BrowserAI's own it would be a second description of a tool whose
+    /// description is already BrowserAI's. Added 2026-10-04 with the maintainer's
+    /// rewrite b of the server instructions.
+    /// </remarks>
+    /// <param name="origin">What to call the file in a failure message.</param>
+    /// <param name="member">Which half the row is in.</param>
+    /// <param name="row">The row.</param>
+    /// <param name="kind">Its verdict.</param>
+    /// <returns>The note, or <see langword="null"/>.</returns>
+    private static string? Note(string origin, string member, JsonProperty row, ToolVerdictKind kind)
+    {
+        if (!row.Value.TryGetProperty(NoteMember, out var note))
+        {
+            return null;
+        }
+
+        if (note.ValueKind is not JsonValueKind.String || note.GetString() is not { Length: > 0 } text)
+        {
+            throw Unreadable(origin, $"'{member}.{row.Name}.{NoteMember}' is not a non-empty string, and a note is text BrowserAI appends to the tool's description");
+        }
+
+        return kind is ToolVerdictKind.Allow
+            ? text
+            : throw Unreadable(origin, $"'{member}.{row.Name}' carries a '{NoteMember}' and its verdict is not 'allow'. A note is appended to the description of a tool BrowserAI forwards, and only an allowed tool has one a model is shown");
     }
 
     private static string? Optional(JsonElement row, string member) =>

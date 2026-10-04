@@ -182,7 +182,7 @@ internal sealed class FlatOutputTests
             SessionPath.For(Path.Combine(ScratchRoot.Path, "eviction-check")),
             headed: false,
             SessionManager.DefaultBrowser,
-            tracing: false,
+            transcript: false,
             RunOptions.Default);
 
         await Assert.That(config.Opinions.Any(opinion => opinion.Path.Contains("outputMaxSize", StringComparison.OrdinalIgnoreCase))).IsFalse();

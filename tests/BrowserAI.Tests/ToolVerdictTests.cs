@@ -242,8 +242,21 @@ internal sealed class ToolVerdictTests
         await Assert.That(loaded.Authored.Count).IsEqualTo(1);
     }
 
+    /// <summary>
+    /// Every <c>deny</c> row carries the reason it was judged and the day.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-10-04 (previously
+    /// <c>EveryDenialCarriesTheRefusalItsCallerReadsAndTheDateItWasJudged</c>).</b>
+    /// Since that day a call naming a denied tool is answered the way a call naming
+    /// a tool BrowserAI does not have is answered, so a row's <c>why</c> is the
+    /// record of the judgement for whoever reads the file, and no caller reads it.
+    /// It is still required: a deny with no reason is a judgement nobody can
+    /// re-examine.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryDenialCarriesTheRefusalItsCallerReadsAndTheDateItWasJudged()
+    public async Task EveryDenialCarriesTheReasonItWasJudgedAndTheDate()
     {
         var denied = RepositoryVerdicts.Committed.Upstream
             .Where(row => row.Kind is ToolVerdictKind.Deny)
@@ -255,7 +268,7 @@ internal sealed class ToolVerdictTests
         {
             if (row.Why is not { Length: > 0 })
             {
-                faults.Add($"{row.Name}: denied with no 'why', so its refusal would carry nothing to act on");
+                faults.Add($"{row.Name}: denied with no 'why', so nobody reading the file can tell why it was judged that way");
             }
 
             if (!DateOnly.TryParseExact(row.Since ?? string.Empty, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
@@ -295,13 +308,53 @@ internal sealed class ToolVerdictTests
         // Playwright's debugger control and its name differs from BrowserAI's own
         // `browserai_resume` by two letters. Planted red 2026-10-03 against the
         // file as it stood, where the row was still `allow`.
-        await Assert.That(denied.Count).IsEqualTo(2);
+        //
+        // ⚠️ SEVEN since 2026-10-04 (previously two): the maintainer's Q365.2 a,
+        // in his words, "Drop browser_verify_element_visible,
+        // browser_verify_text_visiblem, browser_verify_list_visible,
+        // browser_verify_value and browser_generate_locator per your
+        // recommendation." Five test-writing helpers, each a deny with the same
+        // one-line reason and that day's date. Planted red against the file as it
+        // stood, with the five still `allow`.
+        //
+        // ⚠️ EIGHT since 2026-10-04 a second time (previously seven): the
+        // maintainer's Q365.1 a, in his words, "Q365.1 a", and Q365.3, "no
+        // further changes besides what I already told you".
+        // browser_set_storage_state clears the profile's cookies and site
+        // storage before it loads a saved file, so an old file replaces a newer
+        // login, and the profile already keeps logins. Planted red against the
+        // file as it stood, with the row still `allow`.
+        await Assert.That(denied.Count).IsEqualTo(8);
 
         // And them by name, because a count is satisfied by the wrong row. The
         // dates are the file's own: `browser_annotate` judged at the 0.0.79
-        // surface, `browser_resume` at the 0.0.83 one.
+        // surface, `browser_resume` at the 0.0.83 one, the five on 2026-10-03.
         await Assert.That(denied.Select(row => row.Name).Order(StringComparer.Ordinal))
-            .IsEquivalentTo((string[])["browser_annotate", "browser_resume"]);
+            .IsEquivalentTo((string[])
+            [
+                "browser_annotate",
+                "browser_generate_locator",
+                "browser_resume",
+                "browser_set_storage_state",
+                "browser_verify_element_visible",
+                "browser_verify_list_visible",
+                "browser_verify_text_visible",
+                "browser_verify_value",
+            ]);
+
+        foreach (var helper in denied.Where(row => row.Name is "browser_generate_locator" || row.Name.StartsWith("browser_verify_", StringComparison.Ordinal)))
+        {
+            await Assert.That(helper.Since).IsEqualTo("2026-10-03");
+            await Assert.That(helper.Why!).Contains("tests");
+        }
+
+        // The storage loader's reason names what it destroys and why nothing is
+        // lost by refusing it, which is the judgement a reader of the file needs.
+        var loader = denied.Single(row => row.Name == "browser_set_storage_state");
+
+        await Assert.That(loader.Since).IsEqualTo("2026-10-04");
+        await Assert.That(loader.Why!).Contains("cookies");
+        await Assert.That(loader.Why!).Contains("profile");
 
         // The second denial's reason is the measured one, liveness, and it says
         // what the call waits for. It deliberately does NOT send a caller to
@@ -314,6 +367,49 @@ internal sealed class ToolVerdictTests
         await Assert.That(resume.Why!).Contains("next pause");
         await Assert.That(resume.Why!).DoesNotContain("browserai_resume");
         await Assert.That(resume.Since).IsEqualTo("2026-10-03");
+    }
+
+    /// <summary>
+    /// Every BrowserAI note in the shipped file sits on an <c>allow</c> row of a
+    /// tool the snapshot carries, and the notes are the ones the instructions
+    /// rewrite moved onto tools.
+    /// </summary>
+    /// <remarks>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"Rewrite the
+    /// instructions according to b."</i> -- a lean text that keeps only rules
+    /// spanning tools, with the advice for one tool moved to that tool as a short
+    /// note declared beside its verdict. Upstream's own description and schema
+    /// stay as the child sends them; the note is appended at run time and marked
+    /// as BrowserAI's.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryNoteIsOnAnAllowedToolAndTheMovedAdviceHasOne()
+    {
+        var noted = RepositoryVerdicts.Committed.Upstream.Where(row => row.Note is not null).ToList();
+
+        await Assert.That(noted.Where(row => row.Kind is not ToolVerdictKind.Allow).Select(row => row.Name)).IsEmpty();
+        await Assert.That(noted.Where(row => !Snapshot().Contains(row.Name, StringComparer.Ordinal)).Select(row => row.Name)).IsEmpty();
+
+        await Assert.That(noted.Select(row => row.Name).Order(StringComparer.Ordinal))
+            .IsEquivalentTo((string[])
+            [
+                "browser_mouse_click_xy",
+                "browser_mouse_drag_xy",
+                "browser_mouse_move_xy",
+                "browser_network_state_set",
+                "browser_route",
+                "browser_take_screenshot",
+            ]);
+
+        // The shape is the loader's to refuse, so a note on a denied row never
+        // loads at all; this is the positive control that the field loads where
+        // it is allowed.
+        var loaded = ToolVerdicts.Parse(
+            Encoding.UTF8.GetBytes(RepositoryVerdicts.Document().ToJsonString()),
+            "the-committed-file.json");
+
+        await Assert.That(loaded.Find("browser_take_screenshot")!.Note).IsNotNull();
     }
 
     [Test]
@@ -497,6 +593,24 @@ internal sealed class ToolVerdictTests
         (
             "one name carrying two verdicts",
             file => file["upstream"]![SessionToolSurface.Init] = new JsonObject { ["verdict"] = "allow" }),
+
+        // ⚠️ THE NOTE, ADDED 2026-10-04 with the field: a BrowserAI note is
+        // appended to the description of a tool BrowserAI forwards, so it is a
+        // non-empty string on an `allow` row and nowhere else. A note on a denied
+        // tool would describe a tool nobody is shown; on one of ours, a tool whose
+        // description is ours already.
+        (
+            "a note on a denied tool",
+            file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "deny", ["why"] = "because", ["since"] = "2026-10-04", ["note"] = "read this" }),
+        (
+            "a note on one of BrowserAI's own tools",
+            file => file["authored"]![SessionToolSurface.Init] = new JsonObject { ["verdict"] = "answer", ["note"] = "read this" }),
+        (
+            "a note that is not a string",
+            file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow", ["note"] = 5 }),
+        (
+            "an empty note",
+            file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow", ["note"] = string.Empty }),
     ];
 
     private static IReadOnlyList<string> Snapshot() =>

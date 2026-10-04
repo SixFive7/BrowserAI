@@ -239,8 +239,14 @@ internal sealed class PageToolTests
         // arriving straight from a client has no verdict row, is refused before
         // anything is forwarded, and stays that way -- the only route to a page
         // tool is through the judged tool.
+        //
+        // ⚠️ Answered since 2026-10-04 as a tool BrowserAI does not have
+        // (previously asserted "no forwarding verdict", the refusal for a listed
+        // tool with no row). The maintainer's decision of 2026-10-03: a name in
+        // no list this BrowserAI serves gets the plain answer, and BrowserAI's
+        // list never carries a page's tools.
         await Assert.That(run.IsError("straightToTheWireName")).IsTrue();
-        await Assert.That(run.Text("straightToTheWireName")).Contains("no forwarding verdict");
+        await Assert.That(run.Text("straightToTheWireName")).StartsWith("BrowserAI has no tool 'webmcp_");
         await Assert.That(run.Text("straightToTheWireName")).DoesNotContain("ALPHA-ANSWERED");
     }
 }

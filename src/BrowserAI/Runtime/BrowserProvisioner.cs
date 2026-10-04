@@ -284,7 +284,7 @@ internal sealed record ProvisioningTimers
 /// letting it through would have bought a worse answer and not a working
 /// one. What keeps a downloading session inspectable is BrowserAI's <b>own</b>
 /// tools -- <c>browserai_list</c>, <c>browserai_resume</c> and
-/// <c>browserai_set_purpose</c> all answer throughout, because none of them
+/// <c>browserai_change_purpose</c> all answer throughout, because none of them
 /// needs a browser.
 /// </para>
 /// <para>

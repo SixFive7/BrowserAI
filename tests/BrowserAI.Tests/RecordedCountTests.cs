@@ -581,9 +581,15 @@ internal sealed partial class RecordedCountTests
         // maintainer decided it: `browser_resume` is denied beside
         // `browser_annotate`, because it is Playwright's debugger control and its
         // name is two letters from BrowserAI's own `browserai_resume`.
+        //
+        // ⚠️ `withheld` is 8 since 2026-10-04 (previously 2), and the
+        // maintainer decided both moves: Q365.2 a, of 2026-10-03, denied the five
+        // test-writing helpers, and Q365.1 a, of 2026-10-04, denied
+        // `browser_set_storage_state`, which clears the profile's cookies and site
+        // storage before it loads a saved file.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
         await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
-        await Assert.That(withheld).IsEqualTo(2);
+        await Assert.That(withheld).IsEqualTo(8);
     }
 
     /// <summary>

@@ -1,0 +1,6 @@
+2026-10-03T23:28:46.501Z pid=11572 START size=20000 isError=true
+2026-10-03T23:28:46.507Z pid=11572 REQ initialize
+2026-10-03T23:28:46.508Z pid=11572 NOTE notifications/initialized
+2026-10-03T23:28:46.509Z pid=11572 REQ tools/list
+2026-10-03T23:28:46.803Z pid=11572 REQ tools/call
+2026-10-03T23:28:46.803Z pid=11572 CALL browserai_list served=20000

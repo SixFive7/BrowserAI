@@ -135,9 +135,15 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 70 of 72 is what DECISIONS records
+        // Stated as a number as well, because 64 of 72 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-09-21, previously 72 of 74, and this is the
+        // say so. *(Corrected 2026-10-04 a second time, previously 65 of 72: the
+        // maintainer's Q365.1 a denied browser_set_storage_state.)* *(Corrected
+        // 2026-10-04, previously 70 of 72: the maintainer
+        // dropped the five test-writing helpers, Q365.2 a, so five `allow` rows
+        // became `deny` rows, the denominator held still and this number lost
+        // five. The second move here that a decision made.)* *(Corrected
+        // 2026-09-21, previously 72 of 74, and this is the
         // first time it has gone DOWN: @playwright/mcp 0.0.82 marked
         // browser_webmcp_list and browser_webmcp_call `skillOnly`, so both left
         // the exposed surface while keeping capability `core`. The pair that
@@ -159,7 +165,7 @@ internal sealed class VerticalSliceTests
         // previously 71 of 72: the maintainer removed browser_resume, so the
         // denominator held still and this number lost one. It is the first move
         // here that a decision made and not an upstream release.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 70);
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 64);
 
         // ⚠️ And every withheld tool is absent from the REAL binary's real
         // answer, named individually. The list comparison above would also catch
@@ -170,7 +176,10 @@ internal sealed class VerticalSliceTests
         // off-the-wire half is exactly what a count would not have caught.
         // Corrected earlier the same day from "among 74" -- the list is the 7
         // authored names plus the advertised upstream ones, which was 75 when
-        // that number was written and is 78 now.)*
+        // that number was written and is 78 now.)* *(Corrected 2026-10-04,
+        // previously "in a list of 78": the list is the 8 authored names and the
+        // 64 advertised upstream ones, 72, since the five test-writing helpers
+        // and browser_set_storage_state were denied.)*
         foreach (var denial in RepositoryVerdicts.TheDenials)
         {
             await Assert.That(run.ToolNames).DoesNotContain(denial.Name);
@@ -181,10 +190,19 @@ internal sealed class VerticalSliceTests
         // off-the-wire half of the grant: `ModelSurfaceTests` asserts it in
         // process, and a rewrite that dropped them between there and the pipe
         // would pass that and fail this.
-        foreach (var granted in SessionToolSurface.NewlyGrantedTools)
+        //
+        // ⚠️ Except the five of them the maintainer denied on 2026-10-03,
+        // Q365.2 a, the test-writing helpers: they are granted to the child and
+        // kept out of the list by their `deny` rows, so the loop above already
+        // holds them absent and this one holds the other five present.
+        foreach (var granted in SessionToolSurface.NewlyGrantedTools
+            .Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)))
         {
             await Assert.That(run.ToolNames).Contains(granted);
         }
+
+        await Assert.That(SessionToolSurface.NewlyGrantedTools
+            .Count(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool))).IsEqualTo(5);
 
         // Not vacuous -- the child really does have each of them, so the absence
         // above is BrowserAI's filter and not an upstream that never shipped

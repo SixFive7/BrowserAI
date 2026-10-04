@@ -513,6 +513,43 @@ They now say what is written and name the two tools.
 `ModelSurfaceTests.TheTracingArgumentSaysWhatItWritesAndNamesTheToolsThatRecordATrace`
 reads the three bundle lines on every build, so an upstream rename is a red build
 and not a description gone stale; row 67 carries the mapping.
+*Corrected 2026-10-04 by addition: that arm is
+`ModelSurfaceTests.TheTranscriptArgumentSaysWhatItWritesAndThatTypedPasswordsLandInIt`
+since the rename below, and it reads the same three lines.*
+
+⚠️ **What `session.md` holds, measured, and the argument is `transcript`
+since 2026-10-04** -- *added 2026-10-04 by addition. Q371 c, the maintainer's
+words verbatim: "I like option c and the rename to transcript."* Option c renamed
+the argument to what it does, shortened both descriptions and took the clause
+about it out of the instructions; `tracing` is now an argument neither tool has,
+refused like any other. **Measured 2026-10-03** at `@playwright/mcp` 0.0.83
+through a published BrowserAI, one headless Chromium session against a page the
+driver served on `127.0.0.1` with sample credentials, and **again 2026-10-04**
+through the build that renamed it
+([evidence](../../docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md)).
+**It holds each browser tool call that succeeded**, one `### Tool call: <name>`
+section each, with the arguments as upstream received them and the parsed result:
+the page, the snapshot, the events and any attachment, so a screenshot is in it as
+base64 PNG and a 16,396-byte one made most of a 26,822-byte file. BrowserAI's own
+`session` and `why` are not in it, because they are removed before a call is
+forwarded, and a default upstream filled in is: `browser_take_screenshot` showed
+a `scale` the call never sent. **Text typed into a page is in it as plain text**,
+the typed password both times. **A call that failed is not in it**: the
+`browser_click` on a reference that was not on the page is missing from both
+runs, as are the calls BrowserAI refused, which never reached upstream. The
+folder was `output\session-1791069599122` before and
+`output\session-1791072657892` after, named for the time in milliseconds when
+the log was created. The reading above found the first two and could not show
+the last two; the description now says all four in one text on both tools:
+*"Write session.md, a Markdown transcript of this run: every browser tool call
+with its arguments and its result, page snapshots and screenshots included; a
+call that fails can be missing. It goes in a new folder per run,
+output\session-&lt;time in milliseconds&gt;, inside the session folder. Text typed
+into the page, passwords included, is stored in it as plain text. Defaults to
+false. Lasts until this browser closes; a later browserai_resume starts without
+it unless it is passed again."* **Re-establish** with the evidence batch's
+`drive.cjs` against a published BrowserAI; it serves its own page and reports
+which output files carried the password. Row 191 carries it. `[FLOATS]`
 
 **`browser_get_config` answers Markdown with JSON inside it, not JSON.** The tool
 body is `response.addTextResult(JSON.stringify(context.config, null, 2))`, but
@@ -773,7 +810,8 @@ ${sessionFolder}`)` call site in the bundle.
 The old sentence was true of the setup it was written against -- all four of that
 launcher's `config.json` files set `saveSession: true` -- and it is **not** true of
 BrowserAI's default, which writes the key from the `tracing` modifier and leaves
-it off. Nothing about the classifier changes either way: silence is benign too.
+it off (*the `transcript` argument since 2026-10-04, Q371 c*). Nothing about the
+classifier changes either way: silence is benign too.
 `[FLOATS]`, [row 33](../re-verification.md).
 
 **Which error shapes actually reach stderr at 0.0.79, measured twice each,

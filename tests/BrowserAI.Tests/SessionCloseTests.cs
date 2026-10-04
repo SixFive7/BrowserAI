@@ -436,14 +436,29 @@ internal sealed class SessionCloseTests
 
     /// <summary>
     /// A resume of a session whose browser is up applies nothing, refuses a
-    /// per-run setting it was asked for that differs, and accepts the same call
-    /// without it.
+    /// per-run setting it was asked for that differs, and answers <i>the session
+    /// is already live</i> to the same call without it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Q324 a.</b> A field report of 2026-10-01: two resumes asking for a
     /// window were each told "nothing was changed", with no error, and the
     /// session stayed headless. Only the arguments a call passes are compared, so
     /// a bare resume is never refused for asking for nothing.
+    /// </para>
+    /// <para>
+    /// <b>And the maintainer's rule of 2026-10-03, in his words:</b> <i>"A resume
+    /// on an active session is fine and a noop and returns "the session is already
+    /// live" if and only if there are no conflicting settings. So the same settings
+    /// or no settings given or a mix. If any of the settings are different the
+    /// resume is refused with an explicit message that the models needs to call
+    /// close and then resume with the different settings. Name the parameters that
+    /// triggered this refusal. Also explain in the response that this will close
+    /// and re-open the playwright browser."</i> The texts are asserted as
+    /// LITERALS as well as against the method that writes them, because comparing
+    /// a sentence to the method that produces it cannot tell a true sentence from
+    /// a false one.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -472,6 +487,7 @@ internal sealed class SessionCloseTests
             ["why"] = "the suite asking for a window on a browser that is up",
             ["purpose"] = "a purpose a refused resume must not record",
             ["headed"] = true,
+            ["transcript"] = true,
             ["viewport"] = "1280x720",
         });
 
@@ -479,9 +495,27 @@ internal sealed class SessionCloseTests
         await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
             location.FullPath,
             [
-                "'headed' is false and you asked for true",
-                $"'viewport' is '{BrowserConfiguration.DefaultViewport}' and you asked for '1280x720'",
+                "'headed' (running: false, asked: true)",
+                "'transcript' (running: false, asked: true)",
+                $"'viewport' (running: {BrowserConfiguration.DefaultViewport}, asked: 1280x720)",
             ]));
+
+        // What the maintainer asked the refusal to say, each half on its own:
+        // every parameter that triggered it with both values, that nothing
+        // changed, the two calls that apply them, that those close the
+        // Playwright browser and open a new one, and that a live session needs
+        // no resume at all.
+        var refusal = TextOf(refused);
+
+        await Assert.That(refusal).StartsWith($"'{location.FullPath}' is already live, so {SessionToolSurface.Resume} changed nothing.");
+        await Assert.That(refusal).Contains("'headed' (running: false, asked: true)");
+        await Assert.That(refusal).Contains("'transcript' (running: false, asked: true)");
+        await Assert.That(refusal).Contains($"'viewport' (running: {BrowserConfiguration.DefaultViewport}, asked: 1280x720)");
+        await Assert.That(refusal).Contains($"call {LiveSession.BrowserCloseTool} on this session, then {SessionToolSurface.Resume} with them");
+        await Assert.That(refusal).Contains("closes the Playwright browser and opens a new one with the new settings");
+        await Assert.That(refusal).Contains("page snapshots and element references from before no longer apply");
+        await Assert.That(refusal).Contains("no resume is needed: the session is live, so carry on with its tools");
+        await Assert.That(refusal).DoesNotContain("leave those");
 
         // Nothing changed: no new child, and the purpose the refused call
         // carried is not in the record.
@@ -489,7 +523,8 @@ internal sealed class SessionCloseTests
         await Assert.That(SessionLock.ReadRecord(location)!.Purpose).IsEqualTo("the session whose browser is up when it is resumed");
 
         // The positive control: the same session, resumed without the
-        // arguments, is answered and still left alone.
+        // arguments, is answered and still left alone -- and the answer leads
+        // with the maintainer's own words.
         var bare = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = directory,
@@ -497,18 +532,78 @@ internal sealed class SessionCloseTests
         });
 
         await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(bare)).Contains(SessionManager.BrowserIsUpSoNothingWasApplied);
+        await Assert.That(TextOf(bare)).StartsWith(SessionManager.AlreadyLive(browserUp: true, purposeChanged: false));
+        await Assert.That(TextOf(bare)).StartsWith("The session is already live");
+        await Assert.That(TextOf(bare)).Contains("nothing changed");
 
-        // An argument that names what is already in use is not a difference.
-        var same = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        // An argument that names what is already in use is not a difference,
+        // and neither is a mix of one with an argument left out.
+        foreach (var asked in new[]
+        {
+            new JsonObject { ["headed"] = false },
+            new JsonObject { ["headed"] = false, ["viewport"] = BrowserConfiguration.DefaultViewport.ToString() },
+        })
+        {
+            asked["directory"] = directory;
+            asked["why"] = "the suite asking for what the browser already has";
+
+            var same = await CallAsync(rig, SessionToolSurface.Resume, asked);
+
+            await Assert.That((bool?)same["isError"]).IsNotEqualTo(true);
+            await Assert.That(TextOf(same)).StartsWith("The session is already live");
+            await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
+        }
+    }
+
+    /// <summary>
+    /// A resume of a live session whose browser has not started, passing
+    /// nothing, is the no-op the maintainer's rule describes: the session keeps
+    /// the settings it has and nothing is started.
+    /// </summary>
+    /// <remarks>
+    /// <b>The rule of 2026-10-03: <i>"no settings given"</i> is a no-op that
+    /// answers <i>"the session is already live"</i>.</b> Until then a resume with no
+    /// browser up compared the call's DEFAULTS with what the session was running,
+    /// so a bare resume of a session started at another viewport opened it again
+    /// at the default one and said it had applied settings nobody had asked for.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABareResumeWithNoBrowserUpKeepsTheSettingsTheSessionHas()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "bare-resume-no-browser");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["why"] = "the suite asking for what the browser already has",
-            ["headed"] = false,
+            ["purpose"] = "the session resumed bare before its browser started",
+            ["viewport"] = "1280x720",
+            ["transcript"] = true,
         });
 
-        await Assert.That((bool?)same["isError"]).IsNotEqualTo(true);
+        var bare = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming without asking for anything",
+        });
+
+        await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(bare)).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
+        await Assert.That(TextOf(bare)).StartsWith("The session is already live");
+        await Assert.That(TextOf(bare)).Contains("nothing changed");
+        await Assert.That(TextOf(bare)).Contains("viewport: 1280x720");
+
+        // Nothing was started, and the one child there is keeps the config it
+        // was launched with: the viewport and the transcript the init asked for.
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
+
+        var config = ConfigOf(sessions.Launches[^1]);
+
+        await Assert.That((int?)config["browser"]?["contextOptions"]?["viewport"]?["width"]).IsEqualTo(1280);
+        await Assert.That((bool?)config["saveSession"]).IsTrue();
     }
 
     /// <summary>
@@ -516,9 +611,19 @@ internal sealed class SessionCloseTests
     /// asked for, by starting a new child at them.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Q324 c.</b> Nothing a new child can take away is up, so the settings go
     /// into the new child's config; a resume that asked for what the session
     /// already has starts nothing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Kept on 2026-10-04 beside the maintainer's rule of 2026-10-03, and
+    /// recorded for his review.</b> His rule refuses a differing setting on an
+    /// active session and tells the caller to close and resume; a session whose
+    /// browser has not started has no Playwright browser to close, so this case
+    /// still applies the setting by opening the session again, and nothing is
+    /// lost by it.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -541,7 +646,7 @@ internal sealed class SessionCloseTests
             ["why"] = "the suite resuming with what the session already has",
         });
 
-        await Assert.That(TextOf(unchanged)).Contains(SessionManager.NothingNeededApplying);
+        await Assert.That(TextOf(unchanged)).StartsWith("The session is already live");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
 
         // A window and a smaller viewport for a session created headless: the

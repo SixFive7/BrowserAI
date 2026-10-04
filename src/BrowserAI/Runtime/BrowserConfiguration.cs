@@ -753,10 +753,11 @@ internal static class BrowserConfiguration
     /// Firefox would point one browser at the other's profile -- which upstream
     /// would launch, and which nothing would report.
     /// </param>
-    /// <param name="tracing">Whether upstream records this session to the output directory.</param>
+    /// <param name="transcript">Whether upstream writes <c>session.md</c> into the output directory.</param>
     /// <param name="run">The per-run arguments a caller gave for this launch.</param>
     /// <returns>The bytes to write, and every opinion they carry.</returns>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b><c>tracing</c> maps to upstream's <c>saveSession</c>, because there
     /// is nothing else left to map it to.</b> Measured 2026-08-16 against
     /// <c>@playwright/mcp</c> 0.0.79: neither the CLI surface nor
@@ -768,12 +769,21 @@ internal static class BrowserConfiguration
     /// <c>saveSession</c> is the surviving
     /// feature with the same purpose: it records what the session did into the
     /// output directory.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Renamed <c>transcript</c> on 2026-10-04, argument and parameter
+    /// both</b> -- Q371 c, the maintainer's words of 2026-10-03 verbatim: <i>"I like
+    /// option c and the rename to transcript."</i> The mapping above is unchanged;
+    /// what changed is the name, because <c>saveSession</c> writes a Markdown
+    /// transcript of the run's calls and a model reading <c>tracing</c> expected a
+    /// Playwright trace.
+    /// </para>
     /// </remarks>
     public static GeneratedConfig ForSession(
         SessionPath session,
         bool headed,
         string browser,
-        bool tracing,
+        bool transcript,
         RunOptions run)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -790,7 +800,7 @@ internal static class BrowserConfiguration
             OutputDirectory = output,
             DownloadsDirectory = Path.Combine(session.FullPath, SessionLayout.DownloadsFolderName),
             Capabilities = GrantedCapabilities,
-            SaveSession = tracing,
+            SaveSession = transcript,
             Viewport = run.Viewport,
             Locale = run.Locale,
             TimeZone = run.TimeZone,
@@ -1355,7 +1365,7 @@ internal sealed record ViewportSize(int Width, int Height)
 /// </summary>
 /// <remarks>
 /// <b>Every one of these is regenerated at every child launch and none is
-/// written to the session record</b> -- the same rule <c>headed</c>, <c>tracing</c>
+/// written to the session record</b> -- the same rule <c>headed</c>, <c>transcript</c>
 /// and <c>debug</c> follow. A session created at one viewport is resumed at
 /// another without being destroyed first, and nothing on disk differs between
 /// the two.

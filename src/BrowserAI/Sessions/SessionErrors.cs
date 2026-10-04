@@ -514,57 +514,17 @@ internal static class SessionErrors
         + $"{SessionToolSurface.Init} will not take it over. Use {SessionToolSurface.Resume} with directory='{path}' to drive it -- do that only if you expected it to be there, because another agent may be using it -- or {SessionToolSurface.Destroy} to delete it, or {SessionToolSurface.Init} on a directory that is not already one. "
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
-    /// <summary>
-    /// Row 5 -- a tool this build was told not to forward.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Half of this sentence is BrowserAI's and half is
-    /// <c>tool-verdicts.json</c>'s, and the split is the whole design.</b> The
-    /// frame is ours and is the same for every denied tool: it was not run,
-    /// nothing was changed, and the name is not in this server's
-    /// <c>tools/list</c>. The reason -- and what to do instead -- is the row's own
-    /// <c>why</c>, because the reason is a fact about that tool and belongs in
-    /// the file a person adjudicates and not in a C# literal beside a
-    /// constant.
-    /// </para>
-    /// <para>
-    /// <b>It says the tool is not in the list, first.</b> The reader of this
-    /// sentence asked for a tool this server never offered, so it almost
-    /// certainly knows the name from <c>@playwright/mcp</c> and not from
-    /// <c>tools/list</c> -- and a refusal that did not say so reads as a tool that
-    /// broke and not one that is absent, which is a retry.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously
-    /// <c>AnnotationIsNotInTheSurface(string tool)</c>, which carried
-    /// <c>browser_annotate</c>'s whole reasoning as two literal sentences here).</b>
-    /// Those two sentences are now that tool's <c>why</c> in
-    /// <c>tool-verdicts.json</c> and reach a caller through this method's
-    /// <paramref name="why"/>, so the text a caller reads is byte-identical and
-    /// the reason has become data. What that buys is a second denial costing a
-    /// row and not a method: the old shape could only ever describe one
-    /// tool, and it was named after it.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-18 (previously
-    /// <c>AnnotationWouldHangAWindowlessSession(string tool,
-    /// SessionModeDefinition mode)</c>: "a '{mode}' session opens no window ...
-    /// create a session in 'interactive' or 'persistent' mode if a human will be
-    /// at the keyboard").</b> The tool is now withheld from the surface in every
-    /// mode, so there is no mode to name and no session to create that would make
-    /// the call work -- offering one would send a model to build a session for a
-    /// tool that is still not there. The mode parameter went with the sentence.
-    /// Before that it was <c>ModeRefusal</c>, which named the mode that would
-    /// permit a tool the <c>(tool, mode)</c> permission matrix refused.
-    /// </para>
-    /// </remarks>
-    /// <param name="tool">The tool that was refused, spelled as the verdicts file spells it.</param>
-    /// <param name="why">The row's own reason, which is the rest of the refusal.</param>
-    /// <returns>The refusal.</returns>
-    public static string ToolIsDenied(string tool, string why) =>
-        $"'{tool}' is deliberately NOT in this server's tools/list, in any session, and calling it by name does not reach the browser. It was not run and nothing was changed. "
-        + why;
+    // ⚠️ DELETED 2026-10-04: `ToolIsDenied(string tool, string why)`, Row 5 -- a
+    // tool this build was told not to forward. It answered "'<tool>' is
+    // deliberately NOT in this server's tools/list, in any session, and calling it
+    // by name does not reach the browser. It was not run and nothing was changed."
+    // followed by the row's own `why` from tool-verdicts.json. Under the
+    // maintainer's directive of 2026-10-03 a tool BrowserAI does not offer should
+    // look to a model like any other it does not have, so a denied tool is
+    // answered by `ToolDoesNotExist`, and the `why` is the human record in the
+    // file. Its history before this -- `AnnotationIsNotInTheSurface` until
+    // 2026-08-26 and `AnnotationWouldHangAWindowlessSession` until 2026-08-18 --
+    // is in git.
 
     /// <summary>
     /// Row 5's companion -- a tool nobody has judged, which is a gap and not
@@ -616,13 +576,129 @@ internal static class SessionErrors
     /// That window is where an agent is driving the product while a human decides,
     /// which is exactly when an instruction to retry forever costs the most.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>SHORTENED 2026-10-04, and narrowed to the one case it is true of</b>,
+    /// by the maintainer's decision of 2026-10-03: <i>"Calls to a tool BrowserAI
+    /// doesn't have: a) Yes, in the same lane."</i> A name the tool list does not
+    /// carry and the verdicts file has no row for gets
+    /// <see cref="ToolDoesNotExist"/> now; this is left to a name the list
+    /// carries with no row, which is a defect in the build. <b>How it can still
+    /// happen at run time</b>: the list is read from the run's own child, so a
+    /// payload carrying an upstream tool the shipped verdicts file was never told
+    /// about -- a developer build run after a payload was resolved again and
+    /// before it was adjudicated, while its suite is red, or an install whose
+    /// payload or verdicts file was changed by hand -- advertises the name and
+    /// refuses it here. And when the run's own child cannot be asked for its list
+    /// at all, a name with no row lands here too, whatever it is. <i>Previously:
+    /// "BrowserAI has no forwarding verdict for the tool you named, so nothing was
+    /// sent to the browser and nothing was changed. This is a GAP, not a decision:
+    /// a tool this build was deliberately told not to forward refuses with its own
+    /// reason instead of this sentence. The name may well be in tools/list --
+    /// being listed is not the same as being judged -- so retrying it will fail in
+    /// exactly this way until a human adjudicates it. Do not retry. Use a different
+    /// tool, or stop and report that this one does not work in this build."</i>
+    /// </para>
     /// </remarks>
     /// <returns>The refusal.</returns>
     public static string ToolHasNoVerdict() =>
-        "BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. "
-        + "This is a GAP, not a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. "
-        + "The name may well be in tools/list -- being listed is not the same as being judged -- so retrying it will fail in exactly this way until a human adjudicates it. "
-        + "Do not retry. Use a different tool, or stop and report that this one does not work in this build.";
+        "This build of BrowserAI has no verdict for the tool you named, so it was not run and nothing changed. "
+        + "That is a defect in this build, not in your call, and the tool will be refused the same way every time: use another tool, or report that this one does not work in this build.";
+
+    /// <summary>
+    /// Row 5's second companion -- a tool this BrowserAI does not have at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words: <i>"Calls to a tool
+    /// BrowserAI doesn't have: a) Yes, in the same lane."</i></b> A name that is
+    /// in neither the tool list BrowserAI advertises nor its verdicts file gets
+    /// this plain answer: the tool does not exist here, nothing ran, use the tools
+    /// in your tool list. Until 2026-10-04 it met <see cref="ToolHasNoVerdict"/>,
+    /// which calls the name a gap a human must adjudicate and tells the caller to
+    /// stop -- wrong advice for a list read from another server or a name a model
+    /// made up -- and with no session it met <see cref="SessionMissing"/>, which
+    /// sends a caller to supply a session for a tool that is not there.
+    /// </para>
+    /// <para>
+    /// <b>It names the tool and suggests none -- Q371.6 c, the maintainer's own
+    /// wording of 2026-10-03</b> (previously it named no tool, for the reason
+    /// <see cref="ToolHasNoVerdict"/> gives: a string the caller invented, quoted
+    /// back into a model's context). The name is quoted through
+    /// <see cref="RecordText.Escape"/>, as a path is. A similar name is a guess,
+    /// which is history or invention and nothing else, so none is offered.
+    /// </para>
+    /// <para>
+    /// <b>And it says why a tool the caller expected may be missing</b>: a client
+    /// keeps the list it fetched when the conversation started, whatever the
+    /// server it now talks to offers -- measured, Claude Code re-listed 0 of 18
+    /// servers it had launched again, and Codex ignored a list-changed
+    /// notification 30 of 30 (lane q369, 2026-10-03). So a model is told not to
+    /// try, and who can change it.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The name the call carried.</param>
+    /// <returns>The refusal.</returns>
+    public static string ToolDoesNotExist(string tool) =>
+        $"BrowserAI has no tool '{RecordText.Escape(tool)}', so nothing ran. Use the tools in your tool list. "
+        + "If BrowserAI was updated during this conversation, a tool your list does not show cannot be called until the person you are working with reconnects BrowserAI or starts a new conversation: your client keeps the list it fetched when the conversation started.";
+
+    /// <summary>
+    /// A call carried an argument its tool's schema does not have.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"I'd expect
+    /// that any call carrying any parameter or argument that we do not recognize
+    /// would be refused actively with a syntax error. This would teach the LLM it
+    /// has somethign wrong. Also, I do not like us keeping history and translating
+    /// certen arguments for historical sake. The product is what it is and the llm
+    /// needs to learn to use it."</i> So it opens with his words and names every
+    /// argument the schema does not have. It carries no history: an argument that
+    /// once had another name is one more name the schema does not have.
+    /// </para>
+    /// <para>
+    /// <b>And it carries the tool's whole definition, Q371.5 b</b>, decided by
+    /// the maintainer on 2026-10-03: the description and every argument with its
+    /// own, generated by <see cref="ToolSignature.Rendered"/> from the list
+    /// BrowserAI serves and never written here, so the next call can be right
+    /// without another trip to <c>tools/list</c>.
+    /// </para>
+    /// <para>
+    /// <b>The caller's names are escaped and the schema's are not.</b> An
+    /// argument name is a string a model wrote and is quoted back through
+    /// <see cref="RecordText.Escape"/>, as a path is; the definition is read off
+    /// the list BrowserAI advertised.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool the call named, which the list carries.</param>
+    /// <param name="unrecognised">Every argument name the schema does not have, in the call's order.</param>
+    /// <param name="signature">What the tool takes, read off the live list.</param>
+    /// <returns>The refusal.</returns>
+    public static string UnrecognisedArguments(string tool, IReadOnlyList<string> unrecognised, ToolSignature signature)
+    {
+        ArgumentNullException.ThrowIfNull(unrecognised);
+        ArgumentNullException.ThrowIfNull(signature);
+
+        var named = Joined([.. unrecognised.Select(name => $"'{RecordText.Escape(name)}'")], "or");
+
+        var again = signature.Arguments.Count is 0
+            ? "It takes no arguments, so call it again with none."
+            : "Call it again with only the arguments its definition lists:";
+
+        return $"Syntax error: '{tool}' has no argument named {named}, so nothing ran and nothing changed. {again}\n\n{signature.Rendered()}";
+    }
+
+    /// <summary>A list in a sentence: commas, and the given word before the last.</summary>
+    /// <param name="items">What to list.</param>
+    /// <param name="last">The word before the last item.</param>
+    /// <returns>The list.</returns>
+    private static string Joined(List<string> items, string last) =>
+        items.Count switch
+        {
+            0 => string.Empty,
+            1 => items[0],
+            _ => $"{string.Join(", ", items.Take(items.Count - 1))} {last} {items[^1]}",
+        };
 
     /// <summary>
     /// The page under this session's current tab offers no tool by that name.
@@ -830,7 +906,7 @@ internal static class SessionErrors
         $"'{tool}' needs a browser, and this is the first use of {browser} on this machine. The download has started ({megabytes}) into '{directory}' and BrowserAI did not wait for it -- nothing was changed and no browser was launched. "
         + $"{Progress(progress, megabytes)} "
         + "Nothing has to change to recover: call the same tool again on the same session, because the session and its child are already running, so nothing has to be re-created and there is nothing to restart. "
-        + $"Every browser tool is refused until it lands, including 'browser_get_config' -- it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile.";
+        + $"Every browser tool is refused until it lands, including 'browser_get_config' -- it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.ChangePurpose} all work meanwhile.";
 
     /// <summary>
     /// The progress clause, which is the whole of what a caller has to decide on.
@@ -1249,6 +1325,25 @@ internal static class SessionErrors
     /// both told "nothing was changed", with no error, and the session stayed
     /// headless.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>REWRITTEN 2026-10-04 to the maintainer's rule and his own draft.</b>
+    /// The rule of 2026-10-03, in his words: <i>"If any of the settings are
+    /// different the resume is refused with an explicit message that the models
+    /// needs to call close and then resume with the different settings. Name the
+    /// parameters that triggered this refusal. Also explain in the response that
+    /// this will close and re-open the playwright browser."</i> And of the line the
+    /// first draft ended with, in his words: <i>"Why would we say 'To keep the
+    /// browser as it is, leave those settings out.' having it call resume with the
+    /// same settings over just advicing it to not resume at all?"</i> So the last
+    /// sentence says no resume is needed. <i>Previously: "'path' is open in this
+    /// BrowserAI and its browser is up, so browserai_resume applied nothing and
+    /// changed nothing. It was asked for per-run settings this browser was not
+    /// launched with: ... A per-run setting takes effect only when a browser
+    /// starts. To apply them, call browser_close on this session and then
+    /// browserai_resume again with the same arguments; the first browser call after
+    /// that reopens the tabs. To keep this browser as it is, leave those arguments
+    /// out."</i>
+    /// </para>
     /// </remarks>
     /// <param name="path">The session directory.</param>
     /// <param name="unapplied">One clause per argument that differs, naming both values.</param>
@@ -1257,10 +1352,15 @@ internal static class SessionErrors
     {
         ArgumentNullException.ThrowIfNull(unapplied);
 
-        return $"'{path}' is open in this BrowserAI and its browser is up, so {SessionToolSurface.Resume} applied nothing and changed nothing. "
-            + $"It was asked for per-run settings this browser was not launched with: {string.Join("; ", unapplied)}. "
-            + $"A per-run setting takes effect only when a browser starts. To apply them, call {LiveSession.BrowserCloseTool} on this session and then {SessionToolSurface.Resume} again with the same arguments; "
-            + "the first browser call after that reopens the tabs. To keep this browser as it is, leave those arguments out.";
+        var one = unapplied.Count is 1;
+
+        return $"'{path}' is already live, so {SessionToolSurface.Resume} changed nothing. "
+            + (one
+                ? $"This setting differs from the one its browser was started with: {unapplied[0]}. "
+                : $"These settings differ from the ones its browser was started with: {string.Join("; ", unapplied)}. ")
+            + $"If you need {(one ? "it" : "them")}, call {LiveSession.BrowserCloseTool} on this session, then {SessionToolSurface.Resume} with {(one ? "it" : "them")}; "
+            + "that closes the Playwright browser and opens a new one with the new settings: the tabs come back, but page snapshots and element references from before no longer apply. "
+            + "If you don't, no resume is needed: the session is live, so carry on with its tools.";
     }
 
     /// <summary>
@@ -1401,13 +1501,15 @@ internal static class SessionErrors
         return $"Windows names the holder: {named}.";
     }
 
-    /// <summary>Row 10 -- an argument <c>resume</c> does not accept.</summary>
-    /// <param name="argument">The argument.</param>
-    /// <param name="why">Why it cannot be set on a session that exists.</param>
-    /// <returns>The refusal.</returns>
-    public static string ArgumentNotAcceptedOnResume(string argument, string why) =>
-        $"'{argument}' cannot be set on {SessionToolSurface.Resume}, because {why}. Nothing was changed. "
-        + $"Omit the argument to reopen this session as it is, or call {SessionToolSurface.Init} on a new directory if you want different settings.";
+    // ⚠️ DELETED 2026-10-04: `ArgumentNotAcceptedOnResume(string argument,
+    // string why)`, Row 10 -- "'<argument>' cannot be set on browserai_resume,
+    // because <why>. Nothing was changed. Omit the argument to reopen this
+    // session as it is, or call browserai_init on a new directory if you want
+    // different settings." Its one caller refused `browser`, which resume's
+    // schema does not have, and since the maintainer's rule of 2026-10-03 such an
+    // argument is refused by `UnrecognisedArguments` before the tool runs, so the
+    // row could no longer be reached. The definition that refusal carries is
+    // resume's own, and its description says why `browser` is not an argument.
 
     /// <summary>Row 14 -- the machine-wide lock could not be created.</summary>
     /// <remarks>

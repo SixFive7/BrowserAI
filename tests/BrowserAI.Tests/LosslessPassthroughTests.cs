@@ -621,6 +621,42 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(click["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["session","why"]""");
     }
 
+    /// <summary>
+    /// A tool the verdicts file gives a BrowserAI note keeps upstream's own
+    /// description, unchanged, with the note after it, and everything else about
+    /// the tool is what the child sent.
+    /// </summary>
+    /// <remarks>
+    /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"Rewrite the
+    /// instructions according to b."</i>, which moved the advice for one tool onto
+    /// that tool as a short note, declared beside its verdict in
+    /// <c>tool-verdicts.json</c>, appended at run time and marked as BrowserAI's.
+    /// A note is not a schema: the schema and every other member of the tool still
+    /// come from the child, and this holds both halves on the wire.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ANotedToolKeepsUpstreamsDescriptionAndGainsTheNoteAfterIt()
+    {
+        const string Tools =
+            """{"tools":[{"name":"browser_take_screenshot","description":"upstream's own words","inputSchema":{"type":"object","properties":{"fullPage":{"type":"boolean","x-vendor-hint":"kept"}}},"x-tool-extension":{"kept":true}},{"name":"browser_snapshot","description":"c","inputSchema":{"type":"object","properties":{}}}]}""";
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child => child.ToolsListResult = Tools);
+
+        var response = await rig.Client.SendAsync("tools/list");
+        var tools = response.Result!["tools"]!.AsArray();
+        var screenshot = tools.Single(tool => (string?)tool!["name"] == "browser_take_screenshot")!;
+        var snapshot = tools.Single(tool => (string?)tool!["name"] == "browser_snapshot")!;
+        var note = RepositoryVerdicts.Committed.Find("browser_take_screenshot")!.Note!;
+
+        await Assert.That((string?)screenshot["description"]).IsEqualTo("upstream's own words" + SessionToolSurface.NoteMarker + note);
+        await Assert.That((string?)snapshot["description"]).IsEqualTo("c");
+
+        // Everything else is the child's: the extension, the schema's own member.
+        await Assert.That(screenshot["x-tool-extension"]!.ToJsonString()).IsEqualTo("""{"kept":true}""");
+        await Assert.That((string?)screenshot["inputSchema"]!["properties"]!["fullPage"]!["x-vendor-hint"]).IsEqualTo("kept");
+    }
+
     [Test]
     public async Task ThereIsNoTypedToolHandlerLeftToFallBackTo()
     {
@@ -764,7 +800,6 @@ internal sealed class LosslessPassthroughTests
                 ["url"] = "data:text/html,<h1>ok</h1>",
                 [SessionToolSurface.SessionParameter] = rig.Session!,
                 [SessionToolSurface.WhyParameter] = "establishing that the page loads at all before anything else is tried",
-                ["x-caller-extension"] = "kept",
             },
         });
 
@@ -781,9 +816,13 @@ internal sealed class LosslessPassthroughTests
         // in the forwarded params is a `why` upstream may act on.
         await Assert.That(forwarded).DoesNotContain("establishing that the page loads");
 
-        // The positive control.
+        // The positive control. ⚠️ Since 2026-10-04 "everything else" is
+        // everything the tool's schema carries: an argument it does not carry is
+        // refused before anything is forwarded (UnrecognisedArgumentTests), so the
+        // `x-caller-extension` this call used to carry, and that was forwarded
+        // as it was, is no longer something a caller can send.
         await Assert.That((string?)arguments["url"]).IsEqualTo("data:text/html,<h1>ok</h1>");
-        await Assert.That((string?)arguments["x-caller-extension"]).IsEqualTo("kept");
+        await Assert.That(arguments.Select(argument => argument.Key)).IsEquivalentTo((string[])["url"]);
     }
 
     private static string Text(byte[] span) => Encoding.UTF8.GetString(span);

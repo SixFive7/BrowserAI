@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Text.Json;
 
 namespace BrowserAI.Sessions;
 
@@ -26,6 +27,14 @@ namespace BrowserAI.Sessions;
 /// database to count rows would mean holding a file a running browser has open,
 /// and the answer a caller acts on -- <i>this directory may hold credentials</i>
 /// -- does not need the count.
+/// </para>
+/// <para>
+/// ⚠️ <b>One kind of file is opened since 2026-10-04, and the paragraph above is
+/// amended by addition and not rewritten:</b> a <c>.json</c> under
+/// <c>output\</c>, read to tell a saved login from any other JSON, because
+/// <c>browser_storage_state</c> takes any name. No browser holds one open, and
+/// the cookie store is still answered by its existence alone. See
+/// <c>IsSavedLogin</c>.
 /// </para>
 /// <para>
 /// <b>Every failure is reported as an unknown and not as a zero.</b> A tree
@@ -73,6 +82,10 @@ internal static class SessionInventory
 
             var kinds = new Dictionary<string, ArtifactKind>(StringComparer.OrdinalIgnoreCase);
             var archives = new List<SessionFile>();
+            var savedLogins = new List<SessionFile>();
+            var transcripts = new List<SessionFile>();
+            var traceFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var output = Path.Combine(session.FullPath, SessionLayout.OutputFolderName);
             long bytes = 0;
             var touched = DateTimeOffset.MinValue;
 
@@ -97,11 +110,26 @@ internal static class SessionInventory
 
                 tally.Add(file.Length);
 
+                var relative = Path.GetRelativePath(session.FullPath, file.FullName);
+
                 if (string.Equals(file.Extension, HarExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    archives.Add(new SessionFile(
-                        Path.GetRelativePath(session.FullPath, file.FullName),
-                        file.Length));
+                    archives.Add(new SessionFile(relative, file.Length));
+                }
+
+                if (IsTraceFile(file) && file.DirectoryName is { } folder)
+                {
+                    _ = traceFolders.Add(folder);
+                }
+
+                if (IsTranscript(output, file))
+                {
+                    transcripts.Add(new SessionFile(relative, file.Length));
+                }
+
+                if (IsUnder(output, file) && IsSavedLogin(file))
+                {
+                    savedLogins.Add(new SessionFile(relative, file.Length));
                 }
             }
 
@@ -112,12 +140,120 @@ internal static class SessionInventory
                 LastWritten = touched == DateTimeOffset.MinValue ? null : touched,
                 Kinds = [.. kinds.Values.OrderByDescending(kind => kind.Bytes)],
                 Archives = archives,
+                SavedLogins = [.. savedLogins.OrderBy(saved => saved.RelativePath, StringComparer.OrdinalIgnoreCase)],
+                Traces =
+                [
+                    .. traceFolders
+                        .Select(folder => new SessionFile(
+                            Path.GetRelativePath(session.FullPath, folder),
+                            files.Where(file => IsUnder(folder, file)).Sum(file => file.Length)))
+                        .OrderBy(trace => trace.RelativePath, StringComparer.OrdinalIgnoreCase),
+                ],
+                Transcripts = [.. transcripts.OrderBy(transcript => transcript.RelativePath, StringComparer.OrdinalIgnoreCase)],
                 CookieStore = CookieStoreIn(session),
             };
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
             return SessionContents.Unreadable(failure.Message);
+        }
+    }
+
+    /// <summary>
+    /// The largest JSON file read to tell a saved login from any other JSON.
+    /// </summary>
+    /// <remarks>
+    /// A saved login measured 278 bytes for one origin and one cookie on
+    /// 2026-10-03, and again on 2026-10-04; the bound is far above any real one
+    /// and exists so that a directory holding a large unrelated JSON does not
+    /// cost this answer a read of all of it. A saved login above it is not named,
+    /// and that is the one file this walk can miss.
+    /// </remarks>
+    private const long SavedLoginReadLimit = 32L * 1024 * 1024;
+
+    /// <summary>
+    /// Whether a file is part of a Playwright trace: the action log, or the
+    /// network log beside it.
+    /// </summary>
+    /// <remarks>
+    /// <c>browser_start_tracing</c> writes <c>trace-&lt;milliseconds&gt;.trace</c>
+    /// and <c>.network</c> into <c>output\traces</c>, with the resources and the
+    /// screencast in folders beside them -- read in <c>@playwright/mcp</c> 0.0.83 and
+    /// seen on disk 2026-10-03 and 2026-10-04. The trace is named as the folder
+    /// that holds them, because that folder is what has to go.
+    /// </remarks>
+    /// <param name="file">One file.</param>
+    /// <returns>Whether it belongs to a trace.</returns>
+    private static bool IsTraceFile(FileInfo file) =>
+        string.Equals(file.Extension, ".trace", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(file.Extension, ".network", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether a file is a transcript: <c>session.md</c> in a
+    /// <c>session-&lt;milliseconds&gt;</c> folder directly under <c>output\</c>.
+    /// </summary>
+    /// <remarks>
+    /// That is where upstream's <c>saveSession</c> writes it, read in
+    /// <c>@playwright/mcp</c> 0.0.83 (<c>session-${Date.now()}</c>) and measured
+    /// 2026-10-03 as <c>output\session-1791069599122\session.md</c>. A
+    /// <c>session.md</c> anywhere else is somebody else's file.
+    /// </remarks>
+    /// <param name="output">The session's output folder.</param>
+    /// <param name="file">One file.</param>
+    /// <returns>Whether it is a transcript.</returns>
+    private static bool IsTranscript(string output, FileInfo file) =>
+        string.Equals(file.Name, "session.md", StringComparison.OrdinalIgnoreCase)
+        && file.Directory is { } folder
+        && folder.Name.StartsWith("session-", StringComparison.OrdinalIgnoreCase)
+        && folder.Name.Length > "session-".Length
+        && folder.Name["session-".Length..].All(char.IsAsciiDigit)
+        && string.Equals(folder.Parent?.FullName, output, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Whether a file is inside a folder, at any depth.</summary>
+    /// <param name="folder">The folder.</param>
+    /// <param name="file">One file.</param>
+    /// <returns>Whether the file's path begins with the folder's.</returns>
+    private static bool IsUnder(string folder, FileInfo file) =>
+        file.FullName.StartsWith(folder.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether a JSON file is a saved login: Playwright's storage state, an object
+    /// with a <c>cookies</c> array and an <c>origins</c> array.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The one file this walk opens, since 2026-10-04, and the remarks on
+    /// this type are amended for it by addition.</b> Q365.4 a, the maintainer's
+    /// words of 2026-10-03 verbatim: <i>"Now about Q365.4. Let's mention all
+    /// files."</i> <c>browser_storage_state</c> writes whatever <c>filename</c> it
+    /// is given, so a saved login cannot be told by its name; it is told by its
+    /// shape, which is what a reader acting on it needs. A file that cannot be
+    /// read or parsed is not one, and a file a browser is writing is not this kind
+    /// of file: upstream writes the whole state in one call.
+    /// </para>
+    /// </remarks>
+    /// <param name="file">A file under the output folder.</param>
+    /// <returns>Whether it holds a storage state.</returns>
+    private static bool IsSavedLogin(FileInfo file)
+    {
+        if (!string.Equals(file.Extension, ".json", StringComparison.OrdinalIgnoreCase) || file.Length > SavedLoginReadLimit)
+        {
+            return false;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllBytes(file.FullName));
+
+            return document.RootElement.ValueKind is JsonValueKind.Object
+                && document.RootElement.TryGetProperty("cookies", out var cookies)
+                && cookies.ValueKind is JsonValueKind.Array
+                && document.RootElement.TryGetProperty("origins", out var origins)
+                && origins.ValueKind is JsonValueKind.Array;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return false;
         }
     }
 
@@ -236,6 +372,15 @@ internal sealed record SessionContents
 
     /// <summary>Every HTTP Archive under the session.</summary>
     public IReadOnlyList<SessionFile> Archives { get; init; } = [];
+
+    /// <summary>Every saved login <c>browser_storage_state</c> wrote under the output folder.</summary>
+    public IReadOnlyList<SessionFile> SavedLogins { get; init; } = [];
+
+    /// <summary>Every folder holding a Playwright trace, with the size of everything in it.</summary>
+    public IReadOnlyList<SessionFile> Traces { get; init; } = [];
+
+    /// <summary>Every transcript, the <c>session.md</c> of a <c>session-&lt;milliseconds&gt;</c> folder.</summary>
+    public IReadOnlyList<SessionFile> Transcripts { get; init; } = [];
 
     /// <summary>Where the profile's cookie store is, or <see langword="null"/>.</summary>
     public string? CookieStore { get; init; }
