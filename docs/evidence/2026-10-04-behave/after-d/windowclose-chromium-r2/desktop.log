@@ -1,0 +1,9 @@
+2026-10-04T15:23:15.468Z DESKTOP WinSta0\BrowserAI-behave-windowclose-chromium-r2-2d4991fff9c1436e8d66fb5e03cae114
+2026-10-04T15:23:15.505Z START pid=80328 app=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-d\BrowserAI.Server.exe browser=chromium scenario=windowclose headed=true run=r2 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\windowclose-chromium-r2\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T15:23:17.549Z PRIVATE pids=17 windows=3 pid=81432 hwnd=0x982528 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=81432 hwnd=0xa2245a class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=81432 hwnd=0xa4230a class=Chrome_WidgetWin_1 rect=10,10,1946,1224 title=account: signed in as tester – Google Chrome for Testing
+2026-10-04T15:23:19.567Z PRIVATE pids=18 windows=3 pid=81432 hwnd=0x982528 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=81432 hwnd=0xa2245a class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=81432 hwnd=0xa4230a class=Chrome_WidgetWin_1 rect=10,10,1946,1224 title=form – Google Chrome for Testing
+2026-10-04T15:23:22.580Z PRIVATE pids=11 windows=0 
+2026-10-04T15:23:28.607Z PRIVATE pids=17 windows=2 pid=79896 hwnd=0x222512 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=79896 hwnd=0x6a23f8 class=UAC Input Indicator rect=3742,2062,3792,2112 title=
+2026-10-04T15:23:33.626Z PRIVATE pids=11 windows=0 
+2026-10-04T15:23:34.389Z SUMMARY exit=0 ticks=19 maxJobPids=20 ticksWithPrivateWindows=10 leaked=False
+2026-10-04T15:23:34.396Z END processes still in the job before it closed: 0

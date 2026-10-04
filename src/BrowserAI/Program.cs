@@ -753,6 +753,9 @@ internal static partial class Program
         {
             if (serving() is { } proxy)
             {
+                // 8 b: the sessions this stop closes record why.
+                proxy.StoppingThroughThePipe();
+
                 using var bound = new CancellationTokenSource(ServerPipeProtocol.CallBound);
                 await proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token).ConfigureAwait(false);
             }

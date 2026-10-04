@@ -1,0 +1,5 @@
+2026-10-04T14:30:30.078Z call browserai_init 395ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headless-r2' on every browser tool call. directory: C:\So
+2026-10-04T14:30:30.693Z call browser_navigate 614ms isError=false ### Page - Page URL: http://127.0.0.1:59943/echo - Page Title: echo ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chr
+2026-10-04T14:30:30.732Z call browser_navigate 38ms isError=false ### Page - Page URL: http://127.0.0.1:59943/echo?second=1 - Page Title: echo ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessio
+2026-10-04T14:30:31.758Z call browser_evaluate 1025ms isError=false ### Result "{\"ua\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\",\"appVersion\":\"5.0 (Wi
+2026-10-04T14:30:33.429Z call browserai_destroy 806ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headless-r2' (12.5 MiB). Its purpose was: Behave lane rig, ua 

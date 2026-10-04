@@ -1,0 +1,6 @@
+2026-10-04T14:30:16.860Z DESKTOP WinSta0\BrowserAI-behave-desk-probe-03cdc66832b642ed92a46b31013cff0e
+2026-10-04T14:30:16.902Z START pid=24828 app=C:\Program Files\PowerShell\7\pwsh.exe cmd="C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -File "C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\desk-probe.ps1" -Out "C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-ab\desk-probe\probe.txt"
+2026-10-04T14:30:17.930Z PRIVATE pids=2 windows=1 pid=24828 hwnd=0x711416 class=Static rect=-32000,-32000,-31936,-31936 title=lifetime desk probe
+2026-10-04T14:30:21.905Z PRIVATE pids=0 windows=0 
+2026-10-04T14:30:21.917Z SUMMARY exit=0 ticks=5 maxJobPids=2 ticksWithPrivateWindows=4 leaked=False
+2026-10-04T14:30:21.924Z END processes still in the job before it closed: 0

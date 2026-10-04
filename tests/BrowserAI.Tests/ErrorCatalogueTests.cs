@@ -393,10 +393,17 @@ internal sealed partial class ErrorCatalogueTests
 
         var notOpen = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = stranded, ["why"] = "the suite exercising this call" });
 
+        // 8 b, 2026-10-04: the copy carries an opening and no close, which is the
+        // shape a holder that was killed leaves, so the refusal names that as its
+        // last close. Read off the copy's own record, the way the refusal reads it.
+        var strandedRecord = SessionLock.ReadRecord(SessionPath.For(stranded))!;
+
+        await Assert.That(strandedRecord.LastClose?.Value.Cause).IsEqualTo(SessionCloseCause.Unrecorded);
+
         Match(
             TextOf(notOpen),
             nameof(SessionErrors.SessionNotOpen),
-            SessionErrors.SessionNotOpen("browser_navigate", stranded));
+            SessionErrors.SessionNotOpen("browser_navigate", stranded, CloseReasons.Of(strandedRecord.LastClose!)));
 
         // Row 3, through the session argument and not through `directory`.
         var relative = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = "relative\\path", ["why"] = "the suite exercising this call" });
@@ -1008,13 +1015,23 @@ internal sealed partial class ErrorCatalogueTests
                 continue;
             }
 
+            // 8 b, 2026-10-04: the refusal names whose close it was, relative to
+            // the client asking, and quotes the reason the close call gave. The
+            // close came from this same connection, so it reads as this client's.
+            var asking = new CallerConnection();
+
             Match(
                 TextOf(answer),
                 nameof(SessionErrors.SessionWasClosed),
                 SessionErrors.SessionWasClosed(
                     "browser_navigate",
                     SessionPath.For(directory).FullPath,
-                    new SessionClosure(SessionCloseCause.Caller, clock.GetUtcNow(), BrowserIdleTimer.DefaultIdlePeriod)));
+                    new SessionClosure(SessionCloseCause.Caller, clock.GetUtcNow(), BrowserIdleTimer.DefaultIdlePeriod)
+                    {
+                        ClosedBy = asking,
+                        Why = "the suite exercising this call",
+                    },
+                    asking));
         }
 
         await Assert.That(Triggered.Contains(nameof(SessionErrors.SessionWasClosed))).IsTrue();
@@ -1106,6 +1123,51 @@ internal sealed partial class ErrorCatalogueTests
             TextOf(answer),
             nameof(SessionErrors.BrowserServerHasGone),
             SessionErrors.BrowserServerHasGone("browser_navigate", SessionPath.For(directory).FullPath));
+    }
+
+    /// <summary>
+    /// Q380's row -- a Chromium screenshot whose image is taller than Chromium
+    /// captures faithfully, refused with what happened, the bug and what to do.
+    /// </summary>
+    /// <remarks>
+    /// <b>Provoked by the double's own answer</b>: an inline image whose PNG header
+    /// says 1920x16385, the first height measured to repeat. The real browser's
+    /// answer is <c>ScreenshotLimitTests</c>'s.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheScreenshotRowIsEmittedByAChromiumScreenshotPastItsLimit()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools[ScreenshotLimit.ScreenshotTool] = new FakeToolBehaviour
+            {
+                RawResult = $$"""{"content":[{"type":"image","data":"{{Convert.ToBase64String(ScreenshotLimitTests.PngHead(1920, 16385))}}","mimeType":"image/png"}]}""",
+            },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "too-tall");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a screenshot taller than Chromium captures",
+        });
+
+        var answer = await CallAsync(rig, ScreenshotLimit.ScreenshotTool, new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+            ["fullPage"] = true,
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.ScreenshotPastChromiumsLimit),
+            SessionErrors.ScreenshotPastChromiumsLimit(1920, 16385, file: null));
     }
 
     /// <summary>
@@ -1975,7 +2037,14 @@ internal sealed partial class ErrorCatalogueTests
         // `ArgumentNotAcceptedOnResume`, Row 10, went: its one argument, `browser`
         // on resume, is not in resume's schema, so the syntax error above answers
         // it first and the row could not be reached.
-        await Assert.That(rows.Count).IsEqualTo(38);
+        //
+        // ⚠️ **Corrected 2026-10-04 a third time, to 39 (previously 38).**
+        // `ScreenshotPastChromiumsLimit` arrived with Q380 d: a Chromium screenshot
+        // larger than 16,384 px on a side repeats itself past that line and
+        // reports success, so it is refused with the Chromium bug's link and what
+        // to do instead. It is the first row here produced by reading a
+        // successful answer.
+        await Assert.That(rows.Count).IsEqualTo(39);
     }
 
     /// <summary>

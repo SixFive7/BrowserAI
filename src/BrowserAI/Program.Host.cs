@@ -128,7 +128,7 @@ internal static partial class Program
         var activity = new ServerActivity(TimeProvider.System, Environment.CurrentDirectory);
         SessionHostServer? serving = null;
 
-        var responder = new ServerPipeResponder(activity, () => Volatile.Read(ref serving)?.Stop())
+        var responder = new ServerPipeResponder(activity, () => Volatile.Read(ref serving)?.StopThroughThePipe())
         {
             Role = ServerDescription.Roles.Host,
         };

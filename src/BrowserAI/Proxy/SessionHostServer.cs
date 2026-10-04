@@ -140,6 +140,20 @@ internal sealed class SessionHostServer : IAsyncDisposable
         HostServerLog.Listening(_logger, Name);
     }
 
+    /// <summary>
+    /// Stops as <see cref="Stop"/> does, for a stop that arrived through this process's
+    /// own pipe: the sessions the shutdown closes record that, and not a client going.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, 2026-10-04.</b> The pipe's stop is what an update's install sends, and
+    /// what BrowserAI's page sends when a person closes a server there.
+    /// </remarks>
+    public void StopThroughThePipe()
+    {
+        _host.Sessions.StoppingThroughThePipe();
+        Stop();
+    }
+
     /// <summary>Stops accepting, ends every conversation, and completes <see cref="Finished"/>.</summary>
     public void Stop()
     {

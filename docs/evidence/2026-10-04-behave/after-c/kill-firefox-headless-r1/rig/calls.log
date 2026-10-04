@@ -1,0 +1,20 @@
+2026-10-04T15:08:24.543Z call browserai_init 369ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-firefox-headless-r1' on every browser tool call. directory: C:\S
+2026-10-04T15:08:26.538Z call browser_navigate 1994ms isError=false ### Page - Page URL: http://127.0.0.1:62717/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill
+2026-10-04T15:08:26.575Z call browser_type 36ms isError=false 
+2026-10-04T15:08:27.168Z call browser_type 592ms isError=false ### Page - Page URL: http://127.0.0.1:62717/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T15:08:27.434Z call browser_tabs 264ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62717/account) - 1: (current) [form](http://127.0.0.1:62717/form) ### Open tabs - 0: [account: s
+2026-10-04T15:08:27.475Z call browser_type 40ms isError=false 
+2026-10-04T15:08:28.000Z call browser_evaluate 524ms isError=false ### Result "jss=r1-b71a67; jsp=r1-b71a67"
+2026-10-04T15:08:28.009Z call browser_tabs 7ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62717/account) - 1: (current) [form](http://127.0.0.1:62717/form)
+2026-10-04T15:08:28.032Z call browser_tabs 21ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62717/account) - 1: [form](http://127.0.0.1:62717/form)
+2026-10-04T15:08:29.056Z call browser_evaluate 1023ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62717/account\",\"cookie\":\"jss=r1-b71a67; jsp=r1-b71a67\",\"ls\":\"r1-b71a67\",\"ss\":null,\"notes\":null,\"who\":{\"u
+2026-10-04T15:08:29.074Z call browser_tabs 17ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62717/account) - 1: (current) [form](http://127.0.0.1:62717/form)
+2026-10-04T15:08:30.122Z call browser_evaluate 1047ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62717/form\",\"cookie\":\"jss=r1-b71a67; jsp=r1-b71a67\",\"ls\":\"r1-b71a67\",\"ss\":\"r1-b71a67\",\"notes\":\"typed r1-
+2026-10-04T15:08:35.628Z call browser_tabs 1ms isError=true 'browser_tabs' was not run: nothing was sent to the browser. This session's browser ended at 2026-10-04T15:08:31.6402667+00:00 with exit code 1 (0x00000001), wh
+2026-10-04T15:08:36.763Z call browserai_resume 349ms isError=false NOTE: This session's browser ended at 2026-10-04T15:08:31.6402667+00:00 with exit code 1 (0x00000001), which a crash or a kill leaves; BrowserAI had not asked i
+2026-10-04T15:08:36.773Z call browserai_catch_up 9ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-firefox-headless-r1 browser: firefox created: 2026-10-04T17:08:24.1786645+02:00 
+2026-10-04T15:08:38.169Z call browser_tabs 1395ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T15:08:41.179Z call browser_tabs 8ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T15:08:41.194Z call browser_tabs 13ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T15:08:41.708Z call browser_evaluate 512ms isError=false ### Result "{\"url\":\"about:blank\",\"cookie\":\"\",\"ls\":\"THREW The operation is insecure.\",\"ss\":\"THREW The operation is insecure.\",\"notes\":null,\"wh
+2026-10-04T15:08:42.307Z call browserai_destroy 598ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-firefox-headless-r1' (31.8 MiB). Its purpose was: Behave lane rig, ki

@@ -1,0 +1,422 @@
+{
+  "run": "r1-f3579d",
+  "scenario": "restore",
+  "browser": "chromium",
+  "headed": true,
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1",
+  "startedUtc": "2026-10-04T14:31:02.317Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1",
+        "purpose": "Behave lane rig, restore on chromium, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "chromium",
+        "headed": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 445,
+      "images": 0,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\n  browser: chromium\n  headed: true -- a window is open for this run, and it is never closed for being idle\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\downloads\n  purpose: Behave lane rig, restore on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T16:31:02.9007245+02:00   last used: 2026-10-04T16:31:02.9007245+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "navigate echo tab 0",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:53098/echo?tab=0"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 647,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:53098/echo?tab=0\n- Page Title: echo\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\output\\page-2026-10-04T14-31-03-986Z.yml)"
+    },
+    {
+      "label": "new tab: echo tab 1",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:53098/echo?tab=1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 77,
+      "images": 0,
+      "text": "### Result\n- 0: [echo](http://127.0.0.1:53098/echo?tab=0)\n- 1: (current) [echo](http://127.0.0.1:53098/echo?tab=1)\n### Open tabs\n- 0: [echo](http://127.0.0.1:53098/echo?tab=0)\n- 1: (current) [echo](http://127.0.0.1:53098/echo?tab=1)\n### Page\n- Page URL: http://127.0.0.1:53098/echo?tab=1\n- Page Title: echo\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\output\\page-2026-10-04T14-31-04-065Z.yml)"
+    },
+    {
+      "label": "browser_close",
+      "tool": "browser_close",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 169,
+      "images": 0,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    },
+    {
+      "label": "resume hidden",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1",
+        "why": "behave rig restore: resuming hidden to read what the restored tabs send",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 403,
+      "images": 0,
+      "text": "NOTE: this session's browser was closed at 2026-10-04T14:31:04.0697473+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1\\downloads\n  purpose: Behave lane rig, restore on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T16:31:02.9007245+02:00   last used: 2026-10-04T16:31:04.2544700+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n    holder: 2026-10-04T16:31:02.9007245+02:00 PID 96464 started by node → 2026-10-04T16:31:04.2544700+02:00 PID 96464 started by node\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "the first call after the resume",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 560,
+      "images": 0,
+      "text": "### Result\n- 0: (current) [echo](http://127.0.0.1:53098/echo?tab=0)\n- 1: [echo](http://127.0.0.1:53098/echo?tab=1)"
+    },
+    {
+      "label": "read the user agent from the page",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1026,
+      "images": 0,
+      "text": "### Result\n\"{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"appVersion\\\":\\\"5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"webdriver\\\":false,\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\",\\\"mobile\\\":false,\\\"platform\\\":\\\"Windows\\\",\\\"fullVersionList\\\":\\\"\\\",\\\"platformVersion\\\":\\\"\\\",\\\"architecture\\\":\\\"\\\",\\\"bitness\\\":\\\"\\\",\\\"uaFullVersion\\\":\\\"\\\",\\\"fetched\\\":{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"chUa\\\":\\\"\\\\\\\"Chromium\\\\\\\";v=\\\\\\\"155\\\\\\\", \\\\\\\"Not(A:Brand\\\\\\\";v=\\\\\\\"24\\\\\\\"\\\",\\\"chUaMobile\\\":\\\"?0\\\",\\\"chUaPlatform\\\":\\\"\\\\\\\"Windows\\\\\\\"\\\",\\\"chUaFullVersionList\\\":\\\"\\\",\\\"chUaPlatformVersion\\\":\\\"\\\\\\\"\\\\\\\"\\\",\\\"acceptLanguage\\\":\\\"nl-NL\\\"},\\\"worker\\\":{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\",\\\"headers\\\":{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"chUa\\\":null,\\\"chUaMobile\\\":null,\\\"chUaPlatform\\\":null,\\\"chUaFullVersionList\\\":null,\\\"chUaPlatformVersion\\\":null,\\\"acceptLanguage\\\":\\\"en-GB,en-US;q=0.9,en;q=0.8\\\"}}}\""
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1",
+        "why": "behave rig restore: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 770,
+      "images": 0,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\restore-chromium-headed-r1' (12.6 MiB). Its purpose was: Behave lane rig, restore on chromium, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: behave rig restore: done with run r1"
+    }
+  ],
+  "census": {},
+  "serverPid": 96464,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.206"
+        },
+        "instructions": "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\nEvery call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nBrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\nNothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 72,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_change_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "restoreHits": [
+    {
+      "path": "/echo?tab=1",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "dest": "document"
+    },
+    {
+      "path": "/echo?tab=0",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "dest": "document"
+    },
+    {
+      "path": "/favicon.ico",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "dest": "image"
+    },
+    {
+      "path": "/favicon.ico",
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "dest": "image"
+    }
+  ],
+  "page": {
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "appVersion": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "webdriver": false,
+    "brands": "Chromium/155, Not(A:Brand/24",
+    "mobile": false,
+    "platform": "Windows",
+    "fullVersionList": "",
+    "platformVersion": "",
+    "architecture": "",
+    "bitness": "",
+    "uaFullVersion": "",
+    "fetched": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "nl-NL"
+    },
+    "worker": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "brands": "Chromium/155, Not(A:Brand/24",
+      "headers": {
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "chUa": null,
+        "chUaMobile": null,
+        "chUaPlatform": null,
+        "chUaFullVersionList": null,
+        "chUaPlatformVersion": null,
+        "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+      }
+    }
+  },
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791124263912,
+      "method": "GET",
+      "path": "/echo?tab=0",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124263942,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+      "chUaPlatformVersion": "\"19.0.0\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124264028,
+      "method": "GET",
+      "path": "/echo?tab=1",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+      "chUaPlatformVersion": "\"19.0.0\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124264044,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+      "chUaPlatformVersion": "\"19.0.0\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124265118,
+      "method": "GET",
+      "path": "/echo?tab=1",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+    },
+    {
+      "t": 1791124265118,
+      "method": "GET",
+      "path": "/echo?tab=0",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+    },
+    {
+      "t": 1791124265147,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124265184,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124269212,
+      "method": "GET",
+      "path": "/headers?from=page",
+      "dest": "empty",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": "",
+      "chUaPlatformVersion": "\"\"",
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124269215,
+      "method": "GET",
+      "path": "/worker.js",
+      "dest": "worker",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124269219,
+      "method": "GET",
+      "path": "/headers?from=worker",
+      "dest": "empty",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+    }
+  ],
+  "endedUtc": "2026-10-04T14:31:11.040Z"
+}

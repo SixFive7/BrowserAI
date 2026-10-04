@@ -1,0 +1,5 @@
+2026-10-04T13:59:05.566Z call browserai_init 388ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ownclose-chromium-headless-r1' on every browser tool call. directory:
+2026-10-04T13:59:06.389Z call browser_navigate 819ms isError=false ### Page - Page URL: http://127.0.0.1:50837/h/1 - Page Title: history 1 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ow
+2026-10-04T13:59:08.120Z call browser_close 161ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T13:59:09.120Z call browser_tabs 1ms isError=true 'browser_tabs' was not run: nothing was sent to the browser. This session's browser was closed at 2026-10-04T13:59:07.9613487+00:00 by a browser_close call. Cal
+2026-10-04T13:59:09.240Z call browserai_destroy 113ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ownclose-chromium-headless-r1' (12.5 MiB). Its purpose was: Behave lane ri

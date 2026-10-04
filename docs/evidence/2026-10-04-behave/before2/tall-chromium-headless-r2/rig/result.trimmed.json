@@ -1,0 +1,500 @@
+{
+  "run": "r2-932b7c",
+  "scenario": "tall",
+  "browser": "chromium",
+  "headed": false,
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2",
+  "startedUtc": "2026-10-04T13:56:47.512Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2",
+        "purpose": "Behave lane rig, tall on chromium, run r2: a local test site only, destroyed at the end of the run.",
+        "browser": "chromium",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 379,
+      "images": 0,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\downloads\n  purpose: Behave lane rig, tall on chromium, run r2: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T15:56:47.9788889+02:00   last used: 2026-10-04T15:56:47.9788889+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "navigate tall 16384",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:56547/tall?h=16384"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 671,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:56547/tall?h=16384\n- Page Title: tall ready 16384x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-49-022Z.yml)"
+    },
+    {
+      "label": "png file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16384.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 561,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.png)"
+    },
+    {
+      "label": "jpeg file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16384.jpeg"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 284,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.jpeg)"
+    },
+    {
+      "label": "png inline 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 551,
+      "images": 1,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-50-419Z.png)"
+    },
+    {
+      "label": "navigate tall 16385",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:56547/tall?h=16385"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 67,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:56547/tall?h=16385\n- Page Title: tall ready 16385x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-50-517Z.yml)"
+    },
+    {
+      "label": "png file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 627,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.png)"
+    },
+    {
+      "label": "jpeg file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 385,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.jpeg)"
+    },
+    {
+      "label": "png inline 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 758,
+      "images": 1,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-52-281Z.png)"
+    },
+    {
+      "label": "navigate wide 16384",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:56547/wide?w=16384"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 90,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:56547/wide?w=16384\n- Page Title: wide ready 16384x2000\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-52-400Z.yml)"
+    },
+    {
+      "label": "wide png file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "wide-16384.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 640,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16384.png)"
+    },
+    {
+      "label": "navigate wide 16385",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:56547/wide?w=16385"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 58,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:56547/wide?w=16385\n- Page Title: wide ready 16385x2000\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-53-106Z.yml)"
+    },
+    {
+      "label": "wide png file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "wide-16385.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 684,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16385.png)"
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2",
+        "why": "behave rig tall: done with run r2"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 719,
+      "images": 0,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2' (18.6 MiB). Its purpose was: Behave lane rig, tall on chromium, run r2: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: behave rig tall: done with run r2"
+    }
+  ],
+  "census": {},
+  "serverPid": 106120,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.206"
+        },
+        "instructions": "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\nEvery call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nBrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\nNothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 72,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_change_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "images": [
+    {
+      "label": "png file 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16384.png"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.png)"
+    },
+    {
+      "label": "jpeg file 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16384.jpeg"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.jpeg",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16384.jpeg)"
+    },
+    {
+      "label": "png inline 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": false,
+      "images": 1,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-50-419Z.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-50-419Z.png)"
+    },
+    {
+      "label": "png file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.png)"
+    },
+    {
+      "label": "jpeg file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.jpeg",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\tall-16385.jpeg)"
+    },
+    {
+      "label": "png inline 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": false,
+      "images": 1,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-52-281Z.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\page-2026-10-04T13-56-52-281Z.png)"
+    },
+    {
+      "label": "wide png file 16384",
+      "width": 16384,
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16384.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16384.png)"
+    },
+    {
+      "label": "wide png file 16385",
+      "width": 16385,
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16385.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r2\\output\\wide-16385.png)"
+    }
+  ],
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791122208887,
+      "method": "GET",
+      "path": "/tall?h=16384",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122208995,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122210461,
+      "method": "GET",
+      "path": "/tall?h=16385",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122210482,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122212334,
+      "method": "GET",
+      "path": "/wide?w=16384",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122212367,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122213061,
+      "method": "GET",
+      "path": "/wide?w=16385",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122213082,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    }
+  ],
+  "endedUtc": "2026-10-04T13:56:54.571Z"
+}

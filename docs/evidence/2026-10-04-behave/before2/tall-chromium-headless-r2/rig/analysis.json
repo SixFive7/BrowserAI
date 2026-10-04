@@ -1,0 +1,88 @@
+[
+ {
+  "file": "page-2026-10-04T13-56-50-419Z.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16384,
+  "decoded_width": 1920,
+  "decoded_height": 16384
+ },
+ {
+  "file": "page-2026-10-04T13-56-52-281Z.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16385,
+  "decoded_width": 1920,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 1,
+  "rows_near_16384_above": 1,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "tall-16384.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16384,
+  "decoded_width": 1920,
+  "decoded_height": 16384
+ },
+ {
+  "file": "tall-16385.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16385,
+  "decoded_width": 1920,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 1,
+  "rows_near_16384_above": 1,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "wide-16384.png",
+  "kind": "png",
+  "header_width": 16384,
+  "header_height": 2000,
+  "decoded_width": 16384,
+  "decoded_height": 2000
+ },
+ {
+  "file": "wide-16385.png",
+  "kind": "png",
+  "header_width": 16385,
+  "header_height": 2000,
+  "decoded_width": 16385,
+  "decoded_height": 2000,
+  "columns_past_the_seam": 1,
+  "columns_identical_to_16384_left": 1,
+  "columns_near_16384_left": 1,
+  "first_column_not_repeated": null
+ },
+ {
+  "file": "tall-16384.jpeg",
+  "kind": "jpeg",
+  "header_width": 1920,
+  "header_height": 16384,
+  "decoded_width": 1920,
+  "decoded_height": 16384
+ },
+ {
+  "file": "tall-16385.jpeg",
+  "kind": "jpeg",
+  "header_width": 1920,
+  "header_height": 16385,
+  "decoded_width": 1920,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 0,
+  "rows_near_16384_above": 0,
+  "first_row_not_repeated": 16384,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ }
+]

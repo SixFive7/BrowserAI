@@ -34,6 +34,29 @@ internal static class RecordFields
 
     /// <summary>Who has held the directory, one row per acquisition.</summary>
     public const string Holder = "holder";
+
+    /// <summary>
+    /// Every time a BrowserAI opened the session and started its browser server:
+    /// the tool that opened it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-04 with <see cref="Closed"/></b>, so a reader can tell an
+    /// opening no close followed, which is what a killed or crashed BrowserAI
+    /// leaves. A record with none was written by a build that recorded neither, and
+    /// nothing is inferred from it.
+    /// </remarks>
+    public const string Opened = "opened";
+
+    /// <summary>
+    /// Every time the session's browser was closed, and why: one row per close.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, decided 2026-10-04 by the maintainer</b>: the reason of every close
+    /// is recorded, and every answer that sends an agent to
+    /// <c>browserai_resume</c> says it. The value is the JSON of
+    /// <see cref="RecordedClose"/>.
+    /// </remarks>
+    public const string Closed = "closed";
 }
 
 /// <summary>One timestamped thing a session said about itself.</summary>
@@ -123,6 +146,12 @@ internal sealed class SessionRecord
     /// <summary>Everyone who has taken this directory, oldest first.</summary>
     public required IReadOnlyList<Statement<LockFileHolder>> HolderHistory { get; init; }
 
+    /// <summary>Every opening that started a browser server, oldest first: the tool that opened it.</summary>
+    public IReadOnlyList<Statement<string>> OpenedHistory { get; init; } = [];
+
+    /// <summary>Every close of the session's browser, oldest first.</summary>
+    public IReadOnlyList<Statement<RecordedClose>> ClosedHistory { get; init; } = [];
+
     /// <summary>How many rows the log holds.</summary>
     public required long LogLength { get; init; }
 
@@ -160,6 +189,37 @@ internal sealed class SessionRecord
     /// <summary>When the newest holder took it.</summary>
     public DateTimeOffset TakenAt => HolderHistory.Count is 0 ? Created : HolderHistory[^1].At;
 
+    /// <summary>
+    /// The last close this record knows of, or <see langword="null"/> when it knows
+    /// of none.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An opening newer than every close is a close nobody recorded</b>: the
+    /// BrowserAI that opened the session ended without closing it, which a kill, a
+    /// crash, a sign-out or the machine stopping does. That is answered as a close
+    /// of its own, <see cref="SessionCloseCause.Unrecorded"/>, dated when the record
+    /// last moved, because nothing wrote down when it ended.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Only a reader that knows nobody holds the session may ask this</b>: a
+    /// session held right now has an opening newer than its last close because it
+    /// is open. The callers probe the guard first.
+    /// </para>
+    /// </remarks>
+    public Statement<RecordedClose>? LastClose
+    {
+        get
+        {
+            var closed = ClosedHistory.Count is 0 ? null : ClosedHistory[^1];
+            var opened = OpenedHistory.Count is 0 ? null : OpenedHistory[^1];
+
+            return opened is not null && (closed is null || opened.At > closed.At)
+                ? new Statement<RecordedClose>(LastUsed, RecordedClose.Unrecorded(opened.At))
+                : closed;
+        }
+    }
+
     /// <summary>The newest value of a field, or <see langword="null"/> when it has none.</summary>
     /// <param name="statements">The field's history.</param>
     /// <returns>The value.</returns>
@@ -186,6 +246,112 @@ internal sealed record SessionLogRow(
     string Outcome,
     DateTimeOffset? SettledAt,
     string? Failure);
+
+/// <summary>
+/// One close of a session's browser, as the record keeps it: why it was closed,
+/// and what is known about who or what closed it.
+/// </summary>
+/// <remarks>
+/// <b>8 b, decided 2026-10-04 by the maintainer, in his words verbatim:</b> <i>"8 b
+/// - log in our catchup resume that it was the user who closed it. Also whe
+/// ntelling the agent it needs to resume first give it the reason for the last
+/// close. Was it a user? Was it a timeout? Was it a close call from the agent or
+/// another agent?"</i> The value is a JSON object written by
+/// <see cref="Write"/>; a cause this build does not know reads as
+/// <see cref="SessionCloseCause.Unknown"/> and keeps its words, because a later
+/// build may record a cause this one has never heard of.
+/// </remarks>
+/// <param name="Cause">Why it was closed.</param>
+/// <param name="By">The client whose call closed it, as BrowserAI describes a client, when a call did.</param>
+/// <param name="Why">What that call gave as its reason, when a call did.</param>
+/// <param name="ExitCode">The browser's exit code, when the browser ended without BrowserAI closing it.</param>
+/// <param name="OpenedAt">For <see cref="SessionCloseCause.Unrecorded"/>: when the opening no close followed was made.</param>
+/// <param name="Detail">A clause of BrowserAI's own about this close, for a cause that has one.</param>
+internal sealed record RecordedClose(
+    SessionCloseCause Cause,
+    string? By = null,
+    string? Why = null,
+    int? ExitCode = null,
+    DateTimeOffset? OpenedAt = null,
+    string? Detail = null)
+{
+    /// <summary>A close nobody recorded, after the opening at <paramref name="openedAt"/>.</summary>
+    /// <param name="openedAt">When the session was last opened.</param>
+    /// <returns>The close.</returns>
+    public static RecordedClose Unrecorded(DateTimeOffset openedAt) => new(SessionCloseCause.Unrecorded, OpenedAt: openedAt);
+
+    /// <summary>The JSON one <c>closed</c> statement carries.</summary>
+    /// <returns>The value.</returns>
+    public string Write()
+    {
+        var value = new System.Text.Json.Nodes.JsonObject { ["cause"] = Cause.ToString() };
+
+        if (By is not null)
+        {
+            value["by"] = By;
+        }
+
+        if (Why is not null)
+        {
+            value["why"] = Why;
+        }
+
+        if (ExitCode is { } code)
+        {
+            value["exitCode"] = code;
+        }
+
+        if (OpenedAt is { } opened)
+        {
+            value["openedAt"] = SessionRecordReader.Stamp(opened);
+        }
+
+        if (Detail is not null)
+        {
+            value["detail"] = Detail;
+        }
+
+        return value.ToJsonString();
+    }
+
+    /// <summary>A <c>closed</c> statement back out of its value.</summary>
+    /// <remarks>
+    /// <b>Unreadable is a close of unknown cause and never a refusal</b>, the rule
+    /// <c>ReadHolder</c> keeps: losing the reason costs a sentence, and refusing the
+    /// record over it would cost the session.
+    /// </remarks>
+    /// <param name="value">The stored text.</param>
+    /// <returns>The close.</returns>
+    public static RecordedClose Read(string value)
+    {
+        try
+        {
+            if (System.Text.Json.Nodes.JsonNode.Parse(value) is not System.Text.Json.Nodes.JsonObject read)
+            {
+                return new RecordedClose(SessionCloseCause.Unknown, Detail: value);
+            }
+
+            var cause = Enum.TryParse<SessionCloseCause>(textOf(read, "cause"), ignoreCase: false, out var parsed) && Enum.IsDefined(parsed)
+                ? parsed
+                : SessionCloseCause.Unknown;
+
+            return new RecordedClose(
+                cause,
+                textOf(read, "by"),
+                textOf(read, "why"),
+                read["exitCode"] is System.Text.Json.Nodes.JsonValue exit && exit.TryGetValue<int>(out var code) ? code : null,
+                textOf(read, "openedAt") is { } stamp ? SessionRecordReader.Moment(stamp) : null,
+                textOf(read, "detail") ?? (cause is SessionCloseCause.Unknown ? textOf(read, "cause") : null));
+        }
+        catch (JsonException)
+        {
+            return new RecordedClose(SessionCloseCause.Unknown, Detail: value);
+        }
+
+        static string? textOf(System.Text.Json.Nodes.JsonObject node, string name) =>
+            node[name] is System.Text.Json.Nodes.JsonValue text && text.TryGetValue<string>(out var read) ? read : null;
+    }
+}
 
 /// <summary>
 /// Reads and writes the shapes above against a <see cref="SessionStore"/>.
@@ -237,6 +403,8 @@ internal static class SessionRecordReader
         var purpose = new List<Statement<string>>();
         var version = new List<Statement<string>>();
         var holder = new List<Statement<LockFileHolder>>();
+        var opened = new List<Statement<string>>();
+        var closed = new List<Statement<RecordedClose>>();
 
         var oldest = DateTimeOffset.MaxValue;
         var newest = DateTimeOffset.MinValue;
@@ -277,6 +445,14 @@ internal static class SessionRecordReader
                     holder.Add(new Statement<LockFileHolder>(at, ReadHolder(row.Value)));
                     break;
 
+                case RecordFields.Opened:
+                    opened.Add(new Statement<string>(at, row.Value));
+                    break;
+
+                case RecordFields.Closed:
+                    closed.Add(new Statement<RecordedClose>(at, RecordedClose.Read(row.Value)));
+                    break;
+
                 default:
                     // Deliberately kept and not refused. A field this build
                     // does not know is a field a LATER build wrote, and the
@@ -301,6 +477,8 @@ internal static class SessionRecordReader
             PurposeHistory = purpose,
             BrowserAiVersionHistory = version,
             HolderHistory = holder,
+            OpenedHistory = opened,
+            ClosedHistory = closed,
             LogLength = store.LogLength(),
             Created = oldest == DateTimeOffset.MaxValue ? DateTimeOffset.MinValue : oldest,
             LastUsed = newest,

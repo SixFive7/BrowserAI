@@ -275,6 +275,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             // decides whether an idle close, a resume, a caller's close or a
             // shutdown does anything at all. See FakePlaywrightChild.BrowserIsOpen.
             BrowserIsOpen = connection => _doubles.TryGetValue(connection, out var child) && child.BrowserIsOpen,
+
+            // 8 b, 2026-10-04: a double has no browser process to wait on, so the
+            // session's watch is the double's own, ended by CloseTheWindow with
+            // the exit code an arm is about.
+            WatchTheBrowser = (connection, _, ended) => _doubles.TryGetValue(connection, out var child) ? child.WatchTheBrowser(ended) : null,
         };
     }
 

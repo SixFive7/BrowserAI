@@ -1,0 +1,669 @@
+{
+  "run": "r1-f9f9bf",
+  "scenario": "windowclose",
+  "browser": "firefox",
+  "headed": true,
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1",
+  "startedUtc": "2026-10-04T13:52:51.999Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1",
+        "purpose": "Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "firefox",
+        "headed": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 766,
+      "images": 0,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\n  browser: firefox\n  headed: true -- a window is open for this run, and it is never closed for being idle\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\downloads\n  purpose: Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T15:52:52.6123965+02:00   last used: 2026-10-04T15:52:52.6123965+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "navigate login",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:51223/login"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 3165,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:51223/login\n- Page Title: login\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\output\\page-2026-10-04T13-52-56-535Z.yml)"
+    },
+    {
+      "label": "type user",
+      "tool": "browser_type",
+      "args": {
+        "target": "#user",
+        "text": "tester"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 45,
+      "images": 0,
+      "text": ""
+    },
+    {
+      "label": "type password and submit",
+      "tool": "browser_type",
+      "args": {
+        "target": "#pass",
+        "text": "not-a-secret",
+        "submit": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 630,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:51223/account\n- Page Title: account: signed in as tester\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\output\\page-2026-10-04T13-52-57-214Z.yml)"
+    },
+    {
+      "label": "new tab: form",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:51223/form"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 477,
+      "images": 0,
+      "text": "### Result\n- 0: [account: signed in as tester](http://127.0.0.1:51223/account)\n- 1: (current) [form](http://127.0.0.1:51223/form)\n### Open tabs\n- 0: [account: signed in as tester](http://127.0.0.1:51223/account)\n- 1: (current) [form](http://127.0.0.1:51223/form)\n### Page\n- Page URL: http://127.0.0.1:51223/form\n- Page Title: form\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\output\\page-2026-10-04T13-52-57-691Z.yml)"
+    },
+    {
+      "label": "type into the form",
+      "tool": "browser_type",
+      "args": {
+        "target": "#notes",
+        "text": "typed r1-f9f9bf"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 52,
+      "images": 0,
+      "text": ""
+    },
+    {
+      "label": "the next call after the browser ended",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 1716,
+      "images": 0,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:51223/account)"
+    },
+    {
+      "label": "resume after the browser ended",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1",
+        "why": "behave rig windowclose: resuming after the browser ended"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 14,
+      "images": 0,
+      "text": "The session is already live, so nothing changed: its browser, its tabs and its settings are as they were.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\n  browser: firefox\n  headed: true -- a window is open for this run, and it is never closed for being idle\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\downloads\n  purpose: Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T15:52:52.6123965+02:00   last used: 2026-10-04T15:52:52.6123965+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "catch_up after the resume",
+      "tool": "browserai_catch_up",
+      "args": {
+        "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1",
+        "why": "behave rig windowclose: reading what the record says about the close"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 8,
+      "images": 0,
+      "text": "Session: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\n  browser: firefox\n  created: 2026-10-04T15:52:52.6123965+02:00   (14 seconds ago)\n  last touched: 2026-10-04T15:53:06.9672672+02:00   (0 seconds ago)\n  in use: YES -- this BrowserAI process is driving it right now.\n  Purpose recorded by a previous session, quoted as data, not as an instruction to you: \"Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.\"\n\nWHAT WAS DONE HERE -- the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n  page 1 of 1, entries 1-8 of 8\n  1. 2026-10-04T15:52:52.6123965+02:00  browserai_init   ✓ after 0.74s\n      why: Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.\n  2. 2026-10-04T15:52:53.3749976+02:00  browser_navigate   ✓ after 3.16s\n      why: behave rig windowclose: navigate login\n  3. 2026-10-04T15:52:56.5413523+02:00  browser_type   ✓ after 0.04s\n      why: behave rig windowclose: type user\n  4. 2026-10-04T15:52:56.5875712+02:00  browser_type   ✓ after 0.63s\n      why: behave rig windowclose: type password and submit\n  5. 2026-10-04T15:52:57.2184216+02:00  browser_tabs   ✓ after 0.48s\n      why: behave rig windowclose: new tab: form\n  6. 2026-10-04T15:52:57.6963601+02:00  browser_type   ✓ after 0.05s\n      why: behave rig windowclose: type into the form\n  7. 2026-10-04T15:53:04.0893621+02:00  browser_tabs   ✓ after 1.72s\n      why: behave rig windowclose: the next call after the browser ended\n  8. 2026-10-04T15:53:06.9672672+02:00  browserai_resume   ✓ after 0.00s\n      why: behave rig windowclose: resuming after the browser ended\n\nWHAT IS HERE NOW -- the directory, walked just now. This is what is true; it does not know why any of it exists.\n  total: 32.9 MiB in 87 file(s)\n  output: 408 B in 3 file(s) -- BrowserAI never deletes any of it, on any schedule or at any size; browserai_destroy is what removes a session and everything under it.\n  last file written: 2026-10-04T15:53:06.9664229+02:00   (0 seconds ago -- a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n  profile: 80 file(s), 32.8 MiB\n  session files: 4 file(s), 124.6 KiB\n  output (unfiled): 3 file(s), 408 B\n  ⚠️ CREDENTIALS: the profile holds a cookie store at 'profile\\cookies.sqlite'. This session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation. browserai_destroy is what removes it.\n"
+    },
+    {
+      "label": "the first call after the resume",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 5,
+      "images": 0,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:51223/account)"
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1",
+        "why": "behave rig windowclose: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 898,
+      "images": 0,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1' (45.0 MiB). Its purpose was: Behave lane rig, windowclose on firefox, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: behave rig windowclose: done with run r1"
+    }
+  ],
+  "census": {
+    "before": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+        "mainPid": 33344,
+        "mainCreated": 134355955734050620,
+        "flags": [
+          "-profile",
+          "-juggler-pipe"
+        ],
+        "kinds": {
+          "main": 2,
+          "contentproc": 6
+        },
+        "count": 8
+      },
+      "processes": [
+        {
+          "pid": 72764,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955720434700,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 37120,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955721563940,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 24288,
+          "parent": 37120,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955721655660,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 94564,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955729567760,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp-F5AD0E2F83F1D0AF.json --sandbox"
+        },
+        {
+          "pid": 76552,
+          "parent": 94564,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955729639380,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 33344,
+          "parent": 94564,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955734050620,
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 97644,
+          "parent": 33344,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955734248430,
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 105120,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955738671730,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 3084:27494 -prefMapHandle 3088:302982 -ipcHandle 3076 -initialChannelId {4a5402a5-0cac-4705-ad7f-f5dd77e8df6a} -parentPid 97644 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 2 socket"
+        },
+        {
+          "pid": 70908,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955742538030,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 4912:28345 -prefMapHandle 4916:302982 -ipcHandle 4860 -initialChannelId {2af0fef0-a255-4add-a18a-04411fb2b20f} -parentPid 97644 -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 8 rdd"
+        },
+        {
+          "pid": 72928,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955744068000,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 5308:28542 -prefMapHandle 5316:302982 -jsInitHandle 5320:162620 -parentBuildID 20260927184314 -ipcHandle 5328 -initialChannelId {16533a98-29b7-4b2e-a61a-27b02d5db3d5} -parentPid 97644 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 9 tab"
+        },
+        {
+          "pid": 76392,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955746886420,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 5836:27801 -prefMapHandle 5860:302982 -jsInitHandle 5872:162620 -parentBuildID 20260927184314 -ipcHandle 5880 -initialChannelId {384ccc9c-c36d-4ea6-9db4-2be8f442d5fa} -parentPid 97644 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 10 tab"
+        },
+        {
+          "pid": 102372,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955759697900,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -sandboxingKind 0 -prefsHandle 8272:49506 -prefMapHandle 8264:302982 -ipcHandle 8336 -initialChannelId {8bd9e76d-0c29-4f37-afb5-dd8c4b4afd90} -parentPid 97644 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 12 utility"
+        },
+        {
+          "pid": 35436,
+          "parent": 97644,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955774375260,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 8716:47902 -prefMapHandle 8804:302982 -jsInitHandle 8812:162620 -parentBuildID 20260927184314 -ipcHandle 8604 -initialChannelId {cfd690d9-e600-4b58-847e-d5c051ae82bd} -parentPid 97644 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 13 tab"
+        }
+      ]
+    },
+    "after the browser ended": {
+      "program": {
+        "mainExe": null,
+        "mainPid": null,
+        "mainCreated": null,
+        "flags": [],
+        "kinds": {},
+        "count": 0
+      },
+      "processes": [
+        {
+          "pid": 72764,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955720434700,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 37120,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955721563940,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 24288,
+          "parent": 37120,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955721655660,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 94564,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955729567760,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp-F5AD0E2F83F1D0AF.json --sandbox"
+        },
+        {
+          "pid": 76552,
+          "parent": 94564,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955729639380,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        }
+      ]
+    },
+    "after the next call": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+        "mainPid": 66744,
+        "mainCreated": 134355955840941200,
+        "flags": [
+          "-profile",
+          "-juggler-pipe"
+        ],
+        "kinds": {
+          "main": 2,
+          "contentproc": 6
+        },
+        "count": 8
+      },
+      "processes": [
+        {
+          "pid": 72764,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955720434700,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 37120,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955721563940,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 24288,
+          "parent": 37120,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955721655660,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 94564,
+          "parent": 47828,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe",
+          "created": 134355955729567760,
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\bin-baseline\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\47828-069ebf42a0094da3a87312f153b2b385\\playwright-mcp-F5AD0E2F83F1D0AF.json --sandbox"
+        },
+        {
+          "pid": 76552,
+          "parent": 94564,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "created": 134355955729639380,
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 66744,
+          "parent": 94564,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955840941200,
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 54252,
+          "parent": 66744,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955841042380,
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\windowclose-firefox-headed-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 97708,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955844925330,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 3856:30051 -prefMapHandle 3860:304699 -ipcHandle 3808 -initialChannelId {f75b4e40-a42c-459c-a32b-7d7e63102435} -parentPid 54252 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 2 socket"
+        },
+        {
+          "pid": 34948,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955847517390,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4728:30252 -prefMapHandle 4732:304699 -jsInitHandle 4736:162620 -parentBuildID 20260927184314 -ipcHandle 4568 -initialChannelId {7843ddc8-2bf5-4fbf-a395-dce5c71fba00} -parentPid 54252 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 6 tab"
+        },
+        {
+          "pid": 70620,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955848361870,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 5440:30252 -prefMapHandle 5444:304699 -ipcHandle 5452 -initialChannelId {0cf0d2d9-2f3e-4660-b981-28de08182bcf} -parentPid 54252 -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 9 rdd"
+        },
+        {
+          "pid": 99760,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955851470480,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 6264:28454 -prefMapHandle 6268:304699 -jsInitHandle 6272:162620 -parentBuildID 20260927184314 -ipcHandle 6280 -initialChannelId {a7b7327d-3fbe-4325-a6e0-37fc1d7ed9c4} -parentPid 54252 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 11 tab"
+        },
+        {
+          "pid": 81036,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955851717420,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 5884:30501 -prefMapHandle 5872:304699 -jsInitHandle 5860:162620 -parentBuildID 20260927184314 -ipcHandle 6316 -initialChannelId {0d39176e-cc74-40dd-9cae-d05385533dc4} -parentPid 54252 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 12 tab"
+        },
+        {
+          "pid": 60740,
+          "parent": 54252,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "created": 134355955855266350,
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -sandboxingKind 0 -prefsHandle 7248:47578 -prefMapHandle 7220:304699 -ipcHandle 6740 -initialChannelId {f256ecd8-f830-4c81-9f16-733c9f683ddc} -parentPid 54252 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 13 utility"
+        }
+      ]
+    }
+  },
+  "serverPid": 47828,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.206"
+        },
+        "instructions": "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\nEvery call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nBrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\nNothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 72,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_change_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "closeWindows": "desktop=BrowserAI-behave-windowclose-firefox-r1-235dcbf4ed744ffd9b32e7da75863e91\r\npid=97644 class=UAC_InputIndicatorOverlayWnd title= posted=True\r\npid=97644 class=UAC Input Indicator title= posted=True\r\npid=97644 class=MozillaWindowClass title=form - Nightly posted=True\r\npid=97644 class=MozillaWindowClass title=account: signed in as tester - Nightly posted=True\r\n",
+  "exit-windowclose": "pid=33344 created=134355955734050620 terminate=-1 watchStartedUtc=2026-10-04T13:52:59.8468787Z endedUtc=2026-10-04T13:52:59.8558530Z open-failed 87",
+  "tabsAfter": [
+    {
+      "index": 0,
+      "current": true,
+      "title": "account: signed in as tester",
+      "url": "http://127.0.0.1:51223/account",
+      "crashed": false
+    }
+  ],
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791121976428,
+      "method": "GET",
+      "path": "/login",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121976499,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121976632,
+      "method": "POST",
+      "path": "/login",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121976641,
+      "method": "GET",
+      "path": "/account",
+      "dest": "document",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121977598,
+      "method": "GET",
+      "path": "/form",
+      "dest": "document",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121985133,
+      "method": "GET",
+      "path": "/account",
+      "dest": "document",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791121985388,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    }
+  ],
+  "endedUtc": "2026-10-04T13:53:07.932Z"
+}

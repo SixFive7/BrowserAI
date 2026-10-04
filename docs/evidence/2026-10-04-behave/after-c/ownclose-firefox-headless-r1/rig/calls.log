@@ -1,0 +1,5 @@
+2026-10-04T15:08:52.690Z call browserai_init 377ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ownclose-firefox-headless-r1' on every browser tool call. directory: 
+2026-10-04T15:08:54.787Z call browser_navigate 2090ms isError=false ### Page - Page URL: http://127.0.0.1:62753/h/1 - Page Title: history 1 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ow
+2026-10-04T15:08:56.751Z call browser_close 477ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T15:08:57.664Z call browser_tabs 1ms isError=true 'browser_tabs' was not run: nothing was sent to the browser. This session's browser was closed at 2026-10-04T15:08:56.2746463+00:00 by a browser_close call from
+2026-10-04T15:08:57.749Z call browserai_destroy 78ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ownclose-firefox-headless-r1' (31.9 MiB). Its purpose was: Behave lane rig

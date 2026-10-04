@@ -72,6 +72,7 @@ assumed and nothing on `PATH` is used.
 | Building the payload: Node, the vendored `node_modules`, the provenance stamp | `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
+| The user agent a hidden Chromium sends, read off the browser, *added 2026-10-04, 6 b* | `src/BrowserAI/Runtime/HeadedUserAgent.cs`, asked by `SessionManager.HiddenUserAgentAsync` |
 | First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune}.cs`, `src/BrowserAI.Core/Runtime/TreeDelete.cs`, `src/BrowserAI.Core/Interop/BrowserProcesses.cs` |
 
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
@@ -200,6 +201,7 @@ whose page is serving a tab, for the same reason and for as long as the page ser
 | Concern | Implemented by |
 |---|---|
 | The proxy itself: filters, forwarding, the two methods it serves | `src/BrowserAI/Proxy/{BrowserProxy, ChildConnection, ServerInstructions}.cs` |
+| The one successful answer BrowserAI reads: a Chromium screenshot's size, *added 2026-10-04, 9 d* | `src/BrowserAI/Proxy/ScreenshotLimit.cs`, called from `BrowserProxy.AnswerToolsCallAsync` |
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
 | The configuration app: modes, state and status report | `src/BrowserAI.App/{Program, AppState, ClientState, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the page asks of it, one per client, so no button acts on both; `ConfigurationDialog` deleted 2026-10-03 with the window* -- *and `Coordinator.cs` added 2026-09-25: the three start modes, the sign-in step and the apply loop, under [Updates](#updates)* |
 | The folder picker and Explorer | `src/BrowserAI.App/Interop/ShellInterop.cs`, called from `src/BrowserAI.App/Page/DesktopPageHost.cs` -- *the task dialog, `TaskDialogInterop` and `Ui/TaskDialogPage.cs` deleted 2026-10-03 with the window* |
@@ -351,6 +353,7 @@ The largest area, and the one everything else keys on.
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
+| A browser that ends with nobody asking, and why every close happened, *added 2026-10-04, 8 b* | `src/BrowserAI/Sessions/BrowserExitWatch.cs` over `BrowserProcesses.HoldTheEarliest` in `src/BrowserAI.Core/Interop/BrowserProcesses.cs`; `LiveSession.TheBrowserEnded` and the `closed` and `opened` statements `SessionLock.AppendLifecycle` writes; `src/BrowserAI/Sessions/CloseReasons.cs` for the sentence every answer gives; `SessionRecord.LastClose` for the reading back |
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and -- since 2026-08-20 -- `src/BrowserAI.Core/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
@@ -363,6 +366,9 @@ that stopped it being monotone across files, and the provisioning-rewrite path
 that used to bypass the whole thing. **All of it is gone with artifact routing.**
 Nothing reads the child's answer and nothing moves a file, so a pointer upstream
 publishes resolves because the file is still where upstream put it --
+*narrowed 2026-10-04 by addition, the maintainer's 9 d: one answer is read, a
+Chromium screenshot's size from its image header, and an image past 16,384 px
+is refused; the file stays where upstream put it* --
 `FileAccessRootTests.EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt`
 keeps that measured against a real browser, not assumed. See
 [the output directory](#the-sessions-output-directory).
@@ -1301,6 +1307,13 @@ gate in both directions, a string validator refusing nine path shapes, and a
 *never overwrite* rule built on suffixing and an in-flight reservation set.
 Around 1,200 lines. **The doctrine that replaced it is one sentence: nothing
 between the two servers except the session system and the reason system.**
+⚠️ *Narrowed 2026-10-04 by addition, by the maintainer's 9 d, in his words
+verbatim: "9 d - and add a todo to the repo to track the progress of the bug for
+when to remove our checks. Also, the refusal should mention the chromium bug
+link."* One thing more stands between them: `ScreenshotLimit` reads the size of a
+Chromium screenshot from its image header and refuses one past 16,384 px, the
+line past which Chromium repeats the image. It reads and refuses and never
+rewrites or moves, and [`TODO.md`](TODO.md) names the day it goes.
 
 **`<session>\output\` is flat and BrowserAI adds nothing to it.** The child's
 working directory *is* that folder and so is its `outputDir`, so a caller's

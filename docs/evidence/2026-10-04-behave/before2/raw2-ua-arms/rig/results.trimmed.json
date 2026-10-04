@@ -1,0 +1,1310 @@
+{
+  "chrome": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+  "startedUtc": "2026-10-04T13:55:51.091Z",
+  "probe": [
+    {
+      "ms": 673,
+      "status": 0,
+      "signal": null,
+      "stdoutBytes": 229,
+      "stderrHead": "[73464:89420:1004/155551.299:ERROR:sandbox\\policy\\win\\sandbox_win.cc:804] Sandbox cannot access executable %USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)\r\n[73464:87456:1004/155551.334:ERROR:chrome\\browser\\extensions\\external_registry_loader_win.cc:147] Missing value p",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    },
+    {
+      "ms": 797,
+      "status": 0,
+      "signal": null,
+      "stdoutBytes": 229,
+      "stderrHead": "[4560:108608:1004/155551.925:ERROR:sandbox\\policy\\win\\sandbox_win.cc:804] Sandbox cannot access executable %USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)\r\n[4560:105232:1004/155551.969:ERROR:chrome\\browser\\extensions\\external_registry_loader_win.cc:147] Missing value p",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    },
+    {
+      "ms": 717,
+      "status": 0,
+      "signal": null,
+      "stdoutBytes": 229,
+      "stderrHead": "[78668:88436:1004/155552.729:ERROR:sandbox\\policy\\win\\sandbox_win.cc:804] Sandbox cannot access executable %USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)\r\n[78668:89640:1004/155552.769:ERROR:chrome\\browser\\extensions\\external_registry_loader_win.cc:147] Missing value p",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+    }
+  ],
+  "arms": [
+    {
+      "arm": "none-headless",
+      "config": {
+        "browserName": "chromium",
+        "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\none-headless\\profile",
+        "launchOptions": {
+          "channel": "chrome-for-testing",
+          "headless": true,
+          "args": [
+            "--enable-automation",
+            "--disable-blink-features=AutomationControlled",
+            "--restore-last-session",
+            "--enable-aggressive-domstorage-flushing",
+            "--hide-crash-restore-bubble"
+          ],
+          "ignoreDefaultArgs": [
+            "about:blank"
+          ]
+        },
+        "contextOptions": {
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          }
+        }
+      },
+      "navigate1": false,
+      "navigate2": false,
+      "page": {
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "webdriver": false,
+        "brands": "Chromium/155, Not(A:Brand/24",
+        "mobile": false,
+        "platform": "Windows",
+        "fullVersionList": "Chromium/155.0.8059.12, Not(A:Brand/24.0.0.0",
+        "platformVersion": "19.0.0",
+        "architecture": "x86",
+        "bitness": "64",
+        "fetched": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        "worker": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "brands": "Chromium/155, Not(A:Brand/24",
+          "headers": {
+            "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+            "chUa": null,
+            "chUaMobile": null,
+            "chUaPlatform": null,
+            "chUaFullVersionList": null,
+            "chUaPlatformVersion": null,
+            "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+          }
+        }
+      },
+      "serviceWorker": "### Result\n\"{\\\"scope\\\":\\\"http://127.0.0.1:50910/\\\",\\\"controlled\\\":true,\\\"answered\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\"}\"\n### Ran Playwright code\n```js\nawait page.evaluate('async () => {\\n      const reg = await navigator.serviceWorker.register(\\'/sw.js\\');\\n      await navigator.serviceWorker.ready;\\n      const r = await fetch(\\'/headers?from=sw-check\\', { cache: \\'no-store\\' });\\n      return JSON.stringify({ scope: reg.scope, controlled: !!navigator.serviceWorker.controller, answered: (await r.json()).u",
+      "restoreList": "### Result\n- 0: (current) [echo](http://127.0.0.1:50910/echo?second=1)\n- 1: [echo](http://127.0.0.1:50910/echo?tab=second)",
+      "restoreHits": [
+        {
+          "path": "/echo?tab=second",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/echo?second=1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/sw.js",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null
+        }
+      ],
+      "hits": [
+        {
+          "t": 1791122154118,
+          "method": "GET",
+          "path": "/echo",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154145,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154198,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154211,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154233,
+          "method": "GET",
+          "path": "/headers?from=page",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154236,
+          "method": "GET",
+          "path": "/worker.js",
+          "dest": "worker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122154241,
+          "method": "GET",
+          "path": "/headers?from=worker",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122157714,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122157742,
+          "method": "GET",
+          "path": "/headers?from=sw-check",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122158804,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122158828,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122159355,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122159356,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122159377,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122159411,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122161503,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "arm": "context-headless",
+      "config": {
+        "browserName": "chromium",
+        "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\context-headless\\profile",
+        "launchOptions": {
+          "channel": "chrome-for-testing",
+          "headless": true,
+          "args": [
+            "--enable-automation",
+            "--disable-blink-features=AutomationControlled",
+            "--restore-last-session",
+            "--enable-aggressive-domstorage-flushing",
+            "--hide-crash-restore-bubble"
+          ],
+          "ignoreDefaultArgs": [
+            "about:blank"
+          ]
+        },
+        "contextOptions": {
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+        }
+      },
+      "navigate1": false,
+      "navigate2": false,
+      "page": {
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "webdriver": false,
+        "brands": "Chromium/155, Not(A:Brand/24",
+        "mobile": false,
+        "platform": "Windows",
+        "fullVersionList": "Chromium/155.0.8059.12, Not(A:Brand/24.0.0.0",
+        "platformVersion": "10.0",
+        "architecture": "x86",
+        "bitness": "64",
+        "fetched": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        "worker": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "brands": "Chromium/155, Not(A:Brand/24",
+          "headers": {
+            "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+            "chUa": null,
+            "chUaMobile": null,
+            "chUaPlatform": null,
+            "chUaFullVersionList": null,
+            "chUaPlatformVersion": null,
+            "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+          }
+        }
+      },
+      "serviceWorker": "### Result\n\"{\\\"scope\\\":\\\"http://127.0.0.1:50910/\\\",\\\"controlled\\\":true,\\\"answered\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\"}\"\n### Ran Playwright code\n```js\nawait page.evaluate('async () => {\\n      const reg = await navigator.serviceWorker.register(\\'/sw.js\\');\\n      await navigator.serviceWorker.ready;\\n      const r = await fetch(\\'/headers?from=sw-check\\', { cache: \\'no-store\\' });\\n      return JSON.stringify({ scope: reg.scope, controlled: !!navigator.serviceWorker.controller, answered: (await r.json()).ua });\\n ",
+      "restoreList": "### Result\n- 0: (current) [echo](http://127.0.0.1:50910/echo?tab=second)\n- 1: [echo](http://127.0.0.1:50910/echo?second=1)",
+      "restoreHits": [
+        {
+          "path": "/echo?tab=second",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/echo?second=1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/sw.js",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null
+        }
+      ],
+      "hits": [
+        {
+          "t": 1791122164430,
+          "method": "GET",
+          "path": "/echo",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164538,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164560,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164573,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164601,
+          "method": "GET",
+          "path": "/headers?from=page",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164604,
+          "method": "GET",
+          "path": "/worker.js",
+          "dest": "worker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122164610,
+          "method": "GET",
+          "path": "/headers?from=worker",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122165646,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122165666,
+          "method": "GET",
+          "path": "/headers?from=sw-check",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122166712,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122166732,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122167287,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122167288,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122167326,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122167356,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122169430,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "arm": "switch-and-context-headless",
+      "config": {
+        "browserName": "chromium",
+        "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\switch-and-context-headless\\profile",
+        "launchOptions": {
+          "channel": "chrome-for-testing",
+          "headless": true,
+          "args": [
+            "--enable-automation",
+            "--disable-blink-features=AutomationControlled",
+            "--restore-last-session",
+            "--enable-aggressive-domstorage-flushing",
+            "--hide-crash-restore-bubble",
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+          ],
+          "ignoreDefaultArgs": [
+            "about:blank"
+          ]
+        },
+        "contextOptions": {
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          },
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+        }
+      },
+      "navigate1": false,
+      "navigate2": false,
+      "page": {
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "webdriver": false,
+        "brands": "Chromium/155, Not(A:Brand/24",
+        "mobile": false,
+        "platform": "Windows",
+        "fullVersionList": "",
+        "platformVersion": "10.0",
+        "architecture": "x86",
+        "bitness": "",
+        "fetched": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        "worker": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "brands": "Chromium/155, Not(A:Brand/24",
+          "headers": {
+            "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+            "chUa": null,
+            "chUaMobile": null,
+            "chUaPlatform": null,
+            "chUaFullVersionList": null,
+            "chUaPlatformVersion": null,
+            "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+          }
+        }
+      },
+      "serviceWorker": "### Result\n\"{\\\"scope\\\":\\\"http://127.0.0.1:50910/\\\",\\\"controlled\\\":true,\\\"answered\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\"}\"\n### Ran Playwright code\n```js\nawait page.evaluate('async () => {\\n      const reg = await navigator.serviceWorker.register(\\'/sw.js\\');\\n      await navigator.serviceWorker.ready;\\n      const r = await fetch(\\'/headers?from=sw-check\\', { cache: \\'no-store\\' });\\n      return JSON.stringify({ scope: reg.scope, controlled: !!navigator.serviceWorker.controller, answered: (await r.json()).ua });\\n ",
+      "restoreList": "### Result\n- 0: (current) [echo](http://127.0.0.1:50910/echo?tab=second)\n- 1: [echo](http://127.0.0.1:50910/echo?second=1)",
+      "restoreHits": [
+        {
+          "path": "/echo?tab=second",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/echo?second=1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/sw.js",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null
+        }
+      ],
+      "hits": [
+        {
+          "t": 1791122172863,
+          "method": "GET",
+          "path": "/echo",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122172981,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122173002,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122173016,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122173041,
+          "method": "GET",
+          "path": "/headers?from=page",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122173044,
+          "method": "GET",
+          "path": "/worker.js",
+          "dest": "worker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122173049,
+          "method": "GET",
+          "path": "/headers?from=worker",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122174072,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122174090,
+          "method": "GET",
+          "path": "/headers?from=sw-check",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175138,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175157,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175679,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175679,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175702,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122175733,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "",
+          "chUaPlatformVersion": "\"10.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122177788,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        }
+      ],
+      "exitCode": 0
+    },
+    {
+      "arm": "none-headed",
+      "config": {
+        "browserName": "chromium",
+        "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\none-headed\\profile",
+        "launchOptions": {
+          "channel": "chrome-for-testing",
+          "headless": false,
+          "args": [
+            "--enable-automation",
+            "--disable-blink-features=AutomationControlled",
+            "--restore-last-session",
+            "--enable-aggressive-domstorage-flushing",
+            "--hide-crash-restore-bubble"
+          ],
+          "ignoreDefaultArgs": [
+            "about:blank"
+          ]
+        },
+        "contextOptions": {
+          "viewport": {
+            "width": 1920,
+            "height": 1080
+          }
+        }
+      },
+      "navigate1": false,
+      "navigate2": false,
+      "page": {
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "webdriver": false,
+        "brands": "Chromium/155, Not(A:Brand/24",
+        "mobile": false,
+        "platform": "Windows",
+        "fullVersionList": "Chromium/155.0.8059.12, Not(A:Brand/24.0.0.0",
+        "platformVersion": "19.0.0",
+        "architecture": "x86",
+        "bitness": "64",
+        "fetched": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        "worker": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "brands": "Chromium/155, Not(A:Brand/24",
+          "headers": {
+            "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+            "chUa": null,
+            "chUaMobile": null,
+            "chUaPlatform": null,
+            "chUaFullVersionList": null,
+            "chUaPlatformVersion": null,
+            "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+          }
+        }
+      },
+      "serviceWorker": "### Result\n\"{\\\"scope\\\":\\\"http://127.0.0.1:50910/\\\",\\\"controlled\\\":true,\\\"answered\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\"}\"\n### Ran Playwright code\n```js\nawait page.evaluate('async () => {\\n      const reg = await navigator.serviceWorker.register(\\'/sw.js\\');\\n      await navigator.serviceWorker.ready;\\n      const r = await fetch(\\'/headers?from=sw-check\\', { cache: \\'no-store\\' });\\n      return JSON.stringify({ scope: reg.scope, controlled: !!navigator.serviceWorker.controller, answered: (await r.json()).ua });\\n ",
+      "restoreList": "### Result\n- 0: (current) [echo](http://127.0.0.1:50910/echo?tab=second)\n- 1: [echo](http://127.0.0.1:50910/echo?second=1)",
+      "restoreHits": [
+        {
+          "path": "/echo?tab=second",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/echo?second=1",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/favicon.ico",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\""
+        },
+        {
+          "path": "/sw.js",
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null
+        }
+      ],
+      "hits": [
+        {
+          "t": 1791122180811,
+          "method": "GET",
+          "path": "/echo",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180859,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180893,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180910,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180935,
+          "method": "GET",
+          "path": "/headers?from=page",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180937,
+          "method": "GET",
+          "path": "/worker.js",
+          "dest": "worker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122180942,
+          "method": "GET",
+          "path": "/headers?from=worker",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122181965,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122181985,
+          "method": "GET",
+          "path": "/headers?from=sw-check",
+          "dest": "empty",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183036,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183055,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183821,
+          "method": "GET",
+          "path": "/echo?tab=second",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183822,
+          "method": "GET",
+          "path": "/echo?second=1",
+          "dest": "document",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183847,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122183878,
+          "method": "GET",
+          "path": "/favicon.ico",
+          "dest": "image",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "chUaMobile": "?0",
+          "chUaPlatform": "\"Windows\"",
+          "chUaFullVersionList": "\"Chromium\";v=\"155.0.8059.12\", \"Not(A:Brand\";v=\"24.0.0.0\"",
+          "chUaPlatformVersion": "\"19.0.0\"",
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        },
+        {
+          "t": 1791122185918,
+          "method": "GET",
+          "path": "/sw.js",
+          "dest": "serviceworker",
+          "cookies": [],
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+          "chUa": null,
+          "chUaMobile": null,
+          "chUaPlatform": null,
+          "chUaFullVersionList": null,
+          "chUaPlatformVersion": null,
+          "acceptLanguage": "en-GB,en-US;q=0.9,en;q=0.8"
+        }
+      ],
+      "exitCode": 0
+    }
+  ],
+  "derived": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "origin": "http://127.0.0.1:50910",
+  "endedUtc": "2026-10-04T13:56:28.104Z"
+}

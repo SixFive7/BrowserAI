@@ -1,0 +1,8 @@
+2026-10-04T14:31:03.341Z call browserai_init 445ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\restore-chromium-headed-r1' on every browser tool call. directory: C:
+2026-10-04T14:31:03.989Z call browser_navigate 647ms isError=false ### Page - Page URL: http://127.0.0.1:53098/echo?tab=0 - Page Title: echo ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\
+2026-10-04T14:31:04.067Z call browser_tabs 77ms isError=false ### Result - 0: [echo](http://127.0.0.1:53098/echo?tab=0) - 1: (current) [echo](http://127.0.0.1:53098/echo?tab=1) ### Open tabs - 0: [echo](http://127.0.0.1:53
+2026-10-04T14:31:04.237Z call browser_close 169ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T14:31:04.641Z call browserai_resume 403ms isError=false NOTE: this session's browser was closed at 2026-10-04T14:31:04.0697473+00:00 by a browser_close call, and this resume started a new browser server with the per-
+2026-10-04T14:31:05.202Z call browser_tabs 560ms isError=false ### Result - 0: (current) [echo](http://127.0.0.1:53098/echo?tab=0) - 1: [echo](http://127.0.0.1:53098/echo?tab=1)
+2026-10-04T14:31:10.232Z call browser_evaluate 1026ms isError=false ### Result "{\"ua\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\",\"appVersion\":\"5.0 (Wi
+2026-10-04T14:31:11.004Z call browserai_destroy 770ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\restore-chromium-headed-r1' (12.6 MiB). Its purpose was: Behave lane rig, 

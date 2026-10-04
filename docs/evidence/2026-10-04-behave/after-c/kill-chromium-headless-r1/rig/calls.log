@@ -1,0 +1,20 @@
+2026-10-04T15:07:34.905Z call browserai_init 889ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1' on every browser tool call. directory: C:\
+2026-10-04T15:07:35.456Z call browser_navigate 550ms isError=false ### Page - Page URL: http://127.0.0.1:62624/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill
+2026-10-04T15:07:35.479Z call browser_type 22ms isError=false 
+2026-10-04T15:07:36.100Z call browser_type 620ms isError=false ### Page - Page URL: http://127.0.0.1:62624/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T15:07:36.185Z call browser_tabs 83ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62624/account) - 1: (current) [form](http://127.0.0.1:62624/form) ### Open tabs - 0: [account: s
+2026-10-04T15:07:36.210Z call browser_type 24ms isError=false 
+2026-10-04T15:07:36.720Z call browser_evaluate 509ms isError=false ### Result "jss=r1-e3d3ea; jsp=r1-e3d3ea"
+2026-10-04T15:07:36.726Z call browser_tabs 5ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62624/account) - 1: (current) [form](http://127.0.0.1:62624/form)
+2026-10-04T15:07:36.742Z call browser_tabs 13ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62624/account) - 1: [form](http://127.0.0.1:62624/form)
+2026-10-04T15:07:37.758Z call browser_evaluate 1014ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62624/account\",\"cookie\":\"jss=r1-e3d3ea; jsp=r1-e3d3ea\",\"ls\":\"r1-e3d3ea\",\"ss\":null,\"notes\":null,\"who\":{\"u
+2026-10-04T15:07:37.774Z call browser_tabs 15ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62624/account) - 1: (current) [form](http://127.0.0.1:62624/form)
+2026-10-04T15:07:38.787Z call browser_evaluate 1012ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62624/form\",\"cookie\":\"jss=r1-e3d3ea; jsp=r1-e3d3ea\",\"ls\":\"r1-e3d3ea\",\"ss\":\"r1-e3d3ea\",\"notes\":\"typed r1-
+2026-10-04T15:07:44.373Z call browser_tabs 1ms isError=true 'browser_tabs' was not run: nothing was sent to the browser. This session's browser ended at 2026-10-04T15:07:40.3994243+00:00 with exit code 1 (0x00000001), wh
+2026-10-04T15:07:45.531Z call browserai_resume 364ms isError=false NOTE: This session's browser ended at 2026-10-04T15:07:40.3994243+00:00 with exit code 1 (0x00000001), which a crash or a kill leaves; BrowserAI had not asked i
+2026-10-04T15:07:45.546Z call browserai_catch_up 14ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1 browser: chromium created: 2026-10-04T17:07:34.0198104+02:00 
+2026-10-04T15:07:46.006Z call browser_tabs 459ms isError=false ### Result - 0: (current) [New tab](chrome://new-tab-page/)
+2026-10-04T15:07:49.013Z call browser_tabs 5ms isError=false ### Result - 0: (current) [New tab](chrome://new-tab-page/)
+2026-10-04T15:07:49.026Z call browser_tabs 12ms isError=false ### Result - 0: (current) [New tab](chrome://new-tab-page/)
+2026-10-04T15:07:49.540Z call browser_evaluate 513ms isError=false ### Result "{\"url\":\"chrome://new-tab-page/\",\"cookie\":\"\",\"ls\":null,\"ss\":null,\"notes\":null,\"who\":\"THREW Failed to fetch\"}" ### Page - Page URL: 
+2026-10-04T15:07:50.242Z call browserai_destroy 701ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1' (13.9 MiB). Its purpose was: Behave lane rig, k

@@ -1,0 +1,5 @@
+2026-10-04T13:51:19.798Z call browserai_init 449ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-firefox-headless-r1' on every browser tool call. directory: C:\Sou
+2026-10-04T13:51:22.949Z call browser_navigate 3149ms isError=false ### Page - Page URL: http://127.0.0.1:54783/echo - Page Title: echo ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-fir
+2026-10-04T13:51:23.101Z call browser_navigate 151ms isError=false ### Page - Page URL: http://127.0.0.1:54783/echo?second=1 - Page Title: echo ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessio
+2026-10-04T13:51:24.247Z call browser_evaluate 1145ms isError=false ### Result "{\"ua\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\",\"appVersion\":\"5.0 (Windows)\",\"webdriver\":true,\"b
+2026-10-04T13:51:25.855Z call browserai_destroy 726ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-firefox-headless-r1' (31.9 MiB). Its purpose was: Behave lane rig, ua o

@@ -1,0 +1,6 @@
+2026-10-04T14:30:22.848Z DESKTOP WinSta0\BrowserAI-behave-ua-chromium-headless-r1-bc2906fccefb48fc9302561358fda4b7
+2026-10-04T14:30:22.888Z START pid=3680 app=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-ab\BrowserAI.Server.exe browser=chromium scenario=ua headed=false run=r1 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-ab\ua-chromium-headless-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T14:30:24.921Z PRIVATE pids=17 windows=2 pid=95060 hwnd=0xa723dc class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=95060 hwnd=0xc2766 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T14:30:26.942Z PRIVATE pids=11 windows=0 
+2026-10-04T14:30:28.096Z SUMMARY exit=0 ticks=6 maxJobPids=19 ticksWithPrivateWindows=2 leaked=False
+2026-10-04T14:30:28.106Z END processes still in the job before it closed: 0

@@ -1,0 +1,11 @@
+2026-10-04T13:53:10.663Z call browserai_init 459ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r2' on every browser tool call. directory:
+2026-10-04T13:53:14.512Z call browser_navigate 3847ms isError=false ### Page - Page URL: http://127.0.0.1:50460/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\wind
+2026-10-04T13:53:14.568Z call browser_type 55ms isError=false 
+2026-10-04T13:53:15.263Z call browser_type 694ms isError=false ### Page - Page URL: http://127.0.0.1:50460/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T13:53:15.697Z call browser_tabs 432ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:50460/account) - 1: (current) [form](http://127.0.0.1:50460/form) ### Open tabs - 0: [account: s
+2026-10-04T13:53:15.752Z call browser_type 54ms isError=false 
+2026-10-04T13:53:31.887Z call browser_tabs 9764ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:50460/account)
+2026-10-04T13:53:33.403Z call browserai_resume 14ms isError=false The session is already live, so nothing changed: its browser, its tabs and its settings are as they were. Session ready. Pass session='C:\Source\SixFive7\Brows
+2026-10-04T13:53:33.416Z call browserai_catch_up 12ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r2 browser: firefox created: 2026-10-04T15:53:10.2106549+02:
+2026-10-04T13:53:33.423Z call browser_tabs 6ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:50460/account)
+2026-10-04T13:53:34.288Z call browserai_destroy 862ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r2' (45.0 MiB). Its purpose was: Behave lane ri

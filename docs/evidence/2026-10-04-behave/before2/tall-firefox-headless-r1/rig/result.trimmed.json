@@ -1,0 +1,467 @@
+{
+  "run": "r1-d4b98f",
+  "scenario": "tall",
+  "browser": "firefox",
+  "headed": false,
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1",
+  "startedUtc": "2026-10-04T13:57:06.959Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1",
+        "purpose": "Behave lane rig, tall on firefox, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "firefox",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 415,
+      "images": 0,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\downloads\n  purpose: Behave lane rig, tall on firefox, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T15:57:07.4743491+02:00   last used: 2026-10-04T15:57:07.4743491+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "navigate tall 16385",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:59406/tall?h=16385"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 2383,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:59406/tall?h=16385\n- Page Title: tall ready 16385x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-10-265Z.yml)"
+    },
+    {
+      "label": "png file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 224,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.png)"
+    },
+    {
+      "label": "jpeg file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 242,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.jpeg)"
+    },
+    {
+      "label": "png inline 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 206,
+      "images": 1,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-10-938Z.png)"
+    },
+    {
+      "label": "navigate tall 32767",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:59406/tall?h=32767"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 196,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:59406/tall?h=32767\n- Page Title: tall ready 32767x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-11-165Z.yml)"
+    },
+    {
+      "label": "png file 32767",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-32767.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 504,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.png)"
+    },
+    {
+      "label": "jpeg file 32767",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-32767.jpeg"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 609,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.jpeg)"
+    },
+    {
+      "label": "png inline 32767",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 608,
+      "images": 1,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-12-848Z.png)"
+    },
+    {
+      "label": "navigate tall 32768",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:59406/tall?h=32768"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 200,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:59406/tall?h=32768\n- Page Title: tall ready 32768x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-13-113Z.yml)"
+    },
+    {
+      "label": "png file 32768",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-32768.png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 22,
+      "images": 0,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "label": "jpeg file 32768",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-32768.jpeg"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 14,
+      "images": 0,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "label": "png inline 32768",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 14,
+      "images": 0,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1",
+        "why": "behave rig tall: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 777,
+      "images": 0,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1' (42.0 MiB). Its purpose was: Behave lane rig, tall on firefox, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: behave rig tall: done with run r1"
+    }
+  ],
+  "census": {},
+  "serverPid": 83868,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.206"
+        },
+        "instructions": "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\nEvery call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nBrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\nNothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 72,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_change_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "images": [
+    {
+      "label": "png file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.png)"
+    },
+    {
+      "label": "jpeg file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.jpeg",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-16385.jpeg)"
+    },
+    {
+      "label": "png inline 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": false,
+      "images": 1,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-10-938Z.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-10-938Z.png)"
+    },
+    {
+      "label": "png file 32767",
+      "height": 32767,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-32767.png"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.png)"
+    },
+    {
+      "label": "jpeg file 32767",
+      "height": 32767,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-32767.jpeg"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.jpeg",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\tall-32767.jpeg)"
+    },
+    {
+      "label": "png inline 32767",
+      "height": 32767,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": false,
+      "images": 1,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-12-848Z.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-firefox-headless-r1\\output\\page-2026-10-04T13-57-12-848Z.png)"
+    },
+    {
+      "label": "png file 32768",
+      "height": 32768,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-32768.png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "label": "jpeg file 32768",
+      "height": 32768,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-32768.jpeg"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    },
+    {
+      "label": "png inline 32768",
+      "height": 32768,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "### Error\nError: browserBackend.callTool: Protocol error (Page.screenshot): Cannot take screenshot larger than 32767\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n"
+    }
+  ],
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791122230117,
+      "method": "GET",
+      "path": "/tall?h=16385",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122230165,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122230984,
+      "method": "GET",
+      "path": "/tall?h=32767",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791122232932,
+      "method": "GET",
+      "path": "/tall?h=32768",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chUaMobile": null,
+      "chUaPlatform": null,
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    }
+  ],
+  "endedUtc": "2026-10-04T13:57:14.012Z"
+}

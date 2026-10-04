@@ -6,6 +6,7 @@ using BrowserAI.Protocol;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
 
@@ -41,7 +42,16 @@ internal sealed class ConfigRoundTripTests
         var resolved = ResolvedConfig(run);
         var missing = new List<string>();
 
-        foreach (var opinion in Expected(run).Opinions)
+        // 6 b, 2026-10-04: a hidden Chromium launch carries the headed user agent,
+        // which the published server read off the provisioned browser and kept
+        // beside it. Asked the same way here, so the expectation is the browser's
+        // own and not a string written into this file; with no browser provisioned
+        // it is null on both sides.
+        var hiddenUserAgent = File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)
+            ? await HeadedUserAgent.ForAsync(BrowserAiPaths.ExpectedChromiumExecutable, ScratchRoot.Path, NullLogger.Instance, CancellationToken.None)
+            : null;
+
+        foreach (var opinion in Expected(run, hiddenUserAgent).Opinions)
         {
             var actual = Follow(resolved, opinion.Path);
 
@@ -362,13 +372,14 @@ internal sealed class ConfigRoundTripTests
     /// The config the product generated for the run's first session, rebuilt from
     /// the same generator with the same arguments.
     /// </summary>
-    private static GeneratedConfig Expected(SessionRun run) =>
+    private static GeneratedConfig Expected(SessionRun run, string? hiddenUserAgent = null) =>
         BrowserConfiguration.ForSession(
             SessionPath.For(Path.Combine(run.Root, "alpha")),
             headed: false,
             SessionManager.DefaultBrowser,
             transcript: false,
-            RunOptions.Default);
+            RunOptions.Default,
+            hiddenUserAgent);
 
     /// <summary>The child's own merged config, as <c>browser_get_config</c> reported it.</summary>
     /// <remarks>

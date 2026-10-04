@@ -1,0 +1,11 @@
+2026-10-04T13:57:29.132Z call browserai_init 421ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-chromium-headed-r2' on every browser tool call. directory
+2026-10-04T13:57:29.861Z call browser_navigate 727ms isError=false ### Page - Page URL: http://127.0.0.1:50064/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\wind
+2026-10-04T13:57:29.895Z call browser_type 33ms isError=false 
+2026-10-04T13:57:30.519Z call browser_type 622ms isError=false ### Page - Page URL: http://127.0.0.1:50064/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T13:57:30.606Z call browser_tabs 86ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:50064/account) - 1: (current) [form](http://127.0.0.1:50064/form) ### Open tabs - 0: [account: s
+2026-10-04T13:57:30.631Z call browser_type 24ms isError=false 
+2026-10-04T13:57:37.393Z call browser_tabs 450ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:50064/account) - 1: [form](http://127.0.0.1:50064/form)
+2026-10-04T13:57:38.336Z call browserai_resume 17ms isError=false The session is already live, so nothing changed: its browser, its tabs and its settings are as they were. Session ready. Pass session='C:\Source\SixFive7\Brows
+2026-10-04T13:57:38.356Z call browserai_catch_up 19ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-chromium-headed-r2 browser: chromium created: 2026-10-04T15:57:28.7161122+0
+2026-10-04T13:57:38.370Z call browser_tabs 12ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:50064/account) - 1: [form](http://127.0.0.1:50064/form)
+2026-10-04T13:57:39.341Z call browserai_destroy 968ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-chromium-headed-r2' (17.7 MiB). Its purpose was: Behave lane r

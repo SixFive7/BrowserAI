@@ -1,0 +1,6 @@
+2026-10-04T02:31:20.864Z DESKTOP WinSta0\BrowserAI-lifetime-lasttab-firefox-r1-351dda61f28b4c299ba7189153b8f8ba
+2026-10-04T02:31:20.901Z START pid=33620 app=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\lifetime\rig\switch.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe browser=firefox scenario=lasttab from=headless run=r1 out=C:\Source\SixFive7\BrowserAI\.work\lifetime\runs\main\lasttab-firefox-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions
+2026-10-04T02:31:31.974Z PRIVATE pids=13 windows=3 pid=94052 hwnd=0x4624da class=MozillaWindowClass rect=0,0,1366,768 title=Nightly | pid=94052 hwnd=0x4919ca class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=94052 hwnd=0x4f1478 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T02:31:39.107Z PRIVATE pids=8 windows=0 
+2026-10-04T02:31:39.725Z SUMMARY exit=0 ticks=19 maxJobPids=17 ticksWithPrivateWindows=7 leaked=False
+2026-10-04T02:31:39.733Z END processes still in the job before it closed: 0

@@ -1,0 +1,140 @@
+[
+ {
+  "id": "desk-probe",
+  "probe": true,
+  "timeout": 60
+ },
+ {
+  "id": "windowclose-chromium-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-chromium-r2",
+  "args": [
+   "browser=chromium",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r2"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-firefox-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-firefox-r2",
+  "args": [
+   "browser=firefox",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r2"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "kill-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=kill",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "lasttab-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=lasttab",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ownclose-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=ownclose",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "kill-firefox-headless-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=kill",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "lasttab-firefox-headless-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=lasttab",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ownclose-firefox-headless-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=ownclose",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "tall-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=tall",
+   "headed=false",
+   "run=r1",
+   "heights=16384,16385",
+   "element=20000",
+   "wides=16384,16385"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-chromium-headed-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 300
+ }
+]

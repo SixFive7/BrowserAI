@@ -825,6 +825,64 @@ then `tall_check.py` and `tall_repeat.py` over the image. The control in
 `tall_repeat.py` is not optional: a check that finds every row equal to another
 one proves nothing until it has been shown to find rows that differ.
 
+### The exact line, the other direction, an element, a JPEG, and BrowserAI's refusal -- measured 2026-10-04
+
+`[FLOATS]` *Added 2026-10-04 by addition, by lane behave.* The same versions as
+the entry above, through `BrowserAI.Server.exe` published from the lane's tree
+(`1.1.1-alpha.0.206`), with pages of exactly the height asked for: 100 px bands
+coloured by their index, with a 200 px key block at the left whose neighbouring
+bands differ by at least 67 in red, and a wide page of 100 px columns striped the
+same way. Every image was read twice, by its own header and decoded, and every
+row (or column) at or past 16,384 px compared with the one 16,384 px before it,
+with the same control as above. [Evidence](../../docs/evidence/2026-10-04-behave/README.md),
+[rig](../../docs/probes/2026-10-04-behave/README.md).
+
+| What | Chromium, headless | Chromium, headed | Firefox, headless |
+|---|---|---|---|
+| A page **16,384 px** tall, PNG and JPEG, to a file and inline | Whole, 2 of 2 runs | Whole, 1 of 1 | Not taken |
+| **16,385 px** | As PNG, the one row past the line repeats row 0; as JPEG it is the blend below. 2 of 2 runs | The same, 1 of 1 | Whole, 1 of 1 |
+| 16,386 and 20,000 px | Every row past the line repeats, 2 of 2 and 3,616 of 3,616 as PNG, 1 of 1 | The same at 20,000 px, 1 of 1 | Not taken |
+| An element 20,001 px tall, `target` and a `filename` | 3,617 of 3,617 rows past the line repeat, 1 of 1 | Not taken | Not taken |
+| A page **16,385 px wide**, 2,000 tall | The one column past the line repeats column 0, 2 of 2; at 16,384 px wide, whole, 2 of 2; at 20,000, 3,616 of 3,616 columns repeat, 1 of 1 | Not taken | Not taken |
+| 32,767 px | Not taken | Not taken | Whole, PNG and JPEG, 1 of 1 |
+| 32,768 px | Not taken | Not taken | *"Cannot take screenshot larger than 32767"*, `isError: true`, 3 of 3 calls |
+
+**So the line is exact and it is a texture's**: 16,384 px is whole and
+16,385 px is not, in either direction, for a page and for an element, headless
+and headed. **A JPEG repeats too, with one row of difference**: the first row
+past the line, 16,384, is a blend of band 163 above it and band 0, which is what
+a decoder's chroma upsampling makes of a hard edge, and every row after it
+repeats; at 20,000 px, 3,615 of the 3,616 rows past the line. In the headed
+run the first screenshot after each navigation was 1,905 px wide and the two
+after it 1,920, which this reading did not explain. The control found 0 of 15,384
+rows repeating 1,000 px apart in every image. **Firefox draws a page past
+16,384 px correctly**: at 16,385 and 32,767 px no row past the line repeats the
+one above it.
+
+✅ **BrowserAI refuses it, since 2026-10-04**: the maintainer's decision 9 d, in
+his words verbatim: *"9 d - and add a todo to the repo to track the progress of
+the bug for when to remove our checks. Also, the refusal should mention the
+chromium bug link."* For a Chromium session, BrowserAI reads the width and
+height from the header of the image `browser_take_screenshot` returns, inline or
+in the file its answer links, and refuses one larger than 16,384 px on either
+side with `SessionErrors.ScreenshotPastChromiumsLimit`, which names Chromium's
+issue 41347676 and says what to do instead. A Firefox session's screenshots are
+not read. Through the change, at the same versions: every Chromium image past
+the line came back refused and every one at it whole, headless 2 of 2 runs
+(16,385 px tall as PNG and JPEG, to a file and inline, the element and the
+16,385 px wide page in both, and 20,000 px tall in one) and headed 1 of 1
+(16,385 px); Firefox's 16,385 and 32,767 px images came back whole, 1 of 1. The file a refused call wrote stays
+where it is, and the refusal names it. `ScreenshotLimitTests` holds the header
+reading and the refusal, and one arm takes a real Chromium screenshot one pixel
+past the line and one at it. Watched on [`TODO.md`](../../TODO.md), for the day
+Chromium's issue or [microsoft/playwright#32373](https://github.com/microsoft/playwright/issues/32373)
+moves.
+
+*Corrected 2026-10-04 (previously "**BrowserAI is on the path for the
+consequence and not for the cause**, as with the WebP entry above: it forwards
+the call byte for byte")*: that paragraph above describes the product before 9 d
+and is left as written.
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache

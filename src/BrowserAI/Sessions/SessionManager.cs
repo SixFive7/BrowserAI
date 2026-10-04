@@ -314,19 +314,44 @@ internal sealed class SessionManager : IAsyncDisposable
     /// fetched again without its data in Firefox.
     /// </remarks>
     /// <param name="closure">How and when the browser was closed.</param>
+    /// <param name="asking">The connection resuming, so a close it made itself reads as its own.</param>
     /// <returns>The note, without its <c>NOTE: </c> prefix.</returns>
-    public static string ResumedAfterAClose(SessionClosure closure)
+    /// <remarks>
+    /// ⚠️ <b>Every cause since 2026-10-04, 8 b</b> (previously the idle close's and a
+    /// <c>browser_close</c> call's only, written here as "BrowserAI closed this
+    /// session's browser at T after P with no call" and "this session's browser was
+    /// closed at T by a browser_close call"). The reason is <see cref="CloseReasons"/>'s,
+    /// the same sentence the refusal before this resume gave, and what follows it is
+    /// what was measured for that kind of close.
+    /// </remarks>
+    public static string ResumedAfterAClose(SessionClosure closure, CallerConnection? asking = null)
     {
         ArgumentNullException.ThrowIfNull(closure);
 
-        var how = closure.Cause is SessionCloseCause.Idle
-            ? $"BrowserAI closed this session's browser at {SessionErrors.When(closure.At)} after {SessionErrors.Duration(closure.IdlePeriod)} with no call"
-            : $"this session's browser was closed at {SessionErrors.When(closure.At)} by a {LiveSession.BrowserCloseTool} call";
+        var kept = CloseReasons.WasACleanClose(closure.Cause)
+            ? "Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. "
+                + "A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data."
+            : closure.Cause is SessionCloseCause.WindowClosed
+                ? "Measured after a person closed the window, Chromium reopens its tabs with their typed text but without the session cookies or sessionStorage, and Firefox reopens only the first of its tabs, with the session cookies."
+                : closure.Cause is SessionCloseCause.LastTabClosed or SessionCloseCause.BrowserEnded
+                    ? "No tab was open when it ended, so none is reopened."
+                    : "A browser that ends without a clean close keeps only what it had already written to disk, so read any stored value back before you rely on it.";
 
-        return $"{how}, and this resume started a new browser server with the per-run settings it asked for. "
-            + "Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. "
-            + "A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.";
+        return $"{CloseReasons.Of(closure, asking)} This resume started a new browser server with the per-run settings it asked for. {kept}";
     }
+
+    /// <summary>
+    /// What a resume says about a session this process did not hold: why its browser
+    /// was last closed, read from its record.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, decided 2026-10-04 by the maintainer, in his words verbatim:</b>
+    /// <i>"8 b - log in our catchup resume that it was the user who closed it."</i>
+    /// </remarks>
+    /// <param name="close">The last close the record knows of.</param>
+    /// <returns>The note, without its <c>NOTE: </c> prefix.</returns>
+    public static string LastClosed(Statement<RecordedClose> close) =>
+        $"why this session was last closed: {CloseReasons.Of(close)}";
 
     /// <summary>
     /// The courtesy line a session gets when the BrowserAI serving it now is not
@@ -420,6 +445,7 @@ internal sealed class SessionManager : IAsyncDisposable
     private readonly ILogger _logger;
     private readonly ServerRegistryReap _reap;
     private int _disposed;
+    private int _stoppedThroughThePipe;
 
     /// <summary>Creates the manager over one process's environment.</summary>
     /// <remarks>
@@ -555,9 +581,17 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            return SessionLock.ReadRecord(location) is null
-                ? SessionErrors.SessionNamesNoSession(tool, location.FullPath)
-                : SessionErrors.SessionNotOpen(tool, location.FullPath);
+            if (SessionLock.ReadRecord(location) is not { } record)
+            {
+                return SessionErrors.SessionNamesNoSession(tool, location.FullPath);
+            }
+
+            // 8 b: why it was last closed, which only a session nobody holds has.
+            var lastClose = SessionLock.ProbeLiveness(location).State is SessionLiveness.NotHeld && record.LastClose is { } close
+                ? CloseReasons.Of(close)
+                : null;
+
+            return SessionErrors.SessionNotOpen(tool, location.FullPath, lastClose);
         }
         catch (SessionRecordException failure)
         {
@@ -855,14 +889,27 @@ internal sealed class SessionManager : IAsyncDisposable
             }
         }
 
-        await Task.WhenAll(sessions.Select(shutDownAsync)).ConfigureAwait(false);
+        var cause = Volatile.Read(ref _stoppedThroughThePipe) is 1 ? SessionCloseCause.Stopped : SessionCloseCause.ServerShutDown;
 
-        static async Task shutDownAsync(LiveSession session)
+        await Task.WhenAll(sessions.Select(session => shutDownAsync(session, cause))).ConfigureAwait(false);
+
+        static async Task shutDownAsync(LiveSession session, SessionCloseCause cause)
         {
-            await session.CloseTheBrowserForShutdownAsync().ConfigureAwait(false);
+            await session.CloseTheBrowserForShutdownAsync(cause).ConfigureAwait(false);
             await session.DisposeAsync().ConfigureAwait(false);
         }
     }
+
+    /// <summary>
+    /// Says that this process is being stopped through its pipe, so the sessions its
+    /// shutdown closes record that and not a client that went away.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, 2026-10-04.</b> A stop through the pipe is what an update's install
+    /// sends every server it must end, and what BrowserAI's page sends when a person
+    /// closes a server there; the stop carries no reason, so the sentence names both.
+    /// </remarks>
+    public void StoppingThroughThePipe() => Volatile.Write(ref _stoppedThroughThePipe, 1);
 
     /// <summary>How many sessions this process holds right now.</summary>
     public int HeldCount => _live.Count;
@@ -942,6 +989,17 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (nothingToKeep is not null)
         {
+            // 8 b: a server that ended on its own is that close, and a session with
+            // nothing up is let go and says so.
+            if (live.Child.ChildHasGone)
+            {
+                live.RecordTheServerEnded();
+            }
+            else
+            {
+                live.RecordTheRelease(connection.Describe(), "no browser was open");
+            }
+
             await ReleaseDetachedAsync(live, nothingToKeep).ConfigureAwait(false);
             return;
         }
@@ -960,7 +1018,15 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (live.Idle is null)
         {
-            live.WatchTheWindowWhileDetached(session => ReleaseDetachedAsync(session, "its window was closed"));
+            // ⚠️ ALIGNED WITH 8 b, 2026-10-04: a person closing a kept window closes
+            // the session as it closes an attached one, recorded as theirs, and the
+            // session is then let go, as before. The wait on the browser usually sees
+            // it first; this look is what is left for one it did not see.
+            live.WatchTheWindowWhileDetached(session =>
+            {
+                session.TheBrowserEnded(exitCode: null);
+                return ReleaseDetachedAsync(session, "its window was closed");
+            });
         }
     }
 
@@ -1349,8 +1415,15 @@ internal sealed class SessionManager : IAsyncDisposable
                 }
 
                 notes.Add(already.Closed is { } closure
-                    ? ResumedAfterAClose(closure)
+                    ? ResumedAfterAClose(closure, connection)
                     : already.Child.ChildHasGone ? ChildWasRelaunched : AppliedWithNoBrowserUp);
+
+                // 8 b: a browser server that ended on its own is recorded as the close
+                // before this teardown ends what is left of the session.
+                if (already.Closed is null && already.Child.ChildHasGone)
+                {
+                    already.RecordTheServerEnded();
+                }
 
                 createdHere = already.CreatedHere;
                 noticeGiven = already.NoticeGiven;
@@ -1428,6 +1501,21 @@ internal sealed class SessionManager : IAsyncDisposable
             // silently truncated the sentence the caller had just written.
             var purpose = appended is null ? record.Purpose : RecordText.Sanitise(appended);
 
+            // ⚠️ 8 b, 2026-10-04: a session this process did not hold says why it was
+            // last closed, read from its record; one whose last opening no close
+            // followed is a close nobody recorded, which the open below writes down.
+            Statement<RecordedClose>? unrecorded = null;
+
+            if (already is null && record.LastClose is { } lastClose)
+            {
+                notes.Add(LastClosed(lastClose));
+
+                if (lastClose.Value.Cause is SessionCloseCause.Unrecorded)
+                {
+                    unrecorded = lastClose;
+                }
+            }
+
             // Every resume that reaches this line starts a child, and the
             // browser that child starts reopens what its profile last recorded.
             notes.Add(WhatTheFirstBrowserCallReopens);
@@ -1452,7 +1540,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 cancellationToken,
                 movedFrom,
                 why,
-                noticeGiven).ConfigureAwait(false);
+                noticeGiven,
+                unrecorded).ConfigureAwait(false);
         }
         finally
         {
@@ -1626,6 +1715,18 @@ internal sealed class SessionManager : IAsyncDisposable
                 .Append("  last touched: ").Append(Stamp(record.LastUsed)).Append("   (").Append(Age(now - record.LastUsed)).Append(" ago)\n")
                 .Append("  ").Append(InUse(location)).Append('\n')
                 .Append("  ").Append(SessionErrors.Recorded(record.Purpose)).Append('\n');
+
+            // ⚠️ 8 b, 2026-10-04, the maintainer's words verbatim: "8 b - log in our
+            // catchup resume that it was the user who closed it." The last close the
+            // record knows of; while somebody holds the session it is open, so the
+            // newest recorded close is named as that and nothing is inferred.
+            var held = _live.ContainsKey(location.Key) || SessionLock.ProbeLiveness(location).State is not SessionLiveness.NotHeld;
+            var lastClose = held ? (record.ClosedHistory.Count is 0 ? null : record.ClosedHistory[^1]) : record.LastClose;
+
+            if (lastClose is { } close)
+            {
+                _ = text.Append("  ").Append(held ? "last recorded close" : "last close").Append(": ").Append(CloseReasons.Of(close)).Append('\n');
+            }
 
             // Q261 (b). On page 1 only, with the rest of the header: it is a fact
             // about the SERVER and not about the page being fetched, and repeating
@@ -2878,7 +2979,8 @@ internal sealed class SessionManager : IAsyncDisposable
         CancellationToken cancellationToken,
         string? movedFrom = null,
         string? why = null,
-        bool noticeGiven = false)
+        bool noticeGiven = false,
+        Statement<RecordedClose>? unrecorded = null)
     {
         // Nothing below is owned by anyone until the session is in the
         // dictionary, and the finally disposes whatever is left. That is the only
@@ -2917,7 +3019,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // The family comes from the session's own record and not from a
             // constant: `resume` reads it out of the record, and a profile
             // belongs to the browser that made it.
-            var config = BrowserConfiguration.ForSession(location, settings.Headed, request.Browser, settings.Transcript, settings.Run);
+            var config = BrowserConfiguration.ForSession(location, settings.Headed, request.Browser, settings.Transcript, settings.Run, await HiddenUserAgentAsync(request.Browser, settings.Headed, sessionLogger, cancellationToken).ConfigureAwait(false));
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -2974,7 +3076,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap)
+            session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap, BrowserExecutableFor(request.Browser))
             {
                 NoticeGiven = noticeGiven,
             };
@@ -2984,6 +3086,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // with nobody driving it and take it over.
             session.AttachTo(connection);
             session.WhenIdleFires(OnIdleFiredAsync);
+            session.WhenTheBrowserEndsOnItsOwn(OnTheBrowserEndedAsync);
             Volatile.Write(ref relayTo.Value, session);
 
             if (!_live.TryAdd(location.Key, session))
@@ -3004,6 +3107,11 @@ internal sealed class SessionManager : IAsyncDisposable
             held.SettleOpening(SessionStore.Successful, failure: null);
             _index.Record(location);
             SessionToolLog.Opened(sessionLogger, location.FullPath, settings.Headed, createdHere);
+
+            // ⚠️ 8 b, 2026-10-04: a close nobody recorded is written down now, dated
+            // when it was found, and then this opening, so a reader can tell an
+            // opening no close followed. Best effort: the session is open either way.
+            RecordTheOpening(held, request.Entry?.Tool ?? SessionToolSurface.Init, unrecorded, sessionLogger);
 
             if (why is not null)
             {
@@ -3079,6 +3187,106 @@ internal sealed class SessionManager : IAsyncDisposable
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// The browser's executable for a family, absolute, which a session's exit watch
+    /// finds the browser's main process by.
+    /// </summary>
+    /// <param name="browser">The family.</param>
+    /// <returns>The path, or <see langword="null"/> for a family this build does not provision.</returns>
+    private string? BrowserExecutableFor(string browser) =>
+        ProvisionedBrowsers.ExecutableWithin(browser) is { } within
+            ? Path.Combine(_environment.Provisioner.DirectoryFor(browser), within)
+            : null;
+
+    /// <summary>
+    /// Writes the opening's statement, after the close nobody recorded when there is
+    /// one, into the record the open has just taken.
+    /// </summary>
+    /// <param name="held">The open's lock.</param>
+    /// <param name="tool">The tool that opened it.</param>
+    /// <param name="unrecorded">The close nobody recorded, read before the open, or <see langword="null"/>.</param>
+    /// <param name="logger">The session's own logger.</param>
+    private static void RecordTheOpening(SessionLock held, string tool, Statement<RecordedClose>? unrecorded, ILogger logger)
+    {
+        try
+        {
+            if (unrecorded is { } found)
+            {
+                held.AppendLifecycle(RecordFields.Closed, found.Value.Write());
+
+                var row = held.Append(CloseReasons.LogRowTool, CloseReasons.Of(found));
+
+                held.Settle(row, SessionStore.Successful, failure: null);
+            }
+
+            held.AppendLifecycle(RecordFields.Opened, tool);
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            SessionLog.CloseNotRecorded(logger, held.Location.FullPath, "opening", failure);
+        }
+    }
+
+    /// <summary>
+    /// What a browser that ended with nobody asking means for a session nobody drives:
+    /// it is let go, its close already recorded.
+    /// </summary>
+    /// <param name="live">The session.</param>
+    /// <returns>The release, or nothing when a client drives it.</returns>
+    private async Task OnTheBrowserEndedAsync(LiveSession live)
+    {
+        if (!live.IsDetached)
+        {
+            return;
+        }
+
+        await ReleaseDetachedAsync(live, "its browser ended with nobody asking").ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The user agent a hidden Chromium launch sends in place of its own, or
+    /// <see langword="null"/> for a headed launch, a Firefox one, or a browser that
+    /// is not installed yet.
+    /// </summary>
+    /// <remarks>
+    /// <b>6 b, decided 2026-10-04 by the maintainer, in his words verbatim:
+    /// <i>"6 b"</i></b>: a hidden Chromium sends what a headed one sends, read off the
+    /// browser itself. ⚠️ <b>A session opened while its browser is still being
+    /// provisioned launches with the browser's own user agent</b>: the config is
+    /// written when the session opens and there is no browser to ask yet. The
+    /// session's log says so, and the next resume asks.
+    /// </remarks>
+    /// <param name="browser">The session's family.</param>
+    /// <param name="headed">Whether this launch has a window.</param>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>The user agent, or <see langword="null"/>.</returns>
+    private async Task<string?> HiddenUserAgentAsync(string browser, bool headed, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (headed || BrowserConfiguration.IsFirefox(browser))
+        {
+            return null;
+        }
+
+        if (_environment.HeadedUserAgent is { } seam)
+        {
+            return seam(browser);
+        }
+
+        if (_environment.Provisioner.Peek(browser).State is not ProvisioningState.Installed
+            || ProvisionedBrowsers.ExecutableWithin(browser) is not { } within)
+        {
+            UserAgentLog.NotInstalledYet(logger, browser);
+            return null;
+        }
+
+        return await HeadedUserAgent.ForAsync(
+            Path.Combine(_environment.Provisioner.DirectoryFor(browser), within),
+            _environment.InstanceDirectory,
+            logger,
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

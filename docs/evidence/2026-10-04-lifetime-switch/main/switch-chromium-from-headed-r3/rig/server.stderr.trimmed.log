@@ -1,0 +1,159 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.197 started. pid=92140 image=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\lifetime\runs\main\switch-chromium-from-headed-r3\rig sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 107816, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Pipe[1]
+      Listening on \\.\pipe\BrowserAI-92140-f6a88143554f4a119cfcf943ecad2004 for describe and stop.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 99784 in '%USERPROFILE%\AppData\Local\BrowserAI\instances\92140-e82e3e8f5b7f4b53ba81696a79749ab3'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=19.6ms processes=682/520 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=0 titled=0 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after BrowserAI started, which collects what a run that was killed left behind, detached and not awaited: reaper=56360@134355545585227339.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.197) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.197), Client (lifetime-rig 1) method 'initialize' request handler completed in 0.1399ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3 under Global\BrowserAI-BA52573ECE1836C33FEBCE4A5E5620F4.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      playwright-mcp[BA52573E]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 92988 in 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Session open at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3, headed: True; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate login
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type user
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type password and submit
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: read account after sign-in
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate h1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate h2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate store
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: wait for the store page
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: new tab: form
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type into the form
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: new tab: account
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: list tabs
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: select the form tab last
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_close: lifetime rig switch: browser_close
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      playwright-mcp[BA52573E] message processing canceled.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3; the guard stays so a later reader can say who had it.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[BA52573E]: pid 92988 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3 by the process that already held its guard, PID 92140 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      playwright-mcp[BA52573E]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 92180 in 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      Session open at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      browserai_resume: lifetime rig switch: resume with headed toggled
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: first browser call (list tabs)
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: select the store tab
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate_back: lifetime rig switch: navigate back
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: read after back
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3
+      playwright-mcp[BA52573E] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[BA52573E]: pid 92180 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=89760@134355545768848673.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3 by the process that already held its guard, PID 92140 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-chromium-headed-r3; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 99784 exited with code 0.

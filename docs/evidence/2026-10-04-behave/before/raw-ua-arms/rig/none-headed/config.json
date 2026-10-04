@@ -1,0 +1,21 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before\\raw-ua-arms\\rig\\none-headed\\profile",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "headless": false,
+      "args": [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before\\raw-ua-arms\\rig\\none-headed\\output"
+}

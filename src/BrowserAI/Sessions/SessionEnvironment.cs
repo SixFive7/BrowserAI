@@ -161,6 +161,32 @@ internal sealed record SessionEnvironment
     public Func<ChildConnection, bool> BrowserIsOpen { get; init; } = static child => child.HoldsMoreThanItsOwnProcesses();
 
     /// <summary>
+    /// The user agent a hidden launch of a family sends in place of its own, or
+    /// <see langword="null"/> for the product's own derivation.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null in the product</b>, where <see cref="Runtime.HeadedUserAgent"/> asks the
+    /// provisioned browser itself (6 b, 2026-10-04). A seam of the kind
+    /// <see cref="BrowserIsOpen"/> is: the in-process rig's browsers root holds no
+    /// executable to ask, and an arm about what a config carries hands in a value.
+    /// </remarks>
+    public Func<string, string?>? HeadedUserAgent { get; init; }
+
+    /// <summary>
+    /// Starts watching a session's browser end, calling back with its exit code, or
+    /// answers <see langword="null"/> when there is no browser to watch.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, 2026-10-04.</b> The product's own is <see cref="BrowserExitWatch"/>,
+    /// a wait on the browser's main process in the child's job, found by its full
+    /// image path. A seam of the kind <see cref="BrowserIsOpen"/> is: the in-process
+    /// rig's children are doubles with no browser process, and the rig ends a
+    /// double's browser by hand with the exit code an arm is about.
+    /// </remarks>
+    public Func<ChildConnection, string?, Action<int?>, IDisposable?> WatchTheBrowser { get; init; } =
+        static (child, executable, ended) => executable is null ? null : BrowserExitWatch.Start(child, executable, ended);
+
+    /// <summary>
     /// Starts one session's <c>@playwright/mcp</c> child and completes the
     /// handshake with it.
     /// </summary>

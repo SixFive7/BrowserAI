@@ -1,0 +1,28 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\context-headless\\profile",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "headless": true,
+      "args": [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled",
+        "--restore-last-session",
+        "--enable-aggressive-domstorage-flushing",
+        "--hide-crash-restore-bubble"
+      ],
+      "ignoreDefaultArgs": [
+        "about:blank"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before2\\raw2-ua-arms\\rig\\context-headless\\output"
+}

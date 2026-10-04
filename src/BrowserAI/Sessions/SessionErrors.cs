@@ -363,9 +363,16 @@ internal static class SessionErrors
     /// </remarks>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The path the caller named.</param>
+    /// <param name="lastClose">
+    /// Why the session's browser was last closed, from <see cref="CloseReasons"/>, or
+    /// <see langword="null"/> when the record knows of no close or another process
+    /// holds the session. <b>8 b, 2026-10-04</b>: every refusal that sends an agent to
+    /// <c>browserai_resume</c> first says why the session was last closed.
+    /// </param>
     /// <returns>The refusal.</returns>
-    public static string SessionNotOpen(string tool, string path) =>
+    public static string SessionNotOpen(string tool, string path, string? lastClose = null) =>
         $"'{path}' is a BrowserAI session, but this BrowserAI is not driving it, so '{tool}' was not run and nothing was changed. "
+        + (lastClose is null ? string.Empty : $"Its last close: {lastClose} ")
         + $"Call {SessionToolSurface.Resume} with directory='{path}' first -- a session is resumable forever, so one that exists can always be reopened.";
 
     /// <summary>
@@ -885,6 +892,52 @@ internal static class SessionErrors
         + "Navigating the tab elsewhere or closing it releases the abandoned call; until then it stays on the page. "
         + "Do not simply retry it: a tool that did not answer once is a tool the page did not finish, and a second copy will sit beside the first. Read the page with browser_snapshot to see what state it is in, and if you need the result, say to whoever is reading that this page's tool did not return.";
 
+    /// <summary>
+    /// A Chromium screenshot came back larger than Chromium captures faithfully,
+    /// so the image repeats itself, and BrowserAI did not hand it over.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q380, decided 2026-10-04 by the maintainer, in his words verbatim:</b>
+    /// <i>"9 d - and add a todo to the repo to track the progress of the bug for
+    /// when to remove our checks. Also, the refusal should mention the chromium bug
+    /// link."</i> So it says three things and nothing else: what happened, that it
+    /// is Chromium's bug with the link to it, and what to do instead.
+    /// </para>
+    /// <para>
+    /// <b>What it says happened is measured</b>, 2026-10-04 at <c>chromium-1247</c>:
+    /// past 16,384 px the image starts again from its own top, or from its left
+    /// edge for a wide page, and Playwright reports it as a success. What it offers
+    /// instead is measured too: Firefox took a page 32,767 px tall whole and refused
+    /// one 32,768 px tall with its own error. See <see cref="Proxy.ScreenshotLimit"/>.
+    /// </para>
+    /// <para>
+    /// <b>The file stays where it is.</b> Nothing in BrowserAI deletes an artifact,
+    /// the maintainer's decision of 2026-08-25, so the refusal names the file and
+    /// says it holds the repeated image.
+    /// </para>
+    /// </remarks>
+    /// <param name="width">The image's width, as its header states it.</param>
+    /// <param name="height">The image's height, as its header states it.</param>
+    /// <param name="file">The file the screenshot was written to, or <see langword="null"/> when the answer named none.</param>
+    /// <returns>The refusal.</returns>
+    public static string ScreenshotPastChromiumsLimit(int width, int height, string? file)
+    {
+        var limit = Proxy.ScreenshotLimit.LargestFaithfulSide.ToString("N0", CultureInfo.InvariantCulture);
+        var size = $"{width.ToString(CultureInfo.InvariantCulture)}x{height.ToString(CultureInfo.InvariantCulture)}";
+        var edge = (width > Proxy.ScreenshotLimit.LargestFaithfulSide, height > Proxy.ScreenshotLimit.LargestFaithfulSide) switch
+        {
+            (true, true) => "top and left edge",
+            (true, false) => "left edge",
+            _ => "top",
+        };
+
+        return $"The screenshot was not returned. It is {size} px, and Chromium captures at most {limit} px in either direction: past that line the image starts again from its own {edge}, while the call still reports success. "
+            + $"This is a Chromium bug, tracked at {Proxy.ScreenshotLimit.ChromiumIssue}. "
+            + (file is null ? string.Empty : $"The file '{file}' holds that image, so do not use it. ")
+            + "Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px.";
+    }
+
     /// <summary>Row 6 -- the browser this session needs is still being provisioned.</summary>
     /// <remarks>
     /// <para>
@@ -1319,19 +1372,56 @@ internal static class SessionErrors
     /// <param name="tool">The tool that was not forwarded.</param>
     /// <param name="path">The session directory.</param>
     /// <param name="closure">How and when the browser was closed.</param>
+    /// <param name="asking">The connection the refusal answers, so a close it made itself reads as its own.</param>
     /// <returns>The refusal.</returns>
-    public static string SessionWasClosed(string tool, string path, SessionClosure closure)
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Every way a browser closes, since 2026-10-04, 8 b</b>, the maintainer's
+    /// words verbatim: <i>"8 b - log in our catchup resume that it was the user who
+    /// closed it. Also whe ntelling the agent it needs to resume first give it the
+    /// reason for the last close. Was it a user? Was it a timeout? Was it a close
+    /// call from the agent or another agent?"</i> <i>Previously the idle close and a
+    /// <c>browser_close</c> call were the only two causes, and the second said only
+    /// "by a browser_close call".</i> The reason is <see cref="CloseReasons"/>'s.
+    /// </para>
+    /// <para>
+    /// <b>What it says was kept depends on how the browser went</b>, and each clause
+    /// is what was measured for that kind of close: a clean close by BrowserAI keeps
+    /// what the 2026-10-03 measurement above found; a person closing the window,
+    /// measured 2026-10-04 through this refusal and the resume after it at
+    /// <c>chromium-1247</c> and <c>firefox-1553</c>, brought Chromium's tabs back with
+    /// their typed text and without the session cookies or <c>sessionStorage</c>, 4 of
+    /// 4, and Firefox's first tab only, with the session cookies, 4 of 4; a crash or a
+    /// kill keeps only what had reached the disk; and a browser that ended with its
+    /// last tab closed reopens nothing.
+    /// </para>
+    /// </remarks>
+    public static string SessionWasClosed(string tool, string path, SessionClosure closure, Proxy.CallerConnection? asking = null)
     {
         ArgumentNullException.ThrowIfNull(closure);
 
-        var how = closure.Cause is SessionCloseCause.Idle
-            ? $"BrowserAI closed this session's browser at {When(closure.At)} because no browser call had reached it for {Duration(closure.IdlePeriod)}; it closes an idle headless browser so that one nobody is using does not hold memory. "
-            : $"This session's browser was closed at {When(closure.At)} by a {LiveSession.BrowserCloseTool} call. ";
+        var kept = closure.Cause switch
+        {
+            _ when CloseReasons.WasACleanClose(closure.Cause) =>
+                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the first browser call after the resume reopens the tabs that were open, with their history, sessionStorage, typed text and session cookies. "
+                + "Lost: refs from earlier snapshots, so call browser_tabs and browser_snapshot before you act; which tab was selected; and a page that was the answer to a form POST, which does not come back as it was.",
 
-        return $"'{tool}' was not run: nothing was sent to the browser. {how}"
+            SessionCloseCause.WindowClosed =>
+                "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB. "
+                + "Measured after a person closed the window, Chromium reopened its tabs with their typed text but without the session cookies or sessionStorage, and Firefox reopened only the first of its tabs, with the session cookies. "
+                + "Refs from earlier snapshots are lost, so call browser_tabs and browser_snapshot before you act.",
+
+            SessionCloseCause.LastTabClosed or SessionCloseCause.BrowserEnded =>
+                "Kept: the profile on disk, as the browser left it. No tab was open when it ended, so the resume reopens none.",
+
+            _ =>
+                "A browser that ends without a clean close keeps only what it had already written to disk: recent cookie and localStorage writes may be gone, and tabs it had not yet recorded do not come back. "
+                + "Read any stored value back before you rely on it, and call browser_tabs and browser_snapshot before you act.",
+        };
+
+        return $"'{tool}' was not run: nothing was sent to the browser. {CloseReasons.Of(closure, asking)} "
             + $"Call {SessionToolSurface.Resume} with directory='{path}' first, then repeat this call. "
-            + "Kept: the profile on disk, with its persistent cookies, localStorage and IndexedDB, and the first browser call after the resume reopens the tabs that were open, with their history, sessionStorage, typed text and session cookies. "
-            + "Lost: refs from earlier snapshots, so call browser_tabs and browser_snapshot before you act; which tab was selected; and a page that was the answer to a form POST, which does not come back as it was.";
+            + kept;
     }
 
     /// <summary>

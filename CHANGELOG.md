@@ -40,6 +40,20 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **Every close of a session's browser is recorded with its reason, and the agent is told it.**
+  8 b, the maintainer's words verbatim: *"8 b - log in our catchup resume that it was the user who
+  closed it. Also whe ntelling the agent it needs to resume first give it the reason for the last
+  close. Was it a user? Was it a timeout? Was it a close call from the agent or another agent?"*
+  `browserai.data` gains a `closed` statement for each close, with its cause and time: a person
+  closing the window, the idle timeout, a `browser_close` from this client or from another one,
+  named, with the reason its call gave, the last tab closed, the browser's own exit, a crash or a
+  kill with its exit code, the browser server ending, BrowserAI stopped for an update or from its
+  own page, a server shutting down when its client went, and the session host letting a session
+  go. An `opened` statement beside each start of a browser server lets a reader tell a holder that
+  was killed, which leaves an opening with no close after it. The refusal that sends an agent to
+  `browserai_resume` names the last close, and so do the resume's own answer and
+  `browserai_catch_up`'s header. `CloseReasonTests` holds each cause, planted red first.
+
 - ✨ **A Start Menu click opens BrowserAI's page in your own browser.**
   Q315 a, the maintainer's words verbatim: *"Q315 a"*. A start a person makes now opens a tab
   in the default browser, at an address on `127.0.0.1` that BrowserAI makes for it, and opens
@@ -742,6 +756,29 @@ release body; nothing else depends on it.
   [evidence](docs/evidence/2026-10-03-coordinator-survival/README.md).
 
 ### Changed
+
+- 🔧 **A person closing a visible session's window closes the session, as `browser_close` does.**
+  Also 8 b. Until now nothing noticed: the next call met `@playwright/mcp` starting a new browser
+  on its own, and `browserai_resume` answered that the session was already live, measured
+  2026-10-04 at `chromium-1247` and `firefox-1553`. BrowserAI now waits on the browser's main
+  process and reads its exit code, so the session is marked closed when its browser ends with
+  nobody asking, and every later call is refused until `browserai_resume`, with *"A person closed
+  this session's browser window at ..."* and what came back when that was measured: Chromium's
+  tabs with their typed text and without the session cookies or `sessionStorage`, and Firefox's
+  first tab only, 4 of 4 each. A kill or a crash, a browser that ends after its last tab, and a
+  headless browser that exits are told apart by the exit code. A kept session whose window a
+  person closes is recorded the same way and let go, as the session host did before.
+- 🔧 **A hidden Chromium session sends the user agent a visible one sends.**
+  6 b, the maintainer's words verbatim: *"6 b"*. A hidden Chromium sent `HeadlessChrome/155.0.0.0`
+  in its `User-Agent` and `navigator.userAgent`, where a visible one sends `Chrome/155.0.0.0`.
+  BrowserAI now asks the provisioned `chrome.exe` once per build for the user agent it sends
+  hidden, writes `Chrome/` for `HeadlessChrome/`, keeps the answer beside the browser, and gives
+  it to every hidden launch through Chromium's own `--user-agent` switch, so no version is written
+  anywhere in the tree. Pages, workers, a service worker's script fetch and a restored tab's first
+  request all carry it, measured before and after through the published server. **What it costs**:
+  under the switch, Chromium answers the high-entropy client hints with empty values where a
+  visible session fills them, and a session opened while Chromium is still downloading keeps the
+  browser's own user agent until its next launch. Both are open rows in `HAZARDS.md`.
 
 - 🔧 **Claude Code and Codex registrations run through RegisterAI, a program the installer carries.**
   Q332, the maintainer's words verbatim: *"Go for only the small command line program."* BrowserAI
@@ -1714,6 +1751,22 @@ release body; nothing else depends on it.
   copy, not its second.
 
 ### Fixed
+
+- 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.**
+  9 d, the maintainer's words verbatim: *"9 d - and add a todo to the repo to track the progress of
+  the bug for when to remove our checks. Also, the refusal should mention the chromium bug link."*
+  Chromium captures at most 16,384 px in either direction and repeats the image past that line,
+  while Playwright reports success: measured 2026-10-04 at `chromium-1247`, exactly at the line,
+  for a page's height and width and an element, as PNG and as JPEG. BrowserAI now reads the size
+  from the header of every Chromium screenshot, inline or in the file the answer links, and
+  refuses one past the line with what happened, Chromium's issue
+  [41347676](https://issues.chromium.org/issues/41347676), and what to do instead: screenshots of
+  the viewport while scrolling, or a Firefox session, which takes up to 32,767 px whole. The file
+  stays where it was written and the refusal names it. This reverses, for this one tool, the rule
+  of 2026-08-26 that nothing reads the child's answer, and `TODO.md` watches the Chromium issue and
+  [microsoft/playwright#32373](https://github.com/microsoft/playwright/issues/32373) so the check
+  goes when a fixed Chromium ships. `ScreenshotLimitTests` holds the header reading and takes a
+  real Chromium screenshot one pixel past the line and one at it.
 
 - 🐛 **A Claude Code terminal session is told to reconnect through `/mcp` when an update ends its server.**
   Measured 2026-10-03 at Claude Code 2.1.288 against a stand-in server: `claude -p` and the VS

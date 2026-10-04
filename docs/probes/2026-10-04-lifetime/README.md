@@ -52,6 +52,35 @@ pwsh -NoProfile -File HiddenDesktop.ps1 -Purpose <id> -App <node.exe> `
 - **Q380** is `tall.mjs server=<BrowserAI.Server.exe> browser=<family> height=50000 run=<tag> out=<dir> sessions=<dir>`,
   then `tall_check.py` and `tall_repeat.py` over the image.
 
+## `switch/`: a switch between a window and none, and the corners around it
+
+*Added 2026-10-04 by addition, by lane behave, on the maintainer's decision 10 a,
+in his words verbatim: "10 a".* Until then the runs below were in the lane's
+scratch directory only. Establishes
+[Switching between a window and none, closing the window, and closing the last tab](../../../kb/playwright/provisioning-and-timings.md#switching-between-a-window-and-none-closing-the-window-and-closing-the-last-tab----measured-2026-10-04)
+and re-verification rows 194 and 195. Evidence:
+[`docs/evidence/2026-10-04-lifetime-switch/`](../../evidence/2026-10-04-lifetime-switch/README.md).
+
+| File | What it does |
+|---|---|
+| `switch/switch.mjs` | One run through the published `BrowserAI.Server.exe`. `switch`: sign in, open three tabs, write every store through `browser_evaluate`, type into a form, `browser_close`, `browserai_resume` with `headed` toggled, and read it all back from every tab; `windowclose`: the same session headed, its window closed by `close-windows.ps1`, then what the next calls find; `lasttab`: the only tab closed with `browser_tabs`, then the switch; `conflict`: `browserai_resume` with a different `headed`, the same one, none, and a viewport, while the browser is up. It records a census of the server's process tree, by parent pid, before and after |
+| `switch/switch.v1.mjs` | The first version, which the `main` hold ran under the name `switch.mjs`, beside the site that is `../site.mjs` here. To run it again, copy it, `../site.mjs` and `switch/mcp.mjs` into a directory of their own as `switch.mjs`, `site.mjs` and `mcp.mjs` |
+| `switch/site.mjs` | The second version's site: the same pages as `../site.mjs`, none of which writes anything when it loads |
+| `switch/mcp.mjs` | The MCP client, with the process census `../mcp-client.mjs` leaves out |
+| `switch/close-windows.ps1` | Posts `WM_CLOSE` to every visible top-level window on the desktop it runs on, the way a person closes one, and refuses to run on a desktop whose name does not start with `BrowserAI-lifetime-` |
+| `switch/batch.ps1` | Runs a plan under the suite lock, each run through `../HiddenDesktop.ps1`, with `HKCU\Software\Mozilla\Firefox\Launcher` exported before and after; the smoke run's `gate_check.py` verdict decides whether the rest of the plan runs |
+| `switch/plan-all.json`, `switch/plan-v2.json` | The two holds' plans, 29 and 15 runs; `plan-all.json` holds row 152's and Q380's runs too |
+| `switch/analyze_switch.py` | Writes `switch-summary.json` for a hold and prints a line per switch |
+| `switch/gate_check.py` | The smoke run's verdict |
+
+**Re-establish** by copying `switch/` and `../HiddenDesktop.ps1` into one
+directory, pointing `batch.ps1`'s `$S`, `$rig` and `$node` at a scratch
+directory, that directory and a payload's `node.exe`, and the plan's `server=`
+at a published `BrowserAI.Server.exe`; then run
+`pwsh -File batch.ps1 -Name <hold> -Plan plan-v2.json` and
+`python analyze_switch.py <scratch>\runs\<hold>`, and compare
+`switch-summary.json` with the one in the evidence, field by field.
+
 ## What keeps it off the rest of the machine
 
 - **Nothing reaches the screen**: the desktop is never switched to, and the

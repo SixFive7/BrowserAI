@@ -1,0 +1,5 @@
+2026-10-04T13:58:47.482Z call browserai_init 394ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\lasttab-chromium-headless-r1' on every browser tool call. directory: 
+2026-10-04T13:58:48.027Z call browser_navigate 543ms isError=false ### Page - Page URL: http://127.0.0.1:55798/h/1 - Page Title: history 1 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\la
+2026-10-04T13:58:49.696Z call browser_tabs 8ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T13:58:50.617Z call browser_tabs 121ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T13:58:52.163Z call browserai_destroy 625ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\lasttab-chromium-headless-r1' (12.5 MiB). Its purpose was: Behave lane rig

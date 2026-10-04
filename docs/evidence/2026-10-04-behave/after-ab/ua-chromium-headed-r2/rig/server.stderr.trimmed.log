@@ -1,0 +1,69 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.206 started. pid=104812 image=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-ab\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-ab\ua-chromium-headed-r2\rig sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 61652, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Pipe[1]
+      Listening on \\.\pipe\BrowserAI-104812-d15efc3b5fc34cccb0d19ae05cb75cd7 for describe and stop.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-ab\payload\node\node.exe' as pid 25164 in '%USERPROFILE%\AppData\Local\BrowserAI\instances\104812-33edbcd8d2bc4a70aa7d9570e3335420'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=17.8ms processes=695/543 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=0 titled=0 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after BrowserAI started, which collects what a run that was killed left behind, detached and not awaited: reaper=25076@134355978409535504.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.1-alpha.0.206) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.1-alpha.0.206) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.206) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.206), Client (behave-rig 1) method 'initialize' request handler completed in 0.1013ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2 under Global\BrowserAI-26F6D56E97199669DF0F7FE911A0581F.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      playwright-mcp[26F6D56E]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-ab\payload\node\node.exe' as pid 95436 in 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      Client (BrowserAI 1.1.1-alpha.0.206) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      Client (BrowserAI 1.1.1-alpha.0.206) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      Session open at C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2, headed: True; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: behave rig ua: navigate echo
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: behave rig ua: navigate echo again, so Accept-CH has been seen
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: behave rig ua: read the user agent from the page
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2
+      playwright-mcp[26F6D56E] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[26F6D56E]: pid 95436 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=6124@134355978450168045.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2 by the process that already held its guard, PID 104812 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\ua-chromium-headed-r2; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 25164 exited with code 0.

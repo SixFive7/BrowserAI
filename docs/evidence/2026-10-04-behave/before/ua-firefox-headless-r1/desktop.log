@@ -1,0 +1,4 @@
+2026-10-04T13:51:18.684Z DESKTOP WinSta0\BrowserAI-behave-ua-firefox-headless-r1-c262786eaf864a01b9928dead23f6d44
+2026-10-04T13:51:18.731Z START pid=51240 app=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-baseline\BrowserAI.Server.exe browser=firefox scenario=ua headed=false run=r1 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\before\ua-firefox-headless-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T13:51:26.420Z SUMMARY exit=0 ticks=8 maxJobPids=17 ticksWithPrivateWindows=0 leaked=False
+2026-10-04T13:51:26.429Z END processes still in the job before it closed: 0

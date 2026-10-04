@@ -314,8 +314,66 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// until its window closes, and the session host notices that by asking whether
     /// a browser is up. No tool call says the window closed, so the double needs a
     /// way to stop being up that is not one.
+    /// <para>
+    /// <b>And it tells the session's watch, since 2026-10-04 (8 b)</b>, with the exit
+    /// code a real browser leaves: 0 for a window a person closed, which is the
+    /// default, and the code an arm passes for a crash or a kill.
+    /// </para>
     /// </remarks>
-    public void CloseTheWindow() => Volatile.Write(ref _browserIsOpen, 0);
+    /// <param name="exitCode">The code the browser ends with, or <see langword="null"/> when the watch cannot read one.</param>
+    public void CloseTheWindow(int? exitCode = 0)
+    {
+        Volatile.Write(ref _browserIsOpen, 0);
+
+        Action<int?>[] watching;
+
+        lock (_watches)
+        {
+            watching = [.. _watches];
+            _watches.Clear();
+        }
+
+        foreach (var ended in watching)
+        {
+            ended(exitCode);
+        }
+    }
+
+    /// <summary>
+    /// The double's half of the session's watch on its browser: called with the exit
+    /// code once <see cref="CloseTheWindow"/> takes the browser down.
+    /// </summary>
+    /// <param name="ended">The session's callback.</param>
+    /// <returns>A handle that stops the watch.</returns>
+    public IDisposable? WatchTheBrowser(Action<int?> ended)
+    {
+        ArgumentNullException.ThrowIfNull(ended);
+
+        if (!BrowserIsOpen)
+        {
+            return null;
+        }
+
+        lock (_watches)
+        {
+            _watches.Add(ended);
+        }
+
+        return new Unwatch(this, ended);
+    }
+
+    private readonly List<Action<int?>> _watches = [];
+
+    private sealed class Unwatch(FakePlaywrightChild child, Action<int?> ended) : IDisposable
+    {
+        public void Dispose()
+        {
+            lock (child._watches)
+            {
+                _ = child._watches.Remove(ended);
+            }
+        }
+    }
 
     /// <summary>Starts serving.</summary>
     public void Start() => _loop = Task.Run(RunAsync, CancellationToken.None);

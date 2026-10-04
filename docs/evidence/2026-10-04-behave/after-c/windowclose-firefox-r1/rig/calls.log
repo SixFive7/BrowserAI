@@ -1,0 +1,20 @@
+2026-10-04T15:06:49.096Z call browserai_init 366ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r1' on every browser tool call. directory:
+2026-10-04T15:06:51.748Z call browser_navigate 2651ms isError=false ### Page - Page URL: http://127.0.0.1:62569/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\wind
+2026-10-04T15:06:51.788Z call browser_type 39ms isError=false 
+2026-10-04T15:06:52.391Z call browser_type 602ms isError=false ### Page - Page URL: http://127.0.0.1:62569/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T15:06:52.803Z call browser_tabs 410ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62569/account) - 1: (current) [form](http://127.0.0.1:62569/form) ### Open tabs - 0: [account: s
+2026-10-04T15:06:52.849Z call browser_type 45ms isError=false 
+2026-10-04T15:06:53.370Z call browser_evaluate 520ms isError=false ### Result "jss=r1-4ff956; jsp=r1-4ff956"
+2026-10-04T15:06:53.378Z call browser_tabs 7ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62569/account) - 1: (current) [form](http://127.0.0.1:62569/form)
+2026-10-04T15:06:53.407Z call browser_tabs 28ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62569/account) - 1: [form](http://127.0.0.1:62569/form)
+2026-10-04T15:06:54.428Z call browser_evaluate 1019ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62569/account\",\"cookie\":\"jss=r1-4ff956; jsp=r1-4ff956\",\"ls\":\"r1-4ff956\",\"ss\":null,\"notes\":null,\"who\":{\"u
+2026-10-04T15:06:54.481Z call browser_tabs 51ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:62569/account) - 1: (current) [form](http://127.0.0.1:62569/form)
+2026-10-04T15:06:55.539Z call browser_evaluate 1057ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62569/form\",\"cookie\":\"jss=r1-4ff956; jsp=r1-4ff956\",\"ls\":\"r1-4ff956\",\"ss\":\"r1-4ff956\",\"notes\":\"typed r1-
+2026-10-04T15:07:01.855Z call browser_tabs 0ms isError=true 'browser_tabs' was not run: nothing was sent to the browser. A person closed this session's browser window at 2026-10-04T15:06:57.9190782+00:00: the browser exi
+2026-10-04T15:07:02.949Z call browserai_resume 369ms isError=false NOTE: A person closed this session's browser window at 2026-10-04T15:06:57.9190782+00:00: the browser exited cleanly, and BrowserAI had not asked it to close. T
+2026-10-04T15:07:02.960Z call browserai_catch_up 9ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r1 browser: firefox created: 2026-10-04T17:06:48.7339629+02:
+2026-10-04T15:07:04.086Z call browser_tabs 1125ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62569/account)
+2026-10-04T15:07:07.093Z call browser_tabs 6ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62569/account)
+2026-10-04T15:07:07.107Z call browser_tabs 12ms isError=false ### Result - 0: (current) [account: signed in as tester](http://127.0.0.1:62569/account)
+2026-10-04T15:07:08.128Z call browser_evaluate 1019ms isError=false ### Result "{\"url\":\"http://127.0.0.1:62569/account\",\"cookie\":\"jsp=r1-4ff956; jss=r1-4ff956\",\"ls\":\"r1-4ff956\",\"ss\":null,\"notes\":null,\"who\":{\"u
+2026-10-04T15:07:08.764Z call browserai_destroy 635ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\windowclose-firefox-headed-r1' (45.1 MiB). Its purpose was: Behave lane ri

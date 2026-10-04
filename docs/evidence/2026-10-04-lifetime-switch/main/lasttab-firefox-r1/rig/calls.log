@@ -1,0 +1,27 @@
+2026-10-04T02:31:21.856Z call browserai_init 398ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-firefox-headless-r1' on every browser tool call. directory: C:\Sourc
+2026-10-04T02:31:24.208Z call browser_navigate 2350ms isError=false ### Page - Page URL: http://127.0.0.1:60867/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-fir
+2026-10-04T02:31:24.249Z call browser_type 40ms isError=false 
+2026-10-04T02:31:24.853Z call browser_type 602ms isError=false ### Page - Page URL: http://127.0.0.1:60867/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\life
+2026-10-04T02:31:25.942Z call browser_evaluate 1087ms isError=false ### Result "{\"url\":\"http://127.0.0.1:60867/account\",\"title\":\"account: signed in as tester\",\"historyLength\":2,\"ls\":null,\"ss\":null,\"docCookie\":\"\
+2026-10-04T02:31:26.012Z call browser_navigate 69ms isError=false ### Page - Page URL: http://127.0.0.1:60867/h/1 - Page Title: history 1 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-f
+2026-10-04T02:31:26.083Z call browser_navigate 70ms isError=false ### Page - Page URL: http://127.0.0.1:60867/h/2 - Page Title: history 2 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-f
+2026-10-04T02:31:26.157Z call browser_navigate 72ms isError=false ### Page - Page URL: http://127.0.0.1:60867/store - Page Title: stored r1-34ba68 ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\
+2026-10-04T02:31:26.668Z call browser_evaluate 510ms isError=false ### Result "stored r1-34ba68"
+2026-10-04T02:31:27.060Z call browser_tabs 390ms isError=false ### Result - 0: [stored r1-34ba68](http://127.0.0.1:60867/store) - 1: (current) [form](http://127.0.0.1:60867/form) ### Open tabs - 0: [stored r1-34ba68](http:/
+2026-10-04T02:31:27.109Z call browser_type 48ms isError=false 
+2026-10-04T02:31:27.489Z call browser_tabs 379ms isError=false ### Result - 0: [stored r1-34ba68](http://127.0.0.1:60867/store) - 1: [form](http://127.0.0.1:60867/form) - 2: (current) [account: signed in as tester](http://1
+2026-10-04T02:31:27.535Z call browser_tabs 44ms isError=false ### Result - 0: [stored r1-34ba68](http://127.0.0.1:60867/store) - 1: (current) [form](http://127.0.0.1:60867/form)
+2026-10-04T02:31:27.564Z call browser_tabs 28ms isError=false ### Result - 0: (current) [stored r1-34ba68](http://127.0.0.1:60867/store)
+2026-10-04T02:31:27.572Z call browser_tabs 7ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T02:31:30.153Z call browser_tabs 1486ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:30.156Z call browserai_resume 1ms isError=true 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-firefox-headless-r1' is open in this BrowserAI and its browser is up, so browserai_resume applied 
+2026-10-04T02:31:30.516Z call browser_close 351ms isError=false ### Result No open tabs. Navigate to a URL to create one.
+2026-10-04T02:31:31.074Z call browserai_resume 557ms isError=false NOTE: this session's browser was closed at 2026-10-04T02:31:30.1668305+00:00 by a browser_close call, and this resume started a new browser server with the per-
+2026-10-04T02:31:33.480Z call browser_tabs 2404ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:34.529Z call browser_tabs 46ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:35.590Z call browser_tabs 47ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:36.602Z call browser_tabs 10ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:36.611Z call browser_tabs 8ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:36.629Z call browser_tabs 15ms isError=false ### Result - 0: (current) [](about:blank)
+2026-10-04T02:31:37.162Z call browser_evaluate 532ms isError=false ### Result "{\"url\":\"about:blank\",\"title\":\"\",\"historyLength\":1,\"ls\":\"THREW The operation is insecure.\",\"ss\":\"THREW The operation is insecure.\",
+2026-10-04T02:31:39.158Z call browserai_destroy 859ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\lasttab-firefox-headless-r1' (45.0 MiB). Its purpose was: Lifetime review rig, la

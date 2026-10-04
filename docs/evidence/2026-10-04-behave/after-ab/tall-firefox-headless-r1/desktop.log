@@ -1,0 +1,4 @@
+2026-10-04T14:31:42.691Z DESKTOP WinSta0\BrowserAI-behave-tall-firefox-headless-r1-13eb03fa4cd44d479435e6f6ce6e5d5c
+2026-10-04T14:31:42.733Z START pid=87132 app=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-ab\BrowserAI.Server.exe browser=firefox scenario=tall headed=false run=r1 heights=16385,32767 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-ab\tall-firefox-headless-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T14:31:49.549Z SUMMARY exit=0 ticks=7 maxJobPids=15 ticksWithPrivateWindows=0 leaked=False
+2026-10-04T14:31:49.557Z END processes still in the job before it closed: 0

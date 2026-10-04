@@ -1201,6 +1201,26 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 - [ ] **WATCH the Microsoft response to report 2, sent 2026-10-03 to
       secure@microsoft.com.** A non-loopback --host silently disables the
       dashboard Host-header allowlist. Watch for a response.
+- [ ] **WATCH Chromium's [41347676](https://issues.chromium.org/issues/41347676)
+      and [microsoft/playwright#32373](https://github.com/microsoft/playwright/issues/32373),
+      and delete BrowserAI's screenshot check when a fixed Chromium ships.** The
+      maintainer's 9 d, 2026-10-04, in his words verbatim: *"9 d - and add a todo to
+      the repo to track the progress of the bug for when to remove our checks. Also,
+      the refusal should mention the chromium bug link."* Chromium captures at most
+      16,384 px in either direction and repeats the image past that line while
+      Playwright reports success ([kb](kb/playwright/tools-and-artifacts.md#the-exact-line-the-other-direction-an-element-a-jpeg-and-browserais-refusal----measured-2026-10-04)),
+      so `ScreenshotLimit` reads every Chromium screenshot's size and
+      `SessionErrors.ScreenshotPastChromiumsLimit` refuses one past the line.
+      41347676 has been open since 2017-10-02; #32373 was closed as not planned on
+      2026-05-07 as *"a known Chromium limitation"*. **What to do:** check both at
+      least once a week, and at every upstream review that moves Chromium run
+      [re-verification row 190](kb/re-verification.md). **When a Chromium revision
+      takes a page past 16,384 px whole**, measured by that row and never inferred
+      from an issue's state, delete `ScreenshotLimit`, its call in `BrowserProxy`,
+      the refusal and `ScreenshotLimitTests`' arms, and record it in
+      [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
+      If Chromium fails such a capture with an error instead, the check is no
+      longer needed either, because the error reaches the caller as it is.
 
 ---
 

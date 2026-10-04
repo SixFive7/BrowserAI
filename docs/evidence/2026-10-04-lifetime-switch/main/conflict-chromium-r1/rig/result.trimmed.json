@@ -1,0 +1,387 @@
+{
+  "run": "r1-21d67b",
+  "scenario": "conflict",
+  "browser": "chromium",
+  "from": "headless",
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+  "startedUtc": "2026-10-04T02:32:30.554Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "purpose": "Lifetime review rig, conflict on chromium, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "chromium",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 392,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\downloads\n  purpose: Lifetime review rig, conflict on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T04:32:31.0053861+02:00   last used: 2026-10-04T04:32:31.0053861+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions: 0\n"
+    },
+    {
+      "label": "navigate h1",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:55182/h/1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 655,
+      "text": "### Page\n- Page URL: http://127.0.0.1:55182/h/1\n- Page Title: history 1\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\output\\page-2026-10-04T02-32-32-044Z.yml)"
+    },
+    {
+      "label": "resume headed:true while up",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "why": "lifetime rig conflict: resume headed:true while up",
+        "headed": true
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 1,
+      "text": "'C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' is open in this BrowserAI and its browser is up, so browserai_resume applied nothing and changed nothing. It was asked for per-run settings this browser was not launched with: 'headed' is false and you asked for true. A per-run setting takes effect only when a browser starts. To apply them, call browser_close on this session and then browserai_resume again with the same arguments; the first browser call after that reopens the tabs. To keep this browser as it is, leave those arguments out."
+    },
+    {
+      "label": "resume headed:false while up",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "why": "lifetime rig conflict: resume headed:false while up",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 10,
+      "text": "NOTE: this session is open in this BrowserAI and its browser is up, so no per-run setting was applied: they take effect only when a browser starts. To change one, call browser_close on this session and then browserai_resume again with it.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\downloads\n  purpose: Lifetime review rig, conflict on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T04:32:31.0053861+02:00   last used: 2026-10-04T04:32:31.0053861+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions: 0\n"
+    },
+    {
+      "label": "resume bare while up",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "why": "lifetime rig conflict: resume bare while up"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 9,
+      "text": "NOTE: this session is open in this BrowserAI and its browser is up, so no per-run setting was applied: they take effect only when a browser starts. To change one, call browser_close on this session and then browserai_resume again with it.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\downloads\n  purpose: Lifetime review rig, conflict on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T04:32:31.0053861+02:00   last used: 2026-10-04T04:32:31.0053861+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions: 0\n"
+    },
+    {
+      "label": "resume viewport while up",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "why": "lifetime rig conflict: resume viewport while up",
+        "viewport": "1280x720"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 1,
+      "text": "'C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' is open in this BrowserAI and its browser is up, so browserai_resume applied nothing and changed nothing. It was asked for per-run settings this browser was not launched with: 'viewport' is '1920x1080' and you asked for '1280x720'. A per-run setting takes effect only when a browser starts. To apply them, call browser_close on this session and then browserai_resume again with the same arguments; the first browser call after that reopens the tabs. To keep this browser as it is, leave those arguments out."
+    },
+    {
+      "label": "read after the resumes",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1054,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:55182/h/1\\\",\\\"title\\\":\\\"history 1\\\",\\\"historyLength\\\":2,\\\"ls\\\":null,\\\"ss\\\":null,\\\"docCookie\\\":\\\"\\\",\\\"idb\\\":null,\\\"who\\\":{\\\"user\\\":null,\\\"sessionCookie\\\":false,\\\"jsPersistent\\\":null,\\\"jsSession\\\":null,\\\"cookieNames\\\":[]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1920,1080],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1",
+        "why": "lifetime rig conflict: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 745,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1' (12.6 MiB). Its purpose was: Lifetime review rig, conflict on chromium, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: lifetime rig conflict: done with run r1"
+    }
+  ],
+  "census": {
+    "up": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+        "mainPid": 91064,
+        "flags": [
+          "--headless",
+          "--user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile",
+          "--remote-debugging-pipe"
+        ],
+        "kinds": {
+          "main": 1,
+          "crashpad-handler": 1,
+          "gpu-process": 1,
+          "utility": 2,
+          "renderer": 3
+        },
+        "count": 8
+      },
+      "processes": [
+        {
+          "pid": 79968,
+          "parent": 97180,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 80048,
+          "parent": 97180,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\97180-d13c6c6520274160b25c1126ade00d06\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 51996,
+          "parent": 80048,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 17236,
+          "parent": 97180,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\97180-d13c6c6520274160b25c1126ade00d06\\playwright-mcp-BBCDA77DE5F9121E.json --sandbox"
+        },
+        {
+          "pid": 60120,
+          "parent": 17236,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 91064,
+          "parent": 17236,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,NetworkTimeServiceQuerying,AimEnabled,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless"
+        },
+        {
+          "pid": 92420,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --type=crashpad-handler --user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile /prefetch:4 --monitor-self-annotation=ptype=crashpad-handler --database=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\\Crashpad --annotation=plat=Win64 \"--annotation=prod=Google Chrome for Testing\" --annotation=ver=155.0.8059.12 --initial-client-data=0x130,0x134,0x138,0x10c,0x13c,0x7ff8971ceed0,0x7ff8971ceee0,0x7ff8971ceef0"
+        },
+        {
+          "pid": 76936,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=gpu-process --gpu-recent-crash-count=0 --disable-breakpad --headless --enable-unsafe-swiftshader --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --gpu-preferences=WAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAAEAAAAAIAAAABAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=3190708988185955192 --mojo-platform-channel-handle=1976 /prefetch:2"
+        },
+        {
+          "pid": 39008,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=none --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=3190708989122997041 --mojo-platform-channel-handle=2124 /prefetch:11"
+        },
+        {
+          "pid": 85440,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-GB --service-sandbox-type=service --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=3190708990060038890 --mojo-platform-channel-handle=2700 /prefetch:13"
+        },
+        {
+          "pid": 44260,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --top-chrome-webui --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --launch-time-ticks=51945455617 --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=319070899099708"
+        },
+        {
+          "pid": 79152,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --launch-time-ticks=51945497877 --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=3190708992871164437 --mojo-platfor"
+        },
+        {
+          "pid": 105428,
+          "parent": 91064,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\conflict-chromium-headless-r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=9 --launch-time-ticks=51945773296 --field-trial-handle=1980,i,6442745501631093872,3715625117993943013,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1988,i,2665426115352834107,4416192789832027860,4 --trace-process-track-uuid=3190708994745248135 --mojo-platfor"
+        }
+      ]
+    }
+  },
+  "before": [],
+  "after": [],
+  "serverPid": 97180,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.197"
+        },
+        "instructions": "BrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' logs the calls to session.md; for a trace, use browser_start_tracing.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nCall browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It is recorded, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses an existing session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 78,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_set_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_generate_locator",
+      "browser_storage_state",
+      "browser_set_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_verify_element_visible",
+      "browser_verify_text_visible",
+      "browser_verify_list_visible",
+      "browser_verify_value",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "stillThere": {
+    "url": "http://127.0.0.1:55182/h/1",
+    "title": "history 1",
+    "historyLength": 2,
+    "ls": null,
+    "ss": null,
+    "docCookie": "",
+    "idb": null,
+    "who": {
+      "user": null,
+      "sessionCookie": false,
+      "jsPersistent": null,
+      "jsSession": null,
+      "cookieNames": []
+    },
+    "notes": null,
+    "visibility": "visible",
+    "hasFocus": true,
+    "webdriver": false,
+    "outer": [
+      1920,
+      1080
+    ],
+    "inner": [
+      1920,
+      1080
+    ],
+    "screen": [
+      1920,
+      1080
+    ],
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "brands": "Chromium/155, Not(A:Brand/24"
+  },
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791081151966,
+      "method": "GET",
+      "path": "/h/1",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791081152022,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791081152992,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    }
+  ],
+  "endedUtc": "2026-10-04T02:32:34.788Z"
+}

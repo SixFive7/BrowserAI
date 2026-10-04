@@ -1,0 +1,1493 @@
+{
+  "run": "r1-4b1f10",
+  "scenario": "switch",
+  "browser": "firefox",
+  "from": "headless",
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1",
+  "startedUtc": "2026-10-04T02:26:25.702Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1",
+        "purpose": "Lifetime review rig, switch on firefox, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "firefox",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 449,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\downloads\n  purpose: Lifetime review rig, switch on firefox, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T04:26:26.2070334+02:00   last used: 2026-10-04T04:26:26.2070334+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions: 0\n"
+    },
+    {
+      "label": "navigate login",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:57433/login"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 2748,
+      "text": "### Page\n- Page URL: http://127.0.0.1:57433/login\n- Page Title: login\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-29-394Z.yml)"
+    },
+    {
+      "label": "type user",
+      "tool": "browser_type",
+      "args": {
+        "target": "#user",
+        "text": "tester"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 49,
+      "text": ""
+    },
+    {
+      "label": "type password and submit",
+      "tool": "browser_type",
+      "args": {
+        "target": "#pass",
+        "text": "not-a-secret",
+        "submit": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 627,
+      "text": "### Page\n- Page URL: http://127.0.0.1:57433/account\n- Page Title: account: signed in as tester\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-30-075Z.yml)"
+    },
+    {
+      "label": "read account after sign-in",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1093,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/account\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":2,\\\"ls\\\":null,\\\"ss\\\":null,\\\"docCookie\\\":\\\"\\\",\\\"idb\\\":null,\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":null,\\\"jsSession\\\":null,\\\"cookieNames\\\":[\\\"auth\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1366,768],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "navigate h1",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:57433/h/1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 68,
+      "text": "### Page\n- Page URL: http://127.0.0.1:57433/h/1\n- Page Title: history 1\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-31-240Z.yml)"
+    },
+    {
+      "label": "navigate h2",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:57433/h/2"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 74,
+      "text": "### Page\n- Page URL: http://127.0.0.1:57433/h/2\n- Page Title: history 2\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-31-316Z.yml)"
+    },
+    {
+      "label": "navigate store",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:57433/store"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 70,
+      "text": "### Page\n- Page URL: http://127.0.0.1:57433/store\n- Page Title: stored r1-4b1f10\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-31-386Z.yml)"
+    },
+    {
+      "label": "wait for the store page",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 514,
+      "text": "### Result\n\"stored r1-4b1f10\""
+    },
+    {
+      "label": "new tab: form",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:57433/form"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 384,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: (current) [form](http://127.0.0.1:57433/form)\n### Open tabs\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: (current) [form](http://127.0.0.1:57433/form)\n### Page\n- Page URL: http://127.0.0.1:57433/form\n- Page Title: form\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-32-287Z.yml)"
+    },
+    {
+      "label": "type into the form",
+      "tool": "browser_type",
+      "args": {
+        "target": "#notes",
+        "text": "typed r1-4b1f10"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 44,
+      "text": ""
+    },
+    {
+      "label": "new tab: account",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:57433/account?tab=2"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 376,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)\n### Open tabs\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)\n### Page\n- Page URL: http://127.0.0.1:57433/account?tab=2\n- Page Title: account: signed in as tester\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-32-708Z.yml)"
+    },
+    {
+      "label": "before: list tabs",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 24,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "before: select tab 0",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 47,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 0",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1037,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/store\\\",\\\"title\\\":\\\"stored r1-4b1f10\\\",\\\"historyLength\\\":5,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":\\\"r1-4b1f10-tab0\\\",\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1366,768],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "before: select tab 1",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 22,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: (current) [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 1",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1029,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/form\\\",\\\"title\\\":\\\"form\\\",\\\"historyLength\\\":1,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":\\\"r1-4b1f10-tab1\\\",\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":\\\"typed r1-4b1f10\\\",\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1366,768],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "before: select tab 2",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 2
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 25,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 2",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1040,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/account?tab=2\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":1,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":null,\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1366,768],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "select the form tab last",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 24,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: (current) [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "browser_close",
+      "tool": "browser_close",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 551,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    },
+    {
+      "label": "resume with headed toggled",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1",
+        "why": "lifetime rig switch: resume with headed toggled",
+        "headed": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 417,
+      "text": "NOTE: this session's browser was closed at 2026-10-04T02:26:36.8898801+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\n  browser: firefox\n  headed: true -- a window is open for this run, and it is never closed for being idle\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\downloads\n  purpose: Lifetime review rig, switch on firefox, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T04:26:26.2070334+02:00   last used: 2026-10-04T04:26:37.4655091+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n    holder: 2026-10-04T04:26:26.2070334+02:00 PID 77272 started by node → 2026-10-04T04:26:37.4655091+02:00 PID 77272 "
+    },
+    {
+      "label": "after: first browser call (list tabs)",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 10452,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 14,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 10,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 10,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: list tabs",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 10,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: select tab 0",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 41,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: read tab 0",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1039,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/store\\\",\\\"title\\\":\\\"stored r1-4b1f10\\\",\\\"historyLength\\\":5,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":\\\"r1-4b1f10-tab0\\\",\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[3840,2160],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "after: select tab 1",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 41,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: (current) [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: read tab 1",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1028,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/form\\\",\\\"title\\\":\\\"form\\\",\\\"historyLength\\\":1,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":\\\"r1-4b1f10-tab1\\\",\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":\\\"typed r1-4b1f10\\\",\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[3840,2160],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "after: select tab 2",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 2
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 40,
+      "text": "### Result\n- 0: [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "after: read tab 2",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1030,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/account?tab=2\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":1,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":null,\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[3840,2160],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "select the store tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 37,
+      "text": "### Result\n- 0: (current) [stored r1-4b1f10](http://127.0.0.1:57433/store)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)"
+    },
+    {
+      "label": "navigate back",
+      "tool": "browser_navigate_back",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 126,
+      "text": "### Open tabs\n- 0: (current) [history 2](http://127.0.0.1:57433/h/2)\n- 1: [form](http://127.0.0.1:57433/form)\n- 2: [account: signed in as tester](http://127.0.0.1:57433/account?tab=2)\n### Page\n- Page URL: http://127.0.0.1:57433/h/2\n- Page Title: history 2\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\output\\page-2026-10-04T02-26-55-727Z.yml)"
+    },
+    {
+      "label": "read after back",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1063,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:57433/h/2\\\",\\\"title\\\":\\\"history 2\\\",\\\"historyLength\\\":5,\\\"ls\\\":\\\"r1-4b1f10\\\",\\\"ss\\\":\\\"r1-4b1f10-tab0\\\",\\\"docCookie\\\":\\\"jsp=r1-4b1f10; jss=r1-4b1f10\\\",\\\"idb\\\":\\\"r1-4b1f10\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"r1-4b1f10\\\",\\\"jsSession\\\":\\\"r1-4b1f10\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":true,\\\"outer\\\":[1920,1165],\\\"inner\\\":[1920,1080],\\\"screen\\\":[3840,2160],\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"brands\\\":null}\""
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1",
+        "why": "lifetime rig switch: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 740,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1' (45.2 MiB). Its purpose was: Lifetime review rig, switch on firefox, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: lifetime rig switch: done with run r1"
+    }
+  ],
+  "census": {
+    "before": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+        "mainPid": 94956,
+        "flags": [
+          "-headless",
+          "-profile",
+          "-juggler-pipe"
+        ],
+        "kinds": {
+          "main": 2,
+          "contentproc": 7
+        },
+        "count": 9
+      },
+      "processes": [
+        {
+          "pid": 58084,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 88492,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\77272-faf10c0016734aaab5f3ec4ed571d1e3\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 61708,
+          "parent": 88492,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 106760,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\77272-faf10c0016734aaab5f3ec4ed571d1e3\\playwright-mcp-F773B1194B17CE7D.json --sandbox"
+        },
+        {
+          "pid": 25108,
+          "parent": 106760,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 94956,
+          "parent": 106760,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 32384,
+          "parent": 94956,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 82524,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 2696:27337 -prefMapHandle 2700:302946 -ipcHandle 2712 -initialChannelId {d9620467-5d98-4e42-acce-80210dc89d6f} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 1 socket"
+        },
+        {
+          "pid": 42084,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 3716:28188 -prefMapHandle 3720:302946 -ipcHandle 3500 -initialChannelId {583e9ce6-a34f-44c1-b0e3-84027fa90467} -parentPid 32384 -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 3 rdd"
+        },
+        {
+          "pid": 46988,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4136:28385 -prefMapHandle 4140:302946 -jsInitHandle 4144:162620 -parentBuildID 20260927184314 -ipcHandle 4152 -initialChannelId {101e3b35-f6a9-4207-8120-0e28cc2968f4} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 4 tab"
+        },
+        {
+          "pid": 82912,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4360:27684 -prefMapHandle 4364:302946 -jsInitHandle 4368:162620 -parentBuildID 20260927184314 -ipcHandle 4376 -initialChannelId {742c2406-91c9-4533-b1e8-f2c1b6eea9b2} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 5 tab"
+        },
+        {
+          "pid": 82060,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -sandboxingKind 0 -prefsHandle 5520:49030 -prefMapHandle 5428:302946 -ipcHandle 5276 -initialChannelId {aae4f92c-e2d5-40d8-b140-ff3462855528} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 7 utility"
+        },
+        {
+          "pid": 69084,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 3360:47496 -prefMapHandle 5836:302946 -jsInitHandle 784:162620 -parentBuildID 20260927184314 -ipcHandle 884 -initialChannelId {a89bb79a-5844-40c2-9a83-6ce427c32f64} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 8 tab"
+        },
+        {
+          "pid": 12812,
+          "parent": 32384,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 5968:47496 -prefMapHandle 5200:302946 -jsInitHandle 5948:162620 -parentBuildID 20260927184314 -ipcHandle 3360 -initialChannelId {24fe49fe-98c8-4a0c-8c02-663f7fc0040e} -parentPid 32384 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 9 tab"
+        }
+      ]
+    },
+    "after": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+        "mainPid": 92968,
+        "flags": [
+          "-profile",
+          "-juggler-pipe"
+        ],
+        "kinds": {
+          "main": 2,
+          "contentproc": 8
+        },
+        "count": 10
+      },
+      "processes": [
+        {
+          "pid": 58084,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 88492,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\77272-faf10c0016734aaab5f3ec4ed571d1e3\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 61708,
+          "parent": 88492,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 55024,
+          "parent": 77272,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\77272-faf10c0016734aaab5f3ec4ed571d1e3\\playwright-mcp-F773B1194B17CE7D.json --sandbox"
+        },
+        {
+          "pid": 81848,
+          "parent": 55024,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 92968,
+          "parent": 55024,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 24680,
+          "parent": 92968,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe -no-remote -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-firefox-headless-r1\\profile -juggler-pipe"
+        },
+        {
+          "pid": 68648,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 3888:29876 -prefMapHandle 3892:304591 -ipcHandle 3912 -initialChannelId {82aa1b7b-a7c3-4b2c-a7ef-c18cdc4833de} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 2 socket"
+        },
+        {
+          "pid": 74524,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4588:30126 -prefMapHandle 4592:304591 -jsInitHandle 4596:162620 -parentBuildID 20260927184314 -ipcHandle 4604 -initialChannelId {95cfdf21-0275-4e73-a24f-f1526661822e} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 4 tab"
+        },
+        {
+          "pid": 50840,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -prefsHandle 5356:30126 -prefMapHandle 5360:304591 -ipcHandle 5368 -initialChannelId {1f3ed6f6-d2af-4efd-a344-0878c126e173} -parentPid 24680 -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 7 rdd"
+        },
+        {
+          "pid": 74212,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 6268:28310 -prefMapHandle 6272:304591 -jsInitHandle 6276:162620 -parentBuildID 20260927184314 -ipcHandle 6284 -initialChannelId {a82748cd-c593-4fdf-9dc0-6c255b6b9ca0} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 9 tab"
+        },
+        {
+          "pid": 84072,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 6344:28310 -prefMapHandle 6348:304591 -jsInitHandle 6352:162620 -parentBuildID 20260927184314 -ipcHandle 6360 -initialChannelId {d87cf14e-f7a8-4262-bcef-cb053852e0fa} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 10 tab"
+        },
+        {
+          "pid": 12444,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 6376:28310 -prefMapHandle 6380:304591 -jsInitHandle 6384:162620 -parentBuildID 20260927184314 -ipcHandle 6392 -initialChannelId {9b55de47-2b42-4011-ab64-0d1b44320600} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 11 tab"
+        },
+        {
+          "pid": 87120,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 6584:30326 -prefMapHandle 6600:304591 -jsInitHandle 5948:162620 -parentBuildID 20260927184314 -ipcHandle 5836 -initialChannelId {3afd65d1-7ed5-4a62-9c3f-1c2beb2e8c53} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 12 tab"
+        },
+        {
+          "pid": 83700,
+          "parent": 24680,
+          "depth": 4,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260927184314 -sandboxingKind 0 -prefsHandle 7816:47329 -prefMapHandle 7860:304591 -ipcHandle 7876 -initialChannelId {caf92813-4dfb-4970-8c26-a9d9c7dd7738} -parentPid 24680 -win32kLockedDown -appDir \"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553\\firefox\\browser\" - 13 utility"
+        }
+      ]
+    }
+  },
+  "before": [
+    {
+      "index": 0,
+      "listed": {
+        "index": 0,
+        "current": false,
+        "title": "stored r1-4b1f10",
+        "url": "http://127.0.0.1:57433/store",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/store",
+        "title": "stored r1-4b1f10",
+        "historyLength": 5,
+        "ls": "r1-4b1f10",
+        "ss": "r1-4b1f10-tab0",
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1366,
+          768
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    },
+    {
+      "index": 1,
+      "listed": {
+        "index": 1,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:57433/form",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/form",
+        "title": "form",
+        "historyLength": 1,
+        "ls": "r1-4b1f10",
+        "ss": "r1-4b1f10-tab1",
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": "typed r1-4b1f10",
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1366,
+          768
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    },
+    {
+      "index": 2,
+      "listed": {
+        "index": 2,
+        "current": true,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "title": "account: signed in as tester",
+        "historyLength": 1,
+        "ls": "r1-4b1f10",
+        "ss": null,
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1366,
+          768
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    }
+  ],
+  "after": [
+    {
+      "index": 0,
+      "listed": {
+        "index": 0,
+        "current": true,
+        "title": "stored r1-4b1f10",
+        "url": "http://127.0.0.1:57433/store",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/store",
+        "title": "stored r1-4b1f10",
+        "historyLength": 5,
+        "ls": "r1-4b1f10",
+        "ss": "r1-4b1f10-tab0",
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          3840,
+          2160
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    },
+    {
+      "index": 1,
+      "listed": {
+        "index": 1,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:57433/form",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/form",
+        "title": "form",
+        "historyLength": 1,
+        "ls": "r1-4b1f10",
+        "ss": "r1-4b1f10-tab1",
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": "typed r1-4b1f10",
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          3840,
+          2160
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    },
+    {
+      "index": 2,
+      "listed": {
+        "index": 2,
+        "current": false,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "title": "account: signed in as tester",
+        "historyLength": 1,
+        "ls": "r1-4b1f10",
+        "ss": null,
+        "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+        "idb": "r1-4b1f10",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "r1-4b1f10",
+          "jsSession": "r1-4b1f10",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": true,
+        "outer": [
+          1920,
+          1165
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          3840,
+          2160
+        ],
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+        "brands": null
+      }
+    }
+  ],
+  "serverPid": 77272,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.197"
+        },
+        "instructions": "BrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' logs the calls to session.md; for a trace, use browser_start_tracing.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nCall browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It is recorded, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses an existing session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 78,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_set_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_generate_locator",
+      "browser_storage_state",
+      "browser_set_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_verify_element_visible",
+      "browser_verify_text_visible",
+      "browser_verify_list_visible",
+      "browser_verify_value",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "signedIn": {
+    "url": "http://127.0.0.1:57433/account",
+    "title": "account: signed in as tester",
+    "historyLength": 2,
+    "ls": null,
+    "ss": null,
+    "docCookie": "",
+    "idb": null,
+    "who": {
+      "user": "tester",
+      "sessionCookie": true,
+      "jsPersistent": null,
+      "jsSession": null,
+      "cookieNames": [
+        "auth",
+        "sess"
+      ]
+    },
+    "notes": null,
+    "visibility": "visible",
+    "hasFocus": true,
+    "webdriver": true,
+    "outer": [
+      1920,
+      1165
+    ],
+    "inner": [
+      1920,
+      1080
+    ],
+    "screen": [
+      1366,
+      768
+    ],
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+    "brands": null
+  },
+  "restore": {
+    "first": [
+      {
+        "index": 0,
+        "current": true,
+        "title": "stored r1-4b1f10",
+        "url": "http://127.0.0.1:57433/store",
+        "crashed": false
+      },
+      {
+        "index": 1,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:57433/form",
+        "crashed": false
+      },
+      {
+        "index": 2,
+        "current": false,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "crashed": false
+      }
+    ],
+    "settled": [
+      {
+        "index": 0,
+        "current": true,
+        "title": "stored r1-4b1f10",
+        "url": "http://127.0.0.1:57433/store",
+        "crashed": false
+      },
+      {
+        "index": 1,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:57433/form",
+        "crashed": false
+      },
+      {
+        "index": 2,
+        "current": false,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:57433/account?tab=2",
+        "crashed": false
+      }
+    ],
+    "readings": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "settleMs": 3039
+  },
+  "afterTabs": [
+    {
+      "index": 0,
+      "current": true,
+      "title": "stored r1-4b1f10",
+      "url": "http://127.0.0.1:57433/store",
+      "crashed": false
+    },
+    {
+      "index": 1,
+      "current": false,
+      "title": "form",
+      "url": "http://127.0.0.1:57433/form",
+      "crashed": false
+    },
+    {
+      "index": 2,
+      "current": false,
+      "title": "account: signed in as tester",
+      "url": "http://127.0.0.1:57433/account?tab=2",
+      "crashed": false
+    }
+  ],
+  "backTo": {
+    "url": "http://127.0.0.1:57433/h/2",
+    "title": "history 2",
+    "historyLength": 5,
+    "ls": "r1-4b1f10",
+    "ss": "r1-4b1f10-tab0",
+    "docCookie": "jsp=r1-4b1f10; jss=r1-4b1f10",
+    "idb": "r1-4b1f10",
+    "who": {
+      "user": "tester",
+      "sessionCookie": true,
+      "jsPersistent": "r1-4b1f10",
+      "jsSession": "r1-4b1f10",
+      "cookieNames": [
+        "auth",
+        "jsp",
+        "jss",
+        "sess"
+      ]
+    },
+    "notes": null,
+    "visibility": "visible",
+    "hasFocus": true,
+    "webdriver": true,
+    "outer": [
+      1920,
+      1165
+    ],
+    "inner": [
+      1920,
+      1080
+    ],
+    "screen": [
+      3840,
+      2160
+    ],
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+    "brands": null
+  },
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791080789283,
+      "method": "GET",
+      "path": "/login",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080789345,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080789501,
+      "method": "POST",
+      "path": "/login",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080789510,
+      "method": "GET",
+      "path": "/account",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080790157,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080791183,
+      "method": "GET",
+      "path": "/h/1",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080791251,
+      "method": "GET",
+      "path": "/h/2",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080791327,
+      "method": "GET",
+      "path": "/store",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080792201,
+      "method": "GET",
+      "path": "/form",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080792611,
+      "method": "GET",
+      "path": "/account?tab=2",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080792810,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080793861,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080794918,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080807580,
+      "method": "GET",
+      "path": "/form",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080807581,
+      "method": "GET",
+      "path": "/account?tab=2",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080807582,
+      "method": "GET",
+      "path": "/store",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080807872,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080811425,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080812501,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080813574,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080815624,
+      "method": "GET",
+      "path": "/h/2",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    },
+    {
+      "t": 1791080815760,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "jsp",
+        "sess",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "chUa": null,
+      "chPlatform": null
+    }
+  ],
+  "endedUtc": "2026-10-04T02:26:57.586Z"
+}

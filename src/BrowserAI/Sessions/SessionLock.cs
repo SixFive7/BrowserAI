@@ -460,6 +460,38 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
+    /// Adds one <c>opened</c> or <c>closed</c> statement, every time, with no
+    /// dedup: two closes with the same reason are two closes.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-04 for 8 b</b>, beside <see cref="AppendPurpose"/> and under
+    /// the same in-process lock, and the record is read again after it so an answer
+    /// composed next sees it.
+    /// </remarks>
+    /// <param name="field">The field, <see cref="RecordFields.Opened"/> or <see cref="RecordFields.Closed"/>.</param>
+    /// <param name="value">What it says.</param>
+    /// <exception cref="SqliteException">The statement could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    public void AppendLifecycle(string field, string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        if (field is not (RecordFields.Opened or RecordFields.Closed))
+        {
+            throw new ArgumentException($"'{field}' is not a lifecycle field.", nameof(field));
+        }
+
+        lock (_inProcess)
+        {
+            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
+
+            _store.Append(new StoredStatement(field, SessionRecordReader.Stamp(DateTimeOffset.Now), value));
+
+            Record = SessionRecordReader.Read(_store);
+        }
+    }
+
+    /// <summary>
     /// Releases the directory and deletes what is left of it, with the release
     /// and the delete inside <b>one hold</b> of the per-directory gate.
     /// </summary>
@@ -1749,4 +1781,19 @@ internal static partial class SessionLog
         Level = LogLevel.Warning,
         Message = "The idle browser close for {Directory} could not be recorded; the browser was closed anyway, so the log will not show it.")]
     public static partial void IdleCloseNotRecorded(ILogger logger, string directory, Exception failure);
+
+    /// <summary>A close's reason could not be written into the session's record.</summary>
+    /// <remarks>
+    /// Added 2026-10-04 for 8 b. A record that cannot be written stops no close:
+    /// the next BrowserAI to open the session then says no close was recorded.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="cause">The close's cause.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 13,
+        Level = LogLevel.Warning,
+        Message = "The reason the browser of {Directory} was closed ({Cause}) could not be recorded; the close happened anyway, and the record will not say why.")]
+    public static partial void CloseNotRecorded(ILogger logger, string directory, string cause, Exception failure);
 }

@@ -1,0 +1,15 @@
+2026-10-04T15:14:18Z batch after-d: waiting for the suite lock
+2026-10-04T15:22:49Z lock taken
+2026-10-04T15:22:49Z registry before: exit 0
+2026-10-04T15:22:49Z BEGIN desk-probe: "C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -File "C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\desk-probe.ps1" -Out "C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\desk-probe\probe.txt"
+2026-10-04T15:22:55Z END desk-probe: launcher exit 0
+2026-10-04T15:22:55Z BEGIN windowclose-chromium-r1: C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-d\BrowserAI.Server.exe browser=chromium scenario=windowclose headed=true run=r1 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\windowclose-chromium-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T15:23:14Z END windowclose-chromium-r1: launcher exit 0
+2026-10-04T15:23:14Z BEGIN windowclose-chromium-r2: C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-d\BrowserAI.Server.exe browser=chromium scenario=windowclose headed=true run=r2 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\windowclose-chromium-r2\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T15:23:34Z END windowclose-chromium-r2: launcher exit 0
+2026-10-04T15:23:34Z BEGIN windowclose-firefox-r1: C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-d\BrowserAI.Server.exe browser=firefox scenario=windowclose headed=true run=r1 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\windowclose-firefox-r1\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T15:23:59Z END windowclose-firefox-r1: launcher exit 0
+2026-10-04T15:23:59Z BEGIN windowclose-firefox-r2: C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\behave.mjs server=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\bin-d\BrowserAI.Server.exe browser=firefox scenario=windowclose headed=true run=r2 out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\after-d\windowclose-firefox-r2\rig sessions=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions
+2026-10-04T15:24:24Z END windowclose-firefox-r2: launcher exit 0
+2026-10-04T15:24:24Z registry after: exit 0
+2026-10-04T15:24:24Z lock released

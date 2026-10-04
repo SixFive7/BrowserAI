@@ -1,0 +1,11 @@
+2026-10-04T13:53:36.972Z call browserai_init 404ms isError=false Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1' on every browser tool call. directory: C:\
+2026-10-04T13:53:37.703Z call browser_navigate 729ms isError=false ### Page - Page URL: http://127.0.0.1:57514/login - Page Title: login ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill
+2026-10-04T13:53:37.729Z call browser_type 25ms isError=false 
+2026-10-04T13:53:38.344Z call browser_type 614ms isError=false ### Page - Page URL: http://127.0.0.1:57514/account - Page Title: account: signed in as tester ### Snapshot - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\wt\b
+2026-10-04T13:53:38.447Z call browser_tabs 102ms isError=false ### Result - 0: [account: signed in as tester](http://127.0.0.1:57514/account) - 1: (current) [form](http://127.0.0.1:57514/form) ### Open tabs - 0: [account: s
+2026-10-04T13:53:38.479Z call browser_type 31ms isError=false 
+2026-10-04T13:53:45.878Z call browser_tabs 577ms isError=false ### Result - 0: (current) [New tab](chrome://new-tab-page/)
+2026-10-04T13:53:46.857Z call browserai_resume 12ms isError=false The session is already live, so nothing changed: its browser, its tabs and its settings are as they were. Session ready. Pass session='C:\Source\SixFive7\Brows
+2026-10-04T13:53:46.874Z call browserai_catch_up 16ms isError=false Session: C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1 browser: chromium created: 2026-10-04T15:53:36.5723110+02:00 
+2026-10-04T13:53:46.879Z call browser_tabs 4ms isError=false ### Result - 0: (current) [New tab](chrome://new-tab-page/)
+2026-10-04T13:53:47.613Z call browserai_destroy 728ms isError=false Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\sessions\kill-chromium-headless-r1' (13.9 MiB). Its purpose was: Behave lane rig, k

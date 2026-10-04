@@ -1,0 +1,1649 @@
+{
+  "run": "v2r1-2c1e0a",
+  "scenario": "switch",
+  "browser": "chromium",
+  "from": "headless",
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1",
+  "startedUtc": "2026-10-04T03:03:12.211Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1",
+        "purpose": "Lifetime review rig, switch on chromium, run v2r1: a local test site only, destroyed at the end of the run.",
+        "browser": "chromium",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 410,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\downloads\n  purpose: Lifetime review rig, switch on chromium, run v2r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T05:03:12.6853363+02:00   last used: 2026-10-04T05:03:12.6853363+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions: 0\n"
+    },
+    {
+      "label": "navigate login",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:58635/login"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 718,
+      "text": "### Page\n- Page URL: http://127.0.0.1:58635/login\n- Page Title: login\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-13-806Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\console-2026-10-04T03-03-13-657Z.log#L1"
+    },
+    {
+      "label": "type user",
+      "tool": "browser_type",
+      "args": {
+        "target": "#user",
+        "text": "tester"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 27,
+      "text": ""
+    },
+    {
+      "label": "type password and submit",
+      "tool": "browser_type",
+      "args": {
+        "target": "#pass",
+        "text": "not-a-secret",
+        "submit": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 572,
+      "text": "### Page\n- Page URL: http://127.0.0.1:58635/account\n- Page Title: account: signed in as tester\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-14-409Z.yml)"
+    },
+    {
+      "label": "read account after sign-in",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1062,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/account\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":3,\\\"ls\\\":null,\\\"ss\\\":null,\\\"docCookie\\\":\\\"\\\",\\\"idb\\\":null,\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":null,\\\"jsSession\\\":null,\\\"cookieNames\\\":[\\\"auth\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1920,1080],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"navigate\\\",\\\"timeOrigin\\\":1791082993863,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "navigate h1",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:58635/h/1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 40,
+      "text": "### Page\n- Page URL: http://127.0.0.1:58635/h/1\n- Page Title: history 1\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-15-515Z.yml)"
+    },
+    {
+      "label": "navigate h2",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:58635/h/2"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 48,
+      "text": "### Page\n- Page URL: http://127.0.0.1:58635/h/2\n- Page Title: history 2\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-15-564Z.yml)"
+    },
+    {
+      "label": "navigate store",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:58635/store"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 46,
+      "text": "### Page\n- Page URL: http://127.0.0.1:58635/store\n- Page Title: store\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-15-611Z.yml)"
+    },
+    {
+      "label": "write every store from tab 0",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 508,
+      "text": "### Result\n\"written\""
+    },
+    {
+      "label": "new tab: form",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:58635/form"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 100,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: (current) [form](http://127.0.0.1:58635/form)\n### Open tabs\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: (current) [form](http://127.0.0.1:58635/form)\n### Page\n- Page URL: http://127.0.0.1:58635/form\n- Page Title: form\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-16-222Z.yml)"
+    },
+    {
+      "label": "write sessionStorage from tab 1",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 511,
+      "text": "### Result\n\"written\""
+    },
+    {
+      "label": "type into the form",
+      "tool": "browser_type",
+      "args": {
+        "target": "#notes",
+        "text": "typed v2r1-2c1e0a"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 25,
+      "text": ""
+    },
+    {
+      "label": "new tab: account",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "new",
+        "url": "http://127.0.0.1:58635/account?tab=2"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 96,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: [form](http://127.0.0.1:58635/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n### Open tabs\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: [form](http://127.0.0.1:58635/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n### Page\n- Page URL: http://127.0.0.1:58635/account?tab=2\n- Page Title: account: signed in as tester\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-16-857Z.yml)"
+    },
+    {
+      "label": "before: list tabs",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 8,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: [form](http://127.0.0.1:58635/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)"
+    },
+    {
+      "label": "before: select tab 0",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 20,
+      "text": "### Result\n- 0: (current) [store](http://127.0.0.1:58635/store)\n- 1: [form](http://127.0.0.1:58635/form)\n- 2: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 0",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1013,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/store\\\",\\\"title\\\":\\\"store\\\",\\\"historyLength\\\":6,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":\\\"v2r1-2c1e0a-tab0\\\",\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1920,1080],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"navigate\\\",\\\"timeOrigin\\\":1791082995575.9,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "before: select tab 1",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 22,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: (current) [form](http://127.0.0.1:58635/form)\n- 2: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 1",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1016,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/form\\\",\\\"title\\\":\\\"form\\\",\\\"historyLength\\\":2,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":\\\"v2r1-2c1e0a-tab1\\\",\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":\\\"typed v2r1-2c1e0a\\\",\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1920,1080],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"navigate\\\",\\\"timeOrigin\\\":1791082996170.4,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "before: select tab 2",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 2
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 18,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: [form](http://127.0.0.1:58635/form)\n- 2: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)"
+    },
+    {
+      "label": "before: read tab 2",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1015,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/account?tab=2\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":2,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":null,\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1920,1080],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"navigate\\\",\\\"timeOrigin\\\":1791082996803.8,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "select the form tab last",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 17,
+      "text": "### Result\n- 0: [store](http://127.0.0.1:58635/store)\n- 1: (current) [form](http://127.0.0.1:58635/form)\n- 2: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)"
+    },
+    {
+      "label": "browser_close",
+      "tool": "browser_close",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 216,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one."
+    },
+    {
+      "label": "resume with headed toggled",
+      "tool": "browserai_resume",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1",
+        "why": "lifetime rig switch: resume with headed toggled",
+        "headed": true
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 412,
+      "text": "NOTE: this session's browser was closed at 2026-10-04T03:03:20.8017942+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\n  browser: chromium\n  headed: true -- a window is open for this run, and it is never closed for being idle\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\downloads\n  purpose: Lifetime review rig, switch on chromium, run v2r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T05:03:12.6853363+02:00   last used: 2026-10-04T05:03:21.0434756+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n    holder: 2026-10-04T05:03:12.6853363+02:00 PID 21964 started by node → 2026-10-04T05:0"
+    },
+    {
+      "label": "after: first browser call (list tabs)",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 505,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 8,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 6,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: list tabs while the restore settles",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 7,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: list tabs",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "list"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 6,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: select tab 0",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 0
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 21,
+      "text": "### Result\n- 0: (current) [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: read tab 0",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1034,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/account?tab=2\\\",\\\"title\\\":\\\"account: signed in as tester\\\",\\\"historyLength\\\":2,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":null,\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1936,1214],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"back_forward\\\",\\\"timeOrigin\\\":1791083001812.3,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "after: select tab 1",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 23,
+      "text": "### Result\n- 0: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: (current) [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: read tab 1",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1017,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/store\\\",\\\"title\\\":\\\"store\\\",\\\"historyLength\\\":6,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":\\\"v2r1-2c1e0a-tab0\\\",\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1936,1214],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"back_forward\\\",\\\"timeOrigin\\\":1791083001832.3,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "after: select tab 2",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 2
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 22,
+      "text": "### Result\n- 0: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: [store](http://127.0.0.1:58635/store)\n- 2: (current) [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "after: read tab 2",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1018,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/form\\\",\\\"title\\\":\\\"form\\\",\\\"historyLength\\\":2,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":\\\"v2r1-2c1e0a-tab1\\\",\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":\\\"typed v2r1-2c1e0a\\\",\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1936,1214],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"back_forward\\\",\\\"timeOrigin\\\":1791083001738.5,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "select the store tab",
+      "tool": "browser_tabs",
+      "args": {
+        "action": "select",
+        "index": 1
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 17,
+      "text": "### Result\n- 0: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: (current) [store](http://127.0.0.1:58635/store)\n- 2: [form](http://127.0.0.1:58635/form)"
+    },
+    {
+      "label": "navigate back",
+      "tool": "browser_navigate_back",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 55,
+      "text": "### Open tabs\n- 0: [account: signed in as tester](http://127.0.0.1:58635/account?tab=2)\n- 1: (current) [history 2](http://127.0.0.1:58635/h/2)\n- 2: [form](http://127.0.0.1:58635/form)\n### Page\n- Page URL: http://127.0.0.1:58635/h/2\n- Page Title: history 2\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\output\\page-2026-10-04T03-03-29-054Z.yml)"
+    },
+    {
+      "label": "read after back",
+      "tool": "browser_evaluate",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 1015,
+      "text": "### Result\n\"{\\\"url\\\":\\\"http://127.0.0.1:58635/h/2\\\",\\\"title\\\":\\\"history 2\\\",\\\"historyLength\\\":6,\\\"ls\\\":\\\"v2r1-2c1e0a\\\",\\\"ss\\\":\\\"v2r1-2c1e0a-tab0\\\",\\\"docCookie\\\":\\\"jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a\\\",\\\"idb\\\":\\\"v2r1-2c1e0a\\\",\\\"who\\\":{\\\"user\\\":\\\"tester\\\",\\\"sessionCookie\\\":true,\\\"jsPersistent\\\":\\\"v2r1-2c1e0a\\\",\\\"jsSession\\\":\\\"v2r1-2c1e0a\\\",\\\"cookieNames\\\":[\\\"auth\\\",\\\"jsp\\\",\\\"jss\\\",\\\"sess\\\"]},\\\"notes\\\":null,\\\"visibility\\\":\\\"visible\\\",\\\"hasFocus\\\":true,\\\"webdriver\\\":false,\\\"outer\\\":[1936,1214],\\\"inner\\\":[1920,1080],\\\"screen\\\":[1920,1080],\\\"navType\\\":\\\"back_forward\\\",\\\"timeOrigin\\\":1791083009011.5,\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"brands\\\":\\\"Chromium/155, Not(A:Brand/24\\\"}\""
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1",
+        "why": "lifetime rig switch: done with run v2r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 902,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1' (13.8 MiB). Its purpose was: Lifetime review rig, switch on chromium, run v2r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: lifetime rig switch: done with run v2r1"
+    }
+  ],
+  "census": {
+    "before": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+        "mainPid": 57580,
+        "flags": [
+          "--headless",
+          "--user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile",
+          "--remote-debugging-pipe"
+        ],
+        "kinds": {
+          "main": 1,
+          "crashpad-handler": 1,
+          "gpu-process": 1,
+          "utility": 2,
+          "renderer": 5
+        },
+        "count": 10
+      },
+      "processes": [
+        {
+          "pid": 4212,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 102108,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\21964-22c834f49f4f499fa53ab3f9ad11a660\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 2668,
+          "parent": 102108,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 108212,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\21964-22c834f49f4f499fa53ab3f9ad11a660\\playwright-mcp-F7B96BCC34D27CE8.json --sandbox"
+        },
+        {
+          "pid": 16604,
+          "parent": 108212,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 57580,
+          "parent": 108212,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,NetworkTimeServiceQuerying,AimEnabled,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless"
+        },
+        {
+          "pid": 90468,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --type=crashpad-handler --user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile /prefetch:4 --monitor-self-annotation=ptype=crashpad-handler --database=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\\Crashpad --annotation=plat=Win64 \"--annotation=prod=Google Chrome for Testing\" --annotation=ver=155.0.8059.12 --initial-client-data=0x124,0x128,0x12c,0x100,0x130,0x7ff8971ceed0,0x7ff8971ceee0,0x7ff8971ceef0"
+        },
+        {
+          "pid": 34508,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=gpu-process --gpu-recent-crash-count=0 --disable-breakpad --headless --enable-unsafe-swiftshader --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --gpu-preferences=WAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAAEAAAAAIAAAABAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708988185955192 --mojo-platform-channel-handle=1952 /prefetch:2"
+        },
+        {
+          "pid": 56316,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=none --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708989122997041 --mojo-platform-channel-handle=2204 /prefetch:11"
+        },
+        {
+          "pid": 99952,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-GB --service-sandbox-type=service --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708990060038890 --mojo-platform-channel-handle=2692 /prefetch:13"
+        },
+        {
+          "pid": 20560,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --top-chrome-webui --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --launch-time-ticks=53787188800 --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=319070899099"
+        },
+        {
+          "pid": 33420,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --launch-time-ticks=53787234499 --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708992871164437 --mojo-platform-channel-handle=450"
+        },
+        {
+          "pid": 74388,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=9 --launch-time-ticks=53787511217 --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708994745248135 --mojo-platform-channel-handle=564"
+        },
+        {
+          "pid": 12048,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=11 --launch-time-ticks=53789935081 --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708996619331833 --mojo-pla"
+        },
+        {
+          "pid": 9696,
+          "parent": 57580,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=12 --launch-time-ticks=53790573708 --field-trial-handle=1960,i,6148926360369572137,17244208963203409511,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1968,i,15076623241429218630,16366462863499631636,4 --trace-process-track-uuid=3190708997556373682 --mojo-platform-channel-handle=66"
+        }
+      ]
+    },
+    "after": {
+      "program": {
+        "mainExe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+        "mainPid": 108992,
+        "flags": [
+          "--user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile",
+          "--remote-debugging-pipe"
+        ],
+        "kinds": {
+          "main": 1,
+          "crashpad-handler": 1,
+          "gpu-process": 1,
+          "utility": 2,
+          "renderer": 5
+        },
+        "count": 10
+      },
+      "processes": [
+        {
+          "pid": 4212,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 102108,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\21964-22c834f49f4f499fa53ab3f9ad11a660\\playwright-mcp.config.json --sandbox"
+        },
+        {
+          "pid": 2668,
+          "parent": 102108,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 88940,
+          "parent": 21964,
+          "depth": 1,
+          "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe",
+          "cmd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config %USERPROFILE%\\AppData\\Local\\BrowserAI\\instances\\21964-22c834f49f4f499fa53ab3f9ad11a660\\playwright-mcp-F7B96BCC34D27CE8.json --sandbox"
+        },
+        {
+          "pid": 55352,
+          "parent": 88940,
+          "depth": 2,
+          "exe": "C:\\WINDOWS\\system32\\conhost.exe",
+          "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+        },
+        {
+          "pid": 108992,
+          "parent": 88940,
+          "depth": 2,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,NetworkTimeServiceQuerying,AimEnabled,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --enable-a"
+        },
+        {
+          "pid": 105256,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe --type=crashpad-handler --user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile /prefetch:4 --monitor-self-annotation=ptype=crashpad-handler --database=C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\\Crashpad --annotation=plat=Win64 \"--annotation=prod=Google Chrome for Testing\" --annotation=ver=155.0.8059.12 --initial-client-data=0x140,0x144,0x148,0x104,0x14c,0x7ff8971ceed0,0x7ff8971ceee0,0x7ff8971ceef0"
+        },
+        {
+          "pid": 62712,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=gpu-process --gpu-recent-crash-count=0 --disable-breakpad --enable-unsafe-swiftshader --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --gpu-preferences=WAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAAEAAAAAIAAAABAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --metrics-shmem-handle=1980,i,4027823947263389569,7866673115386601085,262144 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708988185955192 --mojo-platform-channel-handle=2024 /prefetch:2"
+        },
+        {
+          "pid": 96700,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=none --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --start-stack-profiler --metrics-shmem-handle=2280,i,6102891701735311619,13247683992625909160,524288 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708989122997041 --mojo-platform-channel-handle=2276 /prefetch:11"
+        },
+        {
+          "pid": 81756,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-GB --service-sandbox-type=service --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --metrics-shmem-handle=2680,i,7512691839601963593,16857114552669517451,524288 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708990060038890 --mojo-platform-channel-handle=2700 /prefetch:13"
+        },
+        {
+          "pid": 88672,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --top-chrome-webui --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --launch-time-ticks=53795494050 --metrics-shmem-handle=4304,i,13957154816645347073,9810931963005315217,1572864 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708990997080739 --mojo-platform-channel-handle=4320 /prefetch:1"
+        },
+        {
+          "pid": 33116,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=8 --launch-time-ticks=53795545457 --metrics-shmem-handle=4828,i,4399010128773037017,9818074460521384581,1572864 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708993808206286 --mojo-platform-channel-handle=4844 /prefetch:1"
+        },
+        {
+          "pid": 78500,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --launch-time-ticks=53795545782 --metrics-shmem-handle=4868,i,13027344973729337489,12961596773791876048,1572864 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708992871164437 --mojo-platform-channel-handle=4884 /prefetch:1"
+        },
+        {
+          "pid": 40028,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=9 --launch-time-ticks=53795619176 --metrics-shmem-handle=5180,i,15496265974264288098,18039545419598135470,1572864 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708994745248135 --mojo-platform-channel-handle=5248 /prefetch:1"
+        },
+        {
+          "pid": 109160,
+          "parent": 108992,
+          "depth": 3,
+          "exe": "%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe",
+          "cmd": "\"%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe\" --type=renderer --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\lifetime\\sessions\\switch-chromium-headless-v2r1\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=6 --launch-time-ticks=53795640233 --metrics-shmem-handle=5188,i,17160222581249918467,467460526884000176,1572864 --field-trial-handle=2036,i,16871086363542037081,2450804214165525744,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AimEnabled,AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,NetworkTimeServiceQuerying,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=2060,i,15741288065922045198,9911883496302107662,4 --trace-process-track-uuid=3190708991934122588 --mojo-platform-channel-handle=5408 /prefetch:1"
+        }
+      ]
+    }
+  },
+  "before": [
+    {
+      "index": 0,
+      "listed": {
+        "index": 0,
+        "current": false,
+        "title": "store",
+        "url": "http://127.0.0.1:58635/store",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/store",
+        "title": "store",
+        "historyLength": 6,
+        "ls": "v2r1-2c1e0a",
+        "ss": "v2r1-2c1e0a-tab0",
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1920,
+          1080
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "navigate",
+        "timeOrigin": 1791082995575.9,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    },
+    {
+      "index": 1,
+      "listed": {
+        "index": 1,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:58635/form",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/form",
+        "title": "form",
+        "historyLength": 2,
+        "ls": "v2r1-2c1e0a",
+        "ss": "v2r1-2c1e0a-tab1",
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": "typed v2r1-2c1e0a",
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1920,
+          1080
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "navigate",
+        "timeOrigin": 1791082996170.4,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    },
+    {
+      "index": 2,
+      "listed": {
+        "index": 2,
+        "current": true,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "title": "account: signed in as tester",
+        "historyLength": 2,
+        "ls": "v2r1-2c1e0a",
+        "ss": null,
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1920,
+          1080
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "navigate",
+        "timeOrigin": 1791082996803.8,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    }
+  ],
+  "after": [
+    {
+      "index": 0,
+      "listed": {
+        "index": 0,
+        "current": true,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "title": "account: signed in as tester",
+        "historyLength": 2,
+        "ls": "v2r1-2c1e0a",
+        "ss": null,
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1936,
+          1214
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "back_forward",
+        "timeOrigin": 1791083001812.3,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    },
+    {
+      "index": 1,
+      "listed": {
+        "index": 1,
+        "current": false,
+        "title": "store",
+        "url": "http://127.0.0.1:58635/store",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/store",
+        "title": "store",
+        "historyLength": 6,
+        "ls": "v2r1-2c1e0a",
+        "ss": "v2r1-2c1e0a-tab0",
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": null,
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1936,
+          1214
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "back_forward",
+        "timeOrigin": 1791083001832.3,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    },
+    {
+      "index": 2,
+      "listed": {
+        "index": 2,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:58635/form",
+        "crashed": false
+      },
+      "state": {
+        "url": "http://127.0.0.1:58635/form",
+        "title": "form",
+        "historyLength": 2,
+        "ls": "v2r1-2c1e0a",
+        "ss": "v2r1-2c1e0a-tab1",
+        "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+        "idb": "v2r1-2c1e0a",
+        "who": {
+          "user": "tester",
+          "sessionCookie": true,
+          "jsPersistent": "v2r1-2c1e0a",
+          "jsSession": "v2r1-2c1e0a",
+          "cookieNames": [
+            "auth",
+            "jsp",
+            "jss",
+            "sess"
+          ]
+        },
+        "notes": "typed v2r1-2c1e0a",
+        "visibility": "visible",
+        "hasFocus": true,
+        "webdriver": false,
+        "outer": [
+          1936,
+          1214
+        ],
+        "inner": [
+          1920,
+          1080
+        ],
+        "screen": [
+          1920,
+          1080
+        ],
+        "navType": "back_forward",
+        "timeOrigin": 1791083001738.5,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "brands": "Chromium/155, Not(A:Brand/24"
+      }
+    }
+  ],
+  "serverPid": 21964,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.197"
+        },
+        "instructions": "BrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' logs the calls to session.md; for a trace, use browser_start_tracing.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nCall browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It is recorded, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses an existing session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 78,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_set_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_generate_locator",
+      "browser_storage_state",
+      "browser_set_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_verify_element_visible",
+      "browser_verify_text_visible",
+      "browser_verify_list_visible",
+      "browser_verify_value",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "signedIn": {
+    "url": "http://127.0.0.1:58635/account",
+    "title": "account: signed in as tester",
+    "historyLength": 3,
+    "ls": null,
+    "ss": null,
+    "docCookie": "",
+    "idb": null,
+    "who": {
+      "user": "tester",
+      "sessionCookie": true,
+      "jsPersistent": null,
+      "jsSession": null,
+      "cookieNames": [
+        "auth",
+        "sess"
+      ]
+    },
+    "notes": null,
+    "visibility": "visible",
+    "hasFocus": true,
+    "webdriver": false,
+    "outer": [
+      1920,
+      1080
+    ],
+    "inner": [
+      1920,
+      1080
+    ],
+    "screen": [
+      1920,
+      1080
+    ],
+    "navType": "navigate",
+    "timeOrigin": 1791082993863,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "brands": "Chromium/155, Not(A:Brand/24"
+  },
+  "restore": {
+    "first": [
+      {
+        "index": 0,
+        "current": true,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "crashed": false
+      },
+      {
+        "index": 1,
+        "current": false,
+        "title": "store",
+        "url": "http://127.0.0.1:58635/store",
+        "crashed": false
+      },
+      {
+        "index": 2,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:58635/form",
+        "crashed": false
+      }
+    ],
+    "settled": [
+      {
+        "index": 0,
+        "current": true,
+        "title": "account: signed in as tester",
+        "url": "http://127.0.0.1:58635/account?tab=2",
+        "crashed": false
+      },
+      {
+        "index": 1,
+        "current": false,
+        "title": "store",
+        "url": "http://127.0.0.1:58635/store",
+        "crashed": false
+      },
+      {
+        "index": 2,
+        "current": false,
+        "title": "form",
+        "url": "http://127.0.0.1:58635/form",
+        "crashed": false
+      }
+    ],
+    "readings": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "settleMs": 3027
+  },
+  "afterTabs": [
+    {
+      "index": 0,
+      "current": true,
+      "title": "account: signed in as tester",
+      "url": "http://127.0.0.1:58635/account?tab=2",
+      "crashed": false
+    },
+    {
+      "index": 1,
+      "current": false,
+      "title": "store",
+      "url": "http://127.0.0.1:58635/store",
+      "crashed": false
+    },
+    {
+      "index": 2,
+      "current": false,
+      "title": "form",
+      "url": "http://127.0.0.1:58635/form",
+      "crashed": false
+    }
+  ],
+  "backTo": {
+    "url": "http://127.0.0.1:58635/h/2",
+    "title": "history 2",
+    "historyLength": 6,
+    "ls": "v2r1-2c1e0a",
+    "ss": "v2r1-2c1e0a-tab0",
+    "docCookie": "jsp=v2r1-2c1e0a; jss=v2r1-2c1e0a",
+    "idb": "v2r1-2c1e0a",
+    "who": {
+      "user": "tester",
+      "sessionCookie": true,
+      "jsPersistent": "v2r1-2c1e0a",
+      "jsSession": "v2r1-2c1e0a",
+      "cookieNames": [
+        "auth",
+        "jsp",
+        "jss",
+        "sess"
+      ]
+    },
+    "notes": null,
+    "visibility": "visible",
+    "hasFocus": true,
+    "webdriver": false,
+    "outer": [
+      1936,
+      1214
+    ],
+    "inner": [
+      1920,
+      1080
+    ],
+    "screen": [
+      1920,
+      1080
+    ],
+    "navType": "back_forward",
+    "timeOrigin": 1791083009011.5,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "brands": "Chromium/155, Not(A:Brand/24"
+  },
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791082993673,
+      "method": "GET",
+      "path": "/login",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082993795,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082993870,
+      "method": "POST",
+      "path": "/login",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082993872,
+      "method": "GET",
+      "path": "/account",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082993890,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082994462,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995485,
+      "method": "GET",
+      "path": "/h/1",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995498,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995526,
+      "method": "GET",
+      "path": "/h/2",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995542,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995577,
+      "method": "GET",
+      "path": "/store",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082995592,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082996172,
+      "method": "GET",
+      "path": "/form",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082996196,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082996805,
+      "method": "GET",
+      "path": "/account?tab=2",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082996824,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082996896,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082997934,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791082998971,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001848,
+      "method": "GET",
+      "path": "/form",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001849,
+      "method": "GET",
+      "path": "/account?tab=2",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001851,
+      "method": "GET",
+      "path": "/store",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001878,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001894,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083001911,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083005016,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083006062,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083007103,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083009013,
+      "method": "GET",
+      "path": "/h/2",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083009032,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    },
+    {
+      "t": 1791083009063,
+      "method": "GET",
+      "path": "/whoami",
+      "cookies": [
+        "auth",
+        "sess",
+        "jsp",
+        "jss"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chPlatform": "\"Windows\""
+    }
+  ],
+  "endedUtc": "2026-10-04T03:03:31.020Z"
+}

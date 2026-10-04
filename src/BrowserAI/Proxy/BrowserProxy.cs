@@ -756,6 +756,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     public void RefuseCallsWhileAnUpdateInstalls() => Volatile.Write(ref _updateInstalling, 1);
 
+    /// <summary>
+    /// Says that this server is being stopped through its pipe, so the sessions its
+    /// shutdown closes record that. See <see cref="SessionManager.StoppingThroughThePipe"/>.
+    /// </summary>
+    public void StoppingThroughThePipe() => _sessions.StoppingThroughThePipe();
+
     /// <summary>The updater has gone: every call from here on is served.</summary>
     public void TheUpdateHasGone() => Volatile.Write(ref _updateInstalling, 0);
 
@@ -1190,9 +1196,23 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // one that names the way back. And it is a refusal and not a relaunch
         // because the per-run settings are applied, and the tabs restored, by
         // the resume and by nothing else.
+        //
+        // ⚠️ AND A BROWSER THAT ENDED WITH NOBODY ASKING CLOSES THE SESSION TOO,
+        // since 2026-10-04, 8 b, the maintainer's words verbatim: "8 b - log in our
+        // catchup resume that it was the user who closed it." The wait on the
+        // browser (`LiveSession.WatchTheBrowser`) usually marks the session closed
+        // the moment the browser ends; this is the same question asked of the job,
+        // for a browser that ended before the wait could be armed. Until then the
+        // call after a person closed a headed window was forwarded, and
+        // @playwright/mcp started a new browser on its own.
+        if (live.Closed is null && live.BrowserWasSeenUp && !live.BrowserIsOpen && !live.Child.ChildHasGone)
+        {
+            live.TheBrowserEnded(exitCode: null);
+        }
+
         if (live.Closed is { } closure)
         {
-            var closed = SessionErrors.SessionWasClosed(tool, live.Location.FullPath, closure);
+            var closed = SessionErrors.SessionWasClosed(tool, live.Location.FullPath, closure, Connection);
 
             ProxyLog.SessionWasClosed(live.Logger, tool, live.Location.FullPath);
             Refused(live, tool, why, closed);
@@ -1236,6 +1256,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // told the less useful one first costs it a turn.
         if (live.Child.ChildHasGone)
         {
+            // 8 b: the next BrowserAI to open the session says why it was closed.
+            live.RecordTheServerEnded();
+
             var gone = SessionErrors.BrowserServerHasGone(tool, live.Location.FullPath);
 
             ProxyLog.ChildHasGone(live.Logger, tool, live.Location.FullPath);
@@ -1355,6 +1378,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // -- `allowUnrestrictedFileAccess` is written `false` for exactly that,
         // and it is the only containment there is now (BrowserConfiguration).
         //
+        // ⚠️ ONE SCAN CAME BACK, 2026-10-04, by addition (the paragraphs above are
+        // unchanged). Q380, the maintainer's words verbatim: "9 d - and add a todo
+        // to the repo to track the progress of the bug for when to remove our
+        // checks." A successful `browser_take_screenshot` answer in a Chromium
+        // session has its image's header read, and an image past 16,384 px on a
+        // side is refused below, because Chromium repeats it past that line and
+        // reports success. Nothing is rewritten: an answer either goes back as the
+        // child wrote it or is refused whole. See `ScreenshotLimit`.
+        //
         // The child has never heard of `session` or `why`; BrowserAI added both.
         // Removed from a CLONE and not from the caller's own node, because
         // the request object is the SDK's and may still be read after this.
@@ -1380,6 +1412,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // ⚠️ NO TIMER AT ALL ON A HEADED SESSION since 2026-10-03, Q326 a, so
             // there is nothing to reset there.
             using var driving = live.Idle?.Call();
+
+            // 8 b: whether this call closes a tab decides how a browser that ends
+            // right after it is described.
+            live.NoteTheCall(tool, arguments);
 
             // ⚠️ THE ONE CALL WHOSE NAME IS NOT THE NAME THAT GOES OUT, and the
             // rewrite is upstream's own: a page tool's wire name is `webmcp_` and
@@ -1429,7 +1465,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 // of the caller's, the caller waits for it under its own, and the child
                 // is ended once the close is over, in the `finally` below.
                 answer = callersClose
-                    ? await live.SendTheCallersCloseAsync(request.Method, forwarded).WaitAsync(cancellationToken).ConfigureAwait(false)
+                    ? await live.SendTheCallersCloseAsync(request.Method, forwarded, Connection, why).WaitAsync(cancellationToken).ConfigureAwait(false)
                     : await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (budget is { IsCancellationRequested: true } && !cancellationToken.IsCancellationRequested)
@@ -1455,6 +1491,40 @@ internal sealed class BrowserProxy : IAsyncDisposable
             }
 
             (outcome, payload) = Judge(answer);
+
+            // ⚠️ 8 b: THE WATCH IS ARMED BEFORE THE CALLER HEARS THE ANSWER. Armed
+            // only in the `finally`, it raced the caller: a browser that ended
+            // between the answer and the `finally` was never watched, and the next
+            // call met upstream starting a new browser. Found on 2026-10-04 by the
+            // double's crash arm, which lost that race in its second iteration.
+            if (!callersClose)
+            {
+                live.WatchTheBrowser();
+            }
+
+            // ⚠️ THE ONE SUCCESSFUL ANSWER BROWSERAI READS, Q380, decided
+            // 2026-10-04 by the maintainer, in his words verbatim: "9 d - and add a
+            // todo to the repo to track the progress of the bug for when to remove
+            // our checks. Also, the refusal should mention the chromium bug link."
+            // A Chromium screenshot larger than 16,384 px on a side repeats itself
+            // past that line and still reports success, so its image's own header is
+            // read, and an image past the line is refused and not handed over. The
+            // row is settled with the refusal, as every refusal's is. Firefox
+            // refuses past 32,767 px with an error of its own and is not read. See
+            // `ScreenshotLimit`, and TODO.md for when this comes out again.
+            if (outcome is SessionStore.Successful
+                && string.Equals(tool, ScreenshotLimit.ScreenshotTool, StringComparison.Ordinal)
+                && !BrowserConfiguration.IsFirefox(live.Config.Browser)
+                && ScreenshotLimit.Refusal(answer.Response?.Result, Path.Combine(live.Location.FullPath, SessionLayout.OutputFolderName)) is { } repeated)
+            {
+                ProxyLog.ScreenshotPastChromiumsLimit(live.Logger, tool, live.Location.FullPath);
+
+                outcome = SessionStore.Failed;
+                payload = Encoding.UTF8.GetBytes(repeated);
+
+                await RefuseAsync(caller, request.Id, repeated, cancellationToken).ConfigureAwait(false);
+                return;
+            }
 
             if (answer.Response is { } response)
             {
@@ -1507,6 +1577,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
             if (callersClose)
             {
                 await live.EndTheChildAfterTheCallersCloseAsync(answered: outcome is not SessionStore.InFlight).ConfigureAwait(false);
+            }
+            else
+            {
+                // 8 b: once a call has left a browser up, its end is watched, so a
+                // person closing its window closes the session. Armed above for an
+                // answered call; this covers every other way out of the block.
+                live.WatchTheBrowser();
             }
         }
     }
@@ -2151,6 +2228,23 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} abandoned a page tool that had not answered. The browser server bounds nothing here, so the page's own code may still be running; navigating the tab or closing it releases it.")]
     public static partial void PageToolAbandoned(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A Chromium screenshot came back larger than Chromium captures faithfully, and
+    /// was refused.
+    /// </summary>
+    /// <remarks>
+    /// Warning, not Information: the browser server reported success, and the
+    /// session's output directory holds a file whose image repeats itself.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 28,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' on the session at {Session} returned a screenshot larger than Chromium captures faithfully, so it was refused and not handed over. Chromium's issue: https://issues.chromium.org/issues/41347676")]
+    public static partial void ScreenshotPastChromiumsLimit(ILogger logger, string tool, string session);
 
     /// <summary>
     /// A connection called a tool before it ever asked for a tool list, so the

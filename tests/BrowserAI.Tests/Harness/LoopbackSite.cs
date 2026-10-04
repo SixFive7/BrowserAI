@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -65,6 +66,18 @@ internal sealed class LoopbackSite : IDisposable
         throw new InvalidOperationException("no loopback port between 54300 and 54399 could be bound");
     }
 
+    /// <summary>
+    /// Every request the site has answered, in order: the page's name and the
+    /// headers that came with it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-04 for 6 b</b>, whose arm reads what a server sees of a
+    /// hidden browser's user agent and client hints.
+    /// </remarks>
+    public IReadOnlyList<(string Name, IReadOnlyDictionary<string, string> Headers)> Requests => [.. _requests];
+
+    private readonly ConcurrentQueue<(string Name, IReadOnlyDictionary<string, string> Headers)> _requests = new();
+
     /// <summary>The address of one page.</summary>
     /// <param name="name">The page's name.</param>
     /// <returns>Its URL.</returns>
@@ -94,6 +107,17 @@ internal sealed class LoopbackSite : IDisposable
             }
 
             var name = context.Request.Url?.AbsolutePath.Trim('/') ?? string.Empty;
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var key in context.Request.Headers.AllKeys)
+            {
+                if (key is not null)
+                {
+                    headers[key] = context.Request.Headers[key] ?? string.Empty;
+                }
+            }
+
+            _requests.Enqueue((name, headers));
             var body = Encoding.UTF8.GetBytes($"<!doctype html><title>{name}</title><h1>{name}</h1>");
 
             context.Response.ContentType = "text/html; charset=utf-8";

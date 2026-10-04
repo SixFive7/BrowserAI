@@ -191,6 +191,79 @@ derivations avoid it and neither is free:
 maintainer's, and the wider parity measurement it belongs to is the open item in
 [`../../TODO.md`](../../TODO.md). `[FLOATS]`
 
+*Corrected 2026-10-04 (previously "**Nothing is implemented.**"), by addition:
+the decision was taken and built, below.* The paragraph above is left as it was
+written.
+
+### A hidden Chromium sends the headed user agent, derived from the browser -- built and measured 2026-10-04
+
+`[FLOATS]` `@playwright/mcp` **0.0.83**, `playwright-core`
+**1.64.0-alpha-1790635538000**, Chrome for Testing **155.0.8059.12**
+(`chromium-1247`) and Firefox **156.0** (`firefox-1553`), each arm on a desktop
+of its own that was never put on the screen.
+[Evidence](../../docs/evidence/2026-10-04-behave/README.md),
+[rig](../../docs/probes/2026-10-04-behave/README.md).
+
+**The decision**, the maintainer's 6 b, in his words verbatim: *"6 b"*, whose
+option b was to give a hidden Chromium the headed user agent, derived from the
+browser and never written down.
+
+**Which mechanism, measured first.** The payload's own `cli.js`, driven over
+stdio with a config per arm, against a local page that echoes what it was sent,
+a dedicated worker, a service worker, and a tab restored by a relaunch; one run
+per arm in each of two batches:
+
+| Arm, hidden unless named | `User-Agent`, page, worker | Service worker's script fetch | A restored tab's first request | `Sec-CH-UA` | Full version list, platform version |
+|---|---|---|---|---|---|
+| Nothing set | `HeadlessChrome/155.0.0.0` | `HeadlessChrome` | `HeadlessChrome` | `"Chromium";v="155", "Not(A:Brand";v="24"` | `155.0.8059.12`, `19.0.0` |
+| Nothing set, headed | `Chrome/155.0.0.0` | `Chrome` | `Chrome` | The same | `155.0.8059.12`, `19.0.0` |
+| `contextOptions.userAgent` | `Chrome/155.0.0.0` | **`HeadlessChrome`** | **`HeadlessChrome`** | The same | `155.0.8059.12`, **`10.0`** |
+| `--user-agent` | `Chrome/155.0.0.0` | `Chrome` | `Chrome` | The same | **empty**, **empty** |
+| `--user-agent`, headed | `Chrome/155.0.0.0` | Not taken | Not taken | The same | **empty**, **empty** |
+
+So **the switch is the browser's own and covers every request from the first**,
+and Playwright's context option is applied page by page, after a page exists,
+so it missed what starts before one, and it states a platform version of its own
+making, `10.0`, read off the user agent string. **What the switch costs**: the
+high-entropy client hints, in the headers a server asks for with `Accept-CH` and
+from `getHighEntropyValues`, are answered empty under any `--user-agent`, headed
+or not, where an unmodified browser fills them; the full version list, the
+platform version, the architecture and the bitness. The default hints are
+unchanged.
+
+**The derivation.** `chrome.exe --headless --dump-dom` on a `data:` page that
+writes `navigator.userAgent` answers the headless string in 708 to 832 ms, 3 of
+3; `HeadlessChrome/` replaced by `Chrome/` gives exactly the string the headed
+browser sends, and every version in it is the browser's own.
+
+✅ **Built 2026-10-04.** `HeadedUserAgent` asks the provisioned `chrome.exe` once
+per build and keeps the answer in `browserai-user-agent.txt` inside the
+revision's own directory, stamped with the executable's length and write time,
+and every hidden Chromium launch carries `--user-agent` with it,
+`BrowserConfiguration.HiddenUserAgent`. A headed launch carries nothing, and a
+Firefox launch nothing: Firefox's user agent is the same either way. **Through
+the published server, before and after**, 2 runs per mode before and 3 after:
+
+| | Hidden, before | Hidden, after | Headed, before and after |
+|---|---|---|---|
+| `User-Agent`, `navigator.userAgent`, a worker's | `HeadlessChrome/155.0.0.0` | `Chrome/155.0.0.0` | `Chrome/155.0.0.0` |
+| `Sec-CH-UA`, `Sec-CH-UA-Platform` | `"Chromium";v="155", "Not(A:Brand";v="24"`, `"Windows"` | The same | The same |
+| Full version list, platform version | `155.0.8059.12`, `19.0.0` | Empty | `155.0.8059.12`, `19.0.0` |
+| The first request of a tab a resume restored hidden | Not taken | `Chrome/155.0.0.0`, 2 of 2 | -- |
+
+⚠️ **What is left, said and not hidden.** A page that asks for the high-entropy
+hints can tell a hidden session from a visible one: it gets empty values from
+the first and filled ones from the second, where before it got the same values
+from both and a different user agent. And a hidden session opened while
+Chromium is still being provisioned has no browser to ask, so it launches with
+the browser's own user agent until its next launch; the session's log says so.
+`HeadedUserAgentTests` holds the derivation, the kept answer and the switch, and
+one arm reads a real hidden Chromium's requests.
+
+**Re-establish** with the rig's `raw.mjs` and `raw2.mjs` for the mechanisms, and
+`behave.mjs` with `scenario=ua` and `scenario=restore` through a published
+server.
+
 **Re-establish** by driving `cli.js` with a config carrying each arm and
 evaluating `JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })`.
 **Keep the `general.useragent.override` arm** -- without a pref that is known to

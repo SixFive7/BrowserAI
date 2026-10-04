@@ -1,0 +1,693 @@
+{
+  "run": "r1-e50cca",
+  "scenario": "tall",
+  "browser": "chromium",
+  "headed": false,
+  "session": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1",
+  "startedUtc": "2026-10-04T14:31:22.372Z",
+  "steps": [
+    {
+      "label": "init",
+      "tool": "browserai_init",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1",
+        "purpose": "Behave lane rig, tall on chromium, run r1: a local test site only, destroyed at the end of the run.",
+        "browser": "chromium",
+        "headed": false
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 470,
+      "images": 0,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\n  browser: chromium\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\downloads\n  purpose: Behave lane rig, tall on chromium, run r1: a local test site only, destroyed at the end of the run.\n  created: 2026-10-04T16:31:22.8923243+02:00   last used: 2026-10-04T16:31:22.8923243+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- chromium 155.0.8059.12 (revision 1247) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247'.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions: 0\n"
+    },
+    {
+      "label": "navigate tall 16384",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/tall?h=16384"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 805,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/tall?h=16384\n- Page Title: tall ready 16384x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-24-204Z.yml)"
+    },
+    {
+      "label": "png file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16384.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 590,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.png)"
+    },
+    {
+      "label": "jpeg file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16384.jpeg"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 326,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.jpeg)"
+    },
+    {
+      "label": "png inline 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 571,
+      "images": 1,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-25-689Z.png)"
+    },
+    {
+      "label": "navigate tall 16385",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/tall?h=16385"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 59,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/tall?h=16385\n- Page Title: tall ready 16385x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-25-782Z.yml)"
+    },
+    {
+      "label": "png file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 603,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16385.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "jpeg file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 511,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16385.jpeg' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "png inline 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 759,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-27-638Z.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "navigate tall 20000",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/tall?h=20000"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 97,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/tall?h=20000\n- Page Title: tall ready 20000x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-27-757Z.yml)"
+    },
+    {
+      "label": "png file 20000",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-20000.png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 895,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-20000.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "jpeg file 20000",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-20000.jpeg"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 483,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-20000.jpeg' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "png inline 20000",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 900,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-30-016Z.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "navigate tall element 20000",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/tallel?h=20000"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 103,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/tallel?h=20000\n- Page Title: tall ready 20130x1920\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-30-145Z.yml)"
+    },
+    {
+      "label": "snapshot for the element ref",
+      "tool": "browser_snapshot",
+      "args": {},
+      "ok": true,
+      "isError": false,
+      "ms": 28,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/tallel?h=20000\n- Page Title: tall ready 20130x1920\n### Snapshot\n```yaml\n- generic [active] [ref=f6e1]:\n  - heading \"above the element\" [level=1] [ref=f6e2]\n  - img \"the tall element\" [ref=f6e3]:\n    - generic [ref=f6e4]: ROW 0000 y=0\n    - generic [ref=f6e8]: ROW 0001 y=100\n    - generic [ref=f6e12]: ROW 0002 y=200\n    - generic [ref=f6e16]: ROW 0003 y=300\n    - generic [ref=f6e20]: ROW 0004 y=400\n    - generic [ref=f6e24]: ROW 0005 y=500\n    - generic [ref=f6e28]: ROW 0006 y=600\n    - generic [ref=f6e32]: ROW 0007 y=700\n    - generic [ref=f6e36]: ROW 0008 y=800\n    - generic [ref=f6e40]: ROW 0009 y=900\n    - generic [ref=f6e44]: ROW 0010 y=1000\n    - generic [ref=f6e48]: ROW 0011 y=1100\n    - generic [ref=f6e52]: ROW 0012 y=1200\n    - generic [ref=f6e56]: ROW 0013 y=1300\n    - generic [ref=f6e60]: ROW 0014 y=1400\n    - generic [ref=f6e64]: ROW 0015 y=1500\n    - generic [ref=f6e68]: ROW 0016 y=1600\n    - generic [ref=f6e72]: ROW 0017 y=1700\n    - generic [ref=f6e76]: ROW 0018 y=1800\n    - generic [ref=f6e80]: ROW 0019 y=1900\n    - generic [ref=f6e84]: ROW 0020 y=2000\n    - generic [ref=f6e88]: ROW 0021 y=2100\n    - generic [ref=f6e92]: ROW 0022 y=2200\n    - generic [ref=f6e96]: ROW 0023 y=2300\n    - generic [ref=f6e100]: ROW 0024 y=2400\n    - generic [ref=f6e104]: ROW 0025 y=2500\n    - generic [ref=f6e108]: ROW 0026 y=2600\n    - generic [ref=f6e112]: ROW 0027 y=2700\n    - generic [ref=f6e116]: ROW 0028 y=2800\n    - generic [ref=f6e120]: ROW 0029 y=2900\n    - generic [ref=f6e124]: ROW 0030 y=3000\n    - generic [ref=f6e128]: ROW 0031 y=3100\n    - generic [ref=f6e132]: ROW 0032 y=3200\n    - generic [ref=f6e136]: ROW 0033 y=3300\n    - generic [ref=f6e140]: ROW 0034 y=3400\n    - generic [ref=f6e144]: ROW 0035 y=3500\n    - generic [ref=f6e148]: ROW 0036 y=3600\n    - generic [ref=f6e152]: ROW 0037 y=3700\n    - generic [ref=f6e156]: ROW 0038 y=3800\n    - generic [ref=f6e160]: ROW 0039 y=3900\n    - generic [ref=f6e164]: ROW 0040 y=4000\n    - generic [ref=f6e168]: ROW 0041 y=4100\n    - generic [ref=f6e172]: ROW 0042 y=4200\n    - generic [ref=f6e176]: ROW 0043 y=4300\n    - generic [ref=f6e180]: ROW 0044 y=4400\n    - generic [ref=f6e184]: ROW 0045 y=4500\n    - generic [ref=f6e188]: ROW 0046 y=4600\n    - generic [ref=f6e192]: ROW 0047 y=4700\n    - generic [ref=f6e196]: ROW 0048 y=4800\n    - generic [ref=f6e200]: ROW 0049 y=4900\n    - generic [ref=f6e204]: ROW 0050 y=5000\n    - generic [ref=f6e208]: ROW 0051 y=5100\n    - generic [ref=f6e212]: ROW 0052 y=5200\n    - generic [ref=f6e216]: ROW 0053 y=5300\n    - generic [ref=f6e220]: ROW 0054 y=5400\n    - generic [ref=f6e224]: ROW 0055 y=5500\n    - generic [ref=f6e228]: ROW 0056 y=5600\n    - generic [ref=f6e232]: ROW 0057 y=5700\n    - generic [ref=f6e236]: ROW 0058 y=5800\n    - generic [ref=f6e240]: ROW 0059 y=5900\n    - generic [ref=f6e244]: ROW 0060 y=6000\n    - generic [ref=f6e248]: ROW 0061 y=6100\n    - generic [ref=f6e252]: ROW 0062 y=6200\n    - generic [ref=f6e256]: ROW 0063 y=6300\n    - generic [ref=f6e260]: ROW 0064 y=6400\n    - generic [ref=f6e264]: ROW 0065 y=6500\n    - generic [ref=f6e268]: ROW 0066 y=6600\n    - generic [ref=f6e272]: ROW 0067 y=6700\n    - generic [ref=f6e276]: ROW 0068 y=6800\n    - generic [ref=f6e280]: ROW 0069 y=6900\n    - generic [ref=f6e284]: ROW 0070 y=7000\n    - generic [ref=f6e288]: ROW 0071 y=7100\n    - generic [ref=f6e292]: ROW 0072 y=7200\n    - generic [ref=f6e296]: ROW 0073 y=7300\n    - generic [ref=f6e300]: ROW 0074 y=7400\n    - generic [ref=f6e304]: ROW 0075 y=7500\n    - generic [ref=f6e308]: ROW 0076 y=7600\n    - generic [ref=f6e312]: ROW 0077 y=7700\n    - generic [ref=f6e316]: ROW 0078 y=7800\n    - generic [ref=f6e320]: ROW 0079 y=7900\n    - generic [ref=f6e324]: ROW 0080 y=8000\n    - generic [ref=f6e328]: ROW 0081 y=8100\n    - generic [ref=f6e332]: ROW 0082 y=8200\n    - generic [ref=f6e336]: ROW 0083 y=8300\n    - generic [ref=f6e340]: ROW 0084 y=8400\n    - generic [ref=f6e344]: ROW 0085 y=8500\n    - generic [ref=f6e348]: ROW 0086 y=8600\n    - generic [ref=f6e352]: ROW 0087 y=8700\n    - generic [ref=f6e356]: ROW 0088 y=8800\n    - generic [ref=f6e360]: ROW 0089 y=8900\n    - generic [ref=f6e364]: ROW 0090 y=9000\n    - generic [ref=f6e368]: ROW 0091 y=9100\n    - generic [ref=f6e372]: ROW 0092 y=9200\n    - generic [ref=f6e376]: ROW 0093 y=9300\n    - generic [ref=f6e380]: ROW 0094 y=9400\n    - generic [ref=f6e384]: ROW 0095 y=9500\n    - generic [ref=f6e388]: ROW 0096 y=9600\n    - generic [ref=f6e392]: ROW 0097 y=9700\n    - generic [ref=f6e396]: ROW 0098 y=9800\n    - generic [ref=f6e400]: ROW 0099 y=9900\n    - generic [ref=f6e404]: ROW 0100 y=10000\n    - generic [ref=f6e408]: ROW 0101 y=10100\n    - generic [ref=f6e412]: ROW 0102 y=10200\n    - generic [ref=f6e416]: ROW 0103 y=10300\n    - generic [ref=f6e420]: ROW 0104 y=10400\n    - generic [ref=f6e424]: ROW 0105 y=10500\n    - generic [ref=f6e428]: ROW 0106 y=10600\n    - generic [ref=f6e432]: ROW 0107 y=10700\n    - generic [ref=f6e436]: ROW 0108 y=10800\n    - generic [ref=f6e440]: ROW 0109 y=10900\n    - generic [ref=f6e444]: ROW 0110 y=11000\n    - generic [ref=f6e448]: ROW 0111 y=11100\n    - generic [ref=f6e452]: ROW 0112 y=11200\n    - generic [ref=f6e456]: ROW 0113 y=11300\n    - generic [ref=f6e460]: ROW 0114 y=11400\n    - generic [ref=f6e464]: ROW 0115 y=11500\n    - generic [ref=f6e468]: ROW 0116 y=11600\n    - generic [ref=f6e472]: ROW 0117 y=11700\n    - generic [ref=f6e476]: ROW 0118 y=11800\n    - generic [ref=f6e480]: ROW 0119 y=11900\n    - generic [ref=f6e484]: ROW 0120 y=12000\n    - generic [ref=f6e488]: ROW 0121 y=12100\n    - generic [ref=f6e492]: ROW 0122 y=12200\n    - generic [ref=f6e496]: ROW 0123 y=12300\n    - generic [ref=f6e500]: ROW 0124 y=12400\n    - generic [ref=f6e504]: ROW 0125 y=12500\n    - generic [ref=f6e508]: ROW 0126 y=12600\n    - generic [ref=f6e512]: ROW 0127 y=12700\n    - generic [ref=f6e516]: ROW 0128 y=12800\n    - generic [ref=f6e520]: ROW 0129 y=12900\n    - generic [ref=f6e524]: ROW 0130 y=13000\n    "
+    },
+    {
+      "label": "element png file 20000",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "target": "f6e3",
+        "type": "png",
+        "filename": "element-20000.png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 908,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 1920x20001 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\element-20000.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "navigate wide 16384",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/wide?w=16384"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 60,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/wide?w=16384\n- Page Title: wide ready 16384x2000\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-31-144Z.yml)"
+    },
+    {
+      "label": "wide png file 16384",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "wide-16384.png"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 664,
+      "images": 0,
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\wide-16384.png)"
+    },
+    {
+      "label": "navigate wide 16385",
+      "tool": "browser_navigate",
+      "args": {
+        "url": "http://127.0.0.1:52270/wide?w=16385"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 49,
+      "images": 0,
+      "text": "### Page\n- Page URL: http://127.0.0.1:52270/wide?w=16385\n- Page Title: wide ready 16385x2000\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-31-861Z.yml)"
+    },
+    {
+      "label": "wide png file 16385",
+      "tool": "browser_take_screenshot",
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "wide-16385.png"
+      },
+      "ok": false,
+      "isError": true,
+      "ms": 699,
+      "images": 0,
+      "text": "The screenshot was not returned. It is 16385x2000 px, and Chromium cannot capture more than 16,384 px in a direction: past 16,384 px across, the image starts again from the left edge of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\wide-16385.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "destroy",
+      "tool": "browserai_destroy",
+      "args": {
+        "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1",
+        "why": "behave rig tall: done with run r1"
+      },
+      "ok": true,
+      "isError": false,
+      "ms": 712,
+      "images": 0,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1' (20.0 MiB). Its purpose was: Behave lane rig, tall on chromium, run r1: a local test site only, destroyed at the end of the run.\nYou said it was being destroyed because: behave rig tall: done with run r1"
+    }
+  ],
+  "census": {},
+  "serverPid": 4304,
+  "handshake": {
+    "init": {
+      "result": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {
+          "tools": {}
+        },
+        "serverInfo": {
+          "name": "BrowserAI",
+          "version": "1.1.1-alpha.0.206"
+        },
+        "instructions": "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\nEvery call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nBrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\nNothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login."
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    },
+    "toolCount": 72,
+    "tools": [
+      "browserai_init",
+      "browserai_resume",
+      "browserai_catch_up",
+      "browserai_list",
+      "browserai_destroy",
+      "browserai_change_purpose",
+      "browserai_reinstall_browser",
+      "browserai_page_tool",
+      "browser_close",
+      "browser_resize",
+      "browser_get_config",
+      "browser_console_messages",
+      "browser_cookie_list",
+      "browser_cookie_get",
+      "browser_cookie_set",
+      "browser_cookie_delete",
+      "browser_cookie_clear",
+      "browser_highlight",
+      "browser_hide_highlight",
+      "browser_handle_dialog",
+      "browser_emulate_media",
+      "browser_evaluate",
+      "browser_file_upload",
+      "browser_drop",
+      "browser_find",
+      "browser_fill_form",
+      "browser_press_key",
+      "browser_type",
+      "browser_mouse_move_xy",
+      "browser_mouse_click_xy",
+      "browser_mouse_drag_xy",
+      "browser_mouse_down",
+      "browser_mouse_up",
+      "browser_mouse_wheel",
+      "browser_navigate",
+      "browser_navigate_back",
+      "browser_network_requests",
+      "browser_network_request",
+      "browser_network_state_set",
+      "browser_pdf_save",
+      "browser_start_recording",
+      "browser_stop_recording",
+      "browser_route",
+      "browser_route_list",
+      "browser_unroute",
+      "browser_run_code_unsafe",
+      "browser_take_screenshot",
+      "browser_snapshot",
+      "browser_click",
+      "browser_drag",
+      "browser_hover",
+      "browser_select_option",
+      "browser_storage_state",
+      "browser_tabs",
+      "browser_start_tracing",
+      "browser_stop_tracing",
+      "browser_start_video",
+      "browser_stop_video",
+      "browser_video_chapter",
+      "browser_video_show_actions",
+      "browser_video_hide_actions",
+      "browser_wait_for",
+      "browser_localstorage_list",
+      "browser_localstorage_get",
+      "browser_localstorage_set",
+      "browser_localstorage_delete",
+      "browser_localstorage_clear",
+      "browser_sessionstorage_list",
+      "browser_sessionstorage_get",
+      "browser_sessionstorage_set",
+      "browser_sessionstorage_delete",
+      "browser_sessionstorage_clear"
+    ]
+  },
+  "images": [
+    {
+      "label": "png file 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16384.png"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.png)"
+    },
+    {
+      "label": "jpeg file 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16384.jpeg"
+      },
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.jpeg",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16384.jpeg)"
+    },
+    {
+      "label": "png inline 16384",
+      "height": 16384,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": false,
+      "images": 1,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-25-689Z.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-25-689Z.png)"
+    },
+    {
+      "label": "png file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-16385.png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16385.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "jpeg file 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-16385.jpeg"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-16385.jpeg' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "png inline 16385",
+      "height": 16385,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x16385 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-27-638Z.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "png file 20000",
+      "height": 20000,
+      "args": {
+        "fullPage": true,
+        "type": "png",
+        "filename": "tall-20000.png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-20000.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "jpeg file 20000",
+      "height": 20000,
+      "args": {
+        "fullPage": true,
+        "type": "jpeg",
+        "filename": "tall-20000.jpeg"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\tall-20000.jpeg' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "png inline 20000",
+      "height": 20000,
+      "args": {
+        "fullPage": true,
+        "type": "png"
+      },
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x20000 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\page-2026-10-04T14-31-30-016Z.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "element png file 20000",
+      "height": 20000,
+      "element": true,
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 1920x20001 px, and Chromium cannot capture more than 16,384 px in a direction: below 16,384 px the image starts again from the top of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\element-20000.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    },
+    {
+      "label": "wide png file 16384",
+      "width": 16384,
+      "isError": false,
+      "images": 0,
+      "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\wide-16384.png",
+      "text": "### Result\n- [Screenshot of full page](C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\wide-16384.png)"
+    },
+    {
+      "label": "wide png file 16385",
+      "width": 16385,
+      "isError": true,
+      "images": 0,
+      "file": null,
+      "text": "The screenshot was not returned. It is 16385x2000 px, and Chromium cannot capture more than 16,384 px in a direction: past 16,384 px across, the image starts again from the left edge of the page, while the call still reports success. This is a Chromium bug, tracked at https://issues.chromium.org/issues/41347676. The file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\sessions\\tall-chromium-headless-r1\\output\\wide-16385.png' holds that image, so do not use it. Instead, take screenshots of the viewport, without 'fullPage', and scroll the page between them; or use a Firefox session, which takes a full-page screenshot up to 32,767 px."
+    }
+  ],
+  "elementRef": "f6e3",
+  "serverExit": 0,
+  "siteHits": [
+    {
+      "t": 1791124284095,
+      "method": "GET",
+      "path": "/tall?h=16384",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124284139,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124285733,
+      "method": "GET",
+      "path": "/tall?h=16385",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124285751,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124287673,
+      "method": "GET",
+      "path": "/tall?h=20000",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124287704,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124290057,
+      "method": "GET",
+      "path": "/tallel?h=20000",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124290094,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124291095,
+      "method": "GET",
+      "path": "/wide?w=16384",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124291119,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124291823,
+      "method": "GET",
+      "path": "/wide?w=16385",
+      "dest": "document",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    },
+    {
+      "t": 1791124291839,
+      "method": "GET",
+      "path": "/favicon.ico",
+      "dest": "image",
+      "cookies": [],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "chUa": "\"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+      "chUaMobile": "?0",
+      "chUaPlatform": "\"Windows\"",
+      "chUaFullVersionList": null,
+      "chUaPlatformVersion": null,
+      "acceptLanguage": "nl-NL"
+    }
+  ],
+  "endedUtc": "2026-10-04T14:31:33.323Z"
+}

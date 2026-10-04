@@ -1,0 +1,1 @@
+pid=78580 created=134356001045596370 terminate=1 watchStartedUtc=2026-10-04T15:08:31.6211137Z endedUtc=2026-10-04T15:08:31.6407762Z exited code=1 hex=0x00000001 after_ms=7

@@ -1,0 +1,1 @@
+pid=60316 created=134355956169921330 terminate=1 watchStartedUtc=2026-10-04T13:53:40.8056739Z endedUtc=2026-10-04T13:53:41.0241427Z exited code=1 hex=0x00000001 after_ms=208

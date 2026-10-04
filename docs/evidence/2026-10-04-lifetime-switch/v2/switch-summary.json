@@ -1,0 +1,808 @@
+[
+ {
+  "id": "v2-smoke-switch-chromium-from-headless",
+  "browser": "chromium",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "form",
+   "account?tab=2",
+   "store"
+  ],
+  "current_after": [
+   "form"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 2, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 194,
+  "resume_ms": 379,
+  "first_call_ms": 445,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3093,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:03:00.2195779+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headed-r1",
+  "browser": "chromium",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "account?tab=2",
+   "form",
+   "store"
+  ],
+  "current_after": [
+   "account?tab=2"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 2, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 2, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 198,
+  "resume_ms": 404,
+  "first_call_ms": 413,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3025,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:03:41.5091348+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headed-r2",
+  "browser": "chromium",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "account?tab=2",
+   "store",
+   "form"
+  ],
+  "current_after": [
+   "account?tab=2"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 203,
+  "resume_ms": 387,
+  "first_call_ms": 423,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3030,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:05:25.3440880+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headed-r3",
+  "browser": "chromium",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 204,
+  "resume_ms": 450,
+  "first_call_ms": 441,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3043,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:06:57.4799821+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headless-r1",
+  "browser": "chromium",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "account?tab=2",
+   "store",
+   "form"
+  ],
+  "current_after": [
+   "account?tab=2"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 216,
+  "resume_ms": 412,
+  "first_call_ms": 505,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3027,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:03:20.8017942+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headless-r2",
+  "browser": "chromium",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "account?tab=2",
+   "form",
+   "store"
+  ],
+  "current_after": [
+   "account?tab=2"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 204,
+  "resume_ms": 403,
+  "first_call_ms": 459,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3030,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:05:02.3549841+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-chromium-from-headless-r3",
+  "browser": "chromium",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "form",
+   "store",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "form"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 6,
+  "history_after": 6,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "brands_after": "Chromium/155, Not(A:Brand/24",
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "chromium-1247\\chrome-win64\\chrome.exe --headless kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "program_after": "chromium-1247\\chrome-win64\\chrome.exe (no headless switch) kinds={'main': 1, 'crashpad-handler': 1, 'gpu-process': 1, 'utility': 2, 'renderer': 5}",
+  "close_ms": 206,
+  "resume_ms": 423,
+  "first_call_ms": 565,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3027,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:06:37.4778706+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headed-r1",
+  "browser": "firefox",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 609,
+  "resume_ms": 403,
+  "first_call_ms": 1630,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3037,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:04:39.3428687+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headed-r2",
+  "browser": "firefox",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 641,
+  "resume_ms": 398,
+  "first_call_ms": 1652,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3036,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:06:14.7159651+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headed-r3",
+  "browser": "firefox",
+  "from": "headed",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 604,
+  "resume_ms": 438,
+  "first_call_ms": 1620,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3042,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:07:47.7543389+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headless-r1",
+  "browser": "firefox",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 564,
+  "resume_ms": 411,
+  "first_call_ms": 11514,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3038,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:04:03.9952339+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headless-r2",
+  "browser": "firefox",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 514,
+  "resume_ms": 411,
+  "first_call_ms": 2320,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3035,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:05:48.5006936+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ },
+ {
+  "id": "v2-switch-firefox-from-headless-r3",
+  "browser": "firefox",
+  "from": "headless",
+  "tabs_before": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "tabs_after": [
+   "store",
+   "form",
+   "account?tab=2"
+  ],
+  "current_after": [
+   "store"
+  ],
+  "signed_in_before": "tester",
+  "signed_in_after": "tester",
+  "session_cookie_after": true,
+  "js_persistent_after": true,
+  "js_session_after": true,
+  "ls_after": true,
+  "idb_after": true,
+  "ss_tab0_after": true,
+  "ss_tab1_after": true,
+  "typed_after": true,
+  "history_before": 5,
+  "history_after": 5,
+  "back_to": "h/2",
+  "ua_before": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "ua_after": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+  "brands_after": null,
+  "visibility_after": "visible",
+  "nav_after": [
+   "back_forward",
+   "back_forward",
+   "back_forward"
+  ],
+  "nav_before": [
+   "navigate",
+   "navigate",
+   "navigate"
+  ],
+  "program_before": "firefox-1553\\firefox\\firefox.exe -headless kinds={'main': 2, 'contentproc': 7}",
+  "program_after": "firefox-1553\\firefox\\firefox.exe (no headless switch) kinds={'main': 2, 'contentproc': 8}",
+  "close_ms": 713,
+  "resume_ms": 628,
+  "first_call_ms": 2456,
+  "first_list_count": 3,
+  "restore_readings": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "restore_settle_ms": 3041,
+  "resume_text": "NOTE: this session's browser was closed at 2026-10-04T03:07:21.2235977+00:00 by a browser_close call, and this resume started a new browser server with the per-run settings it asked for. Measured after this kind of close, the reopened tabs keep their history, sessionStorage, typed text and session cookies, and the profile keeps persistent cookies, localStorage and IndexedDB. A page that was the answer to a form POST does not come back as it was: Chromium shows an error page and Firefox fetches it again without its form data.\nNOTE: the first browser call after this starts the browser, and its o",
+  "errors": [],
+  "fatal": null,
+  "server_exit": 0
+ }
+]

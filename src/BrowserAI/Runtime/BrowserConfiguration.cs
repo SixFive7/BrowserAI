@@ -654,6 +654,12 @@ internal static class BrowserConfiguration
     /// <see cref="HideCrashRestoreBubbleSwitch"/> lets the restore work after a
     /// browser was killed and not closed.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And a sixth on a hidden launch since 2026-10-04, 6 b</b>, written after
+    /// these five and not one of them: <c>--user-agent=</c> with the user agent a
+    /// headed Chromium of the same build sends. See
+    /// <see cref="BrowserConfigurationRequest.UserAgent"/>.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<string> ChromiumArguments { get; } =
     [
@@ -755,6 +761,12 @@ internal static class BrowserConfiguration
     /// </param>
     /// <param name="transcript">Whether upstream writes <c>session.md</c> into the output directory.</param>
     /// <param name="run">The per-run arguments a caller gave for this launch.</param>
+    /// <param name="hiddenUserAgent">
+    /// The user agent a headed Chromium of this build sends, from
+    /// <see cref="HeadedUserAgent"/>, or <see langword="null"/> when it could not be
+    /// had. Written only on a hidden Chromium launch; see
+    /// <see cref="BrowserConfigurationRequest.UserAgent"/>.
+    /// </param>
     /// <returns>The bytes to write, and every opinion they carry.</returns>
     /// <remarks>
     /// <para>
@@ -784,7 +796,8 @@ internal static class BrowserConfiguration
         bool headed,
         string browser,
         bool transcript,
-        RunOptions run)
+        RunOptions run,
+        string? hiddenUserAgent = null)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(run);
@@ -805,6 +818,10 @@ internal static class BrowserConfiguration
             Locale = run.Locale,
             TimeZone = run.TimeZone,
             IgnoreHttpsErrors = run.IgnoreHttpsErrors,
+
+            // 6 b: a hidden Chromium sends the headed user agent, and only a hidden
+            // one, because a headed one already sends it. See HeadedUserAgent.
+            UserAgent = headed || IsFirefox(browser) ? null : hiddenUserAgent,
 
             // ⚠️ A NEW FILENAME PER LAUNCH, and it is the whole reason the path
             // is computed here and not fixed. `recordHar` truncates and
@@ -945,6 +962,16 @@ internal static class BrowserConfiguration
                 foreach (var argument in ChromiumArguments)
                 {
                     writer.WriteStringValue(argument);
+                }
+
+                // 6 b, the maintainer's words of 2026-10-04 verbatim: "6 b". The
+                // browser's own switch and not Playwright's per-page override,
+                // because the override reaches a page only after it exists and a
+                // session restore's first requests went out without it, measured
+                // the same day. See HeadedUserAgent for what the switch costs.
+                if (request.UserAgent is { } userAgent)
+                {
+                    writer.WriteStringValue(HeadedUserAgent.Switch + userAgent);
                 }
 
                 writer.WriteEndArray();
@@ -1283,6 +1310,18 @@ internal sealed record BrowserConfigurationRequest
 
     /// <summary>Whether TLS errors are ignored for every navigation in this context.</summary>
     public bool IgnoreHttpsErrors { get; init; }
+
+    /// <summary>
+    /// The user agent a Chromium launch sends in place of its own, as Chromium's
+    /// <c>--user-agent</c> switch, or <see langword="null"/> to leave the browser's own.
+    /// </summary>
+    /// <remarks>
+    /// <b>6 b, decided 2026-10-04 by the maintainer: a hidden Chromium sends the user
+    /// agent a headed one does.</b> <see cref="BrowserConfiguration.ForSession"/> sets
+    /// it on a hidden Chromium launch only, from <see cref="HeadedUserAgent"/>, which
+    /// reads it off the browser itself; nothing writes a version here.
+    /// </remarks>
+    public string? UserAgent { get; init; }
 
     /// <summary>
     /// Where the HTTP Archive goes, or <see langword="null"/> for no capture.

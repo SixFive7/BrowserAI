@@ -1,0 +1,22 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before\\raw-ua-arms\\rig\\switch-headless\\profile",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "headless": true,
+      "args": [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled",
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\behave\\.work\\runs\\before\\raw-ua-arms\\rig\\switch-headless\\output"
+}

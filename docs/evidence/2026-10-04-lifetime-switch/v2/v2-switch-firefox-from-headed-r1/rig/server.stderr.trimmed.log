@@ -1,0 +1,161 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.197 started. pid=26216 image=C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\lifetime\runs\v2\v2-switch-firefox-from-headed-r1\rig sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 40092, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Pipe[1]
+      Listening on \\.\pipe\BrowserAI-26216-bed3a3b010884df89cb1f6a228ef22c6 for describe and stop.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 109208 in '%USERPROFILE%\AppData\Local\BrowserAI\instances\26216-f85b52d4784d4000bf5af3c1545b542d'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=17.3ms processes=672/510 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=0 titled=0 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after BrowserAI started, which collects what a run that was killed left behind, detached and not awaited: reaper=16788@134355566673458141.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.197) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.197), Client (lifetime-rig 1) method 'initialize' request handler completed in 0.0976ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1 under Global\BrowserAI-5B9DC88A4DD7CA2E3861540894AC8849.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      playwright-mcp[5B9DC88A]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 95108 in 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Session open at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1, headed: True; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate login
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type user
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type password and submit
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: read account after sign-in
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate h1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate h2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: lifetime rig switch: navigate store
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: write every store from tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: new tab: form
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: write sessionStorage from tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_type: lifetime rig switch: type into the form
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: new tab: account
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: list tabs
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: before: select tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: before: read tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: select the form tab last
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_close: lifetime rig switch: browser_close
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      playwright-mcp[5B9DC88A] message processing canceled.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[5B9DC88A]: pid 95108 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[12]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1 by the process that already held its guard, PID 26216 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      playwright-mcp[5B9DC88A]: started 'C:\Source\SixFive7\BrowserAI\.work\wt\lifetime\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 103384 in 'C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Client (BrowserAI 1.1.1-alpha.0.197) client received server '{"name":"Playwright","version":"1.64.0-alpha-1790635538000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Client (BrowserAI 1.1.1-alpha.0.197) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      Session open at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.SessionManager[47]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      browserai_resume: lifetime rig switch: resume with headed toggled
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: first browser call (list tabs)
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs while the restore settles
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: list tabs
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 0
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 1
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: after: select tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: after: read tab 2
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_tabs: lifetime rig switch: select the store tab
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate_back: lifetime rig switch: navigate back
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: lifetime rig switch: read after back
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1
+      playwright-mcp[5B9DC88A] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[5B9DC88A]: pid 103384 exited with code 0.
+info: BrowserAI.Runtime.ServerRegistryReap[90]
+      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=101548@134355566909401784.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1 by the process that already held its guard, PID 26216 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\lifetime\sessions\switch-firefox-headed-v2r1; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 109208 exited with code 0.

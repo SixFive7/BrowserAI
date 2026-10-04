@@ -1,0 +1,331 @@
+[
+ {
+  "id": "smoke-switch-chromium-from-headless",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headless",
+   "run=smoke1"
+  ],
+  "timeout": 900,
+  "gate": true
+ },
+ {
+  "id": "tall-chromium-r1",
+  "script": "tall.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "height=50000",
+   "run=r1"
+  ],
+  "timeout": 1200
+ },
+ {
+  "id": "tall-chromium-r2",
+  "script": "tall.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "height=50000",
+   "run=r2"
+  ],
+  "timeout": 1200
+ },
+ {
+  "id": "tall-firefox-r1",
+  "script": "tall.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "height=50000",
+   "run=r1"
+  ],
+  "timeout": 1200
+ },
+ {
+  "id": "tall-firefox-r2",
+  "script": "tall.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "height=50000",
+   "run=r2"
+  ],
+  "timeout": 1200
+ },
+ {
+  "id": "row152-funnel-headed-plain",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "funnel",
+   "headed-plain"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-funnel-headed-auto",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "funnel",
+   "headed-auto",
+   "--enable-automation"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-pw-headed-plain",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "pw",
+   "headed-plain"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-pw-headed-nab",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "pw",
+   "headed-nab",
+   "--nab"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-pw-headed-auto",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "pw",
+   "headed-auto",
+   "--enable-automation"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-pw-headed-auto-nab",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "pw",
+   "headed-auto-nab",
+   "--enable-automation",
+   "--nab"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "row152-direct-plain",
+  "script": "row152\\fp.mjs",
+  "args": [
+   "direct",
+   "plain"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "switch-chromium-from-headless-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headless",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-chromium-from-headed-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headed",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headless-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headless",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headed-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headed",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-chromium-from-headless-r2",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headless",
+   "run=r2"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-chromium-from-headed-r2",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headed",
+   "run=r2"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headless-r2",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headless",
+   "run=r2"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headed-r2",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headed",
+   "run=r2"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-chromium-from-headless-r3",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headless",
+   "run=r3"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-chromium-from-headed-r3",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=switch",
+   "from=headed",
+   "run=r3"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headless-r3",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headless",
+   "run=r3"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "switch-firefox-from-headed-r3",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=switch",
+   "from=headed",
+   "run=r3"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "lasttab-chromium-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=lasttab",
+   "from=headless",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "windowclose-chromium-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=windowclose",
+   "from=headed",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "lasttab-firefox-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=lasttab",
+   "from=headless",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "windowclose-firefox-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=firefox",
+   "scenario=windowclose",
+   "from=headed",
+   "run=r1"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "conflict-chromium-r1",
+  "script": "switch.mjs",
+  "args": [
+   "server=C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\lifetime\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe",
+   "browser=chromium",
+   "scenario=conflict",
+   "from=headless",
+   "run=r1"
+  ],
+  "timeout": 600
+ }
+]

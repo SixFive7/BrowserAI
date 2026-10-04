@@ -1,0 +1,122 @@
+[
+ {
+  "id": "desk-probe",
+  "probe": true,
+  "timeout": 60
+ },
+ {
+  "id": "ua-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-chromium-headless-r2",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=false",
+   "run=r2"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-chromium-headed-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-chromium-headed-r2",
+  "args": [
+   "browser=chromium",
+   "scenario=ua",
+   "headed=true",
+   "run=r2"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-firefox-headless-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=ua",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "ua-firefox-headed-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=ua",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 300
+ },
+ {
+  "id": "restore-chromium-from-headed-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=restore",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 600
+ },
+ {
+  "id": "restore-chromium-from-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=restore",
+   "headed=false",
+   "run=r1"
+  ],
+  "timeout": 600
+ },
+ {
+  "id": "tall-chromium-headless-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=tall",
+   "headed=false",
+   "run=r1",
+   "heights=16384,16385,20000",
+   "element=20000",
+   "wides=16384,16385"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "tall-chromium-headed-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=tall",
+   "headed=true",
+   "run=r1",
+   "heights=16384,16385"
+  ],
+  "timeout": 900
+ },
+ {
+  "id": "tall-firefox-headless-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=tall",
+   "headed=false",
+   "run=r1",
+   "heights=16385,32767"
+  ],
+  "timeout": 900
+ }
+]

@@ -353,6 +353,64 @@ internal static partial class BrowserProcesses
         return new RootScan(held, spellings.Unresolved);
     }
 
+    /// <summary>
+    /// Of the given processes, the one that started first among those running
+    /// <paramref name="image"/>, held open to be waited on: a browser's main process,
+    /// among the processes of a job that holds one browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-04 for 8 b</b>, so a session notices its browser ending
+    /// without BrowserAI asking it to: a person closing its window, a crash, a kill.
+    /// The pids are a session child's own job's, which is the only question about
+    /// browser processes this product can ask per session.
+    /// </para>
+    /// <para>
+    /// <b>The earliest, because a browser starts its helpers itself.</b> Chromium's
+    /// main process starts its GPU, utility, crash handler and renderer processes, and
+    /// Firefox's starts its content processes, so every other process running the
+    /// browser's image in that job started after it. Matched by full image path,
+    /// every spelling of it, as <see cref="FirstRunning"/> matches; the creation time
+    /// is read off the handle that is kept, so the identity is the pair.
+    /// </para>
+    /// </remarks>
+    /// <param name="processIds">The candidates: a job's members.</param>
+    /// <param name="image">The browser's absolute executable path.</param>
+    /// <returns>The process, or <see langword="null"/> when none of them runs the image. The caller owns it.</returns>
+    public static HeldProcess? HoldTheEarliest(IReadOnlyCollection<int> processIds, string image)
+    {
+        ArgumentNullException.ThrowIfNull(processIds);
+        ArgumentException.ThrowIfNullOrWhiteSpace(image);
+
+        var wanted = ImageSpellings.Of([image]).Matched;
+        HeldProcess? earliest = null;
+
+        foreach (var processId in processIds)
+        {
+            var handle = OpenProcessToWaitOn(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
+
+            if (handle.IsInvalid)
+            {
+                handle.Dispose();
+                continue;
+            }
+
+            if (!GetProcessTimes(handle, out var created, out _, out _, out _)
+                || ImagePathOf(handle) is not { } path
+                || !wanted.Contains(path)
+                || (earliest is not null && earliest.CreatedFileTime <= created))
+            {
+                handle.Dispose();
+                continue;
+            }
+
+            earliest?.Dispose();
+            earliest = new HeldProcess(processId, created, path, handle);
+        }
+
+        return earliest;
+    }
+
     /// <summary>Every pid on the machine, from <c>EnumProcesses</c>.</summary>
     /// <remarks>
     /// <b><c>K32EnumProcesses</c> is <c>EnumProcesses</c>.</b> The name in
@@ -462,6 +520,14 @@ internal static partial class BrowserProcesses
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool K32EnumProcesses([Out] uint[] lpidProcess, uint cb, out uint lpcbNeeded);
+
+    /// <summary>
+    /// <c>GetExitCodeProcess</c>, over a handle a <see cref="HeldProcess"/> owns.
+    /// </summary>
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool GetExitCodeProcess(SafeWaitHandle hProcess, out uint lpExitCode);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
@@ -951,6 +1017,19 @@ internal sealed class HeldProcess : WaitHandle
 
     /// <summary>The full path of the executable it is running.</summary>
     public string ImagePath { get; }
+
+    /// <summary>
+    /// Its exit code, once it has ended: read off the handle this object holds, so
+    /// it is this process's and never a later one's that took its pid.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-04 for 8 b</b>: a browser that ends with 0 closed cleanly,
+    /// which is what a person closing its window does, and any other code is what a
+    /// crash or a kill leaves, measured that day.
+    /// </remarks>
+    /// <returns>The code, or <see langword="null"/> when it cannot be read. Ask only once the handle is signalled.</returns>
+    public int? ExitCodeOnceEnded() =>
+        BrowserProcesses.GetExitCodeProcess(SafeWaitHandle, out var code) ? unchecked((int)code) : null;
 }
 
 /// <summary>One pass over the processes running out of a root, each held open.</summary>

@@ -1612,6 +1612,9 @@ local tabs open.
 ⚠️ **Not established:** whether the restore options survive a browser that was
 killed and not closed, which is how a client ends a session; what a restored
 page re-runs on load, beyond the one POST; and what a headed window does.
+*Answered 2026-10-04 by addition, for the headed window:* a switch between a
+window and none keeps everything, and a window a person closes keeps less;
+[below](#switching-between-a-window-and-none-closing-the-window-and-closing-the-last-tab----measured-2026-10-04).
 *Added 2026-10-03 by addition:* the resume re-measurement of the same day agrees
 with the hard-kill reading below on one more path. A resume after the session's
 child was killed, Path B of
@@ -1656,6 +1659,119 @@ holds the options in the generator.
 `@playwright/mcp` child driven over stdio for one version and family;
 `aggregate.js` writes the tables and `summarise.js` prints `summary.txt`, whose
 sections are the findings above.
+
+### Switching between a window and none, closing the window, and closing the last tab -- measured 2026-10-04
+
+`[FLOATS]` `@playwright/mcp` **0.0.83**, `playwright-core`
+**1.64.0-alpha-1790635538000**, Chrome for Testing **155.0.8059.12**
+(`chromium-1247`) and Firefox **156.0** (`firefox-1553`), node **v24.21.0**,
+through a published `BrowserAI.Server.exe`, every run on a desktop of its own
+that was never put on the screen. Two batches: the lifetime review lane's two
+holds of the suite lock at `1.1.1-alpha.0.197`
+([evidence](../../docs/evidence/2026-10-04-lifetime-switch/README.md),
+[rig](../../docs/probes/2026-10-04-lifetime/README.md)), and lane behave's
+runs at `1.1.1-alpha.0.206`, before its change and through it
+([evidence](../../docs/evidence/2026-10-04-behave/README.md),
+[rig](../../docs/probes/2026-10-04-behave/README.md)). Persisted on the
+maintainer's decisions 10 a and 8 b, in his words verbatim: *"10 a"*, and *"8 b
+- log in our catchup resume that it was the user who closed it."*
+
+**A switch is a new browser, and it keeps everything.** A session signed in to
+the rig's site, opened three tabs, wrote every store and typed into a form, then
+`browser_close` and `browserai_resume` with `headed` the other way round, and
+the first browser call after it. In **26 of 26 runs**, 6 or 8 per family and
+direction over the two holds, the three tabs came back with the account still
+signed in, the `HttpOnly` session cookie and the script-set one, the persistent
+cookies, `localStorage`, IndexedDB, each tab's own `sessionStorage`, the text
+typed into the form, the history (6 entries in Chromium, 5 in Firefox) and
+Back to the page before. In the second hold, whose pages write nothing as they
+load, every restored tab reported a navigation of type `back_forward`, 39 tabs
+of 39: restored from session history, not loaded again.
+
+| | Chromium | Firefox |
+|---|---|---|
+| The program, either way | `chrome-win64\chrome.exe`, with `--headless` or without it | `firefox.exe`, with `-headless` or without it |
+| `browser_close` | 194 to 539 ms | 514 to 713 ms |
+| `browserai_resume` | 379 to 537 ms | 398 to 628 ms |
+| First call after it, to a window | 445 to 605 ms | 2,320 to 2,456 ms in 3 runs, 10,452 to 11,514 ms in 3 |
+| First call after it, to none | 413 to 548 ms | 1,620 to 1,851 ms |
+| The tabs' order, and the one selected | Different in 12 of 14 runs, with the first selected, 14 of 14 | Kept, with the first selected, 12 of 12 |
+| The user agent | `HeadlessChrome/155.0.0.0` without a window, `Chrome/155.0.0.0` with one; `Sec-CH-UA` the same either way | The same either way |
+
+**A window a person closes was not noticed.** Closed the way a person closes
+it, with `WM_CLOSE` posted to every top-level window on its desktop, the
+browser's main process exited with code **0**, Chromium 3 of 3 and Firefox 2 of
+2 where the code was read, the same code its own `browser_close` leaves (2 of 2
+each). Until BrowserAI's change of the same day the session stayed open, and
+the next call was answered, with no error, by `@playwright/mcp` starting a new
+browser on its own: Chromium came back with all its tabs and Firefox with one,
+6 of 6 runs each over the two batches, and `browserai_resume` answered that the
+session was already live and nothing had changed. What came back, read on the
+second hold's passive pages after a `browser_close` and a resume, 1 run per
+family:
+
+| | Chromium | Firefox |
+|---|---|---|
+| Tabs | 3 of 3 | 1 of 3 |
+| Persistent cookies, `localStorage`, IndexedDB | Kept | Kept |
+| The session cookies, `HttpOnly` and script-set | Lost | Kept |
+| `sessionStorage` | Lost | Lost |
+| The text typed into the form | Lost | Its tab did not come back |
+
+**The last tab.** `browser_tabs` closing the only tab answers *"No open tabs.
+Navigate to a URL to create one."* in both families. **Chromium stays up**,
+with nothing open, 1 of 1 where it was watched for 20 s; **Firefox exits**, with
+code 0, within 0.7 s, 2 of 2. Before BrowserAI's change the next
+call found one `about:blank` tab in both (Firefox in a new browser that
+`@playwright/mcp` started), and after `browser_close` and a resume nothing was
+restored, 1 of 1 each.
+
+**A kill.** A browser's main process ended with `TerminateProcess` and code 1
+exited with code 1, 2 of 2 per family; a crash leaves its own code, and none
+was provoked here. Before the change the next call started a new browser on
+`chrome://new-tab-page/` (Chromium) or `about:blank` (Firefox), 2 of 2 each.
+
+✅ **BrowserAI closes the session when its browser ends, since 2026-10-04**, the
+maintainer's decision 8 b: *"8 b - log in our catchup resume that it was the
+user who closed it. Also whe ntelling the agent it needs to resume first give it
+the reason for the last close. Was it a user? Was it a timeout? Was it a close
+call from the agent or another agent?"* `BrowserExitWatch` waits on the
+browser's main process, found in the session's job by its provisioned image
+path and the earliest creation time, and `LiveSession.TheBrowserEnded` reads the
+exit code: 0 in a headed session is a person's close, 0 after a `browser_tabs`
+close is the last tab, 0 in a headless one the browser's own exit, and any other
+code a crash or a kill. The session is marked closed, its reason written into
+`browserai.data` as a `closed` statement and a log row, and every call is
+refused until `browserai_resume`, whose answer, like `browserai_catch_up`'s,
+names the last close. `CloseReasonTests` holds it, with one arm that kills a
+real Chromium.
+
+**Through the change**, the same versions, 4 runs per family of a person's
+close, two of them with the refusal's final wording, and 1 of each other kind:
+the next call after a person closed the window was refused with *"A person
+closed this session's browser window at ..."* and nothing reached a browser, 8
+of 8; `browserai_resume` named the same close and opened the session again, and
+`browserai_catch_up` showed it as the last recorded close, 8 of 8. The first
+browser call after the resume brought back:
+
+| | Chromium, 4 of 4 | Firefox, 4 of 4 |
+|---|---|---|
+| Tabs | Both | The first only |
+| The text typed into the form | Kept | Its tab did not come back |
+| Persistent cookies, `localStorage` | Kept | Kept |
+| The session cookies, `HttpOnly` and script-set | Lost | Kept |
+| `sessionStorage` | Lost | Its tab did not come back |
+
+A kill was refused with *"... ended at ... with exit code 1 (0x00000001), which
+a crash or a kill leaves"*, 1 of 1 per family; Firefox closing its last tab
+with *"... exited at ... after browser_tabs closed its last tab"*, 1 of 1; and
+the session's own `browser_close` with *"... by a browser_close call from this
+client, which gave the reason ..."*, 1 of 1 per family. Chromium closing its last
+tab stayed up and the next call was answered, 1 of 1, as before.
+
+**Re-establish** with the two rigs: `switch.mjs` for the switch, the window and
+the last tab, and `behave.mjs` for the exit codes and the kill, each through
+its batch script under the suite lock.
 
 ### How old a write must be before a hard kill keeps it -- measured 2026-10-03
 

@@ -1,0 +1,47 @@
+[
+ {
+  "id": "desk-probe",
+  "probe": true,
+  "timeout": 60
+ },
+ {
+  "id": "windowclose-chromium-r1",
+  "args": [
+   "browser=chromium",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-chromium-r2",
+  "args": [
+   "browser=chromium",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r2"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-firefox-r1",
+  "args": [
+   "browser=firefox",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r1"
+  ],
+  "timeout": 420
+ },
+ {
+  "id": "windowclose-firefox-r2",
+  "args": [
+   "browser=firefox",
+   "scenario=windowclose",
+   "headed=true",
+   "run=r2"
+  ],
+  "timeout": 420
+ }
+]

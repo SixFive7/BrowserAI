@@ -58,6 +58,11 @@ internal sealed class LiveSession : IAsyncDisposable
     /// serves every session in the process, because the registry it prunes is
     /// machine-wide and so is its log.
     /// </param>
+    /// <param name="browserExecutable">
+    /// The browser's absolute executable path, which <see cref="WatchTheBrowser"/>
+    /// finds the browser's main process by, or <see langword="null"/> when this build
+    /// does not provision the family.
+    /// </param>
     public LiveSession(
         SessionPath location,
         SessionLock sessionLock,
@@ -69,7 +74,8 @@ internal sealed class LiveSession : IAsyncDisposable
         string configFile,
         bool createdHere,
         SessionEnvironment environment,
-        ServerRegistryReap reap)
+        ServerRegistryReap reap,
+        string? browserExecutable = null)
     {
         ArgumentNullException.ThrowIfNull(logging);
         ArgumentNullException.ThrowIfNull(environment);
@@ -86,6 +92,8 @@ internal sealed class LiveSession : IAsyncDisposable
         CreatedHere = createdHere;
         _reap = reap;
         _browserIsOpen = environment.BrowserIsOpen;
+        _watchTheBrowser = environment.WatchTheBrowser;
+        BrowserExecutable = browserExecutable;
         _clock = environment.Clock;
         _cutShortToken = _cutShort.Token;
         Logger = logging.Factory.CreateLogger<LiveSession>();
@@ -479,7 +487,23 @@ internal sealed class LiveSession : IAsyncDisposable
 
     private readonly ServerRegistryReap _reap;
     private readonly Func<ChildConnection, bool> _browserIsOpen;
+    private readonly Func<ChildConnection, string?, Action<int?>, IDisposable?> _watchTheBrowser;
     private readonly TimeProvider _clock;
+
+    /// <summary>The wait on the browser's main process, once one is up and found.</summary>
+    private IDisposable? _browserWatch;
+
+    /// <summary>1 once a forwarded call has left a browser up in this session.</summary>
+    private int _browserSeenUp;
+
+    /// <summary>1 while the last forwarded call was a <c>browser_tabs</c> close.</summary>
+    private int _lastCallClosedATab;
+
+    /// <summary>1 once a browser server that ended on its own has been recorded.</summary>
+    private int _serverEndRecorded;
+
+    /// <summary>What runs once the browser ended without BrowserAI closing it: the session host's release of a session nobody drives.</summary>
+    private Func<LiveSession, Task>? _afterTheBrowserEnded;
 
     /// <summary>Guards <see cref="_closesInFlight"/>.</summary>
     private readonly Lock _closing = new();
@@ -533,6 +557,9 @@ internal sealed class LiveSession : IAsyncDisposable
     /// wrong.
     /// </remarks>
     public ChildConnection Child { get; }
+
+    /// <summary>The browser's absolute executable path, or <see langword="null"/>.</summary>
+    public string? BrowserExecutable { get; }
 
     /// <summary>The per-run arguments this session's child was launched with.</summary>
     /// <remarks>
@@ -794,10 +821,25 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </remarks>
     /// <param name="method">The JSON-RPC method, as the caller sent it.</param>
     /// <param name="parameters">The caller's parameters, with BrowserAI's own taken out.</param>
+    /// <param name="by">The connection the close arrived on, which the reason names.</param>
+    /// <param name="why">What the call gave as its reason.</param>
     /// <returns>The child's answer, for the caller to wait on under its own token.</returns>
-    public Task<ChildAnswer> SendTheCallersCloseAsync(string method, JsonNode? parameters)
+    public Task<ChildAnswer> SendTheCallersCloseAsync(string method, JsonNode? parameters, CallerConnection by, string why)
     {
-        _ = Interlocked.CompareExchange(ref _closed, new SessionClosure(SessionCloseCause.Caller, _clock.GetUtcNow(), Idle?.Period), null);
+        ArgumentNullException.ThrowIfNull(by);
+
+        var closure = new SessionClosure(SessionCloseCause.Caller, _clock.GetUtcNow(), Idle?.Period)
+        {
+            ClosedBy = by,
+            By = by.Describe(),
+            Why = why,
+        };
+
+        // 8 b: the reason is recorded, and its row is the call's own.
+        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
+        {
+            Record(closure, writeRow: false);
+        }
 
         var finished = BeginTheCloseInFlight();
         var asked = Child.AskAsync(method, parameters, CancellationToken.None);
@@ -895,10 +937,40 @@ internal sealed class LiveSession : IAsyncDisposable
     /// server it started, its kill still lands first; see the cap's own remarks.
     /// </para>
     /// </remarks>
+    /// <param name="cause">
+    /// Why this process is shutting down: <see cref="SessionCloseCause.Stopped"/> when
+    /// it was stopped through its pipe, <see cref="SessionCloseCause.ServerShutDown"/>
+    /// when its client went away.
+    /// </param>
     /// <returns>A task that completes once the close has answered or the cap has run out.</returns>
-    public async Task CloseTheBrowserForShutdownAsync()
+    public async Task CloseTheBrowserForShutdownAsync(SessionCloseCause cause = SessionCloseCause.ServerShutDown)
     {
-        if (Closed is not null || CloseIsInFlight || !BrowserIsOpen)
+        // ⚠️ 8 b, 2026-10-04: a session that was not already closed is marked closed
+        // and its reason recorded FIRST, whether or not a browser is up, so the next
+        // BrowserAI to open it can say why it was closed. Before, a shutdown wrote
+        // nothing, and a session it ended read afterwards as one nobody had closed.
+        if (Closed is null && !CloseIsInFlight)
+        {
+            var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)
+            {
+                By = AttachedTo?.Describe(),
+            };
+
+            if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
+            {
+                Record(closure, writeRow: true);
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            return;
+        }
+
+        if (!BrowserIsOpen)
         {
             return;
         }
@@ -1040,6 +1112,10 @@ internal sealed class LiveSession : IAsyncDisposable
         // And a detached headed session's look at its window, for the same reason.
         StopWatching();
 
+        // And the wait on the browser, so a browser this teardown ends is not read
+        // as one that ended on its own.
+        Interlocked.Exchange(ref _browserWatch, null)?.Dispose();
+
         // And the caller's own close or the shutdown's, which the timer does not
         // know about.
         await WaitForTheCloseInFlightAsync().ConfigureAwait(false);
@@ -1094,6 +1170,196 @@ internal sealed class LiveSession : IAsyncDisposable
         // token read at construction, which registers nothing once this is gone.
         _cutShort.Dispose();
     }
+
+    /// <summary>
+    /// What runs once the browser ended without BrowserAI closing it, whatever the
+    /// cause: the session host's release of a session whose client went. Set once, by
+    /// the manager that holds this session.
+    /// </summary>
+    /// <param name="afterTheBrowserEnded">The callback.</param>
+    public void WhenTheBrowserEndsOnItsOwn(Func<LiveSession, Task> afterTheBrowserEnded) =>
+        Volatile.Write(ref _afterTheBrowserEnded, afterTheBrowserEnded);
+
+    /// <summary>Whether a forwarded call has left a browser up in this session.</summary>
+    public bool BrowserWasSeenUp => Volatile.Read(ref _browserSeenUp) is 1;
+
+    /// <summary>
+    /// Notes what a forwarded call is about to do, for the one thing the browser ending
+    /// afterwards depends on: whether it closed a tab.
+    /// </summary>
+    /// <remarks>
+    /// <b>Firefox ends when its last tab is closed</b> (measured 2026-10-04 at
+    /// <c>firefox-1553</c>, exit code 0, 2 of 2), which is the agent's own doing and
+    /// not a person's, so the reason says so.
+    /// </remarks>
+    /// <param name="tool">The tool, as the caller named it.</param>
+    /// <param name="arguments">The caller's arguments.</param>
+    public void NoteTheCall(string tool, JsonObject? arguments)
+    {
+        var closesATab = string.Equals(tool, TabsTool, StringComparison.Ordinal)
+            && arguments?["action"] is JsonValue action
+            && action.GetValueKind() is System.Text.Json.JsonValueKind.String
+            && string.Equals(action.GetValue<string>(), "close", StringComparison.Ordinal);
+
+        Volatile.Write(ref _lastCallClosedATab, closesATab ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Starts watching the browser's main process once a call has left a browser up,
+    /// so the moment it ends without BrowserAI closing it is the moment the session
+    /// knows. Asked after every forwarded call, and cheap once a watch is armed.
+    /// </summary>
+    /// <remarks>
+    /// <b>8 b, decided 2026-10-04 by the maintainer</b>: a person closing a headed
+    /// window closes the session as the agent's own <c>browser_close</c> does. Until
+    /// then the next call met <c>@playwright/mcp</c> starting a new browser on its own
+    /// (measured 2026-10-04: the call answered normally, Chromium's tabs came back and
+    /// Firefox's did not), and nothing recorded that the window had been closed.
+    /// </remarks>
+    public void WatchTheBrowser()
+    {
+        if (Closed is not null || Volatile.Read(ref _disposed) is not 0 || Volatile.Read(ref _browserWatch) is not null || !BrowserIsOpen)
+        {
+            return;
+        }
+
+        Volatile.Write(ref _browserSeenUp, 1);
+
+        var watch = _watchTheBrowser(Child, BrowserExecutable, TheBrowserEnded);
+
+        if (watch is not null && Interlocked.CompareExchange(ref _browserWatch, watch, null) is not null)
+        {
+            watch.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The browser ended and BrowserAI had not asked it to: the session is closed, its
+    /// reason recorded, its browser server ended, and a session nobody drives is let go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The reason comes from the exit code and the session.</b> Measured 2026-10-04
+    /// at <c>chromium-1247</c> and <c>firefox-1553</c>: 0 is a clean exit, which is
+    /// what a person closing a headed window leaves, and Firefox closing its last tab;
+    /// any other code is what a crash or a kill leaves. A headless browser has no
+    /// window, so a clean exit there is said as the browser's own.
+    /// </para>
+    /// <para>
+    /// <b>Nothing here races BrowserAI's own closes</b>: each of them marks the session
+    /// closed, or a close in flight, before it touches the browser, and a teardown sets
+    /// its own mark first, so an exit any of them causes is passed over.
+    /// </para>
+    /// </remarks>
+    /// <param name="exitCode">The browser's exit code, or <see langword="null"/> when it is not known.</param>
+    public void TheBrowserEnded(int? exitCode)
+    {
+        if (Volatile.Read(ref _disposed) is not 0 || Closed is not null || CloseIsInFlight)
+        {
+            return;
+        }
+
+        if (Child.ChildHasGone)
+        {
+            RecordTheServerEnded();
+            return;
+        }
+
+        var cause = exitCode is { } code && code is not 0 ? SessionCloseCause.BrowserCrashed
+            : Volatile.Read(ref _lastCallClosedATab) is 1 ? SessionCloseCause.LastTabClosed
+            : Settings.Headed ? SessionCloseCause.WindowClosed
+            : SessionCloseCause.BrowserEnded;
+
+        var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period) { ExitCode = exitCode };
+
+        if (Interlocked.CompareExchange(ref _closed, closure, null) is not null)
+        {
+            return;
+        }
+
+        Record(closure, writeRow: true);
+
+        // A closed session holds nothing until the resume that opens it again, as
+        // after the idle close and the caller's own (P4 b, P3 b).
+        _ = EndTheChildOnceTheCloseIsOverAsync();
+
+        if (Volatile.Read(ref _afterTheBrowserEnded) is { } after)
+        {
+            _ = Task.Run(() => after(this), CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Records, once, that this session's browser server ended without BrowserAI ending
+    /// it, so the next BrowserAI to open the session can say why it was closed.
+    /// </summary>
+    /// <remarks>
+    /// It does not mark the session closed: a call meeting it is answered with
+    /// <see cref="SessionErrors.BrowserServerHasGone"/>, which says the same thing in
+    /// its own words.
+    /// </remarks>
+    public void RecordTheServerEnded()
+    {
+        if (Closed is not null || Interlocked.Exchange(ref _serverEndRecorded, 1) is not 0)
+        {
+            return;
+        }
+
+        Record(new SessionClosure(SessionCloseCause.ServerEnded, _clock.GetUtcNow(), Idle?.Period), writeRow: true);
+    }
+
+    /// <summary>
+    /// Records that the session host let this session go with nothing to keep, unless
+    /// a close was already recorded for it.
+    /// </summary>
+    /// <param name="by">The client that drove it and went away.</param>
+    /// <param name="detail">What there was to keep: nothing, in one clause.</param>
+    public void RecordTheRelease(string? by, string detail)
+    {
+        if (Closed is not null || Volatile.Read(ref _serverEndRecorded) is not 0)
+        {
+            return;
+        }
+
+        var closure = new SessionClosure(SessionCloseCause.Released, _clock.GetUtcNow(), Idle?.Period) { By = by, Detail = detail };
+
+        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
+        {
+            Record(closure, writeRow: true);
+        }
+    }
+
+    /// <summary>
+    /// Writes a close's reason into the session's record: always a <c>closed</c>
+    /// statement, and a log row for a close no call of its own already stands for.
+    /// </summary>
+    /// <remarks>
+    /// <b>A record that cannot be written stops nothing</b>, for the reason the idle
+    /// close gives: there is no caller to refuse, and the close has happened.
+    /// </remarks>
+    /// <param name="closure">The close.</param>
+    /// <param name="writeRow">Whether to write the log row.</param>
+    private void Record(SessionClosure closure, bool writeRow)
+    {
+        try
+        {
+            Lock.AppendLifecycle(RecordFields.Closed, closure.Recorded.Write());
+
+            if (writeRow)
+            {
+                var row = Lock.Append(CloseReasons.LogRowTool, CloseReasons.Of(closure, asking: null));
+
+                Lock.Settle(row, SessionStore.Successful, failure: null);
+            }
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            SessionLog.CloseNotRecorded(Lock.Logger, Lock.Location.FullPath, closure.Cause.ToString(), failure);
+        }
+    }
+
+    /// <summary>Upstream's tab tool, spelled as upstream spells it.</summary>
+    private const string TabsTool = "browser_tabs";
 
     /// <summary>
     /// The idle close: ends this session's whole browser server, node child
@@ -1180,14 +1446,16 @@ internal sealed class LiveSession : IAsyncDisposable
         var before = ProcessesInTheJob();
         var browserWasUp = TheJobHoldsABrowser();
 
-        if (Interlocked.CompareExchange(
-            ref _closed,
-            new SessionClosure(SessionCloseCause.Idle, _clock.GetUtcNow(), Idle?.Period),
-            null) is not null)
+        var idle = new SessionClosure(SessionCloseCause.Idle, _clock.GetUtcNow(), Idle?.Period);
+
+        if (Interlocked.CompareExchange(ref _closed, idle, null) is not null)
         {
             // The caller's own close got there first, and it is the close in flight.
             return null;
         }
+
+        // 8 b: the reason is recorded; the row is the idle close's own, below.
+        Record(idle, writeRow: false);
 
         var finished = BeginTheCloseInFlight();
 
@@ -1378,18 +1646,73 @@ internal enum SessionClaim
     Releasing,
 }
 
-/// <summary>Who closed a session's browser.</summary>
+/// <summary>Who or what closed a session's browser.</summary>
+/// <remarks>
+/// ⚠️ <b>The member names are a stored spelling since 2026-10-04</b>: a
+/// <c>closed</c> statement in <c>browserai.data</c> carries the name, and a name this
+/// build does not know reads back as <see cref="Unknown"/>. Renaming one is a change
+/// to every record already written.
+/// </remarks>
 internal enum SessionCloseCause
 {
     /// <summary>BrowserAI's own idle timer, after a headless session went unused.</summary>
     Idle,
 
-    /// <summary>The caller's own <c>browser_close</c>.</summary>
+    /// <summary>A <c>browser_close</c> call, from this client or another.</summary>
     Caller,
+
+    /// <summary>A person closed a headed session's window: the browser exited cleanly with nobody asking.</summary>
+    WindowClosed,
+
+    /// <summary>The browser exited after <c>browser_tabs</c> closed its last tab, which Firefox does.</summary>
+    LastTabClosed,
+
+    /// <summary>A headless browser exited cleanly with nobody asking.</summary>
+    BrowserEnded,
+
+    /// <summary>The browser ended with a non-zero exit code: a crash or a kill.</summary>
+    BrowserCrashed,
+
+    /// <summary>The browser server, the node child, ended with nobody ending it.</summary>
+    ServerEnded,
+
+    /// <summary>BrowserAI was stopped through its pipe: for an update, or from its own page.</summary>
+    Stopped,
+
+    /// <summary>The BrowserAI a client started shut down because that client went away.</summary>
+    ServerShutDown,
+
+    /// <summary>The session host let a session go whose client went away, with nothing to keep.</summary>
+    Released,
+
+    /// <summary>Read back, never recorded: an opening no close followed.</summary>
+    Unrecorded,
+
+    /// <summary>Read back: a cause this build does not know.</summary>
+    Unknown,
 }
 
 /// <summary>How and when a session's browser was closed.</summary>
-/// <param name="Cause">Who closed it.</param>
+/// <param name="Cause">Who or what closed it.</param>
 /// <param name="At">When.</param>
 /// <param name="IdlePeriod">The session's idle period, which the refusal names after an idle close.</param>
-internal sealed record SessionClosure(SessionCloseCause Cause, DateTimeOffset At, TimeSpan? IdlePeriod);
+internal sealed record SessionClosure(SessionCloseCause Cause, DateTimeOffset At, TimeSpan? IdlePeriod)
+{
+    /// <summary>The connection whose call closed it, in this process only, so a refusal can say whose it was.</summary>
+    public Proxy.CallerConnection? ClosedBy { get; init; }
+
+    /// <summary>That client, as BrowserAI describes one, which the record keeps.</summary>
+    public string? By { get; init; }
+
+    /// <summary>What the closing call gave as its reason.</summary>
+    public string? Why { get; init; }
+
+    /// <summary>The browser's exit code, when it ended with nobody asking.</summary>
+    public int? ExitCode { get; init; }
+
+    /// <summary>A clause of BrowserAI's own, for a cause that has one.</summary>
+    public string? Detail { get; init; }
+
+    /// <summary>The close as the record keeps it.</summary>
+    public RecordedClose Recorded => new(Cause, By, Why, ExitCode, OpenedAt: null, Detail);
+}

@@ -1,0 +1,21 @@
+2026-10-04T13:55:50.976Z DESKTOP WinSta0\BrowserAI-behave-raw2-ua-arms-9308d7a3c7c440d38a7258f08106e0aa
+2026-10-04T13:55:51.012Z START pid=19392 app=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe cmd=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload\node\node.exe C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\rig\raw2.mjs payload=C:\Source\SixFive7\BrowserAI\.work\wt\behave\payload out=C:\Source\SixFive7\BrowserAI\.work\wt\behave\.work\runs\before2\raw2-ua-arms\rig
+2026-10-04T13:55:52.049Z PRIVATE pids=8 windows=2 pid=4560 hwnd=0x12c0766 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=4560 hwnd=0x910ed6 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:55:53.062Z PRIVATE pids=15 windows=2 pid=78668 hwnd=0x662464 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=78668 hwnd=0xa1140e class=UAC Input Indicator rect=3742,2062,3792,2112 title=
+2026-10-04T13:55:54.075Z PRIVATE pids=13 windows=2 pid=62528 hwnd=0x7b23e2 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=62528 hwnd=0xaf0d52 class=UAC Input Indicator rect=3742,2062,3792,2112 title=
+2026-10-04T13:55:59.095Z PRIVATE pids=6 windows=0 
+2026-10-04T13:56:00.105Z PRIVATE pids=13 windows=2 pid=83604 hwnd=0x7c13b2 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=83604 hwnd=0xb00d52 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:04.140Z PRIVATE pids=10 windows=0 
+2026-10-04T13:56:05.151Z PRIVATE pids=13 windows=2 pid=97788 hwnd=0x881d0e class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=97788 hwnd=0xa4140e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:07.169Z PRIVATE pids=10 windows=1 pid=35988 hwnd=0x891d0e class=UAC_InputIndicatorOverlayWnd rect=0,0,0,0 title=
+2026-10-04T13:56:08.180Z PRIVATE pids=13 windows=2 pid=35988 hwnd=0x821526 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=35988 hwnd=0x891d0e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:12.197Z PRIVATE pids=4 windows=0 
+2026-10-04T13:56:13.208Z PRIVATE pids=12 windows=2 pid=104744 hwnd=0x72156a class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=104744 hwnd=0x8a1d0e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:16.221Z PRIVATE pids=13 windows=2 pid=73908 hwnd=0x7e19d4 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=73908 hwnd=0x8b1d0e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:20.246Z PRIVATE pids=4 windows=0 
+2026-10-04T13:56:21.254Z PRIVATE pids=12 windows=3 pid=18988 hwnd=0x7f19d4 class=Chrome_WidgetWin_1 rect=10,10,1946,1224 title=echo – Google Chrome for Testing | pid=18988 hwnd=0x8c1d0e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=18988 hwnd=0xa124a8 class=UAC Input Indicator rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:23.266Z PRIVATE pids=9 windows=2 pid=18988 hwnd=0x8c1d0e class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=18988 hwnd=0xa124a8 class=UAC Input Indicator rect=3742,2062,3792,2112 title=
+2026-10-04T13:56:24.276Z PRIVATE pids=14 windows=3 pid=7064 hwnd=0x4124e6 class=UAC Input Indicator rect=3742,2062,3792,2112 title= | pid=7064 hwnd=0x7b0d62 class=UAC_InputIndicatorOverlayWnd rect=3742,2062,3792,2112 title= | pid=7064 hwnd=0x9114ea class=Chrome_WidgetWin_1 rect=10,10,1946,1224 title=echo – Google Chrome for Testing
+2026-10-04T13:56:28.290Z PRIVATE pids=2 windows=0 
+2026-10-04T13:56:28.428Z SUMMARY exit=0 ticks=38 maxJobPids=15 ticksWithPrivateWindows=32 leaked=False
+2026-10-04T13:56:28.435Z END processes still in the job before it closed: 0

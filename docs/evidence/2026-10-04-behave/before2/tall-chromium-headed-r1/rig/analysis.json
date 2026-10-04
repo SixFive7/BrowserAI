@@ -1,0 +1,110 @@
+[
+ {
+  "file": "page-2026-10-04T13-56-59-965Z.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16384,
+  "decoded_width": 1920,
+  "decoded_height": 16384
+ },
+ {
+  "file": "page-2026-10-04T13-57-01-882Z.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 16385,
+  "decoded_width": 1920,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 1,
+  "rows_near_16384_above": 1,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "page-2026-10-04T13-57-04-457Z.png",
+  "kind": "png",
+  "header_width": 1920,
+  "header_height": 20000,
+  "decoded_width": 1920,
+  "decoded_height": 20000,
+  "rows_past_the_seam": 3616,
+  "rows_identical_to_16384_above": 3616,
+  "rows_near_16384_above": 3616,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "tall-16384.png",
+  "kind": "png",
+  "header_width": 1905,
+  "header_height": 16384,
+  "decoded_width": 1905,
+  "decoded_height": 16384
+ },
+ {
+  "file": "tall-16385.png",
+  "kind": "png",
+  "header_width": 1905,
+  "header_height": 16385,
+  "decoded_width": 1905,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 1,
+  "rows_near_16384_above": 1,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "tall-20000.png",
+  "kind": "png",
+  "header_width": 1905,
+  "header_height": 20000,
+  "decoded_width": 1905,
+  "decoded_height": 20000,
+  "rows_past_the_seam": 3616,
+  "rows_identical_to_16384_above": 3616,
+  "rows_near_16384_above": 3616,
+  "first_row_not_repeated": null,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "tall-16384.jpeg",
+  "kind": "jpeg",
+  "header_width": 1920,
+  "header_height": 16384,
+  "decoded_width": 1920,
+  "decoded_height": 16384
+ },
+ {
+  "file": "tall-16385.jpeg",
+  "kind": "jpeg",
+  "header_width": 1920,
+  "header_height": 16385,
+  "decoded_width": 1920,
+  "decoded_height": 16385,
+  "rows_past_the_seam": 1,
+  "rows_identical_to_16384_above": 0,
+  "rows_near_16384_above": 0,
+  "first_row_not_repeated": 16384,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ },
+ {
+  "file": "tall-20000.jpeg",
+  "kind": "jpeg",
+  "header_width": 1920,
+  "header_height": 20000,
+  "decoded_width": 1920,
+  "decoded_height": 20000,
+  "rows_past_the_seam": 3616,
+  "rows_identical_to_16384_above": 3615,
+  "rows_near_16384_above": 3615,
+  "first_row_not_repeated": 16384,
+  "control_rows_near_1000_above": 0,
+  "control_rows_checked": 15384
+ }
+]
