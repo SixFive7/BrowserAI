@@ -15,7 +15,10 @@
         "dnx", "NuGet.Mcp.Server",
         "--source", "https://api.nuget.org/v3/index.json",
         "--yes"
-      ]
+      ],
+      "env": {
+        "DOTNET_hostBuilder__reloadConfigOnChange": "false"
+      }
     },
     "github": {
       "type": "http",
