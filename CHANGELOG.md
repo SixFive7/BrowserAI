@@ -800,9 +800,9 @@ release body; nothing else depends on it.
   `RegisterAiPayloadTests.TheCommittedStampNamesAStableRegisterAiRelease` refuses a committed
   stamp written from a folder with `-RegisterAiFrom`, a pre-release, or a tag or release page
   that is not the version's own, so a build taken to try something out cannot be committed.
-  Watched red against the stamp `-RegisterAiFrom` wrote over RegisterAI's release folder, and
-  `UpstreamReviewTests.EveryReviewedVersionEqualsTheVersionTheBuildResolved` read red at
-  reviewed 0.2.0 and resolved 0.3.0 until the review row moved. The decision is in
+  Watched red against the stamp `build/Get-RegisterAi.ps1 -From` wrote over RegisterAI's
+  release folder, and `UpstreamReviewTests.EveryReviewedVersionEqualsTheVersionTheBuildResolved`
+  read red at reviewed 0.2.0 and resolved 0.3.0 until the review row moved. The decision is in
   `DECISIONS.md`, beside the other RegisterAI rows.
 
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
