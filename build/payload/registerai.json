@@ -1,11 +1,11 @@
 {
   "_what_this_is": "What the last payload build put at payload\\registerai\\RegisterAI.exe, written by build/Get-RegisterAi.ps1. A provenance stamp like package-lock.json beside it, not a target: nothing reads it back to pin anything.",
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
-  "version": "0.2.0",
-  "tag": "v0.2.0",
+  "version": "0.3.0",
+  "tag": "v0.3.0",
   "source": "release",
   "repository": "SixFive7/RegisterAI",
-  "release": "https://github.com/SixFive7/RegisterAI/releases/tag/v0.2.0",
-  "sha256": "84f01dd20414cbe46255f3d989a4f0bda1429024f6e21690105b4dbfaabfdbaf",
+  "release": "https://github.com/SixFive7/RegisterAI/releases/tag/v0.3.0",
+  "sha256": "4200388652296856edb94c81f25c92a4cf8502ac202803248b754bdb5400431d",
   "bytes": 2765824
 }

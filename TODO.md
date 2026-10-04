@@ -215,9 +215,11 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - **The [feature-catalogue candidates](#the-next-version)**, waiting on his pick.
 - **Release 1.1.1 is not cut.** Only the maintainer drives a release. The browser
   tab replaced the configuration window on 2026-10-03, which is what Q319 b held a
-  release for; RegisterAI going public is still ahead of one, in its own item above.
-  *Changed 2026-10-03 (previously "and none is cut until the browser tab has replaced
-  the configuration window (Q319 b)").*
+  release for. RegisterAI is no longer ahead of one: it is public since 2026-10-04 and
+  the payload carries its stable release 0.3.0. *Corrected 2026-10-04 (previously
+  "RegisterAI going public is still ahead of one, in its own item above"), after that
+  item left as done.* *Changed 2026-10-03 (previously "and none is cut until the
+  browser tab has replaced the configuration window (Q319 b)").*
 
 ---
 

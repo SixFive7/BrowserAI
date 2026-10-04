@@ -786,6 +786,25 @@ release body; nothing else depends on it.
   `RegisterAiPayloadTests.ThePayloadTakesTheNewestRegisterAiReleaseWithNoGitHubSignIn` runs the
   script with `gh` signed in to nothing and was watched red against the script that used `gh`.
 
+- ⬆️ **The payload carries RegisterAI 0.3.0, and only ever a stable RegisterAI release.**
+  The maintainer, 2026-10-04, verbatim: *"Whenever there needs changing. Create a new stable
+  RegisterAI release and reference that."* Every change BrowserAI needs from RegisterAI now
+  arrives as a new stable release of it, and BrowserAI references that release: the payload
+  build takes it, and `build/payload/registerai.json`, `upstream-review.json` and
+  `drift-check.json` name it. RegisterAI 0.3.0, released 2026-10-04, works as 0.2.0 did, with
+  the same help, `describe`, licence and usage errors apart from the version; what changed is
+  its README, its release notes, which take this repository's markup, and its documents, which
+  no longer name BrowserAI. Its `RegisterAI.exe` is 2,765,824 bytes with SHA-256
+  `4200388652296856edb94c81f25c92a4cf8502ac202803248b754bdb5400431d`, taken from the release
+  with no sign-in and checked against its `SHA256SUMS`.
+  `RegisterAiPayloadTests.TheCommittedStampNamesAStableRegisterAiRelease` refuses a committed
+  stamp written from a folder with `-RegisterAiFrom`, a pre-release, or a tag or release page
+  that is not the version's own, so a build taken to try something out cannot be committed.
+  Watched red against the stamp `-RegisterAiFrom` wrote over RegisterAI's release folder, and
+  `UpstreamReviewTests.EveryReviewedVersionEqualsTheVersionTheBuildResolved` read red at
+  reviewed 0.2.0 and resolved 0.3.0 until the review row moved. The decision is in
+  `DECISIONS.md`, beside the other RegisterAI rows.
+
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
   Q322 a, the maintainer's words verbatim: *"Q322 a"*. The generated config writes
   `snapshot.boxes: false`, upstream's own default, where it wrote `true` for every session.

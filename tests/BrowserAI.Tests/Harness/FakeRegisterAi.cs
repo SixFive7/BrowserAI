@@ -142,10 +142,12 @@ internal sealed class FakeRegisterAi : IRegisterAi
             results.Add(Result(verb, client, scope, project, command, roots, replace));
         }
 
+        // The version is the one the committed stamp names, so the fake reports the
+        // RegisterAI the payload carries and a new release needs no edit here.
         var document = new JsonObject
         {
             ["tool"] = "registerai",
-            ["version"] = "0.2.0",
+            ["version"] = ResolvedVersions.FromRegisterAiStamp(),
             ["schema"] = ToolDocuments.Schema,
             ["verb"] = verb,
             ["dryRun"] = false,

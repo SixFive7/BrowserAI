@@ -184,6 +184,55 @@ internal sealed class RegisterAiPayloadTests
     }
 
     /// <summary>
+    /// The committed stamp names a stable RegisterAI release: taken from GitHub, a version
+    /// with no pre-release part, that version's own tag, and the tag's release page.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer, 2026-10-04, verbatim:</b> <i>"Whenever there needs changing.
+    /// Create a new stable RegisterAI release and reference that."</i> A change BrowserAI
+    /// needs from RegisterAI arrives as a new stable release and a payload rebuilt from
+    /// it. <c>-RegisterAiFrom</c> stays, for an offline build and for trying a RegisterAI
+    /// build before it is released, and the stamp such a build writes is refused here, so
+    /// it cannot be committed.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-04</b> against the stamp <c>build/Get-RegisterAi.ps1 -From</c>
+    /// wrote over RegisterAI's own release folder, which names the folder and no tag, and
+    /// green again once the script took the release from GitHub.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheCommittedStampNamesAStableRegisterAiRelease()
+    {
+        var committed = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "registerai.json"));
+
+        await Assert.That(string.Join(Environment.NewLine, NotAStableRelease(committed))).IsEmpty();
+
+        // The controls: every way a stamp can name something other than a stable
+        // release, each one step from the stamp that passes.
+        const string Release = "https://github.com/SixFive7/RegisterAI/releases/tag/";
+
+        await Assert.That(NotAStableRelease(stampOf("9.9.9", "v9.9.9", "release", "SixFive7/RegisterAI", Release + "v9.9.9"))).IsEmpty();
+        await Assert.That(NotAStableRelease(stampOf("9.9.9", null, "folder", "SixFive7/RegisterAI", null))).IsNotEmpty();
+        await Assert.That(NotAStableRelease(stampOf("9.9.10-alpha.0.1", "v9.9.10-alpha.0.1", "release", "SixFive7/RegisterAI", Release + "v9.9.10-alpha.0.1"))).IsNotEmpty();
+        await Assert.That(NotAStableRelease(stampOf("9.9.9", "v9.9.8", "release", "SixFive7/RegisterAI", Release + "v9.9.8"))).IsNotEmpty();
+        await Assert.That(NotAStableRelease(stampOf("9.9.9", "v9.9.9", "release", "SomebodyElse/RegisterAI", "https://github.com/SomebodyElse/RegisterAI/releases/tag/v9.9.9"))).IsNotEmpty();
+        await Assert.That(NotAStableRelease(stampOf("9.9.9", "v9.9.9", "release", "SixFive7/RegisterAI", Release + "v9.9.8"))).IsNotEmpty();
+
+        static string stampOf(string version, string? tag, string source, string repository, string? release) =>
+            JsonSerializer.Serialize(new Dictionary<string, string?>
+            {
+                ["version"] = version,
+                ["tag"] = tag,
+                ["source"] = source,
+                ["repository"] = repository,
+                ["release"] = release,
+            });
+    }
+
+    /// <summary>
     /// The published slice carries the payload's RegisterAI at the path an install
     /// looks for it beside its own image, byte for byte.
     /// </summary>
@@ -219,6 +268,55 @@ internal sealed class RegisterAiPayloadTests
 
     private static string Hash(string file) =>
         Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(file)));
+
+    /// <summary>
+    /// Every way a stamp names something other than a stable RegisterAI release, or
+    /// nothing when it names one.
+    /// </summary>
+    /// <param name="stamp">The stamp's text.</param>
+    /// <returns>One sentence per problem.</returns>
+    private static List<string> NotAStableRelease(string stamp)
+    {
+        using var document = JsonDocument.Parse(stamp);
+
+        var root = document.RootElement;
+        var version = text(root, "version");
+        var tag = text(root, "tag");
+        var source = text(root, "source");
+        var repository = text(root, "repository");
+        var release = text(root, "release");
+        var problems = new List<string>();
+
+        if (source is not "release")
+        {
+            problems.Add($"The stamp's source is '{source}', not 'release': the payload was built from a folder and not from a RegisterAI release. Run: pwsh -File build/Get-RegisterAi.ps1");
+        }
+
+        if (repository is not "SixFive7/RegisterAI")
+        {
+            problems.Add($"The stamp names the repository '{repository}', not SixFive7/RegisterAI.");
+        }
+
+        if (version?.Split('.') is not { Length: 3 } parts || !Array.TrueForAll(parts, part => part.Length > 0 && part.All(char.IsAsciiDigit)))
+        {
+            problems.Add($"The stamp names version '{version}', which is not a stable release: three numbers and no pre-release part.");
+        }
+
+        if (tag != "v" + version)
+        {
+            problems.Add($"The stamp names tag '{tag}' for version '{version}'; a RegisterAI release is tagged v<version>.");
+        }
+
+        if (release != "https://github.com/" + repository + "/releases/tag/" + tag)
+        {
+            problems.Add($"The stamp names the release page '{release}', which is not the page of tag '{tag}'.");
+        }
+
+        return problems;
+
+        static string? text(JsonElement owner, string name) =>
+            owner.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.String ? value.GetString() : null;
+    }
 
     /// <summary>
     /// The variables of a machine with no GitHub sign-in, for the child alone: an
