@@ -327,6 +327,38 @@ archive. ⚠️ **The trace's line names the network log and not the action
 log**, which this measurement found holds typed text too; that wording is his to
 change and is put to him. Row 193 carries it. `[FLOATS]`
 
+⚠️ **Every file in a session that can hold something sensitive, and catch_up names
+each kind** -- *added 2026-10-04 by addition, 4 a, the maintainer's words verbatim:
+"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or other logs? Name everythign sensitive."* The four kinds above were not all of
+them. Read in BrowserAI and `@playwright/mcp` 0.0.83 for every file either writes
+into a session, then measured 2026-10-04 in one headless session per family,
+Chromium 1247 and Firefox 1553, against a local page with sample values: every
+file read, the profile included, for each value as text and as UTF-16 and inside
+Firefox's compressed session store
+([evidence](../../docs/evidence/2026-10-04-q371-sensitive-files/README.md)).
+
+| Kind | Where, and its name when upstream chooses it | What it held, both families unless named |
+|---|---|---|
+| Page snapshots | `output\page-<moment>.yml`, one for every call whose answer links a snapshot (navigate, click and wait did in this run), or the name `filename` gave | the page's text and **what was typed into its fields, the password included** |
+| A transcript | `output\session-<milliseconds>\session.md` | the typed text, password included, and the page's text |
+| A trace | `output\traces\`: `.trace`, `.network`, `.stacks`, `screencast\`, `resources\` | the action log the typed text with the password, the console and the page; the network log the address with its token, and **the cookie in Firefox**; the resources a download in Firefox |
+| An HTTP Archive | `output\network-<moment>.har`, one per launch | **the cookie, the bearer token**, the API's answer, the page and every stored value it carried |
+| A saved login | `output\storage-state-<moment>.json`, or any name | **the cookie** and local storage |
+| What the network tools saved | `output\request-<moment>.txt` and `response-<moment>.<ext>`, or any name | a request's headers held **the bearer token**, and **the cookie in Firefox**; a body held the API's answer |
+| Logs | `output\console-<moment>.log`, one per tab, written as its page logs, and the console and network lists saved by name | the console message and the address with its token |
+| Files saved by name | anything else under `output\`: a download keeps its own name, and a tool's answer takes `filename` | the download; an evaluation held a stored value and the API's answer |
+| Screenshots, PDFs, videos | `output\page-<moment>.png`, `page-<moment>.pdf` (Chromium), `video-<moment>.webm` | no sample value as text, which says nothing about what they show |
+| Downloads in flight | `downloads\` | nothing after the browser closed: Playwright removes its copy and the tools keep theirs in `output\` |
+| BrowserAI's record | `browserai.data` and its journal | every call's `why` |
+| The profile | `profile\` | the cache (the page, the API's answer and the bearer token, with the cookie in Firefox's and the download in Chromium's), the history (the token), local and session storage, the cookies (**in the clear in Firefox's `cookies.sqlite`**, encrypted in Chromium's), and the tabs to restore with the **typed user name and note, and not the password**, in Chromium's `Sessions\` and Firefox's `sessionstore.jsonlz4` |
+
+`browserai_catch_up` names every one of these since 2026-10-04, one warning line
+per kind in the style he approved for Q365.4, each saying what the kind holds;
+the profile and a trace are named whole, ten files of a kind by path and the rest
+by count. For one file the saved login's, the transcript's and the archive's lines
+read as before; the trace's now names its action log, and the cookie store's line
+became the profile's. Row 193 carries it. `[FLOATS]`
+
 ### What a BrowserAI session permits, after its own filtering
 
 **Re-measured 2026-10-04 @ `@playwright/mcp` 0.0.83 / `playwright-core`

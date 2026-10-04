@@ -191,21 +191,161 @@ internal sealed class CatchUpTests
             $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "login-state.json")}' is a saved login written by browser_storage_state ({Sizes.Describe(sizeOf(saved))}). "
             + "It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n");
 
+        // ⚠️ The trace's line names its action log since 2026-10-04, 4 a
+        // (previously "Its network log holds every request and response with their
+        // headers, so session cookies and tokens are in it in clear text."): the
+        // action log held the typed password in both families' runs that day.
         await Assert.That(text).Contains(
             $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "traces")}' is a Playwright trace ({Sizes.Describe(traceBytes)}). "
-            + "Its network log holds every request and response with their headers, so session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n");
+            + TraceHolds + " Treat it as a secret and delete it when you are done.\n");
 
         await Assert.That(text).Contains(
             $"  ⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "session-1791000000000", "session.md")}' is a transcript ({Sizes.Describe(sizeOf(transcript))}). "
             + "It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n");
 
-        // ⚠️ THE CONTROLS: a JSON of another shape and a session.md outside a
-        // transcript folder are not named, and the trace is named once and not
-        // once per file in it.
-        await Assert.That(text).DoesNotContain("report.json' is");
-        await Assert.That(text).DoesNotContain($"'{Path.Combine(SessionLayout.OutputFolderName, "notes", "session.md")}' is");
+        // ⚠️ THE CONTROLS: a JSON of another shape is not a saved login and a
+        // session.md outside a transcript folder is not a transcript, and the trace
+        // is named once and not once per file in it. *Since 2026-10-04 both
+        // controls are named (previously "are not named"), as files saved under a
+        // name a call chose, which is what 4 a asks: every file that can hold
+        // something sensitive.*
+        await Assert.That(text).DoesNotContain("report.json' is a saved login");
+        await Assert.That(text).DoesNotContain($"'{Path.Combine(SessionLayout.OutputFolderName, "notes", "session.md")}' is a transcript");
+        await Assert.That(text).Contains($"'{Path.Combine(SessionLayout.OutputFolderName, "notes", "session.md")}' and '{Path.Combine(SessionLayout.OutputFolderName, "report.json")}' are files saved under names a call or a page chose");
         await Assert.That(text.Split("is a Playwright trace").Length - 1).IsEqualTo(1);
     }
+
+    /// <summary>
+    /// Every file in a session that can hold something sensitive is named, one line
+    /// per kind, with what that kind holds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>4 a, decided 2026-10-04 by the maintainer, in his words: <i>"1 a / 2 b /
+    /// 3 a / 4 a - is there not also sessions.md or other logs? Name everythign
+    /// sensitive."</i></b> One file of every kind BrowserAI and
+    /// <c>@playwright/mcp</c> 0.0.83 write into a session, laid out as they lay them
+    /// out and named as they name them, measured the same day against headless
+    /// Chromium and Firefox: the profile with its cookie store, an HTTP Archive, a
+    /// saved login, a trace, a transcript, a request the network tools saved, a
+    /// console log, two page snapshots, twelve screenshots, a PDF, a video, two
+    /// files saved by name, a download, and BrowserAI's own record.
+    /// </para>
+    /// <para>
+    /// <b>Twelve screenshots, because ten are named by path</b> and the rest by
+    /// count, so a session holding hundreds does not make the answer longer than a
+    /// client hands a model whole. The lock file is the control: it holds a process
+    /// id and nothing a page wrote, and it is not named.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryFileThatCanHoldSomethingSensitiveIsNamedKindByKind()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "every-kind");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "holds every kind of file that can hold something sensitive",
+        });
+
+        var output = Path.Combine(directory, SessionLayout.OutputFolderName);
+
+        async Task<string> write(string relative, string content)
+        {
+            var path = Path.Combine(directory, relative);
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            await File.WriteAllTextAsync(path, content);
+            return relative;
+        }
+
+        // The profile, with Chromium's cookie store and history where Chromium keeps them.
+        var cookies = await write(Path.Combine(SessionLayout.ProfileFolderName, "Default", "Network", "Cookies"), "cookies");
+        _ = await write(Path.Combine(SessionLayout.ProfileFolderName, "Default", "History"), "history");
+
+        var har = await write(Path.Combine(SessionLayout.OutputFolderName, "network-20261004-160219349.har"), "{\"log\":{}}");
+        var saved = await write(Path.Combine(SessionLayout.OutputFolderName, "storage-state-2026-10-04T14-02-25-098Z.json"), "{\"cookies\":[],\"origins\":[]}");
+        _ = await write(Path.Combine(SessionLayout.OutputFolderName, "traces", "trace-1791122541386.trace"), "{}");
+        _ = await write(Path.Combine(SessionLayout.OutputFolderName, "traces", "trace-1791122541386.network"), "{}");
+        _ = await write(Path.Combine(SessionLayout.OutputFolderName, "traces", "screencast", "page@0541cd-1791122541403.jpeg"), "jpeg");
+        var transcript = await write(Path.Combine(SessionLayout.OutputFolderName, "session-1791122540247", "session.md"), "### Tool call: browser_type\n");
+        var request = await write(Path.Combine(SessionLayout.OutputFolderName, "request-2026-10-04T14-02-24-001Z.txt"), "authorization: Bearer x");
+        var console = await write(Path.Combine(SessionLayout.OutputFolderName, "console-2026-10-04T14-02-20-258Z.log"), "[     12ms] [LOG] x");
+        var snapshot = await write(Path.Combine(SessionLayout.OutputFolderName, "page-2026-10-04T14-02-20-356Z.yml"), "- textbox \"User\" [ref=e5]: x");
+        var named = await write(Path.Combine(SessionLayout.OutputFolderName, "snapshot-after-typing.yml"), "- textbox \"User\" [ref=e5]: x");
+        var images = new List<string>();
+
+        for (var index = 0; index < 12; index++)
+        {
+            images.Add(await write(Path.Combine(SessionLayout.OutputFolderName, $"page-2026-10-04T14-02-{index + 10}-215Z.png"), "png"));
+        }
+
+        var pdf = await write(Path.Combine(SessionLayout.OutputFolderName, "page-2026-10-04T14-02-22-372Z.pdf"), "%PDF");
+        var video = await write(Path.Combine(SessionLayout.OutputFolderName, "video-2026-10-04T14-02-21-399Z.webm"), "webm");
+        var download = await write(Path.Combine(SessionLayout.OutputFolderName, "q371-sample.txt"), "downloaded");
+        var evaluation = await write(Path.Combine(SessionLayout.OutputFolderName, "evaluation.json"), "{\"ls\":1}");
+        var inFlight = await write(Path.Combine(SessionLayout.DownloadsFolderName, "0f1e2d3c-4b5a"), "downloading");
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading back every kind of file",
+            ["session"] = directory,
+        }));
+
+        long sizeOf(string relative) => new FileInfo(Path.Combine(directory, relative)).Length;
+        long folder(string relative) => Directory.EnumerateFiles(Path.Combine(directory, relative), "*", SearchOption.AllDirectories).Sum(path => new FileInfo(path).Length);
+
+        var missing = new List<string>();
+
+        void expect(string line)
+        {
+            if (!text.Contains("  " + line + "\n", StringComparison.Ordinal))
+            {
+                missing.Add(line);
+            }
+        }
+
+        expect($"⚠️ CREDENTIALS: '{SessionLayout.ProfileFolderName}' is the browser profile ({Sizes.Describe(folder(SessionLayout.ProfileFolderName))}). It holds the cookie store at '{cookies}', "
+            + "so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- "
+            + $"and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{har}' is an HTTP Archive ({Sizes.Describe(sizeOf(har))}). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{saved}' is a saved login written by browser_storage_state ({Sizes.Describe(sizeOf(saved))}). It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{Path.Combine(SessionLayout.OutputFolderName, "traces")}' is a Playwright trace ({Sizes.Describe(folder(Path.Combine(SessionLayout.OutputFolderName, "traces")))}). {TraceHolds} Treat it as a secret and delete it when you are done.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{transcript}' is a transcript ({Sizes.Describe(sizeOf(transcript))}). It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{request}' is a request or a response saved by browser_network_request ({Sizes.Describe(sizeOf(request))}). It holds headers or a body as they crossed the wire, so cookies, tokens and what the server sent back are in it in clear text. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ PLAINTEXT CREDENTIALS: '{snapshot}' and '{named}' are page snapshots ({Sizes.Describe(sizeOf(snapshot) + sizeOf(named))}). They hold the text of the pages and what was typed into their fields, passwords included, in clear text. Treat the files as secrets and delete them when you are done.");
+        expect($"⚠️ SENSITIVE: '{console}' is a log a browser tool wrote ({Sizes.Describe(sizeOf(console))}). It holds what the pages wrote to their console, or the addresses they requested, with any token in them, in clear text. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ SENSITIVE: {string.Join(", ", images.Take(10).Select(image => $"'{image}'"))} and 2 more are images: screenshots, or pictures a page served ({Sizes.Describe(images.Sum(sizeOf))}). They show whatever was on the pages. Treat the files as secrets and delete them when you are done.");
+        expect($"⚠️ SENSITIVE: '{pdf}' is a PDF: a page saved as one, or one a page served ({Sizes.Describe(sizeOf(pdf))}). It holds the page as printed. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ SENSITIVE: '{video}' is a video the browser recorded ({Sizes.Describe(sizeOf(video))}). It shows everything the pages showed while it recorded. Treat the file as a secret and delete it when you are done.");
+        expect($"⚠️ SENSITIVE: '{evaluation}' and '{download}' are files saved under names a call or a page chose: downloads, or tools' answers saved with 'filename' ({Sizes.Describe(sizeOf(evaluation) + sizeOf(download))}). They hold whatever the pages served or the tools returned, and a saved request holds its headers, cookies and tokens included, in clear text. Treat the files as secrets and delete them when you are done.");
+        expect($"⚠️ SENSITIVE: '{inFlight}' is a file the browser downloaded ({Sizes.Describe(sizeOf(inFlight))}). It holds whatever the page served. Treat the file as a secret and delete it when you are done.");
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+        // BrowserAI's own record, one thing however many files SQLite keeps it in,
+        // named by what it holds; and the lock beside it, which holds a process id,
+        // is not named. Its size is not asserted: the read writes the call's own row
+        // after the walk, so the record is larger once the answer is back.
+        var record = text.Split('\n').SingleOrDefault(line => line.StartsWith($"  ⚠️ SENSITIVE: '{SessionLayout.DataFileName}' is this session's record (", StringComparison.Ordinal));
+
+        await Assert.That(record).IsNotNull();
+        await Assert.That(record!).EndsWith(
+            $"). It holds every call's 'why', the session's purposes and the text of every failure, which can quote a page, in clear text. {SessionToolSurface.Destroy} is what removes it.");
+        await Assert.That(text).DoesNotContain($"'{SessionLayout.LockFileName}'");
+    }
+
+    /// <summary>
+    /// What the trace's line says it holds, since 4 a named its action log.
+    /// </summary>
+    private const string TraceHolds =
+        "Its action log holds every action with the text it typed, passwords included, and what the pages showed and logged; "
+        + "its network log holds every request with its headers, cookies included; and its saved resources hold what the pages served. "
+        + "So typed text and session cookies and tokens are in it in clear text.";
 
     /// <summary>
     /// It changes nothing -- not the record, not the log -- and works on a session

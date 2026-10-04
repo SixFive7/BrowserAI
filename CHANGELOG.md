@@ -1606,6 +1606,22 @@ release body; nothing else depends on it.
   ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "A denied tool's answer
   is a proposal put to the maintainer").*** He approved it with the other texts, 1 a.
 
+- 🔧 **`browserai_catch_up` names every file in a session that can hold something sensitive.**
+  4 a, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
+  other logs? Name everythign sensitive."* Until then it named the cookie store, HTTP Archives,
+  saved logins, traces and transcripts. It now names the profile whole, with its cookie store, and
+  one line per kind for everything under the session that can hold what a person typed, signed in
+  with or read: HTTP Archives, saved logins, traces, transcripts, what the network tools saved,
+  logs, page snapshots, screenshots, PDFs, videos, files saved by name, downloads in flight and
+  BrowserAI's own record. Each line says what that kind holds, measured that day in one headless
+  session per family: a page snapshot taken after typing held the typed password in Chromium and
+  Firefox alike, and the trace's line now names its action log, which held it too. Ten files of a
+  kind are named by path and the rest counted. Watched red first: the arm that lays out one file of
+  every kind found ten of its lines missing, eight of them for kinds the answer named nowhere, and
+  the arm on the four older kinds read the old trace line.
+  [kb](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials),
+  [evidence](docs/evidence/2026-10-04-q371-sensitive-files/README.md).
+
 - 🔧 **The answer for a tool BrowserAI does not have names every tool it does, with what each does.**
   2 b, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
   other logs? Name everythign sensitive."* So does Q261 b's answer for a connection that called

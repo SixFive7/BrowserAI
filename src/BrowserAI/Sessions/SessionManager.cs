@@ -1941,43 +1941,192 @@ internal sealed class SessionManager : IAsyncDisposable
             _ = text.Append("  ").Append(kind).Append('\n');
         }
 
-        _ = text.Append(contents.CookieStore is { } store
-            ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
+        // ⚠️ THE PROFILE IS NAMED WHOLE, with its cookie store, since
+        // 2026-10-04 (previously "⚠️ CREDENTIALS: the profile holds a cookie
+        // store at '<store>'. This session may be signed in to something, whether or
+        // not any cookie tool appears above -- cookies arrive from navigation.
+        // browserai_destroy is what removes it."): 4 a, every file that can hold
+        // something sensitive, and the profile holds more than cookies.
+        _ = text.Append(contents.Profile is { } profile && contents.CookieStore is { } store
+            ? $"  ⚠️ CREDENTIALS: '{profile.RelativePath}' is the browser profile ({Sizes.Describe(profile.Bytes)}). It holds the cookie store at '{store}', so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. {SessionToolSurface.Destroy} is what removes it.\n"
             : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
 
-        foreach (var archive in contents.Archives)
+        // ⚠️ ONE LINE PER KIND, since 2026-10-04, the maintainer's words
+        // verbatim: "1 a / 2 b / 3 a / 4 a - is there not also sessions.md or other
+        // logs? Name everythign sensitive." Q365.4's lines for a saved login and a
+        // transcript, and the HTTP Archive's, are kept word for word for one file of
+        // their kind; the trace's gained its action log; and a kind with more than
+        // one file is named in one line. See Sensitive for every kind and what each
+        // was measured to hold.
+        foreach (var group in contents.Sensitive)
         {
-            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(archive.RelativePath).Append("' is an HTTP Archive (")
-                .Append(Sizes.Describe(archive.Bytes))
-                .Append("). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n");
+            _ = text.Append("  ").Append(Sensitive(group)).Append('\n');
+        }
+    }
+
+    /// <summary>
+    /// The line that names every file of one sensitive kind, and what it holds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>In the style the maintainer approved for Q365.4, 2026-10-03</b>: what the
+    /// file is, its size, what it holds, and to treat it as a secret. One file of a
+    /// kind reads as his lines do; more than one are named in one line, the first
+    /// <see cref="NamedPerKind"/> of them by path and the rest by count.
+    /// </para>
+    /// <para>
+    /// <b>The two labels say which kind holds what.</b> <i>PLAINTEXT
+    /// CREDENTIALS</i> is a kind measured to hold a typed password, a cookie or a
+    /// token on 2026-10-04, in headless Chromium 1247 and Firefox 1553 against a
+    /// local page with sample values (<c>kb/playwright/tools-and-artifacts.md</c>):
+    /// a page snapshot taken after typing held the typed password in both;
+    /// <i>SENSITIVE</i> is one that holds what a page showed, said or served, which
+    /// can be anything the person using the session can see.
+    /// </para>
+    /// </remarks>
+    /// <param name="group">One kind and its files.</param>
+    /// <returns>The line, without its indent or its line break.</returns>
+    private static string Sensitive(SensitiveFiles group)
+    {
+        var size = Sizes.Describe(group.Bytes);
+
+        // BrowserAI's own record is one thing however many files SQLite keeps it
+        // in: the database, and its journal beside it while the session is open.
+        if (group.Kind is SensitiveKind.Record)
+        {
+            var record = group.Files.FirstOrDefault(file => string.Equals(file.RelativePath, SessionLayout.DataFileName, StringComparison.OrdinalIgnoreCase))
+                ?? group.Files[0];
+            var journal = group.Files.Count > 1 ? ", with its journal" : string.Empty;
+
+            return $"⚠️ SENSITIVE: '{record.RelativePath}' is this session's record ({size}{journal}). "
+                + "It holds every call's 'why', the session's purposes and the text of every failure, which can quote a page, in clear text. "
+                + $"{SessionToolSurface.Destroy} is what removes it.";
         }
 
-        // ⚠️ Q365.4 a, 2026-10-04 -- the maintainer's words of 2026-10-03
-        // verbatim: "Now about Q365.4. Let's mention all files." -- and the
-        // three lines below are his approved wording, "Q365.4 now look good".
-        // Measured that day through the published binary at @playwright/mcp
-        // 0.0.83: the saved login held the cookie value, and the transcript and
-        // the trace's action log held the typed password (kb).
-        foreach (var saved in contents.SavedLogins)
+        var one = group.Files.Count is 1;
+        var names = Named(group.Files);
+
+        // Every kind's words, singular and plural, in one place.
+        var (label, what, whats, holds, hold) = group.Kind switch
         {
-            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(saved.RelativePath).Append("' is a saved login written by browser_storage_state (")
-                .Append(Sizes.Describe(saved.Bytes))
-                .Append("). It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n");
+            SensitiveKind.HttpArchive => (
+                "PLAINTEXT CREDENTIALS",
+                "an HTTP Archive",
+                "HTTP Archives",
+                "A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text.",
+                "A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in them in clear text."),
+            SensitiveKind.SavedLogin => (
+                "PLAINTEXT CREDENTIALS",
+                "a saved login written by browser_storage_state",
+                "saved logins written by browser_storage_state",
+                "It holds the cookies and site storage needed to sign in as this session, in clear text.",
+                "They hold the cookies and site storage needed to sign in as this session, in clear text."),
+            SensitiveKind.Trace => (
+                "PLAINTEXT CREDENTIALS",
+                "a Playwright trace",
+                "Playwright traces",
+                "Its action log holds every action with the text it typed, passwords included, and what the pages showed and logged; its network log holds every request with its headers, cookies included; and its saved resources hold what the pages served. So typed text and session cookies and tokens are in it in clear text.",
+                "Each one's action log holds every action with the text it typed, passwords included, and what the pages showed and logged; its network log holds every request with its headers, cookies included; and its saved resources hold what the pages served. So typed text and session cookies and tokens are in them in clear text."),
+            SensitiveKind.Transcript => (
+                "PLAINTEXT CREDENTIALS",
+                "a transcript",
+                "transcripts",
+                "It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text.",
+                "They hold every call's arguments, so text typed into the page, passwords included, is in them in clear text."),
+            SensitiveKind.NetworkCapture => (
+                "PLAINTEXT CREDENTIALS",
+                "a request or a response saved by browser_network_request",
+                "requests and responses saved by browser_network_request",
+                "It holds headers or a body as they crossed the wire, so cookies, tokens and what the server sent back are in it in clear text.",
+                "They hold headers or bodies as they crossed the wire, so cookies, tokens and what the server sent back are in them in clear text."),
+            SensitiveKind.Log => (
+                "SENSITIVE",
+                "a log a browser tool wrote",
+                "logs the browser tools wrote",
+                "It holds what the pages wrote to their console, or the addresses they requested, with any token in them, in clear text.",
+                "They hold what the pages wrote to their console, or the addresses they requested, with any token in them, in clear text."),
+            SensitiveKind.PageSnapshot => (
+                "PLAINTEXT CREDENTIALS",
+                "a page snapshot",
+                "page snapshots",
+                "It holds the text of the page and what was typed into its fields, passwords included, in clear text.",
+                "They hold the text of the pages and what was typed into their fields, passwords included, in clear text."),
+            SensitiveKind.Image => (
+                "SENSITIVE",
+                "an image: a screenshot, or a picture a page served",
+                "images: screenshots, or pictures a page served",
+                "It shows whatever was on the page.",
+                "They show whatever was on the pages."),
+            SensitiveKind.Pdf => (
+                "SENSITIVE",
+                "a PDF: a page saved as one, or one a page served",
+                "PDFs: pages saved as one, or ones a page served",
+                "It holds the page as printed.",
+                "They hold the pages as printed."),
+            SensitiveKind.Video => (
+                "SENSITIVE",
+                "a video the browser recorded",
+                "videos the browser recorded",
+                "It shows everything the pages showed while it recorded.",
+                "They show everything the pages showed while they recorded."),
+            SensitiveKind.OtherOutput => (
+                "SENSITIVE",
+                "a file saved under a name a call or a page chose: a download, or a tool's answer saved with 'filename'",
+                "files saved under names a call or a page chose: downloads, or tools' answers saved with 'filename'",
+                "It holds whatever the page served or the tool returned, and a saved request holds its headers, cookies and tokens included, in clear text.",
+                "They hold whatever the pages served or the tools returned, and a saved request holds its headers, cookies and tokens included, in clear text."),
+            SensitiveKind.Download => (
+                "SENSITIVE",
+                "a file the browser downloaded",
+                "files the browser downloaded",
+                "It holds whatever the page served.",
+                "They hold whatever the pages served."),
+            _ => throw new System.Diagnostics.UnreachableException($"No words for {group.Kind}."),
+        };
+
+        // Anything under output\ and downloads\ can be deleted by the caller, and
+        // the approved lines say so; the record above cannot, and destroy removes it.
+        var ending = group.Kind switch
+        {
+            SensitiveKind.Trace or SensitiveKind.Transcript => one
+                ? "Treat it as a secret and delete it when you are done."
+                : "Treat them as secrets and delete them when you are done.",
+            _ => one
+                ? "Treat the file as a secret and delete it when you are done."
+                : "Treat the files as secrets and delete them when you are done.",
+        };
+
+        return one
+            ? $"⚠️ {label}: {names} is {what} ({size}). {holds} {ending}"
+            : $"⚠️ {label}: {names} are {whats} ({size}). {hold} {ending}";
+    }
+
+    /// <summary>How many files of one kind are named by path before the rest are counted.</summary>
+    /// <remarks>
+    /// <b>Ten, so that a session holding hundreds of screenshots does not make the
+    /// answer longer than a client hands a model whole</b> -- measured 2026-10-03,
+    /// Codex cuts any tool result above about 12,000 characters. The count, the size
+    /// and the folder still say how much there is. A decision of 2026-10-04 for the
+    /// maintainer's review.
+    /// </remarks>
+    private const int NamedPerKind = 10;
+
+    /// <summary>The files of one kind, as a line names them.</summary>
+    /// <param name="files">The files.</param>
+    /// <returns>"'a'", "'a' and 'b'", "'a', 'b' and 'c'", or the first ten and a count.</returns>
+    private static string Named(IReadOnlyList<SessionFile> files)
+    {
+        var quoted = files.Take(NamedPerKind).Select(file => $"'{file.RelativePath}'").ToList();
+        var rest = files.Count - quoted.Count;
+
+        if (rest > 0)
+        {
+            return $"{string.Join(", ", quoted)} and {rest.ToString(CultureInfo.InvariantCulture)} more";
         }
 
-        foreach (var trace in contents.Traces)
-        {
-            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(trace.RelativePath).Append("' is a Playwright trace (")
-                .Append(Sizes.Describe(trace.Bytes))
-                .Append("). Its network log holds every request and response with their headers, so session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n");
-        }
-
-        foreach (var transcript in contents.Transcripts)
-        {
-            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(transcript.RelativePath).Append("' is a transcript (")
-                .Append(Sizes.Describe(transcript.Bytes))
-                .Append("). It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n");
-        }
+        return quoted.Count is 1
+            ? quoted[0]
+            : $"{string.Join(", ", quoted.Take(quoted.Count - 1))} and {quoted[^1]}";
     }
 
     /// <summary>

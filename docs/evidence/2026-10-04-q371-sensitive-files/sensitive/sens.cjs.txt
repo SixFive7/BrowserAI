@@ -1,0 +1,242 @@
+// Lane q371, 4 a: which files in a session folder hold something sensitive.
+// Drives a published BrowserAI.Server.exe over stdio, headless, against pages this
+// script serves on 127.0.0.1 only, with sample values that sign in to nothing, then
+// walks every file under the session and reports which sample values each holds,
+// as text, as UTF-16 and inside Firefox's compressed session store. No real site,
+// no real credential, no window.
+//
+// node sens.cjs <exe> <scratchRoot> <chromium|firefox> <reportPath>
+'use strict';
+
+const { spawn } = require('child_process');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+
+const [exe, root, family, reportPath] = process.argv.slice(2);
+fs.mkdirSync(root, { recursive: true });
+
+const MARKERS = {
+  user: 'q371-sample-user',
+  password: 'q371-typed-password-SAMPLE',
+  note: 'Q371-TYPED-NOTE',
+  cookie: 'Q371-SAMPLE-COOKIE-VALUE',
+  localStorage: 'Q371-LOCALSTORAGE-VALUE',
+  sessionStorage: 'Q371-SESSIONSTORAGE-VALUE',
+  console: 'Q371-CONSOLE-SECRET',
+  bearer: 'Q371-BEARER-TOKEN',
+  apiResponse: 'Q371-API-RESPONSE-SECRET',
+  page: 'Q371-PAGE-MARKER',
+  download: 'Q371-DOWNLOAD-CONTENT',
+  urlToken: 'q371urltoken',
+  why: 'Q371-WHY-MARKER',
+};
+
+const page = `<!doctype html><title>q371 sensitive sample</title>
+<h1>Sign in (local test page) ${MARKERS.page}</h1>
+<form onsubmit="return false">
+<label>User <input id="user" name="user" autocomplete="username"></label>
+<label>Password <input id="pw" name="pw" type="password" autocomplete="current-password"></label>
+<label>Notes <input id="note" name="note"></label>
+</form>
+<a id="dl" href="/download">Download the sample</a>
+<script>
+localStorage.setItem('q371ls', '${MARKERS.localStorage}');
+sessionStorage.setItem('q371ss', '${MARKERS.sessionStorage}');
+console.log('${MARKERS.console}');
+fetch('/api?token=${MARKERS.urlToken}', { headers: { Authorization: 'Bearer ${MARKERS.bearer}' } }).then(r => r.text()).then(t => { window.q371api = t; });
+</script>`;
+
+const report = { family, exe, root, startedUtc: new Date().toISOString(), steps: [], served: [] };
+
+const server = http.createServer((req, res) => {
+  report.served.push(req.url);
+  if (req.url.startsWith('/api')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ secret: MARKERS.apiResponse }));
+    return;
+  }
+  if (req.url.startsWith('/download')) {
+    res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="q371-sample.txt"' });
+    res.end(`${MARKERS.download}\n`);
+    return;
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Set-Cookie': `q371session=${MARKERS.cookie}; Path=/; HttpOnly; Max-Age=3600`,
+  });
+  res.end(page);
+});
+
+let child;
+let buffer = '';
+const pending = new Map();
+let stderr = '';
+let nextId = 1;
+
+function request(method, params, timeoutMs = 180000) {
+  const id = nextId++;
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`timeout on ${method}`)); }, timeoutMs);
+    pending.set(id, (message) => { clearTimeout(timer); resolve(message); });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+}
+
+function textOf(message) {
+  return (message?.result?.content ?? []).filter((block) => block.type === 'text').map((block) => block.text).join('\n');
+}
+
+async function call(label, name, args) {
+  const started = Date.now();
+  let message;
+  try {
+    message = await request('tools/call', { name, arguments: args });
+  } catch (failure) {
+    report.steps.push({ label, name, failure: String(failure) });
+    return { text: '', isError: true };
+  }
+  const step = { label, name, isError: message?.result?.isError === true, text: textOf(message).slice(0, 30000), ms: Date.now() - started };
+  report.steps.push(step);
+  return step;
+}
+
+// Firefox's session store: "mozLz40\0", a 4-byte decompressed size, then one LZ4 block.
+function mozLz4(bytes) {
+  const size = bytes.readUInt32LE(8);
+  const out = Buffer.alloc(size);
+  let i = 12;
+  let o = 0;
+  while (i < bytes.length) {
+    const token = bytes[i++];
+    let literal = token >> 4;
+    if (literal === 15) { let b; do { b = bytes[i++]; literal += b; } while (b === 255); }
+    bytes.copy(out, o, i, i + literal); i += literal; o += literal;
+    if (i >= bytes.length) break;
+    const offset = bytes[i] | (bytes[i + 1] << 8); i += 2;
+    let match = token & 15;
+    if (match === 15) { let b; do { b = bytes[i++]; match += b; } while (b === 255); }
+    match += 4;
+    for (let k = 0; k < match; k++) { out[o] = out[o - offset]; o++; }
+  }
+  return out.subarray(0, o);
+}
+
+// Searched as bytes, in both encodings, and never decoded: Node 26.7.0 exited with
+// code 127 and no message decoding one 24,122-byte PNG as UTF-16 (2026-10-04).
+function holds(bytes) {
+  const found = [];
+  for (const [name, value] of Object.entries(MARKERS)) {
+    if (bytes.indexOf(Buffer.from(value, 'latin1')) >= 0 || bytes.indexOf(Buffer.from(value, 'utf16le')) >= 0) found.push(name);
+  }
+  return found;
+}
+
+function walk(dir, base, into) {
+  let entries = [];
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return into; }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) { walk(full, base, into); continue; }
+    let bytes;
+    try { bytes = fs.readFileSync(full); } catch (failure) { into.push({ path: path.relative(base, full), unreadable: String(failure.code || failure) }); continue; }
+    let found = holds(bytes);
+    let decompressed = false;
+    if (bytes.length > 12 && bytes.subarray(0, 8).toString('latin1') === 'mozLz40\0') {
+      try { found = [...new Set([...found, ...holds(mozLz4(bytes))])]; decompressed = true; } catch { /* left as read */ }
+    }
+    into.push({ path: path.relative(base, full), bytes: bytes.length, holds: found, decompressed });
+  }
+  return into;
+}
+
+(async () => {
+  const directory = path.join(root, `q371-sensitive-${family}`);
+  const why = 'lane q371 finding every file that holds something sensitive';
+  try {
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${server.address().port}/?token=${MARKERS.urlToken}`;
+    report.url = url;
+
+    child = spawn(exe, [], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+    report.serverPid = child.pid;
+    child.stdout.on('data', (chunk) => {
+      buffer += chunk.toString('utf8');
+      let at;
+      while ((at = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, at).trim();
+        buffer = buffer.slice(at + 1);
+        if (!line) continue;
+        let message;
+        try { message = JSON.parse(line); } catch { continue; }
+        if (message.id !== undefined && pending.has(message.id)) { pending.get(message.id)(message); pending.delete(message.id); }
+      }
+    });
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString('utf8'); });
+
+    const init = await request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'q371-sensitive', version: '0' } });
+    report.serverInfo = init.result?.serverInfo;
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} }) + '\n');
+    await request('tools/list', {});
+
+    await call('init', 'browserai_init', { directory, purpose: 'lane q371: which files hold something sensitive', browser: family, transcript: true, captureNetwork: true });
+    await call('navigate', 'browser_navigate', { session: directory, why: `${why} ${MARKERS.why}`, url });
+    await call('waitApi', 'browser_wait_for', { session: directory, why, time: 1 });
+    const snap = await call('snapshot', 'browser_snapshot', { session: directory, why });
+    const ref = (label) => (snap.text.match(new RegExp(`textbox "${label}" \\[ref=([^\\]]+)\\]`)) || [])[1];
+    const userRef = ref('User');
+    const pwRef = ref('Password');
+    const noteRef = ref('Notes');
+    report.refs = { userRef, pwRef, noteRef };
+
+    await call('startTracing', 'browser_start_tracing', { session: directory, why });
+    await call('startVideo', 'browser_start_video', { session: directory, why });
+    if (userRef) await call('typeUser', 'browser_type', { session: directory, why, element: 'User field', target: userRef, text: MARKERS.user });
+    if (pwRef) await call('typePassword', 'browser_type', { session: directory, why, element: 'Password field', target: pwRef, text: MARKERS.password });
+    if (noteRef) await call('typeNote', 'browser_type', { session: directory, why, element: 'Notes field', target: noteRef, text: MARKERS.note });
+    await call('snapshotToFile', 'browser_snapshot', { session: directory, why, filename: 'snapshot-after-typing.yml' });
+    await call('consoleToFile', 'browser_console_messages', { session: directory, why, filename: 'console-saved.log' });
+    const listed = await call('networkToFile', 'browser_network_requests', { session: directory, why, filename: 'network-saved.log' });
+    report.networkList = listed.text;
+    const listedInline = await call('networkInline', 'browser_network_requests', { session: directory, why });
+    const apiIndex = (listedInline.text.match(/^(\d+)\.\s.*\/api/m) || listedInline.text.match(/\[(\d+)\][^\n]*\/api/) || [])[1];
+    report.apiIndex = apiIndex;
+    if (apiIndex) {
+      await call('requestDetailsToFile', 'browser_network_request', { session: directory, why, index: Number(apiIndex), filename: 'request-details.txt' });
+      await call('requestBodyToFile', 'browser_network_request', { session: directory, why, index: Number(apiIndex), part: 'response-body', filename: 'response-body.txt' });
+    }
+    await call('evaluateToFile', 'browser_evaluate', { session: directory, why, function: '() => ({ ls: localStorage.getItem("q371ls"), api: window.q371api })', filename: 'evaluation.json' });
+    await call('findToFile', 'browser_find', { session: directory, why, query: 'Sign in', filename: 'find-results.md' });
+    await call('screenshot', 'browser_take_screenshot', { session: directory, why, type: 'png' });
+    if (family === 'chromium') await call('pdf', 'browser_pdf_save', { session: directory, why });
+    const dl = (snap.text.match(/link "Download the sample" \[ref=([^\]]+)\]/) || [])[1];
+    if (dl) await call('download', 'browser_click', { session: directory, why, element: 'Download link', target: dl });
+    await call('waitDownload', 'browser_wait_for', { session: directory, why, time: 2 });
+    await call('stopVideo', 'browser_stop_video', { session: directory, why });
+    await call('stopTracing', 'browser_stop_tracing', { session: directory, why });
+    await call('storageState', 'browser_storage_state', { session: directory, why });
+    await call('close', 'browser_close', { session: directory, why });
+
+    report.files = walk(directory, directory, []);
+    const caught = await call('catchUp', 'browserai_catch_up', { session: directory, why: 'lane q371: what does catch_up name now' });
+    report.catchUp = caught.text;
+  } catch (failure) {
+    report.failure = String(failure && failure.stack || failure);
+  } finally {
+    try {
+      if (child) {
+        await call('destroy', 'browserai_destroy', { directory, why: 'lane q371: the sample is read, and it holds sample values' });
+        child.stdin.end();
+        const exited = await new Promise((resolve) => {
+          const timer = setTimeout(() => resolve(false), 30000);
+          child.once('exit', (code) => { clearTimeout(timer); report.exitCode = code; resolve(true); });
+        });
+        if (!exited) { report.killedAfterTimeout = true; child.kill(); }
+      }
+    } catch (failure) { report.cleanupFailure = String(failure); }
+    server.close();
+    report.stderrTail = stderr.slice(-4000);
+    report.endedUtc = new Date().toISOString();
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  }
+})();

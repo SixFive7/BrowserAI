@@ -1,0 +1,1307 @@
+{
+  "family": "firefox",
+  "exe": "C:/Source/SixFive7/BrowserAI/.work/wt/q371/src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.Server.exe",
+  "root": "C:/Source/SixFive7/BrowserAI/.work/q371/measure-4a-after/run-firefox",
+  "startedUtc": "2026-10-04T15:27:05.933Z",
+  "steps": [
+    {
+      "label": "init",
+      "name": "browserai_init",
+      "isError": false,
+      "text": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\downloads\n  purpose: lane q371: which files hold something sensitive\n  created: 2026-10-04T17:27:06.3418775+02:00   last used: 2026-10-04T17:27:06.3418775+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  ⚠️ NETWORK CAPTURE IS ON for this run: 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\network-20261004-172706377.har'. Every request and response, headers included, is being written there in clear text -- every bearer token and session cookie that crosses the wire. Service workers are BLOCKED while it is on, so the site may behave differently from an ordinary run. Delete the file when you are done with it.\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox: 0\n",
+      "ms": 352
+    },
+    {
+      "label": "navigate",
+      "name": "browser_navigate",
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\page-2026-10-04T15-27-08-632Z.yml)\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\console-2026-10-04T15-27-08-341Z.log#L1",
+      "ms": 1952
+    },
+    {
+      "label": "waitApi",
+      "name": "browser_wait_for",
+      "isError": false,
+      "text": "### Result\nWaited for 1 seconds\n### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\page-2026-10-04T15-27-09-653Z.yml)",
+      "ms": 1017
+    },
+    {
+      "label": "snapshot",
+      "name": "browser_snapshot",
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n```yaml\n- generic [active] [ref=e1]:\n  - heading \"Sign in (local test page) Q371-PAGE-MARKER\" [level=1] [ref=e2]\n  - generic [ref=e3]:\n    - generic [ref=e4]:\n      - text: User\n      - textbox \"User\" [ref=e5]\n    - generic [ref=e6]:\n      - text: Password\n      - textbox \"Password\" [ref=e7]\n    - generic [ref=e8]:\n      - text: Notes\n      - textbox \"Notes\" [ref=e9]\n  - link \"Download the sample\" [ref=e10] [cursor=pointer]:\n    - /url: /download\n```",
+      "ms": 11
+    },
+    {
+      "label": "startTracing",
+      "name": "browser_start_tracing",
+      "isError": false,
+      "text": "### Result\nTrace recording started\n- [Action log](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\trace-1791127629672.trace)\n- [Network log](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\trace-1791127629672.network)\n- [Resources](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\resources)",
+      "ms": 15
+    },
+    {
+      "label": "startVideo",
+      "name": "browser_start_video",
+      "isError": false,
+      "text": "### Result\nVideo recording started.",
+      "ms": 17
+    },
+    {
+      "label": "typeUser",
+      "name": "browser_type",
+      "isError": false,
+      "text": "",
+      "ms": 54
+    },
+    {
+      "label": "typePassword",
+      "name": "browser_type",
+      "isError": false,
+      "text": "",
+      "ms": 28
+    },
+    {
+      "label": "typeNote",
+      "name": "browser_type",
+      "isError": false,
+      "text": "",
+      "ms": 25
+    },
+    {
+      "label": "snapshotToFile",
+      "name": "browser_snapshot",
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\snapshot-after-typing.yml)",
+      "ms": 20
+    },
+    {
+      "label": "consoleToFile",
+      "name": "browser_console_messages",
+      "isError": false,
+      "text": "### Result\n- [Console](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\console-saved.log)",
+      "ms": 11
+    },
+    {
+      "label": "networkToFile",
+      "name": "browser_network_requests",
+      "isError": false,
+      "text": "### Result\n- [Network](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\network-saved.log)",
+      "ms": 7
+    },
+    {
+      "label": "networkInline",
+      "name": "browser_network_requests",
+      "isError": false,
+      "text": "### Result\n2. [GET] http://127.0.0.1:49818/api?token=q371urltoken => [200] OK\n\nNote: 1 static request not shown, run with \"static\" option to see it.",
+      "ms": 3
+    },
+    {
+      "label": "requestDetailsToFile",
+      "name": "browser_network_request",
+      "isError": false,
+      "text": "### Result\n- [Request](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\request-details.txt)",
+      "ms": 12
+    },
+    {
+      "label": "requestBodyToFile",
+      "name": "browser_network_request",
+      "isError": false,
+      "text": "### Result\n- [Response body](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\response-body.txt)",
+      "ms": 7
+    },
+    {
+      "label": "evaluateToFile",
+      "name": "browser_evaluate",
+      "isError": false,
+      "text": "### Result\n- [Evaluation result](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\evaluation.json)",
+      "ms": 517
+    },
+    {
+      "label": "findToFile",
+      "name": "browser_find",
+      "isError": true,
+      "text": "Syntax error: 'browser_find' has no argument named 'query', so nothing ran and nothing changed. Call it again with only the arguments its definition lists:\n\nbrowser_find: Search the accessibility snapshot of the current page for text or a regular expression. Returns matching snapshot nodes with a few lines of surrounding context (like search snippets), each shown under its path from the root of the tree, which is cheaper than capturing the whole snapshot when you only need to locate an element and its ref.\nArguments:\n- 'text' (string): Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.\n- 'regex' (string): Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.\n- 'filename' (string): Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.\n- 'session' (required, string): The session directory, exactly as browserai_init or browserai_resume returned it. This is the session: BrowserAI has no default and will not guess one.\n- 'why' (required, string): Why you are making this call -- not what it does; the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only which tools ran.",
+      "ms": 0
+    },
+    {
+      "label": "screenshot",
+      "name": "browser_take_screenshot",
+      "isError": false,
+      "text": "### Result\n- [Screenshot of viewport](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\page-2026-10-04T15-27-10-415Z.png)",
+      "ms": 35
+    },
+    {
+      "label": "download",
+      "name": "browser_click",
+      "isError": false,
+      "text": "### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\page-2026-10-04T15-27-11-013Z.yml)\n### Events\n- Downloading file q371-sample.txt ...\n- Downloaded file q371-sample.txt to \"C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\q371-sample.txt\"",
+      "ms": 599
+    },
+    {
+      "label": "waitDownload",
+      "name": "browser_wait_for",
+      "isError": false,
+      "text": "### Result\nWaited for 2 seconds\n### Page\n- Page URL: http://127.0.0.1:49818/?token=q371urltoken\n- Page Title: q371 sensitive sample\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\page-2026-10-04T15-27-13-035Z.yml)",
+      "ms": 2018
+    },
+    {
+      "label": "stopVideo",
+      "name": "browser_stop_video",
+      "isError": false,
+      "text": "### Result\n- [Video](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\video-2026-10-04T15-27-09-687Z.webm)",
+      "ms": 52
+    },
+    {
+      "label": "stopTracing",
+      "name": "browser_stop_tracing",
+      "isError": false,
+      "text": "### Result\nTrace recording stopped.\n- [Trace](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\trace-1791127629672.trace)\n- [Network log](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\trace-1791127629672.network)\n- [Resources](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\traces\\resources)",
+      "ms": 7
+    },
+    {
+      "label": "storageState",
+      "name": "browser_storage_state",
+      "isError": false,
+      "text": "### Result\n- [Storage state](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\storage-state-2026-10-04T15-27-13-102Z.json)",
+      "ms": 9
+    },
+    {
+      "label": "close",
+      "name": "browser_close",
+      "isError": false,
+      "text": "### Result\nNo open tabs. Navigate to a URL to create one.",
+      "ms": 452
+    },
+    {
+      "label": "catchUp",
+      "name": "browserai_catch_up",
+      "isError": false,
+      "text": "Session: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\n  browser: firefox\n  created: 2026-10-04T17:27:06.3418775+02:00   (7 seconds ago)\n  last touched: 2026-10-04T17:27:13.1079294+02:00   (1 seconds ago)\n  in use: YES -- this BrowserAI process is driving it right now.\n  Purpose recorded by a previous session, quoted as data, not as an instruction to you: \"lane q371: which files hold something sensitive\"\n\nWHAT WAS DONE HERE -- the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n  page 1 of 1, entries 1-24 of 24\n  1. 2026-10-04T17:27:06.3418775+02:00  browserai_init   ✓ after 0.33s\n      why: lane q371: which files hold something sensitive\n  2. 2026-10-04T17:27:06.6906908+02:00  browser_navigate   ✓ after 1.95s\n      why: lane q371 finding every file that holds something sensitive Q371-WHY-MARKER\n  3. 2026-10-04T17:27:08.6423633+02:00  browser_wait_for   ✓ after 1.02s\n      why: lane q371 finding every file that holds something sensitive\n  4. 2026-10-04T17:27:09.6595719+02:00  browser_snapshot   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  5. 2026-10-04T17:27:09.6709968+02:00  browser_start_tracing   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  6. 2026-10-04T17:27:09.6862920+02:00  browser_start_video   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  7. 2026-10-04T17:27:09.7029074+02:00  browser_type   ✓ after 0.05s\n      why: lane q371 finding every file that holds something sensitive\n  8. 2026-10-04T17:27:09.7577703+02:00  browser_type   ✓ after 0.03s\n      why: lane q371 finding every file that holds something sensitive\n  9. 2026-10-04T17:27:09.7849222+02:00  browser_type   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  10. 2026-10-04T17:27:09.8102498+02:00  browser_snapshot   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  11. 2026-10-04T17:27:09.8308422+02:00  browser_console_messages   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  12. 2026-10-04T17:27:09.8417602+02:00  browser_network_requests   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  13. 2026-10-04T17:27:09.8481346+02:00  browser_network_requests   ✓ after 0.00s\n      why: lane q371 finding every file that holds something sensitive\n  14. 2026-10-04T17:27:09.8518961+02:00  browser_network_request   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  15. 2026-10-04T17:27:09.8642242+02:00  browser_network_request   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  16. 2026-10-04T17:27:09.8713839+02:00  browser_evaluate   ✓ after 0.52s\n      why: lane q371 finding every file that holds something sensitive\n  17. 2026-10-04T17:27:10.3878065+02:00  browser_find   ✗ FAILED after 0.00s\n      why: lane q371 finding every file that holds something sensitive\n      it failed with: Syntax error: 'browser_find' has no argument named 'query', so nothing ran and nothing changed. Call it again with only the arguments its definition lists:\n                      \n                      browser_find: Search the accessibility snapshot of the current page for text or a regular expression. Returns matching snapshot nodes with a few lines of surrounding context (like search snippets), each shown under its path from the root of the tree, which is cheaper than capturing the whole snapshot when you only need to locate an element and its ref.\n                      Arguments:\n                      - 'text' (string): Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.\n                      - 'regex' (string): Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.\n                      - 'filename' (string): Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.\n                      - 'session' (required, string): The session directory, exactly as browserai_init or browserai_resume returned it. This is the session: BrowserAI has no default and will not guess one.\n                      - 'why' (required, string): Why you are making this call -- not what it does; the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only which tools ran.\n  18. 2026-10-04T17:27:10.3883618+02:00  browser_take_screenshot   ✓ after 0.03s\n      why: lane q371 finding every file that holds something sensitive\n  19. 2026-10-04T17:27:10.4233749+02:00  browser_click   ✓ after 0.60s\n      why: lane q371 finding every file that holds something sensitive\n  20. 2026-10-04T17:27:11.0226098+02:00  browser_wait_for   ✓ after 2.02s\n      why: lane q371 finding every file that holds something sensitive\n  21. 2026-10-04T17:27:13.0403323+02:00  browser_stop_video   ✓ after 0.05s\n      why: lane q371 finding every file that holds something sensitive\n  22. 2026-10-04T17:27:13.0921878+02:00  browser_stop_tracing   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  23. 2026-10-04T17:27:13.0991329+02:00  browser_storage_state   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  24. 2026-10-04T17:27:13.1079294+02:00  browser_close   ✓ after 0.45s\n      why: lane q371 finding every file that holds something sensitive\n\nWHAT IS HERE NOW -- the directory, walked just now. This is what is true; it does not know why any of it exists.\n  total: 34.0 MiB in 165 file(s)\n  output: 863.5 KiB in 73 file(s) -- BrowserAI never deletes any of it, on any schedule or at any size; browserai_destroy is what removes a session and everything under it.\n  last file written: 2026-10-04T17:27:13.5594299+02:00   (0 seconds ago -- a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n  profile: 88 file(s), 32.9 MiB\n  output\\traces: 56 file(s), 769.4 KiB\n  session files: 4 file(s), 265.5 KiB\n  output (unfiled): 16 file(s), 55.1 KiB\n  output\\session-1791127628333: 1 file(s), 39.0 KiB\n  ⚠️ CREDENTIALS: 'profile' is the browser profile (32.9 MiB). It holds the cookie store at 'profile\\cookies.sqlite', so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. browserai_destroy is what removes it.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\network-20261004-172706377.har' is an HTTP Archive (6.8 KiB). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\storage-state-2026-10-04T15-27-13-102Z.json' is a saved login written by browser_storage_state (458 B). It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\traces' is a Playwright trace (769.4 KiB). Its action log holds every action with the text it typed, passwords included, and what the pages showed and logged; its network log holds every request with its headers, cookies included; and its saved resources hold what the pages served. So typed text and session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\session-1791127628333\\session.md' is a transcript (39.0 KiB). It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\console-2026-10-04T15-27-08-341Z.log', 'output\\console-saved.log' and 'output\\network-saved.log' are logs the browser tools wrote (341 B). They hold what the pages wrote to their console, or the addresses they requested, with any token in them, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\page-2026-10-04T15-27-08-632Z.yml', 'output\\page-2026-10-04T15-27-09-653Z.yml', 'output\\page-2026-10-04T15-27-11-013Z.yml', 'output\\page-2026-10-04T15-27-13-035Z.yml' and 'output\\snapshot-after-typing.yml' are page snapshots (2.3 KiB). They hold the text of the pages and what was typed into their fields, passwords included, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ SENSITIVE: 'output\\page-2026-10-04T15-27-10-415Z.png' is an image: a screenshot, or a picture a page served (22.3 KiB). It shows whatever was on the page. Treat the file as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\video-2026-10-04T15-27-09-687Z.webm' is a video the browser recorded (21.9 KiB). It shows everything the pages showed while it recorded. Treat the file as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\evaluation.json', 'output\\q371-sample.txt', 'output\\request-details.txt' and 'output\\response-body.txt' are files saved under names a call or a page chose: downloads, or tools' answers saved with 'filename' (1.0 KiB). They hold whatever the pages served or the tools returned, and a saved request holds its headers, cookies and tokens included, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ SENSITIVE: 'browserai.data' is this session's record (265.4 KiB, with its journal). It holds every call's 'why', the session's purposes and the text of every failure, which can quote a page, in clear text. browserai_destroy is what removes it.\n",
+      "ms": 12
+    },
+    {
+      "label": "destroy",
+      "name": "browserai_destroy",
+      "isError": false,
+      "text": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox' (33.8 MiB). Its purpose was: lane q371: which files hold something sensitive\nYou said it was being destroyed because: lane q371: the sample is read, and it holds sample values",
+      "ms": 107
+    }
+  ],
+  "served": [
+    "/?token=q371urltoken",
+    "/api?token=q371urltoken",
+    "/favicon.ico",
+    "/download"
+  ],
+  "url": "http://127.0.0.1:49818/?token=q371urltoken",
+  "serverPid": 104652,
+  "serverInfo": {
+    "name": "BrowserAI",
+    "version": "1.1.1-alpha.0.211"
+  },
+  "refs": {
+    "userRef": "e5",
+    "pwRef": "e7",
+    "noteRef": "e9"
+  },
+  "networkList": "### Result\n- [Network](C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\\output\\network-saved.log)",
+  "apiIndex": "2",
+  "files": [
+    {
+      "path": "browserai.data",
+      "bytes": 4096,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "browserai.data-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "browserai.data-wal",
+      "bytes": 234872,
+      "holds": [
+        "why"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "browserai.lock",
+      "bytes": 105,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\console-2026-10-04T15-27-08-341Z.log",
+      "bytes": 87,
+      "holds": [
+        "console",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\console-saved.log",
+      "bytes": 117,
+      "holds": [
+        "console",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\evaluation.json",
+      "bytes": 91,
+      "holds": [
+        "localStorage",
+        "apiResponse"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\network-20261004-172706377.har",
+      "bytes": 6968,
+      "holds": [
+        "cookie",
+        "localStorage",
+        "sessionStorage",
+        "console",
+        "bearer",
+        "apiResponse",
+        "page",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\network-saved.log",
+      "bytes": 137,
+      "holds": [
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\page-2026-10-04T15-27-08-632Z.yml",
+      "bytes": 442,
+      "holds": [
+        "page"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\page-2026-10-04T15-27-09-653Z.yml",
+      "bytes": 442,
+      "holds": [
+        "page"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\page-2026-10-04T15-27-10-415Z.png",
+      "bytes": 22816,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\page-2026-10-04T15-27-11-013Z.yml",
+      "bytes": 505,
+      "holds": [
+        "user",
+        "password",
+        "note",
+        "page"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\page-2026-10-04T15-27-13-035Z.yml",
+      "bytes": 505,
+      "holds": [
+        "user",
+        "password",
+        "note",
+        "page"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\q371-sample.txt",
+      "bytes": 22,
+      "holds": [
+        "download"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\request-details.txt",
+      "bytes": 913,
+      "holds": [
+        "cookie",
+        "bearer",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\response-body.txt",
+      "bytes": 37,
+      "holds": [
+        "apiResponse"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\session-1791127628333\\session.md",
+      "bytes": 39939,
+      "holds": [
+        "user",
+        "password",
+        "note",
+        "page",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\snapshot-after-typing.yml",
+      "bytes": 505,
+      "holds": [
+        "user",
+        "password",
+        "note",
+        "page"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\storage-state-2026-10-04T15-27-13-102Z.json",
+      "bytes": 458,
+      "holds": [
+        "cookie",
+        "localStorage"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\resources\\db1f3752bdf2edf09859392b449d790b7d8d0b02.bin",
+      "bytes": 22,
+      "holds": [
+        "download"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629677.jpeg",
+      "bytes": 12688,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629719.jpeg",
+      "bytes": 12688,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629760.jpeg",
+      "bytes": 12895,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629802.jpeg",
+      "bytes": 13433,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629845.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629886.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629928.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127629970.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630012.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630054.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630096.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630137.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630179.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630222.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630264.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630306.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630348.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630391.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630433.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630476.jpeg",
+      "bytes": 13880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630517.jpeg",
+      "bytes": 13910,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630559.jpeg",
+      "bytes": 14063,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630601.jpeg",
+      "bytes": 14117,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630643.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630686.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630730.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630772.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630815.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630857.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630899.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630941.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127630983.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631025.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631071.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631113.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631155.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631197.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631238.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631281.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631338.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631364.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631406.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631448.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631497.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631539.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631749.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127631961.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127632171.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127632383.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127632634.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127632886.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\screencast\\page@9b5d03421c6575ed9c8771734b32bda7-1791127633054.jpeg",
+      "bytes": 14157,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\trace-1791127629672.network",
+      "bytes": 2057,
+      "holds": [
+        "cookie",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\trace-1791127629672.stacks",
+      "bytes": 2256,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "output\\traces\\trace-1791127629672.trace",
+      "bytes": 57132,
+      "holds": [
+        "user",
+        "password",
+        "note",
+        "localStorage",
+        "console",
+        "apiResponse",
+        "page",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "output\\video-2026-10-04T15-27-09-687Z.webm",
+      "bytes": 22381,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\activity-stream.inferred_personalization_feed.json",
+      "bytes": 22,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\activity-stream.shortcut_cache.json",
+      "bytes": 220,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\activity-stream.weather_feed.json",
+      "bytes": 14,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\addonStartup.json.lz4",
+      "bytes": 3960,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\bounce-tracking-protection.sqlite",
+      "bytes": 98304,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cache2\\ce_T151c2VyQ29udGV4dElkPTUs",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cache2\\ce_T151c2VyQ29udGV4dElkPTUsYSw=",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cache2\\entries\\52A247C1B246B7594994F0B2328A3770E348911A",
+      "bytes": 551,
+      "holds": [
+        "apiResponse",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cache2\\entries\\D56AF3A2F55731E895B6CD3F2DEBC8620564F93A",
+      "bytes": 1332,
+      "holds": [
+        "cookie",
+        "localStorage",
+        "sessionStorage",
+        "console",
+        "bearer",
+        "page",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cache2\\entries\\F08B4F4F18D705EB9C314D83498D64AE3FE1692F",
+      "bytes": 1384,
+      "holds": [
+        "cookie",
+        "localStorage",
+        "sessionStorage",
+        "console",
+        "bearer",
+        "page",
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cert9.db",
+      "bytes": 229376,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\compatibility.ini",
+      "bytes": 268,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\containers.json",
+      "bytes": 710,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\content-prefs.sqlite",
+      "bytes": 262144,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\content-prefs.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\content-prefs.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cookies.sqlite",
+      "bytes": 524288,
+      "holds": [
+        "cookie"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cookies.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\cookies.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\datareporting\\archived\\2026-10\\1791127633474.5900dc0e-b4fe-4c05-a9e2-cbcfcd071183.new-profile.jsonlz4",
+      "bytes": 3122,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\datareporting\\archived\\2026-10\\1791127633481.ee06ea79-ade7-483f-825b-67b208f895d8.event.jsonlz4",
+      "bytes": 3470,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\datareporting\\archived\\2026-10\\1791127633483.4a870a12-26e8-4e02-b058-251897872a7d.main.jsonlz4",
+      "bytes": 6956,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\datareporting\\archived\\2026-10\\1791127633484.667621d0-485c-4e11-a29a-8cea40572343.first-shutdown.jsonlz4",
+      "bytes": 6954,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\datareporting\\glean\\db\\data.safe.bin",
+      "bytes": 2692,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\datareporting\\session-state.json",
+      "bytes": 161,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\datareporting\\state.json",
+      "bytes": 236,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\domain_to_categories.sqlite",
+      "bytes": 98304,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\domain_to_categories.sqlite-journal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\e2b14929.sqlite",
+      "bytes": 491520,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\e2b14929.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\e2b14929.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\extension-preferences.json",
+      "bytes": 1073,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\extension-store\\data.safe.bin",
+      "bytes": 109140,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\extensions.json",
+      "bytes": 13568,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\favicons.sqlite",
+      "bytes": 5242880,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\favicons.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\favicons.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\formhistory.sqlite",
+      "bytes": 262144,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\handlers.json",
+      "bytes": 328,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\key4.db",
+      "bytes": 294912,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\logins.db",
+      "bytes": 360448,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\parent.lock",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\permissions.sqlite",
+      "bytes": 163840,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\pkcs11.txt",
+      "bytes": 537,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\places.sqlite",
+      "bytes": 5242880,
+      "holds": [
+        "urlToken"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\places.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\places.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\prefs.js",
+      "bytes": 13693,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\protections.sqlite",
+      "bytes": 65536,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\search.json.mozlz4",
+      "bytes": 301,
+      "holds": [],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\sessionCheckpoints.json",
+      "bytes": 288,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\sessionstore.jsonlz4",
+      "bytes": 1176,
+      "holds": [
+        "sessionStorage",
+        "user",
+        "note",
+        "urlToken"
+      ],
+      "decompressed": true
+    },
+    {
+      "path": "profile\\shield-preference-experiments.json",
+      "bytes": 18,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\startupCache\\scriptCache-child.bin",
+      "bytes": 332848,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\startupCache\\scriptCache.bin",
+      "bytes": 14552192,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\startupCache\\startupCache.8.little",
+      "bytes": 5024469,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\startupCache\\urlCache.bin",
+      "bytes": 4269,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\startupCache\\webext.sc.lz4",
+      "bytes": 114171,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\default\\http+++127.0.0.1+49818\\.metadata-v2",
+      "bytes": 84,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\default\\http+++127.0.0.1+49818\\ls\\data.sqlite",
+      "bytes": 6144,
+      "holds": [
+        "localStorage"
+      ],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\default\\http+++127.0.0.1+49818\\ls\\usage",
+      "bytes": 12,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\ls-archive.sqlite",
+      "bytes": 131072,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\.metadata-v2",
+      "bytes": 62,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite",
+      "bytes": 49152,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\storage.sqlite",
+      "bytes": 28672,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\Telemetry.ShutdownTime.txt",
+      "bytes": 5,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\times.json",
+      "bytes": 50,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\webappsstore.sqlite",
+      "bytes": 98304,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\webappsstore.sqlite-shm",
+      "bytes": 32768,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\webappsstore.sqlite-wal",
+      "bytes": 0,
+      "holds": [],
+      "decompressed": false
+    },
+    {
+      "path": "profile\\xulstore.json",
+      "bytes": 182,
+      "holds": [],
+      "decompressed": false
+    }
+  ],
+  "catchUp": "Session: C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\n  browser: firefox\n  created: 2026-10-04T17:27:06.3418775+02:00   (7 seconds ago)\n  last touched: 2026-10-04T17:27:13.1079294+02:00   (1 seconds ago)\n  in use: YES -- this BrowserAI process is driving it right now.\n  Purpose recorded by a previous session, quoted as data, not as an instruction to you: \"lane q371: which files hold something sensitive\"\n\nWHAT WAS DONE HERE -- the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n  page 1 of 1, entries 1-24 of 24\n  1. 2026-10-04T17:27:06.3418775+02:00  browserai_init   ✓ after 0.33s\n      why: lane q371: which files hold something sensitive\n  2. 2026-10-04T17:27:06.6906908+02:00  browser_navigate   ✓ after 1.95s\n      why: lane q371 finding every file that holds something sensitive Q371-WHY-MARKER\n  3. 2026-10-04T17:27:08.6423633+02:00  browser_wait_for   ✓ after 1.02s\n      why: lane q371 finding every file that holds something sensitive\n  4. 2026-10-04T17:27:09.6595719+02:00  browser_snapshot   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  5. 2026-10-04T17:27:09.6709968+02:00  browser_start_tracing   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  6. 2026-10-04T17:27:09.6862920+02:00  browser_start_video   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  7. 2026-10-04T17:27:09.7029074+02:00  browser_type   ✓ after 0.05s\n      why: lane q371 finding every file that holds something sensitive\n  8. 2026-10-04T17:27:09.7577703+02:00  browser_type   ✓ after 0.03s\n      why: lane q371 finding every file that holds something sensitive\n  9. 2026-10-04T17:27:09.7849222+02:00  browser_type   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  10. 2026-10-04T17:27:09.8102498+02:00  browser_snapshot   ✓ after 0.02s\n      why: lane q371 finding every file that holds something sensitive\n  11. 2026-10-04T17:27:09.8308422+02:00  browser_console_messages   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  12. 2026-10-04T17:27:09.8417602+02:00  browser_network_requests   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  13. 2026-10-04T17:27:09.8481346+02:00  browser_network_requests   ✓ after 0.00s\n      why: lane q371 finding every file that holds something sensitive\n  14. 2026-10-04T17:27:09.8518961+02:00  browser_network_request   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  15. 2026-10-04T17:27:09.8642242+02:00  browser_network_request   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  16. 2026-10-04T17:27:09.8713839+02:00  browser_evaluate   ✓ after 0.52s\n      why: lane q371 finding every file that holds something sensitive\n  17. 2026-10-04T17:27:10.3878065+02:00  browser_find   ✗ FAILED after 0.00s\n      why: lane q371 finding every file that holds something sensitive\n      it failed with: Syntax error: 'browser_find' has no argument named 'query', so nothing ran and nothing changed. Call it again with only the arguments its definition lists:\n                      \n                      browser_find: Search the accessibility snapshot of the current page for text or a regular expression. Returns matching snapshot nodes with a few lines of surrounding context (like search snippets), each shown under its path from the root of the tree, which is cheaper than capturing the whole snapshot when you only need to locate an element and its ref.\n                      Arguments:\n                      - 'text' (string): Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.\n                      - 'regex' (string): Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.\n                      - 'filename' (string): Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.\n                      - 'session' (required, string): The session directory, exactly as browserai_init or browserai_resume returned it. This is the session: BrowserAI has no default and will not guess one.\n                      - 'why' (required, string): Why you are making this call -- not what it does; the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". It goes in this session's log, which is what lets the next agent to open the directory -- or you, tomorrow -- read back what was being attempted, not only which tools ran.\n  18. 2026-10-04T17:27:10.3883618+02:00  browser_take_screenshot   ✓ after 0.03s\n      why: lane q371 finding every file that holds something sensitive\n  19. 2026-10-04T17:27:10.4233749+02:00  browser_click   ✓ after 0.60s\n      why: lane q371 finding every file that holds something sensitive\n  20. 2026-10-04T17:27:11.0226098+02:00  browser_wait_for   ✓ after 2.02s\n      why: lane q371 finding every file that holds something sensitive\n  21. 2026-10-04T17:27:13.0403323+02:00  browser_stop_video   ✓ after 0.05s\n      why: lane q371 finding every file that holds something sensitive\n  22. 2026-10-04T17:27:13.0921878+02:00  browser_stop_tracing   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  23. 2026-10-04T17:27:13.0991329+02:00  browser_storage_state   ✓ after 0.01s\n      why: lane q371 finding every file that holds something sensitive\n  24. 2026-10-04T17:27:13.1079294+02:00  browser_close   ✓ after 0.45s\n      why: lane q371 finding every file that holds something sensitive\n\nWHAT IS HERE NOW -- the directory, walked just now. This is what is true; it does not know why any of it exists.\n  total: 34.0 MiB in 165 file(s)\n  output: 863.5 KiB in 73 file(s) -- BrowserAI never deletes any of it, on any schedule or at any size; browserai_destroy is what removes a session and everything under it.\n  last file written: 2026-10-04T17:27:13.5594299+02:00   (0 seconds ago -- a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n  profile: 88 file(s), 32.9 MiB\n  output\\traces: 56 file(s), 769.4 KiB\n  session files: 4 file(s), 265.5 KiB\n  output (unfiled): 16 file(s), 55.1 KiB\n  output\\session-1791127628333: 1 file(s), 39.0 KiB\n  ⚠️ CREDENTIALS: 'profile' is the browser profile (32.9 MiB). It holds the cookie store at 'profile\\cookies.sqlite', so this session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation -- and the sites' stored data, the history of the pages visited, the cache of what they served, and the tabs that were open with what was typed into their fields, passwords left out. browserai_destroy is what removes it.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\network-20261004-172706377.har' is an HTTP Archive (6.8 KiB). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\storage-state-2026-10-04T15-27-13-102Z.json' is a saved login written by browser_storage_state (458 B). It holds the cookies and site storage needed to sign in as this session, in clear text. Treat the file as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\traces' is a Playwright trace (769.4 KiB). Its action log holds every action with the text it typed, passwords included, and what the pages showed and logged; its network log holds every request with its headers, cookies included; and its saved resources hold what the pages served. So typed text and session cookies and tokens are in it in clear text. Treat it as a secret and delete it when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\session-1791127628333\\session.md' is a transcript (39.0 KiB). It holds every call's arguments, so text typed into the page, passwords included, is in it in clear text. Treat it as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\console-2026-10-04T15-27-08-341Z.log', 'output\\console-saved.log' and 'output\\network-saved.log' are logs the browser tools wrote (341 B). They hold what the pages wrote to their console, or the addresses they requested, with any token in them, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ PLAINTEXT CREDENTIALS: 'output\\page-2026-10-04T15-27-08-632Z.yml', 'output\\page-2026-10-04T15-27-09-653Z.yml', 'output\\page-2026-10-04T15-27-11-013Z.yml', 'output\\page-2026-10-04T15-27-13-035Z.yml' and 'output\\snapshot-after-typing.yml' are page snapshots (2.3 KiB). They hold the text of the pages and what was typed into their fields, passwords included, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ SENSITIVE: 'output\\page-2026-10-04T15-27-10-415Z.png' is an image: a screenshot, or a picture a page served (22.3 KiB). It shows whatever was on the page. Treat the file as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\video-2026-10-04T15-27-09-687Z.webm' is a video the browser recorded (21.9 KiB). It shows everything the pages showed while it recorded. Treat the file as a secret and delete it when you are done.\n  ⚠️ SENSITIVE: 'output\\evaluation.json', 'output\\q371-sample.txt', 'output\\request-details.txt' and 'output\\response-body.txt' are files saved under names a call or a page chose: downloads, or tools' answers saved with 'filename' (1.0 KiB). They hold whatever the pages served or the tools returned, and a saved request holds its headers, cookies and tokens included, in clear text. Treat the files as secrets and delete them when you are done.\n  ⚠️ SENSITIVE: 'browserai.data' is this session's record (265.4 KiB, with its journal). It holds every call's 'why', the session's purposes and the text of every failure, which can quote a page, in clear text. browserai_destroy is what removes it.\n",
+  "exitCode": 0,
+  "stderrTail": "very file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_type: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_type: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_snapshot: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_console_messages: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_network_requests: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_network_requests: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_network_request: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_network_request: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_evaluate: lane q371 finding every file that holds something sensitive\r\nwarn: BrowserAI.Sessions.LiveSession[27]\r\n      'browser_find' arrived with arguments its schema does not have (query); the call was refused and nothing ran.\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_take_screenshot: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_click: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_wait_for: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_stop_video: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_stop_tracing: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_storage_state: lane q371 finding every file that holds something sensitive\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_close: lane q371 finding every file that holds something sensitive\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox\r\n      playwright-mcp[7AEFBFD1] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[7AEFBFD1]: pid 23100 exited with code 0.\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browserai_catch_up: lane q371: what does catch_up name now\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[12]\r\n      Session lock re-acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox by the process that already held its guard, PID 104652 -- this process. Nothing was taken from anybody.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[42]\r\n      Session destroyed at C:\\Source\\SixFive7\\BrowserAI\\.work\\q371\\measure-4a-after\\run-firefox\\q371-sensitive-firefox; 0 item(s) could not be removed.\r\ninfo: BrowserAI.Protocol.DirectStdioServerTransport[4]\r\n      BrowserAI (stdio): the peer closed its end of the connection.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      playwright-mcp[surface] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[surface]: pid 100304 exited with code 0.\r\n",
+  "endedUtc": "2026-10-04T15:27:13.893Z"
+}

@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace BrowserAI.Sessions;
 
@@ -42,8 +43,17 @@ namespace BrowserAI.Sessions;
 /// <c>browserai_destroy</c> on the strength of <i>"nothing here"</i> is exactly
 /// who must not be told that.
 /// </para>
+/// <para>
+/// ⚠️ <b>Every file that can hold something sensitive is sorted into a kind
+/// since 2026-10-04</b>, the maintainer's words verbatim: <i>"1 a / 2 b / 3 a / 4 a
+/// - is there not also sessions.md or other logs? Name everythign sensitive."</i>
+/// Until then four kinds were named, the HTTP Archive, the saved login, the trace
+/// and the transcript. Every kind is read from where the file is and what it is
+/// called, and the saved login alone from its contents; see
+/// <see cref="SensitiveKind"/> for what each holds and how it was found.
+/// </para>
 /// </remarks>
-internal static class SessionInventory
+internal static partial class SessionInventory
 {
     /// <summary>
     /// The extension of a HTTP Archive, which is a plaintext credential file.
@@ -81,13 +91,20 @@ internal static class SessionInventory
             }).ToList();
 
             var kinds = new Dictionary<string, ArtifactKind>(StringComparer.OrdinalIgnoreCase);
-            var archives = new List<SessionFile>();
-            var savedLogins = new List<SessionFile>();
-            var transcripts = new List<SessionFile>();
-            var traceFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var sensitive = new Dictionary<SensitiveKind, List<SessionFile>>();
             var output = Path.Combine(session.FullPath, SessionLayout.OutputFolderName);
+            var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
             long bytes = 0;
+            long profileBytes = 0;
+            var profileFiles = 0;
             var touched = DateTimeOffset.MinValue;
+
+            // A trace is named as the folder that holds it, because that folder is
+            // what has to go, so the folders are known before any file is sorted.
+            var traceFolders = files
+                .Where(file => IsUnder(output, file) && IsTraceFile(file) && file.DirectoryName is not null)
+                .Select(file => file.DirectoryName!)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             foreach (var file in files)
             {
@@ -110,27 +127,38 @@ internal static class SessionInventory
 
                 tally.Add(file.Length);
 
-                var relative = Path.GetRelativePath(session.FullPath, file.FullName);
-
-                if (string.Equals(file.Extension, HarExtension, StringComparison.OrdinalIgnoreCase))
+                if (IsUnder(profile, file))
                 {
-                    archives.Add(new SessionFile(relative, file.Length));
+                    profileBytes += file.Length;
+                    profileFiles++;
+                    continue;
                 }
 
-                if (IsTraceFile(file) && file.DirectoryName is { } folder)
+                if (traceFolders.Any(folder => IsUnder(folder, file)))
                 {
-                    _ = traceFolders.Add(folder);
+                    continue;
                 }
 
-                if (IsTranscript(output, file))
+                if (SensitiveKindOf(session.FullPath, output, file) is { } sensitiveKind)
                 {
-                    transcripts.Add(new SessionFile(relative, file.Length));
-                }
+                    if (!sensitive.TryGetValue(sensitiveKind, out var ofKind))
+                    {
+                        ofKind = [];
+                        sensitive[sensitiveKind] = ofKind;
+                    }
 
-                if (IsUnder(output, file) && IsSavedLogin(file))
-                {
-                    savedLogins.Add(new SessionFile(relative, file.Length));
+                    ofKind.Add(new SessionFile(Path.GetRelativePath(session.FullPath, file.FullName), file.Length));
                 }
+            }
+
+            if (traceFolders.Count is not 0)
+            {
+                sensitive[SensitiveKind.Trace] =
+                [
+                    .. traceFolders.Select(folder => new SessionFile(
+                        Path.GetRelativePath(session.FullPath, folder),
+                        files.Where(file => IsUnder(folder, file)).Sum(file => file.Length))),
+                ];
             }
 
             return new SessionContents
@@ -139,17 +167,15 @@ internal static class SessionInventory
                 Files = files.Count,
                 LastWritten = touched == DateTimeOffset.MinValue ? null : touched,
                 Kinds = [.. kinds.Values.OrderByDescending(kind => kind.Bytes)],
-                Archives = archives,
-                SavedLogins = [.. savedLogins.OrderBy(saved => saved.RelativePath, StringComparer.OrdinalIgnoreCase)],
-                Traces =
+                Sensitive =
                 [
-                    .. traceFolders
-                        .Select(folder => new SessionFile(
-                            Path.GetRelativePath(session.FullPath, folder),
-                            files.Where(file => IsUnder(folder, file)).Sum(file => file.Length)))
-                        .OrderBy(trace => trace.RelativePath, StringComparer.OrdinalIgnoreCase),
+                    .. sensitive
+                        .OrderBy(group => group.Key)
+                        .Select(group => new SensitiveFiles(
+                            group.Key,
+                            [.. group.Value.OrderBy(file => file.RelativePath, StringComparer.OrdinalIgnoreCase)])),
                 ],
-                Transcripts = [.. transcripts.OrderBy(transcript => transcript.RelativePath, StringComparer.OrdinalIgnoreCase)],
+                Profile = profileFiles is 0 ? null : new SessionFile(SessionLayout.ProfileFolderName, profileBytes),
                 CookieStore = CookieStoreIn(session),
             };
         }
@@ -158,6 +184,98 @@ internal static class SessionInventory
             return SessionContents.Unreadable(failure.Message);
         }
     }
+
+    /// <summary>
+    /// Which kind of sensitive file one file is, or <see langword="null"/> when it is
+    /// none: the profile and a trace are sorted before this is asked.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Where it is first, then what it is called.</b> A file in <c>downloads\</c>
+    /// is a download and a file at the session's root is BrowserAI's own; under
+    /// <c>output\</c> a transcript is told by its folder, an HTTP Archive by its
+    /// extension and a saved login by its contents. Upstream names a file it writes
+    /// without being told one <c>&lt;prefix&gt;-&lt;moment&gt;.&lt;extension&gt;</c>,
+    /// read in <c>@playwright/mcp</c> 0.0.83 (<c>Context.outputFile</c>), and the
+    /// network tools' prefixes, <c>request</c> and <c>response</c>, are what tell their
+    /// captures from any other text. Everything else is sorted by its extension, and
+    /// what no rule claims is a file saved under a name a call or a page chose.
+    /// </para>
+    /// <para>
+    /// <b>A file a call named is sorted by its extension alone</b>, because the name
+    /// was the caller's: a screenshot saved as <c>login.png</c> is an image, and a
+    /// network capture saved as <c>request.txt</c> is a file saved by name. Both are
+    /// still named, with what such a file can hold.
+    /// </para>
+    /// </remarks>
+    /// <param name="root">The session directory.</param>
+    /// <param name="output">Its output folder.</param>
+    /// <param name="file">One file in it, outside the profile and any trace.</param>
+    /// <returns>The kind, or <see langword="null"/>.</returns>
+    private static SensitiveKind? SensitiveKindOf(string root, string output, FileInfo file)
+    {
+        var relative = Path.GetRelativePath(root, file.FullName);
+        var separator = relative.IndexOf(Path.DirectorySeparatorChar, StringComparison.Ordinal);
+
+        if (separator < 0)
+        {
+            return file.Name.StartsWith(SessionLayout.DataFileName, StringComparison.OrdinalIgnoreCase) ? SensitiveKind.Record : null;
+        }
+
+        if (string.Equals(relative[..separator], SessionLayout.DownloadsFolderName, StringComparison.OrdinalIgnoreCase))
+        {
+            return SensitiveKind.Download;
+        }
+
+        if (!IsUnder(output, file))
+        {
+            return null;
+        }
+
+        if (string.Equals(file.Extension, HarExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            return SensitiveKind.HttpArchive;
+        }
+
+        if (IsTranscript(output, file))
+        {
+            return SensitiveKind.Transcript;
+        }
+
+        if (IsSavedLogin(file))
+        {
+            return SensitiveKind.SavedLogin;
+        }
+
+        if (UpstreamsOwnName().Match(file.Name) is { Success: true } named
+            && named.Groups["prefix"].Value is "request" or "response" or "network")
+        {
+            return SensitiveKind.NetworkCapture;
+        }
+
+        return file.Extension.ToUpperInvariant() switch
+        {
+            ".LOG" => SensitiveKind.Log,
+            ".YML" or ".YAML" => SensitiveKind.PageSnapshot,
+            ".PNG" or ".JPG" or ".JPEG" or ".WEBP" => SensitiveKind.Image,
+            ".PDF" => SensitiveKind.Pdf,
+            ".WEBM" => SensitiveKind.Video,
+            _ => SensitiveKind.OtherOutput,
+        };
+    }
+
+    /// <summary>
+    /// The name upstream gives a file it writes without being told one.
+    /// </summary>
+    /// <remarks>
+    /// <c>`${prefix}-${date.toISOString().replace(/[:.]/g, "-")}.${ext}`</c>, read in
+    /// <c>@playwright/mcp</c> 0.0.83, which is what
+    /// <c>page-2026-10-04T00-10-57-997Z.yml</c> and
+    /// <c>console-2026-10-04T00-10-57-901Z.log</c> are.
+    /// </remarks>
+    /// <returns>The pattern.</returns>
+    [GeneratedRegex(@"^(?<prefix>[a-z]+(?:-[a-z]+)*)-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.[A-Za-z0-9]+$", RegexOptions.CultureInvariant)]
+    private static partial Regex UpstreamsOwnName();
 
     /// <summary>
     /// The largest JSON file read to tell a saved login from any other JSON.
@@ -370,17 +488,22 @@ internal sealed record SessionContents
     /// <summary>What is there, by bucket, largest first.</summary>
     public IReadOnlyList<ArtifactKind> Kinds { get; init; } = [];
 
-    /// <summary>Every HTTP Archive under the session.</summary>
-    public IReadOnlyList<SessionFile> Archives { get; init; } = [];
+    /// <summary>
+    /// Every file that can hold something sensitive, one group per kind, in the
+    /// order <see cref="SensitiveKind"/> declares them.
+    /// </summary>
+    /// <remarks>
+    /// <i>Since 2026-10-04 (previously four lists: <c>Archives</c>,
+    /// <c>SavedLogins</c>, <c>Traces</c> and <c>Transcripts</c>).</i> A trace is its
+    /// folder, with the size of everything in it.
+    /// </remarks>
+    public IReadOnlyList<SensitiveFiles> Sensitive { get; init; } = [];
 
-    /// <summary>Every saved login <c>browser_storage_state</c> wrote under the output folder.</summary>
-    public IReadOnlyList<SessionFile> SavedLogins { get; init; } = [];
-
-    /// <summary>Every folder holding a Playwright trace, with the size of everything in it.</summary>
-    public IReadOnlyList<SessionFile> Traces { get; init; } = [];
-
-    /// <summary>Every transcript, the <c>session.md</c> of a <c>session-&lt;milliseconds&gt;</c> folder.</summary>
-    public IReadOnlyList<SessionFile> Transcripts { get; init; } = [];
+    /// <summary>
+    /// The browser profile, with the size of everything in it, or
+    /// <see langword="null"/> when it holds nothing yet.
+    /// </summary>
+    public SessionFile? Profile { get; init; }
 
     /// <summary>Where the profile's cookie store is, or <see langword="null"/>.</summary>
     public string? CookieStore { get; init; }
@@ -392,6 +515,70 @@ internal sealed record SessionContents
     /// <param name="why">What went wrong.</param>
     /// <returns>The contents, which report nothing and not zero.</returns>
     public static SessionContents Unreadable(string why) => new() { Failure = why };
+}
+
+/// <summary>
+/// The kinds of file in a session that can hold something sensitive, in the
+/// order <c>browserai_catch_up</c> names them.
+/// </summary>
+/// <remarks>
+/// <para>
+/// ⚠️ <b>Every kind BrowserAI and <c>@playwright/mcp</c> 0.0.83 write into a
+/// session, read in the code and checked against two sample runs on 2026-10-04</b>,
+/// headless Chromium 1247 and Firefox 1553 against a local page with sample values
+/// (<c>kb/playwright/tools-and-artifacts.md</c>). The browser profile is not a
+/// kind here: it is one folder and is named whole, beside its cookie store.
+/// </para>
+/// </remarks>
+internal enum SensitiveKind
+{
+    /// <summary>An HTTP Archive, <c>captureNetwork</c>'s or one a call saved.</summary>
+    HttpArchive,
+
+    /// <summary>A saved login, <c>browser_storage_state</c>'s, told by its contents.</summary>
+    SavedLogin,
+
+    /// <summary>A Playwright trace, named as its folder.</summary>
+    Trace,
+
+    /// <summary>A transcript, the <c>session.md</c> of a <c>session-&lt;milliseconds&gt;</c> folder.</summary>
+    Transcript,
+
+    /// <summary>A request or a response the network tools saved under upstream's own name.</summary>
+    NetworkCapture,
+
+    /// <summary>A log the browser tools wrote: the console's, or a list of requests.</summary>
+    Log,
+
+    /// <summary>A page snapshot.</summary>
+    PageSnapshot,
+
+    /// <summary>An image: a screenshot, or a picture a page served.</summary>
+    Image,
+
+    /// <summary>A PDF: a page saved as one, or one a page served.</summary>
+    Pdf,
+
+    /// <summary>A video the browser recorded.</summary>
+    Video,
+
+    /// <summary>Any other file under <c>output\</c>, saved under a name a call or a page chose.</summary>
+    OtherOutput,
+
+    /// <summary>A file in the session's <c>downloads\</c> folder.</summary>
+    Download,
+
+    /// <summary>BrowserAI's own record of the session, <c>browserai.data</c> and its journal.</summary>
+    Record,
+}
+
+/// <summary>Every file of one sensitive kind.</summary>
+/// <param name="Kind">The kind.</param>
+/// <param name="Files">The files, by their path in the session, each with its size.</param>
+internal sealed record SensitiveFiles(SensitiveKind Kind, IReadOnlyList<SessionFile> Files)
+{
+    /// <summary>How many bytes they come to.</summary>
+    public long Bytes => Files.Sum(file => file.Bytes);
 }
 
 /// <summary>One bucket of a session's contents.</summary>
