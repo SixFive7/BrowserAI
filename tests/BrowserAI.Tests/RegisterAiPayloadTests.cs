@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,9 +19,16 @@ namespace BrowserAI.Tests;
 /// <b>Q349, decided 2026-10-01 by the maintainer, verbatim: <i>"Q349 a"</i></b> --
 /// BrowserAI's build fetches RegisterAI's release file and checks it against the
 /// release's own checksum list, with a local-path override while RegisterAI is
-/// private. The fetch from GitHub is not driven here, because it needs the network and
-/// a signed-in <c>gh</c>; the check is the same for both sources and is driven through
-/// the override, against the RegisterAI the payload already carries.
+/// private. The check is the same for both sources and is driven through the override,
+/// against the RegisterAI the payload already carries.
+/// </para>
+/// <para>
+/// <b>Q379, decided 2026-10-04 by the maintainer, verbatim: <i>"Q379 b"</i></b> --
+/// RegisterAI is public, and the fetch from GitHub is driven here too, with no
+/// sign-in. <i>Corrected 2026-10-04 (previously "The fetch from GitHub is not driven
+/// here, because it needs the network and a signed-in <c>gh</c>; the check is the
+/// same for both sources and is driven through the override, against the RegisterAI
+/// the payload already carries.")</i>
 /// </para>
 /// <para>
 /// <b>Planted red 2026-10-03</b>: both arms ran before <c>build/Get-RegisterAi.ps1</c>
@@ -101,6 +109,56 @@ internal sealed class RegisterAiPayloadTests
     }
 
     /// <summary>
+    /// With no folder named, the newest release of the public repository is read and
+    /// its two files downloaded with no GitHub sign-in: <c>gh</c> is pointed at an
+    /// empty configuration folder and every token variable is removed, so a script
+    /// that still needed <c>gh</c> fails here.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q379 b</b>, the maintainer's words verbatim: <i>"Q379 b"</i>. A clone of
+    /// <c>next</c> builds its payload with no <c>gh</c> access. <b>Planted red
+    /// 2026-10-04</b> against the script that read the release with <c>gh</c>.
+    /// </para>
+    /// <para>
+    /// It needs the network: one read of <c>api.github.com</c> and two downloads from
+    /// <c>github.com</c>, which a payload build makes too.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePayloadTakesTheNewestRegisterAiReleaseWithNoGitHubSignIn()
+    {
+        using var scratch = ScratchDirectory.Create("registerai-public");
+
+        var payload = Directory.CreateDirectory(Path.Combine(scratch.Path, "payload")).FullName;
+        var stamp = Path.Combine(scratch.Path, "registerai.json");
+        var placed = Path.Combine(payload, "registerai", "RegisterAI.exe");
+        var signedOut = SignedOut(Directory.CreateDirectory(Path.Combine(scratch.Path, "gh")).FullName);
+
+        // The control: under these variables gh, where it is installed, is signed in
+        // to nothing, so the run below cannot borrow an account.
+        var gh = await TryStartAsync("gh", ["auth", "status"], signedOut);
+
+        await Assert.That(gh is null || gh.Exit != 0).IsTrue().Because($"gh auth status exited 0 under an empty configuration folder, so this run could still sign in: {gh?.Everything}");
+
+        var taken = await RunAsync(["-PayloadRoot", payload, "-StampPath", stamp], signedOut);
+
+        await Assert.That(taken.Exit).IsEqualTo(0).Because(taken.Everything);
+
+        using var record = JsonDocument.Parse(await File.ReadAllTextAsync(stamp));
+
+        var root = record.RootElement;
+        var tag = root.GetProperty("tag").GetString();
+
+        await Assert.That(root.GetProperty("source").GetString()).IsEqualTo("release");
+        await Assert.That(root.GetProperty("repository").GetString()).IsEqualTo("SixFive7/RegisterAI");
+        await Assert.That(tag).IsEqualTo("v" + root.GetProperty("version").GetString());
+        await Assert.That(root.GetProperty("release").GetString()).IsEqualTo("https://github.com/SixFive7/RegisterAI/releases/tag/" + tag);
+        await Assert.That(Hash(placed)).IsEqualTo(root.GetProperty("sha256").GetString());
+    }
+
+    /// <summary>
     /// The committed stamp, <c>build/payload/registerai.json</c>, names the RegisterAI
     /// the payload carries: the same version in both records, and the file hashing to
     /// what they say.
@@ -162,10 +220,43 @@ internal sealed class RegisterAiPayloadTests
     private static string Hash(string file) =>
         Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(file)));
 
-    /// <summary>Runs the script and returns its exit code and everything it said.</summary>
-    private static async Task<ScriptRun> RunAsync(string[] arguments)
+    /// <summary>
+    /// The variables of a machine with no GitHub sign-in, for the child alone: an
+    /// empty configuration folder for <c>gh</c>, no token variable, and no prompt.
+    /// </summary>
+    private static Dictionary<string, string?> SignedOut(string emptyConfiguration) => new(StringComparer.OrdinalIgnoreCase)
     {
-        var start = new ProcessStartInfo("pwsh")
+        ["GH_CONFIG_DIR"] = emptyConfiguration,
+        ["GH_TOKEN"] = null,
+        ["GITHUB_TOKEN"] = null,
+        ["GH_ENTERPRISE_TOKEN"] = null,
+        ["GITHUB_ENTERPRISE_TOKEN"] = null,
+        ["GH_PROMPT_DISABLED"] = "1",
+        ["GIT_TERMINAL_PROMPT"] = "0",
+        ["GCM_INTERACTIVE"] = "never",
+    };
+
+    /// <summary>Runs the script and returns its exit code and everything it said.</summary>
+    private static Task<ScriptRun> RunAsync(string[] arguments, IReadOnlyDictionary<string, string?>? environment = null) =>
+        StartAsync("pwsh", ["-NoProfile", "-NonInteractive", "-File", Path.Combine(RepositoryLayout.Root.FullName, "build", Script), .. arguments], environment);
+
+    /// <summary>Runs a program that may not be installed: null when it is not.</summary>
+    private static async Task<ScriptRun?> TryStartAsync(string file, string[] arguments, IReadOnlyDictionary<string, string?> environment)
+    {
+        try
+        {
+            return await StartAsync(file, arguments, environment);
+        }
+        catch (Win32Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Runs a program, with these variables changed for it alone, and returns what it did.</summary>
+    private static async Task<ScriptRun> StartAsync(string file, string[] arguments, IReadOnlyDictionary<string, string?>? environment)
+    {
+        var start = new ProcessStartInfo(file)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -175,17 +266,24 @@ internal sealed class RegisterAiPayloadTests
             StandardErrorEncoding = new UTF8Encoding(false),
         };
 
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-NonInteractive");
-        start.ArgumentList.Add("-File");
-        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", Script));
-
         foreach (var argument in arguments)
         {
             start.ArgumentList.Add(argument);
         }
 
-        using var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start.");
+        foreach (var (name, value) in environment ?? new Dictionary<string, string?>())
+        {
+            if (value is null)
+            {
+                _ = start.Environment.Remove(name);
+            }
+            else
+            {
+                start.Environment[name] = value;
+            }
+        }
+
+        using var process = Process.Start(start) ?? throw new InvalidOperationException($"'{file}' did not start.");
 
         var output = process.StandardOutput.ReadToEndAsync();
         var error = process.StandardError.ReadToEndAsync();

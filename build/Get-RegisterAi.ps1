@@ -13,13 +13,20 @@
     takes node: the newest release, floating, and refused unless its bytes match
     the checksum list published beside it.
 
-    By default the newest release of SixFive7/RegisterAI is read and its two
-    assets, RegisterAI.exe and SHA256SUMS, downloaded with gh. While that
-    repository is private gh must be signed in to an account that can read it.
-    -From names a folder holding the same two files instead: a downloaded
-    release, or RegisterAI's own artifacts\release. The check is the same either
-    way, so the override changes where the files come from and never whether they
-    are checked.
+    By default the newest release of SixFive7/RegisterAI is read from GitHub's
+    REST API and its two assets, RegisterAI.exe and SHA256SUMS, downloaded from
+    the release, with no sign-in and no gh: the repository is public since
+    2026-10-04, Q379, decided by the maintainer, verbatim: "Q379 b". -From names a
+    folder holding the same two files instead: a release downloaded by hand for
+    an offline build, or RegisterAI's own artifacts\release to try a build before
+    it is released. The check is the same either way, so the override changes
+    where the files come from and never whether they are checked.
+    Corrected 2026-10-04 (previously "By default the newest release of
+    SixFive7/RegisterAI is read and its two assets, RegisterAI.exe and
+    SHA256SUMS, downloaded with gh. While that repository is private gh must be
+    signed in to an account that can read it. -From names a folder holding the
+    same two files instead: a downloaded release, or RegisterAI's own
+    artifacts\release.").
 
     In order:
       1. SHA256SUMS must carry a line for RegisterAI.exe, and the file must hash to
@@ -37,7 +44,8 @@
 
 .PARAMETER From
     A folder holding RegisterAI.exe and SHA256SUMS, used in place of the newest
-    release.
+    release: for an offline build, or to try a RegisterAI build before it is
+    released.
 
 .PARAMETER Repository
     The GitHub repository the release is read from.
@@ -80,26 +88,36 @@ if ($From) {
     Write-Host "RegisterAI from the folder $folder"
 }
 else {
-    $gh = Get-Command 'gh' -CommandType Application -ErrorAction SilentlyContinue
-    if ($null -eq $gh) {
-        throw "gh is not on PATH, so the newest RegisterAI release cannot be read. Install gh and sign in, or pass -From with a folder holding $fileName and $sumsName."
+    # The repository is public (Q379 b), so the read and both downloads go out
+    # with no sign-in. GitHub answers 60 unauthenticated API calls an hour from
+    # one address, and a build makes one.
+    $api = "https://api.github.com/repos/$Repository/releases/latest"
+
+    try {
+        $latest = Invoke-RestMethod -Uri $api -Headers @{ Accept = 'application/vnd.github+json' }
+    }
+    catch {
+        throw "Reading $api failed: $($_.Exception.Message) The read needs the network and no sign-in, and GitHub allows 60 unauthenticated API calls an hour from one address. Or pass -From with a folder holding $fileName and $sumsName."
     }
 
-    $viewed = & $gh.Source release view --repo $Repository --json 'tagName,url'
-    if ($LASTEXITCODE -ne 0) {
-        throw "gh release view --repo $Repository exited $LASTEXITCODE. While $Repository is private, gh must be signed in to an account that can read it; or pass -From with a folder holding $fileName and $sumsName."
-    }
-
-    $view = $viewed | ConvertFrom-Json
-    $tag = $view.tagName
-    $release = $view.url
+    $tag = $latest.tag_name
+    $release = $latest.html_url
     $source = 'release'
-    $folder = Join-Path $PayloadRoot '.cache' "registerai-$tag"
 
+    if (-not $tag -or -not $release) {
+        throw "$api answered without a tag_name and an html_url, so there is no release to take. Nothing was put in the payload."
+    }
+
+    $folder = Join-Path $PayloadRoot '.cache' "registerai-$tag"
     New-Item -ItemType Directory -Force -Path $folder | Out-Null
-    & $gh.Source release download $tag --repo $Repository --pattern $fileName --pattern $sumsName --dir $folder --clobber
-    if ($LASTEXITCODE -ne 0) {
-        throw "gh release download $tag --repo $Repository exited $LASTEXITCODE."
+
+    foreach ($name in @($fileName, $sumsName)) {
+        $asset = @($latest.assets | Where-Object { $_.name -ceq $name })
+        if ($asset.Count -ne 1) {
+            throw "Release $tag of $Repository carries $($asset.Count) assets named $name, and the build takes exactly one. Nothing was put in the payload."
+        }
+
+        Invoke-WebRequest -Uri $asset[0].browser_download_url -OutFile (Join-Path $folder $name)
     }
 
     Write-Host "RegisterAI $tag from $release"

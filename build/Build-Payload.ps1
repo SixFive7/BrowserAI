@@ -68,7 +68,10 @@
     A folder holding RegisterAI.exe and SHA256SUMS, used in place of the newest
     RegisterAI release. Passed to build/Get-RegisterAi.ps1, which checks the file
     against the list either way. Added 2026-10-03 with Q349 a, for the time the
-    RegisterAI repository is private.
+    RegisterAI repository was private. Since 2026-10-04 (Q379 b) the release is
+    public and read with no sign-in, and this is for an offline build or for
+    trying a RegisterAI build before it is released. Corrected 2026-10-04
+    (previously "for the time the RegisterAI repository is private.").
 
 .EXAMPLE
     pwsh -File build/Build-Payload.ps1 -SeedBrowsersFrom "$env:LOCALAPPDATA\ms-playwright"
