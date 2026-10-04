@@ -793,20 +793,29 @@ internal sealed class SessionManager : IAsyncDisposable
     /// second session in a sequence was never reached, and the first was ended
     /// through its stdin -- on which <c>@playwright/mcp</c> force-kills its own
     /// browser about 0.1 s later. A browser closed by its own tool flushes what
-    /// it holds, so each session first gets a <c>browser_close</c> bounded by
-    /// <see cref="LiveSession.ShutdownCloseBudget"/>, and the teardown after it
-    /// is the one there always was.
+    /// it holds, so each session first gets a <c>browser_close</c>, capped, and the
+    /// teardown after it is the one there always was.
     /// </para>
     /// <para>
-    /// <b>The bound is the environment's since 2026-10-03</b>
-    /// (<see cref="SessionEnvironment.ShutdownCloseBudget"/>): one second in a server a
-    /// client started, as above, and thirty in the session host, which a client's kill
-    /// does not reach and which an update stops and waits for (Q366 b).
+    /// ⚠️ <b>One cap since 2026-10-04, D4.2</b>, the maintainer's words verbatim:
+    /// <i>"Same 1 min. under option d (lane c)"</i>. <i>Corrected 2026-10-04
+    /// (previously "The bound is the environment's since 2026-10-03: one second in a
+    /// server a client started, as above, and thirty in the session host").</i> Every
+    /// close takes <see cref="SessionTimes.BrowserCloseCap"/>, the session host's and a
+    /// client's server's alike. A client that kills the server it started still lands
+    /// its kill first, 0.53 to 1.15 s after the end of input for Claude Code and at once
+    /// for Codex; that is recorded beside the cap and not worked around.
     /// </para>
     /// <para>
-    /// <b>The bound is what keeps a wedged browser from holding a shutdown.</b>
-    /// A close that meets an armed debugger pause never answers; past the bound
+    /// <b>The cap is what keeps a wedged browser from holding a shutdown.</b>
+    /// A close that meets an armed debugger pause never answers; past the cap
     /// the child is ended through its stdin, which a paused child obeys.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A close already in flight is waited for, since 2026-10-04</b>
+    /// (previously the teardown cut it short). A session the idle timer or its caller
+    /// was closing gets no second close; its teardown waits for the first, bounded by
+    /// the same cap.
     /// </para>
     /// </remarks>
     public async ValueTask DisposeAsync()
@@ -826,13 +835,11 @@ internal sealed class SessionManager : IAsyncDisposable
             }
         }
 
-        var budget = _environment.ShutdownCloseBudget;
+        await Task.WhenAll(sessions.Select(shutDownAsync)).ConfigureAwait(false);
 
-        await Task.WhenAll(sessions.Select(session => shutDownAsync(session, budget))).ConfigureAwait(false);
-
-        static async Task shutDownAsync(LiveSession session, TimeSpan budget)
+        static async Task shutDownAsync(LiveSession session)
         {
-            await session.CloseTheBrowserForShutdownAsync(budget).ConfigureAwait(false);
+            await session.CloseTheBrowserForShutdownAsync().ConfigureAwait(false);
             await session.DisposeAsync().ConfigureAwait(false);
         }
     }
@@ -886,6 +893,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <c>browser_close</c>; when its browser server has ended; and when no browser is
     /// up. None of the three holds state a restart would lose, and a node child
     /// with nothing to drive is about 50 MB held for nobody.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>At once, after any close still in flight</b>, since 2026-10-04: a client
+    /// that goes while its session's browser is closing leaves the close to finish,
+    /// because the release's teardown waits for it, bounded by
+    /// <see cref="SessionTimes.BrowserCloseCap"/>, and a resume that meets the release
+    /// meanwhile waits for <see cref="LiveSession.Released"/>.
     /// </para>
     /// <para>
     /// <b>Kept otherwise, and never without a way to end.</b> A headless session's
@@ -1170,7 +1184,15 @@ internal sealed class SessionManager : IAsyncDisposable
                         SessionToolLog.TakenOver(found.Logger, location.FullPath, taking);
                     }
 
-                    notes.Add(KeptWhileItsClientWasAway);
+                    // ⚠️ ONLY WHEN THE BROWSER REALLY WAS KEPT, 2026-10-04. A kept
+                    // session can be taken over while its idle close is in flight, or
+                    // after its browser server died, and then the answer below says
+                    // what the reopen did instead; saying both was saying two things
+                    // that cannot both be true.
+                    if (found.Closed is null && !found.Child.ChildHasGone)
+                    {
+                        notes.Add(KeptWhileItsClientWasAway);
+                    }
                 }
 
                 already = found;
@@ -1262,6 +1284,25 @@ internal sealed class SessionManager : IAsyncDisposable
                 // lock. A peer that takes it in that instant is answered by the
                 // acquisition's own refusal naming the holder, and the session is
                 // then that peer's, which is the truth.
+                //
+                // ⚠️ THE REOPEN WAITS FOR THE CLOSE IN FLIGHT, and it is the ordering
+                // rule of 2026-10-04. The maintainer's warning of that day, verbatim:
+                // "Just thinking about it, if we were to resume within that close
+                // window we will need to handle atomicity and orderign correctly.
+                // Beware when building lane c." Until then a resume that met the idle
+                // close still waiting ended the wait at once and ended the child
+                // through its stdin, on which @playwright/mcp force-kills a browser
+                // that is in the middle of closing. Waited for here, while the session
+                // is still in `_live`, so a call that arrives meanwhile is refused with
+                // the closed session's own sentence, and bounded by the cap, which the
+                // close itself keeps. The caller's own token still ends the wait.
+                if (already.CloseIsInFlight)
+                {
+                    IdleLog.ReopenWaitsForTheClose(already.Logger, location.FullPath, SessionTimes.BrowserCloseCap);
+
+                    await already.WaitForTheCloseInFlightAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+                }
+
                 notes.Add(already.Closed is { } closure
                     ? ResumedAfterAClose(closure)
                     : already.Child.ChildHasGone ? ChildWasRelaunched : AppliedWithNoBrowserUp);
@@ -1968,6 +2009,9 @@ internal sealed class SessionManager : IAsyncDisposable
                         IsError: true);
 
                 case SessionClaim.Releasing:
+                    // The release waits for a close in flight, and a destroy does not:
+                    // it deletes what the close would save.
+                    named.CutTheCloseShort();
                     await named.Released.ConfigureAwait(false);
                     break;
 
@@ -1988,9 +2032,14 @@ internal sealed class SessionManager : IAsyncDisposable
             // disposal is still visible where it is created. The second call the
             // scope makes is a no-op: `TearDownAsync` has already taken the
             // one-shot guard, which is what makes naming the cause here safe.
+            //
+            // ⚠️ AND IT CUTS A CLOSE IN FLIGHT SHORT, decided 2026-10-04 for the
+            // maintainer's review: every other teardown waits for one, and a
+            // destroy deletes the profile that close would flush, so waiting would
+            // keep the caller for up to the cap for nothing that survives.
             await using (live)
             {
-                await live.TearDownAsync(ServerRegistryReap.AfterDestroy).ConfigureAwait(false);
+                await live.TearDownAsync(ServerRegistryReap.AfterDestroy, cutTheCloseShort: true).ConfigureAwait(false);
             }
         }
 

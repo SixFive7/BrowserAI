@@ -269,7 +269,13 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         // Bounded, and its result is deliberately ignored: the exit code read
         // by the caller is the report, and there is nothing further this code
         // could do about a process the kernel has been told to terminate.
-        _ = await _process.WaitForExitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        //
+        // ⚠️ The child's own shutdown timeout since 2026-10-04 (previously a
+        // literal five seconds here, the same value written twice). A process
+        // the kernel has been told to end is gone in milliseconds -- 37 to 40 ms
+        // for the stand-in the hard-kill research of 2026-10-03 terminated -- so
+        // this is a hang detector, and one named bound serves both waits.
+        _ = await _process.WaitForExitAsync(_shutdownTimeout).ConfigureAwait(false);
     }
 
     private void CloseStandardInput()

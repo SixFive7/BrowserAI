@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Protocol;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Sessions;
@@ -120,23 +121,35 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// </remarks>
     public static TimeSpan DefaultIdlePeriod => SessionTimes.BrowserIdlePeriod;
 
-    /// <summary>How long a close is given before teardown stops waiting for it.</summary>
+    /// <summary>
+    /// How long a teardown waits for an idle close in flight before it goes on without
+    /// it: the close's own cap and then the child's end through its stdin,
+    /// <see cref="SessionTimes.BrowserCloseCap"/> plus
+    /// <see cref="ChildProcessOptions.DefaultShutdownTimeout"/>.
+    /// </summary>
     /// <remarks>
-    /// <b>Shorter than the close's own cap, and that is not a contradiction --
-    /// added 2026-10-03 with Q367 a.</b> The idle close waits up to
-    /// <c>LiveSession.IdleCloseBudget</c>, thirty seconds, for the browser to answer
-    /// its <c>browser_close</c>, and that wait is cancelled by the very token this
-    /// type's disposal cancels first; what this bound then covers is the rest of
-    /// the close, the child ended through its stdin and its job.
+    /// <para>
+    /// ⚠️ <b>Derived since 2026-10-04</b> (previously twenty seconds, chosen and
+    /// pinned by nothing, and shorter than the thirty-second cap because a teardown
+    /// cancelled the close's wait first). Nothing but a destroy cuts an idle close
+    /// short any more, so a teardown sits the close out: its wait for the browser's
+    /// answer, at most the cap, and then the child ended through its stdin, at most
+    /// the child's own shutdown timeout before its job is closed.
+    /// </para>
+    /// <para>
+    /// <b>A hang detector and nothing else.</b> The close bounds itself on the
+    /// session's clock; this bound, on the real clock, is what stops a close that went
+    /// wrong some other way from holding a teardown for ever, and past it the job
+    /// object still takes the browser.
+    /// </para>
     /// </remarks>
-    private static readonly TimeSpan CloseBudget = TimeSpan.FromSeconds(20);
+    internal static TimeSpan CloseBudget { get; } = SessionTimes.BrowserCloseCap + ChildProcessOptions.DefaultShutdownTimeout;
 
     private readonly Lock _gate = new();
     private readonly string _session;
-    private readonly Func<CancellationToken, Task<BrowserCloseResult?>> _closeBrowser;
+    private readonly Func<Task<BrowserCloseResult?>> _closeBrowser;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
-    private readonly CancellationTokenSource _stopping = new();
     private readonly ITimer _timer;
 
     private int _inFlight;
@@ -167,7 +180,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     public BrowserIdleTimer(
         string session,
         TimeSpan period,
-        Func<CancellationToken, Task<BrowserCloseResult?>> closeBrowser,
+        Func<Task<BrowserCloseResult?>> closeBrowser,
         ILogger logger,
         TimeProvider time)
     {
@@ -247,7 +260,10 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
             return;
         }
 
-        await _stopping.CancelAsync().ConfigureAwait(false);
+        // ⚠️ THE TIMER STOPS AND THE CLOSE IN FLIGHT IS LEFT TO FINISH, since
+        // 2026-10-04 (previously this cancelled the close's wait before it waited,
+        // so a resume, a release or a shutdown cut an idle close short). Nothing
+        // but a destroy may do that, and a destroy says so to the session itself.
         await _timer.DisposeAsync().ConfigureAwait(false);
 
         Task? close;
@@ -266,14 +282,12 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
                 // browser goes either way.
                 await close.WaitAsync(CloseBudget).ConfigureAwait(false);
             }
-#pragma warning disable CA1031 // A close that was cancelled or failed on the way down is the ordinary path here, and it is already logged.
+#pragma warning disable CA1031 // A close that failed on the way down is already logged, and the teardown goes on either way.
             catch (Exception)
 #pragma warning restore CA1031
             {
             }
         }
-
-        _stopping.Dispose();
     }
 
     /// <summary>Restarts the period. The caller holds <see cref="_gate"/>.</summary>
@@ -364,11 +378,17 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
                     Arm();
                     return;
                 }
+
+                // And a teardown that has begun ends the child itself.
+                if (Volatile.Read(ref _disposed) is not 0)
+                {
+                    return;
+                }
             }
 
             // Null is Q327 a: only the node child was left, so nothing was
             // closed, no row was written and nothing is counted.
-            if (await _closeBrowser(_stopping.Token).ConfigureAwait(false) is not { } result)
+            if (await _closeBrowser().ConfigureAwait(false) is not { } result)
             {
                 IdleLog.NothingToClose(_logger, _session, Period);
                 return;
@@ -376,10 +396,6 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 
             _ = Interlocked.Increment(ref _closes);
             IdleLog.BrowserClosed(_logger, _session, Period, result.ProcessesBefore, result.ProcessesAfter);
-        }
-        catch (OperationCanceledException)
-        {
-            // Teardown cancelled it. The job object takes the browser instead.
         }
 #pragma warning disable CA1031 // A close that fails is a log line; the teardown that follows it ends the job either way.
         catch (Exception failure)
@@ -493,6 +509,65 @@ internal static partial class IdleLog
         Level = LogLevel.Warning,
         Message = "The browser on the session at {Session} did not answer its idle close within {Budget}; its child is ended through its stdin and its job anyway.")]
     public static partial void IdleCloseUnanswered(ILogger logger, string session, TimeSpan budget);
+
+    /// <summary>A resume met a close in flight and waits for it before it opens the session again.</summary>
+    /// <remarks>
+    /// <b>The ordering rule of 2026-10-04.</b> Information, because the resume's
+    /// caller waits for as long as the close takes, up to the cap, and a reader of the
+    /// log looking at a slow resume needs to find why.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="cap">The longest it can wait.</param>
+    [LoggerMessage(
+        EventId = 66,
+        Level = LogLevel.Information,
+        Message = "A resume of the session at {Session} waits up to {Cap} for its browser to finish the close in flight, and opens the session again once it has.")]
+    public static partial void ReopenWaitsForTheClose(ILogger logger, string session, TimeSpan cap);
+
+    /// <summary>A teardown met a close in flight and waits for it before it ends the child.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="cap">The longest it can wait.</param>
+    [LoggerMessage(
+        EventId = 67,
+        Level = LogLevel.Information,
+        Message = "The session at {Session} is being torn down and waits up to {Cap} for its browser to finish the close in flight before its child is ended.")]
+    public static partial void TeardownWaitsForTheClose(ILogger logger, string session, TimeSpan cap);
+
+    /// <summary>The caller of a <c>browser_close</c> stopped waiting, and the close goes on without it.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="cap">The longest the close is given.</param>
+    [LoggerMessage(
+        EventId = 68,
+        Level = LogLevel.Information,
+        Message = "The caller of browser_close on the session at {Session} stopped waiting for its answer; the close goes on, up to {Cap}, and the child is ended once it is over.")]
+    public static partial void CallerLeftItsClose(ILogger logger, string session, TimeSpan cap);
+
+    /// <summary>The caller's own <c>browser_close</c> did not answer within the cap.</summary>
+    /// <remarks>
+    /// <b>Warning, for the reason the idle close's own is one</b>: whatever was waiting
+    /// for the close goes ahead and ends the child without the flush the close was
+    /// for.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="cap">How long it was given.</param>
+    [LoggerMessage(
+        EventId = 69,
+        Level = LogLevel.Warning,
+        Message = "The browser on the session at {Session} did not answer the caller's browser_close within {Cap}; whatever waits for that close goes ahead, and the child is ended through its stdin.")]
+    public static partial void CallersCloseUnanswered(ILogger logger, string session, TimeSpan cap);
+
+    /// <summary>A destroy cut a close in flight short.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    [LoggerMessage(
+        EventId = 70,
+        Level = LogLevel.Information,
+        Message = "browserai_destroy cut the close in flight on the session at {Session} short: the session's data is deleted, so nothing the close would have saved is kept.")]
+    public static partial void CloseCutShortByDestroy(ILogger logger, string session);
 
     // Id 61 was `CloseRefused`, the child answering the idle close's
     // `browser_close` with an error. The idle close sends no `browser_close`

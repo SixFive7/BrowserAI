@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
@@ -39,6 +39,9 @@ internal sealed class SessionCloseTests
 {
     /// <summary>What the double answers a navigation with.</summary>
     private const string NavigateResult = """{"content":[{"type":"text","text":"Page URL: data:text/html,<h1>ok</h1>"}]}""";
+
+    /// <summary>The page Chromium opens when it restores nothing.</summary>
+    private const string NewTabPage = "chrome://new-tab-page/";
 
     /// <summary>The nominal idle period of the arms that drive the timer; nothing waits for it.</summary>
     private static readonly TimeSpan ShortPeriod = TimeSpan.FromMilliseconds(800);
@@ -284,23 +287,65 @@ internal sealed class SessionCloseTests
     /// measured by the research into debugger tools on 0.0.82 and is not asserted
     /// here.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The resume waits for the close since 2026-10-04, and the cap is what lets
+    /// it go</b> (previously it ended the wedged child the moment it arrived). Nothing
+    /// may cut a clean close short, so the resume waits for the caller's close for
+    /// <see cref="SessionTimes.BrowserCloseCap"/> from when it was sent, on the
+    /// session's clock: one tick short of it the resume is still waiting, and at it the
+    /// resume ends the child and opens the session again. Planted red against the tree
+    /// as it stood, where the resume answered before the cap had moved at all.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Only the first child holds its close, and the hold is let go on every way
+    /// out.</b> The rig's teardown is a shutdown, and a shutdown sends every open
+    /// browser its close and waits for it up to the cap on this arm's own clock, which
+    /// nothing moves once the arm is over. A second child that held its close too
+    /// kept the teardown waiting for good: the first run of this arm on 2026-10-04 had
+    /// written every row of its session record and was still in its teardown ten
+    /// minutes later.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ACloseThatNeverAnswersLeavesASessionTheResumeRecovers()
     {
         var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var clock = new ManualClock();
+        var children = 0;
 
         await using var sessions = RigSessionEnvironment.Create(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
-                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = never.Task };
+
+                if (Interlocked.Increment(ref children) is 1)
+                {
+                    child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = never.Task };
+                }
             },
-            opensDefaultSession: false);
+            opensDefaultSession: false,
+            clock: clock);
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
+        try
+        {
+            await TheResumeRecoversAWedgedSessionAsync(sessions, rig, clock);
+        }
+        finally
+        {
+            _ = never.TrySetResult();
+        }
+    }
+
+    /// <summary>The body of <see cref="ACloseThatNeverAnswersLeavesASessionTheResumeRecovers"/>, with the first child's close held.</summary>
+    /// <param name="sessions">The rig's session environment.</param>
+    /// <param name="rig">The rig.</param>
+    /// <param name="clock">The session clock.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task TheResumeRecoversAWedgedSessionAsync(RigSessionEnvironment sessions, McpTestHarness rig, ManualClock clock)
+    {
         var directory = Path.Combine(sessions.Root, "wedged-close");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -333,15 +378,45 @@ internal sealed class SessionCloseTests
         await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
         await Assert.That(first.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(1);
 
-        var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        var resumeId = await rig.Client.BeginAsync("tools/call", new JsonObject
         {
-            ["directory"] = directory,
-            ["why"] = "the suite getting a wedged session back",
+            ["name"] = SessionToolSurface.Resume,
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = directory,
+                ["why"] = "the suite getting a wedged session back",
+            },
         });
+
+        var resuming = rig.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
+
+        await WaitUntilAsync(
+            () => resuming.IsCompleted || rig.Logs.Logged("opens the session again once it has"),
+            "the resume neither answered nor said it was waiting for the close");
+
+        await Assert.That(resuming.IsCompleted).IsFalse()
+            .Because("the resume ended the close before the cap had moved at all");
+
+        // The cap is the newest timer on the session's clock, armed when the close was
+        // sent, and the clock has not moved since: one tick short of it, nothing fires.
+        var left = clock.UntilTheNewestTimerFires();
+
+        await Assert.That(left).IsEqualTo(SessionTimes.BrowserCloseCap);
+
+        clock.AdvanceTicks(left!.Value.Ticks - ManualClock.OneTick);
+
+        await Assert.That(resuming.IsCompleted).IsFalse();
+        await Assert.That(first.HasStopped).IsFalse();
+
+        // The cap runs out, and the resume goes ahead.
+        clock.AdvanceTicks(ManualClock.OneTick);
+
+        var resumed = (await resuming).Result!;
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
         await WaitUntilAsync(() => first.HasStopped, "the resume did not end the child whose close never answered");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
+        await Assert.That(rig.Logs.Logged("did not answer the caller's browser_close within")).IsTrue();
 
         // The parked close is answered now, by the child that ended under it,
         // and not left outstanding for ever. Read off every frame the client
@@ -593,6 +668,14 @@ internal sealed class SessionCloseTests
     /// produce. The close that never answers is the wedge, and the bound is what
     /// lets the shutdown end anyway.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The bound is the one-minute cap since 2026-10-04, D4.2</b>, the
+    /// maintainer's words verbatim: <i>"Same 1 min. under option d (lane c)"</i>
+    /// (previously one second, a client's kill window). It runs on the session's clock,
+    /// so this arm stops one tick short of it and the wedged close is still waited
+    /// for, and then lets it run out. Planted red against the one second that stood
+    /// until that day.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -600,6 +683,7 @@ internal sealed class SessionCloseTests
     {
         var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var clock = new ManualClock();
         var opened = 0;
 
         await using var sessions = RigSessionEnvironment.Create(
@@ -614,7 +698,8 @@ internal sealed class SessionCloseTests
                     HoldUntil = Interlocked.Increment(ref opened) is 1 ? never.Task : release.Task,
                 };
             },
-            opensDefaultSession: false);
+            opensDefaultSession: false,
+            clock: clock);
 
         var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -648,7 +733,24 @@ internal sealed class SessionCloseTests
             // Both closes are outstanding at once: neither child has been ended.
             await Assert.That(children.Any(child => child.HasStopped)).IsFalse();
 
+            // Both caps were armed together, as the shutdown began, and the clock has
+            // not moved since: each is the one-minute cap, to the tick.
+            var left = clock.UntilTheNewestTimerFires();
+
+            await Assert.That(left).IsEqualTo(SessionTimes.BrowserCloseCap);
+
             release.SetResult();
+
+            await WaitUntilAsync(() => children.Count(child => child.HasStopped) is 1, "the shutdown did not end the child whose close was answered");
+
+            // One tick short of the cap, the wedged close is still waited for.
+            clock.AdvanceTicks(left!.Value.Ticks - ManualClock.OneTick);
+
+            await Assert.That(shuttingDown.IsCompleted).IsFalse();
+            await Assert.That(children.Count(child => child.HasStopped)).IsEqualTo(1);
+
+            // And at it, the shutdown ends the wedged child too.
+            clock.AdvanceTicks(ManualClock.OneTick);
 
             await shuttingDown.WaitAsync(TestDefaults.InProcessHang);
 
@@ -797,7 +899,7 @@ internal sealed class SessionCloseTests
             SuiteEnvironment.RequireProvisionedChromium();
         }
 
-        using var site = PageSite.Start();
+        using var site = LoopbackSite.Start();
 
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -873,6 +975,258 @@ internal sealed class SessionCloseTests
         await Assert.That(after).Contains(site.Url("second"));
     }
 
+    /// <summary>
+    /// Against a <b>real</b> Chromium: after the browser was killed and not closed, a
+    /// resume reopens the tabs it had on disk.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q376, the maintainer's words of 2026-10-04, verbatim: "Q376 a".</b> A kill
+    /// leaves the profile marked as crashed, and Chromium does not restore on the
+    /// launch after an unclean exit: measured 2026-10-03 at <c>chromium-1247</c>, 0 of
+    /// 27 runs restored with <c>--restore-last-session</c> alone, 21 of them with the
+    /// tabs on disk, and 11 of 11 that had them on disk restored with
+    /// <c>--hide-crash-restore-bubble</c> added. A client's kill, the coordinator
+    /// ending and a close cut off at its cap all leave a browser in that state.
+    /// </para>
+    /// <para>
+    /// <b>The kill is the whole job, read off the session's own child</b>: every
+    /// process in it is terminated by its pid and creation time, the browser before
+    /// <c>node</c>, so nothing in it runs a graceful path. Once both pages are open it
+    /// opens a third tab and waits for a write to the session folder after that
+    /// instant, which Chromium makes 2.5 s after a change, because a kill before that
+    /// loses the tabs whatever the switch says, and for the profile's Preferences
+    /// file, without which the relaunch takes the profile for a new one and restores
+    /// nothing; and it reads the session files once the kill is over, because Chromium
+    /// holds them for exclusive reading while it runs, so both pages on disk at the
+    /// kill is established and not assumed.
+    /// </para>
+    /// <para>
+    /// <b>Planted red against the tree as it stood on 2026-10-04</b>, where the launch
+    /// carried no <c>--hide-crash-restore-bubble</c>: the relaunch opened its new tab
+    /// page and restored nothing.
+    /// </para>
+    /// <para>
+    /// <b>Chromium only.</b> Firefox restored whatever had reached disk after a kill in
+    /// 27 of 27 runs with no switch, and its session file is compressed and written on
+    /// a 15 s interval, so there is nothing of BrowserAI's to hold there.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AResumeAfterTheBrowserWasKilledReopensTheTabsItHadOnDisk()
+    {
+        SuiteEnvironment.RequireProvisionedChromium();
+
+        using var site = LoopbackSite.Start();
+
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "restore-after-a-kill");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the session whose browser is killed and then resumed",
+            ["browser"] = ProvisionedBrowsers.Chromium,
+        });
+
+        await Assert.That((bool?)(await NavigateToAsync(rig, directory, site.Url("first")))["isError"]).IsNotEqualTo(true);
+
+        var opened = await CallAsync(rig, "browser_tabs", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite opening a second page in a second tab",
+            ["action"] = "new",
+            ["url"] = site.Url("second"),
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true);
+
+        // ⚠️ THE SESSION FILE CANNOT BE READ WHILE THE BROWSER RUNS. Chromium opens
+        // it for exclusive reading and writing (command_storage_backend.cc:747-750 at
+        // 155.0.8059.12), so no share flag lets a reader in: the first run of this arm,
+        // on 2026-10-04, read it and waited out the hang detector with both pages in a
+        // file it could not open. Its write time can be read, and is what the
+        // measurement's own watcher read. A save writes everything changed before it,
+        // so a write after the instant both pages were open carries both; and a third
+        // tab opened after that instant is a change Chromium saves 2.5 s later, so the
+        // write comes whatever the machine's load. The second form of this arm waited
+        // for a write after the second tab's answer alone, and in a gate's PowerShell
+        // half on 2026-10-04 waited out the hang detector: a save that comes before the
+        // answer leaves nothing to wait for. The files are read once the kill is over,
+        // for the precondition the measurement had.
+        var sessionFiles = Path.Combine(directory, SessionLayout.ProfileFolderName, "Default", "Sessions");
+        var bothOpen = DateTime.UtcNow;
+
+        var third = await CallAsync(rig, "browser_tabs", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite opening a third tab, a change Chromium saves 2.5 s later",
+            ["action"] = "new",
+            ["url"] = site.Url("third"),
+        });
+
+        await Assert.That((bool?)third["isError"]).IsNotEqualTo(true);
+
+        await WaitUntilAsync(
+            () => SessionFolderWrittenSince(sessionFiles, bothOpen),
+            "the browser never wrote its session folder after both pages were open, so a kill now would test nothing");
+
+        // ⚠️ AND THE PROFILE'S PREFERENCES FILE. A relaunch that finds none takes the
+        // profile for a new one, and a new profile is not given the last session
+        // whatever --restore-last-session says (startup_browser_creator.cc:937-939 and
+        // profile_impl.cc:1657-1668 at 155.0.8059.12; Playwright launches with
+        // --no-first-run, so only the file decides). Chromium writes Preferences 10 s
+        // after a change, and the second run of this arm, on 2026-10-04, killed a fresh
+        // profile's first launch 3.1 s after the call that started it and restored
+        // nothing with the switch on.
+        var preferences = Path.Combine(directory, SessionLayout.ProfileFolderName, "Default", "Preferences");
+
+        await WaitUntilAsync(
+            () => File.Exists(preferences),
+            "the browser never wrote its Preferences file, so the relaunch would take the profile for a new one and restore nothing whatever the switch says");
+
+        var child = sessions.RealSessionChildren.Single();
+        var node = child.ProcessId!.Value;
+
+        var members = child.JobProcessIds()
+            .Select(pid => (Pid: pid, Created: TryCreationTimeOf(pid)))
+            .Where(member => member.Created is not null)
+            .Select(member => (member.Pid, Created: member.Created!.Value))
+            .OrderBy(member => member.Pid == node ? 1 : 0)
+            .ToList();
+
+        await Assert.That(members.Count(member => member.Pid != node)).IsGreaterThan(0)
+            .Because("a browser has to be up in the job for a kill to take it");
+
+        foreach (var (pid, created) in members)
+        {
+            try
+            {
+                ProcessIdentity.Terminate(pid, created);
+            }
+            catch (Exception failure) when (failure is Win32Exception or InvalidOperationException)
+            {
+                // Gone already: a browser's helpers end with the browser.
+            }
+        }
+
+        await WaitUntilAsync(
+            () => members.All(member => !ProcessIdentity.IsAlive(member.Pid, member.Created)) && child.ChildHasGone,
+            "a process the suite terminated in the session's job was still running");
+
+        await Assert.That(SessionFilesName(sessionFiles, site.Url("first")) && SessionFilesName(sessionFiles, site.Url("second"))).IsTrue()
+            .Because("the killed browser's session file names both pages, or the resume has nothing on disk to restore and the arm tests nothing");
+
+        var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming a session whose browser was killed",
+        });
+
+        await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
+
+        // The first browser call starts the browser. A relaunch that does not
+        // restore opens the new tab page and nothing else, which is the failure
+        // this arm exists for, so that page with neither of ours is the answer.
+        var after = string.Empty;
+        var waited = Stopwatch.StartNew();
+
+        while (!(after.Contains(site.Url("first"), StringComparison.Ordinal) && after.Contains(site.Url("second"), StringComparison.Ordinal)))
+        {
+            if (after.Contains(NewTabPage, StringComparison.Ordinal)
+                && !after.Contains(site.Url("first"), StringComparison.Ordinal)
+                && !after.Contains(site.Url("second"), StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException($"the relaunched browser opened its new tab page and restored nothing; the listing was:{Environment.NewLine}{after}");
+            }
+
+            if (waited.Elapsed > TestDefaults.BrowserHang)
+            {
+                throw new TimeoutException($"the resumed browser never listed both tabs it had; the last listing was:{Environment.NewLine}{after}");
+            }
+
+            after = TextOf(await TabsAsync(rig, directory));
+        }
+
+        await Assert.That(after).Contains(site.Url("first"));
+        await Assert.That(after).Contains(site.Url("second"));
+    }
+
+    /// <summary>Whether any file in a Chromium profile's session folder was written at or after an instant.</summary>
+    /// <remarks>
+    /// Each write time is read through a <see cref="FileInfo"/> made from the file's
+    /// path, as the durability measurement's watcher read them while the browser held
+    /// the files open.
+    /// </remarks>
+    /// <param name="folder">The profile's <c>Sessions</c> folder.</param>
+    /// <param name="since">The instant, in UTC.</param>
+    /// <returns>Whether one of the files was written since.</returns>
+    private static bool SessionFolderWrittenSince(string folder, DateTime since) =>
+        Directory.Exists(folder)
+        && Directory.EnumerateFiles(folder).Any(file => new FileInfo(file).LastWriteTimeUtc >= since);
+
+    /// <summary>Whether any file in a Chromium profile's session folder carries an address.</summary>
+    /// <remarks>
+    /// Only for a browser that has gone: a running Chromium holds its session file for
+    /// exclusive reading, and a file that cannot be opened reads as naming nothing.
+    /// </remarks>
+    /// <param name="folder">The profile's <c>Sessions</c> folder.</param>
+    /// <param name="url">The address, looked for as UTF-8 and as UTF-16.</param>
+    /// <returns>Whether one of the files names it.</returns>
+    private static bool SessionFilesName(string folder, string url)
+    {
+        if (!Directory.Exists(folder))
+        {
+            return false;
+        }
+
+        var narrow = Encoding.UTF8.GetBytes(url);
+        var wide = Encoding.Unicode.GetBytes(url);
+
+        foreach (var file in Directory.EnumerateFiles(folder))
+        {
+            byte[] bytes;
+
+            try
+            {
+                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var copy = new MemoryStream();
+
+                stream.CopyTo(copy);
+                bytes = copy.ToArray();
+            }
+            catch (IOException)
+            {
+                continue;
+            }
+
+            if (bytes.AsSpan().IndexOf(narrow) >= 0 || bytes.AsSpan().IndexOf(wide) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>A process's creation time, or <see langword="null"/> once it has gone.</summary>
+    /// <param name="processId">The pid.</param>
+    /// <returns>Its creation time.</returns>
+    private static long? TryCreationTimeOf(int processId)
+    {
+        try
+        {
+            return ProcessIdentity.CreationTimeOf(processId);
+        }
+        catch (Exception failure) when (failure is Win32Exception or InvalidOperationException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>The answer to one request among every frame the client has read, or <see langword="null"/>.</summary>
     /// <param name="rig">The rig whose client sent it.</param>
     /// <param name="id">The id the request went out with.</param>
@@ -944,96 +1298,6 @@ internal sealed class SessionCloseTests
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(20));
-        }
-    }
-
-    /// <summary>
-    /// Two pages on a loopback port, for the arm whose subject is which pages a
-    /// browser reopens.
-    /// </summary>
-    /// <remarks>
-    /// <b>Loopback and HTTP, never a <c>data:</c> URL</b>: the restore measured on
-    /// 2026-10-03 was measured against pages served this way, and a URL that
-    /// carries its own content would leave a reader unable to tell a restored
-    /// page from a navigation.
-    /// </remarks>
-    private sealed class PageSite : IDisposable
-    {
-        private readonly HttpListener _listener;
-        private readonly CancellationTokenSource _stopping = new();
-        private readonly string _root;
-
-        private PageSite(HttpListener listener, string root)
-        {
-            _listener = listener;
-            _root = root;
-        }
-
-        /// <summary>Binds a loopback port and starts answering.</summary>
-        /// <returns>The running site.</returns>
-        public static PageSite Start()
-        {
-            for (var port = 54_300; port < 54_400; port++)
-            {
-                var root = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}/";
-                var listener = new HttpListener();
-                listener.Prefixes.Add(root);
-
-                try
-                {
-                    listener.Start();
-                }
-                catch (HttpListenerException)
-                {
-                    listener.Close();
-                    continue;
-                }
-
-                var site = new PageSite(listener, root);
-                _ = Task.Run(site.ServeAsync, CancellationToken.None);
-
-                return site;
-            }
-
-            throw new InvalidOperationException("no loopback port between 54300 and 54399 could be bound");
-        }
-
-        /// <summary>The address of one page.</summary>
-        /// <param name="name">The page's name.</param>
-        /// <returns>Its URL.</returns>
-        public string Url(string name) => $"{_root}{name}";
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            _stopping.Cancel();
-            _listener.Close();
-            _stopping.Dispose();
-        }
-
-        private async Task ServeAsync()
-        {
-            while (!_stopping.IsCancellationRequested)
-            {
-                HttpListenerContext context;
-
-                try
-                {
-                    context = await _listener.GetContextAsync();
-                }
-                catch (Exception failure) when (failure is HttpListenerException or ObjectDisposedException or InvalidOperationException)
-                {
-                    return;
-                }
-
-                var name = context.Request.Url?.AbsolutePath.Trim('/') ?? string.Empty;
-                var body = Encoding.UTF8.GetBytes($"<!doctype html><title>{name}</title><h1>{name}</h1>");
-
-                context.Response.ContentType = "text/html; charset=utf-8";
-                context.Response.ContentLength64 = body.Length;
-                await context.Response.OutputStream.WriteAsync(body);
-                context.Response.Close();
-            }
         }
     }
 }

@@ -147,8 +147,30 @@ internal sealed class ChildProcessOptions
     /// </summary>
     public IReadOnlyList<string> Arguments { get; init; } = [];
 
+    /// <summary>
+    /// How long a child gets to exit after its stdin closes before its job is closed,
+    /// unless a launch says otherwise: <b>5 s</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A hang detector, named on 2026-10-04 and unchanged in value</b>, when the close
+    /// cap was made one and every bound a close depends on was written down. What it
+    /// stands against was measured on 2026-10-03: a child whose browser had already
+    /// closed exited 14 to 36 ms after its stdin closed, one that force-killed its
+    /// browser on the way out 411 to 566 ms after, and one parked on a debugger pause
+    /// 0.75 to 1.5 s after, the last two at <c>@playwright/mcp</c> 0.0.82. Five seconds
+    /// is over three times the slowest.
+    /// </para>
+    /// <para>
+    /// <b>It bounds the session host's stop as well</b>:
+    /// <c>SessionHostProtocol.StopBound</c> has to cover the browsers' closes and then
+    /// each child given this long, and <c>SessionHostBoundsTests</c> holds that it does.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan DefaultShutdownTimeout { get; } = TimeSpan.FromSeconds(5);
+
     /// <summary>How long a child gets to exit after its stdin closes before it is killed.</summary>
-    public TimeSpan ShutdownTimeout { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan ShutdownTimeout { get; init; } = DefaultShutdownTimeout;
 
     /// <summary>Invoked for each line the child writes to stderr.</summary>
     public Action<string>? StandardErrorLines { get; init; }

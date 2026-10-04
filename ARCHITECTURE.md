@@ -838,6 +838,20 @@ closed, sends `browser_close` and waits for the answer for at most
 teardown that starts meanwhile ends the wait through the idle timer's own
 cancellation. Past either, the child is ended as above.
 
+⚠️ **Corrected 2026-10-04, by addition (the two paragraphs above are the design
+until that day), D4.1, D4.2 and Q378.** Every clean close takes one cap,
+`SessionTimes.BrowserCloseCap`, a minute, declared in the library both
+executables read: the idle close, the shutdown's close
+(`LiveSession.CloseTheBrowserForShutdownAsync`), the session host's shutdown
+before an update, and the caller's own close as anything waiting on it sees it.
+**Nothing cuts a clean close short**: every close is recorded as in flight
+until it is answered or out of its cap, and a resume (`SessionManager`'s, before
+it tears the session down), a release and a shutdown (`LiveSession.TearDownAsync`)
+wait for it through `LiveSession.WaitForTheCloseInFlightAsync`; a destroy alone
+cuts it short (`LiveSession.CutTheCloseShort`). The caller's close is marked,
+recorded and sent in one step, `LiveSession.SendTheCallersCloseAsync`, with no
+token of the caller's, so a caller that stops waiting leaves it to finish.
+
 ### `browserai_page_tool`, and how a page tool's name is resolved
 
 | Concern | Implemented by |
@@ -1158,13 +1172,13 @@ the decision of record is [its row](DECISIONS.md#the-zoom-out-of-2026-09-25-and-
 | Who drives a session: attached, refused, taken over, or being let go | `src/BrowserAI/Sessions/LiveSession.cs` (`Claim`, `DetachFrom`, `TryBeginRelease`), asked by `src/BrowserAI/Proxy/BrowserProxy.cs` on every call that names a session and by `SessionManager`'s resume, destroy and purpose |
 | A connection ending: each session it drove judged, kept or let go | `src/BrowserAI/Sessions/SessionManager.cs` (`DetachAsync`, `JudgeDetachedAsync`, `OnIdleFiredAsync`, `ReleaseDetachedAsync`), and `LiveSession.WatchTheWindowWhileDetached` for a headed one |
 | A child's progress going to whoever drives its session now | `SessionManager.OpenAsync`'s relay, through `CallerConnection.RelayAsync` |
-| The shutdown's generous close in the host | `SessionEnvironment.ShutdownCloseBudget`, set from `SessionHostProtocol.ShutdownCloseBudget` |
+| The shutdown's close in the host, the one cap every close takes | `SessionTimes.BrowserCloseCap` in `src/BrowserAI.Core/Sessions/SessionTimes.cs`, read by `LiveSession.CloseTheBrowserForShutdownAsync`. *Corrected 2026-10-04 (previously `SessionEnvironment.ShutdownCloseBudget`, set from `SessionHostProtocol.ShutdownCloseBudget`), D4.2, when the two retired with the per-path caps* |
 | The coordinator's hold: the job, the start, the scan's exclusion and the stop for an update | `src/BrowserAI.Core/Coordination/SessionHostKeeper.cs` |
 | `host`, answered on the coordinator's pipe thread before it is acknowledged | `src/BrowserAI.Core/Coordination/{CoordinatorPipe, CoordinatorInbox, CoordinatorProtocol}.cs` |
 | The coordinator's stay while its host runs, and the stop and second scan before an apply | `src/BrowserAI.App/Coordinator.cs` (`StartMode.StartHost`, `CoordinatorLoop.Host`), wired in `src/BrowserAI.App/Program.cs` |
 | The sign-in step applying nothing while the host runs, so only the loop, which closes every browser first, applies | `SignInStep.Run`'s `host` in `src/BrowserAI.App/Coordinator.cs`, handed the keeper by `src/BrowserAI.App/Program.cs` |
 | A connection that calls before it lists, refused once in words true of a host that may have served its list | `BrowserProxy`'s stale-list refusal, which asks whether the proxy owns its host, and `SessionErrors.ToolListPredatesThisServer`'s `throughTheSessionHost` |
-| Every bound the host added, derived from a named setting with its reason beside it | `SessionHostAccess.ClientStartupAllowance` and `StartBound`, `SessionHostProtocol.ShutdownCloseBudget` and `StopBound`, `SessionHostServer.Linger` and `LingerLook`, `LiveSession.DetachedWindowLook`, `NamedPipes.StreamBufferBytes`; `SessionHostBoundsTests` holds each to what it is derived from, two of them across binaries |
+| Every bound the host added, derived from a named setting with its reason beside it | `SessionHostAccess.ClientStartupAllowance` and `StartBound`, `SessionHostProtocol.StopBound` over `SessionTimes.BrowserCloseCap` (*corrected 2026-10-04, previously `SessionHostProtocol.ShutdownCloseBudget` and `StopBound`*), `SessionHostServer.Linger` and `LingerLook`, `LiveSession.DetachedWindowLook`, `NamedPipes.StreamBufferBytes`; `SessionHostBoundsTests` holds each to what it is derived from, two of them across binaries |
 
 **The arms.** `SessionHostTests` drive the host in process over a fake child;
 `SessionHostAccessTests` drive an installed server's search for its host with a
@@ -1172,7 +1186,10 @@ pipe the arm creates and a scheduler that starts nothing;
 `SessionHostCoordinatorTests` drive the coordinator's half with a scripted host and
 the keeper with windowless stand-ins; `SessionHostProcessTests` drive the published
 slice with a real browser, a front killed the way Codex kills one, and a host whose
-death takes every child and browser with it.
+death takes every child and browser with it. *Added 2026-10-04:* three arms of
+`CloseOrderingTests` drive the host in process too, a kept session whose idle close
+is in flight meeting the next client and a client that goes during its session's
+close, each waiting for the close and never cutting it short.
 
 ## Process containment and observability
 

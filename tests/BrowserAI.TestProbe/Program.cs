@@ -68,6 +68,10 @@ internal static class Program
                 ClientProbe.Start(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
             "session-index" when args.Length is 6 =>
                 SessionProbe.Index(args[1], args[2], args[3], args[4], int.Parse(args[5], CultureInfo.InvariantCulture)),
+            // <releaseFile> <command> [arguments...]. Runs a real @playwright/mcp
+            // child behind it and holds its browser_close until the file exists;
+            // see CloseRelayProbe.
+            "close-relay" when args.Length >= 3 => CloseRelayProbe.Relay(args[1], args[2], args[3..]),
             _ => Usage(),
         };
     }

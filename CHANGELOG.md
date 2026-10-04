@@ -1464,6 +1464,26 @@ release body; nothing else depends on it.
   Watched red first: against the texts as they stood, the arm named ten missing phrases, four in
   each tool's description and two in the instructions.
 
+- 🔧 **Every clean close BrowserAI makes now gives the browser a minute.**
+  D4.1 and D4.2, the maintainer's words verbatim: *"Make it a roomy 1 min. We want everything
+  nicely saved to disk even on a slow system."* and *"Same 1 min. under option d (lane c)"*. The
+  idle close waited thirty seconds for the browser to answer its own `browser_close`, the shutdown
+  of a server a client started one second, and the session host's shutdown before an update thirty;
+  all three now take one cap, `SessionTimes.BrowserCloseCap`, and so does anything that waits on a
+  close in flight. It is twice Chromium's 30 s cookie commit interval, the longest commit window
+  measured on 2026-10-03: past the cap the child is ended and the browser killed, a write older
+  than its commit interval is on disk by then, and at twice the interval every write made before
+  the close began is, with room for a slow machine. The coordinator now waits twice the cap, two
+  minutes, for the session host to end before an update; a teardown waits for an idle close in
+  flight the cap and a child's five seconds; and those five seconds, and the wait after a child's
+  job closes, are named where one was a literal. Chromium's 30 s itself is left as it is (Q378) and
+  so are Firefox's session-store intervals (Q377 e), because a clean close writes both and every
+  close now has its minute. A client that kills the server it started still lands its kill first,
+  about a second after the end of input for Claude Code and at once for Codex. Watched red first:
+  held to the tick on the session's clock, the idle close found thirty seconds and the shutdown
+  one second; the session host's close read thirty seconds, the coordinator's wait for the host
+  sixty, and a teardown's wait for a close in flight twenty.
+
 ### Removed
 
 - 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
@@ -1690,6 +1710,37 @@ release body; nothing else depends on it.
   and a server's pipe described every session it held as having a browser up. The count is now
   taken against what the job held at the child's handshake. The in-process arms ask a double and
   could not see it; a new arm asks a real child, and was watched red against the old count.
+
+- 🐛 **A resume, a release or a shutdown that meets a close in flight now waits for it.**
+  The maintainer's warning of 2026-10-04, verbatim: *"Just thinking about it, if we were to resume
+  within that close window we will need to handle atomicity and orderign correctly. Beware when
+  building lane c."* A resume that met the idle close still waiting for the browser ended the wait
+  at once and ended the child through its stdin, on which `@playwright/mcp` force-kills its browser
+  about 1 ms into its graceful close; a client that went during the close, or a shutdown, did the
+  same. Each now waits for the browser's answer, up to the minute the close is given, and then opens
+  or lets go of the session, and the session's log says so. A call that arrives meanwhile is refused
+  at once, as before, with the sentence naming `browserai_resume`. A destroy still cuts the close
+  short, and says so: it deletes what the close would save. The caller's own `browser_close` now
+  finishes even when its caller stops waiting for it, and a resume that takes over a kept session
+  whose close was in flight no longer says its browser was kept. Watched red first in process,
+  through the session host with kept sessions, and against a real Chromium whose close the suite's
+  probe held back, in process and in the session host: there the resume answered while the close
+  was still held, and with the fix the cookie written just before the close is there after the
+  reopen and both tabs come back.
+
+- 🐛 **A Chromium session reopens its tabs after its browser was killed.**
+  Q376 a, the maintainer's words verbatim: *"Q376 a"*. A browser killed and not closed leaves its
+  profile marked as crashed, and Chromium does not restore on the launch after an unclean exit, so
+  the session restore every launch asks for brought nothing back: 0 of 27 runs on 2026-10-03, 21
+  of them with the tabs on disk. Every Chromium launch now carries `--hide-crash-restore-bubble`,
+  with which 11 of 11 runs that had the tabs on disk restored them. A client's kill, the
+  coordinator or the session host ending, and a close cut off at its cap all leave a browser that
+  way. It turns off Chromium's guard against a page that crashes the browser at every launch, with
+  no guard of BrowserAI's in its place, as decided. A browser killed in the first seconds of a new
+  profile's first launch, before Chromium has written the profile's Preferences, still comes back
+  with nothing: Chromium takes that profile for a new one. Watched red first: the generator's arm found
+  the switch missing, and a resume after the suite killed a real Chromium's whole job opened the
+  new tab page and restored nothing.
 
 ## [1.1.0] - 2026-09-23
 

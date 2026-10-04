@@ -122,7 +122,13 @@ internal sealed class ConfigRoundTripTests
     /// watching this go red is one build and no browser. That the child honours
     /// the keys is <see cref="EveryGeneratedOpinionComesBackFromTheChild"/>'s,
     /// and that the restore actually restores is
-    /// <c>SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed</c>'s.
+    /// <c>SessionCloseTests.AResumeReopensTheTabsThatWereOpenWhenTheBrowserWasClosed</c>'s,
+    /// and after a kill <c>SessionCloseTests.AResumeAfterTheBrowserWasKilledReopensTheTabsItHadOnDisk</c>'s.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And Chromium's <c>--hide-crash-restore-bubble</c> since 2026-10-04,
+    /// Q376 a</b>, without which a browser that was killed and not closed restores
+    /// nothing at its next launch.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -139,6 +145,11 @@ internal sealed class ConfigRoundTripTests
 
         await Assert.That(arguments).Contains("--restore-last-session");
         await Assert.That(arguments).Contains("--enable-aggressive-domstorage-flushing");
+
+        // Q376 a: without it a Chromium that was killed and not closed restores
+        // nothing at the next launch, 0 of 27 runs, and with it 11 of 11 that had
+        // the tabs on disk (kb, durability, 2026-10-03).
+        await Assert.That(arguments).Contains("--hide-crash-restore-bubble");
 
         foreach (var family in new[] { chromium, firefox })
         {

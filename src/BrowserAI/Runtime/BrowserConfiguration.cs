@@ -347,6 +347,41 @@ internal static class BrowserConfiguration
     public const string AggressiveDomStorageFlushingSwitch = "--enable-aggressive-domstorage-flushing";
 
     /// <summary>
+    /// The Chromium switch that lets a browser restore its last session after it was
+    /// killed and not closed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q376, decided 2026-10-04 by the maintainer, in his words verbatim:
+    /// <i>"Q376 a"</i></b>: the switch on every Chromium launch, and no guard of
+    /// BrowserAI's own against a page that crashes the browser at every launch.
+    /// </para>
+    /// <para>
+    /// <b>Why it is needed.</b> A browser that is killed leaves its profile's
+    /// <c>exit_type</c> at <c>Crashed</c>, and Chromium does not restore on the launch
+    /// after an unclean exit, so <see cref="RestoreLastSessionSwitch"/> alone brought
+    /// nothing back after a hard kill: 0 of 27 runs, 21 of them with the tabs on disk,
+    /// measured 2026-10-03 at <c>chromium-1247</c>. With this switch the relaunch
+    /// restored the tabs in all 11 runs that had them on disk, and the session after it
+    /// saved its tabs again, where without it the session file was not written until
+    /// the crash was acknowledged
+    /// (<see href="../../../kb/playwright/provisioning-and-timings.md#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03">kb</see>).
+    /// A client's kill, the coordinator or the session host ending, and a close that
+    /// ran out its cap all leave a browser in that state. The switch's own description
+    /// is about ChromeOS; the check that reads it, <c>HasPendingUncleanExit</c>, has no
+    /// platform condition.
+    /// </para>
+    /// <para>
+    /// <b>What it gives up.</b> Chromium skips the restore after a crash so that a page
+    /// which crashes the browser does not crash it again at every launch, and the
+    /// switch turns the skip off. Whether such a page would loop was deliberately not
+    /// provoked (<see href="../../../kb/not-established.md">kb</see>), and the decision
+    /// took the switch without a guard.
+    /// </para>
+    /// </remarks>
+    public const string HideCrashRestoreBubbleSwitch = "--hide-crash-restore-bubble";
+
+    /// <summary>
     /// The argument Playwright adds to open one blank page at launch, which every
     /// session launch tells it to leave out.
     /// </summary>
@@ -614,6 +649,11 @@ internal static class BrowserConfiguration
     /// long a <c>localStorage</c> write needs on disk; see each constant for what
     /// was measured.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Five since 2026-10-04 (previously four), Q376 a.</b>
+    /// <see cref="HideCrashRestoreBubbleSwitch"/> lets the restore work after a
+    /// browser was killed and not closed.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<string> ChromiumArguments { get; } =
     [
@@ -621,6 +661,7 @@ internal static class BrowserConfiguration
         "--disable-blink-features=AutomationControlled",
         RestoreLastSessionSwitch,
         AggressiveDomStorageFlushingSwitch,
+        HideCrashRestoreBubbleSwitch,
     ];
 
     /// <param name="browser">The family, as upstream names it.</param>

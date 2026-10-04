@@ -1184,20 +1184,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // session open.
         var callersClose = string.Equals(tool, LiveSession.BrowserCloseTool, StringComparison.Ordinal);
 
-        if (callersClose)
+        // ⚠️ THE CLOSED MARK MOVED INTO THE SEND, 2026-10-04: the session is marked
+        // closed, the close recorded as in flight and the request sent in one step,
+        // `LiveSession.SendTheCallersCloseAsync`, below. Marked here and sent further
+        // down, a resume landing between the two met a closed session with no close
+        // in flight and ended the child under the close it was about to receive.
+        if (callersClose && !live.BrowserIsOpen)
         {
-            if (!live.BrowserIsOpen)
-            {
-                live.Lock.Settle(row, SessionStore.Successful, failure: null);
+            live.Lock.Settle(row, SessionStore.Successful, failure: null);
 
-                await caller.SendMessageAsync(
-                    new JsonRpcResponse { Id = request.Id, Result = TextResult(LiveSession.NothingWasOpenToClose, isError: false) },
-                    cancellationToken).ConfigureAwait(false);
+            await caller.SendMessageAsync(
+                new JsonRpcResponse { Id = request.Id, Result = TextResult(LiveSession.NothingWasOpenToClose, isError: false) },
+                cancellationToken).ConfigureAwait(false);
 
-                return;
-            }
-
-            live.ClosedByTheCaller();
+            return;
         }
 
         var outcome = SessionStore.InFlight;
@@ -1287,7 +1287,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             try
             {
-                answer = await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
+                // ⚠️ THE CALLER'S OWN CLOSE OUTLIVES THE CALLER'S WAIT, 2026-10-04.
+                // Nothing may cut a clean close short, and a caller that cancels its
+                // close, or a connection that ends under it, would otherwise have the
+                // cancellation sent on to the child and the child ended at once, with
+                // its browser in the middle of closing. The close is sent with no token
+                // of the caller's, the caller waits for it under its own, and the child
+                // is ended once the close is over, in the `finally` below.
+                answer = callersClose
+                    ? await live.SendTheCallersCloseAsync(request.Method, forwarded).WaitAsync(cancellationToken).ConfigureAwait(false)
+                    : await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (budget is { IsCancellationRequested: true } && !cancellationToken.IsCancellationRequested)
             {
@@ -1358,10 +1367,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             // After the answer and the row, and never before: the caller's
             // close has been answered, so ending the child now takes only a
-            // node process with no browser left in it.
+            // node process with no browser left in it. A caller that stopped
+            // waiting first leaves the close to finish, and the child is ended
+            // once it has, bounded by the cap.
             if (callersClose)
             {
-                await live.EndTheChildAfterTheCallersCloseAsync().ConfigureAwait(false);
+                await live.EndTheChildAfterTheCallersCloseAsync(answered: outcome is not SessionStore.InFlight).ConfigureAwait(false);
             }
         }
     }

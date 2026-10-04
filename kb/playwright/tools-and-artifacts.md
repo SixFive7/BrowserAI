@@ -1340,6 +1340,20 @@ and `.AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce` hold both with a
 child that holds the close open; that a real paused child obeys its stdin is
 still the 0.0.82 measurement.
 
+⚠️ *Corrected 2026-10-04 by addition, D4.1 and Q378 (previously "for thirty
+seconds and no longer" and "A resume that arrives while the close is still
+waiting ends the wait at once").* **A pause meets a close for a minute now, and a
+resume waits it out.** Every clean close takes one cap, `SessionTimes.BrowserCloseCap`,
+a minute, where `LiveSession.IdleCloseBudget` stood, and a resume, a release or a shutdown that meets a close in flight waits
+for its answer up to the cap before it ends the child; only a destroy ends the wait
+early. So a session wedged on an armed pause comes back through `browserai_resume`
+a minute after its close was sent, where it came back at once. The second arm named
+above is retired; `CloseOrderingTests.AResumeThatMeetsAnIdleCloseStillWaitingWaitsForItAndThenReopens`
+holds the opposite, and `SessionCloseTests.ACloseThatNeverAnswersLeavesASessionTheResumeRecovers`
+holds the resume waiting a never-answering close out to the tick of the cap. Nothing
+here was re-measured: what a paused child does at the end of its input is still the
+0.0.82 measurement.
+
 ### A close from the dashboard leaves the session on a blank page, and no call fails
 
 Measured:

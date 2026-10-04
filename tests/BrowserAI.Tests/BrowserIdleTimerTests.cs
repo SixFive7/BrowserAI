@@ -619,7 +619,13 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(left.HasValue)
             .IsTrue()
             .Because("the cap the idle close armed was no longer running once the close had reached the child, so nothing was waiting for the answer");
-        await Assert.That(left!.Value).IsLessThanOrEqualTo(LiveSession.IdleCloseBudget);
+        await Assert.That(left!.Value).IsLessThanOrEqualTo(SessionTimes.BrowserCloseCap);
+
+        // ⚠️ AND IT IS THE ONE-MINUTE CAP, D4.1 of 2026-10-04: the loop that fired the
+        // close moves the clock a period at a time and stops once the cap is armed, so
+        // at most one period has passed since. Planted red against the thirty seconds
+        // that stood until that day.
+        await Assert.That(left.Value).IsGreaterThanOrEqualTo(SessionTimes.BrowserCloseCap - ShortPeriod);
 
         clock.AdvanceTicks(left.Value.Ticks - ManualClock.OneTick);
 
@@ -648,8 +654,8 @@ internal sealed partial class BrowserIdleTimerTests
 
     /// <summary>
     /// An idle close whose <c>browser_close</c> never answers -- an armed debugger
-    /// pause -- still ends the child, once its thirty-second cap has run out and
-    /// not before.
+    /// pause -- still ends the child, once its one-minute cap has run out and not
+    /// before.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -672,8 +678,6 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task AnIdleCloseThatIsNeverAnsweredEndsTheChildWhenItsCapRunsOut()
     {
-        await Assert.That(LiveSession.IdleCloseBudget).IsEqualTo(TimeSpan.FromSeconds(30));
-
         var clock = new ManualClock();
         var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -711,7 +715,11 @@ internal sealed partial class BrowserIdleTimerTests
             .IsTrue()
             .Because("the cap the idle close armed was no longer running once the close had reached the child, so nothing was waiting for the answer");
 
-        clock.AdvanceTicks(left!.Value.Ticks - ManualClock.OneTick);
+        // The one-minute cap, D4.1 of 2026-10-04, and not the thirty seconds before it.
+        await Assert.That(left!.Value).IsLessThanOrEqualTo(SessionTimes.BrowserCloseCap);
+        await Assert.That(left.Value).IsGreaterThanOrEqualTo(SessionTimes.BrowserCloseCap - ShortPeriod);
+
+        clock.AdvanceTicks(left.Value.Ticks - ManualClock.OneTick);
 
         _ = await harness.Client.RoundTripAsync("tools/list");
 
@@ -746,81 +754,11 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
     }
 
-    /// <summary>
-    /// A resume that arrives while the idle close is still waiting for its
-    /// <c>browser_close</c> ends that wait at once, and does not sit out the cap.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Every call to a closed session is refused with a sentence naming
-    /// <c>browserai_resume</c></b>, so a caller who meets the session while its
-    /// close is parked on an armed pause resumes it, and the resume tears the
-    /// session down first. The close is waited on with the teardown's own
-    /// cancellation, so the teardown ends the wait the moment it starts.
-    /// </para>
-    /// <para>
-    /// <b>No duration is asserted, and the evidence is what the cancellation
-    /// leaves.</b> A wait the teardown cancels tells the child its close was
-    /// cancelled, by that close's own id, before the child is ended; a wait it
-    /// merely abandoned would have held the resume for the timer's own 20 s
-    /// teardown bound and then ended the child with nothing said to it. The clock
-    /// is not moved at all after the close is asked for, so the cap cannot be what
-    /// ended it either.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce()
-    {
-        var clock = new ManualClock();
-        var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        await using var rig = RigSessionEnvironment.Create(
-            configure: child =>
-            {
-                child.Tools["browser_navigate"] = new FakeToolBehaviour();
-                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour { HoldUntil = never.Task };
-            },
-            browserIdlePeriod: ShortPeriod,
-            clock: clock);
-
-        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
-
-        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-        {
-            ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the call that starts the browser and arms the timer" },
-        });
-
-        var first = harness.Child;
-
-        await ClockUntilTheIdleCloseArmsItsCapAsync(clock, first);
-
-        await WaitUntilAsync(
-            () => first.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool) || first.HasStopped,
-            TestDefaults.InProcessHang,
-            "the idle close neither asked the browser to close nor ended the child");
-
-        await Assert.That(first.ToolCallsReceived).Contains(LiveSession.BrowserCloseTool);
-        await Assert.That(first.HasStopped).IsFalse();
-
-        var resumed = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-        {
-            ["name"] = SessionToolSurface.Resume,
-            ["arguments"] = new JsonObject { ["directory"] = harness.Session!, ["why"] = "the suite resuming a session whose idle close is still waiting" },
-        });
-
-        await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
-        await Assert.That(rig.SessionChildren.Count).IsEqualTo(2);
-
-        await WaitUntilAsync(
-            () => first.HasStopped,
-            TestDefaults.InProcessHang,
-            "the resume did not end the child whose idle close was still waiting");
-
-        await Assert.That(first.MethodsReceived).Contains("notifications/cancelled");
-        await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
-    }
+    // ⚠️ RETIRED 2026-10-04: `AResumeThatMeetsAnIdleCloseStillWaitingEndsTheWaitAtOnce`
+    // stood here and held the behaviour the maintainer's warning of that day ruled
+    // out -- a resume that met the idle close still waiting ended the wait at once
+    // and ended the child through its stdin. Its replacement holds the opposite, that
+    // the resume waits for the close: `CloseOrderingTests.AResumeThatMeetsAnIdleCloseStillWaitingWaitsForItAndThenReopens`.
 
     /// <summary>
     /// Moves the clock a period at a time until the idle close has armed its cap

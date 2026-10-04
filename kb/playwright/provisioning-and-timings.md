@@ -1068,6 +1068,28 @@ which a paused child obeys. `LiveSession.IdleCloseBudget` is the cap;
 child that answers, one that never does, and a resume in between. **Not re-measured:** what the close keeps when it answers was measured
 through a raw child, and is not re-taken through the product here.
 
+⚠️ **A minute since 2026-10-04, and a resume waits for the close** -- *added by
+addition, D4.1 and Q378, the maintainer's words verbatim: "Make it a roomy 1 min. We
+want everything nicely saved to disk even on a slow system." and "if we were to
+resume within that close window we will need to handle atomicity and orderign
+correctly."* Every clean close takes one cap, `SessionTimes.BrowserCloseCap`, where
+`LiveSession.IdleCloseBudget` stood, twice
+Chromium's 30 s cookie commit interval in [the durability entry](#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03):
+the idle close, the shutdown of a server a client started, the session host's
+shutdown before an update, and anything that meets a close in flight. A resume, a
+release or a shutdown that meets one waits for the browser's answer up to the cap and
+then ends the child; only a destroy ends the wait early. The third arm named above is
+retired, and `CloseOrderingTests.AResumeThatMeetsAnIdleCloseStillWaitingWaitsForItAndThenReopens`
+holds the opposite. **Measured through the product the same day**, against a real
+Chromium whose close the suite's probe held back while a resume arrived: the resume
+waited, and once the close went through, a cookie written just before it was read back
+after the reopen, with both tabs restored
+(`CloseOrderingTests.AgainstARealBrowserAResumeDuringASlowCloseWaitsAndTheWriteBeforeItSurvives`),
+and the same through the session host for a kept session whose client came back
+(`CloseOrderingTests.AgainstARealBrowserInTheHostAKeptSessionsSlowCloseIsWaitedForByTheNextClient`).
+One run each per gate, so they say the close keeps the write when it is let finish,
+and nothing about how often a cut-short close loses one.
+
 ⚠️ **`browser_close`'s own result text reads as though it closed a tab, and it
 does not.** It answers *"No open tabs. Navigate to a URL to create one."* with
 `await page.close()` as the code it ran -- yet every process under the browsers
@@ -1166,6 +1188,13 @@ server logs, so whether their closes were answered in time is not recorded. The
 budget's own remarks quote a Firefox `browser_close` at 444 to 1,163 ms, so a
 close inside that range can miss it, and this run is one that did. The cookie
 survived the run, as Firefox's cookie did on Path B.
+
+⚠️ **The one-second budget is gone since 2026-10-04** -- *added by addition, D4.2, the
+maintainer's words verbatim: "Same 1 min. under option d (lane c)"*. A shutdown's close
+takes the one cap every close takes, `SessionTimes.BrowserCloseCap`, a minute. **Not
+re-measured:** whether this Firefox path keeps its `localStorage` under the minute. Where
+a client kills the server it started, its kill still lands first, so on that client's
+own exit the browser is killed whatever the cap says; see the cap's remarks.
 
 **Costs, 2026-10-03.** The paired runs first, the extra Path A runs after the
 semicolon:
@@ -1599,6 +1628,15 @@ on disk. **Firefox's preferences restore whatever reached disk**, 27 of 27,
 and the session file reaches disk 15 s or more after a change at the default
 interval, and up to an hour later once nobody is at the machine.
 
+✅ **Built 2026-10-04, Q376 a**, the maintainer's words verbatim: *"Q376 a"*: every
+Chromium launch carries `--hide-crash-restore-bubble`,
+`BrowserConfiguration.HideCrashRestoreBubbleSwitch`, with no guard of BrowserAI's own
+against a page that crashes the browser at every launch.
+`SessionCloseTests.AResumeAfterTheBrowserWasKilledReopensTheTabsItHadOnDisk` kills a
+real Chromium's whole job once its session file names both tabs, resumes, and reads
+both tabs back. Firefox's intervals are left at their defaults, Q377 e, and Chromium's
+cookie interval as it is, Q378 a; see [DECISIONS](../../DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
+
 ✅ **Built 2026-10-03.** Every session launch carries the options measured above:
 `BrowserConfiguration.RestoreLastSessionSwitch` for Chromium,
 `BrowserConfiguration.FirefoxSessionRestorePreferences` for Firefox, and
@@ -1774,6 +1812,23 @@ the check that reads it has no platform condition. Rewriting `Crashed` to
 of 3, by editing a file the browser owns. A Chromium relaunch that restored took
 369 to 626 ms (17 runs), and one that did not 377 to 1,674 ms (76). `[FLOATS]`
 
+⚠️ **Except a profile killed before its first Preferences write: it restores nothing
+with the switch on** -- *added 2026-10-04 by addition, measured through the suite's
+own arm.* A relaunch that finds no `Default/Preferences` takes the profile for a new
+one, and a new profile is given no last session whatever `--restore-last-session`
+says (`chrome/browser/ui/startup/startup_browser_creator.cc:937-939`, and
+`ProfileImpl::IsNewProfile` in `chrome/browser/profiles/profile_impl.cc:1657-1668`, at
+155.0.8059.12); Playwright launches with `--no-first-run`, so the file alone decides.
+Every run above warmed its profile with a launch and a clean close first, so none of
+them met it. `SessionCloseTests.AResumeAfterTheBrowserWasKilledReopensTheTabsItHadOnDisk`
+killed a fresh profile's first launch 3.1 s after the call that started it, with both
+tabs in its session file and the switch on, and the relaunch showed
+`chrome://new-tab-page/` and nothing else, 1 of 1. Waiting for the Preferences file
+before the kill, the same arm brought both tabs back, 2 of 2, and without the switch,
+still waiting for the file, nothing, 1 of 1. **Not established:** when a fresh
+profile's first Preferences write comes; Chromium writes the file 10 s after a change,
+in the table above.
+
 ⭐ **Firefox's session file trails a navigation by two 15 s timers in series,
 and by an hour once nobody is at the machine.** The content process reports a
 navigation after `browser.sessionstore.interval`
@@ -1906,6 +1961,16 @@ every launch; what made the 1.2 s stalls; and anything about an operating-system
 crash or a power loss, since every kill here ended processes and left the disk
 cache to Windows. The forced idle cell has two runs without input, not three:
 the four others had input from the person at the machine.
+
+✅ **What became of the levers, 2026-10-04.** The maintainer took Chromium's
+`--hide-crash-restore-bubble` onto every launch, *"Q376 a"*, with no crash-loop
+guard; left Firefox's `browser.sessionstore.interval` and `.interval.idle` at their
+defaults, *"Q377 e. Because combined with my D4.1 and D4.1 2 answer that would work
+right?"*; and left Chromium's 30 s cookie commit as it is, *"30 sec. fits nicely in
+the 1 min. we set under d4.1"*, which made that interval what every close's cap of a
+minute is derived from. The intervals decide only for a browser that dies without a
+clean close, and whether an agent's clicks keep Firefox out of its idle hour is in
+[the not-established table](../not-established.md), read and not measured.
 
 **Re-establish** with the rig: `chain.sh` runs plans through `orchestrate.ps1`,
 one JSON line per run, and `table.py` prints the table above as `table.txt`;

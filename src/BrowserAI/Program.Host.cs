@@ -161,10 +161,6 @@ internal static partial class Program
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = ProcessLog.OpenSessionLog,
-
-                // Nobody kills the host on a clock, so its browsers get the idle
-                // close's generous cap at shutdown and not a client's one second.
-                ShutdownCloseBudget = SessionHostProtocol.ShutdownCloseBudget,
             };
 
             var host = await SessionHost.ConnectAsync(

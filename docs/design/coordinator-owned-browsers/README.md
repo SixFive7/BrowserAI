@@ -212,13 +212,22 @@ released after the close.
 since 2026-10-03, with a generous cap: the client's kill window that set the
 one-second cap does not reach the host.
 
+⚠️ *Corrected 2026-10-04 by addition, D4.1, D4.2 and Q378:* every close takes one
+cap of a minute now, `SessionTimes.BrowserCloseCap`, twice Chromium's 30 s cookie
+commit interval, the idle close's and the shutdown's alike, in the host and in a
+server a client started. And a resume, a release or a shutdown that meets a close
+in flight waits for it, bounded by the cap, where the idle close's wait was ended
+at once; only a destroy cuts a close short. See
+[DECISIONS](../../../DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
+
 ## Updates
 
 The host, its children and the coordinator all run from the install root, so an
 apply must stop them. **The coordinator's scan now leaves out the processes in its
 own job.** When nothing else runs from the install, it asks the host to close every
 browser with its own `browser_close`, in parallel, capped at 30 s like the idle
-close, waits for the host to exit, and applies. Sessions come back through
+close, waits for the host to exit, and applies. *A minute since 2026-10-04, the one
+cap every close takes, and the coordinator waits two minutes for the host to end.* Sessions come back through
 `browserai_resume` and the session restore built on 2026-10-03. Headed windows are
 closed too, which is the brief's direction and is recorded for review; the
 alternative is that a headed window with its browser up holds the apply.
@@ -255,8 +264,8 @@ setting it names, and `SessionHostBoundsTests` holds it there.
 | Bound | Value | Derived from |
 |---|---|---|
 | A front's wait for a host, `SessionHostAccess.StartBound` | 15 s | Half of the 30 s Claude Code 2.1.288 and codex-cli 0.155 and 0.160 give a server to start, measured for Codex and read in Claude Code's binary; the other half is left for the in-process start a front falls back to |
-| The host's close of each browser before an update, `SessionHostProtocol.ShutdownCloseBudget` | 30 s | The idle close's own cap, `LiveSession.IdleCloseBudget` (Q367 a): the same close with nobody waiting |
-| The coordinator's wait for the host to end, `SessionHostProtocol.StopBound` | 60 s | Twice the close: the browsers' closes, then each child ended through its stdin with its transport's five seconds |
+| The host's close of each browser before an update, `SessionHostProtocol.ShutdownCloseBudget` | 30 s | The idle close's own cap, `LiveSession.IdleCloseBudget` (Q367 a): the same close with nobody waiting. ⚠️ *Retired 2026-10-04 with the idle close's own: every close takes `SessionTimes.BrowserCloseCap`, 60 s, twice Chromium's 30 s cookie commit interval (D4.1, D4.2)* |
+| The coordinator's wait for the host to end, `SessionHostProtocol.StopBound` | 60 s | Twice the close: the browsers' closes, then each child ended through its stdin with its transport's five seconds. ⚠️ *120 s since 2026-10-04, twice the one cap* |
 | The host's stay with nothing to do, `SessionHostServer.Linger` | 1 min | The coordinator's own minute after its last tab (Q336 a), for the same kind of return |
 | How often the host looks at itself and at a kept headed window, `SessionHostServer.LingerLook`, `LiveSession.DetachedWindowLook` | 15 s | A quarter of the linger, which is how far past it an empty host can run |
 | The host pipe's buffer, `NamedPipes.StreamBufferBytes` | 64 KiB | The server pipe's own reply buffer; a larger frame waits for its reader, which is the backpressure |

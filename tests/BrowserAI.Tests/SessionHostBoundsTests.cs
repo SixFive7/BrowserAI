@@ -44,22 +44,30 @@ internal sealed class SessionHostBoundsTests
     }
 
     /// <summary>
-    /// The host's close before an update is the idle close's own, and the coordinator's
-    /// wait for the host covers the host's whole shutdown.
+    /// The host's close before an update is the one cap every close takes, and the
+    /// coordinator's wait for the host covers the host's whole shutdown.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The second assertion is the reason the remark gives, made checkable</b>: the
     /// browsers' closes, all at once, then each session's child and the tool list's own
     /// child ended through their stdin, one after the other, each given its transport's
     /// shutdown timeout. A stop bound shorter than that would end a host that was still
     /// closing cleanly.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One cap since 2026-10-04</b> (previously this arm held the host's own
+    /// close, <c>SessionHostProtocol.ShutdownCloseBudget</c>, equal to the server's idle
+    /// close, <c>LiveSession.IdleCloseBudget</c>, across the two binaries). Both names
+    /// are gone: the cap is declared once, in the library both binaries read, so there
+    /// is no second copy left to drift. <see cref="CloseBoundsTests"/> holds the cap.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheHostsCloseIsTheIdleClosesAndTheStopCoversTheHostsWholeShutdown()
+    public async Task TheHostsCloseIsTheOneCapAndTheStopCoversTheHostsWholeShutdown()
     {
-        await Assert.That(SessionHostProtocol.ShutdownCloseBudget).IsEqualTo(LiveSession.IdleCloseBudget);
-        await Assert.That(SessionHostProtocol.StopBound).IsEqualTo(SessionHostProtocol.ShutdownCloseBudget * 2);
+        await Assert.That(SessionHostProtocol.StopBound).IsEqualTo(SessionTimes.BrowserCloseCap * 2);
 
         var childShutdown = new ChildProcessOptions
         {
@@ -68,7 +76,7 @@ internal sealed class SessionHostBoundsTests
             Environment = new Dictionary<string, string>(),
         }.ShutdownTimeout;
 
-        await Assert.That(SessionHostProtocol.StopBound).IsGreaterThanOrEqualTo(SessionHostProtocol.ShutdownCloseBudget + (childShutdown * 2))
+        await Assert.That(SessionHostProtocol.StopBound).IsGreaterThanOrEqualTo(SessionTimes.BrowserCloseCap + (childShutdown * 2))
             .Because("a stop that gave up before the browsers' closes and both children's ends would cut a clean shutdown short");
     }
 

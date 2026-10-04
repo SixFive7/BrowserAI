@@ -35,7 +35,8 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       2026-10-03 in `9a1b921`: Chromium's
       `--enable-aggressive-domstorage-flushing` on every launch, and at the end
       of the server's input a `browser_close` on every live session at once,
-      bounded at 1 s, before the rest of the shutdown. Not built: an arm that
+      bounded at 1 s, before the rest of the shutdown (*a minute since
+      2026-10-04, D4.2, which the client's own kill still cuts short*). Not built: an arm that
       kills the server the way Claude Code does and reads the profile back,
       which the building lane judged a timing test. **What to do:** decide
       whether a kill-and-read-back arm can be written as a hang detector, and
@@ -60,7 +61,9 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       research recommends, once the maintainer has answered Q376 to Q378, in
       `BrowserConfiguration`, which every session child the host starts is
       launched with. The coordinator stays while a tab is open or its host runs,
-      whichever is longer.
+      whichever is longer. *Corrected 2026-10-04 by addition: the levers are
+      answered and done, Q376 a built, Q377 e and Q378 a needing no code, see
+      [DECISIONS](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).*
 - [ ] **The browser tab, Q315 a: what is left.** Built on 2026-10-03, in
       `src/BrowserAI.App/Page/`: the listener, its gate and its token, the
       coordinator's minute, the newest tab winning, the status page with its

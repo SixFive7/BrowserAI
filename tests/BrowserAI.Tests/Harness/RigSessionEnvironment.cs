@@ -70,7 +70,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         TimeSpan? browserIdlePeriod,
         ManualClock? clock,
         bool realSessionChildren,
-        ToolVerdicts? verdicts)
+        ToolVerdicts? verdicts,
+        string? holdBrowserCloseUntil = null)
     {
         Root = root;
         Clock = clock;
@@ -192,8 +193,24 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             {
                 ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
                 {
+                    // ⚠️ THE ONE CHANGE TO THE LAUNCH, and only when an arm asks for
+                    // a slow close: the probe is started in node's place, in the same
+                    // job, with the same directory and environment, and starts node
+                    // itself. See CloseRelayProbe.
+                    var launched = holdBrowserCloseUntil is { } release
+                        ? new ChildProcessOptions
+                        {
+                            Command = CloseRelayProbePath,
+                            Arguments = ["close-relay", release, options.Command, .. options.Arguments],
+                            WorkingDirectory = options.WorkingDirectory,
+                            Environment = options.Environment,
+                            ShutdownTimeout = options.ShutdownTimeout,
+                            StandardErrorLines = options.StandardErrorLines,
+                        }
+                        : options;
+
                     var child = await ChildConnection.ConnectAsync(
-                        new DirectStdioClientTransport(options, loggerFactory),
+                        new DirectStdioClientTransport(launched, loggerFactory),
                         loggerFactory,
                         idPrefix,
                         relay,
@@ -419,6 +436,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// needs a denial or a gap the product does not have hands in a doctored
     /// copy instead of changing what is shipped.
     /// </param>
+    /// <param name="holdBrowserCloseUntil">
+    /// For a rig with real session children only: a file whose existence lets each
+    /// child's <c>browser_close</c> reach it. Until the file exists the request waits
+    /// in <see cref="CloseRelayProbePath"/>, which runs the real child behind it, so
+    /// a close is still running when an arm wants it to be.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
@@ -427,11 +450,18 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         TimeSpan? browserIdlePeriod = null,
         ManualClock? clock = null,
         bool realSessionChildren = false,
-        ToolVerdicts? verdicts = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts)
+        ToolVerdicts? verdicts = null,
+        string? holdBrowserCloseUntil = null) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil)
         {
             OpensDefaultSession = opensDefaultSession,
         };
+
+    /// <summary>
+    /// The suite's probe, which stands between BrowserAI and a real child when an arm
+    /// holds the child's <c>browser_close</c> back.
+    /// </summary>
+    public static string CloseRelayProbePath { get; } = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
 
     /// <summary>
     /// An environment whose session children refuse to start, the way a missing

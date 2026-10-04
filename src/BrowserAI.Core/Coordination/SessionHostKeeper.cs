@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Globalization;
 using BrowserAI.Interop;
 using BrowserAI.Registration;
+using BrowserAI.Sessions;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
@@ -31,43 +32,30 @@ internal static class SessionHostProtocol
     /// </summary>
     public const string RelayArgument = "--relay";
 
-    /// <summary>
-    /// How long the session host's shutdown waits for each browser to answer its own
-    /// <c>browser_close</c>: the idle close's own cap, <c>LiveSession.IdleCloseBudget</c>,
-    /// <b>30 s</b>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The brief's rule for updates, 2026-10-03: browsers are closed cleanly, with
-    /// <c>browser_close</c> generously capped</b>, and sessions come back through
-    /// <c>browserai_resume</c> and the browser's own session restore. A server a client
-    /// started gets one second, because that is what a client leaves it before the
-    /// kill. Nobody kills the host on a clock, so its close is the idle close with
-    /// nobody waiting, and it takes that close's cap (Q367 a), whatever the maintainer
-    /// settles that cap at. The second costs something: re-verification row 38,
-    /// re-established 2026-10-03, lost a Firefox's <c>localStorage</c> in one run of six,
-    /// the run whose server logged that its one-second close had run out.
-    /// </para>
-    /// <para>
-    /// <b>Declared here and held to it by a test</b>, because this library cannot see
-    /// the server's <c>LiveSession</c>: <c>SessionHostBoundsTests</c> fails the build the
-    /// day the two differ.
-    /// </para>
-    /// </remarks>
-    public static TimeSpan ShutdownCloseBudget { get; } = TimeSpan.FromSeconds(30);
+    // ⚠️ RETIRED 2026-10-04: `ShutdownCloseBudget` stood here, thirty seconds, "the
+    // idle close's own cap". D4.1 and D4.2, the maintainer's words verbatim: "Make it
+    // a roomy 1 min." and "Same 1 min. under option d (lane c)". The host's close
+    // before an update is `SessionTimes.BrowserCloseCap` since, the one cap every
+    // close takes, declared in this library so the coordinator and the server read
+    // the same value.
 
     /// <summary>
     /// How long the coordinator waits for the host to close everything and end before
-    /// an update: twice <see cref="ShutdownCloseBudget"/>, <b>60 s</b>.
+    /// an update: twice <see cref="SessionTimes.BrowserCloseCap"/>, <b>two minutes</b>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Twice the close, because the host's shutdown is two steps.</b> First every
     /// browser's own close, all at once and each capped at
-    /// <see cref="ShutdownCloseBudget"/>; then each session's child and the tool list's
-    /// own child ended through their stdin, each given its transport's shutdown
-    /// timeout, five seconds, before its job is closed. The second budget covers the
-    /// second step with room, and <c>SessionHostBoundsTests</c> holds that it does.
+    /// <see cref="SessionTimes.BrowserCloseCap"/>, or a close already in flight waited
+    /// for under the same cap; then each session's child and the tool list's own child
+    /// ended through their stdin, each given its transport's shutdown timeout, five
+    /// seconds, before its job is closed. The second cap covers the second step with
+    /// room, and <c>SessionHostBoundsTests</c> holds that it does.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Two minutes since 2026-10-04</b> (previously sixty seconds, twice the
+    /// thirty-second close it followed), when the cap became a minute.
     /// </para>
     /// <para>
     /// <b>A hang detector, and past it nothing is left running</b>: the coordinator
@@ -75,7 +63,7 @@ internal static class SessionHostProtocol
     /// and everything it started.
     /// </para>
     /// </remarks>
-    public static TimeSpan StopBound { get; } = ShutdownCloseBudget * 2;
+    public static TimeSpan StopBound { get; } = SessionTimes.BrowserCloseCap * 2;
 
     /// <summary>The session host pipe for an install root.</summary>
     /// <remarks>
@@ -374,7 +362,7 @@ internal sealed class SessionHostKeeper : ISessionHostHold, IDisposable
     /// <para>
     /// <b>The brief's rule for updates</b>: the host and its children run from the
     /// install root, so an apply must stop them; browsers are closed cleanly first,
-    /// generously capped (<see cref="SessionHostProtocol.ShutdownCloseBudget"/>), and
+    /// generously capped (<see cref="SessionTimes.BrowserCloseCap"/>), and
     /// sessions come back through <c>browserai_resume</c> and the session restore. The
     /// host's own shutdown is the clean close; its stop is asked through its pipe and
     /// its census marker, the way anything stops a server.
