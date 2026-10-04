@@ -1182,6 +1182,13 @@ and the largest, the refusal of an argument a schema does not have with the
 tool's whole definition, is checked against it for every tool by
 `UnrecognisedArgumentTests`.
 
+⚠️ *Added 2026-10-04 by addition.* **What the maintainer chose instead, 2 b**:
+the two refusals name every current tool with one line saying what it does.
+Measured through the published binary that day, BrowserAI 1.1.1-alpha.0.206 with
+72 tools: the refusal for a tool BrowserAI does not have was **5,454 characters**,
+and Q261 b's refusal, in the wording a client named `claude-code` gets, **6,002**.
+`ToolListInRefusalsTests` holds the longest spelling of both under the budget.
+
 ⚠️ **Not established.** The exact cut points: Claude Code's lies
 somewhere between 10,100 and 12,000 for an error result and between 50,000 and
 60,000 for an ordinary one, and Codex's at or just below 12,000; no run sat

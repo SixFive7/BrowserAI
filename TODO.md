@@ -88,27 +88,14 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 
 ### Still open, and the maintainer's to choose
 
-- [ ] **What a refusal sends instead of the whole tool list (Q369.3 c and
-      Q371.6 c).** He chose to append the entire current tool list to Q261 b's
-      first-call refusal and to the unknown-tool refusal, and asked for a stop and
-      a report if a client would not pass it whole. Measured 2026-10-03: Claude
-      Code 2.1.288 cuts an error result above about 10,100 characters to its first
-      and last 5,000, and Codex 0.160.0 and 0.155.0-alpha.9.2 cut one above about
-      12,000, while the list is 110,386 characters
-      ([kb](kb/mcp/protocol.md#how-much-of-a-tool-result-each-client-hands-its-model----measured-2026-10-03)).
-      Neither refusal carries a list. **What to do:** his choice among what lane
-      q371 reported: names only, names with one line each, a pointer to ask for
-      the tool list again, or nothing more.
-- [ ] **Lane q371's choices inside his rules, for his review.** With no browser
-      started yet, a resume passing a setting that differs reopens the session at
-      that setting (Q324 c) where his rule for a live session would refuse it; a
-      bare resume with no browser up is now the no-op; a `purpose` passed with a
-      no-op resume is still appended; a catch_up `why` on a session another
-      BrowserAI holds goes to this BrowserAI's own log; a denied tool is answered
-      like a name BrowserAI does not have, so its `why` reaches no model; and
-      catch_up's trace line names the network log while the run found typed text
-      in the action log too. **What to do:** put each to him with its texts and
-      record the answer in `DECISIONS.md`.
+- [ ] **Lane q371's choices inside his rules, for his review.** A bare resume
+      with no browser up is now the no-op; a `purpose` passed with a no-op resume
+      is still appended; and a catch_up `why` on a session another BrowserAI holds
+      goes to this BrowserAI's own log. *Narrowed 2026-10-04 by his answers of that
+      day: the texts are approved (1 a), a refusal names every tool (2 b),
+      settings are applied when no browser has started (3 a), and catch_up names
+      every sensitive file (4 a).* **What to do:** put each to him with its texts
+      and record the answer in `DECISIONS.md`.
 - [ ] **The two reports to the Microsoft Security Response Center (Q358).**
       One for the dashboard WebSocket's missing `Origin` check, one for
       `--host` switching its `Host` check off; prepared and not sent. **What to

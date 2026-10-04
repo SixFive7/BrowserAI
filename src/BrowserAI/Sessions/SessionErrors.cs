@@ -137,14 +137,16 @@ internal static class SessionErrors
     /// a client that re-dials reaches the same host, whose list it may already hold, so
     /// that sentence would be false, and this one says only what the host can know.
     /// </param>
+    /// <param name="tools">The tool list this server answers now, for the block that names every tool in it.</param>
     /// <returns>The refusal.</returns>
-    public static string ToolListPredatesThisServer(string tool, string version, string? clientName, bool throughTheSessionHost = false) =>
+    public static string ToolListPredatesThisServer(string tool, string version, string? clientName, bool throughTheSessionHost = false, ToolSignatures? tools = null) =>
         $"'{tool}' was NOT forwarded, once, because this connection has never asked BrowserAI for its tool list. "
         + (throughTheSessionHost
             ? $"It reached BrowserAI's session host, version {version}, which may be the BrowserAI the tool list you are calling from came from, or may have started after that list was read; BrowserAI cannot tell which from here, and in the second case the list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
             : $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. ")
         + $"{Remedy(clientName)} "
-        + "Nothing reached a browser, no session was opened or changed, and this is said once per connection: if you call again without a list, the call is forwarded normally.";
+        + "Nothing reached a browser, no session was opened or changed, and this is said once per connection: if you call again without a list, the call is forwarded normally."
+        + ToolsNow(tools);
 
     /// <summary>
     /// What to do about a tool list that predates the running server, spelled for
@@ -637,10 +639,38 @@ internal static class SessionErrors
     /// </para>
     /// </remarks>
     /// <param name="tool">The name the call carried.</param>
+    /// <param name="tools">The tool list this server answers now, for the block that names every tool in it.</param>
     /// <returns>The refusal.</returns>
-    public static string ToolDoesNotExist(string tool) =>
+    public static string ToolDoesNotExist(string tool, ToolSignatures? tools = null) =>
         $"BrowserAI has no tool '{RecordText.Escape(tool)}', so nothing ran. Use the tools in your tool list. "
-        + "If BrowserAI was updated during this conversation, a tool your list does not show cannot be called until the person you are working with reconnects BrowserAI or starts a new conversation: your client keeps the list it fetched when the conversation started.";
+        + "If BrowserAI was updated during this conversation, a tool your list does not show cannot be called until the person you are working with reconnects BrowserAI or starts a new conversation: your client keeps the list it fetched when the conversation started."
+        + ToolsNow(tools);
+
+    /// <summary>The block naming every tool in the list this server answers now.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-04 by the maintainer, 2 b</b>: the two refusals that send a
+    /// caller back to its tool list carry every current tool's name and one line
+    /// saying what it does, generated from the list this server answers and never
+    /// written here. The sentences before it are unchanged, the reconnect sentence
+    /// included, so a model holding a list from before an update is told both what
+    /// this BrowserAI has and why its own list may not show it.
+    /// </para>
+    /// <para>
+    /// <b>Held under what a client hands a model whole</b>, by
+    /// <c>ToolListInRefusalsTests</c>: the longest spelling, with the whole surface
+    /// this build advertises, is measured against
+    /// <see cref="ClientTruncationBudget.ErrorResultCharacters"/>. Nothing is added
+    /// when the list could not be read, because a block naming BrowserAI's own tools
+    /// alone would say the browser tools are gone.
+    /// </para>
+    /// </remarks>
+    /// <param name="tools">The list, or <see langword="null"/>.</param>
+    /// <returns>The block, or nothing.</returns>
+    private static string ToolsNow(ToolSignatures? tools) =>
+        tools?.Catalogue() is { Length: > 0 } catalogue
+            ? $"\n\nThe tools this BrowserAI has now:\n{catalogue}"
+            : string.Empty;
 
     /// <summary>
     /// A call carried an argument its tool's schema does not have.

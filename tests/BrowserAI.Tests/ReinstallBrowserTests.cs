@@ -858,7 +858,7 @@ internal sealed class ReinstallBrowserTests
         var invented = await CallAsync(rig, "browserai_do_something_nobody_built", []);
 
         await Assert.That((bool?)invented["isError"]).IsTrue();
-        await Assert.That(TextOf(invented)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_do_something_nobody_built"));
+        await Assert.That(TextOf(invented)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_do_something_nobody_built", await rig.ListedToolsAsync()));
     }
 
     /// <summary>

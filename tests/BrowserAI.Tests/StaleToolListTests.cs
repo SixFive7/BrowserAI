@@ -84,8 +84,13 @@ internal sealed class StaleToolListTests
         var first = await CallAsync(rig, SessionToolSurface.Init, arguments.DeepClone().AsObject());
 
         await Assert.That((bool?)first["isError"]).IsTrue();
-        await Assert.That(TextOf(first)).IsEqualTo(
+
+        // Its sentences, and since 2026-10-04 (2 b) the tool list after them,
+        // which ToolListInRefusalsTests holds tool by tool. Listing here to check
+        // it would end the condition the rest of this arm is about.
+        await Assert.That(TextOf(first)).StartsWith(
             SessionErrors.ToolListPredatesThisServer(SessionToolSurface.Init, BuildVersion.Current, "BrowserAI.RawPipeClient"));
+        await Assert.That(TextOf(first)).Contains("\n\nThe tools this BrowserAI has now:\n- " + SessionToolSurface.Init + ": ");
 
         // ⚠️ THE NOTIFICATION, READ OFF THE WIRE AND NOT INFERRED FROM THE
         // SENTENCE. It is written before the response, so the round trip above has

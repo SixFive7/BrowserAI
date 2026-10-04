@@ -398,6 +398,10 @@ internal sealed class SessionPolicyTests
             ["purpose"] = "meets names this BrowserAI does not have",
         });
 
+        // The list the refusal names, since 2026-10-04 (2 b): every tool this
+        // server has now, read the way a caller reads it.
+        var tools = await rig.ListedToolsAsync();
+
         foreach (var invented in new[] { "browserai_zzz", "browser_frobnicate" })
         {
             var answer = await CallAsync(rig, invented, new JsonObject
@@ -407,7 +411,7 @@ internal sealed class SessionPolicyTests
             });
 
             await Assert.That((bool?)answer["isError"]).IsTrue();
-            await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
+            await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented, tools));
 
             // The maintainer's own wording, Q371.6 c, as literals: the name, that
             // nothing ran, the tool list as the place to look, and why a tool the
@@ -428,7 +432,7 @@ internal sealed class SessionPolicyTests
 
             await Assert.That(recorded.Count).IsEqualTo(1);
             await Assert.That(recorded[0].Outcome).IsEqualTo(SessionStore.Failed);
-            await Assert.That(recorded[0].Failure!).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
+            await Assert.That(recorded[0].Failure!).IsEqualTo(SessionErrors.ToolDoesNotExist(invented, tools));
             await Assert.That(recorded[0].Why).IsEqualTo("the suite exercising this call");
 
             // ⚠️ With no session: the same answer, and not "this needs a
@@ -437,7 +441,7 @@ internal sealed class SessionPolicyTests
             var noSession = await CallAsync(rig, invented, new JsonObject { ["why"] = "the suite exercising this call" });
 
             await Assert.That((bool?)noSession["isError"]).IsTrue();
-            await Assert.That(TextOf(noSession)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented));
+            await Assert.That(TextOf(noSession)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented, tools));
             await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == invented)).IsEqualTo(1);
         }
 
@@ -486,7 +490,7 @@ internal sealed class SessionPolicyTests
         });
 
         await Assert.That((bool?)old["isError"]).IsTrue();
-        await Assert.That(TextOf(old)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_set_purpose"));
+        await Assert.That(TextOf(old)).IsEqualTo(SessionErrors.ToolDoesNotExist("browserai_set_purpose", ToolSignatures.From(advertised)));
 
         var changed = await CallAsync(rig, "browserai_change_purpose", new JsonObject
         {
@@ -568,7 +572,7 @@ internal sealed class SessionPolicyTests
             // the deny row's own `why` behind "is deliberately NOT in this server's
             // tools/list", and this arm asserted it said liveness. The `why` stays
             // in tool-verdicts.json as the human record.
-            await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name));
+            await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name, ToolSignatures.From(advertised)));
 
             // Nothing reached the child: a refusal that forwarded first and hid
             // the answer would still have hung.
@@ -658,7 +662,7 @@ internal sealed class SessionPolicyTests
         // ⚠️ Answered like any tool this BrowserAI does not have, since
         // 2026-10-04 (previously "NOT in this server's tools/list" and the row's
         // own reason, "The reason is liveness"). The reason stays in the file.
-        await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(DebuggerResume));
+        await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist(DebuggerResume, ToolSignatures.From(advertised)));
 
         // Nothing reached the child.
         await Assert.That(sessions.SessionChildren.Sum(child =>
@@ -790,7 +794,7 @@ internal sealed class SessionPolicyTests
         // from the file, which is what this arm proves, and the reason stays in
         // the file as the human record. Previously the file's own `why` was the
         // refusal, behind BrowserAI's own first sentence.
-        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolDoesNotExist(Denied));
+        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolDoesNotExist(Denied, ToolSignatures.From(advertised)));
         await Assert.That(TextOf(refused)).DoesNotContain(Why);
 
         // Nothing reached the child.
@@ -874,7 +878,7 @@ internal sealed class SessionPolicyTests
         foreach (var (tool, expected) in new[]
         {
             (Unjudged, SessionErrors.ToolHasNoVerdict()),
-            (Nowhere, SessionErrors.ToolDoesNotExist(Nowhere)),
+            (Nowhere, SessionErrors.ToolDoesNotExist(Nowhere, ToolSignatures.From(advertised))),
         })
         {
             var before = RecordedSession.LogOf(rig.Session!).Count;

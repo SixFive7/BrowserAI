@@ -654,6 +654,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
             ProxyLog.ToolListPredatesThisServer(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
         }
 
+        var signatures = await SignaturesAsync(cancellationToken).ConfigureAwait(false);
+
         await caller.SendMessageAsync(
             new JsonRpcNotification { Method = NotificationMethods.ToolListChangedNotification },
             cancellationToken).ConfigureAwait(false);
@@ -661,7 +663,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await RefuseAsync(
             caller,
             request.Id,
-            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheHost),
+            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheHost, signatures),
             cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -1001,7 +1003,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             && (verdict is { Kind: ToolVerdictKind.Deny } || signatures.CarriesTheChildsTools || SessionToolSurface.IsInTheAuthoredNamespace(name)))
         {
             var named = name ?? "<none>";
-            var absent = SessionErrors.ToolDoesNotExist(named);
+            var absent = SessionErrors.ToolDoesNotExist(named, signatures);
             var recordedIn = RecordOnTheNamedSession(session, named, why, absent);
 
             ProxyLog.ToolDoesNotExist(recordedIn, named);

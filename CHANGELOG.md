@@ -1566,6 +1566,21 @@ release body; nothing else depends on it.
   Watched red first: an unknown name met the old gap text, with and without a session, and each
   denied tool met *"is deliberately NOT in this server's tools/list"*.
 
+  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "A denied tool's answer
+  is a proposal put to the maintainer").*** He approved it with the other texts, 1 a.
+
+- 🔧 **The answer for a tool BrowserAI does not have names every tool it does, with what each does.**
+  2 b, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
+  other logs? Name everythign sensitive."* So does Q261 b's answer for a connection that called
+  before it asked for a tool list. Both keep their sentences, the reconnect sentence included, and
+  end with *"The tools this BrowserAI has now:"* and one line per tool: its name, and BrowserAI's
+  own tool's title or the first sentence of an upstream tool's description. The block is generated
+  from the list this server answers. He had first chosen the whole list with every definition,
+  which no client hands a model whole; measured through the published binary with 72 tools, the
+  first refusal is 5,454 characters and the second, in Claude Code's wording, 6,002, against the
+  10,000 a client passes whole. Watched red first: against both refusals as they were, every arm
+  found no block of tools.
+
 - 🔧 **A resume of a live session changes nothing unless a setting conflicts, and then names the setting.**
   The maintainer's words verbatim: *"Ok, lets stick with these rules: A resume on an active
   session is fine and a noop and returns "the session is already live" if and only if there are no

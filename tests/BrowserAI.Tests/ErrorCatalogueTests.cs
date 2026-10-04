@@ -90,10 +90,12 @@ internal sealed partial class ErrorCatalogueTests
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
 
+            // The list it names is read after the refusal, because listing first
+            // is what would have prevented it.
             Match(
                 TextOf(refused),
                 nameof(SessionErrors.ToolListPredatesThisServer),
-                SessionErrors.ToolListPredatesThisServer("browser_navigate", BuildVersion.Current, client));
+                SessionErrors.ToolListPredatesThisServer("browser_navigate", BuildVersion.Current, client, tools: await rig.ListedToolsAsync()));
         }
     }
 
@@ -658,10 +660,12 @@ internal sealed partial class ErrorCatalogueTests
         // BrowserAI does not have, so this provokes `ToolDoesNotExist` and the
         // row it used to provoke, `ToolIsDenied`, is gone from the catalogue.
         await Assert.That((bool?)refused["isError"]).IsTrue();
+        var listed = await rig.ListedToolsAsync();
+
         Match(
             TextOf(refused),
             nameof(SessionErrors.ToolDoesNotExist),
-            SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name));
+            SessionErrors.ToolDoesNotExist(RepositoryVerdicts.ADenial.Name, listed));
 
         // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
         // "a tool this build has never heard of is FORWARDED now , not
@@ -682,7 +686,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(sessions.SessionChildren.Any(child =>
             child.ToolCallsReceived.Contains("browser_not_a_real_tool", StringComparer.Ordinal))).IsFalse();
 
-        Match(TextOf(unknown), nameof(SessionErrors.ToolDoesNotExist), SessionErrors.ToolDoesNotExist("browser_not_a_real_tool"));
+        Match(TextOf(unknown), nameof(SessionErrors.ToolDoesNotExist), SessionErrors.ToolDoesNotExist("browser_not_a_real_tool", listed));
     }
 
     /// <summary>

@@ -219,12 +219,16 @@ internal sealed class ClientReconnectTests
 
         var received = ToolResults(Path.Combine(work.FullName, $"{run}.requests.jsonl"));
 
-        await Assert.That(received.Count(text => text == refusal)).IsEqualTo(1);
+        // Its sentences and, since 2026-10-04 (2 b), the server's tool list after
+        // them, which ToolListInRefusalsTests holds tool by tool.
+        await Assert.That(received.Count(text => text.StartsWith(refusal, StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(received.Single(text => text.StartsWith(refusal, StringComparison.Ordinal)))
+            .Contains("\n\nThe tools this BrowserAI has now:\n- " + SessionToolSurface.Init + ": ");
 
         // The retry the sentence asks for was forwarded and answered: the same
         // tool's ordinary answer arrives after the refusal.
         await Assert.That(received.Any(text => text.Contains("No BrowserAI sessions under", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(received.IndexOf(refusal) < received.FindLastIndex(text => text.Contains("No BrowserAI sessions under", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(received.FindIndex(text => text.StartsWith(refusal, StringComparison.Ordinal)) < received.FindLastIndex(text => text.Contains("No BrowserAI sessions under", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>

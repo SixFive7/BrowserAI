@@ -112,8 +112,9 @@ internal sealed class SessionHostTests
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(HostConnection.TextOf(refused)).IsEqualTo(
+        await Assert.That(HostConnection.TextOf(refused)).StartsWith(
             SessionErrors.ToolListPredatesThisServer("browser_snapshot", BuildVersion.Current, ClientName, throughTheSessionHost: true));
+        await Assert.That(HostConnection.TextOf(refused)).Contains("\n\nThe tools this BrowserAI has now:\n- " + SessionToolSurface.Init + ": ");
         await Assert.That(HostConnection.TextOf(refused)).DoesNotContain("it started after the tool list you are calling from was read")
             .Because("the host may well be the BrowserAI the client's list came from");
         await Assert.That(sessions.SessionChildren.Single().ToolCallsReceived).DoesNotContain("browser_snapshot");

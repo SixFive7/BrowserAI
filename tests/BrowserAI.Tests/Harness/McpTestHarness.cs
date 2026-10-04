@@ -107,6 +107,18 @@ internal sealed class McpTestHarness : IAsyncDisposable
     public RawPipeClient Client { get; }
 
     /// <summary>
+    /// The tool list this server answers now, read through the client, for the
+    /// refusals that name every tool in it.
+    /// </summary>
+    /// <remarks>
+    /// Asking marks the connection as one that has listed, so an arm about Q261 b's
+    /// refusal reads it after the refusal and not before.
+    /// </remarks>
+    /// <returns>The list's tools, as the refusals read them.</returns>
+    public async Task<BrowserAI.Sessions.ToolSignatures> ListedToolsAsync() =>
+        BrowserAI.Sessions.ToolSignatures.From(await Client.RoundTripAsync("tools/list", new System.Text.Json.Nodes.JsonObject()));
+
+    /// <summary>
     /// The double a <c>tools/call</c> reaches: the default session's child where
     /// there is one, and otherwise the run's own.
     /// </summary>

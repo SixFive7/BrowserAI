@@ -55,11 +55,19 @@ internal sealed class ToolSignatures
 
     private readonly FrozenDictionary<string, ToolSignature> _tools;
 
-    private ToolSignatures(FrozenDictionary<string, ToolSignature> tools, bool carriesTheChildsTools)
+    private ToolSignatures(FrozenDictionary<string, ToolSignature> tools, IReadOnlyList<ToolSignature> inOrder, bool carriesTheChildsTools)
     {
         _tools = tools;
+        InOrder = inOrder;
         CarriesTheChildsTools = carriesTheChildsTools;
     }
+
+    /// <summary>Every tool, in the order the list carries them.</summary>
+    /// <remarks>
+    /// The order is the list's own: BrowserAI's tools first, then upstream's in the
+    /// order the child gave them, which is what a model reading the list saw.
+    /// </remarks>
+    public IReadOnlyList<ToolSignature> InOrder { get; }
 
     /// <summary>
     /// Whether the list this was read from carried the run's own child's tools,
@@ -81,6 +89,7 @@ internal sealed class ToolSignatures
         ArgumentNullException.ThrowIfNull(result);
 
         var tools = new Dictionary<string, ToolSignature>(StringComparer.Ordinal);
+        var inOrder = new List<ToolSignature>();
 
         foreach (var node in result[ToolsMember] as JsonArray ?? [])
         {
@@ -111,11 +120,38 @@ internal sealed class ToolSignatures
                 Definition = (JsonObject)tool.DeepClone(),
             };
 
-            tools[signature.Name] = signature;
+            if (tools.TryAdd(signature.Name, signature))
+            {
+                inOrder.Add(signature);
+            }
         }
 
-        return new ToolSignatures(tools.ToFrozenDictionary(StringComparer.Ordinal), carriesTheChildsTools);
+        return new ToolSignatures(tools.ToFrozenDictionary(StringComparer.Ordinal), inOrder, carriesTheChildsTools);
     }
+
+    /// <summary>
+    /// Every tool in the list, one line each: its name and what it does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided 2026-10-04 by the maintainer, 2 b</b>: the refusal for a tool
+    /// BrowserAI does not have, and Q261 b's refusal for a tool list read before this
+    /// server started, carry every current tool's name and one line saying what it
+    /// does. He had first chosen the whole list with every definition (Q369.3 c and
+    /// Q371.6 c), and measured on 2026-10-03 no client hands a model an error result
+    /// that long whole.
+    /// </para>
+    /// <para>
+    /// <b>Empty when the list did not carry the child's tools</b>, because a block
+    /// naming BrowserAI's eight alone would tell a model that the browser tools are
+    /// gone.
+    /// </para>
+    /// </remarks>
+    /// <returns>The lines, joined by line breaks, or the empty string.</returns>
+    public string Catalogue() =>
+        CarriesTheChildsTools
+            ? string.Join('\n', InOrder.Select(tool => tool.WhatItDoes() is { Length: > 0 } said ? $"- {tool.Name}: {said}" : $"- {tool.Name}"))
+            : string.Empty;
 
     /// <summary>One tool's signature, or <see langword="null"/> when the list does not carry it.</summary>
     /// <param name="tool">The name a call carried.</param>
@@ -227,6 +263,42 @@ internal sealed record ToolSignature
         }
 
         return text.ToString();
+    }
+
+    /// <summary>One line saying what the tool does.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The tool's own title where it has one</b>, which BrowserAI's tools do and
+    /// say it in a sentence. <b>Otherwise the first sentence of its description</b>,
+    /// up to the first full stop followed by a space or the end of the first line:
+    /// upstream's titles sit in <c>annotations</c> and are too short to tell tools
+    /// apart, so <c>browser_click</c> and <c>browser_mouse_click_xy</c> are both
+    /// "Click" there and "Perform click on a web page" and "Click mouse button at a
+    /// given position" here. A note BrowserAI appends to a description starts on a
+    /// line of its own and is never part of this.
+    /// </para>
+    /// <para>
+    /// <b>Nothing is written here.</b> Every word comes from the definition the list
+    /// carried, so a tool upstream rewords is reworded in the refusal too.
+    /// </para>
+    /// </remarks>
+    /// <returns>The line, or the empty string when the definition says nothing.</returns>
+    public string WhatItDoes()
+    {
+        if (Text(Definition["title"]) is { Length: > 0 } title)
+        {
+            return title.Trim();
+        }
+
+        if (Text(Definition["description"]) is { Length: > 0 } description)
+        {
+            var line = description.Split('\n', 2)[0].Trim();
+            var stop = line.IndexOf(". ", StringComparison.Ordinal);
+
+            return stop < 0 ? line : line[..(stop + 1)];
+        }
+
+        return Text(Definition["annotations"]?["title"])?.Trim() ?? string.Empty;
     }
 
     /// <summary>A node's string value, or <see langword="null"/> when it is not a string.</summary>
