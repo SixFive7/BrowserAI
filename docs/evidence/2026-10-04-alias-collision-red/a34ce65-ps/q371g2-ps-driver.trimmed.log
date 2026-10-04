@@ -1,0 +1,65 @@
+=== ORDINARY RUN q371g2-ps starting 05:26:44 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=108272 created=134355580046343041).
+installer lock held: pid=108272 created=134355580046343041
+vpk pack of BrowserAI.app.test took 8.7 s.
+vpk pack of the twin took 8.3 s.
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\q371\.work\clearance\q371g2-ps-before.txt
+scratch released after 2s
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed ASubstOntoAMappedDriveIsRefusedAsNetworkRatherThanSentBackForASecondTurn (49ms)
+  [Test Failure] InvalidOperationException: The alias 'H:' -> '\??\G:\dir' could not be removed and is still defined as '\Device\LanmanRedirector\;H:0000000000012345\10.255.255.1\share'. Remove it before running this suite again: subst H: /d.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: The alias 'H:' -> '\??\G:\dir' could not be removed and is still defined as '\Device\LanmanRedirector\;H:0000000000012345\10.255.255.1\share'. Remove it before running this suite again: subst H: /d.
+    at BrowserAI.Tests.Harness.DosDeviceAlias.Dispose() in C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\Harness\DosDeviceAlias.cs:114
+    at BrowserAI.Tests.CanonicalPathTests.ASubstOntoAMappedDriveIsRefusedAsNetworkRatherThanSentBackForASecondTurn() in C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\CanonicalPathTests.cs:242
+    at BrowserAI.Tests.CanonicalPathTests.ASubstOntoAMappedDriveIsRefusedAsNetworkRatherThanSentBackForASecondTurn()
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 1 error(s) (4m 13s 955ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\q371\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\q371\payload\payload.json
+    Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\q371\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.202-full.nupkg
+    client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+    release installer   PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\q371\Releases\test-pack\BrowserAI.test-installer.exe
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\q371 rev-parse --is-inside-work-tree said true
+    Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+    publish freshness   FRESH      exe 2026-10-04T03:26:19.727Z is 4m36s newer than the newest of 151 inputs (src\BrowserAI\Sessions\ToolVerdicts.cs, 2026-10-04T03:21:43.123Z) · exe and tree both 1.1.1-alpha.0.202 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CACHED   seeded from a tree the CDN served 17 min ago; nothing was downloaded in this run (10.3 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 93,887 MiB (36.9%) · end 95,169 MiB (37.4%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 3407 events, 0 about visible root windows and none of them this run's, 129 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 115 scans, 358 processes read under the browsers root and the scratch roots
+    installer lock      HELD     held by pid=108272 created=134355580046343041, alive, the holder named in BROWSERAI_INSTALLER_LOCK_HELD: this run neither waited for it nor lets it go
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\q371\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 968
+  failed: 1
+  succeeded: 967
+  skipped: 0
+  duration: 4m 14s 439ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\q371\.work\clearance\q371g2-ps-after.txt
+=== ORDINARY RUN q371g2-ps done 05:31:55, clearance clean ===
+Let go of C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=108272 created=134355580046343041).
+ORDINARY-PS-DONE

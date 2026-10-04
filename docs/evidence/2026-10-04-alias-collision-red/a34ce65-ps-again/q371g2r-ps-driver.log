@@ -1,0 +1,23 @@
+=== ORDINARY RUN q371g2r-ps starting 05:53:55 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=77888 created=134355596353278066).
+installer lock held: pid=77888 created=134355596353278066
+vpk pack of BrowserAI.app.test took 8.9 s.
+vpk pack of the twin took 8.6 s.
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\q371\.work\clearance\q371g2r-ps-before.txt
+scratch released after 2s
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+C:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (4m 16s 579ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\q371\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 968
+  failed: 0
+  succeeded: 968
+  skipped: 0
+  duration: 4m 17s 155ms
+clearance snapshot -> C:\Source\SixFive7\BrowserAI\.work\wt\q371\.work\clearance\q371g2r-ps-after.txt
+=== ORDINARY RUN q371g2r-ps done 05:59:08, clearance clean ===
+Let go of C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=77888 created=134355596353278066).
+ORDINARY-PS-DONE

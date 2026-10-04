@@ -1,0 +1,20 @@
+=== ORDINARY RUN q371g2-bash starting 05:31:55 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=69952 created=134355583156156355).
+installer lock held: pid=69952 created=134355583156156355
+vpk pack of BrowserAI.app.test took 9.3 s.
+vpk pack of the twin took 8.9 s.
+scratch released after 2s
+Running tests from c:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+c:\Source\SixFive7\BrowserAI\.work\wt\q371\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (4m 16s 130ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\q371\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 968
+  failed: 0
+  succeeded: 968
+  skipped: 0
+  duration: 4m 16s 616ms
+=== ORDINARY RUN q371g2-bash done 05:37:10, clearance clean ===
+ORDINARY-BASH-DONE
