@@ -8,3 +8,6 @@ abc06a744b444db1320e54ec159f54a658c97183eee1709c67a9dee468fb222e  2026-09-29-ps/
 01f3345b2226695ee620da8aa372d58083b4ba4f7e24861c2c9db181788fd5c3  6e6388d-bash/stale-bash-3-driver.log  ->  6e6388d-bash/stale-bash-3-driver.trimmed.log  (profile path)
 8096e9967a7707aed2eb8773c60db981a76c531fb6f2bbcd7c5e1d76ed40785f  6e6388d-ps/stale-ps-3.log  ->  6e6388d-ps/stale-ps-3.trimmed.log  (profile path)
 6c3e56c94e69854ed4d07b7356001f1c9cd1eee48a511ec7485194700f8492b2  6e6388d-bash-again/stale-bash-4.log  ->  6e6388d-bash-again/stale-bash-4.trimmed.log  (profile path)
+61cdb185f607f95744ec7dde320e5f812c7dbe57f08aaaedc3662135274aab48  d8db27a-ps/ord-ps-tab8b.log  ->  d8db27a-ps/ord-ps-tab8b.trimmed.log  (profile path)
+51271e2fb3aa61d2b3846aff83ba120431ee2be28a91ba380f6f0aaa4dfc7676  d8db27a-ps/ord-ps-tab8b-driver.log  ->  d8db27a-ps/ord-ps-tab8b-driver.trimmed.log  (profile path)
+673d69aa5e78bc3b502cb3eb3f8d37fa092541c7559df2d4a12ca6b9762829e4  d8db27a-bash/ord-bash-tab8b.log  ->  d8db27a-bash/ord-bash-tab8b.trimmed.log  (profile path)

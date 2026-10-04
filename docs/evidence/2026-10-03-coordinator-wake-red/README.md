@@ -3,7 +3,7 @@
 
 # 2026-10-03 - the coordinator wake's recheck arm, red under a full run
 
-**What this is.** The three full suite runs in which
+**What this is.** The four full suite runs in which
 `CoordinatorWakeTests.AServingCoordinatorIsAskedToLookAgainAndNoTaskIsStarted`
 went red, each with the same message, and the runs beside the two newer ones. The
 arm opens a real coordinator pipe in the test process and calls the product's
@@ -20,6 +20,8 @@ inside 500 ms"*.
 | `6e6388d-bash/` | the same gate, 22:11Z to 22:15Z | the same commit, Git Bash half, `FULL RUN` | **911 of 912**, this arm the one red, after 1,838 ms |
 | `6e6388d-bash-again/` | the same gate, 22:16Z to 22:20Z | the same commit, the Git Bash half run again | 912 of 912 |
 | `2026-09-29-ps/` | 2026-09-29, about 21:04Z to 21:08Z | 1.1.1-alpha.0.137, a PowerShell run in the main checkout, `FULL RUN` | **893 of 895**, this arm red after 941 ms, beside one unrelated red in `ChangelogTests` |
+| `d8db27a-ps/` | 2026-10-03, 23:52Z to 23:56Z | lane tab's two-shell gate at `d8db27a`, 1.1.1-alpha.0.192, PowerShell half, `FULL RUN`; the commit was rebased onto lane c's merge before it reached `next` | **916 of 917**, this arm the one red, after 1,105 ms |
+| `d8db27a-bash/` | the same gate, 23:56Z to 00:02Z on 2026-10-04 | the same commit, Git Bash half, `FULL RUN` | 917 of 917 |
 
 **How the 2026-09-29 run was found.** Lane registry reported no other red of this
 arm in the 166 suite logs it read. A search of every log under `.work` that
@@ -37,9 +39,12 @@ lane that recorded the first two, after the search.
 
 ## What was cut
 
-The user-profile path, replaced by `%USERPROFILE%`, in all nine logs, which are
+The user-profile path, replaced by `%USERPROFILE%`, in all twelve logs, which are
 stored under `.trimmed.` names with the originals' digests in `originals.sha256`.
-`cut_wake_red.py` is the script that cut them. Nothing else was changed and
+`cut_wake_red.py` is the script that cut the first nine, and `cut_wake_red_tab.py`
+cut lane tab's three the same way and appended their digests. *Corrected
+2026-10-04 by addition (previously "in all nine logs" and "is the script that cut
+them").* Nothing else was changed and
 nothing was left out: the logs are the gate driver's and the test host's whole
 output for those runs.
 
