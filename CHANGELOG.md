@@ -765,12 +765,15 @@ release body; nothing else depends on it.
   gate with the old code and the new side by side.
 
   **The build takes the newest release and checks it** (Q349 a): `build/Get-RegisterAi.ps1`
-  downloads `RegisterAI.exe` and `SHA256SUMS` with `gh`, refuses the file unless it matches its
-  line, requires `--version` to print the release's tag, and records the release in
-  `payload.json` and in the committed `build/payload/registerai.json`. While the repository is
-  private, `-RegisterAiFrom` takes the same two files from a folder and checks them against the
-  same list. RegisterAI is a sixth row in `drift-check.json` and `upstream-review.json` (Q350 a),
-  the release manifest states it under `resolved.registerai` and refuses a payload without it, and
+  reads the newest release of [RegisterAI](https://github.com/SixFive7/RegisterAI), public since
+  2026-10-04 (Q379 b, the maintainer's words verbatim: *"Q379 b"*), and downloads `RegisterAI.exe`
+  and `SHA256SUMS` from it with no sign-in and no `gh`, so a clone builds its payload with no
+  GitHub account. It refuses the file unless it matches its line, requires `--version` to print
+  the release's tag, and records the release in `payload.json` and in the committed
+  `build/payload/registerai.json`. `-RegisterAiFrom` takes the same two files from a folder, for
+  an offline build or a RegisterAI build not yet released, and checks them against the same list.
+  RegisterAI is a sixth row in `drift-check.json` and `upstream-review.json` (Q350 a), the release
+  manifest states it under `resolved.registerai` and refuses a payload without it, and
   `THIRD-PARTY-NOTICES.txt` names its licence.
   `RegisterAiTests.ThePayloadsRegisterAiWritesTheSchemaThisReaderReads` runs the payload's own
   RegisterAI and fails when it writes a schema other than 1. Watched red: 14 arms against stubs
@@ -780,6 +783,8 @@ release body; nothing else depends on it.
   and the notices' two arms against a publish and a package without the program. The schema,
   stamp, published-slice, real-client and agreement arms were watched red only after the gate,
   each against a plant, and the README says which.
+  `RegisterAiPayloadTests.ThePayloadTakesTheNewestRegisterAiReleaseWithNoGitHubSignIn` runs the
+  script with `gh` signed in to nothing and was watched red against the script that used `gh`.
 
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
   Q322 a, the maintainer's words verbatim: *"Q322 a"*. The generated config writes

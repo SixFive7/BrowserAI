@@ -85,16 +85,6 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 
 ### Still open, and the maintainer's to choose
 
-- [ ] **RegisterAI public, step 8 of its plan.** BrowserAI registers through
-      RegisterAI since 2026-10-03 (steps 6 and 7), and the repository is
-      still private (Q345), so a payload build needs a `gh` signed in to an
-      account that can read it, or `-RegisterAiFrom`. **What to do:** his word
-      on going public, then the plan's checklist: the whole-history scan, the
-      released executable scanned, a second reader for the README,
-      `SECURITY.md`, the real-client arms run that day, and
-      `build/Get-RegisterAi.ps1` reading the public release without `gh`.
-      Until then `master` should not take the switch, because a clone of it
-      cannot build its payload.
 - [ ] **The look-alike tools report.** Eleven tools ranked by how likely a
       model is to confuse them with BrowserAI's own, each with a reason and a
       recommendation; `browser_resume` is the only one denied so far (Q321 with

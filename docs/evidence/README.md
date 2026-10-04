@@ -80,6 +80,13 @@ a time.** Package caches, build output, browsers, profiles and the other bulk
 trees these batches came with are left out by directory: each batch's README
 gives their file count and byte total, and no digest per file.
 
+⚠️ *Added 2026-10-04 by addition.* **An older batch departs too, by one cut.**
+[`2026-09-16-garbage`](2026-09-16-garbage/README.md) keeps its inventory as
+`candidates.trimmed.csv`: one folder name that named another private project
+of the maintainer's is replaced, on his decision 10 b, and the original's
+SHA-256 is in that batch's `originals.sha256`, the way the 2026-10-03 batches
+record theirs.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that

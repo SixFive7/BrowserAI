@@ -3,7 +3,7 @@
 
 # 2026-09-16 - what old versions and old install paths left on this machine
 
-`candidates.csv` is the inventory taken before the machine sweep of 2026-09-16:
+`candidates.trimmed.csv` is the inventory taken before the machine sweep of 2026-09-16:
 every BrowserAI-adjacent path outside this repository, with its size, its age,
 what put it there and a verdict of `GARBAGE`, `ASK` or `KEEP`. The fourteen
 `GARBAGE` rows are what was deleted that day; nothing marked `ASK` or `KEEP` was
@@ -12,6 +12,15 @@ touched. The builder is
 
 **It is a snapshot of one machine on one day**, not a claim about any other -
 re-run the builder instead of reading ages out of it.
+
+⚠️ *Corrected 2026-10-04 (previously "`candidates.csv` is the inventory taken
+before the machine sweep of 2026-09-16:")*: **one cut, for privacy and not for
+size.** Row 163 named a folder of the old scratch directory after another
+private project of the maintainer's, and that name is replaced by
+`[cut: another private project's name]`, his decision 10 b of 2026-10-04 in
+[`DECISIONS.md`](../../../DECISIONS.md). The file as it stood before the cut,
+37,641 bytes, has its SHA-256 in [`originals.sha256`](originals.sha256); every
+other byte is as it was.
 
 ## What the sweep actually removed, 2026-09-16
 
