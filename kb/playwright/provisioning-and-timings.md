@@ -1824,7 +1824,7 @@ them met it. `SessionCloseTests.AResumeAfterTheBrowserWasKilledReopensTheTabsItH
 killed a fresh profile's first launch 3.1 s after the call that started it, with both
 tabs in its session file and the switch on, and the relaunch showed
 `chrome://new-tab-page/` and nothing else, 1 of 1. Waiting for the Preferences file
-before the kill, the same arm brought both tabs back, 2 of 2, and without the switch,
+before the kill, the same arm brought both tabs back, 7 of 7, and without the switch,
 still waiting for the file, nothing, 1 of 1. **Not established:** when a fresh
 profile's first Preferences write comes; Chromium writes the file 10 s after a change,
 in the table above.
