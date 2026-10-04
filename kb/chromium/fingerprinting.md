@@ -232,8 +232,8 @@ platform version, the architecture and the bitness. The default hints are
 unchanged.
 
 **The derivation.** `chrome.exe --headless --dump-dom` on a `data:` page that
-writes `navigator.userAgent` answers the headless string in 708 to 832 ms, 3 of
-3; `HeadlessChrome/` replaced by `Chrome/` gives exactly the string the headed
+writes `navigator.userAgent` answers the headless string in 673 to 832 ms, 6 of
+6 over the two batches; `HeadlessChrome/` replaced by `Chrome/` gives exactly the string the headed
 browser sends, and every version in it is the browser's own.
 
 ✅ **Built 2026-10-04.** `HeadedUserAgent` asks the provisioned `chrome.exe` once
