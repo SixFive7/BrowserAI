@@ -1976,12 +1976,22 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>The two labels say which kind holds what.</b> <i>PLAINTEXT
-    /// CREDENTIALS</i> is a kind measured to hold a typed password, a cookie or a
-    /// token on 2026-10-04, in headless Chromium 1247 and Firefox 1553 against a
-    /// local page with sample values (<c>kb/playwright/tools-and-artifacts.md</c>):
-    /// a page snapshot taken after typing held the typed password in both;
-    /// <i>SENSITIVE</i> is one that holds what a page showed, said or served, which
-    /// can be anything the person using the session can see.
+    /// CREDENTIALS</i> is a kind that holds what the session typed or sent, a typed
+    /// password, a cookie or an authorisation header, measured on 2026-10-04 in
+    /// headless Chromium 1247 and Firefox 1553 against a local page with sample
+    /// values (<c>kb/playwright/tools-and-artifacts.md</c>): a page snapshot taken
+    /// after typing held the typed password in both, and a saved request held the
+    /// bearer token. <i>SENSITIVE</i> is one that holds what a page showed, logged
+    /// or served, which carries a credential only where a page put one there: the
+    /// console log held a token because the page's address carried it.
+    /// </para>
+    /// <para>
+    /// <b>A file saved under a name a call or a page chose is SENSITIVE</b>, because
+    /// its name cannot say which kind it is, and its line says that a saved request
+    /// holds headers, cookies and tokens included. <i>Corrected 2026-10-04
+    /// (previously "a kind measured to hold a typed password, a cookie or a token"),
+    /// which the console log met by way of the address without being labelled
+    /// by it.</i>
     /// </para>
     /// </remarks>
     /// <param name="group">One kind and its files.</param>

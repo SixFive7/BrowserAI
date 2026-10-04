@@ -91,11 +91,14 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **Lane q371's choices inside his rules, for his review.** A bare resume
       with no browser up is now the no-op; a `purpose` passed with a no-op resume
       is still appended; a catch_up `why` on a session another BrowserAI holds
-      goes to this BrowserAI's own log; and catch_up names ten files of a kind by
-      path and counts the rest. *Narrowed 2026-10-04 by his answers of that
-      day: the texts are approved (1 a), a refusal names every tool (2 b),
-      settings are applied when no browser has started (3 a), and catch_up names
-      every sensitive file (4 a).* **What to do:** put each to him with its texts
+      goes to this BrowserAI's own log; catch_up names ten files of a kind by
+      path and counts the rest; and which kinds catch_up labels PLAINTEXT
+      CREDENTIALS, the ones that hold what the session typed or sent, and which
+      SENSITIVE, the ones that hold what a page showed, logged or served.
+      *Narrowed 2026-10-04 by his answers of that day: the texts are approved
+      (1 a), a refusal names every tool (2 b), settings are applied when no
+      browser has started (3 a), and catch_up names every sensitive file (4 a).*
+      **What to do:** put each to him with its texts
       and record the answer in `DECISIONS.md`.
 - [ ] **The two reports to the Microsoft Security Response Center (Q358).**
       One for the dashboard WebSocket's missing `Origin` check, one for
