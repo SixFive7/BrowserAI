@@ -197,7 +197,7 @@ internal static class SignInTask
 
         if (dataRoot is { Length: > 0 })
         {
-            arguments += $" {DataRootArgument} \"{Path.TrimEndingDirectorySeparator(dataRoot)}\"";
+            arguments += $" {DataRootArgument} \"{WithoutTrailingSeparators(dataRoot)}\"";
         }
 
         if (updateSource is { Length: > 0 })
@@ -206,6 +206,29 @@ internal static class SignInTask
         }
 
         return arguments + " " + StartedByArgument + " $(Arg0)";
+    }
+
+    /// <summary>A path with every trailing separator taken off, down to its root and never into it.</summary>
+    /// <remarks>
+    /// <b>Every one, and not the last alone</b>: <c>C:\data\\</c> trimmed once still ends
+    /// in a backslash, which escapes the closing quote and carries the rest of the action
+    /// into the data root, <c>--started-by</c> included. <i>Corrected 2026-10-09
+    /// (previously one <see cref="Path.TrimEndingDirectorySeparator(string)"/>).</i> A
+    /// root keeps its own separator, because <c>C:</c> alone means the current directory
+    /// on that drive.
+    /// </remarks>
+    /// <param name="path">The path.</param>
+    /// <returns>The path, ending in no separator unless it is a root.</returns>
+    private static string WithoutTrailingSeparators(string path)
+    {
+        var trimmed = path;
+
+        while (Path.TrimEndingDirectorySeparator(trimmed) is var shorter && shorter.Length < trimmed.Length)
+        {
+            trimmed = shorter;
+        }
+
+        return trimmed;
     }
 
     /// <summary>The definition the hooks last registered for an install, or <see langword="null"/> when there is none.</summary>

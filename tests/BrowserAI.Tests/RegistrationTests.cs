@@ -300,7 +300,8 @@ internal sealed class RegistrationTests
 
     /// <summary>
     /// The hook writes its outcome where a person looking for it will find it:
-    /// in the <b>data</b> root, and nothing at all under the install root.
+    /// in the <b>data</b> root, and nothing under the install root but the task's
+    /// saved definition, which belongs to the install.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -375,7 +376,7 @@ internal sealed class RegistrationTests
 
         // ⚠️ THE HALF THAT IS RED AGAINST THE OLD LAYOUT: the install root the
         // image path names is a directory Setup.exe renames aside and deletes,
-        // and the hook leaves nothing whatever in it.
+        // and the hook leaves nothing of its RECORD in it.
         //
         // ⚠️ Narrowed 2026-09-15 (previously the install root was expected to be
         // EMPTY). It is not empty any more and cannot be: the two executables
@@ -384,6 +385,15 @@ internal sealed class RegistrationTests
         // is the property that was always meant -- the hook ADDS nothing -- and it
         // is taken as a difference against what was there first, so a file the
         // hook writes anywhere under that root fails it exactly as before.
+        //
+        // ⚠️ Narrowed again 2026-10-09 (previously "the hook ADDS nothing"), by one
+        // file and for a stated reason: the task's saved definition,
+        // background-task.xml, which a person's start registers a missing task
+        // again from (RESOLUTIONS 9). It belongs to the install and goes with it,
+        // which is exactly why it lives there and the record does not; the
+        // uninstall hook deletes it. Anything else the hook writes under that root
+        // still fails this arm. Watched red that day against a hook that saved no
+        // definition, where the difference came back empty.
         var afterwards = Directory
             .EnumerateFileSystemEntries(install.Path, "*", SearchOption.AllDirectories)
             .Select(entry => Path.GetRelativePath(install.Path, entry))
@@ -391,7 +401,7 @@ internal sealed class RegistrationTests
 
         afterwards.ExceptWith(before);
 
-        await Assert.That(string.Join(", ", afterwards.Order(StringComparer.Ordinal))).IsEmpty();
+        await Assert.That(string.Join(", ", afterwards.Order(StringComparer.Ordinal))).IsEqualTo(SignInTask.SavedDefinitionFileName);
     }
 
     /// <summary>
