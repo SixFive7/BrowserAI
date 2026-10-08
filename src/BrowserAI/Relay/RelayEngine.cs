@@ -421,9 +421,10 @@ internal sealed partial class RelayEngine
 
     /// <summary>The finder said why there is no background.</summary>
     /// <param name="Epoch">The connection state the question was asked in.</param>
+    /// <param name="AskedAt">When the question was asked, which is the newest deadline the answer may decide.</param>
     /// <param name="Reading">The finder's answer, completed one way or another.</param>
     /// <param name="Interrupted">The calls a closed pipe left unanswered, which this answer decides the sentence for.</param>
-    private sealed record Explained(int Epoch, Task<BackgroundAbsence> Reading, List<Forwarded> Interrupted) : RelayEvent;
+    private sealed record Explained(int Epoch, DateTimeOffset AskedAt, Task<BackgroundAbsence> Reading, List<Forwarded> Interrupted) : RelayEvent;
 
     /// <summary>A timer fired.</summary>
     /// <param name="Timer">Which one.</param>

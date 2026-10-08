@@ -106,7 +106,15 @@ internal sealed partial class RelayTests
         await Assert.That((await rig.NextAsync()).Text).IsEqualTo(Answer);
     }
 
-    /// <summary>Moves the clock a probe interval at a time, answering each probe the background is sent.</summary>
+    /// <summary>
+    /// Moves the clock a probe interval at a time, answering each probe the background
+    /// is sent, and waits each time until the relay has read the answer.
+    /// </summary>
+    /// <remarks>
+    /// The wait is a question the background asks after its answer, whose own answer
+    /// can only come once the relay has handled the probe's: without it, a relay starved
+    /// of a thread can fall a hang bound behind the clock and report a hang nobody made.
+    /// </remarks>
     /// <param name="rig">The rig.</param>
     /// <param name="background">The background.</param>
     /// <param name="span">How far.</param>
@@ -120,6 +128,7 @@ internal sealed partial class RelayTests
 
             await Assert.That(probe.Method).IsEqualTo("ping");
             await background.SendAsync(Frames.Empty(probe.IdText!));
+            _ = await AskAsync(background, $"after-{probe.IdText}");
         }
     }
 }

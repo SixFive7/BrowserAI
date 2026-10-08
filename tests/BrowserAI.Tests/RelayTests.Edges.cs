@@ -215,4 +215,98 @@ internal sealed partial class RelayTests
         await Assert.That(answered.IdText).IsEqualTo("1");
         Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Unknown, string.Empty, null));
     }
+
+    /// <summary>
+    /// A call that arrives while the finder is still answering for an earlier one is
+    /// asked about again once that answer is in, so an answer read before the call
+    /// arrived never decides it.
+    /// </summary>
+    /// <remarks>
+    /// Here the finder reads "starting" for the first call, the crash is recorded while
+    /// it is still answering, and the second call arrives: both calls are answered at
+    /// once with the crash, from the second question. Found as a flake, 1 run in 10 of
+    /// <see cref="ACrashIsAnsweredAtOnceAndSoIsEveryCallHeldBeforeIt"/>, which leaves the
+    /// order of the two answers to the thread pool.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACallThatArrivesWhileTheFinderIsAnsweringIsAskedAboutAgain()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.Starting();
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        rig.Finder.HoldExplanations();
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await rig.Finder.ExplanationWaiting.WaitAsync(TestDefaults.InProcessHang);
+
+        var at = new DateTimeOffset(2026, 10, 8, 15, 0, 0, TimeSpan.Zero);
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261008.log";
+        rig.Finder.Absence = new BackgroundAbsence.Crashed(at, 7, Log);
+
+        await rig.SendAsync(RelayRig.CallFrame("2"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        rig.Finder.ReleaseExplanations();
+
+        var first = await rig.NextAsync();
+        var second = await rig.NextAsync();
+
+        await Assert.That(first.IdText).IsEqualTo("1");
+        await Assert.That(second.IdText).IsEqualTo("2");
+        Match(first.ToolText, nameof(RelayErrors.Crashed), RelayErrors.Crashed(at, 7, Log));
+        Match(second.ToolText, nameof(RelayErrors.Crashed), RelayErrors.Crashed(at, 7, Log));
+    }
+
+    /// <summary>
+    /// A held call whose deadline comes while the finder is answering a question asked
+    /// before it waits for a question asked at or after its deadline.
+    /// </summary>
+    /// <remarks>
+    /// Item 5 of the build brief: <i>"At a deadline, Explain() again"</i>. Here the
+    /// finder is asked for a second call a tick before the first call's deadline and
+    /// reads a ready task; the task is disabled after the deadline has come; the first
+    /// call is answered with the disabled task, from the question asked at its deadline.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADeadlineThatComesWhileTheFinderIsAnsweringIsAskedAboutAgain()
+    {
+        const string TaskName = FakeBackgroundFinder.TaskName;
+
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null);
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+        await rig.StepAsync(RelayConstants.HoldBound - OneTick);
+
+        rig.Finder.HoldExplanations();
+        await rig.SendAsync(RelayRig.CallFrame("2"));
+        await rig.Finder.ExplanationWaiting.WaitAsync(TestDefaults.InProcessHang);
+
+        // The first call's deadline comes while that question is open; the barrier
+        // returns once the relay has handled it.
+        rig.Clock.Advance(OneTick);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        rig.Finder.Absence = new BackgroundAbsence.NotRunning(TaskState.Disabled, TaskName, null);
+        rig.Finder.ReleaseExplanations();
+
+        var answered = await rig.NextAsync();
+
+        await Assert.That(answered.IdText).IsEqualTo("1");
+        Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Disabled, TaskName, null));
+
+        // The second call's own deadline is still a hold bound away.
+        await rig.SettledAsync();
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+    }
 }

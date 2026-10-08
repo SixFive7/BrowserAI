@@ -158,6 +158,7 @@ internal sealed partial class RelayEngine
     {
         _epoch++;
         _explaining = false;
+        _explainAgain = false;
         _link = new BackgroundLink(this, _epoch, pipe);
         _phase = LinkPhase.Greeting;
 
@@ -449,6 +450,7 @@ internal sealed partial class RelayEngine
         _link = null;
         _epoch++;
         _explaining = false;
+        _explainAgain = false;
         _hung = false;
         _probes.Clear();
         _answeredByRelay.Clear();

@@ -21,6 +21,13 @@ internal sealed partial class RelayEngine
     private bool _explaining;
 
     /// <summary>
+    /// Whether a call arrived, or a deadline came, while the finder was being asked:
+    /// the answer in flight was read before it, so the finder is asked again once that
+    /// answer is in.
+    /// </summary>
+    private bool _explainAgain;
+
+    /// <summary>
     /// Holds a call, with a deadline of its arrival plus the hold bound: half of
     /// Codex's 300 s per tool call (D8 a).
     /// </summary>
@@ -93,13 +100,26 @@ internal sealed partial class RelayEngine
         ArmHoldTimer();
     }
 
-    /// <summary>Asks the finder why there is no background, unless it is being asked already.</summary>
+    /// <summary>
+    /// Asks the finder why there is no background; or, when it is being asked already,
+    /// asks again once that answer is in.
+    /// </summary>
+    /// <remarks>
+    /// <b>One question at a time, and never an answer older than the call it
+    /// decides.</b> Found as a flake, 1 run in 10 of the crash arm: a call arrived while
+    /// the finder was still answering for an earlier one, the answer said "starting"
+    /// because it was read before the crash was recorded, and the call was held for
+    /// the whole hold bound where it should have been answered at once.
+    /// </remarks>
     private void ExplainUnlessAsked()
     {
-        if (!_explaining)
+        if (_explaining)
         {
-            Explain([]);
+            _explainAgain = true;
+            return;
         }
+
+        Explain([]);
     }
 
     /// <summary>Asks the finder why there is no background, on the thread pool.</summary>
@@ -109,6 +129,7 @@ internal sealed partial class RelayEngine
         _explaining = true;
 
         var epoch = _epoch;
+        var askedAt = Now;
         var lastPid = _backgroundPid;
 
         Enter();
@@ -119,7 +140,7 @@ internal sealed partial class RelayEngine
             (done, state) =>
             {
                 var engine = (RelayEngine)state!;
-                engine.Post(new Explained(epoch, done, interrupted));
+                engine.Post(new Explained(epoch, askedAt, done, interrupted));
                 engine.Leave();
             },
             this,
@@ -178,15 +199,17 @@ internal sealed partial class RelayEngine
 
         if (_phase is not (LinkPhase.NotLooking or LinkPhase.Looking or LinkPhase.Connecting))
         {
+            _explainAgain = false;
             return;
         }
 
-        var now = Now;
         var atOnce = AnswersAtOnce(absence);
 
         foreach (var call in _held.ToList())
         {
-            if (!atOnce && call.Deadline > now)
+            // A deadline is answered only from a question asked at or after it: item 5
+            // of the build brief, "At a deadline, Explain() again".
+            if (!atOnce && call.Deadline > explained.AskedAt)
             {
                 continue;
             }
@@ -200,6 +223,16 @@ internal sealed partial class RelayEngine
         }
 
         ArmHoldTimer();
+
+        if (_explainAgain)
+        {
+            _explainAgain = false;
+
+            if (_held.Count > 0)
+            {
+                Explain([]);
+            }
+        }
     }
 
     /// <summary>

@@ -70,6 +70,8 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
     private int _looks;
     private bool _failsToLook;
     private bool _failsToExplain;
+    private TaskCompletionSource? _release;
+    private TaskCompletionSource _waiting = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>What <see cref="Explain"/> answers.</summary>
     public BackgroundAbsence Absence
@@ -131,6 +133,18 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
         }
     }
 
+    /// <summary>Completes when an explanation is waiting at the gate <see cref="HoldExplanations"/> closed.</summary>
+    public Task ExplanationWaiting
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _waiting.Task;
+            }
+        }
+    }
+
     /// <summary>How many times the engine has looked for the pipe.</summary>
     public int Looks
     {
@@ -153,6 +167,34 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
                 return [.. _explained];
             }
         }
+    }
+
+    /// <summary>
+    /// Makes every explanation from here on wait, with the answer it read on entry,
+    /// until <see cref="ReleaseExplanations"/>: a finder that is slow to answer, and
+    /// whose answer is out of date by the time it gives it.
+    /// </summary>
+    public void HoldExplanations()
+    {
+        lock (_gate)
+        {
+            _release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _waiting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+    }
+
+    /// <summary>Lets every waiting explanation answer, and stops holding new ones.</summary>
+    public void ReleaseExplanations()
+    {
+        TaskCompletionSource? release;
+
+        lock (_gate)
+        {
+            release = _release;
+            _release = null;
+        }
+
+        _ = release?.TrySetResult();
     }
 
     /// <summary>Offers a background, which the engine's next look connects to.</summary>
@@ -190,14 +232,34 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
     /// <inheritdoc />
     public BackgroundAbsence Explain(int? lastBackgroundPid)
     {
+        BackgroundAbsence answer;
+        Task? release;
+
         lock (_gate)
         {
             _explained.Add(lastBackgroundPid);
 
-            return _failsToExplain
-                ? throw new InvalidOperationException("The suite's finder could not read the Task Scheduler.")
-                : _absence;
+            if (_failsToExplain)
+            {
+                throw new InvalidOperationException("The suite's finder could not read the Task Scheduler.");
+            }
+
+            answer = _absence;
+            release = _release?.Task;
+
+            if (release is not null)
+            {
+                _ = _waiting.TrySetResult();
+            }
         }
+
+        // On the engine's thread-pool call, as a finder that blocks briefly does.
+        if (release is not null && !release.Wait(TestDefaults.InProcessHang))
+        {
+            throw new TimeoutException("Nothing released the suite's held explanation.");
+        }
+
+        return answer;
     }
 
     /// <inheritdoc />
