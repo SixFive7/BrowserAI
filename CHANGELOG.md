@@ -757,6 +757,16 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 💥 **BrowserAI is one program again, `BrowserAI.exe`, and a client starts it with `--mcp`.**
+  D7 a, the maintainer's words verbatim: *"d7 a"*. Release 1.1.0 carried two programs:
+  `BrowserAI.Server.exe`, which a client started, and `BrowserAI.exe`, which a person started and
+  which ran the installer's hooks. They are one windowless file now, and its argument says which
+  job a start does: `--mcp` for a client, no argument for a person, the hooks as Velopack names
+  them. The install and update hooks register `current\BrowserAI.exe --mcp` with Claude Code and
+  Codex, and the first update replaces an entry that names the old file. A project's `.mcp.json`
+  or `.codex\config.toml` that names `BrowserAI.Server.exe` stops working once and has to be
+  registered again from BrowserAI's page, and so does a client that kept the old command across
+  the update. A start with `--mcp` and no pipe on standard input exits at once and says why.
 - 🔧 **A person closing a visible session's window closes the session, as `browser_close` does.**
   Also 8 b. Until now nothing noticed: the next call met `@playwright/mcp` starting a new browser
   on its own, and `browserai_resume` answered that the session was already live, measured

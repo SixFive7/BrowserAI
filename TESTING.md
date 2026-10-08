@@ -305,7 +305,7 @@ Four drivers, two per shell, plus the clearance snapshot they share:
 | [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh) | one run, forces `c:/`, declares `lower` |
 | [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1) | three runs under `BROWSERAI_RELEASE_RUN`, forces `C:\`, declares `upper` |
 | [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) | three runs under `BROWSERAI_RELEASE_RUN`, forces `c:/`, declares `lower` |
-| [`build/New-Release.ps1 -TestPackOnly`](build/New-Release.ps1) | the suite's installer, packed from the two publishes the run tests, under the lock and before the first run -- *added 2026-09-24, Q287 a; see [the suite's installer](#the-suites-installer-is-packed-from-the-tree-before-each-run)* |
+| [`build/New-Release.ps1 -TestPackOnly`](build/New-Release.ps1) | the suite's installer, packed from the publish the run tests (two until 2026-10-08, D7 a), under the lock and before the first run -- *added 2026-09-24, Q287 a; see [the suite's installer](#the-suites-installer-is-packed-from-the-tree-before-each-run)* |
 | [`build/InstallerLock.ps1`](build/InstallerLock.ps1) | the drivers' half of `.work\installer.lock`: each driver takes it for its own pid before its first clearance snapshot, declares the token in `BROWSERAI_INSTALLER_LOCK_HELD` for the run it starts, and lets it go at the end -- *added 2026-09-24, Q291 a; see [the installer lock](#the-installer-lock-is-the-suites-own)* |
 | [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the six readings compared either side of every run, and it never repairs what it finds -- *six since 2026-09-24 (previously five), when the hooks began registering with Codex and `~\.codex\config.toml` became a file a run must not change*. ⚠️ *The registration reading is a read-only parse of the `browserai` entry in `~/.claude.json` since 2026-09-24 (previously `claude mcp get browserai`), Q281, the maintainer's words verbatim: "Q281 a". The client's own verb starts the client, which health-checks the server and can write that very file; `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` holds the parse*. ⚠️ *The Codex reading is the `[mcp_servers.browserai]` entry of `~\.codex\config.toml`, line for line, since 2026-09-24 (previously the whole file by length and SHA-256), Q292, the maintainer's words verbatim: "Q292 a - Same for claude code". The Codex desktop app rewrites that file when it starts, and a whole-file hash stopped a gate on it; the Claude Code reading was already the entry alone. `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs the script against a scratch profile, rewrites both files around the entry and then the entry itself, and holds both halves*. ⚠️ *And a seventh reading since 2026-09-24, Q294 b: `HKCU\Environment\Path` read raw -- its kind, its length and the SHA-256 of its unexpanded text, and every entry naming BrowserAI. The install and uninstall hooks write it now and the test pack runs them in every gate, so it must come out of every gate byte-identical; `SuiteCoverageTests.TheClearanceReadsTheUserPathByteForByte` compares the line with the test host's own read* |
 
@@ -442,7 +442,7 @@ was a 1.1.0 build writing the old record: no real `Setup.exe` had run a hook thi
 tree wrote since the last release. **Every gate driver now runs
 `build/New-Release.ps1 -TestPackOnly` after taking the installer lock and before its
 first run.** It packs `BrowserAI.app.test` from the two publishes the run tests --
-`src\BrowserAI\bin\Release\...\publish` and the configuration app's -- refuses a publish whose
+`src\BrowserAI\bin\Release\...\publish` and the configuration app's (one publish since 2026-10-08, D7 a: the one executable's) -- refuses a publish whose
 baked version is not the tree's, and packs the same directory once more under the
 shipping id into `Releases\test-pack\twin`, so the arm that compares the two packs
 keeps comparing two packs of one publish. It never reads or writes the shipping feed,
@@ -671,6 +671,17 @@ during that window got the child's.
 *Added 2026-09-15.* BrowserAI ships two binaries and a library, and the suite
 reaches them three different ways -- stated once, because "the product" is
 no longer one thing.
+
+⚠️ **One executable again since 2026-10-08 -- D7 a, the maintainer's words
+verbatim: *"d7 a"*.** *Added by addition; the table below is the record of the two.*
+`PublishedSlice.Executable` is `src\BrowserAI\bin\Release\...\publish\BrowserAI.exe`,
+and `PublishedSlice.AppExecutable` is the same file under a second name. Every arm
+that speaks MCP to it passes `PublishedSlice.Mcp`, the `--mcp` a client's
+registration carries, and every arm that drives the configuration app's modes
+passes that mode's own argument, because a start with no argument is a person's and
+opens a browser tab. `AppBinaryTests` reads the one file's subsystem and manifest
+and holds the mode decision; the release pack carries one binary and
+`ReleaseLayout.PackedBinaries` compares one.
 
 | What | How the suite reaches it | What it cannot see |
 |---|---|---|
@@ -1745,7 +1756,9 @@ consequences a reader has to carry:
   refuses all of them together. The commands are the two that refusal names:
   `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
   --self-contained`, and the same shape over
-  `src/BrowserAI.App/BrowserAI.App.csproj`. **A release publish does not do it**
+  `src/BrowserAI.App/BrowserAI.App.csproj`. *Corrected 2026-10-08 by addition,
+  D7 a: one command since the one executable, the first; the configuration app
+  is a library linked into it.* **A release publish does not do it**
   -- `build/New-Release.ps1` stages into `artifacts\publish-<exe stem>` and never
   writes `src\<project>\bin\`. The early signal is
   [the `publish freshness` row](#the-run-states-the-publish-freshness-it-established),

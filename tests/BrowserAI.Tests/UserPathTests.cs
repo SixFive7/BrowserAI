@@ -194,14 +194,14 @@ internal sealed class UserPathTests
     [Test]
     public async Task ACodexProjectEntryNamesTheServerAloneAndSaysWhatItFinds()
     {
-        const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe";
-        const string Other = @"D:\elsewhere\current\BrowserAI.Server.exe";
+        const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.exe";
+        const string Other = @"D:\elsewhere\current\BrowserAI.exe";
 
         // Never an absolute path, wherever the install is.
         await Assert.That(RegistrationClient.Codex.ProjectCommandFor(Server, Path.GetDirectoryName(Path.GetDirectoryName(Server))).Command)
-            .IsEqualTo(RegistrationTarget.ServerFileName);
+            .IsEqualTo(RegistrationTarget.AppFileName);
         await Assert.That(RegistrationClient.Codex.ProjectCommandFor(Other, @"D:\elsewhere").Command)
-            .IsEqualTo(RegistrationTarget.ServerFileName);
+            .IsEqualTo(RegistrationTarget.AppFileName);
 
         // The sentence after it, from what RegisterAI says the name finds.
         var here = RegistrationClient.Codex.ProjectNoteAfter(Server, Server);
@@ -219,7 +219,7 @@ internal sealed class UserPathTests
         // Claude Code: the portable spelling at the default location, the absolute
         // path and the reason anywhere else.
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
-        var defaultServer = Path.Combine(local, "BrowserAI.app", RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
+        var defaultServer = Path.Combine(local, "BrowserAI.app", RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
 
         var portable = RegistrationClient.ClaudeCode.ProjectCommandFor(defaultServer, Path.Combine(local, "BrowserAI.app"));
 

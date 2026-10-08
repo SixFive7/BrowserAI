@@ -3,33 +3,41 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!--
+      ⚠️ ONE WINDOWLESS FILE SINCE 2026-10-08, D7 a, the maintainer's words
+      verbatim: "d7 a". (Previously "<OutputType>Exe</OutputType>", a console
+      binary named BrowserAI.Server beside a window binary named BrowserAI.)
+
+      The Windows subsystem is the configuration app's old reason, measured: a
+      non-silent Setup.exe starts the main executable with
+      CREATE_UNICODE_ENVIRONMENT and nothing else, and a console binary started
+      that way from a windowless parent is given a console window. A
+      Windows-subsystem file is never given one, by any starter. A client still
+      reaches it over stdio: every client gave a windowless build of the server
+      a pipe on all three standard handles, 54 of 54 runs, measured 2026-10-04
+      (docs/design/one-binary). What a start does is decided by its argument and
+      never by what its handles happen to be: see Program.Main.
+    -->
+    <OutputType>WinExe</OutputType>
     <RootNamespace>BrowserAI</RootNamespace>
     <!--
-      ⚠️ RENAMED 2026-09-15 (previously BrowserAI). The name went to the
-      configuration app, and it had to: Velopack derives the root stub, the
-      Start Menu shortcut, the icon and all four hook invocations from the pack
-      tool's mainExe flag and from nothing else, so whichever binary a person
-      launches and Windows shows in the Start Menu has to be the one named
-      there. The
-      server is what a CLIENT starts, by an absolute path out of its own
-      configuration, so its name is only ever read by machines.
+      ⚠️ BrowserAI AGAIN SINCE 2026-10-08 (previously BrowserAI.Server, renamed
+      on 2026-09-15 when the name went to the configuration app). Velopack
+      derives the root stub, the Start Menu shortcut, the icon and all four
+      hook invocations from the pack tool's mainExe flag and from nothing else,
+      and there is one file to name now, so it carries the name a person sees.
 
       The project DIRECTORY is deliberately unchanged. Renaming it would move
       every file in the tree's largest project and make the diff of this batch
       unreadable, for a directory name nothing reads.
     -->
-    <AssemblyName>BrowserAI.Server</AssemblyName>
-    <!--
-      Explorer shows a console application's icon exactly as it shows a window
-      application's, and a person who opens the install directory sees this file
-      beside the configuration app. Same icon on purpose: they are one product,
-      and two icons would say they are two.
-    -->
+    <AssemblyName>BrowserAI</AssemblyName>
     <ApplicationIcon>..\..\assets\BrowserAI.ico</ApplicationIcon>
     <!-- longPathAware. Session directories are the caller's choice and nothing
          constrains their depth, so a path crossing MAX_PATH must not become a
-         mystery failure somewhere inside a browser profile tree. -->
+         mystery failure somewhere inside a browser profile tree. The common
+         controls, the DPI awareness and the rest came with the configuration
+         app on 2026-10-08, and their reasons are in the manifest. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!--
       Required by [LibraryImport]. The source generator emits unsafe marshalling
@@ -159,9 +167,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      THE BROWSER TAB'S LISTENER, Kestrel, which BrowserAI.App links, so the one
+      executable carries the ASP.NET Core shared framework since 2026-10-08.
+      ⚠️ That is why Microsoft.Extensions.Logging and its console provider are NOT
+      package references here any more (previously both were): the framework
+      carries them, and a direct reference to a package the framework provides is
+      NU1510, an error under this repository's settings
+      (kb/windows/loopback-page.md).
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="ModelContextProtocol" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Velopack" />
     <!-- Build-time only. PrivateAssets="all" keeps it out of the dependency
          graph entirely, so nothing ships and ILC never sees it. -->
@@ -186,11 +202,15 @@
   <Import Project="..\..\build\Sqlite.targets" />
 
   <ItemGroup>
-    <!-- The half this executable shares with the configuration app: the data
-         root, the registration with the Claude Code CLI, the update feed, the
-         live-instance census and the log. BrowserAI.Core's types are internal
-         and reach this assembly through an InternalsVisibleTo declared there. -->
+    <!-- The data root, the registration, the update feed, the task scheduler,
+         the log and the Win32 pieces those need. BrowserAI.Core's types are
+         internal and reach this assembly through an InternalsVisibleTo declared
+         there. -->
     <ProjectReference Include="..\BrowserAI.Core\BrowserAI.Core.csproj" />
+    <!-- The person's start, the coordinator's loop, the browser tab and the
+         status report: the configuration app until 2026-10-08, a library linked
+         into this one file since. -->
+    <ProjectReference Include="..\BrowserAI.App\BrowserAI.App.csproj" />
   </ItemGroup>
 
   <ItemGroup>

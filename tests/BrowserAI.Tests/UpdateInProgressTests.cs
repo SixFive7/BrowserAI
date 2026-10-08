@@ -56,7 +56,7 @@ internal sealed class UpdateInProgressTests
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 
@@ -159,7 +159,7 @@ internal sealed class UpdateInProgressTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], root.Path, environment);
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -248,7 +248,7 @@ internal sealed class UpdateInProgressTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], root.Path, environment);
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 

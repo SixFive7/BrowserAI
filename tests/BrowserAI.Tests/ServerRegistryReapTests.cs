@@ -109,7 +109,7 @@ internal sealed class ServerRegistryReapTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[ServerRegistryReap.RegistryDirectoryVariable] = registry;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], scratch.Path, environment);
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -264,7 +264,7 @@ internal sealed class ServerRegistryReapTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[ServerRegistryReap.RegistryDirectoryVariable] = registry;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], scratch.Path, environment);
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 

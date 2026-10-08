@@ -23,6 +23,17 @@
     page in the person's own browser (Q315 a, Q319 b). The subsystem stays for
     the reason in the first paragraph, which never depended on the window.
 
+    CORRECTED 2026-10-08 (previously "<OutputType>WinExe</OutputType>" and
+    "<AssemblyName>BrowserAI</AssemblyName>" below, with this project as the
+    Velopack main executable): D7 a, the maintainer's words verbatim: "d7 a".
+    BrowserAI is ONE windowless file now, BrowserAI.exe, built from
+    src/BrowserAI, and its argument says which job a start does. This project is
+    a library linked into that file: the person's start, the coordinator's loop,
+    the browser tab and the status report. The Windows subsystem moved to the
+    one executable with the reason in the first paragraph, which holds for every
+    mode it has: the installer, the Start Menu and every hook start it, and a
+    client starts it with pipes on all three standard handles.
+
     WHY NOT WPF OR WINFORMS. Neither is supported under NativeAOT: the SDK
     disables trimming for both, which PublishAot requires
     (Learn: dotnet/core/deploying/trimming/incompatibilities). That includes
@@ -31,29 +42,35 @@
   -->
 
   <PropertyGroup>
-    <!-- Windows subsystem. This single property is what stops a console from
-         ever existing, and it is the whole reason this project exists. -->
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>BrowserAI.App</RootNamespace>
-    <!-- The name a person sees, the Start Menu entry, the root stub, the icon
-         and all four Velopack hooks. -->
-    <AssemblyName>BrowserAI</AssemblyName>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>..\..\assets\BrowserAI.ico</ApplicationIcon>
+    <!-- The assembly a library is, named for the project. The name a person sees,
+         the Start Menu entry, the root stub, the icon and all four Velopack hooks
+         belong to the one executable, src/BrowserAI, since 2026-10-08. -->
+    <AssemblyName>BrowserAI.App</AssemblyName>
     <!-- Required by [LibraryImport]. Every use is a P/Invoke declaration under
          Interop\, never hand-written unsafe code. Corrected 2026-10-03
          (previously "The one exception is the function pointer the task dialog
          callback is taken as, which the runtime requires to be written in an
          unsafe context"): the task dialog is deleted with its callback. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Published only inside the one executable, which is win-x64 NativeAOT; the
+         same reason BrowserAI.Core declares it, so a solution restore and a
+         publish restore resolve one set. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup Label="Version">
+    <!-- The same tag and prefix as the executable and BrowserAI.Core, so every
+         assembly linked into the one file carries the one version. -->
     <MinVerTagPrefix>v</MinVerTagPrefix>
   </PropertyGroup>
 
   <PropertyGroup Label="Native compilation">
-    <PublishAot>true</PublishAot>
+    <!-- A library cannot set PublishAot; IsAotCompatible turns on the same three
+         analyzers, so an AOT-hostile call is an error here and not a publish error
+         in the executable that links this. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
@@ -82,8 +99,8 @@
 
   <ItemGroup>
     <!-- The stdout ban reaches this assembly too. It does not own a protocol
-         channel, but it is packed beside one and the rule has no per-project
-         exception. -->
+         channel, but it is linked into the one that does, and the rule has no
+         per-project exception. -->
     <AdditionalFiles Include="..\BrowserAI\BannedSymbols.txt" />
   </ItemGroup>
 
@@ -92,6 +109,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The one executable calls the person's start, the coordinator and the tab,
+         and the suite asserts on them; both see internals, as BrowserAI.Core's
+         two readers always have. -->
+    <InternalsVisibleTo Include="BrowserAI" />
     <InternalsVisibleTo Include="BrowserAI.Tests" />
   </ItemGroup>
 

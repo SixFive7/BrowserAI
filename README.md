@@ -25,11 +25,23 @@ Why it exists, and every settled decision with the argument that settled it, is 
 **If registration did not happen** -- a client was not found, or it is neither Claude Code nor Codex -- BrowserAI writes `mcp-registration.json` into `%LocalAppData%\BrowserAI`, with one entry per client carrying the exact command to run by hand. They are these:
 
 ```
-claude mcp add browserai --scope user -- "<install root>\current\BrowserAI.Server.exe"
-codex mcp add browserai -- "<install root>\current\BrowserAI.Server.exe"
+claude mcp add browserai --scope user -- "<install root>\current\BrowserAI.exe" --mcp
+codex mcp add browserai -- "<install root>\current\BrowserAI.exe" --mcp
 ```
 
+*Changed 2026-10-08 (previously both lines named `<install root>\current\BrowserAI.Server.exe`
+and passed no argument): BrowserAI is one program again, and `--mcp` is what tells it that a
+client started it.*
+
 Codex is looked for in four places, because its desktop app puts the command line on no search path at all: `PATH`, `~\.local\bin`, the desktop app's own manifest under `%LocalAppData%\OpenAI\Codex`, and `%AppData%\npm`.
+
+⚠️ ***One program again since 2026-10-08: `current\BrowserAI.exe`.*** It is what Claude Code
+and Codex start, with `--mcp`, and what opens the page described in step 3 when you start
+it yourself, with no argument. *Changed 2026-10-08 (previously the paragraph below, written
+2026-09-15): the two programs are one file again.* A registration that names
+`BrowserAI.Server.exe` is repaired by the next update, which registers the new command;
+a project file that names it has to be registered again from the page, because nothing
+rewrites a file in your repositories.
 
 ⚠️ ***The file name changed on 2026-09-15 (previously `current\BrowserAI.exe`).***
 BrowserAI ships as two programs now, in one installer: **`BrowserAI.Server.exe`**
@@ -52,9 +64,11 @@ project...** until 2026-10-03, when the page took registration over)* -- the fil
 offered BrowserAI without configuring anything, and **Claude Code will ask each
 of them to approve the server once**, the first time they open a session there.
 The command written into it is portable --
-`${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe`, which Claude Code
-expands on each machine -- so it is right on every teammate's machine and not
-just on the one that wrote it. *(If you installed BrowserAI somewhere other than
+`${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe` with the argument `--mcp`,
+which Claude Code expands on each machine -- so it is right on every teammate's
+machine and not just on the one that wrote it. *(Until 2026-10-08 it named
+`BrowserAI.Server.exe`, which no build ships any more; a project file that still
+names it needs registering again.)* *(If you installed BrowserAI somewhere other than
 the default location, the entry gets that absolute path instead and the page
 tells you why.)*
 
@@ -62,7 +76,8 @@ tells you why.)*
 running `codex mcp add` with `CODEX_HOME` pointed at that `.codex` folder, so the
 file is Codex's own. ⚠️ **Codex reads a project's own configuration only in a
 project you have trusted**, so the entry does nothing in a folder Codex has not been
-told to trust. **The entry names `BrowserAI.Server.exe` and no folder**, because
+told to trust. **The entry names `BrowserAI.exe` with `--mcp` and no folder** *(`BrowserAI.Server.exe`
+until 2026-10-08)*, because
 Codex expands no variable in a server's command -- measured: none of four spellings of
 `LOCALAPPDATA` started anything in 48 attempts -- so the portable spelling above does
 not work there. Codex finds the name on your PATH instead, and **the installer puts

@@ -32,10 +32,16 @@ namespace BrowserAI.Tests.Harness;
 internal static class InstalledLayout
 {
     /// <summary>
-    /// Creates <c>&lt;root&gt;\current\</c> holding both executables.
+    /// Creates <c>&lt;root&gt;\current\</c> holding the one executable.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously "holding both executables", the
+    /// configuration app as a Windows binary and <c>BrowserAI.Server.exe</c> as a
+    /// console one beside it), D7 a: there is one file, windowless, and it is both
+    /// what a hook runs as and what a client is given.</i>
+    /// </remarks>
     /// <param name="root">The install root.</param>
-    /// <returns>The configuration app's image path, which is what a hook runs as.</returns>
+    /// <returns>The one executable's image path, which is what a hook runs as.</returns>
     public static string Create(string root)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
@@ -46,36 +52,40 @@ internal static class InstalledLayout
         var app = Path.Combine(current.FullName, RegistrationTarget.AppFileName);
 
         WritePortableExecutable(app, PeSubsystem.WindowsGui);
-        WritePortableExecutable(
-            Path.Combine(current.FullName, RegistrationTarget.ServerFileName),
-            PeSubsystem.WindowsCui);
 
         return app;
     }
 
     /// <summary>
-    /// Creates <c>&lt;root&gt;\current\</c> holding the app and <b>no</b> server.
+    /// Creates <c>&lt;root&gt;\current\</c> holding a windowless executable under
+    /// another name and <b>no</b> <c>BrowserAI.exe</c>, so the file registration
+    /// composes is missing.
     /// </summary>
+    /// <remarks>
+    /// <b>The one way the composed file can be missing since 2026-10-08</b>: the image
+    /// asking is in <c>current\</c> and is not the one executable, a renamed copy.
+    /// <i>Previously <c>CreateWithoutTheServer</c>, the app with no server beside it.</i>
+    /// </remarks>
     /// <param name="root">The install root.</param>
-    /// <returns>The configuration app's image path.</returns>
-    public static string CreateWithoutTheServer(string root)
+    /// <returns>The renamed copy's image path.</returns>
+    public static string CreateUnderAnotherName(string root)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
 
         var current = Directory.CreateDirectory(
             Path.Combine(root, RegistrationTarget.CurrentDirectoryName));
 
-        var app = Path.Combine(current.FullName, RegistrationTarget.AppFileName);
-        WritePortableExecutable(app, PeSubsystem.WindowsGui);
+        var renamed = Path.Combine(current.FullName, "BrowserAI.Renamed.exe");
+        WritePortableExecutable(renamed, PeSubsystem.WindowsGui);
 
-        return app;
+        return renamed;
     }
 
-    /// <summary>The server's path inside a layout this created.</summary>
+    /// <summary>The registered file's path inside a layout this created: the one executable.</summary>
     /// <param name="root">The install root.</param>
     /// <returns>The path, whether or not anything is at it.</returns>
     public static string ServerIn(string root) =>
-        Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
+        Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
 
     /// <summary>
     /// Writes the smallest file that carries a readable PE optional header

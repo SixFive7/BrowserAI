@@ -617,6 +617,9 @@ zero -- **plus the two things an exit code does not establish**:
   that read one of the two logs would ship a binary nobody had checked while
   reporting that ILC's output was clean. The publish's exit code is not evidence
   at all, because the failure this exists for exited 0 with an artifact on disk.
+  ⚠️ *Corrected 2026-10-08 by addition, D7 a: one executable, one ILC pass, and
+  the one line `ILC output for the one executable is clean (<n> lines read, 0
+  complaints)` is the evidence.*
   Measured on the first two-binary run: **94** lines for the app and **388** for
   the server, 0 complaints in each.
 - **Both executables are in the pack directory.** The script refuses by name
@@ -788,7 +791,8 @@ before this and nobody had re-read the number:*
   source file(s) ... build\payload\package-lock.json*. The two commands are the
   ones that refusal names -- `dotnet publish src/BrowserAI/BrowserAI.csproj -c
   Release -r win-x64 --self-contained` and the same shape over
-  `src/BrowserAI.App/BrowserAI.App.csproj` -- and
+  `src/BrowserAI.App/BrowserAI.App.csproj` (one command since 2026-10-08, D7 a,
+  the first) -- and
   [item 7](#7-build-clean)'s release publish is **not** a substitute, because
   `build/New-Release.ps1` stages into `artifacts\publish-<exe stem>` and never
   writes `src\<project>\bin\`. The early signal is the coverage block's
@@ -847,7 +851,8 @@ before this and nobody had re-read the number:*
   out of `artifacts\publish-release`, so the arms install the bytes the release ships.
   So item 7 comes before item 8 for a second reason: the release gate refuses to pack
   when that directory is missing or holds another version. The slice arms still drive
-  the publishes under `src\<project>\bin\`, so publish both slices as well. An
+  the publishes under `src\<project>\bin\`, so publish both slices as well (the one
+  slice since 2026-10-08, D7 a). An
   ordinary gate is unchanged and packs from the dev publishes.
 
 - **The smoke layer ran against a real browser**, not against an empty browsers

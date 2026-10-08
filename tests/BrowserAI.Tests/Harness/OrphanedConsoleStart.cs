@@ -444,6 +444,12 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         start.ArgumentList.Add("launch-suspended");
         start.ArgumentList.Add(_executable);
         start.ArgumentList.Add(report);
+
+        // ⚠️ THE SERVER'S MODE, since 2026-10-08 (D7 a): the one executable serves a
+        // client only under --mcp, and a start with no argument is a person's, which
+        // would open a browser tab. Every arm this rig serves is about the server's
+        // guard against a start with nobody to serve.
+        start.ArgumentList.Add(Program.McpArgument);
         start.Environment.Clear();
 
         foreach (var (name, value) in environment)

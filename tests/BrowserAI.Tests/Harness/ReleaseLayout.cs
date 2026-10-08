@@ -241,27 +241,24 @@ internal static partial class ReleaseLayout
     /// </remarks>
     public static IReadOnlyList<(string Entry, string Published)> PackedBinaries => LazyPackedBinaries.Value;
 
-    /// <summary>Where release checklist item 7 publishes both projects, and where a release gate packs its test installer from.</summary>
+    /// <summary>Where release checklist item 7 publishes the one executable, and where a release gate packs its test installer from.</summary>
     public static string ReleasePublish => Path.Combine(RepositoryLayout.Root.FullName, "artifacts", "publish-release");
 
     private static readonly Lazy<IReadOnlyList<(string Entry, string Published)>> LazyPackedBinaries =
         new(() => PackedBinariesFor(fromReleasePublish: SuiteEnvironment.IsReleaseRun));
 
-    /// <summary>The two binaries a pack carries, and the publish each must equal.</summary>
+    /// <summary>The binary a pack carries, and the publish it must equal.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously two binaries, <c>BrowserAI.Server.exe</c>
+    /// and the configuration app's <c>BrowserAI.exe</c>, each from its own publish),
+    /// D7 a: one executable, from one publish.</i>
+    /// </remarks>
     /// <param name="fromReleasePublish">Whether the pack was packed from the release publish.</param>
-    /// <returns>Each entry name inside the package and the file it must equal.</returns>
+    /// <returns>The entry name inside the package and the file it must equal.</returns>
     public static IReadOnlyList<(string Entry, string Published)> PackedBinariesFor(bool fromReleasePublish) =>
         fromReleasePublish
-            ?
-            [
-                ("lib/app/BrowserAI.Server.exe", Path.Combine(ReleasePublish, "BrowserAI.Server.exe")),
-                ("lib/app/BrowserAI.exe", Path.Combine(ReleasePublish, "BrowserAI.exe")),
-            ]
-            :
-            [
-                ("lib/app/BrowserAI.Server.exe", PublishedSlice.Executable),
-                ("lib/app/BrowserAI.exe", PublishedSlice.AppExecutable),
-            ];
+            ? [("lib/app/BrowserAI.exe", Path.Combine(ReleasePublish, "BrowserAI.exe"))]
+            : [("lib/app/BrowserAI.exe", PublishedSlice.Executable)];
 
     /// <summary>
     /// Why the test pack does not carry the binaries this run tested, or

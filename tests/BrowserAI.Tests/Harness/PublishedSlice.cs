@@ -121,24 +121,34 @@ internal static class PublishedSlice
 
     /// <summary>The published binary.</summary>
     /// <remarks>
-    /// ⚠️ <b>Renamed 2026-09-15 (previously <c>BrowserAI.exe</c>).</b> That name
-    /// belongs to the configuration app now -- see <see cref="AppExecutable"/> --
-    /// and this is the MCP server, which is what every slice arm drives over
-    /// stdio.
+    /// ⚠️ <b>Renamed 2026-09-15 (previously <c>BrowserAI.exe</c>), and back on
+    /// 2026-10-08 (previously <c>BrowserAI.Server.exe</c>).</b> D7 a, the
+    /// maintainer's words verbatim: <i>"d7 a"</i>. There is one executable, and
+    /// what a start does is its argument's: every slice arm that drives it over
+    /// stdio passes <see cref="Mcp"/>, and a start with no argument is a person's,
+    /// which opens a browser tab and is never what an arm wants.
     /// </remarks>
-    public static string Executable { get; } = Path.Combine(Directory, "BrowserAI.Server.exe");
+    public static string Executable { get; } = Path.Combine(Directory, "BrowserAI.exe");
 
-    /// <summary>Where the configuration app's own publish lands.</summary>
+    /// <summary>
+    /// The arguments a client's registration starts the one executable with, which
+    /// is what every arm that speaks MCP to it passes.
+    /// </summary>
     /// <remarks>
-    /// <b>A different directory, because it is a different project.</b> The
-    /// release script publishes both into one pack directory; an ordinary
-    /// <c>dotnet publish</c> of each puts them under their own project. Nothing
-    /// in the suite drives this binary over a protocol -- it has no protocol --
-    /// so it is here only for what can be read off the file itself.
+    /// <b>One place, so no arm spells the mode.</b> Added 2026-10-08 with the one
+    /// executable; an arm that passed nothing until that day passes this.
     /// </remarks>
-    public static string AppExecutable { get; } = Path.Combine(
-        RepositoryLayout.Root.FullName,
-        "src", "BrowserAI.App", "bin", "Release", "net10.0-windows", "win-x64", "publish", "BrowserAI.exe");
+    public static IReadOnlyList<string> Mcp { get; } = [Program.McpArgument];
+
+    /// <summary>Where the configuration app's publish used to land: the one executable since 2026-10-08.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The same file as <see cref="Executable"/> since 2026-10-08</b>
+    /// (previously <c>src\BrowserAI.App\bin\Release\...\publish\BrowserAI.exe</c>, a
+    /// second project's publish). Kept as a name, because an arm that drives the
+    /// configuration app's modes reads better naming them, and both names now
+    /// resolve to one publish.
+    /// </remarks>
+    public static string AppExecutable => Executable;
 
     /// <summary>The payload that must sit beside it for a child to start.</summary>
     public static string PayloadMarker { get; } = Path.Combine(Directory, "payload", "payload.json");
@@ -295,42 +305,17 @@ internal static class PublishedSlice
     }
 
     /// <summary>
-    /// Refuses an arm that drives the published CONFIGURATION APP when a source
-    /// file is newer than that binary.
+    /// Refuses an arm that drives the configuration app's modes when a source file
+    /// is newer than the binary: <see cref="EnsureFresh"/> since 2026-10-08.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-09-25 with the coordinator</b>, the first time an arm drives
-    /// the app over a protocol: <see cref="EnsureFresh"/> reads the server's
-    /// binary only, and the two are published by two commands. The inputs are the
-    /// same list, because the app links the same library.
+    /// <b>Added 2026-09-25 with the coordinator</b>, when the app was a second
+    /// publish. <i>Corrected 2026-10-08 (previously it read the configuration app's
+    /// own publish, a second command): there is one executable and one publish, so
+    /// one freshness check.</i>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">The app's publish is missing or older than the tree.</exception>
-    public static void EnsureAppFresh()
-    {
-        if (!File.Exists(AppExecutable))
-        {
-            throw new InvalidOperationException(
-                $"'{AppExecutable}' is not there. Publish the configuration app: {AppPublishCommand}");
-        }
-
-        var published = File.GetLastWriteTimeUtc(AppExecutable);
-        var newer = FreshnessInputs
-            .Where(file => file.LastWriteTimeUtc > published)
-            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
-            .Order(StringComparer.Ordinal)
-            .ToList();
-
-        if (newer.Count > 0)
-        {
-            throw new InvalidOperationException(
-                $"The published configuration app at '{AppExecutable}' is older than {newer.Count} source file(s), so this test would prove "
-                + $"nothing about the code in the tree, among them {newer[0]}. Publish it again: {AppPublishCommand}");
-        }
-    }
-
-    /// <summary>The command that publishes the configuration app.</summary>
-    public const string AppPublishCommand =
-        "dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained";
+    /// <exception cref="InvalidOperationException">The publish is missing or older than the tree.</exception>
+    public static void EnsureAppFresh() => EnsureFresh();
 
     /// <summary>The label the <c>publish freshness</c> row carries in the coverage block.</summary>
     public const string FreshnessTitle = "publish freshness";

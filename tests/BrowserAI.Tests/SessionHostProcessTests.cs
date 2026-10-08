@@ -202,7 +202,7 @@ internal sealed class SessionHostProcessTests
     private static RawStdioClient StartFront(string pipe, string workingDirectory) =>
         RawStdioClient.Start(
             PublishedSlice.Executable,
-            ["--relay", pipe],
+            [Program.McpArgument, "--relay", pipe],
             workingDirectory,
             PublishedSlice.InheritedEnvironment());
 

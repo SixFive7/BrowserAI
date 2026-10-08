@@ -62,6 +62,47 @@ internal static partial class StandardInput
             && GetConsoleMode(handle, out _);
     }
 
+    /// <summary>
+    /// Whether standard input is a pipe, which is what every client gives the
+    /// process it starts as its MCP server.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The second condition of <c>--mcp</c>, since 2026-10-08.</b> The one
+    /// executable is a Windows-subsystem binary, and a windowless start with no
+    /// standard handles reads end of input at once: started the way the Task
+    /// Scheduler, the installer and a double-click start a program, the windowless
+    /// build exited in 52 to 78 ms, 6 of 6, while every client gave its server a
+    /// pipe on standard input, 54 of 54 runs (the one-binary measurement of
+    /// 2026-10-04, docs/design/one-binary). So the argument says what was meant and
+    /// a pipe is required as well, the way the plan's mode table has it.
+    /// </para>
+    /// <para>
+    /// <b><c>GetFileType</c> here, where <see cref="IsAConsole"/> uses
+    /// <c>GetConsoleMode</c>.</b> The question is the opposite one: not whether the
+    /// handle can never end, but whether it is the kind of handle a client writes
+    /// into. Anonymous and named pipes both answer <c>FILE_TYPE_PIPE</c>; a console
+    /// and <c>NUL</c> answer <c>FILE_TYPE_CHAR</c>, a file <c>FILE_TYPE_DISK</c>,
+    /// and no handle at all answers nothing.
+    /// </para>
+    /// </remarks>
+    /// <returns>Whether standard input is a pipe.</returns>
+    public static bool IsAPipe()
+    {
+        var handle = GetStdHandle(StdInputHandle);
+
+        return handle != IntPtr.Zero
+            && handle != InvalidHandleValue
+            && GetFileType(handle) == FileTypePipe;
+    }
+
+    /// <summary><c>FILE_TYPE_PIPE</c>: a socket, a named pipe or an anonymous pipe.</summary>
+    private const uint FileTypePipe = 3;
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint GetFileType(IntPtr hFile);
+
     // System32 only, on every P/Invoke in this repository (CA5392). kernel32 is
     // a KnownDLL and resolves before any path search, so the attribute cannot
     // change this one's outcome; it is here because the rule is every

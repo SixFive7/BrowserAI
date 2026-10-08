@@ -78,7 +78,8 @@ internal static partial class ClientProbe
             }
         }
 
-        var process = JobLauncher.Start(job, browserAi, [], workingDirectory, environment);
+        // --mcp since 2026-10-08: the one executable serves a client only under it.
+        var process = JobLauncher.Start(job, browserAi, [global::BrowserAI.Program.McpArgument], workingDirectory, environment);
 
         // Drained on a background thread, so a BrowserAI writing diagnostics
         // cannot fill a pipe nobody is reading and block.

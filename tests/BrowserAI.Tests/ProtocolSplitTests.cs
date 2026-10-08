@@ -192,7 +192,7 @@ internal sealed class ProtocolSplitTests
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 
@@ -229,7 +229,7 @@ internal sealed class ProtocolSplitTests
         var fromServer = await DiscoverAsync(
             "protocol-discover-server",
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             PublishedSlice.InheritedEnvironment());
 
         var fromChild = await DiscoverAsync(

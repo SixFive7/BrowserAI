@@ -128,13 +128,14 @@
 
 .PARAMETER TestPackOnly
     Pack the suite's installer, and nothing that could be released, from the
-    two publishes a gate has just made and tested. Q287, decided 2026-09-24 by
+    publish a gate has just made and tested. Q287, decided 2026-09-24 by
     the maintainer, verbatim: "Q287 a". Every gate driver runs this before its
     first run, so the real-installer arms install THIS tree's binaries and run
     this tree's hooks; until that day they ran the last pack a release cut had
-    left behind. It reads `src\BrowserAI\bin\Release\...\publish` and
-    `src\BrowserAI.App\bin\Release\...\publish` -- the directories every
-    published-slice arm drives -- refuses a binary whose baked version is not the
+    left behind. It reads `src\BrowserAI\bin\Release\...\publish` -- the
+    directory every published-slice arm drives, one since 2026-10-08 (previously
+    also `src\BrowserAI.App\bin\Release\...\publish`, the configuration app's
+    own) -- refuses a binary whose baked version is not the
     tree's, and writes `Releases\test-pack\` and nothing else: no shipping pack,
     no rename of a download, no archive, no manifest, no release body, no upload
     set, and the shipping feed is neither read nor written. Beside the test pack
@@ -185,21 +186,18 @@ $ErrorView = 'NormalView'
 
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 
-# ⚠️ TWO PROJECTS PUBLISH INTO ONE PACK DIRECTORY -- 2026-09-15. BrowserAI ships
-# as two binaries: the configuration app, which is the Velopack main exe and
-# what a person launches, and the MCP server, which is what a client starts. The
-# app is FIRST because it is the smaller of the two and its ILC pass is the one
-# most likely to be broken by a change to the interop layer; a release that is
-# going to fail should fail on the cheap half.
+# ⚠️ ONE PROJECT PUBLISHES INTO THE PACK DIRECTORY -- 2026-10-08, D7 a, the
+# maintainer's words verbatim: "d7 a". BrowserAI is one windowless file,
+# BrowserAI.exe, built from src\BrowserAI and linking the configuration app's
+# library. *Corrected 2026-10-08 (previously "TWO PROJECTS PUBLISH INTO ONE PACK
+# DIRECTORY -- 2026-09-15", the configuration app as BrowserAI.exe first and the
+# MCP server as BrowserAI.Server.exe second, each behind its own ILC pass).*
 #
-# Each entry names the project, the file it produces and whether it carries the
-# payload -- the last of those only so that a reader can see why the sizes
-# differ by two orders of magnitude.
+# The loops below still walk a list: each step that ran once per binary runs once
+# for the one binary, and a list of one keeps every guard where it was.
 $project = Join-Path $root 'src' 'BrowserAI' 'BrowserAI.csproj'
-$appProject = Join-Path $root 'src' 'BrowserAI.App' 'BrowserAI.App.csproj'
 $publishes = @(
-    @{ Project = $appProject; Exe = 'BrowserAI.exe';        What = 'configuration app' }
-    @{ Project = $project;    Exe = 'BrowserAI.Server.exe'; What = 'MCP server' }
+    @{ Project = $project; Exe = 'BrowserAI.exe'; What = 'one executable' }
 )
 
 # The icon every artifact carries: the Setup stub, the Add/Remove entry, the
@@ -417,7 +415,8 @@ if ($TestPackOnly) {
 
     # ⚠️ A RELEASE GATE PACKS FROM THE RELEASE PUBLISH -- Q305, 2026-09-25, the
     # maintainer's words: "Q305 a". Item 7 of the release checklist publishes
-    # both projects into artifacts\publish-release, and those are the bytes the
+    # the one executable (both projects until 2026-10-08) into
+    # artifacts\publish-release, and those are the bytes the
     # release ships; ILC makes different bytes of one tree on every publish, so a
     # test pack of the dev publishes would have the real-installer arms install a
     # build nobody downloads. The same version refusal applies to it below.
@@ -648,11 +647,11 @@ elseif (-not $SkipPublish) {
     Write-Warning "-SkipPublish: the ILC output check and the decorated-version-string scan did NOT run for this pack."
 }
 
-# ⚠️ BOTH, and by name. A pack directory holding the app without the server is
-# an installer that puts a window on somebody's Start Menu and registers nothing
-# a client can start -- and RegistrationTarget refuses precisely that layout at
-# install time, so the failure would be a successful install that says it could
-# not find its own server.
+# ⚠️ BY NAME. A pack directory without the one executable is an installer with
+# nothing to start, register or update. *Corrected 2026-10-08 (previously "BOTH,
+# and by name. A pack directory holding the app without the server is an
+# installer that puts a window on somebody's Start Menu and registers nothing a
+# client can start"), D7 a: there is one file to look for.*
 foreach ($publish in $publishes) {
     if (-not (Test-Path -LiteralPath (Join-Path $PackDir $publish.Exe))) {
         Write-Error "There is no $($publish.Exe) in $PackDir, so the $($publish.What) is missing and there is nothing releasable to pack."
@@ -675,20 +674,21 @@ $packArgs = @(
     # The icon on the Setup stub, the Add/Remove entry and the shortcut. See
     # $icon above for why it is a placeholder today.
     '--icon', $icon
-    # ⚠️ THE CONFIGURATION APP, AND NEVER THE SERVER -- 2026-09-15. This one
-    # name decides five things at once: which binary Setup.exe starts after a
+    # ⚠️ THE ONE EXECUTABLE, WINDOWLESS -- 2026-10-08, D7 a (previously "THE
+    # CONFIGURATION APP, AND NEVER THE SERVER -- 2026-09-15"). This one name
+    # decides five things at once: which binary Setup.exe starts after a
     # non-silent install, which one the root stub and `Update.exe start` launch,
     # which one all four hooks run on, what the root stub is called, and what
     # the shortcut points at. A console-subsystem binary in this slot is given a
     # console by the post-install start and puts a terminal window on the user's
     # screen; nothing suppresses that start, so the answer is a binary that can
-    # never be given a console.
+    # never be given a console, and the one executable is that binary.
     #
     # ⚠️ NEVER the execution stub, which is a different file: the stub sits at
     # <root>\BrowserAI.exe, is compiled `#![windows_subsystem = "windows"]` and
-    # returns in 59 ms. Registration names <root>\current\BrowserAI.Server.exe,
-    # composed from the app's own directory and checked for the console
-    # subsystem before it is written.
+    # returns in 59 ms. Registration names <root>\current\BrowserAI.exe --mcp,
+    # checked for the Windows subsystem before it is written (previously
+    # <root>\current\BrowserAI.Server.exe, checked for the console subsystem).
     '--mainExe', 'BrowserAI.exe'
     # ⚠️ A START MENU ENTRY, since 2026-09-15 (previously 'None', "this is a
     # background stdio server that a human never launches"). That sentence was

@@ -69,8 +69,8 @@ echo "installer lock held: $token"
 # THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE FIRST
 # RUN -- Q287, the maintainer's words verbatim: "Q287 a". See
 # Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack
-# from the two publishes this run tests and touches nothing a release is made of.
-# Publish both slices before starting a gate: this reads them and does not make them.
+# from the publish this run tests (two until 2026-10-08) and touches nothing a release is made of.
+# Publish the slice before starting a gate (both slices until 2026-10-08): this reads it and does not make it.
 pack_log=".work/suite/$tag-testpack.log"
 if ! pwsh -NoProfile -File "$windows\\build\\New-Release.ps1" -TestPackOnly > "$pack_log" 2>&1; then
   tail -20 "$pack_log"

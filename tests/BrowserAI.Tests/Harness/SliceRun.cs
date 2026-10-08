@@ -140,7 +140,7 @@ internal sealed record SliceRun(
         // browser with it.
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 

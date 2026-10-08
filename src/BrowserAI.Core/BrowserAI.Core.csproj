@@ -25,6 +25,16 @@
     name of the data-root environment variable (Program aliases it), and
     Sessions.SessionLayout now owns the session file names (Storage.LockFile and
     Storage.SessionStore alias them). Nothing else changed shape.
+
+    CORRECTED 2026-10-08 (previously "THE HALF BOTH EXECUTABLES NEED" and "two
+    binaries from 2026-09-15" above, which stay as the record of why the cut was
+    made): D7 a, the maintainer's words verbatim: "d7 a". There is one
+    executable again, BrowserAI.exe, built from src/BrowserAI and linking both
+    this library and BrowserAI.App. The cut stays where it is because NativeAOT
+    compiles all three assemblies into that one file, so a merge would move every
+    file here and change nothing a person or a client can see; what no longer
+    holds is the size argument, since the proxy, the sessions and the storage are
+    in the same file as the tab.
   -->
 
   <PropertyGroup>
@@ -107,23 +117,26 @@
   <ItemGroup>
     <!-- The product's own bans, read by the same analyzer that reads the
          repository-wide file Directory.Build.props supplies. The stdout ban has
-         to reach this assembly too: it is linked into the server, whose stdout
-         is the JSON-RPC channel. -->
+         to reach this assembly too: it is linked into the one executable, whose
+         stdout is the JSON-RPC channel when a client starts it. -->
     <AdditionalFiles Include="..\BrowserAI\BannedSymbols.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <!--
-      Everything here is internal. The two executables and the suite see it
-      through these grants and not by promoting a hundred types to public:
-      the cut was made to stop duplication, not to publish an API, and a public
-      surface would owe XML documentation and semantic versioning to nobody.
+      Everything here is internal. The one executable, the library beside it
+      and the suite see it through these grants and not by promoting a hundred
+      types to public: the cut was made to stop duplication, not to publish an
+      API, and a public surface would owe XML documentation and semantic
+      versioning to nobody. Corrected 2026-10-08 (previously "The two
+      executables", with grants to BrowserAI.Server and to BrowserAI as the
+      configuration app's assembly name).
     -->
-    <InternalsVisibleTo Include="BrowserAI.Server" />
-    <!-- The configuration app's ASSEMBLY name, which is BrowserAI and not
-         BrowserAI.App: the project is named for what it is and the assembly for
-         what a person launches. An InternalsVisibleTo names the assembly. -->
+    <!-- The one executable's assembly, src/BrowserAI. -->
     <InternalsVisibleTo Include="BrowserAI" />
+    <!-- The person's start, the coordinator and the tab, a library since
+         2026-10-08. An InternalsVisibleTo names the assembly. -->
+    <InternalsVisibleTo Include="BrowserAI.App" />
     <InternalsVisibleTo Include="BrowserAI.Tests" />
     <InternalsVisibleTo Include="BrowserAI.TestProbe" />
   </ItemGroup>

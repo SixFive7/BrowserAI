@@ -8,10 +8,12 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Added 2026-09-15, because a name stopped being enough.</b> BrowserAI ships
-/// two executables from that day: <c>BrowserAI.exe</c>, a Windows-subsystem
-/// configuration app, and <c>BrowserAI.Server.exe</c>, the console-subsystem MCP
-/// server. They sit in the same directory, and the one that gets registered with
+/// <b>Added 2026-09-15, because a name stopped being enough.</b> BrowserAI shipped
+/// two executables from that day until 2026-10-08: <c>BrowserAI.exe</c>, a
+/// Windows-subsystem configuration app, and <c>BrowserAI.Server.exe</c>, the
+/// console-subsystem MCP server. Since 2026-10-08 (D7 a) it ships one,
+/// <c>BrowserAI.exe</c>, windowless, and registration checks that the file a
+/// client is given says so. They sit in the same directory, and the one that gets registered with
 /// a client is composed from the other one's path -- see
 /// <see cref="Registration.RegistrationTarget"/>. A composed path is a guess
 /// until something checks it, and the failure a check prevents here is specific:

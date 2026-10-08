@@ -60,8 +60,8 @@ echo "installer lock held: $token"
 # THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE FIRST
 # RUN -- Q287, the maintainer's words verbatim: "Q287 a". See
 # Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack
-# from the two publishes this run tests and touches nothing a release is made of.
-# Publish both slices before starting a gate: this reads them and does not make them.
+# from the publish this run tests (two until 2026-10-08) and touches nothing a release is made of.
+# Publish the slice before starting a gate (both slices until 2026-10-08): this reads it and does not make it.
 # FROM THE RELEASE PUBLISH, -FromReleasePublish -- Q305, 2026-09-25, the maintainer's
 # words: "Q305 a". See Invoke-ReleaseGate.ps1: a release gate packs the suite's
 # installer from artifacts/publish-release, the bytes the release ships.

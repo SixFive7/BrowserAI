@@ -25,6 +25,10 @@ const fs = require('fs');
 const path = require('path');
 
 const SERVER = process.env.Q261_SERVER;
+// The server's arguments, separated by spaces, added 2026-10-08: the one
+// BrowserAI.exe serves a client only under --mcp, and a start with no argument is
+// a person's. Unset, the server is started with none, as before that day.
+const SERVER_ARGS = (process.env.Q261_SERVER_ARGS || '').split(' ').filter(word => word.length > 0);
 const LOGDIR = process.env.Q261_LOGDIR || '.';
 const TAG = process.env.Q261_TAG || 'q261';
 // How many tools/call answers to forward before ending the server. 0 = never.
@@ -55,9 +59,9 @@ if (!SERVER) {
     process.exit(2);
 }
 
-const child = spawn(SERVER, [], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+const child = spawn(SERVER, SERVER_ARGS, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 
-note(`LAUNCH shim=${process.pid} server=${child.pid} exe=${SERVER} dieAfterCalls=${DIE_AFTER}`);
+note(`LAUNCH shim=${process.pid} server=${child.pid} exe=${SERVER} args=${SERVER_ARGS.join(' ')} dieAfterCalls=${DIE_AFTER}`);
 
 // The ids of tools/call requests seen on the way in, so an ANSWER can be
 // recognised by its id on the way back. Counting requests would end the server

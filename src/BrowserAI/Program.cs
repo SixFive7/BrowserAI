@@ -95,7 +95,10 @@ internal static partial class Program
     /// 2026-09-16 (previously <c>BrowserAI.exe --sweep</c>)</i> -- that name
     /// belongs to the configuration app since 2026-09-15, which does not take
     /// this argument and opens a window instead, so the procedure did not
-    /// produce a wrong number: it produced a dialog. That row is the
+    /// produce a wrong number: it produced a dialog. ⚠️ <i>And corrected again
+    /// 2026-10-08 by addition</i>: there is one executable, so the row's command is
+    /// <c>BrowserAI.exe --sweep</c> once more, and the argument is what makes it a
+    /// sweep (<see cref="ServesStdio"/>). That row is the
     /// only route to the <b>published AOT</b> column of
     /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) --
     /// the test probe is a framework-dependent Debug build and measures the
@@ -109,29 +112,98 @@ internal static partial class Program
     /// </remarks>
     public const string SweepArgument = "--sweep";
 
-    private static async Task<int> Main(string[] args)
-    {
-        // ⚠️ FIRST, BEFORE LOGGING AND BEFORE EVERYTHING ELSE. It carries
-        // SetAutoApplyOnStartup(false), whose default would make this process
-        // exit(0) at handshake time and relaunch detached with dead pipes.
-        //
-        // ⚠️ CORRECTED 2026-09-15 (previously "This call is also how the
-        // installer's own hooks are served -- `--veloapp-install` and friends,
-        // which are fast-exit callbacks with 15-60 s timeouts -- so anything
-        // placed above it runs inside every hook as well"). NOT ANY MORE, and
-        // not in this binary. Velopack invokes all four hooks on the main exe
-        // and on nothing else, and the main exe is the configuration app. This
-        // call registers no lifecycle callback at all, so a hook argument
-        // reaching this process by hand is served by nobody -- which is the
-        // point: registering a client's configuration from a process the
-        // installer did not start is not something this binary may do.
-        //
-        // Velopack's own records are buffered and not dropped: the log
-        // cannot exist yet, because WHERE it goes depends on the install root
-        // this call is what establishes. They are replayed below.
-        var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
-        VelopackStartup.RunWithoutLifecycleHooks(args ?? [], (level, message, failure) => velopack.Add((level, message, failure)));
+    /// <summary>
+    /// The argument a client's registration starts the one executable with: serve
+    /// this client over stdio.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>D7 a, the maintainer's words of 2026-10-08, verbatim: <i>"d7 a"</i>.</b>
+    /// There is one file, <c>BrowserAI.exe</c>, and a client is registered as
+    /// <c>current\BrowserAI.exe --mcp</c>. A start with no argument is a person's:
+    /// the Start Menu, <c>Setup.exe</c> after a non-silent install, a double-click.
+    /// </para>
+    /// <para>
+    /// <b>The argument says what was meant, and a pipe on standard input is
+    /// required as well.</b> Choosing by the pipe alone was rejected in the plan: a
+    /// hook whose standard input Velopack pipes, or a person piping into the binary,
+    /// would become a server. A start with the argument and no pipe writes one record
+    /// and exits (<see cref="StartupLog.NoPipeToServe"/>).
+    /// </para>
+    /// </remarks>
+    public const string McpArgument = "--mcp";
 
+    /// <summary>
+    /// The one entry point: the installer's hooks first, then the job the arguments
+    /// name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>One <c>Main</c> since 2026-10-08, D7 a</b> (previously two: this file's,
+    /// asynchronous and serving stdio, and the configuration app's, on a
+    /// single-threaded apartment). The app's apartment is kept, for the reason its
+    /// own remarks give: Explorer, which the tab opens on the coordinator's thread,
+    /// expects one. A mode that serves stdio blocks this thread on its asynchronous
+    /// work, and nothing that work owns needs the thread to pump.
+    /// </para>
+    /// <para>
+    /// <b>The hooks are served first, by Velopack's own <c>Run()</c></b>, which
+    /// exits the process when it serves one, so nothing below runs inside a hook.
+    /// It also carries <c>SetAutoApplyOnStartup(false)</c>, whose default would
+    /// make a server exit at handshake time and relaunch detached with dead pipes.
+    /// The two variables the installer and Velopack's restart set are read before
+    /// it, because <c>Run()</c> clears them, and cleared from this process after
+    /// it (<see cref="App.Program.ClearTheInstallersOwnVariables"/>).
+    /// </para>
+    /// </remarks>
+    /// <param name="args">The command line.</param>
+    /// <returns>The exit code of the job the arguments named.</returns>
+    [STAThread]
+    private static int Main(string[] args)
+    {
+        args ??= [];
+
+        var firstRun = VelopackStartup.StartedByTheInstaller();
+        var restarted = Environment.GetEnvironmentVariable(App.Program.RestartVariable) is { Length: > 0 };
+
+        // Velopack's own records are buffered and not dropped: the log cannot
+        // exist yet, because WHERE it goes depends on the install root this call
+        // is what establishes. Each mode replays them into its log.
+        var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
+        VelopackStartup.RunAndServeLifecycleHooks(args, (level, message, failure) => velopack.Add((level, message, failure)));
+
+        App.Program.ClearTheInstallersOwnVariables();
+
+        return ServesStdio(args)
+            ? ServeAsync(args, velopack).GetAwaiter().GetResult()
+            : App.Program.Run(args, firstRun, restarted, velopack);
+    }
+
+    /// <summary>Whether the arguments name a mode this file's server half runs.</summary>
+    /// <remarks>
+    /// <b>Three of them</b>: <see cref="McpArgument"/>, a client's; <see cref="HostArgument"/>,
+    /// the session host the coordinator starts; and <see cref="SweepArgument"/>, one
+    /// stray sweep for a kb re-verification row. Every other start, no argument
+    /// included, is the configuration app's: a person's start, the logon task's,
+    /// <c>--report</c>.
+    /// </remarks>
+    /// <param name="args">The command line.</param>
+    /// <returns>Whether the server half runs.</returns>
+    internal static bool ServesStdio(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        return args.Contains(McpArgument, StringComparer.Ordinal)
+            || args.Contains(SweepArgument, StringComparer.Ordinal)
+            || ValueOf([.. args], HostArgument) is { Length: > 0 };
+    }
+
+    /// <summary>The server half: a client's server, the session host, or one sweep.</summary>
+    /// <param name="args">The command line.</param>
+    /// <param name="velopack">What Velopack said before the log existed, to replay into it.</param>
+    /// <returns>The exit code.</returns>
+    private static async Task<int> ServeAsync(string[] args, List<(VelopackLogLevel Level, string Message, Exception? Failure)> velopack)
+    {
         // ⚠️ TWO SOURCES, NOT THREE -- 2026-09-15. The locator used to sit
         // between these two and it is gone: an installed BrowserAI no longer
         // takes its DATA root from VelopackLocator.Current.RootAppDir, because
@@ -264,19 +336,20 @@ internal static partial class Program
 
         using var client = ClientLivenessWatcher.ForParentProcess(stopping.Cancel, logger);
 
-        // ⚠️ NEITHER TEARDOWN MECHANISM CAN EVER FIRE, SO THERE IS NOBODY
-        // THERE -- 2026-09-14, measured. Both halves have to be true at once
-        // and each on its own is ordinary: a watch that could not attach is
-        // routine when a client starts BrowserAI through a wrapper, and a
-        // console stdin is routine when a developer runs this by hand from a
-        // terminal that is still sitting there. Together they are the shape
-        // the installer's own start produced -- the launcher pid already
-        // exited, and stdin bound to a console that will never EOF -- and what
-        // came of it was a server plus a node child alive until the machine was
-        // rebooted, serving nobody, with a terminal window on the desktop.
-        if (client is null && StandardInput.IsAConsole())
+        // ⚠️ A CLIENT'S START WITH NO PIPE ON STANDARD INPUT IS NOBODY TO SERVE --
+        // 2026-10-08, D7 a. Every client gives the process it starts a pipe, 54 of
+        // 54 runs measured on 2026-10-04, and a windowless start with no handles
+        // reads end of input at once. Corrected 2026-10-08 (previously "if (client
+        // is null && StandardInput.IsAConsole())", the conjunction measured on
+        // 2026-09-14 against the installer's own start: a launcher already gone
+        // and a console that never ends, which left a server and its node child
+        // serving nobody until the machine was rebooted). The installer never
+        // starts a server since 2026-09-15, and a pipe cannot be that console, so
+        // the narrower rule holds the old shape too; StartupLog[9] is retired with
+        // it. The sweep is a person's measurement from a terminal and is exempt.
+        if (args.Contains(McpArgument, StringComparer.Ordinal) && !StandardInput.IsAPipe())
         {
-            StartupLog.NoClientToServe(logger, ProcessLiveness.ParentProcessId());
+            StartupLog.NoPipeToServe(logger, ProcessLiveness.ParentProcessId());
             return 0;
         }
 
@@ -1023,24 +1096,23 @@ internal static partial class StartupLog
     public static partial void ChannelNotClosed(ILogger logger, Exception exception);
 
     /// <summary>
-    /// Neither teardown signal can ever arrive, so this process would serve
-    /// nobody for ever.
+    /// A client's start, <c>--mcp</c>, found no pipe on standard input, so there is
+    /// nobody to serve.
     /// </summary>
     /// <remarks>
-    /// <b>Warning, because one of the two halves is an anomaly wherever it
-    /// happens.</b> A launcher that is already gone is ordinary on its own -- a
-    /// wrapper exits and leaves the pipe -- and a console stdin is ordinary on its
-    /// own, when a person runs this by hand. Together they mean nothing can ever
-    /// end the conversation, which is the state measured on 2026-09-14: a server
-    /// and its node child alive until reboot.
+    /// <b>Warning: no client ever starts a server that way.</b> Every client gives
+    /// its server a pipe, 54 of 54 runs measured on 2026-10-04, so a start that
+    /// carries the argument and no pipe is a person or a script typing it, and the
+    /// record says what the argument needs. Added 2026-10-08 with the one
+    /// executable, in place of event 9, retired below.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="launcher">The pid the kernel recorded as this process's creator.</param>
     [LoggerMessage(
-        EventId = 9,
+        EventId = 14,
         Level = LogLevel.Warning,
-        Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console, not a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
-    public static partial void NoClientToServe(ILogger logger, int launcher);
+        Message = "BrowserAI was started with --mcp and standard input is not a pipe, so there is no client to serve and it exits (started by pid={Launcher}). A client that registers BrowserAI starts it with --mcp and gives it a pipe on standard input; a person starts it with no argument.")]
+    public static partial void NoPipeToServe(ILogger logger, int launcher);
 
     /// <summary>
     /// This install's updater is running, so this server refuses every tool call
@@ -1112,9 +1184,17 @@ internal static partial class StartupLog
     // old log, and a new event under the same id would answer that query about
     // something else. Nothing may take it.
     //
-    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
-    // machine-readable half of the paragraph above, beside it and not in place of
-    // it.
+    // ⚠️ EVENT ID 9 IS RETIRED -- 2026-10-08, D7 a. It was `NoClientToServe`,
+    // "BrowserAI has no client to serve and is exiting: the process that started
+    // it (pid=...) could not be opened or is gone, and standard input is a
+    // console, not a pipe", written when a launcher that had gone met a console
+    // standard input. The one executable serves a client only under --mcp with a
+    // pipe, and says so as event 14. Builds up to 1.1.0 write 9, so it stays
+    // taken.
     //
-    // RETIRED-EVENT-IDS: 8
+    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
+    // machine-readable half of the paragraphs above, beside them and not in place
+    // of them.
+    //
+    // RETIRED-EVENT-IDS: 8, 9
 }

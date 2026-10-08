@@ -97,9 +97,10 @@ internal sealed record RegistrationClient
     /// <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>, <c>%LOCALAPPDATA%</c> and
     /// <c>~</c> started nothing in 48 attempts (measured and read 2026-09-24,
     /// <c>docs/evidence/2026-09-24-codex-expansion</c>), so by Q294, the maintainer's
-    /// words verbatim <i>"Q294 b"</i>, a Codex project entry names
-    /// <c>BrowserAI.Server.exe</c> alone, found on the PATH the install puts its own
-    /// folder on (<see cref="UserPath"/>).
+    /// words verbatim <i>"Q294 b"</i>, a Codex project entry names the executable
+    /// alone, found on the PATH the install puts its own folder on
+    /// (<see cref="UserPath"/>): <c>BrowserAI.exe --mcp</c> since 2026-10-08, D7 a
+    /// (previously <c>BrowserAI.Server.exe</c>).
     /// </remarks>
     public required Func<string, string?, ProjectCommand> ProjectCommandFor { get; init; }
 
@@ -132,7 +133,7 @@ internal sealed record RegistrationClient
         ProjectFileName = ".mcp.json",
         ProjectCommandFor = ClaudeProjectCommandFor,
         ProjectNoteAfter = (_, _) => null,
-        ManualCommandFor = command => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\"",
+        ManualCommandFor = command => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {RegistrationTarget.McpArgument}",
     };
 
     /// <summary>Codex, added 2026-09-24.</summary>
@@ -147,9 +148,9 @@ internal sealed record RegistrationClient
         ProjectHint =
             "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
         ProjectFileName = Path.Combine(".codex", "config.toml"),
-        ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.ServerFileName, null),
+        ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.AppFileName, null),
         ProjectNoteAfter = CodexProjectNote,
-        ManualCommandFor = command => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\"",
+        ManualCommandFor = command => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\" {RegistrationTarget.McpArgument}",
     };
 
     /// <summary>Both clients, in the order a report lists them.</summary>
@@ -191,7 +192,7 @@ internal sealed record RegistrationClient
     /// </para>
     /// </remarks>
     public static string PortableCommandFor(string packId) =>
-        $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.ServerFileName}";
+        $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.AppFileName}";
 
     /// <summary>
     /// What a Claude Code project file is given: the portable spelling when it
@@ -219,7 +220,7 @@ internal sealed record RegistrationClient
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
             folder,
             RegistrationTarget.CurrentDirectoryName,
-            RegistrationTarget.ServerFileName);
+            RegistrationTarget.AppFileName);
 
         return string.Equals(Path.GetFullPath(expanded), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
             ? new ProjectCommand(PortableCommandFor(folder), null)
@@ -246,7 +247,7 @@ internal sealed record RegistrationClient
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(server);
 
-        const string How = "The entry names BrowserAI.Server.exe and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.";
+        const string How = "The entry names BrowserAI.exe with --mcp and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.";
 
         return found is null
             ? $"{How} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."

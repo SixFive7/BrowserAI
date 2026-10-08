@@ -126,8 +126,11 @@ internal sealed class RegisterAiTests
         await Assert.That(nothing.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
         await Assert.That(nothing.IsWhatWasAskedFor).IsTrue();
 
-        // Ours and stale: an older file under this root, repaired.
-        tool.Register("claude-code", Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        // Ours and stale: an older file under this root, repaired. Since 2026-10-08
+        // the older file is the retired server's, which is the entry every
+        // install written before that day carries (previously the configuration
+        // app's own file, which was another file until the two became one).
+        tool.Register("claude-code", Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.RetiredServerFileName));
 
         await Assert.That(McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Update, image, tool, logger).Status)
             .IsEqualTo(RegistrationStatus.Registered);
@@ -311,7 +314,8 @@ internal sealed class RegisterAiTests
         var call = tool.Calls.Single();
 
         await Assert.That(codex.Status).IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(RegistrationTarget.ServerFileName);
+        await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(RegistrationTarget.AppFileName);
+        await Assert.That(call[^1]).IsEqualTo(Program.McpArgument);
         await Assert.That(FakeRegisterAi.Option(call, "--path-folder")).IsEqualTo(Path.GetDirectoryName(server));
         await Assert.That(FakeRegisterAi.Option(call, "--project")).IsEqualTo(project.Path);
 

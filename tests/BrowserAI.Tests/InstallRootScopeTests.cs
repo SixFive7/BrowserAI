@@ -296,7 +296,7 @@ internal sealed class InstallRootScopeTests
         // then has to be this assertion and not the whole run.
         using var job = JobObject.CreateKillOnClose();
 
-        using var process = JobLauncher.Start(job, PublishedSlice.Executable, [], outside.Path, environment);
+        using var process = JobLauncher.Start(job, PublishedSlice.Executable, PublishedSlice.Mcp, outside.Path, environment);
 
         var exited = await process.WaitForExitAsync(TestDefaults.BrowserHang);
 

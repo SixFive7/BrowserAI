@@ -61,9 +61,11 @@ internal static class Program
                 SessionProbe.StraySweepPass(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),
             "session-rewrite" when args.Length is 5 =>
                 SessionProbe.Rewrite(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
-            // <executable> <reportPath>. Starts it suspended and exits; see
-            // LauncherProbe for why the order has to be a fact.
-            "launch-suspended" when args.Length is 3 => LauncherProbe.LaunchSuspended(args[1], args[2]),
+            // <executable> <reportPath> [arguments...]. Starts it suspended and
+            // exits; see LauncherProbe for why the order has to be a fact. The
+            // arguments arrived 2026-10-08 with the one executable, whose mode is
+            // its argument.
+            "launch-suspended" when args.Length >= 3 => LauncherProbe.LaunchSuspended(args[1], args[2], args[3..]),
             "client-parent" when args.Length is 5 =>
                 ClientProbe.Start(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
             "session-index" when args.Length is 6 =>

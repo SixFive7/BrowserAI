@@ -85,7 +85,7 @@ internal sealed class PageBrowserTests
         var first = rig.HandOut();
         var session = Path.Combine(scratch.Path, "page-session");
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [], scratch.Path, PublishedSlice.InheritedEnvironment());
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 

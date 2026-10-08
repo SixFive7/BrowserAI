@@ -97,12 +97,17 @@ internal sealed class InstallerHandoffTests
     [Test]
     public async Task TheInstallersVariablesAreClearedAfterVelopackReadsThemAndBeforeAnythingStarts()
     {
+        // ⚠️ THE ONE EXECUTABLE'S Main SINCE 2026-10-08, D7 a (previously the
+        // configuration app's own Main in src/BrowserAI.App/Program.cs, with the
+        // first launch read as its RegisterAI lookup). The hooks, the read and the
+        // clear happen once, before the arguments decide anything, and the first
+        // thing that can start a child is that decision.
         var source = await File.ReadAllTextAsync(
-            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Program.cs"));
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs"));
 
         var run = source.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
-        var clear = source.IndexOf("        ClearTheInstallersOwnVariables();", StringComparison.Ordinal);
-        var launch = source.IndexOf("RegisterAiTool.Beside(Environment.ProcessPath)", StringComparison.Ordinal);
+        var clear = source.IndexOf("        App.Program.ClearTheInstallersOwnVariables();", StringComparison.Ordinal);
+        var launch = source.IndexOf("return ServesStdio(args)", StringComparison.Ordinal);
 
         await Assert.That(run).IsGreaterThan(-1);
         await Assert.That(clear).IsGreaterThan(-1);
@@ -191,7 +196,7 @@ internal sealed class InstallerHandoffTests
         // BrowserAI, so an assertion that fails below leaves nothing running.
         using var job = JobObject.CreateKillOnClose();
 
-        using var process = JobLauncher.Start(job, PublishedSlice.Executable, [], root.Path, environment);
+        using var process = JobLauncher.Start(job, PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
 
         var logs = Path.Combine(root.Path, "logs");
 
@@ -239,10 +244,20 @@ internal sealed class InstallerHandoffTests
     private const string RetiredInstallerExitSentence = "started by the installer";
 
     /// <summary>
-    /// A launcher that is gone <b>and</b> a console stdin means nobody is there;
-    /// either one on its own is ordinary.
+    /// A client's start with no pipe on standard input is nobody to serve, and the
+    /// one executable exits saying so.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Rewritten 2026-10-08, D7 a</b> (previously
+    /// <c>AnUnwatchableLauncherAndAConsoleStdinAreTogetherTheOnlyNoClientCase</c>, whose
+    /// summary read "A launcher that is gone <b>and</b> a console stdin means nobody is
+    /// there; either one on its own is ordinary"). The one executable serves a client
+    /// only under <c>--mcp</c> with a pipe on standard input, and a console is not a
+    /// pipe, so the conjunction below became one condition. The paragraphs that follow
+    /// are the record of the conjunction. <b>Planted red 2026-10-08</b> against the tree
+    /// before the change, whose <c>Program.cs</c> asked the console question.
+    /// </para>
     /// <para>
     /// <b>The conjunction is the whole decision.</b> A watch that could not
     /// attach happens whenever a client starts BrowserAI through a wrapper -- that
@@ -261,24 +276,27 @@ internal sealed class InstallerHandoffTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnUnwatchableLauncherAndAConsoleStdinAreTogetherTheOnlyNoClientCase()
+    public async Task AClientsStartWithNoPipeOnStandardInputIsNobodyToServe()
     {
         var program = await RepositoryLayout.ReadCodeAsync(
             new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs")));
 
-        // One condition, both halves, in the order they are cheapest to answer.
-        await Assert.That(program).Contains("if (client is null && StandardInput.IsAConsole())");
+        // ⚠️ ONE CONDITION SINCE 2026-10-08, D7 a (previously "if (client is null
+        // && StandardInput.IsAConsole())", the conjunction of a launcher gone and a
+        // console). The one executable serves a client only under --mcp with a pipe
+        // on standard input, and a console is not a pipe, so the old shape is held
+        // by the narrower rule.
+        await Assert.That(program).Contains("if (args.Contains(McpArgument, StringComparer.Ordinal) && !StandardInput.IsAPipe())");
+        await Assert.That(program).DoesNotContain("StandardInput.IsAConsole()");
 
-        // It says why, and it exits cleanly instead of refusing to start: an
-        // installer reading a non-zero exit from a freshly installed binary
-        // would be reading a failure that did not happen.
-        var at = program.IndexOf("StandardInput.IsAConsole()", StringComparison.Ordinal);
+        // It says why, and it exits cleanly instead of refusing to start.
+        var at = program.IndexOf("!StandardInput.IsAPipe()", StringComparison.Ordinal);
 
         await Assert.That(at).IsGreaterThan(-1);
 
         var decision = program[at..Math.Min(program.Length, at + 400)];
 
-        await Assert.That(decision).Contains("StartupLog.NoClientToServe");
+        await Assert.That(decision).Contains("StartupLog.NoPipeToServe");
         await Assert.That(decision).Contains("return 0;");
 
         // And the watcher is what supplies `client`, so the condition cannot be
@@ -327,6 +345,13 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(StandardInput.IsAConsole()).IsEqualTo(first);
         await Assert.That(StandardInput.IsAConsole()).IsEqualTo(first);
+
+        // And the pipe question the one executable asks since 2026-10-08, which is
+        // a question about the same handle and must not consume it either.
+        var pipe = StandardInput.IsAPipe();
+
+        await Assert.That(StandardInput.IsAPipe()).IsEqualTo(pipe);
+        await Assert.That(StandardInput.IsAPipe()).IsEqualTo(pipe);
     }
 
     /// <summary>
@@ -394,7 +419,10 @@ internal sealed class InstallerHandoffTests
         // named failure in a second and not a ten-minute one that says only
         // that a sentence never arrived. The retired installer exit is one of
         // them, so a build that still carried it is named and not waited out.
-        const string Decision = "no client to serve and is exiting";
+        // ⚠️ Startup[14] since 2026-10-08 (previously Startup[9], "no client to
+        // serve and is exiting"): the rig starts the one executable with --mcp,
+        // and a console is not a pipe.
+        const string Decision = "standard input is not a pipe, so there is no client to serve";
 
         await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, Decision, RetiredInstallerExitSentence, "Watching the MCP client"))
             .IsEqualTo(Decision)
@@ -462,7 +490,7 @@ internal sealed class InstallerHandoffTests
 
         // And the decision that follows from it, which is the one the installer
         // incident was about.
-        await Assert.That(run.WaitUntilItSays("no client to serve and is exiting", TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(run.WaitUntilItSays("standard input is not a pipe, so there is no client to serve", TestDefaults.ProcessHang)).IsTrue();
         await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
     }
 
@@ -511,9 +539,9 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.WaitUntilItSaysOneOf(
             TestDefaults.ProcessHang,
-            "no client to serve and is exiting",
+            "standard input is not a pipe, so there is no client to serve",
             "Watching the MCP client"))
-            .IsEqualTo("no client to serve and is exiting");
+            .IsEqualTo("standard input is not a pipe, so there is no client to serve");
 
         var said = run.Records();
 

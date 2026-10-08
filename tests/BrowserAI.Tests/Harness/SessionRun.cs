@@ -103,7 +103,7 @@ internal sealed record SessionRun
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             root,
             PublishedSlice.InheritedEnvironment());
 
@@ -440,7 +440,7 @@ internal sealed record SessionRun
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             root,
             PublishedSlice.InheritedEnvironment());
 

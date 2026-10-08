@@ -45,12 +45,26 @@ internal static partial class LauncherProbe
     /// </summary>
     /// <param name="executable">The program's absolute path.</param>
     /// <param name="reportPath">Where the pid and the main thread's id go.</param>
+    /// <param name="arguments">
+    /// What the program is started with after its own name: the one executable's
+    /// mode since 2026-10-08. Each is one word with no space, tab or quote in it,
+    /// and is refused otherwise, so nothing here has to quote one.
+    /// </param>
     /// <returns>Zero when the program was created; one with the error in the report otherwise.</returns>
-    public static int LaunchSuspended(string executable, string reportPath)
+    public static int LaunchSuspended(string executable, string reportPath, string[] arguments)
     {
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        if (Array.Exists(arguments, argument => argument.Length is 0 || argument.AsSpan().IndexOfAny(" \t\"") >= 0))
+        {
+            File.WriteAllText(reportPath, "error an argument is empty or carries a space, a tab or a quote");
+            return 1;
+        }
+
         // CreateProcessW writes into the command line, so it is a buffer of its
         // own and never a string.
-        Span<char> commandLine = [.. "\"" + executable + "\"", '\0'];
+        var spelled = "\"" + executable + "\"" + string.Concat(arguments.Select(argument => " " + argument));
+        Span<char> commandLine = [.. spelled, '\0'];
         var startup = new StartupInfo { Cb = Marshal.SizeOf<StartupInfo>() };
 
         if (!CreateProcessW(

@@ -124,7 +124,7 @@ internal sealed class FirefoxSessionTests
         // it. Nothing in this file terminates anything by name.
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 

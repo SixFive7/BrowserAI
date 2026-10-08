@@ -159,7 +159,7 @@ internal sealed class FirstRunProvisioningTests
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            [],
+            PublishedSlice.Mcp,
             scratch.Path,
             environment);
 

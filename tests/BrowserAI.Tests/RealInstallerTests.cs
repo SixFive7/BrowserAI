@@ -304,9 +304,10 @@ internal sealed partial class RealInstallerTests
     /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
     /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
     /// screen while two windows were on it. What carries that guarantee is
-    /// <c>AppBinaryTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>
-    /// (<c>TaskDialogLayoutTests</c> until 2026-10-03), which reads the subsystem
-    /// out of the binary -- the cause and not the symptom.
+    /// <c>AppBinaryTests.TheOneExecutableIsAWindowsSubsystemBinary</c>
+    /// (<c>TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c> until 2026-10-08, and
+    /// <c>TaskDialogLayoutTests</c> until 2026-10-03), which reads the subsystem out
+    /// of the binary -- the cause and not the symptom.
     /// </para>
     /// <para>
     /// ⚠️ <b>The app runs on a desktop nobody is looking at, since 2026-09-24 --
@@ -748,8 +749,8 @@ internal sealed partial class RealInstallerTests
         {
             await Assert.That(await RunAsync(setup, ["--silent", "--log", Path.Combine(logs.Path, "setup.log"), "--installto", installRoot.Path])).IsEqualTo(0);
 
-            var installed = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
-            var copy = Path.Combine(outside.Path, RegistrationTarget.ServerFileName);
+            var installed = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+            var copy = Path.Combine(outside.Path, RegistrationTarget.AppFileName);
 
             await Assert.That(File.Exists(installed)).IsTrue();
 
@@ -793,8 +794,14 @@ internal sealed partial class RealInstallerTests
         await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
     }
 
-    /// <summary>What the general exit, <c>Startup[9]</c>, says.</summary>
-    private const string GeneralExitSentence = "no client to serve and is exiting";
+    /// <summary>What the general exit says: <c>Startup[14]</c> since 2026-10-08.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously <c>Startup[9]</c>, "no client to serve and
+    /// is exiting", a launcher gone and a console standard input), D7 a: the one
+    /// executable serves a client only under <c>--mcp</c> with a pipe on standard
+    /// input, the rig starts it with <c>--mcp</c>, and a console is not a pipe.</i>
+    /// </remarks>
+    private const string GeneralExitSentence = "standard input is not a pipe, so there is no client to serve";
 
     /// <summary>
     /// What the installer exit, <c>Startup[8]</c>, said while a build carried it.
@@ -827,8 +834,7 @@ internal sealed partial class RealInstallerTests
     /// <returns><see langword="true"/> when it does.</returns>
     private static bool IsACompleteInstall(string root) =>
         File.Exists(Path.Combine(root, "Update.exe"))
-        && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName))
-        && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName));
+        && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
 
     /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
     /// <param name="setup">The test-id installer.</param>
@@ -872,16 +878,20 @@ internal sealed partial class RealInstallerTests
         // app's directory and refused if it is not there -- so an install with
         // one of the two would register nothing and say so, which is a failure
         // this arm would otherwise have watched happen and called a pass.
-        foreach (var executable in new[] { RegistrationTarget.AppFileName, RegistrationTarget.ServerFileName })
-        {
-            await Assert.That(File.Exists(
-                Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, executable))).IsTrue();
-        }
+        //
+        // ⚠️ Narrowed 2026-10-08, D7 a (previously both binaries): there is one
+        // file, the one a hook runs as and a client is given, and the retired
+        // server's name must not come back with an install.
+        await Assert.That(File.Exists(
+            Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName))).IsTrue();
+        await Assert.That(File.Exists(
+            Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.RetiredServerFileName))).IsFalse();
 
-        // And the registration the hook wrote names the SERVER.
+        // And the registration the hook wrote names the one executable.
         var written = await File.ReadAllTextAsync(RegistrationRecord.PathFor(dataRoot.Path));
 
-        await Assert.That(written).Contains(RegistrationTarget.ServerFileName);
+        await Assert.That(written).Contains(RegistrationTarget.AppFileName);
+        await Assert.That(written).DoesNotContain(RegistrationTarget.RetiredServerFileName);
 
         // ⚠️ AND THE SHAPE OF THE RECORD, SINCE Q287 a -- 2026-09-24. *Previously
         // "AND NOT WHAT SHAPE THE RECORD IS IN, WHICH IS A LIMIT OF THIS ARM": the
@@ -905,7 +915,7 @@ internal sealed partial class RealInstallerTests
             await Assert.That(string.Join(",", clients.Select(client => client.GetProperty("key").GetString())))
                 .IsEqualTo(string.Join(",", RegistrationClient.All.Select(client => client.Key)));
 
-            var server = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
+            var server = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
 
             foreach (var client in clients)
             {
@@ -1274,25 +1284,25 @@ internal sealed partial class RealInstallerTests
     {
         using var scratch = ScratchDirectory.Create("test-pack-bytes");
 
-        var server = Path.Combine(scratch.Path, "server.bin");
+        // One executable since 2026-10-08, D7 a (previously the server and the app,
+        // each compared on its own).
         var app = Path.Combine(scratch.Path, "app.bin");
 
-        await File.WriteAllTextAsync(server, "the server's bytes");
-        await File.WriteAllTextAsync(app, "the app's bytes");
+        await File.WriteAllTextAsync(app, "the one executable's bytes");
 
-        (string Entry, string Published)[] binaries = [("lib/app/BrowserAI.Server.exe", server), ("lib/app/BrowserAI.exe", app)];
+        (string Entry, string Published)[] binaries = [("lib/app/BrowserAI.exe", app)];
 
         var same = Path.Combine(scratch.Path, "same.nupkg");
         var other = Path.Combine(scratch.Path, "other.nupkg");
         var missing = Path.Combine(scratch.Path, "missing.nupkg");
 
-        await PackageAsync(same, ("lib/app/BrowserAI.Server.exe", "the server's bytes"), ("lib/app/BrowserAI.exe", "the app's bytes"));
-        await PackageAsync(other, ("lib/app/BrowserAI.Server.exe", "the server's bytes, one release ago"), ("lib/app/BrowserAI.exe", "the app's bytes"));
-        await PackageAsync(missing, ("lib/app/BrowserAI.exe", "the app's bytes"));
+        await PackageAsync(same, ("lib/app/BrowserAI.exe", "the one executable's bytes"));
+        await PackageAsync(other, ("lib/app/BrowserAI.exe", "the one executable's bytes, one release ago"));
+        await PackageAsync(missing, ("lib/app/payload/payload.json", "a package with no executable"));
 
         await Assert.That(ReleaseLayout.MismatchBetween(same, binaries)).IsNull();
-        await Assert.That(ReleaseLayout.MismatchBetween(other, binaries)).Contains("BrowserAI.Server.exe");
-        await Assert.That(ReleaseLayout.MismatchBetween(missing, binaries)).Contains("carries no lib/app/BrowserAI.Server.exe");
+        await Assert.That(ReleaseLayout.MismatchBetween(other, binaries)).Contains("BrowserAI.exe");
+        await Assert.That(ReleaseLayout.MismatchBetween(missing, binaries)).Contains("carries no lib/app/BrowserAI.exe");
 
         // ---- The live half: this run's installer is this run's build.
         _ = SuiteEnvironment.RequireReleaseInstaller();
@@ -1360,17 +1370,16 @@ internal sealed partial class RealInstallerTests
         }
 
         await Assert.That(text).Contains($"<mainExe>{RegistrationTarget.AppFileName}</mainExe>");
-        await Assert.That(text).DoesNotContain($"<mainExe>{RegistrationTarget.ServerFileName}</mainExe>");
+        await Assert.That(text).DoesNotContain($"<mainExe>{RegistrationTarget.RetiredServerFileName}</mainExe>");
         await Assert.That(text).Contains("<shortcutLocations>StartMenuRoot</shortcutLocations>");
 
-        // Both binaries, at the root of the application directory. The stub is
-        // a third file and is Velopack's, not ours.
+        // The one executable, at the root of the application directory, and not
+        // the retired server beside it (D7 a, 2026-10-08; previously both
+        // binaries). The stub is another file and is Velopack's, not ours.
         var app = archive.Entries.Select(entry => entry.FullName).ToList();
 
-        foreach (var executable in new[] { RegistrationTarget.AppFileName, RegistrationTarget.ServerFileName })
-        {
-            await Assert.That(app).Contains($"lib/app/{executable}");
-        }
+        await Assert.That(app).Contains($"lib/app/{RegistrationTarget.AppFileName}");
+        await Assert.That(app).DoesNotContain($"lib/app/{RegistrationTarget.RetiredServerFileName}");
 
         // And the payload the server needs is in there with them, which is what
         // makes the package an install and not two executables.

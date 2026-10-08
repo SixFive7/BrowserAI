@@ -219,7 +219,7 @@ internal static class McpRegistrar
             var command = target!.Command;
             var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
             var run = tool.Run(
-                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command),
+                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, target.Arguments),
                 ToolBudget);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
@@ -300,7 +300,7 @@ internal static class McpRegistrar
             var pathFolder = register && IsBareName(command) ? Path.GetDirectoryName(target!.Command) : null;
 
             var run = tool.Run(
-                Arguments(verb, [who], "project", project, target!.InstallRoot, replace: false, pathFolder, command),
+                Arguments(verb, [who], "project", project, target!.InstallRoot, replace: false, pathFolder, command, target.Arguments),
                 ToolBudget);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
@@ -335,6 +335,10 @@ internal static class McpRegistrar
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
     /// <param name="pathFolder">The folder a bare command is found in, or null.</param>
     /// <param name="command">The server's command, or null.</param>
+    /// <param name="commandArguments">
+    /// What the command is started with, after it: <see cref="RegistrationTarget.Arguments"/>
+    /// when registering, since 2026-10-08 (D7 a, <c>--mcp</c>), and nothing for a read.
+    /// </param>
     /// <returns>The arguments, one element each.</returns>
     internal static List<string> Arguments(
         string verb,
@@ -344,7 +348,8 @@ internal static class McpRegistrar
         string? ownedRoot,
         bool replace,
         string? pathFolder,
-        string? command)
+        string? command,
+        IReadOnlyList<string>? commandArguments = null)
     {
         ArgumentNullException.ThrowIfNull(clients);
 
@@ -388,7 +393,7 @@ internal static class McpRegistrar
 
         if (command is { Length: > 0 })
         {
-            arguments.AddRange(["--", command]);
+            arguments.AddRange(["--", command, .. commandArguments ?? []]);
         }
 
         return arguments;

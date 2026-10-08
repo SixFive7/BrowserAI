@@ -248,7 +248,8 @@ internal static class HookRegistration
                 WriteRecord(paths.RootAppDir, passes, intent, version, logger);
 
                 // ⚠️ THE INSTALL'S FOLDER ON THE USER'S PATH -- Q294 b, 2026-09-24. A
-                // Codex project entry names `BrowserAI.Server.exe` alone, because
+                // Codex project entry names `BrowserAI.exe --mcp` alone (since
+                // 2026-10-08, previously `BrowserAI.Server.exe`), because
                 // Codex expands no variable in a command, and Codex finds it through
                 // the PATH it hands the server. The install and update hooks put this
                 // install's own `current\` there and the uninstall hook takes exactly

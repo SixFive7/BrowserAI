@@ -64,6 +64,19 @@ namespace BrowserAI.Registration;
 /// field the linker writes and the loader obeys, and it is the one property a
 /// rename cannot forge.
 /// </para>
+/// <para>
+/// ⚠️ <b>ONE FILE AGAIN SINCE 2026-10-08, D7 a, the maintainer's words verbatim:
+/// <i>"d7 a"</i></b> (previously the composed sibling was
+/// <c>current\BrowserAI.Server.exe</c> and had to declare the CONSOLE subsystem).
+/// A client is registered as <c>current\BrowserAI.exe --mcp</c>, the file every
+/// hook runs as, and the check turned round: it must declare the WINDOWS
+/// subsystem, because the one executable is windowless by construction and a
+/// console file at that name, an old build or a mispacked one, would be given a
+/// console window by every windowless client that starts it. The two checks stay
+/// two -- the file exists, and its header says what it is -- because the image
+/// asking is not always the file registered: the suite asks about installs it
+/// composes.
+/// </para>
 /// </remarks>
 internal sealed record RegistrationTarget
 {
@@ -74,28 +87,47 @@ internal sealed record RegistrationTarget
     public const string CurrentDirectoryName = "current";
 
     /// <summary>
-    /// The Velopack main executable: the configuration app, which is what the
-    /// Start Menu points at and what every hook runs as.
+    /// The one executable: the Velopack main executable, what the Start Menu
+    /// points at, what every hook runs as, and what a client is given.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously "The Velopack main executable: the
+    /// configuration app, which is what the Start Menu points at and what every
+    /// hook runs as"), D7 a.</i>
+    /// </remarks>
     public const string AppFileName = "BrowserAI.exe";
 
     /// <summary>
-    /// The MCP server, which is what a client is actually given.
+    /// The MCP server's file from 2026-09-15 to 2026-10-08, which no build ships
+    /// any more.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>It was <see cref="AppFileName"/> until 2026-09-15.</b> The names
-    /// swapped when the product became two binaries: the configuration app took
-    /// <c>BrowserAI.exe</c> because Velopack derives the root stub, the Start
-    /// Menu entry, the icon and all four hook invocations from
-    /// <c>--mainExe</c> and from nothing else, and the server took a name of its
-    /// own. Every registration written before that day names the old path, which
-    /// is why the update hook repairs an entry of ours that points at a file
-    /// that is no longer there.
+    /// ⚠️ <b>Kept because registrations still name it.</b> Every user-scope entry
+    /// written in that time names <c>current\BrowserAI.Server.exe</c>; the update
+    /// hook registers <c>current\BrowserAI.exe --mcp</c>, and RegisterAI replaces an
+    /// entry of ours that names a different file (its README, <i>register</i>), so
+    /// the user-scope entries move on the first update. A project file that names
+    /// it breaks once, which D7 a accepted. <i>Previously <c>ServerFileName</c>, the
+    /// file a client was given.</i>
     /// </remarks>
-    public const string ServerFileName = "BrowserAI.Server.exe";
+    public const string RetiredServerFileName = "BrowserAI.Server.exe";
+
+    /// <summary>The argument that makes the one executable serve a client over stdio.</summary>
+    /// <remarks>
+    /// <b>The registration carries it</b>: RegisterAI passes everything after
+    /// <c>--</c> to the client unchanged (its README), and a start with no argument
+    /// is a person's.
+    /// </remarks>
+    public const string McpArgument = "--mcp";
 
     /// <summary>The executable a client is given, absolute.</summary>
     public required string Command { get; init; }
+
+    /// <summary>What a client passes the executable: <see cref="McpArgument"/>, and nothing else today.</summary>
+    public IReadOnlyList<string> Arguments { get; init; } = [McpArgument];
+
+    /// <summary>The command and its arguments, one element each, the way a registration writes them.</summary>
+    public IReadOnlyList<string> CommandLine => [Command, .. Arguments];
 
     /// <summary>
     /// The install root -- the directory <b>containing</b> <c>current\</c>.
@@ -168,23 +200,23 @@ internal sealed record RegistrationTarget
             return false;
         }
 
-        // ⚠️ THE SIBLING, COMPOSED AND THEN CHECKED. Everything above this line
-        // is about the path of the process that is ASKING; everything below is
-        // about the file a client would be handed, which is a different file
-        // from this day on.
-        var server = Path.Combine(directory, ServerFileName);
+        // ⚠️ THE FILE, COMPOSED AND THEN CHECKED. Everything above this line is
+        // about the path of the process that is ASKING; everything below is about
+        // the file a client would be handed. Since 2026-10-08 the two are one file
+        // in an install, and a caller may still ask about a layout it composed.
+        var server = Path.Combine(directory, AppFileName);
 
         if (!File.Exists(server))
         {
-            refusal = $"'{server}' is not there. BrowserAI registers its MCP server, '{ServerFileName}', which ships beside the configuration app that runs the installer's hooks -- and this install has the app without the server. Nothing is registered: a client pointed at a file that does not exist reports a server that will not start, with nothing to say which file was missing. Reinstall BrowserAI, or run the installer again over this root.";
+            refusal = $"'{server}' is not there. BrowserAI registers '{AppFileName} {McpArgument}' from the folder its hooks run in, and this install has no such file. Nothing is registered: a client pointed at a file that does not exist reports a server that will not start, with nothing to say which file was missing. Reinstall BrowserAI, or run the installer again over this root.";
             return false;
         }
 
         var subsystem = Runtime.PeSubsystem.Of(server);
 
-        if (subsystem is not Runtime.PeSubsystem.WindowsCui)
+        if (subsystem is not Runtime.PeSubsystem.WindowsGui)
         {
-            refusal = $"'{server}' is {Runtime.PeSubsystem.Describe(subsystem)}, and BrowserAI's MCP server is a console-subsystem binary because a client speaks to it over stdio. A file of this kind at that name is either a mispacked release or somebody's copy of '{AppFileName}' wearing the server's name -- and registering it would put a window on the screen at every session start while the client waited forever for a handshake. Nothing is registered.";
+            refusal = $"'{server}' is {Runtime.PeSubsystem.Describe(subsystem)}, and BrowserAI is one Windows-subsystem file, so that no starter, a client included, ever gives it a console window. A file of another kind at that name is a mispacked release or an older build, and registering it would put a console window on the screen at every session start. Nothing is registered.";
             return false;
         }
 

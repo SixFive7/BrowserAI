@@ -129,10 +129,11 @@ internal sealed record UserPathReport(UserPathChange Change, string Entry, strin
 /// ⚠️ <b>Q294, decided 2026-09-24 by the maintainer, verbatim: <i>"Q294 b"</i>.</b>
 /// Codex expands no variable in a server's command -- measured 0 of 48, and read in
 /// its source -- so a committed project entry cannot name this install portably the
-/// way Claude Code's <c>${LOCALAPPDATA}</c> spelling does. It names
-/// <c>BrowserAI.Server.exe</c> alone, and Codex finds that through the PATH it hands
-/// the server, which it takes from its own environment. So the install puts its
-/// folder there.
+/// way Claude Code's <c>${LOCALAPPDATA}</c> spelling does. It names the executable
+/// alone, <c>BrowserAI.exe --mcp</c> since 2026-10-08 (previously
+/// <c>BrowserAI.Server.exe</c>), and Codex finds that through the PATH it hands the
+/// server, which it takes from its own environment. So the install puts its folder
+/// there.
 /// </para>
 /// <para>
 /// <b>Each install root adds and removes only its own entry</b>, spelled as the
@@ -198,7 +199,7 @@ internal static class UserPath
                 : value with { Text = value.Text + Separator + entry });
             store.Announce();
 
-            return new UserPathReport(UserPathChange.Added, entry, $"Put '{entry}' on the PATH at {store.Where}, so a program started from now on finds BrowserAI.Server.exe by name.");
+            return new UserPathReport(UserPathChange.Added, entry, $"Put '{entry}' on the PATH at {store.Where}, so a program started from now on finds BrowserAI.exe by name.");
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {

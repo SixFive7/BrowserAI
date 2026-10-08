@@ -131,6 +131,7 @@ internal sealed class ClientReconnectTests
                     ["env"] = new JsonObject
                     {
                         ["Q261_SERVER"] = PublishedSlice.Executable,
+                        ["Q261_SERVER_ARGS"] = Program.McpArgument,
                         ["Q261_LOGDIR"] = work.FullName,
                         ["Q261_TAG"] = run,
                         ["Q261_DIE_AFTER_CALLS"] = "1",
@@ -276,6 +277,7 @@ internal sealed class ClientReconnectTests
             $"args = [{Quote(Path.Combine(Rig, "shim.js"))}]",
             "env = { "
                 + $"Q261_SERVER = {Quote(PublishedSlice.Executable)}, "
+                + $"Q261_SERVER_ARGS = {Quote(Program.McpArgument)}, "
                 + $"Q261_LOGDIR = {Quote(work.FullName)}, "
                 + $"Q261_TAG = {Quote(run)}, "
                 + "Q261_DIE_AFTER_CALLS = \"0\", "
@@ -413,7 +415,7 @@ internal sealed class ClientReconnectTests
 
         // ---- Registered the product's way --------------------------------------
         var image = Path.Combine(current, RegistrationTarget.AppFileName);
-        var server = Path.Combine(current, RegistrationTarget.ServerFileName);
+        var server = Path.Combine(current, RegistrationTarget.AppFileName);
         var tool = new RegisterAiTool(
             RegisterAiTool.Beside(image).Executable,
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -444,7 +446,7 @@ internal sealed class ClientReconnectTests
         var sandboxed = tool.Run(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
-                "--owned-root", install, "--replace", "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server,
+                "--owned-root", install, "--replace", "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server, RegistrationTarget.McpArgument,
             ],
             McpRegistrar.ToolBudget);
 

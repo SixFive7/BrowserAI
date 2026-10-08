@@ -121,88 +121,105 @@ internal sealed class RegistrationTests
     }
 
     /// <summary>
-    /// The sibling server is what a client is given, and the app that composed
-    /// it is not.
+    /// The one executable is what a client is given, with <c>--mcp</c>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>The guarantee this replaces was stronger and is gone, 2026-09-15
-    /// (previously: "BrowserAI registers the executable it is itself running
-    /// from ... the registered path and the running binary cannot disagree: they
-    /// are the same string").</b> The hooks run on the Velopack main exe, and
-    /// from this day the main exe is the configuration app. So the path handed
-    /// to a client is <b>composed</b> -- the running image's directory plus the
-    /// server's file name -- and a composed path is a guess until something
-    /// checks it.
+    /// ⚠️ <b>Rewritten 2026-10-08, D7 a, the maintainer's words verbatim:
+    /// <i>"d7 a"</i></b> (previously
+    /// <c>TheSiblingServerIsRegisteredRatherThanTheAppThatComposedIt</c>, which held
+    /// that the composed sibling <c>BrowserAI.Server.exe</c> was registered and not
+    /// the app that composed it). There is one file, so the path a hook runs as and
+    /// the path a client is given are one string again, and what tells a client's
+    /// start from a person's is the argument the registration carries.
     /// </para>
     /// <para>
-    /// <b>What replaces it is two checks and a refusal</b>: the file must be
-    /// there, and it must declare the console subsystem. Registering the app
-    /// under the server's name would put a window on the screen every time a
-    /// client opened a session, and the client would then wait forever for a
-    /// handshake from a process that is showing a dialog.
+    /// <b>Planted red 2026-10-08</b> against the tree before the change, where the
+    /// registered command was the sibling server and carried no argument.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheSiblingServerIsRegisteredRatherThanTheAppThatComposedIt()
+    public async Task TheOneExecutableIsRegisteredWithTheMcpArgument()
     {
-        using var install = ScratchDirectory.Create("registration-sibling");
+        using var install = ScratchDirectory.Create("registration-one-file");
 
         var app = InstalledLayout.Create(install.Path);
 
         await Assert.That(RegistrationTarget.TryResolve(app, out var target, out var refusal)).IsTrue();
         await Assert.That(refusal).IsEmpty();
-        await Assert.That(target!.Command).IsEqualTo(InstalledLayout.ServerIn(install.Path));
-        await Assert.That(target.Command).IsNotEqualTo(app);
+        await Assert.That(target!.Command).IsEqualTo(app);
+        await Assert.That(target.CommandLine).IsEquivalentTo([app, Program.McpArgument]);
         await Assert.That(target.InstallRoot).IsEqualTo(install.Path);
+
+        // What RegisterAI is handed: the command and the argument after "--", one
+        // element each, so the client receives them unchanged.
+        var arguments = McpRegistrar.Arguments(
+            "register", RegistrationClient.All, "user", project: null, install.Path, replace: false, pathFolder: null, target.Command, target.Arguments);
+
+        await Assert.That(arguments.Skip(arguments.IndexOf("--") + 1)).IsEquivalentTo([app, Program.McpArgument]);
     }
 
     /// <summary>
-    /// A <c>current\</c> with no server in it registers nothing and says which
-    /// file it went looking for.
+    /// A <c>current\</c> with no <c>BrowserAI.exe</c> in it registers nothing and
+    /// says which file it went looking for.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously
+    /// <c>AnInstallWithNoServerBesideTheAppIsRefusedByName</c>, a <c>current\</c>
+    /// holding the app and no server): with one file, the composed file is missing
+    /// only when the image asking is a renamed copy.</i>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnInstallWithNoServerBesideTheAppIsRefusedByName()
+    public async Task AFolderWithoutTheOneExecutableIsRefusedByName()
     {
         using var install = ScratchDirectory.Create("registration-no-server");
 
-        var app = InstalledLayout.CreateWithoutTheServer(install.Path);
+        var renamed = InstalledLayout.CreateUnderAnotherName(install.Path);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out var refusal)).IsFalse();
+        await Assert.That(RegistrationTarget.TryResolve(renamed, out var target, out var refusal)).IsFalse();
         await Assert.That(target).IsNull();
-        await Assert.That(refusal).Contains(RegistrationTarget.ServerFileName);
+        await Assert.That(refusal).Contains(RegistrationTarget.AppFileName);
         await Assert.That(refusal).Contains(InstalledLayout.ServerIn(install.Path));
     }
 
     /// <summary>
-    /// A file wearing the server's name that is not a console binary is refused,
-    /// and so is one that is not an executable at all.
+    /// A file at the one executable's name that is not windowless is refused, and
+    /// so is one that is not an executable at all.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The name is not the check and cannot be.</b> Both arms here put a file
     /// at exactly the path the composition produces; what separates them from
     /// the passing case is a field the linker writes, which is why
     /// <see cref="PeSubsystem"/> reads it instead of trusting the extension.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Turned round 2026-10-08, D7 a</b> (previously
+    /// <c>AFileAtTheServersNameThatIsNotAConsoleBinaryIsRefused</c>, which refused a
+    /// Windows-subsystem file at the server's name): the one executable is
+    /// windowless, so a console file at its name, an older server or a mispacked
+    /// release, is the one refused. <b>Planted red 2026-10-08</b> against the tree
+    /// before the change, which accepted the console file.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AFileAtTheServersNameThatIsNotAConsoleBinaryIsRefused()
+    public async Task AFileAtTheOneExecutablesNameThatIsNotWindowlessIsRefused()
     {
         using var install = ScratchDirectory.Create("registration-wrong-subsystem");
 
-        var app = InstalledLayout.CreateWithoutTheServer(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
+        var app = InstalledLayout.Create(install.Path);
 
-        // A second copy of the configuration app, renamed.
-        InstalledLayout.WritePortableExecutable(server, PeSubsystem.WindowsGui);
+        // A console binary wearing the one executable's name.
+        InstalledLayout.WritePortableExecutable(app, PeSubsystem.WindowsCui);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var windows, out var windowsRefusal)).IsFalse();
-        await Assert.That(windows).IsNull();
-        await Assert.That(windowsRefusal).Contains("Windows-subsystem");
+        await Assert.That(RegistrationTarget.TryResolve(app, out var console, out var consoleRefusal)).IsFalse();
+        await Assert.That(console).IsNull();
+        await Assert.That(consoleRefusal).Contains("Windows-subsystem");
 
-        InstalledLayout.WriteSomethingThatIsNotAnExecutable(server);
+        InstalledLayout.WriteSomethingThatIsNotAnExecutable(app);
 
         await Assert.That(RegistrationTarget.TryResolve(app, out var garbage, out var garbageRefusal)).IsFalse();
         await Assert.That(garbage).IsNull();
@@ -226,8 +243,6 @@ internal sealed class RegistrationTests
 
         InstalledLayout.WritePortableExecutable(
             Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), PeSubsystem.WindowsGui);
-        InstalledLayout.WritePortableExecutable(
-            Path.Combine(shoutingCurrent.FullName, RegistrationTarget.ServerFileName), PeSubsystem.WindowsCui);
 
         await Assert.That(RegistrationTarget.TryResolve(
             Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), out var shouting, out _)).IsTrue();
@@ -256,14 +271,14 @@ internal sealed class RegistrationTests
         var portable = RegistrationClient.PortableCommandFor(PackId);
 
         await Assert.That(portable).StartsWith("${LOCALAPPDATA}/");
-        await Assert.That(portable).EndsWith(RegistrationTarget.ServerFileName);
+        await Assert.That(portable).EndsWith(RegistrationTarget.AppFileName);
         await Assert.That(portable).DoesNotContain(BackslashText);
 
         var expected = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
             PackId,
             RegistrationTarget.CurrentDirectoryName,
-            RegistrationTarget.ServerFileName);
+            RegistrationTarget.AppFileName);
 
         // Claude Code's project file gets the portable spelling for the install at
         // its default place, and the absolute path, with the reason, anywhere else.
@@ -272,9 +287,9 @@ internal sealed class RegistrationTests
         await Assert.That(atHome.Command).IsEqualTo(portable);
         await Assert.That(atHome.Note).IsNull();
 
-        var moved = RegistrationClient.ClaudeProjectCommandFor(@"D:\elsewhere\current\BrowserAI.Server.exe", @"D:\elsewhere");
+        var moved = RegistrationClient.ClaudeProjectCommandFor(@"D:\elsewhere\current\BrowserAI.exe", @"D:\elsewhere");
 
-        await Assert.That(moved.Command).IsEqualTo(@"D:\elsewhere\current\BrowserAI.Server.exe");
+        await Assert.That(moved.Command).IsEqualTo(@"D:\elsewhere\current\BrowserAI.exe");
         await Assert.That(moved.Note!).Contains("not at its default location");
     }
 

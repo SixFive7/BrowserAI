@@ -30,6 +30,15 @@ because the product became two programs, not because anything about this
 diagram did. `BrowserAI.exe` is [the configuration app](#the-mcp-server), which
 a person launches and no client ever does.*
 
+⚠️ **One file again since 2026-10-08 -- D7 a, the maintainer's words verbatim:
+*"d7 a"*.** *Added by addition; the two paragraphs above and the diagrams below
+are the record of the two programs.* There is one windowless executable,
+`BrowserAI.exe`, and what a start does is its argument's: a client starts
+`current\BrowserAI.exe --mcp`, the coordinator starts the session host as
+`BrowserAI.exe --host <pipe>`, and a start with no argument is a person's. Read
+`BrowserAI.Server.exe` in the diagrams below as `BrowserAI.exe --mcp`.
+[The MCP server](#the-mcp-server) maps the modes to the code.
+
 ```
 MCP client ──stdio──> BrowserAI.Server.exe ──stdio──> node.exe + @playwright/mcp ──> browser
                         (one server)                   (one child per session,
@@ -156,6 +165,30 @@ and at 25 minutes in).*
 a run that exits 0 without it is a failure whose partial tree is removed.
 
 ## The MCP server
+
+⚠️ **ONE EXECUTABLE AGAIN SINCE 2026-10-08, AND TWO LIBRARIES -- D7 a, the
+maintainer's words verbatim: *"d7 a"*.** *Added by addition; the section below is
+the record of the two executables of 2026-09-15 and is left as written.*
+`src/BrowserAI` builds the one windowless `BrowserAI.exe`; `src/BrowserAI.App` is a
+library since that day (the person's start, the coordinator, the tab and the
+report), linked into it beside `BrowserAI.Core`. One `Main`, in
+`src/BrowserAI/Program.cs`, serves Velopack's four hooks first and then lets the
+argument decide:
+
+| Start | Mode | Code |
+|---|---|---|
+| `--veloapp-install`, `--veloapp-updated`, `--veloapp-obsolete`, `--veloapp-uninstall` | the installer's hooks, served by Velopack's own `Run()`, which exits | `VelopackStartup.RunAndServeLifecycleHooks` |
+| `--mcp` | a client's server, over stdio; a pipe on standard input is required, and without one it writes `Startup[14]` and exits | `Program.ServeAsync`, `StandardInput.IsAPipe` |
+| `--host <pipe>` | the session host the coordinator starts | `Program.RunTheSessionHostAsync` |
+| `--sweep` | one stray sweep, for a kb re-verification row | `Program.SweepOnce` |
+| anything else, no argument included | the configuration app's: a person's start, `--sessions`, `--report`, the logon task's `--sign-in` | `App.Program.Run` |
+
+`Program.ServesStdio` is the decision, and
+`AppBinaryTests.TheArgumentChoosesTheModeAndNoArgumentIsAPersonsStart` holds it.
+**Why the argument and a pipe, and never the pipe alone:** a windowless start with
+no standard handles reads end of input at once, measured 6 of 6 on 2026-10-04, and
+a hook whose standard input Velopack pipes would otherwise become a server
+([the plan](docs/design/one-binary/README.md#the-modes-and-how-each-is-chosen)).
 
 ⚠️ **TWO EXECUTABLES SINCE 2026-09-15, AND ONE LIBRARY.** *(Previously one, and
 every path in this document that reads `src/BrowserAI/...` for a moved file has
@@ -1470,6 +1503,12 @@ installer's four hooks, and in the server it deliberately serves none.
 server, under the same file name)*, and registration names
 `current\BrowserAI.Server.exe` -- composed from the app's own directory, checked
 for the console subsystem, and never the execution stub beside `current\`.
+⚠️ *Corrected 2026-10-08 by addition, D7 a:* `--mainExe BrowserAI.exe` names the
+one executable, its one `Main` serves the hooks first whatever the arguments, and
+registration names `current\BrowserAI.exe --mcp`, checked for the WINDOWS
+subsystem (`RegistrationTarget`), and still never the execution stub beside
+`current\`. An entry naming the retired `BrowserAI.Server.exe` is ours and names
+a different file, so RegisterAI replaces it at the next install or update hook.
 
 **The channel reaches Velopack through `UpdateOptions.ExplicitChannel` and nowhere
 else.** `UpdateFeed.Create` *refuses* the three shapes that 404 silently: a base

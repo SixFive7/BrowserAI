@@ -39,7 +39,7 @@ name, no image path, no enumeration -- the same rule the product holds itself to
 
 | File | What it is |
 |---|---|
-| `shim.js` | The stdio pass-through that makes the server go away. `Q261_SERVER`, `Q261_LOGDIR`, `Q261_TAG`, `Q261_DIE_AFTER_CALLS`, `Q261_DIED_MARKER` |
+| `shim.js` | The stdio pass-through that makes the server go away. `Q261_SERVER`, `Q261_LOGDIR`, `Q261_TAG`, `Q261_DIE_AFTER_CALLS`, `Q261_DIED_MARKER`, and since 2026-10-08 `Q261_SERVER_ARGS`, the server's arguments separated by spaces: the one `BrowserAI.exe` serves a client only under `--mcp`, so the suite passes that, and unset the server starts with none, as the runs of 2026-09-24 did |
 | `cc-q261.sh` | One headless Claude Code run: `cc-q261.sh <run-name> <port> [hold-seconds-before-the-retry]`. The third argument is what decides whether the notification did anything -- it leaves the MCP connection idle between the refusal and the retry, so a `tools/list` that is going to arrive has time to |
 | `cx-q261.sh` | One `codex app-server` run: `cx-q261.sh <run-name>`. No model, no stub, no credential -- `mcpServer/tool/call` makes the client connect and call without a turn |
 | `apistub.js` | The Anthropic Messages API stub, which scripts the model's moves |

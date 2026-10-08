@@ -149,7 +149,7 @@ internal sealed class SessionHostKeeper : ISessionHostHold, IDisposable
 
     /// <summary>Creates the job; nothing is started yet.</summary>
     /// <param name="installRoot">The install root, which names the host's pipe and holds its census marker.</param>
-    /// <param name="server">The server binary to start as the host: <c>current\BrowserAI.Server.exe</c> beside this app.</param>
+    /// <param name="server">The binary to start as the host: the one executable, <c>current\BrowserAI.exe</c>, since 2026-10-08 (previously <c>current\BrowserAI.Server.exe</c> beside this app).</param>
     /// <param name="workingDirectory">The host's working directory.</param>
     /// <param name="logger">Where starts and exits are recorded.</param>
     public SessionHostKeeper(string installRoot, string server, string workingDirectory, ILogger logger)

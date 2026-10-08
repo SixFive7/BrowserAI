@@ -1228,26 +1228,26 @@ internal sealed class UpdateTests
 
         var program = await RepositoryLayout.ReadCodeAsync(ProductFile("Program.cs"));
 
-        // ⚠️ RE-POINTED 2026-09-15 (previously `VelopackStartup.Run(`). The one
-        // call became two on the day the product became two binaries: the SERVER
-        // registers no lifecycle callback at all, because Velopack invokes all
-        // four hooks on the main exe and the main exe is the configuration app.
-        // Two methods and not a flag, so what is asserted here is the one
-        // the server is supposed to be calling -- naming the other would be an
-        // arm that passed while the server was serving hooks it must not serve.
-        var velopack = program.IndexOf("VelopackStartup.RunWithoutLifecycleHooks(", StringComparison.Ordinal);
+        // ⚠️ RE-POINTED 2026-09-15 (previously `VelopackStartup.Run(`), and again
+        // on 2026-10-08. From 2026-09-15 the server registered no lifecycle
+        // callback and the configuration app served all four hooks, because
+        // Velopack invokes them on the main exe. Since 2026-10-08, D7 a, the main
+        // exe is the one executable, and its one Main serves them, first, before
+        // the arguments decide anything (previously this arm required
+        // `RunWithoutLifecycleHooks` here and `RunAndServeLifecycleHooks` in the
+        // configuration app's Program.cs).
+        var velopack = program.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
 
         await Assert.That(velopack).IsGreaterThan(-1);
-        await Assert.That(program).DoesNotContain("VelopackStartup.RunAndServeLifecycleHooks(");
+        await Assert.That(program).DoesNotContain("VelopackStartup.RunWithoutLifecycleHooks(");
 
-        // And the configuration app is the one that DOES serve them, which is
-        // the other half of the same claim and is invisible from this file
-        // alone: an arm holding only the negative above would stay green for a
-        // product in which nobody served a hook at all.
+        // And the configuration app no longer calls it: a second Run() in one
+        // process would serve the hooks twice and read variables the first one
+        // already cleared.
         var app = await RepositoryLayout.ReadCodeAsync(
             new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Program.cs")));
 
-        await Assert.That(app).Contains("VelopackStartup.RunAndServeLifecycleHooks(");
+        await Assert.That(app).DoesNotContain("VelopackStartup.RunAndServeLifecycleHooks(");
 
         var late = new List<string>();
 

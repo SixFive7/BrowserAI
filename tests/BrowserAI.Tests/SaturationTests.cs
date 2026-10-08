@@ -909,7 +909,7 @@ internal sealed partial class SaturationTests
 
             var client = RawStdioClient.Start(
                 PublishedSlice.Executable,
-                [],
+                PublishedSlice.Mcp,
                 _home,
                 PublishedSlice.InheritedEnvironment(),
                 Conversation);

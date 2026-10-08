@@ -83,8 +83,8 @@ Write-Host "installer lock held: $token"
 # they ran the last release's hooks. `-TestPackOnly` packs it from the two
 # publishes this run tests, refuses a publish that is not the tree's version,
 # and touches nothing a release is made of; the release installer capability
-# refuses a pack that is not those bytes. Publish both slices before starting a
-# gate: this reads the publishes and does not make them.
+# refuses a pack that is not those bytes. Publish the slice before starting a
+# gate: this reads the publish and does not make it.
 $packLog = Join-Path $root '.work' 'suite' "$Tag-testpack.log"
 & (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly *> $packLog
 if ($LASTEXITCODE -ne 0) {

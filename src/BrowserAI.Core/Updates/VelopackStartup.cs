@@ -56,12 +56,19 @@ namespace BrowserAI.Updates;
 /// ⚠️ <b>THE HOOKS RUN IN THE CONFIGURATION APP AND NOT IN THE SERVER, since
 /// 2026-09-15.</b> Velopack invokes all four on <c>--mainExe</c> and on nothing
 /// else, and the main exe is <c>BrowserAI.exe</c>, which is now the
-/// configuration app. So the server calls <see cref="RunWithoutLifecycleHooks"/>
-/// and the app calls <see cref="RunAndServeLifecycleHooks"/>. They are two
-/// methods and not a flag because the difference is a <i>capability</i>: a
+/// configuration app. So the server called <c>RunWithoutLifecycleHooks</c>
+/// and the app called <see cref="RunAndServeLifecycleHooks"/>. They were two
+/// methods and not a flag because the difference was a <i>capability</i>: a
 /// binary that registers no callbacks cannot serve a hook even if somebody
-/// passes it one by hand, which is the property being asserted and not a
-/// setting being chosen.
+/// passes it one by hand.
+/// </para>
+/// <para>
+/// ⚠️ <b>ONE CALL AGAIN SINCE 2026-10-08, D7 a, the maintainer's words verbatim:
+/// <i>"d7 a"</i></b> (previously the two calls above). There is one executable,
+/// it is the main exe, and its one <c>Main</c> calls
+/// <see cref="RunAndServeLifecycleHooks"/> first, whatever its arguments; a hook
+/// argument is Velopack's and is served before any mode is chosen.
+/// <c>RunWithoutLifecycleHooks</c> is deleted, because nothing calls it.
 /// </para>
 /// <para>
 /// <b><c>VelopackApp.Run()</c> is called in both cases</b>, and that is not
@@ -132,36 +139,7 @@ internal static class VelopackStartup
     }
 
     /// <summary>
-    /// Runs Velopack's startup handling and serves no lifecycle hook at all.
-    /// </summary>
-    /// <param name="args">The process arguments.</param>
-    /// <param name="log">Where Velopack's own output goes.</param>
-    /// <remarks>
-    /// <para>
-    /// <b>What the MCP server calls.</b> Velopack never invokes a hook on this
-    /// binary -- it invokes all four on the main exe, which is the configuration
-    /// app -- so a callback registered here could only ever be reached by
-    /// somebody passing <c>--veloapp-install</c> to the server by hand. Serving
-    /// it would then register, unregister or repair a client's configuration
-    /// from a process the installer did not start and is not waiting for.
-    /// </para>
-    /// <para>
-    /// <b>It still calls <c>VelopackApp.Run()</c></b>, for the one line
-    /// that makes this file matter: <c>SetAutoApplyOnStartup(false)</c>. The
-    /// default applies a staged package, exits 0 and relaunches detached with no
-    /// inherited stdio, which for a stdio server is indistinguishable from a
-    /// crash at handshake time.
-    /// </para>
-    /// </remarks>
-    public static void RunWithoutLifecycleHooks(string[] args, Action<VelopackLogLevel, string, Exception?> log)
-    {
-        ArgumentNullException.ThrowIfNull(log);
-
-        Common(args, log).Run();
-    }
-
-    /// <summary>
-    /// Everything both entry points configure, which is everything except the
+    /// Everything the one entry point configures before its callbacks, which is everything except the
     /// lifecycle callbacks.
     /// </summary>
     private static VelopackApp Common(string[] args, Action<VelopackLogLevel, string, Exception?> log) =>

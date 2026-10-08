@@ -15,8 +15,8 @@ using Velopack.Logging;
 namespace BrowserAI.App;
 
 /// <summary>
-/// The configuration app: the Velopack main executable, the Start Menu entry,
-/// and the owner of all four installer hooks.
+/// The configuration app's half of the one executable: a person's start, the
+/// logon task's start and the status report.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -49,6 +49,14 @@ namespace BrowserAI.App;
 /// hook never reaches the line below it. Re-implementing that dispatch would be
 /// a second parser for somebody else's argument syntax, running beside theirs,
 /// and the first divergence would be an installer that hangs on its own timeout.
+/// </para>
+/// <para>
+/// ⚠️ <b>Not an entry point since 2026-10-08, D7 a, the maintainer's words
+/// verbatim: <i>"d7 a"</i></b> (previously this class carried the configuration
+/// app's <c>Main</c>, on a single-threaded apartment). There is one executable,
+/// and its <c>Main</c> in <c>src/BrowserAI/Program.cs</c> serves the hooks,
+/// reads the installer's two variables, clears them, and hands every start that
+/// is not a server's to <see cref="Run"/> on the same single-threaded thread.
 /// </para>
 /// </remarks>
 internal static class Program
@@ -117,46 +125,33 @@ internal static class Program
     }
 
     /// <summary>
-    /// ⚠️ <b>Single-threaded apartment, and it is load-bearing in two
-    /// places.</b>
+    /// A start that is not a server's: a person's, the logon task's, a blocked
+    /// server's through the task, or a report.
     /// </summary>
     /// <remarks>
-    /// The shell's folder picker falls back to the pre-Vista dialog on a thread
-    /// that is not in one -- silently, with no error -- and the common controls a
-    /// task dialog is made of expect it. Neither failure is one a test here can
-    /// see, so the reason is written at both ends. <i>Corrected 2026-10-03
-    /// (previously as written): the task dialog is gone with the configuration
-    /// window, and the folder picker runs on a single-threaded thread of its own
-    /// (<see cref="Page.DesktopPageHost"/>). What still needs this thread's
-    /// apartment is Explorer, which the page opens on the coordinator's thread.</i>
+    /// <b>Called on the one executable's main thread, which is a single-threaded
+    /// apartment, and that is load-bearing.</b> The shell's folder picker falls back
+    /// to the pre-Vista dialog on a thread that is not in one -- silently, with no
+    /// error -- so it runs on a single-threaded thread of its own
+    /// (<see cref="Page.DesktopPageHost"/>), and Explorer, which the page opens on
+    /// the coordinator's thread, is this one. <i>Corrected 2026-10-08 (previously
+    /// this was <c>Main</c>, carrying the attribute itself, and read the installer's
+    /// variables and served the hooks before anything else): the one executable's
+    /// <c>Main</c> does both, first, and passes what it read.</i>
     /// </remarks>
     /// <param name="args">The command line.</param>
+    /// <param name="firstRun">Whether the installer started this process, read before Velopack's <c>Run()</c> cleared it.</param>
+    /// <param name="restarted">Whether Velopack's restart after an update started it, read the same way.</param>
+    /// <param name="buffered">What Velopack said before the log existed.</param>
     /// <returns>Zero when what was asked for happened.</returns>
-    [STAThread]
-    private static int Main(string[] args)
+    public static int Run(
+        string[] args,
+        bool firstRun,
+        bool restarted,
+        IReadOnlyList<(VelopackLogLevel Level, string Message, Exception? Failure)> buffered)
     {
-        args ??= [];
-
-        var firstRun = VelopackStartup.StartedByTheInstaller();
-        var restarted = Environment.GetEnvironmentVariable(RestartVariable) is { Length: > 0 };
-
-        // ⚠️ FIRST. This call serves the installer's four hooks and exits the
-        // process when it does, so everything below it belongs to a run that is
-        // not a hook. It also carries SetAutoApplyOnStartup(false).
-        var buffered = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
-        VelopackStartup.RunAndServeLifecycleHooks(args, (level, message, failure) => buffered.Add((level, message, failure)));
-
-        // ⚠️ AFTER Run() AND BEFORE ANYTHING IS STARTED -- corrected 2026-09-16
-        // (previously this ran BEFORE the line above). Velopack decides whether
-        // to invoke OnFirstRun and OnRestarted by reading exactly these two
-        // variables, so clearing them first made both callbacks unreachable in
-        // this binary: two log lines that could never be written, and a remark
-        // beside them describing behaviour that did not happen. Nothing is
-        // started between here and there -- the hook path never reaches this
-        // line at all, because Run() exits the process when it serves one -- so
-        // the guarantee the clearing exists for is unchanged: no child of this
-        // process ever inherits VELOPACK_FIRSTRUN.
-        ClearTheInstallersOwnVariables();
+        ArgumentNullException.ThrowIfNull(args);
+        ArgumentNullException.ThrowIfNull(buffered);
 
         var paths = new LocalAppDataPaths(LocalAppDataPaths.Overridden());
 

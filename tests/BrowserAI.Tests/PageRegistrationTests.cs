@@ -290,7 +290,7 @@ internal sealed class PageRegistrationTests
         var tool = new FakeRegisterAi();
 
         tool.Register("codex", server);
-        tool.RegisterIn("codex", project.Path, RegistrationTarget.ServerFileName);
+        tool.RegisterIn("codex", project.Path, RegistrationTarget.AppFileName);
 
         var state = StateFor(
             install.Path,

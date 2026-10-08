@@ -331,16 +331,24 @@ internal sealed class ReleaseScriptTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     /// <summary>
-    /// Both binaries are published into one pack directory, each behind its own
-    /// ILC gate, and neither may be missing when the pack runs.
+    /// The one executable is published into the pack directory behind its ILC
+    /// gate, and may not be missing when the pack runs.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>HALT-A once per publish is the whole point of the loop.</b> Two
-    /// binaries are linked into one release by two ILC passes, and a scan that
-    /// read one of the two logs would ship a binary nobody had checked while
-    /// reporting that ILC's output was clean -- which is the same defect the
-    /// full-pass check exists for, one level up.
+    /// binaries were linked into one release by two ILC passes until 2026-10-08,
+    /// and a scan that read one of the two logs would ship a binary nobody had
+    /// checked while reporting that ILC's output was clean -- which is the same
+    /// defect the full-pass check exists for, one level up.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One publish since 2026-10-08, D7 a</b> (previously
+    /// <c>BothBinariesArePublishedIntoOnePackDirectoryEachBehindItsOwnIlcGate</c>,
+    /// which held the configuration app's project and <c>BrowserAI.Server.exe</c>
+    /// in the list): the list holds the one executable, and the loop is kept so
+    /// every guard stays where it was. <b>Planted red 2026-10-08</b> against the
+    /// script before the change, which still named the server.
     /// </para>
     /// <para>
     /// <b>The intermediates sweep is asserted with it</b>, because the two are
@@ -351,17 +359,21 @@ internal sealed class ReleaseScriptTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task BothBinariesArePublishedIntoOnePackDirectoryEachBehindItsOwnIlcGate()
+    public async Task TheOneExecutableIsPublishedIntoThePackDirectoryBehindItsIlcGate()
     {
         var script = await File.ReadAllTextAsync(ReleaseScript);
 
-        await Assert.That(script).Contains("$appProject = Join-Path $root 'src' 'BrowserAI.App' 'BrowserAI.App.csproj'");
-        await Assert.That(script).Contains("Exe = 'BrowserAI.exe'");
-        await Assert.That(script).Contains("Exe = 'BrowserAI.Server.exe'");
+        await Assert.That(script).Contains("$project = Join-Path $root 'src' 'BrowserAI' 'BrowserAI.csproj'");
+        await Assert.That(script).Contains("@{ Project = $project; Exe = 'BrowserAI.exe'; What = 'one executable' }");
+
+        // Nothing publishes the retired server or the configuration app's own
+        // project any more.
+        await Assert.That(script).DoesNotContain("Exe = 'BrowserAI.Server.exe'");
+        await Assert.That(script).DoesNotContain("$appProject");
 
         // The publish, the full-pass refusal and the complaint scan are all
-        // inside one loop over $publishes, so neither binary can be the one
-        // nobody read a log for.
+        // inside one loop over $publishes, so no binary can be the one nobody
+        // read a log for.
         var loop = script.IndexOf("foreach ($publish in $publishes) {", StringComparison.Ordinal);
 
         await Assert.That(loop).IsGreaterThan(-1);

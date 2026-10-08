@@ -11,8 +11,8 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// What each shipped executable declares about itself: its subsystem, the
-/// configuration app's embedded manifest, and the apartment its main thread runs in.
+/// What the one shipped executable declares about itself: its subsystem, its
+/// embedded manifest, and the apartment its main thread runs in.
 /// </summary>
 /// <remarks>
 /// <i>Renamed 2026-10-03 (previously <c>TaskDialogLayoutTests</c>, whose summary was
@@ -25,13 +25,13 @@ namespace BrowserAI.Tests;
 internal sealed class AppBinaryTests
 {
     /// <summary>
-    /// The configuration app is a Windows-subsystem binary and the server is a
-    /// console one, read out of the executables themselves.
+    /// The one executable is a Windows-subsystem binary, read out of the file
+    /// itself, and the configuration app builds no executable of its own.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>This is the property the whole two-binary design rests on.</b> A
-    /// non-silent <c>Setup.exe</c> starts the main executable with
+    /// ⚠️ <b>This is the property the whole design rests on.</b> A non-silent
+    /// <c>Setup.exe</c> starts the main executable with
     /// <c>CREATE_UNICODE_ENVIRONMENT</c> and nothing else; a console-subsystem
     /// binary started that way from a windowless parent is given a console, and
     /// on this machine that was a Windows Terminal window over the user's work
@@ -39,39 +39,81 @@ internal sealed class AppBinaryTests
     /// allocated one.
     /// </para>
     /// <para>
-    /// <b>The server's half matters just as much and in the other direction.</b>
-    /// A client speaks to it over stdio, and
-    /// <c>RegistrationTarget</c> refuses to register a file at the server's name
-    /// that is not a console binary -- so a server accidentally built
-    /// <c>WinExe</c> would install fine and register nothing.
+    /// ⚠️ <b>One file since 2026-10-08, D7 a, the maintainer's words verbatim:
+    /// <i>"d7 a"</i></b> (previously
+    /// <c>TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>, which held the
+    /// configuration app windowless and <c>BrowserAI.Server.exe</c> console). A
+    /// client still speaks stdio to the one file: every client gave a windowless
+    /// build of the server a pipe on all three standard handles, 54 of 54 runs on
+    /// 2026-10-04, and <c>RegistrationTarget</c> now refuses a file at the
+    /// registered name that is NOT windowless. <b>Planted red 2026-10-08</b> against
+    /// the tree before the change, where <c>src/BrowserAI</c> built
+    /// <c>BrowserAI.Server.exe</c> and no <c>BrowserAI.exe</c>.
     /// </para>
     /// <para>
-    /// <b>Read off the Debug outputs, which always exist</b>, because the
+    /// <b>Read off the Debug output, which always exists</b>, because the
     /// subsystem comes from <c>OutputType</c> and is identical in every
-    /// configuration. The published AOT binaries are checked the same way when
-    /// they are present, which is what would catch a link that did not honour
-    /// it.
+    /// configuration. The published AOT binary is checked the same way when it is
+    /// present, which is what would catch a link that did not honour it.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheAppIsAWindowBinaryAndTheServerIsAConsoleOne()
+    public async Task TheOneExecutableIsAWindowsSubsystemBinary()
     {
-        await Assert.That(PeSubsystem.Of(Built("BrowserAI.App", "BrowserAI.exe")))
+        await Assert.That(PeSubsystem.Of(Built("BrowserAI", "BrowserAI.exe")))
             .IsEqualTo(PeSubsystem.WindowsGui);
-
-        await Assert.That(PeSubsystem.Of(Built("BrowserAI", "BrowserAI.Server.exe")))
-            .IsEqualTo(PeSubsystem.WindowsCui);
 
         if (File.Exists(PublishedSlice.Executable))
         {
-            await Assert.That(PeSubsystem.Of(PublishedSlice.Executable)).IsEqualTo(PeSubsystem.WindowsCui);
+            await Assert.That(PeSubsystem.Of(PublishedSlice.Executable)).IsEqualTo(PeSubsystem.WindowsGui);
         }
 
-        if (File.Exists(PublishedSlice.AppExecutable))
-        {
-            await Assert.That(PeSubsystem.Of(PublishedSlice.AppExecutable)).IsEqualTo(PeSubsystem.WindowsGui);
-        }
+        // The configuration app is a library now, so its project builds no
+        // executable that could be packed or started by mistake.
+        await Assert.That(File.Exists(Path.Combine(
+            RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "bin", "Debug", "net10.0-windows", "BrowserAI.exe"))).IsFalse();
+    }
+
+    /// <summary>
+    /// The argument chooses what a start of the one executable does, and a start
+    /// with no argument never serves stdio.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>D7 a, 2026-10-08.</b> The server half runs for <c>--mcp</c>, a client's
+    /// registration; for <c>--host</c> with a pipe, the session host the
+    /// coordinator starts; and for <c>--sweep</c>, a kb re-verification row's one
+    /// pass. Every other start is the configuration app's: no argument (the Start
+    /// Menu, <c>Setup.exe</c> after a non-silent install, a double-click),
+    /// <c>--sessions</c>, <c>--report</c>, the logon task's <c>--sign-in</c>. The
+    /// windowless file reads end of input at once when it is started with no
+    /// handles, measured 6 of 6 on 2026-10-04, so a start with no argument may never
+    /// be a server.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-08</b> with <c>ServesStdio</c> answering
+    /// <see langword="true"/> for a start with no argument, the shape the server
+    /// had while it was its own file.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheArgumentChoosesTheModeAndNoArgumentIsAPersonsStart()
+    {
+        await Assert.That(Program.ServesStdio([Program.McpArgument])).IsTrue();
+        await Assert.That(Program.ServesStdio([Program.McpArgument, Program.RelayArgument, @"\\.\pipe\x"])).IsTrue();
+        await Assert.That(Program.ServesStdio([Program.HostArgument, @"\\.\pipe\x"])).IsTrue();
+        await Assert.That(Program.ServesStdio([Program.SweepArgument])).IsTrue();
+
+        await Assert.That(Program.ServesStdio([])).IsFalse();
+        await Assert.That(Program.ServesStdio(["--sessions"])).IsFalse();
+        await Assert.That(Program.ServesStdio(["--report", "report.json"])).IsFalse();
+        await Assert.That(Program.ServesStdio(["--sign-in", "$(Arg0)"])).IsFalse();
+        await Assert.That(Program.ServesStdio(["--write-address", "address.txt"])).IsFalse();
+
+        // A pipe name with no argument before it is not the host's mode.
+        await Assert.That(Program.ServesStdio([Program.HostArgument])).IsFalse();
     }
 
     /// <summary>
@@ -104,18 +146,22 @@ internal sealed class AppBinaryTests
     /// file that ships.
     /// </para>
     /// <para>
-    /// <b>The control is the SERVER.</b> A reader that had stopped finding
+    /// <b>The control is the test probe.</b> A reader that had stopped finding
     /// resources would report every property absent, which is indistinguishable
     /// from a binary that declares none -- so the arm also reads a binary that is
     /// <i>known</i> to declare no common controls, and requires the reader to
-    /// come back with a manifest that says so and not with nothing.
+    /// come back with a manifest that says so and not with nothing. <i>Corrected
+    /// 2026-10-08 (previously "The control is the SERVER", whose own manifest
+    /// declared no common controls): there is one executable since D7 a, and it
+    /// carries the configuration app's manifest, so the control moved to the
+    /// suite's own probe, a console binary built beside the test host.</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheAppsEmbeddedManifestDeclaresCommonControlsLongPathsAndPerMonitorV2()
+    public async Task TheOneExecutablesEmbeddedManifestDeclaresCommonControlsLongPathsAndPerMonitorV2()
     {
-        foreach (var binary in Candidates("BrowserAI.App", "BrowserAI.exe", PublishedSlice.AppExecutable))
+        foreach (var binary in Candidates("BrowserAI", "BrowserAI.exe", PublishedSlice.Executable))
         {
             var manifest = EmbeddedManifest.Of(binary);
 
@@ -140,14 +186,14 @@ internal sealed class AppBinaryTests
             await Assert.That(declared).Contains("asInvoker");
         }
 
-        // ⚠️ THE CONTROL. The server is a console binary with a manifest of its
-        // own that declares no common controls, so a reader that had stopped
-        // working cannot look like a binary that simply declares less.
-        var server = EmbeddedManifest.Of(Built("BrowserAI", "BrowserAI.Server.exe"));
+        // ⚠️ THE CONTROL. The test probe is a console binary whose manifest
+        // declares no common controls, so a reader that had stopped working cannot
+        // look like a binary that simply declares less.
+        var probe = EmbeddedManifest.Of(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"));
 
-        await Assert.That(server is null ? "the server carries no RT_MANIFEST" : string.Empty).IsEmpty();
-        await Assert.That(server!).Contains("<assembly");
-        await Assert.That(server!.Contains("Microsoft.Windows.Common-Controls", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(probe is null ? "the test probe carries no RT_MANIFEST" : string.Empty).IsEmpty();
+        await Assert.That(probe!).Contains("<assembly");
+        await Assert.That(probe!.Contains("Microsoft.Windows.Common-Controls", StringComparison.Ordinal)).IsFalse();
     }
 
     /// <summary>
@@ -183,8 +229,7 @@ internal sealed class AppBinaryTests
         if (!File.Exists(PublishedSlice.AppExecutable))
         {
             throw new FileNotFoundException(
-                $"'{PublishedSlice.AppExecutable}' is not there. Publish the configuration app: "
-                + "dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64",
+                $"'{PublishedSlice.AppExecutable}' is not there. Publish the one executable: {PublishedSlice.PublishCommand}",
                 PublishedSlice.AppExecutable);
         }
 

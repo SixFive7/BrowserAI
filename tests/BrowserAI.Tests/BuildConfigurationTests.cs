@@ -383,7 +383,7 @@ internal sealed partial class BuildConfigurationTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     /// <summary>
-    /// Both shipped executables carry a manifest, and both manifests say the
+    /// Every shipped executable carries a manifest, and every manifest says the
     /// same two things.
     /// </summary>
     /// <remarks>
@@ -394,6 +394,9 @@ internal sealed partial class BuildConfigurationTests
     /// until somebody installs it: this product is per-user to
     /// <c>%LocalAppData%</c> precisely so that nothing it does can raise a UAC
     /// prompt, and a manifest is the only place that can be undone.
+    /// ⚠️ <b>One again since 2026-10-08, D7 a</b> (previously "Both shipped
+    /// executables" and a count of two): the configuration app is a library
+    /// linked into the one executable, and the count is the one manifest.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -413,9 +416,10 @@ internal sealed partial class BuildConfigurationTests
             }
         }
 
-        // Both executables, and the library is not one. A count that silently
-        // fell to one would be this arm checking half of what it claims to.
-        await Assert.That(manifests.Count).IsEqualTo(2);
+        // The one executable, and neither library is one. A count that silently
+        // fell to none would be this arm checking nothing at all. (Two until
+        // 2026-10-08, the server and the configuration app.)
+        await Assert.That(manifests.Count).IsEqualTo(1);
 
         foreach (var path in manifests)
         {
@@ -434,10 +438,11 @@ internal sealed partial class BuildConfigurationTests
     }
 
     /// <summary>
-    /// The configuration app declares the version 6 common controls, without
-    /// which it has no window at all.
+    /// The one executable declares the version 6 common controls, which the
+    /// folder picker it opens is drawn with.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b>This is the one entry whose absence has no compile-time
     /// signal.</b> <c>TaskDialogIndirect</c> is exported only by the
     /// side-by-side version 6 <c>comctl32</c>; with no dependency the loader
@@ -445,13 +450,22 @@ internal sealed partial class BuildConfigurationTests
     /// -- presenting as <i>the application starts and nothing happens</i>. It is
     /// the classic failure of this whole approach, which is why it is asserted
     /// and not left to the one manual check that would find it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One manifest since 2026-10-08, D7 a</b> (previously
+    /// <c>TheConfigurationAppDeclaresTheVersionSixCommonControls</c>, reading
+    /// <c>src/BrowserAI.App/app.manifest</c> and requiring the server's manifest to
+    /// carry no such dependency): the configuration app is a library linked into
+    /// the one executable, and its manifest moved into
+    /// <c>src/BrowserAI/app.manifest</c> whole.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheConfigurationAppDeclaresTheVersionSixCommonControls()
+    public async Task TheOneExecutableDeclaresTheVersionSixCommonControls()
     {
         var manifest = XDocument.Load(
-            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "app.manifest"));
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
 
         var identities = manifest.Descendants()
             .Where(element => element.Name.LocalName is "assemblyIdentity"
@@ -463,16 +477,11 @@ internal sealed partial class BuildConfigurationTests
         await Assert.That(identities[0].Attribute("publicKeyToken")?.Value).IsEqualTo("6595b64144ccf1df");
         await Assert.That(identities[0].Attribute("type")?.Value).IsEqualTo("win32");
 
-        // And it is the SERVER that does not need one, which is asserted and
-        // not assumed: a dependency there would be a side-by-side load
-        // for a binary that never draws anything.
-        var server = XDocument.Load(
-            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
-
-        await Assert.That(server.Descendants()
-                .Any(element => element.Name.LocalName is "assemblyIdentity"
-                    && element.Attribute("name")?.Value is "Microsoft.Windows.Common-Controls"))
-            .IsFalse();
+        // And the configuration app's own manifest is gone with its executable: a
+        // library cannot carry one, and a file left behind would be a second
+        // manifest nobody links.
+        await Assert.That(File.Exists(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "app.manifest"))).IsFalse();
     }
 
     /// <summary>One <c>global.json</c> entry, or a legible stand-in for an absent one.</summary>
