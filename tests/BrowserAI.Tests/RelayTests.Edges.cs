@@ -217,6 +217,50 @@ internal sealed partial class RelayTests
     }
 
     /// <summary>
+    /// Nothing a client's frame carries, and nothing the classifier read, reaches the
+    /// relay's log: a record names a frame by its method and id.
+    /// </summary>
+    /// <remarks>
+    /// The root's measurement of 2026-10-08: a Claude Code server inherits a messaging
+    /// socket and its secret token in its environment. The classifier reads the
+    /// client's environment and command line, so its failure is logged by type and
+    /// code; a call's arguments are the client's data and are never logged at all.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NothingTheClientSentOrTheClassifierReadReachesTheLog()
+    {
+        const string Token = "relay-suite-secret-token-4711";
+        const string Argument = "relay-suite-secret-argument-0815";
+
+        await using var rig = RelayRig.Start(reconnectOf: _ => throw new InvalidOperationException($"CLAUDE_CODE_MESSAGING_SOCKET_TOKEN={Token}"));
+        rig.Finder.Absence = new BackgroundAbsence.Crashed(DateTimeOffset.UnixEpoch, 1, RelayRig.Facts.LogPath);
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1").Replace("https://example.invalid/", "https://example.invalid/" + Argument, StringComparison.Ordinal));
+        await Assert.That((await rig.NextAsync()).IdText).IsEqualTo("1");
+        await rig.SendAsync("{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"tools/call\",\"params\":{\"name\":\"" + Argument);
+        await Assert.That((await rig.NextAsync()).IdText).IsEqualTo("9");
+
+        var records = rig.Logs;
+
+        // The log was written: the classifier's failure, the call answered in place
+        // and the unreadable frame are all in it.
+        await Assert.That(records.Count(record => record.Message.Contains(nameof(InvalidOperationException), StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(records.Count(record => record.Message.Contains("answered call 1", StringComparison.Ordinal))).IsEqualTo(1);
+
+        var leaked = records
+            .Where(record => (record.Message + record.Exception).Contains(Token, StringComparison.Ordinal)
+                || (record.Message + record.Exception).Contains(Argument, StringComparison.Ordinal))
+            .Select(record => record.Message);
+
+        await Assert.That(string.Join(Environment.NewLine, leaked)).IsEmpty();
+    }
+
+    /// <summary>
     /// A call that arrives while the finder is still answering for an earlier one is
     /// asked about again once that answer is in, so an answer read before the call
     /// arrived never decides it.

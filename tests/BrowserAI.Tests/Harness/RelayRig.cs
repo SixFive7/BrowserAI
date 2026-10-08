@@ -4,7 +4,6 @@
 using System.Text.Json.Nodes;
 using BrowserAI.Relay;
 using BrowserAI.Updates;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -35,6 +34,7 @@ internal sealed class RelayRig : IAsyncDisposable
     private readonly PipeDuplex _clientHop = new("client hop (client and relay)");
     private readonly CancellationTokenSource _stop = new();
     private readonly SdkHandshake _handshake = SdkHandshake.Start();
+    private readonly CapturingLoggerProvider _logs = new();
     private readonly List<string?> _classified = [];
     private readonly Lock _gate = new();
 
@@ -55,7 +55,7 @@ internal sealed class RelayRig : IAsyncDisposable
             reconnectOf ?? Classify,
             Facts,
             Clock,
-            NullLogger.Instance);
+            _logs.CreateLogger(nameof(RelayEngine)));
 
         Running = Engine.RunAsync(_stop.Token);
 
@@ -99,6 +99,9 @@ internal sealed class RelayRig : IAsyncDisposable
 
     /// <summary>The engine's run.</summary>
     public Task<RelayEnd> Running { get; }
+
+    /// <summary>Every record the engine logged, in order.</summary>
+    public IReadOnlyList<LogRecord> Logs => _logs.Records;
 
     /// <summary>Every client name the default classifier was asked about, in order.</summary>
     public IReadOnlyList<string?> Classified
@@ -321,6 +324,7 @@ internal sealed class RelayRig : IAsyncDisposable
             await _clientHop.CompleteWritersAsync();
             Client.Dispose();
             await _handshake.DisposeAsync();
+            _logs.Dispose();
             _stop.Dispose();
         }
     }

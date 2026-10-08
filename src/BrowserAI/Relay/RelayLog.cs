@@ -143,9 +143,18 @@ internal static partial class RelayLog
         Message = "Relay: ended ({Reason}); the background's pipe is closed.")]
     public static partial void Ended(ILogger logger, RelayEnding reason);
 
+    /// <summary>The classifier failed, logged by its exception's type and code and never its message.</summary>
+    /// <remarks>
+    /// The classifier reads the client's command line and environment, so a message it
+    /// put in an exception could carry either; the type and the code say what failed
+    /// without repeating what it read.
+    /// </remarks>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="exceptionType">The exception's type name.</param>
+    /// <param name="hresult">The exception's code.</param>
     [LoggerMessage(
         EventId = 22,
         Level = LogLevel.Warning,
-        Message = "Relay: telling what this client needs after an update failed, so its greeting says Unknown.")]
-    public static partial void ClassifyFailed(ILogger logger, Exception? exception);
+        Message = "Relay: telling what this client needs after an update failed ({ExceptionType}, {HResult}), so its greeting says Unknown.")]
+    public static partial void ClassifyFailed(ILogger logger, string exceptionType, int hresult);
 }

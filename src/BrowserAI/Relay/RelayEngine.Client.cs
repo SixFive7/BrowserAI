@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
 using BrowserAI.Sessions;
 using BrowserAI.Updates;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 
@@ -189,7 +190,11 @@ internal sealed partial class RelayEngine
         }
         else
         {
-            RelayLog.ClassifyFailed(_logger, reading.Exception);
+            if (_logger.IsEnabled(LogLevel.Warning) && reading.Exception?.InnerException is { } failure)
+            {
+                RelayLog.ClassifyFailed(_logger, failure.GetType().Name, failure.HResult);
+            }
+
             _reconnect = RelayReconnect.Unknown;
         }
 
