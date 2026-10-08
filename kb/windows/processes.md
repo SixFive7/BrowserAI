@@ -2366,6 +2366,178 @@ nothing is installing: every real-installer arm writes the user value and takes 
 For the cost, time the same `SendMessageTimeoutW` call; it changes no value, and every
 install and uninstall of the suite's test pack sends it anyway.
 
+## What the visible-input check costs, and the timer it runs on -- measured 2026-10-08
+
+`[MACHINE]` for every number; `[STABLE]` for what the Windows functions document.
+Windows 11 Pro 26H2, build **26300.9550**, AMD Ryzen 9 5950X (16 cores, 32 logical),
+128 GB; .NET SDK **10.0.401**, runtime **10.0.12**, ILCompiler 10.0.12, NativeAOT
+win-x64; `Microsoft.Extensions.Logging.Abstractions` 10.0.12. Taken 2026-10-08 from
+15:21Z to 15:33Z by a rig that compiles in the product's own `VisibleInputWatch`,
+`InputActivity`, `CoalescableTimer` and `SessionTimes`, at the shipped interval of
+**2 s** and tolerance of **1 s**, while other agents' work ran on the same machine and
+another process held the system timer at 1 ms.
+[Rig](../../docs/probes/2026-10-08-input-check/README.md),
+[evidence](../../docs/evidence/2026-10-08-input-check/README.md).
+
+It was taken for F4 a, the maintainer's decision of 2026-10-08 that a person's keyboard
+or mouse input in a visible session's window counts as activity for that session, on
+his condition, verbatim, *"Make sure the keyboard and mouse input check does not lag the
+system."* A check is four reads -- `GetForegroundWindow`, `GetWindowThreadProcessId`,
+`GetTickCount` and `GetLastInputInfo` -- once every interval, whatever the number of
+visible sessions, on one coalescable timer for the whole process.
+
+⚠️ **Input latency itself was not measured, and could not be here.** Measuring it needs
+input delivered while BrowserAI runs, injected through `SendInput` or typed by a person,
+and the work it was measured in may not touch the keyboard or the mouse or take the
+foreground on this machine. **What was measured instead is everything BrowserAI adds:**
+
+- **No hook, so nothing of BrowserAI's is on the input path** `[STABLE]`. BrowserAI
+  installs no hook of any kind. A low-level hook is the mechanism that would be: Windows
+  calls it for every input event *"by sending a message to the thread that installed the
+  hook"*, and removes it silently past `LowLevelHooksTimeout`, at most 1,000 ms
+  ([LowLevelKeyboardProc](https://learn.microsoft.com/windows/win32/winmsg/lowlevelkeyboardproc)),
+  and *"Hooks tend to slow down the system because they increase the amount of
+  processing the system must perform for each message"*
+  ([Hooks Overview](https://learn.microsoft.com/windows/win32/winmsg/about-hooks)).
+  The check reads state Windows already keeps, at a time BrowserAI chooses.
+- **What one check costs**, hot and cold, and whether any read enters the kernel.
+- **What the timer costs a process over twelve minutes**, against a process with no
+  timer, and how often it actually ran.
+
+### Each read, and the shipped check, in a tight loop
+
+Every call in a loop, the thread's cycles (`QueryThreadCycleTime`) and its kernel and
+user time (`GetThreadTimes`) read either side of it, in two runs: ten million calls each
+with the timed processes below, at 15:21Z, and a hundred million each at 15:38Z, so that
+the thread's time, which moves in steps of the 15.6 ms clock, is sampled hundreds of
+times a loop:
+
+| Calls of | 10 million: per call | Cycles | 100 million: per call | Cycles | Thread kernel / user over the 100 million |
+|---|--:|--:|--:|--:|---|
+| an empty loop, the floor | 0.3 ns | 1 | 0.3 ns | 1 | 15.6 / 15.6 ms |
+| `GetForegroundWindow` | **15.6 ns** | 51 | **13.4 ns** | 45 | 0.0 / 1,312.5 ms |
+| `GetWindowThreadProcessId`, on one window | **23.5 ns** | 79 | **23.2 ns** | 77 | 62.5 / 2,187.5 ms |
+| the two together | 37.6 ns | 125 | 48.5 ns | 163 | 46.9 / 4,750.0 ms |
+| `GetLastInputInfo` | **13.0 ns** | 43 | **16.5 ns** | 56 | 0.0 / 1,656.2 ms |
+| `GetTickCount` | **5.4 ns** | 18 | **6.7 ns** | 23 | 0.0 / 656.2 ms |
+| `VisibleInputWatch.Tick`, one session registered | **67.9 ns** | 228 | **104.7 ns** | 292 | 203.1 / 8,359.4 ms |
+| `VisibleInputWatch.Tick`, a hundred sessions | **78.7 ns** | 253 | **87.6 ns** | 284 | 296.9 / 8,078.1 ms |
+
+**No read enters the kernel on every call, and three of the four did not enter it at
+all that the sampling could see.** Over a hundred million calls, `GetForegroundWindow`,
+`GetLastInputInfo` and `GetTickCount` spent no sampled time in the kernel; the loops
+with `GetWindowThreadProcessId` in them spent 1.0 to 3.5 % of their time there, the
+check's included. A read that entered the kernel on every call would spend most of its
+loop there. The two runs differ by up to half on the same call: the machine was shared,
+and these move with it.
+
+**A hundred sessions cost the same four reads as one**: `VisibleInputWatchTests`
+counts them, one each, and the two checks above are 11 and 17 ns apart in the two
+runs, the hundred sessions the slower in one and the faster in the other. The in-memory
+half of a check that saw new input with a known window in front -- one array of the
+hundred sessions and a hundred comparisons, which the rig re-creates, since checks a few
+nanoseconds apart almost never see new input -- cost **166.3 ns** (564 cycles) in the
+first run and 225.0 ns in the second.
+
+A million hot checks with a hundred sessions, in batches of a hundred between a clock
+read and a cycle read, per check, in the first run: **median 69.0 ns, p99 131.0 ns,
+p99.9 213.0 ns, max 506.0 ns**, and median 217.6 cycles, p99 425.0, max 1,043.8; the
+same instruments around nothing cost 11.0 ns and 20.4 cycles a check. The second run
+read a median of 105.0 ns and a max of 306.0 ns. Timed one at a time, between two clock
+reads alone, the median is 100 ns, which is this machine's `Stopwatch` resolution, and
+the max **119.1 µs** and 2.08 ms in the two runs, a check the scheduler set aside.
+
+### The shipped timer over twelve minutes, beside a process with no timer
+
+Four processes of the rig started together, each waiting 2 s and then measuring a
+720 s window of its own with `QueryProcessCycleTime` and `GetProcessTimes`:
+
+| Process | Cycles in the window | Over the control | Per tick, over the control | Ticks | Spacing min / median / max | First tick |
+|---|--:|--:|--:|--:|---|--:|
+| `control`: no timer | 3,659,420 | -- | -- | 0 | -- | -- |
+| `wake`: the shipped timer, a tick that does nothing | 34,067,320 | 30,407,900 | 86,386 | 352 | 2,000.0 / 2,044.5 / 2,067.6 ms | 2,400.6 ms |
+| **`timer`: the product's watch, one session, 2 s and 1 s** | **39,867,720** | **36,208,300** | **102,864** | **352** | **1,990.3 / 2,044.5 / 2,068.8 ms** | 2,435.3 ms |
+| `exact`: the same with no tolerance | 43,405,080 | 39,745,660 | 110,405 | 360 | 1,980.7 / 2,000.0 / 2,026.6 ms | 2,015.2 ms |
+
+**At the TSC's 3.40 GHz, the rate the step-0 rig calibrated on this machine, the
+product's check cost its process 30.3 µs a tick over a process with no timer**, 25.4 µs
+of it the wake-up alone: about 53 ms an hour, or 0.0015 % of one of the 32 logical
+processors. Microsoft's page says *"Do not attempt to convert the CPU clock cycles
+returned by QueryThreadCycleTime to elapsed time"*, because the timer services behind
+the count vary from one processor to the next
+([QueryThreadCycleTime](https://learn.microsoft.com/windows/win32/api/realtimeapiset/nf-realtimeapiset-querythreadcycletime)),
+so the cycle counts are the measurement and the times are a reading of them. The busy
+loops above counted 3,213 and 3,240 thread cycles for each microsecond of wall time in
+the two runs, a little under that rate.
+
+**`GetProcessTimes` could not see it**: one 15.6 ms step in twelve minutes for each of
+the three timers, the one that did nothing included, and none for the control. The timer
+and the wake arms carried an instrument around each tick, two `QueryThreadCycleTime`
+calls and two clock reads, which the product does not; cold, that instrument alone cost
+a median of 3,060 cycles a tick.
+
+**The four reads cold**, from before the first to after the last in each of the 352
+ticks: median **2.6 µs**, p99 8.2 µs, max 566.2 µs, and median 12,240 cycles against the
+instrument's 3,060, so about 9,200 cycles, 2.7 µs, for the reads. In a tight loop the
+same reads cost about 70 to 100 ns; a check two seconds after the one before runs cold.
+
+**The tolerance is used, and it is visible in the spacing** `[MACHINE]`. With no
+tolerance the timer ran every 2,000.0 ms at the median and 360 times in 720 s. With the
+shipped second of room Windows ran it 44.5 ms after the period at the median, in both
+processes that had it, and the next period counted from there: 352 ticks in 720 s, never
+more than 68.8 ms late against the one before, and the first ticks 400 and 435 ms after
+they were due.
+
+**The timer outlives the thread that set it** `[MACHINE]`. In all three timed processes
+the timer was set from a thread that ended before the first tick, and it went on firing
+for the whole window. `SetWaitableTimerEx`'s page says it both ways: *"If there is no
+completion routine, then terminating the thread has no effect on the timer"*, and further
+down, *"If the thread that called SetWaitableTimerEx exits, the timer is canceled"*
+([SetWaitableTimerEx](https://learn.microsoft.com/windows/win32/api/synchapi/nf-synchapi-setwaitabletimerex)).
+`CoalescableTimer` sets none, so this is the case the first sentence describes.
+
+**No read was unknown.** No NULL window and no zero thread or pid in the 712 timed checks
+or in the ten million `GetForegroundWindow` calls, and every `GetLastInputInfo` answered.
+
+### The root's step-0 measurement of the bare reads, the same day
+
+Taken 2026-10-08 between 14:10Z and 14:40Z on the same machine and toolchain, before
+the product's check was written, with stand-ins that called `GetForegroundWindow`,
+`GetWindowThreadProcessId` and `GetLastInputInfo` and nothing else, timed with an
+`lfence; rdtsc` stub calibrated against the performance counter at 3.40 GHz, because
+`QueryPerformanceCounter` resolves only 100 ns here. Its numbers, which rest on a
+scratch folder and are copied into
+[the evidence](../../docs/evidence/2026-10-08-input-check/README.md):
+
+- **Tight loop, 5 × 100,000 ticks: median 50 ns, p99 90 to 100 ns**, mean 49.4 to
+  53.9 ns, two clock reads of 20 ns included; started by a task, the same. Per call,
+  `GetForegroundWindow` median 30 ns (p99 80 to 90 ns), `GetWindowThreadProcessId` 30 ns,
+  `GetLastInputInfo` 20 to 30 ns.
+- **One tick every 2 s for 300 s, in five processes: median 2.22 to 2.43 µs**; the 750
+  pooled had a median of 2.34 µs, p99 65.2 µs and max 734 µs.
+- **CPU over those five minutes**: `GetProcessTimes` read 0 for all five ticking
+  processes and for two controls that woke every 2 s and called nothing;
+  `QueryProcessCycleTime` read 3.13 to 3.45 ms for the ticking processes against 2.38
+  and 2.72 ms for the controls, so about 0.7 ms per five minutes for the reads and about
+  2.5 ms for the wake-ups.
+- No tick read a NULL foreground window.
+
+The two agree where they overlap: a few tens of nanoseconds a read hot, about two and a
+half microseconds for a check cold, and a wake-up that costs several times what the
+reads do. They do not agree on the wake-up's own price. Step 0's controls, which woke
+every 2 s and called nothing, used 2.38 and 2.72 ms of cycles in five minutes, 16 to
+18 µs a wake-up for the whole process; this entry's `wake` process used 34,067,320
+cycles for 352, about 28.5 µs each at the same rate, on the thread-pool wait the product
+uses. Step 0 does not say how its controls woke, so why they differ was not looked
+into.
+
+**How to re-establish it:** from
+[`docs/probes/2026-10-08-input-check`](../../docs/probes/2026-10-08-input-check/README.md),
+`dotnet publish InputCheck -c Release -r win-x64`, then
+`InputCheck.exe measure --out <dir> --seconds 720`, started detached so no console window
+opens. It sends no input and moves no focus; the four timed processes are its own
+children. Compare each table here with `summary.txt`.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

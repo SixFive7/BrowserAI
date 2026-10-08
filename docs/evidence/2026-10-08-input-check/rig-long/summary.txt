@@ -1,0 +1,22 @@
+Windows 26300.9550 (26H2), .NET 10.0.12, NativeAOT True, 32 logical processors, Stopwatch 10,000,000 Hz
+system timer: current 1 ms, coarsest 15.625 ms, finest 0.5 ms
+shipped check: every 2000 ms, tolerance 1000 ms
+
+Each read on its own, 100,000,000 calls, per call:
+  emptyLoop                                      100,000,000 x      0.3 ns       1 cycles   loop   0.030 s: thread kernel    15.6 ms user     15.6 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetForegroundWindow                            100,000,000 x     13.4 ns      45 cycles   loop   1.340 s: thread kernel     0.0 ms user   1312.5 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetWindowThreadProcessId                       100,000,000 x     23.2 ns      77 cycles   loop   2.318 s: thread kernel    62.5 ms user   2187.5 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetForegroundWindow+GetWindowThreadProcessId   100,000,000 x     48.5 ns     163 cycles   loop   4.845 s: thread kernel    46.9 ms user   4750.0 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetLastInputInfo                               100,000,000 x     16.5 ns      56 cycles   loop   1.648 s: thread kernel     0.0 ms user   1656.2 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetTickCount                                   100,000,000 x      6.7 ns      23 cycles   loop   0.665 s: thread kernel     0.0 ms user    656.2 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+
+VisibleInputWatch.Tick over this desktop, 100,000,000 checks, per check:
+  tickOneSession                                 100,000,000 x    104.7 ns     292 cycles   loop  10.468 s: thread kernel   203.1 ms user   8359.4 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  tickHundredSessions                            100,000,000 x     87.6 ns     284 cycles   loop   8.760 s: thread kernel   296.9 ms user   8078.1 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  scanOfAHundredSessions                          1,000,000 x    225.0 ns     762 cycles   loop   0.225 s: thread kernel    15.6 ms user    203.1 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+Hot checks with a hundred sessions, 1,000,000 of them, against the same instruments around nothing (cycles at 3240 a microsecond):
+  hotCheckHundredSessions  in batches of 100, per check: mean 105.4 median 105.0 p99 131.0 p99.9 209.0 max 306.0 ns;  mean 338.2 median 336.6 p99 425.0 p99.9 561.0 max 710.6 cycles
+                           one at a time: mean 120.5 median 100.0 p99 200.0 p99.9 200.0 max 2081100.0 ns
+  hotNothing               in batches of 100, per check: mean 10.3 median 10.0 p99 13.0 p99.9 43.0 max 205.0 ns;  mean 19.1 median 17.0 p99 27.2 p99.9 74.8 max 278.8 cycles
+                           one at a time: mean 22.2 median 0.0 p99 100.0 p99.9 100.0 max 14700.0 ns
+

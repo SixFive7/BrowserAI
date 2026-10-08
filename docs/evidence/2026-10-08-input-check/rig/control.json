@@ -1,0 +1,18 @@
+{
+  "arm": "control",
+  "toleranceMs": -1,
+  "productWatch": false,
+  "intervalMs": 2000,
+  "windowSeconds": 720.001,
+  "windowCycles": 3659420,
+  "windowKernelMs": 0,
+  "windowUserMs": 0,
+  "ticks": 0,
+  "firstTickMs": -1,
+  "nullWindows": 0,
+  "zeroThreads": 0,
+  "zeroPids": 0,
+  "lastInputRefused": 0,
+  "setterEndedBeforeFirstTick": false,
+  "spacingMs": []
+}

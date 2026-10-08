@@ -1,0 +1,5 @@
+mode=ticker noop=True intervalMs=2000 durationS=300 pid=91724 creation=2026-10-08T14:21:16.7014409Z begin=2026-10-08T14:21:16.9193362Z quitEarly=False sink=0
+wallSeconds=299.999 ticks=0 nullForeground=0 distinctForegroundOwners=0 idleMsMin=9223372036854775807 idleMsMax=-9223372036854775808
+windowCpu: kernel100ns=0 user100ns=0 totalMs=0.000
+windowCycles=8090980 tscPerSecond=3400023785 windowCpuMsFromCycles=2.3797
+lifetimeCpu: kernel100ns=468750 user100ns=2031250 lifetimeCycles=718399600 lifetimeCpuMsFromCycles=211.293

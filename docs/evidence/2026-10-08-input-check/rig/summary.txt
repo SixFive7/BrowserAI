@@ -1,0 +1,40 @@
+Windows 26300.9550 (26H2), .NET 10.0.12, NativeAOT True, 32 logical processors, Stopwatch 10,000,000 Hz
+system timer: current 1 ms, coarsest 15.625 ms, finest 0.5 ms
+shipped check: every 2000 ms, tolerance 1000 ms
+
+Each read on its own, 10,000,000 calls, per call:
+  emptyLoop                                      10,000,000 x      0.3 ns       1 cycles   loop   0.003 s: thread kernel    15.6 ms user      0.0 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetForegroundWindow                            10,000,000 x     15.6 ns      51 cycles   loop   0.156 s: thread kernel    15.6 ms user    125.0 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetWindowThreadProcessId                       10,000,000 x     23.5 ns      79 cycles   loop   0.235 s: thread kernel    15.6 ms user    218.8 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetForegroundWindow+GetWindowThreadProcessId   10,000,000 x     37.6 ns     125 cycles   loop   0.376 s: thread kernel    15.6 ms user    343.8 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetLastInputInfo                               10,000,000 x     13.0 ns      43 cycles   loop   0.130 s: thread kernel     0.0 ms user    125.0 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  GetTickCount                                   10,000,000 x      5.4 ns      18 cycles   loop   0.054 s: thread kernel     0.0 ms user     62.5 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+
+VisibleInputWatch.Tick over this desktop, 10,000,000 checks, per check:
+  tickOneSession                                 10,000,000 x     67.9 ns     228 cycles   loop   0.679 s: thread kernel     0.0 ms user    671.9 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  tickHundredSessions                            10,000,000 x     78.7 ns     253 cycles   loop   0.787 s: thread kernel     0.0 ms user    781.2 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+  scanOfAHundredSessions                          1,000,000 x    166.3 ns     564 cycles   loop   0.166 s: thread kernel     0.0 ms user    171.9 ms   nulls 0 zero threads 0 zero pids 0 refused 0
+Hot checks with a hundred sessions, 1,000,000 of them, against the same instruments around nothing (cycles at 3213 a microsecond):
+  hotCheckHundredSessions  in batches of 100, per check: mean 76.5 median 69.0 p99 131.0 p99.9 213.0 max 506.0 ns;  mean 244.1 median 217.6 p99 425.0 p99.9 530.4 max 1043.8 cycles
+                           one at a time: mean 81.1 median 100.0 p99 200.0 p99.9 300.0 max 119100.0 ns
+  hotNothing               in batches of 100, per check: mean 11.0 median 11.0 p99 13.0 p99.9 95.0 max 250.0 ns;  mean 20.4 median 20.4 p99 27.2 p99.9 68.0 max 343.4 cycles
+                           one at a time: mean 22.8 median 0.0 p99 100.0 p99.9 100.0 max 29400.0 ns
+
+Timed window: 720 s, four processes started together, each a child of this one, held by the handle that started it:
+  timer    pid 122812 started 2026-10-08T15:21:04.9952227Z
+  exact    pid 117980 started 2026-10-08T15:21:05.0094759Z
+  wake     pid 100832 started 2026-10-08T15:21:05.0181749Z
+  control  pid 126852 started 2026-10-08T15:21:05.0570606Z
+  timer    window   720.0 s: cycles    39,867,720, over control    36,208,300; CPU by GetProcessTimes   15.6 ms; ticks 352; exit 0
+           spacing ms: min 1990.3, median 2044.5, max 2068.8; first tick 2435.3 ms after the window opened; over control per tick 102,864 cycles
+           null windows 0, zero threads 0, zero pids 0, last-input refused 0; the setting thread had ended before the first tick: True
+           each tick's four reads, cold: median 2600.0 p99 8200.0 max 566200.0 mean 4488.4 ns over 352;  median 12240.0 p99 34680.0 max 1433100.0 mean 17134.3 cycles over 352
+  exact    window   720.0 s: cycles    43,405,080, over control    39,745,660; CPU by GetProcessTimes   15.6 ms; ticks 360; exit 0
+           spacing ms: min 1980.7, median 2000.0, max 2026.6; first tick 2015.2 ms after the window opened; over control per tick 110,405 cycles
+           null windows 0, zero threads 0, zero pids 0, last-input refused 0; the setting thread had ended before the first tick: True
+           each tick's four reads, cold: median 2600.0 p99 7500.0 max 451200.0 mean 4344.2 ns over 360;  median 11900.0 p99 36040.0 max 1419500.0 mean 17206.8 cycles over 360
+  wake     window   720.0 s: cycles    34,067,320, over control    30,407,900; CPU by GetProcessTimes   15.6 ms; ticks 352; exit 0
+           spacing ms: min 2000.0, median 2044.5, max 2067.6; first tick 2400.6 ms after the window opened; over control per tick 86,386 cycles
+           null windows 0, zero threads 0, zero pids 0, last-input refused 0; the setting thread had ended before the first tick: True
+           each tick's instrument around nothing, cold: median 0.0 p99 100.0 max 200.0 mean 28.4 ns over 352;  median 3060.0 p99 7480.0 max 18020.0 mean 3448.3 cycles over 352
+  control  window   720.0 s: cycles     3,659,420, over control             0; CPU by GetProcessTimes    0.0 ms; ticks 0; exit 0

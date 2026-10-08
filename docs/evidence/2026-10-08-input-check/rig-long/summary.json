@@ -1,0 +1,200 @@
+{
+  "environment": {
+    "taken": "2026-10-08T15:38:04.3917481Z",
+    "windowsBuild": "26300.9550 (26H2)",
+    "os": "Microsoft Windows 10.0.26300",
+    "runtime": ".NET 10.0.12",
+    "nativeAot": true,
+    "processors": 32,
+    "stopwatchFrequency": 10000000,
+    "intervalMs": 2000,
+    "toleranceMs": 1000,
+    "timerCoarsest100ns": 156250,
+    "timerFinest100ns": 5000,
+    "timerCurrent100ns": 10000
+  },
+  "calls": {
+    "emptyLoop": {
+      "calls": 100000000,
+      "loopSeconds": 0.0295,
+      "nanosecondsPerCall": 0.3,
+      "cyclesPerCall": 0.9,
+      "threadKernelMs": 15.625,
+      "threadUserMs": 15.625,
+      "cyclesPerMicrosecond": 3133.6,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "GetForegroundWindow": {
+      "calls": 100000000,
+      "loopSeconds": 1.3398,
+      "nanosecondsPerCall": 13.4,
+      "cyclesPerCall": 44.6,
+      "threadKernelMs": 0,
+      "threadUserMs": 1312.5,
+      "cyclesPerMicrosecond": 3329.8,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "GetWindowThreadProcessId": {
+      "calls": 100000000,
+      "loopSeconds": 2.318,
+      "nanosecondsPerCall": 23.18,
+      "cyclesPerCall": 77.4,
+      "threadKernelMs": 62.5,
+      "threadUserMs": 2187.5,
+      "cyclesPerMicrosecond": 3338.7,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "GetForegroundWindow\u002BGetWindowThreadProcessId": {
+      "calls": 100000000,
+      "loopSeconds": 4.8451,
+      "nanosecondsPerCall": 48.45,
+      "cyclesPerCall": 163,
+      "threadKernelMs": 46.875,
+      "threadUserMs": 4750,
+      "cyclesPerMicrosecond": 3363.7,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "GetLastInputInfo": {
+      "calls": 100000000,
+      "loopSeconds": 1.6477,
+      "nanosecondsPerCall": 16.48,
+      "cyclesPerCall": 55.6,
+      "threadKernelMs": 0,
+      "threadUserMs": 1656.25,
+      "cyclesPerMicrosecond": 3376.8,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "GetTickCount": {
+      "calls": 100000000,
+      "loopSeconds": 0.665,
+      "nanosecondsPerCall": 6.65,
+      "cyclesPerCall": 22.6,
+      "threadKernelMs": 0,
+      "threadUserMs": 656.25,
+      "cyclesPerMicrosecond": 3391.3,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "foregroundAtStart": 131174
+  },
+  "checks": {
+    "tickOneSession": {
+      "calls": 100000000,
+      "loopSeconds": 10.4684,
+      "nanosecondsPerCall": 104.68,
+      "cyclesPerCall": 292,
+      "threadKernelMs": 203.125,
+      "threadUserMs": 8359.375,
+      "cyclesPerMicrosecond": 2789.7,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "tickHundredSessions": {
+      "calls": 100000000,
+      "loopSeconds": 8.7597,
+      "nanosecondsPerCall": 87.6,
+      "cyclesPerCall": 283.8,
+      "threadKernelMs": 296.875,
+      "threadUserMs": 8078.125,
+      "cyclesPerMicrosecond": 3240.1,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "scanOfAHundredSessions": {
+      "calls": 1000000,
+      "loopSeconds": 0.225,
+      "nanosecondsPerCall": 224.99,
+      "cyclesPerCall": 762,
+      "threadKernelMs": 15.625,
+      "threadUserMs": 203.125,
+      "cyclesPerMicrosecond": 3386.7,
+      "nullWindows": 0,
+      "zeroThreads": 0,
+      "zeroPids": 0,
+      "lastInputRefused": 0
+    },
+    "hotCheckHundredSessions": {
+      "checks": 1000000,
+      "batch": 100,
+      "perCheckInBatchesNs": {
+        "n": 10000,
+        "mean": 105.4,
+        "min": 65,
+        "median": 105,
+        "p99": 131,
+        "p999": 209,
+        "max": 306
+      },
+      "perCheckInBatchesCycles": {
+        "n": 10000,
+        "mean": 338.22,
+        "min": 207.4,
+        "median": 336.6,
+        "p99": 425,
+        "p999": 561,
+        "max": 710.6
+      },
+      "oneAtATimeNs": {
+        "n": 1000000,
+        "mean": 120.46,
+        "min": 0,
+        "median": 100,
+        "p99": 200,
+        "p999": 200,
+        "max": 2081100
+      }
+    },
+    "hotNothing": {
+      "checks": 1000000,
+      "batch": 100,
+      "perCheckInBatchesNs": {
+        "n": 10000,
+        "mean": 10.28,
+        "min": 8,
+        "median": 10,
+        "p99": 13,
+        "p999": 43,
+        "max": 205
+      },
+      "perCheckInBatchesCycles": {
+        "n": 10000,
+        "mean": 19.07,
+        "min": 13.6,
+        "median": 17,
+        "p99": 27.2,
+        "p999": 74.8,
+        "max": 278.8
+      },
+      "oneAtATimeNs": {
+        "n": 1000000,
+        "mean": 22.19,
+        "min": 0,
+        "median": 0,
+        "p99": 100,
+        "p999": 100,
+        "max": 14700
+      }
+    }
+  }
+}

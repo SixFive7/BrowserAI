@@ -1,0 +1,9 @@
+mode=tickbench ticks=100000 qpcFrequency=10000000 tscPerSecond=3400024310 pid=75748 sink=0
+timedLoopElapsedSeconds=0.007656 meanNsPerTickFromElapsed=76.6 (includes two clock reads per tick)
+timedLoop threadCycles=25987220 processCycles=26068820 kernel100ns=0 user100ns=0 nullForeground=0
+clockPairBaseline n=100000 minNs=10.0 p50Ns=20.0 p90Ns=20.0 p99Ns=20.0 p999Ns=30.0 maxNs=7559.9 meanNs=18.6
+tickTsc n=100000 minNs=40.0 p50Ns=50.0 p90Ns=50.0 p99Ns=90.0 p999Ns=220.0 maxNs=10399.9 meanNs=50.5
+tickQpc100ns n=100000 minNs=0.0 p50Ns=0.0 p90Ns=100.0 p99Ns=100.0 p999Ns=100.0 maxNs=6100.0 meanNs=50.0
+GetForegroundWindow n=100000 minNs=20.0 p50Ns=30.0 p90Ns=30.0 p99Ns=80.0 p999Ns=320.0 maxNs=5330.0 meanNs=29.5
+GetWindowThreadProcessId n=100000 minNs=20.0 p50Ns=30.0 p90Ns=30.0 p99Ns=30.0 p999Ns=50.0 maxNs=110.0 meanNs=29.0
+GetLastInputInfo n=100000 minNs=20.0 p50Ns=20.0 p90Ns=30.0 p99Ns=30.0 p999Ns=40.0 maxNs=26839.8 meanNs=25.0

@@ -1,0 +1,167 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI.App\bin\Release\net10.0-windows\BrowserAI.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI\bin\Release\net10.0-windows\BrowserAI.Server.dll
+  BrowserAI.TestProbe -> C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.TestProbe\bin\Release\net10.0-windows\BrowserAI.TestProbe.dll
+  BrowserAI.Tests -> C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\bin\Release\net10.0-windows\BrowserAI.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:01:30.97
+failed NoNewInputTellsNobody (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.NoNewInputTellsNobody() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:211
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheExpectedSizesAreMicrosoftsOwn (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: Neither product assembly declares BrowserAI.Interop.InputActivity, so the oracle cannot check the structs it nests. Either the type was renamed, in which case update this test, or it was deleted, in which case delete its rows.
+    at BrowserAI.Tests.InteropLayoutTests.Nested(String owner, String nested) in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:135
+    at BrowserAI.Tests.InteropLayoutTests.TheExpectedSizesAreMicrosoftsOwn() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:285
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed OneCheckMakesTheSameFourReadsForAHundredSessionsAsForOne (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.OneCheckMakesTheSameFourReadsForAHundredSessionsAsForOne() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:356
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheProductsWatchRunsATimerOnlyWhileASessionIsRegistered (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true
+  but found False
+  
+  at Assert.That(watch.IsRunning).IsTrue()
+    at BrowserAI.Tests.VisibleInputWatchTests.TheProductsWatchRunsATimerOnlyWhileASessionIsRegistered() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:599
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheOracleReachesEveryStruct (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: Neither product assembly declares BrowserAI.Interop.InputActivity, so the oracle cannot check the structs it nests. Either the type was renamed, in which case update this test, or it was deleted, in which case delete its rows.
+    at BrowserAI.Tests.InteropLayoutTests.Nested(String owner, String nested) in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:135
+    at BrowserAI.Tests.InteropLayoutTests.TheOracleReachesEveryStruct() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:174
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed InputWhileAnotherWindowIsInFrontTellsNobody (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.InputWhileAnotherWindowIsInFrontTellsNobody() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:106
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed OneTimerRunsOnlyWhileASessionIsRegistered (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be 1
+  but found 0
+  
+  at Assert.That(timers.Started).IsEqualTo(1)
+    at BrowserAI.Tests.VisibleInputWatchTests.OneTimerRunsOnlyWhileASessionIsRegistered() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:303
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed InputWhileTheSessionsWindowIsInFrontTellsThatSessionOnce (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.InputWhileTheSessionsWindowIsInFrontTellsThatSessionOnce() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:75
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheComparisonHoldsAcrossTheTickCountWrappingToZero (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.TheComparisonHoldsAcrossTheTickCountWrappingToZero() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:242
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheShippedCheckIsEveryFiveSecondsWithASecondOfRoom (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be 00:00:05
+  but found 00:00:00
+  
+  at Assert.That(SessionTimes.VisibleInputCheckInterval).IsEqualTo(TimeSpan.FromSeconds(5))
+    at BrowserAI.Tests.VisibleInputWatchTests.TheShippedCheckIsEveryFiveSecondsWithASecondOfRoom() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:478
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ASessionWithNoKnownBrowserIsNeverTold (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.ASessionWithNoKnownBrowserIsNeverTold() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:277
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed AZeroThreadAttributesNothingAndStillMovesTheBaseline (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.AZeroThreadAttributesNothingAndStillMovesTheBaseline() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:176
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed TheShippedTimerFiresOnceAnIntervalAndStopsWhenDisposed (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: period ('00:00:00') must be greater than or equal to '00:00:00.0010000'. (Parameter 'period')
+  Actual value was 00:00:00.
+    at System.ArgumentOutOfRangeException.ThrowLess[T](T value, T other, String paramName)
+    at System.ArgumentOutOfRangeException.ThrowIfLessThan[T](T value, T other, String paramName)
+    at BrowserAI.Interop.CoalescableTimer.Start(TimeSpan period, TimeSpan tolerance, Action tick) in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI\Interop\CoalescableTimer.cs:85
+    at BrowserAI.Tests.VisibleInputWatchTests.TheShippedTimerFiresOnceAnIntervalAndStopsWhenDisposed() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:532
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ANullWindowInFrontAttributesNothingAndStillMovesTheBaseline (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.ANullWindowInFrontAttributesNothingAndStillMovesTheBaseline() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:138
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ATimerThatCannotStartRefusesNoSession (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be 1
+  but found 0
+  
+  at Assert.That(log.Records.Count(record => record.EventId.Id is 102 && record.Level is LogLevel.Warning)).IsEqualTo(1)
+    at BrowserAI.Tests.VisibleInputWatchTests.ATimerThatCannotStartRefusesNoSession() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:452
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed ASessionThatThrowsStopsNeitherTheOthersNorTheNextCheck (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+    at System.Collections.Generic.List`1.get_Item(Int32 index)
+    at BrowserAI.Tests.VisibleInputWatchTests.FakeTimers.get_Last() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:692
+    at BrowserAI.Tests.VisibleInputWatchTests.ASessionThatThrowsStopsNeitherTheOthersNorTheNextCheck() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\VisibleInputWatchTests.cs:409
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed EveryStructHasTheSizeWindowsSaysItHas (143ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: Neither product assembly declares BrowserAI.Interop.InputActivity, so the oracle cannot check the structs it nests. Either the type was renamed, in which case update this test, or it was deleted, in which case delete its rows.
+    at BrowserAI.Tests.InteropLayoutTests.Nested(String owner, String nested) in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:135
+    at BrowserAI.Tests.InteropLayoutTests.EveryStructHasTheSizeWindowsSaysItHas() in C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\InteropLayoutTests.cs:251
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\payload\payload.json
+  Chromium            PRESENT  C:\Users\<user>\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\<user>\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\Releases\BrowserAI.app-<version>-full.nupkg
+  client CLI          ABSENT   claude.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\payload\registerai\RegisterAI.exe'
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\sess-input rev-parse --is-inside-work-tree said true
+  Codex CLI           ABSENT   codex.exe, not found: the payload's RegisterAI, which finds the clients, is not at 'C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\payload\registerai\RegisterAI.exe'
+  publish freshness   NOT ESTABLISHED  nothing has been published: there is no directory at 'C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish' -- nothing was compared, so no line in this log says whether a binary matches the tree
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\bin\Release\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\bin\Release\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/(VisibleInputWatchTests|InteropLayoutTests)/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 131,304 MiB (51.6%) · end 131,276 MiB (51.6%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 0 events, 0 about visible root windows and none of them this run's, 151 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 2 scans, 0 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=92552 created=134359449177212440), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  5 capability above is ABSENT and no test in this run asked for it.
+      Nothing was degraded, and nothing here proves it could have been exercised.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\bin\Release\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\.work\wt\sess-input\tests\BrowserAI.Tests\bin\Release\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 21
+  failed: 17
+  succeeded: 4
+  skipped: 0
+  duration: 1s 854ms

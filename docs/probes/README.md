@@ -187,6 +187,13 @@ holds Python and Markdown only, which the scan does not read, and selects no
 process. **The scan would still flag eleven files, and only `observe.ps1` selects
 a process by name.**
 
+⚠️ *Added 2026-10-08, later the same day.* **Thirty-seven**, counted as its
+subdirectories, when [`2026-10-08-input-check`](2026-10-08-input-check/README.md)
+arrived with the visible-input check. The new rig carries none of the eight
+spellings `ProcessSelection` keys on, by a search that found two in `observe.ps1`,
+the positive control, so the scan has nothing to read in it and it was not put to
+the scan. **It adds nothing to what the scan would flag.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -265,3 +272,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-look`](2026-10-03-look/README.md) | A picture of a headless session taken beside an agent's call: what it takes from the agent's next answer, what it leaves in the session's folder, and what one picture costs in each family | |
 | [`2026-10-04-lifetime`](2026-10-04-lifetime/README.md) | A desktop of the rig's own for a headed browser, with a window census over both desktops, row 152's headed arms run on it, and a 50,000 px page screenshotted full-page through the published server | |
 | [`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) | The opening Claude Code sends since 2026-09-30, sent to a BrowserAI server by hand, and Claude Code's own logs and transcripts counted, read-only, for which opening each connection took and what came of it | |
+| [`2026-10-08-input-check`](2026-10-08-input-check/README.md) | What the visible-input check costs: each read and the product's whole check in tight loops, and the shipped coalescable timer over twelve minutes beside the same timer with no tolerance, a timer that wakes for nothing and a process with no timer | |

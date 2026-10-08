@@ -1,0 +1,39 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<!--
+  The input-check rig. Published NativeAOT, as the product is, so the check runs on
+  the thread pool the product runs on: a NativeAOT build uses the Windows thread
+  pool by default. The four product files below are compiled in as they stand in
+  src/, so what is measured is the shipped check and the shipped timer.
+
+  Kept out of the repository's build by the three empty files one level up, and out
+  of BrowserAI.slnx by not being named there.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishAot>true</PublishAot>
+    <RootNamespace>InputCheck</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\..\src\BrowserAI.Core\Sessions\SessionTimes.cs" Link="Product\SessionTimes.cs" />
+    <Compile Include="..\..\..\..\src\BrowserAI\Sessions\VisibleInputWatch.cs" Link="Product\VisibleInputWatch.cs" />
+    <Compile Include="..\..\..\..\src\BrowserAI\Interop\InputActivity.cs" Link="Product\InputActivity.cs" />
+    <Compile Include="..\..\..\..\src\BrowserAI\Interop\CoalescableTimer.cs" Link="Product\CoalescableTimer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The product's logging abstraction and its source generator, at whatever 10.x
+         restores: the watch logs through it, and the rig hands it a NullLogger. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+  </ItemGroup>
+</Project>
