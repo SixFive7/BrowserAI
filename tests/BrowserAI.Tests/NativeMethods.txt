@@ -38,6 +38,10 @@
 // when in COM interface mode`, measured 2026-09-25 -- so the hand-written VARIANT's
 // oracle is the framework's own ComVariant, the way OVERLAPPED's is
 // NativeOverlapped.
+//
+// AND LASTINPUTINFO SINCE 2026-10-08, added by addition: the struct the visible-input
+// check (F4 a) hands GetLastInputInfo, which Windows refuses unless cbSize is set,
+// and whose dwTime is the whole of what the check reads.
 
 STARTUPINFOW
 STARTUPINFOEXW
@@ -47,6 +51,7 @@ IO_COUNTERS
 JOBOBJECT_BASIC_LIMIT_INFORMATION
 JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 TOKEN_USER
+LASTINPUTINFO
 ITaskService
 ITaskFolder
 IRegisteredTask

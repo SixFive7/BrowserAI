@@ -134,4 +134,55 @@ internal static class SessionTimes
     /// </para>
     /// </remarks>
     public static TimeSpan BrowserCloseCap { get; } = ChromiumCookieCommitInterval * 2;
+
+    /// <summary>
+    /// How often a visible session's browser window is checked for a person's keyboard
+    /// or mouse input: every <b>two seconds</b>, by one timer for every visible session
+    /// in the process.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>CHOSEN 2026-10-08, and not measured.</b> <i>"Every few seconds"</i> is the
+    /// maintainer's own phrase for the check (root, 2026-10-08, F4), and the root's
+    /// step-0 measurement of the bare reads that day was taken at exactly this cadence,
+    /// one check every two seconds for five minutes. Two seconds is short against the
+    /// shortest idle countdown an agent can set, one minute, so input is counted at most
+    /// an interval and its tolerance after it was made; and it is more than one second,
+    /// which is what Microsoft's power guidance asks of a periodic timer: <i>"set the
+    /// interval to a value greater than one second"</i>
+    /// (<see href="https://learn.microsoft.com/windows/win32/sync/waitable-timer-objects">Waitable Timer Objects</see>).
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A new number for the numbers index of decision F3, which does not exist
+    /// yet.</b> When it does, this and <see cref="VisibleInputCheckTolerance"/> are two
+    /// of its rows.
+    /// </para>
+    /// <para>
+    /// What a check costs, and what the timer costs over more than ten minutes against a
+    /// process with none, was measured on 2026-10-08 and is in
+    /// <see href="../../../kb/windows/processes.md">kb/windows/processes.md</see>.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan VisibleInputCheckInterval { get; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// How late Windows may run each visible-input check so that its wake-up can share
+    /// one with another timer's: <b>one second</b>, half the interval.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>CHOSEN 2026-10-08, and not measured.</b> It is the tolerable delay handed to
+    /// <c>SetWaitableTimerEx</c>, which is what lets Windows fold the check's wake-up
+    /// into another timer's; <c>SetTimer</c>, <c>CreateTimerQueueTimer</c> and
+    /// <c>Sleep</c> offer no such room
+    /// (<see href="https://learn.microsoft.com/windows-hardware/test/assessments/results-for-the-idle-energy-efficiency-assessment#issues">Idle Energy Efficiency Assessment</see>).
+    /// With one second of room, two checks are at most three seconds apart on the
+    /// timer's own terms, a twentieth of the shortest countdown.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A new number for the numbers index of decision F3, which does not exist
+    /// yet</b>, beside <see cref="VisibleInputCheckInterval"/>.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan VisibleInputCheckTolerance { get; } = TimeSpan.FromSeconds(1);
 }

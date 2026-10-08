@@ -105,6 +105,11 @@ internal sealed class InteropLayoutTests
         // Added 2026-10-03 with the session host's pipe (Q366 b): the OVERLAPPED
         // its pending connect waits on, so an idle pipe holds no thread.
         (nameof(NamedPipes), "Overlapped", 32),
+
+        // Added 2026-10-08 with the visible-input check (F4 a): the LASTINPUTINFO
+        // GetLastInputInfo fills, the first hand-written struct in the server's
+        // own assembly since JobObject moved to BrowserAI.Core.
+        (nameof(InputActivity), "LastInputInfo", 8),
     ];
 
     /// <summary>
@@ -120,8 +125,16 @@ internal sealed class InteropLayoutTests
         // into is not a property this oracle is about, and pinning it here would
         // turn the next move into a red for a reason that has nothing to do
         // with Windows' layout.
+        //
+        // ⚠️ CORRECTED 2026-10-08 (previously only the two lookups below the
+        // first, described above as the server's and the library's). JobObject
+        // moved to BrowserAI.Core on 2026-10-03, so both of them searched the
+        // library and a struct nested in a server type was unreachable; the
+        // visible-input check's LASTINPUTINFO was the first to need one, and the
+        // oracle threw for it until the server's own assembly was searched too.
         var ownerType =
-            typeof(JobObject).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
+            typeof(InputActivity).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
+            ?? typeof(JobObject).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
             ?? typeof(NativeFile).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
             ?? throw new InvalidOperationException(
                 $"Neither product assembly declares BrowserAI.Interop.{owner}, so the oracle cannot "
@@ -153,7 +166,9 @@ internal sealed class InteropLayoutTests
         // Corrected 2026-09-25 to 11 (previously 10): the Task Scheduler's VARIANT.
         // Corrected 2026-10-03 to 12 (previously 11): the session host's pipe
         // brought a second OVERLAPPED.
-        await Assert.That(Structs.Length).IsEqualTo(12);
+        // Corrected 2026-10-08 to 13 (previously 12): the visible-input check's
+        // LASTINPUTINFO.
+        await Assert.That(Structs.Length).IsEqualTo(13);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -260,9 +275,16 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("Overlapped")).IsEqualTo(32);
         await Assert.That(SizeOfMetadata("TokenUser")).IsEqualTo(16);
         await Assert.That(SizeOfMetadata("Variant")).IsEqualTo(24);
+        await Assert.That(SizeOfMetadata("LastInputInfo")).IsEqualTo(8);
 
         // VARIANT's value begins after the type and three reserved words.
         await Assert.That((int)Marshal.OffsetOf(Nested(nameof(TaskSchedulerInterop), "Variant"), "Value")).IsEqualTo(8);
+
+        // LASTINPUTINFO's tick follows its size, on both sides. It is the one field
+        // the visible-input check reads, and a tick read from the wrong four bytes
+        // is a person's input never seen, or seen on every check.
+        await Assert.That((int)Marshal.OffsetOf(Nested(nameof(InputActivity), "LastInputInfo"), "Time")).IsEqualTo(4);
+        await Assert.That((int)Marshal.OffsetOf<W.UI.Input.KeyboardAndMouse.LASTINPUTINFO>("dwTime")).IsEqualTo(4);
     }
 
     /// <summary>
@@ -426,6 +448,7 @@ internal sealed class InteropLayoutTests
         // The second row whose oracle is the framework: CsWin32 will not emit
         // VARIANT in COM interface mode, and ComVariant is Microsoft's own.
         "Variant" => sizeof(System.Runtime.InteropServices.Marshalling.ComVariant),
-        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the ten."),
+        "LastInputInfo" => sizeof(W.UI.Input.KeyboardAndMouse.LASTINPUTINFO),
+        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the eleven."),
     };
 }
