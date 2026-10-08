@@ -13,13 +13,16 @@ namespace BrowserAI.App.Page;
 /// only.
 /// </para>
 /// <para>
-/// <b>The script does four things and no more</b>: it keeps one event stream open
+/// <b>The script does five things and no more</b>: it keeps one event stream open
 /// and replaces the page's main part with each state it is sent; it closes the tab
 /// when a newer one has replaced it (Q337 a), falling back to a sentence when the
 /// browser will not close it; it shows the last thing the coordinator says before
-/// it goes; and it posts the action a button names, as JSON, to this origin. It
-/// keeps which <i>Show details</i> are open and which boxes are ticked across a
-/// replacement, so a state arriving mid-click does not undo the click.
+/// it goes; it posts the action a button names, as JSON, to this origin; and once
+/// a second it rewrites every countdown from the deadline the element carries,
+/// <c>data-ends-at</c>, in milliseconds since 1970 (added 2026-10-08 with the
+/// update page). It keeps which <i>Show details</i> are open and which boxes are
+/// ticked across a replacement, so a state arriving mid-click does not undo the
+/// click.
 /// </para>
 /// </remarks>
 internal static class PageAssets
@@ -43,6 +46,11 @@ internal static class PageAssets
         .warning { color: #b25000; }
         .muted { opacity: 0.75; }
         .note { border-left: 3px solid color-mix(in srgb, currentColor 40%, transparent); padding-left: 0.8rem; }
+        .holders > li { list-style: none; margin: 0.6rem 0; }
+        .holders { padding-left: 0; }
+        .countdown { font-variant-numeric: tabular-nums; font-weight: 600; }
+        details.entry, p.entry { margin: 0.4rem 0; }
+        details.entry > summary { cursor: pointer; }
         #banner { border: 1px solid currentColor; padding: 0.6rem 0.8rem; }
         footer { margin-top: 2.5rem; font-size: 0.9em; }
         """;
@@ -87,6 +95,19 @@ internal static class PageAssets
           events.onerror = () => {
             if (!finished) { say('BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.'); }
           };
+
+          const pad = (value) => String(value).padStart(2, '0');
+          const left = (milliseconds) => {
+            const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return hours > 0 ? hours + ':' + pad(minutes) + ':' + pad(seconds % 60) : minutes + ':' + pad(seconds % 60);
+          };
+          setInterval(() => {
+            for (const element of main.querySelectorAll('[data-ends-at]')) {
+              element.textContent = left(Number(element.dataset.endsAt) - Date.now());
+            }
+          }, 1000);
 
           document.addEventListener('click', async (event) => {
             const button = event.target.closest('button[data-action]');

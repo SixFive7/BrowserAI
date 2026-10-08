@@ -109,6 +109,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      THE CHANGELOG SHIPPED INSIDE THE BUILD, for the dashboard's changelog page,
+      which the installed toast's Changelog opens (T, decided 2026-10-08). It is the
+      file the build was made from, so a development build, which has no release
+      page, shows what it carries too. Embedded, so the executable stays one file.
+    -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="BrowserAI.CHANGELOG.md" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The one executable calls the person's start, the coordinator and the tab,
          and the suite asserts on them; both see internals, as BrowserAI.Core's
          two readers always have. -->

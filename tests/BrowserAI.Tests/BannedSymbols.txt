@@ -12,6 +12,10 @@
 ; appears over whatever the person at the machine is doing and nothing in the run
 ; says so. The release-run exception, one suppressed toast read back from the
 ; notification history, arrives with the toast work and not before.
+; Added 2026-10-08 by addition: the toast work arrived WITHOUT it. The one-binary
+; build's rule is that nothing a run starts shows a toast, a suppressed one in the
+; Notification Centre included, so ToastInteropTests composes a real toast object
+; and reads every setting back without ever showing it.
 ;
 ; ⚠️ WHAT THIS FILE CAN AND CANNOT SEE, stated here because an entry for a type
 ; that does not resolve matches nothing and reads as coverage anyway, which is
@@ -39,3 +43,18 @@ M:BrowserAI.App.Interop.ShellInterop.OpenUrl(System.String);No test opens a real
 M:BrowserAI.App.Interop.ShellInterop.OpenInExplorer(System.String);No test opens a real Explorer window. Hand the page a desktop that records the folder it was asked to open.
 M:BrowserAI.App.Interop.ShellInterop.PickFolder(System.IntPtr,System.String);No test opens a real folder picker. Hand the caller a picker that answers what the test decides.
 T:BrowserAI.App.Page.DesktopPageHost;No test uses the page's real desktop: every call it queues opens something on the person's screen. Hand the page a desktop that records what it was asked for.
+;
+; NO TEST MAKES THE PRODUCT'S OWN TOAST SURFACE OR ITS ACTIVATOR'S REAL REGISTRATION.
+; Added 2026-10-08 with the update toasts (T). WindowsToastSurface is the one type
+; that shows a toast, and it is made by its constructor or by the two factories
+; below; every arm hands UpdateToasts a surface that records what it was asked.
+; Its static Compose builds a toast object and shows nothing, which is how
+; ToastInteropTests reads every setting back, so the type itself is not banned. The
+; activator's registration is written under a scratch key the arm hands
+; ToastActivatorRegistration.Register, never under the user's own classes, and no
+; arm registers the activator's class with COM.
+M:BrowserAI.Updates.WindowsToastSurface.#ctor(System.String);No ordinary test raises a real toast: hand UpdateToasts a surface that records what it was asked.
+M:BrowserAI.Updates.WindowsToastSurface.ForThisProcess;No ordinary test raises a real toast. Same rule as the surface's constructor.
+M:BrowserAI.Updates.UpdateToasts.ForThisProcess(BrowserAI.Updates.IUpdateHolds,BrowserAI.Hosting.IAppPaths,Microsoft.Extensions.Logging.ILogger);No ordinary test raises a real toast: it makes the product's own surface. Construct UpdateToasts with a recording one.
+M:BrowserAI.Updates.ToastActivatorRegistration.UserClasses;No test writes the activator's registration where Windows reads it: hand Register a scratch key under HKCU\Software\BrowserAI.Tests.
+M:BrowserAI.Updates.ToastActivation.Receive(System.String,Microsoft.Extensions.Logging.ILogger);No test registers the activator's class with COM: a registered class takes real clicks. Hand a click to its class object in process.

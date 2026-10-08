@@ -123,7 +123,13 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private readonly TimeProvider _clock;
     private readonly TimeSpan _linger;
     private readonly ILogger _logger;
-    private readonly Dictionary<PageKind, PageNote?> _notes = new() { [PageKind.Status] = null, [PageKind.Sessions] = null };
+    private readonly Dictionary<PageKind, PageNote?> _notes = new()
+    {
+        [PageKind.Status] = null,
+        [PageKind.Sessions] = null,
+        [PageKind.Update] = null,
+        [PageKind.Changelog] = null,
+    };
 
     private Served? _current;
     private readonly Occasion _firstOccasion;
@@ -138,12 +144,23 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private RegistrationSnapshot? _registration;
     private string? _registering;
     private bool _readingRegistration;
+    private bool _installingNow;
+    private string? _holdsSignature;
 
     /// <summary>
     /// The coordinator's hold on the session host, or <see langword="null"/> where
     /// there is none: an install stops the host through it (Q366 b).
     /// </summary>
     internal ISessionHostHold? SessionHost { get; init; }
+
+    /// <summary>
+    /// What holds a downloaded update, and the person's install-now, or
+    /// <see langword="null"/> where nothing reports them: the update page says so.
+    /// </summary>
+    internal IUpdateHolds? Holds { get; init; }
+
+    /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
+    internal ChangelogSection? Changelog { get; init; }
 
     /// <summary>A page for one coordinator.</summary>
     /// <param name="facts">What does not change.</param>
@@ -257,14 +274,19 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
                 // Started here, under the lock and synchronously: the pipe's thread
                 // is the caller, it has a bound of its own, and a second hand-out
                 // must find this listener and not start another.
-                _current = new Served(this, _clock, _linger, _wake, _logger);
+                _current = new Served(this, _clock, _linger, _wake, _logger)
+                {
+                    // While a listener is up, what holds the update is read once a
+                    // second, and every tab is sent a new state when it has changed.
+                    HoldsWatch = Holds is null ? null : _clock.CreateTimer(_ => WatchHolds(), null, HoldsWatchPeriod, HoldsWatchPeriod),
+                };
             }
 
             var tab = _current.Tabs.HandOut()!.Value;
 
             _occasionTab ??= (_current, tab);
 
-            var route = kind is PageKind.Sessions ? "sessions" : string.Empty;
+            var route = PageNames.RouteOf(kind);
 
             return string.Create(CultureInfo.InvariantCulture, $"{_current.Listener.Gate.Root}{route}?tab={tab}");
         }
@@ -346,9 +368,13 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     /// <returns>The view.</returns>
     public PageView View(PageKind kind)
     {
+        // Read outside the lock: the background answers it from its own memory, and
+        // a page that waited on the background under its own lock would wait twice.
+        var holds = kind is PageKind.Update ? ReadHolds() : null;
+
         lock (_gate)
         {
-            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering);
+            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering, holds, Changelog);
         }
     }
 
@@ -376,6 +402,14 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
             case "sessions" when get:
                 await RefreshSessionsAsync(context.RequestAborted).ConfigureAwait(false);
                 await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Sessions, query)).ConfigureAwait(false);
+                return true;
+
+            case "update" when get:
+                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Update, query)).ConfigureAwait(false);
+                return true;
+
+            case "changelog" when get:
+                await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Changelog, query)).ConfigureAwait(false);
                 return true;
 
             case "page.css" when get:
@@ -421,6 +455,13 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
         ending?.Dispose();
     }
+
+    /// <summary>
+    /// How often a listener reads what holds the update, to send the tabs a new
+    /// state when it has changed: <b>once a second</b>, the unit the countdowns count
+    /// in. The countdowns themselves run in the page's script.
+    /// </summary>
+    internal static TimeSpan HoldsWatchPeriod { get; } = TimeSpan.FromSeconds(1);
 
     /// <summary>Stops the listener, waiting on the calling thread.</summary>
     public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -487,7 +528,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private async Task StreamAsync(HttpContext context, string query)
     {
         var tabs = Tabs;
-        var page = string.Equals(PageGate.QueryValue(query, "page"), "sessions", StringComparison.Ordinal) ? PageKind.Sessions : PageKind.Status;
+        var page = PageNames.Parse(PageGate.QueryValue(query, "page"));
 
         if (tabs?.Connect(TabOf(query), page) is not { } stream)
         {
@@ -550,6 +591,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         var taken = action switch
         {
             "check-updates" => StartCheck(),
+            "install-now" => StartInstallNow(String(request, "version")),
             "stop-check" => StopCheck(),
             "install-update" => StartInstall(String(request, "version")),
             "open-folder" => OpenFolder(String(request, "folder")),
@@ -570,6 +612,108 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
         context.Response.StatusCode = StatusCodes.Status204NoContent;
         return true;
+    }
+
+    /// <summary>Reads what holds the update, or <see langword="null"/> where nothing reports it or the read failed.</summary>
+    /// <returns>The snapshot.</returns>
+    private UpdateHoldSnapshot? ReadHolds()
+    {
+        if (Holds is not { } holds)
+        {
+            return null;
+        }
+
+        try
+        {
+            return holds.Read();
+        }
+#pragma warning disable CA1031 // A read that failed is a page that says so, never a background that stops.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PageServiceLog.HoldsUnread(_logger, failure);
+            return null;
+        }
+    }
+
+    /// <summary>One second of the watch: a new state for every tab when what holds the update has changed.</summary>
+    private void WatchHolds()
+    {
+        var signature = UpdatePageContent.Signature(ReadHolds(), _clock.GetUtcNow());
+        bool changed;
+
+        lock (_gate)
+        {
+            changed = !string.Equals(signature, _holdsSignature, StringComparison.Ordinal);
+            _holdsSignature = signature;
+        }
+
+        if (changed)
+        {
+            Push();
+        }
+    }
+
+    /// <summary>The update page's install button: the person's install-now, through the background.</summary>
+    /// <param name="version">The version the page showed.</param>
+    /// <returns>Whether the request was taken.</returns>
+    private bool StartInstallNow(string? version)
+    {
+        if (Holds is not { } holds || version is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        lock (_gate)
+        {
+            if (_installingNow)
+            {
+                return true;
+            }
+
+            _installingNow = true;
+            _notes[PageKind.Update] = new PageNote($"Closing every session and connection, then installing BrowserAI {version}.");
+        }
+
+        Push();
+        _ = Task.Run(() => InstallNowAsync(holds, version), CancellationToken.None);
+        return true;
+    }
+
+    private async Task InstallNowAsync(IUpdateHolds holds, string version)
+    {
+        PageNote? refused;
+
+        try
+        {
+            // Bounded by the update's own tripwire: closing every session is each one's
+            // minute at most, and then the hand-over.
+            using var bounded = new CancellationTokenSource(UpdateService.CrashTripwire, _clock);
+
+            refused = await holds.InstallNowAsync(version, bounded.Token).ConfigureAwait(false) is { } why
+                ? new PageNote(why)
+                : null;
+        }
+#pragma warning disable CA1031 // An install that threw is a sentence on the page; the background keeps running.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            refused = new PageNote($"BrowserAI {version} was not installed.", failure.Message);
+        }
+
+        lock (_gate)
+        {
+            _installingNow = false;
+            _notes[PageKind.Update] = refused;
+        }
+
+        if (refused is null)
+        {
+            Tell($"BrowserAI is installing {version}. This tab has stopped, and BrowserAI starts again by itself when the install is done.");
+            return;
+        }
+
+        Push();
     }
 
     private static string? String(JsonElement request, string name) =>
@@ -1167,8 +1311,12 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
         public PageTabs Tabs { get; }
 
+        /// <summary>The once-a-second read of what holds the update, or <see langword="null"/> where nothing reports it.</summary>
+        public ITimer? HoldsWatch { get; init; }
+
         public void Dispose()
         {
+            HoldsWatch?.Dispose();
             Listener.Dispose();
             Tabs.Dispose();
         }
@@ -1185,5 +1333,8 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
 
         [LoggerMessage(EventId = 7013, Level = LogLevel.Information, Message = "An update check that was given up came back ({Stage}), and nobody was waiting for it.")]
         public static partial void CheckDropped(ILogger logger, UpdateStage stage);
+
+        [LoggerMessage(EventId = 7014, Level = LogLevel.Warning, Message = "What holds the update could not be read for the page.")]
+        public static partial void HoldsUnread(ILogger logger, Exception failure);
     }
 }

@@ -33,6 +33,12 @@ internal enum StartMode
     /// (Q366 b). It shows nothing.
     /// </summary>
     StartHost,
+
+    /// <summary>By a person, for the update page: <c>--update</c>, what the ready toast's <i>Install now</i> leads to.</summary>
+    Update,
+
+    /// <summary>By a person, for the changelog page: <c>--changelog</c>, what the installed toast's <i>Changelog</i> leads to.</summary>
+    Changelog,
 }
 
 /// <summary>Reads the start mode out of the arguments.</summary>
@@ -63,6 +69,8 @@ internal static class StartModes
             : args.Contains(CoordinatorProtocol.StartHostArgument, StringComparer.Ordinal) ? StartMode.StartHost
             : args.Contains(CoordinatorProtocol.SignInArgument, StringComparer.Ordinal) ? StartMode.SignIn
             : args.Contains(CoordinatorProtocol.SessionsArgument, StringComparer.Ordinal) ? StartMode.Sessions
+            : args.Contains(CoordinatorProtocol.UpdateArgument, StringComparer.Ordinal) ? StartMode.Update
+            : args.Contains(CoordinatorProtocol.ChangelogArgument, StringComparer.Ordinal) ? StartMode.Changelog
             : StartMode.User;
     }
 
@@ -77,6 +85,8 @@ internal static class StartModes
     {
         StartMode.User => CoordinatorVerb.Show,
         StartMode.Sessions => CoordinatorVerb.Sessions,
+        StartMode.Update => CoordinatorVerb.Update,
+        StartMode.Changelog => CoordinatorVerb.Changelog,
         StartMode.StartHost => CoordinatorVerb.Host,
         _ => CoordinatorVerb.Recheck,
     };
@@ -84,12 +94,29 @@ internal static class StartModes
     /// <summary>Whether a person made this start, so it opens a tab.</summary>
     /// <param name="mode">The mode.</param>
     /// <returns>Whether it is a person's start.</returns>
-    public static bool IsAPersons(StartMode mode) => mode is StartMode.User or StartMode.Sessions;
+    public static bool IsAPersons(StartMode mode) => mode is StartMode.User or StartMode.Sessions or StartMode.Update or StartMode.Changelog;
 
     /// <summary>The page a tab opens on for a verb.</summary>
     /// <param name="verb">The verb.</param>
     /// <returns>The page.</returns>
-    public static PageKind PageOf(CoordinatorVerb verb) => verb is CoordinatorVerb.Sessions ? PageKind.Sessions : PageKind.Status;
+    public static PageKind PageOf(CoordinatorVerb verb) => verb switch
+    {
+        CoordinatorVerb.Sessions => PageKind.Sessions,
+        CoordinatorVerb.Update => PageKind.Update,
+        CoordinatorVerb.Changelog => PageKind.Changelog,
+        _ => PageKind.Status,
+    };
+
+    /// <summary>The argument a person's start opens one page with, by the page's name.</summary>
+    /// <param name="page">The page's name: <c>update</c> or <c>changelog</c>; anything else is the status page.</param>
+    /// <returns>The arguments.</returns>
+    public static string[] ArgumentsFor(string page) => page switch
+    {
+        "update" => [CoordinatorProtocol.UpdateArgument],
+        "changelog" => [CoordinatorProtocol.ChangelogArgument],
+        "sessions" => [CoordinatorProtocol.SessionsArgument],
+        _ => [],
+    };
 }
 
 /// <summary>The page, as the coordinator's loop sees it.</summary>

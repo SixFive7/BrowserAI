@@ -43,8 +43,15 @@ internal static class PageContent
     {
         ArgumentNullException.ThrowIfNull(view);
 
-        var page = kind is PageKind.Sessions ? "sessions" : "status";
+        var page = PageNames.Of(kind);
         var tabText = tab.ToString(CultureInfo.InvariantCulture);
+        var title = kind switch
+        {
+            PageKind.Sessions => "BrowserAI sessions",
+            PageKind.Update => "BrowserAI update",
+            PageKind.Changelog => "BrowserAI changelog",
+            _ => "BrowserAI",
+        };
 
         return $"""
             <!doctype html>
@@ -52,7 +59,7 @@ internal static class PageContent
             <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>{(kind is PageKind.Sessions ? "BrowserAI sessions" : "BrowserAI")}</title>
+            <title>{title}</title>
             <link rel="stylesheet" href="page.css">
             <script src="page.js" defer></script>
             </head>
@@ -80,7 +87,13 @@ internal static class PageContent
     {
         ArgumentNullException.ThrowIfNull(view);
 
-        return kind is PageKind.Sessions ? SessionsMain(view, now) : StatusMain(view, occasion);
+        return kind switch
+        {
+            PageKind.Sessions => SessionsMain(view, now),
+            PageKind.Update => UpdatePageContent.Render(view, now),
+            PageKind.Changelog => ChangelogPageContent.Render(view),
+            _ => StatusMain(view, occasion),
+        };
     }
 
     /// <summary>Encodes text for HTML, attribute values included.</summary>
@@ -136,10 +149,18 @@ internal static class PageContent
     private static string Navigation(PageKind kind, int tab)
     {
         var query = "?tab=" + tab.ToString(CultureInfo.InvariantCulture);
+        var links = new StringBuilder();
 
-        return kind is PageKind.Sessions
-            ? $"""<a href="./{query}">Status</a> <a href="sessions{query}" aria-current="page">Sessions</a>"""
-            : $"""<a href="./{query}" aria-current="page">Status</a> <a href="sessions{query}">Sessions</a>""";
+        foreach (var (page, label) in new[] { (PageKind.Status, "Status"), (PageKind.Sessions, "Sessions"), (PageKind.Update, "Update"), (PageKind.Changelog, "Changelog") })
+        {
+            var href = page is PageKind.Status ? "./" : PageNames.RouteOf(page);
+
+            _ = links.Append(links.Length > 0 ? " " : string.Empty)
+                .Append("<a href=\"").Append(href).Append(query).Append('"')
+                .Append(page == kind ? " aria-current=\"page\">" : ">").Append(label).Append("</a>");
+        }
+
+        return links.ToString();
     }
 
     private static string StatusMain(PageView view, Occasion occasion)
@@ -173,7 +194,10 @@ internal static class PageContent
     public const string CodexStartedBeforeTheInstall =
         "A Codex that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.";
 
-    private static void AppendNote(StringBuilder html, PageNote? note)
+    /// <summary>The last action's sentence, with its raw text under <i>Show details</i>.</summary>
+    /// <param name="html">Where to write.</param>
+    /// <param name="note">The note, or <see langword="null"/> for none.</param>
+    internal static void AppendNote(StringBuilder html, PageNote? note)
     {
         if (note is null)
         {

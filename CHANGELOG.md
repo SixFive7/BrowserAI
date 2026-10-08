@@ -77,6 +77,43 @@ release body; nothing else depends on it.
   `SessionCloseTests`, `CloseOrderingTests`, `CloseReasonTests` and `SessionPolicyTests` hold it,
   planted red first.
 
+- ✨ **A downloaded update that has to wait says so in a toast that counts down to its install.**
+  T, the maintainer's words verbatim: *"t I like the live countdown of the toast. I'd opt for two
+  buttons. Install now and wait for inactivity."* and then *"Make sure the toasts have no timeout."*
+  The ready toast is a reminder, which stays on screen until the person acts. It names the version,
+  says it installs by itself once BrowserAI has been idle, counts down to the moment it would if
+  nothing uses BrowserAI, says what still uses it, and names the clients that will need a reconnect
+  afterwards. **Install now** opens the dashboard's update page and **Wait for inactivity** closes
+  it; a version the person chose to wait for is raised again after a restart into the Notification
+  Centre with no banner. Three more follow it: installing, with **Dismiss**; installed, with
+  **Changelog** and **Dismiss**; and failed, naming Velopack's log and BrowserAI's. The countdown is
+  the progress element's bound fields, which the screen measurement of 2026-10-08 saw update in
+  place with no new banner and no sound, and each toast has a tag of its own with the others removed
+  first, because a replacement under one tag popped up again in only 4 of 6. A click reaches a COM
+  activator that the install hooks register for a class derived from the application id, so the
+  suite's test pack never takes over a real install's. ⚠️ Nothing raises them yet: the resident
+  background that holds updates calls them, and it lands with the rest of the one-binary build.
+  `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and `ToastActivationTests`
+  hold it, planted red first, and no test shows a toast.
+
+- ✨ **The dashboard has an update page: what holds the update, each with a countdown, and Install now.**
+  T and H1, the maintainer's words verbatim: *"the install now button takes you to the browser
+  interface gui of the coordinator where it can better explain what the risks of forcing the update
+  now are together with an overview of who is still using it"*. Hidden browser sessions, visible
+  windows, each marked *Close this to let the update proceed*, and the agents' connections, each
+  with the reconnect its client will need, are listed with a countdown the page counts down by
+  itself; what installing now does is said beside the button, which asks the background to close
+  everything cleanly and install at once. The toast activator opens it with `--update`, which hands
+  the pipe's new `update` verb to a running coordinator. Until the resident background reports what
+  holds an update, the page says nothing reports it. `UpdatePageTests` and `ToastPageStartTests`
+  hold it, planted red first.
+
+- ✨ **The dashboard has a changelog page, read from the changelog the build carries.**
+  The installed toast's **Changelog** opens it. `CHANGELOG.md` is embedded in the executable, and
+  the page shows the installed version's section, or for a development build, which no heading
+  names, what is listed as not yet released; each entry is folded under its headline, and a link to
+  a file in the repository is shown as its text. `ChangelogPageTests` holds it, planted red first.
+
 - ✨ **Every close of a session's browser is recorded with its reason, and the agent is told it.**
   8 b, the maintainer's words verbatim: *"8 b - log in our catchup resume that it was the user who
   closed it. Also whe ntelling the agent it needs to resume first give it the reason for the last

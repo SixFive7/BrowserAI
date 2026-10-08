@@ -113,7 +113,92 @@ internal sealed record UpdateHoldSnapshot(
     /// <param name="readAt">When that was read.</param>
     /// <returns>The snapshot.</returns>
     public static UpdateHoldSnapshot Nothing(DateTimeOffset readAt) => new(readAt, UpdateHoldState.None, null, [], [], []);
+
+    /// <summary>The relays that hold the update at one moment: their countdown is still running, or a call is.</summary>
+    /// <param name="now">The moment.</param>
+    /// <returns>Those relays, in the snapshot's order.</returns>
+    public IEnumerable<HoldingRelay> HoldingRelaysAt(DateTimeOffset now) =>
+        Relays.Where(relay => relay.CallInFlight || relay.IdleAt > now);
+
+    /// <summary>
+    /// How the wait stands at one moment, and when it ends if nothing uses
+    /// BrowserAI until then.
+    /// </summary>
+    /// <param name="now">The moment.</param>
+    /// <returns>The reading.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>A holder with no countdown decides first</b>: a window an agent set never
+    /// to close holds the update until the person closes it, and a hidden session set
+    /// so holds it until an agent closes it, whatever every other countdown says.
+    /// </para>
+    /// <para>
+    /// <b>Otherwise the wait is the last deadline still ahead</b>, among every listed
+    /// session and every relay that holds the update now. A session whose countdown
+    /// has run out is closing and still holds it while it is listed; a relay whose
+    /// countdown has run out holds it only while a call runs.
+    /// </para>
+    /// </remarks>
+    public UpdateWaitReading WaitAt(DateTimeOffset now)
+    {
+        if (VisibleWindows.Any(window => window.ClosesAt is null))
+        {
+            return new UpdateWaitReading(UpdateWait.WindowNeverCloses, null);
+        }
+
+        if (HiddenSessions.Any(session => session.ClosesAt is null))
+        {
+            return new UpdateWaitReading(UpdateWait.SessionNeverCloses, null);
+        }
+
+        var holding = HoldingRelaysAt(now).ToList();
+        var deadlines = HiddenSessions.Concat(VisibleWindows)
+            .Select(session => session.ClosesAt!.Value)
+            .Concat(holding.Select(relay => relay.IdleAt))
+            .ToList();
+
+        if (deadlines.Count > 0 && deadlines.Max() is var last && last > now)
+        {
+            return new UpdateWaitReading(UpdateWait.Counting, last);
+        }
+
+        if (holding.Any(relay => relay.CallInFlight))
+        {
+            return new UpdateWaitReading(UpdateWait.CallRunning, null);
+        }
+
+        return HiddenSessions.Count + VisibleWindows.Count > 0
+            ? new UpdateWaitReading(UpdateWait.Closing, null)
+            : new UpdateWaitReading(UpdateWait.NothingHolds, null);
+    }
 }
+
+/// <summary>How the wait for a downloaded update stands at one moment.</summary>
+internal enum UpdateWait
+{
+    /// <summary>Every holder has a countdown, and the last of them is still running.</summary>
+    Counting,
+
+    /// <summary>A visible window an agent set never to close holds it, so it waits for the person to close the window.</summary>
+    WindowNeverCloses,
+
+    /// <summary>A hidden session an agent set never to close holds it, so it waits for an agent to close the session.</summary>
+    SessionNeverCloses,
+
+    /// <summary>Every countdown has run out, and a relay is still answering a call.</summary>
+    CallRunning,
+
+    /// <summary>Every countdown has run out, and a session is still closing.</summary>
+    Closing,
+
+    /// <summary>Nothing holds it: the background is asking its relays, or the install is starting.</summary>
+    NothingHolds,
+}
+
+/// <summary>How the wait stands, and when it ends when it counts down.</summary>
+/// <param name="Wait">How it stands.</param>
+/// <param name="Ends">When the last countdown runs out, for <see cref="UpdateWait.Counting"/>, and otherwise <see langword="null"/>.</param>
+internal readonly record struct UpdateWaitReading(UpdateWait Wait, DateTimeOffset? Ends);
 
 /// <summary>
 /// The seam the background implements and the update toast and the dashboard's

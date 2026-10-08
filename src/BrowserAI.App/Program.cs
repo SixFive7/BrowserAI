@@ -171,6 +171,29 @@ internal static class Program
             }
         }
 
+        // ⚠️ A CLICK ON ONE OF BROWSERAI'S TOASTS -- T, decided 2026-10-08. COM starts this
+        // program with -ToastActivated -Embedding for a click; the click is taken from
+        // COM and acted on here, and a click that opens a dashboard page goes on below as
+        // a person's start for that page, which is what it is.
+        if (ToastActivation.IsActivation(args))
+        {
+            string[]? opening = null;
+            var click = ToastInterop.CurrentAppUserModelId() is { } id ? ToastActivation.Receive(id, logger) : null;
+
+            _ = ToastActivation.Act(click, UpdateToastMemoryFile.In(paths.RootAppDir), page =>
+            {
+                opening = StartModes.ArgumentsFor(page);
+                return 0;
+            });
+
+            if (opening is null)
+            {
+                return 0;
+            }
+
+            args = opening;
+        }
+
         var tool = RegisterAiTool.Beside(Environment.ProcessPath);
 
         // ⚠️ THE STATE IS READ ONLY WHERE IT IS SHOWN -- 2026-09-25. Reading it asks
@@ -230,6 +253,12 @@ internal static class Program
             // An install from the page stops the session host the way this
             // process's own apply does (Q366 b).
             SessionHost = keeper,
+
+            // The changelog page reads the section this build carries for its own
+            // version (T, 2026-10-08). What holds an update is reported by the
+            // resident background, which is not this process yet, so the update page
+            // says nothing reports it.
+            Changelog = ShippedChangelog.ForThisBuild(),
         };
 
         var start = CoordinatorStart.Settle(

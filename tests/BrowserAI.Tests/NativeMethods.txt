@@ -42,6 +42,15 @@
 // AND LASTINPUTINFO SINCE 2026-10-08, added by addition: the struct the visible-input
 // check (F4 a) hands GetLastInputInfo, which Windows refuses unless cbSize is set,
 // and whose dwTime is the whole of what the check reads.
+//
+// AND TWO MORE COM INTERFACES SINCE 2026-10-08, added by addition: the update
+// toast's activator, INotificationActivationCallback, and the class factory COM
+// asks it for, IClassFactory, which the product declares by hand through
+// [GeneratedComInterface] and implements through [GeneratedComClass].
+// ToastInteropTests reads each one's GUID and its methods' order and arity. The
+// Windows Runtime interfaces the toasts call are NOT here: they are not in the
+// metadata CsWin32 reads, and their oracle is the metadata Windows ships in
+// System32\WinMetadata.
 
 STARTUPINFOW
 STARTUPINFOEXW
@@ -56,3 +65,5 @@ ITaskService
 ITaskFolder
 IRegisteredTask
 IRunningTask
+INotificationActivationCallback
+IClassFactory

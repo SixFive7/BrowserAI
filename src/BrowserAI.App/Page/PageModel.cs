@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Coordination;
+using BrowserAI.Updates;
 
 namespace BrowserAI.App.Page;
 
@@ -209,6 +210,8 @@ internal enum Occasion
 /// <param name="Note">The last action's sentence, or <see langword="null"/>.</param>
 /// <param name="Registration">The last read of the registration, or <see langword="null"/> before the first.</param>
 /// <param name="Registering">A sentence while a registration action runs, or <see langword="null"/>.</param>
+/// <param name="Holds">What holds a downloaded update, or <see langword="null"/> where nothing reports it.</param>
+/// <param name="Changelog">The installed version's section of the shipped changelog, or <see langword="null"/>.</param>
 internal sealed record PageView(
     PageFacts Facts,
     UpdateView Update,
@@ -216,4 +219,6 @@ internal sealed record PageView(
     SessionsSnapshot Sessions,
     PageNote? Note,
     RegistrationSnapshot? Registration = null,
-    string? Registering = null);
+    string? Registering = null,
+    UpdateHoldSnapshot? Holds = null,
+    ChangelogSection? Changelog = null);

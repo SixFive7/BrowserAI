@@ -511,6 +511,10 @@ internal sealed partial class HouseRuleTests
     /// <b>The release-run exception is not here yet</b>: one suppressed toast read
     /// back from the notification history belongs to the toast work, and arrives
     /// with it as a named exception to this arm and not as a hole in it.
+    /// <i>Added 2026-10-08 by addition: the toast work arrived without it, because
+    /// the one-binary build's rule is that nothing a run starts shows a toast, a
+    /// suppressed one included; <c>ToastInteropTests</c> composes a real toast
+    /// object and reads every setting back without showing it.</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

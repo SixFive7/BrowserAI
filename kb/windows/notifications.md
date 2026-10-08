@@ -457,3 +457,35 @@ also allows, was not measured.
 `part1b.ps1.txt`, run with `powershell` under its own app id, and
 `Monitor.cs.txt` beside them; the crops are in the batch as PNG. It clears the
 calling shell's own toast history at the end and nothing else.
+
+### What the hand-written interop met in Windows' own metadata and objects -- read and run 2026-10-08
+
+`[STABLE]` for the metadata's shape; `[MACHINE]` for the build it was read on.
+Windows 11 Pro 10.0.26300.9550 (26H2), .NET SDK 10.0.401, read by
+`ToastInteropTests` from the files Windows ships in `C:\Windows\System32\WinMetadata`
+and run in its test host, which runs under no application id. Nothing was shown:
+no notifier was made.
+
+- ⭐ **An overload's name in the metadata is the name it is projected as, shared by
+  every overload; its own name is in `OverloadAttribute`.** The `MethodDef` rows of
+  `Windows.UI.Notifications.IToastNotificationManagerStatics` read
+  `CreateToastNotifier` twice; the attribute on the second carries
+  `CreateToastNotifierWithId`, the name the SDK's IDL gives slot 7. An oracle that
+  compares a hand-written vtable with the metadata has to read the attribute, or it
+  calls a correct declaration wrong. The first version of the test did not, and
+  failed on exactly that interface.
+- **A real toast object can be built and read back with no application id and
+  nothing shown.** `RoActivateInstance` on `Windows.Data.Xml.Dom.XmlDocument`,
+  `LoadXml`, the toast factory, and then the tag, the group, `SuppressPopup`,
+  `ExpiresOnReboot` and a `NotificationData` with a sequence number set through the
+  product's own declarations all read back what was set, through the same
+  declarations. With two of `IToastNotification2`'s slots swapped the composition
+  threw.
+- **`IMap<String, String>`'s id, `F6D1F700-49C2-52AE-8154-826F9908773C`, is the one a
+  `NotificationData`'s values answer to**: asked for that id, the map was handed
+  over and kept a value; with the declaration's last digit changed, the call that
+  asks for it threw.
+
+**Re-establish it** by running `ToastInteropTests`, which needs no window, no
+application id and no toast: it reads the metadata with `MetadataReader` and
+composes the toast object on a thread of its own in the multi-threaded apartment.

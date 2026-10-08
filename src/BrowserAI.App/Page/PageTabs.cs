@@ -13,6 +13,49 @@ internal enum PageKind
 
     /// <summary>BrowserAI's own sessions page.</summary>
     Sessions,
+
+    /// <summary>
+    /// The update page: what holds a downloaded update, and the install button. The
+    /// ready toast's <i>Install now</i> opens it (T, 2026-10-08).
+    /// </summary>
+    Update,
+
+    /// <summary>
+    /// The changelog page: the section of the changelog shipped in the build for the
+    /// installed version. The installed toast's <i>Changelog</i> opens it.
+    /// </summary>
+    Changelog,
+}
+
+/// <summary>Each page's name, which is its route and what its tab's stream says it shows.</summary>
+internal static class PageNames
+{
+    /// <summary>The page's name: <c>status</c>, <c>sessions</c>, <c>update</c> or <c>changelog</c>.</summary>
+    /// <param name="kind">The page.</param>
+    /// <returns>Its name.</returns>
+    public static string Of(PageKind kind) => kind switch
+    {
+        PageKind.Sessions => "sessions",
+        PageKind.Update => "update",
+        PageKind.Changelog => "changelog",
+        _ => "status",
+    };
+
+    /// <summary>The page's route under the listener's root: the status page is the root itself.</summary>
+    /// <param name="kind">The page.</param>
+    /// <returns>The route.</returns>
+    public static string RouteOf(PageKind kind) => kind is PageKind.Status ? string.Empty : Of(kind);
+
+    /// <summary>The page a name names; anything else is the status page.</summary>
+    /// <param name="name">The name.</param>
+    /// <returns>The page.</returns>
+    public static PageKind Parse(string? name) => name switch
+    {
+        "sessions" => PageKind.Sessions,
+        "update" => PageKind.Update,
+        "changelog" => PageKind.Changelog,
+        _ => PageKind.Status,
+    };
 }
 
 /// <summary>One event for one tab's stream.</summary>

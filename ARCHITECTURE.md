@@ -1477,6 +1477,14 @@ button names as JSON. A button names what it acts on by a name the page was give
 role or a digest of a session's directory, and never by a path. What it rests on:
 [kb](kb/windows/loopback-page.md#the-products-listener-under-attack----measured-2026-10-03).
 
+*Added 2026-10-08 by addition (T):* **two more pages.** The update page shows what holds a downloaded
+update, split into hidden browser sessions, visible windows and the agents' connections, each with a
+countdown the page's script counts down from a deadline in the element, and the button that asks the
+background to install now; the listener reads what holds the update once a second and sends every tab a
+new state when it has changed. The changelog page shows the installed version's section of the changelog
+embedded in the build, or the unreleased one for a development build. The toasts' **Install now** and
+**Changelog** open them.
+
 ## Updates
 
 | Concern | Implemented by |
@@ -1494,6 +1502,9 @@ role or a digest of a session's directory, and never by a path. What it rests on
 | A blocked server waking the coordinator -- **added 2026-09-25, Q283 a** | `src/BrowserAI.Core/Coordination/CoordinatorWake.cs`, which `UpdateService` calls when a pass stages a package it may not apply |
 | The session host on the sessions page and in a page's install: the host, the servers that relay to it and the sessions it keeps, and an install that stops the host after the servers -- **added 2026-10-04, Q366 b** | `ServerDescription.Role` and `HeldSession`'s attachment in `src/BrowserAI.Core/Coordination/ServerDescription.cs`, filled by `SessionManager.Held` from `LiveSession.AttachedTo` and `BrowserIdleTimer.ClosesAt`, and set by the host and by a relaying server through `ServerPipeResponder.Role`; read by `CensusPageSessions.Compose` and `RelayEntry`, shown by `PageContent.StateOf`; the install's stop is `PageService.SessionHost`, the coordinator's `SessionHostKeeper` |
 | The session host in the apply: left out of the scan, closed before the apply, and a second scan after -- **added 2026-10-03, Q366 b** | `CoordinatorLoop.Host` in `src/BrowserAI.App/Coordinator.cs`, over `SessionHostKeeper.LeaveOutMine` and `SessionHostKeeper.StopForUpdate` in `src/BrowserAI.Core/Coordination/SessionHostKeeper.cs`; see [the session host](#the-session-host-q366-b) |
+| What holds a downloaded update, at one moment -- **added 2026-10-08, H1** | `UpdateHoldSnapshot`, `HoldingSession`, `HoldingRelay` and `RelayReconnect` in `src/BrowserAI.Core/Updates/UpdateHolds.cs`, with `UpdateHoldSnapshot.WaitAt`, which reads the wait off it; the background implements `IUpdateHolds`, the one seam the toast and the update page read |
+| The update toasts -- **added 2026-10-08, T** | `src/BrowserAI.Core/Updates/UpdateToastContent.cs` (the four toasts' XML, the countdown's bound values and the arguments each click carries back), `UpdateToasts.cs` (raising each one, the countdown once a second through `IToastSurface.Update`, and the person's wait remembered by `UpdateToastMemoryFile`), `WindowsToastSurface.cs` (the surface that reaches Windows, on a thread of its own) over `src/BrowserAI.Core/Interop/Toasts.cs`, and `ToastActivation.cs`: `ToastActivatorRegistration`, which the install, update and uninstall hooks call, and `ToastActivation`, the mode a click starts. `IUpdateToasts` is what the background and the after-update start call |
+| The dashboard's update and changelog pages -- **added 2026-10-08, T** | `src/BrowserAI.App/Page/{UpdatePageContent, ChangelogPageContent, ShippedChangelog}.cs`, routed by `PageService` and named by `PageNames`; the changelog is `CHANGELOG.md`, embedded in the executable by `BrowserAI.App.csproj`; the toast activator reaches them through `StartModes` with `--update` and `--changelog`, and the pipe's `update` and `changelog` verbs in `CoordinatorProtocol` |
 
 **The pipe is named after the live marker, so the census entry is the address --
 2026-09-24.** `\\.\pipe\BrowserAI-<pid>-<guid>` for the marker

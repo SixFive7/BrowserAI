@@ -763,6 +763,26 @@ newest and a pin. What it cannot see is the client: which opening a real session
 takes is read in the client's own logs, with
 [the rig](docs/probes/2026-10-08-protocol-pin/README.md).
 
+## The update toasts and the update pages: what the suite can and cannot see
+
+*Added 2026-10-08 with the update toasts (T).* **No test shows a toast**: a toast is
+drawn by the shell over whatever the person at the machine is doing (Q278), and the
+rule for the one-binary build is that nothing a run starts shows a window, a toast or
+takes focus. What the suite holds instead, and where it stops:
+
+| What | How the suite reaches it | What it cannot see |
+|---|---|---|
+| The four toasts' content | `UpdateToastContentTests` parses each toast's XML, holds every field the ready toast binds against the values its data supplies, and reads every click's arguments back | How Windows draws them, which the screen measurement of 2026-10-08 saw once |
+| Raising, the countdown and its stops | `UpdateToastsTests`, through a surface that records what Windows would have been asked and a clock the arm moves | Nothing new: the surface is the seam |
+| The hand-written interop | `ToastInteropTests` holds every Windows Runtime interface's id and slot order against the metadata Windows ships in `System32\WinMetadata`, and the activator's two through CsWin32; it composes a real toast object through every interface the product shows one with and reads each setting back, and writes and reads a real `NotificationData` map | `Show`, `Update` and the history, the three calls that reach the screen |
+| The activator | `ToastActivationTests` pins the class derived from the application id, writes and removes the registration under a scratch key in `HKCU\Software\BrowserAI.Tests`, and hands a click to the activator's class object in process | COM starting the program for a real click, measured on 2026-09-24 and not since |
+| The update and changelog pages | `UpdatePageTests` and `ChangelogPageTests`, rendered from snapshots and served through the page's own listener, and `ToastPageStartTests`, the start and the pipe verb each page is opened by | A person's browser |
+
+⚠️ **The suite's `BannedSymbols.txt` refuses what would reach the screen or the real
+registration**: the product surface's constructor and both factories that make one,
+the user's own classes key, and the activator's registration with COM. The surface's
+static `Compose` stays usable, because building a toast object shows nothing.
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

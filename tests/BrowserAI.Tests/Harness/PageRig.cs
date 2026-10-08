@@ -22,7 +22,9 @@ internal sealed class PageRig : IDisposable
         Action? wake = null,
         IPageRegistration? registration = null,
         Occasion occasion = Occasion.Ordinary,
-        bool sessionHost = false)
+        bool sessionHost = false,
+        IUpdateHolds? holds = null,
+        ChangelogSection? changelog = null)
     {
         Registration = registration ?? new FakeRegistration();
         HostHold = sessionHost ? new RecordingHostHold(() => (Sessions.Closed.Count, Updates.Installed.Count)) : null;
@@ -50,6 +52,8 @@ internal sealed class PageRig : IDisposable
             logs?.CreateLogger("page") ?? NullLogger.Instance)
         {
             SessionHost = HostHold,
+            Holds = holds,
+            Changelog = changelog,
         };
     }
 

@@ -27,6 +27,18 @@ internal enum CoordinatorVerb
     /// it finds no host to relay to (Q366 b).
     /// </summary>
     Host,
+
+    /// <summary>
+    /// Hand out a tab on the update page. What a click on the ready toast's
+    /// <i>Install now</i> asks, through the toast activator (T, 2026-10-08).
+    /// </summary>
+    Update,
+
+    /// <summary>
+    /// Hand out a tab on the changelog page. What a click on the installed toast's
+    /// <i>Changelog</i> asks, through the toast activator.
+    /// </summary>
+    Changelog,
 }
 
 /// <summary>
@@ -66,13 +78,17 @@ internal static class CoordinatorProtocol
 
     /// <summary>The version of this protocol, carried in every acknowledgement.</summary>
     /// <remarks>
+    /// <b>3 since 2026-10-08</b> (previously <c>2</c>): <c>update</c> and
+    /// <c>changelog</c> ask for a tab on the update and changelog pages, the toast
+    /// activator's two verbs. A coordinator of version 2 does not know them and
+    /// answers neither, so an activator meeting one opens nothing.
     /// <b>2 since 2026-10-03</b> (previously <c>1</c>): the acknowledgement of a
     /// verb that asks for a tab carries the page's address, Q334 a, and
     /// <c>sessions</c> is a third verb. A reader of version 1 ignores the member it
     /// does not know, so an older second start meeting a newer coordinator hands
     /// over as it always did and opens nothing.
     /// </remarks>
-    public const int Version = 2;
+    public const int Version = 3;
 
     /// <summary>The verb the update toast's <i>Review</i> sends: a tab on the sessions page.</summary>
     public const string SessionsVerb = "sessions";
@@ -106,7 +122,8 @@ internal static class CoordinatorProtocol
     /// <summary>Whether a verb asks the coordinator for a tab.</summary>
     /// <param name="verb">The verb.</param>
     /// <returns>Whether its acknowledgement carries an address.</returns>
-    public static bool AsksForATab(CoordinatorVerb verb) => verb is CoordinatorVerb.Show or CoordinatorVerb.Sessions;
+    public static bool AsksForATab(CoordinatorVerb verb) =>
+        verb is CoordinatorVerb.Show or CoordinatorVerb.Sessions or CoordinatorVerb.Update or CoordinatorVerb.Changelog;
 
     /// <summary>The verb a start the person made sends.</summary>
     public const string ShowVerb = "show";
@@ -116,6 +133,12 @@ internal static class CoordinatorProtocol
 
     /// <summary>The verb a server sends when it finds no session host to relay to.</summary>
     public const string HostVerb = "host";
+
+    /// <summary>The verb the toast activator sends for <i>Install now</i>: a tab on the update page.</summary>
+    public const string UpdateVerb = "update";
+
+    /// <summary>The verb the toast activator sends for <i>Changelog</i>: a tab on the changelog page.</summary>
+    public const string ChangelogVerb = "changelog";
 
     /// <summary>
     /// The argument the per-user logon task starts the app with: the sign-in step.
@@ -143,6 +166,12 @@ internal static class CoordinatorProtocol
     /// </summary>
     public const string StartHostArgument = "--start-host";
 
+    /// <summary>The argument that makes a person's start open the update page: what the toast activator starts with for <i>Install now</i>.</summary>
+    public const string UpdateArgument = "--update";
+
+    /// <summary>The argument that makes a person's start open the changelog page: what the toast activator starts with for <i>Changelog</i>.</summary>
+    public const string ChangelogArgument = "--changelog";
+
     /// <summary>
     /// The refusal a coordinator gives <c>host</c> when it cannot start the session
     /// host, so the server that asked serves its client itself at once and does not
@@ -168,6 +197,8 @@ internal static class CoordinatorProtocol
         CoordinatorVerb.Show => ShowVerb,
         CoordinatorVerb.Sessions => SessionsVerb,
         CoordinatorVerb.Host => HostVerb,
+        CoordinatorVerb.Update => UpdateVerb,
+        CoordinatorVerb.Changelog => ChangelogVerb,
         _ => RecheckVerb,
     };
 
@@ -180,6 +211,8 @@ internal static class CoordinatorProtocol
         RecheckVerb => CoordinatorVerb.Recheck,
         SessionsVerb => CoordinatorVerb.Sessions,
         HostVerb => CoordinatorVerb.Host,
+        UpdateVerb => CoordinatorVerb.Update,
+        ChangelogVerb => CoordinatorVerb.Changelog,
         _ => null,
     };
 
