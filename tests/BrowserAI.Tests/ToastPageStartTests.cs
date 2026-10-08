@@ -33,6 +33,12 @@ internal sealed class ToastPageStartTests
     /// background reads as the update and the changelog pages, and the activator's page
     /// names are the arguments that make them.
     /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-08</b>, at the root session's word, with
+    /// <c>PageNameOf</c> naming no page for <c>--changelog</c>, so the Changelog
+    /// button would open the status page: red at the changelog row, with no name where
+    /// <c>changelog</c> was expected.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task EachToastPageIsAPersonsStartForAPageOfItsOwn()

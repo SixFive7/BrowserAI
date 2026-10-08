@@ -40,6 +40,12 @@ internal sealed class BackgroundProcessTests
     /// A session outlives a relay that is killed the way Codex ends a server, and the
     /// next relay finds its page exactly as it was left: no restore, no new browser.
     /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-08</b>, at the root session's word, with the background
+    /// stopping itself once its last relay had gone, the shape S a reversed: the second
+    /// relay's <c>browser_snapshot</c> was refused at once, no background running for
+    /// this build, and the session had gone with the background.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ASessionOutlivesARelayThatIsKilledAndTheNextRelayFindsItsPageAsItWasLeft()
@@ -103,6 +109,11 @@ internal sealed class BackgroundProcessTests
     /// A session outlives a relay whose client closed its standard input, the way a
     /// client ends a server it is done with, and the next relay takes it over.
     /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-08</b> with the defect of the arm above, the background
+    /// stopping once its last relay had gone: the second relay's call was refused at
+    /// once in the same words.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ASessionOutlivesARelayWhoseClientClosedItsInputAndTheNextRelayTakesItOver()
@@ -161,7 +172,9 @@ internal sealed class BackgroundProcessTests
     /// <remarks>
     /// <b>The crash text is R's</b>, the maintainer's words of 2026-10-08 accepting it:
     /// <i>"r ok"</i>. It is answered at once and never after the 150 s hold, because
-    /// waiting cannot change a recorded crash.
+    /// waiting cannot change a recorded crash. <b>Planted red 2026-10-08</b> with the
+    /// record no longer written at the background's start: the relay answered that no
+    /// background runs for this build, where the crash was expected.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

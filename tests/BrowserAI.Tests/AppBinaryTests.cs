@@ -97,7 +97,10 @@ internal sealed class AppBinaryTests
     /// <see langword="true"/> for a start with no argument, the shape the server had
     /// while it was its own file; and again with <c>IsTheTasksStart</c> answering
     /// <see langword="false"/> for <c>--sign-in</c>, which would make the sign-in start
-    /// of a task registered before the update a person's start, opening a tab.
+    /// of a task registered before the update a person's start, opening a tab. The
+    /// second was watched again the same night at the root session's word, red at the
+    /// <c>--sign-in</c> line, in an in-process run only: a published binary with that
+    /// defect would itself be the incident it guards against.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
