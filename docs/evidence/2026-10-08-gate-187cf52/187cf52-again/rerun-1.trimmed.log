@@ -1,0 +1,50 @@
+=== rerun-1 starting 16:21:45Z filter=/*/*/(ClientReconnectTests|CoordinatorWakeTests)/(ABrowserAiRegisteredInCodexServesACallAndLeavesNothingThatHoldsAnUpdate|AServingCoordinatorIsAskedToLookAgainAndNoTaskIsStarted) ===
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1\payload\payload.json
+  Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.224-full.nupkg
+  client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+  release installer   PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1\Releases\test-pack\BrowserAI.test-installer.exe
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\s1 rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-08T14:59:40.144Z is 10m00s newer than the newest of 156 inputs (src\BrowserAI\Proxy\BrowserProxy.cs, 2026-10-08T14:49:39.615Z) · exe and tree both 1.1.1-alpha.0.224 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\s1\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\s1\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/(ClientReconnectTests|CoordinatorWakeTests)/(ABrowserAiRegisteredInCodexServesACallAndLeavesNothingThatHoldsAnUpdate|AServingCoordinatorIsAskedToLookAgainAndNoTaskIsStarted)' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 132,213 MiB (52.0%) · end 132,647 MiB (52.1%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 60 events, 0 about visible root windows and none of them this run's, 150 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 14 scans, 0 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=96240 created=134359501053845171), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\s1\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed! - C:\Source\SixFive7\BrowserAI\.work\wt\s1\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 2
+  failed: 0
+  succeeded: 2
+  skipped: 0
+  duration: 28s 790ms
+=== rerun-1 exit 0 at 16:22:15Z ===
