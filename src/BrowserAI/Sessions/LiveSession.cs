@@ -31,7 +31,7 @@ namespace BrowserAI.Sessions;
 /// against its directory indefinitely.
 /// </para>
 /// </remarks>
-internal sealed class LiveSession : IAsyncDisposable
+internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 {
     /// <param name="location">The canonicalised session directory.</param>
     /// <param name="sessionLock">The held lock. This object owns it.</param>
@@ -112,13 +112,19 @@ internal sealed class LiveSession : IAsyncDisposable
         // session set to never still has no timer at all, for the reason Q326 a's
         // headed session had none: an object that does not exist cannot be armed by
         // a call nobody thought about.
+        _inputWatch = settings.Headed ? environment.InputWatch : null;
+
         Idle = environment.IdlePeriodFor(settings.Idle) is { } period
             ? new BrowserIdleTimer(
                 location.FullPath,
                 period,
                 FireIdleAsync,
                 logging.Factory.CreateLogger<BrowserIdleTimer>(),
-                environment.Clock)
+                environment.Clock,
+
+                // F4: a visible window's input is read once more before its countdown
+                // decides it has run out.
+                _inputWatch is { } inputs ? inputs.Tick : null)
             : null;
 
         _lastActivity = _clock.GetUtcNow().UtcTicks;
@@ -527,6 +533,12 @@ internal sealed class LiveSession : IAsyncDisposable
 
     private SessionClosure? _closed;
     private long _lastActivity;
+
+    /// <summary>The process's check of the person's input, for a visible session; <see langword="null"/> otherwise.</summary>
+    private readonly VisibleInputWatch? _inputWatch;
+
+    /// <summary>This session's registration with <see cref="_inputWatch"/>, once its browser is watched.</summary>
+    private IDisposable? _inputRegistration;
     private int _reapOwed;
     private int _disposed;
 
@@ -800,6 +812,30 @@ internal sealed class LiveSession : IAsyncDisposable
 
         return new DrivingScope(this);
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// <b>The browser's main process, while the session is open</b>: the pid
+    /// <see cref="BrowserExitWatch"/> found inside the session's own job and holds open,
+    /// and <see langword="null"/> once the session is closed or before a browser is
+    /// watched, which no window is ever matched against.
+    /// </remarks>
+    int? IVisibleWindowOwner.WindowProcessId =>
+        Closed is null && Volatile.Read(ref _browserWatch) is IWatchedBrowser watched ? watched.ProcessId : null;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// <b>F4, decided 2026-10-08 by the maintainer, in his words verbatim:</b> <i>"f4 a -
+    /// but only if this is easy."</i>, then <i>"Make sure the keyboard and mouse input
+    /// check does not lag the system."</i> and <i>"Make sure these reads happen at the
+    /// same pace regardless of how many visible windows there are."</i> The person's
+    /// keyboard or mouse input in this session's window, while it is in front, is
+    /// activity, as a call that names the session is.
+    /// </remarks>
+    void IVisibleWindowOwner.PersonWasActive() => NoteActivity();
+
+    /// <summary>Leaves the visible-input check, when this session had joined it.</summary>
+    private void StopWatchingInput() => Interlocked.Exchange(ref _inputRegistration, null)?.Dispose();
 
     /// <summary>
     /// This session's idle countdown for the update and the dashboard, or
@@ -1223,6 +1259,9 @@ internal sealed class LiveSession : IAsyncDisposable
         // And a detached headed session's look at its window, for the same reason.
         StopWatching();
 
+        // And the input check, before the watch whose pid it matches against goes.
+        StopWatchingInput();
+
         // And the wait on the browser, so a browser this teardown ends is not read
         // as one that ended on its own.
         Interlocked.Exchange(ref _browserWatch, null)?.Dispose();
@@ -1341,6 +1380,20 @@ internal sealed class LiveSession : IAsyncDisposable
         if (watch is not null && Interlocked.CompareExchange(ref _browserWatch, watch, null) is not null)
         {
             watch.Dispose();
+            return;
+        }
+
+        // F4, 2026-10-08: a visible session joins the process's check of the person's
+        // input once its browser is watched, because the watched pid is what a window
+        // in front is matched against.
+        if (watch is not null && _inputWatch is { } inputs)
+        {
+            var registration = inputs.Watch(this);
+
+            if (Interlocked.CompareExchange(ref _inputRegistration, registration, null) is not null)
+            {
+                registration.Dispose();
+            }
         }
     }
 
@@ -1452,6 +1505,10 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <param name="writeRow">Whether to write the log row.</param>
     private void Record(SessionClosure closure, bool writeRow)
     {
+        // A closed session's window is no one's to use: it leaves the input check, and
+        // the check stops once no visible session is left in it (F4).
+        StopWatchingInput();
+
         try
         {
             Lock.AppendLifecycle(RecordFields.Closed, closure.Recorded.Write());

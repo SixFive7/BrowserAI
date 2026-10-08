@@ -156,6 +156,20 @@ internal sealed record SessionEnvironment
     public TimeProvider Clock { get; init; } = TimeProvider.System;
 
     /// <summary>
+    /// The one process-wide check of the person's input in visible windows, or
+    /// <see langword="null"/> for the product's own, which <see cref="SessionManager"/>
+    /// makes when it is handed none.
+    /// </summary>
+    /// <remarks>
+    /// <b>F4, 2026-10-08.</b> One check for every visible session in the process, at
+    /// one pace whatever their number, and running only while one is registered
+    /// (<see cref="VisibleInputWatch"/>). A seam of the kind <see cref="Clock"/> is: the
+    /// in-process rig hands in a desktop and a timer it drives itself, because the
+    /// real desktop's window in front and last input are the developer's own.
+    /// </remarks>
+    public VisibleInputWatch? InputWatch { get; init; }
+
+    /// <summary>
     /// Whether a session's child has a browser up: anything in its job beyond the
     /// processes the child had of its own when it connected.
     /// </summary>

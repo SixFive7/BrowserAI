@@ -164,6 +164,9 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     private readonly Lock _gate = new();
     private readonly string _session;
     private readonly Func<Task<BrowserCloseResult?>> _closeBrowser;
+
+    /// <summary>The one extra read before the countdown decides, or <see langword="null"/>.</summary>
+    private readonly Action? _beforeDeciding;
     private readonly ILogger _logger;
     private readonly TimeProvider _time;
     private readonly ITimer _timer;
@@ -193,12 +196,18 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// <see cref="TimeProvider.System"/> in the product; a manual one in the
     /// suite. See the remarks on the type.
     /// </param>
+    /// <param name="beforeDeciding">
+    /// What runs once just before the countdown decides it has run out, outside its
+    /// lock, or <see langword="null"/>: a visible session's one extra read of the
+    /// person's input, which can start the countdown again (F4, 2026-10-08).
+    /// </param>
     public BrowserIdleTimer(
         string session,
         TimeSpan period,
         Func<Task<BrowserCloseResult?>> closeBrowser,
         ILogger logger,
-        TimeProvider time)
+        TimeProvider time,
+        Action? beforeDeciding = null)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(closeBrowser);
@@ -209,6 +218,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
         _session = session;
         Period = period;
         _closeBrowser = closeBrowser;
+        _beforeDeciding = beforeDeciding;
         _logger = logger;
         _time = time;
 
@@ -423,6 +433,22 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 
     private void OnIdle()
     {
+        // ⚠️ F4, 2026-10-08: a visible window's last few seconds of input are read
+        // once more before the countdown decides, because the check that reads them
+        // runs every two seconds and a person typing into the window in those seconds
+        // must not have it closed under their hands. Outside the lock: the read can
+        // start this very countdown again, and Touch takes the lock itself.
+        try
+        {
+            _beforeDeciding?.Invoke();
+        }
+#pragma warning disable CA1031 // The extra read is an addition to the countdown; a failure in it leaves the countdown to decide as it would have.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            IdleLog.InputCheckFailed(_logger, _session, failure);
+        }
+
         lock (_gate)
         {
             if (Volatile.Read(ref _disposed) is not 0 || _closing)
@@ -665,6 +691,16 @@ internal static partial class IdleLog
         Level = LogLevel.Warning,
         Message = "The browser on the session at {Session} did not answer the agent's close within {Cap}; whatever waits for that close goes ahead, and the child is ended through its stdin.")]
     public static partial void CallersCloseUnanswered(ILogger logger, string session, TimeSpan cap);
+
+    /// <summary>The visible-input read a countdown makes just before it decides failed.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="session">The session directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 71,
+        Level = LogLevel.Warning,
+        Message = "The read of the person's input that the countdown of the session at {Session} makes before it decides failed; the countdown decides without it.")]
+    public static partial void InputCheckFailed(ILogger logger, string session, Exception failure);
 
     /// <summary>A destroy cut a close in flight short.</summary>
     /// <param name="logger">Where it goes.</param>

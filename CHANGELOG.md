@@ -40,6 +40,16 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **A person typing or clicking in a visible window keeps that window open.**
+  F4, the maintainer's words verbatim: *"f4 a - but only if this is easy."* and *"Make sure the
+  keyboard and mouse input check does not lag the system."* One check for the whole BrowserAI,
+  on a timer Windows may fold into its own every two seconds, reads the window in front and the
+  time of the last input, four reads whatever the number of windows, with no input hook, and runs
+  only while a visible window is open. Input in a visible session's window starts its idle
+  countdown again, as a call that names the session does, and the countdown reads it once more
+  before it closes the window. Measured: about 30 microseconds a check, 53 ms an hour.
+  `VisibleInputWatchTests` and `IdleCountdownTests` hold it, planted red first.
+
 - ✨ **Every session's browser closes after its own idle time, and a visible window after an hour.**
   E2, the maintainer's words verbatim: *"What if we change the never to 1 hour and then allow the
   calling agent to change this default behaviour with a parameter?"* `browserai_init` and

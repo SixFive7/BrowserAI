@@ -546,6 +546,9 @@ internal sealed class SessionManager : IAsyncDisposable
     private int _disposed;
     private int _stoppedThroughThePipe;
 
+    /// <summary>Whether this manager made the input check, and disposes it.</summary>
+    private readonly bool _ownsTheInputWatch;
+
     /// <summary>Creates the manager over one process's environment.</summary>
     /// <remarks>
     /// ⚠️ <b>A session child's notifications go to the connection the session is
@@ -564,7 +567,13 @@ internal sealed class SessionManager : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        _environment = environment;
+        // F4, 2026-10-08: one check of the person's input in visible windows for the
+        // whole process, the product's own when the environment brings none. It starts
+        // nothing until a visible session joins it.
+        _ownsTheInputWatch = environment.InputWatch is null;
+        _environment = _ownsTheInputWatch
+            ? environment with { InputWatch = VisibleInputWatch.ForThisDesktop(loggerFactory.CreateLogger<VisibleInputWatch>()) }
+            : environment;
         _logger = loggerFactory.CreateLogger<SessionManager>();
         _index = new SessionIndex(environment.Paths, _logger);
 
@@ -1026,6 +1035,12 @@ internal sealed class SessionManager : IAsyncDisposable
         var cause = Volatile.Read(ref _stoppedThroughThePipe) is 1 ? SessionCloseCause.Stopped : SessionCloseCause.ServerShutDown;
 
         await Task.WhenAll(sessions.Select(session => shutDownAsync(session, cause))).ConfigureAwait(false);
+
+        // After every session has left it.
+        if (_ownsTheInputWatch)
+        {
+            _environment.InputWatch?.Dispose();
+        }
 
         static async Task shutDownAsync(LiveSession session, SessionCloseCause cause)
         {

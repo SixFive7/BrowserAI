@@ -387,6 +387,150 @@ internal sealed class IdleCountdownTests
         await Assert.That(moved.LastActivity).IsEqualTo(clock.GetUtcNow());
     }
 
+    /// <summary>
+    /// A person's keyboard or mouse input in a visible window, while it is in front,
+    /// starts the session's countdown again; input in another window, or with a
+    /// hidden session's browser in front, counts for nothing; and the check runs only
+    /// while a visible session is in it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F4, decided 2026-10-08 by the maintainer, in his words verbatim:</b> <i>"f4 a -
+    /// but only if this is easy."</i> The rig's desktop is a double
+    /// (<see cref="RigDesktop"/>), so no arm touches the keyboard or the mouse: it sets
+    /// the window in front and the last input's tick, and runs the check by hand.
+    /// </para>
+    /// <para>
+    /// <b>Three hours of typing, each check one tick short of the hour after the last,
+    /// is three hours with no close</b>, which only input that counted allows. Planted
+    /// red against the tree with the session never joining the check.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APersonsInputInAVisibleWindowStartsItsCountdownAgainAndInputElsewhereDoesNot()
+    {
+        var clock = new ManualClock();
+
+        await using var rig = Sessions(clock);
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        var visible = Path.Combine(rig.Root, "typed-into");
+        var hidden = Path.Combine(rig.Root, "never-typed-into");
+
+        await InitAsync(harness, hidden, headed: false);
+        await NavigateAsync(harness, hidden, "the call that starts the hidden browser");
+
+        // A hidden session has no window to use, so it starts no check.
+        await Assert.That(rig.Desktop.CheckIsRunning).IsFalse();
+
+        await InitAsync(harness, visible, headed: true);
+        await NavigateAsync(harness, visible, "the call that starts the visible browser");
+
+        var hiddenChild = rig.SessionChildren[0];
+        var visibleChild = rig.SessionChildren[1];
+
+        await Assert.That(rig.Desktop.CheckIsRunning).IsTrue();
+
+        // Input with the hidden browser in front counts for nothing: the hidden
+        // session closes at its ten minutes all the same.
+        rig.Desktop.InFront(hiddenChild.BrowserProcessId);
+        rig.Desktop.PersonTypes();
+        rig.Desktop.Check();
+
+        await AdvanceUntilAsync(clock, OneMinute, () => hiddenChild.HasStopped, "the hidden session was never idle-closed");
+
+        // A call BrowserAI answers itself starts the visible countdown at a moment
+        // this arm knows.
+        _ = await ResumeAsync(harness, visible);
+
+        var hour = OneMinute * SessionTimes.VisibleIdleMinutes;
+
+        rig.Desktop.InFront(visibleChild.BrowserProcessId);
+
+        for (var typed = 1; typed <= 3; typed++)
+        {
+            clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
+            rig.Desktop.TimePasses();
+            rig.Desktop.PersonTypes();
+            rig.Desktop.Check();
+
+            await Assert.That(visibleChild.HasStopped).IsFalse()
+                .Because("the person typed into the window and its countdown ran out anyway");
+        }
+
+        // Input with another window in front counts for nothing: one tick short of the
+        // hour since the last input that counted, and then past it, the window closes.
+        clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
+        rig.Desktop.InFront(4321);
+        rig.Desktop.TimePasses();
+        rig.Desktop.PersonTypes();
+        rig.Desktop.Check();
+
+        clock.AdvanceTicks(ManualClock.OneTick * 2);
+
+        await WaitUntilAsync(() => visibleChild.HasStopped, "input in another window kept the visible window open");
+
+        // And with no visible session left in it, the check stops.
+        await Assert.That(rig.Desktop.CheckIsRunning).IsFalse();
+    }
+
+    /// <summary>
+    /// Input in the last seconds before a visible window's hour runs out, which no
+    /// check has read yet, is read before the window is closed, and keeps it open.
+    /// </summary>
+    /// <remarks>
+    /// <b>The check runs every two seconds, and a person typing into the window in the
+    /// seconds before its hour must not have it closed under their hands</b>, which is
+    /// the hole the root named when F4 was proposed: <i>"The window could then close
+    /// under their hands at the hour."</i> So the countdown makes the check once more
+    /// before it decides. Planted red against the tree with that read taken out.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task InputInTheLastSecondsBeforeTheHourIsReadBeforeTheWindowIsClosed()
+    {
+        var clock = new ManualClock();
+
+        await using var rig = Sessions(clock);
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        var visible = Path.Combine(rig.Root, "typed-at-the-last-moment");
+
+        await InitAsync(harness, visible, headed: true);
+        await NavigateAsync(harness, visible, "the call that starts the visible browser");
+
+        var child = rig.SessionChildren[^1];
+
+        _ = await ResumeAsync(harness, visible);
+
+        var hour = OneMinute * SessionTimes.VisibleIdleMinutes;
+
+        // The person types one tick before the hour runs out, and no check runs.
+        rig.Desktop.InFront(child.BrowserProcessId);
+        clock.AdvanceTicks(hour.Ticks - ManualClock.OneTick);
+        rig.Desktop.TimePasses();
+        rig.Desktop.PersonTypes();
+
+        // The hour runs out: the countdown reads the input before it decides. The
+        // clock fires the countdown on this thread, so what it decided is readable at
+        // once: a deadline a whole hour away, and not a close that has begun.
+        clock.AdvanceTicks(ManualClock.OneTick);
+
+        var countdown = harness.Proxy.SessionCountdowns().Single(entry => string.Equals(entry.Directory, SessionPath.For(visible).FullPath, StringComparison.OrdinalIgnoreCase));
+
+        await Assert.That(countdown.ClosesAt).IsEqualTo(clock.GetUtcNow() + hour)
+            .Because("the countdown decided the window was idle with input in it that no check had read");
+
+        _ = await harness.Client.RoundTripAsync("tools/list");
+
+        await Assert.That(child.HasStopped).IsFalse();
+
+        // With nothing more, the next hour closes it.
+        rig.Desktop.TimePasses();
+        await AdvanceUntilAsync(clock, OneMinute, () => child.HasStopped, "the visible window was never idle-closed once the input stopped");
+    }
+
     private static RigSessionEnvironment Sessions(ManualClock clock) =>
         RigSessionEnvironment.Create(
             child =>
@@ -457,6 +601,22 @@ internal sealed class IdleCountdownTests
         var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
 
         return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+    }
+
+    /// <summary>Waits for an event with the clock still, bounded by the suite's hang detector.</summary>
+    private static async Task WaitUntilAsync(Func<bool> condition, string whatWentWrong)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (!condition())
+        {
+            if (waited.Elapsed > TestDefaults.InProcessHang)
+            {
+                throw new TimeoutException($"{whatWentWrong} -- after {waited.Elapsed.TotalSeconds:F1} s.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+        }
     }
 
     /// <summary>

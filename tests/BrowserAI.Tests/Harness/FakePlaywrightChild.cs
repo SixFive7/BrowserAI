@@ -364,8 +364,21 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
     private readonly List<Action<int?>> _watches = [];
 
-    private sealed class Unwatch(FakePlaywrightChild child, Action<int?> ended) : IDisposable
+    /// <summary>The next pid a double's browser is given.</summary>
+    private static int _nextBrowserProcessId = 1_900_000_000;
+
+    /// <summary>
+    /// The pid the double's browser answers to, for the visible-input check: a number
+    /// no real process has, so the rig's desktop can put this browser's window in front
+    /// and nothing else's. Added 2026-10-08 with F4.
+    /// </summary>
+    public int BrowserProcessId { get; } = Interlocked.Increment(ref _nextBrowserProcessId);
+
+    private sealed class Unwatch(FakePlaywrightChild child, Action<int?> ended) : IDisposable, BrowserAI.Sessions.IWatchedBrowser
     {
+        /// <inheritdoc />
+        public int ProcessId => child.BrowserProcessId;
+
         public void Dispose()
         {
             lock (child._watches)

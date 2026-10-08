@@ -963,6 +963,18 @@ and the dashboard through `SessionManager.Countdowns`, one `SessionCountdown` pe
 open session with its deadline (`BrowserIdleTimer.CountdownEndsAt`), and none for a
 closed one.
 
+⚠️ **Added 2026-10-08, F4.** A visible session's countdown also restarts on the
+person's input in its window. `SessionManager` holds one `VisibleInputWatch` for
+the process (`SessionEnvironment.InputWatch`, the product's own
+`VisibleInputWatch.ForThisDesktop` unless an environment brings one); a visible
+`LiveSession` joins it once its browser is watched, as an `IVisibleWindowOwner`
+whose window is the browser's main process that `BrowserExitWatch` holds open
+(`IWatchedBrowser`), and leaves it when it closes or is torn down. The check runs on
+`Interop/CoalescableTimer`, an auto-reset waitable timer with a tolerable delay the
+thread pool waits on, only while a session is in it, and reads the desktop through
+`Interop/InputActivity`; a visible session's `BrowserIdleTimer` runs the check once
+more before it decides. The in-process rig's desktop is `Harness/RigDesktop`.
+
 ### `browserai_page_tool`, and how a page tool's name is resolved
 
 | Concern | Implemented by |

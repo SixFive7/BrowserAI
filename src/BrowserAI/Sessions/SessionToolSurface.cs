@@ -658,7 +658,7 @@ internal static class SessionToolSurface
     /// </remarks>
     private static string IdleDescription { get; } =
         "How long this session's browser may go unused before BrowserAI closes it: a whole number of minutes, or \"never\". "
-        + "Unused means no call names this session; every call that names it starts the countdown again, whatever its answer. "
+        + "Unused means no call names this session and, in a visible window, nobody types or clicks in it; every call that names the session starts the countdown again, whatever its answer, and so does the person's input in its window. "
         + $"Defaults to {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} minutes without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one. The close keeps the session, and browserai_resume opens it again. "
         + "A LONGER TIME IS NOT FREE: BrowserAI cannot install an update while a session's browser is open, so a longer time, or never, keeps every update waiting for as long as the browser stays open.";
 
@@ -848,7 +848,7 @@ internal static class SessionToolSurface
             "Take over a directory that is already a BrowserAI session.",
             "Reopens a session that exists, and replays what it was: its recorded browser, purpose and history. Every per-run argument init takes is accepted here too and none is read back from last time. "
             + $"They take effect when a browser starts: while this BrowserAI has the session's browser up, nothing is applied and an argument that differs is refused, so call {Close} first; otherwise they are applied, and the browser reopens the tabs it last had. "
-            + $"Once no call has named the session for its idle time ('{IdleSetting.ParameterName}'), BrowserAI closes its browser, and every browser call is then refused until this is called. "
+            + $"Once no call has named the session for its idle time ('{IdleSetting.ParameterName}'), and in a visible window nobody has used it, BrowserAI closes its browser, and every browser call is then refused until this is called. "
             + "'browser' is NOT an argument -- it was bound when the session was created and a profile on disk belongs to its browser -- and passing it is refused. "
             + "A session is resumable forever; there is no expiry, so a directory that exists can always be resumed. "
             + "IF THE BROWSERAI SERVING YOU IS NOT THE ONE THAT LAST WROTE THE SESSION, this says so and resumes anyway -- nothing needs repairing, but the tool list you are calling from may have been read from the older build, so ask for the tool list again. "

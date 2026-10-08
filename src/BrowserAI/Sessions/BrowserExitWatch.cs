@@ -30,7 +30,7 @@ namespace BrowserAI.Sessions;
 /// given when it is killed (2 of 2 each).
 /// </para>
 /// </remarks>
-internal sealed class BrowserExitWatch : IDisposable
+internal sealed class BrowserExitWatch : IDisposable, IWatchedBrowser
 {
     private readonly HeldProcess _browser;
     private readonly RegisteredWaitHandle _registration;
@@ -55,6 +55,9 @@ internal sealed class BrowserExitWatch : IDisposable
 
     /// <summary>The browser's main process, by pid and creation time.</summary>
     public (int ProcessId, long CreatedFileTime) Browser => (_browser.ProcessId, _browser.CreatedFileTime);
+
+    /// <inheritdoc />
+    int IWatchedBrowser.ProcessId => _browser.ProcessId;
 
     /// <summary>
     /// Starts watching the browser a session child's job holds, or answers
@@ -118,4 +121,21 @@ internal sealed class BrowserExitWatch : IDisposable
 
         _ended(code);
     }
+}
+
+/// <summary>
+/// A watch on a session's browser that knows the browser's main process, which the
+/// visible-input check matches the window in front against.
+/// </summary>
+/// <remarks>
+/// <b>Added 2026-10-08 with F4.</b> The pid is safe to compare only because the watch
+/// holds the process open: it was found inside the session's own job by full image
+/// path, never by image name, and Windows cannot give the number to another process
+/// while the handle is held. The in-process rig's double answers with a number of its
+/// own, which no real process has.
+/// </remarks>
+internal interface IWatchedBrowser
+{
+    /// <summary>The browser's main process.</summary>
+    int ProcessId { get; }
 }

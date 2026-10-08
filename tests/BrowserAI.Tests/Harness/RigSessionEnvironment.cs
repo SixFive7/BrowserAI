@@ -168,6 +168,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             Provisioner = Provisioner,
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
+
+            // F4, 2026-10-08: the rig's own desktop, never the developer's. See RigDesktop.
+            InputWatch = Desktop.Watch,
         };
 
         if (browserIdlePeriod is { } period)
@@ -286,6 +289,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     /// <summary>What the proxy is handed.</summary>
     public SessionEnvironment Environment { get; private init; }
+
+    /// <summary>
+    /// The desktop this rig's sessions read the person's input from, which an arm sets
+    /// and checks by hand. Added 2026-10-08 with F4.
+    /// </summary>
+    public RigDesktop Desktop { get; } = new();
 
     /// <summary>The scratch tree every session this rig opens lives under.</summary>
     public string Root { get; }
