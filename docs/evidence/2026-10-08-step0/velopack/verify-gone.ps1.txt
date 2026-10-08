@@ -1,0 +1,71 @@
+# Every process this rig started or caused, checked by pid AND creation time, so a
+# recycled pid is never mistaken for one of ours. Observation only.
+$ErrorActionPreference = 'Stop'
+$base = 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack'
+$pairs = @{}
+
+function Add-Pair([int] $ProcessId, $Created, [string] $Source) {
+    if (-not $Created) { return }
+    $fileTime = if ($Created -is [DateTime]) { $Created.ToUniversalTime().ToFileTimeUtc() }
+        elseif ($Created -is [long] -or $Created -is [int64]) { [long]$Created }
+        else { [DateTime]::Parse([string]$Created, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind).ToUniversalTime().ToFileTimeUtc() }
+    $pairs["$ProcessId|$fileTime"] = $Source
+}
+
+foreach ($session in Get-ChildItem -LiteralPath (Join-Path $base 'runs') -Directory) {
+    foreach ($line in Get-Content -LiteralPath (Join-Path $session.FullName 'orchestrator.jsonl')) {
+        $record = $line | ConvertFrom-Json -DateKind String
+        if ($record.event -eq 'watch') { Add-Pair $record.pid $record.created "$($session.Name) watch $($record.role)" }
+        if ($record.event -eq 'preflight') { $orchestratorPid = $record.orchestratorPid }
+    }
+
+    foreach ($journal in Get-ChildItem -LiteralPath (Join-Path $session.FullName 'logs') -Recurse -Filter '*.jsonl') {
+        foreach ($line in Get-Content -LiteralPath $journal.FullName) {
+            $record = $line | ConvertFrom-Json -DateKind String
+            if ($record.event -eq 'process-start') {
+                Add-Pair $record.pid $record.createdUtc "$($session.Name) journal $($record.args -join ' ')"
+                # The orchestrator itself is the parent of every process it started.
+                if ($record.parentPid -eq $orchestratorPid) { Add-Pair $record.parentPid $record.parentCreatedUtc "$($session.Name) orchestrator" }
+            }
+            if ($record.event -eq 'spawned') { Add-Pair $record.childPid $record.childStartUtc "$($session.Name) spawned $($record.role)" }
+        }
+    }
+
+    foreach ($outside in Get-ChildItem -LiteralPath (Join-Path $session.FullName 'logs') -Recurse -Filter 'outside-*.txt') {
+        $first = Get-Content -LiteralPath $outside.FullName -TotalCount 1
+        if ($first -match 'start pid=(?<pid>\d+) created=(?<created>\S+)') { Add-Pair ([int]$Matches['pid']) $Matches['created'] "$($session.Name) outside child" }
+    }
+}
+
+# Positive control: this script's own pid and creation time, which must come back alive.
+$self = Get-Process -Id $PID
+$controlKey = "$PID|$($self.StartTime.ToUniversalTime().ToFileTimeUtc())"
+$pairs[$controlKey] = 'CONTROL: this verification process'
+
+$alive = @()
+foreach ($key in $pairs.Keys) {
+    $processId, $fileTime = $key.Split('|')
+    $process = Get-Process -Id ([int]$processId) -ErrorAction SilentlyContinue
+    if ($process) {
+        $created = try { $process.StartTime.ToUniversalTime().ToFileTimeUtc() } catch { -1 }
+        if ($created -eq [long]$fileTime) { $alive += "$processId ($($pairs[$key]))" }
+    }
+}
+
+$root = Join-Path $env:LOCALAPPDATA 'BrowserAI.Measure'
+$all = @(Get-CimInstance -ClassName Win32_Process)
+$underRoot = @($all | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { "$($_.ProcessId) $($_.ExecutablePath)" })
+# Positive control for the path filter: the same test against the folder pwsh runs from.
+$pwshFolder = Split-Path -Parent $self.Path
+$controlUnderPwsh = @($all | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($pwshFolder + '\', [StringComparison]::OrdinalIgnoreCase) }).Count
+$mentioningRig = @($all | Where-Object { $_.CommandLine -and $_.CommandLine -match 'step0-velopack|BrowserAI\.Measure' -and $_.ProcessId -ne $PID } | ForEach-Object { "$($_.ProcessId) $($_.CommandLine)" })
+
+[ordered]@{
+    checkedUtc = [DateTime]::UtcNow.ToString('o')
+    pidsChecked = $pairs.Count - 1
+    aliveWithSameCreationTime = @($alive | Where-Object { $_ -notmatch 'CONTROL' })
+    controlFoundAlive = @($alive | Where-Object { $_ -match 'CONTROL' })
+    controlProcessesUnderPwshFolder = $controlUnderPwsh
+    processesWithImageUnderRoot = $underRoot
+    processesWhoseCommandLineMentionsTheRig = $mentioningRig
+} | ConvertTo-Json -Depth 4

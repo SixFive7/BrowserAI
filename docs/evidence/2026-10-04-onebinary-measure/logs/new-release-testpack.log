@@ -1,0 +1,67 @@
+vpk 1.2.161 matches Velopack 1.2.161.
+Packing version 1.1.1-alpha.0.197 on channel win.
+Test pack only: the shipping feed in C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases is neither read nor written.
+Copied the configuration app, 1.1.1-alpha.0.197, from C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish.
+Copied the MCP server, 1.1.1-alpha.0.197, from C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish.
+WARNING: -TestPackOnly: the ILC output check and the decorated-version-string scan are the release's, and did NOT run here; the gate reads each publish's log.
+Nothing to clear in C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack : the test-pack feed holds none of the files the next pack regenerates.
+vpk pack --packId BrowserAI.app.test --packVersion 1.1.1-alpha.0.197 --packDir C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\artifacts\publish-test-pack --packTitle BrowserAI (suite) --packAuthors Jori Huisman --channel win --outputDir C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack --icon C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\assets\BrowserAI.ico --mainExe BrowserAI.exe --shortcuts StartMenuRoot --delta None
+[03:44:14 INF] Velopack CLI 1.2.161, for distributing applications.
+[03:44:14 INF] Beginning to package Velopack release 1.1.1-alpha.0.197.
+[03:44:14 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack
+[03:44:14 INF] Starting: Pre-process steps
+[03:44:14 INF] Shortcuts: StartMenuRoot
+[03:44:15 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[03:44:15 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[03:44:15 INF] Complete: Pre-process steps
+[03:44:15 INF] Starting: Code-sign application
+[03:44:15 WRN] No signing parameters provided, 7 file(s) will not be signed.
+[03:44:15 INF] Complete: Code-sign application
+[03:44:15 INF] Starting: Building portable package
+[03:44:15 INF] Starting: Building release 1.1.1-alpha.0.197
+[03:44:22 INF] Complete: Building release 1.1.1-alpha.0.197
+[03:44:22 INF] Starting: Building setup package
+[03:44:22 INF] Complete: Building portable package
+[03:44:23 INF] Setup bundle created 'BrowserAI.app.test-win-Setup.exe'.
+[03:44:23 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[03:44:23 INF] Complete: Building setup package
+[03:44:23 INF] Starting: Post-process steps
+[03:44:23 INF] Complete: Post-process steps
+[03:44:23 INF] Finished in 00:00:08.4926370.
+vpk pack of BrowserAI.app.test took 10.2 s.
+Packed the suite's own installer as BrowserAI.test-installer.exe under C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack (pack id BrowserAI.app.test). It is NEVER published.
+vpk pack --packId BrowserAI.app --packVersion 1.1.1-alpha.0.197 --packDir C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\artifacts\publish-test-pack --packTitle BrowserAI --packAuthors Jori Huisman --channel win --outputDir C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack\twin --icon C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\assets\BrowserAI.ico --mainExe BrowserAI.exe --shortcuts StartMenuRoot --delta None
+[03:44:24 INF] Velopack CLI 1.2.161, for distributing applications.
+[03:44:24 INF] Beginning to package Velopack release 1.1.1-alpha.0.197.
+[03:44:24 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack\twin
+[03:44:24 INF] Starting: Pre-process steps
+[03:44:24 INF] Shortcuts: StartMenuRoot
+[03:44:25 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[03:44:25 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[03:44:25 INF] Complete: Pre-process steps
+[03:44:25 INF] Starting: Code-sign application
+[03:44:25 WRN] No signing parameters provided, 7 file(s) will not be signed.
+[03:44:25 INF] Complete: Code-sign application
+[03:44:25 INF] Starting: Building portable package
+[03:44:25 INF] Starting: Building release 1.1.1-alpha.0.197
+[03:44:31 INF] Complete: Building portable package
+[03:44:31 INF] Complete: Building release 1.1.1-alpha.0.197
+[03:44:31 INF] Starting: Building setup package
+[03:44:32 INF] Setup bundle created 'BrowserAI.app-win-Setup.exe'.
+[03:44:32 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[03:44:32 INF] Complete: Building setup package
+[03:44:32 INF] Starting: Post-process steps
+[03:44:32 INF] Complete: Post-process steps
+[03:44:32 INF] Finished in 00:00:07.7192465.
+vpk pack of the twin took 9 s.
+
+Version         : 1.1.1-alpha.0.197
+Channel         : win
+TestSetup       : C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack\BrowserAI.test-installer.exe
+TestPackage     : C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack\BrowserAI.app.test-1.1.1-alpha.0.1
+                  97-full.nupkg
+TwinPackage     : C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.1
+                  97-full.nupkg
+TestPackSeconds : 10,2
+TwinPackSeconds : 9
+

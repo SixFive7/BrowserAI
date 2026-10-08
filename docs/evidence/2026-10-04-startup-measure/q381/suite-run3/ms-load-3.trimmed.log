@@ -1,0 +1,142 @@
+=== ms-load-3 starting 2026-10-04T01:50:36.9847338Z
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath (5s 692ms)
+  [Test Failure] ArgumentException: 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\.work\test-scratch\walk-limit-3fed509771734e9da319c5a2340cabdc\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L' is 248 characters, and a session directory may be at most 240. BrowserAI creates 'browserai.data' and 'output' inside the directory you name, and Windows still bounds a database open and a child's working directory at 260 characters even where .NET does not -- so the directory would be created and the session would then fail to open, with a message about the browser, not about the path. Name a path at least 8 character(s) shorter.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] ArgumentException: 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\.work\test-scratch\walk-limit-3fed509771734e9da319c5a2340cabdc\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L\L' is 248 characters, and a session directory may be at most 240. BrowserAI creates 'browserai.data' and 'output' inside the directory you name, and Windows still bounds a database open and a child's working directory at 260 characters even where .NET does not -- so the directory would be created and the session would then fail to open, with a message about the browser, not about the path. Name a path at least 8 character(s) shorter.
+    at BrowserAI.Sessions.SessionPath.For(String canonical) in C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.Core\Sessions\SessionPath.cs:240
+    at BrowserAI.Tests.CanonicalPathTests.TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath() in C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\CanonicalPathTests.cs:634
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed AServingCoordinatorIsAskedToLookAgainAndNoTaskIsStarted (649ms)
+  [Test Failure] AssertionException: Expected to be equal to Rechecked, because the coordinator's pipe is there and did not take the recheck, so no second coordinator was started: '\\.\pipe\BrowserAI-Coordinator-6CA366A3006AF0C43C9E1330994C1BF9' did not answer 'recheck' inside 500 ms.
+but received Failed
+
+at Assert.That(report.Outcome).IsEqualTo(WakeOutcome.Rechecked).Because("the coordinator's pipe is there and did not take the recheck, so no second coordinator was started: '\\.\pipe\BrowserAI-Coordinator-6CA366A3006AF0C43C9E1330994C1BF9' did not answer 'recheck' inside 500 ms.")
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be equal to Rechecked, because the coordinator's pipe is there and did not take the recheck, so no second coordinator was started: '\\.\pipe\BrowserAI-Coordinator-6CA366A3006AF0C43C9E1330994C1BF9' did not answer 'recheck' inside 500 ms.
+  but received Failed
+  
+  at Assert.That(report.Outcome).IsEqualTo(WakeOutcome.Rechecked).Because("the coordinator's pipe is there and did not take the recheck, so no second coordinator was started: '\\.\pipe\BrowserAI-Coordinator-6CA366A3006AF0C43C9E1330994C1BF9' did not answer 'recheck' inside 500 ms.")
+    at BrowserAI.Tests.CoordinatorWakeTests.AServingCoordinatorIsAskedToLookAgainAndNoTaskIsStarted() in C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\CoordinatorWakeTests.cs:47
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+skipped ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse
+  packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow
+  packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped NothingElseInTheReleaseDirectoryIsPublished
+  packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped EveryNoticeIsInsideThePackedRelease
+  packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped ThePackedReleaseNamesTheAppAsItsMainExeAndCarriesBothBinaries
+  packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped TheSuitesInstallerIsTheBuildThisRunTested
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+skipped TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears
+  release installer is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one). Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set BROWSERAI_RELEASE_FEED to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed. Set BROWSERAI_RELEASE_RUN=1 to make this a failure instead of a skip.
+  from C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 2 error(s) (3m 12s 173ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\payload\payload.json
+    Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg
+        5 tests skipped: ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse, EveryNoticeIsInsideThePackedRelease, EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow, NothingElseInTheReleaseDirectoryIsPublished, ThePackedReleaseNamesTheAppAsItsMainExeAndCarriesBothBinaries
+    client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+    release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+        6 tests skipped: AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes, InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical, TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn, TheSuitesInstallerIsTheBuildThisRunTested, TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears, TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup rev-parse --is-inside-work-tree said true
+    Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+    publish freshness   FRESH      exe 2026-10-04T00:42:38.217Z is 15m49s newer than the newest of 153 inputs (third-party\sqlite\sqlite3.h, 2026-10-04T00:26:48.840Z) ┬╖ exe and tree both 1.1.1-alpha.0.192 ┬╖ the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CACHED   seeded from a tree the CDN served 4 min ago; nothing was downloaded in this run (10.7 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ ┬╖ cwd C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows ┬╖ BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly ┬╖ read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ΓÜá∩╕Å  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 96,354 MiB (37.9%) ┬╖ end 94,803 MiB (37.3%) ┬╖ limit 254,409 MiB ┬╖ \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 4997 events, 15 about visible root windows and none of them this run's, 128 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 77 scans, 377 processes read under the browsers root and the scratch roots
+    installer lock      TAKEN    taken by this run (pid=62556 created=134355522646538273), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+  ==============================================================================
+    ΓÜá∩╕Å  DEGRADED RUN: 11 test executions took a path that proves less than the
+        test's name claims. They are reported as SKIPPED, not as passed, so this
+        run's summary is not the summary of a healthy one. A release may not be
+        cut from it: release checklist item 8 requires the skipped count to be zero.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 959
+  failed: 2
+  succeeded: 946
+  skipped: 11
+  duration: 3m 12s 789ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\payload\payload.json
+  Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\BrowserAI.app-<version>-full.nupkg
+      5 tests skipped: ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse, EveryNoticeIsInsideThePackedRelease, EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow, NothingElseInTheReleaseDirectoryIsPublished, ThePackedReleaseNamesTheAppAsItsMainExeAndCarriesBothBinaries
+  client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+  release installer   ABSENT   C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\Releases\test-pack\BrowserAI.test-installer.exe (nothing has packed one)
+      6 tests skipped: AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes, InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical, TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn, TheSuitesInstallerIsTheBuildThisRunTested, TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears, TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-04T00:42:38.217Z is 15m49s newer than the newest of 153 inputs (third-party\sqlite\sqlite3.h, 2026-10-04T00:26:48.840Z) · exe and tree both 1.1.1-alpha.0.192 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     CACHED   seeded from a tree the CDN served 4 min ago; nothing was downloaded in this run (10.7 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+  filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 96,354 MiB (37.9%) · end 94,803 MiB (37.3%) · limit 254,409 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 4997 events, 15 about visible root windows and none of them this run's, 128 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 77 scans, 377 processes read under the browsers root and the scratch roots
+  installer lock      TAKEN    taken by this run (pid=62556 created=134355522646538273), and let go when the session ends: C:\Source\SixFive7\BrowserAI\.work\installer.lock
+==============================================================================
+  ⚠️  DEGRADED RUN: 11 test executions took a path that proves less than the
+      test's name claims. They are reported as SKIPPED, not as passed, so this
+      run's summary is not the summary of a healthy one. A release may not be
+      cut from it: release checklist item 8 requires the skipped count to be zero.
+==============================================================================
+=== ms-load-3 done 2026-10-04T01:54:17.4749771Z

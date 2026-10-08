@@ -1,0 +1,534 @@
+﻿000008 clock zero utc=2026-10-08T13:58:33.7004643Z
+000012 screen=3840x2160 region={X=2940,Y=1460,Width=900,Height=700}
+000016 notifier setting=Enabled
+000027 history before=0
+000040 audio-device dev=0 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613} volume=1,00 mute=False
+000041 audio-device dev=1 id={0.0.0.00000000}.{4ae90f57-d116-4db4-ac0b-2d4e9583ebc3} volume=0,51 mute=False
+000041 audio-device dev=2 id={0.0.0.00000000}.{6bc13147-7e56-4052-af2f-cbb384ba35dc} volume=1,00 mute=False
+000042 audio-device dev=3 id={0.0.0.00000000}.{72f23a22-5e24-478a-b486-4ba983d324fe} volume=0,00 mute=True
+000042 audio-device dev=4 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4} volume=0,50 mute=False
+000043 audio-device dev=5 id={0.0.0.00000000}.{c79418f3-4d53-4446-968f-f95fe2fd4d6f} volume=0,54 mute=False
+000043 audio-device dev=6 id={0.0.0.00000000}.{eb54d0dc-bab3-4339-91a1-44aeff53fdc5} volume=0,00 mute=False
+000047 audio-default-console id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}
+000059 audio-baseline endpoint dev=0 peak=0,0577 (ignored from here on)
+000061 audio-baseline session dev=0 pid=18872 system=False peak=0,0577 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613}|\Device\HarddiskVolume3\Program Files\WindowsApps\Elgato.WaveLink_3.3.0.4529_x64__g54w8ztgkx496\Elgato.WaveLink.exe%b{00000000-0000-0000-0000-000000000000} (ignored from here on)
+000087 fg hwnd=0x111E6 pid=54008 class='Chrome_WidgetWin_1' title='BrowserAI - Visual Studio Code'
+000318 pix roi=31 outside=0 box=(875,664)-(880,671)
+000481 pix roi=78 outside=0 box=(562,669)-(575,682)
+000967 pix roi=78 outside=0 box=(562,669)-(575,682)
+001332 pix roi=32 outside=0 box=(875,664)-(880,671)
+001490 pix roi=78 outside=0 box=(562,669)-(575,682)
+001562 audio baseline ends
+001574 SHOW toast1 seq=1 status='Installs in 10:00' T0=1564
+001581 history after show1=1
+001762 audio-endpoint dev=4 peak=0,1722
+001763 audio-session dev=4 pid=12396 system=True peak=0,1722 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001776 pix roi=6756 outside=0 box=(738,361)-(899,643)
+001804 audio-endpoint dev=4 peak=0,3239
+001805 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001819 pix roi=10687 outside=0 box=(633,370)-(899,643)
+001845 audio-endpoint dev=4 peak=0,3239
+001845 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001860 pix roi=10978 outside=0 box=(576,384)-(899,643)
+001887 audio-endpoint dev=4 peak=0,3175
+001888 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001901 pix roi=10866 outside=0 box=(542,370)-(899,643)
+001927 audio-endpoint dev=4 peak=0,3175
+001928 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001945 pix roi=10384 outside=0 box=(522,361)-(899,643)
+001968 audio-endpoint dev=4 peak=0,3175
+001968 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001985 pix roi=9736 outside=0 box=(514,361)-(897,682)
+002008 audio-endpoint dev=4 peak=0,2392
+002009 audio-session dev=4 pid=12396 system=True peak=0,2392 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002027 pix roi=9200 outside=0 box=(514,361)-(888,643)
+002053 audio-endpoint dev=4 peak=0,2106
+002054 audio-session dev=4 pid=12396 system=True peak=0,2106 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002094 audio-endpoint dev=4 peak=0,1702
+002094 audio-session dev=4 pid=12396 system=True peak=0,1702 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002134 audio-endpoint dev=4 peak=0,1602
+002134 audio-session dev=4 pid=12396 system=True peak=0,1602 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002174 audio-endpoint dev=4 peak=0,1466
+002175 audio-session dev=4 pid=12396 system=True peak=0,1466 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002215 audio-endpoint dev=4 peak=0,1309
+002215 audio-session dev=4 pid=12396 system=True peak=0,1309 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002257 audio-endpoint dev=4 peak=0,1103
+002257 audio-session dev=4 pid=12396 system=True peak=0,1103 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002298 audio-endpoint dev=4 peak=0,0904
+002298 audio-session dev=4 pid=12396 system=True peak=0,0904 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002320 pix roi=19 outside=0 box=(875,664)-(880,671)
+002338 audio-endpoint dev=4 peak=0,0786
+002339 audio-session dev=4 pid=12396 system=True peak=0,0786 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002380 audio-endpoint dev=4 peak=0,0671
+002381 audio-session dev=4 pid=12396 system=True peak=0,0671 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002421 audio-endpoint dev=4 peak=0,0562
+002421 audio-session dev=4 pid=12396 system=True peak=0,0562 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002461 audio-endpoint dev=4 peak=0,0486
+002462 audio-session dev=4 pid=12396 system=True peak=0,0486 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002476 pix roi=78 outside=0 box=(562,669)-(575,682)
+002502 audio-endpoint dev=4 peak=0,0407
+002503 audio-session dev=4 pid=12396 system=True peak=0,0407 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002543 audio-endpoint dev=4 peak=0,0368
+002544 audio-session dev=4 pid=12396 system=True peak=0,0368 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002584 audio-endpoint dev=4 peak=0,0328
+002584 audio-session dev=4 pid=12396 system=True peak=0,0316 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002590 UPDATE k=1 seq=2 result=Succeeded callMs=5 status='Installs in 9:59' value=0.0017 valueString='0:01 of 10:00'
+002609 uia roi: 0 toast view(s) 
+002624 audio-endpoint dev=4 peak=0,0277
+002625 audio-session dev=4 pid=12396 system=True peak=0,0266 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002666 audio-endpoint dev=4 peak=0,0213
+002667 audio-session dev=4 pid=12396 system=True peak=0,0213 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002707 audio-endpoint dev=4 peak=0,0164
+002707 audio-session dev=4 pid=12396 system=True peak=0,0164 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002724 pix roi=798 outside=0 box=(536,539)-(839,614)
+002746 audio-endpoint dev=4 peak=0,0137
+002746 audio-session dev=4 pid=12396 system=True peak=0,0137 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002788 audio-endpoint dev=4 peak=0,0116
+002789 audio-session dev=4 pid=12396 system=True peak=0,0116 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002829 audio-endpoint dev=4 peak=0,0092
+002830 audio-session dev=4 pid=12396 system=True peak=0,0092 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002870 audio-endpoint dev=4 peak=0,0075
+002871 audio-session dev=4 pid=12396 system=True peak=0,0075 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002913 audio-endpoint dev=4 peak=0,0061
+002914 audio-session dev=4 pid=12396 system=True peak=0,0061 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002954 audio-endpoint dev=4 peak=0,0049
+002954 audio-session dev=4 pid=12396 system=True peak=0,0046 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002967 pix roi=78 outside=0 box=(562,669)-(575,682)
+002995 audio-endpoint dev=4 peak=0,0031
+002995 audio-session dev=4 pid=12396 system=True peak=0,0031 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+003037 audio-endpoint dev=4 peak=0,0015
+003037 audio-session dev=4 pid=12396 system=True peak=0,0015 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+003341 pix roi=35 outside=0 box=(875,664)-(880,671)
+003467 pix roi=78 outside=0 box=(562,669)-(575,682)
+003583 UPDATE k=2 seq=3 result=Succeeded callMs=2 status='Installs in 9:58' value=0.0033 valueString='0:02 of 10:00'
+003716 pix roi=227 outside=0 box=(536,539)-(816,565)
+003998 pix roi=78 outside=0 box=(562,669)-(575,682)
+004106 uia toast1-t02s: 0 toast view(s) 
+004108 shot toast1-t02s captured at 4081 ms, NO matching toast view for 'ready to install'
+004332 pix roi=36 outside=0 box=(875,664)-(880,671)
+004499 pix roi=78 outside=0 box=(562,669)-(575,682)
+004566 UPDATE k=3 seq=4 result=Succeeded callMs=1 status='Installs in 9:57' value=0.0050 valueString='0:03 of 10:00'
+004700 pix roi=80 outside=0 box=(537,539)-(816,565)
+004992 pix roi=78 outside=0 box=(562,669)-(575,682)
+005326 pix roi=23 outside=0 box=(875,666)-(880,671)
+005490 pix roi=78 outside=0 box=(562,669)-(575,682)
+005582 UPDATE k=4 seq=5 result=Succeeded callMs=1 status='Installs in 9:56' value=0.0067 valueString='0:04 of 10:00'
+005732 pix roi=82 outside=0 box=(616,556)-(816,565)
+005985 pix roi=78 outside=0 box=(562,669)-(575,682)
+006352 pix roi=42 outside=0 box=(868,664)-(880,671)
+006474 pix roi=78 outside=0 box=(562,669)-(575,682)
+006583 UPDATE k=5 seq=6 result=Succeeded callMs=2 status='Installs in 9:55' value=0.0083 valueString='0:05 of 10:00'
+006725 pix roi=68 outside=0 box=(538,539)-(816,565)
+007007 pix roi=78 outside=0 box=(562,669)-(575,682)
+007340 pix roi=39 outside=0 box=(875,664)-(880,671)
+007498 pix roi=78 outside=0 box=(562,669)-(575,682)
+007567 UPDATE k=6 seq=7 result=Succeeded callMs=1 status='Installs in 9:54' value=0.0100 valueString='0:06 of 10:00'
+007707 pix roi=64 outside=0 box=(615,556)-(816,565)
+008000 pix roi=78 outside=0 box=(562,669)-(575,682)
+008333 pix roi=27 outside=0 box=(875,664)-(880,671)
+008499 pix roi=78 outside=0 box=(562,669)-(575,682)
+008583 UPDATE k=7 seq=8 result=Succeeded callMs=2 status='Installs in 9:53' value=0.0117 valueString='0:07 of 10:00'
+008706 pix roi=85 outside=0 box=(539,539)-(816,565)
+008993 pix roi=78 outside=0 box=(562,669)-(575,682)
+009326 pix roi=24 outside=0 box=(875,665)-(880,671)
+009490 pix roi=78 outside=0 box=(562,669)-(575,682)
+009567 UPDATE k=8 seq=9 result=Succeeded callMs=1 status='Installs in 9:52' value=0.0133 valueString='0:08 of 10:00'
+009699 pix roi=79 outside=0 box=(539,539)-(816,565)
+009991 pix roi=78 outside=0 box=(562,669)-(575,682)
+010317 pix roi=31 outside=0 box=(875,664)-(880,671)
+010481 pix roi=78 outside=0 box=(562,669)-(575,682)
+010568 UPDATE k=9 seq=10 result=Succeeded callMs=2 status='Installs in 9:51' value=0.0150 valueString='0:09 of 10:00'
+010691 pix roi=77 outside=0 box=(540,539)-(816,565)
+010977 pix roi=78 outside=0 box=(562,669)-(575,682)
+011349 pix roi=32 outside=0 box=(875,664)-(880,671)
+011473 pix roi=78 outside=0 box=(562,669)-(575,682)
+011580 UPDATE k=10 seq=11 result=Succeeded callMs=2 status='Installs in 9:50' value=0.0167 valueString='0:10 of 10:00'
+011716 pix roi=196 outside=0 box=(541,539)-(816,565)
+011967 pix roi=78 outside=0 box=(562,669)-(575,682)
+012332 pix roi=19 outside=0 box=(875,664)-(880,671)
+012499 pix roi=78 outside=0 box=(562,669)-(575,682)
+012566 UPDATE k=11 seq=12 result=Succeeded callMs=1 status='Installs in 9:49' value=0.0183 valueString='0:11 of 10:00'
+012707 pix roi=238 outside=0 box=(608,556)-(816,565)
+012992 pix roi=78 outside=0 box=(562,669)-(575,682)
+013323 pix roi=35 outside=0 box=(875,664)-(880,671)
+013481 pix roi=78 outside=0 box=(562,669)-(575,682)
+013580 UPDATE k=12 seq=13 result=Succeeded callMs=1 status='Installs in 9:48' value=0.0200 valueString='0:12 of 10:00'
+013732 pix roi=200 outside=0 box=(542,539)-(816,565)
+013975 pix roi=78 outside=0 box=(562,669)-(575,682)
+014349 pix roi=36 outside=0 box=(875,664)-(880,671)
+014474 pix roi=78 outside=0 box=(562,669)-(575,682)
+014584 UPDATE k=13 seq=14 result=Succeeded callMs=2 status='Installs in 9:47' value=0.0217 valueString='0:13 of 10:00'
+014717 pix roi=80 outside=0 box=(542,539)-(816,565)
+015007 pix roi=78 outside=0 box=(562,669)-(575,682)
+015332 pix roi=23 outside=0 box=(875,666)-(880,671)
+015499 pix roi=78 outside=0 box=(562,669)-(575,682)
+015584 UPDATE k=14 seq=15 result=Succeeded callMs=2 status='Installs in 9:46' value=0.0233 valueString='0:14 of 10:00'
+015708 pix roi=86 outside=0 box=(543,539)-(816,565)
+015993 pix roi=78 outside=0 box=(562,669)-(575,682)
+016323 pix roi=45 outside=0 box=(868,664)-(880,671)
+016490 pix roi=78 outside=0 box=(562,669)-(575,682)
+016569 UPDATE k=15 seq=16 result=Succeeded callMs=2 status='Installs in 9:45' value=0.0250 valueString='0:15 of 10:00'
+016699 pix roi=64 outside=0 box=(616,556)-(816,565)
+016991 pix roi=78 outside=0 box=(562,669)-(575,682)
+017319 pix roi=39 outside=0 box=(875,664)-(880,671)
+017481 pix roi=78 outside=0 box=(562,669)-(575,682)
+017568 UPDATE k=16 seq=17 result=Succeeded callMs=2 status='Installs in 9:44' value=0.0267 valueString='0:16 of 10:00'
+017688 pix roi=68 outside=0 box=(544,539)-(816,565)
+017981 pix roi=78 outside=0 box=(562,669)-(575,682)
+018317 pix roi=27 outside=0 box=(875,664)-(880,671)
+018481 pix roi=78 outside=0 box=(562,669)-(575,682)
+018569 UPDATE k=17 seq=18 result=Succeeded callMs=1 status='Installs in 9:43' value=0.0283 valueString='0:17 of 10:00'
+018691 pix roi=81 outside=0 box=(615,556)-(816,565)
+018982 pix roi=78 outside=0 box=(562,669)-(575,682)
+019348 pix roi=24 outside=0 box=(875,665)-(880,671)
+019474 pix roi=78 outside=0 box=(562,669)-(575,682)
+019582 UPDATE k=18 seq=19 result=Succeeded callMs=2 status='Installs in 9:42' value=0.0300 valueString='0:18 of 10:00'
+019723 pix roi=79 outside=0 box=(545,539)-(816,565)
+019974 pix roi=78 outside=0 box=(562,669)-(575,682)
+020339 pix roi=31 outside=0 box=(875,664)-(880,671)
+020505 pix roi=78 outside=0 box=(562,669)-(575,682)
+020569 UPDATE k=19 seq=20 result=Succeeded callMs=2 status='Installs in 9:41' value=0.0317 valueString='0:19 of 10:00'
+020715 pix roi=77 outside=0 box=(546,539)-(816,565)
+021007 pix roi=78 outside=0 box=(562,669)-(575,682)
+021339 pix roi=32 outside=0 box=(875,664)-(880,671)
+021467 pix roi=78 outside=0 box=(562,669)-(575,682)
+021568 UPDATE k=20 seq=21 result=Succeeded callMs=2 status='Installs in 9:40' value=0.0333 valueString='0:20 of 10:00'
+021716 pix roi=190 outside=0 box=(615,556)-(816,565)
+022002 pix roi=78 outside=0 box=(562,669)-(575,682)
+022333 pix roi=19 outside=0 box=(875,664)-(880,671)
+022499 pix roi=78 outside=0 box=(562,669)-(575,682)
+022581 UPDATE k=21 seq=22 result=Succeeded callMs=2 status='Installs in 9:39' value=0.0350 valueString='0:21 of 10:00'
+022700 pix roi=240 outside=0 box=(547,539)-(816,565)
+022740 pix roi=2 outside=0 box=(547,539)-(547,541)
+022992 pix roi=78 outside=0 box=(562,669)-(575,682)
+023318 pix roi=35 outside=0 box=(875,664)-(880,671)
+023483 pix roi=78 outside=0 box=(562,669)-(575,682)
+023591 UPDATE k=22 seq=23 result=Succeeded callMs=1 status='Installs in 9:38' value=0.0367 valueString='0:22 of 10:00'
+023733 pix roi=199 outside=0 box=(615,556)-(816,565)
+023976 pix roi=78 outside=0 box=(562,669)-(575,682)
+024356 pix roi=36 outside=0 box=(875,664)-(880,671)
+024476 pix roi=78 outside=0 box=(562,669)-(575,682)
+024584 UPDATE k=23 seq=24 result=Succeeded callMs=2 status='Installs in 9:37' value=0.0383 valueString='0:23 of 10:00'
+024724 pix roi=80 outside=0 box=(548,539)-(816,565)
+025007 pix roi=78 outside=0 box=(562,669)-(575,682)
+025340 pix roi=23 outside=0 box=(875,666)-(880,671)
+025507 pix roi=78 outside=0 box=(562,669)-(575,682)
+025575 UPDATE k=24 seq=25 result=Succeeded callMs=2 status='Installs in 9:36' value=0.0400 valueString='0:24 of 10:00'
+025718 pix roi=82 outside=0 box=(616,556)-(816,565)
+025967 pix roi=78 outside=0 box=(562,669)-(575,682)
+026333 pix roi=66 outside=0 box=(859,664)-(880,671)
+026498 pix roi=78 outside=0 box=(562,669)-(575,682)
+026568 UPDATE k=25 seq=26 result=Succeeded callMs=1 status='Installs in 9:35' value=0.0417 valueString='0:25 of 10:00'
+026707 pix roi=68 outside=0 box=(549,539)-(816,565)
+026999 pix roi=78 outside=0 box=(562,669)-(575,682)
+027326 pix roi=39 outside=0 box=(875,664)-(880,671)
+027490 pix roi=78 outside=0 box=(562,669)-(575,682)
+027581 UPDATE k=26 seq=27 result=Succeeded callMs=2 status='Installs in 9:34' value=0.0433 valueString='0:26 of 10:00'
+027700 pix roi=68 outside=0 box=(549,539)-(816,565)
+027741 pix roi=4 outside=0 box=(549,539)-(549,542)
+027993 pix roi=78 outside=0 box=(562,669)-(575,682)
+028329 pix roi=27 outside=0 box=(875,664)-(880,671)
+028481 pix roi=78 outside=0 box=(562,669)-(575,682)
+028568 UPDATE k=27 seq=28 result=Succeeded callMs=1 status='Installs in 9:33' value=0.0450 valueString='0:27 of 10:00'
+028699 pix roi=85 outside=0 box=(550,539)-(816,565)
+028739 pix roi=1 outside=0 box=(550,541)-(550,541)
+028983 pix roi=78 outside=0 box=(562,669)-(575,682)
+029347 pix roi=24 outside=0 box=(875,665)-(880,671)
+029472 pix roi=78 outside=0 box=(562,669)-(575,682)
+029569 UPDATE k=28 seq=29 result=Succeeded callMs=2 status='Installs in 9:32' value=0.0467 valueString='0:28 of 10:00'
+029682 pix roi=79 outside=0 box=(551,539)-(816,565)
+029723 pix roi=2 outside=0 box=(551,540)-(551,541)
+029966 pix roi=78 outside=0 box=(562,669)-(575,682)
+030331 pix roi=31 outside=0 box=(875,664)-(880,671)
+030498 pix roi=78 outside=0 box=(562,669)-(575,682)
+030569 UPDATE k=29 seq=30 result=Succeeded callMs=2 status='Installs in 9:31' value=0.0483 valueString='0:29 of 10:00'
+030707 pix roi=77 outside=0 box=(551,539)-(816,565)
+030990 pix roi=78 outside=0 box=(562,669)-(575,682)
+031318 pix roi=32 outside=0 box=(875,664)-(880,671)
+031481 pix roi=78 outside=0 box=(562,669)-(575,682)
+031568 UPDATE k=30 seq=31 result=Succeeded callMs=2 status='Installs in 9:30' value=0.0500 valueString='0:30 of 10:00'
+031690 pix roi=105 outside=0 box=(552,539)-(816,565)
+031982 pix roi=78 outside=0 box=(562,669)-(575,682)
+032117 uia toast1-t30s: 0 toast view(s) 
+032117 shot toast1-t30s captured at 32097 ms, NO matching toast view for 'ready to install'
+032319 pix roi=19 outside=0 box=(875,664)-(880,671)
+032472 pix roi=78 outside=0 box=(562,669)-(575,682)
+032582 UPDATE k=31 seq=32 result=Succeeded callMs=2 status='Installs in 9:29' value=0.0517 valueString='0:31 of 10:00'
+032724 pix roi=220 outside=0 box=(608,556)-(816,565)
+032974 pix roi=78 outside=0 box=(562,669)-(575,682)
+033341 pix roi=35 outside=0 box=(875,664)-(880,671)
+033468 pix roi=78 outside=0 box=(562,669)-(575,682)
+033582 UPDATE k=32 seq=33 result=Succeeded callMs=1 status='Installs in 9:28' value=0.0533 valueString='0:32 of 10:00'
+033715 pix roi=209 outside=0 box=(553,539)-(816,565)
+033966 pix roi=78 outside=0 box=(562,669)-(575,682)
+034331 pix roi=36 outside=0 box=(875,664)-(880,671)
+034499 pix roi=78 outside=0 box=(562,669)-(575,682)
+034581 UPDATE k=33 seq=34 result=Succeeded callMs=2 status='Installs in 9:27' value=0.0550 valueString='0:33 of 10:00'
+034706 pix roi=80 outside=0 box=(553,539)-(816,565)
+035000 pix roi=78 outside=0 box=(562,669)-(575,682)
+035323 pix roi=23 outside=0 box=(875,666)-(880,671)
+035489 pix roi=78 outside=0 box=(562,669)-(575,682)
+035567 UPDATE k=34 seq=35 result=Succeeded callMs=2 status='Installs in 9:26' value=0.0567 valueString='0:34 of 10:00'
+035699 pix roi=86 outside=0 box=(554,539)-(816,565)
+035999 pix roi=78 outside=0 box=(562,669)-(575,682)
+036322 pix roi=48 outside=0 box=(868,664)-(880,671)
+036489 pix roi=78 outside=0 box=(562,669)-(575,682)
+036568 UPDATE k=35 seq=36 result=Succeeded callMs=2 status='Installs in 9:25' value=0.0583 valueString='0:35 of 10:00'
+036698 pix roi=68 outside=0 box=(554,539)-(816,565)
+036982 pix roi=78 outside=0 box=(562,669)-(575,682)
+037318 pix roi=39 outside=0 box=(875,664)-(880,671)
+037475 pix roi=78 outside=0 box=(562,669)-(575,682)
+037581 UPDATE k=36 seq=37 result=Succeeded callMs=2 status='Installs in 9:24' value=0.0600 valueString='0:36 of 10:00'
+037723 pix roi=68 outside=0 box=(555,539)-(816,565)
+037976 pix roi=78 outside=0 box=(562,669)-(575,682)
+038340 pix roi=27 outside=0 box=(875,664)-(880,671)
+038501 pix roi=78 outside=0 box=(562,669)-(575,682)
+038575 UPDATE k=37 seq=38 result=Succeeded callMs=2 status='Installs in 9:23' value=0.0617 valueString='0:37 of 10:00'
+038716 pix roi=81 outside=0 box=(615,556)-(816,565)
+039007 pix roi=78 outside=0 box=(562,669)-(575,682)
+039339 pix roi=24 outside=0 box=(875,665)-(880,671)
+039468 pix roi=78 outside=0 box=(562,669)-(575,682)
+039573 UPDATE k=38 seq=39 result=Succeeded callMs=2 status='Installs in 9:22' value=0.0633 valueString='0:38 of 10:00'
+039720 pix roi=79 outside=0 box=(556,539)-(816,565)
+039999 pix roi=78 outside=0 box=(562,669)-(575,682)
+040335 pix roi=31 outside=0 box=(875,664)-(880,671)
+040498 pix roi=78 outside=0 box=(562,669)-(575,682)
+040583 UPDATE k=39 seq=40 result=Succeeded callMs=2 status='Installs in 9:21' value=0.0650 valueString='0:39 of 10:00'
+040708 pix roi=77 outside=0 box=(557,539)-(816,565)
+041000 pix roi=78 outside=0 box=(562,669)-(575,682)
+041331 pix roi=32 outside=0 box=(875,664)-(880,671)
+041498 pix roi=78 outside=0 box=(562,669)-(575,682)
+041582 UPDATE k=40 seq=41 result=Succeeded callMs=2 status='Installs in 9:20' value=0.0667 valueString='0:40 of 10:00'
+041708 pix roi=119 outside=0 box=(557,539)-(816,565)
+041748 pix roi=4 outside=0 box=(557,539)-(557,542)
+041999 pix roi=78 outside=0 box=(562,669)-(575,682)
+042330 pix roi=19 outside=0 box=(875,664)-(880,671)
+042498 pix roi=78 outside=0 box=(562,669)-(575,682)
+042568 UPDATE k=41 seq=42 result=Succeeded callMs=1 status='Installs in 9:19' value=0.0683 valueString='0:41 of 10:00'
+042699 pix roi=275 outside=0 box=(558,539)-(816,565)
+042992 pix roi=78 outside=0 box=(562,669)-(575,682)
+043326 pix roi=35 outside=0 box=(875,664)-(880,671)
+043490 pix roi=78 outside=0 box=(562,669)-(575,682)
+043567 UPDATE k=42 seq=43 result=Succeeded callMs=1 status='Installs in 9:18' value=0.0700 valueString='0:42 of 10:00'
+043699 pix roi=209 outside=0 box=(558,539)-(816,565)
+043740 pix roi=2 outside=0 box=(558,539)-(558,541)
+043992 pix roi=78 outside=0 box=(562,669)-(575,682)
+044319 pix roi=36 outside=0 box=(875,664)-(880,671)
+044481 pix roi=78 outside=0 box=(562,669)-(575,682)
+044568 UPDATE k=43 seq=44 result=Succeeded callMs=2 status='Installs in 9:17' value=0.0717 valueString='0:43 of 10:00'
+044690 pix roi=80 outside=0 box=(559,539)-(816,565)
+044731 pix roi=2 outside=0 box=(559,540)-(559,542)
+044982 pix roi=78 outside=0 box=(562,669)-(575,682)
+045319 pix roi=23 outside=0 box=(875,666)-(880,671)
+045481 pix roi=78 outside=0 box=(562,669)-(575,682)
+045569 UPDATE k=44 seq=45 result=Succeeded callMs=2 status='Installs in 9:16' value=0.0733 valueString='0:44 of 10:00'
+045690 pix roi=89 outside=0 box=(559,539)-(816,565)
+045983 pix roi=78 outside=0 box=(562,669)-(575,682)
+046319 pix roi=40 outside=0 box=(868,664)-(880,671)
+046480 pix roi=78 outside=0 box=(562,669)-(575,682)
+046585 UPDATE k=45 seq=46 result=Succeeded callMs=2 status='Installs in 9:15' value=0.0750 valueString='0:45 of 10:00'
+046723 pix roi=71 outside=0 box=(560,539)-(816,565)
+046983 pix roi=78 outside=0 box=(562,669)-(575,682)
+047348 pix roi=39 outside=0 box=(875,664)-(880,671)
+047474 pix roi=78 outside=0 box=(562,669)-(575,682)
+047569 UPDATE k=46 seq=47 result=Succeeded callMs=2 status='Installs in 9:14' value=0.0767 valueString='0:46 of 10:00'
+047681 pix roi=76 outside=0 box=(560,539)-(816,565)
+047722 pix roi=3 outside=0 box=(560,539)-(560,541)
+047965 pix roi=78 outside=0 box=(562,669)-(575,682)
+048339 pix roi=27 outside=0 box=(875,664)-(880,671)
+048466 pix roi=78 outside=0 box=(562,669)-(575,682)
+048581 UPDATE k=47 seq=48 result=Succeeded callMs=1 status='Installs in 9:13' value=0.0783 valueString='0:47 of 10:00'
+048707 pix roi=92 outside=0 box=(561,539)-(816,565)
+049000 pix roi=78 outside=0 box=(562,669)-(575,682)
+049330 pix roi=24 outside=0 box=(875,665)-(880,671)
+049489 pix roi=78 outside=0 box=(562,669)-(575,682)
+049581 UPDATE k=48 seq=49 result=Succeeded callMs=1 status='Installs in 9:12' value=0.0800 valueString='0:48 of 10:00'
+049699 pix roi=78 outside=0 box=(562,539)-(816,565)
+049739 pix roi=1 outside=0 box=(562,541)-(562,541)
+049990 pix roi=78 outside=0 box=(562,669)-(575,682)
+050319 pix roi=31 outside=0 box=(875,664)-(880,671)
+050483 pix roi=78 outside=0 box=(562,669)-(575,682)
+050581 UPDATE k=49 seq=50 result=Succeeded callMs=2 status='Installs in 9:11' value=0.0817 valueString='0:49 of 10:00'
+050733 pix roi=73 outside=0 box=(613,556)-(816,565)
+050983 pix roi=78 outside=0 box=(562,669)-(575,682)
+051349 pix roi=32 outside=0 box=(875,664)-(880,671)
+051473 pix roi=78 outside=0 box=(562,669)-(575,682)
+051582 UPDATE k=50 seq=51 result=Succeeded callMs=2 status='Installs in 9:10' value=0.0833 valueString='0:50 of 10:00'
+051724 pix roi=126 outside=0 box=(563,539)-(816,565)
+051973 pix roi=78 outside=0 box=(562,669)-(575,682)
+052339 pix roi=19 outside=0 box=(875,664)-(880,671)
+052505 pix roi=78 outside=0 box=(562,669)-(575,682)
+052567 UPDATE k=51 seq=52 result=Succeeded callMs=1 status='Installs in 9:09' value=0.0850 valueString='0:51 of 10:00'
+052705 pix roi=269 outside=0 box=(608,556)-(816,565)
+052999 pix roi=78 outside=0 box=(562,669)-(575,682)
+053323 pix roi=35 outside=0 box=(875,664)-(880,671)
+053488 pix roi=78 outside=0 box=(562,669)-(575,682)
+053567 UPDATE k=52 seq=53 result=Succeeded callMs=1 status='Installs in 9:08' value=0.0867 valueString='0:52 of 10:00'
+053699 pix roi=204 outside=0 box=(564,539)-(816,565)
+053991 pix roi=78 outside=0 box=(562,669)-(575,682)
+054313 pix roi=36 outside=0 box=(875,664)-(880,671)
+054481 pix roi=78 outside=0 box=(562,669)-(575,682)
+054567 UPDATE k=53 seq=54 result=Succeeded callMs=2 status='Installs in 9:07' value=0.0883 valueString='0:53 of 10:00'
+054681 pix roi=80 outside=0 box=(564,539)-(816,565)
+054973 pix roi=78 outside=0 box=(562,669)-(575,682)
+055348 pix roi=23 outside=0 box=(875,666)-(880,671)
+055473 pix roi=78 outside=0 box=(562,669)-(575,682)
+055580 UPDATE k=54 seq=55 result=Succeeded callMs=1 status='Installs in 9:06' value=0.0900 valueString='0:54 of 10:00'
+055715 pix roi=86 outside=0 box=(565,539)-(816,565)
+055967 pix roi=78 outside=0 box=(562,669)-(575,682)
+056332 pix roi=40 outside=0 box=(868,665)-(880,671)
+056497 pix roi=78 outside=0 box=(562,669)-(575,682)
+056569 UPDATE k=55 seq=56 result=Succeeded callMs=1 status='Installs in 9:05' value=0.0917 valueString='0:55 of 10:00'
+056706 pix roi=68 outside=0 box=(565,539)-(816,565)
+056998 pix roi=78 outside=0 box=(562,669)-(575,682)
+057325 pix roi=39 outside=0 box=(875,664)-(880,671)
+057489 pix roi=78 outside=0 box=(562,669)-(575,682)
+057580 UPDATE k=56 seq=57 result=Succeeded callMs=1 status='Installs in 9:04' value=0.0933 valueString='0:56 of 10:00'
+057698 pix roi=68 outside=0 box=(566,539)-(816,565)
+057739 pix roi=4 outside=0 box=(566,539)-(566,542)
+057991 pix roi=78 outside=0 box=(562,669)-(575,682)
+058316 pix roi=27 outside=0 box=(875,664)-(880,671)
+058473 pix roi=78 outside=0 box=(562,669)-(575,682)
+058584 UPDATE k=57 seq=58 result=Succeeded callMs=2 status='Installs in 9:03' value=0.0950 valueString='0:57 of 10:00'
+058723 pix roi=85 outside=0 box=(567,539)-(816,565)
+059006 pix roi=78 outside=0 box=(562,669)-(575,682)
+059339 pix roi=24 outside=0 box=(875,665)-(880,671)
+059505 pix roi=78 outside=0 box=(562,669)-(575,682)
+059571 UPDATE k=58 seq=59 result=Succeeded callMs=2 status='Installs in 9:02' value=0.0967 valueString='0:58 of 10:00'
+059716 pix roi=75 outside=0 box=(616,556)-(816,565)
+060008 pix roi=78 outside=0 box=(562,669)-(575,682)
+060340 pix roi=31 outside=0 box=(875,664)-(880,671)
+060498 pix roi=78 outside=0 box=(562,669)-(575,682)
+060570 UPDATE k=59 seq=60 result=Succeeded callMs=2 status='Installs in 9:01' value=0.0983 valueString='0:59 of 10:00'
+060707 pix roi=77 outside=0 box=(568,539)-(816,565)
+060991 pix roi=78 outside=0 box=(562,669)-(575,682)
+061316 pix roi=32 outside=0 box=(875,664)-(880,671)
+061481 pix roi=78 outside=0 box=(562,669)-(575,682)
+061566 UPDATE k=60 seq=61 result=Succeeded callMs=2 status='Installs in 9:00' value=0.1000 valueString='1:00 of 10:00'
+061690 pix roi=159 outside=0 box=(568,539)-(816,565)
+061974 pix roi=78 outside=0 box=(562,669)-(575,682)
+062103 uia toast1-t60s: 0 toast view(s) 
+062103 shot toast1-t60s captured at 62081 ms, NO matching toast view for 'ready to install'
+062117 update results: Succeeded=60
+062322 pix roi=19 outside=0 box=(875,664)-(880,671)
+062481 pix roi=78 outside=0 box=(562,669)-(575,682)
+062972 pix roi=78 outside=0 box=(562,669)-(575,682)
+063340 pix roi=35 outside=0 box=(875,664)-(880,671)
+063506 pix roi=78 outside=0 box=(562,669)-(575,682)
+063572 history before replace1=1
+063575 SHOW toast2 (replace, same tag and group) 'Installing BrowserAI 1.2.0 now'
+063578 history after replace1=1
+063633 pix roi=12727 outside=0 box=(520,366)-(883,642)
+063965 pix roi=78 outside=0 box=(562,669)-(575,682)
+064339 pix roi=36 outside=0 box=(875,664)-(880,671)
+064497 pix roi=78 outside=0 box=(562,669)-(575,682)
+064997 pix roi=78 outside=0 box=(562,669)-(575,682)
+065321 pix roi=23 outside=0 box=(875,666)-(880,671)
+065497 pix roi=78 outside=0 box=(562,669)-(575,682)
+065983 pix roi=78 outside=0 box=(562,669)-(575,682)
+066097 uia toast2-installing: 0 toast view(s) 
+066098 shot toast2-installing captured at 66079 ms, NO matching toast view for 'Installing BrowserAI'
+066321 pix roi=42 outside=0 box=(868,664)-(880,671)
+066488 pix roi=78 outside=0 box=(562,669)-(575,682)
+066980 pix roi=78 outside=0 box=(562,669)-(575,682)
+067314 pix roi=39 outside=0 box=(875,664)-(880,671)
+067480 pix roi=78 outside=0 box=(562,669)-(575,682)
+068013 pix roi=78 outside=0 box=(562,669)-(575,682)
+068348 pix roi=27 outside=0 box=(875,664)-(880,671)
+068482 pix roi=78 outside=0 box=(562,669)-(575,682)
+068586 history before replace2=1
+068589 SHOW toast3 (replace, same tag and group) 'BrowserAI 1.2.0 is installed'
+068593 history after replace2=1
+068664 audio-endpoint dev=4 peak=0,1722
+068664 audio-session dev=4 pid=12396 system=True peak=0,1722 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068709 audio-endpoint dev=4 peak=0,3239
+068709 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068724 pix roi=4141 outside=0 box=(648,519)-(899,642)
+068750 audio-endpoint dev=4 peak=0,3239
+068751 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068765 pix roi=3725 outside=0 box=(599,519)-(899,622)
+068791 audio-endpoint dev=4 peak=0,3175
+068792 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068809 pix roi=3639 outside=0 box=(578,519)-(899,622)
+068834 audio-endpoint dev=4 peak=0,3175
+068834 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068849 pix roi=3279 outside=0 box=(549,519)-(899,622)
+068875 audio-endpoint dev=4 peak=0,3175
+068875 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068890 pix roi=2880 outside=0 box=(539,519)-(876,614)
+068915 audio-endpoint dev=4 peak=0,2392
+068916 audio-session dev=4 pid=12396 system=True peak=0,2392 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068933 pix roi=2925 outside=0 box=(513,507)-(892,633)
+068959 audio-endpoint dev=4 peak=0,2106
+068959 audio-session dev=4 pid=12396 system=True peak=0,2106 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+068976 pix roi=466 outside=0 box=(513,507)-(890,682)
+068999 audio-endpoint dev=4 peak=0,1702
+069000 audio-session dev=4 pid=12396 system=True peak=0,1702 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069040 audio-endpoint dev=4 peak=0,1564
+069040 audio-session dev=4 pid=12396 system=True peak=0,1564 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069081 audio-endpoint dev=4 peak=0,1466
+069082 audio-session dev=4 pid=12396 system=True peak=0,1466 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069121 audio-endpoint dev=4 peak=0,1309
+069121 audio-session dev=4 pid=12396 system=True peak=0,1309 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069160 audio-endpoint dev=4 peak=0,1103
+069161 audio-session dev=4 pid=12396 system=True peak=0,1103 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069202 audio-endpoint dev=4 peak=0,0904
+069203 audio-session dev=4 pid=12396 system=True peak=0,0904 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069243 audio-endpoint dev=4 peak=0,0786
+069243 audio-session dev=4 pid=12396 system=True peak=0,0786 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069284 audio-endpoint dev=4 peak=0,0671
+069285 audio-session dev=4 pid=12396 system=True peak=0,0671 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069325 audio-endpoint dev=4 peak=0,0562
+069325 audio-session dev=4 pid=12396 system=True peak=0,0562 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069339 pix roi=24 outside=0 box=(875,665)-(880,671)
+069365 audio-endpoint dev=4 peak=0,0486
+069365 audio-session dev=4 pid=12396 system=True peak=0,0486 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069406 audio-endpoint dev=4 peak=0,0407
+069406 audio-session dev=4 pid=12396 system=True peak=0,0407 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069447 audio-endpoint dev=4 peak=0,0368
+069448 audio-session dev=4 pid=12396 system=True peak=0,0368 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069488 audio-endpoint dev=4 peak=0,0328
+069488 audio-session dev=4 pid=12396 system=True peak=0,0328 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069505 pix roi=78 outside=0 box=(562,669)-(575,682)
+069530 audio-endpoint dev=4 peak=0,0277
+069530 audio-session dev=4 pid=12396 system=True peak=0,0266 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069571 audio-endpoint dev=4 peak=0,0213
+069571 audio-session dev=4 pid=12396 system=True peak=0,0213 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069612 audio-endpoint dev=4 peak=0,0164
+069612 audio-session dev=4 pid=12396 system=True peak=0,0164 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069651 audio-endpoint dev=4 peak=0,0137
+069652 audio-session dev=4 pid=12396 system=True peak=0,0137 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069695 audio-endpoint dev=4 peak=0,0116
+069696 audio-session dev=4 pid=12396 system=True peak=0,0116 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069735 audio-endpoint dev=4 peak=0,0092
+069736 audio-session dev=4 pid=12396 system=True peak=0,0092 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069776 audio-endpoint dev=4 peak=0,0075
+069777 audio-session dev=4 pid=12396 system=True peak=0,0075 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069819 audio-endpoint dev=4 peak=0,0061
+069820 audio-session dev=4 pid=12396 system=True peak=0,0061 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069860 audio-endpoint dev=4 peak=0,0046
+069860 audio-session dev=4 pid=12396 system=True peak=0,0046 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069900 audio-endpoint dev=4 peak=0,0031
+069900 audio-session dev=4 pid=12396 system=True peak=0,0031 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069943 audio-endpoint dev=4 peak=0,0015
+069943 audio-session dev=4 pid=12396 system=True peak=0,0015 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+069996 pix roi=78 outside=0 box=(562,669)-(575,682)
+070325 pix roi=31 outside=0 box=(875,664)-(880,671)
+070488 pix roi=78 outside=0 box=(562,669)-(575,682)
+070981 pix roi=78 outside=0 box=(562,669)-(575,682)
+071099 uia toast3-installed: 0 toast view(s) 
+071100 shot toast3-installed captured at 71080 ms, NO matching toast view for 'is installed'
+071316 pix roi=32 outside=0 box=(875,664)-(880,671)
+071483 pix roi=78 outside=0 box=(562,669)-(575,682)
+071973 pix roi=78 outside=0 box=(562,669)-(575,682)
+072349 pix roi=19 outside=0 box=(875,664)-(880,671)
+072504 pix roi=78 outside=0 box=(562,669)-(575,682)
+072570 CLEAR history for the app id, as show.ps1 does
+072590 pix roi=5110 outside=0 box=(520,501)-(883,642)
+073003 pix roi=78 outside=0 box=(562,669)-(575,682)
+073329 pix roi=35 outside=0 box=(875,664)-(880,671)
+073498 pix roi=78 outside=0 box=(562,669)-(575,682)
+073989 pix roi=78 outside=0 box=(562,669)-(575,682)
+074075 history after clear=0
+074079 uia after-clear: 0 toast view(s) 
+074095 monitor-stopped polls=1794

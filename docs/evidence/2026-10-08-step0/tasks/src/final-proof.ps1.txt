@@ -1,0 +1,42 @@
+# Step 0 scratch, 2026-10-08: the cleanup proof. A positive control first: one disabled, never-run task
+# with the prefix, which every listing must find. Then the cleanup of every BrowserAI-measure-<stamp>- task,
+# then three independent listings, then every process the run recorded, checked by pid and creation time.
+$ErrorActionPreference = 'Stop'
+$root = 'C:\Source\SixFive7\BrowserAI\.work\step0-tasks'
+$stamp = (Get-Content "$root\runs\STAMP.txt").Trim()
+$rig = "$root\bin\rig3\Rig.exe"
+$out = "$root\runs\$stamp\final-proof.txt"
+
+function Listings($label) {
+    "== $label"
+    & $rig list --prefix 'BrowserAI-measure-'
+    $tasks = @(Get-ScheduledTask | Where-Object { $_.TaskName -like 'BrowserAI-measure-*' })
+    "Get-ScheduledTask, every folder, TaskName like 'BrowserAI-measure-*': $($tasks.Count)"
+    $tasks | ForEach-Object { "  $($_.TaskPath)$($_.TaskName) state=$($_.State)" }
+    $csv = @(schtasks.exe /query /fo csv /nh 2>&1 | Where-Object { $_ -match 'BrowserAI-measure-' })
+    "schtasks /query /fo csv, lines naming BrowserAI-measure-: $($csv.Count)"
+    $csv | ForEach-Object { "  $_" }
+}
+
+& {
+    "final proof, $((Get-Date).ToUniversalTime().ToString('o'))"
+    "== positive control"
+    & $rig control --stamp $stamp
+    Listings 'with the control registered (each listing must show exactly the control)'
+    "== the control as the scheduler stores it (schtasks /query /xml)"
+    schtasks.exe /query /tn "BrowserAI-measure-$stamp-control" /xml 2>&1
+    "== cleanup of every BrowserAI-measure-$stamp- task"
+    & $rig cleanup --stamp $stamp
+    Listings 'after the cleanup (each listing must show 0)'
+    "== every process this run recorded (registry and stand-in logs), by pid and creation time"
+    & $rig verify-gone --stamp $stamp
+    "verify-gone exit code: $LASTEXITCODE"
+    "== the seven foreign members of the scheduler's job, read-only, against their record from before any End or Stop"
+    $before = Get-Content "$root\runs\$stamp\shared-job-foreign-before-m3.tsv"
+    $now = foreach ($i in 12088, 19764, 31376, 31432, 30948, 23488, 25992) {
+        $p = Get-CimInstance Win32_Process -Filter "ProcessId=$i"
+        if ($p) { "{0}`t{1}`t{2}" -f $i, $p.ParentProcessId, $p.CreationDate.ToUniversalTime().ToString('o') } else { "{0}`tGONE" -f $i }
+    }
+    "identical to the record taken before the first Stop: $($null -eq (Compare-Object $before $now))"
+    $now
+} *>&1 | Tee-Object -FilePath $out

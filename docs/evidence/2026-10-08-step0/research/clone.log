@@ -1,0 +1,20 @@
+Cloning into 'velopack-1.2.161'...
+Note: switching to '92d6a1c91716729d449034df5c50307dcce39493'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+Updating files:  69% (804/1152)Updating files:  70% (807/1152)Updating files:  71% (818/1152)Updating files:  72% (830/1152)Updating files:  73% (841/1152)Updating files:  74% (853/1152)Updating files:  75% (864/1152)Updating files:  76% (876/1152)Updating files:  77% (888/1152)Updating files:  78% (899/1152)Updating files:  79% (911/1152)Updating files:  80% (922/1152)Updating files:  81% (934/1152)Updating files:  82% (945/1152)Updating files:  83% (957/1152)Updating files:  84% (968/1152)Updating files:  85% (980/1152)Updating files:  86% (991/1152)Updating files:  87% (1003/1152)Updating files:  87% (1004/1152)Updating files:  88% (1014/1152)Updating files:  89% (1026/1152)Updating files:  90% (1037/1152)Updating files:  91% (1049/1152)Updating files:  92% (1060/1152)Updating files:  93% (1072/1152)Updating files:  94% (1083/1152)Updating files:  95% (1095/1152)Updating files:  96% (1106/1152)Updating files:  97% (1118/1152)Updating files:  98% (1129/1152)Updating files:  99% (1141/1152)Updating files: 100% (1152/1152)Updating files: 100% (1152/1152), done.
+exit=0

@@ -1,0 +1,32 @@
+2026-10-04T01:00:09.478Z PHASE c1 reps=5
+2026-10-04T01:00:09.546Z STARTED coordinator --coordinate pid=41824
+2026-10-04T01:00:09.685Z EXIT coordinator pid=41824 code=0
+2026-10-04T01:00:39.558Z c1 r1: coordinator pipe up after -1 ms; host pipe present=false
+2026-10-04T01:00:40.504Z mcpprobe c1-r1.json status=0
+2026-10-04T01:00:40.505Z c1 r1 cold host, coordinator running: init=518.986ms tools=530.034ms count=78 exit=0
+2026-10-04T01:00:40.511Z after stop: host pipe gone in 2 ms, coordinator pipe gone in 3 ms
+2026-10-04T01:00:42.017Z STARTED coordinator --coordinate pid=11456
+2026-10-04T01:00:42.082Z EXIT coordinator pid=11456 code=0
+2026-10-04T01:01:12.031Z c1 r2: coordinator pipe up after -1 ms; host pipe present=false
+2026-10-04T01:01:13.220Z mcpprobe c1-r2.json status=0
+2026-10-04T01:01:13.222Z c1 r2 cold host, coordinator running: init=710.059ms tools=724.502ms count=78 exit=0
+2026-10-04T01:01:13.230Z after stop: host pipe gone in 4 ms, coordinator pipe gone in 4 ms
+2026-10-04T01:01:14.735Z STARTED coordinator --coordinate pid=38784
+2026-10-04T01:01:14.804Z EXIT coordinator pid=38784 code=0
+2026-10-04T01:01:44.742Z c1 r3: coordinator pipe up after -1 ms; host pipe present=false
+2026-10-04T01:01:45.723Z mcpprobe c1-r3.json status=0
+2026-10-04T01:01:45.724Z c1 r3 cold host, coordinator running: init=527.016ms tools=536.993ms count=78 exit=0
+2026-10-04T01:01:45.729Z after stop: host pipe gone in 3 ms, coordinator pipe gone in 2 ms
+2026-10-04T01:01:47.233Z STARTED coordinator --coordinate pid=51012
+2026-10-04T01:01:47.300Z EXIT coordinator pid=51012 code=0
+2026-10-04T01:02:17.252Z c1 r4: coordinator pipe up after -1 ms; host pipe present=false
+2026-10-04T01:02:18.333Z mcpprobe c1-r4.json status=0
+2026-10-04T01:02:18.335Z c1 r4 cold host, coordinator running: init=599.696ms tools=610.622ms count=78 exit=0
+2026-10-04T01:02:18.340Z after stop: host pipe gone in 3 ms, coordinator pipe gone in 2 ms
+2026-10-04T01:02:19.849Z STARTED coordinator --coordinate pid=63092
+2026-10-04T01:02:19.929Z EXIT coordinator pid=63092 code=0
+2026-10-04T01:02:49.881Z c1 r5: coordinator pipe up after -1 ms; host pipe present=false
+2026-10-04T01:02:50.771Z mcpprobe c1-r5.json status=0
+2026-10-04T01:02:50.773Z c1 r5 cold host, coordinator running: init=464.451ms tools=473.875ms count=78 exit=0
+2026-10-04T01:02:50.778Z after stop: host pipe gone in 3 ms, coordinator pipe gone in 2 ms
+2026-10-04T01:02:52.279Z PHASE c1 DONE; started 5 processes

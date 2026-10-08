@@ -1,0 +1,17 @@
+48525367.057	2026-10-04T01:35:31.5615044Z	90108	feedback	BEGIN	exe=bin\winexe\McpStubWin.exe appStarting=0x10019 arrow=0x10003 desktop=Default
+48533372.877	2026-10-04T01:35:39.5667239Z	90108	feedback	RESULT	rep=1 variant=idle flags=0x0 pid=-1 ticks=706 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=706 readFailures=0 shapes=0x10005 childExit=-
+48542895.072	2026-10-04T01:35:49.0889136Z	90108	feedback	RESULT	rep=1 variant=default flags=0x100 pid=26184 ticks=706 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=706 readFailures=0 shapes=0x10005 childExit=42
+48552406.929	2026-10-04T01:35:58.6008543Z	90108	feedback	RESULT	rep=1 variant=hidden flags=0x101 pid=56908 ticks=706 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=706 readFailures=0 shapes=0x10005 childExit=42
+48561925.280	2026-10-04T01:36:08.1191199Z	90108	feedback	RESULT	rep=1 variant=forceon flags=0x140 pid=95324 ticks=707 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=707 readFailures=0 shapes=0x10005 childExit=42
+48571438.643	2026-10-04T01:36:17.6324947Z	90108	feedback	RESULT	rep=1 variant=forceoff flags=0x180 pid=58496 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=42
+48580946.735	2026-10-04T01:36:27.1406673Z	90108	feedback	RESULT	rep=2 variant=idle flags=0x0 pid=-1 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=-
+48590453.894	2026-10-04T01:36:36.6477352Z	90108	feedback	RESULT	rep=2 variant=default flags=0x100 pid=92224 ticks=707 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=707 readFailures=0 shapes=0x10005 childExit=42
+48599973.647	2026-10-04T01:36:46.1674892Z	90108	feedback	RESULT	rep=2 variant=hidden flags=0x101 pid=31924 ticks=704 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=704 readFailures=0 shapes=0x10005 childExit=42
+48609491.988	2026-10-04T01:36:55.6858304Z	90108	feedback	RESULT	rep=2 variant=forceon flags=0x140 pid=85224 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=42
+48619003.547	2026-10-04T01:37:05.1973853Z	90108	feedback	RESULT	rep=2 variant=forceoff flags=0x180 pid=5112 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=42
+48628516.845	2026-10-04T01:37:14.7106872Z	90108	feedback	RESULT	rep=3 variant=idle flags=0x0 pid=-1 ticks=705 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=705 readFailures=0 shapes=0x10005 childExit=-
+48638023.403	2026-10-04T01:37:24.2172544Z	90108	feedback	RESULT	rep=3 variant=default flags=0x100 pid=54584 ticks=702 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=702 readFailures=0 shapes=0x10005 childExit=42
+48647535.689	2026-10-04T01:37:33.7295310Z	90108	feedback	RESULT	rep=3 variant=hidden flags=0x101 pid=29108 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=42
+48657043.733	2026-10-04T01:37:43.2375748Z	90108	feedback	RESULT	rep=3 variant=forceon flags=0x140 pid=86668 ticks=700 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=700 readFailures=0 shapes=0x10005 childExit=42
+48666559.845	2026-10-04T01:37:52.7536874Z	90108	feedback	RESULT	rep=3 variant=forceoff flags=0x180 pid=58408 ticks=708 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=0 other=708 readFailures=0 shapes=0x10005 childExit=42
+48668060.457	2026-10-04T01:37:54.2543053Z	90108	feedback	END	

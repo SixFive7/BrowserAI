@@ -1,0 +1,417 @@
+// One-binary measurement stub, 2026-10-04. Not product code.
+// Serves MCP over BrowserAI's own StdioChannel + DirectStdioServerTransport with the
+// ModelContextProtocol 2.2.0 McpServer, logs to stderr through the same console
+// provider configuration BrowserAI uses (LogToStandardErrorThreshold = Trace), and
+// writes a self-report of how it was started (subsystem, console, std handles,
+// STARTUPINFO, job) plus a timestamped event log into STUB_LOGDIR.
+//
+// Exit codes: 42 = it saw end of input and left on its own after STUB_EOF_DELAY_MS.
+// Anything else (1 from taskkill /F or TerminateJobObject(job, 1)) = it was ended.
+
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using BrowserAI.Protocol;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Server;
+
+namespace McpStub;
+
+internal static class Program
+{
+    private static EventLog? _ev;
+
+    private static async Task<int> Main(string[] args)
+    {
+        var pid = Environment.ProcessId;
+        var logDir = Environment.GetEnvironmentVariable("STUB_LOGDIR");
+        if (string.IsNullOrEmpty(logDir))
+        {
+            logDir = Path.Combine(AppContext.BaseDirectory, "nolog");
+        }
+
+        Directory.CreateDirectory(logDir);
+        _ev = new EventLog(Path.Combine(logDir, $"stub-{pid}.log"));
+        var ev = _ev;
+        var eofDelay = int.TryParse(Environment.GetEnvironmentVariable("STUB_EOF_DELAY_MS"), out var d) ? d : 0;
+        var bigBytes = int.TryParse(Environment.GetEnvironmentVariable("STUB_BIG_BYTES"), out var b) ? b : 70_000;
+        var nonce = Guid.NewGuid().ToString("N")[..12];
+
+        ev.W("START", $"pid={pid} nonce={nonce} args={JsonSerializer.Serialize(args, StubJson.Default.StringArray)} eofDelayMs={eofDelay} bigBytes={bigBytes}");
+
+        var report = SelfReport.Take();
+        report["nonce"] = nonce;
+
+        using var factory = LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Trace);
+            // BrowserAI's own line (ProcessLog.cs): everything, at every level, to stderr.
+            builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+        });
+
+        var logger = factory.CreateLogger("McpStub");
+        logger.LogInformation("STUB-STDERR-MARKER start pid={Pid} nonce={Nonce}", pid, nonce);
+
+        var big = BigText.Make(bigBytes);
+        var bigUtf8 = Encoding.UTF8.GetBytes(big);
+        var bigSha = Convert.ToHexString(SHA256.HashData(bigUtf8)).ToLowerInvariant();
+        ev.W("BIG", $"chars={big.Length} utf8Bytes={bigUtf8.Length} sha256={bigSha}");
+
+        // From here exactly as BrowserAI's Program.cs: the channel last, then the transport.
+        using var channel = StdioChannel.OpenStandardStreams();
+        report["inputStreamType"] = channel.Input.GetType().FullName;
+        report["outputStreamType"] = channel.Output.GetType().FullName;
+        report["bigUtf8Bytes"] = bigUtf8.Length;
+        report["bigSha256"] = bigSha;
+        File.WriteAllText(Path.Combine(logDir, $"stub-{pid}.report.json"), report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        ev.W("CHANNEL", $"input={channel.Input.GetType().FullName} output={channel.Output.GetType().FullName}");
+
+        var transport = new DirectStdioServerTransport(channel, factory);
+        await using var transportScope = transport.ConfigureAwait(false);
+
+        var options = new McpServerOptions
+        {
+            ServerInfo = new Implementation { Name = "onebinary-probe", Version = "1.0.0" },
+            ProtocolVersion = null,
+            Capabilities = new ServerCapabilities { Tools = new ToolsCapability() },
+            Handlers = new McpServerHandlers
+            {
+                ListToolsHandler = (request, cancellationToken) =>
+                {
+                    ev.W("HANDLER", "tools/list");
+                    logger.LogInformation("STUB-STDERR-MARKER tools/list pid={Pid} nonce={Nonce}", pid, nonce);
+                    return ValueTask.FromResult(new ListToolsResult
+                    {
+                        Tools =
+                        [
+                            new Tool { Name = "big", Description = "Returns about 70 KB of text.", InputSchema = EmptySchema() },
+                            new Tool { Name = "ping", Description = "Returns pong.", InputSchema = EmptySchema() },
+                        ],
+                    });
+                },
+                CallToolHandler = (request, cancellationToken) =>
+                {
+                    var name = request.Params?.Name ?? "<none>";
+                    ev.W("HANDLER", $"tools/call name={name}");
+                    logger.LogInformation("STUB-STDERR-MARKER tools/call {Name} pid={Pid} nonce={Nonce}", name, pid, nonce);
+                    var text = name == "big" ? big : "pong";
+                    return ValueTask.FromResult(new CallToolResult { Content = [new TextContentBlock { Text = text }] });
+                },
+            },
+        };
+
+        options.Filters.Message.IncomingFilters.Add(next => async (context, cancellationToken) =>
+        {
+            ev.W("IN", Describe(context.JsonRpcMessage));
+            await next(context, cancellationToken).ConfigureAwait(false);
+        });
+
+        options.Filters.Message.OutgoingFilters.Add(next => async (context, cancellationToken) =>
+        {
+            var started = Stopwatch.GetTimestamp();
+            await next(context, cancellationToken).ConfigureAwait(false);
+            ev.W("OUT", $"{Describe(context.JsonRpcMessage)} writeMs={Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1}");
+        });
+
+        var server = McpServer.Create(transport, options, factory);
+        await using var serverScope = server.ConfigureAwait(false);
+
+        ev.W("SERVING", "RunAsync");
+        try
+        {
+            await server.RunAsync().ConfigureAwait(false);
+            ev.W("EOF", "RunAsync returned: end of input");
+        }
+        catch (Exception failure)
+        {
+            ev.W("RUN_FAILED", failure.ToString().Replace('\n', ' ').Replace('\r', ' '));
+        }
+
+        logger.LogInformation("STUB-STDERR-MARKER eof pid={Pid} nonce={Nonce}", pid, nonce);
+
+        if (eofDelay > 0)
+        {
+            ev.W("EOF_DELAY", $"sleeping {eofDelay} ms before leaving");
+            Thread.Sleep(eofDelay);
+        }
+
+        ev.W("EXIT", "leaving with 42");
+        return 42;
+    }
+
+    private static JsonElement EmptySchema()
+    {
+        using var doc = JsonDocument.Parse("""{"type":"object","properties":{},"additionalProperties":false}""");
+        return doc.RootElement.Clone();
+    }
+
+    private static string Describe(JsonRpcMessage message) => message switch
+    {
+        JsonRpcRequest r => $"request id={r.Id} method={r.Method}",
+        JsonRpcNotification n => $"notification method={n.Method}",
+        JsonRpcResponse r => $"response id={r.Id} resultChars={r.Result?.ToJsonString().Length ?? 0}",
+        JsonRpcError e => $"error id={e.Id} code={e.Error?.Code} message={e.Error?.Message}",
+        _ => message.GetType().Name,
+    };
+}
+
+[System.Text.Json.Serialization.JsonSerializable(typeof(string[]))]
+internal sealed partial class StubJson : System.Text.Json.Serialization.JsonSerializerContext;
+
+/// <summary>Deterministic text of an exact UTF-8 size, ASCII plus some two-, three- and four-byte characters.</summary>
+internal static class BigText
+{
+    public static string Make(int bytes)
+    {
+        var sb = new StringBuilder(bytes);
+        var used = 0;
+        var line = 0;
+        while (true)
+        {
+            line++;
+            var s = $"line {line:D6}: the quick brown fox jumps over the lazy dog; café naïve 漢字 \U0001F600 <&>'\"`\n";
+            var n = Encoding.UTF8.GetByteCount(s);
+            if (used + n > bytes)
+            {
+                break;
+            }
+
+            sb.Append(s);
+            used += n;
+        }
+
+        sb.Append('.', bytes - used);
+        return sb.ToString();
+    }
+}
+
+internal sealed class EventLog
+{
+    private readonly object _gate = new();
+    private readonly FileStream _file;
+
+    public EventLog(string path)
+    {
+        _file = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+    }
+
+    public void W(string kind, string text)
+    {
+        var line = $"{DateTime.UtcNow:O}\t{Stopwatch.GetTimestamp() * 1000.0 / Stopwatch.Frequency:F3}\t{Environment.CurrentManagedThreadId}\t{kind}\t{text}\n";
+        var bytes = Encoding.UTF8.GetBytes(line);
+        lock (_gate)
+        {
+            _file.Write(bytes);
+            _file.Flush();
+        }
+    }
+}
+
+internal static unsafe class SelfReport
+{
+    public static JsonObject Take()
+    {
+        var o = new JsonObject();
+        var pid = Environment.ProcessId;
+        o["pid"] = pid;
+        o["utc"] = DateTime.UtcNow.ToString("O");
+        o["image"] = Environment.ProcessPath;
+        o["peSubsystem"] = Subsystem(Environment.ProcessPath);
+
+        var ppid = ParentPid();
+        o["ppid"] = ppid;
+        o["parentImage"] = ImageOf(ppid);
+
+        var hwnd = GetConsoleWindow();
+        o["consoleWindow"] = hwnd.ToInt64();
+        // No user32 call anywhere in this stub: a GUI call from a windows-subsystem process
+        // extends the startup feedback cursor, which this stub must not distort. The rig reads
+        // window visibility from outside.
+
+        var pids = new uint[64];
+        uint count;
+        fixed (uint* p = pids)
+        {
+            count = GetConsoleProcessList(p, (uint)pids.Length);
+        }
+
+        o["consoleProcessCount"] = count;
+        o["consoleProcessListError"] = count == 0 ? Marshal.GetLastPInvokeError() : 0;
+        var list = new JsonArray();
+        for (var i = 0; i < Math.Min(count, (uint)pids.Length); i++)
+        {
+            list.Add((JsonNode)JsonValue.Create((long)pids[i]));
+        }
+
+        o["consoleProcesses"] = list;
+        o["consoleSharedWithParent"] = list.Any(x => x is not null && (long)x == ppid);
+        o["consoleCP"] = GetConsoleCP();
+        o["consoleOutputCP"] = GetConsoleOutputCP();
+
+        var std = new JsonObject();
+        foreach (var (name, id) in new[] { ("stdin", -10), ("stdout", -11), ("stderr", -12) })
+        {
+            var h = GetStdHandle(id);
+            var e = new JsonObject { ["handle"] = h.ToInt64() };
+            if (h == IntPtr.Zero)
+            {
+                e["kind"] = "null";
+            }
+            else if (h == new IntPtr(-1))
+            {
+                e["kind"] = "invalid";
+            }
+            else
+            {
+                var t = GetFileType(h);
+                e["kind"] = t switch { 1 => "disk", 2 => "char", 3 => "pipe", 0 => "unknown", _ => t.ToString() };
+                e["fileTypeError"] = t == 0 ? Marshal.GetLastPInvokeError() : 0;
+            }
+
+            std[name] = e;
+        }
+
+        o["std"] = std;
+
+        STARTUPINFOW si = default;
+        si.cb = (uint)sizeof(STARTUPINFOW);
+        GetStartupInfoW(&si);
+        o["startupInfo"] = new JsonObject
+        {
+            ["dwFlags"] = $"0x{si.dwFlags:X8}",
+            ["STARTF_USESHOWWINDOW"] = (si.dwFlags & 0x1) != 0,
+            ["STARTF_USESTDHANDLES"] = (si.dwFlags & 0x100) != 0,
+            ["STARTF_FORCEONFEEDBACK"] = (si.dwFlags & 0x40) != 0,
+            ["STARTF_FORCEOFFFEEDBACK"] = (si.dwFlags & 0x80) != 0,
+            ["wShowWindow"] = si.wShowWindow,
+            ["desktop"] = si.lpDesktop == null ? null : new string(si.lpDesktop),
+            ["title"] = si.lpTitle == null ? null : new string(si.lpTitle),
+            ["hStdInput"] = ((IntPtr)si.hStdInput).ToInt64(),
+            ["hStdOutput"] = ((IntPtr)si.hStdOutput).ToInt64(),
+            ["hStdError"] = ((IntPtr)si.hStdError).ToInt64(),
+        };
+
+        o["inJob"] = IsProcessInJob(GetCurrentProcess(), IntPtr.Zero, out var inJob) ? inJob : null;
+        // No desktop query here: GetThreadDesktop is a user32 call, see above.
+
+        var env = new JsonObject();
+        foreach (System.Collections.DictionaryEntry kv in Environment.GetEnvironmentVariables())
+        {
+            var k = (string)kv.Key;
+            if (k.StartsWith("STUB_", StringComparison.OrdinalIgnoreCase) || k.Equals("CLAUDE_CODE_ENTRYPOINT", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("MCP_CONNECTION_NONBLOCKING", StringComparison.OrdinalIgnoreCase) || k.Equals("CODEX_HOME", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("CLAUDE_CONFIG_DIR", StringComparison.OrdinalIgnoreCase))
+            {
+                env[k] = (string?)kv.Value;
+            }
+        }
+
+        o["env"] = env;
+        o["envCount"] = Environment.GetEnvironmentVariables().Count;
+        return o;
+    }
+
+    private static string Subsystem(string? image)
+    {
+        if (image is null)
+        {
+            return "unknown";
+        }
+
+        try
+        {
+            var bytes = new byte[4096];
+            using (var f = File.OpenRead(image))
+            {
+                _ = f.Read(bytes, 0, bytes.Length);
+            }
+
+            var lfanew = BitConverter.ToInt32(bytes, 0x3C);
+            var opt = lfanew + 4 + 20;
+            var sub = BitConverter.ToUInt16(bytes, opt + 68);
+            return sub switch { 2 => "2 WINDOWS_GUI", 3 => "3 WINDOWS_CUI", _ => sub.ToString() };
+        }
+        catch (Exception e)
+        {
+            return "error " + e.Message;
+        }
+    }
+
+    private static long ParentPid()
+    {
+        PROCESS_BASIC_INFORMATION pbi = default;
+        var status = NtQueryInformationProcess(GetCurrentProcess(), 0, &pbi, (uint)sizeof(PROCESS_BASIC_INFORMATION), out _);
+        return status == 0 ? (long)pbi.InheritedFromUniqueProcessId : -1;
+    }
+
+    private static string? ImageOf(long pid)
+    {
+        if (pid <= 0)
+        {
+            return null;
+        }
+
+        var h = OpenProcess(0x1000, false, (uint)pid);
+        if (h == IntPtr.Zero)
+        {
+            return $"<OpenProcess failed {Marshal.GetLastPInvokeError()}>";
+        }
+
+        try
+        {
+            var buf = new char[1024];
+            var len = (uint)buf.Length;
+            fixed (char* p = buf)
+            {
+                return QueryFullProcessImageNameW(h, 0, p, ref len) ? new string(p, 0, (int)len) : $"<image failed {Marshal.GetLastPInvokeError()}>";
+            }
+        }
+        finally
+        {
+            CloseHandle(h);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct STARTUPINFOW
+    {
+        public uint cb;
+        public char* lpReserved;
+        public char* lpDesktop;
+        public char* lpTitle;
+        public uint dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
+        public ushort wShowWindow, cbReserved2;
+        public byte* lpReserved2;
+        public void* hStdInput, hStdOutput, hStdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PROCESS_BASIC_INFORMATION
+    {
+        public IntPtr ExitStatus;
+        public IntPtr PebBaseAddress;
+        public IntPtr AffinityMask;
+        public IntPtr BasePriority;
+        public nuint UniqueProcessId;
+        public nuint InheritedFromUniqueProcessId;
+    }
+
+    [DllImport("kernel32.dll")] private static extern IntPtr GetConsoleWindow();
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint GetConsoleProcessList(uint* list, uint count);
+    [DllImport("kernel32.dll")] private static extern uint GetConsoleCP();
+    [DllImport("kernel32.dll")] private static extern uint GetConsoleOutputCP();
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern IntPtr GetStdHandle(int id);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint GetFileType(IntPtr h);
+    [DllImport("kernel32.dll")] private static extern void GetStartupInfoW(STARTUPINFOW* si);
+    [DllImport("kernel32.dll")] private static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result);
+    [DllImport("ntdll.dll")] private static extern int NtQueryInformationProcess(IntPtr process, int cls, void* info, uint len, out uint ret);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool QueryFullProcessImageNameW(IntPtr h, uint flags, char* name, ref uint size);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+}

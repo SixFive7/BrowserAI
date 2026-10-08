@@ -1,0 +1,321 @@
+// Step 0 scratch driver, 2026-10-08. Win32 declarations the driver needs. Not BrowserAI.
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+namespace Rig;
+
+/// <summary>The Win32 calls the driver makes.</summary>
+internal static class Native
+{
+    public const uint Synchronize = 0x00100000;
+    public const uint QueryLimited = 0x1000;
+    public const uint Terminate = 0x0001;
+    public const uint CreateSuspended = 0x4;
+    public const uint CreateNoWindow = 0x08000000;
+    public const uint ExtendedStartupInfoPresent = 0x00080000;
+    public const uint StartfUseStdHandles = 0x100;
+    public const uint GenericWrite = 0x40000000;
+    public const uint GenericRead = 0x80000000;
+    public const uint FileShareRead = 1;
+    public const uint FileShareWrite = 2;
+    public const uint CreateAlways = 2;
+    public const uint OpenExisting = 3;
+    public const nint ProcThreadAttributeHandleList = 0x20002;
+    public const uint WaitObject0 = 0;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SecurityAttributes
+    {
+        public int Length;
+        public nint Descriptor;
+        public int Inherit;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StartupInfo
+    {
+        public int Cb;
+        public nint Reserved;
+        public nint Desktop;
+        public nint Title;
+        public int X;
+        public int Y;
+        public int XSize;
+        public int YSize;
+        public int XCountChars;
+        public int YCountChars;
+        public int FillAttribute;
+        public uint Flags;
+        public short ShowWindow;
+        public short Reserved2Count;
+        public nint Reserved2;
+        public nint StdInput;
+        public nint StdOutput;
+        public nint StdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StartupInfoEx
+    {
+        public StartupInfo StartupInfo;
+        public nint AttributeList;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ProcessInformation
+    {
+        public nint Process;
+        public nint Thread;
+        public int ProcessId;
+        public int ThreadId;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern nint CreateFileW(string name, uint access, uint share, ref SecurityAttributes security, uint disposition, uint flags, nint template);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool InitializeProcThreadAttributeList(nint list, int count, int flags, ref nint size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UpdateProcThreadAttribute(nint list, uint flags, nint attribute, nint value, nint size, nint previous, nint returnSize);
+
+    [DllImport("kernel32.dll")]
+    public static extern void DeleteProcThreadAttributeList(nint list);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool CreateProcessW(string? application, char[] commandLine, nint processAttributes, nint threadAttributes, [MarshalAs(UnmanagedType.Bool)] bool inheritHandles, uint flags, nint environment, string? directory, ref StartupInfoEx startup, out ProcessInformation information);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint ResumeThread(nint thread);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern nint OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, int pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetProcessTimes(nint process, out long creation, out long exit, out long kernel, out long user);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetExitCodeProcess(nint process, out int code);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint WaitForSingleObject(nint handle, uint milliseconds);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool CloseHandle(nint handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool TerminateProcess(nint process, uint code);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetOEMCP();
+}
+
+/// <summary>A process this driver created itself, with its standard handles on files, optionally suspended.</summary>
+internal sealed class Spawned : IDisposable
+{
+    private Spawned(int pid, nint process, nint thread, string outPath, string errPath)
+    {
+        Pid = pid;
+        Process = process;
+        Thread = thread;
+        OutPath = outPath;
+        ErrPath = errPath;
+    }
+
+    public int Pid { get; }
+
+    public nint Process { get; }
+
+    public nint Thread { get; }
+
+    public string OutPath { get; }
+
+    public string ErrPath { get; }
+
+    public DateTime? ResumedUtc { get; private set; }
+
+    public long CreationFt
+    {
+        get
+        {
+            _ = Native.GetProcessTimes(Process, out var creation, out _, out _, out _);
+            return creation;
+        }
+    }
+
+    public long ExitFt
+    {
+        get
+        {
+            _ = Native.GetProcessTimes(Process, out _, out var exit, out _, out _);
+            return exit;
+        }
+    }
+
+    public int ExitCode
+    {
+        get
+        {
+            _ = Native.GetExitCodeProcess(Process, out var code);
+            return code;
+        }
+    }
+
+    /// <summary>Creates the process with no console window and only its three standard handles inherited.</summary>
+    public static Spawned Start(string commandLine, string outPath, string errPath, bool suspended)
+    {
+        var security = new Native.SecurityAttributes { Length = Marshal.SizeOf<Native.SecurityAttributes>(), Inherit = 1 };
+        var output = Native.CreateFileW(outPath, Native.GenericWrite, Native.FileShareRead | Native.FileShareWrite, ref security, Native.CreateAlways, 0x80, 0);
+        var error = Native.CreateFileW(errPath, Native.GenericWrite, Native.FileShareRead | Native.FileShareWrite, ref security, Native.CreateAlways, 0x80, 0);
+        var input = Native.CreateFileW("NUL", Native.GenericRead, Native.FileShareRead | Native.FileShareWrite, ref security, Native.OpenExisting, 0, 0);
+
+        if (output == -1 || error == -1 || input == -1)
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreateFileW for the standard handles");
+        }
+
+        nint size = 0;
+        _ = Native.InitializeProcThreadAttributeList(0, 1, 0, ref size);
+        var list = Marshal.AllocHGlobal(size);
+        var handles = Marshal.AllocHGlobal(3 * IntPtr.Size);
+        var initialised = false;
+
+        try
+        {
+            if (!Native.InitializeProcThreadAttributeList(list, 1, 0, ref size))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "InitializeProcThreadAttributeList");
+            }
+
+            initialised = true;
+            Marshal.WriteIntPtr(handles, 0, input);
+            Marshal.WriteIntPtr(handles, IntPtr.Size, output);
+            Marshal.WriteIntPtr(handles, 2 * IntPtr.Size, error);
+
+            if (!Native.UpdateProcThreadAttribute(list, 0, Native.ProcThreadAttributeHandleList, handles, 3 * IntPtr.Size, 0, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "UpdateProcThreadAttribute");
+            }
+
+            var startup = new Native.StartupInfoEx
+            {
+                StartupInfo = new Native.StartupInfo
+                {
+                    Cb = Marshal.SizeOf<Native.StartupInfoEx>(),
+                    Flags = Native.StartfUseStdHandles,
+                    StdInput = input,
+                    StdOutput = output,
+                    StdError = error,
+                },
+                AttributeList = list,
+            };
+
+            var flags = Native.CreateNoWindow | Native.ExtendedStartupInfoPresent | (suspended ? Native.CreateSuspended : 0);
+            var line = (commandLine + "\0").ToCharArray();
+
+            if (!Native.CreateProcessW(null, line, 0, 0, true, flags, 0, null, ref startup, out var information))
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), "CreateProcessW " + commandLine);
+            }
+
+            return new Spawned(information.ProcessId, information.Process, information.Thread, outPath, errPath);
+        }
+        finally
+        {
+            if (initialised)
+            {
+                Native.DeleteProcThreadAttributeList(list);
+            }
+
+            Marshal.FreeHGlobal(list);
+            Marshal.FreeHGlobal(handles);
+            _ = Native.CloseHandle(input);
+            _ = Native.CloseHandle(output);
+            _ = Native.CloseHandle(error);
+        }
+    }
+
+    public void Resume()
+    {
+        ResumedUtc = DateTime.UtcNow;
+        _ = Native.ResumeThread(Thread);
+    }
+
+    public bool Wait(int milliseconds) => Native.WaitForSingleObject(Process, (uint)milliseconds) == Native.WaitObject0;
+
+    public void Dispose()
+    {
+        _ = Native.CloseHandle(Thread);
+        _ = Native.CloseHandle(Process);
+    }
+}
+
+/// <summary>
+/// A process this driver started, directly or through a task, opened by the pid it recorded and
+/// accepted only when its creation time is the one it recorded.
+/// </summary>
+internal sealed class Mine : IDisposable
+{
+    private Mine(int pid, long creationFt, nint handle)
+    {
+        Pid = pid;
+        CreationFt = creationFt;
+        Handle = handle;
+    }
+
+    public int Pid { get; }
+
+    public long CreationFt { get; }
+
+    public nint Handle { get; }
+
+    public int ExitCode
+    {
+        get
+        {
+            _ = Native.GetExitCodeProcess(Handle, out var code);
+            return code;
+        }
+    }
+
+    public long ExitFt
+    {
+        get
+        {
+            _ = Native.GetProcessTimes(Handle, out _, out var exit, out _, out _);
+            return exit;
+        }
+    }
+
+    public bool Exited => Native.WaitForSingleObject(Handle, 0) == Native.WaitObject0;
+
+    /// <summary>Opens the pid and checks the creation time; null when the pid is gone or is somebody else now.</summary>
+    public static Mine? Open(int pid, long creationFt, bool terminateRight = false)
+    {
+        var handle = Native.OpenProcess(Native.Synchronize | Native.QueryLimited | (terminateRight ? Native.Terminate : 0), false, pid);
+
+        if (handle == 0)
+        {
+            return null;
+        }
+
+        if (!Native.GetProcessTimes(handle, out var creation, out _, out _, out _) || creation != creationFt)
+        {
+            _ = Native.CloseHandle(handle);
+            return null;
+        }
+
+        return new Mine(pid, creationFt, handle);
+    }
+
+    public bool WaitExit(int milliseconds) => Native.WaitForSingleObject(Handle, (uint)milliseconds) == Native.WaitObject0;
+
+    public void Dispose() => Native.CloseHandle(Handle);
+}

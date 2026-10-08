@@ -1,0 +1,67 @@
+// OpenAI Responses API stub for the one-binary measurement (2026-10-04), derived from
+// .work\client-exit\stub\openai-stub.js (copied). STATELESS: a request whose tools carry the
+// policy's namespace (default mcp__probe) and whose input carries no function_call_output gets
+// a function_call to the policy's tool (default big); anything else gets the message "done".
+// policy.script (optional): a list of {tool, input} steps; step k is answered when the input
+// already holds k function_call_outputs. Used by the scheduler half.
+// Every request is digested into <policy.logDir>\model.seen.jsonl with every
+// function_call_output part's length and sha256.
+const http = require('http');
+const fs = require('fs');
+const crypto = require('crypto');
+const PORT = Number(process.env.STUB_PORT || 8972);
+const POLICY = process.env.STUB_POLICY_FILE;
+const FALLBACK = process.env.STUB_LOGDIR || __dirname;
+let n = 0;
+const policy = () => { try { return JSON.parse(fs.readFileSync(POLICY, 'utf8')); } catch (e) { return { logDir: FALLBACK }; } };
+const sha = (s) => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).digest('hex');
+const write = (res, e) => res.write('event: ' + e.type + '\ndata: ' + JSON.stringify(e) + '\n\n');
+
+function outputs(body) {
+  const out = [];
+  for (const i of (Array.isArray(body.input) ? body.input : [])) {
+    if (!i || i.type !== 'function_call_output') continue;
+    let parts = [];
+    if (typeof i.output === 'string') parts = [i.output];
+    else if (Array.isArray(i.output)) parts = i.output.map((x) => (x && typeof x.text === 'string') ? x.text : JSON.stringify(x));
+    else if (i.output && typeof i.output === 'object') parts = [typeof i.output.content === 'string' ? i.output.content : JSON.stringify(i.output)];
+    out.push({ call_id: i.call_id, parts: parts.map((t) => ({ chars: t.length, utf8: Buffer.byteLength(t, 'utf8'), sha256: sha(t), head: t.slice(0, 2000) })) });
+  }
+  return out;
+}
+
+const server = http.createServer((req, res) => {
+  let raw = '';
+  req.on('data', (c) => { raw += c; });
+  req.on('end', () => {
+    const url = req.url.split('?')[0];
+    const pol = policy();
+    const logDir = pol.logDir || FALLBACK;
+    const ev = (o) => { try { fs.appendFileSync(`${logDir}\\model.seen.jsonl`, JSON.stringify(Object.assign({ t: new Date().toISOString() }, o)) + '\n'); } catch (e) { /* run dir gone */ } };
+    if (!url.endsWith('/responses')) { ev({ req: `${req.method} ${req.url}`, answer: '404' }); res.statusCode = 404; res.end('{}'); return; }
+    let body = {}; try { body = JSON.parse(raw); } catch (e) { body = {}; }
+    const tools = Array.isArray(body.tools) ? body.tools : [];
+    const nsName = pol.namespace || 'mcp__probe';
+    const ns = tools.find((t) => t && t.type === 'namespace' && t.name === nsName);
+    const nsTools = ns ? (ns.tools || []).map((x) => x.name) : [];
+    const outs = outputs(body);
+    let d;
+    if (Array.isArray(pol.script)) {
+      const step = pol.script[outs.length];
+      d = step && ns && nsTools.includes(step.tool) ? { kind: 'tool', tool: step.tool, input: step.input || {} } : { kind: 'text' };
+    } else {
+      d = ns && outs.length === 0 ? { kind: 'tool', tool: pol.tool || 'big', input: {} } : { kind: 'text' };
+    }
+    const id = `${process.pid}_${++n}_${crypto.randomBytes(4).toString('hex')}`;
+    ev({ req: `${req.method} ${req.url}`, model: body.model, tools: tools.map((t) => t.type === 'namespace' ? `${t.name}{${(t.tools || []).map((x) => x.name).join(',')}}` : (t.name || t.type)), outputs: outs, answer: d.kind, tool: d.tool, input: d.input, id, bodyBytes: raw.length });
+    res.statusCode = 200;
+    res.setHeader('content-type', 'text/event-stream');
+    const rid = 'resp_' + id;
+    write(res, { type: 'response.created', response: { id: rid } });
+    if (d.kind === 'tool') write(res, { type: 'response.output_item.done', item: { type: 'function_call', call_id: 'call_' + id, id: 'fc_' + id, name: d.tool, namespace: ns.name, arguments: JSON.stringify(d.input || {}) } });
+    else write(res, { type: 'response.output_item.done', item: { type: 'message', role: 'assistant', id: 'msg_' + id, content: [{ type: 'output_text', text: 'done' }] } });
+    write(res, { type: 'response.completed', response: { id: rid, usage: { input_tokens: 42, input_tokens_details: { cached_tokens: 12 }, output_tokens: 5, output_tokens_details: null, total_tokens: 47 } } });
+    res.end();
+  });
+});
+server.listen(PORT, '127.0.0.1', () => fs.appendFileSync(`${FALLBACK}\\cxstub.listen.log`, `${new Date().toISOString()} LISTENING 127.0.0.1:${PORT} pid=${process.pid}\n`));

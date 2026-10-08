@@ -1,0 +1,45 @@
+[04:19:24] [INFO] --
+[04:19:24] [INFO] Starting Velopack Updater (1.2.161)
+[04:19:24] [INFO]     Location: "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\Update.exe"
+[04:19:24] [INFO]     CWD: "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"
+[04:19:24] [INFO]     Verbose: false
+[04:19:24] [INFO]     Silent: true
+[04:19:24] [INFO]     Root Directory: None
+[04:19:24] [INFO]     Log File: "%USERPROFILE%\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[04:19:24] [INFO]     Context: IAmUpdateExe
+[04:19:24] [INFO] Command: Uninstall
+[04:19:24] [INFO] Auto-locating app manifest...
+[04:19:24] [INFO] Root directory '%USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9' writable: true
+[04:19:24] [INFO] Using root packages directory: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\packages
+[04:19:24] [INFO] Command: Uninstall
+[04:19:24] [INFO] Checking for running processes in: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9
+[04:19:24] [INFO] Inspected 737 running processes in 66ms, 1 matched directory
+[04:19:24] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\Update.exe (39324)
+[04:19:24] [INFO] Force-stop check complete.
+[04:19:24] [INFO] Running --veloapp-uninstall hook...
+[04:19:24] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current\\BrowserAI.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.1-alpha.0.197\0")
+[04:19:24] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[04:19:24] [INFO] Waiting 60000ms for process handle to exit.
+[04:19:25] [INFO] Hook executed successfully (took 880.9472ms)
+[04:19:25] [INFO] Checking for running processes in: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9
+[04:19:25] [INFO] Inspected 737 running processes in 66ms, 1 matched directory
+[04:19:25] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\Update.exe (39324)
+[04:19:25] [INFO] Force-stop check complete.
+[04:19:25] [INFO] COM context initialized in 5ms
+[04:19:25] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"'
+[04:19:25] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+[04:19:25] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[04:19:25] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[04:19:25] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current\\BrowserAI.exe"' matched.
+[04:19:26] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[04:19:26] [INFO] Removing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU)).
+[04:19:26] [INFO] Removing directory '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"'
+[04:19:26] [INFO] Removing directory '"%USERPROFILE%\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[04:19:26] [INFO] Removing uninstall registry keys...
+[04:19:26] [INFO] Finished successfully.
+[04:19:26] [INFO] Scheduling removal of install directory...
+[04:19:26] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "%USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"
+Y
+
+--- stderr ---
+

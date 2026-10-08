@@ -1,0 +1,8 @@
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI\BrowserAI.csproj (in 395 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI.Core\BrowserAI.Core.csproj (in 395 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\
+exit=0

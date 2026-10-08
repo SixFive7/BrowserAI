@@ -2181,6 +2181,35 @@ click for 20 s and every later call on that page.
 in BrowserAI's configuration over the local fixtures and the three public pages,
 and write the summaries in the evidence's `bench/out/`.
 
+## The upstream snapshot is the list a live child answers, 70 of 70 -- measured 2026-10-04
+
+`[FLOATS]` on `@playwright/mcp` **0.0.83** with `playwright-core`
+**1.64.0-alpha-1790635538000**, through BrowserAI **1.1.1-alpha.0.192** published from
+`1ee00ec0`. Taken 2026-10-04. Everything it was read from:
+[`docs/evidence/2026-10-04-startup-measure`](../../docs/evidence/2026-10-04-startup-measure/README.md),
+`part3/c0/`. It is the fact the one-binary design compiles the tool list on.
+
+**The live list, with BrowserAI's rewrite undone, is the golden snapshot.** The live
+`tools/list` of the published server was taken, BrowserAI's own tools and its
+`session` and `why` parameters were taken back out, and what was left was compared
+with `upstream-snapshots/tools-list.json`: **70 of 70 tools, in the same order, every
+description identical byte for byte.** The 70 are Playwright's 72 less the two `deny`
+rows of that day, `browser_resume` and `browser_annotate`. The list is fixed by the
+payload's version and the capabilities BrowserAI configures; it moves only with a web
+page's own WebMCP tools, and the child that answers `tools/list` never opens a page.
+
+**Nothing stored Playwright's answer before.** The installed 1.1.0 holds no file
+named `*tools-list*`, with `tool-verdicts.json` as the positive control, found once;
+`BrowserAI.Server.exe` 1.1.0 carries BrowserAI's own description of `session` (1 hit
+as UTF-16) and none of three Playwright descriptions searched for (0 hits as UTF-8 or
+UTF-16). The snapshot was a test's golden file and was never shipped.
+
+**Re-establish it** by asking a published server for `tools/list`, removing what
+`SessionToolSurface.Rewrite` adds, and comparing the rest with the snapshot of the same
+payload, as the batch's `part3/c0/*.tools.json` were compared. At run time the
+one-binary design compares the built-in list with each session's child, and
+`UpstreamSnapshotTests` holds the snapshot against the payload on every build.
+
 ## Artifacts and output-directory behaviour
 
 All read from the shipped bundle or observed against a real child. `[FLOATS]`

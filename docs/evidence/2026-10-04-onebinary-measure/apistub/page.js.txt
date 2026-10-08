@@ -1,0 +1,13 @@
+// The local page the scheduler half's browser opens: /p/<tag> answers a page whose heading is
+// ONEBINARY-PAGE-<tag>. A process of its own, so a client run the driver waits on synchronously
+// never holds its answers back.
+const http = require('http');
+const fs = require('fs');
+const PORT = Number(process.env.PAGE_PORT || 8983);
+const LOG = process.env.PAGE_LOG;
+http.createServer((req, res) => {
+  const tag = (req.url.match(/^\/p\/([\w.-]+)/) || [])[1] || 'none';
+  if (LOG) fs.appendFileSync(LOG, `${new Date().toISOString()} ${req.method} ${req.url} ua=${req.headers['user-agent']}\n`);
+  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+  res.end(`<!doctype html><html><head><title>onebinary ${tag}</title></head><body><h1>ONEBINARY-PAGE-${tag}</h1><p>kept across a client's exit</p></body></html>`);
+}).listen(PORT, '127.0.0.1');

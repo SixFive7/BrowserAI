@@ -1336,6 +1336,289 @@ each connection to its transcript, both printing counts only; `opening.py` sends
 the two openings to any BrowserAI server; and the test above is the standing
 check on the server's half.
 
+## A windowless server under both clients -- measured 2026-10-04
+
+`[FLOATS]` on the clients' releases: Claude Code **2.1.288** (`-p`, and the VS Code
+extension's stream-json transport driven as the client-exit rig drives it), codex-cli
+**0.155.0-alpha.9.2** and **0.160.0** (`exec` and `app-server`), Windows 11 Pro
+10.0.26300. Taken 2026-10-04 between 01:19Z and 01:56Z with a stub and not BrowserAI's
+binaries, every client under a scratch configuration against local API stubs.
+Everything it was read from, with the stub and the rig:
+[`docs/evidence/2026-10-04-onebinary-measure`](../../docs/evidence/2026-10-04-onebinary-measure/README.md).
+It answers whether one program with no console of its own can be the server a client
+starts. **It can, and each client ends it as it ends a console one.**
+
+**The stub** was BrowserAI's own stdio code, `StdioChannel`, `JsonLinesTransport`,
+`JsonLines`, `DirectStdioServerTransport` and `VerbatimPayload`, copied byte for byte
+from `e30380ac` and checked by SHA-256, under `McpServer.Create` from
+`ModelContextProtocol` 2.2.0, with stderr through the same console logger line as
+BrowserAI's process log. It was published NativeAOT twice, as a Windows-subsystem
+program (PE subsystem 2) and as a console one (3), with `Microsoft.Extensions.Logging`
+10.0.12 and ILCompiler 10.0.12 under SDK 10.0.401. Its `big` tool answers exactly
+70,000 bytes of UTF-8 with 2-, 3- and 4-byte characters. After the end of its input it
+waited 3 s and exited with code 42, so every run shows whether the client let it leave
+or ended it.
+
+**Every cell, 3 of 3, both forms:** `initialize`, `tools/list` and `tools/call big`
+were served; the 70,000 bytes reached the client with their SHA-256 unchanged; stderr
+reached the client; nothing was left running after the client; and no window
+appeared and the server owned none. `initialize` arrived 8 to 14 ms after the server
+started, and the 70 KB answer left it in 3 to 7 ms.
+
+| Client, and how it ended | Form | Client start to server start | Ended by | Timing | Exit code |
+|---|---|---|---|---|---|
+| Claude `-p`, normal | windowless | 710 to 798 ms | `taskkill /PID /T /F`, then stdin closed (the end of input read 5.4 to 6.8 ms after the taskkill started) | killed 533 to 580 ms after the taskkill started | 1 |
+| | console | 736 to 847 ms | the same | 510 to 620 ms | 1 |
+| Claude VS Code transport, stdin closed | windowless | 688 to 764 ms | the same | killed 491 to 587 ms after stdin closed | 1 |
+| | console | 664 to 748 ms | the same | 559 to 612 ms | 1 |
+| Claude VS Code transport, client terminated | windowless | 628 to 656 ms | Claude Code's job closing | 2.4 to 4.0 ms after the client died | 0 |
+| | console | 604 to 738 ms | the same | 2.6 to 4.3 ms | 0 |
+| `codex exec` 0.155 | windowless | 446 to 464 ms | the job ended, stdin never closed | 133 to 142 ms before Codex exited | 1 |
+| | console | 432 to 497 ms | the same | 119 to 137 ms | 1 |
+| `codex exec` 0.160 | windowless | 446 to 506 ms | the same | 127 to 136 ms | 1 |
+| | console | 436 to 807 ms | the same | 116 to 141 ms | 1 |
+| app-server 0.155, stdin closed | windowless | 462 to 507 ms | the job ended | 2.4 to 6.3 ms after its stdin closed | 1 |
+| | console | 459 to 722 ms | the same | 1.4 to 3.0 ms | 1 |
+| app-server 0.160, stdin closed | windowless | 441 to 471 ms | the same | 1.6 to 1.9 ms | 1 |
+| | console | 455 to 533 ms | the same | 2.1 to 11.3 ms | 1 |
+| app-server 0.155, terminated | windowless | 427 to 503 ms | Codex's job closing | 27 to 44 ms after it died | 0 |
+| | console | 445 to 600 ms | the same | 27 to 32 ms | 0 |
+| app-server 0.160, terminated | windowless | 440 to 548 ms | the same | 11 to 18 ms | 0 |
+| | console | 414 to 511 ms | the same | 12 to 17 ms | 0 |
+
+No console event is involved in any of these ends.
+
+**How each client starts its server**, from the stub's own report of its
+`STARTUPINFO`, its handles and its console:
+
+- **Claude Code** passes `STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES` with `SW_HIDE`.
+  The console form got a console of its own with no window and a `conhost` child,
+  which is consistent with `CREATE_NO_WINDOW`; the flag itself was not read.
+- **Codex 0.155** passes `STARTF_USESTDHANDLES` alone, and its console form shares
+  Codex's own console.
+- **Codex 0.160** passes the same flags, and its console form got a console of its
+  own.
+- **The windowless form, under all three**, has no console and no `conhost`, its
+  console code pages read 0, and `Console.OpenStandardInput` and
+  `Console.OpenStandardOutput` return a `WindowsConsoleStream` over the pipes, as the
+  console form's do.
+
+**stderr.** Codex logged every stderr line it received, in both forms. Claude Code
+put one `[ERROR] "Server stderr"` entry in its debug log carrying only the first
+chunk, in both forms.
+
+**What the model was handed of the 70,000 bytes**, the same in both forms: Claude
+Code saved the result to `tool-results\*.json` and handed the model a 2,519-byte
+preview, and Codex handed it 12,021 bytes.
+
+**No window, and how that was checked.** Every 25 ms every top-level window on the
+desktop was compared with a baseline of 129, because with Windows Terminal as the
+default terminal a console's window belongs to Windows Terminal, and watching the
+run's own processes would miss it; every window the run's tree owned was recorded,
+visible or not. A hidden window the rig created was found and read as not visible at
+the start of every batch, and the desktop scan also caught one real foreign window.
+Over 54 runs and 7,862 scans: no window from any run, none owned by a server, and no
+`conhost` under a windowless server.
+
+**What it does not establish.** The one binary itself, which did not exist yet;
+either client's terminal UI; the real VS Code window, which was emulated; and a
+console-less parent starting the console form, the one case only the windowless form
+avoids a window in, which was not run because it would have put a window on the
+screen.
+
+**Re-establish it** with the batch's `stub/` and `rig/`: the stub published both ways,
+and the client-exit rig with the four files it gained here (`WindowWatch`, `RootWatch`,
+`Feedback`, `Launch`), one cell at a time, every client from that rig's copies under a
+scratch configuration; compare against the batch's `runs/m1/cells.tsv` and
+`runs/m1k/cells.tsv`.
+
+## When each client's first turn goes out, and a call held behind it -- measured 2026-10-04
+
+`[FLOATS]` Claude Code **2.1.288** (`-p`, and the VS Code stream-json transport),
+codex-cli **0.155.0-alpha.9.2** and **0.160.0** (`exec` and `app-server`), against a
+stand-in server and never BrowserAI, every client under a scratch configuration and
+against local API stubs, its model a script. Taken 2026-10-04 between 00:26Z and
+02:07Z. Everything it was read from:
+[`docs/evidence/2026-10-04-startup-measure`](../../docs/evidence/2026-10-04-startup-measure/README.md).
+
+### The first turn waits about 1.3 s in Codex and about 2 s in Claude Code
+
+A conversation's first request to the model carries only the tools of the servers that
+had answered by then. How long each client waits for them:
+
+| Client, and how the server is registered | When the first request went out | What it carried |
+|---|---|---|
+| Codex 0.155 and 0.160, `exec` and `app-server`, the server not `required` | 1.23 to 1.36 s after the server started | none of the tools of a server that answered after 3 s, 12 of 12 |
+| Claude Code 2.1.288 at user scope, in `~/.claude.json`, which is how RegisterAI registers BrowserAI; `-p` and the VS Code transport | 1.91 to 1.98 s after the server started | none of the tools of a server that needed 3 s or 10 s, 12 of 12 |
+| Claude Code 2.1.288 through `--mcp-config` | up to 30 s | the tools of a server that took 3 s or 10 s, 12 of 12; none from one that took 35 s, 6 of 6, the first request at 29.9 s |
+
+**Read in the clients:** Claude Code's binary carries `var woe=2000` at byte
+211,693,688, near "MCP startup is otherwise non-blocking by default" at byte
+205,419,229; Codex's `DEFAULT_OPTIONAL_MCP_STARTUP_GRACE` is one second
+(`codex-mcp/src/mcp/mod.rs:193` at 0.155, `:195` at 0.160), counted from the turn's
+start, which is about 0.3 s after the server is spawned. **How a server is registered
+decides how long Claude Code waits for it**, so a stand-in registered through
+`--mcp-config`, as earlier rigs here registered theirs, overstates how patient Claude
+Code is with BrowserAI as it is really registered. The Codex half extends the
+`codex exec` reading of 2026-10-03 above, 4 of 4, to `app-server` and to 12 runs.
+
+### A held call: both clients wait for it, and deliver it
+
+A stand-in that answered `initialize` and `tools/list` at once and held the first
+`tools/call`:
+
+| Held for | Claude Code 2.1.288, `-p` and the VS Code transport | Codex 0.155 and 0.160, `exec` and `app-server` |
+|---|---|---|
+| 1 s | waited and delivered, 6 of 6 | 12 of 12 |
+| 5 s | 6 of 6, and 6 of 6 more at user scope | 12 of 12 |
+| 30 s | 6 of 6 | 12 of 12 |
+| 90 s | 6 of 6 | 12 of 12 |
+
+In all 78 runs the first request carried the tools, and **no client cancelled a
+call**: no `notifications/cancelled` frame in any stand-in run, against 176
+`tools/call` frames as the positive control. **Claude Code sends a `tool_progress`
+heartbeat every 30 s** while it waits (at 30, 60 and 90 s), and the VS Code extension
+receives them; read in its binary, a stdio call is abandoned after 30 minutes with no
+answer, and the default hard limit is 100,000,000 ms. **Codex** shows the call as in
+progress, and the model then reads "Wall time: 90.02 seconds" ahead of the output; its
+default tool timeout is 300 s (`rmcp_client.rs:104` at 0.155, `:106` at 0.160).
+
+### What the model is shown when a held call fails
+
+| The server answers with | Claude Code, 6 runs each | Codex, 12 runs each |
+|---|---|---|
+| an `isError` result | the sentence, with `is_error: true` | "Wall time: ... / Output: " and then the sentence; the item is marked `failed` |
+| a JSON-RPC error | the sentence, with `is_error: true` | "tool call error: tool call failed for `browserai/browserai_list` / Caused by: / Mcp error: -32603: " and then the sentence |
+| nothing, because the server exits | "Connection closed", with `is_error: true` | "... Caused by: Transport closed" |
+
+So a server that answers a held call with a sentence is heard by the model in both
+clients, and one that dies tells the model nothing.
+
+### Codex with `required = true`
+
+| The server | `codex exec` | `codex app-server` |
+|---|---|---|
+| answers after 3 s | waits; the first turn has the tools, 6 of 6 | the same, 6 of 6 |
+| dies on `initialize` | exits with code 1 before any model request: "Error: thread/start: thread/start failed: error creating thread: Fatal error: Failed to initialize session: required MCP servers failed to initialize: browserai: handshaking with MCP server failed: connection closed: initialize response", 6 of 6 | `thread/start` returns that error and no thread is created, 6 of 6 |
+| answers after 35 s | exits with code 1 at 30 s: "timed out handshaking with MCP server after 29.9999955s", 6 of 6 | fails the same way, 6 of 6 |
+| answers at once, the control | normal, 6 of 6 | normal, 6 of 6 |
+
+`required = true` trades a first turn without the server for a Codex that opens no
+conversation at all while the server is broken, or while an update ends it during its
+start.
+
+### Read, and not run, on 2026-10-04
+
+- **Claude Code 2.1.288's own text for `alwaysLoad`**, found by a text search of the
+  client binary: "When true, all tools from this server are always included in the
+  prompt and never deferred behind tool search ... As a side effect, true also blocks
+  startup until the server is connected (capped at the standard 5s connect
+  timeout)". The per-tool `_meta` form of the key is described only in its `false`
+  direction.
+- **`codex mcp add` writes `required: false`** at `rust-v0.155.0-alpha.9.2`, and its
+  arguments offer no flag for it (`codex-rs/cli/src/mcp_cmd.rs`). The 0.160.0 copy
+  read had no `cli` folder, so 0.160 was not read.
+- **Codex 0.160's `startup_readiness = "catalog"`** (`config/src/mcp_types.rs:219-226`
+  and `:248-256`) uses a cache that lives in one process
+  (`tool_catalog_cache.rs:33-38`), so it cannot help `codex exec`'s first turn; 0.155
+  has no such key, and whether 0.155 accepts it was not checked.
+
+**What it does not establish.** Claude Code's interactive terminal with a slow server,
+the real VS Code window and the Codex TUI and desktop app; what a real model does with
+the failure sentences; and the server half of a lazy start, which was not built.
+
+**Re-establish it** with the batch's `rig/` (`lazysrv.js.txt` is the stand-in,
+`gen-cc.js.txt`, `ccmodel.js.txt`, `cx-run.js.txt` and `cxmodel.js.txt` the drivers and
+model stubs, `ccsum.py.txt` and `cxsum.py.txt` the tables), one batch at a time with
+each client under a scratch home; compare against each batch's `table.tsv` under
+`runs/`.
+
+## What a stdio server can see of the client that started it -- measured 2026-10-08
+
+`[FLOATS]` on the clients' releases: Claude Code **2.1.294**, the installed CLI, and
+**2.1.292**, the binary the newest installed VS Code extension bundles; codex-cli
+**0.161.0**, npm `latest` that day, and **0.159.0-alpha.12.1**, the binary the running
+Codex desktop app uses as its app-server. Windows 11 Pro 10.0.26300. Taken 2026-10-08
+with a stub server and local API stubs, every client under a scratch configuration,
+no window shown: **41 counted runs**, 21 of Claude Code and 20 of Codex, at least three
+per client and more on the weak spots. Everything it was read from, with the stub and
+the rig: [`docs/evidence/2026-10-08-client-id`](../../docs/evidence/2026-10-08-client-id/README.md).
+It answers what H1-T of [the one-binary design](../../docs/design/one-binary/README.md)
+needs before an update: **which of a relay's clients will need a person to reconnect
+it.** ⚠️ It records what can be told apart and how well; **which test the relay uses
+is the maintainer's choice and was not made** when this was written.
+
+| Signal | (1) Claude Code, terminal UI | (2) Claude Code, VS Code transport | (3) `claude -p` | (4) `codex exec` | (5) `codex app-server` |
+|---|---|---|---|---|---|
+| `clientInfo` name and title | `claude-code`, `Claude Code`, 4 of 4 | the same, 4 of 4 | the same, 10 of 10 | `codex-mcp-client`, `Codex`, 4 of 4 | the same, 8 of 8 |
+| `clientInfo` version | 2.1.294 | 2.1.292, the extension's own binary | 2.1.294 | 0.161.0 | 0.161.0 and 0.159.0-alpha.12.1 |
+| Protocol revision and capabilities | `2025-11-25`, roots and elicitation, the same in all 21 Claude Code runs | the same | the same | `2025-06-18`, `codex/auth-change` and elicitation, the same in all 20 Codex runs | the same |
+| What it sends | a `server/discover` probe, then `initialize` and `tools/list`, 21 of 21; `roots/list` answered with the working directory | the same | the same | `initialize` and `tools/list`, no roots | the same |
+| `CLAUDE_CODE_ENTRYPOINT` | `cli`, 4 of 4; a value already set is kept: `claude-vscode`, 3 of 3 | `claude-vscode`, 4 of 4, which the extension sets | `sdk-cli`, 7 of 7; started from inside a VS Code session's shell, `claude-vscode`, 3 of 3 | not set | not set |
+| Variables the client adds | `AI_AGENT=claude-code_<version>_harness`, `CLAUDECODE=1`, the session id, a messaging pipe and its token, `CLAUDE_PROJECT_DIR` and `SHELL`, the same in (1), (2) and (3) | the same | the same | none: only an allowlist of 19 passes, and a marker variable was dropped 20 of 20 | the same |
+| The environment it was started with | passed through whole, the marker 21 of 21 | the same, with the extension host's own variables | the same | not passed | not passed |
+| The parent process and its arguments | `claude.exe` with no argument, 7 of 7 | `claude.exe --output-format stream-json --verbose --input-format stream-json ...`, 4 of 4 | `claude.exe -p ...`, 10 of 10 | `codex.exe exec ...`, 4 of 4 | `codex.exe app-server`, 8 of 8 |
+| Console, start flags, job and pipes | no console window in any run, 41 of 41; Claude Code: flags `0x101` with the window hidden, the server in `claude.exe`'s job, named pipes `\uv\N-<pid of claude>`, stdin closed at the end, 21 of 21 | the same | the same | flags `0x100`, a kill-on-close job of its own per server, unnamed pipes, the server terminated with no end of input, 20 of 20 | the same |
+
+**What does not tell them apart.** (1), (2) and (3) are identical on the wire, 21 of 21;
+the version differs only because the extension bundles its own binary. (4) and (5) are
+identical on the wire and in the environment, 20 of 20, and the host's own
+`clientInfo` is not passed to the server, 8 of 8. `CLAUDE_CODE_ENTRYPOINT` tells the
+three Claude Code modes apart in the 15 clean runs and reads `claude-vscode` in 6 of 6
+runs that inherited it, because Claude Code keeps a value already set and rewrites only
+an inherited `cli` to `sdk-cli` (read in the 2.1.294 bundle). For a terminal session
+that is the harmful direction: it would say no reconnect is needed where one is. **The
+environment alone classifies 15 of the 41 runs correctly.**
+
+**What does, 41 of 41.** `clientInfo`'s name, then the parent process: its pid, kept
+only if it was created before the server, and its command line read through
+`NtQueryInformationProcess` class 60 with limited-query access, split by Windows'
+argument rules. For `claude-code`: none of `-p`, `--print`, `--input-format`,
+`--output-format`, `--sdk-url` and `--init-only` is the terminal UI; `-p` or `--print`
+is (3); otherwise an entrypoint of `claude-vscode` is (2), and any other is another
+host, named by its entrypoint. For `codex-mcp-client`: the first argument that is not
+an option, skipping the values of `-c`, `--enable`, `-m`, `-p`, `-C` and the like, is
+`exec`, `e` or `review` for (4) and `app-server` for (5), unless `--managed-daemon` is
+present, which marks the Codex terminal UI's shared background server; no subcommand
+is the Codex terminal UI started with `--no-daemon`. The same test, run against two
+live processes on the machine, named the VS Code session's own `claude.exe`
+(extension 2.1.288) as (2) and the running Codex desktop app's server as (5); the
+latter's real command line is `-c features.code_mode_host=true app-server
+--analytics-default-enabled -c ...`, so its subcommand is its third argument.
+
+**Three more findings of the same runs.**
+
+- ⭐ **Codex 0.161.0's terminal UI keeps its servers alive after it closes.** By default
+  it runs them inside a shared background server it installs under `CODEX_HOME`; after
+  `/quit` the stub stayed alive 30.1 to 30.2 s, until `codex app-server daemon stop`, 3
+  of 3. With `--no-daemon` the server ended 0.11 to 0.14 s before the terminal UI did,
+  3 of 3. A helper, `codex app-server daemon pid-update-loop`, survived even
+  `daemon stop`, 4 of 4. Only 30 s were measured. A long `CODEX_HOME` path breaks the
+  background server with "path must be shorter than SUN_LEN", which is the one run not
+  counted.
+- **Claude Code 2.1.292 and 2.1.294 probe with `server/discover` first**, revision
+  `2026-07-28` with `clientInfo` in `_meta`, and fall back to `initialize`, 21 of 21;
+  [the protocol pin above](#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08)
+  is what BrowserAI answers it with.
+- ⚠️ **Every Claude Code server is handed a messaging pipe and its token**,
+  `CLAUDE_CODE_MESSAGING_SOCKET` and `CLAUDE_CODE_MESSAGING_TOKEN`, so a server that
+  logs its environment logs the token.
+
+**What it does not establish.** Hosts not run: the Agent SDK, the Claude desktop app,
+JetBrains and the Codex IDE extension. (2) was not driven through VS Code, because
+nothing could show a window: the extension's own 2.1.292 binary ran with the argument
+list read off a live extension session and the environment its `extension.js` sets. The
+test assumes the server's parent is the client, which held in 37 of 41: under the
+Codex terminal UI the parent is the shared background server, so a server there cannot
+tell which terminal session is attached. And the flags it reads are not a contract;
+any release can change them.
+
+**Re-establish it** with the batch's `rig/` (`IdRig/IdStub.cs.txt` is the stub,
+`gen.trimmed.js.txt` writes the batches, `classify.trimmed.js.txt` is the test run over
+every run, and `summarize.js.txt` the tables), every client under a scratch configuration and against
+the local API stubs; compare against `runs/all-runs.tsv` and
+`runs/all-arms-summary.txt`.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

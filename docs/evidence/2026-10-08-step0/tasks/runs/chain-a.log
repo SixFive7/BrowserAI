@@ -1,0 +1,77 @@
+2026-10-08T14:12:19.9412900Z m4 com rep 1: first line 22.7 ms (creation 5.9, Main 22.0); request returned in 3.3 ms
+2026-10-08T14:12:20.9993134Z m4 com rep 2: first line 19.7 ms (creation 3.9, Main 19.0); request returned in 1.1 ms
+2026-10-08T14:12:22.0468449Z m4 com rep 3: first line 21.2 ms (creation 3.5, Main 20.0); request returned in 1.1 ms
+2026-10-08T14:12:23.0906062Z m4 com rep 4: first line 18.8 ms (creation 3.8, Main 18.1); request returned in 8.5 ms
+2026-10-08T14:12:24.1363685Z m4 com rep 5: first line 19.3 ms (creation 3.7, Main 18.4); request returned in 1.2 ms
+2026-10-08T14:12:25.1928284Z m4 com rep 6: first line 20.0 ms (creation 3.7, Main 19.3); request returned in 1.1 ms
+2026-10-08T14:12:26.2420667Z m4 com rep 7: first line 19.3 ms (creation 3.7, Main 18.6); request returned in 8.0 ms
+2026-10-08T14:12:27.2948827Z m4 com rep 8: first line 22.5 ms (creation 4.4, Main 21.8); request returned in 1.3 ms
+2026-10-08T14:12:28.3446647Z m4 com rep 9: first line 19.2 ms (creation 3.8, Main 18.5); request returned in 1.2 ms
+2026-10-08T14:12:29.4033713Z m4 com rep 10: first line 22.3 ms (creation 4.6, Main 21.6); request returned in 1.2 ms
+2026-10-08T14:12:30.4555560Z m4 com rep 11: first line 19.3 ms (creation 3.5, Main 18.5); request returned in 1.2 ms
+2026-10-08T14:12:31.5089701Z m4 com rep 12: first line 20.1 ms (creation 3.7, Main 19.3); request returned in 1.0 ms
+2026-10-08T14:12:32.5873686Z m4 com rep 13: first line 49.1 ms (creation 32.8, Main 48.5); request returned in 1.3 ms
+2026-10-08T14:12:33.6388577Z m4 com rep 14: first line 18.4 ms (creation 3.9, Main 17.7); request returned in 1.1 ms
+2026-10-08T14:12:34.6846804Z m4 com rep 15: first line 18.4 ms (creation 3.3, Main 17.6); request returned in 1.0 ms
+2026-10-08T14:12:35.7469919Z m4 com rep 16: first line 19.1 ms (creation 3.4, Main 18.2); request returned in 1.1 ms
+2026-10-08T14:12:36.7978751Z m4 com rep 17: first line 19.3 ms (creation 3.2, Main 18.2); request returned in 0.9 ms
+2026-10-08T14:12:37.8618256Z m4 com rep 18: first line 19.6 ms (creation 3.6, Main 18.8); request returned in 1.1 ms
+2026-10-08T14:12:38.9235314Z m4 com rep 19: first line 20.2 ms (creation 4.2, Main 19.5); request returned in 1.3 ms
+2026-10-08T14:12:39.9835600Z m4 com rep 20: first line 21.0 ms (creation 3.6, Main 20.4); request returned in 1.1 ms
+2026-10-08T14:12:41.0041463Z deleted BrowserAI-measure-20261008T1411-m4-com: True
+2026-10-08T14:12:41.3049118Z m4 schtasks rep 1: first line 60.6 ms (creation 45.1, Main 60.1); request returned in 31.0 ms
+2026-10-08T14:12:42.4196750Z m4 schtasks rep 2: first line 85.1 ms (creation 71.1, Main 84.7); request returned in 31.1 ms
+2026-10-08T14:12:43.5254180Z m4 schtasks rep 3: first line 76.1 ms (creation 64.3, Main 75.7); request returned in 59.0 ms
+2026-10-08T14:12:44.5938734Z m4 schtasks rep 4: first line 43.9 ms (creation 31.8, Main 43.5); request returned in 27.4 ms
+2026-10-08T14:12:45.6987513Z m4 schtasks rep 5: first line 74.6 ms (creation 61.6, Main 73.9); request returned in 25.6 ms
+2026-10-08T14:12:46.7783867Z m4 schtasks rep 6: first line 48.0 ms (creation 33.9, Main 46.6); request returned in 27.4 ms
+2026-10-08T14:12:47.8908224Z m4 schtasks rep 7: first line 74.7 ms (creation 62.6, Main 74.3); request returned in 25.6 ms
+2026-10-08T14:12:49.0048942Z m4 schtasks rep 8: first line 77.9 ms (creation 64.9, Main 77.4); request returned in 27.1 ms
+2026-10-08T14:12:50.0859625Z m4 schtasks rep 9: first line 49.4 ms (creation 34.2, Main 48.9); request returned in 28.5 ms
+2026-10-08T14:12:51.1629489Z m4 schtasks rep 10: first line 43.5 ms (creation 30.6, Main 43.0); request returned in 28.8 ms
+2026-10-08T14:12:52.1798270Z deleted BrowserAI-measure-20261008T1411-m4-schtasks: True
+2026-10-08T14:13:04.3949499Z m1-com-none round 1: started=1 tags=req-r01-20 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:13:17.4974915Z m1-com-none round 2: started=1 tags=req-r02-20 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:13:30.5569847Z m1-com-none round 3: started=1 tags=req-r03-06 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:13:43.5966607Z m1-com-none round 4: started=1 tags=req-r04-19 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:13:56.6829916Z m1-com-none round 5: started=1 tags=req-r05-13 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:14:09.6334688Z m1-com-none round 6: started=1 tags=req-r06-19 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:14:22.8306224Z m1-com-none round 7: started=1 tags=req-r07-05 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:14:36.0751039Z m1-com-none round 8: started=1 tags=req-r08-09 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:14:49.2551717Z m1-com-none round 9: started=1 tags=req-r09-20 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:15:02.3544629Z m1-com-none round 10: started=1 tags=req-r10-19 results=19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4
+2026-10-08T14:15:03.3627866Z deleted BrowserAI-measure-20261008T1411-m1-com-none: True
+2026-10-08T14:15:16.2063342Z m1-com-running round 1: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:15:29.8809341Z m1-com-running round 2: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:15:43.5276042Z m1-com-running round 3: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:15:57.2158583Z m1-com-running round 4: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:16:11.0111452Z m1-com-running round 5: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:16:24.7273138Z m1-com-running round 6: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:16:41.0444865Z m1-com-running round 7: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:16:54.7121598Z m1-com-running round 8: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:17:08.4027167Z m1-com-running round 9: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:17:21.9909103Z m1-com-running round 10: started=0 tags= results=20x 0x00000000 state=err:0x8004130B
+2026-10-08T14:17:23.0027928Z deleted BrowserAI-measure-20261008T1411-m1-com-running: True
+2026-10-08T14:17:33.0290898Z m1-schtasks-none round 1: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:17:43.8419456Z m1-schtasks-none round 2: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:17:54.6250991Z m1-schtasks-none round 3: started=1 tags=$(Arg0) results=18x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 2x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:05.4065678Z m1-schtasks-none round 4: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:16.1718931Z m1-schtasks-none round 5: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:26.9247948Z m1-schtasks-none round 6: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:37.7196963Z m1-schtasks-none round 7: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:48.5106511Z m1-schtasks-none round 8: started=1 tags=$(Arg0) results=15x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 5x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:18:59.2734891Z m1-schtasks-none round 9: started=1 tags=$(Arg0) results=19x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 1x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:19:09.9893011Z m1-schtasks-none round 10: started=1 tags=$(Arg0) results=17x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]; 3x exit=0 out=[SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-none". |] err=[]
+2026-10-08T14:19:10.9988731Z deleted BrowserAI-measure-20261008T1411-m1-schtasks-none: True
+2026-10-08T14:19:21.4646752Z m1-schtasks-running round 1: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:19:32.7532062Z m1-schtasks-running round 2: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:19:44.0636800Z m1-schtasks-running round 3: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:19:55.3445340Z m1-schtasks-running round 4: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:20:06.6671768Z m1-schtasks-running round 5: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:20:17.9277202Z m1-schtasks-running round 6: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:20:29.1837859Z m1-schtasks-running round 7: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:20:40.4438355Z m1-schtasks-running round 8: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:20:51.8767684Z m1-schtasks-running round 9: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:21:03.2735768Z m1-schtasks-running round 10: started=0 tags= results=20x exit=0 out=[INFO: scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running" is currently running. | SUCCESS: Attempted to run the scheduled task "BrowserAI-measure-20261008T1411-m1-schtasks-running". |] err=[]
+2026-10-08T14:21:04.2824184Z deleted BrowserAI-measure-20261008T1411-m1-schtasks-running: True
+CHAIN-A-DONE

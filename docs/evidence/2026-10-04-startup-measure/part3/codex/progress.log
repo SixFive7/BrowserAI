@@ -1,0 +1,86 @@
+2026-10-04T01:16:41.582Z PHASE codex reps=3
+2026-10-04T01:16:43.099Z RUN_START c0-exec155-r1
+2026-10-04T01:16:44.385Z codex 155 exit=0 after 1284 ms
+2026-10-04T01:16:44.385Z RUN_END c0-exec155-r1
+2026-10-04T01:16:45.888Z RUN_START c0-exec155-r2
+2026-10-04T01:16:47.086Z codex 155 exit=0 after 1196 ms
+2026-10-04T01:16:47.087Z RUN_END c0-exec155-r2
+2026-10-04T01:16:48.588Z RUN_START c0-exec155-r3
+2026-10-04T01:16:52.165Z codex 155 exit=0 after 3575 ms
+2026-10-04T01:16:52.166Z RUN_END c0-exec155-r3
+2026-10-04T01:16:53.667Z RUN_START c0-exec160-r1
+2026-10-04T01:16:54.848Z codex 160 exit=0 after 1179 ms
+2026-10-04T01:16:54.848Z RUN_END c0-exec160-r1
+2026-10-04T01:16:56.350Z RUN_START c0-exec160-r2
+2026-10-04T01:16:57.655Z codex 160 exit=0 after 1303 ms
+2026-10-04T01:16:57.657Z RUN_END c0-exec160-r2
+2026-10-04T01:16:59.160Z RUN_START c0-exec160-r3
+2026-10-04T01:17:00.477Z codex 160 exit=0 after 1310 ms
+2026-10-04T01:17:00.478Z RUN_END c0-exec160-r3
+2026-10-04T01:17:01.985Z c1t-exec155-r1: idle (no coordinator, no host) after 4 ms
+2026-10-04T01:17:01.986Z RUN_START c1t-exec155-r1
+2026-10-04T01:17:04.609Z codex 155 exit=0 after 2621 ms
+2026-10-04T01:17:04.609Z RUN_END c1t-exec155-r1
+2026-10-04T01:18:19.809Z c1t-exec155-r2: idle (no coordinator, no host) after 73698 ms
+2026-10-04T01:18:19.810Z RUN_START c1t-exec155-r2
+2026-10-04T01:18:21.262Z codex 155 exit=0 after 1450 ms
+2026-10-04T01:18:21.262Z RUN_END c1t-exec155-r2
+2026-10-04T01:19:36.390Z c1t-exec155-r3: idle (no coordinator, no host) after 73624 ms
+2026-10-04T01:19:36.391Z RUN_START c1t-exec155-r3
+2026-10-04T01:19:37.686Z codex 155 exit=0 after 1294 ms
+2026-10-04T01:19:37.687Z RUN_END c1t-exec155-r3
+2026-10-04T01:20:52.809Z c1t-exec160-r1: idle (no coordinator, no host) after 73621 ms
+2026-10-04T01:20:52.810Z RUN_START c1t-exec160-r1
+2026-10-04T01:20:54.206Z codex 160 exit=0 after 1395 ms
+2026-10-04T01:20:54.206Z RUN_END c1t-exec160-r1
+2026-10-04T01:22:08.939Z c1t-exec160-r2: idle (no coordinator, no host) after 73228 ms
+2026-10-04T01:22:08.940Z RUN_START c1t-exec160-r2
+2026-10-04T01:22:10.328Z codex 160 exit=0 after 1386 ms
+2026-10-04T01:22:10.329Z RUN_END c1t-exec160-r2
+2026-10-04T01:23:25.030Z c1t-exec160-r3: idle (no coordinator, no host) after 73199 ms
+2026-10-04T01:23:25.031Z RUN_START c1t-exec160-r3
+2026-10-04T01:23:26.446Z codex 160 exit=0 after 1413 ms
+2026-10-04T01:23:26.446Z RUN_END c1t-exec160-r3
+2026-10-04T01:23:27.955Z STARTED coordinator --start-host pid=64300
+2026-10-04T01:23:27.963Z c2-exec155-r1: host pipe 3 ms
+2026-10-04T01:23:28.017Z EXIT coordinator pid=64300 code=0
+2026-10-04T01:23:28.265Z RUN_START c2-exec155-r1
+2026-10-04T01:23:29.206Z codex 155 exit=0 after 939 ms
+2026-10-04T01:23:29.207Z RUN_END c2-exec155-r1
+2026-10-04T01:23:59.228Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:24:00.733Z STARTED coordinator --start-host pid=90224
+2026-10-04T01:24:00.742Z c2-exec155-r2: host pipe 3 ms
+2026-10-04T01:24:00.796Z EXIT coordinator pid=90224 code=0
+2026-10-04T01:24:01.043Z RUN_START c2-exec155-r2
+2026-10-04T01:24:02.095Z codex 155 exit=0 after 1049 ms
+2026-10-04T01:24:02.096Z RUN_END c2-exec155-r2
+2026-10-04T01:24:32.102Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:24:33.609Z STARTED coordinator --start-host pid=39408
+2026-10-04T01:24:33.617Z c2-exec155-r3: host pipe 4 ms
+2026-10-04T01:24:33.668Z EXIT coordinator pid=39408 code=0
+2026-10-04T01:24:33.925Z RUN_START c2-exec155-r3
+2026-10-04T01:24:34.895Z codex 155 exit=0 after 968 ms
+2026-10-04T01:24:34.897Z RUN_END c2-exec155-r3
+2026-10-04T01:25:04.921Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:25:06.432Z STARTED coordinator --start-host pid=24728
+2026-10-04T01:25:06.440Z c2-exec160-r1: host pipe 4 ms
+2026-10-04T01:25:06.490Z EXIT coordinator pid=24728 code=0
+2026-10-04T01:25:06.741Z RUN_START c2-exec160-r1
+2026-10-04T01:25:07.824Z codex 160 exit=0 after 1081 ms
+2026-10-04T01:25:07.825Z RUN_END c2-exec160-r1
+2026-10-04T01:25:37.861Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:25:39.367Z STARTED coordinator --start-host pid=88420
+2026-10-04T01:25:39.376Z c2-exec160-r2: host pipe 4 ms
+2026-10-04T01:25:39.432Z EXIT coordinator pid=88420 code=0
+2026-10-04T01:25:39.677Z RUN_START c2-exec160-r2
+2026-10-04T01:25:40.612Z codex 160 exit=0 after 933 ms
+2026-10-04T01:25:40.613Z RUN_END c2-exec160-r2
+2026-10-04T01:26:10.630Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:26:12.135Z STARTED coordinator --start-host pid=21172
+2026-10-04T01:26:12.141Z c2-exec160-r3: host pipe 3 ms
+2026-10-04T01:26:12.197Z EXIT coordinator pid=21172 code=0
+2026-10-04T01:26:12.442Z RUN_START c2-exec160-r3
+2026-10-04T01:26:13.400Z codex 160 exit=0 after 956 ms
+2026-10-04T01:26:13.400Z RUN_END c2-exec160-r3
+2026-10-04T01:26:43.414Z after stop: host pipe gone in -1 ms, coordinator pipe gone in -1 ms
+2026-10-04T01:26:44.916Z PHASE codex DONE; started 25 processes

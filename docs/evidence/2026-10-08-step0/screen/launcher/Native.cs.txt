@@ -1,0 +1,322 @@
+// Scratch rig for the step-0 screen measurements, 2026-10-08, part 2: the Win32 surface the
+// launcher reads. Classic DllImport, because this is a framework-dependent scratch build.
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace Step0Launcher;
+
+internal static class Native
+{
+    public delegate nint WndProc(nint hwnd, uint message, nint wParam, nint lParam);
+
+    public delegate void WinEventProc(nint hook, uint eventType, nint hwnd, int idObject, int idChild, uint thread, uint time);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct StartupInfo
+    {
+        public int Cb;
+        public nint Reserved;
+        public nint Desktop;
+        public nint Title;
+        public int X;
+        public int Y;
+        public int XSize;
+        public int YSize;
+        public int XCountChars;
+        public int YCountChars;
+        public int FillAttribute;
+        public int Flags;
+        public short ShowWindow;
+        public short Reserved2Count;
+        public nint Reserved2;
+        public nint StdInput;
+        public nint StdOutput;
+        public nint StdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ProcessInformation
+    {
+        public nint Process;
+        public nint Thread;
+        public uint ProcessId;
+        public uint ThreadId;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BasicLimitInformation
+    {
+        public long PerProcessUserTimeLimit;
+        public long PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public nuint MinimumWorkingSetSize;
+        public nuint MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public nuint Affinity;
+        public uint PriorityClass;
+        public uint SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IoCounters
+    {
+        public ulong ReadOperationCount;
+        public ulong WriteOperationCount;
+        public ulong OtherOperationCount;
+        public ulong ReadTransferCount;
+        public ulong WriteTransferCount;
+        public ulong OtherTransferCount;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ExtendedLimitInformation
+    {
+        public BasicLimitInformation Basic;
+        public IoCounters Io;
+        public nuint ProcessMemoryLimit;
+        public nuint JobMemoryLimit;
+        public nuint PeakProcessMemoryUsed;
+        public nuint PeakJobMemoryUsed;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ProcessBasicInformation
+    {
+        public nint ExitStatus;
+        public nint PebBaseAddress;
+        public nint AffinityMask;
+        public nint BasePriority;
+        public nint UniqueProcessId;
+        public nint InheritedFromUniqueProcessId;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct GuiThreadInfo
+    {
+        public int Size;
+        public int Flags;
+        public nint Active;
+        public nint Focus;
+        public nint Capture;
+        public nint MenuOwner;
+        public nint MoveSize;
+        public nint Caret;
+        public Rect CaretRect;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct WindowClassEx
+    {
+        public uint Size;
+        public uint Style;
+        public nint WndProc;
+        public int ClassExtra;
+        public int WindowExtra;
+        public nint Instance;
+        public nint Icon;
+        public nint Cursor;
+        public nint Background;
+        public string? MenuName;
+        public string ClassName;
+        public nint SmallIcon;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Point
+    {
+        public int X;
+        public int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Message
+    {
+        public nint Hwnd;
+        public uint Msg;
+        public nint WParam;
+        public nint LParam;
+        public uint Time;
+        public Point Pt;
+        public uint Private;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern nint CreateJobObjectW(nint attributes, string? name);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool SetInformationJobObject(nint job, int infoClass, ref ExtendedLimitInformation info, int length);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool QueryInformationJobObject(nint job, int infoClass, nint buffer, int length, out int returned);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool AssignProcessToJobObject(nint job, nint process);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool TerminateJobObject(nint job, uint exitCode);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool TerminateProcess(nint process, uint exitCode);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool IsProcessInJob(nint process, nint job, out bool result);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool CreateProcessW(
+        string? application,
+        StringBuilder commandLine,
+        nint processAttributes,
+        nint threadAttributes,
+        bool inheritHandles,
+        uint flags,
+        nint environment,
+        string? currentDirectory,
+        ref StartupInfo startup,
+        out ProcessInformation information);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint ResumeThread(nint thread);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(nint handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern nint OpenProcess(uint access, bool inherit, uint pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint WaitForSingleObject(nint handle, uint milliseconds);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetExitCodeProcess(nint process, out uint code);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool QueryFullProcessImageNameW(nint process, uint flags, StringBuilder name, ref int size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetProcessTimes(nint process, out long creation, out long exit, out long kernel, out long user);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool ProcessIdToSessionId(uint pid, out uint session);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    public static extern void GetStartupInfoW(out StartupInfo startup);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentThreadId();
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    public static extern nint GetModuleHandleW(string? name);
+
+    [DllImport("ntdll.dll")]
+    public static extern int NtQueryInformationProcess(nint process, int infoClass, ref ProcessBasicInformation info, int length, out int returned);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern uint GetWindowThreadProcessId(nint hwnd, out uint pid);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetClassNameW(nint hwnd, StringBuilder name, int size);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetWindowTextW(nint hwnd, StringBuilder text, int size);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsIconic(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(nint hwnd, out Rect rect);
+
+    public delegate bool EnumProc(nint hwnd, nint lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumProc callback, nint lParam);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetTopWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetWindow(nint hwnd, uint command);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetAncestor(nint hwnd, uint flags);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetWindowLongPtrW(nint hwnd, int index);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool GetGUIThreadInfo(uint thread, ref GuiThreadInfo info);
+
+    [DllImport("user32.dll")]
+    public static extern nint SetWinEventHook(uint eventMin, uint eventMax, nint module, WinEventProc callback, uint pid, uint thread, uint flags);
+
+    [DllImport("user32.dll")]
+    public static extern bool UnhookWinEvent(nint hook);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern ushort RegisterClassExW(ref WindowClassEx windowClass);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern nint CreateWindowExW(uint exStyle, string className, string windowName, uint style, int x, int y, int width, int height, nint parent, nint menu, nint instance, nint param);
+
+    [DllImport("user32.dll")]
+    public static extern bool DestroyWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern nint DefWindowProcW(nint hwnd, uint message, nint wParam, nint lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool RegisterShellHookWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool DeregisterShellHookWindow(nint hwnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern uint RegisterWindowMessageW(string name);
+
+    [DllImport("user32.dll")]
+    public static extern nuint SetTimer(nint hwnd, nuint id, uint milliseconds, nint callback);
+
+    [DllImport("user32.dll")]
+    public static extern bool KillTimer(nint hwnd, nuint id);
+
+    [DllImport("user32.dll")]
+    public static extern int GetMessageW(out Message message, nint hwnd, uint min, uint max);
+
+    [DllImport("user32.dll")]
+    public static extern bool TranslateMessage(ref Message message);
+
+    [DllImport("user32.dll")]
+    public static extern nint DispatchMessageW(ref Message message);
+
+    [DllImport("user32.dll")]
+    public static extern void PostQuitMessage(int code);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SystemParametersInfoW(uint action, uint param, out uint value, uint winIni);
+
+    [DllImport("user32.dll")]
+    public static extern nint GetProcessWindowStation();
+
+    [DllImport("user32.dll")]
+    public static extern nint GetThreadDesktop(uint thread);
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool GetUserObjectInformationW(nint handle, int index, StringBuilder? info, int length, out int needed);
+}

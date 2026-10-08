@@ -1,0 +1,99 @@
+using System.Diagnostics;
+using System.Globalization;
+using Velopack;
+
+namespace BrowserAI.Measure;
+
+/// <summary>What each fast-exit hook does, as the control file says.</summary>
+internal static class Hooks
+{
+    /// <summary>One fast-exit hook's body. Velopack exits the process when it returns.</summary>
+    /// <param name="name">Which hook.</param>
+    /// <param name="version">The version Velopack passed.</param>
+    public static void Fast(string name, SemanticVersion version)
+    {
+        Journal.Write("callback", ("hook", name), ("version", version.ToFullString()));
+        if (name == "updated")
+        {
+            Updated(Control.Current);
+        }
+
+        Journal.Write("hook-return", ("hook", name));
+    }
+
+    /// <summary>Writes a heartbeat record at the control file's interval until the time is up.</summary>
+    /// <param name="who">Whose heartbeat.</param>
+    /// <param name="duration">How long.</param>
+    public static void Heartbeat(string who, TimeSpan duration)
+    {
+        var interval = Control.Current.HeartbeatMilliseconds;
+        var stopwatch = Stopwatch.StartNew();
+        var beat = 0;
+        Journal.Write("heartbeat-start", ("who", who), ("seconds", duration.TotalSeconds), ("intervalMs", interval));
+        while (stopwatch.Elapsed < duration)
+        {
+            Journal.Write("heartbeat", ("who", who), ("n", beat), ("elapsedMs", stopwatch.ElapsedMilliseconds));
+            beat++;
+            Thread.Sleep(interval);
+        }
+
+        Journal.Write("heartbeat-done", ("who", who), ("n", beat), ("elapsedMs", stopwatch.ElapsedMilliseconds));
+    }
+
+    private static void Updated(Control control)
+    {
+        if (control.UpdatedChildUnderRootSeconds > 0)
+        {
+            Spawn(
+                "child-under-root",
+                Environment.ProcessPath!,
+                ["child", control.UpdatedChildUnderRootSeconds.ToString(CultureInfo.InvariantCulture)]);
+        }
+
+        if (control.UpdatedChildOutsideSeconds > 0)
+        {
+            Spawn(
+                "child-outside-root",
+                control.Pwsh,
+                [
+                    "-NoLogo", "-NoProfile", "-NonInteractive", "-File", control.OutsideScript,
+                    "-LogDirectory", control.LogDirectory,
+                    "-Seconds", control.UpdatedChildOutsideSeconds.ToString(CultureInfo.InvariantCulture),
+                    "-Spawner", Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                ]);
+        }
+
+        if (control.UpdatedWaitAfterSpawnMilliseconds > 0)
+        {
+            Heartbeat("hook-wait", TimeSpan.FromMilliseconds(control.UpdatedWaitAfterSpawnMilliseconds));
+        }
+
+        if (control.UpdatedSleepSeconds > 0)
+        {
+            Heartbeat("hook-sleep", TimeSpan.FromSeconds(control.UpdatedSleepSeconds));
+        }
+    }
+
+    private static void Spawn(string role, string file, string[] arguments)
+    {
+        var start = new ProcessStartInfo(file)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        foreach (var argument in arguments)
+        {
+            start.ArgumentList.Add(argument);
+        }
+
+        using var process = Process.Start(start)!;
+        Journal.Write(
+            "spawned",
+            ("role", role),
+            ("childPid", process.Id),
+            ("childStartUtc", process.StartTime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture)),
+            ("file", file),
+            ("arguments", arguments));
+    }
+}

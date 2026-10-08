@@ -1,0 +1,8 @@
+2026-10-04T01:44:21.435Z MODE fresh
+2026-10-04T01:44:21.997Z coordinator pipe 46 ms, host pipe 507 ms
+2026-10-04T01:45:12.105Z KILLED pid=29940 by its handle
+2026-10-04T01:45:12.112Z EXIT holding client pid=29940 code=null
+2026-10-04T01:45:13.107Z KILLED coordinator pid=22484 by its handle
+2026-10-04T01:45:13.118Z EXIT coordinator --start-host pid=22484 code=null
+2026-10-04T01:45:13.128Z after stop: host pipe gone in 17 ms, coordinator pipe gone in 3 ms
+2026-10-04T01:45:13.130Z MODE fresh DONE; started 2 long-lived processes (second starts and cold probes ran synchronously)

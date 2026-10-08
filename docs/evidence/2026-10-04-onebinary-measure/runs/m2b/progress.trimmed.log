@@ -1,0 +1,51 @@
+2026-10-04T02:02:21.769Z START root=%USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9 server=%USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\current\BrowserAI.Server.exe stubs=94768,87660,77856 page=8983
+2026-10-04T02:02:33.291Z RUN ccExit-r1: background gone after 10004 ms (remaining: none)
+2026-10-04T02:02:36.320Z   A ccP status=0 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:02:42.322Z   after A: 81804:coordinator(--start-host) 81188:host 104632:conhost 98068:node 108452:conhost 77724:node 98148:conhost 92184:chrome 2680:chrome 72864:chrome 33076:chrome 79484:chrome 32112:chrome 72628:chrome 97192:chrome 32728:chrome
+2026-10-04T02:02:44.392Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:03:51.463Z RUN ccKill-r1: background gone after 64067 ms (remaining: none)
+2026-10-04T02:04:14.984Z   A ccSkill status=1 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:04:20.987Z   after A: 95356:coordinator(--start-host) 31932:host 94988:conhost 98976:node 3048:conhost 87628:node 108716:conhost 31044:chrome 103476:chrome 69708:chrome 59904:chrome 61096:chrome 59712:chrome 89816:chrome 93744:chrome
+2026-10-04T02:04:23.367Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:05:38.447Z RUN cxExec-r1: background gone after 72077 ms (remaining: none)
+2026-10-04T02:05:42.426Z   A cxE status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:05:48.428Z   after A: 98288:coordinator(--start-host) 79236:host 38420:conhost 106876:node 106652:conhost 103420:node 30604:conhost 28336:chrome 34492:chrome 29628:chrome 103632:chrome 31140:chrome 75928:chrome 86392:chrome 74928:chrome 48156:chrome
+2026-10-04T02:05:50.750Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:06:55.808Z RUN cxApp-r1: background gone after 62042 ms (remaining: none)
+2026-10-04T02:07:00.933Z   A cxA status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:07:06.934Z   after A: 104828:coordinator(--start-host) 104168:host 81180:conhost 66352:node 72256:conhost 80716:node 95912:conhost 95248:chrome 105232:chrome 96696:chrome 89368:chrome 92448:chrome 2044:chrome 31976:chrome 74688:chrome
+2026-10-04T02:07:09.412Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:08:12.492Z RUN ccExit-r2: background gone after 60077 ms (remaining: none)
+2026-10-04T02:08:15.736Z   A ccP status=0 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:08:21.737Z   after A: 67464:coordinator(--start-host) 32992:host 101340:conhost 104304:node 92140:conhost 80108:node 15880:conhost 31644:chrome 12904:chrome 50532:chrome 89928:chrome 33048:chrome 88296:chrome 31308:chrome 85716:chrome 47068:chrome
+2026-10-04T02:08:23.933Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:09:30.982Z RUN ccKill-r2: background gone after 64044 ms (remaining: none)
+2026-10-04T02:09:54.503Z   A ccSkill status=1 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:10:00.504Z   after A: 103248:coordinator(--start-host) 66324:host 108844:conhost 70252:node 90892:conhost 93436:node 24628:conhost 89056:chrome 6744:chrome 82552:chrome 34520:chrome 24500:chrome 70448:chrome 33764:chrome 78080:chrome 101716:chrome
+2026-10-04T02:10:02.603Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:11:03.671Z RUN cxExec-r2: background gone after 58063 ms (remaining: none)
+2026-10-04T02:11:07.405Z   A cxE status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:11:13.407Z   after A: 77480:coordinator(--start-host) 65832:host 70108:conhost 74720:node 33344:conhost 99936:node 102144:conhost 66276:chrome 100620:chrome 73004:chrome 77704:chrome 98220:chrome 79832:chrome 104356:chrome 88032:chrome
+2026-10-04T02:11:16.670Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:12:21.776Z RUN cxApp-r2: background gone after 62099 ms (remaining: none)
+2026-10-04T02:12:26.965Z   A cxA status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:12:32.968Z   after A: 97020:coordinator(--start-host) 82280:host 49792:conhost 105688:node 83508:conhost 59532:node 73112:conhost 105352:chrome 89196:chrome 91296:chrome 25572:chrome 76952:chrome 45744:chrome 55404:chrome 95092:chrome 102872:chrome
+2026-10-04T02:12:35.137Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:13:38.185Z RUN ccExit-r3: background gone after 60045 ms (remaining: none)
+2026-10-04T02:13:41.370Z   A ccP status=0 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:13:47.377Z   after A: 106780:coordinator(--start-host) 74180:host 3640:conhost 79356:node 87608:conhost 23884:node 2804:conhost 80260:chrome 37308:chrome 5876:chrome 25692:chrome 69968:chrome 103316:chrome 17308:chrome 24732:chrome
+2026-10-04T02:13:49.836Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:14:56.907Z RUN ccKill-r3: background gone after 64069 ms (remaining: none)
+2026-10-04T02:15:20.636Z   A ccSkill status=1 offered=true calls=mcp__browserai__browserai_init,mcp__browserai__browser_navigate
+2026-10-04T02:15:26.637Z   after A: 73048:coordinator(--start-host) 107440:host 84428:conhost 59884:node 90988:conhost 69488:node 32708:conhost 76540:chrome 104008:chrome 74712:chrome 4640:chrome 63576:chrome 36612:chrome 37876:chrome 104372:chrome
+2026-10-04T02:15:29.587Z   B ccP status=0 calls=mcp__browserai__browser_snapshot,mcp__browserai__browserai_destroy marker=true
+2026-10-04T02:16:44.692Z RUN cxExec-r3: background gone after 72102 ms (remaining: none)
+2026-10-04T02:16:48.250Z   A cxE status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:16:54.251Z   after A: 85132:coordinator(--start-host) 102320:host 5160:conhost 91092:node 82024:conhost 61388:node 3752:conhost 87572:chrome 68016:chrome 45936:chrome 81348:chrome 89892:chrome 56596:chrome 9952:chrome 67736:chrome 21040:chrome
+2026-10-04T02:16:56.884Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:18:01.966Z RUN cxApp-r3: background gone after 62076 ms (remaining: none)
+2026-10-04T02:18:07.538Z   A cxA status=0 offered=true calls=browserai_init,browser_navigate
+2026-10-04T02:18:13.541Z   after A: 83636:coordinator(--start-host) 83372:host 73400:conhost 60076:node 82400:conhost 96008:node 16544:conhost 71216:chrome 37672:chrome 78360:chrome 83704:chrome 35516:chrome 63400:chrome 106568:chrome 80376:chrome
+2026-10-04T02:18:16.067Z   B cxE status=0 calls=browser_snapshot,browserai_destroy marker=true
+2026-10-04T02:19:19.131Z END background gone after 60056 ms (remaining: none)
+2026-10-04T02:19:19.132Z DONE

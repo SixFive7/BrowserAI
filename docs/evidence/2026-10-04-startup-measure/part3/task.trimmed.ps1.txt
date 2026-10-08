@@ -1,0 +1,66 @@
+# startup-measure, 2026-10-04: a scratch per-user scheduled task under the exact name the published
+# front computes for the scratch install (SignInTask.NameFor), carrying the sign-in task's own
+# settings and action (SignInTask.DefinitionFor: '<install root>\current\BrowserAI.exe --sign-in $(Arg0)'),
+# but with NO trigger, so nothing ever starts it by itself. Removed when the measurement ends.
+# Adapted from docs/probes/2026-10-03-coordinator-survival/tools/task.ps1 (lane c).
+# Usage: task.ps1 -Do register|remove|show
+param([Parameter(Mandatory)] [ValidateSet('register', 'remove', 'show')] [string] $Do)
+$ErrorActionPreference = 'Stop'
+$Name = 'BrowserAI.app.measure sign-in C429DBA98841F2BBC73DAFB506AEE381'
+$Exe = '%USERPROFILE%\Downloads\tmp-startup-measure\inst\current\BrowserAI.exe'
+$Arguments = '--sign-in $(Arg0)'
+$log = 'C:\Source\SixFive7\BrowserAI\.work\startup-measure\part3\task-actions.log'
+function Note($s) { Add-Content -LiteralPath $log -Value ("{0} {1}" -f (Get-Date).ToUniversalTime().ToString('o'), $s) }
+$service = New-Object -ComObject Schedule.Service
+$service.Connect()
+$folder = $service.GetFolder('\')
+switch ($Do) {
+  'register' {
+    $sid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value
+    $exeX = [System.Security.SecurityElement]::Escape($Exe)
+    $argX = [System.Security.SecurityElement]::Escape($Arguments)
+    $xml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Author>BrowserAI startup-measure scratch</Author>
+    <Description>Scratch measurement, 2026-10-04. Starts the scratch install's coordinator on demand only. Removed when the measurement ends.</Description>
+  </RegistrationInfo>
+  <Triggers />
+  <Principals>
+    <Principal id="Author">
+      <UserId>$sid</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>5</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>$exeX</Command>
+      <Arguments>$argX</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+    $null = $folder.RegisterTask($Name, $xml, 6, $null, $null, 3, $null)
+    Note "registered '$Name' exe=$Exe args=$Arguments (no trigger)"
+    "registered"
+  }
+  'remove' {
+    try { $folder.DeleteTask($Name, 0); Note "removed '$Name'"; "removed" } catch { Note "remove of '$Name' failed: $($_.Exception.Message)"; "remove failed: $($_.Exception.Message)" }
+  }
+  'show' {
+    try { $task = $folder.GetTask($Name); "state=$($task.State) lastRun=$($task.LastRunTime) lastResult=$($task.LastTaskResult)" } catch { "absent" }
+  }
+}

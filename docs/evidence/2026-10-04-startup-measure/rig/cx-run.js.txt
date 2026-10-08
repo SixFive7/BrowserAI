@@ -1,0 +1,163 @@
+// startup-measure: Codex batches, codex exec and codex app-server, against the lazy stand-in
+// (rig/lazysrv.js) or a real BrowserAI.Server.exe. Derived from .work/q369/rig/cx-batch.js.
+// usage: node cx-run.js <batch> <scenario[,scenario...]> <ver[,ver...]> <kind[,kind...]> <reps> <port>
+//   ver : 155 (codex-cli 0.155.0-alpha.9.2) | 160 (codex-cli 0.160.0)
+//   kind: exec | app
+// Every Codex process gets a clean environment: an allowlist plus a per-run CODEX_HOME. The
+// server entry carries NO startup_timeout_sec and NO tool_timeout_sec, as BrowserAI's real
+// registration carries none, so Codex's defaults are what is measured.
+'use strict';
+const fs = require('fs');
+const { spawn } = require('child_process');
+
+const [batch, scenArg, verArg, kindArg, repsArg, port] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure';
+const Q = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const LZ = `${S}\\rig\\lazysrv.js`;
+const PROJ = `${S}\\proj`;
+const CODEX = { 155: `${Q}\\bin\\codex155\\codex.exe`, 160: `${Q}\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe` };
+const BATCHDIR = `${S}\\runs\\${batch}`;
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const plog = (s) => fs.appendFileSync(`${BATCHDIR}\\progress.log`, `${new Date().toISOString()} ${s}\n`);
+
+const ALLOW = ['ALLUSERSPROFILE', 'COMPUTERNAME', 'ComSpec', 'CommonProgramFiles', 'CommonProgramFiles(x86)', 'CommonProgramW6432', 'HOMEDRIVE', 'HOMEPATH', 'NUMBER_OF_PROCESSORS', 'OS', 'Path', 'PATHEXT', 'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL', 'PROCESSOR_REVISION', 'ProgramData', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'PUBLIC', 'SystemDrive', 'SystemRoot', 'USERDOMAIN', 'USERNAME', 'USERPROFILE', 'windir', 'LOCALAPPDATA', 'APPDATA'];
+function cleanEnv(home) {
+  const e = {};
+  for (const [k, v] of Object.entries(process.env)) if (ALLOW.some((a) => a.toLowerCase() === k.toLowerCase())) e[k] = v;
+  Object.assign(e, {
+    CODEX_HOME: home, CLAUDE_CONFIG_DIR: `${S}\\cfg\\claude-unused`, DISABLE_AUTOUPDATER: '1', STUB_KEY: 'not-a-real-key',
+    RUST_LOG: 'codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info',
+    TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+    GIT_CEILING_DIRECTORIES: S, NO_COLOR: '1',
+  });
+  return e;
+}
+const tomlStr = (s) => `'${s}'`;
+function configToml(run, def) {
+  let server;
+  if (def.real) {
+    const envPairs = Object.entries(def.realEnv || {}).map(([k, v]) => `${k} = ${tomlStr(v)}`).join(', ');
+    server = `command = ${tomlStr(def.real)}\n${envPairs ? `env = { ${envPairs} }\n` : ''}`;
+  } else {
+    const envPairs = Object.entries(Object.assign({ LZ_LOGDIR: run, LZ_TAG: 'lz' }, def.server)).map(([k, v]) => `${k} = ${tomlStr(v)}`).join(', ');
+    server = `command = ${tomlStr(NODE)}\nargs = [${tomlStr(LZ)}]\nenv = { ${envPairs} }\n`;
+  }
+  if (def.required) server += 'required = true\n';
+  return `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${port}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+${server}
+[projects.${tomlStr(PROJ)}]
+trust_level = "trusted"
+
+[projects.${tomlStr(PROJ.toLowerCase())}]
+trust_level = "trusted"
+`;
+}
+
+const SCEN = {
+  D1: { server: { LZ_CALL_DELAY_MS: '1000' } },
+  D5: { server: { LZ_CALL_DELAY_MS: '5000' } },
+  D30: { server: { LZ_CALL_DELAY_MS: '30000' } },
+  D90: { server: { LZ_CALL_DELAY_MS: '90000' } },
+  FE: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'iserror' } },
+  FR: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'rpcerror' } },
+  FX: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'exit' } },
+  I3: { server: { LZ_INIT_DELAY_MS: '3000' } },
+  // required = true
+  R0: { required: true, server: {} },
+  R3: { required: true, server: { LZ_INIT_DELAY_MS: '3000' } },
+  RX: { required: true, server: { LZ_INIT_DIE: '1' } },
+  RT: { required: true, server: { LZ_INIT_DELAY_MS: '35000' } },
+};
+
+function runProc(exe, args, env, cwd, outFile, errFile, timeoutMs) {
+  // stdout is read line by line and every line is stamped with the time it arrived.
+  return new Promise((resolve) => {
+    const err = fs.openSync(errFile, 'a');
+    const t0 = Date.now();
+    const p = spawn(exe, args, { env, cwd, windowsHide: true, stdio: ['ignore', 'pipe', err] });
+    plog(`SPAWN pid=${p.pid} ${exe} ${JSON.stringify(args).slice(0, 300)}`);
+    let buf = '';
+    p.stdout.on('data', (d) => {
+      buf += d.toString('utf8');
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl);
+        buf = buf.slice(nl + 1);
+        fs.appendFileSync(outFile, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - t0, line }) + '\n');
+      }
+    });
+    const t = setTimeout(() => { plog(`TIMEOUT pid=${p.pid}, terminating it by its handle`); p.kill(); }, timeoutMs);
+    p.on('exit', (code, signal) => {
+      clearTimeout(t);
+      if (buf) fs.appendFileSync(outFile, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - t0, line: buf }) + '\n');
+      fs.closeSync(err);
+      plog(`EXIT pid=${p.pid} code=${code} signal=${signal} after=${Date.now() - t0}ms`);
+      resolve(code);
+    });
+  });
+}
+
+const appSteps = (def) => [
+  { m: 'initialize', p: { clientInfo: { name: 'startup-measure-probe', title: 'startup-measure', version: '1.0.0' }, capabilities: { experimentalApi: true } } },
+  { marker: 'THREAD START' },
+  { m: 'thread/start', p: { cwd: PROJ }, timeout: 120000 },
+  { marker: 'TURN 1 (sent at once after thread/start)' },
+  { m: 'turn/start', p: { threadId: '$THREAD', input: [{ type: 'text', text: 'Use the browserai tools.' }] }, timeout: 120000, waitNote: 'turn/completed', waitNoteTimeout: def.turnWait || 240000 },
+  { sleep: 1000 },
+  { marker: 'STATUS after turn 1' },
+  { m: 'mcpServerStatus/list', p: { threadId: '$THREAD', serverName: 'browserai' }, timeout: 60000 },
+];
+
+(async () => {
+  const stubLog = fs.openSync(`${BATCHDIR}\\stub.out`, 'a');
+  const stub = spawn(NODE, [`${S}\\rig\\cxmodel.js`], { env: Object.assign({}, process.env, { STUB_PORT: port, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'stub-fallback' }), windowsHide: true, stdio: ['ignore', stubLog, stubLog] });
+  plog(`STUB pid=${stub.pid} port=${port}`);
+  await sleep(1500);
+  try {
+    for (const sc of scenArg.split(',')) for (const kind of kindArg.split(',')) for (const ver of verArg.split(',')) for (let r = 1; r <= Number(repsArg); r++) {
+      const name = `${sc}-${kind}${ver}-r${r}`;
+      const run = `${BATCHDIR}\\${name}`;
+      if (fs.existsSync(`${run}\\done.txt`)) { plog(`SKIP ${name}`); continue; }
+      fs.mkdirSync(`${run}\\home`, { recursive: true });
+      const def = SCEN[sc];
+      fs.writeFileSync(`${run}\\home\\config.toml`, configToml(run, def));
+      fs.writeFileSync(POLICY, JSON.stringify({ logDir: run, tag: 'model', phPerTurn: 0 }));
+      const env = cleanEnv(`${run}\\home`);
+      plog(`RUN_START ${name}`);
+      fs.writeFileSync(`${run}\\start.txt`, new Date().toISOString());
+      if (kind === 'exec') {
+        const args = ['exec', '--json', '--skip-git-repo-check', '--dangerously-bypass-approvals-and-sandbox', '-C', PROJ, 'Use the browserai tools.'];
+        const code = await runProc(CODEX[ver], args, env, PROJ, `${run}\\exec1.jsonl`, `${run}\\exec1.err.txt`, 300000);
+        fs.writeFileSync(`${run}\\exit.txt`, String(code));
+      } else {
+        fs.writeFileSync(`${run}\\steps.json`, JSON.stringify(appSteps(def), null, 1));
+        fs.writeFileSync(`${run}\\appenv.json`, JSON.stringify(env));
+        const denv = Object.assign({}, cleanEnv(`${run}\\home`), { CODEX_EXE: CODEX[ver], DRIVER_LOG: `${run}\\driver.log`, DRIVER_CWD: PROJ, APP_ENV_FILE: `${run}\\appenv.json`, DRIVER_KILL_AFTER_MS: '10000' });
+        await runProc(NODE, [`${S}\\rig\\appdrv.js`, `${run}\\steps.json`], denv, PROJ, `${run}\\driver.out.jsonl`, `${run}\\driver.err`, 480000);
+      }
+      fs.writeFileSync(`${run}\\done.txt`, new Date().toISOString());
+      plog(`RUN_END ${name}`);
+      await sleep(1500);
+    }
+  } finally {
+    stub.kill();
+    plog('BATCH_DONE');
+  }
+})();

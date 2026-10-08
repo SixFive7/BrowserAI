@@ -1,0 +1,95 @@
+# Reads one orchestration session and writes what each run showed, per run,
+# to analysis.txt in the session directory. Reads only.
+param([Parameter(Mandatory)] [string] $Session)
+
+$ErrorActionPreference = 'Stop'
+$logs = Join-Path $Session 'logs'
+$out = [System.Collections.Generic.List[string]]::new()
+
+$orchestrator = @(Get-Content -LiteralPath (Join-Path $Session 'orchestrator.jsonl') | ForEach-Object { $_ | ConvertFrom-Json -DateKind String })
+$exits = @{}
+$images = @{}
+foreach ($record in $orchestrator) {
+    if ($record.event -eq 'exited') { $exits["$($record.pid)"] = $record }
+    if ($record.event -eq 'watch') { $images["$($record.pid)|$($record.created)"] = $record.image }
+}
+
+function Ms([string] $from, [string] $to) {
+    if (-not $from -or -not $to) { return $null }
+    $a = [DateTimeOffset]::Parse($from, [Globalization.CultureInfo]::InvariantCulture)
+    $b = [DateTimeOffset]::Parse($to, [Globalization.CultureInfo]::InvariantCulture)
+    return [math]::Round(($b - $a).TotalMilliseconds, 1)
+}
+
+foreach ($run in Get-ChildItem -LiteralPath $logs -Directory | Sort-Object { (Get-Item -LiteralPath (Join-Path $_.FullName 'control.json')).LastWriteTimeUtc }) {
+    $out.Add('')
+    $out.Add("=== RUN $($run.Name)")
+    $summaryPath = Join-Path $run.FullName 'summary.json'
+    if (Test-Path -LiteralPath $summaryPath) {
+        $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json -DateKind String
+        $out.Add("version before -> after: $($summary.versionBefore) -> $($summary.versionAfter); elapsed $($summary.elapsedSeconds) s; timedOut=$($summary.timedOut)")
+        foreach ($process in $summary.processes) {
+            $out.Add(("  process {0,-6} {1,-34} created {2} exited {3} code {4} image {5}" -f $process.pid, $process.role, $process.created, $process.exited, $process.exitCode, $process.image))
+        }
+        if ($summary.missed) { $out.Add("  missed: $($summary.missed -join '; ')") }
+    }
+
+    $state = Get-Content -LiteralPath (Join-Path $run.FullName 'state.json') -Raw | ConvertFrom-Json -DateKind String
+    $out.Add("  packages before: $($state.before.packages -join ', ')")
+    $out.Add("  packages after:  $($state.after.packages -join ', ')")
+    $out.Add("  VelopackTemp after: $($state.after.velopackTemp -join ', ')")
+    $currentSame = (($state.before.current -join '|') -eq ($state.after.current -join '|'))
+    $out.Add("  current\ identical before and after (path, size, sha256 prefix): $currentSame; files after: $($state.after.current.Count)")
+
+    foreach ($journal in Get-ChildItem -LiteralPath $run.FullName -Filter '*.jsonl' | Sort-Object Name) {
+        $records = @(Get-Content -LiteralPath $journal.FullName | ForEach-Object { $_ | ConvertFrom-Json -DateKind String })
+        $start = $records | Where-Object event -eq 'process-start' | Select-Object -First 1
+        if (-not $start) { continue }
+        $parentImage = if ($start.parentImage) { $start.parentImage } else { $images["$($start.parentPid)|$($start.parentCreatedUtc)"] }
+        $exitRecord = $exits["$($start.pid)"]
+        $out.Add(("  -- pid {0} v{1} args [{2}]" -f $start.pid, $start.assemblyVersion, (($start.args | ForEach-Object { "'$_'" }) -join ' ')))
+        $out.Add("     exe: $($start.exe)")
+        $out.Add("     raw command line: $($start.commandLine)")
+        $out.Add("     VELOPACK at entry: $(($start.velopackVariables.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ', ')")
+        $out.Add("     parent: pid $($start.parentPid) image $parentImage created $($start.parentCreatedUtc) state-at-entry '$($start.parentState)' olderThanMe=$($start.parentOlderThanMe)")
+        $out.Add("     created $($start.createdUtc); cwd $($start.cwd); inJob=$($start.inJob)")
+        foreach ($callback in $records | Where-Object event -eq 'callback') { $out.Add("     callback: $($callback.hook) $($callback.version) at $($callback.t)") }
+        $afterRun = $records | Where-Object event -eq 'after-run' | Select-Object -First 1
+        if ($afterRun) {
+            $out.Add("     after Run(): VELOPACK now: $(($afterRun.velopackVariablesAfterRun.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ', '); installed $($afterRun.installedVersion); local packages: $($afterRun.localPackages -join ', ')")
+        }
+        foreach ($interesting in $records | Where-Object { $_.event -in @('feed', 'check-result', 'downloaded', 'apply-requesting', 'spawned', 'error', 'hook-return', 'heartbeat-start', 'heartbeat-done') }) {
+            $copy = $interesting | Select-Object -Property * -ExcludeProperty pid
+            $out.Add("     $($copy | ConvertTo-Json -Compress -Depth 5)")
+        }
+        $beats = @($records | Where-Object event -eq 'heartbeat')
+        if ($beats.Count -gt 0) {
+            $first = $beats[0]
+            $last = $beats[-1]
+            $out.Add("     heartbeats: $($beats.Count), who=$($first.who), first $($first.t), last $($last.t) (elapsedMs $($last.elapsedMs)); last record overall: $($records[-1].event) at $($records[-1].t)")
+        }
+        foreach ($message in $records | Where-Object { $_.event -eq 'velopack' -and $_.message -match 'Process started with ID|out-dated|Pre-condition|Removing old package|fast exit hook' }) {
+            $out.Add("     velopack: $($message.message)")
+        }
+        if ($exitRecord) {
+            $out.Add("     exit seen by orchestrator: code $($exitRecord.exitCode) at $($exitRecord.exitedUtc); lifetime $(Ms $start.createdUtc $exitRecord.exitedUtc) ms")
+        }
+    }
+
+    foreach ($outside in Get-ChildItem -LiteralPath $run.FullName -Filter 'outside-*.txt') {
+        $lines = @(Get-Content -LiteralPath $outside.FullName)
+        $out.Add("  -- outside child file $($outside.Name): $($lines.Count) lines; first: $($lines[0]); last: $($lines[-1])")
+    }
+
+    $slice = Join-Path $run.FullName 'velopack-log-slice.txt'
+    if (Test-Path -LiteralPath $slice) {
+        $pattern = 'Hook executed|timed out|was killed|Killing process|Skipping killing|matched directory|Backing up|Replacing current|applied successfully|Apply error|An error has occurred|Retrying operation|Removed temp|About to launch|PROCESS_CREATION_FLAGS|Running --veloapp|Failed to wait|Getting ready|Setting environment|Exe Args|Restart:|Hook exited|Was unable to wait|Scheduling removal|Running: cmd|Removing directory|Finished successfully|Shortcut|Unable to'
+        foreach ($line in Get-Content -LiteralPath $slice | Where-Object { $_ -match $pattern }) {
+            $trimmed = if ($line.Length -gt 330) { $line.Substring(0, 330) + '...' } else { $line }
+            $out.Add("  log: $trimmed")
+        }
+    }
+}
+
+$out | Set-Content -LiteralPath (Join-Path $Session 'analysis.txt') -Encoding utf8
+Write-Host "wrote $(Join-Path $Session 'analysis.txt') ($($out.Count) lines)"

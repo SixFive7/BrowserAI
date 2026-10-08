@@ -1,0 +1,246 @@
+    private static int TickBench(Options options)
+    {
+        var output = options.Get("--out") ?? throw new ArgumentException("--out");
+        var ticks = int.Parse(options.Get("--ticks") ?? "100000", CultureInfo.InvariantCulture);
+        var sink = 0L;
+        var nullForeground = 0;
+        InitTsc();
+
+        for (var i = 0; i < 2000; i++)
+        {
+            sink ^= OneTick();
+        }
+
+        // The clock's own cost: two reads back to back.
+        var baseline = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var b = s_tsc();
+            baseline[i] = TscNs(b - a);
+        }
+
+        // The measurement: one tick is GetForegroundWindow, GetWindowThreadProcessId and GetLastInputInfo.
+        var total = new double[ticks];
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelBefore, out var userBefore);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesBefore);
+        _ = QueryThreadCycleTime(CurrentThread, out var threadBefore);
+        var started = Stopwatch.GetTimestamp();
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var b = s_tsc();
+            total[i] = TscNs(b - a);
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+
+            if (window == 0)
+            {
+                nullForeground++;
+            }
+        }
+
+        var finished = Stopwatch.GetTimestamp();
+        _ = QueryThreadCycleTime(CurrentThread, out var threadAfter);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesAfter);
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelAfter, out var userAfter);
+
+        // The same ticks timed with QueryPerformanceCounter, whose resolution here is 100 ns.
+        var qpc = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var t0 = Stopwatch.GetTimestamp();
+            sink ^= OneTick();
+            qpc[i] = (Stopwatch.GetTimestamp() - t0) * 1e9 / Stopwatch.Frequency;
+        }
+
+        // Each call on its own.
+        var first = new double[ticks];
+        var second = new double[ticks];
+        var third = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            var b = s_tsc();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var c = s_tsc();
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var d = s_tsc();
+            first[i] = TscNs(b - a);
+            second[i] = TscNs(c - b);
+            third[i] = TscNs(d - c);
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+        }
+
+        var elapsedSeconds = (finished - started) / (double)Stopwatch.Frequency;
+        var report = new StringBuilder();
+        _ = report.AppendLine(Invariant($"mode=tickbench ticks={ticks} qpcFrequency={Stopwatch.Frequency} tscPerSecond={s_tscPerSecond:F0} pid={Environment.ProcessId} sink={sink}"));
+        _ = report.AppendLine(Invariant($"timedLoopElapsedSeconds={elapsedSeconds:F6} meanNsPerTickFromElapsed={elapsedSeconds * 1e9 / ticks:F1} (includes two clock reads per tick)"));
+        _ = report.AppendLine(Invariant($"timedLoop threadCycles={threadAfter - threadBefore} processCycles={cyclesAfter - cyclesBefore} kernel100ns={kernelAfter - kernelBefore} user100ns={userAfter - userBefore} nullForeground={nullForeground}"));
+        _ = report.AppendLine("clockPairBaseline " + Stats(baseline));
+        _ = report.AppendLine("tickTsc " + Stats(total));
+        _ = report.AppendLine("tickQpc100ns " + Stats(qpc));
+        _ = report.AppendLine("GetForegroundWindow " + Stats(first));
+        _ = report.AppendLine("GetWindowThreadProcessId " + Stats(second));
+        _ = report.AppendLine("GetLastInputInfo " + Stats(third));
+        File.WriteAllText(output, report.ToString());
+
+        var raw = new StringBuilder(ticks * 6);
+
+        foreach (var duration in total)
+        {
+            _ = raw.Append(duration.ToString("F1", CultureInfo.InvariantCulture)).Append('\n');
+        }
+
+        File.WriteAllText(output + ".raw-ns.txt", raw.ToString());
+
+        return 0;
+    }
+
+    private static long OneTick()
+    {
+        var window = GetForegroundWindow();
+        uint ownerPid;
+        var thread = GetWindowThreadProcessId(window, &ownerPid);
+        var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+        _ = GetLastInputInfo(&input);
+
+        return window ^ thread ^ ownerPid ^ input.Time;
+    }
+
+    private static int Ticker(Options options)
+    {
+        var output = options.Get("--out") ?? throw new ArgumentException("--out");
+        var interval = int.Parse(options.Get("--interval-ms") ?? "2000", CultureInfo.InvariantCulture);
+        var duration = int.Parse(options.Get("--duration-s") ?? "300", CultureInfo.InvariantCulture);
+        var noop = options.Has("--noop");
+        var quitName = options.Get("--quit");
+        using var quit = quitName is null ? new EventWaitHandle(false, EventResetMode.ManualReset) : new EventWaitHandle(false, EventResetMode.ManualReset, quitName, out _);
+        InitTsc();
+
+        _ = GetProcessTimes(CurrentProcess, out var creation, out _, out var kernelBefore, out var userBefore);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesBefore);
+        var begin = Stopwatch.GetTimestamp();
+        var beginUtc = DateTime.UtcNow;
+        var tickDurations = new List<double>();
+        var sink = 0L;
+        var nullForeground = 0;
+        var ownerPids = new HashSet<uint>();
+        var idleMin = long.MaxValue;
+        var idleMax = long.MinValue;
+        var tick = 0;
+        var quitEarly = false;
+
+        while (true)
+        {
+            tick++;
+            var due = begin + ((long)tick * interval * Stopwatch.Frequency / 1000);
+
+            if ((due - begin) / (double)Stopwatch.Frequency > duration)
+            {
+                break;
+            }
+
+            var waitMs = Math.Max(0, (due - Stopwatch.GetTimestamp()) * 1000 / Stopwatch.Frequency);
+
+            if (quit.WaitOne((int)waitMs))
+            {
+                quitEarly = true;
+                break;
+            }
+
+            if (noop)
+            {
+                continue;
+            }
+
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var b = s_tsc();
+            tickDurations.Add(TscNs(b - a));
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+
+            if (window == 0)
+            {
+                nullForeground++;
+            }
+
+            _ = ownerPids.Add(ownerPid);
+            var idle = (long)(uint)(Environment.TickCount - (int)input.Time);
+            idleMin = Math.Min(idleMin, idle);
+            idleMax = Math.Max(idleMax, idle);
+        }
+
+        var end = Stopwatch.GetTimestamp();
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesAfter);
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelAfter, out var userAfter);
+        var cycles = cyclesAfter - cyclesBefore;
+
+        var report = new StringBuilder();
+        _ = report.AppendLine(Invariant($"mode=ticker noop={noop} intervalMs={interval} durationS={duration} pid={Environment.ProcessId} creation={DateTime.FromFileTimeUtc(creation):O} begin={beginUtc:O} quitEarly={quitEarly} sink={sink}"));
+        _ = report.AppendLine(Invariant($"wallSeconds={(end - begin) / (double)Stopwatch.Frequency:F3} ticks={tickDurations.Count} nullForeground={nullForeground} distinctForegroundOwners={ownerPids.Count} idleMsMin={idleMin} idleMsMax={idleMax}"));
+        _ = report.AppendLine(Invariant($"windowCpu: kernel100ns={kernelAfter - kernelBefore} user100ns={userAfter - userBefore} totalMs={(kernelAfter - kernelBefore + userAfter - userBefore) / 10000.0:F3}"));
+        _ = report.AppendLine(Invariant($"windowCycles={cycles} tscPerSecond={s_tscPerSecond:F0} windowCpuMsFromCycles={cycles / s_tscPerSecond * 1000:F4}"));
+        _ = report.AppendLine(Invariant($"lifetimeCpu: kernel100ns={kernelAfter} user100ns={userAfter} lifetimeCycles={cyclesAfter} lifetimeCpuMsFromCycles={cyclesAfter / s_tscPerSecond * 1000:F3}"));
+
+        if (tickDurations.Count > 0)
+        {
+            _ = report.AppendLine("perTick " + Stats([.. tickDurations]));
+        }
+
+        File.WriteAllText(output, report.ToString());
+        File.WriteAllText(output + ".raw-ns.txt", string.Join('\n', tickDurations.Select(d => d.ToString("F1", CultureInfo.InvariantCulture))) + "\n");
+
+        return 0;
+    }
+
+    private static void InitTsc()
+    {
+        // lfence; rdtsc; shl rdx, 32; or rax, rdx; ret
+        byte[] code = [0x0F, 0xAE, 0xE8, 0x0F, 0x31, 0x48, 0xC1, 0xE2, 0x20, 0x48, 0x09, 0xD0, 0xC3];
+        var memory = VirtualAlloc(0, 4096, 0x3000, 0x04);
+        Marshal.Copy(code, 0, memory, code.Length);
+        _ = VirtualProtect(memory, 4096, 0x20, out _);
+        _ = FlushInstructionCache(CurrentProcess, memory, 4096);
+        s_tsc = (delegate* unmanaged<ulong>)memory;
+
+        var q0 = Stopwatch.GetTimestamp();
+        var c0 = s_tsc();
+
+        while (Stopwatch.GetTimestamp() - q0 < Stopwatch.Frequency / 5)
+        {
+        }
+
+        var c1 = s_tsc();
+        var q1 = Stopwatch.GetTimestamp();
+        s_tscPerSecond = (c1 - c0) / ((q1 - q0) / (double)Stopwatch.Frequency);
+    }
+
+    private static double TscNs(ulong cycles) => cycles * 1e9 / s_tscPerSecond;
+
+    private static string Stats(double[] nanoseconds)
+    {
+        var sorted = nanoseconds.Order().ToArray();
+        var count = sorted.Length;
+
+        double At(double fraction) => sorted[Math.Min(count - 1, (int)Math.Ceiling(fraction * count) - 1)];
+
+        return Invariant(
+            $"n={count} minNs={sorted[0]:F1} p50Ns={At(0.50):F1} p90Ns={At(0.90):F1} p99Ns={At(0.99):F1} p999Ns={At(0.999):F1} maxNs={sorted[^1]:F1} meanNs={sorted.Average():F1}");
+    }
+

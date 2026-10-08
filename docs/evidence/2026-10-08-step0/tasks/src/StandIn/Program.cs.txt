@@ -1,0 +1,963 @@
+// Step 0 scratch stand-in, 2026-10-08. Windowless (WinExe), NativeAOT. Not BrowserAI.
+//
+// Modes:
+//   standin  --dir D --tag T --quit NAME [--snap NAME] [--max S] [--child] [--top] [--on-close exit|ignore]
+//   child    --dir D --tag T --quit NAME [--snap NAME] [--max S] [--top] [--on-close exit|ignore]
+//   tickbench --out FILE --ticks N [--detail]
+//   ticker   --out FILE --interval-ms MS --duration-s S [--noop] [--quit NAME]
+//
+// standin and child write <dir>\<role>-<pid>.log, one line per event, flushed per line:
+//   <utc>\t<qpc>\t<pid>\t<role>\t<EVENT>\t<detail>
+// The first line is START, written as early as Main allows; it carries the time Main was entered.
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace StandIn;
+
+/// <summary>The stand-in's entry point and its four modes.</summary>
+internal static unsafe partial class Program
+{
+    private const uint WmClose = 0x0010;
+    private const uint WmQueryEndSession = 0x0011;
+    private const uint WmQuit = 0x0012;
+    private const uint WmEndSession = 0x0016;
+    private const uint WaitTimeout = 0x102;
+    private const uint WaitFailed = 0xFFFFFFFF;
+    private const uint QsAllInput = 0x04FF;
+    private const uint MwmoInputAvailable = 0x0004;
+    private const uint PmRemove = 0x0001;
+    private const uint WsPopup = 0x80000000;
+    private const uint WsExToolWindow = 0x00000080;
+    private const uint WsExNoActivate = 0x08000000;
+    private const int ExitQuit = 0;
+    private const int ExitMaxLifetime = 2;
+    private const int ExitOnClose = 16;
+    private const int ExitOnQuitMessage = 17;
+    private const int ExitAfterChild = 0;
+    private const uint CreateNoWindow = 0x08000000;
+    private const uint DetachedProcess = 0x00000008;
+    private const uint CreateNewProcessGroup = 0x00000200;
+    private const uint CreateBreakawayFromJob = 0x01000000;
+
+    private static readonly nint MessageParent = -3;
+    private static readonly nint CurrentProcess = -1;
+    private static readonly nint CurrentThread = -2;
+
+    private static Log? s_log;
+    private static int s_exitCode = -1;
+    private static string s_exitReason = string.Empty;
+    private static bool s_ignoreClose;
+    private static bool s_windowsReady;
+    private static nint s_messageWindow;
+    private static nint s_topWindow;
+    private static delegate* unmanaged<ulong> s_tsc;
+    private static double s_tscPerSecond;
+
+    /// <summary>The entry point.</summary>
+    /// <param name="args">The mode, then its options.</param>
+    /// <returns>The exit code.</returns>
+    public static int Main(string[] args)
+    {
+        var entered = DateTime.UtcNow;
+        var enteredQpc = Stopwatch.GetTimestamp();
+
+        if (args.Length == 0)
+        {
+            return 64;
+        }
+
+        var options = Options.Parse(args);
+
+        return args[0] switch
+        {
+            "standin" => Resident("standin", options, entered, enteredQpc),
+            "child" => Resident("child", options, entered, enteredQpc),
+            "tickbench" => TickBench(options),
+            "ticker" => Ticker(options),
+            _ => 64,
+        };
+    }
+
+    private static int Resident(string role, Options options, DateTime entered, long enteredQpc)
+    {
+        var dir = options.Get("--dir") ?? throw new ArgumentException("--dir");
+        var tag = options.Get("--tag") ?? "-";
+        var pid = Environment.ProcessId;
+
+        s_log = new Log(Path.Combine(dir, $"{role}-{pid}.log"), pid, role);
+
+        _ = GetProcessTimes(CurrentProcess, out var creation, out _, out _, out _);
+        s_log.Write(
+            "START",
+            Invariant($"entered={entered:O} enteredQpc={enteredQpc} creationFt={creation} creation={DateTime.FromFileTimeUtc(creation):O} tag={tag}"));
+
+        s_ignoreClose = options.Get("--on-close") == "ignore";
+        var maxSeconds = int.Parse(options.Get("--max") ?? "300", CultureInfo.InvariantCulture);
+
+        s_log.Write("INFO", Describe());
+        s_log.Write("JOB", Job());
+
+        _ = SetConsoleCtrlHandler(&OnConsoleControl, 1);
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => s_log?.Write("PROCESSEXIT", Invariant($"exitCode={Environment.ExitCode}"));
+
+        using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, options.Get("--quit") ?? throw new ArgumentException("--quit"), out var quitCreated);
+        var snapName = options.Get("--snap");
+        using var snap = snapName is null ? null : new EventWaitHandle(false, EventResetMode.AutoReset, snapName, out _);
+        s_log.Write("EVENTS", Invariant($"quitCreatedHere={quitCreated} snap={snapName ?? "-"}"));
+
+        CreateWindows(options.Has("--top"));
+
+        if (role == "standin" && options.Has("--child"))
+        {
+            StartChild(options, dir, tag, maxSeconds);
+        }
+
+        if (options.Get("--exit-after-child-ms") is { } exitAfter)
+        {
+            // The Update.exe shape: start the child, then leave.
+            Thread.Sleep(int.Parse(exitAfter, CultureInfo.InvariantCulture));
+            RequestExit(ExitAfterChild, "exit after child");
+        }
+        else
+        {
+            Loop(quit, snap, TimeSpan.FromSeconds(maxSeconds));
+        }
+
+        s_log.Write("EXIT", Invariant($"code={s_exitCode} reason={s_exitReason}"));
+
+        return s_exitCode;
+    }
+
+    private static void StartChild(Options options, string dir, string tag, int maxSeconds)
+    {
+        // --child-how: ordinary (CREATE_NO_WINDOW, as Process.Start with CreateNoWindow),
+        // detached (DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP), or detached-breakaway (the same
+        // plus CREATE_BREAKAWAY_FROM_JOB, falling back to detached when the job refuses it).
+        var how = options.Get("--child-how") ?? "ordinary";
+        var childMax = options.Get("--child-max") ?? maxSeconds.ToString(CultureInfo.InvariantCulture);
+        var arguments = new List<string> { "child", "--dir", dir, "--tag", tag + "-child", "--quit", options.Get("--quit")!, "--max", childMax };
+
+        if (options.Has("--top"))
+        {
+            arguments.Add("--top");
+        }
+
+        if (options.Get("--on-close") is { } onClose)
+        {
+            arguments.Add("--on-close");
+            arguments.Add(onClose);
+        }
+
+        var commandLine = Quote(Environment.ProcessPath!) + " " + string.Join(' ', arguments.Select(Quote));
+        var flags = how switch
+        {
+            "detached" => DetachedProcess | CreateNewProcessGroup,
+            "detached-breakaway" => DetachedProcess | CreateNewProcessGroup | CreateBreakawayFromJob,
+            _ => CreateNoWindow,
+        };
+
+        var breakaway = how == "detached-breakaway" ? "attempted" : "not-attempted";
+        var (ok, error, information) = Create(commandLine, flags);
+
+        if (!ok && how == "detached-breakaway")
+        {
+            s_log!.Write("CHILD_BREAKAWAY_REFUSED", Invariant($"error={error} flags=0x{flags:X}"));
+            breakaway = Invariant($"refused-error-{error}-fell-back");
+            flags &= ~CreateBreakawayFromJob;
+            (ok, error, information) = Create(commandLine, flags);
+        }
+        else if (ok && how == "detached-breakaway")
+        {
+            breakaway = "succeeded";
+        }
+
+        if (!ok)
+        {
+            s_log!.Write("CHILD_FAILED", Invariant($"error={error} flags=0x{flags:X}"));
+            return;
+        }
+
+        _ = GetProcessTimes(information.Process, out var childCreation, out _, out _, out _);
+        _ = IsProcessInJob(information.Process, 0, out var childInJob);
+        s_log!.Write("CHILD", Invariant($"pid={information.ProcessId} creationFt={childCreation} how={how} flags=0x{flags:X} breakaway={breakaway} childInAnyJob={childInJob != 0}"));
+        _ = CloseHandle(information.Thread);
+        _ = CloseHandle(information.Process);
+    }
+
+    private static (bool Ok, int Error, ProcessInformation Information) Create(string commandLine, uint flags)
+    {
+        var startup = new StartupInfo { Cb = sizeof(StartupInfo) };
+        var information = default(ProcessInformation);
+        var buffer = (commandLine + "\0").ToCharArray();
+
+        fixed (char* line = buffer)
+        {
+            var ok = CreateProcessW(null, line, 0, 0, 0, flags, 0, null, &startup, &information) != 0;
+            return (ok, ok ? 0 : Marshal.GetLastPInvokeError(), information);
+        }
+    }
+
+    private static string Quote(string value) => value.Contains(' ', StringComparison.Ordinal) || value.Length == 0 ? "\"" + value + "\"" : value;
+
+    private static void Loop(EventWaitHandle quit, EventWaitHandle? snap, TimeSpan max)
+    {
+        var deadline = Stopwatch.GetTimestamp() + (long)(max.TotalSeconds * Stopwatch.Frequency);
+        var handles = stackalloc nint[2];
+        handles[0] = quit.SafeWaitHandle.DangerousGetHandle();
+        var count = 1u;
+
+        if (snap is not null)
+        {
+            handles[1] = snap.SafeWaitHandle.DangerousGetHandle();
+            count = 2;
+        }
+
+        MSG message;
+
+        while (s_exitCode < 0)
+        {
+            var left = deadline - Stopwatch.GetTimestamp();
+
+            if (left <= 0)
+            {
+                RequestExit(ExitMaxLifetime, "max lifetime");
+                break;
+            }
+
+            var waitMs = (uint)Math.Min(left * 1000 / Stopwatch.Frequency + 1, 60_000);
+            var woke = MsgWaitForMultipleObjectsEx(count, handles, waitMs, QsAllInput, MwmoInputAvailable);
+
+            if (woke == 0)
+            {
+                s_log!.Write("QUIT_EVENT", string.Empty);
+                RequestExit(ExitQuit, "quit event");
+                break;
+            }
+
+            if (woke == 1 && count == 2)
+            {
+                s_log!.Write("JOBSNAP", Job());
+                continue;
+            }
+
+            if (woke == count)
+            {
+                while (PeekMessageW(&message, 0, 0, 0, PmRemove) != 0)
+                {
+                    if (message.Hwnd == 0)
+                    {
+                        s_log!.Write("THREADMSG", Invariant($"msg=0x{message.Message:X4} wParam=0x{message.WParam:X} lParam=0x{message.LParam:X}"));
+                    }
+
+                    if (message.Message == WmQuit)
+                    {
+                        RequestExit(ExitOnQuitMessage, Invariant($"WM_QUIT wParam=0x{message.WParam:X}"));
+                        break;
+                    }
+
+                    _ = TranslateMessage(&message);
+                    _ = DispatchMessageW(&message);
+                }
+
+                continue;
+            }
+
+            if (woke == WaitTimeout)
+            {
+                continue;
+            }
+
+            if (woke == WaitFailed)
+            {
+                s_log!.Write("WAIT_FAILED", Invariant($"error={Marshal.GetLastPInvokeError()}"));
+                RequestExit(3, "wait failed");
+                break;
+            }
+        }
+    }
+
+    private static void RequestExit(int code, string reason)
+    {
+        if (s_exitCode < 0)
+        {
+            s_exitCode = code;
+            s_exitReason = reason;
+        }
+    }
+
+    private static void CreateWindows(bool top)
+    {
+        var instance = GetModuleHandleW(null);
+        const string ClassName = "BrowserAIMeasureStandIn";
+
+        fixed (char* className = ClassName)
+        {
+            var windowClass = new WndClassEx
+            {
+                Size = (uint)sizeof(WndClassEx),
+                WndProc = (nint)(delegate* unmanaged<nint, uint, nint, nint, nint>)&WndProc,
+                Instance = instance,
+                ClassName = (nint)className,
+            };
+
+            var atom = RegisterClassExW(&windowClass);
+
+            if (atom == 0)
+            {
+                s_log!.Write("WINDOW_FAILED", Invariant($"RegisterClassExW error={Marshal.GetLastPInvokeError()}"));
+                return;
+            }
+        }
+
+        s_messageWindow = CreateWindowExW(0, ClassName, "BrowserAI-measure message-only", 0, 0, 0, 0, 0, MessageParent, 0, instance, 0);
+        s_log!.Write("WINDOW", Invariant($"messageOnly=0x{s_messageWindow:X} error={(s_messageWindow == 0 ? Marshal.GetLastPInvokeError() : 0)}"));
+
+        if (top)
+        {
+            // Never shown: no WS_VISIBLE and no ShowWindow call. A tool window that cannot activate,
+            // so even a stray show would put nothing on the taskbar and take no focus.
+            s_topWindow = CreateWindowExW(WsExToolWindow | WsExNoActivate, ClassName, "BrowserAI-measure hidden", WsPopup, 0, 0, 0, 0, 0, 0, instance, 0);
+            s_log!.Write("WINDOW", Invariant($"hiddenTopLevel=0x{s_topWindow:X} visible={IsWindowVisible(s_topWindow)} error={(s_topWindow == 0 ? Marshal.GetLastPInvokeError() : 0)}"));
+        }
+
+        s_windowsReady = true;
+    }
+
+    [UnmanagedCallersOnly]
+    private static nint WndProc(nint window, uint message, nint wParam, nint lParam)
+    {
+        if (s_windowsReady)
+        {
+            var which = window == s_messageWindow ? "messageOnly" : window == s_topWindow ? "hiddenTopLevel" : Invariant($"0x{window:X}");
+
+            switch (message)
+            {
+                case WmClose:
+                    s_log?.Write("WM_CLOSE", Invariant($"window={which} wParam=0x{wParam:X} lParam=0x{lParam:X} ignore={s_ignoreClose}"));
+
+                    if (!s_ignoreClose)
+                    {
+                        RequestExit(ExitOnClose, "WM_CLOSE to " + which);
+                    }
+
+                    return 0;
+                case WmQueryEndSession:
+                    s_log?.Write("WM_QUERYENDSESSION", Invariant($"window={which} wParam=0x{wParam:X} lParam=0x{lParam:X}"));
+                    return 1;
+                case WmEndSession:
+                    s_log?.Write("WM_ENDSESSION", Invariant($"window={which} wParam=0x{wParam:X} lParam=0x{lParam:X}"));
+                    return 0;
+                default:
+                    s_log?.Write("MSG", Invariant($"window={which} msg=0x{message:X4} wParam=0x{wParam:X} lParam=0x{lParam:X}"));
+                    break;
+            }
+        }
+
+        return DefWindowProcW(window, message, wParam, lParam);
+    }
+
+    [UnmanagedCallersOnly]
+    private static int OnConsoleControl(uint type)
+    {
+        s_log?.Write("CONSOLE_CTRL", Invariant($"type={type}"));
+        return 0;
+    }
+
+    private static string Describe()
+    {
+        var info = default(ProcessBasicInformation);
+        int returned;
+        var status = NtQueryInformationProcess(CurrentProcess, 0, &info, sizeof(ProcessBasicInformation), &returned);
+        _ = ProcessIdToSessionId((uint)Environment.ProcessId, out var session);
+        var priority = GetPriorityClass(CurrentProcess);
+
+        return Invariant(
+            $"ppid={(status == 0 ? info.InheritedFromUniqueProcessId : -1)} session={session} priorityClass=0x{priority:X} desktop={ObjectName(GetThreadDesktop(GetCurrentThreadId()))} winsta={ObjectName(GetProcessWindowStation())} image={Environment.ProcessPath} cmdline={Environment.CommandLine}");
+    }
+
+    private static string ObjectName(nint handle)
+    {
+        var buffer = stackalloc char[256];
+        int needed;
+
+        return GetUserObjectInformationW(handle, 2, buffer, 512, &needed) != 0 ? new string(buffer) : Invariant($"<error {Marshal.GetLastPInvokeError()}>");
+    }
+
+    private static string Job()
+    {
+        _ = IsProcessInJob(CurrentProcess, 0, out var inJob);
+
+        if (inJob == 0)
+        {
+            return "inJob=False";
+        }
+
+        var accounting = default(JobAccounting);
+        int returned;
+        var accountingOk = QueryInformationJobObject(0, 1, &accounting, sizeof(JobAccounting), &returned);
+
+        var limits = default(JobBasicLimits);
+        var limitsOk = QueryInformationJobObject(0, 2, &limits, sizeof(JobBasicLimits), &returned);
+
+        const int Capacity = 4096;
+        var buffer = stackalloc byte[8 + (8 * Capacity)];
+        var listOk = QueryInformationJobObject(0, 3, buffer, 8 + (8 * Capacity), &returned);
+        var assigned = *(uint*)buffer;
+        var listed = *(uint*)(buffer + 4);
+        var ids = new StringBuilder();
+
+        if (listOk != 0)
+        {
+            var list = (ulong*)(buffer + 8);
+
+            for (var i = 0; i < listed; i++)
+            {
+                if (i > 0)
+                {
+                    _ = ids.Append(',');
+                }
+
+                _ = ids.Append(list[i].ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        return Invariant(
+            $"inJob=True accountingOk={accountingOk != 0} total={accounting.TotalProcesses} active={accounting.ActiveProcesses} terminated={accounting.TotalTerminatedProcesses} limitsOk={limitsOk != 0} limitFlags=0x{limits.LimitFlags:X} priorityClass=0x{limits.PriorityClass:X} listOk={listOk != 0} assigned={assigned} listed={listed} ids=[{ids}]");
+    }
+
+    private static int TickBench(Options options)
+    {
+        var output = options.Get("--out") ?? throw new ArgumentException("--out");
+        var ticks = int.Parse(options.Get("--ticks") ?? "100000", CultureInfo.InvariantCulture);
+        var sink = 0L;
+        var nullForeground = 0;
+        InitTsc();
+
+        for (var i = 0; i < 2000; i++)
+        {
+            sink ^= OneTick();
+        }
+
+        // The clock's own cost: two reads back to back.
+        var baseline = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var b = s_tsc();
+            baseline[i] = TscNs(b - a);
+        }
+
+        // The measurement: one tick is GetForegroundWindow, GetWindowThreadProcessId and GetLastInputInfo.
+        var total = new double[ticks];
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelBefore, out var userBefore);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesBefore);
+        _ = QueryThreadCycleTime(CurrentThread, out var threadBefore);
+        var started = Stopwatch.GetTimestamp();
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var b = s_tsc();
+            total[i] = TscNs(b - a);
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+
+            if (window == 0)
+            {
+                nullForeground++;
+            }
+        }
+
+        var finished = Stopwatch.GetTimestamp();
+        _ = QueryThreadCycleTime(CurrentThread, out var threadAfter);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesAfter);
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelAfter, out var userAfter);
+
+        // The same ticks timed with QueryPerformanceCounter, whose resolution here is 100 ns.
+        var qpc = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var t0 = Stopwatch.GetTimestamp();
+            sink ^= OneTick();
+            qpc[i] = (Stopwatch.GetTimestamp() - t0) * 1e9 / Stopwatch.Frequency;
+        }
+
+        // Each call on its own.
+        var first = new double[ticks];
+        var second = new double[ticks];
+        var third = new double[ticks];
+
+        for (var i = 0; i < ticks; i++)
+        {
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            var b = s_tsc();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var c = s_tsc();
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var d = s_tsc();
+            first[i] = TscNs(b - a);
+            second[i] = TscNs(c - b);
+            third[i] = TscNs(d - c);
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+        }
+
+        var elapsedSeconds = (finished - started) / (double)Stopwatch.Frequency;
+        var report = new StringBuilder();
+        _ = report.AppendLine(Invariant($"mode=tickbench ticks={ticks} qpcFrequency={Stopwatch.Frequency} tscPerSecond={s_tscPerSecond:F0} pid={Environment.ProcessId} sink={sink}"));
+        _ = report.AppendLine(Invariant($"timedLoopElapsedSeconds={elapsedSeconds:F6} meanNsPerTickFromElapsed={elapsedSeconds * 1e9 / ticks:F1} (includes two clock reads per tick)"));
+        _ = report.AppendLine(Invariant($"timedLoop threadCycles={threadAfter - threadBefore} processCycles={cyclesAfter - cyclesBefore} kernel100ns={kernelAfter - kernelBefore} user100ns={userAfter - userBefore} nullForeground={nullForeground}"));
+        _ = report.AppendLine("clockPairBaseline " + Stats(baseline));
+        _ = report.AppendLine("tickTsc " + Stats(total));
+        _ = report.AppendLine("tickQpc100ns " + Stats(qpc));
+        _ = report.AppendLine("GetForegroundWindow " + Stats(first));
+        _ = report.AppendLine("GetWindowThreadProcessId " + Stats(second));
+        _ = report.AppendLine("GetLastInputInfo " + Stats(third));
+        File.WriteAllText(output, report.ToString());
+
+        var raw = new StringBuilder(ticks * 6);
+
+        foreach (var duration in total)
+        {
+            _ = raw.Append(duration.ToString("F1", CultureInfo.InvariantCulture)).Append('\n');
+        }
+
+        File.WriteAllText(output + ".raw-ns.txt", raw.ToString());
+
+        return 0;
+    }
+
+    private static long OneTick()
+    {
+        var window = GetForegroundWindow();
+        uint ownerPid;
+        var thread = GetWindowThreadProcessId(window, &ownerPid);
+        var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+        _ = GetLastInputInfo(&input);
+
+        return window ^ thread ^ ownerPid ^ input.Time;
+    }
+
+    private static int Ticker(Options options)
+    {
+        var output = options.Get("--out") ?? throw new ArgumentException("--out");
+        var interval = int.Parse(options.Get("--interval-ms") ?? "2000", CultureInfo.InvariantCulture);
+        var duration = int.Parse(options.Get("--duration-s") ?? "300", CultureInfo.InvariantCulture);
+        var noop = options.Has("--noop");
+        var quitName = options.Get("--quit");
+        using var quit = quitName is null ? new EventWaitHandle(false, EventResetMode.ManualReset) : new EventWaitHandle(false, EventResetMode.ManualReset, quitName, out _);
+        InitTsc();
+
+        _ = GetProcessTimes(CurrentProcess, out var creation, out _, out var kernelBefore, out var userBefore);
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesBefore);
+        var begin = Stopwatch.GetTimestamp();
+        var beginUtc = DateTime.UtcNow;
+        var tickDurations = new List<double>();
+        var sink = 0L;
+        var nullForeground = 0;
+        var ownerPids = new HashSet<uint>();
+        var idleMin = long.MaxValue;
+        var idleMax = long.MinValue;
+        var tick = 0;
+        var quitEarly = false;
+
+        while (true)
+        {
+            tick++;
+            var due = begin + ((long)tick * interval * Stopwatch.Frequency / 1000);
+
+            if ((due - begin) / (double)Stopwatch.Frequency > duration)
+            {
+                break;
+            }
+
+            var waitMs = Math.Max(0, (due - Stopwatch.GetTimestamp()) * 1000 / Stopwatch.Frequency);
+
+            if (quit.WaitOne((int)waitMs))
+            {
+                quitEarly = true;
+                break;
+            }
+
+            if (noop)
+            {
+                continue;
+            }
+
+            var a = s_tsc();
+            var window = GetForegroundWindow();
+            uint ownerPid;
+            var thread = GetWindowThreadProcessId(window, &ownerPid);
+            var input = new LastInputInfo { Size = (uint)sizeof(LastInputInfo) };
+            _ = GetLastInputInfo(&input);
+            var b = s_tsc();
+            tickDurations.Add(TscNs(b - a));
+            sink ^= window ^ thread ^ ownerPid ^ input.Time;
+
+            if (window == 0)
+            {
+                nullForeground++;
+            }
+
+            _ = ownerPids.Add(ownerPid);
+            var idle = (long)(uint)(Environment.TickCount - (int)input.Time);
+            idleMin = Math.Min(idleMin, idle);
+            idleMax = Math.Max(idleMax, idle);
+        }
+
+        var end = Stopwatch.GetTimestamp();
+        _ = QueryProcessCycleTime(CurrentProcess, out var cyclesAfter);
+        _ = GetProcessTimes(CurrentProcess, out _, out _, out var kernelAfter, out var userAfter);
+        var cycles = cyclesAfter - cyclesBefore;
+
+        var report = new StringBuilder();
+        _ = report.AppendLine(Invariant($"mode=ticker noop={noop} intervalMs={interval} durationS={duration} pid={Environment.ProcessId} creation={DateTime.FromFileTimeUtc(creation):O} begin={beginUtc:O} quitEarly={quitEarly} sink={sink}"));
+        _ = report.AppendLine(Invariant($"wallSeconds={(end - begin) / (double)Stopwatch.Frequency:F3} ticks={tickDurations.Count} nullForeground={nullForeground} distinctForegroundOwners={ownerPids.Count} idleMsMin={idleMin} idleMsMax={idleMax}"));
+        _ = report.AppendLine(Invariant($"windowCpu: kernel100ns={kernelAfter - kernelBefore} user100ns={userAfter - userBefore} totalMs={(kernelAfter - kernelBefore + userAfter - userBefore) / 10000.0:F3}"));
+        _ = report.AppendLine(Invariant($"windowCycles={cycles} tscPerSecond={s_tscPerSecond:F0} windowCpuMsFromCycles={cycles / s_tscPerSecond * 1000:F4}"));
+        _ = report.AppendLine(Invariant($"lifetimeCpu: kernel100ns={kernelAfter} user100ns={userAfter} lifetimeCycles={cyclesAfter} lifetimeCpuMsFromCycles={cyclesAfter / s_tscPerSecond * 1000:F3}"));
+
+        if (tickDurations.Count > 0)
+        {
+            _ = report.AppendLine("perTick " + Stats([.. tickDurations]));
+        }
+
+        File.WriteAllText(output, report.ToString());
+        File.WriteAllText(output + ".raw-ns.txt", string.Join('\n', tickDurations.Select(d => d.ToString("F1", CultureInfo.InvariantCulture))) + "\n");
+
+        return 0;
+    }
+
+    private static void InitTsc()
+    {
+        // lfence; rdtsc; shl rdx, 32; or rax, rdx; ret
+        byte[] code = [0x0F, 0xAE, 0xE8, 0x0F, 0x31, 0x48, 0xC1, 0xE2, 0x20, 0x48, 0x09, 0xD0, 0xC3];
+        var memory = VirtualAlloc(0, 4096, 0x3000, 0x04);
+        Marshal.Copy(code, 0, memory, code.Length);
+        _ = VirtualProtect(memory, 4096, 0x20, out _);
+        _ = FlushInstructionCache(CurrentProcess, memory, 4096);
+        s_tsc = (delegate* unmanaged<ulong>)memory;
+
+        var q0 = Stopwatch.GetTimestamp();
+        var c0 = s_tsc();
+
+        while (Stopwatch.GetTimestamp() - q0 < Stopwatch.Frequency / 5)
+        {
+        }
+
+        var c1 = s_tsc();
+        var q1 = Stopwatch.GetTimestamp();
+        s_tscPerSecond = (c1 - c0) / ((q1 - q0) / (double)Stopwatch.Frequency);
+    }
+
+    private static double TscNs(ulong cycles) => cycles * 1e9 / s_tscPerSecond;
+
+    private static string Stats(double[] nanoseconds)
+    {
+        var sorted = nanoseconds.Order().ToArray();
+        var count = sorted.Length;
+
+        double At(double fraction) => sorted[Math.Min(count - 1, (int)Math.Ceiling(fraction * count) - 1)];
+
+        return Invariant(
+            $"n={count} minNs={sorted[0]:F1} p50Ns={At(0.50):F1} p90Ns={At(0.90):F1} p99Ns={At(0.99):F1} p999Ns={At(0.999):F1} maxNs={sorted[^1]:F1} meanNs={sorted.Average():F1}");
+    }
+
+    private static string Invariant(FormattableString text) => text.ToString(CultureInfo.InvariantCulture);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessBasicInformation
+    {
+        public nint ExitStatus;
+        public nint PebBaseAddress;
+        public nint AffinityMask;
+        public nint BasePriority;
+        public nint UniqueProcessId;
+        public nint InheritedFromUniqueProcessId;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobAccounting
+    {
+        public long TotalUserTime;
+        public long TotalKernelTime;
+        public long ThisPeriodTotalUserTime;
+        public long ThisPeriodTotalKernelTime;
+        public uint TotalPageFaultCount;
+        public uint TotalProcesses;
+        public uint ActiveProcesses;
+        public uint TotalTerminatedProcesses;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JobBasicLimits
+    {
+        public long PerProcessUserTimeLimit;
+        public long PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public nuint MinimumWorkingSetSize;
+        public nuint MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public nuint Affinity;
+        public uint PriorityClass;
+        public uint SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WndClassEx
+    {
+        public uint Size;
+        public uint Style;
+        public nint WndProc;
+        public int ClassExtra;
+        public int WindowExtra;
+        public nint Instance;
+        public nint Icon;
+        public nint Cursor;
+        public nint Background;
+        public nint MenuName;
+        public nint ClassName;
+        public nint SmallIcon;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MSG
+    {
+        public nint Hwnd;
+        public uint Message;
+        public nint WParam;
+        public nint LParam;
+        public uint Time;
+        public int X;
+        public int Y;
+        public uint Private;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LastInputInfo
+    {
+        public uint Size;
+        public uint Time;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct StartupInfo
+    {
+        public int Cb;
+        public nint Reserved;
+        public nint Desktop;
+        public nint Title;
+        public int X;
+        public int Y;
+        public int XSize;
+        public int YSize;
+        public int XCountChars;
+        public int YCountChars;
+        public int FillAttribute;
+        public uint Flags;
+        public short ShowWindow;
+        public short Reserved2Count;
+        public nint Reserved2;
+        public nint StdInput;
+        public nint StdOutput;
+        public nint StdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessInformation
+    {
+        public nint Process;
+        public nint Thread;
+        public int ProcessId;
+        public int ThreadId;
+    }
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int CreateProcessW(char* application, char* commandLine, nint processAttributes, nint threadAttributes, int inheritHandles, uint flags, nint environment, char* directory, StartupInfo* startup, ProcessInformation* information);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int CloseHandle(nint handle);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint VirtualAlloc(nint address, nuint size, uint type, uint protect);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int VirtualProtect(nint address, nuint size, uint protect, out uint previous);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int FlushInstructionCache(nint process, nint address, nuint size);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(nint process, out long creation, out long exit, out long kernel, out long user);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryProcessCycleTime(nint process, out ulong cycles);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryThreadCycleTime(nint thread, out ulong cycles);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ProcessIdToSessionId(uint processId, out uint sessionId);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint GetPriorityClass(nint process);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int IsProcessInJob(nint process, nint job, out int result);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int QueryInformationJobObject(nint job, int infoClass, void* info, int length, int* returned);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial int SetConsoleCtrlHandler(delegate* unmanaged<uint, int> handler, int add);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial uint GetCurrentThreadId();
+
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint GetModuleHandleW(string? name);
+
+    [LibraryImport("ntdll.dll")]
+    private static partial int NtQueryInformationProcess(nint process, int infoClass, ProcessBasicInformation* info, int length, int* returned);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial nint GetThreadDesktop(uint threadId);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial nint GetProcessWindowStation();
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial int GetUserObjectInformationW(nint handle, int index, char* buffer, int length, int* needed);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial ushort RegisterClassExW(WndClassEx* windowClass);
+
+    [LibraryImport("user32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint CreateWindowExW(uint exStyle, string className, string windowName, uint style, int x, int y, int width, int height, nint parent, nint menu, nint instance, nint param);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowVisible(nint window);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint DefWindowProcW(nint window, uint message, nint wParam, nint lParam);
+
+    [LibraryImport("user32.dll")]
+    private static partial int PeekMessageW(MSG* message, nint window, uint filterMin, uint filterMax, uint remove);
+
+    [LibraryImport("user32.dll")]
+    private static partial int TranslateMessage(MSG* message);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint DispatchMessageW(MSG* message);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial uint MsgWaitForMultipleObjectsEx(uint count, nint* handles, uint milliseconds, uint wakeMask, uint flags);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetForegroundWindow();
+
+    [LibraryImport("user32.dll")]
+    private static partial uint GetWindowThreadProcessId(nint window, uint* processId);
+
+    [LibraryImport("user32.dll")]
+    private static partial int GetLastInputInfo(LastInputInfo* info);
+}
+
+/// <summary>A line-per-event log, flushed to the operating system after every line.</summary>
+internal sealed class Log : IDisposable
+{
+    private readonly FileStream _stream;
+    private readonly Lock _gate = new();
+    private readonly int _pid;
+    private readonly string _role;
+
+    /// <summary>Opens the log for appending.</summary>
+    /// <param name="path">The file.</param>
+    /// <param name="pid">This process's id.</param>
+    /// <param name="role">standin or child.</param>
+    public Log(string path, int pid, string role)
+    {
+        _stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, 1, FileOptions.None);
+        _pid = pid;
+        _role = role;
+    }
+
+    /// <summary>Writes one line.</summary>
+    /// <param name="what">The event.</param>
+    /// <param name="detail">Its detail.</param>
+    public void Write(string what, string detail)
+    {
+        var line = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss.fffffffZ}\t{Stopwatch.GetTimestamp()}\t{_pid}\t{_role}\t{what}\t{detail}\n");
+        var bytes = Encoding.UTF8.GetBytes(line);
+
+        lock (_gate)
+        {
+            _stream.Write(bytes);
+            _stream.Flush();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose() => _stream.Dispose();
+}
+
+/// <summary>The command line as <c>--name value</c> pairs and bare flags.</summary>
+internal sealed class Options
+{
+    private readonly Dictionary<string, string?> _values = new(StringComparer.Ordinal);
+
+    /// <summary>Parses everything after the mode.</summary>
+    /// <param name="args">The whole command line.</param>
+    /// <returns>The options.</returns>
+    public static Options Parse(string[] args)
+    {
+        var options = new Options();
+
+        for (var i = 1; i < args.Length; i++)
+        {
+            if (!args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
+            {
+                options._values[args[i]] = args[i + 1];
+                i++;
+            }
+            else
+            {
+                options._values[args[i]] = null;
+            }
+        }
+
+        return options;
+    }
+
+    /// <summary>An option's value.</summary>
+    /// <param name="name">The option.</param>
+    /// <returns>The value, or null.</returns>
+    public string? Get(string name) => _values.TryGetValue(name, out var value) ? value : null;
+
+    /// <summary>Whether an option is present.</summary>
+    /// <param name="name">The option.</param>
+    /// <returns>Whether it is.</returns>
+    public bool Has(string name) => _values.ContainsKey(name);
+}

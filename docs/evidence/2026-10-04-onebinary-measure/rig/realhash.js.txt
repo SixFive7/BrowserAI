@@ -1,0 +1,26 @@
+// Hashes the real client configuration, read-only. usage: node realhash.js <label> <outfile>
+'use strict';
+const fs = require('fs'); const path = require('path'); const crypto = require('crypto');
+const [label, out] = process.argv.slice(2);
+const H = (b) => crypto.createHash('sha256').update(b).digest('hex').toUpperCase();
+const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
+const home = process.env.USERPROFILE;
+const rows = [];
+const now = new Date().toISOString();
+const cj = path.join(home, '.claude.json');
+const raw = fs.readFileSync(cj); const st = fs.statSync(cj);
+rows.push([label, now, cj, 'whole-file', H(raw), raw.length, st.mtime.toISOString()]);
+const j = JSON.parse(raw.toString('utf8'));
+rows.push([label, now, cj, 'mcpServers(top-level)', H(canon(j.mcpServers ?? null)), Object.keys(j.mcpServers ?? {}).join(',') || '-', '']);
+const proj = {}; for (const [k, v] of Object.entries(j.projects ?? {})) if (v && v.mcpServers && Object.keys(v.mcpServers).length) proj[k] = v.mcpServers;
+rows.push([label, now, cj, 'projects[*].mcpServers', H(canon(proj)), Object.keys(proj).length + ' projects', '']);
+const ct = path.join(home, '.codex', 'config.toml');
+const rawc = fs.readFileSync(ct); const stc = fs.statSync(ct);
+rows.push([label, now, ct, 'whole-file', H(rawc), rawc.length, stc.mtime.toISOString()]);
+// ~/.codex tree: names, sizes, mtimes (to see any write a stray invocation makes)
+const walk = (d, acc) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); try { const s = fs.statSync(p); acc.push(`${path.relative(path.join(home, '.codex'), p)}\t${e.isDirectory() ? 'D' : s.size}\t${s.mtime.toISOString()}`); if (e.isDirectory() && acc.length < 200000) walk(p, acc); } catch (x) { acc.push(`${p}\tERR ${x.code}`); } } return acc; };
+const tree = walk(path.join(home, '.codex'), []).sort();
+fs.writeFileSync(out.replace(/\.tsv$/, '') + `.codex-tree.${label}.txt`, tree.join('\n') + '\n');
+rows.push([label, now, path.join(home, '.codex'), 'tree(names,sizes,mtimes)', H(tree.join('\n')), tree.length + ' entries', '']);
+fs.appendFileSync(out, rows.map((r) => r.join('\t')).join('\n') + '\n');
+console.log(rows.map((r) => r.join('\t')).join('\n'));

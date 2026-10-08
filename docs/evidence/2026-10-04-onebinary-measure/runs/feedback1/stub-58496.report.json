@@ -1,0 +1,58 @@
+{
+  "pid": 58496,
+  "utc": "2026-10-04T01:36:09.6434026Z",
+  "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe",
+  "peSubsystem": "2 WINDOWS_GUI",
+  "ppid": 90108,
+  "parentImage": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\rig\\bin\\ExitRig.exe",
+  "consoleWindow": 0,
+  "consoleProcessCount": 0,
+  "consoleProcessListError": 6,
+  "consoleProcesses": [],
+  "consoleSharedWithParent": false,
+  "consoleCP": 0,
+  "consoleOutputCP": 0,
+  "std": {
+    "stdin": {
+      "handle": 840,
+      "kind": "pipe",
+      "fileTypeError": 0
+    },
+    "stdout": {
+      "handle": 884,
+      "kind": "pipe",
+      "fileTypeError": 0
+    },
+    "stderr": {
+      "handle": 884,
+      "kind": "pipe",
+      "fileTypeError": 0
+    }
+  },
+  "startupInfo": {
+    "dwFlags": "0x00000180",
+    "STARTF_USESHOWWINDOW": false,
+    "STARTF_USESTDHANDLES": true,
+    "STARTF_FORCEONFEEDBACK": false,
+    "STARTF_FORCEOFFFEEDBACK": true,
+    "wShowWindow": 0,
+    "desktop": "Winsta0\\Default",
+    "title": "bin\\winexe\\McpStubWin.exe",
+    "hStdInput": 840,
+    "hStdOutput": 884,
+    "hStdError": 884
+  },
+  "inJob": true,
+  "env": {
+    "STUB_LOGDIR": "runs\\feedback1",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "STUB_EOF_DELAY_MS": "0"
+  },
+  "envCount": 109,
+  "nonce": "c2d16e9ad393",
+  "inputStreamType": "System.ConsolePal\u002BWindowsConsoleStream",
+  "outputStreamType": "System.ConsolePal\u002BWindowsConsoleStream",
+  "bigUtf8Bytes": 70000,
+  "bigSha256": "abc9f0411537508097e7e46ebd997a39a37660dce6426ddc0d5316c6c9b90f16"
+}

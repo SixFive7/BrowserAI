@@ -1,0 +1,38 @@
+import struct, sys
+def imports(p):
+    d=open(p,'rb').read()
+    lf=struct.unpack_from('<I',d,0x3c)[0]
+    coff=lf+4
+    nsec=struct.unpack_from('<H',d,coff+2)[0]
+    optsz=struct.unpack_from('<H',d,coff+16)[0]
+    opt=coff+20
+    dd=opt+112
+    imp_rva,imp_sz=struct.unpack_from('<II',d,dd+8)
+    secs=[]
+    so=opt+optsz
+    for i in range(nsec):
+        name,vs,va,rs,ra=struct.unpack_from('<8sIIII',d,so+i*40)
+        secs.append((va,vs,ra,rs))
+    def r2o(rva):
+        for va,vs,ra,rs in secs:
+            if va<=rva<va+max(vs,rs): return rva-va+ra
+    o=r2o(imp_rva); out={}
+    while True:
+        ilt,ts,fc,nm,iat=struct.unpack_from('<IIIII',d,o)
+        if nm==0: break
+        no=r2o(nm); e=d.index(b'\0',no); dll=d[no:e].decode()
+        fns=[]; t=r2o(ilt or iat)
+        while True:
+            v=struct.unpack_from('<Q',d,t)[0]
+            if v==0: break
+            if v>>63: fns.append('#%d'%(v&0xffff))
+            else:
+                ho=r2o(v&0x7fffffff); e2=d.index(b'\0',ho+2); fns.append(d[ho+2:e2].decode())
+            t+=8
+        out[dll]=fns
+        o+=20
+    return out
+for p in sys.argv[1:]:
+    im=imports(p)
+    for k,v in im.items():
+        if k.upper() in ('USER32.DLL','OLE32.DLL'): print(p,k,v)

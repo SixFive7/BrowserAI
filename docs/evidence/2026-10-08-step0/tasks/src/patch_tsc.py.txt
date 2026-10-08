@@ -1,0 +1,22 @@
+p = r'C:\Source\SixFive7\BrowserAI\.work\step0-tasks\src\StandIn\Program.cs'
+s = open(p, encoding='utf-8', newline='').read()
+nl = '\r\n' if '\r\n' in s else '\n'
+new = open(r'C:\Source\SixFive7\BrowserAI\.work\step0-tasks\src\tick_modes.cs.txt', encoding='utf-8', newline='').read().replace('\r\n', '\n').replace('\n', nl)
+start = s.index('    private static int TickBench(Options options)')
+end = s.index('    private static long ToNanoseconds(long qpcTicks)')
+s = s[:start] + new + s[end:]
+a = s.index('    private static long ToNanoseconds(long qpcTicks)')
+b = s.index('    private static string Invariant(FormattableString text)')
+s = s[:a] + s[b:]
+s = s.replace('    private static nint s_topWindow;', '    private static nint s_topWindow;' + nl + '    private static delegate* unmanaged<ulong> s_tsc;' + nl + '    private static double s_tscPerSecond;')
+old_close = '    [LibraryImport("kernel32.dll", SetLastError = true)]' + nl + '    private static partial int CloseHandle(nint handle);'
+assert old_close in s
+s = s.replace(old_close, old_close + nl + nl +
+    '    [LibraryImport("kernel32.dll", SetLastError = true)]' + nl + '    private static partial nint VirtualAlloc(nint address, nuint size, uint type, uint protect);' + nl + nl +
+    '    [LibraryImport("kernel32.dll", SetLastError = true)]' + nl + '    private static partial int VirtualProtect(nint address, nuint size, uint protect, out uint previous);' + nl + nl +
+    '    [LibraryImport("kernel32.dll", SetLastError = true)]' + nl + '    private static partial int FlushInstructionCache(nint process, nint address, nuint size);')
+old_exit = '        s_log.Write("EXIT", Invariant($"code={s_exitCode} reason={s_exitReason}"));' + nl + '        s_log.Dispose();'
+assert old_exit in s
+s = s.replace(old_exit, '        s_log.Write("EXIT", Invariant($"code={s_exitCode} reason={s_exitReason}"));')
+open(p, 'w', encoding='utf-8', newline='').write(s)
+print('ok', s.count('Stats('), 'VirtualAlloc' in s, 's_log.Dispose' in s)

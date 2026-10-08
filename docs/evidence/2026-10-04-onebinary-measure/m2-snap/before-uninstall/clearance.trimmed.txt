@@ -1,0 +1,30 @@
+ARP BrowserAI.app PRESENT
+  DisplayIcon String = %USERPROFILE%\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  DisplayName String = BrowserAI
+  DisplayVersion String = 1.1.0
+  EstimatedSize DWord = 140351
+  InstallDate String = 20260924
+  InstallLocation String = %USERPROFILE%\AppData\Local\BrowserAI.app
+  Language DWord = 1033
+  NoModify DWord = 1
+  NoRepair DWord = 1
+  Publisher String = Jori Huisman
+  QuietUninstallString String = "%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall --silent
+  UninstallString String = "%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall
+ARP BrowserAI.app.test: PRESENT <<< MUST BE ABSENT
+--- ~/.claude.json mcpServers.browserai, parsed read-only ---
+  args = []
+  command = "%USERPROFILE%\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.Server.exe"
+  env = {}
+  type = "stdio"
+TEMP velopack_BrowserAI.app: ABSENT
+StartMenu BrowserAI.lnk PRESENT len=2323 sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145
+--- ~/.codex/config.toml [mcp_servers.browserai], read as text ---
+  [mcp_servers.browserai]
+  command = '%USERPROFILE%\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe'
+--- HKCU\Environment Path, read raw ---
+  kind=ExpandString chars=1560 sha256=2E3DA72AAFDB9586429DB283E92F7B70AA4650501147CA12E004746AAACBAE43
+  entries naming BrowserAI: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\current
+--- Task Scheduler root folder, the sign-in tasks ---
+  BrowserAI.app sign-in: none
+  BrowserAI.app.test tasks: BrowserAI.app.test sign-in 9EAC6015ED2D2D8CAD6C58529C48F904 <<< MUST BE ABSENT

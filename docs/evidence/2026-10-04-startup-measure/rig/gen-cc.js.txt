@@ -1,0 +1,110 @@
+// startup-measure: Claude Code batches for the ExitRig harness (.work/q369/rig/bin/ExitRig.exe, reused).
+// Derived from .work/q369/rig/gen.js.
+// usage: node gen-cc.js <batch> <scenario[,scenario...]> <mode[,mode...]> <reps> [port]
+//   modes: P = claude -p ; S = stream-json with the VS Code extension's environment and control requests
+//   scenarios: D1 D5 D30 D90 (the first tools/call answered after N s), FE FR FX (it fails after 5 s:
+//              isError result, JSON-RPC error, server exits), I3 (initialize answered after 3 s)
+'use strict';
+const fs = require('fs');
+
+const [batch, scenArg, modeArg, repsArg, portArg] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure';
+const Q = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const RIG = `${Q}\\rig\\bin\\ExitRig.exe`;
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const LZ = `${S}\\rig\\lazysrv.js`;
+// CC_PROJ moves the working directory outside the repository, so a user-scope run does not also
+// connect the repository's own .mcp.json servers (batch cc3 did: void for the turn-1 question).
+const PROJ = process.env.CC_PROJ || `${S}\\proj`;
+const PORT = portArg || '8971';
+const CLAUDE = `${Q}\\bin\\cli\\claude.exe`; // Claude Code 2.1.288, byte-identical to the VS Code extension's 2.1.288 binary (q369 INDEX)
+const BATCHDIR = `${S}\\runs\\${batch}`;
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+
+const baseEnv = (run, extra) => Object.assign({
+  CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${S}\\cfg\\codex-unused`, DISABLE_AUTOUPDATER: '1',
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${PORT}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+  GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+  TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`, APPDATA: `${S}\\appdata\\roaming`, LOCALAPPDATA: `${S}\\appdata\\local`,
+  GIT_CEILING_DIRECTORIES: S,
+}, extra || {});
+
+// The VS Code extension's own environment for its claude process (extension.js 2.1.288), as q369 used it.
+const vscEnv = () => ({
+  CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.288',
+  MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1',
+});
+
+// U and V register the stand-in at USER scope in the scratch config, the way RegisterAI registers
+// BrowserAI (~/.claude.json mcpServers), instead of through --mcp-config.
+const seed = (userServers) => JSON.stringify(Object.assign({
+  hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: false,
+  customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] },
+  lastReleaseNotesSeen: '2.1.288',
+  projects: { [PROJ.replace(/\\/g, '/')]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [] } },
+}, userServers ? { mcpServers: userServers } : {}));
+
+// No per-server timeout, as BrowserAI's real registration has none.
+const mcpJson = (run, serverEnv) => JSON.stringify({ mcpServers: { browserai: { type: 'stdio', command: NODE, args: [LZ], env: Object.assign({ LZ_LOGDIR: run, LZ_TAG: 'lz' }, serverEnv) } } });
+
+const ALLOWED = 'mcp__browserai__browserai_init,mcp__browserai__browserai_list';
+const userMsg = (text) => JSON.stringify({ type: 'user', session_id: '', message: { role: 'user', content: [{ type: 'text', text }] }, parent_tool_use_id: null });
+let reqNo = 1;
+const ctl = (request) => JSON.stringify({ type: 'control_request', request_id: `req_${reqNo++}`, request });
+const initReq = () => ctl({ subtype: 'initialize' });
+const turn = (text, timeoutMs) => [{ do: 'mark', text: `TURN ${text}` }, { do: 'send', line: userMsg(text) }, { do: 'waitFor', pattern: '"type":"result"', timeoutMs: timeoutMs || 200000 }];
+const status = (label) => { const l = ctl({ subtype: 'mcp_status' }); const id = JSON.parse(l).request_id; return [{ do: 'mark', text: `mcp_status ${label}` }, { do: 'send', line: l }, { do: 'waitFor', pattern: `"request_id":"${id}"`, timeoutMs: 40000 }]; };
+
+const SCEN = {
+  D1: { server: { LZ_CALL_DELAY_MS: '1000' } },
+  D5: { server: { LZ_CALL_DELAY_MS: '5000' } },
+  D30: { server: { LZ_CALL_DELAY_MS: '30000' } },
+  D90: { server: { LZ_CALL_DELAY_MS: '90000' } },
+  FE: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'iserror' } },
+  FR: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'rpcerror' } },
+  FX: { server: { LZ_CALL_DELAY_MS: '5000', LZ_CALL_FAIL: 'exit' } },
+  I3: { server: { LZ_INIT_DELAY_MS: '3000' } },
+  I10: { server: { LZ_INIT_DELAY_MS: '10000' } },
+  I35: { server: { LZ_INIT_DELAY_MS: '35000' } },
+};
+
+const modes = modeArg.split(',');
+const scens = scenArg.split(',');
+const reps = Number(repsArg || 3);
+const runs = [];
+for (const sc of scens) for (const mode of modes) for (let r = 1; r <= reps; r++) {
+  const name = `${sc}-${mode}-r${r}`;
+  const run = `${BATCHDIR}\\${name}`;
+  const def = SCEN[sc];
+  const toolArgs = ['--tools', '', '--allowedTools', ALLOWED];
+  const userScope = mode === 'U' || mode === 'V';
+  const headless = mode === 'P' || mode === 'U';
+  const mcpArgs = userScope ? [] : ['--mcp-config', `${run}\\mcp.json`, '--strict-mcp-config'];
+  const args = headless
+    ? ['-p', '--output-format', 'stream-json', '--verbose', ...mcpArgs, ...toolArgs, '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet', 'Use the browserai tools.']
+    : ['--output-format', 'stream-json', '--verbose', '--input-format', 'stream-json', ...mcpArgs, ...toolArgs, '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet'];
+  const env = baseEnv(run, (mode === 'S' || mode === 'V') ? vscEnv() : {});
+  const policy = { logDir: run, tag: 'model', realPerTurn: 1, phPerTurn: 0 };
+  const steps = headless ? [] : [
+    { do: 'send', line: initReq() }, { do: 'waitFor', pattern: '"type":"control_response"', timeoutMs: 30000 },
+    ...turn('Use the browserai tools.'), { do: 'sleep', ms: 1000 }, ...status('after turn 1'),
+    { do: 'mark', text: 'end: closeStdin' }, { do: 'closeStdin' }];
+  runs.push({
+    name, dir: run, exe: CLAUDE, args, cwd: PROJ, env, stdin: headless ? 'closed' : 'pipe', maxMs: 300000, settleMs: 20000,
+    writeFiles: [
+      { path: `${run}\\cfg\\.claude.json`, content: seed(userScope ? JSON.parse(mcpJson(run, def.server)).mcpServers : null) },
+      { path: `${run}\\mcp.json`, content: mcpJson(run, def.server) },
+      { path: POLICY, content: JSON.stringify(policy) },
+    ],
+    steps,
+  });
+}
+const batchObj = {
+  progress: `${BATCHDIR}\\progress.log`, gapMs: 1500,
+  stubs: [{ name: 'anthropic', exe: NODE, args: [`${S}\\rig\\ccmodel.js`], env: { STUB_PORT: PORT, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'stub-fallback' } }],
+  runs,
+};
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify(batchObj, null, 1));
+console.log(`${batch}: ${runs.length} runs -> ${BATCHDIR}\\batch.json (rig ${RIG})`);

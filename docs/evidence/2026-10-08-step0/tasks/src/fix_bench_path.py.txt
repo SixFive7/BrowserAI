@@ -1,0 +1,8 @@
+p = r'C:\Source\SixFive7\BrowserAI\.work\step0-tasks\src\Rig\Program.cs'
+s = open(p, encoding='utf-8', newline='').read()
+old = '$"tickbench --out \\"{dir}\\bench-task-$(Arg0).txt\\" --ticks 100000"'
+new = '$"tickbench --out \\"{Path.Combine(dir, "bench-task-$(Arg0).txt")}\\" --ticks 100000"'
+assert old in s, 'pattern not found'
+s = s.replace(old, new)
+open(p, 'w', encoding='utf-8', newline='').write(s)
+print('fixed')

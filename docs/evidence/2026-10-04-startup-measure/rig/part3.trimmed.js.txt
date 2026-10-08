@@ -1,0 +1,226 @@
+// startup-measure part 3: the cold-host path through the real product (the worktree of origin/next,
+// published, RegisterAI in the payload), against a Velopack-shaped scratch install under the profile.
+// Runs ONLY under the suite lock. Every process it starts is recorded with its pid and kept as a
+// ChildProcess handle; it ends only those, by that handle, and the coordinator's own kill-on-close
+// job takes the session host and its node children with it.
+//
+// usage: node part3.js <phase> <outDir> [reps]
+//   phases: sanity | c0 | c1 | c2 | codex | hold
+'use strict';
+const { spawn, spawnSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const [phase, outDir, repsArg] = process.argv.slice(2);
+const reps = Number(repsArg || 5);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure';
+const Q = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const BASE = '%USERPROFILE%\\Downloads\\tmp-startup-measure';
+const INST = `${BASE}\\inst`;
+const CUR = `${INST}\\current`;
+const FRONT = `${CUR}\\BrowserAI.Server.exe`;
+const APP = `${CUR}\\BrowserAI.exe`;
+const UNINSTALLED = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\measure-startup\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.Server.exe';
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const DATA = `${BASE}\\data`;
+const FEED = `${BASE}\\feed`;
+const COORD_PIPE = 'BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381';
+const HOST_PIPE = 'BrowserAI-Host-C429DBA98841F2BBC73DAFB506AEE381';
+const CODEX = { 155: `${Q}\\bin\\codex155\\codex.exe`, 160: `${Q}\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe` };
+const PROJ = `${S}\\proj`;
+const PORT = '8991';
+
+fs.mkdirSync(outDir, { recursive: true });
+const plog = (s) => { const line = `${new Date().toISOString()} ${s}`; fs.appendFileSync(`${outDir}\\progress.log`, line + '\n'); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const productEnv = Object.assign({}, process.env, { BROWSERAI_ROOT: DATA, BROWSERAI_UPDATE_FEED: FEED });
+const started = [];
+
+function pipes() { try { return new Set(fs.readdirSync('\\\\.\\pipe\\')); } catch (e) { return new Set(); } }
+async function waitPipe(name, present, timeoutMs) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) { if (pipes().has(name) === present) return Date.now() - t0; await sleep(10); }
+  return -1;
+}
+
+// The cold state: neither the coordinator's pipe nor the host's exists. A host ends itself one
+// linger after its last connection and the coordinator follows it, so this waits for the
+// product's own shutdown instead of ending a process the Task Scheduler started.
+async function waitIdle(label) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < 150000) {
+    const p = pipes();
+    if (!p.has(HOST_PIPE) && !p.has(COORD_PIPE)) { plog(`${label}: idle (no coordinator, no host) after ${Date.now() - t0} ms`); return true; }
+    await sleep(500);
+  }
+  plog(`${label}: NOT idle after 150 s`);
+  return false;
+}
+
+function startCoordinator(mode) {
+  const t0 = Date.now();
+  const child = spawn(APP, [mode], { env: productEnv, windowsHide: true, stdio: 'ignore', detached: false });
+  started.push({ pid: child.pid, what: `coordinator ${mode}`, at: new Date().toISOString() });
+  plog(`STARTED coordinator ${mode} pid=${child.pid}`);
+  child.on('exit', (code) => plog(`EXIT coordinator pid=${child.pid} code=${code}`));
+  return { child, t0 };
+}
+async function stopCoordinator(c) {
+  if (c.child.exitCode === null) { c.child.kill(); plog(`KILLED coordinator pid=${c.child.pid} by its handle`); }
+  const gone = await waitPipe(HOST_PIPE, false, 15000);
+  const cgone = await waitPipe(COORD_PIPE, false, 15000);
+  plog(`after stop: host pipe gone in ${gone} ms, coordinator pipe gone in ${cgone} ms`);
+}
+
+function mcpprobe(exe, out, extraArgs, sharedRoot) {
+  const rootArgs = sharedRoot ? [] : ['--env', `BROWSERAI_ROOT=${DATA}`];
+  const args = [`${S}\\rig\\mcpprobe.js`, exe, out, ...rootArgs, '--env', `BROWSERAI_UPDATE_FEED=${FEED}`, ...(extraArgs || [])];
+  const r = spawnSync(NODE, args, { windowsHide: true, timeout: 180000, encoding: 'utf8' });
+  plog(`mcpprobe ${path.basename(out)} status=${r.status}`);
+  try { return JSON.parse(fs.readFileSync(out, 'utf8')); } catch (e) { return null; }
+}
+const at = (rec, what) => { const e = rec && rec.events.find((x) => x.what === what); return e ? e.ms : null; };
+function summary(rec) {
+  if (!rec) return 'no record';
+  const tl = rec.events.find((x) => x.what === 'tools/list answered');
+  return `init=${at(rec, 'initialize answered')}ms tools=${at(rec, 'tools/list answered')}ms count=${tl ? tl.count : '?'} exit=${JSON.stringify((rec.events.find((x) => x.what === 'exited') || {}).code)}`;
+}
+
+const tomlStr = (s) => `'${s}'`;
+function codexConfig(exe, sharedRoot) {
+  return `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${PORT}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+command = ${tomlStr(exe)}
+env = { ${sharedRoot ? '' : `BROWSERAI_ROOT = ${tomlStr(DATA)}, `}BROWSERAI_UPDATE_FEED = ${tomlStr(FEED)} }
+
+[projects.${tomlStr(PROJ)}]
+trust_level = "trusted"
+
+[projects.${tomlStr(PROJ.toLowerCase())}]
+trust_level = "trusted"
+`;
+}
+const ALLOW = ['ALLUSERSPROFILE', 'COMPUTERNAME', 'ComSpec', 'CommonProgramFiles', 'CommonProgramFiles(x86)', 'CommonProgramW6432', 'HOMEDRIVE', 'HOMEPATH', 'NUMBER_OF_PROCESSORS', 'OS', 'Path', 'PATHEXT', 'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL', 'PROCESSOR_REVISION', 'ProgramData', 'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'PUBLIC', 'SystemDrive', 'SystemRoot', 'USERDOMAIN', 'USERNAME', 'USERPROFILE', 'windir', 'LOCALAPPDATA', 'APPDATA'];
+function cleanEnv(home) {
+  const e = {};
+  for (const [k, v] of Object.entries(process.env)) if (ALLOW.some((a) => a.toLowerCase() === k.toLowerCase())) e[k] = v;
+  return Object.assign(e, { CODEX_HOME: home, CLAUDE_CONFIG_DIR: `${S}\\cfg\\claude-unused`, DISABLE_AUTOUPDATER: '1', STUB_KEY: 'not-a-real-key',
+    RUST_LOG: 'codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info', TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`,
+    GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1', GIT_CEILING_DIRECTORIES: S, NO_COLOR: '1' });
+}
+function codexExec(ver, run, exe, sharedRoot) {
+  fs.mkdirSync(`${run}\\home`, { recursive: true });
+  fs.writeFileSync(`${run}\\home\\config.toml`, codexConfig(exe, sharedRoot));
+  fs.writeFileSync(`${outDir}\\policy.json`, JSON.stringify({ logDir: run, tag: 'model', phPerTurn: 0 }));
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    const p = spawn(CODEX[ver], ['exec', '--json', '--skip-git-repo-check', '--dangerously-bypass-approvals-and-sandbox', '-C', PROJ, 'Use the browserai tools.'], { env: cleanEnv(`${run}\\home`), cwd: PROJ, windowsHide: true, stdio: ['ignore', 'pipe', fs.openSync(`${run}\\exec1.err.txt`, 'a')] });
+    started.push({ pid: p.pid, what: `codex ${ver}`, at: new Date().toISOString() });
+    let buf = '';
+    p.stdout.on('data', (d) => { buf += d.toString('utf8'); let nl; while ((nl = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, nl); buf = buf.slice(nl + 1); fs.appendFileSync(`${run}\\exec1.jsonl`, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - t0, line }) + '\n'); } });
+    const t = setTimeout(() => { plog(`TIMEOUT codex pid=${p.pid}: terminating it by its handle`); p.kill(); }, 240000);
+    p.on('exit', (code) => { clearTimeout(t); plog(`codex ${ver} exit=${code} after ${Date.now() - t0} ms`); resolve(code); });
+  });
+}
+
+(async () => {
+  plog(`PHASE ${phase} reps=${reps}`);
+  const results = [];
+  try {
+    if (phase === 'sanity') {
+      const rec = mcpprobe(FRONT, `${outDir}\\sanity-front.json`);
+      plog(`sanity installed front (no coordinator): ${summary(rec)}`);
+    } else if (phase === 'c0') {
+      for (let r = 1; r <= reps; r++) {
+        const rec = mcpprobe(UNINSTALLED, `${outDir}\\c0-r${r}.json`);
+        plog(`c0 r${r} in-process, not installed: ${summary(rec)}`);
+        results.push({ r, rec: summary(rec) });
+        await sleep(1500);
+      }
+    } else if (phase === 'c1') {
+      for (let r = 1; r <= reps; r++) {
+        const c = startCoordinator('--coordinate');
+        const up = await waitPipe(COORD_PIPE, true, 30000);
+        plog(`c1 r${r}: coordinator pipe up after ${up} ms; host pipe present=${pipes().has(HOST_PIPE)}`);
+        await sleep(300);
+        const rec = mcpprobe(FRONT, `${outDir}\\c1-r${r}.json`);
+        plog(`c1 r${r} cold host, coordinator running: ${summary(rec)}`);
+        results.push({ r, coordinatorUpMs: up, rec: summary(rec) });
+        await stopCoordinator(c);
+        await sleep(1500);
+      }
+    } else if (phase === 'c1t') {
+      // The whole cold path: no host and no coordinator, so the installed front runs the logon task
+      // (a scratch on-demand task under the name the front computes), which starts the coordinator,
+      // which starts the host. Nothing here starts any of the three.
+      for (let r = 1; r <= reps; r++) {
+        if (!(await waitIdle(`c1t r${r}`))) break;
+        const rec = mcpprobe(FRONT, `${outDir}\\c1t-r${r}.json`, [], true);
+        plog(`c1t r${r} cold host through the logon task: ${summary(rec)}`);
+        results.push({ r, rec: summary(rec) });
+        await sleep(1000);
+      }
+      await waitIdle('c1t end');
+    } else if (phase === 'c2') {
+      for (let r = 1; r <= reps; r++) {
+        const c = startCoordinator('--start-host');
+        const coordUp = await waitPipe(COORD_PIPE, true, 30000);
+        const hostUp = await waitPipe(HOST_PIPE, true, 60000);
+        plog(`c2 r${r}: coordinator pipe ${coordUp} ms, host pipe ${hostUp} ms after BrowserAI.exe --start-host was started`);
+        await sleep(300);
+        const rec = mcpprobe(FRONT, `${outDir}\\c2-r${r}.json`);
+        plog(`c2 r${r} host already running: ${summary(rec)}`);
+        results.push({ r, coordinatorUpMs: coordUp, hostUpMs: hostUp, rec: summary(rec) });
+        await stopCoordinator(c);
+        await sleep(1500);
+      }
+    } else if (phase === 'codex') {
+      const stub = spawn(NODE, [`${S}\\rig\\cxmodel.js`], { env: Object.assign({}, process.env, { STUB_PORT: PORT, STUB_POLICY_FILE: `${outDir}\\policy.json`, STUB_LOGDIR: outDir, STUB_TAG: 'stub-fallback' }), windowsHide: true, stdio: 'ignore' });
+      started.push({ pid: stub.pid, what: 'cxmodel stub', at: new Date().toISOString() });
+      await sleep(1500);
+      try {
+        for (const cs of (process.env.P3_CASES || 'c0,c1t,c2').split(',')) for (const ver of ['155', '160']) for (let r = 1; r <= reps; r++) {
+          const run = `${outDir}\\${cs}-exec${ver}-r${r}`;
+          fs.mkdirSync(run, { recursive: true });
+          let c = null;
+          if (cs === 'c1t') { await waitIdle(path.basename(run)); }
+          if (cs === 'c2') { c = startCoordinator('--start-host'); await waitPipe(COORD_PIPE, true, 30000); plog(`${path.basename(run)}: host pipe ${await waitPipe(HOST_PIPE, true, 60000)} ms`); await sleep(300); }
+          plog(`RUN_START ${path.basename(run)}`);
+          await codexExec(ver, run, cs === 'c0' ? UNINSTALLED : FRONT, cs === 'c1t');
+          plog(`RUN_END ${path.basename(run)}`);
+          if (c) await stopCoordinator(c);
+          await sleep(1500);
+        }
+      } finally { stub.kill(); }
+    } else if (phase === 'hold') {
+      // Keeps a coordinator and its host alive for a measurement, through one front whose client
+      // holds its conversation open until <outDir>\hold.stop exists.
+      const c = startCoordinator('--start-host');
+      plog(`hold: coordinator pipe ${await waitPipe(COORD_PIPE, true, 30000)} ms, host pipe ${await waitPipe(HOST_PIPE, true, 60000)} ms`);
+      const holder = spawn(NODE, [`${S}\\rig\\mcpprobe.js`, FRONT, `${outDir}\\hold-front.json`, '--env', `BROWSERAI_ROOT=${DATA}`, '--env', `BROWSERAI_UPDATE_FEED=${FEED}`, '--hold', '7200000'], { windowsHide: true, stdio: 'ignore' });
+      started.push({ pid: holder.pid, what: 'holding client', at: new Date().toISOString() });
+      plog(`hold: holding client pid=${holder.pid}`);
+      while (!fs.existsSync(`${outDir}\\hold.stop`)) await sleep(1000);
+      plog('hold: stop file seen');
+      holder.kill();
+      await sleep(1000);
+      await stopCoordinator(c);
+    }
+  } finally {
+    fs.writeFileSync(`${outDir}\\${phase}-summary.json`, JSON.stringify({ results, started }, null, 1));
+    plog(`PHASE ${phase} DONE; started ${started.length} processes`);
+  }
+})();

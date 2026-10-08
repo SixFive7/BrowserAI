@@ -1,0 +1,194 @@
+2026-10-04T00:46:51.794Z STUB pid=100524 port=8984
+2026-10-04T00:46:53.301Z RUN_START R0-exec155-r1
+2026-10-04T00:46:53.918Z SPAWN pid=65124 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:46:56.060Z EXIT pid=65124 code=0 signal=null after=2757ms
+2026-10-04T00:46:56.062Z RUN_END R0-exec155-r1
+2026-10-04T00:46:57.573Z RUN_START R0-exec155-r2
+2026-10-04T00:46:57.582Z SPAWN pid=57372 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:46:59.846Z EXIT pid=57372 code=0 signal=null after=2272ms
+2026-10-04T00:46:59.849Z RUN_END R0-exec155-r2
+2026-10-04T00:47:01.356Z RUN_START R0-exec155-r3
+2026-10-04T00:47:01.366Z SPAWN pid=82224 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:02.803Z EXIT pid=82224 code=0 signal=null after=1445ms
+2026-10-04T00:47:02.805Z RUN_END R0-exec155-r3
+2026-10-04T00:47:04.309Z RUN_START R0-exec160-r1
+2026-10-04T00:47:04.317Z SPAWN pid=23952 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:06.483Z EXIT pid=23952 code=0 signal=null after=2173ms
+2026-10-04T00:47:06.485Z RUN_END R0-exec160-r1
+2026-10-04T00:47:07.988Z RUN_START R0-exec160-r2
+2026-10-04T00:47:07.995Z SPAWN pid=33000 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:09.303Z EXIT pid=33000 code=0 signal=null after=1314ms
+2026-10-04T00:47:09.305Z RUN_END R0-exec160-r2
+2026-10-04T00:47:10.810Z RUN_START R0-exec160-r3
+2026-10-04T00:47:10.819Z SPAWN pid=29532 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:12.324Z EXIT pid=29532 code=0 signal=null after=1512ms
+2026-10-04T00:47:12.325Z RUN_END R0-exec160-r3
+2026-10-04T00:47:13.828Z RUN_START R0-app155-r1
+2026-10-04T00:47:13.837Z SPAWN pid=68460 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app155-r1\\steps.json"]
+2026-10-04T00:47:17.221Z EXIT pid=68460 code=0 signal=null after=3390ms
+2026-10-04T00:47:17.222Z RUN_END R0-app155-r1
+2026-10-04T00:47:18.727Z RUN_START R0-app155-r2
+2026-10-04T00:47:18.741Z SPAWN pid=87144 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app155-r2\\steps.json"]
+2026-10-04T00:47:22.513Z EXIT pid=87144 code=0 signal=null after=3782ms
+2026-10-04T00:47:22.515Z RUN_END R0-app155-r2
+2026-10-04T00:47:24.021Z RUN_START R0-app155-r3
+2026-10-04T00:47:24.034Z SPAWN pid=620 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app155-r3\\steps.json"]
+2026-10-04T00:47:27.627Z EXIT pid=620 code=0 signal=null after=3602ms
+2026-10-04T00:47:27.629Z RUN_END R0-app155-r3
+2026-10-04T00:47:29.136Z RUN_START R0-app160-r1
+2026-10-04T00:47:29.150Z SPAWN pid=85912 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app160-r1\\steps.json"]
+2026-10-04T00:47:33.396Z EXIT pid=85912 code=0 signal=null after=4255ms
+2026-10-04T00:47:33.397Z RUN_END R0-app160-r1
+2026-10-04T00:47:34.902Z RUN_START R0-app160-r2
+2026-10-04T00:47:34.912Z SPAWN pid=21096 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app160-r2\\steps.json"]
+2026-10-04T00:47:38.253Z EXIT pid=21096 code=0 signal=null after=3348ms
+2026-10-04T00:47:38.254Z RUN_END R0-app160-r2
+2026-10-04T00:47:39.760Z RUN_START R0-app160-r3
+2026-10-04T00:47:39.797Z SPAWN pid=48692 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R0-app160-r3\\steps.json"]
+2026-10-04T00:47:43.270Z EXIT pid=48692 code=0 signal=null after=3505ms
+2026-10-04T00:47:43.271Z RUN_END R0-app160-r3
+2026-10-04T00:47:44.776Z RUN_START R3-exec155-r1
+2026-10-04T00:47:44.785Z SPAWN pid=26800 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:51.174Z EXIT pid=26800 code=0 signal=null after=6397ms
+2026-10-04T00:47:51.176Z RUN_END R3-exec155-r1
+2026-10-04T00:47:52.693Z RUN_START R3-exec155-r2
+2026-10-04T00:47:52.742Z SPAWN pid=4900 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:47:59.434Z EXIT pid=4900 code=0 signal=null after=6737ms
+2026-10-04T00:47:59.436Z RUN_END R3-exec155-r2
+2026-10-04T00:48:01.532Z RUN_START R3-exec155-r3
+2026-10-04T00:48:01.837Z SPAWN pid=64808 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:48:07.501Z EXIT pid=64808 code=0 signal=null after=5678ms
+2026-10-04T00:48:07.503Z RUN_END R3-exec155-r3
+2026-10-04T00:48:09.037Z RUN_START R3-exec160-r1
+2026-10-04T00:48:09.068Z SPAWN pid=22716 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:48:15.973Z EXIT pid=22716 code=0 signal=null after=6935ms
+2026-10-04T00:48:15.975Z RUN_END R3-exec160-r1
+2026-10-04T00:48:17.482Z RUN_START R3-exec160-r2
+2026-10-04T00:48:17.494Z SPAWN pid=83096 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:48:25.504Z EXIT pid=83096 code=0 signal=null after=8020ms
+2026-10-04T00:48:25.506Z RUN_END R3-exec160-r2
+2026-10-04T00:48:27.010Z RUN_START R3-exec160-r3
+2026-10-04T00:48:27.020Z SPAWN pid=85108 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:48:35.931Z EXIT pid=85108 code=0 signal=null after=8918ms
+2026-10-04T00:48:35.933Z RUN_END R3-exec160-r3
+2026-10-04T00:48:37.442Z RUN_START R3-app155-r1
+2026-10-04T00:48:37.475Z SPAWN pid=70288 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app155-r1\\steps.json"]
+2026-10-04T00:48:51.489Z EXIT pid=70288 code=0 signal=null after=14042ms
+2026-10-04T00:48:51.490Z RUN_END R3-app155-r1
+2026-10-04T00:48:52.994Z RUN_START R3-app155-r2
+2026-10-04T00:48:53.009Z SPAWN pid=79364 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app155-r2\\steps.json"]
+2026-10-04T00:49:02.885Z EXIT pid=79364 code=0 signal=null after=9887ms
+2026-10-04T00:49:02.887Z RUN_END R3-app155-r2
+2026-10-04T00:49:04.391Z RUN_START R3-app155-r3
+2026-10-04T00:49:04.406Z SPAWN pid=82572 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app155-r3\\steps.json"]
+2026-10-04T00:49:14.061Z EXIT pid=82572 code=0 signal=null after=9665ms
+2026-10-04T00:49:14.062Z RUN_END R3-app155-r3
+2026-10-04T00:49:15.567Z RUN_START R3-app160-r1
+2026-10-04T00:49:15.577Z SPAWN pid=79184 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app160-r1\\steps.json"]
+2026-10-04T00:49:21.822Z EXIT pid=79184 code=0 signal=null after=6251ms
+2026-10-04T00:49:21.823Z RUN_END R3-app160-r1
+2026-10-04T00:49:23.328Z RUN_START R3-app160-r2
+2026-10-04T00:49:23.344Z SPAWN pid=105984 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app160-r2\\steps.json"]
+2026-10-04T00:49:29.863Z EXIT pid=105984 code=0 signal=null after=6530ms
+2026-10-04T00:49:29.864Z RUN_END R3-app160-r2
+2026-10-04T00:49:31.368Z RUN_START R3-app160-r3
+2026-10-04T00:49:31.403Z SPAWN pid=79556 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\R3-app160-r3\\steps.json"]
+2026-10-04T00:49:37.888Z EXIT pid=79556 code=0 signal=null after=6515ms
+2026-10-04T00:49:37.890Z RUN_END R3-app160-r3
+2026-10-04T00:49:39.395Z RUN_START RX-exec155-r1
+2026-10-04T00:49:39.404Z SPAWN pid=93132 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:40.145Z EXIT pid=93132 code=1 signal=null after=749ms
+2026-10-04T00:49:40.148Z RUN_END RX-exec155-r1
+2026-10-04T00:49:41.652Z RUN_START RX-exec155-r2
+2026-10-04T00:49:41.662Z SPAWN pid=11484 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:42.940Z EXIT pid=11484 code=1 signal=null after=1286ms
+2026-10-04T00:49:42.941Z RUN_END RX-exec155-r2
+2026-10-04T00:49:44.446Z RUN_START RX-exec155-r3
+2026-10-04T00:49:44.455Z SPAWN pid=26960 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:45.233Z EXIT pid=26960 code=1 signal=null after=785ms
+2026-10-04T00:49:45.235Z RUN_END RX-exec155-r3
+2026-10-04T00:49:46.738Z RUN_START RX-exec160-r1
+2026-10-04T00:49:46.748Z SPAWN pid=66936 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:47.524Z EXIT pid=66936 code=1 signal=null after=784ms
+2026-10-04T00:49:47.525Z RUN_END RX-exec160-r1
+2026-10-04T00:49:49.030Z RUN_START RX-exec160-r2
+2026-10-04T00:49:49.055Z SPAWN pid=82056 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:49.919Z EXIT pid=82056 code=1 signal=null after=887ms
+2026-10-04T00:49:49.921Z RUN_END RX-exec160-r2
+2026-10-04T00:49:51.427Z RUN_START RX-exec160-r3
+2026-10-04T00:49:51.435Z SPAWN pid=81900 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:49:52.234Z EXIT pid=81900 code=1 signal=null after=806ms
+2026-10-04T00:49:52.236Z RUN_END RX-exec160-r3
+2026-10-04T00:49:53.741Z RUN_START RX-app155-r1
+2026-10-04T00:49:53.752Z SPAWN pid=44952 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app155-r1\\steps.json"]
+2026-10-04T00:53:56.927Z EXIT pid=44952 code=0 signal=null after=243182ms
+2026-10-04T00:53:56.929Z RUN_END RX-app155-r1
+2026-10-04T00:53:58.472Z RUN_START RX-app155-r2
+2026-10-04T00:53:58.507Z SPAWN pid=37616 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app155-r2\\steps.json"]
+2026-10-04T00:54:02.082Z EXIT pid=37616 code=0 signal=null after=3590ms
+2026-10-04T00:54:02.083Z RUN_END RX-app155-r2
+2026-10-04T00:54:03.587Z RUN_START RX-app155-r3
+2026-10-04T00:54:03.603Z SPAWN pid=103316 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app155-r3\\steps.json"]
+2026-10-04T00:54:08.878Z EXIT pid=103316 code=0 signal=null after=5286ms
+2026-10-04T00:54:08.879Z RUN_END RX-app155-r3
+2026-10-04T00:54:10.384Z RUN_START RX-app160-r1
+2026-10-04T00:54:10.402Z SPAWN pid=105388 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app160-r1\\steps.json"]
+2026-10-04T00:54:20.314Z EXIT pid=105388 code=0 signal=null after=9926ms
+2026-10-04T00:54:20.315Z RUN_END RX-app160-r1
+2026-10-04T00:54:21.823Z RUN_START RX-app160-r2
+2026-10-04T00:54:21.855Z SPAWN pid=74656 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app160-r2\\steps.json"]
+2026-10-04T00:54:33.925Z EXIT pid=74656 code=0 signal=null after=12095ms
+2026-10-04T00:54:33.944Z RUN_END RX-app160-r2
+2026-10-04T00:54:35.470Z RUN_START RX-app160-r3
+2026-10-04T00:54:36.514Z SPAWN pid=94600 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RX-app160-r3\\steps.json"]
+2026-10-04T00:54:48.466Z EXIT pid=94600 code=0 signal=null after=12961ms
+2026-10-04T00:54:48.468Z RUN_END RX-app160-r3
+2026-10-04T00:54:49.973Z RUN_START RT-exec155-r1
+2026-10-04T00:54:49.982Z SPAWN pid=76152 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:55:21.073Z EXIT pid=76152 code=1 signal=null after=31099ms
+2026-10-04T00:55:21.075Z RUN_END RT-exec155-r1
+2026-10-04T00:55:22.578Z RUN_START RT-exec155-r2
+2026-10-04T00:55:22.587Z SPAWN pid=85140 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:55:53.250Z EXIT pid=85140 code=1 signal=null after=30670ms
+2026-10-04T00:55:53.252Z RUN_END RT-exec155-r2
+2026-10-04T00:55:54.757Z RUN_START RT-exec155-r3
+2026-10-04T00:55:54.764Z SPAWN pid=32536 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex155\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:56:25.437Z EXIT pid=32536 code=1 signal=null after=30678ms
+2026-10-04T00:56:25.438Z RUN_END RT-exec155-r3
+2026-10-04T00:56:26.943Z RUN_START RT-exec160-r1
+2026-10-04T00:56:26.950Z SPAWN pid=61372 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:56:57.706Z EXIT pid=61372 code=1 signal=null after=30761ms
+2026-10-04T00:56:57.709Z RUN_END RT-exec160-r1
+2026-10-04T00:56:59.215Z RUN_START RT-exec160-r2
+2026-10-04T00:56:59.221Z SPAWN pid=80664 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:57:29.988Z EXIT pid=80664 code=1 signal=null after=30772ms
+2026-10-04T00:57:29.990Z RUN_END RT-exec160-r2
+2026-10-04T00:57:31.499Z RUN_START RT-exec160-r3
+2026-10-04T00:57:31.506Z SPAWN pid=72084 C:\Source\SixFive7\BrowserAI\.work\q369\bin\codex160\x86_64-pc-windows-msvc\bin\codex.exe ["exec","--json","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","-C","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj","Use the browserai tools."]
+2026-10-04T00:58:02.939Z EXIT pid=72084 code=1 signal=null after=31439ms
+2026-10-04T00:58:02.941Z RUN_END RT-exec160-r3
+2026-10-04T00:58:04.447Z RUN_START RT-app155-r1
+2026-10-04T00:58:04.476Z SPAWN pid=6496 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app155-r1\\steps.json"]
+2026-10-04T00:59:07.554Z EXIT pid=6496 code=0 signal=null after=63103ms
+2026-10-04T00:59:07.555Z RUN_END RT-app155-r1
+2026-10-04T00:59:09.059Z RUN_START RT-app155-r2
+2026-10-04T00:59:09.068Z SPAWN pid=91708 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app155-r2\\steps.json"]
+2026-10-04T01:00:11.772Z EXIT pid=91708 code=0 signal=null after=62710ms
+2026-10-04T01:00:11.773Z RUN_END RT-app155-r2
+2026-10-04T01:00:13.277Z RUN_START RT-app155-r3
+2026-10-04T01:00:13.288Z SPAWN pid=14880 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app155-r3\\steps.json"]
+2026-10-04T01:01:15.964Z EXIT pid=14880 code=0 signal=null after=62684ms
+2026-10-04T01:01:15.965Z RUN_END RT-app155-r3
+2026-10-04T01:01:17.468Z RUN_START RT-app160-r1
+2026-10-04T01:01:17.482Z SPAWN pid=98708 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app160-r1\\steps.json"]
+2026-10-04T01:02:20.245Z EXIT pid=98708 code=0 signal=null after=62771ms
+2026-10-04T01:02:20.246Z RUN_END RT-app160-r1
+2026-10-04T01:02:21.751Z RUN_START RT-app160-r2
+2026-10-04T01:02:21.764Z SPAWN pid=64692 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app160-r2\\steps.json"]
+2026-10-04T01:03:25.443Z EXIT pid=64692 code=0 signal=null after=63688ms
+2026-10-04T01:03:25.444Z RUN_END RT-app160-r2
+2026-10-04T01:03:26.947Z RUN_START RT-app160-r3
+2026-10-04T01:03:26.957Z SPAWN pid=103888 C:\Program Files\nodejs\node.exe ["C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\appdrv.js","C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cxC\\RT-app160-r3\\steps.json"]
+2026-10-04T01:04:29.666Z EXIT pid=103888 code=0 signal=null after=62715ms
+2026-10-04T01:04:29.667Z RUN_END RT-app160-r3
+2026-10-04T01:04:31.172Z BATCH_DONE

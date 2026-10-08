@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Takes the suite lock by the mkdir protocol in RULES.txt, trying once a minute.
+L=/c/Source/SixFive7/BrowserAI/.work/locks/suite
+for i in $(seq 1 600); do
+  if mkdir "$L" 2>/dev/null; then
+    {
+      echo "lane: onebinary-measure"
+      echo "started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      echo "running: one-binary measurement 2: a test pack (BrowserAI.app.test 1.1.1-alpha.0.197 from origin/next e30380ac) installed silently into a scratch root under %LOCALAPPDATA%\BrowserAI-test-scratch the way RealInstallerTests does, its own logon task run by the front, headless Chromium sessions on a local page through the real Task Scheduler with sandboxed Claude Code 2.1.288 and codex 0.160.0; uninstalled at the end"
+    } > "$L/owner.txt"
+    echo "ACQUIRED $(date -u +%H:%M:%SZ) after $i tries"
+    exit 0
+  fi
+  sleep 60
+done
+echo "GAVE UP $(date -u +%H:%M:%SZ)"
+exit 1

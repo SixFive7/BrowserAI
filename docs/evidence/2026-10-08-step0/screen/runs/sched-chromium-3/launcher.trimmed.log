@@ -1,0 +1,73 @@
+pre+3 run sched-chromium-3 utc=2026-10-08T14:17:12.9889012Z
+pre+7 self pid=73216 session=1 user=%USERNAME% parent pid=2984 parent image=(unreadable, error 5)
+pre+8 self startupinfo flags=0x80 showWindow=0 winsta=WinSta0 desktop=Default
+pre+8 SPI foregroundLockTimeout=2147483647 ms foregroundFlashCount=7
+pre+23 hidden window 0x10B0B38 visible=False shell hook registered=True message=0xC029
+pre+28 win event hooks: True,True,True
+pre+30 FOREGROUND BEFORE: [hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe]
+pre+31 FOCUS BEFORE active=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focus=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focusIsBrowser=False
+t=0 LAUNCHED pid=34440 exe=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe args=--user-data-dir="C:\Source\SixFive7\BrowserAI\.work\step0-screen\runs\sched-chromium-3\profile" --no-first-run --no-default-browser-check about:blank startupinfo=STARTF_USESHOWWINDOW+SW_SHOWDEFAULT
+t=47 job gained pid 76540 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=47 shell hook code 0x10 -> [hwnd=0x1341408 pid=76540 tid=3176 class='crashpad_SessionEndWatcher' title='' visible=False minimized=False image=chrome.exe] browser=True
+t=122 shell hook code 0x10 -> [hwnd=0x72029C pid=34440 tid=88160 class='Chrome_WidgetWin_0' title='' visible=False minimized=False image=chrome.exe] browser=True
+t=135 shell hook code 0x10 -> [hwnd=0x13715B2 pid=34440 tid=88160 class='Chrome_StatusTrayWindow' title='' visible=False minimized=False image=chrome.exe] browser=True
+t=179 job gained pid 65248 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=180 job gained pid 12752 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=221 shell hook code 0x10 -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='' visible=False minimized=False image=chrome.exe] browser=True
+t=278 shell hook REDRAW -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=False minimized=False image=chrome.exe] browser=True
+t=301 job gained pid 100140 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=301 job gained pid 70740 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=301 job gained pid 92748 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=316 shell hook WINDOWCREATED -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=chrome.exe] browser=True
+t=318 event SHOW top-level -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=chrome.exe]
+t=319 event FOREGROUND -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=chrome.exe] browser=True
+t=364 shell hook WINDOWACTIVATED -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=chrome.exe] browser=True
+t=428 job gained pid 31212 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=440 shell hook REDRAW -> [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] browser=True
+t=489 job gained pid 100420 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=552 job gained pid 39332 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=1053 SAMPLE 1s FOREGROUND [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] browser=True sameAsBefore=False
+t=1053 SAMPLE 1s FOCUS active=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focus=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focusIsBrowser=True
+t=1061 SAMPLE 1s browser top-level windows=10 visible=1
+t=1061 SAMPLE 1s   visible [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] rect=(10,10)-(1915,2102) style=0x16CF0000 exstyle=0x200100
+t=1066 SAMPLE 1s MAIN [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] zIndex=56 beforeForegroundZIndex=64 RELATION=ABOVE visibleWindowsBetween=0
+t=2427 job gained pid 23360 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=2552 job gained pid 73440 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=2616 job gained pid 42272 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=2741 job gained pid 45444 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=2802 job gained pid 39316 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=2863 job gained pid 71584 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=3052 job gained pid 6912 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\chrome-win64\chrome.exe
+t=3052 SAMPLE 3s FOREGROUND [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] browser=True sameAsBefore=False
+t=3052 SAMPLE 3s FOCUS active=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focus=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focusIsBrowser=True
+t=3053 SAMPLE 3s browser top-level windows=11 visible=1
+t=3053 SAMPLE 3s   visible [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] rect=(10,10)-(1915,2102) style=0x16CF0000 exstyle=0x200100
+t=3054 SAMPLE 3s MAIN [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] zIndex=57 beforeForegroundZIndex=65 RELATION=ABOVE visibleWindowsBetween=0
+t=6051 SAMPLE 6s FOREGROUND [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] browser=True sameAsBefore=False
+t=6051 SAMPLE 6s FOCUS active=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focus=[hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] focusIsBrowser=True
+t=6052 SAMPLE 6s browser top-level windows=11 visible=1
+t=6052 SAMPLE 6s   visible [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] rect=(10,10)-(1915,2102) style=0x16CF0000 exstyle=0x200100
+t=6052 SAMPLE 6s MAIN [hwnd=0xE41ACA pid=34440 tid=88160 class='Chrome_WidgetWin_1' title='about:blank – Google Chrome for Testing' visible=True minimized=False image=chrome.exe] zIndex=57 beforeForegroundZIndex=65 RELATION=ABOVE visibleWindowsBetween=0
+t=8055 END job holds 12 process(es): 34440,76540,12752,65248,92748,100140,70740,31212,100420,39332,73440,42272; terminating the job it created
+t=8057 END TerminateJobObject=True active processes=0 after 0 ms
+t=8278 END pid 34440 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 76540 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 65248 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 12752 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 100140 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 70740 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 92748 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 31212 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 100420 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 39332 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 23360 exited=True (wait result 0x0) exitCode=0x0 after 221 ms
+t=8278 END pid 73440 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 42272 exited=True (wait result 0x0) exitCode=0xE0D after 221 ms
+t=8278 END pid 45444 exited=True (wait result 0x0) exitCode=0x0 after 221 ms
+t=8278 END pid 39316 exited=True (wait result 0x0) exitCode=0x0 after 221 ms
+t=8278 END pid 71584 exited=True (wait result 0x0) exitCode=0x0 after 221 ms
+t=8278 END pid 6912 exited=True (wait result 0x0) exitCode=0x0 after 221 ms
+t=8279 END browser top-level windows left=0
+t=8279 shell hook WINDOWACTIVATED -> [hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] browser=False
+t=8287 cleanup done; owned pids=34440,76540,65248,12752,100140,70740,92748,31212,100420,39332,23360,73440,42272,45444,39316,71584,6912
+t=8287 DONE exit=0

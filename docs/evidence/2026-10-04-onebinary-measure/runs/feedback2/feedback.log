@@ -1,0 +1,7 @@
+49329179.327	2026-10-04T01:48:55.3738614Z	70328	feedback	BEGIN	exe=bin\winexe\McpStubWin.exe appStarting=0x10019 arrow=0x10003 desktop=Default
+49335185.685	2026-10-04T01:49:01.3795404Z	70328	feedback	RESULT	rep=1 variant=idle flags=0x0 pid=-1 ticks=313 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=313 other=0 readFailures=0 shapes=ARROW childExit=-
+49342752.264	2026-10-04T01:49:08.9461049Z	70328	feedback	RESULT	rep=1 variant=default flags=0x100 pid=66184 ticks=375 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=375 other=0 readFailures=0 shapes=ARROW childExit=42
+49350261.061	2026-10-04T01:49:16.4549855Z	70328	feedback	RESULT	rep=1 variant=hidden flags=0x101 pid=88268 ticks=478 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=478 other=0 readFailures=0 shapes=ARROW childExit=42
+49357789.213	2026-10-04T01:49:23.9830591Z	70328	feedback	RESULT	rep=1 variant=forceon flags=0x140 pid=92568 ticks=187 appStarting=117 firstAppMs=0 lastAppMs=4072 arrow=70 other=0 readFailures=0 shapes=APPSTARTING,ARROW childExit=42
+49365311.378	2026-10-04T01:49:31.5052251Z	70328	feedback	RESULT	rep=1 variant=forceoff flags=0x180 pid=97236 ticks=511 appStarting=0 firstAppMs=-1 lastAppMs=-1 arrow=511 other=0 readFailures=0 shapes=ARROW childExit=42
+49366811.911	2026-10-04T01:49:33.0057951Z	70328	feedback	END	

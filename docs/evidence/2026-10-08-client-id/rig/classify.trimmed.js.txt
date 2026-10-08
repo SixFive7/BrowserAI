@@ -1,0 +1,115 @@
+// Applies the recommended client test to every run, and an environment-only test beside it, and
+// counts agreement with the arm each run actually was. Also classifies the live command lines
+// read off this machine. Writes runs\all-runs.tsv.
+// usage: node classify.js <batchDir> [<batchDir>...]
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+// CommandLineToArgvW rules: 2n backslashes + quote -> n backslashes, toggle; 2n+1 -> n + literal quote.
+function argv(cmd) {
+  const out = []; let cur = ''; let inQ = false; let any = false; let i = 0;
+  while (i < cmd.length) {
+    const c = cmd[i];
+    if (c === '\\') {
+      let n = 0; while (cmd[i] === '\\') { n++; i++; }
+      if (cmd[i] === '"') { cur += '\\'.repeat(Math.floor(n / 2)); if (n % 2) { cur += '"'; i++; } any = true; }
+      else { cur += '\\'.repeat(n); any = true; }
+      continue;
+    }
+    if (c === '"') { if (inQ && cmd[i + 1] === '"') { cur += '"'; i += 2; continue; } inQ = !inQ; any = true; i++; continue; }
+    if (!inQ && (c === ' ' || c === '\t')) { if (any) { out.push(cur); cur = ''; any = false; } i++; continue; }
+    cur += c; any = true; i++;
+  }
+  if (any) out.push(cur);
+  return out;
+}
+
+const CC_NONINTERACTIVE = (t) => t === '-p' || t === '--print' || t === '--init-only' || /^--(input-format|output-format|sdk-url)(=|$)/.test(t);
+const CODEX_VALUE_OPTS = new Set(['-c', '--config', '--enable', '--disable', '-m', '--model', '-p', '--profile', '-C', '--cd', '-s', '--sandbox', '-a', '--ask-for-approval', '-i', '--image', '--add-dir', '--remote', '--remote-auth-token-env', '--local-provider', '--listen', '--ws-auth', '--code-mode-host']);
+
+/** The recommended test. Returns one of: claude-tui, claude-vscode, claude-print, claude-other-headless:<ep>, codex-exec, codex-app-server, codex-tui-daemon, codex-tui, unknown. */
+function classify(clientName, entrypoint, parentCmd) {
+  const toks = parentCmd ? argv(parentCmd).slice(1) : null;
+  if (clientName === 'claude-code') {
+    if (!toks) return entrypoint === 'cli' ? 'claude-tui' : entrypoint === 'sdk-cli' ? 'claude-print' : entrypoint === 'claude-vscode' ? 'claude-vscode' : `claude-other-headless:${entrypoint}`;
+    if (!toks.some(CC_NONINTERACTIVE)) return 'claude-tui';
+    if (toks.includes('-p') || toks.includes('--print')) return 'claude-print';
+    if (entrypoint === 'claude-vscode') return 'claude-vscode';
+    return `claude-other-headless:${entrypoint}`;
+  }
+  if (clientName === 'codex-mcp-client') {
+    if (!toks) return 'codex-unknown';
+    let sub = null;
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i];
+      if (CODEX_VALUE_OPTS.has(t)) { i++; continue; }
+      if (t.startsWith('-')) continue;
+      sub = t; break;
+    }
+    if (sub === 'exec' || sub === 'e' || sub === 'review') return 'codex-exec';
+    if (sub === 'app-server') return toks.includes('--managed-daemon') ? 'codex-tui-daemon' : 'codex-app-server';
+    return 'codex-tui';
+  }
+  return 'unknown';
+}
+/** The environment-only test, for contrast. */
+function envOnly(clientName, entrypoint) {
+  if (clientName === 'claude-code') return entrypoint === 'cli' ? 'claude-tui' : entrypoint === 'sdk-cli' ? 'claude-print' : entrypoint === 'claude-vscode' ? 'claude-vscode' : `claude-other-headless:${entrypoint}`;
+  if (clientName === 'codex-mcp-client') return 'codex-?';
+  return 'unknown';
+}
+const TRUTH = {
+  tui: 'claude-tui', tuiinh: 'claude-tui', vscode: 'claude-vscode', print: 'claude-print', printpty: 'claude-print', printinh: 'claude-print',
+  cxexec: 'codex-exec', cxapp: 'codex-app-server', cxappdesk: 'codex-app-server', cxtui: 'codex-tui-daemon', cxtuind: 'codex-tui',
+};
+// What the product question needs: does the client start a dead server again by itself?
+const REMEDY = (c) => ({ 'claude-tui': 'reconnect via /mcp', 'claude-vscode': 'none (re-launches)', 'claude-print': 'none (re-launches)', 'codex-exec': 'new conversation', 'codex-app-server': 'new conversation', 'codex-tui-daemon': 'new conversation', 'codex-tui': 'new conversation' }[c] || 'unknown');
+
+const rows = [];
+for (const b of process.argv.slice(2)) {
+  for (const d of fs.readdirSync(b, { withFileTypes: true }).filter((x) => x.isDirectory() && /-r\d+$/.test(x.name))) {
+    const dir = path.join(b, d.name);
+    const files = fs.readdirSync(dir);
+    const listed = files.find((f) => /^idstub-\d+\.listed$/.test(f));
+    if (!listed) { rows.push({ batch: path.basename(b), run: d.name, arm: d.name.replace(/-r\d+$/, ''), error: 'no stub launch' }); continue; }
+    const pid = listed.match(/\d+/)[0];
+    const st = JSON.parse(fs.readFileSync(path.join(dir, `idstub-${pid}.start.json`), 'utf8'));
+    const init = JSON.parse(fs.readFileSync(path.join(dir, `idstub-${pid}.initialize.json`), 'utf8'));
+    const ci = init.params.clientInfo || {};
+    const ep = st.env.CLAUDE_CODE_ENTRYPOINT ?? '(unset)';
+    const par = st.ancestors[0] || {};
+    const arm = d.name.replace(/-r\d+$/, '');
+    const rec = classify(ci.name, ep, par.cmd);
+    const env = envOnly(ci.name, ep);
+    rows.push({
+      batch: path.basename(b), run: d.name, arm, truth: TRUTH[arm], recommended: rec, recOk: rec === TRUTH[arm], envOnly: env, envOk: env === TRUTH[arm],
+      remedyTruth: REMEDY(TRUTH[arm]), remedyRec: REMEDY(rec), remedyEnv: REMEDY(env),
+      clientName: ci.name, clientTitle: ci.title, clientVersion: ci.version, protocolVersion: init.params.protocolVersion,
+      ENTRYPOINT: ep, MCP_CONNECTION_NONBLOCKING: st.env.MCP_CONNECTION_NONBLOCKING ?? '(unset)', CLAUDE_AGENT_SDK_VERSION: st.env.CLAUDE_AGENT_SDK_VERSION ?? '(unset)',
+      VSCODE_CRASH_REPORTER_PROCESS_TYPE: st.env.VSCODE_CRASH_REPORTER_PROCESS_TYPE ?? '(unset)', CLAUDECODE: st.env.CLAUDECODE ?? '(unset)', AI_AGENT: st.env.AI_AGENT ?? '(unset)',
+      envCount: st.envCount, parentImage: (par.image || '').split('\\').pop(), parentArgs: argv(par.cmd || '').slice(1).join(' '),
+      startupFlags: `${st.startupInfo.dwFlags}/${st.startupInfo.wShowWindow}`, job: st.job.summary.replace(/ assigned=.*$/, ''),
+      console: st.console.consoleWindow, cwd: st.cwd,
+    });
+  }
+}
+const cols = Object.keys(rows.find((r) => !r.error) || {});
+const tsv = [cols.join('\t'), ...rows.map((r) => cols.map((c) => String(r[c] ?? '')).join('\t'))].join('\n') + '\n';
+fs.writeFileSync('C:\\Source\\SixFive7\\BrowserAI\\.work\\client-id\\runs\\all-runs.tsv', tsv);
+
+const byArm = new Map();
+for (const r of rows) { const k = r.arm; if (!byArm.has(k)) byArm.set(k, []); byArm.get(k).push(r); }
+console.log('arm\truns\ttruth\trecommended test correct\tenvironment-only correct\tenvironment-only remedy right');
+for (const [arm, rs] of byArm) {
+  console.log(`${arm}\t${rs.length}\t${TRUTH[arm]}\t${rs.filter((r) => r.recOk).length}/${rs.length}\t${rs.filter((r) => r.envOk).length}/${rs.length} (${[...new Set(rs.map((r) => r.envOnly))].join(',')})\t${rs.filter((r) => r.remedyEnv === r.remedyTruth).length}/${rs.length}`);
+}
+const ok = rows.filter((r) => r.recOk).length;
+console.log(`TOTAL recommended ${ok}/${rows.length}; environment-only ${rows.filter((r) => r.envOk).length}/${rows.length}; errors ${rows.filter((r) => r.error).length}`);
+
+// The live command lines read off this machine, classified the same way.
+const live = [
+  ['live VS Code extension session (pid 40232)', 'claude-code', 'claude-vscode', '%USERPROFILE%\\.vscode\\extensions\\anthropic.claude-code-2.1.288-win32-x64\\resources\\native-binary\\claude.exe --output-format stream-json --verbose --input-format stream-json --max-thinking-tokens 31999 --thinking-display summarized --permission-prompt-tool stdio --setting-sources=user,project,local --permission-mode bypassPermissions --allow-dangerously-skip-permissions --include-partial-messages --debug --debug-to-stderr --enable-auth-status --no-chrome --replay-user-messages'],
+  ['live Codex desktop app-server (pid 15308)', 'codex-mcp-client', '(unset)', '%USERPROFILE%\\AppData\\Local\\OpenAI\\Codex\\bin\\be3fd7e5c1969ff6\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true'],
+];
+for (const [label, name, ep, cmd] of live) console.log(`LIVE ${label}: ${classify(name, ep, cmd)}`);

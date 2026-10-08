@@ -1,0 +1,18 @@
+=== publish server start 2026-10-04T02:41:27.5647086+02:00
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.Core\BrowserAI.Core.csproj (in 343 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\BrowserAI.csproj (in 343 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\
+=== publish server exit 0 2026-10-04T02:42:38.6209532+02:00
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.App\BrowserAI.App.csproj (in 324 ms).
+  1 of 2 projects are up-to-date for restore.
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\BrowserAI.dll
+  Generating native code
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish\
+=== publish app exit 0 2026-10-04T02:43:03.5704247+02:00
+=== PUBLISH-DONE

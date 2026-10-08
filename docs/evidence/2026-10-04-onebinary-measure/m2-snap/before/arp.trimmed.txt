@@ -1,0 +1,16 @@
+BrowserAI.app:
+DisplayIcon=[String]%USERPROFILE%\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+DisplayName=[String]BrowserAI
+DisplayVersion=[String]1.1.0
+EstimatedSize=[DWord]140351
+InstallDate=[String]20260924
+InstallLocation=[String]%USERPROFILE%\AppData\Local\BrowserAI.app
+Language=[DWord]1033
+NoModify=[DWord]1
+NoRepair=[DWord]1
+Publisher=[String]Jori Huisman
+QuietUninstallString=[String]"%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall --silent
+UninstallString=[String]"%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall
+
+BrowserAI.app.test:
+<absent>

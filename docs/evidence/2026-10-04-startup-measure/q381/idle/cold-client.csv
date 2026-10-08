@@ -1,0 +1,8 @@
+seq,utc,label,mode,verb,bound_ms,elapsed_ms,wall_ms,outcome,why
+1,2026-10-04T01:37:26.2633080Z,cold-idle,client,recheck,30000,9.053,10.434,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:38:27.9734791Z,cold-idle,client,host,30000,8.013,9.353,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:39:29.6765808Z,cold-idle,client,recheck,30000,7.429,8.609,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:40:31.3754036Z,cold-idle,client,host,30000,8.246,9.482,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:41:33.0826532Z,cold-idle,client,recheck,30000,7.873,9.187,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:42:34.9652659Z,cold-idle,client,host,30000,8.640,9.995,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."
+1,2026-10-04T01:43:36.7058775Z,cold-idle,client,recheck,30000,7.591,8.813,NoCoordinator,"No pipe named '\\.\pipe\BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381' exists."

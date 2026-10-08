@@ -1,0 +1,11 @@
+direct-chromium-1 : Process.Start from this shell pid=103352 start=2026-10-08T16:16:41.1951065+02:00 exited=True exit=0 ; log complete=True after 8573 ms
+sched-chromium-2 : task.Run('sched-chromium-2') instance={6E002283-111A-464C-B226-8156E54036F1} ; log complete=True after 8586 ms
+direct-chromium-2 : Process.Start from this shell pid=43168 start=2026-10-08T16:17:02.3680812+02:00 exited=True exit=0 ; log complete=True after 8543 ms
+sched-chromium-3 : task.Run('sched-chromium-3') instance={B840A06E-BE48-46A9-A5B4-641B006204BB} ; log complete=True after 8535 ms
+direct-chromium-3 : Process.Start from this shell pid=89224 start=2026-10-08T16:17:23.4651641+02:00 exited=True exit=0 ; log complete=True after 8574 ms
+sched-firefox-1 : task.Run('sched-firefox-1') instance={9144B147-3950-45CB-A83C-79DD8371AFCC} ; log complete=True after 8569 ms
+direct-firefox-1 : Process.Start from this shell pid=70916 start=2026-10-08T16:17:44.6125831+02:00 exited=True exit=0 ; log complete=True after 8284 ms
+sched-firefox-2 : task.Run('sched-firefox-2') instance={42EC5483-7E09-43EF-BE5E-79E1F56E7B5E} ; log complete=True after 8294 ms
+direct-firefox-2 : Process.Start from this shell pid=42276 start=2026-10-08T16:18:05.1943715+02:00 exited=True exit=0 ; log complete=True after 8310 ms
+sched-firefox-3 : task.Run('sched-firefox-3') instance={E37EDF14-2996-4193-A056-CA1B54E2FD5D} ; log complete=True after 8297 ms
+direct-firefox-3 : Process.Start from this shell pid=83980 start=2026-10-08T16:18:25.8052898+02:00 exited=True exit=0 ; log complete=True after 8305 ms

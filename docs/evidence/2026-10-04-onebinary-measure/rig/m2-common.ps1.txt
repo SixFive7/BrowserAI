@@ -1,0 +1,96 @@
+# Shared helpers for the scheduler half of the one-binary measurement (2026-10-04). Read-only
+# except Invoke-Quiet, which runs a program with no window and its output captured.
+$ErrorActionPreference = 'Stop'
+$script:M = 'C:\Source\SixFive7\BrowserAI\.work\onebinary-measure'
+$script:WT = 'C:\Source\SixFive7\BrowserAI\.work\wt\onebinary'
+$script:StateFile = Join-Path $script:M 'm2-state.json'
+
+function Get-CleanEnvironment([hashtable] $Set) {
+    # The current environment without the parent client session's own variables (this shell runs
+    # inside a Claude Code session in VS Code), plus the sandbox variables the suite's arms set.
+    $e = @{}
+    foreach ($kv in [Environment]::GetEnvironmentVariables().GetEnumerator()) {
+        $k = [string]$kv.Key
+        if ($k -match '^(CLAUDE|CLAUDECODE|MCP_|VSCODE_|ELECTRON_|ANTHROPIC_|CODEX|BROWSERAI_)') { continue }
+        $e[$k] = [string]$kv.Value
+    }
+    foreach ($k in $Set.Keys) { $e[$k] = $Set[$k] }
+    return $e
+}
+
+function Invoke-Quiet([string] $Exe, [string[]] $Arguments, [hashtable] $Environment, [int] $TimeoutSeconds = 600) {
+    $psi = [System.Diagnostics.ProcessStartInfo]::new($Exe)
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    foreach ($a in $Arguments) { $psi.ArgumentList.Add($a) }
+    if ($Environment) {
+        $psi.Environment.Clear()
+        foreach ($k in $Environment.Keys) { $psi.Environment[$k] = $Environment[$k] }
+    }
+    $p = [System.Diagnostics.Process]::Start($psi)
+    $o = $p.StandardOutput.ReadToEndAsync()
+    $er = $p.StandardError.ReadToEndAsync()
+    if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { throw "$Exe did not exit within $TimeoutSeconds s (pid $($p.Id))" }
+    $p.WaitForExit()
+    [pscustomobject]@{ ExitCode = $p.ExitCode; Pid = $p.Id; StdOut = $o.Result; StdErr = $er.Result }
+}
+
+function Get-RegValues([string] $Path) {
+    $k = Get-Item -LiteralPath $Path -ErrorAction SilentlyContinue
+    if (-not $k) { return '<absent>' }
+    ($k.GetValueNames() | Sort-Object | ForEach-Object { "$_=[$($k.GetValueKind($_))]$($k.GetValue($_, $null, 'DoNotExpandEnvironmentNames'))" }) -join "`n"
+}
+
+function Get-UserPathRaw {
+    $k = Get-Item -LiteralPath 'HKCU:\Environment'
+    $v = $k.GetValue('Path', $null, 'DoNotExpandEnvironmentNames')
+    $kind = $k.GetValueKind('Path')
+    $sha = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::Unicode.GetBytes([string]$v)))
+    [pscustomobject]@{ Kind = "$kind"; Length = ([string]$v).Length; Sha256 = $sha; BrowserAIEntries = (([string]$v) -split ';' | Where-Object { $_ -match 'BrowserAI' }) -join ' | ' }
+}
+
+function Get-StartMenuShortcuts {
+    $dir = Join-Path ([Environment]::GetFolderPath('Programs')) ''
+    Get-ChildItem -LiteralPath $dir -Filter 'BrowserAI*.lnk' -File -ErrorAction SilentlyContinue | ForEach-Object {
+        "$($_.Name)`t$([Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.IO.File]::ReadAllBytes($_.FullName))))"
+    }
+}
+
+function Get-BrowserAiTasks {
+    # Every scheduled task whose name starts with BrowserAI, with the SHA-256 of its stored definition.
+    $svc = New-Object -ComObject 'Schedule.Service'
+    $svc.Connect()
+    $root = $svc.GetFolder('\')
+    $out = @()
+    foreach ($t in @($root.GetTasks(1))) {
+        if ($t.Name -like 'BrowserAI*') {
+            $xml = $t.Xml
+            $out += [pscustomobject]@{ Name = $t.Name; State = $t.State; LastRunTime = $t.LastRunTime; LastTaskResult = $t.LastTaskResult
+                Sha256 = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::Unicode.GetBytes($xml))) }
+        }
+    }
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($svc) | Out-Null
+    $out
+}
+
+function Get-AllTaskNames {
+    $svc = New-Object -ComObject 'Schedule.Service'
+    $svc.Connect()
+    $names = New-Object System.Collections.Generic.List[string]
+    function Walk($folder) {
+        foreach ($t in @($folder.GetTasks(1))) { $names.Add($t.Path) }
+        foreach ($f in @($folder.GetFolders(0))) { Walk $f }
+    }
+    Walk ($svc.GetFolder('\'))
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($svc) | Out-Null
+    $names | Sort-Object
+}
+
+function Get-ProcessesUnder([string] $Root) {
+    # Observation only: processes whose image path is under a root, by pid and creation time.
+    $r = $Root.TrimEnd('\') + '\'
+    Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($r, [StringComparison]::OrdinalIgnoreCase) } |
+        ForEach-Object { "$($_.ProcessId)`t$($_.CreationDate.ToUniversalTime().ToString('o'))`t$($_.ExecutablePath)`t$($_.CommandLine)" }
+}

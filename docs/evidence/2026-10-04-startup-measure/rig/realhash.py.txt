@@ -1,0 +1,28 @@
+# Read-only fingerprints of the real client configurations, BEFORE and AFTER the measurements.
+import hashlib, json, os, sys, datetime
+tag = sys.argv[1]
+home = os.path.expanduser('~')
+out = []
+def h(b): return hashlib.sha256(b).hexdigest()[:16].upper()
+cj = os.path.join(home, '.claude.json')
+d = json.load(open(cj, encoding='utf-8'))
+out.append(('claude.json mcpServers (top level)', h(json.dumps(d.get('mcpServers', {}), sort_keys=True).encode())))
+proj = {k: v.get('mcpServers', {}) for k, v in d.get('projects', {}).items() if isinstance(v, dict)}
+out.append(('claude.json mcpServers (per project)', h(json.dumps(proj, sort_keys=True).encode())))
+cx = os.path.join(home, '.codex', 'config.toml')
+b = open(cx, 'rb').read()
+out.append(('codex config.toml (whole file)', h(b)))
+out.append(('codex config.toml mtime', datetime.datetime.utcfromtimestamp(os.path.getmtime(cx)).isoformat() + 'Z'))
+inst = os.path.join(home, 'AppData', 'Local', 'BrowserAI.app')
+names = []
+for root, dirs, files in os.walk(inst):
+    for f in files:
+        p = os.path.join(root, f)
+        try: names.append((os.path.relpath(p, inst), os.path.getsize(p), int(os.path.getmtime(p))))
+        except OSError: pass
+names.sort()
+out.append(('installed BrowserAI.app tree (names, sizes, mtimes)', h(json.dumps(names).encode()) + f' ({len(names)} files)'))
+with open(os.path.join(os.path.dirname(__file__), '..', 'isolation', 'real-config-hashes.tsv'), 'a', encoding='utf-8') as f:
+    for k, v in out:
+        f.write(f'{datetime.datetime.utcnow().isoformat()}Z\t{tag}\t{k}\t{v}\n')
+for k, v in out: print(tag, k, v)

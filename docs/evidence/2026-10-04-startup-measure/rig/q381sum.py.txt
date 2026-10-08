@@ -1,0 +1,26 @@
+# Q381: latency distributions of the coordinator call, from the probe CSVs and from the published
+# app's own hand-over log lines ("asked it to '<verb>' in N ms").
+import csv, re, sys, glob, os
+from collections import defaultdict
+def pct(a, q):
+    a = sorted(a); return a[min(len(a)-1, int(q*len(a)))] if a else float('nan')
+def summarize(label, vals):
+    vals = [v for v in vals if v == v]
+    if not vals: print(f'{label:58s} n=0'); return
+    over = sum(1 for v in vals if v > 500)
+    print(f'{label:58s} n={len(vals):5d} p50={pct(vals,.5):8.2f} p90={pct(vals,.9):8.2f} p99={pct(vals,.99):8.2f} max={max(vals):8.2f} >500ms={over}')
+for d in sys.argv[1:]:
+    print(f'== {d}')
+    groups = defaultdict(list)
+    outcomes = defaultdict(lambda: defaultdict(int))
+    for f in glob.glob(os.path.join(d, '*.csv')):
+        if os.path.basename(f).startswith('second-starts'): continue
+        for r in csv.DictReader(open(f, encoding='utf-8')):
+            key = f"{os.path.basename(f)} {r['label']} {r['mode'].split('-threads')[0]} {r['verb']}"
+            outcomes[key][r['outcome']] += 1
+            if r['outcome'] == 'Answered':
+                groups[key].append(float(r['elapsed_ms']))
+    for k in sorted(groups): summarize(k, groups[k]); 
+    for k in sorted(outcomes):
+        o = dict(outcomes[k])
+        if set(o) != {'Answered'}: print('   outcomes', k, o)

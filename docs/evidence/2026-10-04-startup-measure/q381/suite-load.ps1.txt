@@ -1,0 +1,20 @@
+# Two full suite runs back to back in the measure-startup worktree, as TESTING.md's invocation runs
+# them (detached by the caller, teed to a log), each declaring the drive-letter spelling it forces.
+# Load for the Q381 measurement; the probes stop when this writes the stop file.
+$ErrorActionPreference = 'Continue'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'never'
+$root = 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup'
+$stop = 'C:\Source\SixFive7\BrowserAI\.work\startup-measure\q381\load\stop'
+Set-Location $root
+foreach ($run in @(@{ Tag = 'ms-load-1'; Case = 'upper'; Root = 'C:' + $root.Substring(2) }, @{ Tag = 'ms-load-2'; Case = 'lower'; Root = 'c:' + $root.Substring(2) })) {
+    $log = Join-Path $root ".work\suite\$($run.Tag).log"
+    "=== $($run.Tag) starting $((Get-Date).ToUniversalTime().ToString('o'))" | Out-File -LiteralPath $log -Encoding utf8
+    $env:BROWSERAI_DRIVE_CASE = $run.Case
+    & dotnet test (Join-Path $run.Root 'BrowserAI.slnx') 2>&1 | Tee-Object -FilePath $log -Append
+    Get-Content (Join-Path $root '.work\suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
+    "=== $($run.Tag) done $((Get-Date).ToUniversalTime().ToString('o'))" | Add-Content -LiteralPath $log
+}
+New-Item -ItemType File -Force -Path $stop | Out-Null
+'SUITE-LOAD-DONE'

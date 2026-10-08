@@ -1,0 +1,1 @@
+An inert file. The failed-apply measurement holds it open with no sharing so that renaming current\ fails.

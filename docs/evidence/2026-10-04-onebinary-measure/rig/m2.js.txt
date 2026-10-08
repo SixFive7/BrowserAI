@@ -1,0 +1,233 @@
+// Measurement 2 driver (one-binary measurement, 2026-10-04): the start path through the real
+// Task Scheduler with the real programs, from a sandboxed real client to a test install's front,
+// which finds no coordinator and runs the test install's own logon task.
+// usage: node m2.js <batch> <installRoot> <exit[,exit...]> <reps>
+//   exits: ccExit (claude -p ends normally) | ccKill (claude in the VS Code transport, terminated)
+//          cxExec (codex exec 0.160.0 ends) | cxApp (codex app-server 0.160.0, stdin closed)
+// Needs `ExitRig rootwatch` running on the same install root, writing <batch>-watch\alive.json.
+// Never stops a process: clients end themselves or are ended by the harness that started them.
+'use strict';
+const fs = require('fs');
+const http = require('http');
+const { spawn, spawnSync } = require('child_process');
+
+const [batch, root, exitArg, repsArg] = process.argv.slice(2);
+const M = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure';
+const Q = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const NODE = process.execPath;
+const RIG = `${M}\\rig\\bin\\ExitRig.exe`;
+const CLAUDE = `${Q}\\bin\\cli\\claude.exe`;
+const CODEX = `${Q}\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe`;
+const SERVER = `${root}\\current\\BrowserAI.Server.exe`;
+const OUT = `${M}\\runs\\${batch}`;
+const ALIVE = process.env.M2_WATCH ? `${process.env.M2_WATCH}\\alive.json` : `${M}\\runs\\${batch}-watch\\alive.json`;
+const POLICY = `${OUT}\\policy.json`;
+const FEED = `${M}\\m2-emptyfeed`;
+const PROJ = `${M}\\proj`;
+const CCPORT = 8981, CXPORT = 8982, PAGEPORT = 8983;
+const REAL = { LOCALAPPDATA: process.env.LOCALAPPDATA, APPDATA: process.env.APPDATA, TEMP: process.env.TEMP, TMP: process.env.TMP };
+fs.mkdirSync(OUT, { recursive: true });
+fs.mkdirSync(FEED, { recursive: true });
+fs.writeFileSync(`${FEED}\\releases.win.json`, JSON.stringify({ Assets: [] }));
+const plog = (s) => { const l = `${new Date().toISOString()} ${s}`; fs.appendFileSync(`${OUT}\\progress.log`, l + '\n'); console.log(l); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// What the front gets from the client, beyond the client's own environment: an update feed with
+// nothing in it (a test pack's front would otherwise check the production feed, and Velopack
+// 1.2.161 offers any id's newest package there as a rollback), and the real profile folders the
+// client itself is sandboxed away from, so the front sees what an installed front sees.
+const serverEnv = () => Object.assign({ BROWSERAI_UPDATE_FEED: FEED }, REAL);
+
+function aliveNow() {
+  try { return JSON.parse(fs.readFileSync(ALIVE, 'utf8')); } catch (e) { return { utc: null, alive: [] }; }
+}
+const bg = (a) => a.alive.filter((p) => p.role.startsWith('coordinator') || p.role === 'app' || p.role === 'host' || p.role === 'front');
+
+async function waitNoBackground(limitMs) {
+  const t0 = Date.now();
+  let a = aliveNow();
+  while (bg(a).length > 0 && Date.now() - t0 < limitMs) { await sleep(2000); a = aliveNow(); }
+  return { waitedMs: Date.now() - t0, remaining: bg(a).map((p) => `${p.pid}:${p.role}`) };
+}
+
+const common = () => ({
+  TEMP: `${M}\\tmp`, TMP: `${M}\\tmp`, APPDATA: `${M}\\appdata\\roaming`, LOCALAPPDATA: `${M}\\appdata\\local`,
+  GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1', GIT_CEILING_DIRECTORIES: M, DISABLE_AUTOUPDATER: '1',
+});
+const ccEnv = (run, vsc) => Object.assign(common(), {
+  CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${run}\\codex-unused`,
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${CCPORT}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+}, vsc ? { CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.288', MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1' } : {});
+const cxEnv = (run) => Object.assign(common(), {
+  CODEX_HOME: `${run}\\home`, CLAUDE_CONFIG_DIR: `${run}\\claude-unused`, STUB_KEY: 'not-a-real-key', NO_COLOR: '1',
+  RUST_LOG: 'codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info',
+});
+const seed = () => JSON.stringify({
+  hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: false,
+  customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] }, lastReleaseNotesSeen: '2.1.288',
+  projects: { [PROJ.replace(/\\/g, '/')]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [] } },
+});
+const mcpJson = () => JSON.stringify({ mcpServers: { browserai: { type: 'stdio', command: SERVER, args: [], env: serverEnv() } } });
+const tq = (s) => `'${s}'`;
+const codexToml = () => `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${CXPORT}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+command = ${tq(SERVER)}
+args = []
+env = { ${Object.entries(serverEnv()).map(([k, v]) => `${k} = ${tq(v)}`).join(', ')} }
+
+[projects.${tq(PROJ)}]
+trust_level = "trusted"
+
+[projects.${tq(PROJ.toLowerCase())}]
+trust_level = "trusted"
+`;
+
+const TOOLS = ['browserai_init', 'browser_navigate', 'browser_snapshot', 'browserai_destroy'];
+const scriptA = (sess, url, cc) => [
+  { tool: (cc ? 'mcp__browserai__' : '') + 'browserai_init', input: { directory: sess, purpose: 'One-binary measurement: a headless browser that has to outlive the client that opened it.' } },
+  { tool: (cc ? 'mcp__browserai__' : '') + 'browser_navigate', input: { session: sess, url, why: 'Load the local test page so the browser holds a page when this client ends.' } },
+];
+const scriptB = (sess, cc) => [
+  { tool: (cc ? 'mcp__browserai__' : '') + 'browser_snapshot', input: { session: sess, why: 'Check that the page is still there after the previous client ended.' } },
+  { tool: (cc ? 'mcp__browserai__' : '') + 'browserai_destroy', input: { directory: sess, why: 'The measurement is done; remove the scratch session and its browser.' } },
+];
+const ccArgs = (run, p, prompt) => [...(p ? ['-p'] : []), '--output-format', 'stream-json', '--verbose', ...(p ? [] : ['--input-format', 'stream-json']),
+  '--mcp-config', `${run}\\mcp.json`, '--strict-mcp-config', '--tools', '', '--allowedTools', TOOLS.map((t) => `mcp__browserai__${t}`).join(','),
+  '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet', ...(p ? [prompt] : [])];
+let reqNo = 1;
+const ctl = (request) => JSON.stringify({ type: 'control_request', request_id: `req_${reqNo++}`, request });
+const userMsg = (text) => JSON.stringify({ type: 'user', session_id: '', message: { role: 'user', content: [{ type: 'text', text }] }, parent_tool_use_id: null });
+
+function specFor(kind, run, script) {
+  const base = { name: run.split('\\').pop(), dir: run, cwd: PROJ, maxMs: 240000, settleMs: 20000 };
+  const policy = { path: POLICY, content: JSON.stringify({ logDir: run, namespace: 'mcp__browserai', script }) };
+  if (kind === 'ccP') {
+    return Object.assign(base, { exe: CLAUDE, args: ccArgs(run, true, 'Use the browserai tools as instructed.'), env: ccEnv(run, false), stdin: 'closed',
+      writeFiles: [{ path: `${run}\\cfg\\.claude.json`, content: seed() }, { path: `${run}\\mcp.json`, content: mcpJson() }, policy] });
+  }
+  if (kind === 'ccSkill') {
+    const status = ctl({ subtype: 'mcp_status' }); const sid = JSON.parse(status).request_id;
+    return Object.assign(base, { exe: CLAUDE, args: ccArgs(run, false), env: ccEnv(run, true), stdin: 'pipe',
+      writeFiles: [{ path: `${run}\\cfg\\.claude.json`, content: seed() }, { path: `${run}\\mcp.json`, content: mcpJson() }, policy],
+      steps: [
+        { do: 'send', line: ctl({ subtype: 'initialize' }) }, { do: 'waitFor', pattern: '"type":"control_response"', timeoutMs: 30000 },
+        { do: 'mark', text: 'waiting 20 s for the front to reach a host (the front waits up to 15 s, then serves in-process)' }, { do: 'sleep', ms: 20000 },
+        { do: 'send', line: status }, { do: 'waitFor', pattern: `"request_id":"${sid}"`, timeoutMs: 30000 },
+        { do: 'send', line: userMsg('Use the browserai tools as instructed.') }, { do: 'waitFor', pattern: '"type":"result"', timeoutMs: 120000 },
+        { do: 'sleep', ms: 1000 }, { do: 'mark', text: 'end: the client is terminated (as VS Code closing takes it)' }, { do: 'terminate' },
+      ] });
+  }
+  if (kind === 'cxE') {
+    return Object.assign(base, { exe: CODEX, args: ['exec', '--json', '--skip-git-repo-check', '--dangerously-bypass-approvals-and-sandbox', '-C', PROJ, 'Use the browserai tools as instructed.'],
+      env: cxEnv(run), stdin: 'closed', writeFiles: [{ path: `${run}\\home\\config.toml`, content: codexToml() }, policy] });
+  }
+  // cxA: codex app-server
+  return Object.assign(base, { exe: CODEX, args: ['app-server', '--listen', 'stdio://'], env: cxEnv(run), stdin: 'pipe', autoReplyJsonRpc: true,
+    writeFiles: [{ path: `${run}\\home\\config.toml`, content: codexToml() }, policy],
+    steps: [
+      { do: 'send', line: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"onebinary-probe","title":"onebinary probe","version":"1.0.0"}}}' },
+      { do: 'waitFor', pattern: '"id":1\\b', timeoutMs: 30000 },
+      { do: 'send', line: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'thread/start', params: { cwd: PROJ } }) },
+      { do: 'waitFor', pattern: '"id":2\\b.*?(?:"thread":\\{"id":"(?<THREAD>[^"]+)"|"threadId":"(?<THREAD>[^"]+)"|"thread_id":"(?<THREAD>[^"]+)")', timeoutMs: 60000 },
+      { do: 'waitFor', pattern: '"name":"browserai","status":"(ready|failed)"', timeoutMs: 45000 },
+      { do: 'send', line: '{"jsonrpc":"2.0","id":3,"method":"turn/start","params":{"threadId":"$THREAD","input":[{"type":"text","text":"Use the browserai tools as instructed."}]}}' },
+      { do: 'waitFor', pattern: 'turn/completed', timeoutMs: 120000 },
+      { do: 'sleep', ms: 2000 }, { do: 'mark', text: 'end: close stdin' }, { do: 'closeStdin' },
+    ] });
+}
+
+function runRig(spec) {
+  fs.mkdirSync(spec.dir, { recursive: true });
+  const specPath = `${spec.dir}\\spec.json`;
+  fs.writeFileSync(specPath, JSON.stringify(spec, null, 1));
+  const t0 = new Date().toISOString();
+  const r = spawnSync(RIG, ['run', specPath], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], timeout: 400000 });
+  fs.writeFileSync(`${spec.dir}\\rig.stdout.txt`, (r.stdout || '') + '\n--- stderr ---\n' + (r.stderr || '') + `\nstatus=${r.status} error=${r.error}`);
+  return { startUtc: t0, endUtc: new Date().toISOString(), status: r.status };
+}
+
+function seenOf(run) {
+  try { return fs.readFileSync(`${run}\\model.seen.jsonl`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)); } catch (e) { return []; }
+}
+function resultTexts(seen) {
+  const out = [];
+  for (const s of seen) {
+    for (const t of (s.toolResults || [])) out.push({ is_error: t.is_error, head: t.head });
+    for (const o of (s.outputs || [])) out.push({ head: o.parts.map((p) => p.head).join(' | ') });
+  }
+  return out;
+}
+const offered = (seen, cc) => seen.some((s) => (s.tools || []).some((t) => cc ? String(t).startsWith('mcp__browserai__') : String(t).startsWith('mcp__browserai{')));
+
+(async () => {
+  // The page server is a process of its own: runRig waits synchronously, and a server in this
+  // process would answer nothing while a client runs (the first attempt, batch m2, did exactly that).
+  const page = spawn(NODE, [`${M}\\apistub\\page.js`], { env: Object.assign({}, process.env, { PAGE_PORT: String(PAGEPORT), PAGE_LOG: `${OUT}\\page.log` }), windowsHide: true, stdio: 'ignore' });
+  const stubs = [page,
+    spawn(NODE, [`${M}\\apistub\\ccstub.js`], { env: Object.assign({}, process.env, { STUB_PORT: String(CCPORT), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: OUT }), windowsHide: true, stdio: 'ignore' }),
+    spawn(NODE, [`${M}\\apistub\\cxstub.js`], { env: Object.assign({}, process.env, { STUB_PORT: String(CXPORT), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: OUT }), windowsHide: true, stdio: 'ignore' }),
+  ];
+  plog(`START root=${root} server=${SERVER} stubs=${stubs.map((s) => s.pid).join(',')} page=${PAGEPORT}`);
+  await sleep(1500);
+  const exits = exitArg.split(','), reps = Number(repsArg || 3);
+  try {
+    for (let r = 1; r <= reps; r++) for (const ex of exits) {
+      const name = `${ex}-r${r}`;
+      const dir = `${OUT}\\${name}`;
+      if (fs.existsSync(`${dir}\\summary.json`)) { plog(`SKIP ${name}`); continue; }
+      fs.mkdirSync(dir, { recursive: true });
+      const sum = { run: name, exit: ex };
+      const w = await waitNoBackground(480000);
+      sum.waitForNoBackground = w;
+      sum.backgroundBeforeA = bg(aliveNow()).map((p) => `${p.pid}:${p.role}`);
+      plog(`RUN ${name}: background gone after ${w.waitedMs} ms (remaining: ${w.remaining.join(' ') || 'none'})`);
+      const sess = `${OUT}\\sessions\\${name}`;
+      const url = `http://127.0.0.1:${PAGEPORT}/p/${name}`;
+      const cc = ex.startsWith('cc');
+      const kindA = ex === 'ccExit' ? 'ccP' : ex === 'ccKill' ? 'ccSkill' : ex === 'cxExec' ? 'cxE' : 'cxA';
+      let a = runRig(specFor(kindA, `${dir}\\A`, scriptA(sess, url, cc)));
+      let seenA = seenOf(`${dir}\\A`);
+      sum.A = Object.assign(a, { offeredBrowserAI: offered(seenA, cc), toolCalls: seenA.filter((s) => s.answer === 'tool').map((s) => s.tool), results: resultTexts(seenA) });
+      plog(`  A ${kindA} status=${a.status} offered=${sum.A.offeredBrowserAI} calls=${sum.A.toolCalls.join(',')}`);
+      if (!sum.A.offeredBrowserAI || sum.A.toolCalls.length < 2) {
+        // A client that met a cold host without its tools (the known Codex first-turn hazard): once more, warm.
+        plog(`  A did not get to open the page; one more A against what is now running`);
+        a = runRig(specFor(kindA, `${dir}\\A2`, scriptA(sess, url, cc)));
+        seenA = seenOf(`${dir}\\A2`);
+        sum.A2 = Object.assign(a, { offeredBrowserAI: offered(seenA, cc), toolCalls: seenA.filter((s) => s.answer === 'tool').map((s) => s.tool), results: resultTexts(seenA) });
+        plog(`  A2 ${kindA} status=${a.status} offered=${sum.A2.offeredBrowserAI} calls=${sum.A2.toolCalls.join(',')}`);
+      }
+      await sleep(6000);
+      sum.aliveAfterA = aliveNow();
+      plog(`  after A: ${sum.aliveAfterA.alive.map((p) => `${p.pid}:${p.role}`).join(' ')}`);
+      const kindB = cc ? 'ccP' : 'cxE';
+      const b = runRig(specFor(kindB, `${dir}\\B`, scriptB(sess, cc)));
+      const seenB = seenOf(`${dir}\\B`);
+      sum.B = Object.assign(b, { offeredBrowserAI: offered(seenB, cc), toolCalls: seenB.filter((s) => s.answer === 'tool').map((s) => s.tool), results: resultTexts(seenB) });
+      sum.B.snapshotHasMarker = sum.B.results.some((t) => (t.head || '').includes(`ONEBINARY-PAGE-${name}`));
+      plog(`  B ${kindB} status=${b.status} calls=${sum.B.toolCalls.join(',')} marker=${sum.B.snapshotHasMarker}`);
+      await sleep(3000);
+      sum.aliveAfterB = aliveNow();
+      fs.writeFileSync(`${dir}\\summary.json`, JSON.stringify(sum, null, 1));
+    }
+    const w = await waitNoBackground(480000);
+    plog(`END background gone after ${w.waitedMs} ms (remaining: ${w.remaining.join(' ') || 'none'})`);
+  } finally {
+    for (const s of stubs) { try { s.kill(); } catch (e) { /* gone */ } }
+    plog('DONE');
+  }
+})();

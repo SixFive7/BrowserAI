@@ -1,0 +1,97 @@
+final proof, 2026-10-08T14:40:14.4792043Z
+== positive control
+2026-10-08T14:40:14.6352555Z registered the positive control BrowserAI-measure-20261008T1411-control, disabled and never run
+2026-10-08T14:40:14.6499858Z COM GetTasks(TASK_ENUM_HIDDEN) in \ with prefix 'BrowserAI-measure-': 1
+  BrowserAI-measure-20261008T1411-control
+== with the control registered (each listing must show exactly the control)
+2026-10-08T14:40:14.7936543Z COM GetTasks(TASK_ENUM_HIDDEN) in \ with prefix 'BrowserAI-measure-': 1
+  BrowserAI-measure-20261008T1411-control
+Get-ScheduledTask, every folder, TaskName like 'BrowserAI-measure-*': 1
+  \BrowserAI-measure-20261008T1411-control state=Disabled
+schtasks /query /fo csv, lines naming BrowserAI-measure-: 1
+  "\BrowserAI-measure-20261008T1411-control","N/A","Disabled"
+== the control as the scheduler stores it (schtasks /query /xml)
+<?xml version="1.0" encoding="UTF-16"?>
+
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+
+  <RegistrationInfo>
+
+    <Author>BrowserAI step 0 measurement</Author>
+
+    <Description>Scratch measurement task, 2026-10-08, started on demand only. Removed when the measurement ends.</Description>
+
+    <URI>\BrowserAI-measure-20261008T1411-control</URI>
+
+  </RegistrationInfo>
+
+  <Principals>
+
+    <Principal id="Author">
+
+      <UserId>S-1-5-21-1861559866-3226897200-1792437171-1001</UserId>
+
+      <LogonType>InteractiveToken</LogonType>
+
+    </Principal>
+
+  </Principals>
+
+  <Settings>
+
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+
+    <Enabled>false</Enabled>
+
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+
+    <Priority>5</Priority>
+
+    <IdleSettings>
+
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+
+      <RestartOnIdle>false</RestartOnIdle>
+
+    </IdleSettings>
+
+  </Settings>
+
+  <Triggers />
+
+  <Actions Context="Author">
+
+    <Exec>
+
+      <Command>C:\Source\SixFive7\BrowserAI\.work\step0-tasks\bin\standin\StandIn.exe</Command>
+
+      <Arguments>standin --dir C:\nowhere --tag control --quit Local\BrowserAI-measure-control --max 1</Arguments>
+
+    </Exec>
+
+  </Actions>
+
+</Task>
+== cleanup of every BrowserAI-measure-20261008T1411- task
+2026-10-08T14:40:16.4883889Z deleting BrowserAI-measure-20261008T1411-control: True
+2026-10-08T14:40:16.4952815Z COM GetTasks(TASK_ENUM_HIDDEN) in \ with prefix 'BrowserAI-measure-': 0
+== after the cleanup (each listing must show 0)
+2026-10-08T14:40:16.6351768Z COM GetTasks(TASK_ENUM_HIDDEN) in \ with prefix 'BrowserAI-measure-': 0
+Get-ScheduledTask, every folder, TaskName like 'BrowserAI-measure-*': 0
+schtasks /query /fo csv, lines naming BrowserAI-measure-: 0
+== every process this run recorded (registry and stand-in logs), by pid and creation time
+2026-10-08T14:40:18.0025285Z processes recorded by this run: 1017; still alive with the recorded creation time: 0
+verify-gone exit code: 0
+== the seven foreign members of the scheduler's job, read-only, against their record from before any End or Stop
+identical to the record taken before the first Stop: True
+12088	2984	2026-10-03T12:07:02.8545250Z
+19764	2984	2026-10-03T12:07:06.3543680Z
+31376	19764	2026-10-03T12:07:27.6084420Z
+31432	19764	2026-10-03T12:07:27.6366820Z
+30948	19764	2026-10-03T12:07:28.1531550Z
+23488	2984	2026-10-03T18:40:45.1902070Z
+25992	19764	2026-10-03T12:07:10.7218890Z

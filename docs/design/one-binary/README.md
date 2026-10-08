@@ -342,8 +342,11 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    neither is in `kb/` or `docs/evidence/`. Step 0 persists them, together with this
    plan's own readings (the Claude Code binary's text, the Codex source, the memory
    figures).
-   **Now:** step 0 persists them on 2026-10-08, and "Where the facts come from"
-   below says where each one went.
+   **Now:** persisted in step 0 on 2026-10-08, into the kb with their dates,
+   versions and how to re-establish them, and into
+   [`2026-10-04-onebinary-measure`](../../evidence/2026-10-04-onebinary-measure/README.md)
+   and [`2026-10-04-startup-measure`](../../evidence/2026-10-04-startup-measure/README.md);
+   "Where the facts come from" below names each entry.
 5. **The relay has to understand the protocol.** Lane c's front copies bytes and
    parses nothing. This relay reads the method and the id of every frame the client
    sends: it answers `initialize`, `ping` and `tools/list` itself, holds a
@@ -2218,6 +2221,17 @@ conversation is.
 **Decided 2026-10-08: a.** His words (13:41:42Z): "H1-T a", followed by "can you do all
 the measurements right now before the go? and if so, how long will that take?"
 
+**Measured the same day, for naming those sessions** (41 runs at Claude Code 2.1.294 and
+2.1.292 and codex-cli 0.161.0 and 0.159.0-alpha.12.1, in
+[the kb](../../../kb/mcp/protocol.md)): a stdio server tells the three Claude Code modes
+and the two Codex ones apart only by `clientInfo` together with its parent's command
+line, 41 of 41; the environment alone gets 15 of 41, and misreads a terminal session
+that inherited `CLAUDE_CODE_ENTRYPOINT` as the VS Code extension, the direction that
+tells a person no reconnect is needed where one is. Codex 0.161.0's terminal UI also
+keeps its servers alive about 30 s after `/quit`, in a shared background server.
+⚠️ Which test the relay applies is not decided; it reads undocumented client flags,
+and the choice is his.
+
 ### H2. How dev builds reach his machine
 
 **The options** (2026-10-08T00:21:41Z). Today an installed build checks GitHub for
@@ -2432,6 +2446,29 @@ update in place or stay on screen, from Microsoft's documentation and the Window
 10.0.26100.0 headers; the Task Scheduler's instance policy, End, the interactive token
 and the foreground; and what the input reads cost. Its facts that the build rests on
 go to the [kb](../../../kb/README.md) with their sources. *Added 2026-10-08.*
+
+**Persisted in step 0, 2026-10-08.** Each measurement the design stands on is a kb
+entry with its date, its versions and how to re-establish it, and its raw data is a
+batch in `docs/evidence`:
+
+| Measurement | The kb entry | The batch |
+|---|---|---|
+| A windowless server under both clients, 2026-10-04 | [protocol](../../../kb/mcp/protocol.md), "A windowless server under both clients"; [processes](../../../kb/windows/processes.md), "A windowless program started with no standard handles reads end of input at once" | [`2026-10-04-onebinary-measure`](../../evidence/2026-10-04-onebinary-measure/README.md) |
+| The real programs through the real Task Scheduler, 2026-10-04 | [processes](../../../kb/windows/processes.md), "The real programs through the real Task Scheduler" | the same |
+| A test pack offered the production release, read 2026-10-04 | [Velopack](../../../kb/packaging/velopack.md), "A test pack would be offered the production release" | the same |
+| The first turn, a held call, Codex's `required`, 2026-10-04 | [protocol](../../../kb/mcp/protocol.md), "When each client's first turn goes out, and a call held behind it" | [`2026-10-04-startup-measure`](../../evidence/2026-10-04-startup-measure/README.md) |
+| What a server's start costs, and 673 real starts, 2026-10-04 | [provisioning and timings](../../../kb/playwright/provisioning-and-timings.md), "What a server's start costs before its first answer" | the same |
+| The live tool list against the snapshot, 2026-10-04 | [tools and artifacts](../../../kb/playwright/tools-and-artifacts.md), "The upstream snapshot is the list a live child answers, 70 of 70" | the same |
+| A pipe call idle and under load, 2026-10-04 | [processes](../../../kb/windows/processes.md), "A pipe call between two of BrowserAI's processes, idle and under a full suite's load" | the same |
+| Velopack's local source, restart, failed apply and hooks, 2026-10-08 | [Velopack](../../../kb/packaging/velopack.md), "A local folder, a silent apply with a restart, a failed apply, and the update hook" | [`2026-10-08-step0`](../../evidence/2026-10-08-step0/README.md) |
+| The toasts, 2026-10-08 | [notifications](../../../kb/windows/notifications.md), "A toast that counts down in place, stays until acted on, and is replaced" | the same |
+| The Task Scheduler, End, a child left behind, and sign-out read, 2026-10-08 | [processes](../../../kb/windows/processes.md), "What the Task Scheduler does with a second run, a missing or disabled task, End, and a child left behind" | the same |
+| The input reads, 2026-10-08 | [processes](../../../kb/windows/processes.md), "Reading the window in front and the time of the last input" | the same |
+| A browser window started by a task-started process, 2026-10-08 | [processes](../../../kb/windows/processes.md), under "A process a task starts may not take the foreground" | the same |
+| What a stdio server can see of its client, 2026-10-08 | [protocol](../../../kb/mcp/protocol.md), "What a stdio server can see of the client that started it" | [`2026-10-08-client-id`](../../evidence/2026-10-08-client-id/README.md) |
+
+The relay stand-in's 3.5 MiB (P) was read by the root session on 2026-10-08 and is not
+in the kb; the build measures the real relay. *Added 2026-10-08.*
 
 **In scratch on 2026-10-04, and persisted in step 0** (weakest point 4), under
 `C:\Source\SixFive7\BrowserAI\.work\`:

@@ -1,0 +1,1 @@
+processors=32 minWorkers=32 minIo=1 pid=86180

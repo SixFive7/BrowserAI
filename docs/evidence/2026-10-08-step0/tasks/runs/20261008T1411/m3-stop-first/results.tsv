@@ -1,0 +1,2 @@
+rep	via	gate	requestResult	requestMs	standinExitMsAfterRequest	standinExitCode	childEndedWithin5s	childExitMsAfterRequest	childExitCode	instancesAfter	stateAfter	lastResult	standinSaw	childSaw	cleanup
+1	stop	FOREIGN [12088,19764,31376,31432,30948,23488,25992] in [12088,19764,31376,31432,30948,23488,6496,45308,25992] ;; all 7 foreign members still present after the request	IRunningTask.Stop returned	27.1	1041.8	0x0000042B	False	-	-	0	3	0x00041306	-	-	all exited

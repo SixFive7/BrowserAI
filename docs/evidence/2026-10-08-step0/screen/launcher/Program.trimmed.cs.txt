@@ -1,0 +1,635 @@
+// Scratch rig for the step-0 screen measurements, 2026-10-08, part 2.
+// A windowless launcher. It records the foreground window before the launch, starts one browser
+// inside a job object it creates, records the foreground, the keyboard focus and the browser's
+// top-level window at 1, 3 and 6 s, and after 8 s ends the browser's whole tree through that job.
+// Its one window is never shown: it exists to receive the shell hook's flash and activation
+// messages and the 50 ms timer.
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace Step0Launcher;
+
+internal static class Program
+{
+    private const uint WmTimer = 0x0113;
+    private const uint CreateSuspended = 0x00000004;
+    private const int StartfUseShowWindow = 0x00000001;
+    private const short SwShowDefault = 10;
+    private const uint JobKillOnClose = 0x00002000;
+    private const uint Synchronize = 0x00100000;
+    private const uint QueryLimited = 0x00001000;
+    private const uint WsPopup = 0x80000000;
+    private const uint WsExToolWindow = 0x00000080;
+    private const long WsCaption = 0x00C00000;
+    private const uint EventSystemForeground = 0x0003;
+    private const uint EventSystemMinimizeStart = 0x0016;
+    private const uint EventSystemMinimizeEnd = 0x0017;
+    private const uint EventObjectShow = 0x8002;
+    private const uint EventObjectHide = 0x8003;
+
+    private static readonly Stopwatch Clock = Stopwatch.StartNew();
+    private static readonly List<string> Lines = [];
+    private static readonly Dictionary<uint, nint> Owned = [];
+    private static readonly Dictionary<uint, string> Images = [];
+    private static readonly List<nint> Hooks = [];
+    private static readonly int[] SampleAt = [1000, 3000, 6000];
+    private static readonly bool[] Sampled = new bool[3];
+    private static readonly Native.WndProc WndProcKeep = WindowProcedure;
+    private static readonly Native.WinEventProc WinEventKeep = OnWinEvent;
+
+    private static string runId = "unnamed";
+    private static nint job;
+    private static nint hidden;
+    private static uint shellHookMessage;
+    private static nint beforeForeground;
+    private static long launchedAt = -1;
+    private static long lastRefresh = -1000;
+    private static bool ended;
+
+    [STAThread]
+    private static int Main(string[] args)
+    {
+        if (args.Length > 0)
+        {
+            runId = args[0];
+        }
+
+        var root = FindRoot();
+        var runDir = Path.Combine(root, "runs", runId);
+        Directory.CreateDirectory(runDir);
+        var code = 1;
+
+        try
+        {
+            code = Run(root, runDir);
+        }
+        catch (Exception failure)
+        {
+            Log($"FAILED {failure}");
+        }
+        finally
+        {
+            Log($"DONE exit={code}");
+            File.WriteAllLines(Path.Combine(runDir, "launcher.log"), Lines);
+        }
+
+        return code;
+    }
+
+    private static string FindRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && directory.Name != "step0-screen")
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ?? throw new InvalidOperationException("No step0-screen directory above the launcher.");
+    }
+
+    private static int Run(string root, string runDir)
+    {
+        var chromium = runId.Contains("chromium", StringComparison.Ordinal);
+        var exe = chromium
+            ? Path.Combine(root, "browsers", "chromium-1247", "chrome-win64", "chrome.exe")
+            : Path.Combine(root, "browsers", "firefox-1553", "firefox", "firefox.exe");
+        var profile = Path.Combine(runDir, "profile");
+        Directory.CreateDirectory(profile);
+        var arguments = chromium
+            ? $"--user-data-dir=\"{profile}\" --no-first-run --no-default-browser-check about:blank"
+            : $"-profile \"{profile}\" -no-remote about:blank";
+
+        Log($"run {runId} utc={DateTime.UtcNow:o}");
+        LogContext();
+        CreateHiddenWindow();
+        HookEvents();
+
+        beforeForeground = Native.GetForegroundWindow();
+        Log($"FOREGROUND BEFORE: {Describe(beforeForeground)}");
+        LogFocus("FOCUS BEFORE");
+
+        job = CreateKillOnCloseJob();
+        var pid = Launch(exe, arguments);
+        launchedAt = Clock.ElapsedMilliseconds;
+        Log($"LAUNCHED pid={pid} exe={exe} args={arguments} startupinfo=STARTF_USESHOWWINDOW+SW_SHOWDEFAULT");
+
+        _ = Native.SetTimer(hidden, 1, 50, 0);
+
+        while (Native.GetMessageW(out var message, 0, 0, 0) > 0)
+        {
+            _ = Native.TranslateMessage(ref message);
+            _ = Native.DispatchMessageW(ref message);
+        }
+
+        Cleanup();
+        return 0;
+    }
+
+    private static void Log(string line)
+    {
+        var at = launchedAt < 0
+            ? $"pre+{Clock.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture)}"
+            : $"t={(Clock.ElapsedMilliseconds - launchedAt).ToString(CultureInfo.InvariantCulture)}";
+        Lines.Add($"{at} {line}");
+    }
+
+    private static void LogContext()
+    {
+        var self = (uint)Environment.ProcessId;
+        _ = Native.ProcessIdToSessionId(self, out var session);
+        Native.GetStartupInfoW(out var startup);
+        var info = default(Native.ProcessBasicInformation);
+        _ = Native.NtQueryInformationProcess(-1, 0, ref info, Marshal.SizeOf<Native.ProcessBasicInformation>(), out _);
+        var parent = (uint)info.InheritedFromUniqueProcessId;
+        _ = Native.SystemParametersInfoW(0x2000, 0, out var lockTimeout, 0);
+        _ = Native.SystemParametersInfoW(0x2004, 0, out var flashCount, 0);
+        Log($"self pid={self} session={session} user={Environment.UserName} parent pid={parent} parent image={ImageOf(parent)}");
+        Log($"self startupinfo flags=0x{startup.Flags:X} showWindow={startup.ShowWindow} winsta={ObjectName(Native.GetProcessWindowStation())} desktop={ObjectName(Native.GetThreadDesktop(Native.GetCurrentThreadId()))}");
+        Log($"SPI foregroundLockTimeout={lockTimeout} ms foregroundFlashCount={flashCount}");
+    }
+
+    private static string ObjectName(nint handle)
+    {
+        var text = new StringBuilder(256);
+        return Native.GetUserObjectInformationW(handle, 2, text, 512, out _) ? text.ToString() : $"error {Marshal.GetLastWin32Error()}";
+    }
+
+    private static void CreateHiddenWindow()
+    {
+        var windowClass = new Native.WindowClassEx
+        {
+            Size = (uint)Marshal.SizeOf<Native.WindowClassEx>(),
+            WndProc = Marshal.GetFunctionPointerForDelegate(WndProcKeep),
+            Instance = Native.GetModuleHandleW(null),
+            ClassName = "Step0LauncherHidden",
+        };
+
+        if (Native.RegisterClassExW(ref windowClass) == 0)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "RegisterClassExW");
+        }
+
+        hidden = Native.CreateWindowExW(WsExToolWindow, "Step0LauncherHidden", "step0 launcher (never shown)", WsPopup, 0, 0, 0, 0, 0, 0, windowClass.Instance, 0);
+
+        if (hidden == 0)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateWindowExW");
+        }
+
+        shellHookMessage = Native.RegisterWindowMessageW("SHELLHOOK");
+        var registered = Native.RegisterShellHookWindow(hidden);
+        Log($"hidden window 0x{hidden:X} visible={Native.IsWindowVisible(hidden)} shell hook registered={registered} message=0x{shellHookMessage:X}");
+    }
+
+    private static void HookEvents()
+    {
+        Hooks.Add(Native.SetWinEventHook(EventSystemForeground, EventSystemForeground, 0, WinEventKeep, 0, 0, 0));
+        Hooks.Add(Native.SetWinEventHook(EventSystemMinimizeStart, EventSystemMinimizeEnd, 0, WinEventKeep, 0, 0, 0));
+        Hooks.Add(Native.SetWinEventHook(EventObjectShow, EventObjectHide, 0, WinEventKeep, 0, 0, 0));
+        Log($"win event hooks: {string.Join(',', Hooks.Select(hook => hook != 0))}");
+    }
+
+    private static nint CreateKillOnCloseJob()
+    {
+        var created = Native.CreateJobObjectW(0, null);
+
+        if (created == 0)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateJobObjectW");
+        }
+
+        var limits = default(Native.ExtendedLimitInformation);
+        limits.Basic.LimitFlags = JobKillOnClose;
+
+        if (!Native.SetInformationJobObject(created, 9, ref limits, Marshal.SizeOf<Native.ExtendedLimitInformation>()))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "SetInformationJobObject");
+        }
+
+        return created;
+    }
+
+    private static uint Launch(string exe, string arguments)
+    {
+        var startup = new Native.StartupInfo
+        {
+            Cb = Marshal.SizeOf<Native.StartupInfo>(),
+            Flags = StartfUseShowWindow,
+            ShowWindow = SwShowDefault,
+        };
+        var commandLine = new StringBuilder($"\"{exe}\" {arguments}");
+
+        if (!Native.CreateProcessW(exe, commandLine, 0, 0, false, CreateSuspended, 0, Path.GetDirectoryName(exe), ref startup, out var started))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateProcessW");
+        }
+
+        if (!Native.AssignProcessToJobObject(job, started.Process))
+        {
+            var error = Marshal.GetLastWin32Error();
+            _ = Native.TerminateProcess(started.Process, 1);
+            throw new Win32Exception(error, "AssignProcessToJobObject");
+        }
+
+        _ = Native.ResumeThread(started.Thread);
+        _ = Native.CloseHandle(started.Thread);
+        Owned[started.ProcessId] = started.Process;
+        return started.ProcessId;
+    }
+
+    private static nint WindowProcedure(nint hwnd, uint message, nint wParam, nint lParam)
+    {
+        if (shellHookMessage != 0 && message == shellHookMessage)
+        {
+            var code = (int)wParam;
+            var browser = IsBrowser(lParam);
+
+            if (browser || code is 4 or 0x8004 or 0x8006)
+            {
+                Log($"shell hook {ShellCode(code)} -> {Describe(lParam)} browser={browser}");
+            }
+
+            return 0;
+        }
+
+        if (message == WmTimer)
+        {
+            OnTick();
+            return 0;
+        }
+
+        return Native.DefWindowProcW(hwnd, message, wParam, lParam);
+    }
+
+    private static string ShellCode(int code) => code switch
+    {
+        1 => "WINDOWCREATED",
+        2 => "WINDOWDESTROYED",
+        4 => "WINDOWACTIVATED",
+        6 => "REDRAW",
+        0x8004 => "RUDEAPPACTIVATED",
+        0x8006 => "FLASH",
+        _ => $"code 0x{code:X}",
+    };
+
+    private static void OnWinEvent(nint hook, uint eventType, nint hwnd, int idObject, int idChild, uint thread, uint time)
+    {
+        if (eventType == EventSystemForeground)
+        {
+            Log($"event FOREGROUND -> {Describe(hwnd)} browser={IsBrowser(hwnd)}");
+        }
+        else if (eventType is EventSystemMinimizeStart or EventSystemMinimizeEnd)
+        {
+            if (IsBrowser(hwnd))
+            {
+                Log($"event {(eventType == EventSystemMinimizeStart ? "MINIMIZESTART" : "MINIMIZEEND")} -> {Describe(hwnd)}");
+            }
+        }
+        else if (idObject == 0 && idChild == 0 && hwnd != 0 && Native.GetAncestor(hwnd, 2) == hwnd && IsBrowser(hwnd))
+        {
+            Log($"event {(eventType == EventObjectShow ? "SHOW" : "HIDE")} top-level -> {Describe(hwnd)}");
+        }
+    }
+
+    private static void OnTick()
+    {
+        if (launchedAt < 0)
+        {
+            return;
+        }
+
+        var t = Clock.ElapsedMilliseconds - launchedAt;
+        RefreshJob(force: true);
+
+        for (var i = 0; i < SampleAt.Length; i++)
+        {
+            if (!Sampled[i] && t >= SampleAt[i])
+            {
+                Sampled[i] = true;
+                Sample($"{SampleAt[i] / 1000}s");
+            }
+        }
+
+        if (!ended && t >= 8000)
+        {
+            ended = true;
+            _ = Native.KillTimer(hidden, 1);
+            End();
+            Native.PostQuitMessage(0);
+        }
+    }
+
+    private static void Sample(string label)
+    {
+        var foreground = Native.GetForegroundWindow();
+        Log($"SAMPLE {label} FOREGROUND {Describe(foreground)} browser={IsBrowser(foreground)} sameAsBefore={foreground == beforeForeground}");
+        LogFocus($"SAMPLE {label} FOCUS");
+
+        var windows = BrowserTopLevelWindows();
+        var visible = windows.Where(Native.IsWindowVisible).ToList();
+        Log($"SAMPLE {label} browser top-level windows={windows.Count} visible={visible.Count}");
+
+        foreach (var window in visible)
+        {
+            _ = Native.GetWindowRect(window, out var rect);
+            Log($"SAMPLE {label}   visible {Describe(window)} rect=({rect.Left},{rect.Top})-({rect.Right},{rect.Bottom}) style=0x{Native.GetWindowLongPtrW(window, -16):X} exstyle=0x{Native.GetWindowLongPtrW(window, -20):X}");
+        }
+
+        var main = MainWindow(windows);
+
+        if (main == 0)
+        {
+            Log($"SAMPLE {label} MAIN none");
+            return;
+        }
+
+        var order = ZOrder();
+        var mainIndex = order.IndexOf(main);
+        var beforeIndex = order.IndexOf(beforeForeground);
+        var relation = mainIndex < 0 || beforeIndex < 0 ? "UNKNOWN" : mainIndex < beforeIndex ? "ABOVE" : "BELOW";
+        var low = Math.Min(mainIndex, beforeIndex);
+        var high = Math.Max(mainIndex, beforeIndex);
+        var between = low < 0 ? -1 : order.Skip(low + 1).Take(Math.Max(0, high - low - 1)).Count(Native.IsWindowVisible);
+        Log($"SAMPLE {label} MAIN {Describe(main)} zIndex={mainIndex} beforeForegroundZIndex={beforeIndex} RELATION={relation} visibleWindowsBetween={between}");
+    }
+
+    private static void LogFocus(string label)
+    {
+        var info = new Native.GuiThreadInfo { Size = Marshal.SizeOf<Native.GuiThreadInfo>() };
+
+        Log(Native.GetGUIThreadInfo(0, ref info)
+            ? $"{label} active={Describe(info.Active)} focus={Describe(info.Focus)} focusIsBrowser={IsBrowser(info.Focus)}"
+            : $"{label} GetGUIThreadInfo failed {Marshal.GetLastWin32Error()}");
+    }
+
+    private static nint MainWindow(List<nint> windows)
+    {
+        nint best = 0;
+        long bestArea = -1;
+
+        foreach (var window in windows)
+        {
+            var style = (long)Native.GetWindowLongPtrW(window, -16);
+            var exStyle = (long)Native.GetWindowLongPtrW(window, -20);
+
+            var className = new StringBuilder(256);
+            _ = Native.GetClassNameW(window, className, 256);
+
+            if ((style & WsCaption) != WsCaption || (exStyle & WsExToolWindow) != 0 || className.ToString() is not ("Chrome_WidgetWin_1" or "MozillaWindowClass"))
+            {
+                continue;
+            }
+
+            _ = Native.GetWindowRect(window, out var rect);
+            var area = ((long)(rect.Right - rect.Left) * (rect.Bottom - rect.Top)) + (Native.IsWindowVisible(window) ? 1L << 40 : 0);
+
+            if (area > bestArea)
+            {
+                bestArea = area;
+                best = window;
+            }
+        }
+
+        return best;
+    }
+
+    private static List<nint> ZOrder()
+    {
+        var order = new List<nint>();
+        var window = Native.GetTopWindow(0);
+
+        while (window != 0 && order.Count < 20000)
+        {
+            order.Add(window);
+            window = Native.GetWindow(window, 2);
+        }
+
+        return order;
+    }
+
+    private static List<nint> BrowserTopLevelWindows()
+    {
+        RefreshJob(force: true);
+        var found = new List<nint>();
+        _ = Native.EnumWindows(
+            (window, state) =>
+            {
+                _ = Native.GetWindowThreadProcessId(window, out var pid);
+
+                if (Owned.ContainsKey(pid))
+                {
+                    found.Add(window);
+                }
+
+                return true;
+            },
+            0);
+        return found;
+    }
+
+    private static bool IsBrowser(nint hwnd)
+    {
+        if (hwnd == 0)
+        {
+            return false;
+        }
+
+        _ = Native.GetWindowThreadProcessId(hwnd, out var pid);
+
+        if (Owned.ContainsKey(pid))
+        {
+            return true;
+        }
+
+        RefreshJob(force: false);
+        return Owned.ContainsKey(pid);
+    }
+
+    private static void RefreshJob(bool force)
+    {
+        if (job == 0 || ended || (!force && Clock.ElapsedMilliseconds - lastRefresh < 20))
+        {
+            return;
+        }
+
+        lastRefresh = Clock.ElapsedMilliseconds;
+
+        foreach (var pid in JobPids())
+        {
+            if (Owned.ContainsKey(pid))
+            {
+                continue;
+            }
+
+            var handle = Native.OpenProcess(Synchronize | QueryLimited, false, pid);
+
+            if (handle == 0)
+            {
+                continue;
+            }
+
+            if (Native.IsProcessInJob(handle, job, out var inJob) && inJob)
+            {
+                Owned[pid] = handle;
+                Log($"job gained pid {pid} image={ImageOf(pid)}");
+            }
+            else
+            {
+                _ = Native.CloseHandle(handle);
+            }
+        }
+    }
+
+    private static List<uint> JobPids()
+    {
+        const int capacity = 1024;
+        var buffer = Marshal.AllocHGlobal(8 + (capacity * 8));
+
+        try
+        {
+            if (!Native.QueryInformationJobObject(job, 3, buffer, 8 + (capacity * 8), out _))
+            {
+                return [];
+            }
+
+            var count = Marshal.ReadInt32(buffer, 4);
+            var pids = new List<uint>(count);
+
+            for (var i = 0; i < count; i++)
+            {
+                pids.Add((uint)Marshal.ReadIntPtr(buffer, 8 + (i * 8)));
+            }
+
+            return pids;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    private static int ActiveProcesses()
+    {
+        var buffer = Marshal.AllocHGlobal(64);
+
+        try
+        {
+            return Native.QueryInformationJobObject(job, 1, buffer, 48, out _) ? Marshal.ReadInt32(buffer, 40) : -1;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    private static void End()
+    {
+        var pids = JobPids();
+        Log($"END job holds {pids.Count} process(es): {string.Join(',', pids)}; terminating the job it created");
+        var terminated = Native.TerminateJobObject(job, 0xE0D);
+        var waited = Stopwatch.StartNew();
+
+        while (ActiveProcesses() > 0 && waited.ElapsedMilliseconds < 10000)
+        {
+            Thread.Sleep(25);
+        }
+
+        Log($"END TerminateJobObject={terminated} active processes={ActiveProcesses()} after {waited.ElapsedMilliseconds} ms");
+
+        foreach (var (pid, handle) in Owned)
+        {
+            var wait = Native.WaitForSingleObject(handle, 10000);
+            _ = Native.GetExitCodeProcess(handle, out var exitCode);
+            Log($"END pid {pid} exited={wait == 0} (wait result 0x{wait:X}) exitCode=0x{exitCode:X} after {waited.ElapsedMilliseconds} ms");
+        }
+
+        var left = 0;
+        _ = Native.EnumWindows(
+            (window, state) =>
+            {
+                _ = Native.GetWindowThreadProcessId(window, out var pid);
+
+                if (Owned.ContainsKey(pid))
+                {
+                    left++;
+                }
+
+                return true;
+            },
+            0);
+        Log($"END browser top-level windows left={left}");
+    }
+
+    private static void Cleanup()
+    {
+        foreach (var hook in Hooks.Where(hook => hook != 0))
+        {
+            _ = Native.UnhookWinEvent(hook);
+        }
+
+        _ = Native.DeregisterShellHookWindow(hidden);
+        _ = Native.DestroyWindow(hidden);
+        _ = Native.CloseHandle(job);
+
+        foreach (var handle in Owned.Values)
+        {
+            _ = Native.CloseHandle(handle);
+        }
+
+        Log($"cleanup done; owned pids={string.Join(',', Owned.Keys)}");
+    }
+
+    private static string Describe(nint hwnd)
+    {
+        if (hwnd == 0)
+        {
+            return "none";
+        }
+
+        var className = new StringBuilder(256);
+        _ = Native.GetClassNameW(hwnd, className, 256);
+        var title = new StringBuilder(256);
+        _ = Native.GetWindowTextW(hwnd, title, 256);
+        var thread = Native.GetWindowThreadProcessId(hwnd, out var pid);
+        var text = title.ToString();
+
+        if (text.Length > 60)
+        {
+            text = text[..60] + "~";
+        }
+
+        return $"[hwnd=0x{hwnd:X} pid={pid} tid={thread} class='{className}' title='(a window of the person at the machine, its title cut)' visible={Native.IsWindowVisible(hwnd)} minimized={Native.IsIconic(hwnd)} image={Path.GetFileName(ImageOf(pid))}]";
+    }
+
+    private static string ImageOf(uint pid)
+    {
+        if (Images.TryGetValue(pid, out var known))
+        {
+            return known;
+        }
+
+        var handle = Native.OpenProcess(QueryLimited, false, pid);
+
+        if (handle == 0)
+        {
+            return $"(unreadable, error {Marshal.GetLastWin32Error()})";
+        }
+
+        try
+        {
+            var name = new StringBuilder(1024);
+            var size = name.Capacity;
+            var image = Native.QueryFullProcessImageNameW(handle, 0, name, ref size) ? name.ToString() : $"(error {Marshal.GetLastWin32Error()})";
+            Images[pid] = image;
+            return image;
+        }
+        finally
+        {
+            _ = Native.CloseHandle(handle);
+        }
+    }
+}

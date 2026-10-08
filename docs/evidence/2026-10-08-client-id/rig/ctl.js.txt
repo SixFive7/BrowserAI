@@ -1,0 +1,20 @@
+// Positive control for the stub: a known parent (this node process) spawns it with pipes,
+// does the handshake with a known clientInfo and roots, answers roots/list, then closes stdin.
+'use strict';
+const { spawn } = require('child_process');
+const [exe, logdir] = process.argv.slice(2);
+const p = spawn(exe, ['stub', '--logdir', logdir, '--tag', 'control'], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, env: Object.assign({}, process.env, { IDRIG_MARKER: 'control', SOME_API_KEY: 'should-be-masked' }) });
+let buf = '';
+const send = (o) => p.stdin.write(JSON.stringify(o) + '\n');
+p.stdout.on('data', (d) => {
+  buf += d; let i;
+  while ((i = buf.indexOf('\n')) >= 0) {
+    const line = buf.slice(0, i); buf = buf.slice(i + 1);
+    const m = JSON.parse(line); console.log('<-', line.slice(0, 200));
+    if (m.id === 1) { send({ jsonrpc: '2.0', method: 'notifications/initialized' }); send({ jsonrpc: '2.0', id: 2, method: 'tools/list' }); }
+    else if (m.method === 'roots/list') send({ jsonrpc: '2.0', id: m.id, result: { roots: [{ uri: 'file:///C:/ctl', name: 'ctl' }] } });
+    else if (m.id === 2) { setTimeout(() => p.stdin.end(), 300); }
+  }
+});
+p.on('exit', (c) => console.log('stub exit', c));
+send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: { roots: { listChanged: true } }, clientInfo: { name: 'ctl', title: 'Control', version: '0' } } });

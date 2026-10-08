@@ -1,0 +1,200 @@
+# Measurement 1 analysis: one row per run, then one row per cell (client x form).
+# usage: python analyze1.py <batchdir> [<batchdir> ...]  -> writes <first batchdir>\runs.tsv and cells.tsv
+import json, sys, os, glob, hashlib, re
+from datetime import datetime
+
+def ts(s):
+    if not s: return None
+    s = s.replace('Z', '')
+    if '.' in s:
+        a, b = s.split('.'); s = a + '.' + b[:6]
+    return datetime.fromisoformat(s)
+
+def ms(a, b):
+    if a is None or b is None: return None
+    return round((b - a).total_seconds() * 1000, 1)
+
+def read(p):
+    try: return open(p, encoding='utf-8', errors='replace').read()
+    except Exception: return ''
+
+def stub_events(run):
+    ev = {}
+    lines = []
+    for f in sorted(glob.glob(os.path.join(run, 'stub-*.log'))):
+        pid = int(re.search(r'stub-(\d+)\.log', f).group(1))
+        for l in read(f).splitlines():
+            p = l.split('\t')
+            if len(p) < 5: continue
+            lines.append((pid, ts(p[0]), p[3], p[4]))
+    return lines
+
+def row(run):
+    name = os.path.basename(run.rstrip('\\/'))
+    m = re.match(r'(.+)-(win|con)-r(\d+)$', name)
+    client, form, rep = m.group(1), m.group(2), int(m.group(3))
+    res = json.load(open(os.path.join(run, 'result.json')))
+    procs = res['procs']
+    client_p = [p for p in procs if p['role'] == 'client'][0]
+    servers = [p for p in procs if p['role'] == 'server']
+    killers = [p for p in procs if p['role'].startswith('KILLER')]
+    r = {'run': name, 'client': client, 'form': form, 'rep': rep, 'clientExit': res['clientExitCode']}
+    c0, c1 = ts(client_p['createdUtc']), ts(client_p['exitUtc'])
+    r['clientMs'] = ms(c0, c1)
+    r['serverLaunches'] = len(servers)
+    r['serverExitCodes'] = ','.join(str(s['exitCode']) for s in servers)
+    r['serverInJob'] = ','.join(str(s['inJob']) for s in servers)
+    r['serverParentIsClient'] = all(s['ppid'] == client_p['pid'] for s in servers)
+    s0 = servers[0] if servers else None
+    sv0, sv1 = (ts(s0['createdUtc']), ts(s0['exitUtc'])) if s0 else (None, None)
+    r['clientToServerStartMs'] = ms(c0, sv0)
+    ev = stub_events(run)
+    kinds = [(k, d) for (_, t, k, d) in ev]
+    def first(kind, contains=''):
+        for (_, t, k, d) in ev:
+            if k == kind and contains in d: return t
+        return None
+    r['initialize'] = first('IN', 'method=initialize') is not None
+    r['initialized'] = first('IN', 'notifications/initialized') is not None
+    r['toolsList'] = first('HANDLER', 'tools/list') is not None
+    r['callBig'] = first('HANDLER', 'name=big') is not None
+    t_start = first('START')
+    r['serverStartToInitializeMs'] = ms(t_start, first('IN', 'method=initialize'))
+    bigout = [d for (_, t, k, d) in ev if k == 'OUT' and 'resultChars=111220' in d]
+    r['bigWriteMs'] = re.search(r'writeMs=([\d,\.]+)', bigout[0]).group(1).replace(',', '.') if bigout else ''
+    t_eof = first('EOF'); t_exit42 = first('EXIT')
+    r['stubSawEOF'] = t_eof is not None
+    r['stubLeftOnOwn'] = t_exit42 is not None
+    # report
+    rep_files = glob.glob(os.path.join(run, 'stub-*.report.json'))
+    expected = None
+    if rep_files:
+        rp = json.load(open(rep_files[0]))
+        expected = rp.get('bigSha256')
+        si = rp['startupInfo']
+        r['subsystem'] = rp['peSubsystem'].split()[0]
+        r['consoleProcs'] = rp['consoleProcessCount']
+        r['consoleShared'] = rp['consoleSharedWithParent']
+        r['std'] = '/'.join(rp['std'][k]['kind'] for k in ('stdin', 'stdout', 'stderr'))
+        r['startfFlags'] = si['dwFlags']
+        r['feedbackFlag'] = 'FORCEON' if si['STARTF_FORCEONFEEDBACK'] else ('FORCEOFF' if si['STARTF_FORCEOFFFEEDBACK'] else 'none')
+        r['wShowWindow'] = si['wShowWindow'] if si['STARTF_USESHOWWINDOW'] else '-'
+        r['streams'] = rp['inputStreamType'].split('.')[-1] + '/' + rp['outputStreamType'].split('.')[-1]
+        r['reportInJob'] = rp['inJob']
+    # 70 KB delivery at the client
+    delivered = None
+    if client.startswith('cc'):
+        for f in glob.glob(os.path.join(run, 'cfg', 'projects', '*', '*', 'tool-results', '*.json')):
+            try:
+                j = json.load(open(f, encoding='utf-8'))
+                text = ''.join(x.get('text', '') for x in j if isinstance(x, dict))
+                b = text.encode('utf-8'); delivered = (len(b), hashlib.sha256(b).hexdigest())
+            except Exception as e:
+                delivered = ('err', str(e))
+        r['deliveredVia'] = 'claude tool-results file'
+    else:
+        for l in read(os.path.join(run, 'client-stdout.full.log')).splitlines():
+            if ('mcp_tool_call' in l or 'mcpToolCall' in l) and ('item.completed' in l or 'item/completed' in l):
+                try:
+                    j = json.loads(l)
+                    item = j.get('item') or j.get('params', {}).get('item')
+                    texts = [c.get('text', '') for c in (item.get('result') or {}).get('content', [])]
+                    b = ''.join(texts).encode('utf-8'); delivered = (len(b), hashlib.sha256(b).hexdigest())
+                except Exception as e:
+                    delivered = ('err', str(e))
+        r['deliveredVia'] = 'codex item.completed result'
+    r['delivered70k'] = (delivered is not None and expected is not None and delivered[1] == expected)
+    r['deliveredBytes'] = delivered[0] if delivered else ''
+    seen = [json.loads(l) for l in read(os.path.join(run, 'model.seen.jsonl')).splitlines() if l.strip()]
+    mb = []
+    for s in seen:
+        for t in s.get('toolResults', []): mb.append(t['utf8'])
+        for o in s.get('outputs', []): mb.append(sum(p['utf8'] for p in o['parts']))
+    r['modelGotBytes'] = ','.join(map(str, mb))
+    r['modelToolCalls'] = sum(1 for s in seen if s.get('answer') == 'tool')
+    # stderr at the client
+    if client.startswith('cc'):
+        log = read(os.path.join(run, 'claude-debug.log'))
+    else:
+        log = read(os.path.join(run, 'client-stderr.log'))
+    markers = re.findall(r'STUB-STDERR-MARKER (start|tools/list|tools/call big|eof)', log)
+    r['stderrMarkers'] = ','.join(sorted(set(markers)))
+    r['stderrMarkerCount'] = len(markers)
+    # how it ended
+    r['killer'] = killers[0]['cmd'].split('\\')[-1] if killers else ''
+    k0 = ts(killers[0]['createdUtc']) if killers else None
+    r['killerStartToEOFMs'] = ms(k0, t_eof)
+    r['eofToServerExitMs'] = ms(t_eof, sv1)
+    r['killerStartToServerExitMs'] = ms(k0, sv1)
+    r['serverExitToClientExitMs'] = ms(sv1, c1)
+    harness = read(os.path.join(run, 'harness.log'))
+    close = re.search(r'ACTION_CLOSE_STDIN\twhy=step', harness)
+    tclose = None
+    for l in harness.splitlines():
+        p = l.split('\t')
+        if len(p) > 4 and p[4] == 'ACTION_CLOSE_STDIN' and 'why=step' in p[5]:
+            tclose = ts(p[1])
+    r['clientStdinCloseToServerExitMs'] = ms(tclose, sv1)
+    r['aliveAfterSettle'] = ','.join(res['stillAliveAfterSettle'])
+    serverpids = {s['pid'] for s in servers}
+    r['conhostOfServer'] = sum(1 for p in procs if p['role'] == 'conhost' and p['ppid'] in serverpids)
+    w = res.get('windows', {})
+    r['newVisibleWindows'] = len(w.get('newVisible', []))
+    r['newVisibleInTree'] = w.get('newVisibleInTree', '')
+    owned = w.get('ownedByTree', [])
+    r['windowsOwnedByTree'] = len(owned)
+    r['windowsOwnedByServer'] = sum(1 for o in owned if o['pid'] in serverpids)
+    r['cursorAppStartingTicks'] = w.get('appStartingTicks', '')
+    r['cursorShapes'] = ','.join(sorted({c['cursor'] for c in w.get('cursorChanges', [])}))
+    r['cursorReadFailures'] = w.get('cursorReadFailures', '')
+    r['windowTicks'] = w.get('ticks', '')
+    return r
+
+def rng(vals):
+    v = [x for x in vals if isinstance(x, (int, float))]
+    if not v: return '-'
+    return f'{min(v)}..{max(v)}' if len(v) > 1 else f'{v[0]}'
+
+batches = sys.argv[1:]
+rows = []
+for b in batches:
+    for run in sorted(glob.glob(os.path.join(b, '*-*-r*'))):
+        if os.path.exists(os.path.join(run, 'result.json')):
+            rows.append(row(run))
+cols = list(rows[0].keys())
+for r in rows:
+    for k in r:
+        if k not in cols: cols.append(k)
+out = os.path.join(batches[0], 'runs.tsv')
+with open(out, 'w', encoding='utf-8') as f:
+    f.write('\t'.join(cols) + '\n')
+    for r in rows: f.write('\t'.join(str(r.get(c, '')) for c in cols) + '\n')
+cells = {}
+for r in rows: cells.setdefault((r['client'], r['form']), []).append(r)
+order = ['ccP', 'ccS', 'cx155e', 'cx160e', 'cx155a', 'cx160a']
+cout = os.path.join(batches[0], 'cells.tsv')
+hdr = ['client', 'form', 'runs', 'subsystem', 'served(init+list+callBig)', '70KB intact at client', 'model got bytes', 'stderr markers reached client', 'server exit codes', 'killer', 'stub saw EOF', 'killerStart->EOF ms', 'EOF->server exit ms', 'stdin close->server exit ms', 'server exit->client exit ms', 'alive after settle', 'conhost of server', 'new visible windows', 'windows owned by server', 'cursor APPSTARTING ticks', 'cursor shapes', 'console procs', 'std', 'startf', 'feedback flag', 'server in job']
+with open(cout, 'w', encoding='utf-8') as f:
+    f.write('\t'.join(hdr) + '\n')
+    for c in sorted(cells, key=lambda k: (order.index(k[0]) if k[0] in order else 99, k[1])):
+        rs = cells[c]; n = len(rs)
+        f.write('\t'.join(str(x) for x in [
+            c[0], c[1], n, ','.join(sorted({r.get('subsystem', '?') for r in rs})),
+            f"{sum(1 for r in rs if r['initialize'] and r['toolsList'] and r['callBig'])}/{n}",
+            f"{sum(1 for r in rs if r['delivered70k'])}/{n}",
+            ','.join(sorted({r['modelGotBytes'] for r in rs})),
+            f"{sum(1 for r in rs if r['stderrMarkerCount'] > 0)}/{n} [{';'.join(sorted({r['stderrMarkers'] for r in rs}))}]",
+            ','.join(sorted({r['serverExitCodes'] for r in rs})),
+            ','.join(sorted({r['killer'] or 'none (job)' for r in rs})),
+            f"{sum(1 for r in rs if r['stubSawEOF'])}/{n}",
+            rng([r['killerStartToEOFMs'] for r in rs]), rng([r['eofToServerExitMs'] for r in rs]),
+            rng([r['clientStdinCloseToServerExitMs'] for r in rs]), rng([r['serverExitToClientExitMs'] for r in rs]),
+            f"{sum(1 for r in rs if r['aliveAfterSettle'])}/{n}",
+            sum(r['conhostOfServer'] for r in rs), sum(r['newVisibleWindows'] for r in rs), sum(r['windowsOwnedByServer'] for r in rs),
+            sum(r['cursorAppStartingTicks'] or 0 for r in rs), ','.join(sorted({r['cursorShapes'] for r in rs})),
+            ','.join(sorted({str(r.get('consoleProcs')) for r in rs})), ','.join(sorted({r.get('std', '') for r in rs})),
+            ','.join(sorted({r.get('startfFlags', '') for r in rs})), ','.join(sorted({r.get('feedbackFlag', '') for r in rs})),
+            ','.join(sorted({r['serverInJob'] for r in rs})),
+        ]) + '\n')
+print(open(cout, encoding='utf-8').read())
+print('rows:', len(rows), '->', out)

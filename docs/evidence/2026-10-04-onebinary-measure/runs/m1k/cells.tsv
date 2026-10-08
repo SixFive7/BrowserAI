@@ -1,0 +1,7 @@
+client	form	runs	subsystem	served(init+list+callBig)	70KB intact at client	model got bytes	stderr markers reached client	server exit codes	killer	stub saw EOF	killerStart->EOF ms	EOF->server exit ms	stdin close->server exit ms	server exit->client exit ms	alive after settle	conhost of server	new visible windows	windows owned by server	cursor APPSTARTING ticks	cursor shapes	console procs	std	startf	feedback flag	server in job
+ccK	con	3	3	3/3	3/3	2520,2521	3/3 [start]	0	none (job)	0/3	-	-	-	-4.3..-2.6	0/3	3	0	0	0	ARROW	1	pipe/pipe/pipe	0x00000101	none	True
+cx155k	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	0	none (job)	0/3	-	-	-	-32.1..-27.2	0/3	0	0	0	0	0x10005,0x10013,0x1001F,ARROW,0x1001F,0x1001F,ARROW	2	pipe/pipe/pipe	0x00000100	none	True
+cx160k	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	0	none (job)	0/3	-	-	-	-16.7..-12.4	0/3	3	1	0	0	0x10005,0x1001F,ARROW,0x1001F,ARROW	1	pipe/pipe/pipe	0x00000100	none	True
+ccK	win	3	2	3/3	3/3	2520	3/3 [start]	0	none (job)	0/3	-	-	-	-4.0..-2.4	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000101	none	True
+cx155k	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	0	none (job)	0/3	-	-	-	-44.3..-27.1	0/3	0	0	0	0	0x1001F,ARROW	0	pipe/pipe/pipe	0x00000100	none	True
+cx160k	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	0	none (job)	0/3	-	-	-	-18.3..-11.3	0/3	0	0	0	0	0x10005,0x1001F,ARROW,0x1001F,ARROW	0	pipe/pipe/pipe	0x00000100	none	True

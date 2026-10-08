@@ -1,0 +1,41 @@
+rep	case	request	result	ms	startedWithin3s	detail
+1	missing	com GetTask+Run	GetTask threw 0x80070002 The system cannot find the file specified. (0x80070002)	5.3	0	-
+1	missing	schtasks /run	exit=1	33.1	0	out=[] err=[ERROR: The system cannot find the file specified. |]
+2	missing	com GetTask+Run	GetTask threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.3	0	-
+2	missing	schtasks /run	exit=1	40.1	0	out=[] err=[ERROR: The system cannot find the file specified. |]
+3	missing	com GetTask+Run	GetTask threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.3	0	-
+3	missing	schtasks /run	exit=1	33.5	0	out=[] err=[ERROR: The system cannot find the file specified. |]
+4	missing	com GetTask+Run	GetTask threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.3	0	-
+4	missing	schtasks /run	exit=1	32.9	0	out=[] err=[ERROR: The system cannot find the file specified. |]
+5	missing	com GetTask+Run	GetTask threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.2	0	-
+5	missing	schtasks /run	exit=1	30.3	0	out=[] err=[ERROR: The system cannot find the file specified. |]
+1	deleted-after-GetTask	com Run on the held IRegisteredTask	Run threw 0x80070002 The system cannot find the file specified. (0x80070002)	2.7	0	all exited
+2	deleted-after-GetTask	com Run on the held IRegisteredTask	Run threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.5	0	all exited
+3	deleted-after-GetTask	com Run on the held IRegisteredTask	Run threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.2	0	all exited
+4	deleted-after-GetTask	com Run on the held IRegisteredTask	Run threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.2	0	all exited
+5	deleted-after-GetTask	com Run on the held IRegisteredTask	Run threw 0x80070002 The system cannot find the file specified. (0x80070002)	0.2	0	all exited
+1	disabled	state	State=1 Enabled=False	0.0	0	-
+1	disabled	com Run	Run threw 0x80041326 The task is disabled. (0x80041326)	0.8	0	lastResult=0x00041303 state=1 quit=-
+1	disabled	com RunEx TASK_RUN_IGNORE_CONSTRAINTS	RunEx threw 0x80041326 The task is disabled. (0x80041326)	2.7	0	lastResult=0x00041303 state=1 quit=-
+1	disabled	schtasks /run	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	41.0	0	lastResult=0x00041303 state=1 quit=-
+1	disabled	schtasks /run /i	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	59.3	0	lastResult=0x00041303 state=1 quit=-
+2	disabled	state	State=1 Enabled=False	0.0	0	-
+2	disabled	com Run	Run threw 0x80041326 The task is disabled. (0x80041326)	0.3	0	lastResult=0x00041303 state=1 quit=-
+2	disabled	com RunEx TASK_RUN_IGNORE_CONSTRAINTS	RunEx threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+2	disabled	schtasks /run	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	32.1	0	lastResult=0x00041303 state=1 quit=-
+2	disabled	schtasks /run /i	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	74.2	0	lastResult=0x00041303 state=1 quit=-
+3	disabled	state	State=1 Enabled=False	0.0	0	-
+3	disabled	com Run	Run threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+3	disabled	com RunEx TASK_RUN_IGNORE_CONSTRAINTS	RunEx threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+3	disabled	schtasks /run	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	33.9	0	lastResult=0x00041303 state=1 quit=-
+3	disabled	schtasks /run /i	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	72.4	0	lastResult=0x00041303 state=1 quit=-
+4	disabled	state	State=1 Enabled=False	0.0	0	-
+4	disabled	com Run	Run threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+4	disabled	com RunEx TASK_RUN_IGNORE_CONSTRAINTS	RunEx threw 0x80041326 The task is disabled. (0x80041326)	0.3	0	lastResult=0x00041303 state=1 quit=-
+4	disabled	schtasks /run	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	33.1	0	lastResult=0x00041303 state=1 quit=-
+4	disabled	schtasks /run /i	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	35.2	0	lastResult=0x00041303 state=1 quit=-
+5	disabled	state	State=1 Enabled=False	0.0	0	-
+5	disabled	com Run	Run threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+5	disabled	com RunEx TASK_RUN_IGNORE_CONSTRAINTS	RunEx threw 0x80041326 The task is disabled. (0x80041326)	0.2	0	lastResult=0x00041303 state=1 quit=-
+5	disabled	schtasks /run	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	32.5	0	lastResult=0x00041303 state=1 quit=-
+5	disabled	schtasks /run /i	exit=1 out=[] err=[ERROR: The scheduled task "BrowserAI-measure-20261008T1411-m2-disabled" could not run because it is disabled. |]	33.5	0	lastResult=0x00041303 state=1 quit=-

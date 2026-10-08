@@ -1,0 +1,61 @@
+{
+ "results": [
+  {
+   "r": 1,
+   "coordinatorUpMs": 61,
+   "hostUpMs": 497,
+   "rec": "init=85.14ms tools=96.28ms count=78 exit=0"
+  },
+  {
+   "r": 2,
+   "coordinatorUpMs": 44,
+   "hostUpMs": 417,
+   "rec": "init=83.562ms tools=93.397ms count=78 exit=0"
+  },
+  {
+   "r": 3,
+   "coordinatorUpMs": 55,
+   "hostUpMs": 482,
+   "rec": "init=88.222ms tools=98.146ms count=78 exit=0"
+  },
+  {
+   "r": 4,
+   "coordinatorUpMs": 43,
+   "hostUpMs": 429,
+   "rec": "init=90.413ms tools=100.481ms count=78 exit=0"
+  },
+  {
+   "r": 5,
+   "coordinatorUpMs": 46,
+   "hostUpMs": 453,
+   "rec": "init=84.248ms tools=94.342ms count=78 exit=0"
+  }
+ ],
+ "started": [
+  {
+   "pid": 41756,
+   "what": "coordinator --start-host",
+   "at": "2026-10-04T01:02:52.438Z"
+  },
+  {
+   "pid": 93176,
+   "what": "coordinator --start-host",
+   "at": "2026-10-04T01:02:55.024Z"
+  },
+  {
+   "pid": 87996,
+   "what": "coordinator --start-host",
+   "at": "2026-10-04T01:02:57.514Z"
+  },
+  {
+   "pid": 40848,
+   "what": "coordinator --start-host",
+   "at": "2026-10-04T01:03:00.083Z"
+  },
+  {
+   "pid": 8548,
+   "what": "coordinator --start-host",
+   "at": "2026-10-04T01:03:02.592Z"
+  }
+ ]
+}

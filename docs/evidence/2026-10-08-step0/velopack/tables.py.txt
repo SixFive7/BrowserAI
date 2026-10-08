@@ -1,0 +1,161 @@
+# Derives the per-run tables in FINDINGS.md from one orchestration session.
+# Reads only. Usage: python tables.py runs/full-<stamp>
+import json
+import pathlib
+import re
+import sys
+from datetime import datetime, timezone
+
+session = pathlib.Path(sys.argv[1])
+logs = session / "logs"
+
+
+def ts(value):
+    if value is None:
+        return None
+    text = value.rstrip("Z")
+    if "." in text:
+        head, frac = text.split(".")
+        frac = (frac + "0000000")[:7]
+    else:
+        head, frac = text, "0000000"
+    base = datetime.fromisoformat(head).replace(tzinfo=timezone.utc).timestamp()
+    return base + int(frac) / 1e7
+
+
+def ms(a, b):
+    if a is None or b is None:
+        return None
+    return round((ts(b) - ts(a)) * 1000, 1)
+
+
+orchestrator = [json.loads(line) for line in (session / "orchestrator.jsonl").read_text(encoding="utf-8-sig").splitlines() if line.strip()]
+exits = {}
+watches = {}
+for record in orchestrator:
+    if record["event"] == "exited":
+        exits[(record["run"], record["pid"])] = record
+    if record["event"] == "watch":
+        watches[(record["pid"], record["created"])] = record
+
+
+def journals(run):
+    found = []
+    for path in sorted((logs / run).glob("*.jsonl")):
+        records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if records and records[0]["event"] == "process-start":
+            found.append(records)
+    return found
+
+
+def role(start):
+    args = start["args"]
+    return args[0] if args else "(none)"
+
+
+def exit_of(run, pid):
+    return exits.get((run, pid))
+
+
+def update_exe(run):
+    for (r, pid), record in exits.items():
+        if r == run and record["role"] == "Update.exe":
+            return record
+    return None
+
+
+def slice_lines(run, pattern):
+    path = logs / run / "velopack-log-slice.txt"
+    if not path.exists():
+        return []
+    return [line for line in path.read_text(encoding="utf-8-sig").splitlines() if re.search(pattern, line)]
+
+
+def restart_rows(runs):
+    print("| Run | Update.exe pid, life, exit | Restarted process | Its args (as .NET parsed them) | VELOPACK variables at entry | Parent pid (state when read) | Update.exe created -> restarted created | Restarted created -> Update.exe exit |")
+    print("|---|---|---|---|---|---|--:|--:|")
+    for run in runs:
+        upd = update_exe(run)
+        restarted = [j for j in journals(run) if role(j[0]) == "restarted"]
+        if not restarted:
+            print(f"| {run} | no restarted process | | | | | | |")
+            continue
+        start = restarted[0][0]
+        life = ms(upd["created"], upd["exitedUtc"]) if upd else None
+        variables = ", ".join(f"{k}={v}" for k, v in start["velopackVariables"].items()) or "none"
+        parent_is_update = upd is not None and start["parentPid"] == upd["pid"] and start["parentCreatedUtc"] == upd["created"]
+        print(
+            f"| {run} | {upd['pid'] if upd else '?'}, {life} ms, exit {upd['exitCode'] if upd else '?'} "
+            f"| `current\\BrowserAI.Measure.exe` v{start['assemblyVersion']} | `{json.dumps(start["args"])}` | {variables} "
+            f"| {start['parentPid']} ({start['parentState']}){' = that Update.exe' if parent_is_update else ' NOT that Update.exe'} "
+            f"| {ms(upd['created'], start['createdUtc']) if upd else '?'} | {ms(start['createdUtc'], upd['exitedUtc']) if upd else '?'} |"
+        )
+
+
+def hook_timeout_rows(runs):
+    print("| Run | Hook pid | Created | Killed (exit code) | Lifetime | Heartbeats, last at elapsed | Update.exe says | Version after |")
+    print("|---|---|---|---|--:|---|---|---|")
+    for run in runs:
+        hook = [j for j in journals(run) if role(j[0]) == "--veloapp-updated"][0]
+        start = hook[0]
+        beats = [r for r in hook if r["event"] == "heartbeat"]
+        ex = exit_of(run, start["pid"])
+        said = "; ".join(re.sub(r"^\[update:\d+\] \[[\d:]+\] ", "", line) for line in slice_lines(run, r"timed out|applied successfully\.$"))
+        summary = json.loads((logs / run / "summary.json").read_text(encoding="utf-8-sig"))
+        print(
+            f"| {run} | {start['pid']} | {start['createdUtc']} | {ex['exitedUtc']} ({ex['exitCode']}) | {ms(start['createdUtc'], ex['exitedUtc'])} ms "
+            f"| {len(beats)}, {beats[-1]['elapsedMs']} ms | {said} | {summary['versionAfter']} |"
+        )
+
+
+def children_rows(runs):
+    print("| Run | Hook exit (code) | Child under root: created, last heartbeat, exit (code) | Child killed after hook exit | Update.exe exit (code) | Child outside root: last line | Outside child exit (code) | Outside child outlived Update.exe by |")
+    print("|---|---|---|--:|---|---|---|--:|")
+    for run in runs:
+        found = journals(run)
+        hook = [j for j in found if role(j[0]) == "--veloapp-updated"][0]
+        child = [j for j in found if role(j[0]) == "child"][0]
+        hook_exit = exit_of(run, hook[0]["pid"])
+        child_exit = exit_of(run, child[0]["pid"])
+        beats = [r for r in child if r["event"] == "heartbeat"]
+        upd = update_exe(run)
+        outside_file = sorted((logs / run).glob("outside-*.txt"))[0]
+        outside_lines = outside_file.read_text(encoding="utf-8-sig").splitlines()
+        outside_pid = int(re.search(r"pid=(\d+)", outside_lines[0]).group(1))
+        outside_exit = exit_of(run, outside_pid)
+        print(
+            f"| {run} | {hook_exit['exitedUtc']} ({hook_exit['exitCode']}) "
+            f"| {child[0]['createdUtc']}, {beats[-1]['t']} (beat {beats[-1]['n']}), {child_exit['exitedUtc']} ({child_exit['exitCode']}) "
+            f"| {ms(hook_exit['exitedUtc'], child_exit['exitedUtc'])} ms | {upd['exitedUtc']} ({upd['exitCode']}) "
+            f"| `{outside_lines[-1]}` | {outside_exit['exitedUtc'] if outside_exit else '?'} ({outside_exit['exitCode'] if outside_exit else '?'}) "
+            f"| {ms(upd['exitedUtc'], outside_exit['exitedUtc']) if outside_exit else '?'} ms |"
+        )
+
+
+def check_rows(prefixes):
+    print("| Run | Feed folder | Channel asked | Assets the source listed | CheckForUpdatesAsync returned |")
+    print("|---|---|---|---|---|")
+    for run in sorted(p.name for p in logs.iterdir() if p.is_dir() and p.name.startswith(prefixes)):
+        records = journals(run)[0]
+        feed = [r for r in records if r["event"] == "feed"][0]
+        result = [r for r in records if r["event"] == "check-result"][0]
+        assets = ", ".join(a.split(" ")[1] for a in feed["assets"])
+        returned = f"{result['target']} (IsDowngrade {result['isDowngrade']}, deltas {result['deltas']})" if result["found"] else "null"
+        print(f"| {run} | `{pathlib.Path(feed['folder']).name}` | {feed['channelAsked'] or '(default: win)'} | {assets} | {returned} |")
+
+
+which = sys.argv[2] if len(sys.argv) > 2 else "all"
+if which in ("all", "checks"):
+    check_rows(("M1-",))
+    print()
+if which in ("all", "restarts"):
+    restart_rows(["M2-1", "M2-2", "M2-3", "M3-recover", "M4a-1", "M4a-2", "M4a-3"])
+    print()
+if which in ("all", "failures"):
+    restart_rows(["M3-1", "M3-2", "M3-3"])
+    print()
+if which in ("all", "timeouts"):
+    hook_timeout_rows(["M4a-1", "M4a-2", "M4a-3"])
+    print()
+if which in ("all", "children"):
+    children_rows(["M4b-1", "M4b-2", "M4b-3"])

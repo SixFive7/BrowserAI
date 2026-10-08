@@ -1,0 +1,71 @@
+# Uninstalls the test pack the way RealInstallerTests does, with the same sandbox, and then reclaims
+# exactly what ReclaimAsync reclaims: the shortcut naming this root, the root itself, this root's
+# PATH entry, this root's own sign-in task, and the test pack's Add/Remove key. Every step reports.
+# usage: pwsh -NoProfile -File m2-uninstall.ps1
+. (Join-Path $PSScriptRoot 'm2-common.ps1')
+$ErrorActionPreference = 'Continue'
+$state = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json
+$root = $state.installRoot
+$logs = Join-Path $M 'm2-logs'
+$envBlock = Get-CleanEnvironment @{ CLAUDE_CONFIG_DIR = $state.claudeConfigDir; BROWSERAI_ROOT = $state.dataRoot; CODEX_HOME = $state.codexHome }
+"processes under the test root before the uninstall:"
+Get-ProcessesUnder $root
+$update = Join-Path $root 'Update.exe'
+if (Test-Path -LiteralPath $update) {
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    try {
+        $r = Invoke-Quiet $update @('--uninstall', '--silent') $envBlock 600
+        "uninstall exit=$($r.ExitCode) after $([math]::Round($clock.Elapsed.TotalSeconds,1)) s"
+        $r.StdOut + "`n--- stderr ---`n" + $r.StdErr | Set-Content -LiteralPath (Join-Path $logs 'uninstall.stdout.txt')
+    } catch { "uninstall failed: $_" }
+    $deadline = (Get-Date).AddMinutes(2)
+    while ((Test-Path -LiteralPath (Join-Path $root 'current')) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+    "current\ still present after the wait: $(Test-Path -LiteralPath (Join-Path $root 'current'))"
+} else { "no Update.exe at $update" }
+"processes under the test root after the uninstall:"
+Get-ProcessesUnder $root
+# The shortcut, by target and never by name.
+$programs = [Environment]::GetFolderPath('Programs')
+foreach ($lnk in Get-ChildItem -LiteralPath $programs -Filter 'BrowserAI*.lnk' -File -ErrorAction SilentlyContinue) {
+    $text = [System.Text.Encoding]::Unicode.GetString([System.IO.File]::ReadAllBytes($lnk.FullName)) + [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($lnk.FullName))
+    if ($text.IndexOf($root, [StringComparison]::OrdinalIgnoreCase) -ge 0) { "removing shortcut naming the test root: $($lnk.Name)"; Remove-Item -LiteralPath $lnk.FullName -Force }
+}
+# This root's own PATH entry, exactly, if the hook left it.
+$k = Get-Item -LiteralPath 'HKCU:\Environment'
+$path = [string]$k.GetValue('Path', $null, 'DoNotExpandEnvironmentNames')
+$mine = Join-Path $root 'current'
+$entries = $path -split ';'
+if ($entries | Where-Object { $_.TrimEnd('\') -ieq $mine }) {
+    "the uninstall hook left this root's PATH entry; removing exactly that entry"
+    $kind = $k.GetValueKind('Path')
+    $new = ($entries | Where-Object { $_.TrimEnd('\') -ine $mine }) -join ';'
+    Set-ItemProperty -LiteralPath 'HKCU:\Environment' -Name 'Path' -Value $new -Type $kind
+} else { "no PATH entry for this root" }
+# This root's own sign-in task, by the exact name the install added.
+$present = @(Get-BrowserAiTasks | ForEach-Object { $_.Name })
+foreach ($name in @($state.newTasks)) {
+    if ($name -and ($present -contains $name)) {
+        "the uninstall hook left this root's task; removing it by its exact name: $name"
+        $svc = New-Object -ComObject 'Schedule.Service'; $svc.Connect(); $svc.GetFolder('\').DeleteTask($name, 0)
+    } elseif ($name) { "task gone: $name" }
+}
+"BrowserAI tasks now: $((Get-BrowserAiTasks | ForEach-Object { $_.Name }) -join ' | ')"
+# The test pack's Add/Remove key, only when it still names this root.
+$arp = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app.test'
+$key = Get-Item -LiteralPath $arp -ErrorAction SilentlyContinue
+if ($key) {
+    $loc = [string]$key.GetValue('InstallLocation')
+    if ($loc.TrimEnd('\') -ieq $root.TrimEnd('\')) { "removing the test ARP key that names this root"; Remove-Item -LiteralPath $arp -Recurse -Force }
+    else { "test ARP key present and naming '$loc', not this root: left alone" }
+} else { "test ARP key: absent" }
+# The two scratch roots, after a look for reparse points.
+foreach ($dir in @($root, $state.dataRoot)) {
+    if (Test-Path -LiteralPath $dir) {
+        $links = @(Get-ChildItem -LiteralPath $dir -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue)
+        if ($links.Count -gt 0) { "not deleting $dir, it holds reparse points: $($links.FullName -join ' | ')"; continue }
+        Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction Continue
+        "removed ${dir}: $(-not (Test-Path -LiteralPath $dir))"
+    } else { "already gone: $dir" }
+}
+"processes under the test root at the end:"
+Get-ProcessesUnder $root

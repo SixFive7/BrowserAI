@@ -1,0 +1,25 @@
+<Project>
+
+  <!--
+    Scratch rig for the step-0 Velopack measurements. This file exists so that
+    MSBuild stops here and does not import the repository's own
+    Directory.Build.props, whose banned-symbol analyzer, MinVer and lock-file
+    settings belong to the product and not to a throwaway stand-in. The
+    repository's .editorconfig still applies, because EditorConfig discovery is
+    independent of MSBuild, and the code-style half of it is enforced below.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+</Project>

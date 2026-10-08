@@ -1,0 +1,11 @@
+round	via	seeded	goUtc	seedPid	requests	results	distinctGuids	enginePids	started	startedTags	startedPids	firstStartMsAfterGo	lastStartMsAfterGo	instancesAt8s	stateAt8s	instancesAfterQuit	requestSpreadMs	callMsMinMedMax	quit
+1	com	False	2026-10-08T14:12:52.6671404Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 38012	1	req-r01-20	38012	24.8	24.8	1	4	0	0.1	4.7/17.5/27.8	all exited
+2	com	False	2026-10-08T14:13:05.7480530Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 70828	1	req-r02-20	70828	24.9	24.9	1	4	0	0.1	5.0/19.9/26.2	all exited
+3	com	False	2026-10-08T14:13:18.8193644Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 79660	1	req-r03-06	79660	33.6	33.6	1	4	0	0.6	9.4/26.0/33.1	all exited
+4	com	False	2026-10-08T14:13:31.8516964Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 93716	1	req-r04-19	93716	24.6	24.6	1	4	0	0.1	5.6/20.4/30.7	all exited
+5	com	False	2026-10-08T14:13:44.9245929Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 68976	1	req-r05-13	68976	50.3	50.3	1	4	0	0.1	9.4/45.3/45.9	all exited
+6	com	False	2026-10-08T14:13:57.9629578Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 692	1	req-r06-19	692	24.3	24.3	1	4	0	0.1	3.5/21.3/26.6	all exited
+7	com	False	2026-10-08T14:14:11.0489061Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 37120	1	req-r07-05	37120	49.1	49.1	1	4	0	0.3	9.9/31.5/40.8	all exited
+8	com	False	2026-10-08T14:14:24.1767896Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 95992	1	req-r08-09	95992	37.3	37.3	1	4	0	0.1	12.3/29.9/30.0	all exited
+9	com	False	2026-10-08T14:14:37.5107930Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 96800	1	req-r09-20	96800	38.8	38.8	1	4	0	0.1	7.6/26.7/35.4	all exited
+10	com	False	2026-10-08T14:14:50.6020393Z	-	20	19x 0x00000000 state=err:0x8004130B; 1x 0x00000000 state=4	20	19x err:0x8004130B; 1x 73576	1	req-r10-19	73576	26.3	26.3	1	4	0	0.1	6.2/20.6/25.9	all exited

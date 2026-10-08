@@ -1,0 +1,13 @@
+client	form	runs	subsystem	served(init+list+callBig)	70KB intact at client	model got bytes	stderr markers reached client	server exit codes	killer	stub saw EOF	killerStart->EOF ms	EOF->server exit ms	stdin close->server exit ms	server exit->client exit ms	alive after settle	conhost of server	new visible windows	windows owned by server	cursor APPSTARTING ticks	cursor shapes	console procs	std	startf	feedback flag	server in job
+ccP	con	3	3	3/3	3/3	2519,2520	3/3 [start]	1	taskkill.exe /PID 3692 /T /F,taskkill.exe /PID 62644 /T /F,taskkill.exe /PID 72152 /T /F	3/3	6.0..6.5	503.6..614.2	-	19.1..32.3	0/3	3	0	0	0	ARROW	1	pipe/pipe/pipe	0x00000101	none	True
+ccP	win	3	2	3/3	3/3	2519	3/3 [start]	1	taskkill.exe /PID 103924 /T /F,taskkill.exe /PID 10900 /T /F,taskkill.exe /PID 86700 /T /F	3/3	5.4..6.8	526.0..573.1	-	17.0..20.4	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000101	none	True
+ccS	con	3	3	3/3	3/3	2520	3/3 [start]	1	taskkill.exe /PID 14780 /T /F,taskkill.exe /PID 2260 /T /F,taskkill.exe /PID 76360 /T /F	3/3	6.3..7.7	548.2..601.4	559.1..612.3	15.5..17.2	0/3	3	0	0	0	ARROW	1	pipe/pipe/pipe	0x00000101	none	True
+ccS	win	3	2	3/3	3/3	2520	3/3 [start]	1	taskkill.exe /PID 2404 /T /F,taskkill.exe /PID 59416 /T /F,taskkill.exe /PID 84024 /T /F	3/3	6.1..6.3	481.9..578.0	490.8..587.2	16.4..18.9	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000101	none	True
+cx155e	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	-	119.4..137.0	0/3	0	0	0	0	ARROW	3,4	pipe/pipe/pipe	0x00000100	none	True
+cx155e	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	-	132.9..141.5	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000100	none	True
+cx160e	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	-	116.1..140.7	0/3	3	0	0	0	ARROW	1	pipe/pipe/pipe	0x00000100	none	True
+cx160e	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	-	127.2..135.9	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000100	none	True
+cx155a	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	1.4..3.0	9.6..13.2	0/3	0	0	0	0	ARROW	2	pipe/pipe/pipe	0x00000100	none	True
+cx155a	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	2.4..6.3	7.9..13.4	0/3	0	0	0	0	ARROW	0	pipe/pipe/pipe	0x00000100	none	True
+cx160a	con	3	3	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	2.1..11.3	7.6..18.5	0/3	3	0	0	0	0x10005,0x10005,0x1001F,0x8111B8F,ARROW	1	pipe/pipe/pipe	0x00000100	none	True
+cx160a	win	3	2	3/3	3/3	12021	3/3 [start,tools/call big,tools/list]	1	none (job)	0/3	-	-	1.6..1.9	8.9..15.0	0/3	0	0	0	0	0x10005,ARROW	0	pipe/pipe/pipe	0x00000100	none	True

@@ -1,0 +1,12 @@
+2026-10-04T01:46:44.362Z MODE load
+2026-10-04T01:46:45.452Z coordinator pipe 97 ms, host pipe 978 ms
+2026-10-04T01:49:33.878Z stop file seen
+2026-10-04T01:49:34.036Z EXIT load-client-host pid=37612 code=0
+2026-10-04T01:49:34.053Z EXIT load-inproc pid=103316 code=0
+2026-10-04T01:49:34.074Z EXIT load-client-recheck pid=98252 code=0
+2026-10-04T01:49:36.882Z KILLED pid=92448 by its handle
+2026-10-04T01:49:36.894Z EXIT holding client pid=92448 code=null
+2026-10-04T01:49:37.883Z KILLED coordinator pid=83904 by its handle
+2026-10-04T01:49:37.899Z EXIT coordinator --start-host pid=83904 code=null
+2026-10-04T01:49:37.910Z after stop: host pipe gone in 22 ms, coordinator pipe gone in 5 ms
+2026-10-04T01:49:37.912Z MODE load DONE; started 5 long-lived processes (second starts and cold probes ran synchronously)

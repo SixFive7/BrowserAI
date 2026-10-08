@@ -1,0 +1,104 @@
+// Reads every run of one or more batches and prints, per arm, each candidate signal with the
+// distinct values it took and how many runs took each. Writes <batch>\summary.jsonl (one line
+// per run) beside it.
+// usage: node summarize.js <batchDir> [<batchDir>...]
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const rd = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
+const js = (f) => { const s = rd(f); if (s === null) return null; try { return JSON.parse(s.replace(/^﻿/, '')); } catch { return null; } };
+const base = (p) => (p ? p.split('\\').pop() : '-');
+const INTEREST = /^(CLAUDE|ANTHROPIC|VSCODE|CODEX|MCP|TERM|ELECTRON|WT_|COLORTERM|IDRIG|NO_COLOR|FORCE_COLOR|RUST|STUB)/i;
+
+function argsOf(cmd, image) {
+  if (!cmd) return '';
+  let s = cmd.trim();
+  if (s.startsWith('"')) { const i = s.indexOf('"', 1); s = s.slice(i + 1); } else { const i = s.indexOf(' '); s = i < 0 ? '' : s.slice(i + 1); }
+  return s.trim();
+}
+
+function oneRun(dir) {
+  const name = path.basename(dir);
+  const arm = name.replace(/-r\d+$/, '');
+  const res = js(path.join(dir, 'result.json')) || {};
+  const hlog = rd(path.join(dir, 'harness.log')) || '';
+  const envLine = hlog.split('\n').find((l) => l.includes('\tENV\t'));
+  const given = envLine ? envLine.split('\t').pop().trim().split(' ').filter(Boolean) : [];
+  const files = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+  const starts = files.filter((f) => /^idstub-\d+\.start\.json$/.test(f)).map((f) => Number(f.match(/\d+/)[0]));
+  const listed = files.filter((f) => /^idstub-\d+\.listed$/.test(f)).map((f) => Number(f.match(/\d+/)[0]));
+  const out = { run: name, arm, clientExit: res.clientExitCode, harnessKilled: !!res.harnessKilledClient, waitTimeout: res.waitTimeout || null, launches: starts.length, listedLaunches: listed.length };
+  const pid = listed.length ? listed[0] : starts[0];
+  if (pid === undefined) { out.error = 'no stub launch'; return out; }
+  const st = js(path.join(dir, `idstub-${pid}.start.json`)) || {};
+  const init = js(path.join(dir, `idstub-${pid}.initialize.json`));
+  const wire = (rd(path.join(dir, `idstub-${pid}.wire.jsonl`)) || '').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const end = js(path.join(dir, `idstub-${pid}.end.json`)) || {};
+  const env = st.env || {};
+  const p = init && init.params ? init.params : {};
+  out.clientInfo = p.clientInfo ? `${p.clientInfo.name} | ${p.clientInfo.title ?? '-'} | ${p.clientInfo.version}` : '-';
+  out.clientName = p.clientInfo ? p.clientInfo.name : '-';
+  out.protocolVersion = p.protocolVersion || '-';
+  out.capabilities = JSON.stringify(p.capabilities || null);
+  out.initializeMeta = p._meta ? JSON.stringify(p._meta) : '-';
+  out.ENTRYPOINT = env.CLAUDE_CODE_ENTRYPOINT ?? '(unset)';
+  for (const k of ['CLAUDECODE', 'CLAUDE_CODE_CHILD_SESSION', 'CLAUDE_CODE_SESSION_ATTENDED', 'CLAUDE_AGENT_SDK_VERSION', 'MCP_CONNECTION_NONBLOCKING', 'CLAUDE_CODE_SSE_PORT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_PID', 'TERM', 'TERM_PROGRAM', 'VSCODE_CRASH_REPORTER_PROCESS_TYPE', 'IDRIG_MARKER'])
+    out[k] = env[k] === undefined ? '(unset)' : (k === 'CLAUDE_CODE_EXECPATH' ? base(env[k]) : env[k]);
+  out.envCount = st.envCount;
+  const stubNames = Object.keys(env);
+  const lc = (a) => new Set(a.map((x) => x.toLowerCase()));
+  const g = lc(given), sn = lc(stubNames);
+  out.envAddedByClient = stubNames.filter((k) => !g.has(k.toLowerCase())).sort().join(' ') || '-';
+  out.envDroppedByClient = given.filter((k) => !sn.has(k.toLowerCase())).sort().join(' ') || '-';
+  out.envOfInterest = stubNames.filter((k) => INTEREST.test(k)).sort().join(' ');
+  const anc = st.ancestors || [];
+  const par = anc[0] || {};
+  out.parentImage = base(par.image);
+  out.parentIsClient = par.pid === res.clientPid;
+  const pargs = argsOf(par.cmd, par.image);
+  out.parentArgs = pargs.length > 160 ? pargs.slice(0, 160) + '...' : pargs;
+  out.parentHasPrintFlag = /(^|\s)(-p|--print)(\s|$)/.test(pargs);
+  out.parentHasStreamJsonInput = /--input-format[ =]stream-json/.test(pargs);
+  out.parentFirstArg = (pargs.split(/\s+/)[0] || '(none)');
+  out.grandparentImage = base((anc[1] || {}).image);
+  out.cwd = st.cwd;
+  const io = st.stdio || [];
+  out.stdio = io.map((h) => h.type).join('/');
+  out.pipeNames = io.map((h) => (h.pipeName || '-').replace(/\d+/g, 'N')).join(' ');
+  out.pipeServerIsParent = io.map((h) => (h.pipeServerPid === par.pid ? 'yes' : String(h.pipeServerPid))).join('/');
+  const c = st.console || {};
+  out.consoleWindow = c.consoleWindow === '0x0' ? 'none' : (c.consoleWindowVisible ? 'VISIBLE' : 'hidden');
+  out.consoleProcs = (c.consoleProcesses || []).map((x) => (x.image === '(self)' ? 'self' : base(x.image))).join(',');
+  out.consoleTitleAtStart = c.consoleTitle;
+  out.consoleTitleAtEnd = end.consoleTitleAtEnd ?? '-';
+  const su = st.startupInfo || {};
+  out.startupFlags = `${su.dwFlags} show=${su.wShowWindow}`;
+  const jb = st.job || {};
+  out.job = (jb.summary || '-').replace(/ assigned=.*$/, '');
+  out.jobImages = (jb.processes || []).map((x) => (x.image === '(self)' ? 'self' : base(x.image))).join(',');
+  const ins = wire.filter((w) => w.dir === 'in' && w.frame);
+  out.methodsIn = [...new Set(ins.map((w) => w.frame.method || (w.frame.id === 'idstub-roots-1' ? '(roots answer)' : '(response)')))].join(',');
+  const roots = ins.find((w) => w.frame.id === 'idstub-roots-1');
+  out.roots = roots ? JSON.stringify(roots.frame.result ? roots.frame.result.roots : roots.frame.error) : '-';
+  out.endHow = end.how ?? '-';
+  return out;
+}
+
+const all = [];
+for (const b of process.argv.slice(2)) {
+  const rows = fs.readdirSync(b, { withFileTypes: true }).filter((d) => d.isDirectory() && /-r\d+$/.test(d.name)).map((d) => oneRun(path.join(b, d.name)));
+  fs.writeFileSync(path.join(b, 'summary.jsonl'), rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  all.push(...rows);
+}
+const arms = [...new Set(all.map((r) => r.arm))];
+const keys = [...new Set(all.flatMap((r) => Object.keys(r)))].filter((k) => !['run', 'arm'].includes(k));
+for (const arm of arms) {
+  const rows = all.filter((r) => r.arm === arm);
+  console.log(`\n===== ${arm}: ${rows.length} runs (${rows.map((r) => r.run).join(', ')})`);
+  for (const k of keys) {
+    const counts = new Map();
+    for (const r of rows) { const v = r[k] === undefined ? '(missing)' : String(r[k]); counts.set(v, (counts.get(v) || 0) + 1); }
+    console.log(`  ${k}: ${[...counts].map(([v, n]) => `${v} x${n}`).join('  ||  ')}`);
+  }
+}

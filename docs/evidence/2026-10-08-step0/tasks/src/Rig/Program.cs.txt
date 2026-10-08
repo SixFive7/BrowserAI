@@ -1,0 +1,1389 @@
+// Step 0 scratch driver, 2026-10-08. Not BrowserAI.
+//
+//   pilot  --stamp S                       one Parallel instance with a child; prints its logs and job
+//   m1     --stamp S --via com|schtasks [--seeded] --rounds N --requesters 20
+//   m2     --stamp S --reps N
+//   m3     --stamp S --via end|stop|regstop --reps N [--top] [--on-close ignore] [--allow-shared-job]
+//   m4     --stamp S --via com|schtasks --reps N
+//   m5     --stamp S --bench-runs 5 --ticks 100000 --tickers 5 --noops 2 --duration-s 300
+//   m6     --stamp S --how ordinary|detached|detached-breakaway --reps N --watch-s 150
+//   request ...                            one requester process (started by m1 and m2)
+//   list   --prefix P                      the root folder's tasks whose name starts with P
+//   cleanup --stamp S                      deletes every task named BrowserAI-measure-S-*
+//   verify-gone --stamp S                  every process the run recorded, checked by pid and creation time
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+
+namespace Rig;
+
+/// <summary>The driver.</summary>
+internal static class Program
+{
+    public static int Main(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            Console.Error.WriteLine("usage: see the header of Program.cs");
+            return 64;
+        }
+
+        var options = Options.Parse(args);
+
+        if (options["--stamp"] is { } stamp && args[0] != "request")
+        {
+            Directory.CreateDirectory(Paths.Runs(stamp));
+            Registry.File = Path.Combine(Paths.Runs(stamp), "registry.tsv");
+        }
+
+        return args[0] switch
+        {
+            "pilot" => Pilot(options),
+            "m1" => M1(options),
+            "m2" => M2(options),
+            "m3" => M3(options),
+            "m3pair" => M3Pair(options),
+            "m4" => M4(options),
+            "m5" => M5(options),
+            "m5task" => M5Task(options),
+            "m6" => M6(options),
+            "request" => Request(options),
+            "list" => List(options),
+            "control" => Control(options),
+            "cleanup" => Cleanup(options),
+            "verify-gone" => VerifyGone(options),
+            _ => 64,
+        };
+    }
+
+    private static void Say(string line) => Console.WriteLine($"{Text.Utc(DateTime.UtcNow)} {line}");
+
+    private static string Arguments(string dir, string quitName, int maxSeconds, string extra = "") =>
+        $"standin --dir \"{dir}\" --tag $(Arg0) --quit {quitName} --max {maxSeconds}{(extra.Length > 0 ? " " + extra : string.Empty)}";
+
+    private static string Schtasks => Path.Combine(Environment.SystemDirectory, "schtasks.exe");
+
+    private static void NoteStarts(string dir)
+    {
+        foreach (var start in Logs.ReadAll(dir, "standin").Concat(Logs.ReadAll(dir, "child")).Where(l => l.Event == "START"))
+        {
+            Registry.Process(start.Role + ":" + start.Field("tag"), start.Pid, long.Parse(start.Field("creationFt")!, CultureInfo.InvariantCulture));
+        }
+    }
+
+    /// <summary>Sets the quit event and waits for every stand-in and child logged in the directory to exit.</summary>
+    private static string QuitAll(EventWaitHandle quit, string dir, int waitMs = 20000)
+    {
+        _ = quit.Set();
+        var report = new List<string>();
+
+        foreach (var start in Logs.ReadAll(dir, "standin").Concat(Logs.ReadAll(dir, "child")).Where(l => l.Event == "START"))
+        {
+            var creation = long.Parse(start.Field("creationFt")!, CultureInfo.InvariantCulture);
+            using var mine = Mine.Open(start.Pid, creation, terminateRight: true);
+
+            if (mine is null)
+            {
+                continue;
+            }
+
+            if (!mine.WaitExit(waitMs))
+            {
+                // Last resort, and only on a pid whose creation time this run recorded.
+                _ = Native.TerminateProcess(mine.Handle, 99);
+                report.Add($"{start.Role} {start.Pid} TERMINATED after {waitMs} ms");
+            }
+        }
+
+        return report.Count == 0 ? "all exited" : string.Join("; ", report);
+    }
+
+    private static int Pilot(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        const string What = "pilot";
+        var name = Paths.Task(stamp, What);
+        var dir = Path.Combine(Paths.Runs(stamp), What);
+        Directory.CreateDirectory(dir);
+        var quitName = Paths.Event(stamp, What, 1, "quit");
+        var snapName = Paths.Event(stamp, What, 1, "snap");
+        using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+        using var snap = new EventWaitHandle(false, EventResetMode.AutoReset, snapName);
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            Sched.Register(folder, name, Sched.Definition("Parallel", true, Arguments(dir, quitName, 120, $"--snap {snapName} --child --top")));
+            dynamic task = folder.GetTask(name);
+            Say($"registered {name}; state={task.State}");
+            var before = DateTime.UtcNow;
+            dynamic running = task.Run("pilot1");
+            var after = DateTime.UtcNow;
+            Say($"Run returned in {Text.Ms(after - before)} ms guid={running.InstanceGuid} enginePid={running.EnginePID} state={running.State}");
+            var start = Logs.WaitFor(dir, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+            var child = Logs.WaitFor(dir, "child", "START", _ => true, TimeSpan.FromSeconds(15));
+            Say($"standin START {(start is null ? "MISSING" : Text.Ms(start.Utc - before) + " ms after the request")}; child START {(child is null ? "MISSING" : "seen")}");
+            NoteStarts(dir);
+            Thread.Sleep(1000);
+            _ = snap.Set();
+            Thread.Sleep(1000);
+            running.Refresh();
+            Say($"instance after refresh: state={running.State} enginePid={running.EnginePID} currentAction={running.CurrentAction}");
+            Say($"task: instances={Sched.Instances(task)} state={task.State} lastResult={Text.Hex((int)task.LastTaskResult)}");
+
+            foreach (var line in Logs.ReadAll(dir, "standin").Concat(Logs.ReadAll(dir, "child")).OrderBy(l => l.Utc))
+            {
+                Console.WriteLine($"  {Text.Utc(line.Utc)} {line.Pid} {line.Role} {line.Event} {line.Detail}");
+            }
+
+            Say("quit: " + QuitAll(quit, dir));
+            Thread.Sleep(1500);
+            Say($"after quit: instances={Sched.Instances(task)} state={task.State} lastResult={Text.Hex((int)task.LastTaskResult)}");
+        }
+        finally
+        {
+            Say($"deleted={Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    private static int M1(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var via = options.Need("--via");
+        var seeded = options.Has("--seeded");
+        var rounds = options.Int("--rounds", 10);
+        var count = options.Int("--requesters", 20);
+        var what = $"m1-{via}-{(seeded ? "running" : "none")}";
+        var name = Paths.Task(stamp, what);
+        var caseDir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(caseDir);
+        var summaryPath = Path.Combine(caseDir, "summary.tsv");
+        File.WriteAllText(summaryPath, "round\tvia\tseeded\tgoUtc\tseedPid\trequests\tresults\tdistinctGuids\tenginePids\tstarted\tstartedTags\tstartedPids\tfirstStartMsAfterGo\tlastStartMsAfterGo\tinstancesAt8s\tstateAt8s\tinstancesAfterQuit\trequestSpreadMs\tcallMsMinMedMax\tquit\n");
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            for (var round = 1; round <= rounds; round++)
+            {
+                var dir = Path.Combine(caseDir, $"r{round:D2}");
+                Directory.CreateDirectory(dir);
+                var quitName = Paths.Event(stamp, what, round, "quit");
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                Sched.Register(folder, name, Sched.Definition("IgnoreNew", true, Arguments(dir, quitName, 120)));
+                dynamic task = folder.GetTask(name);
+                var seedPid = "-";
+
+                if (seeded)
+                {
+                    _ = task.Run($"seed-r{round:D2}");
+                    var seed = Logs.WaitFor(dir, "standin", "START", l => l.Field("tag")!.StartsWith("seed", StringComparison.Ordinal), TimeSpan.FromSeconds(15));
+                    seedPid = seed?.Pid.ToString(CultureInfo.InvariantCulture) ?? "MISSING";
+                    Thread.Sleep(500);
+                }
+
+                DateTime go;
+                string results;
+                string guids = "-";
+                string enginePids = "-";
+                string spread;
+                string calls;
+
+                if (via == "com")
+                {
+                    var rows = ComBurst(stamp, what, round, name, dir, count, "run", i => $"req-r{round:D2}-{i:D2}", 0, null, out go);
+                    results = Text.Distribution(rows.Select(r => r["hr"] + (r["error"] == "-" ? string.Empty : " " + r["error"]) + " state=" + r["state"]));
+                    guids = rows.Select(r => r["guid"]).Distinct().Count().ToString(CultureInfo.InvariantCulture);
+                    enginePids = Text.Distribution(rows.Select(r => r["enginePid"]));
+                    var befores = rows.Where(r => r["before"] != "-" && r["before"] != "MISSING").Select(r => DateTime.Parse(r["before"], CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal)).ToList();
+                    spread = befores.Count > 0 ? Text.Ms(befores.Max() - befores.Min()) : "-";
+                    var durations = rows.Where(r => r["callMs"] != "-" && r["callMs"] != "MISSING").Select(r => double.Parse(r["callMs"], CultureInfo.InvariantCulture)).Order().ToList();
+                    calls = durations.Count > 0 ? $"{durations[0]:F1}/{durations[durations.Count / 2]:F1}/{durations[^1]:F1}" : "-";
+                    File.WriteAllLines(Path.Combine(dir, "requests.tsv"), [RequestHeader, .. rows.Select(r => string.Join('	', RequestHeader.Split('	').Select(c => r[c])))]);
+                }
+                else
+                {
+                    var spawned = SchtasksBurst(dir, count, $"/run /tn \"{name}\"", out go);
+                    var rows = spawned.Select(s => (s.ExitCode, Out: Text.ReadOutput(s.OutPath), Err: Text.ReadOutput(s.ErrPath), Exit: Text.FromFt(s.ExitFt), s.ResumedUtc)).ToList();
+                    results = Text.Distribution(rows.Select(r => $"exit={r.ExitCode} out=[{r.Out}] err=[{r.Err}]"));
+                    var resumes = rows.Select(r => r.ResumedUtc!.Value).ToList();
+                    spread = Text.Ms(resumes.Max() - resumes.Min());
+                    var durations = rows.Select(r => (r.Exit - r.ResumedUtc!.Value).TotalMilliseconds).Order().ToList();
+                    calls = $"{durations[0]:F1}/{durations[durations.Count / 2]:F1}/{durations[^1]:F1}";
+                    File.WriteAllLines(Path.Combine(dir, "schtasks.tsv"), spawned.Select((s, i) => $"{i + 1}\t{s.Pid}\t{s.CreationFt}\t{Text.Utc(s.ResumedUtc!.Value)}\t{Text.Utc(Text.FromFt(s.ExitFt))}\t{s.ExitCode}\t{Text.ReadOutput(s.OutPath)}\t{Text.ReadOutput(s.ErrPath)}"));
+
+                    foreach (var s in spawned)
+                    {
+                        Registry.Process("schtasks", s.Pid, s.CreationFt);
+                        s.Dispose();
+                    }
+                }
+
+                Thread.Sleep(8000);
+                int instancesAt8 = Sched.Instances(task);
+                int stateAt8 = task.State;
+                NoteStarts(dir);
+                var started = Logs.Starts(dir, "standin").Where(l => !l.Field("tag")!.StartsWith("seed", StringComparison.Ordinal)).ToList();
+                var quitReport = QuitAll(quit, dir);
+                Thread.Sleep(1500);
+                int instancesAfter = Sched.Instances(task);
+                var startedAfter = Logs.Starts(dir, "standin").Count(l => !l.Field("tag")!.StartsWith("seed", StringComparison.Ordinal));
+
+                if (startedAfter != started.Count)
+                {
+                    quitReport += $"; LATE STARTS {startedAfter - started.Count}";
+                    quitReport += "; " + QuitAll(quit, dir);
+                }
+
+                var line = string.Join('\t', [
+                    round.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    seeded.ToString(),
+                    Text.Utc(go),
+                    seedPid,
+                    count.ToString(CultureInfo.InvariantCulture),
+                    results,
+                    guids,
+                    enginePids,
+                    started.Count.ToString(CultureInfo.InvariantCulture),
+                    string.Join(',', started.Select(s => s.Field("tag"))),
+                    string.Join(',', started.Select(s => s.Pid)),
+                    started.Count > 0 ? Text.Ms(started.Min(s => s.Utc) - go) : "-",
+                    started.Count > 0 ? Text.Ms(started.Max(s => s.Utc) - go) : "-",
+                    instancesAt8.ToString(CultureInfo.InvariantCulture),
+                    stateAt8.ToString(CultureInfo.InvariantCulture),
+                    instancesAfter.ToString(CultureInfo.InvariantCulture),
+                    spread,
+                    calls,
+                    quitReport]);
+                File.AppendAllText(summaryPath, line + "\n");
+                Say($"{what} round {round}: started={started.Count} tags={string.Join(',', started.Select(s => s.Field("tag")))} results={results}");
+                Thread.Sleep(1000);
+            }
+        }
+        finally
+        {
+            Say($"deleted {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    private static List<Dictionary<string, string>> ComBurst(string stamp, string what, int round, string task, string dir, int count, string mode, Func<int, string> argumentOf, int flags, Action? beforeGo, out DateTime go)
+    {
+        var readyName = Paths.Event(stamp, what, round, "ready");
+        var goName = Paths.Event(stamp, what, round, "go");
+        using var ready = new Semaphore(0, 1000, readyName);
+        using var goEvent = new EventWaitHandle(false, EventResetMode.ManualReset, goName);
+        var processes = new List<Process>();
+
+        for (var i = 1; i <= count; i++)
+        {
+            var start = new ProcessStartInfo(Environment.ProcessPath!)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+
+            foreach (var argument in new[] { "request", "--task", task, "--go", goName, "--ready", readyName, "--arg", argumentOf(i), "--out", Path.Combine(dir, $"request-{i:D2}.tsv"), "--mode", mode, "--flags", flags.ToString(CultureInfo.InvariantCulture), "--index", i.ToString(CultureInfo.InvariantCulture) })
+            {
+                start.ArgumentList.Add(argument);
+            }
+
+            var process = Process.Start(start)!;
+            _ = Native.GetProcessTimes(process.Handle, out var creation, out _, out _, out _);
+            Registry.Process("requester", process.Id, creation);
+            processes.Add(process);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            if (!ready.WaitOne(TimeSpan.FromSeconds(90)))
+            {
+                throw new TimeoutException($"only {i} of {count} requesters became ready");
+            }
+        }
+
+        beforeGo?.Invoke();
+        go = DateTime.UtcNow;
+        _ = goEvent.Set();
+
+        foreach (var process in processes)
+        {
+            if (!process.WaitForExit(90_000))
+            {
+                Say($"requester {process.Id} did not exit in 90 s");
+            }
+
+            process.WaitForExit();
+            process.Dispose();
+        }
+
+        var header = RequestHeader.Split('\t');
+        var rows = new List<Dictionary<string, string>>();
+
+        for (var i = 1; i <= count; i++)
+        {
+            var path = Path.Combine(dir, $"request-{i:D2}.tsv");
+            var values = File.Exists(path) ? File.ReadAllText(path).TrimEnd('\n').Split('\t') : [];
+            var row = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            for (var c = 0; c < header.Length; c++)
+            {
+                row[header[c]] = c < values.Length ? values[c] : "MISSING";
+            }
+
+            rows.Add(row);
+        }
+
+        return rows;
+    }
+
+    private static List<Spawned> SchtasksBurst(string dir, int count, string arguments, out DateTime go)
+    {
+        var spawned = new List<Spawned>();
+
+        for (var i = 1; i <= count; i++)
+        {
+            spawned.Add(Spawned.Start($"\"{Schtasks}\" {arguments}", Path.Combine(dir, $"schtasks-{i:D2}.out"), Path.Combine(dir, $"schtasks-{i:D2}.err"), suspended: true));
+        }
+
+        go = DateTime.UtcNow;
+
+        foreach (var process in spawned)
+        {
+            process.Resume();
+        }
+
+        foreach (var process in spawned)
+        {
+            if (!process.Wait(90_000))
+            {
+                Say($"schtasks {process.Pid} did not exit in 90 s");
+            }
+        }
+
+        return spawned;
+    }
+
+    private static (int ExitCode, string Out, string Err, double Ms, int Pid) SchtasksOnce(string dir, string label, string arguments)
+    {
+        using var process = Spawned.Start($"\"{Schtasks}\" {arguments}", Path.Combine(dir, $"schtasks-{label}.out"), Path.Combine(dir, $"schtasks-{label}.err"), suspended: false);
+        var before = DateTime.UtcNow;
+        _ = process.Wait(90_000);
+        var ms = (Text.FromFt(process.ExitFt) - before).TotalMilliseconds;
+        Registry.Process("schtasks", process.Pid, process.CreationFt);
+
+        return (process.ExitCode, Text.ReadOutput(process.OutPath), Text.ReadOutput(process.ErrPath), ms, process.Pid);
+    }
+
+    private const string RequestHeader = "index\tpid\tcreationFt\tready\tgoSeen\tbefore\tafter\tcallMs\tmode\tstep\thr\terror\tguid\tenginePid\tstate\tcurrentAction\trefresh\tstate2\tenginePid2";
+
+    private static int Request(Options options)
+    {
+        var output = options.Need("--out");
+        var mode = options["--mode"] ?? "run";
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var column in RequestHeader.Split('\t'))
+        {
+            values[column] = "-";
+        }
+
+        values["index"] = options["--index"] ?? "-";
+        values["pid"] = Environment.ProcessId.ToString(CultureInfo.InvariantCulture);
+        values["mode"] = mode;
+        values["hr"] = "0x00000000";
+
+        using (var self = Process.GetCurrentProcess())
+        {
+            _ = Native.GetProcessTimes(self.Handle, out var creation, out _, out _, out _);
+            values["creationFt"] = creation.ToString(CultureInfo.InvariantCulture);
+        }
+
+        try
+        {
+            dynamic folder = Sched.Folder();
+            dynamic? task = null;
+
+            if (mode != "gettask-run")
+            {
+                task = folder.GetTask(options.Need("--task"));
+            }
+
+            using var go = EventWaitHandle.OpenExisting(options.Need("--go"));
+            using var ready = Semaphore.OpenExisting(options.Need("--ready"));
+            values["ready"] = Text.Utc(DateTime.UtcNow);
+            _ = ready.Release();
+
+            if (!go.WaitOne(TimeSpan.FromSeconds(90)))
+            {
+                values["step"] = "go-timeout";
+                throw new TimeoutException("go never came");
+            }
+
+            values["goSeen"] = Text.Utc(DateTime.UtcNow);
+            dynamic? running = null;
+            var before = DateTime.UtcNow;
+
+            try
+            {
+                if (mode == "gettask-run")
+                {
+                    values["step"] = "gettask";
+                    task = folder.GetTask(options.Need("--task"));
+                }
+
+                values["step"] = mode == "runex" ? "runex" : "run";
+                var argument = options.Need("--arg");
+                running = mode == "runex" ? task!.RunEx(argument, options.Int("--flags", 0), 0, string.Empty) : task!.Run(argument);
+                values["step"] = "returned";
+            }
+            catch (Exception failure)
+            {
+                values["hr"] = Text.Hex(Sched.Hr(failure));
+                values["error"] = Sched.Message(failure);
+            }
+
+            var after = DateTime.UtcNow;
+            values["before"] = Text.Utc(before);
+            values["after"] = Text.Utc(after);
+            values["callMs"] = Text.Ms(after - before);
+
+            if (running is not null)
+            {
+                dynamic instance = running;
+                values["guid"] = Try(() => (string)instance.InstanceGuid);
+                values["enginePid"] = Try(() => ((object)instance.EnginePID).ToString()!);
+                values["state"] = Try(() => ((object)instance.State).ToString()!);
+                values["currentAction"] = Try(() => (string)(instance.CurrentAction ?? "null"));
+                Thread.Sleep(1500);
+                values["refresh"] = Try(() =>
+                {
+                    instance.Refresh();
+                    return "ok";
+                });
+                values["state2"] = Try(() => ((object)instance.State).ToString()!);
+                values["enginePid2"] = Try(() => ((object)instance.EnginePID).ToString()!);
+            }
+        }
+        catch (Exception outer)
+        {
+            if (values["error"] == "-")
+            {
+                values["hr"] = Text.Hex(Sched.Hr(outer));
+                values["error"] = "outer: " + Sched.Message(outer);
+            }
+        }
+
+        File.WriteAllText(output, string.Join('\t', RequestHeader.Split('\t').Select(c => values[c])) + "\n");
+        return 0;
+    }
+
+    private static string Try(Func<string> read)
+    {
+        try
+        {
+            return Text.Clean(read());
+        }
+        catch (Exception failure)
+        {
+            return "err:" + Text.Hex(Sched.Hr(failure));
+        }
+    }
+
+    private static int M2(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var reps = options.Int("--reps", 5);
+        var caseDir = Path.Combine(Paths.Runs(stamp), "m2");
+        Directory.CreateDirectory(caseDir);
+        var resultsPath = Path.Combine(caseDir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\tcase\trequest\tresult\tms\tstartedWithin3s\tdetail\n");
+        dynamic folder = Sched.Folder();
+
+        void Row(int rep, string what, string request, string result, double ms, int started, string detail)
+        {
+            File.AppendAllText(resultsPath, $"{rep}\t{what}\t{request}\t{result}\t{ms.ToString("F1", CultureInfo.InvariantCulture)}\t{started}\t{Text.Clean(detail)}\n");
+            Say($"m2 rep {rep} {what} {request}: {result} ({ms:F1} ms) started={started} {detail}");
+        }
+
+        var missing = Paths.Task(stamp, "m2-missing");
+        var stale = Paths.Task(stamp, "m2-stale");
+        var disabled = Paths.Task(stamp, "m2-disabled");
+
+        try
+        {
+            // A name that was never registered.
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dir = Path.Combine(caseDir, "missing", $"r{rep:D2}");
+                Directory.CreateDirectory(dir);
+                var before = DateTime.UtcNow;
+                string result;
+
+                try
+                {
+                    dynamic task = folder.GetTask(missing);
+                    dynamic running = task.Run("m2-missing");
+                    result = "GetTask and Run SUCCEEDED " + (string)running.InstanceGuid;
+                }
+                catch (Exception failure)
+                {
+                    result = $"GetTask threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                }
+
+                Row(rep, "missing", "com GetTask+Run", result, (DateTime.UtcNow - before).TotalMilliseconds, 0, "-");
+                var (code, output, error, ms, _) = SchtasksOnce(dir, "run", $"/run /tn \"{missing}\"");
+                Row(rep, "missing", "schtasks /run", $"exit={code}", ms, 0, $"out=[{output}] err=[{error}]");
+            }
+
+            // A task deleted after the requester obtained it.
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dir = Path.Combine(caseDir, "stale", $"r{rep:D2}");
+                Directory.CreateDirectory(dir);
+                var quitName = Paths.Event(stamp, "m2-stale", rep, "quit");
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                Sched.Register(folder, stale, Sched.Definition("Parallel", true, Arguments(dir, quitName, 60)));
+                dynamic held = folder.GetTask(stale);
+                _ = Sched.Delete(folder, stale);
+                var before = DateTime.UtcNow;
+                string result;
+
+                try
+                {
+                    dynamic running = held.Run($"m2-stale-r{rep:D2}");
+                    result = "Run SUCCEEDED " + (string)running.InstanceGuid;
+                }
+                catch (Exception failure)
+                {
+                    result = $"Run threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                }
+
+                var ms = (DateTime.UtcNow - before).TotalMilliseconds;
+                Thread.Sleep(3000);
+                NoteStarts(dir);
+                var started = Logs.Starts(dir, "standin").Count;
+                Row(rep, "deleted-after-GetTask", "com Run on the held IRegisteredTask", result, ms, started, QuitAll(quit, dir));
+            }
+
+            // A disabled task.
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dir = Path.Combine(caseDir, "disabled", $"r{rep:D2}");
+                Directory.CreateDirectory(dir);
+                var quitName = Paths.Event(stamp, "m2-disabled", rep, "quit");
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                Sched.Register(folder, disabled, Sched.Definition("Parallel", false, Arguments(dir, quitName, 60)));
+                dynamic task = folder.GetTask(disabled);
+                Row(rep, "disabled", "state", $"State={task.State} Enabled={task.Enabled}", 0, 0, "-");
+                var attempts = new (string Request, Func<string> Act)[]
+                {
+                    ("com Run", () =>
+                    {
+                        try
+                        {
+                            dynamic running = task.Run($"m2-disabled-run-r{rep:D2}");
+                            return $"Run SUCCEEDED guid={(string)running.InstanceGuid} state={running.State} enginePid={running.EnginePID}";
+                        }
+                        catch (Exception failure)
+                        {
+                            return $"Run threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                        }
+                    }),
+                    ("com RunEx TASK_RUN_IGNORE_CONSTRAINTS", () =>
+                    {
+                        try
+                        {
+                            dynamic running = task.RunEx($"m2-disabled-runex-r{rep:D2}", 2, 0, string.Empty);
+                            return $"RunEx SUCCEEDED guid={(string)running.InstanceGuid} state={running.State} enginePid={running.EnginePID}";
+                        }
+                        catch (Exception failure)
+                        {
+                            return $"RunEx threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                        }
+                    }),
+                    ("schtasks /run", () =>
+                    {
+                        var (code, output, error, _, _) = SchtasksOnce(dir, "run", $"/run /tn \"{disabled}\"");
+                        return $"exit={code} out=[{output}] err=[{error}]";
+                    }),
+                    ("schtasks /run /i", () =>
+                    {
+                        var (code, output, error, _, _) = SchtasksOnce(dir, "run-i", $"/run /i /tn \"{disabled}\"");
+                        return $"exit={code} out=[{output}] err=[{error}]";
+                    }),
+                };
+
+                foreach (var (request, act) in attempts)
+                {
+                    var startedBefore = Logs.Starts(dir, "standin").Count;
+                    var before = DateTime.UtcNow;
+                    var result = act();
+                    var ms = (DateTime.UtcNow - before).TotalMilliseconds;
+                    Thread.Sleep(3000);
+                    NoteStarts(dir);
+                    var started = Logs.Starts(dir, "standin").Count - startedBefore;
+                    var quitReport = started > 0 ? QuitAll(quit, dir) : "-";
+
+                    if (started > 0)
+                    {
+                        _ = quit.Reset();
+                    }
+
+                    Row(rep, "disabled", request, result, ms, started, $"lastResult={Text.Hex((int)task.LastTaskResult)} state={task.State} quit={quitReport}");
+                }
+
+                _ = Sched.Delete(folder, disabled);
+            }
+        }
+        finally
+        {
+            _ = Sched.Delete(folder, stale);
+            _ = Sched.Delete(folder, disabled);
+        }
+
+        return 0;
+    }
+
+    private static int M3(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var via = options.Need("--via");
+        var reps = options.Int("--reps", 5);
+        var top = options.Has("--top");
+        var onClose = options["--on-close"];
+        var allowShared = options.Has("--allow-shared-job");
+        var allowedForeign = (options["--allow-foreign"] ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToHashSet();
+        var s4u = options["--logon"] == "s4u";
+        var what = $"m3-{(s4u ? "s4u-" : string.Empty)}{via}{(top ? "-top" : string.Empty)}{(onClose is null ? string.Empty : "-" + onClose)}{(options["--label"] is { } label ? "-" + label : string.Empty)}";
+        var name = Paths.Task(stamp, what);
+        var caseDir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(caseDir);
+        var resultsPath = Path.Combine(caseDir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\tvia\tgate\trequestResult\trequestMs\tstandinExitMsAfterRequest\tstandinExitCode\tchildEndedWithin5s\tchildExitMsAfterRequest\tchildExitCode\tinstancesAfter\tstateAfter\tlastResult\tstandinSaw\tchildSaw\tcleanup\n");
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dir = Path.Combine(caseDir, $"r{rep:D2}");
+                Directory.CreateDirectory(dir);
+                var quitName = Paths.Event(stamp, what, rep, "quit", s4u);
+                var snapName = Paths.Event(stamp, what, rep, "snap", s4u);
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                using var snap = new EventWaitHandle(false, EventResetMode.AutoReset, snapName);
+                var extra = $"--snap {snapName} --child{(top ? " --top" : string.Empty)}{(onClose is null ? string.Empty : " --on-close " + onClose)}";
+                Sched.Register(folder, name, Sched.Definition("Parallel", true, Arguments(dir, quitName, 180, extra), s4u ? "S4U" : "InteractiveToken"), s4u ? 2 : 3);
+                dynamic task = folder.GetTask(name);
+                dynamic running = task.Run($"m3-r{rep:D2}");
+                var start = Logs.WaitFor(dir, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                var childStart = Logs.WaitFor(dir, "child", "START", _ => true, TimeSpan.FromSeconds(15));
+                var childLine = Logs.WaitFor(dir, "standin", "CHILD", _ => true, TimeSpan.FromSeconds(15));
+
+                if (start is null || childStart is null || childLine is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tSETUP FAILED\n");
+                    Say($"m3 rep {rep}: setup failed; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                NoteStarts(dir);
+                Thread.Sleep(700);
+                using var standin = Mine.Open(start.Pid, long.Parse(start.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+                using var child = Mine.Open(childStart.Pid, long.Parse(childStart.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+
+                if (standin is null || child is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tOPEN FAILED\n");
+                    Say($"m3 rep {rep}: open failed; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                // The gate: the stand-in's own job, read now, holds the stand-in and its child and nothing else.
+                var snapsBefore = Logs.ReadAll(dir, "standin").Count(l => l.Event == "JOBSNAP");
+                _ = snap.Set();
+                var jobSnap = Logs.WaitFor(dir, "standin", "JOBSNAP", _ => Logs.ReadAll(dir, "standin").Count(l => l.Event == "JOBSNAP") > snapsBefore, TimeSpan.FromSeconds(5));
+                var snaps = Logs.ReadAll(dir, "standin").Where(l => l.Event == "JOBSNAP").ToList();
+                var latest = snaps.Count > snapsBefore ? snaps[^1] : null;
+                var ids = latest?.Field("ids")?.Trim('[', ']').Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList() ?? [];
+                var foreign = ids.Where(id => id != standin.Pid && id != child.Pid).ToList();
+                var gate = latest is null ? "NO SNAPSHOT" : foreign.Count == 0 ? $"own job holds only [{string.Join(',', ids)}]" : $"FOREIGN [{string.Join(',', foreign)}] in [{string.Join(',', ids)}]";
+
+                if (latest is null || (foreign.Count > 0 && !(allowShared && foreign.All(allowedForeign.Contains))))
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tREFUSED: {gate}\n");
+                    Say($"m3 rep {rep}: refused, {gate}; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                // Every foreign member allowed above, as it stands now: its start time where it can be read.
+                var foreignBefore = foreign.ToDictionary(id => id, StartOf);
+
+                var request = DateTime.UtcNow;
+                string requestResult;
+
+                try
+                {
+                    switch (via)
+                    {
+                        case "end":
+                            var (code, output, error, _, _) = SchtasksOnce(dir, "end", $"/end /tn \"{name}\"");
+                            requestResult = $"exit={code} out=[{output}] err=[{error}]";
+                            break;
+                        case "stop":
+                            running.Stop();
+                            requestResult = "IRunningTask.Stop returned";
+                            break;
+                        default:
+                            task.Stop(0);
+                            requestResult = "IRegisteredTask.Stop(0) returned";
+                            break;
+                    }
+                }
+                catch (Exception failure)
+                {
+                    requestResult = $"threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                }
+
+                var requestMs = (DateTime.UtcNow - request).TotalMilliseconds;
+                var standinExited = standin.WaitExit(60_000);
+                var standinExitMs = standinExited ? Text.Ms(Text.FromFt(standin.ExitFt) - request) : "ALIVE after 60 s";
+                var standinCode = standinExited ? Text.Hex(standin.ExitCode) : "-";
+                var childEnded = child.WaitExit(5000);
+                var childExitMs = childEnded ? Text.Ms(Text.FromFt(child.ExitFt) - request) : "-";
+                var childCode = childEnded ? Text.Hex(child.ExitCode) : "-";
+                Thread.Sleep(500);
+                int instancesAfter = Sched.Instances(task);
+                int stateAfter = task.State;
+                var lastResult = Text.Hex((int)task.LastTaskResult);
+                var standinSaw = string.Join(" ", Logs.ReadAll(dir, "standin").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event + (l.Event is "MSG" or "WM_CLOSE" ? "(" + l.Detail + ")" : string.Empty)));
+                var childSaw = string.Join(" ", Logs.ReadAll(dir, "child").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event + (l.Event is "MSG" or "WM_CLOSE" ? "(" + l.Detail + ")" : string.Empty)));
+                var cleanup = QuitAll(quit, dir);
+                var foreignGone = foreignBefore.Where(pair => StartOf(pair.Key) != pair.Value).Select(pair => pair.Key).ToList();
+
+                if (foreignGone.Count > 0)
+                {
+                    File.WriteAllText(Path.Combine(caseDir, "ABORT-foreign-process-gone.txt"), string.Join(',', foreignGone));
+                    gate += $" ;; FOREIGN PROCESS GONE OR CHANGED AFTER THE REQUEST: [{string.Join(',', foreignGone)}]";
+                }
+                else if (foreignBefore.Count > 0)
+                {
+                    gate += $" ;; all {foreignBefore.Count} foreign members still present after the request";
+                }
+
+                File.AppendAllText(resultsPath, string.Join('\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    gate,
+                    requestResult,
+                    requestMs.ToString("F1", CultureInfo.InvariantCulture),
+                    standinExitMs,
+                    standinCode,
+                    childEnded.ToString(),
+                    childExitMs,
+                    childCode,
+                    instancesAfter.ToString(CultureInfo.InvariantCulture),
+                    stateAfter.ToString(CultureInfo.InvariantCulture),
+                    lastResult,
+                    standinSaw.Length == 0 ? "-" : standinSaw,
+                    childSaw.Length == 0 ? "-" : childSaw,
+                    cleanup]) + "\n");
+                Say($"m3 rep {rep} {via}: {requestResult}; standin exit {standinExitMs} ms code {standinCode}; child ended={childEnded} {childExitMs} code {childCode}; saw [{standinSaw}] child saw [{childSaw}]; gate {gate}");
+
+                if (foreignGone.Count > 0)
+                {
+                    Say("ABORT: a foreign member of the job is gone or changed after the request; no further requests.");
+                    break;
+                }
+
+                Thread.Sleep(1000);
+            }
+        }
+        finally
+        {
+            Say($"deleted {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Two tasks whose processes share one job: ends the first and watches whether the second, a
+    /// process in the same job that the first never started, survives. Refuses unless the job holds
+    /// the two stand-ins and nothing else.
+    /// </summary>
+    private static int M3Pair(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var via = options.Need("--via");
+        var reps = options.Int("--reps", 3);
+        var s4u = options["--logon"] == "s4u";
+        var what = $"m3pair-{(s4u ? "s4u-" : string.Empty)}{via}";
+        var nameA = Paths.Task(stamp, what + "-a");
+        var nameB = Paths.Task(stamp, what + "-b");
+        var caseDir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(caseDir);
+        var resultsPath = Path.Combine(caseDir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\tvia\tgate\trequestResult\taExitMsAfterRequest\taExitCode\tbEndedWithin5s\tbExitCode\taSaw\tbSaw\tcleanup\n");
+        dynamic folder = Sched.Folder();
+        var logon = s4u ? "S4U" : "InteractiveToken";
+        var logonType = s4u ? 2 : 3;
+
+        try
+        {
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dirA = Path.Combine(caseDir, $"r{rep:D2}", "a");
+                var dirB = Path.Combine(caseDir, $"r{rep:D2}", "b");
+                Directory.CreateDirectory(dirA);
+                Directory.CreateDirectory(dirB);
+                var quitName = Paths.Event(stamp, what, rep, "quit", s4u);
+                var snapName = Paths.Event(stamp, what, rep, "snap", s4u);
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                using var snap = new EventWaitHandle(false, EventResetMode.AutoReset, snapName);
+                Sched.Register(folder, nameA, Sched.Definition("Parallel", true, Arguments(dirA, quitName, 180, $"--snap {snapName} --top"), logon), logonType);
+                Sched.Register(folder, nameB, Sched.Definition("Parallel", true, Arguments(dirB, quitName, 180, "--top --on-close ignore"), logon), logonType);
+                dynamic taskA = folder.GetTask(nameA);
+                dynamic taskB = folder.GetTask(nameB);
+                dynamic runningA = taskA.Run($"pair-a-r{rep:D2}");
+                _ = taskB.Run($"pair-b-r{rep:D2}");
+                var startA = Logs.WaitFor(dirA, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                var startB = Logs.WaitFor(dirB, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                NoteStarts(dirA);
+                NoteStarts(dirB);
+
+                if (startA is null || startB is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tSETUP FAILED a={(startA is null ? "missing" : "ok")} b={(startB is null ? "missing" : "ok")}\n");
+                    Say($"m3pair rep {rep}: setup failed; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                Thread.Sleep(700);
+                using var a = Mine.Open(startA.Pid, long.Parse(startA.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+                using var b = Mine.Open(startB.Pid, long.Parse(startB.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+
+                if (a is null || b is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tOPEN FAILED\n");
+                    Say($"m3pair rep {rep}: open failed; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                var snapsBefore = Logs.ReadAll(dirA, "standin").Count(l => l.Event == "JOBSNAP");
+                _ = snap.Set();
+                _ = Logs.WaitFor(dirA, "standin", "JOBSNAP", _ => Logs.ReadAll(dirA, "standin").Count(l => l.Event == "JOBSNAP") > snapsBefore, TimeSpan.FromSeconds(5));
+                var snaps = Logs.ReadAll(dirA, "standin").Where(l => l.Event == "JOBSNAP").ToList();
+                var latest = snaps.Count > snapsBefore ? snaps[^1] : null;
+                var ids = latest?.Field("ids")?.Trim('[', ']').Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList() ?? [];
+                var foreign = ids.Where(id => id != a.Pid && id != b.Pid).ToList();
+                var sameJob = ids.Contains(a.Pid) && ids.Contains(b.Pid);
+                var gate = latest is null
+                    ? "NO SNAPSHOT"
+                    : foreign.Count > 0
+                        ? $"FOREIGN [{string.Join(',', foreign)}] in [{string.Join(',', ids)}]"
+                        : sameJob ? $"one job holds exactly a={a.Pid} and b={b.Pid}: [{string.Join(',', ids)}]" : $"NOT ONE JOB: a's job holds [{string.Join(',', ids)}]";
+
+                if (latest is null || foreign.Count > 0 || !sameJob)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tREFUSED: {gate}\n");
+                    Say($"m3pair rep {rep}: refused, {gate}; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                var request = DateTime.UtcNow;
+                string requestResult;
+
+                try
+                {
+                    if (via == "end")
+                    {
+                        var (code, output, error, _, _) = SchtasksOnce(dirA, "end", $"/end /tn \"{nameA}\"");
+                        requestResult = $"exit={code} out=[{output}] err=[{error}]";
+                    }
+                    else
+                    {
+                        runningA.Stop();
+                        requestResult = "IRunningTask.Stop returned";
+                    }
+                }
+                catch (Exception failure)
+                {
+                    requestResult = $"threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                }
+
+                var aExited = a.WaitExit(60_000);
+                var aExitMs = aExited ? Text.Ms(Text.FromFt(a.ExitFt) - request) : "ALIVE after 60 s";
+                var aCode = aExited ? Text.Hex(a.ExitCode) : "-";
+                var bEnded = b.WaitExit(5000);
+                var bCode = bEnded ? Text.Hex(b.ExitCode) : "-";
+                var aSaw = string.Join(" ", Logs.ReadAll(dirA, "standin").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event + (l.Event is "MSG" or "WM_CLOSE" ? "(" + l.Detail + ")" : string.Empty)));
+                var bSaw = string.Join(" ", Logs.ReadAll(dirB, "standin").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event + (l.Event is "MSG" or "WM_CLOSE" ? "(" + l.Detail + ")" : string.Empty)));
+                var cleanup = QuitAll(quit, dirA) + "; " + QuitAll(quit, dirB);
+                File.AppendAllText(resultsPath, string.Join('\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    gate,
+                    requestResult,
+                    aExitMs,
+                    aCode,
+                    bEnded.ToString(),
+                    bCode,
+                    aSaw.Length == 0 ? "-" : aSaw,
+                    bSaw.Length == 0 ? "-" : bSaw,
+                    cleanup]) + "\n");
+                Say($"m3pair rep {rep} {via}: {requestResult}; a exit {aExitMs} ms code {aCode}; b ended within 5 s={bEnded} code {bCode}; a saw [{aSaw}] b saw [{bSaw}]");
+                Thread.Sleep(1000);
+            }
+        }
+        finally
+        {
+            Say($"deleted {nameA}: {Sched.Delete(folder, nameA)}; {nameB}: {Sched.Delete(folder, nameB)}");
+        }
+
+        return 0;
+    }
+
+    /// <summary>A process's identity for the foreign check, read without opening it: present or not, and its start time where readable.</summary>
+    private static string StartOf(int pid)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+
+            try
+            {
+                return "present start=" + process.StartTime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            }
+            catch (Exception)
+            {
+                return "present start=unreadable";
+            }
+        }
+        catch (ArgumentException)
+        {
+            return "gone";
+        }
+    }
+
+    private static int M4(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var via = options.Need("--via");
+        var reps = options.Int("--reps", 20);
+        var what = $"m4-{via}";
+        var name = Paths.Task(stamp, what);
+        var dir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(dir);
+        var resultsPath = Path.Combine(dir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\tvia\trequestUtc\trequestReturnMs\tcreationMs\tmainMs\tfirstLineMs\tcreationToMainMs\tmainToLineMs\tpid\tenginePid\n");
+        var quitName = Paths.Event(stamp, what, 0, "quit");
+        using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            Sched.Register(folder, name, Sched.Definition("Parallel", true, Arguments(dir, quitName, 60)));
+            dynamic task = folder.GetTask(name);
+
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var startsBefore = Logs.Starts(dir, "standin").Count;
+                var request = DateTime.UtcNow;
+                double returnMs;
+                var enginePid = "-";
+
+                if (via == "com")
+                {
+                    dynamic running = task.Run($"m4-r{rep:D2}");
+                    returnMs = (DateTime.UtcNow - request).TotalMilliseconds;
+                    enginePid = ((object)running.EnginePID).ToString()!;
+                }
+                else
+                {
+                    var (code, _, _, ms, _) = SchtasksOnce(dir, $"r{rep:D2}", $"/run /tn \"{name}\"");
+                    returnMs = ms;
+                    enginePid = $"exit={code}";
+                }
+
+                var start = Logs.WaitFor(dir, "standin", "START", _ => Logs.Starts(dir, "standin").Count > startsBefore, TimeSpan.FromSeconds(15));
+                var latest = Logs.Starts(dir, "standin").OrderBy(l => l.Utc).LastOrDefault();
+
+                if (start is null || latest is null || Logs.Starts(dir, "standin").Count <= startsBefore)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\t{Text.Utc(request)}\tNO START\n");
+                    continue;
+                }
+
+                var creation = Text.FromFt(long.Parse(latest.Field("creationFt")!, CultureInfo.InvariantCulture));
+                var entered = DateTime.Parse(latest.Field("entered")!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                NoteStarts(dir);
+                File.AppendAllText(resultsPath, string.Join('\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    Text.Utc(request),
+                    returnMs.ToString("F1", CultureInfo.InvariantCulture),
+                    Text.Ms(creation - request),
+                    Text.Ms(entered - request),
+                    Text.Ms(latest.Utc - request),
+                    Text.Ms(entered - creation),
+                    Text.Ms(latest.Utc - entered),
+                    latest.Pid.ToString(CultureInfo.InvariantCulture),
+                    enginePid]) + "\n");
+                Say($"m4 {via} rep {rep}: first line {Text.Ms(latest.Utc - request)} ms (creation {Text.Ms(creation - request)}, Main {Text.Ms(entered - request)}); request returned in {returnMs:F1} ms");
+                _ = QuitAll(quit, dir);
+                _ = quit.Reset();
+                Thread.Sleep(1000);
+            }
+        }
+        finally
+        {
+            _ = QuitAll(quit, dir);
+            Say($"deleted {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    private static int M5(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var dir = Path.Combine(Paths.Runs(stamp), "m5");
+        Directory.CreateDirectory(dir);
+        var benchRuns = options.Int("--bench-runs", 5);
+        var ticks = options.Int("--ticks", 100000);
+        var tickers = options.Int("--tickers", 5);
+        var noops = options.Int("--noops", 2);
+        var duration = options.Int("--duration-s", 300);
+
+        Process Start(params string[] arguments)
+        {
+            var start = new ProcessStartInfo(Paths.StandIn)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+
+            foreach (var argument in arguments)
+            {
+                start.ArgumentList.Add(argument);
+            }
+
+            var process = Process.Start(start)!;
+            _ = Native.GetProcessTimes(process.Handle, out var creation, out _, out _, out _);
+            Registry.Process("m5:" + arguments[0], process.Id, creation);
+            return process;
+        }
+
+        for (var run = 1; run <= benchRuns; run++)
+        {
+            using var bench = Start("tickbench", "--out", Path.Combine(dir, $"bench-{run:D2}.txt"), "--ticks", ticks.ToString(CultureInfo.InvariantCulture));
+            bench.WaitForExit();
+            Say($"bench {run}: exit {bench.ExitCode}");
+        }
+
+        using (var detail = Start("tickbench", "--out", Path.Combine(dir, "bench-detail.txt"), "--ticks", ticks.ToString(CultureInfo.InvariantCulture), "--detail"))
+        {
+            detail.WaitForExit();
+            Say($"bench detail: exit {detail.ExitCode}");
+        }
+
+        if (tickers + noops == 0)
+        {
+            return 0;
+        }
+
+        var running = new List<Process>();
+
+        for (var i = 1; i <= tickers; i++)
+        {
+            running.Add(Start("ticker", "--out", Path.Combine(dir, $"ticker-{i:D2}.txt"), "--interval-ms", "2000", "--duration-s", duration.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        for (var i = 1; i <= noops; i++)
+        {
+            running.Add(Start("ticker", "--out", Path.Combine(dir, $"noop-{i:D2}.txt"), "--interval-ms", "2000", "--duration-s", duration.ToString(CultureInfo.InvariantCulture), "--noop"));
+        }
+
+        Say($"started {running.Count} tickers for {duration} s");
+
+        foreach (var process in running)
+        {
+            process.WaitForExit();
+            Say($"ticker {process.Id}: exit {process.ExitCode}");
+            process.Dispose();
+        }
+
+        return 0;
+    }
+
+    private static int M5Task(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var reps = options.Int("--reps", 5);
+        var dir = Path.Combine(Paths.Runs(stamp), "m5-task");
+        Directory.CreateDirectory(dir);
+        var name = Paths.Task(stamp, "m5-task");
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            Sched.Register(folder, name, Sched.Definition("Parallel", true, $"tickbench --out \"{Path.Combine(dir, "bench-task-$(Arg0).txt")}\" --ticks 100000"));
+            dynamic task = folder.GetTask(name);
+
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var label = $"r{rep:D2}";
+                dynamic running = task.Run(label);
+                var enginePid = ((object)running.EnginePID).ToString();
+                var raw = Path.Combine(dir, $"bench-task-{label}.txt.raw-ns.txt");
+                var until = DateTime.UtcNow.AddSeconds(60);
+
+                while (!File.Exists(raw) && DateTime.UtcNow < until)
+                {
+                    Thread.Sleep(100);
+                }
+
+                Thread.Sleep(1500);
+                Say($"m5 task-started bench {label}: enginePid={enginePid} raw={(File.Exists(raw) ? "written" : "MISSING")} instances={Sched.Instances(task)} lastResult={Text.Hex((int)task.LastTaskResult)}");
+            }
+        }
+        finally
+        {
+            Say($"deleted {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    private static int M6(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var how = options.Need("--how");
+        var reps = options.Int("--reps", 5);
+        var watch = options.Int("--watch-s", 150);
+        var what = $"m6-{how}";
+        var name = Paths.Task(stamp, what);
+        var caseDir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(caseDir);
+        var resultsPath = Path.Combine(caseDir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\thow\tchildLine\tstandinExitMsAfterRequest\tstandinExitCode\tchildJob\tchildAliveAtEndOfWatch\tchildExitMsAfterStandinExit\tchildExitCode\tstatesWhileChildAlive\tinstancesWhileChildAlive\tlastResultsWhileChildAlive\tstateAfterChildQuit\tinstancesAfterChildQuit\tlastResultAfterChildQuit\tchildSaw\n");
+        dynamic folder = Sched.Folder();
+
+        try
+        {
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dir = Path.Combine(caseDir, $"r{rep:D2}");
+                Directory.CreateDirectory(dir);
+                var quitName = Paths.Event(stamp, what, rep, "quit");
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                var extra = $"--child --child-how {how} --child-max {watch + 90} --exit-after-child-ms 500";
+                Sched.Register(folder, name, Sched.Definition("Parallel", true, Arguments(dir, quitName, 60, extra)));
+                dynamic task = folder.GetTask(name);
+                var samplesPath = Path.Combine(dir, "samples.tsv");
+                File.WriteAllText(samplesPath, "utc\tsecondsAfterStandinExit\tchildAlive\ttaskState\tinstances\tinstanceStates\tinstanceEnginePids\tlastResult\n");
+                var request = DateTime.UtcNow;
+                _ = task.Run($"m6-{how}-r{rep:D2}");
+                var start = Logs.WaitFor(dir, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                var childLine = Logs.WaitFor(dir, "standin", "CHILD", _ => true, TimeSpan.FromSeconds(15));
+                var childStart = Logs.WaitFor(dir, "child", "START", _ => true, TimeSpan.FromSeconds(15));
+                var childJob = Logs.WaitFor(dir, "child", "JOB", _ => true, TimeSpan.FromSeconds(15));
+                NoteStarts(dir);
+
+                if (start is null || childLine is null || childStart is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{how}\tSETUP FAILED\n");
+                    Say($"m6 rep {rep}: setup failed; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                using var standin = Mine.Open(start.Pid, long.Parse(start.Field("creationFt")!, CultureInfo.InvariantCulture));
+                using var child = Mine.Open(childStart.Pid, long.Parse(childStart.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+
+                if (child is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{how}\tCHILD OPEN FAILED\n");
+                    Say($"m6 rep {rep}: child open failed; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                var standinExited = standin is null || standin.WaitExit(15_000);
+                var standinExit = standin is not null && standinExited ? Text.FromFt(standin.ExitFt) : DateTime.UtcNow;
+                var standinExitMs = standin is null ? "already gone" : standinExited ? Text.Ms(standinExit - request) : "ALIVE";
+                var standinCode = standin is not null && standinExited ? standin.ExitCode.ToString(CultureInfo.InvariantCulture) : "-";
+                var states = new List<string>();
+                var counts = new List<string>();
+                var lastResults = new List<string>();
+                var childExitMs = "-";
+                var childCode = "-";
+                var until = standinExit.AddSeconds(watch);
+
+                while (DateTime.UtcNow < until)
+                {
+                    var alive = !child.Exited;
+                    int state = task.State;
+                    var instances = new List<string>();
+                    var pids = new List<string>();
+                    dynamic list = task.GetInstances(0);
+                    int count = list.Count;
+
+                    for (var i = 1; i <= count; i++)
+                    {
+                        dynamic instance = list[i];
+                        instances.Add(Try(() => ((object)instance.State).ToString()!));
+                        pids.Add(Try(() => ((object)instance.EnginePID).ToString()!));
+                    }
+
+                    var last = Text.Hex((int)task.LastTaskResult);
+                    File.AppendAllText(samplesPath, $"{Text.Utc(DateTime.UtcNow)}\t{(DateTime.UtcNow - standinExit).TotalSeconds:F1}\t{alive}\t{state}\t{count}\t{string.Join(',', instances)}\t{string.Join(',', pids)}\t{last}\n");
+
+                    if (alive)
+                    {
+                        states.Add(state.ToString(CultureInfo.InvariantCulture));
+                        counts.Add(count.ToString(CultureInfo.InvariantCulture));
+                        lastResults.Add(last);
+                    }
+                    else if (childExitMs == "-")
+                    {
+                        childExitMs = Text.Ms(Text.FromFt(child.ExitFt) - standinExit);
+                        childCode = Text.Hex(child.ExitCode);
+                    }
+
+                    Thread.Sleep(1000);
+                }
+
+                var aliveAtEnd = !child.Exited;
+                _ = quit.Set();
+                _ = child.WaitExit(15_000);
+
+                if (childExitMs == "-" && child.Exited && !aliveAtEnd)
+                {
+                    childExitMs = Text.Ms(Text.FromFt(child.ExitFt) - standinExit);
+                    childCode = Text.Hex(child.ExitCode);
+                }
+
+                Thread.Sleep(2000);
+                int stateAfter = task.State;
+                int instancesAfter = Sched.Instances(task);
+                var lastAfter = Text.Hex((int)task.LastTaskResult);
+                var childSaw = string.Join(" ", Logs.ReadAll(dir, "child").Where(l => l.Utc >= standinExit).Select(l => l.Event + (l.Event is "MSG" or "WM_CLOSE" ? "(" + l.Detail + ")" : string.Empty)));
+                var cleanup = QuitAll(quit, dir);
+                File.AppendAllText(resultsPath, string.Join('\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    how,
+                    childLine.Detail,
+                    standinExitMs,
+                    standinCode,
+                    childJob?.Detail ?? "-",
+                    aliveAtEnd.ToString(),
+                    childExitMs,
+                    childCode,
+                    Text.Distribution(states),
+                    Text.Distribution(counts),
+                    Text.Distribution(lastResults),
+                    stateAfter.ToString(CultureInfo.InvariantCulture),
+                    instancesAfter.ToString(CultureInfo.InvariantCulture),
+                    lastAfter,
+                    (childSaw.Length == 0 ? "-" : childSaw) + " | cleanup: " + cleanup]) + "\n");
+                Say($"m6 {how} rep {rep}: standin exit {standinExitMs} ms code {standinCode}; child alive at end of {watch} s watch={aliveAtEnd}; states while alive [{Text.Distribution(states)}] instances [{Text.Distribution(counts)}]; after child quit: state={stateAfter} instances={instancesAfter} last={lastAfter}");
+            }
+        }
+        finally
+        {
+            Say($"deleted {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return 0;
+    }
+
+    /// <summary>The positive control for the final listing: a disabled task with the prefix, never run, left for cleanup.</summary>
+    private static int Control(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var name = Paths.Task(stamp, "control");
+        dynamic folder = Sched.Folder();
+        Sched.Register(folder, name, Sched.Definition("Parallel", false, @"standin --dir C:\nowhere --tag control --quit Local\BrowserAI-measure-control --max 1"));
+        Say($"registered the positive control {name}, disabled and never run");
+        return List(options);
+    }
+
+    private static int List(Options options)
+    {
+        var prefix = options["--prefix"] ?? Paths.TaskPrefix;
+        dynamic folder = Sched.Folder();
+        var names = Sched.Names(folder, prefix);
+        Say($"COM GetTasks(TASK_ENUM_HIDDEN) in \\ with prefix '{prefix}': {names.Count}");
+
+        foreach (var name in names)
+        {
+            Console.WriteLine("  " + name);
+        }
+
+        return 0;
+    }
+
+    private static int Cleanup(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var prefix = Paths.Task(stamp, string.Empty);
+        dynamic folder = Sched.Folder();
+
+        foreach (var name in Sched.Names(folder, prefix))
+        {
+            Say($"deleting {name}: {Sched.Delete(folder, name)}");
+        }
+
+        return List(options);
+    }
+
+    private static int VerifyGone(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var root = Paths.Runs(stamp);
+        var recorded = new Dictionary<(int Pid, long Creation), string>();
+
+        foreach (var line in File.Exists(Path.Combine(root, "registry.tsv")) ? File.ReadAllLines(Path.Combine(root, "registry.tsv")) : [])
+        {
+            var parts = line.Split('\t');
+
+            if (parts.Length >= 5 && parts[1] == "process")
+            {
+                recorded[(int.Parse(parts[3], CultureInfo.InvariantCulture), long.Parse(parts[4], CultureInfo.InvariantCulture))] = parts[2];
+            }
+        }
+
+        foreach (var file in Directory.GetFiles(root, "*.log", SearchOption.AllDirectories))
+        {
+            foreach (var start in Logs.Read(file).Where(l => l.Event == "START"))
+            {
+                recorded[(start.Pid, long.Parse(start.Field("creationFt")!, CultureInfo.InvariantCulture))] = start.Role + ":" + start.Field("tag");
+            }
+
+            foreach (var child in Logs.Read(file).Where(l => l.Event == "CHILD"))
+            {
+                recorded[(int.Parse(child.Field("pid")!, CultureInfo.InvariantCulture), long.Parse(child.Field("creationFt")!, CultureInfo.InvariantCulture))] = "child-of:" + child.Pid;
+            }
+        }
+
+        var alive = 0;
+
+        foreach (var ((pid, creation), what) in recorded)
+        {
+            using var mine = Mine.Open(pid, creation);
+
+            if (mine is not null && !mine.Exited)
+            {
+                alive++;
+                Say($"ALIVE {what} pid={pid} created={Text.Utc(Text.FromFt(creation))}");
+            }
+        }
+
+        Say($"processes recorded by this run: {recorded.Count}; still alive with the recorded creation time: {alive}");
+        return alive == 0 ? 0 : 1;
+    }
+}

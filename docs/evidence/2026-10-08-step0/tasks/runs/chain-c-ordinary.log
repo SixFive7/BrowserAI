@@ -1,0 +1,6 @@
+2026-10-08T14:23:55.1465673Z m6 ordinary rep 1: standin exit 558.2 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:26:28.9742704Z m6 ordinary rep 2: standin exit 848.5 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:29:02.3482289Z m6 ordinary rep 3: standin exit 546.7 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:31:36.4399158Z m6 ordinary rep 4: standin exit 614.1 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:34:09.8152353Z m6 ordinary rep 5: standin exit 559.3 ms code 0; child alive at end of 150 s watch=True; states while alive [139x 3] instances [139x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:34:09.8235164Z deleted BrowserAI-measure-20261008T1411-m6-ordinary: True

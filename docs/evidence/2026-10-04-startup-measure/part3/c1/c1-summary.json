@@ -1,0 +1,56 @@
+{
+ "results": [
+  {
+   "r": 1,
+   "coordinatorUpMs": -1,
+   "rec": "init=518.986ms tools=530.034ms count=78 exit=0"
+  },
+  {
+   "r": 2,
+   "coordinatorUpMs": -1,
+   "rec": "init=710.059ms tools=724.502ms count=78 exit=0"
+  },
+  {
+   "r": 3,
+   "coordinatorUpMs": -1,
+   "rec": "init=527.016ms tools=536.993ms count=78 exit=0"
+  },
+  {
+   "r": 4,
+   "coordinatorUpMs": -1,
+   "rec": "init=599.696ms tools=610.622ms count=78 exit=0"
+  },
+  {
+   "r": 5,
+   "coordinatorUpMs": -1,
+   "rec": "init=464.451ms tools=473.875ms count=78 exit=0"
+  }
+ ],
+ "started": [
+  {
+   "pid": 41824,
+   "what": "coordinator --coordinate",
+   "at": "2026-10-04T01:00:09.546Z"
+  },
+  {
+   "pid": 11456,
+   "what": "coordinator --coordinate",
+   "at": "2026-10-04T01:00:42.017Z"
+  },
+  {
+   "pid": 38784,
+   "what": "coordinator --coordinate",
+   "at": "2026-10-04T01:01:14.735Z"
+  },
+  {
+   "pid": 51012,
+   "what": "coordinator --coordinate",
+   "at": "2026-10-04T01:01:47.233Z"
+  },
+  {
+   "pid": 63092,
+   "what": "coordinator --coordinate",
+   "at": "2026-10-04T01:02:19.849Z"
+  }
+ ]
+}

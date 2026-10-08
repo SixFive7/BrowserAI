@@ -1,0 +1,29 @@
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows                              
+-------------------------------------------------------------------------------
+
+  Started : donderdag 8 oktober 2026 15:51:14
+   Source : %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\
+     Dest : C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\
+
+    Files : *.*
+	    
+  Options : *.* /NDL /NFL /S /E /DCOPY:DA /COPY:DAT /NP /R:1 /W:1 
+
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+
+               Total    Copied   Skipped  Mismatch    FAILED    Extras
+    Dirs :        16        16         0         0         0         0
+   Files :        63        63         0         0         0         0
+   Bytes :  345.04 m  345.04 m         0         0         0         0
+   Times :   0:00:00   0:00:00                       0:00:00   0:00:00
+
+
+   Speed :           1.073.606.688 Bytes/sec.
+   Speed :               61432,266 MegaBytes/min.
+   Ended : donderdag 8 oktober 2026 15:51:15
+

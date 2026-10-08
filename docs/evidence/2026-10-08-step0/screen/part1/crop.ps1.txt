@@ -1,0 +1,14 @@
+# Crops a full-region capture to the toast's body: inside its translucent 1 px border, with the
+# rounded corners made transparent, so no pixel of the desktop behind it is kept.
+param([string]$In, [string]$Out, [int]$X, [int]$Y, [int]$W, [int]$H, [int]$Radius = 10)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+if (-not ('Step0.Mon' -as [type]))
+{
+    Add-Type -TypeDefinition (Get-Content -Raw (Join-Path $here 'Monitor.cs')) -ReferencedAssemblies System.Drawing, System.Windows.Forms
+}
+$src = New-Object System.Drawing.Bitmap $In
+[Step0.Mon]::SaveCrop($src, (New-Object System.Drawing.Rectangle $X, $Y, $W, $H), $Radius, $Out)
+$src.Dispose()
+"saved $Out ($W x $H from $X,$Y of $In)"

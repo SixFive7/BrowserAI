@@ -1,0 +1,56 @@
+# Publishes the stand-in at each version and packs it with the global vpk into
+# one output directory, in ascending order, snapshotting the feed after every
+# pack. vpk regenerates releases.win.json from every package in the directory,
+# so each snapshot is a feed vpk itself wrote. Installs nothing.
+$ErrorActionPreference = 'Stop'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+$env:DOTNET_NOLOGO = '1'
+
+$base = 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack'
+$project = Join-Path $base 'app\BrowserAI.Measure.csproj'
+$publishRoot = Join-Path $base 'out\publish'
+$releases = Join-Path $base 'out\releases'
+$feeds = Join-Path $base 'feeds'
+$versions = @('1.0.0', '1.0.1', '1.0.2-alpha.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7', '1.0.8', '1.0.9', '1.0.10')
+
+foreach ($dir in @($publishRoot, $releases, $feeds)) {
+    if (Test-Path -LiteralPath $dir) { throw "$dir already exists; this script packs into empty directories only." }
+}
+
+function Publish([string] $version) {
+    $out = Join-Path $publishRoot $version
+    & dotnet publish $project -c Release "-p:Version=$version" -o $out --disable-build-servers | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "dotnet publish $version failed with $LASTEXITCODE" }
+    return $out
+}
+
+function Pack([string] $version, [string] $packDir, [string] $outputDir, [string] $channel) {
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    & vpk pack --packId BrowserAI.Measure --packVersion $version --packDir $packDir --mainExe BrowserAI.Measure.exe `
+        --packTitle BrowserAI.Measure --shortcuts StartMenuRoot --delta None --channel $channel --outputDir $outputDir | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "vpk pack $version ($channel) failed with $LASTEXITCODE" }
+    Write-Host ("vpk pack {0} ({1}) took {2:N1} s" -f $version, $channel, $clock.Elapsed.TotalSeconds)
+}
+
+foreach ($version in $versions) {
+    $packDir = Publish $version
+    Pack $version $packDir $releases 'win'
+    $snapshot = Join-Path $feeds "after-$version"
+    $null = New-Item -ItemType Directory -Path $snapshot
+    Copy-Item -Path (Join-Path $releases '*') -Destination $snapshot
+    Write-Host "snapshot $snapshot holds: $((Get-ChildItem -LiteralPath $snapshot -Name) -join ', ')"
+}
+
+# A pre-release in a channel of its own: same bits as the win-channel 1.0.2-alpha.1.
+$betaOut = Join-Path $base 'out\releases-beta'
+Pack '1.0.2-alpha.1' (Join-Path $publishRoot '1.0.2-alpha.1') $betaOut 'beta'
+
+# Feed: what was published up to 1.0.1 on win, plus that beta-channel pre-release.
+$mixed = Join-Path $feeds 'win-1.0.1-plus-beta-alpha'
+$null = New-Item -ItemType Directory -Path $mixed
+Copy-Item -Path (Join-Path $feeds 'after-1.0.1\*') -Destination $mixed
+# A non-default channel puts its name in the package file name: -beta-full.
+Copy-Item -LiteralPath (Join-Path $betaOut 'BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg') -Destination $mixed
+Copy-Item -LiteralPath (Join-Path $betaOut 'releases.beta.json') -Destination $mixed
+Write-Host "mixed feed holds: $((Get-ChildItem -LiteralPath $mixed -Name) -join ', ')"
+Write-Host 'PACK DONE'

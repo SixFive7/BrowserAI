@@ -1,0 +1,2 @@
+2026-10-04T01:07:53.8534301Z registered 'BrowserAI.app.measure sign-in C429DBA98841F2BBC73DAFB506AEE381' exe=%USERPROFILE%\Downloads\tmp-startup-measure\inst\current\BrowserAI.exe args=--sign-in $(Arg0) (no trigger)
+2026-10-04T01:55:58.3483621Z removed 'BrowserAI.app.measure sign-in C429DBA98841F2BBC73DAFB506AEE381'

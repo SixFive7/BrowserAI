@@ -1,0 +1,122 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace ExitRig;
+
+/// <summary>
+/// Added 2026-10-04: does starting a windows-subsystem child with the STARTUPINFO the clients
+/// pass put the "working in background" cursor up, and can GetCursorInfo see it at all?
+/// usage: ExitRig feedback --exe <windowless exe> --log <file> [--reps 3] [--ms 6000]
+/// Variants, each with STARTF_USESTDHANDLES and pipes, as both clients start a server:
+///   idle      nothing is started (the cursor read alone)
+///   default   no feedback flag (Codex's 0x100)
+///   hidden    STARTF_USESHOWWINDOW + SW_HIDE (Claude Code's 0x101)
+///   forceon   STARTF_FORCEONFEEDBACK (the positive control: the documented feedback, forced)
+///   forceoff  STARTF_FORCEOFFFEEDBACK (the documented way a parent turns it off)
+/// The child's stdin is closed after --ms, so it sees end of input and leaves; it is also in a
+/// kill-on-close job this process created, so nothing outlives the experiment.
+/// </summary>
+static class Feedback
+{
+    public static int Run(string[] a)
+    {
+        var o = Args.Parse(a, 1);
+        string exe = o["exe"];
+        var log = new Log(o["log"]);
+        int reps = int.Parse(o.GetValueOrDefault("reps", "3"));
+        int ms = int.Parse(o.GetValueOrDefault("ms", "6000"));
+        string logDir = Path.GetDirectoryName(o["log"])!;
+        IntPtr appStarting = W.LoadCursorW(IntPtr.Zero, new IntPtr(32650));
+        IntPtr arrow = W.LoadCursorW(IntPtr.Zero, new IntPtr(32512));
+        log.W("feedback", "BEGIN", $"exe={exe} appStarting=0x{appStarting.ToInt64():X} arrow=0x{arrow.ToInt64():X} desktop={W.DesktopName()}");
+        var variants = new (string name, int flags, short show)[]
+        {
+            ("idle", 0, 0), ("default", 0x100, 0), ("hidden", 0x101, 0), ("forceon", 0x140, 0), ("forceoff", 0x180, 0),
+        };
+        for (int r = 1; r <= reps; r++)
+        {
+            foreach (var v in variants)
+            {
+                IntPtr job = Native.CreateKillOnCloseJob(out _);
+                int pid = -1;
+                IntPtr inW = IntPtr.Zero, hProc = IntPtr.Zero;
+                long t0 = Clock.Now();
+                if (v.name != "idle")
+                {
+                    pid = Start(exe, v.flags, v.show, job, logDir, out inW, out hProc);
+                }
+                int ticks = 0, app = 0, arrowTicks = 0, other = 0, fail = 0;
+                long firstApp = -1, lastApp = -1;
+                var shapes = new HashSet<string>();
+                var sw = Stopwatch.StartNew();
+                while (sw.ElapsedMilliseconds < ms + 2000)
+                {
+                    if (inW != IntPtr.Zero && sw.ElapsedMilliseconds >= ms) { Native.CloseHandle(inW); inW = IntPtr.Zero; }
+                    var ci = new W.CURSORINFO { cbSize = Marshal.SizeOf<W.CURSORINFO>() };
+                    ticks++;
+                    if (W.GetCursorInfo(ref ci))
+                    {
+                        if (ci.hCursor == appStarting) { app++; if (firstApp < 0) firstApp = sw.ElapsedMilliseconds; lastApp = sw.ElapsedMilliseconds; }
+                        else if (ci.hCursor == arrow) arrowTicks++;
+                        else other++;
+                        shapes.Add(ci.hCursor == appStarting ? "APPSTARTING" : ci.hCursor == arrow ? "ARROW" : $"0x{ci.hCursor.ToInt64():X}");
+                    }
+                    else fail++;
+                    Thread.Sleep(10);
+                }
+                string exit = "-";
+                if (hProc != IntPtr.Zero)
+                {
+                    uint wr = WaitForSingleObject(hProc, 5000);
+                    GetExitCodeProcess(hProc, out uint code);
+                    exit = wr == 0 ? code.ToString() : "still running";
+                    Native.CloseHandle(hProc);
+                }
+                Native.CloseHandle(job);
+                log.W("feedback", "RESULT", $"rep={r} variant={v.name} flags=0x{v.flags:X} pid={pid} ticks={ticks} appStarting={app} firstAppMs={firstApp} lastAppMs={lastApp} arrow={arrowTicks} other={other} readFailures={fail} shapes={string.Join(",", shapes)} childExit={exit}");
+                Thread.Sleep(1500);
+            }
+        }
+        log.W("feedback", "END", "");
+        return 0;
+    }
+
+    static int Start(string exe, int flags, short show, IntPtr job, string logDir, out IntPtr stdinWrite, out IntPtr hProcess)
+    {
+        var sa = new SECURITY_ATTRIBUTES { nLength = Marshal.SizeOf<SECURITY_ATTRIBUTES>(), bInheritHandle = true };
+        if (!CreatePipe(out IntPtr inR, out IntPtr inW, ref sa, 0)) throw new Win32Exception();
+        if (!CreatePipe(out IntPtr outR, out IntPtr outW, ref sa, 0)) throw new Win32Exception();
+        SetHandleInformation(inW, 1, 0);
+        SetHandleInformation(outR, 1, 0);
+        var si = new Native.STARTUPINFOW { cb = Marshal.SizeOf<Native.STARTUPINFOW>(), dwFlags = flags, wShowWindow = show, hStdInput = inR, hStdOutput = outW, hStdError = outW };
+        var env = new StringBuilder();
+        foreach (System.Collections.DictionaryEntry kv in Environment.GetEnvironmentVariables()) env.Append(kv.Key).Append('=').Append(kv.Value).Append('\0');
+        env.Append("STUB_LOGDIR=").Append(logDir).Append('\0').Append("STUB_EOF_DELAY_MS=0").Append('\0').Append('\0');
+        IntPtr envBlock = Marshal.StringToHGlobalUni(env.ToString());
+        try
+        {
+            if (!Native.CreateProcessW(exe, new StringBuilder($"\"{exe}\"", 1024), IntPtr.Zero, IntPtr.Zero, true, Native.CREATE_SUSPENDED | Native.CREATE_UNICODE_ENVIRONMENT, envBlock, null, ref si, out var pi))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateProcessW");
+            Native.AssignProcessToJobObject(job, pi.hProcess);
+            Native.ResumeThread(pi.hThread);
+            Native.CloseHandle(pi.hThread);
+            Native.CloseHandle(inR); Native.CloseHandle(outW);
+            // drain the child's stdout/stderr so it never blocks on a full pipe
+            var drain = new Thread(() => { var b = new byte[65536]; while (ReadFile(outR, b, b.Length, out int n, IntPtr.Zero) && n > 0) { } Native.CloseHandle(outR); }) { IsBackground = true };
+            drain.Start();
+            stdinWrite = inW;
+            hProcess = pi.hProcess;
+            return pi.dwProcessId;
+        }
+        finally { Marshal.FreeHGlobal(envBlock); }
+    }
+
+    [StructLayout(LayoutKind.Sequential)] struct SECURITY_ATTRIBUTES { public int nLength; public IntPtr lpSecurityDescriptor; public bool bInheritHandle; }
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool CreatePipe(out IntPtr r, out IntPtr w, ref SECURITY_ATTRIBUTES sa, int size);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetHandleInformation(IntPtr h, int mask, int flags);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool ReadFile(IntPtr h, byte[] b, int n, out int read, IntPtr ov);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern uint WaitForSingleObject(IntPtr h, uint ms);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetExitCodeProcess(IntPtr h, out uint code);
+}

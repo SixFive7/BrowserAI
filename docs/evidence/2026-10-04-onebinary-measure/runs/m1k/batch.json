@@ -1,0 +1,1740 @@
+{
+ "progress": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\progress.log",
+ "gapMs": 1500,
+ "serverImages": [
+  "McpStubWin.exe",
+  "McpStubCon.exe"
+ ],
+ "stubs": [
+  {
+   "name": "anthropic",
+   "exe": "C:\\Program Files\\nodejs\\node.exe",
+   "args": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\apistub\\ccstub.js"
+   ],
+   "env": {
+    "STUB_PORT": "8971",
+    "STUB_POLICY_FILE": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+    "STUB_LOGDIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k"
+   }
+  },
+  {
+   "name": "openai",
+   "exe": "C:\\Program Files\\nodejs\\node.exe",
+   "args": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\apistub\\cxstub.js"
+   ],
+   "env": {
+    "STUB_PORT": "8972",
+    "STUB_POLICY_FILE": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+    "STUB_LOGDIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k"
+   }
+  }
+ ],
+ "runs": [
+  {
+   "name": "ccK-win-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_2\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_1\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_1\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\winexe\\\\McpStubWin.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r1\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r1\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "ccK-con-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_4\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_3\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_3\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\console\\\\McpStubCon.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r1\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r1\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "ccK-win-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_6\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_5\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_5\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\winexe\\\\McpStubWin.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r2\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r2\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "ccK-con-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_8\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_7\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_7\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\console\\\\McpStubCon.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r2\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r2\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "ccK-win-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_10\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_9\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_9\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-win-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\winexe\\\\McpStubWin.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r3\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-win-r3\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "ccK-con-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__probe__big,mcp__probe__ping",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\codex-unused",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_12\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status before the turn"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_11\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_11\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the client is terminated (as VS Code closing takes it)"
+    },
+    {
+     "do": "terminate"
+    }
+   ],
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/onebinary-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\ccK-con-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"probe\":{\"type\":\"stdio\",\"command\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\bin\\\\console\\\\McpStubCon.exe\",\"args\":[],\"env\":{\"STUB_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r3\",\"STUB_EOF_DELAY_MS\":\"3000\",\"STUB_BIG_BYTES\":\"70000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\ccK-con-r3\",\"tool\":\"mcp__probe__big\"}"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-win-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r1\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r1\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r1\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r1', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-win-r1\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-con-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r1\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r1\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r1\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r1', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-con-r1\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-win-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r2\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r2\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r2\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r2', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-win-r2\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-con-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r2\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r2\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r2\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r2', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-con-r2\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-win-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r3\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r3\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r3\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-win-r3', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-win-r3\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx155k-con-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex155\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r3\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r3\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r3\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx155k-con-r3', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx155k-con-r3\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-win-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r1\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r1\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r1\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r1', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-win-r1\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-con-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r1",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r1\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r1\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r1\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r1', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-con-r1\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-win-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r2\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r2\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r2\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r2', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-win-r2\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-con-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r2",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r2\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r2\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r2\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r2', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-con-r2\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-win-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r3\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r3\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r3\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-win-r3', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-win-r3\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  },
+  {
+   "name": "cx160k-con-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r3",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj",
+   "maxMs": 180000,
+   "settleMs": 20000,
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+   "args": [
+    "app-server",
+    "--listen",
+    "stdio://"
+   ],
+   "env": {
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\appdata\\local",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure",
+    "DISABLE_AUTOUPDATER": "1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r3\\home",
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r3\\claude-unused",
+    "STUB_KEY": "not-a-real-key",
+    "NO_COLOR": "1",
+    "RUST_LOG": "codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info"
+   },
+   "stdin": "pipe",
+   "autoReplyJsonRpc": true,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r3\\home\\config.toml",
+     "content": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"danger-full-access\"\n\n[features]\nplugins = false\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:8972\"\nwire_api = \"responses\"\nenv_key = \"STUB_KEY\"\n\n[mcp_servers.probe]\ncommand = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\console\\McpStubCon.exe'\nargs = []\nenv = { STUB_LOGDIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\cx160k-con-r3', STUB_EOF_DELAY_MS = '3000', STUB_BIG_BYTES = '70000' }\nstartup_timeout_sec = 20\ntool_timeout_sec = 60\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n\n[projects.'c:\\source\\sixfive7\\browserai\\.work\\onebinary-measure\\proj']\ntrust_level = \"trusted\"\n"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\runs\\m1k\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\runs\\\\m1k\\\\cx160k-con-r3\",\"namespace\":\"mcp__probe\",\"tool\":\"big\"}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"onebinary-probe\",\"title\":\"onebinary probe\",\"version\":\"1.0.0\"}}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":1\\b",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"thread/start\",\"params\":{\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\onebinary-measure\\\\proj\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"id\":2\\b.*?(?:\"thread\":\\{\"id\":\"(?<THREAD>[^\"]+)\"|\"threadId\":\"(?<THREAD>[^\"]+)\"|\"thread_id\":\"(?<THREAD>[^\"]+)\")",
+     "timeoutMs": 60000
+    },
+    {
+     "do": "sleep",
+     "ms": 1500
+    },
+    {
+     "do": "send",
+     "line": "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"turn/start\",\"params\":{\"threadId\":\"$THREAD\",\"input\":[{\"type\":\"text\",\"text\":\"Call the probe big tool, then say done.\"}]}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "turn/completed",
+     "timeoutMs": 90000
+    },
+    {
+     "do": "sleep",
+     "ms": 2000
+    },
+    {
+     "do": "mark",
+     "text": "end: the app-server is terminated"
+    },
+    {
+     "do": "terminate"
+    }
+   ]
+  }
+ ]
+}

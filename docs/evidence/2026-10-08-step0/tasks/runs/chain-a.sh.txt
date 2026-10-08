@@ -1,0 +1,10 @@
+#!/bin/bash
+cd /c/Source/SixFive7/BrowserAI/.work/step0-tasks
+R=./bin/rig/Rig.exe
+$R m4 --stamp 20261008T1411 --via com --reps 20
+$R m4 --stamp 20261008T1411 --via schtasks --reps 10
+$R m1 --stamp 20261008T1411 --via com --rounds 10
+$R m1 --stamp 20261008T1411 --via com --seeded --rounds 10
+$R m1 --stamp 20261008T1411 --via schtasks --rounds 10
+$R m1 --stamp 20261008T1411 --via schtasks --seeded --rounds 10
+echo CHAIN-A-DONE

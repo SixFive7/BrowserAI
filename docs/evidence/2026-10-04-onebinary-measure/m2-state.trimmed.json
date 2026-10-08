@@ -1,0 +1,13 @@
+{
+  "installRoot": "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9",
+  "dataRoot": "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-data-9b8a2464f50441b4a73585be4fc3c4c9",
+  "claudeConfigDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\m2-install-client\\9b8a2464f50441b4a73585be4fc3c4c9\\claude",
+  "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\m2-install-client\\9b8a2464f50441b4a73585be4fc3c4c9\\codex",
+  "setup": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\onebinary\\Releases\\test-pack\\BrowserAI.test-installer.exe",
+  "installedUtc": "2026-10-04T01:58:51.8900112Z",
+  "setupExit": 0,
+  "setupSeconds": 2.3,
+  "newTasks": [
+    "BrowserAI.app.test sign-in 9EAC6015ED2D2D8CAD6C58529C48F904"
+  ]
+}

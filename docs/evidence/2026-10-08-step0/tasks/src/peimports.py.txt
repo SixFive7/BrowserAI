@@ -1,0 +1,80 @@
+# Step 0 scratch, 2026-10-08: read-only scan of a PE file's import and delay-import names, plus a raw
+# string search, for the job and process APIs a Task Scheduler binary could use to end a task.
+import struct, sys
+
+WANTED = [b'TerminateJobObject', b'NtTerminateJobObject', b'TerminateProcess', b'NtTerminateProcess',
+          b'AssignProcessToJobObject', b'CreateJobObjectW', b'OpenJobObjectW', b'QueryInformationJobObject',
+          b'SetInformationJobObject', b'CreateProcessAsUserW', b'PostMessageW', b'SendMessageTimeoutW',
+          b'EnumWindows', b'EnumThreadWindows', b'GenerateConsoleCtrlEvent', b'WTSTerminateProcess']
+
+
+def rva_to_offset(sections, rva):
+    for va, vsize, raw, rsize in sections:
+        if va <= rva < va + max(vsize, rsize):
+            return rva - va + raw
+    return None
+
+
+def imports(path):
+    d = open(path, 'rb').read()
+    pe = struct.unpack_from('<I', d, 0x3C)[0]
+    nsec = struct.unpack_from('<H', d, pe + 6)[0]
+    optsize = struct.unpack_from('<H', d, pe + 20)[0]
+    opt = pe + 24
+    magic = struct.unpack_from('<H', d, opt)[0]
+    ddir = opt + (112 if magic == 0x20B else 96)
+    sections = []
+    sec = opt + optsize
+    for i in range(nsec):
+        vsize, va, rsize, raw = struct.unpack_from('<IIII', d, sec + i * 40 + 8)
+        sections.append((va, vsize, raw, rsize))
+    found = {}
+
+    def name_at(rva):
+        off = rva_to_offset(sections, rva)
+        end = d.index(b'\0', off)
+        return d[off:end]
+
+    def walk_thunks(dll, thunk_rva, kind):
+        off = rva_to_offset(sections, thunk_rva)
+        while True:
+            entry = struct.unpack_from('<Q', d, off)[0]
+            if entry == 0:
+                break
+            if not entry & (1 << 63):
+                fname = name_at(entry + 2)
+                found.setdefault(fname, set()).add(kind + ':' + dll.decode())
+            off += 8
+
+    imp_rva, imp_size = struct.unpack_from('<II', d, ddir + 8)
+    if imp_rva:
+        off = rva_to_offset(sections, imp_rva)
+        while True:
+            oft, ts, fc, name, ft = struct.unpack_from('<IIIII', d, off)
+            if name == 0:
+                break
+            walk_thunks(name_at(name), oft or ft, 'import')
+            off += 20
+    dimp_rva, dimp_size = struct.unpack_from('<II', d, ddir + 13 * 8)
+    if dimp_rva:
+        off = rva_to_offset(sections, dimp_rva)
+        while True:
+            attrs, name, hmod, iat, int_, bound, unload, ts = struct.unpack_from('<IIIIIIII', d, off)
+            if name == 0:
+                break
+            walk_thunks(name_at(name), int_, 'delay')
+            off += 32
+    return d, found
+
+
+for path in sys.argv[1:]:
+    try:
+        data, found = imports(path)
+    except Exception as e:
+        print(path, 'unreadable:', e)
+        continue
+    print('==', path, len(data), 'bytes;', len(found), 'imported names')
+    for w in WANTED:
+        via = sorted(found.get(w, []))
+        raw = data.count(w) + data.count(w.decode().encode('utf-16-le'))
+        print('  %-28s imported=%s rawStringHits=%d' % (w.decode(), ','.join(via) if via else '-', raw))

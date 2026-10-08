@@ -1,0 +1,11 @@
+$ErrorActionPreference = 'Continue'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'never'
+Set-Location 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup'
+"=== publish server start $(Get-Date -Format o)"
+& dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64 --self-contained 2>&1
+"=== publish server exit $LASTEXITCODE $(Get-Date -Format o)"
+& dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained 2>&1
+"=== publish app exit $LASTEXITCODE $(Get-Date -Format o)"
+"=== PUBLISH-DONE"

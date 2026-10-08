@@ -1,0 +1,6 @@
+49300002.594	2026-10-04T01:48:26.1968283Z	65148	launch	RESULT	rep=1 mode=nullhandles pid=31124 exitedOnItsOwn=True afterMs=52.6 exitCode=42
+49300569.044	2026-10-04T01:48:26.7628847Z	65148	launch	RESULT	rep=2 mode=nullhandles pid=10064 exitedOnItsOwn=True afterMs=64.3 exitCode=42
+49301122.419	2026-10-04T01:48:27.3162599Z	65148	launch	RESULT	rep=3 mode=nullhandles pid=80692 exitedOnItsOwn=True afterMs=51.8 exitCode=42
+49301843.711	2026-10-04T01:48:28.0381031Z	96876	launch	RESULT	rep=1 mode=nohandleflag pid=90768 exitedOnItsOwn=True afterMs=78.2 exitCode=42
+49302422.186	2026-10-04T01:48:28.6160317Z	96876	launch	RESULT	rep=2 mode=nohandleflag pid=59808 exitedOnItsOwn=True afterMs=76.8 exitCode=42
+49302976.463	2026-10-04T01:48:29.1703023Z	96876	launch	RESULT	rep=3 mode=nohandleflag pid=29532 exitedOnItsOwn=True afterMs=53.7 exitCode=42

@@ -1,0 +1,8 @@
+2026-10-04T01:43:08.275Z PHASE hold reps=1
+2026-10-04T01:43:08.285Z STARTED coordinator --start-host pid=69864
+2026-10-04T01:43:08.293Z hold: coordinator pipe 4 ms, host pipe 4 ms
+2026-10-04T01:43:08.300Z hold: holding client pid=98996
+2026-10-04T01:43:08.356Z EXIT coordinator pid=69864 code=0
+2026-10-04T01:43:48.354Z hold: stop file seen
+2026-10-04T01:43:49.362Z after stop: host pipe gone in 4 ms, coordinator pipe gone in 3 ms
+2026-10-04T01:43:49.363Z PHASE hold DONE; started 2 processes

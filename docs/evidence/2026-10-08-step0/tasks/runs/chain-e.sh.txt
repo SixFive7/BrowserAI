@@ -1,0 +1,16 @@
+#!/bin/bash
+# Interactive End/Stop, run only after the session-0 pair test showed End and Stop spare a
+# non-descendant in the same job. The gate tolerates only the 7 pre-recorded foreign members
+# and checks each is still present after every request; one missing aborts everything.
+cd /c/Source/SixFive7/BrowserAI/.work/step0-tasks
+R=./bin/rig3/Rig.exe
+A="--allow-shared-job --allow-foreign 12088,19764,31376,31432,30948,23488,25992"
+for v in end stop; do
+  $R m3 --stamp 20261008T1411 --via $v --reps 5 $A || exit 1
+  if ls runs/20261008T1411/m3-*/ABORT-* >/dev/null 2>&1; then echo ABORTED; exit 2; fi
+done
+for v in end stop; do
+  $R m3 --stamp 20261008T1411 --via $v --reps 5 --top $A || exit 1
+  if ls runs/20261008T1411/m3-*/ABORT-* >/dev/null 2>&1; then echo ABORTED; exit 2; fi
+done
+echo CHAIN-E-DONE

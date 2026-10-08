@@ -1,0 +1,11 @@
+#!/bin/bash
+# Takes the machine-wide suite lock by mkdir, retrying every 30 s, and exits once it holds it.
+L=/c/Source/SixFive7/BrowserAI/.work/locks/suite
+while true; do
+  if mkdir "$L" 2>/dev/null; then
+    printf 'lane: measure-startup\nstarted: %s\nrunning: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" > "$L/owner.txt"
+    echo "TOOK $(date -u +%H:%M:%SZ)"
+    exit 0
+  fi
+  sleep 30
+done

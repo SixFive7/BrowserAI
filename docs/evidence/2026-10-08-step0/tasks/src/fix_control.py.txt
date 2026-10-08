@@ -1,0 +1,7 @@
+p = r'C:\Source\SixFive7\BrowserAI\.work\step0-tasks\src\Rig\Program.cs'
+s = open(p, encoding='utf-8', newline='').read()
+start = s.index('Sched.Definition("Parallel", false, "standin --dir C:')
+end = s.index('--max 1")', start) + len('--max 1")')
+s = s[:start] + 'Sched.Definition("Parallel", false, @"standin --dir C:\\nowhere --tag control --quit Local\\BrowserAI-measure-control --max 1")' + s[end:]
+open(p, 'w', encoding='utf-8', newline='').write(s)
+print(s[start:start + 140])

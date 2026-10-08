@@ -1,0 +1,121 @@
+// startup-measure part 5 (Q381): the coordinator call's latency, idle and under a full suite's load.
+// Runs ONLY under the suite lock. The coordinator under test is the published BrowserAI.exe of the
+// scratch install, keyed to its own install root, with BROWSERAI_ROOT in scratch: its pipe name,
+// its census, its host's pipe and its log are all its own, so nothing a suite arm opens can meet it.
+// Every process started here is kept as a ChildProcess handle and ended only through that handle.
+//
+// usage: node part5.js idle <outDir>
+//        node part5.js load <outDir>     (runs until <outDir>\stop exists)
+'use strict';
+const { spawn, spawnSync } = require('child_process');
+const fs = require('fs');
+
+const [mode, outDir] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure';
+const BASE = '%USERPROFILE%\\Downloads\\tmp-startup-measure';
+const INST = `${BASE}\\inst`;
+const CUR = `${INST}\\current`;
+const FRONT = `${CUR}\\BrowserAI.Server.exe`;
+const APP = `${CUR}\\BrowserAI.exe`;
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const PROBE = `${S}\\probe\\out\\BrowserAI.TestProbe.exe`;
+const DATA = `${BASE}\\data`;
+const FEED = `${BASE}\\feed`;
+const COORD_PIPE = 'BrowserAI-Coordinator-C429DBA98841F2BBC73DAFB506AEE381';
+const HOST_PIPE = 'BrowserAI-Host-C429DBA98841F2BBC73DAFB506AEE381';
+const INPROC_ROOT = `${S}\\q381\\inproc-root-${mode}`;
+
+fs.mkdirSync(outDir, { recursive: true });
+const plog = (s) => fs.appendFileSync(`${outDir}\\progress.log`, `${new Date().toISOString()} ${s}\n`);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const productEnv = Object.assign({}, process.env, { BROWSERAI_ROOT: DATA, BROWSERAI_UPDATE_FEED: FEED });
+const started = [];
+const live = [];
+
+function pipes() { try { return new Set(fs.readdirSync('\\\\.\\pipe\\')); } catch (e) { return new Set(); } }
+async function waitPipe(name, present, timeoutMs) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) { if (pipes().has(name) === present) return Date.now() - t0; await sleep(10); }
+  return -1;
+}
+function track(child, what) {
+  started.push({ pid: child.pid, what, at: new Date().toISOString() });
+  live.push(child);
+  child.on('exit', (code) => plog(`EXIT ${what} pid=${child.pid} code=${code}`));
+  return child;
+}
+function probe(args, what) {
+  return track(spawn(PROBE, args, { windowsHide: true, stdio: ['ignore', fs.openSync(`${outDir}\\${what}.out`, 'a'), fs.openSync(`${outDir}\\${what}.err`, 'a')] }), what);
+}
+const exited = (c) => new Promise((r) => (c.exitCode !== null ? r() : c.on('exit', r)));
+
+// One second start of the published app: it finds the coordinator's pipe held, hands its verb over,
+// logs how long the hand-over took, and exits. A fresh NativeAOT process per sample, which is what a
+// front asking for a host is.
+function secondStart(flag) {
+  const t0 = Date.now();
+  const r = spawnSync(APP, [flag], { env: productEnv, windowsHide: true, timeout: 60000 });
+  fs.appendFileSync(`${outDir}\\second-starts.csv`, `${new Date().toISOString()},${flag},${r.status},${Date.now() - t0}\n`);
+}
+function coldProbe(verb) {
+  spawnSync(PROBE, ['client', INST, verb, '1', '0', '30000', `${outDir}\\cold-client.csv`, `cold-${mode}`], { windowsHide: true, timeout: 60000 });
+}
+
+(async () => {
+  plog(`MODE ${mode}`);
+  let coordinator = null;
+  let holder = null;
+  try {
+    coordinator = track(spawn(APP, ['--start-host'], { env: productEnv, windowsHide: true, stdio: 'ignore' }), 'coordinator --start-host');
+    plog(`coordinator pipe ${await waitPipe(COORD_PIPE, true, 30000)} ms, host pipe ${await waitPipe(HOST_PIPE, true, 60000)} ms`);
+    holder = track(spawn(NODE, [`${S}\\rig\\mcpprobe.js`, FRONT, `${outDir}\\hold-front.json`, '--env', `BROWSERAI_ROOT=${DATA}`, '--env', `BROWSERAI_UPDATE_FEED=${FEED}`, '--hold', '7200000'], { windowsHide: true, stdio: 'ignore' }), 'holding client');
+    await sleep(3000);
+
+    if (mode === 'fresh') {
+      // One fresh process per sample, while the coordinator above is held alive by its host's
+      // connection: a second start of the published app handing over each verb, and a cold
+      // CoreCLR probe making one call.
+      for (let i = 0; i < 30; i++) {
+        if (!pipes().has(COORD_PIPE)) { plog(`fresh ${i}: the coordinator's pipe is gone; stopping`); break; }
+        secondStart('--coordinate'); await sleep(300);
+        secondStart('--start-host'); await sleep(300);
+        coldProbe('recheck'); await sleep(300);
+        coldProbe('host'); await sleep(300);
+      }
+    } else if (mode === 'idle') {
+      for (const [verb, label] of [['recheck', 'idle-client-recheck'], ['host', 'idle-client-host']]) {
+        await exited(probe(['client', INST, verb, '600', '50', '30000', `${outDir}\\client.csv`, label], label));
+      }
+      await exited(probe(['inproc', INPROC_ROOT, '600', '50', '30000', `${outDir}\\inproc.csv`, 'idle-inproc'], 'idle-inproc'));
+      for (const blocked of [32, 64, 128]) {
+        await exited(probe(['inproc', `${INPROC_ROOT}-b${blocked}`, '40', '250', '30000', `${outDir}\\inproc.csv`, `idle-inproc-blocked${blocked}`, String(blocked)], `idle-inproc-blocked${blocked}`));
+      }
+      for (let i = 0; i < 30; i++) { secondStart('--coordinate'); await sleep(500); secondStart('--start-host'); await sleep(500); coldProbe(i % 2 ? 'host' : 'recheck'); await sleep(500); }
+    } else {
+      const stopFiles = [];
+      for (const [verb, label] of [['recheck', 'load-client-recheck'], ['host', 'load-client-host']]) {
+        stopFiles.push(`${outDir}\\client-${verb}.csv.stop`);
+        probe(['client', INST, verb, '100000', '200', '30000', `${outDir}\\client-${verb}.csv`, label], label);
+      }
+      stopFiles.push(`${outDir}\\inproc.csv.stop`);
+      probe(['inproc', INPROC_ROOT, '100000', '200', '30000', `${outDir}\\inproc.csv`, 'load-inproc'], 'load-inproc');
+      let i = 0;
+      while (!fs.existsSync(`${outDir}\\stop`)) {
+        secondStart(i % 2 ? '--start-host' : '--coordinate');
+        coldProbe(i % 2 ? 'host' : 'recheck');
+        i++;
+        await sleep(3000);
+      }
+      plog('stop file seen');
+      for (const f of stopFiles) fs.writeFileSync(f, 'stop');
+      await sleep(3000);
+    }
+  } finally {
+    for (const c of live) if (c.exitCode === null && c !== coordinator) { c.kill(); plog(`KILLED pid=${c.pid} by its handle`); }
+    await sleep(1000);
+    if (coordinator && coordinator.exitCode === null) { coordinator.kill(); plog(`KILLED coordinator pid=${coordinator.pid} by its handle`); }
+    plog(`after stop: host pipe gone in ${await waitPipe(HOST_PIPE, false, 15000)} ms, coordinator pipe gone in ${await waitPipe(COORD_PIPE, false, 15000)} ms`);
+    fs.writeFileSync(`${outDir}\\${mode}-started.json`, JSON.stringify(started, null, 1));
+    plog(`MODE ${mode} DONE; started ${started.length} long-lived processes (second starts and cold probes ran synchronously)`);
+  }
+})();

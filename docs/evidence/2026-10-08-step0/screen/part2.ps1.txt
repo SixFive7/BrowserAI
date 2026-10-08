@@ -1,0 +1,128 @@
+# Scratch orchestration for the step-0 screen measurements, 2026-10-08, part 2. PowerShell 7.
+#   part2.ps1 -Step register            registers the temporary task (no trigger, interactive token)
+#   part2.ps1 -Step run -Runs a,b,...    runs each id: sched-* through the task, direct-* from this shell
+#   part2.ps1 -Step delete              deletes the task and proves it is gone
+param(
+    [Parameter(Mandatory)][ValidateSet('register', 'run', 'delete', 'query')][string]$Step,
+    [string[]]$Runs = @(),
+    [string]$TaskName = ''
+)
+$ErrorActionPreference = 'Stop'
+$Runs = @($Runs | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
+$root = 'C:\Source\SixFive7\BrowserAI\.work\step0-screen'
+$launcher = Join-Path $root 'launcher\bin\Release\net10.0\launcher.exe'
+$nameFile = Join-Path $root 'task-name.txt'
+if (-not $TaskName -and (Test-Path $nameFile)) { $TaskName = (Get-Content $nameFile -Raw).Trim() }
+
+function Get-Folder
+{
+    $service = New-Object -ComObject Schedule.Service
+    $service.Connect()
+    return $service.GetFolder('\')
+}
+
+switch ($Step)
+{
+    'register'
+    {
+        $TaskName = 'BrowserAI-measure-' + (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-window'
+        $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        $image = [System.Security.SecurityElement]::Escape($launcher)
+        # Principal and Settings copied from SignInTask.DefinitionFor (src/BrowserAI.Core/Registration/SignInTask.cs).
+        # No trigger: the measurement starts it on demand only, through IRegisteredTask::Run, as a blocked server would.
+        $xml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Author>BrowserAI step-0 screen measurement</Author>
+    <Description>Temporary. Starts a scratch launcher that opens one scratch browser window for 8 seconds. Deleted when the measurement ends.</Description>
+  </RegistrationInfo>
+  <Triggers />
+  <Principals>
+    <Principal id="Author">
+      <UserId>$sid</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>5</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>$image</Command>
+      <Arguments>`$(Arg0)</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+        $folder = Get-Folder
+        $registered = $folder.RegisterTask($TaskName, $xml, 6, $null, $null, 3, $null)
+        Set-Content -Path $nameFile -Value $TaskName -NoNewline
+        Set-Content -Path (Join-Path $root 'task-definition-registered.xml') -Value $registered.Xml
+        "registered '$TaskName' state=$($registered.State) enabled=$($registered.Enabled)"
+    }
+    'query'
+    {
+        $folder = Get-Folder
+        try { $t = $folder.GetTask($TaskName); "task '$TaskName' state=$($t.State) lastRun=$($t.LastRunTime) lastResult=0x{0:X}" -f $t.LastTaskResult }
+        catch { "task '$TaskName' not found: 0x{0:X8} {1}" -f $_.Exception.HResult, $_.Exception.Message }
+    }
+    'run'
+    {
+        foreach ($id in $Runs)
+        {
+            $runDir = Join-Path $root "runs\$id"
+            if (Test-Path $runDir) { throw "run directory already exists: $runDir" }
+            $log = Join-Path $runDir 'launcher.log'
+            $started = Get-Date
+            $how = ''
+            $proc = $null
+            if ($id -like 'sched-*')
+            {
+                $folder = Get-Folder
+                $task = $folder.GetTask($TaskName)
+                $running = $task.Run($id)
+                $how = "task.Run('$id') instance=$($running.InstanceGuid)"
+            }
+            else
+            {
+                $psi = [System.Diagnostics.ProcessStartInfo]::new($launcher, $id)
+                $psi.UseShellExecute = $false
+                $psi.CreateNoWindow = $true
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                $how = "Process.Start from this shell pid=$($proc.Id) start=$($proc.StartTime.ToString('o'))"
+            }
+            $deadline = $started.AddSeconds(45)
+            while ((Get-Date) -lt $deadline)
+            {
+                if ((Test-Path $log) -and ((Get-Content $log -Tail 1) -like '*DONE exit=*')) { break }
+                Start-Sleep -Milliseconds 250
+            }
+            if ($proc) { [void]$proc.WaitForExit(15000); $how += " exited=$($proc.HasExited) exit=$($proc.ExitCode)" }
+            $done = (Test-Path $log) -and ((Get-Content $log -Tail 1) -like '*DONE exit=*')
+            "$id : $how ; log complete=$done after $([int]((Get-Date) - $started).TotalMilliseconds) ms"
+            Start-Sleep -Milliseconds 2000
+        }
+    }
+    'delete'
+    {
+        $folder = Get-Folder
+        $folder.DeleteTask($TaskName, 0)
+        "deleted '$TaskName'"
+        try { $null = $folder.GetTask($TaskName); "STILL PRESENT: '$TaskName'" }
+        catch { "proof: GetTask('$TaskName') now fails 0x{0:X8}" -f $_.Exception.HResult }
+        $q = & schtasks.exe /Query /TN "\$TaskName" 2>&1
+        "proof: schtasks /Query exit=$LASTEXITCODE output=$($q -join ' ')"
+        $all = @($folder.GetTasks(1) | Where-Object { $_.Name -like 'BrowserAI-measure-*' } | ForEach-Object { $_.Name })
+        "proof: tasks in the root folder named BrowserAI-measure-*: $($all.Count) $($all -join ', ')"
+    }
+}

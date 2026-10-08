@@ -1,0 +1,94 @@
+p = r'C:\Source\SixFive7\BrowserAI\.work\step0-tasks\src\Rig\Program.cs'
+s = open(p, encoding='utf-8', newline='').read()
+nl = '\r\n' if '\r\n' in s else '\n'
+
+
+def sub(old, new):
+    global s
+    old = old.replace('\n', nl)
+    new = new.replace('\n', nl)
+    assert old in s, 'missing: ' + old[:80]
+    s = s.replace(old, new)
+
+
+sub('''        var allowShared = options.Has("--allow-shared-job");
+        var s4u = options["--logon"] == "s4u";''', '''        var allowShared = options.Has("--allow-shared-job");
+        var allowedForeign = (options["--allow-foreign"] ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToHashSet();
+        var s4u = options["--logon"] == "s4u";''')
+
+sub('''                if (latest is null || (foreign.Count > 0 && !allowShared))
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\\t{via}\\tREFUSED: {gate}\\n");
+                    Say($"m3 rep {rep}: refused, {gate}; " + QuitAll(quit, dir));
+                    continue;
+                }
+''', '''                if (latest is null || (foreign.Count > 0 && !(allowShared && foreign.All(allowedForeign.Contains))))
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\\t{via}\\tREFUSED: {gate}\\n");
+                    Say($"m3 rep {rep}: refused, {gate}; " + QuitAll(quit, dir));
+                    continue;
+                }
+
+                // Every foreign member allowed above, as it stands now: its start time where it can be read.
+                var foreignBefore = foreign.ToDictionary(id => id, StartOf);
+''')
+
+sub('''                var cleanup = QuitAll(quit, dir);
+                File.AppendAllText(resultsPath, string.Join('\\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    gate,''', '''                var cleanup = QuitAll(quit, dir);
+                var foreignGone = foreignBefore.Where(pair => StartOf(pair.Key) != pair.Value).Select(pair => pair.Key).ToList();
+
+                if (foreignGone.Count > 0)
+                {
+                    File.WriteAllText(Path.Combine(caseDir, "ABORT-foreign-process-gone.txt"), string.Join(',', foreignGone));
+                    gate += $" ;; FOREIGN PROCESS GONE OR CHANGED AFTER THE REQUEST: [{string.Join(',', foreignGone)}]";
+                }
+                else if (foreignBefore.Count > 0)
+                {
+                    gate += $" ;; all {foreignBefore.Count} foreign members still present after the request";
+                }
+
+                File.AppendAllText(resultsPath, string.Join('\\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    gate,''')
+
+sub('''                Say($"m3 rep {rep} {via}: {requestResult}; standin exit {standinExitMs} ms code {standinCode}; child ended={childEnded} {childExitMs} code {childCode}; saw [{standinSaw}] child saw [{childSaw}]");
+                Thread.Sleep(1000);''', '''                Say($"m3 rep {rep} {via}: {requestResult}; standin exit {standinExitMs} ms code {standinCode}; child ended={childEnded} {childExitMs} code {childCode}; saw [{standinSaw}] child saw [{childSaw}]; gate {gate}");
+
+                if (foreignGone.Count > 0)
+                {
+                    Say("ABORT: a foreign member of the job is gone or changed after the request; no further requests.");
+                    break;
+                }
+
+                Thread.Sleep(1000);''')
+
+sub('''    private static int M4(Options options)''', '''    /// <summary>A process's identity for the foreign check, read without opening it: present or not, and its start time where readable.</summary>
+    private static string StartOf(int pid)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(pid);
+
+            try
+            {
+                return "present start=" + process.StartTime.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            }
+            catch (Exception)
+            {
+                return "present start=unreadable";
+            }
+        }
+        catch (ArgumentException)
+        {
+            return "gone";
+        }
+    }
+
+    private static int M4(Options options)''')
+
+open(p, 'w', encoding='utf-8', newline='').write(s)
+print('patched')

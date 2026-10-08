@@ -1,0 +1,496 @@
+﻿000006 clock zero utc=2026-10-08T14:05:11.7980360Z
+000010 screen=3840x2160 region={X=2940,Y=1460,Width=900,Height=700} probe=(3640,2060)
+000025 audio-device dev=0 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613} volume=1,00 mute=False
+000025 audio-device dev=1 id={0.0.0.00000000}.{4ae90f57-d116-4db4-ac0b-2d4e9583ebc3} volume=0,51 mute=False
+000026 audio-device dev=2 id={0.0.0.00000000}.{6bc13147-7e56-4052-af2f-cbb384ba35dc} volume=1,00 mute=False
+000026 audio-device dev=3 id={0.0.0.00000000}.{72f23a22-5e24-478a-b486-4ba983d324fe} volume=0,00 mute=True
+000027 audio-device dev=4 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4} volume=0,50 mute=False
+000027 audio-device dev=5 id={0.0.0.00000000}.{c79418f3-4d53-4446-968f-f95fe2fd4d6f} volume=0,54 mute=False
+000028 audio-device dev=6 id={0.0.0.00000000}.{eb54d0dc-bab3-4339-91a1-44aeff53fdc5} volume=0,00 mute=False
+000032 audio-default-console id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}
+000042 audio-baseline endpoint dev=0 peak=0,0431 (ignored from here on)
+000044 audio-baseline session dev=0 pid=18872 system=False peak=0,0431 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613}|\Device\HarddiskVolume3\Program Files\WindowsApps\Elgato.WaveLink_3.3.0.4529_x64__g54w8ztgkx496\Elgato.WaveLink.exe%b{00000000-0000-0000-0000-000000000000} (ignored from here on)
+000071 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+000071 fg hwnd=0x111E6 pid=54008 class='Chrome_WidgetWin_1' title='BrowserAI - Visual Studio Code'
+000225 pix roi=27 outside=0 box=(875,664)-(880,671)
+000560 pix roi=78 outside=0 box=(562,669)-(575,682)
+001029 pix roi=78 outside=0 box=(562,669)-(575,682)
+001228 pix roi=24 outside=0 box=(875,665)-(880,671)
+001521 audio baseline ends
+001526 === run R, toast1, then toast2, then toast3
+001540 history at start=0 
+001561 pix roi=78 outside=0 box=(562,669)-(575,682)
+001585 R SHOW toast1 T0=1576
+001729 at (3640,2060) root hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112)
+001761 audio-endpoint dev=4 peak=0,3239
+001762 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001781 pix roi=10493 outside=0 box=(633,361)-(899,643)
+001801 audio-endpoint dev=4 peak=0,3239
+001802 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001823 pix roi=10367 outside=0 box=(585,384)-(899,643)
+001842 audio-endpoint dev=4 peak=0,3175
+001842 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001865 pix roi=10062 outside=0 box=(547,384)-(899,643)
+001885 audio-endpoint dev=4 peak=0,3175
+001885 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001907 pix roi=10239 outside=0 box=(522,361)-(899,643)
+001924 audio-endpoint dev=4 peak=0,3175
+001924 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001940 pix roi=8565 outside=0 box=(514,361)-(897,643)
+001965 audio-endpoint dev=4 peak=0,2505
+001965 audio-session dev=4 pid=12396 system=True peak=0,2505 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+001980 pix roi=10379 outside=0 box=(513,363)-(892,641)
+002006 audio-endpoint dev=4 peak=0,2188
+002006 audio-session dev=4 pid=12396 system=True peak=0,2188 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002020 pix roi=2110 outside=0 box=(513,361)-(890,643)
+002047 audio-endpoint dev=4 peak=0,1811
+002048 audio-session dev=4 pid=12396 system=True peak=0,1811 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002059 pix roi=78 outside=0 box=(562,669)-(575,682)
+002087 audio-endpoint dev=4 peak=0,1610
+002088 audio-session dev=4 pid=12396 system=True peak=0,1610 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002129 audio-endpoint dev=4 peak=0,1505
+002130 audio-session dev=4 pid=12396 system=True peak=0,1505 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002170 audio-endpoint dev=4 peak=0,1356
+002171 audio-session dev=4 pid=12396 system=True peak=0,1356 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002211 audio-endpoint dev=4 peak=0,1163
+002212 audio-session dev=4 pid=12396 system=True peak=0,1163 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002226 pix roi=31 outside=0 box=(875,664)-(880,671)
+002253 audio-endpoint dev=4 peak=0,0936
+002254 audio-session dev=4 pid=12396 system=True peak=0,0936 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002294 audio-endpoint dev=4 peak=0,0811
+002294 audio-session dev=4 pid=12396 system=True peak=0,0811 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002334 audio-endpoint dev=4 peak=0,0700
+002335 audio-session dev=4 pid=12396 system=True peak=0,0700 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002379 audio-endpoint dev=4 peak=0,0594
+002379 audio-session dev=4 pid=12396 system=True peak=0,0594 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002418 audio-endpoint dev=4 peak=0,0504
+002419 audio-session dev=4 pid=12396 system=True peak=0,0504 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002458 audio-endpoint dev=4 peak=0,0430
+002459 audio-session dev=4 pid=12396 system=True peak=0,0430 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002505 audio-endpoint dev=4 peak=0,0368
+002505 audio-session dev=4 pid=12396 system=True peak=0,0368 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002546 audio-endpoint dev=4 peak=0,0328
+002546 audio-session dev=4 pid=12396 system=True peak=0,0328 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002559 pix roi=78 outside=0 box=(562,669)-(575,682)
+002585 R UPDATE k=1 result=Succeeded
+002587 audio-endpoint dev=4 peak=0,0277
+002587 audio-session dev=4 pid=12396 system=True peak=0,0277 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002627 audio-endpoint dev=4 peak=0,0226
+002628 audio-session dev=4 pid=12396 system=True peak=0,0226 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002669 audio-endpoint dev=4 peak=0,0174
+002670 audio-session dev=4 pid=12396 system=True peak=0,0174 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002710 audio-endpoint dev=4 peak=0,0140
+002710 audio-session dev=4 pid=12396 system=True peak=0,0137 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002729 pix roi=798 outside=0 box=(536,539)-(839,614)
+002749 audio-endpoint dev=4 peak=0,0123
+002749 audio-session dev=4 pid=12396 system=True peak=0,0123 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002790 audio-endpoint dev=4 peak=0,0092
+002791 audio-session dev=4 pid=12396 system=True peak=0,0092 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002831 audio-endpoint dev=4 peak=0,0075
+002832 audio-session dev=4 pid=12396 system=True peak=0,0075 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002874 audio-endpoint dev=4 peak=0,0061
+002875 audio-session dev=4 pid=12396 system=True peak=0,0061 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002914 audio-endpoint dev=4 peak=0,0049
+002915 audio-session dev=4 pid=12396 system=True peak=0,0049 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002956 audio-endpoint dev=4 peak=0,0034
+002956 audio-session dev=4 pid=12396 system=True peak=0,0034 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+002996 audio-endpoint dev=4 peak=0,0019
+002997 audio-session dev=4 pid=12396 system=True peak=0,0019 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+003053 pix roi=78 outside=0 box=(562,669)-(575,682)
+003221 pix roi=32 outside=0 box=(875,664)-(880,671)
+003552 pix roi=78 outside=0 box=(562,669)-(575,682)
+003580 R UPDATE k=2 result=Succeeded
+003710 pix roi=227 outside=0 box=(536,539)-(816,565)
+004043 pix roi=78 outside=0 box=(562,669)-(575,682)
+004253 pix roi=19 outside=0 box=(875,664)-(880,671)
+004319 shot R-toast1
+004472 uia R-toast1: point=(3640,2060) window: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112) | root: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112) | rootOwner: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112)
+004559 pix roi=78 outside=0 box=(562,669)-(575,682)
+005052 pix roi=78 outside=0 box=(562,669)-(575,682)
+005114 R history before replace1=1 [tag=update group=browserai-step0 title='BrowserAI 1.2.0 is ready to install']
+005118 R SHOW toast2 (replace, same tag and group)
+005123 R history after replace1=1 [tag=update group=browserai-step0 title='Installing BrowserAI 1.2.0 now']
+005178 pix roi=12734 outside=0 box=(520,366)-(883,642)
+005185 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+005223 pix roi=35 outside=0 box=(875,664)-(880,671)
+005234 at (3640,2060) root hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+005242 audio-endpoint dev=4 peak=0,3239
+005243 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005265 pix roi=2573 outside=0 box=(738,519)-(899,642)
+005283 audio-endpoint dev=4 peak=0,3239
+005284 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005305 pix roi=3561 outside=0 box=(633,507)-(899,639)
+005324 audio-endpoint dev=4 peak=0,3239
+005324 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005338 pix roi=2895 outside=0 box=(599,519)-(895,622)
+005365 audio-endpoint dev=4 peak=0,3175
+005366 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005380 pix roi=2964 outside=0 box=(572,519)-(897,622)
+005407 audio-endpoint dev=4 peak=0,3175
+005407 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005420 pix roi=2789 outside=0 box=(550,519)-(898,611)
+005447 audio-endpoint dev=4 peak=0,2675
+005447 audio-session dev=4 pid=12396 system=True peak=0,2617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005462 pix roi=2604 outside=0 box=(539,519)-(876,611)
+005490 audio-endpoint dev=4 peak=0,2248
+005491 audio-session dev=4 pid=12396 system=True peak=0,2248 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005504 pix roi=2575 outside=0 box=(513,507)-(890,632)
+005531 audio-endpoint dev=4 peak=0,1932
+005531 audio-session dev=4 pid=12396 system=True peak=0,1932 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005543 pix roi=481 outside=0 box=(513,507)-(890,682)
+005572 audio-endpoint dev=4 peak=0,1617
+005572 audio-session dev=4 pid=12396 system=True peak=0,1617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005615 audio-endpoint dev=4 peak=0,1526
+005615 audio-session dev=4 pid=12396 system=True peak=0,1526 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005655 audio-endpoint dev=4 peak=0,1442
+005655 audio-session dev=4 pid=12396 system=True peak=0,1442 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005696 audio-endpoint dev=4 peak=0,1266
+005696 audio-session dev=4 pid=12396 system=True peak=0,1266 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005738 audio-endpoint dev=4 peak=0,0992
+005739 audio-session dev=4 pid=12396 system=True peak=0,0992 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005780 audio-endpoint dev=4 peak=0,0852
+005780 audio-session dev=4 pid=12396 system=True peak=0,0852 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005821 audio-endpoint dev=4 peak=0,0731
+005821 audio-session dev=4 pid=12396 system=True peak=0,0731 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005863 audio-endpoint dev=4 peak=0,0627
+005863 audio-session dev=4 pid=12396 system=True peak=0,0627 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005905 audio-endpoint dev=4 peak=0,0523
+005905 audio-session dev=4 pid=12396 system=True peak=0,0523 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005946 audio-endpoint dev=4 peak=0,0447
+005947 audio-session dev=4 pid=12396 system=True peak=0,0447 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+005989 audio-endpoint dev=4 peak=0,0380
+005989 audio-session dev=4 pid=12396 system=True peak=0,0380 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006029 audio-endpoint dev=4 peak=0,0333
+006029 audio-session dev=4 pid=12396 system=True peak=0,0333 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006045 pix roi=78 outside=0 box=(562,669)-(575,682)
+006068 audio-endpoint dev=4 peak=0,0287
+006068 audio-session dev=4 pid=12396 system=True peak=0,0287 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006114 audio-endpoint dev=4 peak=0,0240
+006114 audio-session dev=4 pid=12396 system=True peak=0,0240 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006154 audio-endpoint dev=4 peak=0,0185
+006155 audio-session dev=4 pid=12396 system=True peak=0,0185 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006194 audio-endpoint dev=4 peak=0,0145
+006194 audio-session dev=4 pid=12396 system=True peak=0,0145 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006240 audio-endpoint dev=4 peak=0,0123
+006241 audio-session dev=4 pid=12396 system=True peak=0,0123 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006252 pix roi=36 outside=0 box=(875,664)-(880,671)
+006281 audio-endpoint dev=4 peak=0,0098
+006281 audio-session dev=4 pid=12396 system=True peak=0,0098 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006321 audio-endpoint dev=4 peak=0,0079
+006321 audio-session dev=4 pid=12396 system=True peak=0,0079 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006362 audio-endpoint dev=4 peak=0,0065
+006362 audio-session dev=4 pid=12396 system=True peak=0,0065 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006402 audio-endpoint dev=4 peak=0,0051
+006403 audio-session dev=4 pid=12396 system=True peak=0,0051 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006443 audio-endpoint dev=4 peak=0,0038
+006443 audio-session dev=4 pid=12396 system=True peak=0,0038 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006485 audio-endpoint dev=4 peak=0,0022
+006486 audio-session dev=4 pid=12396 system=True peak=0,0022 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006526 audio-endpoint dev=4 peak=0,0008
+006527 audio-session dev=4 pid=12396 system=True peak=0,0008 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+006543 pix roi=78 outside=0 box=(562,669)-(575,682)
+007043 pix roi=78 outside=0 box=(562,669)-(575,682)
+007243 pix roi=23 outside=0 box=(875,666)-(880,671)
+007528 pix roi=78 outside=0 box=(562,669)-(575,682)
+007622 shot R-toast2
+007655 uia R-toast2: point=(3640,2060) window: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | root: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | rootOwner: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+008029 pix roi=78 outside=0 box=(562,669)-(575,682)
+008104 R history before replace2=1 [tag=update group=browserai-step0 title='Installing BrowserAI 1.2.0 now']
+008107 R SHOW toast3 (replace, same tag and group)
+008112 R history after replace2=1 [tag=update group=browserai-step0 title='BrowserAI 1.2.0 is installed']
+008159 pix roi=4840 outside=0 box=(520,501)-(883,642)
+008163 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+008234 pix roi=40 outside=0 box=(868,664)-(880,671)
+008528 pix roi=78 outside=0 box=(562,669)-(575,682)
+009059 pix roi=78 outside=0 box=(562,669)-(575,682)
+009230 pix roi=39 outside=0 box=(875,664)-(880,671)
+009559 pix roi=78 outside=0 box=(562,669)-(575,682)
+010063 pix roi=78 outside=0 box=(562,669)-(575,682)
+010222 pix roi=27 outside=0 box=(875,664)-(880,671)
+010558 pix roi=78 outside=0 box=(562,669)-(575,682)
+010604 shot R-toast3
+010641 uia R-toast3: point=(3640,2060) window: hwnd=0x111EE pid=54008 class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' visible=True rect=(2561,0)-(3839,2111) | root: hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119) | rootOwner: hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+011045 pix roi=78 outside=0 box=(562,669)-(575,682)
+011095 R CLEAR history for the app id, as show.ps1 does
+011252 pix roi=24 outside=0 box=(875,665)-(880,671)
+011544 pix roi=78 outside=0 box=(562,669)-(575,682)
+012042 pix roi=78 outside=0 box=(562,669)-(575,682)
+012250 pix roi=31 outside=0 box=(875,664)-(880,671)
+012297 R history after clear=0 
+012543 pix roi=78 outside=0 box=(562,669)-(575,682)
+013035 pix roi=78 outside=0 box=(562,669)-(575,682)
+013242 pix roi=32 outside=0 box=(875,664)-(880,671)
+013576 pix roi=78 outside=0 box=(562,669)-(575,682)
+013808 === run S, toast1, then toast3, then toast2
+013812 history at start=0 
+013816 S SHOW toast1 T0=13814
+013915 at (3640,2060) root hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112)
+013933 audio-endpoint dev=4 peak=0,3239
+013934 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+013953 pix roi=8467 outside=0 box=(686,361)-(899,643)
+013974 audio-endpoint dev=4 peak=0,3239
+013974 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+013989 pix roi=9104 outside=0 box=(620,383)-(899,643)
+014014 audio-endpoint dev=4 peak=0,2523
+014015 audio-session dev=4 pid=12396 system=True peak=0,2523 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014032 pix roi=10285 outside=0 box=(569,384)-(899,643)
+014060 audio-endpoint dev=4 peak=0,3175
+014060 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014080 pix roi=10879 outside=0 box=(532,370)-(899,682)
+014100 audio-endpoint dev=4 peak=0,3175
+014100 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014122 pix roi=9788 outside=0 box=(519,361)-(899,643)
+014140 audio-endpoint dev=4 peak=0,2617
+014140 audio-session dev=4 pid=12396 system=True peak=0,2617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014154 pix roi=9927 outside=0 box=(514,361)-(896,643)
+014181 audio-endpoint dev=4 peak=0,2248
+014181 audio-session dev=4 pid=12396 system=True peak=0,2248 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014195 pix roi=7348 outside=0 box=(514,361)-(883,643)
+014220 audio-endpoint dev=4 peak=0,1932
+014221 audio-session dev=4 pid=12396 system=True peak=0,1932 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014235 pix roi=19 outside=0 box=(875,664)-(880,671)
+014261 audio-endpoint dev=4 peak=0,1617
+014261 audio-session dev=4 pid=12396 system=True peak=0,1617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014304 audio-endpoint dev=4 peak=0,1505
+014305 audio-session dev=4 pid=12396 system=True peak=0,1505 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014346 audio-endpoint dev=4 peak=0,1396
+014346 audio-session dev=4 pid=12396 system=True peak=0,1396 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014386 audio-endpoint dev=4 peak=0,1212
+014386 audio-session dev=4 pid=12396 system=True peak=0,1212 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014429 audio-endpoint dev=4 peak=0,0992
+014430 audio-session dev=4 pid=12396 system=True peak=0,0992 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014470 audio-endpoint dev=4 peak=0,0852
+014470 audio-session dev=4 pid=12396 system=True peak=0,0852 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014510 audio-endpoint dev=4 peak=0,0731
+014510 audio-session dev=4 pid=12396 system=True peak=0,0731 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014529 pix roi=78 outside=0 box=(562,669)-(575,682)
+014554 audio-endpoint dev=4 peak=0,0594
+014555 audio-session dev=4 pid=12396 system=True peak=0,0594 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014594 audio-endpoint dev=4 peak=0,0504
+014595 audio-session dev=4 pid=12396 system=True peak=0,0504 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014634 audio-endpoint dev=4 peak=0,0430
+014635 audio-session dev=4 pid=12396 system=True peak=0,0430 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014676 audio-endpoint dev=4 peak=0,0380
+014677 audio-session dev=4 pid=12396 system=True peak=0,0380 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014718 audio-endpoint dev=4 peak=0,0333
+014719 audio-session dev=4 pid=12396 system=True peak=0,0333 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014757 audio-endpoint dev=4 peak=0,0287
+014758 audio-session dev=4 pid=12396 system=True peak=0,0287 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014800 audio-endpoint dev=4 peak=0,0240
+014800 audio-session dev=4 pid=12396 system=True peak=0,0240 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014827 S UPDATE k=1 result=Succeeded
+014841 audio-endpoint dev=4 peak=0,0185
+014841 audio-session dev=4 pid=12396 system=True peak=0,0185 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014882 audio-endpoint dev=4 peak=0,0145
+014882 audio-session dev=4 pid=12396 system=True peak=0,0145 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014923 audio-endpoint dev=4 peak=0,0123
+014924 audio-session dev=4 pid=12396 system=True peak=0,0123 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014963 audio-endpoint dev=4 peak=0,0098
+014963 audio-session dev=4 pid=12396 system=True peak=0,0098 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+014977 pix roi=369 outside=0 box=(536,539)-(816,565)
+015003 audio-endpoint dev=4 peak=0,0079
+015004 audio-session dev=4 pid=12396 system=True peak=0,0079 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015046 audio-endpoint dev=4 peak=0,0065
+015046 audio-session dev=4 pid=12396 system=True peak=0,0065 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015061 pix roi=78 outside=0 box=(562,669)-(575,682)
+015087 audio-endpoint dev=4 peak=0,0051
+015087 audio-session dev=4 pid=12396 system=True peak=0,0051 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015128 audio-endpoint dev=4 peak=0,0038
+015128 audio-session dev=4 pid=12396 system=True peak=0,0038 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015169 audio-endpoint dev=4 peak=0,0022
+015169 audio-session dev=4 pid=12396 system=True peak=0,0022 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015209 audio-endpoint dev=4 peak=0,0008
+015210 audio-session dev=4 pid=12396 system=True peak=0,0008 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+015229 pix roi=35 outside=0 box=(875,664)-(880,671)
+015551 pix roi=78 outside=0 box=(562,669)-(575,682)
+015830 S UPDATE k=2 result=Succeeded
+015970 pix roi=223 outside=0 box=(615,556)-(816,565)
+016054 pix roi=78 outside=0 box=(562,669)-(575,682)
+016222 pix roi=36 outside=0 box=(875,664)-(880,671)
+016550 pix roi=78 outside=0 box=(562,669)-(575,682)
+016555 shot S-toast1
+016590 uia S-toast1: point=(3640,2060) window: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112) | root: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112) | rootOwner: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1796)-(3840,2112)
+017042 pix roi=78 outside=0 box=(562,669)-(575,682)
+017242 pix roi=23 outside=0 box=(875,666)-(880,671)
+017330 S history before replace1=1 [tag=update group=browserai-step0 title='BrowserAI 1.2.0 is ready to install']
+017333 S SHOW toast3 (replace, same tag and group)
+017337 S history after replace1=1 [tag=update group=browserai-step0 title='BrowserAI 1.2.0 is installed']
+017374 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+017410 pix roi=11500 outside=0 box=(520,366)-(883,642)
+017459 at (3640,2060) root hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+017471 audio-endpoint dev=4 peak=0,3239
+017472 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017487 pix roi=3709 outside=0 box=(709,519)-(895,642)
+017511 audio-endpoint dev=4 peak=0,3239
+017512 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017531 pix roi=3888 outside=0 box=(620,508)-(899,631)
+017553 audio-endpoint dev=4 peak=0,2523
+017553 audio-session dev=4 pid=12396 system=True peak=0,2523 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017571 pix roi=3573 outside=0 box=(562,519)-(899,682)
+017593 audio-endpoint dev=4 peak=0,3175
+017594 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017613 pix roi=3114 outside=0 box=(561,519)-(899,622)
+017638 audio-endpoint dev=4 peak=0,3175
+017638 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017654 pix roi=2949 outside=0 box=(521,505)-(898,632)
+017677 audio-endpoint dev=4 peak=0,2617
+017678 audio-session dev=4 pid=12396 system=True peak=0,2617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017698 pix roi=2671 outside=0 box=(514,519)-(870,631)
+017717 audio-endpoint dev=4 peak=0,2248
+017718 audio-session dev=4 pid=12396 system=True peak=0,2248 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017738 pix roi=2007 outside=0 box=(514,519)-(883,639)
+017761 audio-endpoint dev=4 peak=0,1932
+017761 audio-session dev=4 pid=12396 system=True peak=0,1811 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017801 audio-endpoint dev=4 peak=0,1617
+017801 audio-session dev=4 pid=12396 system=True peak=0,1610 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017842 audio-endpoint dev=4 peak=0,1505
+017843 audio-session dev=4 pid=12396 system=True peak=0,1505 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017887 audio-endpoint dev=4 peak=0,1396
+017888 audio-session dev=4 pid=12396 system=True peak=0,1396 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017927 audio-endpoint dev=4 peak=0,1212
+017928 audio-session dev=4 pid=12396 system=True peak=0,1212 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+017968 audio-endpoint dev=4 peak=0,0992
+017969 audio-session dev=4 pid=12396 system=True peak=0,0992 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018008 audio-endpoint dev=4 peak=0,0852
+018008 audio-session dev=4 pid=12396 system=True peak=0,0852 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018049 audio-endpoint dev=4 peak=0,0731
+018049 audio-session dev=4 pid=12396 system=True peak=0,0731 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018059 pix roi=78 outside=0 box=(562,669)-(575,682)
+018090 audio-endpoint dev=4 peak=0,0627
+018090 audio-session dev=4 pid=12396 system=True peak=0,0627 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018132 audio-endpoint dev=4 peak=0,0504
+018133 audio-session dev=4 pid=12396 system=True peak=0,0504 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018173 audio-endpoint dev=4 peak=0,0430
+018173 audio-session dev=4 pid=12396 system=True peak=0,0430 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018213 audio-endpoint dev=4 peak=0,0380
+018214 audio-session dev=4 pid=12396 system=True peak=0,0380 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018227 pix roi=40 outside=0 box=(868,665)-(880,671)
+018253 audio-endpoint dev=4 peak=0,0333
+018254 audio-session dev=4 pid=12396 system=True peak=0,0333 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018294 audio-endpoint dev=4 peak=0,0287
+018294 audio-session dev=4 pid=12396 system=True peak=0,0287 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018333 audio-endpoint dev=4 peak=0,0240
+018334 audio-session dev=4 pid=12396 system=True peak=0,0240 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018379 audio-endpoint dev=4 peak=0,0185
+018380 audio-session dev=4 pid=12396 system=True peak=0,0185 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018420 audio-endpoint dev=4 peak=0,0145
+018421 audio-session dev=4 pid=12396 system=True peak=0,0145 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018460 audio-endpoint dev=4 peak=0,0128
+018461 audio-session dev=4 pid=12396 system=True peak=0,0128 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018507 audio-endpoint dev=4 peak=0,0098
+018508 audio-session dev=4 pid=12396 system=True peak=0,0098 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018548 audio-endpoint dev=4 peak=0,0079
+018548 audio-session dev=4 pid=12396 system=True peak=0,0079 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018560 pix roi=78 outside=0 box=(562,669)-(575,682)
+018587 audio-endpoint dev=4 peak=0,0065
+018588 audio-session dev=4 pid=12396 system=True peak=0,0065 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018629 audio-endpoint dev=4 peak=0,0051
+018629 audio-session dev=4 pid=12396 system=True peak=0,0051 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018670 audio-endpoint dev=4 peak=0,0038
+018670 audio-session dev=4 pid=12396 system=True peak=0,0038 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+018711 audio-endpoint dev=4 peak=0,0022
+018711 audio-session dev=4 pid=12396 system=True peak=0,0022 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+019053 pix roi=78 outside=0 box=(562,669)-(575,682)
+019222 pix roi=39 outside=0 box=(875,664)-(880,671)
+019551 pix roi=78 outside=0 box=(562,669)-(575,682)
+019859 shot S-toast3
+019911 uia S-toast3: point=(3640,2060) window: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | root: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | rootOwner: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+020046 pix roi=78 outside=0 box=(562,669)-(575,682)
+020251 pix roi=27 outside=0 box=(875,664)-(880,671)
+020332 S history before replace2=1 [tag=update group=browserai-step0 title='BrowserAI 1.2.0 is installed']
+020337 S SHOW toast2 (replace, same tag and group)
+020342 S history after replace2=1 [tag=update group=browserai-step0 title='Installing BrowserAI 1.2.0 now']
+020378 pix roi=5110 outside=0 box=(520,501)-(883,642)
+020389 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+020438 at (3640,2060) root hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+020446 audio-endpoint dev=4 peak=0,3239
+020447 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020463 pix roi=3480 outside=0 box=(709,519)-(899,642)
+020489 audio-endpoint dev=4 peak=0,3239
+020490 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020507 pix roi=3624 outside=0 box=(620,508)-(899,631)
+020530 audio-endpoint dev=4 peak=0,3239
+020531 audio-session dev=4 pid=12396 system=True peak=0,3239 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020547 pix roi=3351 outside=0 box=(562,519)-(878,682)
+020571 audio-endpoint dev=4 peak=0,3175
+020571 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020588 pix roi=2789 outside=0 box=(561,519)-(899,622)
+020617 audio-endpoint dev=4 peak=0,3175
+020617 audio-session dev=4 pid=12396 system=True peak=0,3175 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020637 pix roi=2748 outside=0 box=(519,508)-(886,632)
+020657 audio-endpoint dev=4 peak=0,2617
+020657 audio-session dev=4 pid=12396 system=True peak=0,2617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020671 pix roi=2596 outside=0 box=(514,507)-(896,632)
+020699 audio-endpoint dev=4 peak=0,2248
+020700 audio-session dev=4 pid=12396 system=True peak=0,2248 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020712 pix roi=1918 outside=0 box=(514,519)-(883,639)
+020740 audio-endpoint dev=4 peak=0,1932
+020740 audio-session dev=4 pid=12396 system=True peak=0,1932 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020780 audio-endpoint dev=4 peak=0,1617
+020780 audio-session dev=4 pid=12396 system=True peak=0,1617 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020820 audio-endpoint dev=4 peak=0,1526
+020821 audio-session dev=4 pid=12396 system=True peak=0,1526 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020861 audio-endpoint dev=4 peak=0,1442
+020861 audio-session dev=4 pid=12396 system=True peak=0,1442 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020901 audio-endpoint dev=4 peak=0,1266
+020901 audio-session dev=4 pid=12396 system=True peak=0,1266 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020941 audio-endpoint dev=4 peak=0,1050
+020941 audio-session dev=4 pid=12396 system=True peak=0,1050 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+020984 audio-endpoint dev=4 peak=0,0852
+020985 audio-session dev=4 pid=12396 system=True peak=0,0852 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021025 audio-endpoint dev=4 peak=0,0731
+021025 audio-session dev=4 pid=12396 system=True peak=0,0731 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021044 pix roi=78 outside=0 box=(562,669)-(575,682)
+021067 audio-endpoint dev=4 peak=0,0627
+021067 audio-session dev=4 pid=12396 system=True peak=0,0627 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021114 audio-endpoint dev=4 peak=0,0504
+021114 audio-session dev=4 pid=12396 system=True peak=0,0504 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021155 audio-endpoint dev=4 peak=0,0430
+021156 audio-session dev=4 pid=12396 system=True peak=0,0430 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021196 audio-endpoint dev=4 peak=0,0380
+021196 audio-session dev=4 pid=12396 system=True peak=0,0380 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021241 audio-endpoint dev=4 peak=0,0333
+021242 audio-session dev=4 pid=12396 system=True peak=0,0333 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021262 pix roi=24 outside=0 box=(875,665)-(880,671)
+021281 audio-endpoint dev=4 peak=0,0287
+021282 audio-session dev=4 pid=12396 system=True peak=0,0287 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021323 audio-endpoint dev=4 peak=0,0226
+021323 audio-session dev=4 pid=12396 system=True peak=0,0226 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021364 audio-endpoint dev=4 peak=0,0174
+021364 audio-session dev=4 pid=12396 system=True peak=0,0174 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021403 audio-endpoint dev=4 peak=0,0140
+021404 audio-session dev=4 pid=12396 system=True peak=0,0140 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021444 audio-endpoint dev=4 peak=0,0123
+021444 audio-session dev=4 pid=12396 system=True peak=0,0123 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021486 audio-endpoint dev=4 peak=0,0098
+021487 audio-session dev=4 pid=12396 system=True peak=0,0098 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021528 audio-endpoint dev=4 peak=0,0079
+021529 audio-session dev=4 pid=12396 system=True peak=0,0079 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021549 pix roi=78 outside=0 box=(562,669)-(575,682)
+021570 audio-endpoint dev=4 peak=0,0065
+021570 audio-session dev=4 pid=12396 system=True peak=0,0065 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021611 audio-endpoint dev=4 peak=0,0051
+021611 audio-session dev=4 pid=12396 system=True peak=0,0051 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021650 audio-endpoint dev=4 peak=0,0038
+021650 audio-session dev=4 pid=12396 system=True peak=0,0038 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+021694 audio-endpoint dev=4 peak=0,0019
+021695 audio-session dev=4 pid=12396 system=True peak=0,0019 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}|#%b{A9EF3FD9-4240-455E-A4D5-F2B3301887B2}
+022042 pix roi=78 outside=0 box=(562,669)-(575,682)
+022247 pix roi=31 outside=0 box=(875,664)-(880,671)
+022589 pix roi=78 outside=0 box=(562,669)-(575,682)
+022861 shot S-toast2
+022924 uia S-toast2: point=(3640,2060) window: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | root: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112) | rootOwner: hwnd=0x10EEC pid=52060 class='Windows.UI.Core.CoreWindow' title='New notification' visible=True rect=(3444,1931)-(3840,2112)
+023040 pix roi=78 outside=0 box=(562,669)-(575,682)
+023248 pix roi=32 outside=0 box=(875,664)-(880,671)
+023346 S CLEAR history for the app id, as show.ps1 does
+023377 at (3640,2060) root hwnd=0x111EC pid=54008 class='Chrome_WidgetWin_1' title='(a window of the person at the machine, its title cut)' visible=True rect=(2553,0)-(3847,2119)
+023403 pix roi=5296 outside=0 box=(520,501)-(883,642)
+023567 pix roi=78 outside=0 box=(562,669)-(575,682)
+024060 pix roi=78 outside=0 box=(562,669)-(575,682)
+024236 pix roi=19 outside=0 box=(875,664)-(880,671)
+024552 S history after clear=0 
+024559 pix roi=78 outside=0 box=(562,669)-(575,682)
+025061 pix roi=78 outside=0 box=(562,669)-(575,682)
+025231 pix roi=35 outside=0 box=(875,664)-(880,671)
+025551 pix roi=78 outside=0 box=(562,669)-(575,682)
+025580 monitor-stopped polls=614

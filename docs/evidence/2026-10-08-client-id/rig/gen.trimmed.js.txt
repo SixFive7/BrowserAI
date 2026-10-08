@@ -1,0 +1,185 @@
+// Client identification batches for the IdRig harness.
+// usage: node gen.js <group> <arm[,arm...]> <reps>
+//   group cc: Claude Code arms (tui, print, vscode, printpty, printinh, tuiinh); stub ccmodel.js
+//   group cx: Codex arms (cxexec, cxapp, cxappdesk, cxtui); stub cxmodel.js
+// Every client gets an allowlisted environment (the harness's EnvAllow) plus what is listed here,
+// with CLAUDE_CONFIG_DIR and CODEX_HOME always in scratch. Nothing here names a real config.
+'use strict';
+const fs = require('fs');
+
+const [group, armArg, repsArg, batchName] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-id';
+const RIG = `${S}\\rig\\bin\\IdRig.exe`;
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const PROJ = `${S}\\proj`;
+const PROJ_FWD = PROJ.replace(/\\/g, '/');
+const BIN = {
+  cli: `${S}\\bin\\cc-cli\\claude.exe`,
+  vsc: `${S}\\bin\\cc-vsc\\claude.exe`,
+  cx161: `${S}\\bin\\codex-npm\\package\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe`,
+  cxdesk: `${S}\\bin\\codex-app\\codex.exe`,
+};
+const VER = { cli: '2.1.294', vsc: '2.1.292' };
+const PORT = { cc: '8971', cx: '8972' };
+const BATCHDIR = `${S}\\runs\\${batchName || group}`;
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+fs.mkdirSync(`${S}\\cfg-unused\\claude`, { recursive: true });
+fs.mkdirSync(`${S}\\cfg-unused\\codex`, { recursive: true });
+
+const common = (arm) => ({
+  DISABLE_AUTOUPDATER: '1', TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`,
+  APPDATA: `${S}\\appdata\\roaming`, LOCALAPPDATA: `${S}\\appdata\\local`,
+  GIT_CEILING_DIRECTORIES: S, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+  IDRIG_MARKER: arm,
+});
+const ccEnv = (run, arm) => Object.assign(common(arm), {
+  CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${S}\\cfg-unused\\codex`,
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${PORT.cc}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+});
+const cxEnv = (run, arm, home) => Object.assign(common(arm), {
+  CODEX_HOME: home || `${run}\\home`, CLAUDE_CONFIG_DIR: `${S}\\cfg-unused\\claude`, STUB_KEY: 'not-a-real-key',
+});
+
+// What the VS Code extension 2.1.292 puts in its claude process's environment (extension.js,
+// N$(): MCP_CONNECTION_NONBLOCKING, CLAUDE_CODE_ENABLE_TASKS, CLAUDE_CODE_EMIT_STARTUP_TIMING,
+// CLAUDE_CODE_ENTRYPOINT=claude-vscode, deletes CLAUDECODE and CLAUDE_CODE_CHILD_SESSION) and
+// what its bundled agent SDK adds (CLAUDE_AGENT_SDK_VERSION, CLAUDE_CODE_SDK_READS_SESSION_STATE,
+// CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING), plus the extension host's own variables, copied
+// from a live extension session on this machine. VSCODE_PID and VSCODE_IPC_HOOK are left out on
+// purpose: they name the user's running VS Code, and nothing here may reach it.
+const vscodeHostEnv = {
+  ELECTRON_RUN_AS_NODE: '1',
+  VSCODE_CODE_CACHE_PATH: '%USERPROFILE%\\AppData\\Roaming\\Code\\CachedData\\07f806f999227108933c2e30515b26eecc1fda74',
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: 'extensionHost',
+  VSCODE_CWD: 'C:\\Program Files\\Microsoft VS Code',
+  VSCODE_ESM_ENTRYPOINT: 'vs/workbench/api/node/extensionHostProcess',
+  VSCODE_HANDLES_UNCAUGHT_ERRORS: 'true',
+  VSCODE_L10N_BUNDLE_LOCATION: '',
+  VSCODE_NLS_CONFIG: '{"userLocale":"en-us","osLocale":"en-nl","resolvedLanguage":"en","defaultMessagesFile":"C:\\\\Program Files\\\\Microsoft VS Code\\\\07f806f999\\\\resources\\\\app\\\\out\\\\nls.messages.json","locale":"en-us","availableLanguages":{}}',
+  VSCODE_NODE_COMPILE_CACHE_KIND: 'extension-host',
+  VSCODE_NODE_COMPILE_CACHE_ROOT: 'C:\\Program Files\\Microsoft VS Code\\07f806f999\\resources\\app\\node-compile-cache',
+};
+const vscodeExtEnv = {
+  MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1',
+  CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.292',
+  CLAUDE_CODE_SDK_READS_SESSION_STATE: '1', CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: 'true',
+};
+// What a Bash tool inside a VS Code extension session hands a `claude -p` it starts (read from
+// this session's own environment), minus the messaging socket, its token, the session id and the
+// pid, which name the live root session and must not reach it.
+const bashToolEnv = {
+  CLAUDECODE: '1', CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_CODE_CHILD_SESSION: '1',
+  CLAUDE_CODE_SESSION_ATTENDED: '1', CLAUDE_AGENT_SDK_VERSION: '0.3.288', MCP_CONNECTION_NONBLOCKING: 'true',
+  CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1',
+};
+
+const stubArgs = (run, arm) => ['stub', '--logdir', run, '--tag', arm];
+const ccSeed = (run, arm, ver) => JSON.stringify({
+  hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: true,
+  customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] },
+  lastReleaseNotesSeen: ver,
+  projects: { [PROJ_FWD]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [], enabledMcpjsonServers: [], disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'] } },
+  mcpServers: { idstub: { type: 'stdio', command: RIG, args: stubArgs(run, arm), env: {} } },
+}, null, 1);
+const tq = (s) => `'${s}'`;
+const cxToml = (run, arm) => `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${PORT.cx}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.idstub]
+command = ${tq(RIG)}
+args = [${stubArgs(run, arm).map(tq).join(', ')}]
+
+[projects.${tq(PROJ)}]
+trust_level = "trusted"
+
+[projects.${tq(PROJ.toLowerCase())}]
+trust_level = "trusted"
+`;
+
+const listed = (run, ms) => ({ do: 'waitGlob', dir: run, pattern: 'idstub-*.listed', timeoutMs: ms || 90000 });
+const tuiExit = [{ do: 'type', text: '/exit' }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 5000 }];
+// The real arguments of the extension's claude process, read off a live extension session.
+const VSC_ARGS = ['--output-format', 'stream-json', '--verbose', '--input-format', 'stream-json', '--max-thinking-tokens', '31999', '--thinking-display', 'summarized', '--permission-prompt-tool', 'stdio', '--setting-sources=user,project,local', '--permission-mode', 'bypassPermissions', '--allow-dangerously-skip-permissions', '--include-partial-messages', '--debug', '--debug-to-stderr', '--enable-auth-status', '--no-chrome', '--replay-user-messages'];
+let reqNo = 1;
+const ctl = (request) => JSON.stringify({ type: 'control_request', request_id: `req_${reqNo++}`, request });
+const rpc = (id, method, params) => JSON.stringify(id === null ? { jsonrpc: '2.0', method, params } : { jsonrpc: '2.0', id, method, params });
+
+const ARMS = {
+  // (1) the terminal UI, plain `claude`, in a pseudoconsole with no window
+  tui: (run, arm) => ({ exe: BIN.cli, args: [], console: 'pty', env: ccEnv(run, arm), seed: 'cli',
+    steps: [listed(run), { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'listed' }, ...tuiExit] }),
+  // (1') the same with an entrypoint inherited from the environment that started it
+  tuiinh: (run, arm) => ({ exe: BIN.cli, args: [], console: 'pty', env: Object.assign(ccEnv(run, arm), { CLAUDE_CODE_ENTRYPOINT: 'claude-vscode' }), seed: 'cli',
+    steps: [listed(run), { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'listed' }, ...tuiExit] }),
+  // (3) claude -p, from a process with pipes and no console window
+  print: (run, arm) => ({ exe: BIN.cli, args: ['-p', 'Say hi.'], console: 'pipes', stdin: 'closed', env: ccEnv(run, arm), seed: 'cli', steps: [] }),
+  // (3') claude -p typed in a terminal (a pseudoconsole)
+  printpty: (run, arm) => ({ exe: BIN.cli, args: ['-p', 'Say hi.'], console: 'pty', env: ccEnv(run, arm), seed: 'cli', steps: [listed(run)] }),
+  // (3'') claude -p started by a Bash tool inside a VS Code extension session
+  printinh: (run, arm) => ({ exe: BIN.cli, args: ['-p', 'Say hi.'], console: 'pipes', stdin: 'closed', env: Object.assign(ccEnv(run, arm), bashToolEnv), seed: 'cli', steps: [] }),
+  // (2) the VS Code extension's transport: its own binary, its arguments and its environment
+  vscode: (run, arm) => ({ exe: BIN.vsc, args: VSC_ARGS, console: 'pipes', stdin: 'pipe', env: Object.assign(ccEnv(run, arm), vscodeHostEnv, vscodeExtEnv), seed: 'vsc',
+    steps: [{ do: 'send', line: ctl({ subtype: 'initialize' }) }, { do: 'waitFor', pattern: '"type":"control_response"', timeoutMs: 60000 },
+      listed(run), { do: 'sleep', ms: 2500 }, { do: 'closeStdin' }] }),
+  // (4) codex exec, the npm CLI
+  cxexec: (run, arm) => ({ exe: BIN.cx161, args: ['exec', '--skip-git-repo-check', 'Say hi.'], console: 'pipes', stdin: 'closed', env: cxEnv(run, arm), steps: [] }),
+  // (5) codex app-server, the npm CLI, driven the way a host drives it
+  cxapp: (run, arm) => appServer(run, arm, BIN.cx161),
+  // (5') the Codex desktop app's own codex.exe as an app-server
+  cxappdesk: (run, arm) => appServer(run, arm, BIN.cxdesk),
+  // (6) the Codex terminal UI, in a pseudoconsole, as it starts by default: through the shared
+  // app-server daemon it installs under CODEX_HOME (a short home: the daemon's unix socket path
+  // must fit in SUN_LEN). After /quit the run waits 30 s, then stops the daemon the documented way.
+  cxtui: (run, arm, r) => { const home = `${S}\\h\\${(batchName || group).replace(/[^a-z0-9]/gi, "").slice(0, 4)}${r}`; return { exe: BIN.cx161, args: [], console: 'pty', env: cxEnv(run, arm, home), home,
+    steps: [listed(run), { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'listed' }, { do: 'type', text: '/quit' }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 30000 },
+      { do: 'mark', text: 'TUI quit 30 s ago; stopping the daemon' }, { do: 'exec', exe: BIN.cx161, args: ['app-server', 'daemon', 'stop'], timeoutMs: 60000 }, { do: 'sleep', ms: 3000 }] }; },
+  // (6') the Codex terminal UI with --no-daemon
+  cxtuind: (run, arm) => ({ exe: BIN.cx161, args: ['--no-daemon'], console: 'pty', env: cxEnv(run, arm),
+    steps: [listed(run), { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'listed' }, { do: 'type', text: '/quit' }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 5000 }] }),
+};
+function appServer(run, arm, exe) {
+  return { exe, args: ['app-server'], console: 'pipes', stdin: 'pipe', autoReply: true, env: cxEnv(run, arm),
+    steps: [
+      { do: 'send', line: rpc(1, 'initialize', { clientInfo: { name: 'idrig_host', title: 'IdRig Host', version: '1.0.0' }, capabilities: { experimentalApi: true } }) },
+      { do: 'waitFor', pattern: '"id":1[,}]', timeoutMs: 60000 },
+      { do: 'send', line: rpc(null, 'initialized', undefined) },
+      { do: 'send', line: rpc(2, 'thread/start', { cwd: PROJ }) },
+      { do: 'waitFor', pattern: '"id":2[,}]', timeoutMs: 60000 },
+      listed(run), { do: 'sleep', ms: 2500 }, { do: 'closeStdin' },
+    ] };
+}
+
+const reps = Number(repsArg || 3);
+const runs = [];
+for (const arm of armArg.split(',')) for (let r = 1; r <= reps; r++) {
+  const name = `${arm}-r${r}`;
+  const run = `${BATCHDIR}\\${name}`;
+  const d = ARMS[arm](run, arm, r);
+  const writeFiles = [];
+  if (d.seed) writeFiles.push({ path: `${run}\\cfg\\.claude.json`, content: ccSeed(run, arm, VER[d.seed]) });
+  else writeFiles.push({ path: `${d.home || `${run}\\home`}\\config.toml`, content: cxToml(run, arm) });
+  runs.push({
+    name, dir: run, exe: d.exe, args: d.args, cwd: PROJ, env: d.env, stdin: d.stdin || 'closed', console: d.console,
+    ptyNullStdHandles: d.console === 'pty', autoReplyJsonRpc: !!d.autoReply, maxMs: 120000, settleMs: 15000,
+    writeFiles, steps: d.steps,
+  });
+}
+fs.writeFileSync(POLICY, JSON.stringify({ logDir: BATCHDIR, tag: 'model' }));
+const stub = group === 'cc'
+  ? { name: 'anthropic', exe: NODE, args: [`${S}\\rig\\ccmodel.js`], env: { STUB_PORT: PORT.cc, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'model' } }
+  : { name: 'openai', exe: NODE, args: [`${S}\\rig\\cxmodel.js`], env: { STUB_PORT: PORT.cx, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'model' } };
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify({ progress: `${BATCHDIR}\\progress.log`, gapMs: 1500, stubs: [stub], runs }, null, 1));
+console.log(`${BATCHDIR}\\batch.json: ${runs.length} runs`);

@@ -1,0 +1,74 @@
+# Step 0 scratch analysis, 2026-10-08: reads the run directory and prints the aggregates FINDINGS.md quotes.
+import csv, glob, os, re, statistics, sys
+
+root = sys.argv[1]
+
+
+def rows(path):
+    with open(path, encoding='utf-8') as f:
+        return list(csv.DictReader(f, delimiter='\t'))
+
+
+def pct(values, p):
+    s = sorted(values)
+    import math
+    k = max(1, math.ceil(p * len(s)))
+    return s[k - 1]
+
+
+def describe(values):
+    if not values:
+        return 'n=0'
+    return 'n=%d min=%.1f median=%.1f p90=%.1f max=%.1f mean=%.1f' % (
+        len(values), min(values), statistics.median(values), pct(values, 0.9), max(values), statistics.mean(values))
+
+
+print('== m4 ==')
+for via in ('com', 'schtasks'):
+    p = os.path.join(root, 'm4-' + via, 'results.tsv')
+    if not os.path.exists(p):
+        continue
+    r = [x for x in rows(p) if x.get('firstLineMs') not in (None, '', 'NO START')]
+    for key in ('requestReturnMs', 'creationMs', 'mainMs', 'firstLineMs', 'creationToMainMs', 'mainToLineMs'):
+        print(via, key, describe([float(x[key]) for x in r]))
+
+print('== m1 ==')
+for d in sorted(glob.glob(os.path.join(root, 'm1-*'))):
+    s = rows(os.path.join(d, 'summary.tsv'))
+    started = [int(x['started']) for x in s]
+    print(os.path.basename(d), 'rounds=%d' % len(s), 'started per round:', started)
+    print('  results:', sorted(set(x['results'] for x in s)))
+    print('  firstStartMsAfterGo:', describe([float(x['firstStartMsAfterGo']) for x in s if x['firstStartMsAfterGo'] not in ('-', '')]))
+    print('  requestSpreadMs:', [x['requestSpreadMs'] for x in s])
+    print('  callMsMinMedMax:', [x['callMsMinMedMax'] for x in s])
+    print('  instancesAt8s:', [x['instancesAt8s'] for x in s], 'instancesAfterQuit:', [x['instancesAfterQuit'] for x in s])
+    print('  winners:', [x['startedTags'] for x in s])
+    print('  quit:', sorted(set(x['quit'] for x in s)))
+
+print('== m5 ==')
+for p in sorted(glob.glob(os.path.join(root, 'm5', 'bench-*.txt')) + glob.glob(os.path.join(root, 'm5-task', 'bench-task-*.txt'))):
+    if p.endswith('.raw-ns.txt'):
+        continue
+    text = open(p, encoding='utf-8').read()
+    tick = re.search(r'^tickTsc (.*)$', text, re.M)
+    base = re.search(r'^clockPairBaseline (.*)$', text, re.M)
+    print(os.path.relpath(p, root), '| tick:', tick.group(1) if tick else '-', '| clock pair:', base.group(1) if base else '-')
+for p in sorted(glob.glob(os.path.join(root, 'm5', 'ticker-*.txt')) + glob.glob(os.path.join(root, 'm5', 'noop-*.txt'))):
+    if p.endswith('.raw-ns.txt'):
+        continue
+    print(os.path.relpath(p, root))
+    print('  ' + open(p, encoding='utf-8').read().replace('\n', '\n  '))
+
+print('== m6 ==')
+for d in sorted(glob.glob(os.path.join(root, 'm6-*'))):
+    for x in rows(os.path.join(d, 'results.tsv')):
+        print(os.path.basename(d), x.get('rep'), '| child alive at end:', x.get('childAliveAtEndOfWatch'), '| child exit after standin exit ms:', x.get('childExitMsAfterStandinExit'),
+              '| states while alive:', x.get('statesWhileChildAlive'), '| instances:', x.get('instancesWhileChildAlive'), '| last:', x.get('lastResultsWhileChildAlive'),
+              '| after child quit: state', x.get('stateAfterChildQuit'), 'instances', x.get('instancesAfterChildQuit'), 'last', x.get('lastResultAfterChildQuit'))
+        print('    child line:', x.get('childLine'))
+        print('    child job:', (x.get('childJob') or '')[:200])
+
+print('== m2 / m3 / m3pair ==')
+for p in sorted(glob.glob(os.path.join(root, 'm2', 'results.tsv')) + glob.glob(os.path.join(root, 'm3*', 'results.tsv'))):
+    print('--', os.path.relpath(p, root))
+    print(open(p, encoding='utf-8').read())

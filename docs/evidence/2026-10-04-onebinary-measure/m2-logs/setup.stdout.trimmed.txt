@@ -1,0 +1,65 @@
+[03:58:51] [INFO] Starting Velopack Setup (1.2.161)
+[03:58:51] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\onebinary\\Releases\\test-pack\\BrowserAI.test-installer.exe"
+[03:58:52] [INFO]     Silent: true
+[03:58:52] [INFO]     Verbose: false
+[03:58:52] [INFO]     Log: "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\m2-logs\\setup.log"
+[03:58:52] [INFO]     Install To: Some("%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9")
+[03:58:52] [INFO] OS: Windows 10.0.26300 (Windows 11 Professional) [64-bit], Arch=Some(
+    X64,
+)
+[03:58:52] [INFO] Reading bundle header...
+[03:58:52] [INFO] Bundle offset = 7561216, length = 58751459
+[03:58:52] [INFO] Loading bundle from embedded zip...
+[03:58:52] [INFO] No channel override tag found in installer signature.
+[03:58:52] [INFO] Loading bundle from embedded zip...
+[03:58:52] [INFO] Reading package manifest...
+[03:58:52] [INFO] Package manifest loaded successfully.
+[03:58:52] [INFO]     Package ID: BrowserAI.app.test
+[03:58:52] [INFO]     Package Version: 1.1.1-alpha.0.197
+[03:58:52] [INFO]     Package Title: BrowserAI (suite)
+[03:58:52] [INFO]     Package Authors: Jori Huisman
+[03:58:52] [INFO]     Package Description: BrowserAI (suite)
+[03:58:52] [INFO]     Package Machine Architecture: x64
+[03:58:52] [INFO]     Package Runtime Dependencies: 
+[03:58:52] [INFO] Checking application pre-requisites...
+[03:58:52] [INFO] Determining install directory...
+[03:58:52] [INFO] Installation Directory: "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"
+[03:58:52] [INFO] There is 86.65 GB free space available at destination, this package requires 265.74 MB.
+[03:58:52] [INFO] Preparing and cleaning installation directory...
+[03:58:52] [INFO] Acquiring lock...
+[03:58:52] [INFO] Root directory '%USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9' writable: true
+[03:58:52] [INFO] Using root packages directory: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\packages
+[03:58:52] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...
+[03:58:52] [INFO] Will not show splash because silent mode is on.
+[03:58:52] [INFO] Starting installation!
+[03:58:52] [INFO] Extracting Update.exe...
+[03:58:52] [INFO] Extracting stub 'BrowserAI (suite)_ExecutionStub.exe' to '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\BrowserAI (suite).exe"'
+[03:58:52] [INFO] Successfully extracted stub executable: "%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\BrowserAI (suite).exe"
+[03:58:52] [INFO] Copying nupkg to packages directory...
+[03:58:52] [INFO] Extracting 213 app files to '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current"'...
+[03:58:52] [INFO] Creating shortcuts...
+[03:58:52] [INFO] COM context initialized in 14ms
+[03:58:52] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(0x0) (None)
+[03:58:52] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.1.1-alpha.0.197")
+[03:58:52] [INFO] App Model ID: Some("velopack.BrowserAI.app.test")
+[03:58:52] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9"'
+[03:58:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+[03:58:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[03:58:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[03:58:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[03:58:52] [INFO] Will update all current shortcuts: []
+[03:58:52] [INFO] Creating new shortcut for flag '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU_ROOT)).
+[03:58:52] [INFO] Starting process install hook
+[03:58:52] [INFO] Running --veloapp-install hook...
+[03:58:52] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current\\BrowserAI.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI-test-scratch\\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9\\current\\BrowserAI.exe\" --veloapp-install 1.1.1-alpha.0.197\0")
+[03:58:52] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[03:58:52] [INFO] Waiting 30000ms for process handle to exit.
+[03:58:54] [INFO] Hook executed successfully (took 1164.9392ms)
+[03:58:54] [INFO] Checking for running processes in: %USERPROFILE%\AppData\Local\BrowserAI-test-scratch\onebinary-install-9b8a2464f50441b4a73585be4fc3c4c9
+[03:58:54] [INFO] Inspected 691 running processes in 59ms, 0 matched directory
+[03:58:54] [INFO] Force-stop check complete.
+[03:58:54] [INFO] Writing uninstall registry key...
+[03:58:54] [INFO] Installation completed successfully!
+
+--- stderr ---
+

@@ -1,0 +1,36 @@
+# Field data: how long installed BrowserAI servers took from their 'started' record to 'serving
+# stdio' (the moment the client's initialize is first read), from BrowserAI's own process log.
+# Predicate: the start record's image is under %LOCALAPPDATA%\BrowserAI.app\current\ (any file name,
+# so 1.0.0's BrowserAI.exe server and 1.1.0's BrowserAI.Server.exe both count).
+import re, glob, os
+from collections import Counter
+from datetime import datetime
+
+def t(s):
+    return datetime.fromisoformat(s.replace('Z', '+00:00')).timestamp()
+
+local = os.environ['LOCALAPPDATA']
+inst = os.path.join(local, 'BrowserAI.app', 'current') + os.sep
+starts, serving, versions = {}, {}, {}
+files = sorted(glob.glob(os.path.join(local, 'BrowserAI', 'logs', 'browserai-*.log')))
+for f in files:
+    for l in open(f, encoding='utf-8', errors='replace'):
+        m = re.match(r'(\S+)\s+made=\S+\s+\w+\s+pid=(\d+@\d+)\s+(\S+)\s+(.*)', l)
+        if not m:
+            continue
+        ts, key, cat, msg = m.groups()
+        if cat.startswith('BrowserAI.Startup[1]') and 'started. pid=' in msg:
+            im = re.search(r'image=(\S+)', msg)
+            if im and im.group(1).lower().startswith(inst.lower()):
+                starts[key] = t(ts)
+                versions[key] = msg.split()[1]
+        elif cat.startswith('BrowserAI.Startup[2]') and 'serving stdio' in msg:
+            serving[key] = t(ts)
+d = sorted(serving[k] - starts[k] for k in starts if k in serving and serving[k] >= starts[k])
+n = len(d)
+print('log files', len(files), os.path.basename(files[0]), 'to', os.path.basename(files[-1]))
+print('installed starts:', len(starts), 'with a serving record:', n, 'versions:', dict(Counter(versions.values())))
+for th in (1.0, 1.3, 2.0, 5.0):
+    c = sum(1 for x in d if x > th)
+    print(f'  over {th:.1f} s: {c} of {n} ({100 * c / n:.1f}%)')
+print('  median %.3f s, p90 %.3f s, p99 %.3f s, max %.3f s' % (d[n // 2], d[int(.9 * n)], d[int(.99 * n)], d[-1]))

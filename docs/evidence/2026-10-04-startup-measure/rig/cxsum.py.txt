@@ -1,0 +1,119 @@
+# startup-measure: one row per Codex run (exec or app-server), read from the stand-in's wire log, the
+# scripted model's capture and the client's own event stream. Usage: python cxsum.py <batchdir>...
+import json, os, re, sys, glob
+
+def jl(path):
+    out = []
+    if not os.path.exists(path):
+        return out
+    for line in open(path, encoding='utf-8', errors='replace'):
+        line = line.strip()
+        if line:
+            try:
+                out.append(json.loads(line))
+            except Exception:
+                pass
+    return out
+
+def ms(ts):
+    # ISO -> epoch ms
+    from datetime import datetime, timezone
+    ts = ts.replace('Z', '+00:00')
+    return datetime.fromisoformat(ts).timestamp() * 1000
+
+def run_row(run):
+    name = os.path.basename(run)
+    row = {'run': name}
+    seen = jl(os.path.join(run, 'model.seen.jsonl'))
+    row['model_requests'] = len(seen)
+    if seen:
+        first = seen[0]
+        row['turn1_has_browserai'] = bool(first.get('browseraiTools'))
+        row['turn1_browserai_tools'] = ','.join(t['tool'] for t in first.get('browseraiTools', []))
+        res = [r for s in seen for r in s.get('browseraiResults', [])]
+        row['model_saw_result'] = (res[-1]['text'][:260].replace('\n', ' | ') if res else '')
+    else:
+        row['turn1_has_browserai'] = None
+    wire = jl(os.path.join(run, 'lz.wire.jsonl'))
+    launches = sorted(set(w['launch'] for w in wire))
+    row['server_launches'] = len(launches)
+    call = next((w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'tools/call'), None)
+    if call:
+        cid = call['frame'].get('id')
+        ans = next((w for w in wire if w['direction'] == 'server->client' and w['frame'].get('id') == cid and w['launch'] == call['launch']), None)
+        row['call_answered_after_ms'] = (round(ms(ans['at']) - ms(call['at'])) if ans else None)
+        cancels = [w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'notifications/cancelled']
+        row['client_cancelled'] = len(cancels)
+        row['progress_token'] = json.dumps(((call['frame'].get('params') or {}).get('_meta') or {}).get('progressToken'))
+    else:
+        row['call_answered_after_ms'] = None
+    init = next((w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'initialize'), None)
+    tl = next((w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'tools/list'), None)
+    row['client_listed'] = bool(tl)
+    # exec
+    ex = jl(os.path.join(run, 'exec1.jsonl'))
+    if ex:
+        row['kind'] = 'exec'
+        evs = []
+        for e in ex:
+            try:
+                evs.append((e['ms'], json.loads(e['line'])))
+            except Exception:
+                evs.append((e['ms'], {'type': 'nonjson', 'line': e['line'][:200]}))
+        st = next(((t, x) for t, x in evs if x.get('type') == 'item.started' and (x.get('item') or {}).get('type') == 'mcp_tool_call'), None)
+        co = next(((t, x) for t, x in evs if x.get('type') == 'item.completed' and (x.get('item') or {}).get('type') == 'mcp_tool_call'), None)
+        ts = next((t for t, x in evs if x.get('type') == 'turn.started'), None)
+        row['turn_started_ms'] = ts
+        row['tool_call_ms'] = (co[0] - st[0]) if (st and co) else None
+        if co:
+            it = co[1]['item']
+            row['client_status'] = it.get('status')
+            row['client_error'] = json.dumps(it.get('error'))[:200]
+        errs = [x.get('message') or (x.get('item') or {}).get('message') for t, x in evs if x.get('type') in ('error', 'turn.failed') or ((x.get('item') or {}).get('type') == 'error')]
+        row['exec_errors'] = ' || '.join(str(e)[:200] for e in errs if e and 'Model metadata' not in str(e))
+        try:
+            row['exit'] = open(os.path.join(run, 'exit.txt')).read().strip()
+        except Exception:
+            row['exit'] = ''
+    # app-server
+    drv = os.path.join(run, 'driver.log')
+    if os.path.exists(drv):
+        row['kind'] = 'app'
+        lines = open(drv, encoding='utf-8', errors='replace').read().splitlines()
+        def t_of(l):
+            return ms(l.split(' ', 1)[0])
+        stl = [l for l in lines if 'item/started' in l and 'mcpToolCall' in l]
+        col = [l for l in lines if 'item/completed' in l and 'mcpToolCall' in l]
+        row['tool_call_ms'] = round(t_of(col[0]) - t_of(stl[0])) if (stl and col) else None
+        if col:
+            m = re.search(r'"status":"(\w+)"', col[0])
+            row['client_status'] = m.group(1) if m else ''
+            m = re.search(r'"error":(\{.*?\}|null)', col[0])
+            row['client_error'] = (m.group(1)[:200] if m else '')
+        statuses = re.findall(r'startupStatus/updated .*?"status":"(\w+)"(?:,"error":("[^"]*"|null))?', '\n'.join(lines))
+        row['startup_statuses'] = ' > '.join(s[0] + ('' if s[1] in ('', 'null') else ':' + s[1][:120]) for s in statuses)
+        resp2 = next((l for l in lines if l.split(' ', 2)[1:2] == ['RESP'] and ' id=2 ' in l), '')
+        row['thread_start'] = resp2.split(' id=2 ', 1)[1][:240] if resp2 else ''
+        row['turn_completed'] = any('turn/completed' in l for l in lines)
+        tcl = next((l for l in lines if 'turn/completed' in l), '')
+        m = re.search(r'"status":"(\w+)"', tcl.split('"turn":', 1)[1]) if '"turn":' in tcl else None
+        row['turn_status'] = m.group(1) if m else ''
+    return row
+
+def main():
+    rows = []
+    for b in sys.argv[1:]:
+        for run in sorted(glob.glob(os.path.join(b, '*-*-r*'))):
+            if os.path.isdir(run):
+                rows.append(run_row(run))
+    keys = []
+    for r in rows:
+        for k in r:
+            if k not in keys:
+                keys.append(k)
+    print('\t'.join(keys))
+    for r in rows:
+        print('\t'.join(str(r.get(k, '')) for k in keys))
+
+if __name__ == '__main__':
+    main()

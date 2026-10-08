@@ -356,3 +356,104 @@ process had exited, `OpenExisting` on the name failed, because the object dies
 with its last handle, so a late signal reaches nothing. `[MACHINE]`
 
 **Re-establish it** with `stopevent/`, published NativeAOT; it opens no window.
+
+## A toast that counts down in place, stays until acted on, and is replaced -- read and measured 2026-10-08
+
+`[STABLE]` for what Microsoft documents; `[MACHINE]` for every pixel, time and count.
+Windows 11 Pro **10.0.26300.9550** (26H2) at 3840x2160, dark theme, transparency on;
+raised from Windows PowerShell 5.1 (`powershell.exe` 10.0.26100.8972) under that
+shell's own application id, as the 2026-09-24 rig raised its toasts. Taken 2026-10-08
+between 13:58Z and 14:06Z, on the maintainer's own screen with his leave, while he
+used the machine. The documentation was read the same day by the step-0 research,
+which also read the Windows SDK 10.0.26100.0 headers. Everything it was read from:
+[`docs/evidence/2026-10-08-step0`](../../docs/evidence/2026-10-08-step0/README.md),
+`screen/`. It is what the four toasts of
+[the one-binary design](../../docs/design/one-binary/README.md) rest on.
+
+### What the documentation says, read 2026-10-08
+
+- **A top-level text line can be updated in place, and so can every field of a
+  progress bar.** "The following elements in app notifications support data binding:
+  All properties on AppNotificationProgressBar; The Text property on the top-level
+  text elements"
+  ([progress bar and data binding](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/app-notifications-progress-bar));
+  "Data binding only works for top-level text elements"
+  ([the schema](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/app-notifications-schema)).
+  The update is `ToastNotifier.Update`, which answers `Succeeded`, `Failed` or
+  `NotificationNotFound`, the last "the user may have dismissed it"; a sequence
+  number orders updates, and "If the user dismissed the notification, the update will
+  fail." No rate limit on updates is documented. For a hand-written NativeAOT caller
+  the SDK 10.0.26100.0 IDL gives `IToastNotifier2` as
+  `354389C6-7C01-4BD5-9C20-604340CD2B74` (`UpdateWithTagAndGroup` at slot 6,
+  `UpdateWithTag` at 7), `INotificationData` as
+  `9FFD2312-9D6A-4AAF-B6AC-FF17F0C1F280` and `IToastNotification4` as
+  `15154935-28EA-4727-88E9-C58680E2D118` (`put_Data` at slot 7), counting
+  `IInspectable`'s six slots first.
+- **A reminder stays on screen until it is acted on, and needs a button, and the two
+  pages disagree on which.** The content page: "You must provide at least one button
+  on your app notification. Otherwise, the notification will be treated as a normal
+  notification"
+  ([content, scenarios](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/app-notifications-content#scenarios));
+  the schema: "this will be silently ignored unless there's a toast button action
+  that activates in background"
+  ([toast element](https://learn.microsoft.com/uwp/schemas/tiles/toastschema/element-toast)).
+  Every reminder measured here carried a background-activated button, so a reminder
+  with only foreground, protocol or system buttons is not observed. Under Do Not
+  Disturb a reminder gets a banner only if the person's priority settings allow
+  reminders, and a toast lives in the Notification Centre for three days at most
+  ([expiration](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/manage-app-notifications#set-an-expiration-time)).
+- **A replacement with the same tag and group** "Moves the notification to the top
+  of Notification Center", "Can reappear as a popup if SuppressPopup is false", and is
+  "always sent regardless of whether the user dismissed the previous notification";
+  an update "Won't reappear as a popup" (the progress bar page, "Update or replace a
+  notification").
+- **A click with no process of BrowserAI's running** reaches it only through a COM
+  activator, foreground and background buttons alike for a desktop app; a protocol
+  button starts the scheme's handler and loses the input values
+  ([quickstart, activation](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/app-notifications-quickstart#handle-activation-from-an-app-notification)),
+  which matches what was measured on 2026-09-24 above.
+
+### What a reminder with a live countdown did on screen
+
+A reminder with the tag `update` was raised with a progress bar whose status read
+"Installs in 10:00", then updated once a second for 60 s down to "Installs in 9:00",
+sequence numbers 2 to 61, each button's `Dismiss` activating in the background; then
+it was replaced twice with the same tag and group. A monitor sampled about every
+40 ms the pixels of the screen's bottom-right corner, the peak meter of every audio
+session, the window in front and the history count.
+
+- **It stayed on screen** from 0.2 s after `Show` for the 62 s until it was
+  replaced, in the captures at 2.5, 30.5 and 60.5 s.
+- ⭐ **The countdown moved in place, 60 of 60, with no new popup and no sound.**
+  Every `Update` answered `Succeeded`, in 1 to 5 ms; each changed only the progress
+  line, 64 to 275 pixels a frame and 798 on the first; and the meter, which heard the
+  first `Show` (the system sounds' session at peak 0.32 from 1.76 to 3.04 s), heard
+  nothing after it.
+- **Both pairs of labels showed whole**: *Install now* and *Wait for inactivity*,
+  about 162 px each in a 362 px toast, and *Changelog* and *Dismiss*.
+- **A replacement is in place in the Notification Centre and never on screen**, and
+  whether it sounds again is not predictable. The history held exactly one toast
+  before and after all six replacements, and read back the new title each time; the
+  old popup was gone within one frame; and **4 of 6 replacements slid a new popup in,
+  with the same sound as the first toast, while 2 of 6 went to the Notification
+  Centre only**, with neither the order nor the content explaining the split.
+
+| Run | Replacement | Old popup gone | New popup | Sound |
+|---|---|---|---|---|
+| 1 | ready to Installing, 63.58 s | 63.63 s | none | none |
+| 1 | Installing to installed, 68.59 s | none was on screen | 68.72 to 68.98 s | 68.66 to 69.94 s |
+| R | ready to Installing, 5.12 s | 5.18 s | 5.27 to 5.54 s | from 5.24 s |
+| R | Installing to installed, 8.11 s | 8.16 s | none | none |
+| S | ready to installed, 17.33 s | 17.41 s | 17.49 to 17.74 s | from 17.47 s |
+| S | installed to Installing, 20.34 s | 20.38 s | 20.46 to 20.71 s | from 20.45 s |
+
+The popup is a `Windows.UI.Core.CoreWindow` titled "New notification", owned by
+`ShellExperienceHost.exe`; `EnumWindows` does not list it and UI Automation found
+nothing on this build, so the crops were placed from pixel edges. The countdown was
+a progress bar's status, and a bound top-level text line, which the documentation
+also allows, was not measured.
+
+**Re-establish it** with the batch's `screen/part1/part1.ps1.txt` and
+`part1b.ps1.txt`, run with `powershell` under its own app id, and
+`Monitor.cs.txt` beside them; the crops are in the batch as PNG. It clears the
+calling shell's own toast history at the end and nothing else.

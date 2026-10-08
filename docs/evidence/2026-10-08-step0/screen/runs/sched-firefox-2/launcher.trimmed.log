@@ -1,0 +1,76 @@
+pre+3 run sched-firefox-2 utc=2026-10-08T14:17:54.9702012Z
+pre+8 self pid=24044 session=1 user=%USERNAME% parent pid=2984 parent image=(unreadable, error 5)
+pre+9 self startupinfo flags=0x80 showWindow=0 winsta=WinSta0 desktop=Default
+pre+9 SPI foregroundLockTimeout=2147483647 ms foregroundFlashCount=7
+pre+20 hidden window 0x2DF0CC4 visible=False shell hook registered=True message=0xC029
+pre+25 win event hooks: True,True,True
+pre+27 FOREGROUND BEFORE: [hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe]
+pre+28 FOCUS BEFORE active=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focus=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focusIsBrowser=False
+t=1 LAUNCHED pid=20044 exe=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe args=-profile "C:\Source\SixFive7\BrowserAI\.work\step0-screen\runs\sched-firefox-2\profile" -no-remote about:blank startupinfo=STARTF_USESHOWWINDOW+SW_SHOWDEFAULT
+t=62 job gained pid 48900 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=307 shell hook code 0x10 -> [hwnd=0x1D40D08 pid=48900 tid=35772 class='MozillaHiddenWindowClass' title='WinEventWindow' visible=False minimized=False image=firefox.exe] browser=True
+t=311 shell hook code 0x10 -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=313 shell hook REDRAW -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=313 shell hook REDRAW -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=372 job gained pid 61876 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=373 job gained pid 51708 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=457 shell hook code 0x10 -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=458 shell hook REDRAW -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=458 shell hook REDRAW -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=467 shell hook code 0x10 -> [hwnd=0xA21792 pid=48900 tid=35772 class='Mozilla_firefox-default_C:\Source\SixFive7\BrowserAI\.work\step0-screen\runs\sched-firefox-2\profile_RemoteWindow' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=571 shell hook REDRAW -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=574 shell hook REDRAW -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=621 job gained pid 107908 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=718 shell hook code 0x10 -> [hwnd=0x61260A pid=48900 tid=35772 class='MozillaBatteryClass' title='Battery Watcher' visible=False minimized=False image=firefox.exe] browser=True
+t=748 job gained pid 67104 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=757 shell hook WINDOWCREATED -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=True minimized=False image=firefox.exe] browser=True
+t=758 event SHOW top-level -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=True minimized=False image=firefox.exe]
+t=759 event FOREGROUND -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=True minimized=False image=firefox.exe] browser=True
+t=765 shell hook REDRAW -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=True minimized=False image=firefox.exe] browser=True
+t=1058 job gained pid 29676 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=1060 SAMPLE 1s FOREGROUND [hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] browser=False sameAsBefore=True
+t=1061 SAMPLE 1s FOCUS active=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focus=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focusIsBrowser=False
+t=1068 SAMPLE 1s browser top-level windows=9 visible=1
+t=1069 SAMPLE 1s   visible [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=True minimized=False image=firefox.exe] rect=(32767,32767)-(32927,33001) style=0x16880080 exstyle=0x0
+t=1073 SAMPLE 1s MAIN [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='' visible=False minimized=False image=firefox.exe] zIndex=354 beforeForegroundZIndex=54 RELATION=BELOW visibleWindowsBetween=77
+t=1372 job gained pid 98736 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=1380 shell hook REDRAW -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=False minimized=False image=firefox.exe] browser=True
+t=1401 shell hook WINDOWDESTROYED -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=1401 event HIDE top-level -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe]
+t=1406 shell hook WINDOWDESTROYED -> [hwnd=0x1650D62 pid=48900 tid=35772 class='MozillaDialogClass' title='' visible=False minimized=False image=firefox.exe] browser=True
+t=1467 shell hook WINDOWCREATED -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] browser=True
+t=1468 event SHOW top-level -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe]
+t=1468 event FOREGROUND -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] browser=True
+t=1471 shell hook REDRAW -> [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] browser=True
+t=2060 job gained pid 83820 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=2371 job gained pid 108880 image=C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\firefox-1553\firefox\firefox.exe
+t=3059 SAMPLE 3s FOREGROUND [hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] browser=False sameAsBefore=True
+t=3059 SAMPLE 3s FOCUS active=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focus=[hwnd=0xF322FA pid=105536 tid=81016 class='MozillaWindowClass' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=firefox.exe] focusIsBrowser=False
+t=3060 SAMPLE 3s browser top-level windows=8 visible=1
+t=3060 SAMPLE 3s   visible [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] rect=(4,4)-(1300,1052) style=0x16CF0000 exstyle=0x100
+t=3060 SAMPLE 3s MAIN [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] zIndex=356 beforeForegroundZIndex=54 RELATION=BELOW visibleWindowsBetween=77
+t=3281 event FOREGROUND -> [hwnd=0xA0210 pid=15908 tid=16120 class='Windows.UI.Core.CoreWindow' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=SearchHost.exe] browser=False
+t=3299 shell hook WINDOWACTIVATED -> [hwnd=0xA0210 pid=15908 tid=16120 class='Windows.UI.Core.CoreWindow' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=SearchHost.exe] browser=False
+t=5430 event FOREGROUND -> [hwnd=0x10162 pid=12396 tid=14840 class='ApplicationManager_DesktopShellWindow' title='' visible=False minimized=False image=explorer.exe] browser=False
+t=5539 event FOREGROUND -> [hwnd=0x6012CA pid=78660 tid=98196 class='PX_WINDOW_CLASS' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=sublime_text.exe] browser=False
+t=5585 shell hook WINDOWACTIVATED -> [hwnd=0x6012CA pid=78660 tid=98196 class='PX_WINDOW_CLASS' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=sublime_text.exe] browser=False
+t=6060 SAMPLE 6s FOREGROUND [hwnd=0x6012CA pid=78660 tid=98196 class='PX_WINDOW_CLASS' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=sublime_text.exe] browser=False sameAsBefore=False
+t=6061 SAMPLE 6s FOCUS active=[hwnd=0x6012CA pid=78660 tid=98196 class='PX_WINDOW_CLASS' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=sublime_text.exe] focus=[hwnd=0x6012CA pid=78660 tid=98196 class='PX_WINDOW_CLASS' title='(a window of the person at the machine, its title cut)' visible=True minimized=False image=sublime_text.exe] focusIsBrowser=False
+t=6061 SAMPLE 6s browser top-level windows=8 visible=1
+t=6061 SAMPLE 6s   visible [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] rect=(4,4)-(1300,1052) style=0x16CF0000 exstyle=0x100
+t=6062 SAMPLE 6s MAIN [hwnd=0x194178A pid=48900 tid=35772 class='MozillaWindowClass' title='Nightly' visible=True minimized=False image=firefox.exe] zIndex=357 beforeForegroundZIndex=58 RELATION=BELOW visibleWindowsBetween=77
+t=8060 END job holds 7 process(es): 48900,61876,51708,67104,29676,98736,108880; terminating the job it created
+t=8062 END TerminateJobObject=True active processes=0 after 0 ms
+t=8063 END pid 20044 exited=True (wait result 0x0) exitCode=0x0 after 1 ms
+t=8137 END pid 48900 exited=True (wait result 0x0) exitCode=0xE0D after 74 ms
+t=8153 END pid 61876 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8153 END pid 51708 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8153 END pid 107908 exited=True (wait result 0x0) exitCode=0x0 after 90 ms
+t=8153 END pid 67104 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8153 END pid 29676 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8153 END pid 98736 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8153 END pid 83820 exited=True (wait result 0x0) exitCode=0x0 after 90 ms
+t=8153 END pid 108880 exited=True (wait result 0x0) exitCode=0xE0D after 90 ms
+t=8154 END browser top-level windows left=0
+t=8159 cleanup done; owned pids=20044,48900,61876,51708,107908,67104,29676,98736,83820,108880
+t=8159 DONE exit=0

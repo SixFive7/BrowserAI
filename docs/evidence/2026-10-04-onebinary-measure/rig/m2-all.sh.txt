@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# The scheduler half of the one-binary measurement, start to finish, under the suite lock the
+# caller already holds. Detached; everything goes to logs/m2-all.log.
+# usage: bash m2-all.sh <reps> <exits>
+set -u
+M=/c/Source/SixFive7/BrowserAI/.work/onebinary-measure
+WT=/c/Source/SixFive7/BrowserAI/.work/wt/onebinary
+REPS=${1:-3}
+EXITS=${2:-ccExit,ccKill,cxExec,cxApp}
+LOG=$M/logs/m2-all.log
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never DOTNET_CLI_TELEMETRY_OPTOUT=1
+say() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >> "$LOG"; }
+WINPID=$(cat /proc/$$/winpid)
+say "BEGIN reps=$REPS exits=$EXITS bash winpid=$WINPID"
+
+TOKEN=$(pwsh -NoProfile -File "$WT/build/InstallerLock.ps1" -Take -HolderPid "$WINPID" 2>>"$LOG")
+say "installer lock: token=$TOKEN rc=$?"
+
+pwsh -NoProfile -File "$M/rig/m2-snap.ps1" -Tag before >> "$LOG" 2>&1
+pwsh -NoProfile -File "$M/rig/m2-install.ps1" -Prepare >> "$LOG" 2>&1
+ROOT=$(python -c "import json;print(json.load(open(r'$(cygpath -w $M/m2-state.json)'))['installRoot'])")
+say "install root: $ROOT"
+WATCH=$M/runs/m2-watch
+mkdir -p "$WATCH"
+rm -f "$WATCH/STOP"
+nohup "$M/rig/bin/ExitRig.exe" rootwatch --root "$ROOT" --dir "$(cygpath -w $WATCH)" --stop "$(cygpath -w $WATCH/STOP)" > "$M/logs/rootwatch.out" 2>&1 < /dev/null &
+say "rootwatch started"
+sleep 3
+
+pwsh -NoProfile -File "$M/rig/m2-install.ps1" >> "$LOG" 2>&1
+SETUP_EXIT=$(python -c "import json;print(json.load(open(r'$(cygpath -w $M/m2-state.json)')).get('setupExit'))")
+say "setup exit: $SETUP_EXIT"
+pwsh -NoProfile -File "$M/rig/m2-snap.ps1" -Tag installed -InstallRoot "$ROOT" >> "$LOG" 2>&1
+
+if [ "$SETUP_EXIT" = "0" ]; then
+  node "$M/rig/m2.js" m2 "$ROOT" "$EXITS" "$REPS" >> "$LOG" 2>&1
+  say "m2.js finished rc=$?"
+else
+  say "setup failed; no runs"
+fi
+
+pwsh -NoProfile -File "$M/rig/m2-snap.ps1" -Tag before-uninstall -InstallRoot "$ROOT" >> "$LOG" 2>&1
+pwsh -NoProfile -File "$M/rig/m2-uninstall.ps1" >> "$LOG" 2>&1
+say "uninstall script finished"
+sleep 5
+touch "$WATCH/STOP"
+sleep 3
+pwsh -NoProfile -File "$M/rig/m2-snap.ps1" -Tag after -InstallRoot "$ROOT" >> "$LOG" 2>&1
+pwsh -NoProfile -File "$WT/build/InstallerLock.ps1" -Release -HolderPid "$WINPID" >> "$LOG" 2>&1
+say "installer lock released rc=$?"
+say "END"

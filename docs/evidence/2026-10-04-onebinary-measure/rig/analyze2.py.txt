@@ -1,0 +1,174 @@
+# Measurement 2 analysis: one row per run from runs\<batch>\<run>\summary.json, the client
+# harness results, and the root watch's event log.
+# usage: python analyze2.py <batchdir> <watchdir>
+import json, sys, os, re, glob
+from datetime import datetime
+
+batch, watch = sys.argv[1], sys.argv[2]
+
+def ts(s):
+    if not s: return None
+    s = s.replace('Z', '')
+    if '.' in s:
+        a, b = s.split('.'); s = a + '.' + (b + '000000')[:6]
+    return datetime.fromisoformat(s)
+
+def ms(a, b):
+    return None if a is None or b is None else round((b - a).total_seconds() * 1000)
+
+# root watch events
+procs = {}
+for line in open(os.path.join(watch, 'rootwatch.log'), encoding='utf-8', errors='replace'):
+    p = line.rstrip('\n').split('\t')
+    if len(p) < 6: continue
+    kind, d = p[4], p[5]
+    if kind == 'FOUND':
+        m = re.match(r'pid=(\d+) ppid=(\d+) role=(\S+) via=(.+?) created=(\S+) inJob=(\S+) parentImage=(.*?) image=(.*?) cmd=(.*)$', d)
+        if not m: continue
+        pid = int(m.group(1))
+        procs[pid] = {'pid': pid, 'ppid': int(m.group(2)), 'role': m.group(3), 'created': ts(m.group(5)), 'inJob': m.group(6), 'parentImage': m.group(7), 'image': m.group(8), 'cmd': m.group(9), 'exit': None, 'code': None}
+    elif kind == 'EXIT':
+        m = re.match(r'pid=(\d+) role=(\S+) code=(\d+) .*exitUtc=(\S+)', d)
+        if m and int(m.group(1)) in procs:
+            procs[int(m.group(1))]['exit'] = ts(m.group(4)); procs[int(m.group(1))]['code'] = int(m.group(3))
+
+# the machine-wide log: every line names pid@creation, so a front's own lines are found by pid
+loglines = {}
+logdir = os.path.join(os.environ['LOCALAPPDATA'], 'BrowserAI', 'logs')
+for lf in sorted(glob.glob(os.path.join(logdir, 'browserai-20261004-*.log'))):
+    for line in open(lf, encoding='utf-8', errors='replace'):
+        m = re.search(r'\spid=(\d+)@\d+\s+(\S+)\s+(.*)$', line.rstrip('\n'))
+        if m:
+            loglines.setdefault(int(m.group(1)), []).append((line[:28], m.group(2), m.group(3)))
+
+def front_log(pid):
+    out = {'reach': '', 'cameUpMs': None, 'relays': False, 'relayEnded': '', 'feed': ''}
+    for (t, src, text) in loglines.get(pid, []):
+        m = re.search(r'came up (\d+) ms after this server asked \((\w+)\)', text)
+        if m: out['cameUpMs'] = int(m.group(1)); out['reach'] = m.group(2)
+        if 'relays its client to the session host' in text: out['relays'] = True
+        m = re.search(r'The relay to the session host ended: (.*)\.$', text)
+        if m: out['relayEnded'] = m.group(1)
+        if 'No session host on' in text: out['reach'] = 'NONE: ' + text[:120]
+        if 'BROWSERAI_UPDATE_FEED is set' in text: out['feed'] = 'override'
+    if out['relays'] and not out['reach']: out['reach'] = 'Connected'
+    return out
+
+def during(role_pred, t0, t1):
+    return [p for p in procs.values() if role_pred(p['role']) and p['created'] and t0 <= p['created'] <= t1]
+
+def alive_at(p, t):
+    return p['created'] <= t and (p['exit'] is None or p['exit'] > t)
+
+def harness(run):
+    try: return json.load(open(os.path.join(run, 'result.json')))
+    except Exception: return None
+
+def front_of(res):
+    if not res: return None
+    f = [p for p in res['procs'] if p['role'].startswith('browserai:browserai.server')]
+    return f[0] if f else None
+
+def chrome_main(cands):
+    mains = [p for p in cands if p['role'] == 'chrome' and '--type=' not in p['cmd']]
+    return mains
+
+rows = []
+for d in sorted(glob.glob(os.path.join(batch, '*-r*'))):
+    sp = os.path.join(d, 'summary.json')
+    if not os.path.exists(sp): continue
+    s = json.load(open(sp))
+    r = {'run': s['run'], 'exit': s['exit']}
+    a_dir = os.path.join(d, 'A2') if 'A2' in s else os.path.join(d, 'A')
+    resA = harness(os.path.join(d, 'A')); resA2 = harness(os.path.join(d, 'A2')) if 'A2' in s else None
+    resB = harness(os.path.join(d, 'B'))
+    r['coldMissThenWarm'] = 'A2' in s
+    r['A1toolsOffered'] = s['A']['offeredBrowserAI']; r['A1calls'] = len(s['A']['toolCalls'])
+    use = resA2 or resA
+    cA = [p for p in use['procs'] if p['role'] == 'client'][0]
+    a0, a1 = ts(cA['createdUtc']), ts(cA['exitUtc'])
+    # the first A's window, for the start path
+    cA1 = [p for p in resA['procs'] if p['role'] == 'client'][0]
+    a10, a11 = ts(cA1['createdUtc']), ts(cA1['exitUtc'])
+    fA1 = front_of(resA)
+    coord = during(lambda x: x.startswith('coordinator'), a10, a11)
+    host = during(lambda x: x == 'host', a10, a11)
+    r['bgBeforeA'] = ' '.join(s.get('backgroundBeforeA', [])) or 'none'
+    r['waitedForNoBackgroundS'] = round(s['waitForNoBackground']['waitedMs'] / 1000)
+    r['frontStartToCoordinatorMs'] = ms(ts(fA1['createdUtc']), coord[0]['created']) if (fA1 and coord) else None
+    r['coordinatorParent'] = (coord[0]['parentImage'] if coord else '')[:40]
+    r['coordinatorCmdHasStartHost'] = bool(coord and '--start-host' in coord[0]['cmd'])
+    r['coordinatorInJob'] = coord[0]['inJob'] if coord else ''
+    r['frontStartToHostMs'] = ms(ts(fA1['createdUtc']), host[0]['created']) if (fA1 and host) else None
+    r['hostParentIsCoordinator'] = bool(coord and host and host[0]['ppid'] == coord[0]['pid'])
+    r['coordinatorPid'] = coord[0]['pid'] if coord else ''
+    r['hostPid'] = host[0]['pid'] if host else ''
+    # A's results
+    res_list = (s.get('A2') or s['A'])['results']
+    r['initOk'] = any('Session ready' in (x.get('head') or '') for x in res_list)
+    r['navigateOk'] = any(('Page URL' in (x.get('head') or '') or 'ONEBINARY-PAGE' in (x.get('head') or '')) and not x.get('is_error') for x in res_list)
+    r['navigateHead'] = ''
+    for x in res_list:
+        h = x.get('head') or ''
+        if 'navigat' in h.lower() or 'Page URL' in h or 'Error' in h:
+            r['navigateHead'] = h[:90].replace('\n', ' ')
+    fA = front_of(use)
+    lA1 = front_log(fA1['pid']) if fA1 else {}
+    r['A1front_reach'] = lA1.get('reach'); r['A1front_cameUpMs'] = lA1.get('cameUpMs')
+    lA = front_log(fA['pid']) if fA else {}
+    r['frontA_reach'] = lA.get('reach'); r['frontA_relayEnded'] = lA.get('relayEnded') or '(no line: ended from outside)'
+    r['frontA_feedOverride'] = lA.get('feed')
+    r['frontAExitCode'] = fA['exitCode'] if fA else ''
+    killers = [p for p in use['procs'] if p['role'].startswith('KILLER')]
+    r['clientAStartedTaskkill'] = bool(killers)
+    r['clientAExitCode'] = cA['exitCode']
+    r['frontAExitToClientAExitMs'] = ms(ts(fA['exitUtc']), a1) if fA else None
+    # the browser, the host and the coordinator across A's end
+    browsers = chrome_main(during(lambda x: x == 'chrome', a0, a1 + (ts(s['B']['startUtc']) - a1) if False else a1))
+    if not browsers:
+        browsers = chrome_main([p for p in procs.values() if p['role'] == 'chrome' and p['created'] and a10 <= p['created'] <= a1])
+    br = browsers[0] if browsers else None
+    r['browserPid'] = br['pid'] if br else ''
+    after = s['aliveAfterA']['alive']
+    roles_after = {}
+    for p in after: roles_after.setdefault(p['role'], []).append(p['pid'])
+    r['aliveAfterA_coordinator'] = bool(coord and coord[0]['pid'] in [p['pid'] for p in after])
+    r['aliveAfterA_host'] = bool(host and host[0]['pid'] in [p['pid'] for p in after])
+    r['aliveAfterA_browser'] = bool(br and br['pid'] in [p['pid'] for p in after])
+    r['aliveAfterA_chromeCount'] = len(roles_after.get('chrome', []))
+    r['frontAAliveAfterA'] = bool(fA and fA['pid'] in [p['pid'] for p in after])
+    # B
+    cB = [p for p in resB['procs'] if p['role'] == 'client'][0] if resB else None
+    b0, b1 = (ts(cB['createdUtc']), ts(cB['exitUtc'])) if cB else (None, None)
+    r['B_snapshotHasMarker'] = s['B'].get('snapshotHasMarker')
+    r['B_destroyOk'] = any('Destroyed the session' in (x.get('head') or '') for x in s['B']['results'])
+    r['B_calls'] = len(s['B']['toolCalls'])
+    fB = front_of(resB)
+    lB = front_log(fB['pid']) if fB else {}
+    r['frontB_reach'] = lB.get('reach'); r['frontB_relayEnded'] = lB.get('relayEnded') or '(no line: ended from outside)'
+    hostB = [p for p in procs.values() if p['role'] == 'host' and b0 and alive_at(p, b0)]
+    r['sameHostForB'] = bool(host and hostB and hostB[0]['pid'] == host[0]['pid'])
+    r['coordinatorStartedDuringB'] = len(during(lambda x: x.startswith('coordinator'), b0, b1)) if b0 else ''
+    r['browserAliveUntilB'] = bool(br and b0 and alive_at(br, b0))
+    r['browserExitAfterBStartMs'] = ms(b0, br['exit']) if (br and b0 and br['exit']) else None
+    r['browserExitCode'] = br['code'] if br else ''
+    # what was left, and when it went
+    if host:
+        r['hostExitAfterBEndS'] = round(ms(b1, host[0]['exit']) / 1000, 1) if (b1 and host[0]['exit']) else None
+        r['hostExitCode'] = host[0]['code']
+    if coord:
+        r['coordinatorExitAfterHostMs'] = ms(host[0]['exit'], coord[0]['exit']) if (host and host[0]['exit'] and coord[0]['exit']) else None
+        r['coordinatorExitCode'] = coord[0]['code']
+    rows.append(r)
+
+cols = []
+for r in rows:
+    for k in r:
+        if k not in cols: cols.append(k)
+out = os.path.join(batch, 'm2-runs.tsv')
+with open(out, 'w', encoding='utf-8') as f:
+    f.write('\t'.join(cols) + '\n')
+    for r in rows: f.write('\t'.join(str(r.get(c, '')) for c in cols) + '\n')
+for r in rows:
+    print(json.dumps(r))
+print('rows', len(rows), '->', out)

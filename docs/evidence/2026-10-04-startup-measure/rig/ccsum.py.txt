@@ -1,0 +1,123 @@
+# startup-measure: one row per Claude Code run (ExitRig harness), from the stand-in's wire log, the
+# scripted model's capture, the client's stream-json output and its debug log.
+# usage: python ccsum.py <batchdir>
+import json, os, re, sys, glob
+from datetime import datetime
+
+def jl(path):
+    out = []
+    if os.path.exists(path):
+        for line in open(path, encoding='utf-8', errors='replace'):
+            line = line.strip()
+            if line:
+                try:
+                    out.append(json.loads(line))
+                except Exception:
+                    pass
+    return out
+
+def ms(ts):
+    return datetime.fromisoformat(ts.replace('Z', '+00:00')).timestamp() * 1000
+
+def stdout_events(run):
+    # client-stdout.log lines: "<qpc>\t<utc>\t<pid>\tclient\tOUT\t<json>"
+    evs = []
+    p = os.path.join(run, 'client-stdout.log')
+    if not os.path.exists(p):
+        return evs
+    for line in open(p, encoding='utf-8', errors='replace'):
+        parts = line.rstrip('\n').split('\t', 5)
+        if len(parts) < 6 or parts[4] != 'OUT':
+            continue
+        try:
+            evs.append((ms(parts[1][:26] + 'Z' if not parts[1].endswith('Z') else parts[1]), json.loads(parts[5])))
+        except Exception:
+            pass
+    return evs
+
+def run_row(run):
+    name = os.path.basename(run)
+    row = {'run': name}
+    seen = jl(os.path.join(run, 'model.seen.jsonl'))
+    row['model_requests'] = len(seen)
+    if seen:
+        row['turn1_has_browserai'] = bool(seen[0].get('browseraiTools'))
+        res = [r for s in seen for r in s.get('browseraiResults', [])]
+        if res:
+            row['model_saw_is_error'] = res[-1].get('is_error')
+            row['model_saw_result'] = res[-1]['text'][:300].replace('\n', ' | ')
+    wire = jl(os.path.join(run, 'lz.wire.jsonl'))
+    row['server_launches'] = len(set(w['launch'] for w in wire))
+    call = next((w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'tools/call'), None)
+    if call:
+        cid = call['frame'].get('id')
+        ans = next((w for w in wire if w['direction'] == 'server->client' and w['frame'].get('id') == cid and w['launch'] == call['launch']), None)
+        row['call_answered_after_ms'] = round(ms(ans['at']) - ms(call['at'])) if ans else None
+        row['client_cancelled'] = sum(1 for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'notifications/cancelled')
+    init = next((w for w in wire if w['direction'] == 'client->server' and w['frame'].get('method') == 'initialize'), None)
+    initans = next((w for w in wire if w['direction'] == 'server->client' and init and w['frame'].get('id') == init['frame'].get('id')), None)
+    if init and initans:
+        row['init_answered_after_ms'] = round(ms(initans['at']) - ms(init['at']))
+    row['client_listed'] = any(w['direction'] == 'client->server' and w['frame'].get('method') == 'tools/list' for w in wire)
+    # first model request time relative to the server's launch
+    if seen and wire:
+        row['turn1_request_after_server_start_ms'] = round(ms(seen[0]['at']) - ms(wire[0]['at']))
+    evs = stdout_events(run)
+    types = {}
+    tu = None
+    tr = None
+    for t, e in evs:
+        k = e.get('type', '?') + ('/' + e['subtype'] if e.get('subtype') else '')
+        types[k] = types.get(k, 0) + 1
+        if e.get('type') == 'assistant' and tu is None:
+            for b in (e.get('message') or {}).get('content') or []:
+                if b.get('type') == 'tool_use':
+                    tu = t
+        if e.get('type') == 'user' and tr is None:
+            for b in (e.get('message') or {}).get('content') or []:
+                if isinstance(b, dict) and b.get('type') == 'tool_result':
+                    tr = t
+                    row['stream_tool_result'] = json.dumps(b.get('content'))[:240]
+                    row['stream_is_error'] = b.get('is_error')
+    if tu and tr:
+        row['stream_tool_ms'] = round(tr - tu)
+    row['stream_event_types'] = ' '.join(f'{k}x{v}' for k, v in sorted(types.items()))
+    res = next((e for t, e in evs if e.get('type') == 'result'), None)
+    if res:
+        row['result_subtype'] = res.get('subtype')
+        row['result_is_error'] = res.get('is_error')
+    inits = [e for t, e in evs if e.get('type') == 'system' and e.get('subtype') == 'init']
+    if inits:
+        row['init_mcp_servers'] = json.dumps(inits[0].get('mcp_servers'))[:160]
+        row['init_browserai_tools'] = sum(1 for x in inits[0].get('tools', []) if 'browserai' in x)
+    dbg = os.path.join(run, 'claude-debug.log')
+    if os.path.exists(dbg):
+        lines = [l for l in open(dbg, encoding='utf-8', errors='replace') if 'browserai' in l and ('MCP' in l or 'mcp' in l)]
+        row['debug_mcp_lines'] = len(lines)
+        tl = [l for l in lines if re.search(r'timed out|timeout|aborting|Connection established|connection timed|failed', l, re.I)]
+        row['debug_notable'] = ' || '.join(l.strip()[:200] for l in tl[:3])
+    try:
+        r = json.load(open(os.path.join(run, 'result.json'), encoding='utf-8'))
+        row['client_exit'] = r.get('clientExitCode')
+        row['wait_timeout'] = r.get('waitTimeout', '')
+    except Exception:
+        pass
+    return row
+
+def main():
+    rows = []
+    for b in sys.argv[1:]:
+        for run in sorted(glob.glob(os.path.join(b, '*-*-r*'))):
+            if os.path.isdir(run) and os.path.exists(os.path.join(run, 'result.json')):
+                rows.append(run_row(run))
+    keys = []
+    for r in rows:
+        for k in r:
+            if k not in keys:
+                keys.append(k)
+    print('\t'.join(keys))
+    for r in rows:
+        print('\t'.join(str(r.get(k, '')) for k in keys))
+
+if __name__ == '__main__':
+    main()

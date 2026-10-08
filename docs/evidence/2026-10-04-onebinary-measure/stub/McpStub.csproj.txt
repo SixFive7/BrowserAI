@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    A minimal MCP stdio server for the one-binary measurement (2026-10-04).
+    It compiles BrowserAI's own stdio path, copied byte for byte from origin/next
+    e30380ac (Protocol\*.cs), against the package versions BrowserAI's lock file
+    resolves: ModelContextProtocol 2.2.0, Microsoft.Extensions.Logging(.Console)
+    10.0.12, ILCompiler 10.0.12 through the SDK. OutputType is set on the publish
+    command line: WinExe for the windowless form, Exe for the console form.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <LangVersion>latestMajor</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <RootNamespace>McpStub</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591;CA1031;CA2007</NoWarn>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+  </ItemGroup>
+</Project>

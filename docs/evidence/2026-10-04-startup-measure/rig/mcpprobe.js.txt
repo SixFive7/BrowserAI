@@ -1,0 +1,73 @@
+// startup-measure: starts one stdio MCP server the way a client does (pipes, no window), sends
+// initialize the moment it is spawned, then notifications/initialized and tools/list, and records
+// when each answer arrived. Then it closes stdin, as a client does, and waits for the exit.
+// usage: node mcpprobe.js <exe> <out.json> [--env K=V]... [--arg A]... [--hold ms]
+//   --hold ms: keep the conversation open this long after tools/list before closing stdin.
+'use strict';
+const { spawn } = require('child_process');
+const fs = require('fs');
+
+const argv = process.argv.slice(2);
+const exe = argv[0];
+const out = argv[1];
+const env = Object.assign({}, process.env);
+const args = [];
+let holdMs = 0;
+for (let i = 2; i < argv.length; i++) {
+  if (argv[i] === '--env') { const kv = argv[++i]; const eq = kv.indexOf('='); env[kv.slice(0, eq)] = kv.slice(eq + 1); }
+  else if (argv[i] === '--arg') args.push(argv[++i]);
+  else if (argv[i] === '--hold') holdMs = Number(argv[++i]);
+}
+
+const hr = () => Number(process.hrtime.bigint() / 1000n) / 1000; // ms
+const t0 = hr();
+const rec = { exe, args, startUtc: new Date().toISOString(), events: [] };
+const ev = (what, extra) => rec.events.push(Object.assign({ ms: +(hr() - t0).toFixed(3), what }, extra || {}));
+
+const child = spawn(exe, args, { env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+rec.pid = child.pid;
+ev('spawned', { pid: child.pid });
+let stderr = '';
+child.stderr.on('data', (d) => { stderr += d.toString('utf8'); });
+
+const send = (o) => child.stdin.write(JSON.stringify(o) + '\n');
+send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'startup-measure-mcpprobe', version: '1' } } });
+ev('initialize sent');
+
+let buf = '';
+let done = false;
+child.stdout.on('data', (d) => {
+  buf += d.toString('utf8');
+  let nl;
+  while ((nl = buf.indexOf('\n')) >= 0) {
+    const line = buf.slice(0, nl).trim();
+    buf = buf.slice(nl + 1);
+    if (!line) continue;
+    let m;
+    try { m = JSON.parse(line); } catch (e) { ev('unparsed stdout', { line: line.slice(0, 200) }); continue; }
+    if (m.id === 1) {
+      ev('initialize answered', { serverInfo: m.result && m.result.serverInfo, capabilities: m.result && m.result.capabilities, error: m.error });
+      send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+      send({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
+      ev('tools/list sent');
+    } else if (m.id === 2) {
+      const tools = (m.result && m.result.tools) || [];
+      ev('tools/list answered', { count: tools.length, error: m.error, first: tools.slice(0, 3).map((t) => t.name) });
+      fs.writeFileSync(out.replace(/\.json$/, '.tools.json'), JSON.stringify(m.result || m.error));
+      setTimeout(() => { ev('closing stdin'); child.stdin.end(); }, holdMs);
+    } else if (m.method) {
+      ev('notification', { method: m.method });
+    }
+  }
+});
+
+// A hang detector for the conversation, measured past the hold: a --hold run keeps its server for
+// as long as it was asked to, and only a server that has not exited 120 s after that is ended.
+const killer = setTimeout(() => { ev('no exit 120 s after the hold: terminating it by its handle'); child.kill(); }, 120000 + holdMs);
+child.on('exit', (code, signal) => {
+  clearTimeout(killer);
+  ev('exited', { code, signal });
+  rec.stderr = stderr.slice(-4000);
+  fs.writeFileSync(out, JSON.stringify(rec, null, 1));
+  done = true;
+});

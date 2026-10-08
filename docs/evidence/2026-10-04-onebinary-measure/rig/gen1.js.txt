@@ -1,0 +1,152 @@
+// Measurement 1 batch generator for the ExitRig harness (one-binary measurement, 2026-10-04).
+// usage: node gen1.js <batch> <client[,client...]> <form[,form...]> <reps> [eofDelayMs]
+//   clients: ccP (claude -p) | ccS (stream-json with the VS Code extension's env and requests)
+//            cx155e | cx160e (codex exec) | cx155a | cx160a (codex app-server, stdin closed)
+//   forms:   win (McpStubWin.exe, windows subsystem) | con (McpStubCon.exe, console subsystem)
+'use strict';
+const fs = require('fs');
+
+const [batch, clientArg, formArg, repsArg, delayArg] = process.argv.slice(2);
+const M = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure';
+const Q = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const PROJ = `${M}\\proj`;
+const CLAUDE = `${Q}\\bin\\cli\\claude.exe`;
+const CODEX = { 155: `${Q}\\bin\\codex155\\codex.exe`, 160: `${Q}\\bin\\codex160\\x86_64-pc-windows-msvc\\bin\\codex.exe` };
+const STUB = { win: `${M}\\bin\\winexe\\McpStubWin.exe`, con: `${M}\\bin\\console\\McpStubCon.exe` };
+const CCPORT = '8971', CXPORT = '8972';
+const BATCHDIR = `${M}\\runs\\${batch}`;
+const POLICY = `${BATCHDIR}\\policy.json`;
+const EOF_DELAY = delayArg || '3000';
+fs.mkdirSync(BATCHDIR, { recursive: true });
+
+const common = (run) => ({
+  TEMP: `${M}\\tmp`, TMP: `${M}\\tmp`, APPDATA: `${M}\\appdata\\roaming`, LOCALAPPDATA: `${M}\\appdata\\local`,
+  GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1', GIT_CEILING_DIRECTORIES: M,
+  DISABLE_AUTOUPDATER: '1',
+});
+const ccEnv = (run, extra) => Object.assign(common(run), {
+  CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${run}\\codex-unused`,
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${CCPORT}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+}, extra || {});
+const cxEnv = (run) => Object.assign(common(run), {
+  CODEX_HOME: `${run}\\home`, CLAUDE_CONFIG_DIR: `${run}\\claude-unused`, STUB_KEY: 'not-a-real-key', NO_COLOR: '1',
+  RUST_LOG: 'codex_core::mcp=trace,codex_rmcp_client=trace,codex_mcp=trace,info',
+});
+// The VS Code extension's environment for its claude process (extension.js 2.1.288, as the q369 rig drives it).
+const vscEnv = { CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.288', MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1' };
+
+const seed = () => JSON.stringify({
+  hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: false,
+  customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] }, lastReleaseNotesSeen: '2.1.288',
+  projects: { [PROJ.replace(/\\/g, '/')]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [] } },
+});
+const serverEnv = (run) => ({ STUB_LOGDIR: run, STUB_EOF_DELAY_MS: EOF_DELAY, STUB_BIG_BYTES: '70000' });
+const mcpJson = (run, form) => JSON.stringify({ mcpServers: { probe: { type: 'stdio', command: STUB[form], args: [], env: serverEnv(run) } } });
+const tq = (s) => `'${s}'`;
+const codexToml = (run, form) => {
+  const env = Object.entries(serverEnv(run)).map(([k, v]) => `${k} = ${tq(v)}`).join(', ');
+  return `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${CXPORT}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = ${tq(STUB[form])}
+args = []
+env = { ${env} }
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+
+[projects.${tq(PROJ)}]
+trust_level = "trusted"
+
+[projects.${tq(PROJ.toLowerCase())}]
+trust_level = "trusted"
+`;
+};
+
+const PROMPT = 'Call the probe big tool, then say done.';
+const userMsg = (text) => JSON.stringify({ type: 'user', session_id: '', message: { role: 'user', content: [{ type: 'text', text }] }, parent_tool_use_id: null });
+let reqNo = 1;
+const ctl = (request) => JSON.stringify({ type: 'control_request', request_id: `req_${reqNo++}`, request });
+const ccArgs = (run, p) => [...(p ? ['-p'] : []), '--output-format', 'stream-json', '--verbose', ...(p ? [] : ['--input-format', 'stream-json']),
+  '--mcp-config', `${run}\\mcp.json`, '--strict-mcp-config', '--tools', '', '--allowedTools', 'mcp__probe__big,mcp__probe__ping',
+  '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet', ...(p ? [PROMPT] : [])];
+
+function spec(client, form, r) {
+  const name = `${client}-${form}-r${r}`;
+  const run = `${BATCHDIR}\\${name}`;
+  const base = { name, dir: run, cwd: PROJ, maxMs: 180000, settleMs: 20000 };
+  if (client === 'ccP' || client === 'ccS' || client === 'ccK') {
+    const p = client === 'ccP';
+    const kill = client === 'ccK';
+    const steps = p ? [] : (() => {
+      const status = ctl({ subtype: 'mcp_status' });
+      const sid = JSON.parse(status).request_id;
+      return [
+        { do: 'send', line: ctl({ subtype: 'initialize' }) }, { do: 'waitFor', pattern: '"type":"control_response"', timeoutMs: 30000 },
+        { do: 'sleep', ms: 2000 }, { do: 'mark', text: 'mcp_status before the turn' }, { do: 'send', line: status }, { do: 'waitFor', pattern: `"request_id":"${sid}"`, timeoutMs: 30000 },
+        { do: 'send', line: userMsg(PROMPT) }, { do: 'waitFor', pattern: '"type":"result"', timeoutMs: 90000 },
+        { do: 'sleep', ms: 2000 },
+        ...(kill ? [{ do: 'mark', text: 'end: the client is terminated (as VS Code closing takes it)' }, { do: 'terminate' }]
+                 : [{ do: 'mark', text: 'end: closeStdin, then terminate if alive 7 s later (the SDK transport close)' }, { do: 'closeStdin' }, { do: 'terminateIfAliveAfter', ms: 7000 }]),
+      ];
+    })();
+    return Object.assign(base, {
+      exe: CLAUDE, args: ccArgs(run, p), env: ccEnv(run, p ? null : vscEnv), stdin: p ? 'closed' : 'pipe', steps,
+      writeFiles: [
+        { path: `${run}\\cfg\\.claude.json`, content: seed() },
+        { path: `${run}\\mcp.json`, content: mcpJson(run, form) },
+        { path: POLICY, content: JSON.stringify({ logDir: run, tool: 'mcp__probe__big' }) },
+      ],
+    });
+  }
+  const m = /^cx(155|160)(e|a|k)$/.exec(client);
+  const exe = CODEX[m[1]];
+  const files = [
+    { path: `${run}\\home\\config.toml`, content: codexToml(run, form) },
+    { path: POLICY, content: JSON.stringify({ logDir: run, namespace: 'mcp__probe', tool: 'big' }) },
+  ];
+  if (m[2] === 'e') {
+    return Object.assign(base, { exe, args: ['exec', '--json', '--skip-git-repo-check', '--dangerously-bypass-approvals-and-sandbox', '-C', PROJ, PROMPT], env: cxEnv(run), stdin: 'closed', writeFiles: files });
+  }
+  return Object.assign(base, {
+    exe, args: ['app-server', '--listen', 'stdio://'], env: cxEnv(run), stdin: 'pipe', autoReplyJsonRpc: true, writeFiles: files,
+    steps: [
+      { do: 'send', line: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"onebinary-probe","title":"onebinary probe","version":"1.0.0"}}}' },
+      { do: 'waitFor', pattern: '"id":1\\b', timeoutMs: 30000 },
+      { do: 'send', line: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'thread/start', params: { cwd: PROJ } }) },
+      { do: 'waitFor', pattern: '"id":2\\b.*?(?:"thread":\\{"id":"(?<THREAD>[^"]+)"|"threadId":"(?<THREAD>[^"]+)"|"thread_id":"(?<THREAD>[^"]+)")', timeoutMs: 60000 },
+      { do: 'sleep', ms: 1500 },
+      { do: 'send', line: '{"jsonrpc":"2.0","id":3,"method":"turn/start","params":{"threadId":"$THREAD","input":[{"type":"text","text":"' + PROMPT + '"}]}}' },
+      { do: 'waitFor', pattern: 'turn/completed', timeoutMs: 90000 },
+      { do: 'sleep', ms: 2000 },
+      ...(m[2] === 'k' ? [{ do: 'mark', text: 'end: the app-server is terminated' }, { do: 'terminate' }] : [{ do: 'mark', text: 'end: close stdin' }, { do: 'closeStdin' }]),
+    ],
+  });
+}
+
+const runs = [];
+const clients = clientArg.split(','), forms = formArg.split(','), reps = Number(repsArg || 3);
+for (const c of clients) for (let r = 1; r <= reps; r++) for (const f of forms) runs.push(spec(c, f, r));
+const batchObj = {
+  progress: `${BATCHDIR}\\progress.log`, gapMs: 1500, serverImages: ['McpStubWin.exe', 'McpStubCon.exe'],
+  stubs: [
+    { name: 'anthropic', exe: NODE, args: [`${M}\\apistub\\ccstub.js`], env: { STUB_PORT: CCPORT, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR } },
+    { name: 'openai', exe: NODE, args: [`${M}\\apistub\\cxstub.js`], env: { STUB_PORT: CXPORT, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR } },
+  ],
+  runs,
+};
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify(batchObj, null, 1));
+console.log(`${batch}: ${runs.length} runs -> ${BATCHDIR}\\batch.json`);

@@ -1,0 +1,21 @@
+2026-10-08T14:21:15.0759289Z bench 1: exit 0
+2026-10-08T14:21:15.3992303Z bench 2: exit 0
+2026-10-08T14:21:15.7201700Z bench 3: exit 0
+2026-10-08T14:21:16.0323562Z bench 4: exit 0
+2026-10-08T14:21:16.3442481Z bench 5: exit 0
+2026-10-08T14:21:16.6631692Z bench detail: exit 0
+2026-10-08T14:21:16.7153735Z started 7 tickers for 300 s
+2026-10-08T14:26:16.8855938Z ticker 84032: exit 0
+2026-10-08T14:26:16.8947546Z ticker 34384: exit 0
+2026-10-08T14:26:16.9014013Z ticker 81796: exit 0
+2026-10-08T14:26:16.9108301Z ticker 106916: exit 0
+2026-10-08T14:26:16.9177039Z ticker 73032: exit 0
+2026-10-08T14:26:16.9241258Z ticker 91724: exit 0
+2026-10-08T14:26:16.9346596Z ticker 91268: exit 0
+2026-10-08T14:26:18.9525739Z m5 task-started bench r01: enginePid=33196 raw=written instances=0 lastResult=0x00000000
+2026-10-08T14:26:20.7901958Z m5 task-started bench r02: enginePid=46124 raw=written instances=0 lastResult=0x00000000
+2026-10-08T14:26:22.7521115Z m5 task-started bench r03: enginePid=47644 raw=written instances=0 lastResult=0x00000000
+2026-10-08T14:26:24.5846908Z m5 task-started bench r04: enginePid=100788 raw=written instances=0 lastResult=0x00000000
+2026-10-08T14:26:26.4311203Z m5 task-started bench r05: enginePid=75748 raw=written instances=0 lastResult=0x00000000
+2026-10-08T14:26:26.4389893Z deleted BrowserAI-measure-20261008T1411-m5-task: True
+CHAIN-D-DONE

@@ -1,0 +1,130 @@
+using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+/// <summary>
+/// Added 2026-10-04 for the scheduler half of the one-binary measurement.
+/// usage: ExitRig rootwatch --root <install root> --dir <output dir> --stop <stop file>
+/// Observes, read-only, every process whose image path is under the given install root (the
+/// coordinator, the session host, every front), and every descendant of one by parent pid
+/// (node, the browser), from outside every client's tree. Opens a handle at once (query and
+/// synchronize only), so a pid cannot be reused under it, and records each exit's time and code.
+/// Writes rootwatch.log (events) and alive.json (the live set, every 250 ms), and runs the
+/// desktop-wide window watch for the whole time. Never terminates anything.
+/// </summary>
+static class RootWatch
+{
+    sealed class P
+    {
+        public int Pid, Ppid; public long Created; public string Image = "", Cmd = "", Role = "", Via = "";
+        public SafeProcessHandle? H; public bool Exited; public uint Code; public long ExitFt;
+    }
+
+    public static int Run(string[] a)
+    {
+        Native.timeBeginPeriod(1);
+        var o = Args.Parse(a, 1);
+        string root = Path.GetFullPath(o["root"]).TrimEnd('\\') + "\\";
+        string dir = o["dir"];
+        string stop = o["stop"];
+        Directory.CreateDirectory(dir);
+        var ev = new Log(Path.Combine(dir, "rootwatch.log"));
+        ev.W("rootwatch", "BEGIN", $"root={root} pid={Environment.ProcessId} selftest={WindowWatch.SelfTest()}");
+        var tracked = new ConcurrentDictionary<int, P>();
+        var notUnder = new Dictionary<int, long>();
+        var windows = new WindowWatch(ev, () => tracked.Values.Where(p => !p.Exited).Select(p => p.Pid).ToHashSet());
+        windows.Start();
+        var e = new Native.PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<Native.PROCESSENTRY32W>() };
+        var list = new List<(int pid, int ppid)>(2048);
+        long lastAlive = 0;
+        while (!File.Exists(stop))
+        {
+            IntPtr snap = Native.CreateToolhelp32Snapshot(2, 0);
+            if (snap != new IntPtr(-1))
+            {
+                list.Clear();
+                e.dwSize = (uint)Marshal.SizeOf<Native.PROCESSENTRY32W>();
+                if (Native.Process32FirstW(snap, ref e)) { do { list.Add(((int)e.th32ProcessID, (int)e.th32ParentProcessID)); } while (Native.Process32NextW(snap, ref e)); }
+                Native.CloseHandle(snap);
+                bool added;
+                do
+                {
+                    added = false;
+                    foreach (var (pid, ppid) in list)
+                    {
+                        if (pid == 0 || pid == 4 || tracked.ContainsKey(pid)) continue;
+                        tracked.TryGetValue(ppid, out var parent);
+                        if (parent is null && notUnder.ContainsKey(pid)) continue;
+                        var h = Native.OpenProcess(Native.PROCESS_QUERY_LIMITED_INFORMATION | Native.SYNCHRONIZE, false, pid);
+                        if (h.IsInvalid) { if (parent is null) notUnder[pid] = 0; continue; }
+                        long ct = Native.CreationTime(h);
+                        string img = Native.ImageOf(h);
+                        bool under = img.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+                        bool child = parent is not null && ct >= parent.Created && (parent.ExitFt == 0 || ct <= parent.ExitFt);
+                        if (!under && !child) { notUnder[pid] = ct; h.Dispose(); continue; }
+                        var p = new P { Pid = pid, Ppid = ppid, Created = ct, Image = img, Cmd = Native.CommandLineOf(h), H = h, Via = under ? "image under root" : $"child of {ppid}" };
+                        p.Role = Classify(p);
+                        bool inJob = Native.IsProcessInJob(h, IntPtr.Zero, out bool j) && j;
+                        tracked[pid] = p;
+                        added = true;
+                        ev.W("rootwatch", "FOUND", $"pid={pid} ppid={ppid} role={p.Role} via={p.Via} created={Clock.Ft(ct)} inJob={inJob} parentImage={(parent?.Image ?? Native.ImageOfPid(ppid))} image={img} cmd={p.Cmd}");
+                        var t = new Thread(() =>
+                        {
+                            Native.WaitForSingleObject(p.H!, Native.INFINITE);
+                            Native.GetExitCodeProcess(p.H!, out uint code);
+                            Native.GetProcessTimes(p.H!, out _, out long ex, out _, out _);
+                            p.Code = code; p.ExitFt = ex; p.Exited = true;
+                            ev.W("rootwatch", "EXIT", $"pid={p.Pid} role={p.Role} code={code} (0x{code:X8}) exitUtc={Clock.Ft(ex)}");
+                        }) { IsBackground = true };
+                        t.Start();
+                    }
+                } while (added);
+                // A pid that left the snapshot is forgotten, so a recycled pid is examined afresh.
+                var current = new HashSet<int>(list.Select(x => x.pid));
+                foreach (var gone in notUnder.Keys.Where(k => !current.Contains(k)).ToList()) notUnder.Remove(gone);
+            }
+            long now = Environment.TickCount64;
+            if (now - lastAlive >= 250)
+            {
+                lastAlive = now;
+                var arr = new JsonArray();
+                foreach (var p in tracked.Values.Where(p => !p.Exited).OrderBy(p => p.Created))
+                    arr.Add(new JsonObject { ["pid"] = p.Pid, ["ppid"] = p.Ppid, ["role"] = p.Role, ["createdUtc"] = Clock.Ft(p.Created), ["image"] = p.Image, ["cmd"] = p.Cmd });
+                var doc = new JsonObject { ["utc"] = Clock.Utc(), ["alive"] = arr, ["windows"] = windows.Summary() };
+                var tmp = Path.Combine(dir, "alive.json.tmp");
+                File.WriteAllText(tmp, doc.ToJsonString());
+                File.Move(tmp, Path.Combine(dir, "alive.json"), true);
+            }
+            Thread.Sleep(20);
+        }
+        windows.Stop();
+        var all = new JsonArray();
+        foreach (var p in tracked.Values.OrderBy(p => p.Created))
+            all.Add(new JsonObject { ["pid"] = p.Pid, ["ppid"] = p.Ppid, ["role"] = p.Role, ["via"] = p.Via, ["createdUtc"] = Clock.Ft(p.Created), ["exited"] = p.Exited, ["exitCode"] = p.Exited ? p.Code : null, ["exitUtc"] = Clock.Ft(p.ExitFt), ["image"] = p.Image, ["cmd"] = p.Cmd });
+        File.WriteAllText(Path.Combine(dir, "rootwatch.final.json"), new JsonObject { ["utc"] = Clock.Utc(), ["procs"] = all, ["windows"] = windows.Summary() }.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        ev.W("rootwatch", "END", $"tracked={tracked.Count} stillAlive={tracked.Values.Count(p => !p.Exited)}");
+        return 0;
+    }
+
+    static string Classify(P p)
+    {
+        string file = Path.GetFileName(p.Image).ToLowerInvariant();
+        return file switch
+        {
+            "browserai.exe" => p.Cmd.Contains("--start-host", StringComparison.Ordinal) ? "coordinator(--start-host)"
+                : p.Cmd.Contains("--sign-in", StringComparison.Ordinal) ? "coordinator(--sign-in)"
+                : p.Cmd.Contains("--coordinate", StringComparison.Ordinal) ? "coordinator(--coordinate)" : "app",
+            "browserai.server.exe" => p.Cmd.Contains("--host", StringComparison.Ordinal) ? "host" : "front",
+            "node.exe" => "node",
+            "chrome.exe" => "chrome",
+            "chrome-headless-shell.exe" => "chrome",
+            "conhost.exe" => "conhost",
+            "update.exe" => "updater",
+            _ => "other:" + file,
+        };
+    }
+}

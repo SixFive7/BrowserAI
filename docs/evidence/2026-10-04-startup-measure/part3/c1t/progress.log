@@ -1,0 +1,18 @@
+2026-10-04T01:08:01.832Z PHASE c1t reps=5
+2026-10-04T01:08:01.838Z c1t r1: idle (no coordinator, no host) after 4 ms
+2026-10-04T01:08:02.680Z mcpprobe c1t-r1.json status=0
+2026-10-04T01:08:02.682Z c1t r1 cold host through the logon task: init=709.578ms tools=726.908ms count=78 exit=0
+2026-10-04T01:09:17.884Z c1t r2: idle (no coordinator, no host) after 74202 ms
+2026-10-04T01:09:18.604Z mcpprobe c1t-r2.json status=0
+2026-10-04T01:09:18.605Z c1t r2 cold host through the logon task: init=605.652ms tools=614.333ms count=78 exit=0
+2026-10-04T01:10:33.907Z c1t r3: idle (no coordinator, no host) after 74300 ms
+2026-10-04T01:10:34.712Z mcpprobe c1t-r3.json status=0
+2026-10-04T01:10:34.714Z c1t r3 cold host through the logon task: init=678.057ms tools=688.245ms count=78 exit=0
+2026-10-04T01:11:49.803Z c1t r4: idle (no coordinator, no host) after 74088 ms
+2026-10-04T01:11:50.591Z mcpprobe c1t-r4.json status=0
+2026-10-04T01:11:50.594Z c1t r4 cold host through the logon task: init=667.643ms tools=681.408ms count=78 exit=0
+2026-10-04T01:13:05.847Z c1t r5: idle (no coordinator, no host) after 74247 ms
+2026-10-04T01:13:06.639Z mcpprobe c1t-r5.json status=0
+2026-10-04T01:13:06.640Z c1t r5 cold host through the logon task: init=681.599ms tools=692.7ms count=78 exit=0
+2026-10-04T01:14:21.776Z c1t end: idle (no coordinator, no host) after 74135 ms
+2026-10-04T01:14:21.777Z PHASE c1t DONE; started 0 processes

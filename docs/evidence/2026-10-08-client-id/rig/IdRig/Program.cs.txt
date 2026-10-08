@@ -1,0 +1,16 @@
+namespace ExitRig;
+
+static class Program
+{
+    static int Main(string[] args)
+    {
+        if (args.Length == 0) { Console.Error.WriteLine("usage: IdRig stub --logdir <dir> [--tag <t>] | run <spec> | batch <batch>"); return 2; }
+        return args[0] switch
+        {
+            "stub" => IdStub.Run(args),
+            "run" => Harness.RunOne(args[1]),
+            "batch" => Harness.RunBatch(args[1]),
+            _ => 2,
+        };
+    }
+}

@@ -1,0 +1,155 @@
+// startup-measure probe: times the product's own coordinator call, CoordinatorClient.SendAsync,
+// out of the Release BrowserAI.Core.dll the worktree of origin/next published.
+//
+//   client <installRoot> <recheck|host> <count> <intervalMs> <boundMs> <out.csv> <label>
+//       against a REAL coordinator process (BrowserAI.exe) serving <installRoot>'s pipe, called
+//       synchronously on this process's main thread the way SessionHostAccess.Reach calls it.
+//   inproc <root> <count> <intervalMs> <boundMs> <out.csv> <label> [blockedPoolThreads]
+//       the shape of CoordinatorWakeTests' arm: the coordinator's pipe opened IN this process
+//       (CoordinatorPipe.Open) and the call made sync-over-async from a thread-pool thread, as
+//       CoordinatorWake.Wake does. With blockedPoolThreads > 0 that many pool threads are held in
+//       a blocking sleep loop first, which is what a test host full of synchronous arms does.
+//
+// The bound is passed explicitly (30 s in the runs) so that a call slower than the product's
+// 500 ms is MEASURED instead of being cut off at 500 ms.
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using BrowserAI.Coordination;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace StartupMeasure;
+
+internal static class Program
+{
+    private static int Main(string[] args)
+    {
+        if (args.Length < 1)
+        {
+            Console.Error.WriteLine("usage: client <root> <verb> <count> <intervalMs> <boundMs> <out> <label> | inproc <root> <count> <intervalMs> <boundMs> <out> <label> [blocked]");
+            return 2;
+        }
+
+        ThreadPool.GetMinThreads(out var minWorkers, out var minIo);
+        Console.WriteLine($"processors={Environment.ProcessorCount} minWorkers={minWorkers} minIo={minIo} pid={Environment.ProcessId}");
+
+        if (args[0] == "names")
+        {
+            Console.WriteLine($"coordinator={CoordinatorProtocol.NameFor(args[1])}");
+            Console.WriteLine($"host={SessionHostProtocol.NameFor(args[1])}");
+            return 0;
+        }
+
+        return args[0] switch
+        {
+            "client" => Client(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), int.Parse(args[4], CultureInfo.InvariantCulture), int.Parse(args[5], CultureInfo.InvariantCulture), args[6], args[7]),
+            "inproc" => InProcess(args[1], int.Parse(args[2], CultureInfo.InvariantCulture), int.Parse(args[3], CultureInfo.InvariantCulture), int.Parse(args[4], CultureInfo.InvariantCulture), args[5], args[6], args.Length > 7 ? int.Parse(args[7], CultureInfo.InvariantCulture) : 0),
+            _ => 2,
+        };
+    }
+
+    private static StreamWriter Open(string path)
+    {
+        var exists = File.Exists(path);
+        var writer = new StreamWriter(path, append: true, new UTF8Encoding(false)) { AutoFlush = true };
+        if (!exists)
+        {
+            writer.WriteLine("seq,utc,label,mode,verb,bound_ms,elapsed_ms,wall_ms,outcome,why");
+        }
+
+        return writer;
+    }
+
+    private static string Csv(string s) => "\"" + s.Replace("\"", "'", StringComparison.Ordinal).Replace("\r", " ", StringComparison.Ordinal).Replace("\n", " ", StringComparison.Ordinal) + "\"";
+
+    private static int Client(string root, string verbName, int count, int intervalMs, int boundMs, string outPath, string label)
+    {
+        var verb = verbName == "host" ? CoordinatorVerb.Host : CoordinatorVerb.Recheck;
+        using var writer = Open(outPath);
+        var bound = TimeSpan.FromMilliseconds(boundMs);
+
+        for (var seq = 1; seq <= count; seq++)
+        {
+            var wall = Stopwatch.StartNew();
+            var handed = CoordinatorClient.SendAsync(root, verb, grant: null, bound).GetAwaiter().GetResult();
+            wall.Stop();
+            writer.WriteLine(string.Join(",",
+                seq.ToString(CultureInfo.InvariantCulture),
+                DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+                label, "client", verbName,
+                boundMs.ToString(CultureInfo.InvariantCulture),
+                handed.Elapsed.TotalMilliseconds.ToString("F3", CultureInfo.InvariantCulture),
+                wall.Elapsed.TotalMilliseconds.ToString("F3", CultureInfo.InvariantCulture),
+                handed.Outcome.ToString(),
+                Csv(handed.Why.Length > 200 ? handed.Why[..200] : handed.Why)));
+
+            if (File.Exists(outPath + ".stop"))
+            {
+                break;
+            }
+
+            Thread.Sleep(intervalMs);
+        }
+
+        return 0;
+    }
+
+    private static int InProcess(string root, int count, int intervalMs, int boundMs, string outPath, string label, int blocked)
+    {
+        Directory.CreateDirectory(root);
+        using var writer = Open(outPath);
+        using var inbox = new CoordinatorInbox();
+        using var pipe = CoordinatorPipe.Open(root, inbox, NullLogger.Instance);
+        var bound = TimeSpan.FromMilliseconds(boundMs);
+
+        using var stop = new CancellationTokenSource();
+
+        for (var i = 0; i < blocked; i++)
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                while (!stop.IsCancellationRequested)
+                {
+                    Thread.Sleep(100);
+                }
+            });
+        }
+
+        if (blocked > 0)
+        {
+            Thread.Sleep(2000);
+        }
+
+        for (var seq = 1; seq <= count; seq++)
+        {
+            var wall = Stopwatch.StartNew();
+            var handed = Task.Run(() => CoordinatorClient.SendAsync(root, CoordinatorVerb.Recheck, grant: null, bound).GetAwaiter().GetResult()).GetAwaiter().GetResult();
+            wall.Stop();
+
+            while (inbox.TryTake(out _))
+            {
+            }
+
+            ThreadPool.GetAvailableThreads(out var availableWorkers, out _);
+            writer.WriteLine(string.Join(",",
+                seq.ToString(CultureInfo.InvariantCulture),
+                DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
+                label, blocked > 0 ? $"inproc-blocked{blocked}-threads{ThreadPool.ThreadCount}" : $"inproc-threads{ThreadPool.ThreadCount}", "recheck",
+                boundMs.ToString(CultureInfo.InvariantCulture),
+                handed.Elapsed.TotalMilliseconds.ToString("F3", CultureInfo.InvariantCulture),
+                wall.Elapsed.TotalMilliseconds.ToString("F3", CultureInfo.InvariantCulture),
+                handed.Outcome.ToString(),
+                Csv(handed.Why.Length > 200 ? handed.Why[..200] : handed.Why)));
+
+            if (File.Exists(outPath + ".stop"))
+            {
+                break;
+            }
+
+            Thread.Sleep(intervalMs);
+        }
+
+        stop.Cancel();
+        return 0;
+    }
+}

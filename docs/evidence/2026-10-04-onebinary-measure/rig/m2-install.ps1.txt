@@ -1,0 +1,46 @@
+# Installs the test pack into a fresh scratch root the way RealInstallerTests does: silent, under
+# --installto, with CLAUDE_CONFIG_DIR (seeded), BROWSERAI_ROOT and CODEX_HOME all in scratch so the
+# hooks never reach the real configuration. Writes m2-state.json for the uninstall to read.
+# usage: pwsh -NoProfile -File m2-install.ps1 -Prepare   (composes the roots, writes m2-state.json)
+#        pwsh -NoProfile -File m2-install.ps1            (runs the installer into the prepared root)
+param([switch] $Prepare)
+. (Join-Path $PSScriptRoot 'm2-common.ps1')
+$setup = Join-Path $WT 'Releases\test-pack\BrowserAI.test-installer.exe'
+if (-not (Test-Path -LiteralPath $setup)) { throw "no test installer at $setup" }
+if ($Prepare) {
+    $scratch = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'BrowserAI-test-scratch'
+    $g = [guid]::NewGuid().ToString('N')
+    $installRoot = Join-Path $scratch "onebinary-install-$g"
+    $dataRoot = Join-Path $scratch "onebinary-install-data-$g"
+    $clientRoot = Join-Path $M "m2-install-client\$g"
+    $claudeCfg = Join-Path $clientRoot 'claude'
+    $codexHome = Join-Path $clientRoot 'codex'
+    New-Item -ItemType Directory -Force $installRoot, $dataRoot, $claudeCfg, $codexHome, (Join-Path $M 'm2-logs') | Out-Null
+    # OnboardedClientConfig.Seed, character for character.
+    [System.IO.File]::WriteAllText((Join-Path $claudeCfg '.claude.json'), '{"hasCompletedOnboarding":true,"autoUpdates":false,"bypassPermissionsModeAccepted":false}')
+    [ordered]@{ installRoot = $installRoot; dataRoot = $dataRoot; claudeConfigDir = $claudeCfg; codexHome = $codexHome; setup = $setup; preparedUtc = (Get-Date).ToUniversalTime().ToString('o') } |
+        ConvertTo-Json | Set-Content -LiteralPath $StateFile
+    Get-Content -LiteralPath $StateFile
+    return
+}
+$st = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json
+$installRoot = $st.installRoot; $dataRoot = $st.dataRoot; $claudeCfg = $st.claudeConfigDir; $codexHome = $st.codexHome
+$logs = Join-Path $M 'm2-logs'
+$tasksBefore = @(Get-BrowserAiTasks | ForEach-Object { $_.Name })
+$state = [ordered]@{ installRoot = $installRoot; dataRoot = $dataRoot; claudeConfigDir = $claudeCfg; codexHome = $codexHome; setup = $setup; installedUtc = (Get-Date).ToUniversalTime().ToString('o') }
+$envBlock = Get-CleanEnvironment @{ CLAUDE_CONFIG_DIR = $claudeCfg; BROWSERAI_ROOT = $dataRoot; CODEX_HOME = $codexHome }
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+$r = Invoke-Quiet $setup @('--silent', '--log', (Join-Path $logs 'setup.log'), '--installto', $installRoot) $envBlock 600
+"setup exit=$($r.ExitCode) pid=$($r.Pid) after $([math]::Round($clock.Elapsed.TotalSeconds,1)) s"
+$r.StdOut + "`n--- stderr ---`n" + $r.StdErr | Set-Content -LiteralPath (Join-Path $logs 'setup.stdout.txt')
+$state.setupExit = $r.ExitCode
+$state.setupSeconds = [math]::Round($clock.Elapsed.TotalSeconds, 1)
+$state | ConvertTo-Json | Set-Content -LiteralPath $StateFile
+"installRoot=$installRoot"
+Get-ChildItem -LiteralPath $installRoot | Select-Object Name | Format-Table -HideTableHeaders | Out-String
+$after = @(Get-BrowserAiTasks)
+$new = @($after | Where-Object { $tasksBefore -notcontains $_.Name })
+$state.newTasks = @($new | ForEach-Object { $_.Name })
+$state | ConvertTo-Json | Set-Content -LiteralPath $StateFile
+"new BrowserAI tasks: $($state.newTasks -join ' | ')"
+$after | Format-List | Out-String -Width 300

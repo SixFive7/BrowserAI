@@ -1,0 +1,188 @@
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json.Nodes;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+/// <summary>
+/// Added 2026-10-04 for the one-binary measurement. Watches the desktop this process runs on
+/// from OUTSIDE the run's process tree, every 25 ms, for:
+///  - any visible top-level window that was not there when the run began, anywhere on the
+///    desktop (a console window with Windows Terminal as the default terminal belongs to
+///    Windows Terminal's process, not to the process that got the console, so a tree-only
+///    scan would miss exactly the window this measurement is about);
+///  - any top-level window, visible or not, owned by a process of the run's tree;
+///  - the global cursor, against the shared IDC_APPSTARTING and IDC_WAIT handles (the startup
+///    feedback cursor a windows-subsystem child gets unless its parent passes STARTF_FORCEOFFFEEDBACK).
+/// It reads only. It creates no window except in SelfTest, which creates one hidden window,
+/// confirms the owned-window scan finds it and that it is not visible, and destroys it.
+/// </summary>
+sealed class WindowWatch
+{
+    readonly Log _ev;
+    readonly Func<HashSet<int>> _tree;
+    readonly HashSet<IntPtr> _baseline = new();
+    readonly HashSet<IntPtr> _newReported = new();
+    readonly HashSet<IntPtr> _ownedReported = new();
+    readonly object _gate = new();
+    volatile bool _stop;
+    Thread? _thread;
+    IntPtr _appStarting, _wait, _arrow, _lastCursor = new(-1);
+    public int BaselineVisible, Ticks, CursorReadFailures, AppStartingTicks, WaitTicks;
+    public long FirstAppStartingMs = -1, LastAppStartingMs = -1;
+    readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
+    public readonly JsonArray NewVisible = new();
+    public readonly JsonArray Owned = new();
+    public readonly JsonArray CursorChanges = new();
+
+    public WindowWatch(Log ev, Func<HashSet<int>> tree) { _ev = ev; _tree = tree; }
+
+    public void Start()
+    {
+        _appStarting = W.LoadCursorW(IntPtr.Zero, new IntPtr(32650));
+        _wait = W.LoadCursorW(IntPtr.Zero, new IntPtr(32514));
+        _arrow = W.LoadCursorW(IntPtr.Zero, new IntPtr(32512));
+        foreach (var (h, _) in W.TopLevel()) if (W.IsWindowVisible(h)) _baseline.Add(h);
+        BaselineVisible = _baseline.Count;
+        _ev.W("windows", "BASELINE", $"visibleTopLevel={BaselineVisible} desktop={W.DesktopName()} appStarting=0x{_appStarting.ToInt64():X} wait=0x{_wait.ToInt64():X} arrow=0x{_arrow.ToInt64():X}");
+        _thread = new Thread(Loop) { IsBackground = true, Name = "windowwatch", Priority = ThreadPriority.AboveNormal };
+        _thread.Start();
+    }
+
+    public void Stop() { _stop = true; _thread?.Join(2000); }
+
+    string CursorName(IntPtr c) => c == _appStarting ? "APPSTARTING" : c == _wait ? "WAIT" : c == _arrow ? "ARROW" : $"0x{c.ToInt64():X}";
+
+    void Loop()
+    {
+        while (!_stop)
+        {
+            try { Tick(); } catch (Exception e) { _ev.W("windows", "TICK_ERROR", e.Message); }
+            Thread.Sleep(25);
+        }
+    }
+
+    void Tick()
+    {
+        Ticks++;
+        var tree = _tree();
+        foreach (var (h, pid) in W.TopLevel())
+        {
+            bool vis = W.IsWindowVisible(h);
+            if (vis && !_baseline.Contains(h) && _newReported.Add(h))
+            {
+                var d = W.Describe(h, pid);
+                d["inTree"] = tree.Contains(pid);
+                d["tMs"] = _clock.ElapsedMilliseconds;
+                lock (_gate) NewVisible.Add(d);
+                _ev.W("windows", "NEW_VISIBLE", d.ToJsonString());
+            }
+            if (tree.Contains(pid) && _ownedReported.Add(h))
+            {
+                var d = W.Describe(h, pid);
+                d["visible"] = vis;
+                d["tMs"] = _clock.ElapsedMilliseconds;
+                lock (_gate) Owned.Add(d);
+                _ev.W("windows", "OWNED_BY_TREE", d.ToJsonString());
+            }
+        }
+        var ci = new W.CURSORINFO { cbSize = Marshal.SizeOf<W.CURSORINFO>() };
+        if (W.GetCursorInfo(ref ci))
+        {
+            if (ci.hCursor == _appStarting)
+            {
+                AppStartingTicks++;
+                if (FirstAppStartingMs < 0) FirstAppStartingMs = _clock.ElapsedMilliseconds;
+                LastAppStartingMs = _clock.ElapsedMilliseconds;
+            }
+            if (ci.hCursor == _wait) WaitTicks++;
+            if (ci.hCursor != _lastCursor)
+            {
+                _lastCursor = ci.hCursor;
+                var c = new JsonObject { ["tMs"] = _clock.ElapsedMilliseconds, ["cursor"] = CursorName(ci.hCursor), ["flags"] = ci.flags };
+                lock (_gate) CursorChanges.Add(c);
+                _ev.W("windows", "CURSOR", c.ToJsonString());
+            }
+        }
+        else CursorReadFailures++;
+    }
+
+    public JsonObject Summary()
+    {
+        lock (_gate)
+        {
+            return new JsonObject
+            {
+                ["baselineVisible"] = BaselineVisible, ["ticks"] = Ticks,
+                ["newVisible"] = NewVisible.DeepClone(), ["newVisibleInTree"] = NewVisible.Count(n => n!["inTree"]!.GetValue<bool>()),
+                ["ownedByTree"] = Owned.DeepClone(),
+                ["cursorReadFailures"] = CursorReadFailures, ["appStartingTicks"] = AppStartingTicks, ["waitTicks"] = WaitTicks,
+                ["firstAppStartingMs"] = FirstAppStartingMs, ["lastAppStartingMs"] = LastAppStartingMs,
+                ["cursorChanges"] = CursorChanges.DeepClone(),
+            };
+        }
+    }
+
+    /// <summary>Positive control for the owned-window scan: a hidden window of this process must be found, and found not visible.</summary>
+    public static string SelfTest()
+    {
+        IntPtr h = W.CreateWindowExW(0x00000080 /*WS_EX_TOOLWINDOW*/, "STATIC", "onebinary-selftest", 0x80000000 /*WS_POPUP, not visible*/, -32000, -32000, 1, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        if (h == IntPtr.Zero) return $"CreateWindowExW failed {Marshal.GetLastWin32Error()}";
+        try
+        {
+            int me = Environment.ProcessId;
+            bool found = false, visible = true;
+            foreach (var (w, pid) in W.TopLevel()) if (w == h && pid == me) { found = true; visible = W.IsWindowVisible(w); }
+            return $"hiddenWindowFound={found} visible={visible} desktop={W.DesktopName()}";
+        }
+        finally { W.DestroyWindow(h); }
+    }
+}
+
+static class W
+{
+    public delegate bool EnumProc(IntPtr h, IntPtr l);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr l);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out int pid);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassNameW(IntPtr h, StringBuilder sb, int n);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int InternalGetWindowText(IntPtr h, StringBuilder sb, int n);
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    [DllImport("user32.dll")] public static extern IntPtr LoadCursorW(IntPtr inst, IntPtr id);
+    [DllImport("user32.dll", SetLastError = true)] public static extern bool GetCursorInfo(ref CURSORINFO ci);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] public static extern IntPtr CreateWindowExW(uint ex, string cls, string name, uint style, int x, int y, int w, int h, IntPtr parent, IntPtr menu, IntPtr inst, IntPtr p);
+    [DllImport("user32.dll")] public static extern bool DestroyWindow(IntPtr h);
+    [DllImport("user32.dll")] public static extern IntPtr GetThreadDesktop(uint tid);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] public static extern bool GetUserObjectInformationW(IntPtr obj, int index, StringBuilder info, int len, out int needed);
+
+    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
+    [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] public struct CURSORINFO { public int cbSize; public int flags; public IntPtr hCursor; public POINT pt; }
+
+    public static List<(IntPtr, int)> TopLevel()
+    {
+        var l = new List<(IntPtr, int)>(512);
+        EnumWindows((h, _) => { GetWindowThreadProcessId(h, out int pid); l.Add((h, pid)); return true; }, IntPtr.Zero);
+        return l;
+    }
+
+    public static string DesktopName()
+    {
+        var sb = new StringBuilder(256);
+        return GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()), 2, sb, 512, out _) ? sb.ToString() : $"<err {Marshal.GetLastWin32Error()}>";
+    }
+
+    public static JsonObject Describe(IntPtr h, int pid)
+    {
+        var cls = new StringBuilder(256); GetClassNameW(h, cls, 256);
+        var txt = new StringBuilder(256); InternalGetWindowText(h, txt, 256);
+        GetWindowRect(h, out var r);
+        return new JsonObject
+        {
+            ["hwnd"] = $"0x{h.ToInt64():X}", ["pid"] = pid, ["image"] = Native.ImageOfPid(pid), ["class"] = cls.ToString(), ["title"] = txt.ToString(),
+            ["rect"] = $"{r.L},{r.T},{r.R},{r.B}",
+        };
+    }
+}

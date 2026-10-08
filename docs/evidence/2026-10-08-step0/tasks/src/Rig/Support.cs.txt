@@ -1,0 +1,347 @@
+// Step 0 scratch driver, 2026-10-08. The scheduler through IDispatch, the stand-ins' logs, and small helpers. Not BrowserAI.
+using System.Globalization;
+using System.Reflection;
+using System.Security;
+using System.Security.Principal;
+using System.Text;
+
+namespace Rig;
+
+/// <summary>The Task Scheduler's COM API, through <c>dynamic</c>.</summary>
+internal static class Sched
+{
+    public const int NotFound = unchecked((int)0x80070002);
+
+    public static dynamic Folder()
+    {
+        var type = Type.GetTypeFromProgID("Schedule.Service", throwOnError: true)!;
+        dynamic service = Activator.CreateInstance(type)!;
+        service.Connect();
+        return service.GetFolder(@"\");
+    }
+
+    /// <summary>
+    /// SignInTask.DefinitionFor's principal and settings (BrowserAI.Core, read 2026-10-08), with the
+    /// instances policy and the enabled flag a case may change, and no trigger: an on-demand run does not
+    /// read the trigger, and a task left behind by a failed cleanup then starts nothing by itself.
+    /// </summary>
+    public static string Definition(string policy, bool enabled, string arguments, string logon = "InteractiveToken")
+    {
+        var sid = WindowsIdentity.GetCurrent().User!.Value;
+        var image = SecurityElement.Escape(Paths.StandIn);
+        var escaped = SecurityElement.Escape(arguments);
+        var enabledText = enabled ? "true" : "false";
+
+        return $"""
+            <?xml version="1.0" encoding="UTF-16"?>
+            <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+              <RegistrationInfo>
+                <Author>BrowserAI step 0 measurement</Author>
+                <Description>Scratch measurement task, 2026-10-08, started on demand only. Removed when the measurement ends.</Description>
+              </RegistrationInfo>
+              <Triggers />
+              <Principals>
+                <Principal id="Author">
+                  <UserId>{sid}</UserId>
+                  <LogonType>{logon}</LogonType>
+                  <RunLevel>LeastPrivilege</RunLevel>
+                </Principal>
+              </Principals>
+              <Settings>
+                <MultipleInstancesPolicy>{policy}</MultipleInstancesPolicy>
+                <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+                <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+                <AllowStartOnDemand>true</AllowStartOnDemand>
+                <StartWhenAvailable>false</StartWhenAvailable>
+                <Enabled>{enabledText}</Enabled>
+                <Hidden>false</Hidden>
+                <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+                <Priority>5</Priority>
+              </Settings>
+              <Actions Context="Author">
+                <Exec>
+                  <Command>{image}</Command>
+                  <Arguments>{escaped}</Arguments>
+                </Exec>
+              </Actions>
+            </Task>
+            """;
+    }
+
+    public static void Register(dynamic folder, string name, string xml, int logonType = 3)
+    {
+        if (!name.StartsWith(Paths.TaskPrefix, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("refusing a task name outside the measurement prefix: " + name);
+        }
+
+        _ = folder.RegisterTask(name, xml, 6, null, null, logonType, null);
+        Registry.Note("task-registered", name);
+    }
+
+    public static bool Delete(dynamic folder, string name)
+    {
+        if (!name.StartsWith(Paths.TaskPrefix, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("refusing to delete a task outside the measurement prefix: " + name);
+        }
+
+        try
+        {
+            folder.DeleteTask(name, 0);
+            Registry.Note("task-deleted", name);
+            return true;
+        }
+        catch (Exception failure) when (Hr(failure) == NotFound)
+        {
+            return false;
+        }
+    }
+
+    public static List<string> Names(dynamic folder, string prefix)
+    {
+        var names = new List<string>();
+        dynamic tasks = folder.GetTasks(1);
+        int count = tasks.Count;
+
+        for (var i = 1; i <= count; i++)
+        {
+            dynamic task = tasks[i];
+            string name = task.Name;
+
+            if (name.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                names.Add(name);
+            }
+        }
+
+        return names;
+    }
+
+    public static int Instances(dynamic task)
+    {
+        dynamic instances = task.GetInstances(0);
+        return (int)instances.Count;
+    }
+
+    public static int Hr(Exception failure) =>
+        (failure is TargetInvocationException { InnerException: { } inner } ? inner : failure).HResult;
+
+    public static string Message(Exception failure) =>
+        Text.Clean((failure is TargetInvocationException { InnerException: { } inner } ? inner : failure).Message);
+}
+
+/// <summary>Where everything lives.</summary>
+internal static class Paths
+{
+    public const string Root = @"C:\Source\SixFive7\BrowserAI\.work\step0-tasks";
+    public const string TaskPrefix = "BrowserAI-measure-";
+
+    public static string StandIn => Path.Combine(Root, "bin", "standin", "StandIn.exe");
+
+    public static string Runs(string stamp) => Path.Combine(Root, "runs", stamp);
+
+    public static string Task(string stamp, string what) => $"{TaskPrefix}{stamp}-{what}";
+
+    public static string Event(string stamp, string what, int round, string purpose, bool global = false) => $@"{(global ? "Global" : "Local")}\BrowserAI-measure-{stamp}-{what}-r{round:D2}-{purpose}";
+}
+
+/// <summary>Every task and process the driver made, appended as it makes it, for the cleanup proof.</summary>
+internal static class Registry
+{
+    private static readonly Lock Gate = new();
+
+    public static string? File { get; set; }
+
+    public static void Note(string what, string detail)
+    {
+        if (File is null)
+        {
+            return;
+        }
+
+        var line = string.Create(CultureInfo.InvariantCulture, $"{DateTime.UtcNow:O}\t{what}\t{detail}\n");
+
+        lock (Gate)
+        {
+            for (var attempt = 0; attempt < 50; attempt++)
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(File, line);
+                    return;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(10);
+                }
+            }
+        }
+    }
+
+    public static void Process(string what, int pid, long creationFt) =>
+        Note("process", string.Create(CultureInfo.InvariantCulture, $"{what}\t{pid}\t{creationFt}"));
+}
+
+/// <summary>One line of a stand-in's log.</summary>
+internal sealed record LogLine(DateTime Utc, long Qpc, int Pid, string Role, string Event, string Detail, string File)
+{
+    public string? Field(string key) => Text.Field(Detail, key);
+}
+
+/// <summary>The stand-ins' logs.</summary>
+internal static class Logs
+{
+    public static List<LogLine> Read(string file)
+    {
+        var lines = new List<LogLine>();
+
+        try
+        {
+            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var all = reader.ReadToEnd();
+
+            foreach (var raw in all.Split('\n'))
+            {
+                var parts = raw.Split('\t');
+
+                if (parts.Length < 6)
+                {
+                    continue;
+                }
+
+                if (!DateTime.TryParseExact(parts[0], "yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var utc))
+                {
+                    continue;
+                }
+
+                lines.Add(new LogLine(utc, long.Parse(parts[1], CultureInfo.InvariantCulture), int.Parse(parts[2], CultureInfo.InvariantCulture), parts[3], parts[4], string.Join('\t', parts.Skip(5)), file));
+            }
+        }
+        catch (FileNotFoundException)
+        {
+        }
+
+        return lines;
+    }
+
+    public static List<LogLine> ReadAll(string dir, string role) =>
+        Directory.Exists(dir)
+            ? [.. Directory.GetFiles(dir, role + "-*.log").SelectMany(Read).OrderBy(l => l.Utc)]
+            : [];
+
+    public static List<LogLine> Starts(string dir, string role) =>
+        [.. ReadAll(dir, role).Where(l => l.Event == "START")];
+
+    public static LogLine? WaitFor(string dir, string role, string evt, Func<LogLine, bool> match, TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+
+        while (DateTime.UtcNow < until)
+        {
+            var found = ReadAll(dir, role).FirstOrDefault(l => l.Event == evt && match(l));
+
+            if (found is not null)
+            {
+                return found;
+            }
+
+            Thread.Sleep(5);
+        }
+
+        return null;
+    }
+}
+
+/// <summary>Text helpers.</summary>
+internal static class Text
+{
+    public static string Clean(string? value) =>
+        (value ?? string.Empty).Replace("\r", string.Empty, StringComparison.Ordinal).Replace("\n", " | ", StringComparison.Ordinal).Replace("\t", " ", StringComparison.Ordinal).Trim();
+
+    public static string? Field(string detail, string key)
+    {
+        var marker = key + "=";
+        var at = detail.StartsWith(marker, StringComparison.Ordinal) ? 0 : detail.IndexOf(" " + marker, StringComparison.Ordinal);
+
+        if (at < 0)
+        {
+            return null;
+        }
+
+        var start = at == 0 ? marker.Length : at + 1 + marker.Length;
+        var end = detail.IndexOf(' ', start);
+
+        return end < 0 ? detail[start..] : detail[start..end];
+    }
+
+    public static string ReadOutput(string path)
+    {
+        var bytes = System.IO.File.ReadAllBytes(path);
+
+        if (bytes.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        if (bytes.Length >= 2 && bytes[1] == 0)
+        {
+            return Clean(Encoding.Unicode.GetString(bytes));
+        }
+
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        return Clean(Encoding.GetEncoding((int)Native.GetOEMCP()).GetString(bytes));
+    }
+
+    public static string Hex(int value) => string.Create(CultureInfo.InvariantCulture, $"0x{value:X8}");
+
+    public static string Ms(TimeSpan span) => span.TotalMilliseconds.ToString("F1", CultureInfo.InvariantCulture);
+
+    public static string Utc(DateTime value) => value.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture);
+
+    public static DateTime FromFt(long fileTime) => DateTime.FromFileTimeUtc(fileTime);
+
+    public static string Distribution(IEnumerable<string> values) =>
+        string.Join("; ", values.GroupBy(v => v).OrderByDescending(g => g.Count()).Select(g => $"{g.Count()}x {g.Key}"));
+}
+
+/// <summary>The command line as <c>--name value</c> pairs and bare flags.</summary>
+internal sealed class Options
+{
+    private readonly Dictionary<string, string?> _values = new(StringComparer.Ordinal);
+
+    public string? this[string name] => _values.TryGetValue(name, out var value) ? value : null;
+
+    public static Options Parse(string[] args)
+    {
+        var options = new Options();
+
+        for (var i = 1; i < args.Length; i++)
+        {
+            if (!args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
+            {
+                options._values[args[i]] = args[i + 1];
+                i++;
+            }
+            else
+            {
+                options._values[args[i]] = null;
+            }
+        }
+
+        return options;
+    }
+
+    public bool Has(string name) => _values.ContainsKey(name);
+
+    public int Int(string name, int fallback) => this[name] is { } text ? int.Parse(text, CultureInfo.InvariantCulture) : fallback;
+
+    public string Need(string name) => this[name] ?? throw new ArgumentException("missing " + name);
+}

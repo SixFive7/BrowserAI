@@ -1,0 +1,32 @@
+# Per BrowserAI process in a process log: when it started, when its surface child was spawned and
+# connected, when it began serving stdio, and when the client's initialize was handled.
+import re, sys
+from datetime import datetime
+def t(s): return datetime.fromisoformat(s.replace('Z','+00:00')).timestamp()*1000
+procs = {}
+for path in sys.argv[1:]:
+    for line in open(path, encoding='utf-8', errors='replace'):
+        m = re.match(r'(\S+)\s+made=\S+\s+\w+\s+pid=(\d+)@\d+\s+(\S+)\s+(.*)', line)
+        if not m: continue
+        ts, pid, cat, msg = m.group(1), m.group(2), m.group(3), m.group(4)
+        p = procs.setdefault(pid, {'pid': pid})
+        T = t(ts)
+        if cat.startswith('BrowserAI.Startup[1]') and 'started. pid=' in msg:
+            p['start'] = T; p['image'] = re.search(r'image=(\S+)', msg).group(1)
+        elif 'DirectStdioClientTransport[7]' in cat and 'surface' in msg: p.setdefault('child_spawned', T)
+        elif 'ChildConnection[1]' in cat: p.setdefault('child_connected', T)
+        elif cat.startswith('BrowserAI.Startup[2]') and 'serving stdio' in msg: p['serving'] = T
+        elif "method 'initialize' request handler called" in msg: p.setdefault('init_handled', T)
+        elif 'is the session host, serving' in msg: p['host_serving'] = T
+        elif 'relays its client to the session host' in msg: p['relaying'] = T
+        elif 'came up' in msg and 'after this server asked' in msg: p['host_came_up_msg'] = msg.strip()[:160]
+        elif 'No session host on' in msg: p['no_host'] = msg.strip()[:200]
+rows = []
+for pid, p in procs.items():
+    if 'start' not in p: continue
+    s = p['start']
+    f = lambda k: ('%.0f' % (p[k]-s)) if k in p else ''
+    rows.append((s, pid, p.get('image','')[-60:], f('child_spawned'), f('child_connected'), f('serving'), f('init_handled'), f('host_serving'), f('relaying'), p.get('host_came_up_msg',''), p.get('no_host','')[:80]))
+rows.sort()
+print('pid\timage\tchild_spawned_ms\tchild_connected_ms\tserving_ms\tinit_handled_ms\thost_serving_ms\trelaying_ms\tcame_up\tno_host')
+for r in rows: print('\t'.join(str(x) for x in r[1:]))

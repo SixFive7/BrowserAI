@@ -1,0 +1,152 @@
+// startup-measure stand-in: a stdio MCP server shaped like the maintainer's proposal of
+// 2026-10-04 -- answer initialize and tools/list at once, start the browser engine in the
+// background, and hold the FIRST tools/call until the engine is "ready". Never BrowserAI.
+// Derived from .work/q369/rig/phserver.js. Every frame in both directions goes to
+// <tag>.wire.jsonl with the launch number, the pid and a millisecond clock, so "what the
+// client did while it waited" is read off the wire, not assumed.
+//
+// env:
+//   LZ_LOGDIR, LZ_TAG        where <tag>.launches.log and <tag>.wire.jsonl go
+//   LZ_CAP                   none ({"tools":{}}, BrowserAI today) | listChanged
+//   LZ_INIT_DELAY_MS         hold the initialize answer this long (a slow start); default 0
+//   LZ_INIT_DIE              1: on initialize, after LZ_INIT_DELAY_MS, end with TerminateProcess
+//                            (exit 1) without answering -- a failed start
+//   LZ_CALL_DELAY_MS         hold the FIRST tools/call's answer this long (the queued call);
+//                            every later call is answered at once, as a ready engine would
+//   LZ_CALL_FAIL             '' : the queued call succeeds after the delay
+//                            iserror : it is answered with an isError result after the delay
+//                            rpcerror: it is answered with a JSON-RPC error -32603 after the delay
+//                            exit    : the process ends (TerminateProcess, exit 1) after the delay,
+//                                      with the call unanswered
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const LOGDIR = process.env.LZ_LOGDIR || '.';
+const TAG = process.env.LZ_TAG || 'lz';
+const CAP = process.env.LZ_CAP || 'none';
+const INIT_DELAY_MS = Number(process.env.LZ_INIT_DELAY_MS || 0);
+const INIT_DIE = process.env.LZ_INIT_DIE === '1';
+const CALL_DELAY_MS = Number(process.env.LZ_CALL_DELAY_MS || 0);
+const CALL_FAIL = process.env.LZ_CALL_FAIL || '';
+const STARTED = Date.now();
+
+fs.mkdirSync(LOGDIR, { recursive: true });
+
+let launchNo = 0;
+for (let n = 1; n < 1000; n++) {
+  try {
+    const fd = fs.openSync(path.join(LOGDIR, `${TAG}.launch.${n}`), 'wx');
+    fs.writeSync(fd, `${new Date().toISOString()} pid=${process.pid}\n`);
+    fs.closeSync(fd);
+    launchNo = n;
+    break;
+  } catch (e) {
+    if (e.code !== 'EEXIST') throw e;
+  }
+}
+
+const LAUNCHES = path.join(LOGDIR, `${TAG}.launches.log`);
+const WIRE = path.join(LOGDIR, `${TAG}.wire.jsonl`);
+const note = (s) => fs.appendFileSync(LAUNCHES, `${new Date().toISOString()} +${Date.now() - STARTED}ms launch=${launchNo} pid=${process.pid} ${s}\n`);
+const wire = (direction, frame) => fs.appendFileSync(WIRE, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - STARTED, launch: launchNo, pid: process.pid, direction, frame }) + '\n');
+
+note(`LAUNCH cap=${CAP} initDelay=${INIT_DELAY_MS} initDie=${INIT_DIE} callDelay=${CALL_DELAY_MS} callFail=${CALL_FAIL || 'none'} ppid=${process.ppid}`);
+
+const INSTRUCTIONS = 'LZ-INSTRUCTIONS (stub): BrowserAI drives a real browser. Call browserai_init first.';
+const TOOLS = [
+  {
+    name: 'browserai_init',
+    description: 'Starts a BrowserAI session in a directory. (stub)',
+    inputSchema: { type: 'object', properties: { directory: { type: 'string', description: 'An absolute directory.' } }, required: ['directory'], additionalProperties: false },
+  },
+  {
+    name: 'browserai_list',
+    description: 'Lists the BrowserAI sessions under a directory. (stub)',
+    inputSchema: { type: 'object', properties: { directory: { type: 'string', description: 'An absolute directory.' } }, required: ['directory'], additionalProperties: false },
+  },
+];
+// Marked as a stub's words so nobody mistakes them for a wording proposal.
+const FAIL_TEXT = 'LZ-QUEUED-CALL-FAILED (stub): the browser engine did not start, so this call was not run.';
+
+function send(obj) {
+  wire('server->client', obj);
+  fs.writeSync(1, JSON.stringify(obj) + '\n');
+}
+
+function terminate(why) {
+  note(`TERMINATING ITSELF (${why}): TerminateProcess, exit code 1`);
+  process.kill(process.pid, 'SIGKILL');
+}
+
+let calls = 0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function handle(msg) {
+  const { id, method } = msg;
+  if (method === 'initialize') {
+    note(`initialize from clientInfo=${JSON.stringify(msg.params && msg.params.clientInfo)} protocolVersion=${msg.params && msg.params.protocolVersion}`);
+    if (INIT_DELAY_MS > 0) { note(`holding the initialize answer ${INIT_DELAY_MS} ms`); await sleep(INIT_DELAY_MS); }
+    if (INIT_DIE) { terminate('on initialize, without answering it'); return; }
+    send({ jsonrpc: '2.0', id, result: {
+      protocolVersion: (msg.params && msg.params.protocolVersion) || '2025-06-18',
+      capabilities: { tools: CAP === 'listChanged' ? { listChanged: true } : {} },
+      serverInfo: { name: 'BrowserAI', version: '9.9.9-lazy-stub' },
+      instructions: INSTRUCTIONS,
+    } });
+    note('initialize answered');
+    return;
+  }
+  if (typeof method === 'string' && method.startsWith('notifications/')) {
+    if (method === 'notifications/cancelled') note(`CLIENT CANCELLED ${JSON.stringify(msg.params)}`);
+    return;
+  }
+  if (method === 'ping') { send({ jsonrpc: '2.0', id, result: {} }); return; }
+  if (method === 'tools/list') { send({ jsonrpc: '2.0', id, result: { tools: TOOLS } }); note('tools/list answered at once'); return; }
+  if (method === 'resources/list') { send({ jsonrpc: '2.0', id, result: { resources: [] } }); return; }
+  if (method === 'resources/templates/list') { send({ jsonrpc: '2.0', id, result: { resourceTemplates: [] } }); return; }
+  if (method === 'prompts/list') { send({ jsonrpc: '2.0', id, result: { prompts: [] } }); return; }
+  if (method === 'tools/call') {
+    calls += 1;
+    const n = calls;
+    const tool = msg.params && msg.params.name;
+    const token = msg.params && msg.params._meta && msg.params._meta.progressToken;
+    if (n === 1 && CALL_DELAY_MS > 0) {
+      note(`tools/call #${n} ${tool} QUEUED for ${CALL_DELAY_MS} ms (progressToken=${token === undefined ? 'none' : JSON.stringify(token)})`);
+      await sleep(CALL_DELAY_MS);
+    }
+    if (n === 1 && CALL_FAIL === 'exit') { terminate(`the queued call #${n} failed after ${CALL_DELAY_MS} ms`); return; }
+    if (n === 1 && CALL_FAIL === 'rpcerror') {
+      send({ jsonrpc: '2.0', id, error: { code: -32603, message: FAIL_TEXT } });
+      note(`tools/call #${n} ${tool} answered with a JSON-RPC error`);
+      return;
+    }
+    if (n === 1 && CALL_FAIL === 'iserror') {
+      send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: FAIL_TEXT }], isError: true } });
+      note(`tools/call #${n} ${tool} answered with an isError result`);
+      return;
+    }
+    const text = `LZ-CALL-SERVED (stub) call=${n} launch=${launchNo} after=${n === 1 ? CALL_DELAY_MS : 0}ms: ${tool} found no sessions under ${msg.params && msg.params.arguments && msg.params.arguments.directory}.`;
+    send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text }], isError: false } });
+    note(`tools/call #${n} ${tool} SERVED`);
+    return;
+  }
+  if (id !== undefined) send({ jsonrpc: '2.0', id, error: { code: -32601, message: `Method not found: ${method}` } });
+}
+
+let buf = '';
+process.stdin.on('data', (chunk) => {
+  buf += chunk.toString('utf8');
+  let nl;
+  while ((nl = buf.indexOf('\n')) >= 0) {
+    const line = buf.slice(0, nl).trim();
+    buf = buf.slice(nl + 1);
+    if (!line) continue;
+    let msg;
+    try { msg = JSON.parse(line); } catch (e) { wire('client->server-unparsed', line); continue; }
+    wire('client->server', msg);
+    handle(msg).catch((e) => note(`HANDLER ERROR ${e && e.stack}`));
+  }
+});
+process.stdin.on('end', () => { note(`stdin EOF after ${Date.now() - STARTED} ms; exiting 0`); setTimeout(() => process.exit(0), 50); });
+process.on('exit', (c) => { try { note(`process exit code=${c}`); } catch (e) { /* ignore */ } });

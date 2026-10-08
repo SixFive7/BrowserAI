@@ -1,0 +1,30 @@
+# Read-only snapshot of everything the scheduler half must leave as it found it.
+# usage: pwsh -NoProfile -File m2-snap.ps1 -Tag <before|after|...> [-InstallRoot <root>]
+param([Parameter(Mandatory)] [string] $Tag, [string] $InstallRoot = '')
+. (Join-Path $PSScriptRoot 'm2-common.ps1')
+$out = Join-Path $M "m2-snap\$Tag"
+New-Item -ItemType Directory -Force $out | Out-Null
+
+# 1. The suite's own clearance snapshot, exactly as a gate takes it.
+Push-Location $WT
+try { & pwsh -NoProfile -File build/Get-ClearanceSnapshot.ps1 -Tag "onebinary-$Tag" *> (Join-Path $out 'clearance.stdout.txt') }
+finally { Pop-Location }
+Copy-Item -LiteralPath (Join-Path $WT ".work\clearance\onebinary-$Tag.txt") -Destination (Join-Path $out 'clearance.txt') -ErrorAction SilentlyContinue
+
+# 2. Every task in the scheduler by path, and every BrowserAI task with its definition's hash.
+Get-AllTaskNames | Set-Content -LiteralPath (Join-Path $out 'tasks-all.txt')
+Get-BrowserAiTasks | Format-List | Out-String -Width 400 | Set-Content -LiteralPath (Join-Path $out 'tasks-browserai.txt')
+
+# 3. The two Add/Remove keys, the Start Menu, the user's PATH.
+"BrowserAI.app:`n$(Get-RegValues 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app')`n`nBrowserAI.app.test:`n$(Get-RegValues 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app.test')" |
+    Set-Content -LiteralPath (Join-Path $out 'arp.txt')
+(Get-StartMenuShortcuts) -join "`n" | Set-Content -LiteralPath (Join-Path $out 'startmenu.txt')
+Get-UserPathRaw | Format-List | Out-String | Set-Content -LiteralPath (Join-Path $out 'userpath.txt')
+
+# 4. The installed BrowserAI's processes, observed by path and never acted on.
+(Get-ProcessesUnder (Join-Path $env:LOCALAPPDATA 'BrowserAI.app')) -join "`n" | Set-Content -LiteralPath (Join-Path $out 'installed-browserai-processes.txt')
+if ($InstallRoot) { (Get-ProcessesUnder $InstallRoot) -join "`n" | Set-Content -LiteralPath (Join-Path $out 'test-root-processes.txt') }
+
+# 5. The real client configurations, hashed the way the q369 lane did.
+& node (Join-Path $M 'rig\realhash.js') "M2-$Tag" (Join-Path $M 'isolation\real-config-hashes.tsv') *> (Join-Path $out 'realhash.txt')
+"snapshot $Tag written to $out"

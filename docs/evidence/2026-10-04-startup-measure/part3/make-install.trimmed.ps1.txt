@@ -1,0 +1,33 @@
+# Assembles a Velopack-shaped install of the worktree's published BrowserAI, for the cold-host
+# path. It has to be under the user's profile: InstallRootScope refuses an install root or a
+# data root outside it, and .work is not. So it lives in the user's own scratch area,
+# Downloads\tmp-startup-measure, and is deleted when the measurement is done. No installer runs,
+# no hook runs, nothing is registered with any client, and no logon task is created.
+$ErrorActionPreference = 'Stop'
+$base = '%USERPROFILE%\Downloads\tmp-startup-measure'
+$inst = Join-Path $base 'inst'
+$cur = Join-Path $inst 'current'
+$server = 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish'
+$app = 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish'
+New-Item -ItemType Directory -Force -Path $cur, (Join-Path $base 'data'), (Join-Path $base 'feed') | Out-Null
+robocopy $server $cur /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null
+robocopy $app $cur /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1 | Out-Null
+# A placeholder, never run: the locator looks for the file, and nothing here stages an update.
+if (-not (Test-Path (Join-Path $inst 'Update.exe'))) { New-Item -ItemType File -Path (Join-Path $inst 'Update.exe') | Out-Null }
+@'
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+<metadata>
+<id>BrowserAI.app.measure</id>
+<title>BrowserAI</title>
+<description>BrowserAI</description>
+<authors>Jori Huisman</authors>
+<version>1.1.1-alpha.0.192</version>
+<channel>win</channel>
+<mainExe>BrowserAI.exe</mainExe>
+<os>win</os>
+<rid>win</rid>
+</metadata>
+</package>
+'@ | Set-Content -LiteralPath (Join-Path $cur 'sq.version') -Encoding utf8NoBOM
+Get-ChildItem $cur | Select-Object Name, Length | Format-Table -AutoSize | Out-String

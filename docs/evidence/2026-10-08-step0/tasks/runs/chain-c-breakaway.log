@@ -1,0 +1,6 @@
+2026-10-08T14:23:55.6176528Z m6 detached-breakaway rep 1: standin exit 553.2 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:26:28.9791165Z m6 detached-breakaway rep 2: standin exit 723.3 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:29:02.3378181Z m6 detached-breakaway rep 3: standin exit 544.7 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:31:36.4414344Z m6 detached-breakaway rep 4: standin exit 658.6 ms code 0; child alive at end of 150 s watch=True; states while alive [150x 3] instances [150x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:34:09.8162362Z m6 detached-breakaway rep 5: standin exit 554.8 ms code 0; child alive at end of 150 s watch=True; states while alive [139x 3] instances [139x 0]; after child quit: state=3 instances=0 last=0x00000000
+2026-10-08T14:34:09.8243903Z deleted BrowserAI-measure-20261008T1411-m6-detached-breakaway: True

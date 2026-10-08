@@ -1,0 +1,6 @@
+#!/bin/bash
+cd /c/Source/SixFive7/BrowserAI/.work/step0-tasks
+./bin/rig2/Rig.exe m5 --stamp 20261008T1411 --bench-runs 5 --ticks 100000 --tickers 5 --noops 2 --duration-s 300
+
+./bin/rig2/Rig.exe m5task --stamp 20261008T1411 --reps 5
+echo CHAIN-D-DONE

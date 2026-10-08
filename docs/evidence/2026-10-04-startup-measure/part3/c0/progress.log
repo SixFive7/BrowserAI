@@ -1,0 +1,12 @@
+2026-10-04T00:59:56.786Z PHASE c0 reps=5
+2026-10-04T00:59:59.135Z mcpprobe c0-r1.json status=0
+2026-10-04T00:59:59.136Z c0 r1 in-process, not installed: init=2002.758ms tools=2013.284ms count=78 exit=0
+2026-10-04T01:00:01.264Z mcpprobe c0-r2.json status=0
+2026-10-04T01:00:01.265Z c0 r2 in-process, not installed: init=485.766ms tools=495.677ms count=78 exit=0
+2026-10-04T01:00:03.390Z mcpprobe c0-r3.json status=0
+2026-10-04T01:00:03.392Z c0 r3 in-process, not installed: init=485.17ms tools=495.079ms count=78 exit=0
+2026-10-04T01:00:05.497Z mcpprobe c0-r4.json status=0
+2026-10-04T01:00:05.498Z c0 r4 in-process, not installed: init=461.45ms tools=477.689ms count=78 exit=0
+2026-10-04T01:00:07.835Z mcpprobe c0-r5.json status=0
+2026-10-04T01:00:07.836Z c0 r5 in-process, not installed: init=653.036ms tools=665.8ms count=78 exit=0
+2026-10-04T01:00:09.338Z PHASE c0 DONE; started 0 processes

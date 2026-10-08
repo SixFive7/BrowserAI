@@ -1050,6 +1050,153 @@ require the severity word: `(warning|error)\s+IL[0-9]{4}`, plus the literal
 `will always throw`, which is the case the whole check exists for and is not a
 diagnostic at all.
 
+### A test pack would be offered the production release -- read 2026-10-04
+
+`[FLOATS]` on Velopack **1.2.161**: `UpdateManager.cs` at the tag, read on 2026-10-04
+by the one-binary measurement, and the production feed as read the same day; not run.
+Everything it was read from:
+[`docs/evidence/2026-10-04-onebinary-measure`](../../docs/evidence/2026-10-04-onebinary-measure/README.md),
+`code/releases.win.json` and the source file's digest in `left-out.sha256`.
+
+**A package's pack id is not compared when an update is chosen.** The production
+feed lists `BrowserAI.app` 1.1.0; `CheckForUpdatesAsync` picks the newest full
+package in the feed it reads without looking at the package's id; and BrowserAI sets
+`AllowVersionDowngrade`. So a test pack, whose pack id is `BrowserAI.app.test`, built
+on a release version and pointed at the production feed would be offered 1.1.0, and a
+process with the user's real environment would apply it. A pre-release build never
+checks, by BrowserAI's own rule above, and in the measurement every front was also
+given an empty local feed. The one-binary design closes it with one comparison: no
+package whose pack id is not the installed one is applied. Under a local folder that
+holds dev packs (H2 of that design) it matters more.
+
+**Re-establish it** by reading `CheckForUpdatesAsync` and the release selection in
+`src/lib-csharp/UpdateManager.cs` at the tag Velopack floats to, for any filter on the
+package id; a planted-red arm with a feed carrying another pack id is what would
+settle it by running.
+## A local folder, a silent apply with a restart, a failed apply, and the update hook -- read and measured at 1.2.161, 2026-10-08
+
+`[FLOATS]` on Velopack **1.2.161**, tag `1.2.161`, commit
+`92d6a1c91716729d449034df5c50307dcce39493`, the NuGet package's content hash the one
+`src/BrowserAI/packages.lock.json` pins; vpk 1.2.161, and `Setup.exe` and `Update.exe`
+reporting 1.2.161 in their own logs. Windows 11 Pro 10.0.26300, .NET SDK 10.0.401 with
+runtime 10.0.12. Read in the source and in `velopack/velopack.docs` at
+`1ca8eea6017fb9c5743e070575a9f28da08c26c1` by the step-0 research, and measured the
+same day between 14:09Z and 14:21Z with a stand-in under its own pack id,
+`BrowserAI.Measure`, installed with its `Setup.exe --silent` into
+`%LOCALAPPDATA%\BrowserAI.Measure`, updated through its own `Update.exe` and
+uninstalled; nothing of `BrowserAI.app` was touched. The stand-in is a .NET 10
+Windows-subsystem program, framework-dependent and not NativeAOT, with Velopack at
+exactly 1.2.161, `SetAutoApplyOnStartup(false)` and every hook, packed with
+BrowserAI's own vpk flags. Everything it was read from, with the stand-in and the
+driver: [`docs/evidence/2026-10-08-step0`](../../docs/evidence/2026-10-08-step0/README.md),
+`velopack/`. It is what the one-binary design's update rests on: **do the work after
+an update in Velopack's restart, never in the update hook, and tell a failed apply
+from a good one by the version.** Between 1.2.158, which the entries above read, and
+1.2.161, GitHub's compare shows three commits that touch only `runtime_arch.rs` and two
+Node samples' package files, so every reading above of the apply, the hooks and the
+kill pass is the same source at 1.2.161; that is identity of source, not a
+re-measurement.
+
+### A local folder is a source, and it offers the highest version, pre-release or not
+
+`new UpdateManager("<path>")` builds a `SimpleFileSource` for any string that is not
+an HTTP URL (`UpdateManager.cs:535-546`); it reads `releases.{channel}.json` from the
+folder, and "downloading" is a file copy and the same SHA-256 check as a web download.
+**There is no pre-release switch**: the offer is a plain version maximum
+(`UpdateManager.cs:139`), and only `GithubSource`, `GiteaSource` and `GitlabSource`
+take one. Measured, 3 of 3 each: with 1.0.0 installed and a folder holding 1.0.0 and
+1.0.1, the check offered 1.0.1; with 1.0.2-alpha.1 added, it offered the alpha; with
+1.0.2 added as well, it offered 1.0.2. The same alpha packed into a `beta` channel in
+the same folder was not offered to an ordinary check, and was when the check asked for
+`beta`. Download and apply worked 10 of 10 times when nothing blocked them, downloads
+taking 11 to 84 ms.
+
+### A silent apply with a restart starts the new version with exactly the arguments given
+
+`WaitExitThenApplyUpdates(asset, silent: true, restart: true, args)`, the call the
+one-binary design makes, 3 of 3 and 4 more restarts in later runs, all alike:
+`current\<main exe>` of the new version started with exactly the arguments passed,
+nothing added (a two-word argument, an embedded quote and a trailing backslash
+arrived intact), with `VELOPACK_RESTART=true` as the only Velopack variable, which
+`Run()` clears before it calls the restarted hook. Its parent was the `Update.exe` the
+app had started, which had already exited 8.9 to 17.3 ms after starting it; its
+working folder was `current\`, it was in no job, and its creation flags were 1024,
+which does not suppress a console window. From `Update.exe`'s start to the new
+process took 1.8 to 2.1 s. **`ApplyUpdatesAndRestart` is not silent**: it runs
+`Update.exe` without `--silent`, which shows Velopack's progress window
+(`UpdateManager.cs:327`; read and not run, because it would put a window on the
+screen). Velopack waits up to 60 s for the calling program to exit
+(`util_common.rs:14-26`).
+
+### A failed apply restarts the old version as though it had been updated
+
+To make it fail, a process outside the install root held a file inside `current\`
+open with no sharing, 3 of 3 and once more in a dry run. `Update.exe` ran the old
+version's obsolete hook, made its two passes that end every process under the root,
+tried to rename `current\` away and met "Access is denied" eleven times a second apart,
+deleted the new version it had extracted, and exited with code 1 after 11.0 to 11.3 s.
+No rollback was needed and none ran: the rename is the first step that changes the
+install, and `current\` was identical by hash before and after, 3 of 3. ⭐ **It then
+started the old version with the same arguments and `VELOPACK_RESTART=true`**, and
+the old version's restarted hook fired as though an update had happened; `Run()`
+logged "Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4".
+Nothing in the arguments or the environment says the apply failed; `Update.exe`'s exit
+code reaches nobody; and the log, `%LOCALAPPDATA%\velopack\velopack_<pack id>.log`,
+ends "Unable to start the update, because one or more running processes prevented
+it...". With the file released, the app started as the old version and exited 0, 3 of
+3, and an ordinary apply of the package still downloaded then succeeded. **So a
+program restarted after an apply tells the two apart only by comparing its own version
+with one it was handed**, or, after this kind of failure, by a staged package still
+being there (`UpdatePendingRestart`, true after a failed rename and false after a bad
+package, which Velopack deletes).
+
+⚠️ **Read, not measured: a failure after the swap began leaves no program at all.**
+When the new tree cannot be renamed into `current\` after 31 tries, 1.2.161 logs
+"Unable to complete the update, and the app was left in a broken state", runs no
+rollback though its comment promises one, and its cleanup then deletes both temporary
+directories, the second of which is the old `current\`
+(`apply_windows_impl.rs:172-177`, `:275-278`, `locator.rs:206-213`). Nothing is
+restarted, because the old executable is gone, and only a reinstall recovers.
+
+### The update hook has 15 s, and what it starts under the root is ended
+
+`--veloapp-updated` runs after the swap with a limit of 15 s
+(`apply_windows_impl.rs:217-222`, `run_hook(..., 15)`), and a hook that outlives it is
+terminated alone, not with its tree. Measured, 3 of 3: a hook that kept running was
+killed 15.008, 15.009 and 15.014 s after it started, exit code 1, with "[ERROR] Process
+timed out after 15s and was killed."; **the update still completed and the app was
+restarted**, and nothing told the app. Then, whatever the hook did, `Update.exe` ends
+every process whose image is under the install root (`force_stop_package`): a detached
+child the hook had started from the root was killed 462, 584 and 490 ms after the hook
+returned, exit code 1, while a child the hook started from outside the root ran its
+full 90 s and exited 0, outliving `Update.exe` by about 86 s, 3 of 3. **So anything
+the hook starts from `current\`, a background through the Task Scheduler included, is
+ended if it is up in time and survives if it is not**, which is why the one-binary
+design starts nothing there. The other limits, read in code: install 30 s, obsolete
+15 s, uninstall 60 s (`uninstall.rs:24`), where the documentation says uninstall 30 s
+and the library's own comment says 30 s too. The 60 s this article already records is
+the uninstall hook's and the wait for the calling program's exit, never the update
+hook's.
+
+### The download changes the install before any apply, and Velopack checks nothing by itself
+
+The download step overwrites `Update.exe` and deletes the installed version's own
+package (`UpdateManager.cs:290-313`). And Velopack never checks on its own:
+`VelopackApp.Run()` creates no update manager and reads no feed, and only applies a
+package already downloaded when automatic apply is on (`VelopackApp.cs:172-287`,
+`:242-251`); no file in the C# library mentions a timer; `Update.exe` has no command
+that checks; each `CheckForUpdatesAsync` reads the feed once and the web source sends
+no cache headers (`UpdateManager.cs:128-170`, `SimpleWebSource.cs:40-66`); and the only
+thing a check writes is a staging id in `packages\.betaId`, 35 bytes with no time in
+it, seen created on the first check and read back on later ones. So "at most once per
+10 minutes, across crashes and restarts" (D9) is BrowserAI's own stamp to keep.
+
+**Re-establish it** with the batch's `velopack/` driver, `orchestrate.ps1.txt` with
+`-Mode full`, over the stand-in in `velopack/app/` packed by `pack.ps1.txt`, under the
+suite lock and the installer lock; compare against `velopack/tables.md` and each run's
+logs. The failure needs a process outside the root holding a file in `current\` open
+with no sharing; the source lines are at the tag named above.
+
 ## Channel -- the charter's reason was wrong
 
 Measured 2026-08-15. `[FLOATS]`

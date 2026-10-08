@@ -1,0 +1,16 @@
+# One full suite run in the measure-startup worktree, detached by the caller and teed to a log, as
+# TESTING.md runs it. Load for the Q381 measurement: the probes in q381\load2 stop when this ends.
+$ErrorActionPreference = 'Continue'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'never'
+$root = 'C:\Source\SixFive7\BrowserAI\.work\wt\measure-startup'
+$log = Join-Path $root '.work\suite\ms-load-3.log'
+Set-Location $root
+"=== ms-load-3 starting $((Get-Date).ToUniversalTime().ToString('o'))" | Out-File -FilePath $log -Encoding utf8
+$env:BROWSERAI_DRIVE_CASE = 'upper'
+& dotnet test (Join-Path $root 'BrowserAI.slnx') 2>&1 | Tee-Object -FilePath $log -Append
+Get-Content (Join-Path $root '.work\suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
+"=== ms-load-3 done $((Get-Date).ToUniversalTime().ToString('o'))" | Add-Content -LiteralPath $log
+New-Item -ItemType File -Force -Path 'C:\Source\SixFive7\BrowserAI\.work\startup-measure\q381\load2\stop' | Out-Null
+'SUITE-LOAD-DONE'

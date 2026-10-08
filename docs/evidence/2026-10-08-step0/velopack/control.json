@@ -1,0 +1,11 @@
+{
+  "run": "uninstall",
+  "logDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\runs\\full-20261008T141238Z\\logs\\uninstall",
+  "updatedSleepSeconds": 0,
+  "updatedChildUnderRootSeconds": 0,
+  "updatedChildOutsideSeconds": 0,
+  "updatedWaitAfterSpawnMilliseconds": 0,
+  "heartbeatMilliseconds": 250,
+  "pwsh": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "outsideScript": "C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\outside-child.ps1"
+}

@@ -1,0 +1,248 @@
+# Scratch rig for the step-0 screen measurements, 2026-10-08. Run with Windows PowerShell 5.1:
+#   powershell -NoProfile -ExecutionPolicy Bypass -File part1.ps1 [-DryRun]
+# Raises toasts under Windows PowerShell's own app id, as docs/design/toast-2026-09-24/show.ps1 does.
+param([switch]$DryRun)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$raw = Join-Path $here 'raw'
+New-Item -ItemType Directory -Force $raw | Out-Null
+[void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.UI.Notifications.NotificationData, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms, UIAutomationClient, UIAutomationTypes
+Add-Type -TypeDefinition (Get-Content -Raw (Join-Path $here 'Monitor.cs')) -ReferencedAssemblies System.Drawing, System.Windows.Forms
+[void][Step0.Mon]::SetProcessDPIAware()
+
+$appId = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
+$tag = 'update'
+$group = 'browserai-step0'
+$inv = [Globalization.CultureInfo]::InvariantCulture
+$hist = [Windows.UI.Notifications.ToastNotificationManager]::History
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId)
+$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+[Step0.Mon]::Region = New-Object System.Drawing.Rectangle ($b.Right - 900), ($b.Bottom - 700), 900, 700
+$clock = [Step0.Mon]::Clock
+function L([string]$s) { [Step0.Mon]::Log($s) }
+
+$xml1 = @'
+<toast scenario="reminder" launch="action=open">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>BrowserAI 1.2.0 is ready to install</text>
+      <text>It installs by itself once BrowserAI has been idle. Holding it: 3 agents, 2 browser sessions and 1 visible window.</text>
+      <progress title="{progressTitle}" value="{progressValue}" valueStringOverride="{progressValueString}" status="{progressStatus}"/>
+    </binding>
+  </visual>
+  <actions>
+    <action content="Install now" arguments="action=install" activationType="background"/>
+    <action content="Wait for inactivity" arguments="action=wait" activationType="background"/>
+  </actions>
+</toast>
+'@
+$xml2 = @'
+<toast scenario="reminder" launch="action=open">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>Installing BrowserAI 1.2.0 now</text>
+    </binding>
+  </visual>
+  <actions>
+    <action content="Dismiss" arguments="action=dismiss" activationType="background"/>
+  </actions>
+</toast>
+'@
+$xml3 = @'
+<toast scenario="reminder" launch="action=open">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>BrowserAI 1.2.0 is installed</text>
+    </binding>
+  </visual>
+  <actions>
+    <action content="Changelog" arguments="action=changelog" activationType="background"/>
+    <action content="Dismiss" arguments="action=dismiss" activationType="background"/>
+  </actions>
+</toast>
+'@
+
+function New-Toast([string]$xml)
+{
+    $doc = New-Object Windows.Data.Xml.Dom.XmlDocument
+    $doc.LoadXml($xml)
+    $t = New-Object Windows.UI.Notifications.ToastNotification $doc
+    $t.Tag = $tag
+    $t.Group = $group
+    return $t
+}
+
+$script:lastValues = $null
+function New-Data([int]$k)
+{
+    $left = 600 - $k
+    $v = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    $v['progressTitle'] = 'Waiting for BrowserAI to be idle'
+    $v['progressValue'] = ($k / 600.0).ToString('0.0000', $inv)
+    $v['progressValueString'] = ('{0}:{1:00} of 10:00' -f [int][math]::Floor($k / 60), ($k % 60))
+    $v['progressStatus'] = ('Installs in {0}:{1:00}' -f [int][math]::Floor($left / 60), ($left % 60))
+    $script:lastValues = $v
+    return (New-Object Windows.UI.Notifications.NotificationData -ArgumentList $v, ([uint32]($k + 1)))
+}
+
+function Wait-Until([long]$ms)
+{
+    while ($clock.ElapsedMilliseconds -lt $ms) { Start-Sleep -Milliseconds 5 }
+}
+
+function History-Count
+{
+    try { return @($hist.GetHistory($appId)).Count } catch { return "error: $($_.Exception.Message)" }
+}
+
+# UIA snapshot of every 'New notification' window: every FlexibleToastView, its rect, runtime id and descendants.
+function Snap([string]$label)
+{
+    $A = [System.Windows.Automation.AutomationElement]
+    $views = @()
+    $text = New-Object System.Collections.Generic.List[string]
+    foreach ($h in [Step0.Mon]::ToastWindows())
+    {
+        $text.Add("window " + [Step0.Mon]::WindowState($h))
+        $w = $A::FromHandle($h)
+        $cond = New-Object System.Windows.Automation.PropertyCondition ($A::ClassNameProperty), 'FlexibleToastView'
+        foreach ($v in $w.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond))
+        {
+            $r = $v.Current.BoundingRectangle
+            $rid = ($v.GetRuntimeId() -join '.')
+            $text.Add(("  view id='{0}' runtimeId={1} rect=({2},{3}) {4}x{5} name='{6}'" -f $v.Current.AutomationId, $rid, $r.X, $r.Y, $r.Width, $r.Height, $v.Current.Name))
+            foreach ($e in $v.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition))
+            {
+                $er = $e.Current.BoundingRectangle
+                $text.Add(("    {0} id='{1}' class='{2}' name='{3}' rect=({4},{5}) {6}x{7}" -f $e.Current.ControlType.ProgrammaticName, $e.Current.AutomationId, $e.Current.ClassName, $e.Current.Name, $er.X, $er.Y, $er.Width, $er.Height))
+            }
+            $views += [pscustomobject]@{ Rect = $r; RuntimeId = $rid; Name = $v.Current.Name }
+        }
+    }
+    Set-Content -Path (Join-Path $here "uia-$label.txt") -Value $text -Encoding UTF8
+    L ("uia {0}: {1} toast view(s) {2}" -f $label, $views.Count, (($views | ForEach-Object { "runtimeId=$($_.RuntimeId) rect=$($_.Rect)" }) -join ' | '))
+    return $views
+}
+
+# Full-region capture to raw\, then a crop of the matching toast view to <label>.png.
+function Shot([string]$label, [string]$match)
+{
+    $bmp = [Step0.Mon]::Grab()
+    $at = $clock.ElapsedMilliseconds
+    $rawPath = Join-Path $raw "$label-uncropped.png"
+    $bmp.Save($rawPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $views = Snap $label
+    $v = $views | Where-Object { $_.Name -like "*$match*" } | Select-Object -First 1
+    if ($v)
+    {
+        $reg = [Step0.Mon]::Region
+        $x = [int][math]::Round($v.Rect.X) - $reg.X
+        $y = [int][math]::Round($v.Rect.Y) - $reg.Y
+        $w = [int][math]::Round($v.Rect.Width)
+        $h = [int][math]::Round($v.Rect.Height)
+        L ("shot {0} captured at {1} ms, toast rect in capture ({2},{3}) {4}x{5}" -f $label, $at, $x, $y, $w, $h)
+        Set-Content -Path (Join-Path $raw "$label-rect.txt") -Value "$x $y $w $h"
+    }
+    else
+    {
+        L "shot $label captured at $at ms, NO matching toast view for '$match'"
+    }
+    $bmp.Dispose()
+}
+
+if ($DryRun)
+{
+    $t = New-Toast $xml1
+    $t.Data = New-Data 0
+    "dry: toast1 tag=$($t.Tag) group=$($t.Group) seq=$($t.Data.SequenceNumber) status=$($lastValues['progressStatus']) count=$($t.Data.Values.Count)"
+    $d = New-Data 59
+    "dry: data59 seq=$($d.SequenceNumber) status=$($lastValues['progressStatus']) value=$($lastValues['progressValue']) vs=$($lastValues['progressValueString'])"
+    $t2 = New-Toast $xml2; $t3 = New-Toast $xml3
+    "dry: toast2/3 built; history count=$(History-Count)"
+    try { "dry: setting=$($notifier.Setting)" } catch { "dry: setting error $($_.Exception.Message)" }
+    "dry: region=$([Step0.Mon]::Region) screen=$($b.Width)x$($b.Height)"
+    "dry: fg=$([Step0.Mon]::Foreground())"
+    "dry: toast windows=$(([Step0.Mon]::ToastWindows() | ForEach-Object { [Step0.Mon]::WindowState($_) }) -join ' | ')"
+    [Step0.Mon]::Start()
+    Start-Sleep -Milliseconds 1500
+    [Step0.Mon]::Stop()
+    [Step0.Mon]::Lines()
+    return
+}
+
+L ("clock zero utc=" + [Step0.Mon]::ClockZeroUtc.ToString('o'))
+L "screen=$($b.Width)x$($b.Height) region=$([Step0.Mon]::Region)"
+try { L "notifier setting=$($notifier.Setting)" } catch { L "notifier setting error $($_.Exception.Message)" }
+L "history before=$(History-Count)"
+[Step0.Mon]::Start()
+Start-Sleep -Milliseconds 1500
+
+$t1 = New-Toast $xml1
+$t1.Data = New-Data 0
+[Step0.Mon]::Baseline = $false
+L 'audio baseline ends'
+$T0 = $clock.ElapsedMilliseconds
+$notifier.Show($t1)
+L "SHOW toast1 seq=1 status='Installs in 10:00' T0=$T0"
+L "history after show1=$(History-Count)"
+
+$results = @{}
+for ($k = 1; $k -le 60; $k++)
+{
+    Wait-Until ($T0 + 1000 * $k)
+    $d = New-Data $k
+    $a = $clock.ElapsedMilliseconds
+    $r = $notifier.Update($d, $tag, $group)
+    $z = $clock.ElapsedMilliseconds
+    $results["$r"] = 1 + [int]$results["$r"]
+    L ("UPDATE k={0} seq={1} result={2} callMs={3} status='{4}' value={5} valueString='{6}'" -f $k, ($k + 1), $r, ($z - $a), $lastValues['progressStatus'], $lastValues['progressValue'], $lastValues['progressValueString'])
+    if ($k -eq 1)
+    {
+        $v = Snap 'roi' | Select-Object -First 1
+        if ($v)
+        {
+            $reg = [Step0.Mon]::Region
+            [Step0.Mon]::Roi = New-Object System.Drawing.Rectangle ([int]$v.Rect.X - $reg.X - 4), ([int]$v.Rect.Y - $reg.Y - 4), ([int]$v.Rect.Width + 8), ([int]$v.Rect.Height + 8)
+            L "roi set to $([Step0.Mon]::Roi)"
+        }
+    }
+    if ($k -eq 2 -or $k -eq 30 -or $k -eq 60)
+    {
+        Wait-Until ($T0 + 1000 * $k + 500)
+        Shot ("toast1-t{0:00}s" -f $k) 'ready to install'
+    }
+}
+L ("update results: " + (($results.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', '))
+
+Wait-Until ($T0 + 62000)
+L "history before replace1=$(History-Count)"
+$t2 = New-Toast $xml2
+$notifier.Show($t2)
+L "SHOW toast2 (replace, same tag and group) 'Installing BrowserAI 1.2.0 now'"
+L "history after replace1=$(History-Count)"
+Wait-Until ($T0 + 64500)
+Shot 'toast2-installing' 'Installing BrowserAI'
+
+Wait-Until ($T0 + 67000)
+L "history before replace2=$(History-Count)"
+$t3 = New-Toast $xml3
+$notifier.Show($t3)
+L "SHOW toast3 (replace, same tag and group) 'BrowserAI 1.2.0 is installed'"
+L "history after replace2=$(History-Count)"
+Wait-Until ($T0 + 69500)
+Shot 'toast3-installed' 'is installed'
+
+Wait-Until ($T0 + 71000)
+$hist.Clear($appId)
+L "CLEAR history for the app id, as show.ps1 does"
+Start-Sleep -Milliseconds 1500
+L "history after clear=$(History-Count)"
+$null = Snap 'after-clear'
+[Step0.Mon]::Stop()
+$log = Join-Path $here 'part1-log.txt'
+Set-Content -Path $log -Value ([Step0.Mon]::Lines()) -Encoding UTF8
+"wrote $log"

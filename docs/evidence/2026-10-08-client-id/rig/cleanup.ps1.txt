@@ -1,0 +1,22 @@
+# Ends what a batch left running, and nothing else: only a pid the harness recorded in a run's
+# result.json, only while that pid still has the creation time the harness recorded, and only if
+# its image lives under this scratch folder. Everything else is reported and left alone.
+param([Parameter(Mandatory = $true)][string]$BatchDir)
+$scratch = 'C:\Source\SixFive7\BrowserAI\.work\client-id\'
+Get-ChildItem -Path $BatchDir -Directory | ForEach-Object {
+    $rf = Join-Path $_.FullName 'result.json'
+    if (-not (Test-Path $rf)) { return }
+    $r = Get-Content $rf -Raw | ConvertFrom-Json
+    foreach ($p in $r.procs) {
+        if ($null -ne $p.exitCode) { continue }
+        $live = Get-Process -Id $p.pid -ErrorAction SilentlyContinue
+        if ($null -eq $live) { "$($_.Name): pid $($p.pid) recorded alive, now gone"; continue }
+        $created = $live.StartTime.ToUniversalTime().ToString('o')
+        $recorded = ([datetime]$p.createdUtc).ToUniversalTime().ToString('o')
+        $path = $live.Path
+        if ($created -ne $recorded) { "$($_.Name): pid $($p.pid) reused (created $created, recorded $recorded): left alone"; continue }
+        if (-not $path -or -not $path.StartsWith($scratch, [System.StringComparison]::OrdinalIgnoreCase)) { "$($_.Name): pid $($p.pid) image '$path' is not under scratch: left alone"; continue }
+        try { Stop-Process -Id $p.pid -Confirm:$false -ErrorAction Stop; "$($_.Name): ended pid $($p.pid) $path ($($p.cmd))" }
+        catch { "$($_.Name): could not end pid $($p.pid): $($_.Exception.Message)" }
+    }
+}

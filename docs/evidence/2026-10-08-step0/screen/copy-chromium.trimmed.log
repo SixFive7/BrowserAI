@@ -1,0 +1,29 @@
+
+-------------------------------------------------------------------------------
+   ROBOCOPY     ::     Robust File Copy for Windows                              
+-------------------------------------------------------------------------------
+
+  Started : donderdag 8 oktober 2026 15:51:14
+   Source : %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\
+     Dest : C:\Source\SixFive7\BrowserAI\.work\step0-screen\browsers\chromium-1247\
+
+    Files : *.*
+	    
+  Options : *.* /NDL /NFL /S /E /DCOPY:DA /COPY:DAT /NP /R:1 /W:1 
+
+------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------
+
+               Total    Copied   Skipped  Mismatch    FAILED    Extras
+    Dirs :         9         9         0         0         0         0
+   Files :       309       309         0         0         0         0
+   Bytes :  437.01 m  437.01 m         0         0         0         0
+   Times :   0:00:00   0:00:00                       0:00:00   0:00:00
+
+
+   Speed :           662.197.932 Bytes/sec.
+   Speed :             37891,270 MegaBytes/min.
+   Ended : donderdag 8 oktober 2026 15:51:15
+

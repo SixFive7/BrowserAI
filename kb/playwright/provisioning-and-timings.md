@@ -2193,6 +2193,59 @@ deterministic arm and the one to run first**: three of three stuck, no keyboard
 involved. A newer Firefox that launches under it, or a `playwright-core` that
 sets the variable itself, is the change to look for.
 
+### What a server's start costs before its first answer -- measured 2026-10-04
+
+`[FLOATS]` on the payload, `@playwright/mcp` **0.0.83** with `playwright-core`
+**1.64.0-alpha-1790635538000** and node **v24.21.0**; `[MACHINE]` for every time.
+BrowserAI **1.1.1-alpha.0.192** published from `1ee00ec0`, Windows 11 Pro 10.0.26300.
+Taken 2026-10-04 between 00:26Z and 02:07Z. Everything it was read from:
+[`docs/evidence/2026-10-04-startup-measure`](../../docs/evidence/2026-10-04-startup-measure/README.md),
+`part3/` and `q369/fieldstarts.out`. It is what the first turn and the one-binary
+design's relay rest on: **where the time goes between a client starting a server and
+the server's first answer.**
+
+| Part of the start | Time |
+|---|---|
+| BrowserAI's own work before it starts Playwright | 36 to 63 ms, 9 warm starts |
+| Playwright's own start, `node` with `@playwright/mcp` | 350 to 520 ms with a warm disk cache; 1.08 to 1.6 s with a cold one |
+
+**The same, read off this machine's real installs**: BrowserAI's process logs of
+1.0.0 and 1.1.0 from 2026-09-15 to 2026-10-04, 25 files, each start's time from its
+"started" record to its "serving" record. 681 installed starts, 673 of them with a
+serving record (391 of 1.0.0 and 290 of 1.1.0):
+
+| Over | Starts | Share |
+|---|--:|--:|
+| 1.0 s | 200 of 673 | 29.7% |
+| 1.3 s | 137 of 673 | 20.4% |
+| 2.0 s | 60 of 673 | 8.9% |
+| 5.0 s | 13 of 673 | 1.9% |
+
+Median **0.453 s**, p90 **1.864 s**, p99 5.797 s, max 8.608 s. These are lower
+bounds on what a client waits, because the client's clock starts a little before
+BrowserAI logs "started". Set against the first-turn waits measured the same day in
+[the protocol article](../mcp/protocol.md), about 1.3 s in Codex and 2 s in Claude
+Code as BrowserAI is registered, one start in five would have missed Codex's first
+turn and one in eleven Claude Code's.
+
+**The real product's answers, timed from the client's side:**
+
+| Case | `initialize` answered | `tools/list` answered | `codex exec`'s first turn has the tools |
+|---|---|---|---|
+| A front, the session host already running | 84 to 90 ms, 5 runs | 93 to 100 ms | 6 of 6 |
+| A front with no host and no coordinator: the front runs the logon task, which starts the coordinator, which starts the host | 606 to 710 ms, 5 runs | 614 to 727 ms | 5 of 6; the miss took about 2.0 s, because Playwright's `node` needed 1.3 s cold |
+| Not installed, serving in-process | 461 to 653 ms warm, and 2,003 ms on the first run, 5 runs | 10 ms later | 6 of 6, warm |
+
+**And a coordinator with nothing to do stops at once**: "The coordinator stops: no
+newer package is staged, no tab is open and no session host runs", 5 of 5, within
+1 ms, so every cold front of option c went through the Task Scheduler. The
+coordinator held its pipe 79 to 103 ms after the front started, 10 of 11 runs and
+303 ms once, and the front logged that the host came up 475 to 619 ms after it asked.
+
+**Re-establish it** with the batch's `rig/part3.js.txt` and `rig/fieldstarts.py.txt`,
+the second read-only over the installed BrowserAI's process logs; compare against
+`part3/` and `q369/fieldstarts.out`.
+
 ## Firefox against Chromium: the standing cost ratios
 
 ✅ **RE-ESTABLISHED 2026-10-03 at chromium 1247 (`browserVersion`

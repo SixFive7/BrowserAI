@@ -1,0 +1,7 @@
+log files 25 browserai-20260915-000.log to browserai-20261004-000.log
+installed starts: 681 with a serving record: 673 versions: {'1.0.0': 391, '1.1.0': 290}
+  over 1.0 s: 200 of 673 (29.7%)
+  over 1.3 s: 137 of 673 (20.4%)
+  over 2.0 s: 60 of 673 (8.9%)
+  over 5.0 s: 13 of 673 (1.9%)
+  median 0.453 s, p90 1.864 s, p99 5.797 s, max 8.608 s

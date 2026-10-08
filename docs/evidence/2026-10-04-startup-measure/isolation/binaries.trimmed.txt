@@ -1,0 +1,5 @@
+84304f7d4b0cd0ebcbe8318695a260151b48991a6659c3366fdd5da290c0ab91 *cli/claude.exe
+bc45017e8239dc150258f69309ced9df6bbcdf5b8e4f346decf780ac0999e226 *codex155/codex.exe
+fdda5fa3cf3fb3d000b876720742857676293e4315e4b045fae6f8bd7e866d1d *codex160/x86_64-pc-windows-msvc/bin/codex.exe
+dc496f26230519edc348a250f3d4b607c3684041fc18fd1bd8042474258ccfd8 *%USERPROFILE%/Downloads/tmp-startup-measure/inst/current/BrowserAI.Server.exe
+e871a4c9e73f5000edce2869a2db282aa332b570f27b318d8cf9606b64b57821 *%USERPROFILE%/Downloads/tmp-startup-measure/inst/current/BrowserAI.exe

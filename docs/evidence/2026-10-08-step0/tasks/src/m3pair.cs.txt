@@ -1,0 +1,137 @@
+    /// <summary>
+    /// Two tasks whose processes share one job: ends the first and watches whether the second, a
+    /// process in the same job that the first never started, survives. Refuses unless the job holds
+    /// the two stand-ins and nothing else.
+    /// </summary>
+    private static int M3Pair(Options options)
+    {
+        var stamp = options.Need("--stamp");
+        var via = options.Need("--via");
+        var reps = options.Int("--reps", 3);
+        var s4u = options["--logon"] == "s4u";
+        var what = $"m3pair-{(s4u ? "s4u-" : string.Empty)}{via}";
+        var nameA = Paths.Task(stamp, what + "-a");
+        var nameB = Paths.Task(stamp, what + "-b");
+        var caseDir = Path.Combine(Paths.Runs(stamp), what);
+        Directory.CreateDirectory(caseDir);
+        var resultsPath = Path.Combine(caseDir, "results.tsv");
+        File.WriteAllText(resultsPath, "rep\tvia\tgate\trequestResult\taExitMsAfterRequest\taExitCode\tbEndedWithin5s\tbExitCode\taSaw\tbSaw\tcleanup\n");
+        dynamic folder = Sched.Folder();
+        var logon = s4u ? "S4U" : "InteractiveToken";
+        var logonType = s4u ? 2 : 3;
+
+        try
+        {
+            for (var rep = 1; rep <= reps; rep++)
+            {
+                var dirA = Path.Combine(caseDir, $"r{rep:D2}", "a");
+                var dirB = Path.Combine(caseDir, $"r{rep:D2}", "b");
+                Directory.CreateDirectory(dirA);
+                Directory.CreateDirectory(dirB);
+                var quitName = Paths.Event(stamp, what, rep, "quit", s4u);
+                var snapName = Paths.Event(stamp, what, rep, "snap", s4u);
+                using var quit = new EventWaitHandle(false, EventResetMode.ManualReset, quitName);
+                using var snap = new EventWaitHandle(false, EventResetMode.AutoReset, snapName);
+                Sched.Register(folder, nameA, Sched.Definition("Parallel", true, Arguments(dirA, quitName, 180, $"--snap {snapName}"), logon), logonType);
+                Sched.Register(folder, nameB, Sched.Definition("Parallel", true, Arguments(dirB, quitName, 180), logon), logonType);
+                dynamic taskA = folder.GetTask(nameA);
+                dynamic taskB = folder.GetTask(nameB);
+                dynamic runningA = taskA.Run($"pair-a-r{rep:D2}");
+                _ = taskB.Run($"pair-b-r{rep:D2}");
+                var startA = Logs.WaitFor(dirA, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                var startB = Logs.WaitFor(dirB, "standin", "START", _ => true, TimeSpan.FromSeconds(15));
+                NoteStarts(dirA);
+                NoteStarts(dirB);
+
+                if (startA is null || startB is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tSETUP FAILED a={(startA is null ? "missing" : "ok")} b={(startB is null ? "missing" : "ok")}\n");
+                    Say($"m3pair rep {rep}: setup failed; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                Thread.Sleep(700);
+                using var a = Mine.Open(startA.Pid, long.Parse(startA.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+                using var b = Mine.Open(startB.Pid, long.Parse(startB.Field("creationFt")!, CultureInfo.InvariantCulture), terminateRight: true);
+
+                if (a is null || b is null)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tOPEN FAILED\n");
+                    Say($"m3pair rep {rep}: open failed; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                var snapsBefore = Logs.ReadAll(dirA, "standin").Count(l => l.Event == "JOBSNAP");
+                _ = snap.Set();
+                _ = Logs.WaitFor(dirA, "standin", "JOBSNAP", _ => Logs.ReadAll(dirA, "standin").Count(l => l.Event == "JOBSNAP") > snapsBefore, TimeSpan.FromSeconds(5));
+                var snaps = Logs.ReadAll(dirA, "standin").Where(l => l.Event == "JOBSNAP").ToList();
+                var latest = snaps.Count > snapsBefore ? snaps[^1] : null;
+                var ids = latest?.Field("ids")?.Trim('[', ']').Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList() ?? [];
+                var foreign = ids.Where(id => id != a.Pid && id != b.Pid).ToList();
+                var sameJob = ids.Contains(a.Pid) && ids.Contains(b.Pid);
+                var gate = latest is null
+                    ? "NO SNAPSHOT"
+                    : foreign.Count > 0
+                        ? $"FOREIGN [{string.Join(',', foreign)}] in [{string.Join(',', ids)}]"
+                        : sameJob ? $"one job holds exactly a={a.Pid} and b={b.Pid}: [{string.Join(',', ids)}]" : $"NOT ONE JOB: a's job holds [{string.Join(',', ids)}]";
+
+                if (latest is null || foreign.Count > 0 || !sameJob)
+                {
+                    File.AppendAllText(resultsPath, $"{rep}\t{via}\tREFUSED: {gate}\n");
+                    Say($"m3pair rep {rep}: refused, {gate}; {QuitAll(quit, dirA)}; {QuitAll(quit, dirB)}");
+                    continue;
+                }
+
+                var request = DateTime.UtcNow;
+                string requestResult;
+
+                try
+                {
+                    if (via == "end")
+                    {
+                        var (code, output, error, _, _) = SchtasksOnce(dirA, "end", $"/end /tn \"{nameA}\"");
+                        requestResult = $"exit={code} out=[{output}] err=[{error}]";
+                    }
+                    else
+                    {
+                        runningA.Stop();
+                        requestResult = "IRunningTask.Stop returned";
+                    }
+                }
+                catch (Exception failure)
+                {
+                    requestResult = $"threw {Text.Hex(Sched.Hr(failure))} {Sched.Message(failure)}";
+                }
+
+                var aExited = a.WaitExit(60_000);
+                var aExitMs = aExited ? Text.Ms(Text.FromFt(a.ExitFt) - request) : "ALIVE after 60 s";
+                var aCode = aExited ? Text.Hex(a.ExitCode) : "-";
+                var bEnded = b.WaitExit(5000);
+                var bCode = bEnded ? Text.Hex(b.ExitCode) : "-";
+                var aSaw = string.Join(" ", Logs.ReadAll(dirA, "standin").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event));
+                var bSaw = string.Join(" ", Logs.ReadAll(dirB, "standin").Where(l => l.Utc >= request.AddMilliseconds(-5)).Select(l => l.Event));
+                var cleanup = QuitAll(quit, dirA) + "; " + QuitAll(quit, dirB);
+                File.AppendAllText(resultsPath, string.Join('\t', [
+                    rep.ToString(CultureInfo.InvariantCulture),
+                    via,
+                    gate,
+                    requestResult,
+                    aExitMs,
+                    aCode,
+                    bEnded.ToString(),
+                    bCode,
+                    aSaw.Length == 0 ? "-" : aSaw,
+                    bSaw.Length == 0 ? "-" : bSaw,
+                    cleanup]) + "\n");
+                Say($"m3pair rep {rep} {via}: {requestResult}; a exit {aExitMs} ms code {aCode}; b ended within 5 s={bEnded} code {bCode}; a saw [{aSaw}] b saw [{bSaw}]");
+                Thread.Sleep(1000);
+            }
+        }
+        finally
+        {
+            Say($"deleted {nameA}: {Sched.Delete(folder, nameA)}; {nameB}: {Sched.Delete(folder, nameB)}");
+        }
+
+        return 0;
+    }
+

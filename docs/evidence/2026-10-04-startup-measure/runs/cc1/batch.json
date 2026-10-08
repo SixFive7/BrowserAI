@@ -1,0 +1,4245 @@
+{
+ "progress": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\progress.log",
+ "gapMs": 1500,
+ "stubs": [
+  {
+   "name": "anthropic",
+   "exe": "C:\\Program Files\\nodejs\\node.exe",
+   "args": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\rig\\ccmodel.js"
+   ],
+   "env": {
+    "STUB_PORT": "8971",
+    "STUB_POLICY_FILE": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+    "STUB_LOGDIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1",
+    "STUB_TAG": "stub-fallback"
+   }
+  }
+ ],
+ "runs": [
+  {
+   "name": "D1-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D1-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D1-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D1-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_1\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_2\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_2\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D1-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_3\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_4\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_4\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D1-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D1-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"1000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D1-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_5\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_6\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_6\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D5-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D5-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D5-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D5-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_7\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_8\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_8\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D5-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_9\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_10\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_10\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D5-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D5-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D5-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_11\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_12\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_12\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D30-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D30-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D30-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D30-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_13\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_14\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_14\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D30-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_15\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_16\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_16\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D30-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D30-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"30000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D30-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_17\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_18\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_18\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D90-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D90-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D90-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "D90-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_19\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_20\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_20\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D90-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_21\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_22\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_22\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "D90-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\D90-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"90000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\D90-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_23\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_24\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_24\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FE-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FE-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FE-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FE-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_25\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_26\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_26\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FE-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_27\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_28\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_28\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FE-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FE-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"iserror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FE-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_29\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_30\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_30\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FR-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FR-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FR-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FR-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_31\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_32\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_32\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FR-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_33\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_34\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_34\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FR-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FR-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"rpcerror\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FR-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_35\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_36\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_36\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FX-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FX-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FX-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "FX-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_37\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_38\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_38\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FX-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_39\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_40\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_40\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "FX-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\FX-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_CALL_DELAY_MS\":\"5000\",\"LZ_CALL_FAIL\":\"exit\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\FX-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_41\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_42\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_42\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "I3-P-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r1\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "I3-P-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r2\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "I3-P-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3\\claude-debug.log",
+    "--model",
+    "sonnet",
+    "Use the browserai tools."
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure"
+   },
+   "stdin": "closed",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-P-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r3\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-P-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": []
+  },
+  {
+   "name": "I3-S-r1",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r1\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r1\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r1\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_43\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_44\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_44\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "I3-S-r2",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r2\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r2\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r2\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_45\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_46\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_46\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  },
+  {
+   "name": "I3-S-r3",
+   "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3",
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\bin\\cli\\claude.exe",
+   "args": [
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--input-format",
+    "stream-json",
+    "--mcp-config",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3\\mcp.json",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--allowedTools",
+    "mcp__browserai__browserai_init,mcp__browserai__browserai_list",
+    "--permission-mode",
+    "acceptEdits",
+    "--debug-file",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3\\claude-debug.log",
+    "--model",
+    "sonnet"
+   ],
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\proj",
+   "env": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3\\cfg",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\cfg\\codex-unused",
+    "DISABLE_AUTOUPDATER": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8971",
+    "ANTHROPIC_API_KEY": "stub-key-not-real",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "GIT_TERMINAL_PROMPT": "0",
+    "GCM_INTERACTIVE": "never",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "TEMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "TMP": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\tmp",
+    "APPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\roaming",
+    "LOCALAPPDATA": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\appdata\\local",
+    "GIT_CEILING_DIRECTORIES": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure",
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "CLAUDE_AGENT_SDK_VERSION": "0.3.288",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "CLAUDE_CODE_ENABLE_TASKS": "0",
+    "CLAUDE_CODE_EMIT_STARTUP_TIMING": "1"
+   },
+   "stdin": "pipe",
+   "maxMs": 300000,
+   "settleMs": 20000,
+   "writeFiles": [
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3\\cfg\\.claude.json",
+     "content": "{\"hasCompletedOnboarding\":true,\"autoUpdates\":false,\"bypassPermissionsModeAccepted\":false,\"customApiKeyResponses\":{\"approved\":[\"stub-key-not-real\"],\"rejected\":[]},\"lastReleaseNotesSeen\":\"2.1.288\",\"projects\":{\"C:/Source/SixFive7/BrowserAI/.work/startup-measure/proj\":{\"hasTrustDialogAccepted\":true,\"hasCompletedProjectOnboarding\":true,\"allowedTools\":[]}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\I3-S-r3\\mcp.json",
+     "content": "{\"mcpServers\":{\"browserai\":{\"type\":\"stdio\",\"command\":\"C:\\\\Program Files\\\\nodejs\\\\node.exe\",\"args\":[\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\rig\\\\lazysrv.js\"],\"env\":{\"LZ_LOGDIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r3\",\"LZ_TAG\":\"lz\",\"LZ_INIT_DELAY_MS\":\"3000\"}}}}"
+    },
+    {
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure\\runs\\cc1\\policy.json",
+     "content": "{\"logDir\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\startup-measure\\\\runs\\\\cc1\\\\I3-S-r3\",\"tag\":\"model\",\"realPerTurn\":1,\"phPerTurn\":0}"
+    }
+   ],
+   "steps": [
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_47\",\"request\":{\"subtype\":\"initialize\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"control_response\"",
+     "timeoutMs": 30000
+    },
+    {
+     "do": "mark",
+     "text": "TURN Use the browserai tools."
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"user\",\"session_id\":\"\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Use the browserai tools.\"}]},\"parent_tool_use_id\":null}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"type\":\"result\"",
+     "timeoutMs": 200000
+    },
+    {
+     "do": "sleep",
+     "ms": 1000
+    },
+    {
+     "do": "mark",
+     "text": "mcp_status after turn 1"
+    },
+    {
+     "do": "send",
+     "line": "{\"type\":\"control_request\",\"request_id\":\"req_48\",\"request\":{\"subtype\":\"mcp_status\"}}"
+    },
+    {
+     "do": "waitFor",
+     "pattern": "\"request_id\":\"req_48\"",
+     "timeoutMs": 40000
+    },
+    {
+     "do": "mark",
+     "text": "end: closeStdin"
+    },
+    {
+     "do": "closeStdin"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+[void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+$appId = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
+$h = @([Windows.UI.Notifications.ToastNotificationManager]::History.GetHistory($appId))
+"toast history for Windows PowerShell's app id: $($h.Count) toast(s) at $((Get-Date).ToUniversalTime().ToString('o'))"

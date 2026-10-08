@@ -487,6 +487,43 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 > provisioned `chrome.exe` with the saturation entry's command line and add
 > `--crash-test` for the crash arm. **Never by image name**, on any of them.
 
+### A windowless program started with no standard handles reads end of input at once -- measured 2026-10-04
+
+`[FLOATS]` on .NET for what the runtime makes of a missing handle, the windowless stub
+of [the windowless server entry](../mcp/protocol.md) built with SDK 10.0.401 and
+ILCompiler 10.0.12; `[STABLE]` for what Windows hands such a start. Windows 11 Pro
+10.0.26300. Everything it was read from:
+[`docs/evidence/2026-10-04-onebinary-measure`](../../docs/evidence/2026-10-04-onebinary-measure/README.md),
+`runs/nohandles/`.
+
+**A start with no standard handles is how the Task Scheduler, an installer and a
+double-click start a program, and a windowless MCP server started that way stops by
+itself.** The stub was launched 6 times with no standard handles: 3 times with the
+three handles NULL, 3 times with no `STARTF_USESTDHANDLES` at all. `GetStdHandle`
+returned NULL every time, .NET returned `Stream.Null` without a word, the MCP server
+read end of input at once, and the process exited by itself in 52 to 78 ms, 6 of 6.
+Every client gave its server a pipe on stdin, in all 54 runs of the same day, so a
+pipe on stdin is what tells a client's start from the others, and an argument is what
+says which was meant. ⚠️ **A check of the shape "no client, and stdin is a console"
+can never fire in a windowless start**, because stdin there is NULL and not a console;
+BrowserAI's server made that check for a person who double-clicked it.
+
+**The feedback cursor.** Microsoft documents that "If a GUI process is being started
+and neither STARTF_FORCEONFEEDBACK or STARTF_FORCEOFFFEEDBACK is specified, the
+process feedback cursor is used", and that "The system turns the feedback cursor off
+after the first call to GetMessage"
+([STARTUPINFOW](https://learn.microsoft.com/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfow),
+read 2026-10-08). Neither client passes either flag. No busy cursor was seen in any of
+the 27 windowless client runs, the pointer over the arrow shape in 23 of them; in a
+separate launcher the forced flag showed it 4 of 4 times, and the clients' flags 0 of
+7 times while the stub ran. A person was using the machine, so this is *not
+observed*, never *absent*. One `GetMessage` call at start would rule it out, as
+documented.
+
+**Re-establish it** with the batch's rig, `rig/ExitRig/Launch.cs.txt` and
+`Feedback.cs.txt`, starting the windowless stub with NULL handles and with no handle
+flag, and reading the stub's own report of its handles and its exit.
+
 ## Files, durable writes and deletes
 
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on
@@ -1705,6 +1742,39 @@ With this machine's lock
 process that holds the right grants it first**, which is why Q284 a has a second start
 learn the first one's pid before it asks for the window.
 
+⚠️ *Added 2026-10-08 by addition.* **A browser such a process starts can still come
+to the front.** On the maintainer's screen, with his leave, a launcher started through
+a scheduled task with the sign-in task's principal and settings, `IRegisteredTask::Run`
+with `TASK_LOGON_INTERACTIVE_TOKEN`, its parent the `svchost.exe` hosting the Schedule
+service, started a browser directly with `CreateProcessW`, `STARTF_USESHOWWINDOW` and
+`SW_SHOWDEFAULT` (what Node's spawn passes), in a kill-on-close job; the same launcher
+started from a shell was the control, the runs interleaved. Chromium was
+`chromium-1247` and Firefox `firefox-1553`, the foreground lock time-out 2147483647 ms,
+2026-10-08 between 14:14Z and 14:19Z, Windows 11 Pro 10.0.26300.9550.
+
+| Browser | Started by | Runs | Its window came to the front and took the keyboard focus | Opened behind the window in front, visible and not minimized |
+|---|---|---|---|---|
+| Chromium | the scheduled task | 3 | **3 of 3**, 0.32 to 1.34 s after the launch | 0 |
+| Chromium | the shell | 3 | **3 of 3**, 0.31 to 0.37 s | 0 |
+| Firefox | the scheduled task | 3 | 1 of 3, from 2.80 s, the foreground going back to his own window at 7.47 s | 2 |
+| Firefox | the shell | 3 | 1 of 3, from 2.08 s | 2 |
+
+**How the launcher was started made no difference.** Chromium's window comes to the
+front and takes the keyboard focus about 0.3 s after the launch, 6 of 6, so a person
+typing at that moment types into it; Firefox's came to the front 2 of 6 times and
+opened behind 77 to 118 other windows 4 of 6, the person's own window keeping the
+focus. Why Firefox splits was not measured; the person was switching windows while it
+ran, and Firefox shows its window 1.4 to 2.8 s after the launch, against Chromium's
+0.3 s. No browser window was ever minimized, and no taskbar flash was recorded, with no
+positive control for one. **BrowserAI's own chain was not measured**: these were
+direct launches, not through Node and `@playwright/mcp` with Playwright's flags. So
+the probe's `AllowSetForegroundWindow` reading above says what the process may do,
+and says nothing about a browser it starts. Everything it was read from:
+[`docs/evidence/2026-10-08-step0`](../../docs/evidence/2026-10-08-step0/README.md),
+`screen/runs/`; re-establish it with `screen/part2.ps1.txt` and the launcher in
+`screen/launcher/`, which register the task, run each case and delete the task, and
+snapshot and clean `HKCU\Software\Mozilla\Firefox\Launcher` around any Firefox run.
+
 ### A single instance through a mutex and a message-only window
 
 The researcher's prototype, published NativeAOT with the Windows subsystem: the first
@@ -1790,7 +1860,10 @@ it started, one the Task Scheduler put it in with six other processes, limit fla
 `0x0`: no kill on close and no breakaway rule. Kill-on-close jobs nested under it
 worked, three levels deep: the scheduler's, the coordinator's (`0x2000`, read back by
 the host) and each browser's (`0x2000`). Which processes the six others were was not
-recorded.
+recorded. *Corrected 2026-10-08 by addition: they were not this task's.* The Task Scheduler
+puts every process it starts in the session, from every task, into one job it shares,
+measured with stand-ins on 2026-10-08 in [the entry below](#what-the-task-scheduler-does-with-a-second-run-a-missing-or-disabled-task-end-and-a-child-left-behind----measured-2026-10-08);
+the six were that job's other members, started by other tasks.
 
 **What it does not establish.** The real binaries: the coordinator, host and browser
 were stand-ins, and the real ones are measured by the suite's arms over the published
@@ -1803,6 +1876,330 @@ scratch task, runs the batch, kills the coordinator and removes the task whateve
 happened, and `tools\analyzec.py` over the run; compare against the batch's
 `summary-survival.tsv`. Every client runs from the client-exit rig's copies, under a
 scratch configuration against a local stub.
+
+## The real programs through the real Task Scheduler -- measured 2026-10-04
+
+`[MACHINE]` for every time. How the clients end a server floats with their releases, as
+the 2026-10-03 entry above says, and that entry's row carries it.
+Windows 11 Pro 10.0.26300; BrowserAI **1.1.1-alpha.0.197**, both programs published
+from `e30380ac`, lane c's option c as built, with `@playwright/mcp` 0.0.83 and
+RegisterAI 0.2.0, packed as the suite's test pack with vpk **1.2.161** and installed
+the way `RealInstallerTests` installs it, `--silent --installto` a root under
+`%LOCALAPPDATA%\BrowserAI-test-scratch`; the clients Claude Code **2.1.288** and
+codex-cli **0.160.0**. Taken 2026-10-04 between 01:56Z and 02:21Z under the suite lock
+and the installer lock. Everything it was read from:
+[`docs/evidence/2026-10-04-onebinary-measure`](../../docs/evidence/2026-10-04-onebinary-measure/README.md),
+`runs/m2b/` and `m2-*`. It repeats the stand-in measurement of 2026-10-03 above with
+the real programs, and it holds.
+
+**Each run** waited until nothing of the test install ran, so that every run had to
+start a coordinator; client A opened a session with a hidden Chromium on a local page
+and then ended one of four ways; 6 s later the watcher read which processes were
+alive; then client B called `browser_snapshot` on the same session, with no resume,
+and `browserai_destroy`.
+
+| Exit, 3 runs each | Client A | Front asked to host up, from the front's own log | How client A's front ended | 6 s later | B took over |
+|---|---|---|---|---|---|
+| Claude Code, normal exit | 2.1.288 `-p` | 523, 575, 534 ms | by itself, "the client's input ended", exit 0 | coordinator, host and browser alive, 3 of 3 | 3 of 3, with `claude -p` |
+| Claude Code killed | 2.1.288, VS Code transport, terminated | 518, 521, 567 ms | Claude Code's job closing, exit 0, 3 ms after the client died | 3 of 3 | 3 of 3 |
+| `codex exec` ending | 0.160.0 | 673, 565, 619 ms | Codex's job, exit 1 | 3 of 3 | 3 of 3, with `codex exec` |
+| app-server ending, stdin closed | 0.160.0 | 536, 518, 572 ms | Codex's job, exit 1 | 3 of 3 | 3 of 3, with `codex exec` |
+
+**In all 12 runs:**
+
+- **The start path.** Client A's front logged `StartedThroughTheTask`.
+  `BrowserAI.exe --sign-in --start-host` appeared 106 to 145 ms after the front
+  started, its parent the `svchost.exe` hosting the Schedule service, inside a job the
+  Task Scheduler made, and it started `BrowserAI.Server.exe --host` 163 to 203 ms after
+  the front. Counting the two runs of a first attempt, the task started **14 of 14
+  times, in 514 to 674 ms**, and no front fell back to serving in-process.
+- **Codex's first turn** had BrowserAI's tools, 3 of 3 under `codex exec`.
+- **The takeover.** Client B's front reached the same host and no second coordinator
+  started; the same Chromium main process was alive when B began, and the snapshot
+  showed the page's own heading. `browserai_destroy` closed the browser 0.8 to 1.8 s
+  later, exit 0.
+- **The end.** The host ended 60 to 75 s after client B, exit 0, and the coordinator
+  11 to 19 ms after the host, exit 0.
+- **Windows.** No visible window appeared anywhere on the desktop; the watched
+  processes owned 144 windows, all invisible and all Chromium's own headless ones; no
+  BrowserAI process owned a window of any kind; and every front had its own windowless
+  console, 24 of 24 client runs.
+
+⭐ **A process the Task Scheduler starts never sees the client's environment.** The
+host wrote to the default data root, `%LOCALAPPDATA%\BrowserAI`, although the
+installer had `BROWSERAI_ROOT` pointing at scratch. The task's process gets the
+environment the Task Scheduler builds for the user, so a setting meant for it has to
+travel as an argument or over a pipe, and a test cannot sandbox its data root through
+a variable.
+
+**Every new front's stray sweep warned** that it found 7 or 8 browser processes it
+could not attribute while a session was kept, 13 of 13; nothing was terminated. A
+sweep allowed to act on processes it cannot attribute would end kept sessions.
+
+**Cleanup, checked.** `Update.exe --uninstall --silent` exited 0 in 1.9 s; the task,
+the PATH entry, the shortcut, the test's uninstall key and both scratch roots were
+gone; the clearance snapshot, the list of 204 scheduled tasks, the real `mcpServers` in
+`~/.claude.json` and `~/.codex/config.toml`, and the user PATH by kind, length and
+SHA-256 were identical before and after; and the installed BrowserAI 1.1.0's eight
+servers and their `node` children were still running with the same pids and creation
+times.
+
+**What it does not establish.** The one binary, which did not exist; any way the
+task's start can fail, which is the gap that matters once nothing falls back; codex
+0.155 in this measurement; either client's terminal UI; and whether the real
+`~/.claude/` folder was touched by the real `claude.exe` the install's RegisterAI ran,
+which was not compared.
+
+**Re-establish it** with the batch's `rig/m2*` scripts and `rig/m2.js.txt` against a
+test pack installed under the installer lock, with each client's driver from the
+client-exit rig; compare against `runs/m2b/m2-runs.tsv` and the clearance snapshots
+in `m2-snap/`.
+
+## A pipe call between two of BrowserAI's processes, idle and under a full suite's load -- measured 2026-10-04
+
+`[MACHINE]`. Windows 11 Pro 10.0.26300, BrowserAI **1.1.1-alpha.0.192** published from
+`1ee00ec0` and installed by hand in scratch with its own pipe, census, host and log,
+so that no suite arm could meet it. Callers were the product's own
+`CoordinatorClient.SendAsync`, through a probe linking the published
+`BrowserAI.Core.dll`, and fresh `BrowserAI.exe` second starts, which log their own
+hand-over time; the probes waited up to 30 s, so a slow call was measured and not cut
+off. Taken 2026-10-04 between 00:59Z and 01:56Z under the suite lock. Everything it
+was read from:
+[`docs/evidence/2026-10-04-startup-measure`](../../docs/evidence/2026-10-04-startup-measure/README.md),
+`q381/`. It is what Q381 and D3 of [the one-binary design](../../docs/design/one-binary/README.md)
+rest on: **whether 500 ms is a fair limit on one such call.**
+
+| Caller | Idle: p50 / p99 / max (n) | Under load: p50 / p99 / max (n) | Over 500 ms under load |
+|---|---|---|---|
+| A separate process, warm, `recheck` | 0.55 / 12.9 / 29.9 ms (600) | 0.6 to 1.1 / 82 to 193 / 1,234 ms (1,852) | 1 |
+| A separate process, warm, `host`, the host running | 0.56 / 1.9 / 22.8 ms (600) | 0.6 to 1.0 / 55 to 145 / 1,234 ms (1,879) | 1 |
+| In process, as the test arm calls it, its pool idle | 0.48 / 9.7 / 32.5 ms (600) | 0.6 to 0.8 / 62 to 137 / 339 ms (1,856) | 0 |
+| A fresh `BrowserAI.exe` second start | max 0.9 ms `recheck` (30), max 0.8 ms `host` (30) | p50 0.7, max 142.7 ms `recheck` (58); p50 0.7, max 55.1 ms `host` (57) | 0 |
+| A fresh .NET process, JIT-compiled, one call | p50 21, max 36 ms (60) | p50 28 to 42, max 1,017 ms (115) | 2 |
+| In process, with 32, 64 or 128 pool threads blocked | the first call 1,009 to 1,014 ms, 3 of 3; later calls under 50 ms | not run under load | -- |
+
+"Under load" is two full suite runs on the same machine. **The two separate-process
+calls over 500 ms happened at the same instant in two processes**, 01:46:53.666Z,
+1,234 ms each: one machine-wide stall of about 1.2 s in about seven minutes of load.
+**The suite's own arm went red in one of the two runs**, "did not answer 'recheck'
+inside 500 ms" at 650 ms, while nine probe calls in other processes at that moment
+took 0.5 to 0.7 ms. So the red came mostly from the test host itself, one .NET process
+running about 900 tests whose arm blocks one pool thread while it waits for another,
+on code compiled at first use, which the blocked-pool row shows costs about a second;
+the product's precompiled callers stayed under 143 ms; and the machine can still stall
+a call past 500 ms, rarely. With no process on the other end, opening the pipe fails at
+once, 7 to 10 ms, "No pipe named ... exists".
+
+**Re-establish it** with the batch's `probe/` and `rig/q381sum.py.txt` against a
+scratch install's coordinator, idle and then under a full suite run, and the second
+starts' own log lines; compare against `q381/idle/` and `q381/load/`.
+
+## What the Task Scheduler does with a second run, a missing or disabled task, End, and a child left behind -- measured 2026-10-08
+
+`[STABLE]` for the scheduler's behaviour, which no version this project floats can
+move; `[MACHINE]` for every time. Windows 11 Pro **10.0.26300.9550** (26H2), an AMD
+Ryzen 9 5950X; .NET SDK 10.0.401 with runtime 10.0.12. Taken 2026-10-08 between
+14:10Z and 14:40Z with stand-ins built for it and no BrowserAI binary: a NativeAOT
+Windows-subsystem stand-in that logs every window message, thread message, console
+event and its own exit, and a driver that talks to the scheduler through
+`Schedule.Service`, the same methods BrowserAI calls through its own vtables. Every
+task was registered with the sign-in task's principal and settings
+(`SignInTask.DefinitionFor`: the user by SID, least privilege, no battery
+conditions, start on demand, no time limit, priority 5, `Parallel`), changed per
+case and with no trigger, and removed afterwards. Everything it was read from, with
+the stand-in and the driver:
+[`docs/evidence/2026-10-08-step0`](../../docs/evidence/2026-10-08-step0/README.md),
+`tasks/`. It is what the one-binary design's "never a second copy", its errors for a
+missing and a disabled task, and its rule never to stop the background with End rest
+on.
+
+**Microsoft documents three of the four answers only in part**, read 2026-10-08:
+`IgnoreNew` "Does not start a new instance if an existing instance of the task is
+running"
+([MultipleInstancesPolicy](https://learn.microsoft.com/windows/win32/taskschd/taskschedulerschema-multipleinstancespolicy-settingstype-element)),
+and no page says what a `Run` it ignores returns; End sends `WM_CLOSE` and then calls
+`TerminateProcess` when `AllowHardTerminate` is true, its default
+([AllowHardTerminate](https://learn.microsoft.com/windows/win32/api/taskschd/nf-taskschd-itasksettings-get_allowhardterminate)),
+and no page says how long it waits, which windows get the message, or what happens to
+children; and a disabled task's `Run` returns `SCHED_E_TASK_DISABLED`
+([IRegisteredTask::Run](https://learn.microsoft.com/windows/win32/api/taskschd/nf-taskschd-iregisteredtask-run)).
+
+### `IgnoreNew` starts one instance from twenty requests at once, and answers every one of them `S_OK`
+
+| Case | Rounds | Instances started per round | What each of the 20 requesters got back |
+|---|---|---|---|
+| `IRegisteredTask::Run`, nothing running | 10 | **1, in 10 of 10** | `S_OK`, each with its own running-task object and instance id, 20 distinct per round. The one that started read `State` 4 with `EnginePID` the stand-in's pid; the other 19 failed every read and `Refresh` with `0x8004130B` (`SCHED_E_TASK_NOT_RUNNING`) |
+| `Run`, one already running | 10 | **0, in 10 of 10** | `S_OK` from all 20, each running-task object failing with `0x8004130B` |
+| `schtasks /run`, nothing running | 10 | **1, in 10 of 10** | exit 0 from all 20 and `SUCCESS: Attempted to run the scheduled task`; 15 to 19 of the 20 printed `INFO: ... is currently running.` before it |
+| `schtasks /run`, one already running | 10 | **0, in 10 of 10** | exit 0 from all 20, each printing both lines |
+
+The COM requests were 20 processes released by one named event, entering `Run`
+within 0.1 to 2.7 ms of each other, each call taking 3.5 to 55.7 ms, and the winner
+changed from round to round. ⚠️ **A requester cannot tell from the result whether it
+started the instance**: the `HRESULT` and the exit code are the same for the winner
+and the ignored, and only the returned object's `State` tells, through COM; through
+`schtasks` nothing does.
+
+### A missing task and a disabled one, 5 runs each
+
+| Request | Result | Anything started |
+|---|---|---|
+| `ITaskFolder::GetTask` on a name never registered | `0x80070002`, "The system cannot find the file specified.", in 0.2 to 5.3 ms | no |
+| `schtasks /run` on that name | exit 1, `ERROR: The system cannot find the file specified.` | no |
+| `Run` on a task object taken before the task was deleted | `0x80070002` | no |
+| `Run` on a disabled task | `0x80041326`, "The task is disabled." | no |
+| `RunEx` with `TASK_RUN_IGNORE_CONSTRAINTS` on it | `0x80041326` | no |
+| `schtasks /run`, and `schtasks /run /i`, on it | exit 1, `ERROR: The scheduled task "<name>" could not run because it is disabled.` | no |
+
+The disabled task read `State` 1 and `Enabled` false, and its `LastTaskResult` stayed
+`0x00041303`, never run.
+
+### End and Stop close the process's top-level windows, then terminate it about a second later, and touch nothing else
+
+31 requests against a running instance whose stand-in had a message-only window, and
+in two variants a hidden top-level window as well, and which had started one ordinary
+child with the same windows:
+
+| Request | The stand-in's windows | Runs | The request returned | The stand-in ended after the request | Exit code | It received first | Its child |
+|---|---|---|---|---|---|---|---|
+| `schtasks /end` | message-only | 5 | exit 0, 41.2 to 73.2 ms | 1,039.2 to 1,071.0 ms | `0x42B` | nothing | alive 5 of 5 |
+| `IRunningTask::Stop` | message-only | 6 | `S_OK`, 22.3 to 29.2 ms | 1,028.4 to 1,051.9 ms | `0x42B` | nothing | alive 6 of 6 |
+| `schtasks /end` | and a hidden top-level window that exits on `WM_CLOSE` | 5 | exit 0, 40.1 to 76.5 ms | 57.1 to 96.5 ms | 16, its own | `WM_COMMAND`, `WM_COMMAND`, `WM_CLOSE`, twice | alive 5 of 5 |
+| `IRunningTask::Stop` | the same | 5 | `S_OK`, 20.0 to 24.1 ms | 44.7 to 51.8 ms | 16 | the same | alive 5 of 5 |
+| `schtasks /end` | and a hidden top-level window that ignores `WM_CLOSE` | 5 | exit 0, 38.8 to 61.7 ms | 1,045.2 to 1,051.2 ms | `0x42B` | the same | alive 5 of 5 |
+| `IRunningTask::Stop` | the same | 5 | `S_OK`, 18.4 to 34.1 ms | 1,024.2 to 1,036.6 ms | `0x42B` | the same | alive 5 of 5 |
+
+⭐ **A process with no top-level window gets no notice at all**: no window message,
+no thread message, no console event and no `ProcessExit`, and it is terminated 1.02 to
+1.07 s after the request with exit code `0x42B` (1067, `ERROR_PROCESS_ABORTED`). One
+with a top-level window receives, within 45 to 96 ms, `WM_COMMAND` (wParam 0,
+lParam 7), `WM_COMMAND` (wParam 0, lParam 2) and `WM_CLOSE`, and the same three again
+about a millisecond later; a message-only window received nothing in any of the 31.
+A process that exits on `WM_CLOSE` keeps its own exit code, and one that ignores it is
+terminated on the same deadline. **The child was ended in 0 of 31**, though it had a
+hidden top-level window of its own: End and Stop end the task's process, never its
+tree and never its job. After every request the task read Ready, no instance, and
+`LastTaskResult` `0x00041306`, `SCHED_S_TASK_TERMINATED`. Which process sends the
+messages was not established: none of the scheduler service's binaries imports
+`PostMessageW`, and `taskhostw.exe` does.
+
+### A child the task's process leaves behind is not ended, and the task no longer counts as running
+
+The stand-in started a child and exited 500 ms later with code 0, and the task was
+read once a second for 150 s, 5 runs per way of starting the child:
+
+| How the child was started | Ended by the scheduler | Alive at the end of the 150 s |
+|---|---|---|
+| ordinary, `CREATE_NO_WINDOW`, as `Process.Start` does | never | 5 of 5 |
+| detached, `DETACHED_PROCESS` and `CREATE_NEW_PROCESS_GROUP` | never | 5 of 5 |
+| detached and `CREATE_BREAKAWAY_FROM_JOB` | never | 5 of 5 |
+
+**The breakaway was refused 5 of 5**, `CreateProcess` failing with error 5, so all 15
+children ran inside the scheduler's job, and **none of the 15 was ended**, at any of
+2,217 samples from the stand-in's exit to 150 s after it. From the first sample the
+task read Ready, no instance, `LastTaskResult` 0: an instance ends when the action's
+own process exits, and the scheduler does not follow that process's children. So a
+child the task-started process starts and then exits for, such as `Update.exe`, keeps
+running untouched. A run request made while such a child lives was not measured.
+
+### The scheduler puts every process it starts in the session into one job
+
+The job the stand-ins started in held, besides them, seven processes this
+measurement did not start: two the scheduler started at the 2026-10-03 sign-in, four
+children of one of those, and one more program. Its counters read 2,500 processes in
+total at 14:10Z and 2,730 at 14:39Z, limit flags `0x0`: **one job for every task's
+process in the session, shared, with no breakaway**. That is why a breakaway is
+refused, and it names the "six other processes" the 2026-10-03 entry above could not.
+End and Stop were run against it only behind a gate: the scheduler's own binaries
+were read first, and none of `schedsvc.dll`, `ubpm.dll`, `taskcomp.dll` and
+`wptaskscheduler.dll` imports or contains a call that terminates a job; and before
+every request the stand-in's job had to hold only the stand-in, its child and the
+seven recorded pids, and after it all seven had to be alive with unchanged start
+times. They were, after each of the 31 and at the end. An S4U task, which would have
+had a job of its own in session 0, was refused to the non-elevated token,
+`0x80070005`, 4 of 4.
+
+### The scheduler's own share of a start is about 4 ms
+
+| Path | Runs | From the run request to the stand-in's first log line | Medians |
+|---|---|---|---|
+| `Run`, one request at a time | 20 | 18.4 to 49.1 ms, median 19.6 | `Run` returned in 1.1 ms; the process created at 3.7 ms; its start to `Main` 15.1 ms; `Main` to the line 0.7 ms |
+| `schtasks /run`, timed from launching `schtasks.exe` | 10 | 43.5 to 85.1 ms, median 67.6 | `schtasks.exe` exited at 27.9 ms; the process created at 53.4 ms; its start to `Main` 12.4 ms |
+| `Run`, the winner of a twenty-way race | 10 | 24.3 to 50.3 ms after the release, median 30.0 | |
+| `schtasks`, the winner of a twenty-way race | 10 | 78.0 to 124.5 ms, median 105.4 | |
+
+`EnginePID` was the stand-in's own pid, 20 of 20. Set against the 514 to 674 ms the
+real programs took on 2026-10-04 (the entry above), almost all of that is the program
+starting after it was created.
+
+### Sign-out, read 2026-10-08 and not measured
+
+An interactive-token task runs "only in an existing interactive session"
+([LogonType](https://learn.microsoft.com/windows/win32/taskschd/taskschedulerschema-logontype-principaltype-element)),
+and at sign-out every process in the session ends. A process with no visible window
+is told only through a hidden top-level window that handles `WM_QUERYENDSESSION` and
+`WM_ENDSESSION`, created with `CreateWindowEx` and a `dwExStyle` of 0
+([SetConsoleCtrlHandler](https://learn.microsoft.com/windows/console/setconsolectrlhandler));
+`CTRL_LOGOFF_EVENT` "is received only by services"
+([HandlerRoutine](https://learn.microsoft.com/windows/console/handlerroutine)); a
+message-only window "does not receive broadcast messages"
+([window features](https://learn.microsoft.com/windows/win32/winmsg/window-features));
+and such a process "cannot cancel shutdown" and is ended if it has not answered within
+5 seconds
+([shutdown changes for Windows Vista](https://learn.microsoft.com/windows/win32/shutdown/shutdown-changes-for-windows-vista)).
+`WM_QUERYENDSESSION` never arrived in the measurement above, because nothing signed
+out.
+
+**Re-establish it** with the batch's `tasks/src/` (the stand-in and the driver, both
+as `.txt`), which registers each task, runs each case and removes the task whatever
+happens; take the measurement of End only behind the same gate, because the job it
+runs in is shared with processes nobody here started. Compare against each case's
+`results.tsv` or `summary.tsv` under `tasks/runs/`.
+
+## Reading the window in front and the time of the last input -- measured 2026-10-08
+
+`[MACHINE]`. The same machine and day as the entry above, a stand-in and no hooks of
+any kind. It is what the one-binary design's check of a person's input in a visible
+window rests on (F4): **two reads per tick, however many windows are open, and what
+they cost.**
+
+One tick is `GetForegroundWindow`, `GetWindowThreadProcessId` and `GetLastInputInfo`.
+`QueryPerformanceCounter` resolves only 100 ns on this machine and a tick is shorter,
+so ticks were timed with a serialised `rdtsc` calibrated against it, at 3.40 GHz, in
+10 ns steps; two clock reads cost a median of 20 ns and are inside every figure.
+
+| Run | Ticks | Median | p99 | Mean |
+|---|---|---|---|---|
+| a tight loop, started directly | 5 x 100,000 | **50 ns**, 5 of 5 | 90 to 100 ns | 49.4 to 53.9 ns |
+| a tight loop, started by a task | 5 x 100,000 | 50 ns, 5 of 5 | 90 ns, 5 of 5 | 48.3 to 51.3 ns |
+| one tick every 2 s for 300 s | 5 x 150 | **2.22 to 2.43 microseconds** | 12.4 to 360 microseconds | 4.2 to 10.1 microseconds |
+
+Per call in the tight loop, `GetForegroundWindow` took a median of 30 ns,
+`GetWindowThreadProcessId` 30 ns and `GetLastInputInfo` 20 to 30 ns. The 750 ticks at
+the 2 s pace, pooled, had a median of 2.34 microseconds, a p99 of 65.2 and a maximum
+of 734. **Over the five minutes the calls cost about 0.7 ms of CPU**:
+`QueryProcessCycleTime` read 3.13 to 3.45 ms for the ticking processes against 2.38
+and 2.72 ms for controls that woke every 2 s and called nothing, while
+`GetProcessTimes` read zero for all of them, below its 15.625 ms step. Waking every
+2 s costs about 2.5 ms on its own. No tick read a missing foreground window.
+
+**What Microsoft documents about the reads**, read 2026-10-08: `GetLastInputInfo` is
+session-wide for the calling session and its tick "is not guaranteed to be
+incremental"
+([GetLastInputInfo](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getlastinputinfo));
+its `dwTime` is a 32-bit tick count that wraps after 49.7 days, so an idle time is a
+32-bit difference against `GetTickCount`
+([GetTickCount](https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-gettickcount));
+"The foreground window can be NULL in certain circumstances"
+([GetForegroundWindow](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getforegroundwindow));
+hooks "tend to slow down the system"
+([hooks overview](https://learn.microsoft.com/windows/win32/winmsg/about-hooks)); and a
+periodic timer costs power, where a coalescable one is recommended
+([waitable timer objects](https://learn.microsoft.com/windows/win32/sync/waitable-timer-objects)).
+No page says what the three reads cost.
+
+**Re-establish it** with the batch's `tasks/src/` tick modes against a no-op control,
+reading `QueryProcessCycleTime` for both; compare against `tasks/runs/.../m5/`.
 
 ## The task scheduler from a NativeAOT process, through COM -- measured 2026-09-24
 

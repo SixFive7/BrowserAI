@@ -1,0 +1,4 @@
+2026-10-04T00:59:40.752Z PHASE sanity reps=1
+2026-10-04T00:59:42.438Z mcpprobe sanity-front.json status=0
+2026-10-04T00:59:42.439Z sanity installed front (no coordinator): init=1548.15ms tools=1564.146ms count=78 exit=0
+2026-10-04T00:59:42.440Z PHASE sanity DONE; started 0 processes

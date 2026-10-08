@@ -1,0 +1,551 @@
+// Scratch rig for the step-0 screen measurements, 2026-10-08. Compiled by Windows PowerShell 5.1's
+// Add-Type, so C# 5: no interpolation, no expression bodies.
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+
+namespace Step0
+{
+    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+    public class MMDeviceEnumeratorCo
+    {
+    }
+
+    [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceEnumerator
+    {
+        [PreserveSig] int EnumAudioEndpoints(int dataFlow, int stateMask, out IMMDeviceCollection devices);
+        [PreserveSig] int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice device);
+    }
+
+    [ComImport, Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceCollection
+    {
+        [PreserveSig] int GetCount(out uint count);
+        [PreserveSig] int Item(uint index, out IMMDevice device);
+    }
+
+    [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDevice
+    {
+        [PreserveSig] int Activate(ref Guid iid, int clsCtx, IntPtr activationParams, [MarshalAs(UnmanagedType.IUnknown)] out object iface);
+        [PreserveSig] int OpenPropertyStore(int access, out IntPtr store);
+        [PreserveSig] int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetState(out int state);
+    }
+
+    [ComImport, Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionManager2
+    {
+        [PreserveSig] int GetAudioSessionControl(IntPtr sessionGuid, int streamFlags, out IntPtr control);
+        [PreserveSig] int GetSimpleAudioVolume(IntPtr sessionGuid, int streamFlags, out IntPtr volume);
+        [PreserveSig] int GetSessionEnumerator(out IAudioSessionEnumerator sessionEnum);
+    }
+
+    [ComImport, Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionEnumerator
+    {
+        [PreserveSig] int GetCount(out int count);
+        [PreserveSig] int GetSession(int index, [MarshalAs(UnmanagedType.IUnknown)] out object session);
+    }
+
+    [ComImport, Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionControl2
+    {
+        [PreserveSig] int GetState(out int state);
+        [PreserveSig] int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+        [PreserveSig] int SetDisplayName(IntPtr name, IntPtr context);
+        [PreserveSig] int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+        [PreserveSig] int SetIconPath(IntPtr path, IntPtr context);
+        [PreserveSig] int GetGroupingParam(out Guid grouping);
+        [PreserveSig] int SetGroupingParam(ref Guid grouping, IntPtr context);
+        [PreserveSig] int RegisterAudioSessionNotification(IntPtr notifications);
+        [PreserveSig] int UnregisterAudioSessionNotification(IntPtr notifications);
+        [PreserveSig] int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetProcessId(out uint pid);
+        [PreserveSig] int IsSystemSoundsSession();
+        [PreserveSig] int SetDuckingPreference(bool optOut);
+    }
+
+    [ComImport, Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioMeterInformation
+    {
+        [PreserveSig] int GetPeakValue(out float peak);
+    }
+
+    [ComImport, Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioEndpointVolume
+    {
+        [PreserveSig] int RegisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int UnregisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int GetChannelCount(out uint count);
+        [PreserveSig] int SetMasterVolumeLevel(float level, IntPtr context);
+        [PreserveSig] int SetMasterVolumeLevelScalar(float level, IntPtr context);
+        [PreserveSig] int GetMasterVolumeLevel(out float level);
+        [PreserveSig] int GetMasterVolumeLevelScalar(out float level);
+        [PreserveSig] int SetChannelVolumeLevel(uint channel, float level, IntPtr context);
+        [PreserveSig] int SetChannelVolumeLevelScalar(uint channel, float level, IntPtr context);
+        [PreserveSig] int GetChannelVolumeLevel(uint channel, out float level);
+        [PreserveSig] int GetChannelVolumeLevelScalar(uint channel, out float level);
+        [PreserveSig] int SetMute(bool mute, IntPtr context);
+        [PreserveSig] int GetMute(out bool mute);
+    }
+
+    public static class Mon
+    {
+        public delegate bool EnumProc(IntPtr h, IntPtr l);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int L;
+            public int T;
+            public int R;
+            public int B;
+        }
+
+        [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+        [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+        [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+        [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out RECT r);
+        [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr l);
+
+        public static readonly Stopwatch Clock = Stopwatch.StartNew();
+        public static readonly DateTime ClockZeroUtc = DateTime.UtcNow;
+        public static Rectangle Region;
+        public static Rectangle Roi = Rectangle.Empty;
+        public static int PeriodMs = 40;
+        public static volatile bool Baseline = true;
+        public static int ProbeX;
+        public static int ProbeY;
+        static string lastAt = "";
+        static readonly HashSet<string> quietIgnore = new HashSet<string>();
+
+        static readonly List<string> lines = new List<string>();
+        static readonly object gate = new object();
+        static Thread thread;
+        static volatile bool stop;
+        static int polls;
+        static int audioFailures;
+        static string lastWin = "";
+        static string lastFg = "";
+        static int[] prev;
+        static int[] cur;
+        static Bitmap frame;
+
+        public static void Log(string s)
+        {
+            lock (gate)
+            {
+                lines.Add(Clock.ElapsedMilliseconds.ToString("D6") + " " + s);
+            }
+        }
+
+        public static string[] Lines()
+        {
+            lock (gate)
+            {
+                return lines.ToArray();
+            }
+        }
+
+        public static string Describe(IntPtr h)
+        {
+            var c = new StringBuilder(256);
+            GetClassName(h, c, 256);
+            var t = new StringBuilder(256);
+            GetWindowText(h, t, 256);
+            uint pid;
+            GetWindowThreadProcessId(h, out pid);
+            string title = t.ToString();
+            if (title.Length > 70)
+            {
+                title = title.Substring(0, 70) + "~";
+            }
+
+            return String.Format("hwnd=0x{0:X} pid={1} class='{2}' title='(a window of the person at the machine, its title cut)'", h.ToInt64(), pid, c, title);
+        }
+
+        public static string Foreground()
+        {
+            return Describe(GetForegroundWindow());
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")] static extern IntPtr WindowFromPoint(POINT p);
+        [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr h, uint flags);
+
+        public static IntPtr RootAt(int x, int y)
+        {
+            var p = new POINT();
+            p.X = x;
+            p.Y = y;
+            return GetAncestor(WindowFromPoint(p), 2);
+        }
+
+        public static string At(int x, int y)
+        {
+            var p = new POINT();
+            p.X = x;
+            p.Y = y;
+            IntPtr h = WindowFromPoint(p);
+            return "point=(" + x + "," + y + ") window: " + WindowState(h) + " | root: " + WindowState(GetAncestor(h, 2)) + " | rootOwner: " + WindowState(GetAncestor(h, 3));
+        }
+
+        public static List<IntPtr> ToastWindows()
+        {
+            var found = new List<IntPtr>();
+            EnumWindows(delegate(IntPtr h, IntPtr l)
+            {
+                var c = new StringBuilder(256);
+                GetClassName(h, c, 256);
+                var t = new StringBuilder(256);
+                GetWindowText(h, t, 256);
+                if (c.ToString() == "Windows.UI.Core.CoreWindow" && t.ToString() == "New notification")
+                {
+                    found.Add(h);
+                }
+
+                return true;
+            }, IntPtr.Zero);
+            return found;
+        }
+
+        public static string WindowState(IntPtr h)
+        {
+            RECT r;
+            GetWindowRect(h, out r);
+            return String.Format("{0} visible={1} rect=({2},{3})-({4},{5})", Describe(h), IsWindowVisible(h), r.L, r.T, r.R, r.B);
+        }
+
+        public static Bitmap Grab()
+        {
+            var b = new Bitmap(Region.Width, Region.Height, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(b))
+            {
+                g.CopyFromScreen(Region.X, Region.Y, 0, 0, Region.Size);
+            }
+
+            return b;
+        }
+
+        public static void SaveCrop(Bitmap src, Rectangle r, int radius, string path)
+        {
+            using (var dst = src.Clone(r, PixelFormat.Format32bppArgb))
+            {
+                for (int y = 0; y < radius; y++)
+                {
+                    for (int x = 0; x < radius; x++)
+                    {
+                        double dx = radius - x - 0.5;
+                        double dy = radius - y - 0.5;
+                        if (dx * dx + dy * dy > (double)radius * radius)
+                        {
+                            dst.SetPixel(x, y, Color.Transparent);
+                            dst.SetPixel(dst.Width - 1 - x, y, Color.Transparent);
+                            dst.SetPixel(x, dst.Height - 1 - y, Color.Transparent);
+                            dst.SetPixel(dst.Width - 1 - x, dst.Height - 1 - y, Color.Transparent);
+                        }
+                    }
+                }
+
+                dst.Save(path, ImageFormat.Png);
+            }
+        }
+
+        public static void Start()
+        {
+            stop = false;
+            thread = new Thread(Run);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        public static void Stop()
+        {
+            stop = true;
+            thread.Join(5000);
+        }
+
+        static void Run()
+        {
+            var devices = new List<object[]>();
+            try
+            {
+                AudioInit(devices);
+            }
+            catch (Exception e)
+            {
+                Log("audio-init-failed " + e.GetType().Name + ": " + e.Message);
+            }
+
+            frame = new Bitmap(Region.Width, Region.Height, PixelFormat.Format32bppArgb);
+            cur = new int[Region.Width * Region.Height];
+            prev = new int[Region.Width * Region.Height];
+            bool havePrev = false;
+            while (!stop)
+            {
+                long t0 = Clock.ElapsedMilliseconds;
+                try
+                {
+                    AudioPoll(devices);
+                }
+                catch (Exception e)
+                {
+                    if (audioFailures++ < 5)
+                    {
+                        Log("audio-poll-failed " + e.GetType().Name + ": " + e.Message);
+                    }
+                }
+
+                try
+                {
+                    PixPoll(havePrev);
+                    havePrev = true;
+                }
+                catch (Exception e)
+                {
+                    Log("pix-failed " + e.Message);
+                }
+
+                try
+                {
+                    WinPoll();
+                }
+                catch (Exception e)
+                {
+                    Log("win-failed " + e.Message);
+                }
+
+                polls++;
+                int left = PeriodMs - (int)(Clock.ElapsedMilliseconds - t0);
+                if (left > 0)
+                {
+                    Thread.Sleep(left);
+                }
+            }
+
+            Log("monitor-stopped polls=" + polls);
+        }
+
+        static void AudioInit(List<object[]> devices)
+        {
+            var en = (IMMDeviceEnumerator)(new MMDeviceEnumeratorCo());
+            IMMDeviceCollection col;
+            int hr = en.EnumAudioEndpoints(0, 1, out col);
+            if (hr != 0)
+            {
+                Log("audio-enum hr=0x" + hr.ToString("X8"));
+                return;
+            }
+
+            uint n;
+            col.GetCount(out n);
+            for (uint i = 0; i < n; i++)
+            {
+                IMMDevice dev;
+                col.Item(i, out dev);
+                string id;
+                dev.GetId(out id);
+                object o;
+                Guid g1 = typeof(IAudioMeterInformation).GUID;
+                dev.Activate(ref g1, 23, IntPtr.Zero, out o);
+                var meter = (IAudioMeterInformation)o;
+                Guid g2 = typeof(IAudioSessionManager2).GUID;
+                dev.Activate(ref g2, 23, IntPtr.Zero, out o);
+                var mgr = (IAudioSessionManager2)o;
+                Guid g3 = typeof(IAudioEndpointVolume).GUID;
+                dev.Activate(ref g3, 23, IntPtr.Zero, out o);
+                var vol = (IAudioEndpointVolume)o;
+                float level;
+                bool mute;
+                vol.GetMasterVolumeLevelScalar(out level);
+                vol.GetMute(out mute);
+                Log(String.Format("audio-device dev={0} id={1} volume={2:0.00} mute={3}", i, id, level, mute));
+                devices.Add(new object[] { i, meter, mgr });
+            }
+
+            IMMDevice def;
+            if (en.GetDefaultAudioEndpoint(0, 0, out def) == 0)
+            {
+                string did;
+                def.GetId(out did);
+                Log("audio-default-console id=" + did);
+            }
+        }
+
+        static void AudioPoll(List<object[]> devices)
+        {
+            foreach (var d in devices)
+            {
+                float p;
+                ((IAudioMeterInformation)d[1]).GetPeakValue(out p);
+                if (p > 0.0005f)
+                {
+                    string key = "endpoint" + d[0];
+                    if (Baseline)
+                    {
+                        if (quietIgnore.Add(key))
+                        {
+                            Log(String.Format("audio-baseline endpoint dev={0} peak={1:0.0000} (ignored from here on)", d[0], p));
+                        }
+                    }
+                    else if (!quietIgnore.Contains(key))
+                    {
+                        Log(String.Format("audio-endpoint dev={0} peak={1:0.0000}", d[0], p));
+                    }
+                }
+
+                IAudioSessionEnumerator se;
+                if (((IAudioSessionManager2)d[2]).GetSessionEnumerator(out se) != 0)
+                {
+                    continue;
+                }
+
+                int c;
+                se.GetCount(out c);
+                for (int k = 0; k < c; k++)
+                {
+                    object so;
+                    se.GetSession(k, out so);
+                    float sp;
+                    ((IAudioMeterInformation)so).GetPeakValue(out sp);
+                    if (sp > 0.0005f)
+                    {
+                        var ctl = (IAudioSessionControl2)so;
+                        uint pid;
+                        ctl.GetProcessId(out pid);
+                        bool sys = ctl.IsSystemSoundsSession() == 0;
+                        string sid;
+                        ctl.GetSessionIdentifier(out sid);
+                        string key = "session" + d[0] + "|" + sid;
+                        if (Baseline)
+                        {
+                            if (quietIgnore.Add(key))
+                            {
+                                Log(String.Format("audio-baseline session dev={0} pid={1} system={2} peak={3:0.0000} id={4} (ignored from here on)", d[0], pid, sys, sp, sid));
+                            }
+                        }
+                        else if (!quietIgnore.Contains(key))
+                        {
+                            Log(String.Format("audio-session dev={0} pid={1} system={2} peak={3:0.0000} id={4}", d[0], pid, sys, sp, sid));
+                        }
+                    }
+
+                    Marshal.ReleaseComObject(so);
+                }
+
+                Marshal.ReleaseComObject(se);
+            }
+        }
+
+        static void PixPoll(bool havePrev)
+        {
+            using (var g = Graphics.FromImage(frame))
+            {
+                g.CopyFromScreen(Region.X, Region.Y, 0, 0, Region.Size);
+            }
+
+            var data = frame.LockBits(new Rectangle(0, 0, frame.Width, frame.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(data.Scan0, cur, 0, cur.Length);
+            frame.UnlockBits(data);
+            if (havePrev)
+            {
+                Rectangle roi = Roi;
+                int w = frame.Width;
+                int inRoi = 0;
+                int outRoi = 0;
+                int minX = int.MaxValue, minY = int.MaxValue, maxX = -1, maxY = -1;
+                for (int i = 0; i < cur.Length; i++)
+                {
+                    int a = prev[i];
+                    int b = cur[i];
+                    if (a == b)
+                    {
+                        continue;
+                    }
+
+                    int dr = Math.Abs(((a >> 16) & 255) - ((b >> 16) & 255));
+                    int dg = Math.Abs(((a >> 8) & 255) - ((b >> 8) & 255));
+                    int db = Math.Abs((a & 255) - (b & 255));
+                    if (dr < 32 && dg < 32 && db < 32)
+                    {
+                        continue;
+                    }
+
+                    int x = i % w;
+                    int y = i / w;
+                    if (roi.IsEmpty || roi.Contains(x, y))
+                    {
+                        inRoi++;
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                    else
+                    {
+                        outRoi++;
+                    }
+                }
+
+                if (inRoi > 0)
+                {
+                    Log(String.Format("pix roi={0} outside={1} box=({2},{3})-({4},{5})", inRoi, outRoi, minX, minY, maxX, maxY));
+                }
+            }
+
+            var t = prev;
+            prev = cur;
+            cur = t;
+        }
+
+        static void WinPoll()
+        {
+            var sb = new StringBuilder();
+            foreach (var h in ToastWindows())
+            {
+                sb.Append(WindowState(h)).Append("; ");
+            }
+
+            string w = sb.ToString();
+            if (w != lastWin)
+            {
+                Log("win " + (w.Length == 0 ? "(no 'New notification' window)" : w));
+                lastWin = w;
+            }
+
+            if (ProbeX != 0)
+            {
+                string at = WindowState(RootAt(ProbeX, ProbeY));
+                if (at != lastAt)
+                {
+                    Log("at (" + ProbeX + "," + ProbeY + ") root " + at);
+                    lastAt = at;
+                }
+            }
+
+            string f = Foreground();
+            if (f != lastFg)
+            {
+                Log("fg " + f);
+                lastFg = f;
+            }
+        }
+    }
+}

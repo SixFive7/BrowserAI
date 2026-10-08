@@ -1,0 +1,11 @@
+round	via	seeded	goUtc	seedPid	requests	results	distinctGuids	enginePids	started	startedTags	startedPids	firstStartMsAfterGo	lastStartMsAfterGo	instancesAt8s	stateAt8s	instancesAfterQuit	requestSpreadMs	callMsMinMedMax	quit
+1	com	True	2026-10-08T14:15:04.4336231Z	66520	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	5.2/16.7/24.3	all exited
+2	com	True	2026-10-08T14:15:18.1051949Z	109488	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	6.5/24.2/36.3	all exited
+3	com	True	2026-10-08T14:15:31.7703036Z	101240	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	9.3/15.9/18.2	all exited
+4	com	True	2026-10-08T14:15:45.4330414Z	40800	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	1.1	12.8/21.9/23.3	all exited
+5	com	True	2026-10-08T14:15:59.2054785Z	75660	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.2	9.2/18.1/23.6	all exited
+6	com	True	2026-10-08T14:16:12.9620671Z	80488	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	6.2/20.6/20.7	all exited
+7	com	True	2026-10-08T14:16:28.8128971Z	104040	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	2.7	14.3/18.1/55.7	all exited
+8	com	True	2026-10-08T14:16:42.9786973Z	105520	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	4.4/17.8/24.1	all exited
+9	com	True	2026-10-08T14:16:56.6156639Z	13308	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	6.7/14.8/21.9	all exited
+10	com	True	2026-10-08T14:17:10.2506289Z	22272	20	20x 0x00000000 state=err:0x8004130B	20	20x err:0x8004130B	0			-	-	1	4	0	0.1	5.5/21.6/23.3	all exited

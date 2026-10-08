@@ -1,0 +1,9 @@
+2026-10-04T01:32:01.941Z MODE idle
+2026-10-04T01:32:02.576Z coordinator pipe 44 ms, host pipe 582 ms
+2026-10-04T01:32:37.377Z EXIT idle-client-recheck pid=79108 code=0
+2026-10-04T01:33:09.135Z EXIT idle-client-host pid=26732 code=0
+2026-10-04T01:33:41.271Z EXIT idle-inproc pid=86180 code=0
+2026-10-04T01:33:54.570Z EXIT idle-inproc-blocked32 pid=89752 code=0
+2026-10-04T01:34:39.589Z EXIT idle-inproc-blocked64 pid=75468 code=0
+2026-10-04T01:35:17.610Z EXIT coordinator --start-host pid=31788 code=0
+2026-10-04T01:36:25.056Z EXIT idle-inproc-blocked128 pid=48384 code=0

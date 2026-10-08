@@ -1,0 +1,572 @@
+
+===== print: 4 runs (print-r1, print-r2, print-r3, print-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: claude-code | Claude Code | 2.1.294 x4
+  clientName: claude-code x4
+  protocolVersion: 2025-11-25 x4
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: sdk-cli x4
+  CLAUDECODE: 1 x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: a7670fc3-ccd3-4aeb-ba8e-bb433bbcde4e x1  ||  ff907eca-bec5-4307-beae-41a8ef30f665 x1  ||  9f6caecb-69fd-4766-a7e3-37f1bc259086 x1  ||  5fa5a2ab-6653-4310-9757-5f47d40d94fa x1
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: print x4
+  envCount: 58 x4
+  envAddedByClient: AI_AGENT CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x4
+  envDroppedByClient: - x4
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME IDRIG_MARKER x4
+  parentImage: claude.exe x4
+  parentIsClient: true x4
+  parentArgs: -p "Say hi." x4
+  parentHasPrintFlag: true x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: -p x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  startupFlags: 0x101 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x3C00 x4
+  jobImages: claude.exe,self x4
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x4
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x4
+  endHow: EOF x4
+  error: (missing) x4
+
+===== printinh: 3 runs (printinh-r1, printinh-r2, printinh-r3)
+  clientExit: 0 x3
+  harnessKilled: false x3
+  waitTimeout: null x3
+  launches: 1 x3
+  listedLaunches: 1 x3
+  clientInfo: claude-code | Claude Code | 2.1.294 x3
+  clientName: claude-code x3
+  protocolVersion: 2025-11-25 x3
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x3
+  initializeMeta: - x3
+  ENTRYPOINT: claude-vscode x3
+  CLAUDECODE: 1 x3
+  CLAUDE_CODE_CHILD_SESSION: (unset) x3
+  CLAUDE_CODE_SESSION_ATTENDED: 1 x3
+  CLAUDE_AGENT_SDK_VERSION: 0.3.288 x3
+  MCP_CONNECTION_NONBLOCKING: true x3
+  CLAUDE_CODE_SSE_PORT: (unset) x3
+  CLAUDE_CODE_EXECPATH: (unset) x3
+  CLAUDE_CODE_SESSION_ID: 73b1ead3-b2f1-4fbe-b10d-33d99b90079b x1  ||  08f3c1ea-1b9e-461a-a5ce-831e4fdb276a x1  ||  3526acc8-ad6a-4902-b009-55b13ade90cd x1
+  CLAUDE_PID: (unset) x3
+  TERM: (unset) x3
+  TERM_PROGRAM: (unset) x3
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x3
+  IDRIG_MARKER: printinh x3
+  envCount: 63 x3
+  envAddedByClient: AI_AGENT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x3
+  envDroppedByClient: CLAUDE_CODE_CHILD_SESSION x3
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_AGENT_SDK_VERSION CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_EMIT_STARTUP_TIMING CLAUDE_CODE_ENABLE_TASKS CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ATTENDED CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME IDRIG_MARKER MCP_CONNECTION_NONBLOCKING x3
+  parentImage: claude.exe x3
+  parentIsClient: true x3
+  parentArgs: -p "Say hi." x3
+  parentHasPrintFlag: true x3
+  parentHasStreamJsonInput: false x3
+  parentFirstArg: -p x3
+  grandparentImage: IdRig.exe x3
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x3
+  stdio: pipe/pipe/pipe x3
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x3
+  pipeServerIsParent: yes/yes/yes x3
+  consoleWindow: none x3
+  consoleProcs: self x3
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  startupFlags: 0x101 show=0 x3
+  job: inJob=True immediateJobLimitFlags=0x3C00 x3
+  jobImages: claude.exe,self x3
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x3
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x3
+  endHow: EOF x3
+  error: (missing) x3
+
+===== printpty: 3 runs (printpty-r1, printpty-r2, printpty-r3)
+  clientExit: 0 x3
+  harnessKilled: false x3
+  waitTimeout: null x3
+  launches: 1 x3
+  listedLaunches: 1 x3
+  clientInfo: claude-code | Claude Code | 2.1.294 x3
+  clientName: claude-code x3
+  protocolVersion: 2025-11-25 x3
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x3
+  initializeMeta: - x3
+  ENTRYPOINT: sdk-cli x3
+  CLAUDECODE: 1 x3
+  CLAUDE_CODE_CHILD_SESSION: (unset) x3
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x3
+  CLAUDE_AGENT_SDK_VERSION: (unset) x3
+  MCP_CONNECTION_NONBLOCKING: (unset) x3
+  CLAUDE_CODE_SSE_PORT: (unset) x3
+  CLAUDE_CODE_EXECPATH: (unset) x3
+  CLAUDE_CODE_SESSION_ID: ef8c7a90-480e-4ead-a756-c6a767599290 x1  ||  30aa4823-c294-4384-b1c9-1e87624c4958 x1  ||  62d5dc85-2782-4c50-847e-93a911349b31 x1
+  CLAUDE_PID: (unset) x3
+  TERM: (unset) x3
+  TERM_PROGRAM: (unset) x3
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x3
+  IDRIG_MARKER: printpty x3
+  envCount: 58 x3
+  envAddedByClient: AI_AGENT CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x3
+  envDroppedByClient: - x3
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME IDRIG_MARKER x3
+  parentImage: claude.exe x3
+  parentIsClient: true x3
+  parentArgs: -p "Say hi." x3
+  parentHasPrintFlag: true x3
+  parentHasStreamJsonInput: false x3
+  parentFirstArg: -p x3
+  grandparentImage: IdRig.exe x3
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x3
+  stdio: pipe/pipe/pipe x3
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x3
+  pipeServerIsParent: yes/yes/yes x3
+  consoleWindow: none x3
+  consoleProcs: self x3
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  startupFlags: 0x101 show=0 x3
+  job: inJob=True immediateJobLimitFlags=0x3C00 x3
+  jobImages: claude.exe,self x3
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x3
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x3
+  endHow: EOF x3
+  error: (missing) x3
+
+===== tui: 4 runs (tui-r1, tui-r2, tui-r3, tui-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: claude-code | Claude Code | 2.1.294 x4
+  clientName: claude-code x4
+  protocolVersion: 2025-11-25 x4
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: cli x4
+  CLAUDECODE: 1 x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: 27008d62-1822-46d0-b8c9-6c6228750413 x1  ||  2c22c3cf-0096-4706-9daf-dbe1d9a28aef x1  ||  095b2635-4695-4027-8701-5c0881b05fb6 x1  ||  617bce05-45e0-4b2d-b96c-d297f33f9cf3 x1
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: tui x4
+  envCount: 58 x4
+  envAddedByClient: AI_AGENT CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x4
+  envDroppedByClient: - x4
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME IDRIG_MARKER x4
+  parentImage: claude.exe x4
+  parentIsClient: true x4
+  parentArgs:  x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: (none) x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  startupFlags: 0x101 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x3C00 x4
+  jobImages: claude.exe,self x4
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x4
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x4
+  endHow: EOF x4
+  error: (missing) x4
+
+===== tuiinh: 3 runs (tuiinh-r1, tuiinh-r2, tuiinh-r3)
+  clientExit: 0 x3
+  harnessKilled: false x3
+  waitTimeout: null x3
+  launches: 1 x3
+  listedLaunches: 1 x3
+  clientInfo: claude-code | Claude Code | 2.1.294 x3
+  clientName: claude-code x3
+  protocolVersion: 2025-11-25 x3
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x3
+  initializeMeta: - x3
+  ENTRYPOINT: claude-vscode x3
+  CLAUDECODE: 1 x3
+  CLAUDE_CODE_CHILD_SESSION: (unset) x3
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x3
+  CLAUDE_AGENT_SDK_VERSION: (unset) x3
+  MCP_CONNECTION_NONBLOCKING: (unset) x3
+  CLAUDE_CODE_SSE_PORT: (unset) x3
+  CLAUDE_CODE_EXECPATH: (unset) x3
+  CLAUDE_CODE_SESSION_ID: 779004cb-fd38-4273-b9b7-81d60fbfcbc1 x1  ||  c7d819f7-55fa-4168-bae1-e9a521f3519a x1  ||  4fb585bf-a912-4a4e-ad19-1c7b67281cf6 x1
+  CLAUDE_PID: (unset) x3
+  TERM: (unset) x3
+  TERM_PROGRAM: (unset) x3
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x3
+  IDRIG_MARKER: tuiinh x3
+  envCount: 58 x3
+  envAddedByClient: AI_AGENT CLAUDECODE CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x3
+  envDroppedByClient: - x3
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME IDRIG_MARKER x3
+  parentImage: claude.exe x3
+  parentIsClient: true x3
+  parentArgs:  x3
+  parentHasPrintFlag: false x3
+  parentHasStreamJsonInput: false x3
+  parentFirstArg: (none) x3
+  grandparentImage: IdRig.exe x3
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x3
+  stdio: pipe/pipe/pipe x3
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x3
+  pipeServerIsParent: yes/yes/yes x3
+  consoleWindow: none x3
+  consoleProcs: self x3
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x3
+  startupFlags: 0x101 show=0 x3
+  job: inJob=True immediateJobLimitFlags=0x3C00 x3
+  jobImages: claude.exe,self x3
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x3
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x3
+  endHow: EOF x3
+  error: (missing) x3
+
+===== vscode: 4 runs (vscode-r1, vscode-r2, vscode-r3, vscode-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: claude-code | Claude Code | 2.1.292 x4
+  clientName: claude-code x4
+  protocolVersion: 2025-11-25 x4
+  capabilities: {"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: claude-vscode x4
+  CLAUDECODE: 1 x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: 0.3.292 x4
+  MCP_CONNECTION_NONBLOCKING: true x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: e38556ee-72d7-42b4-9c43-3a1d901a1a53 x1  ||  7aad56c2-1f7a-455c-a989-c9c06b487d0f x1  ||  35fb0660-c17a-4b84-b1fa-ecf869a8c28c x1  ||  36c1a534-6c44-469e-9d38-ebfb86ede8fd x1
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: extensionHost x4
+  IDRIG_MARKER: vscode x4
+  envCount: 73 x4
+  envAddedByClient: AI_AGENT CLAUDECODE CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_PROJECT_DIR COREPACK_ENABLE_AUTO_PIN NoDefaultCurrentDirectoryInExePath SHELL x4
+  envDroppedByClient: CLAUDE_CODE_SDK_READS_SESSION_STATE x4
+  envOfInterest: ANTHROPIC_API_KEY ANTHROPIC_BASE_URL CLAUDECODE CLAUDE_AGENT_SDK_VERSION CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CODE_EMIT_STARTUP_TIMING CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING CLAUDE_CODE_ENABLE_TASKS CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN CLAUDE_CODE_SESSION_ID CLAUDE_CONFIG_DIR CLAUDE_PROJECT_DIR CODEX_HOME ELECTRON_RUN_AS_NODE IDRIG_MARKER MCP_CONNECTION_NONBLOCKING VSCODE_CODE_CACHE_PATH VSCODE_CRASH_REPORTER_PROCESS_TYPE VSCODE_CWD VSCODE_ESM_ENTRYPOINT VSCODE_HANDLES_UNCAUGHT_ERRORS VSCODE_L10N_BUNDLE_LOCATION VSCODE_NLS_CONFIG VSCODE_NODE_COMPILE_CACHE_KIND VSCODE_NODE_COMPILE_CACHE_ROOT x4
+  parentImage: claude.exe x4
+  parentIsClient: true x4
+  parentArgs: --output-format stream-json --verbose --input-format stream-json --max-thinking-tokens 31999 --thinking-display summarized --permission-prompt-tool stdio --sett... x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: true x4
+  parentFirstArg: --output-format x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: \uv\N-N \uv\N-N \uv\N-N x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  startupFlags: 0x101 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x3C00 x4
+  jobImages: claude.exe,self,claude.exe x3  ||  claude.exe,self,<image? err 5>,claude.exe x1
+  methodsIn: server/discover,initialize,notifications/initialized,tools/list,(roots answer) x4
+  roots: [{"uri":"file:///C:/Source/SixFive7/BrowserAI/.work/client-id/proj"}] x4
+  endHow: EOF x4
+  error: (missing) x4
+
+===== cxapp: 4 runs (cxapp-r1, cxapp-r2, cxapp-r3, cxapp-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: codex-mcp-client | Codex | 0.161.0 x4
+  clientName: codex-mcp-client x4
+  protocolVersion: 2025-06-18 x4
+  capabilities: {"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: (unset) x4
+  CLAUDECODE: (unset) x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: (unset) x4
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: (unset) x4
+  envCount: 19 x4
+  envAddedByClient: - x4
+  envDroppedByClient: ALLUSERSPROFILE CLAUDE_CONFIG_DIR CODEX_HOME COMPUTERNAME CommonProgramFiles CommonProgramFiles(x86) CommonProgramW6432 DISABLE_AUTOUPDATER DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT IDRIG_MARKER LOGONSERVER NUMBER_OF_PROCESSORS OS PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION PUBLIC SESSIONNAME STUB_KEY USERDOMAIN_ROAMINGPROFILE x4
+  envOfInterest:  x4
+  parentImage: codex.exe x4
+  parentIsClient: true x4
+  parentArgs: app-server x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: app-server x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: - - - x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: - x4
+  startupFlags: 0x100 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x2000 x4
+  jobImages: self,conhost.exe x4
+  methodsIn: initialize,notifications/initialized,tools/list x4
+  roots: - x4
+  endHow: - x4
+  error: (missing) x4
+
+===== cxappdesk: 4 runs (cxappdesk-r1, cxappdesk-r2, cxappdesk-r3, cxappdesk-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: codex-mcp-client | Codex | 0.159.0-alpha.12.1 x4
+  clientName: codex-mcp-client x4
+  protocolVersion: 2025-06-18 x4
+  capabilities: {"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: (unset) x4
+  CLAUDECODE: (unset) x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: (unset) x4
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: (unset) x4
+  envCount: 19 x4
+  envAddedByClient: - x4
+  envDroppedByClient: ALLUSERSPROFILE CLAUDE_CONFIG_DIR CODEX_HOME COMPUTERNAME CommonProgramFiles CommonProgramFiles(x86) CommonProgramW6432 DISABLE_AUTOUPDATER DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT IDRIG_MARKER LOGONSERVER NUMBER_OF_PROCESSORS OS PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION PUBLIC SESSIONNAME STUB_KEY USERDOMAIN_ROAMINGPROFILE x4
+  envOfInterest:  x4
+  parentImage: codex.exe x4
+  parentIsClient: true x4
+  parentArgs: app-server x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: app-server x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: - - - x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: - x4
+  startupFlags: 0x100 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x2000 x4
+  jobImages: self,conhost.exe x4
+  methodsIn: initialize,notifications/initialized,tools/list x4
+  roots: - x4
+  endHow: - x4
+  error: (missing) x4
+
+===== cxexec: 4 runs (cxexec-r1, cxexec-r2, cxexec-r3, cxexec-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: codex-mcp-client | Codex | 0.161.0 x4
+  clientName: codex-mcp-client x4
+  protocolVersion: 2025-06-18 x4
+  capabilities: {"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: (unset) x4
+  CLAUDECODE: (unset) x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: (unset) x4
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: (unset) x4
+  envCount: 19 x4
+  envAddedByClient: - x4
+  envDroppedByClient: ALLUSERSPROFILE CLAUDE_CONFIG_DIR CODEX_HOME COMPUTERNAME CommonProgramFiles CommonProgramFiles(x86) CommonProgramW6432 DISABLE_AUTOUPDATER DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT IDRIG_MARKER LOGONSERVER NUMBER_OF_PROCESSORS OS PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION PUBLIC SESSIONNAME STUB_KEY USERDOMAIN_ROAMINGPROFILE x4
+  envOfInterest:  x4
+  parentImage: codex.exe x4
+  parentIsClient: true x4
+  parentArgs: exec --skip-git-repo-check "Say hi." x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: exec x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: - - - x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: - x4
+  startupFlags: 0x100 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x2000 x4
+  jobImages: self,conhost.exe x4
+  methodsIn: initialize,notifications/initialized,tools/list x4
+  roots: - x4
+  endHow: - x4
+  error: (missing) x4
+
+===== cxtui: 5 runs (cxtui-r1, cxtui-r2, cxtui-r3, cxtui-r1, cxtui-r1)
+  clientExit: 0 x4  ||  1 x1
+  harnessKilled: false x5
+  waitTimeout: null x4  ||  glob:idstub-*.listed; x1
+  launches: 1 x4  ||  0 x1
+  listedLaunches: 1 x4  ||  0 x1
+  clientInfo: codex-mcp-client | Codex | 0.161.0 x4  ||  (missing) x1
+  clientName: codex-mcp-client x4  ||  (missing) x1
+  protocolVersion: 2025-06-18 x4  ||  (missing) x1
+  capabilities: {"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}} x4  ||  (missing) x1
+  initializeMeta: - x4  ||  (missing) x1
+  ENTRYPOINT: (unset) x4  ||  (missing) x1
+  CLAUDECODE: (unset) x4  ||  (missing) x1
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4  ||  (missing) x1
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4  ||  (missing) x1
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4  ||  (missing) x1
+  MCP_CONNECTION_NONBLOCKING: (unset) x4  ||  (missing) x1
+  CLAUDE_CODE_SSE_PORT: (unset) x4  ||  (missing) x1
+  CLAUDE_CODE_EXECPATH: (unset) x4  ||  (missing) x1
+  CLAUDE_CODE_SESSION_ID: (unset) x4  ||  (missing) x1
+  CLAUDE_PID: (unset) x4  ||  (missing) x1
+  TERM: (unset) x4  ||  (missing) x1
+  TERM_PROGRAM: (unset) x4  ||  (missing) x1
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4  ||  (missing) x1
+  IDRIG_MARKER: (unset) x4  ||  (missing) x1
+  envCount: 19 x4  ||  (missing) x1
+  envAddedByClient: - x4  ||  (missing) x1
+  envDroppedByClient: ALLUSERSPROFILE CLAUDE_CONFIG_DIR CODEX_HOME COMMONPROGRAMFILES COMPUTERNAME CommonProgramFiles(x86) CommonProgramW6432 DISABLE_AUTOUPDATER DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT IDRIG_MARKER LOGONSERVER NUMBER_OF_PROCESSORS OS PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION PUBLIC SESSIONNAME STUB_KEY USERDOMAIN_ROAMINGPROFILE x4  ||  (missing) x1
+  envOfInterest:  x4  ||  (missing) x1
+  parentImage: codex.exe x4  ||  (missing) x1
+  parentIsClient: false x4  ||  (missing) x1
+  parentArgs: app-server --listen unix:// --analytics-default-enabled --managed-daemon x4  ||  (missing) x1
+  parentHasPrintFlag: false x4  ||  (missing) x1
+  parentHasStreamJsonInput: false x4  ||  (missing) x1
+  parentFirstArg: app-server x4  ||  (missing) x1
+  grandparentImage: codex.exe x4  ||  (missing) x1
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4  ||  (missing) x1
+  stdio: pipe/pipe/pipe x4  ||  (missing) x1
+  pipeNames: - - - x4  ||  (missing) x1
+  pipeServerIsParent: yes/yes/yes x4  ||  (missing) x1
+  consoleWindow: none x4  ||  (missing) x1
+  consoleProcs: self x4  ||  (missing) x1
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4  ||  (missing) x1
+  consoleTitleAtEnd: - x4  ||  (missing) x1
+  startupFlags: 0x100 show=0 x4  ||  (missing) x1
+  job: inJob=True immediateJobLimitFlags=0x2000 x4  ||  (missing) x1
+  jobImages: self,conhost.exe x4  ||  (missing) x1
+  methodsIn: initialize,notifications/initialized,tools/list x4  ||  (missing) x1
+  roots: - x4  ||  (missing) x1
+  endHow: - x4  ||  (missing) x1
+  error: (missing) x4  ||  no stub launch x1
+
+===== cxtuind: 4 runs (cxtuind-r1, cxtuind-r2, cxtuind-r3, cxtuind-r1)
+  clientExit: 0 x4
+  harnessKilled: false x4
+  waitTimeout: null x4
+  launches: 1 x4
+  listedLaunches: 1 x4
+  clientInfo: codex-mcp-client | Codex | 0.161.0 x4
+  clientName: codex-mcp-client x4
+  protocolVersion: 2025-06-18 x4
+  capabilities: {"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}} x4
+  initializeMeta: - x4
+  ENTRYPOINT: (unset) x4
+  CLAUDECODE: (unset) x4
+  CLAUDE_CODE_CHILD_SESSION: (unset) x4
+  CLAUDE_CODE_SESSION_ATTENDED: (unset) x4
+  CLAUDE_AGENT_SDK_VERSION: (unset) x4
+  MCP_CONNECTION_NONBLOCKING: (unset) x4
+  CLAUDE_CODE_SSE_PORT: (unset) x4
+  CLAUDE_CODE_EXECPATH: (unset) x4
+  CLAUDE_CODE_SESSION_ID: (unset) x4
+  CLAUDE_PID: (unset) x4
+  TERM: (unset) x4
+  TERM_PROGRAM: (unset) x4
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: (unset) x4
+  IDRIG_MARKER: (unset) x4
+  envCount: 19 x4
+  envAddedByClient: - x4
+  envDroppedByClient: ALLUSERSPROFILE CLAUDE_CONFIG_DIR CODEX_HOME COMMONPROGRAMFILES COMPUTERNAME CommonProgramFiles(x86) CommonProgramW6432 DISABLE_AUTOUPDATER DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT IDRIG_MARKER LOGONSERVER NUMBER_OF_PROCESSORS OS PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION PUBLIC SESSIONNAME STUB_KEY USERDOMAIN_ROAMINGPROFILE x4
+  envOfInterest:  x4
+  parentImage: codex.exe x4
+  parentIsClient: true x4
+  parentArgs: --no-daemon x4
+  parentHasPrintFlag: false x4
+  parentHasStreamJsonInput: false x4
+  parentFirstArg: --no-daemon x4
+  grandparentImage: IdRig.exe x4
+  cwd: C:\Source\SixFive7\BrowserAI\.work\client-id\proj x4
+  stdio: pipe/pipe/pipe x4
+  pipeNames: - - - x4
+  pipeServerIsParent: yes/yes/yes x4
+  consoleWindow: none x4
+  consoleProcs: self x4
+  consoleTitleAtStart: C:\Source\SixFive7\BrowserAI\.work\client-id\rig\bin\IdRig.exe x4
+  consoleTitleAtEnd: - x4
+  startupFlags: 0x100 show=0 x4
+  job: inJob=True immediateJobLimitFlags=0x2000 x4
+  jobImages: self,conhost.exe x4
+  methodsIn: initialize,notifications/initialized,tools/list x4
+  roots: - x4
+  endHow: - x4
+  error: (missing) x4

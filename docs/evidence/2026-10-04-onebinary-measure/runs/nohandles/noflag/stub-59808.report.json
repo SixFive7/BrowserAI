@@ -1,0 +1,55 @@
+{
+  "pid": 59808,
+  "utc": "2026-10-04T01:48:28.5781164Z",
+  "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\bin\\winexe\\McpStubWin.exe",
+  "peSubsystem": "2 WINDOWS_GUI",
+  "ppid": 96876,
+  "parentImage": "C:\\Source\\SixFive7\\BrowserAI\\.work\\onebinary-measure\\rig\\bin\\ExitRig.exe",
+  "consoleWindow": 0,
+  "consoleProcessCount": 0,
+  "consoleProcessListError": 6,
+  "consoleProcesses": [],
+  "consoleSharedWithParent": false,
+  "consoleCP": 0,
+  "consoleOutputCP": 0,
+  "std": {
+    "stdin": {
+      "handle": 0,
+      "kind": "null"
+    },
+    "stdout": {
+      "handle": 0,
+      "kind": "null"
+    },
+    "stderr": {
+      "handle": 0,
+      "kind": "null"
+    }
+  },
+  "startupInfo": {
+    "dwFlags": "0x00000001",
+    "STARTF_USESHOWWINDOW": true,
+    "STARTF_USESTDHANDLES": false,
+    "STARTF_FORCEONFEEDBACK": false,
+    "STARTF_FORCEOFFFEEDBACK": false,
+    "wShowWindow": 1,
+    "desktop": "Winsta0\\Default",
+    "title": "bin\\winexe\\McpStubWin.exe",
+    "hStdInput": 0,
+    "hStdOutput": 0,
+    "hStdError": 0
+  },
+  "inJob": true,
+  "env": {
+    "CLAUDE_CODE_ENTRYPOINT": "claude-vscode",
+    "STUB_EOF_DELAY_MS": "0",
+    "MCP_CONNECTION_NONBLOCKING": "true",
+    "STUB_LOGDIR": "runs\\nohandles\\noflag"
+  },
+  "envCount": 110,
+  "nonce": "47b8d9a85a48",
+  "inputStreamType": "System.IO.Stream\u002BNullStream",
+  "outputStreamType": "System.IO.Stream\u002BNullStream",
+  "bigUtf8Bytes": 70000,
+  "bigSha256": "abc9f0411537508097e7e46ebd997a39a37660dce6426ddc0d5316c6c9b90f16"
+}

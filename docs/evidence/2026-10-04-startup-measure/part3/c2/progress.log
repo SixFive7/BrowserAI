@@ -1,0 +1,37 @@
+2026-10-04T01:02:52.417Z PHASE c2 reps=5
+2026-10-04T01:02:52.438Z STARTED coordinator --start-host pid=41756
+2026-10-04T01:02:52.997Z c2 r1: coordinator pipe 61 ms, host pipe 497 ms after BrowserAI.exe --start-host was started
+2026-10-04T01:02:53.486Z mcpprobe c2-r1.json status=0
+2026-10-04T01:02:53.488Z c2 r1 host already running: init=85.14ms tools=96.28ms count=78 exit=0
+2026-10-04T01:02:53.488Z KILLED coordinator pid=41756 by its handle
+2026-10-04T01:02:53.495Z EXIT coordinator pid=41756 code=null
+2026-10-04T01:02:53.520Z after stop: host pipe gone in 29 ms, coordinator pipe gone in 2 ms
+2026-10-04T01:02:55.024Z STARTED coordinator --start-host pid=93176
+2026-10-04T01:02:55.486Z c2 r2: coordinator pipe 44 ms, host pipe 417 ms after BrowserAI.exe --start-host was started
+2026-10-04T01:02:55.987Z mcpprobe c2-r2.json status=0
+2026-10-04T01:02:55.989Z c2 r2 host already running: init=83.562ms tools=93.397ms count=78 exit=0
+2026-10-04T01:02:55.989Z KILLED coordinator pid=93176 by its handle
+2026-10-04T01:02:55.999Z EXIT coordinator pid=93176 code=null
+2026-10-04T01:02:56.009Z after stop: host pipe gone in 16 ms, coordinator pipe gone in 3 ms
+2026-10-04T01:02:57.514Z STARTED coordinator --start-host pid=87996
+2026-10-04T01:02:58.051Z c2 r3: coordinator pipe 55 ms, host pipe 482 ms after BrowserAI.exe --start-host was started
+2026-10-04T01:02:58.557Z mcpprobe c2-r3.json status=0
+2026-10-04T01:02:58.559Z c2 r3 host already running: init=88.222ms tools=98.146ms count=78 exit=0
+2026-10-04T01:02:58.559Z KILLED coordinator pid=87996 by its handle
+2026-10-04T01:02:58.570Z EXIT coordinator pid=87996 code=null
+2026-10-04T01:02:58.580Z after stop: host pipe gone in 17 ms, coordinator pipe gone in 4 ms
+2026-10-04T01:03:00.083Z STARTED coordinator --start-host pid=40848
+2026-10-04T01:03:00.555Z c2 r4: coordinator pipe 43 ms, host pipe 429 ms after BrowserAI.exe --start-host was started
+2026-10-04T01:03:01.061Z mcpprobe c2-r4.json status=0
+2026-10-04T01:03:01.063Z c2 r4 host already running: init=90.413ms tools=100.481ms count=78 exit=0
+2026-10-04T01:03:01.063Z KILLED coordinator pid=40848 by its handle
+2026-10-04T01:03:01.071Z EXIT coordinator pid=40848 code=null
+2026-10-04T01:03:01.085Z after stop: host pipe gone in 19 ms, coordinator pipe gone in 3 ms
+2026-10-04T01:03:02.592Z STARTED coordinator --start-host pid=8548
+2026-10-04T01:03:03.092Z c2 r5: coordinator pipe 46 ms, host pipe 453 ms after BrowserAI.exe --start-host was started
+2026-10-04T01:03:03.593Z mcpprobe c2-r5.json status=0
+2026-10-04T01:03:03.594Z c2 r5 host already running: init=84.248ms tools=94.342ms count=78 exit=0
+2026-10-04T01:03:03.595Z KILLED coordinator pid=8548 by its handle
+2026-10-04T01:03:03.604Z EXIT coordinator pid=8548 code=null
+2026-10-04T01:03:03.615Z after stop: host pipe gone in 18 ms, coordinator pipe gone in 2 ms
+2026-10-04T01:03:05.130Z PHASE c2 DONE; started 5 processes

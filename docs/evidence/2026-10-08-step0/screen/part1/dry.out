@@ -1,0 +1,23 @@
+dry: toast1 tag=update group=browserai-step0 seq=1 status=Installs in 10:00 count=1 1 1 1
+dry: data59 seq=60 status=Installs in 9:01 value=0.0983 vs=0:59 of 10:00
+dry: toast2/3 built; history count=0
+dry: setting=Enabled
+dry: region={X=2940,Y=1460,Width=900,Height=700} screen=3840x2160
+dry: fg=hwnd=0x111E6 pid=54008 class='Chrome_WidgetWin_1' title='BrowserAI - Visual Studio Code'
+dry: toast windows=
+000095 audio-device dev=0 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613} volume=1,00 mute=False
+000096 audio-device dev=1 id={0.0.0.00000000}.{4ae90f57-d116-4db4-ac0b-2d4e9583ebc3} volume=0,51 mute=False
+000096 audio-device dev=2 id={0.0.0.00000000}.{6bc13147-7e56-4052-af2f-cbb384ba35dc} volume=1,00 mute=False
+000097 audio-device dev=3 id={0.0.0.00000000}.{72f23a22-5e24-478a-b486-4ba983d324fe} volume=0,00 mute=True
+000097 audio-device dev=4 id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4} volume=0,50 mute=False
+000098 audio-device dev=5 id={0.0.0.00000000}.{c79418f3-4d53-4446-968f-f95fe2fd4d6f} volume=0,54 mute=False
+000098 audio-device dev=6 id={0.0.0.00000000}.{eb54d0dc-bab3-4339-91a1-44aeff53fdc5} volume=0,00 mute=False
+000102 audio-default-console id={0.0.0.00000000}.{9bc2b269-b40a-449d-ba45-c363a86609e4}
+000116 audio-baseline endpoint dev=0 peak=0,0682 (ignored from here on)
+000118 audio-baseline session dev=0 pid=18872 system=False peak=0,0682 id={0.0.0.00000000}.{1b862a61-bbf6-4e58-bb2a-8f7f32379613}|\Device\HarddiskVolume3\Program Files\WindowsApps\Elgato.WaveLink_3.3.0.4529_x64__g54w8ztgkx496\Elgato.WaveLink.exe%b{00000000-0000-0000-0000-000000000000} (ignored from here on)
+000141 fg hwnd=0x111E6 pid=54008 class='Chrome_WidgetWin_1' title='BrowserAI - Visual Studio Code'
+000297 pix roi=78 outside=0 box=(562,669)-(575,682)
+000797 pix roi=78 outside=0 box=(562,669)-(575,682)
+001134 pix roi=31 outside=0 box=(875,664)-(880,671)
+001291 pix roi=78 outside=0 box=(562,669)-(575,682)
+001606 monitor-stopped polls=36

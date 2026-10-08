@@ -1,0 +1,15 @@
+{
+  "checkedUtc": "2026-10-08T14:21:47.7990824Z",
+  "pidsChecked": 106,
+  "aliveWithSameCreationTime": [],
+  "controlFoundAlive": [
+    "16804 (CONTROL: this verification process)"
+  ],
+  "controlProcessesUnderPwshFolder": 1,
+  "processesWithImageUnderRoot": [],
+  "processesWhoseCommandLineMentionsTheRig": [
+    "70116 \"C:\\Program Files\\Git\\bin\\bash.exe\" -c \"source %USERPROFILE%/.claude/shell-snapshots/snapshot-bash-1791050543624-6lqbte.sh 2>/dev/null || true && export TEMP='%USERPROFILE%\\AppData\\Local\\Temp' TMP='%USERPROFILE%\\AppData\\Local\\Temp' && shopt -u extglob 2>/dev/null || true && { \\builtin unalias -- 'unsetenv'; \\builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /c/Source/SixFive7/BrowserAI/.work/step0-velopack && pwsh -NoLogo -NoProfile -NonInteractive -File verify-gone.ps1 > verify-gone.json 2>&1; echo exit=$?; python3 -c \\\"\nimport json\nd=json.load(open('\\\"'\\\"'verify-gone.json'\\\"'\\\"',encoding='\\\"'\\\"'utf-8-sig'\\\"'\\\"'))\nfor k,v in d.items():\n    if k=='\\\"'\\\"'processesWhoseCommandLineMentionsTheRig'\\\"'\\\"': print(k, len(v), [x[:60] for x in v])\n    else: print(k, v)\n\\\"' < /dev/null && pwd -P >| %USERPROFILE%/AppData/Local/Temp/claude-4d61-cwd\"",
+    "53836 \"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" -c \"source %USERPROFILE%/.claude/shell-snapshots/snapshot-bash-1791050543624-6lqbte.sh 2>/dev/null || true && export TEMP='%USERPROFILE%\\AppData\\Local\\Temp' TMP='%USERPROFILE%\\AppData\\Local\\Temp' && shopt -u extglob 2>/dev/null || true && { \\builtin unalias -- 'unsetenv'; \\builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /c/Source/SixFive7/BrowserAI/.work/step0-velopack && pwsh -NoLogo -NoProfile -NonInteractive -File verify-gone.ps1 > verify-gone.json 2>&1; echo exit=$?; python3 -c \\\"\nimport json\nd=json.load(open('\\\"'\\\"'verify-gone.json'\\\"'\\\"',encoding='\\\"'\\\"'utf-8-sig'\\\"'\\\"'))\nfor k,v in d.items():\n    if k=='\\\"'\\\"'processesWhoseCommandLineMentionsTheRig'\\\"'\\\"': print(k, len(v), [x[:60] for x in v])\n    else: print(k, v)\n\\\"' < /dev/null && pwd -P >| %USERPROFILE%/AppData/Local/Temp/claude-4d61-cwd\"",
+    "4776 \"C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe\" -c \"source %USERPROFILE%/.claude/shell-snapshots/snapshot-bash-1791050543624-6lqbte.sh 2>/dev/null || true && export TEMP='%USERPROFILE%\\AppData\\Local\\Temp' TMP='%USERPROFILE%\\AppData\\Local\\Temp' && shopt -u extglob 2>/dev/null || true && { \\builtin unalias -- 'unsetenv'; \\builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /c/Source/SixFive7/BrowserAI/.work/step0-velopack && pwsh -NoLogo -NoProfile -NonInteractive -File verify-gone.ps1 > verify-gone.json 2>&1; echo exit=$?; python3 -c \\\"\nimport json\nd=json.load(open('\\\"'\\\"'verify-gone.json'\\\"'\\\"',encoding='\\\"'\\\"'utf-8-sig'\\\"'\\\"'))\nfor k,v in d.items():\n    if k=='\\\"'\\\"'processesWhoseCommandLineMentionsTheRig'\\\"'\\\"': print(k, len(v), [x[:60] for x in v])\n    else: print(k, v)\n\\\"' < /dev/null && pwd -P >| %USERPROFILE%/AppData/Local/Temp/claude-4d61-cwd\""
+  ]
+}

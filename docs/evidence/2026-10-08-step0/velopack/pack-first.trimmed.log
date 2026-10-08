@@ -1,0 +1,380 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.0\
+[16:03:37 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:03:37 INF] Beginning to package Velopack release 1.0.0.
+[16:03:37 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:03:37 INF] Starting: Pre-process steps
+[16:03:38 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:03:38 INF] Shortcuts: StartMenuRoot
+[16:03:38 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:38 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:38 INF] Complete: Pre-process steps
+[16:03:38 INF] Starting: Code-sign application
+[16:03:38 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:03:38 INF] Complete: Code-sign application
+[16:03:38 INF] Starting: Building portable package
+[16:03:38 INF] Starting: Building release 1.0.0
+[16:03:39 INF] Complete: Building portable package
+[16:03:39 INF] Complete: Building release 1.0.0
+[16:03:39 INF] Starting: Building setup package
+[16:03:39 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:03:39 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:03:39 INF] Complete: Building setup package
+[16:03:39 INF] Starting: Post-process steps
+[16:03:39 INF] Complete: Post-process steps
+[16:03:39 INF] Finished in 00:00:01.6262974.
+vpk pack 1.0.0 (win) took 2,8 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.0 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 248 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.1\
+[16:03:43 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:03:43 INF] Beginning to package Velopack release 1.0.1.
+[16:03:43 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:03:43 INF] Starting: Pre-process steps
+[16:03:44 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:03:44 INF] Shortcuts: StartMenuRoot
+[16:03:44 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:44 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:44 INF] Complete: Pre-process steps
+[16:03:44 INF] Starting: Code-sign application
+[16:03:44 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:03:44 INF] Complete: Code-sign application
+[16:03:44 INF] Starting: Building portable package
+[16:03:44 INF] Starting: Building release 1.0.1
+[16:03:44 INF] Complete: Building portable package
+[16:03:44 INF] Complete: Building release 1.0.1
+[16:03:44 INF] Starting: Building setup package
+[16:03:45 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:03:45 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:03:45 INF] Complete: Building setup package
+[16:03:45 INF] Starting: Post-process steps
+[16:03:45 INF] Complete: Post-process steps
+[16:03:45 INF] Finished in 00:00:01.2079401.
+vpk pack 1.0.1 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 251 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.2-alpha.1\
+[16:03:49 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:03:49 INF] Beginning to package Velopack release 1.0.2-alpha.1.
+[16:03:49 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:03:49 INF] Starting: Pre-process steps
+[16:03:49 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:03:50 INF] Shortcuts: StartMenuRoot
+[16:03:50 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:50 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:50 INF] Complete: Pre-process steps
+[16:03:50 INF] Starting: Code-sign application
+[16:03:50 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:03:50 INF] Complete: Code-sign application
+[16:03:50 INF] Starting: Building portable package
+[16:03:50 INF] Starting: Building release 1.0.2-alpha.1
+[16:03:50 INF] Complete: Building portable package
+[16:03:50 INF] Complete: Building release 1.0.2-alpha.1
+[16:03:50 INF] Starting: Building setup package
+[16:03:50 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:03:50 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:03:50 INF] Complete: Building setup package
+[16:03:50 INF] Starting: Post-process steps
+[16:03:50 INF] Complete: Post-process steps
+[16:03:50 INF] Finished in 00:00:01.1695484.
+vpk pack 1.0.2-alpha.1 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 240 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.2\
+[16:03:55 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:03:55 INF] Beginning to package Velopack release 1.0.2.
+[16:03:55 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:03:55 INF] Starting: Pre-process steps
+[16:03:55 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:03:56 INF] Shortcuts: StartMenuRoot
+[16:03:56 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:56 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:03:56 INF] Complete: Pre-process steps
+[16:03:56 INF] Starting: Code-sign application
+[16:03:56 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:03:56 INF] Complete: Code-sign application
+[16:03:56 INF] Starting: Building portable package
+[16:03:56 INF] Starting: Building release 1.0.2
+[16:03:56 INF] Complete: Building portable package
+[16:03:56 INF] Complete: Building release 1.0.2
+[16:03:56 INF] Starting: Building setup package
+[16:03:56 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:03:56 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:03:56 INF] Complete: Building setup package
+[16:03:56 INF] Starting: Post-process steps
+[16:03:56 INF] Complete: Post-process steps
+[16:03:56 INF] Finished in 00:00:01.2856245.
+vpk pack 1.0.2 (win) took 2,0 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 247 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.3\
+[16:04:01 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:01 INF] Beginning to package Velopack release 1.0.3.
+[16:04:01 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:01 INF] Starting: Pre-process steps
+[16:04:01 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:01 INF] Shortcuts: StartMenuRoot
+[16:04:01 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:01 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:02 INF] Complete: Pre-process steps
+[16:04:02 INF] Starting: Code-sign application
+[16:04:02 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:02 INF] Complete: Code-sign application
+[16:04:02 INF] Starting: Building portable package
+[16:04:02 INF] Starting: Building release 1.0.3
+[16:04:02 INF] Complete: Building portable package
+[16:04:02 INF] Complete: Building release 1.0.3
+[16:04:02 INF] Starting: Building setup package
+[16:04:02 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:02 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:02 INF] Complete: Building setup package
+[16:04:02 INF] Starting: Post-process steps
+[16:04:02 INF] Complete: Post-process steps
+[16:04:02 INF] Finished in 00:00:01.1875213.
+vpk pack 1.0.3 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.3 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 266 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.4\
+[16:04:07 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:07 INF] Beginning to package Velopack release 1.0.4.
+[16:04:07 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:07 INF] Starting: Pre-process steps
+[16:04:07 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:07 INF] Shortcuts: StartMenuRoot
+[16:04:07 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:07 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:07 INF] Complete: Pre-process steps
+[16:04:07 INF] Starting: Code-sign application
+[16:04:07 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:07 INF] Complete: Code-sign application
+[16:04:07 INF] Starting: Building portable package
+[16:04:07 INF] Starting: Building release 1.0.4
+[16:04:08 INF] Complete: Building portable package
+[16:04:08 INF] Complete: Building release 1.0.4
+[16:04:08 INF] Starting: Building setup package
+[16:04:08 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:08 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:08 INF] Complete: Building setup package
+[16:04:08 INF] Starting: Post-process steps
+[16:04:08 INF] Complete: Post-process steps
+[16:04:08 INF] Finished in 00:00:01.1810235.
+vpk pack 1.0.4 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 242 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.5\
+[16:04:12 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:13 INF] Beginning to package Velopack release 1.0.5.
+[16:04:13 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:13 INF] Starting: Pre-process steps
+[16:04:13 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:13 INF] Shortcuts: StartMenuRoot
+[16:04:13 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:13 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:13 INF] Complete: Pre-process steps
+[16:04:13 INF] Starting: Code-sign application
+[16:04:13 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:13 INF] Complete: Code-sign application
+[16:04:13 INF] Starting: Building portable package
+[16:04:13 INF] Starting: Building release 1.0.5
+[16:04:14 INF] Complete: Building portable package
+[16:04:14 INF] Complete: Building release 1.0.5
+[16:04:14 INF] Starting: Building setup package
+[16:04:14 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:14 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:14 INF] Complete: Building setup package
+[16:04:14 INF] Starting: Post-process steps
+[16:04:14 INF] Complete: Post-process steps
+[16:04:14 INF] Finished in 00:00:01.2211975.
+vpk pack 1.0.5 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.5 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 257 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.6\
+[16:04:18 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:18 INF] Beginning to package Velopack release 1.0.6.
+[16:04:18 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:19 INF] Starting: Pre-process steps
+[16:04:19 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:19 INF] Shortcuts: StartMenuRoot
+[16:04:19 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:19 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:19 INF] Complete: Pre-process steps
+[16:04:19 INF] Starting: Code-sign application
+[16:04:19 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:19 INF] Complete: Code-sign application
+[16:04:19 INF] Starting: Building portable package
+[16:04:19 INF] Starting: Building release 1.0.6
+[16:04:20 INF] Complete: Building portable package
+[16:04:20 INF] Complete: Building release 1.0.6
+[16:04:20 INF] Starting: Building setup package
+[16:04:20 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:20 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:20 INF] Complete: Building setup package
+[16:04:20 INF] Starting: Post-process steps
+[16:04:20 INF] Complete: Post-process steps
+[16:04:20 INF] Finished in 00:00:01.2228181.
+vpk pack 1.0.6 (win) took 1,9 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.6 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-1.0.6-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 250 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.7\
+[16:04:24 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:24 INF] Beginning to package Velopack release 1.0.7.
+[16:04:24 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:24 INF] Starting: Pre-process steps
+[16:04:25 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:25 INF] Shortcuts: StartMenuRoot
+[16:04:25 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:25 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:25 INF] Complete: Pre-process steps
+[16:04:25 INF] Starting: Code-sign application
+[16:04:25 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:25 INF] Complete: Code-sign application
+[16:04:25 INF] Starting: Building portable package
+[16:04:25 INF] Starting: Building release 1.0.7
+[16:04:25 INF] Complete: Building portable package
+[16:04:25 INF] Complete: Building release 1.0.7
+[16:04:25 INF] Starting: Building setup package
+[16:04:26 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:26 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:26 INF] Complete: Building setup package
+[16:04:26 INF] Starting: Post-process steps
+[16:04:26 INF] Complete: Post-process steps
+[16:04:26 INF] Finished in 00:00:01.2389741.
+vpk pack 1.0.7 (win) took 2,0 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.7 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-1.0.6-full.nupkg, BrowserAI.Measure-1.0.7-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 244 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.8\
+[16:04:30 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:30 INF] Beginning to package Velopack release 1.0.8.
+[16:04:30 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:30 INF] Starting: Pre-process steps
+[16:04:31 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:31 INF] Shortcuts: StartMenuRoot
+[16:04:31 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:31 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:31 INF] Complete: Pre-process steps
+[16:04:31 INF] Starting: Code-sign application
+[16:04:31 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:31 INF] Complete: Code-sign application
+[16:04:31 INF] Starting: Building portable package
+[16:04:31 INF] Starting: Building release 1.0.8
+[16:04:31 INF] Complete: Building portable package
+[16:04:31 INF] Complete: Building release 1.0.8
+[16:04:31 INF] Starting: Building setup package
+[16:04:32 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:32 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:32 INF] Complete: Building setup package
+[16:04:32 INF] Starting: Post-process steps
+[16:04:32 INF] Complete: Post-process steps
+[16:04:32 INF] Finished in 00:00:01.2729387.
+vpk pack 1.0.8 (win) took 2,0 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.8 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-1.0.6-full.nupkg, BrowserAI.Measure-1.0.7-full.nupkg, BrowserAI.Measure-1.0.8-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 256 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.9\
+[16:04:36 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:36 INF] Beginning to package Velopack release 1.0.9.
+[16:04:36 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:36 INF] Starting: Pre-process steps
+[16:04:37 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:37 INF] Shortcuts: StartMenuRoot
+[16:04:37 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:37 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:37 INF] Complete: Pre-process steps
+[16:04:37 INF] Starting: Code-sign application
+[16:04:37 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:37 INF] Complete: Code-sign application
+[16:04:37 INF] Starting: Building portable package
+[16:04:37 INF] Starting: Building release 1.0.9
+[16:04:37 INF] Complete: Building portable package
+[16:04:37 INF] Complete: Building release 1.0.9
+[16:04:37 INF] Starting: Building setup package
+[16:04:38 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:38 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:38 INF] Complete: Building setup package
+[16:04:38 INF] Starting: Post-process steps
+[16:04:38 INF] Complete: Post-process steps
+[16:04:38 INF] Finished in 00:00:01.2035572.
+vpk pack 1.0.9 (win) took 2,0 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.9 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-1.0.6-full.nupkg, BrowserAI.Measure-1.0.7-full.nupkg, BrowserAI.Measure-1.0.8-full.nupkg, BrowserAI.Measure-1.0.9-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\BrowserAI.Measure.csproj (in 256 ms).
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\app\bin\Release\net10.0-windows\win-x64\BrowserAI.Measure.dll
+  BrowserAI.Measure -> C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\publish\1.0.10\
+[16:04:42 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:42 INF] Beginning to package Velopack release 1.0.10.
+[16:04:42 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases
+[16:04:42 INF] Starting: Pre-process steps
+[16:04:43 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:43 INF] Shortcuts: StartMenuRoot
+[16:04:43 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:43 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:43 INF] Complete: Pre-process steps
+[16:04:43 INF] Starting: Code-sign application
+[16:04:43 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:43 INF] Complete: Code-sign application
+[16:04:43 INF] Starting: Building portable package
+[16:04:43 INF] Starting: Building release 1.0.10
+[16:04:43 INF] Complete: Building portable package
+[16:04:43 INF] Complete: Building release 1.0.10
+[16:04:43 INF] Starting: Building setup package
+[16:04:44 INF] Setup bundle created 'BrowserAI.Measure-win-Setup.exe'.
+[16:04:44 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:44 INF] Complete: Building setup package
+[16:04:44 INF] Starting: Post-process steps
+[16:04:44 INF] Complete: Post-process steps
+[16:04:44 INF] Finished in 00:00:01.2354506.
+vpk pack 1.0.10 (win) took 2,0 s
+snapshot C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.10 holds: assets.win.json, BrowserAI.Measure-1.0.0-full.nupkg, BrowserAI.Measure-1.0.1-full.nupkg, BrowserAI.Measure-1.0.10-full.nupkg, BrowserAI.Measure-1.0.2-alpha.1-full.nupkg, BrowserAI.Measure-1.0.2-full.nupkg, BrowserAI.Measure-1.0.3-full.nupkg, BrowserAI.Measure-1.0.4-full.nupkg, BrowserAI.Measure-1.0.5-full.nupkg, BrowserAI.Measure-1.0.6-full.nupkg, BrowserAI.Measure-1.0.7-full.nupkg, BrowserAI.Measure-1.0.8-full.nupkg, BrowserAI.Measure-1.0.9-full.nupkg, BrowserAI.Measure-win-Portable.zip, BrowserAI.Measure-win-Setup.exe, RELEASES, releases.win.json
+[16:04:44 INF] Velopack CLI 1.2.161, for distributing applications.
+[16:04:44 INF] Beginning to package Velopack release 1.0.2-alpha.1.
+[16:04:44 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases-beta
+[16:04:44 INF] Starting: Pre-process steps
+[16:04:45 INF] Verified VelopackApp.Run() in 'System.Int32 BrowserAI.Measure.Program::Main(System.String)'.
+[16:04:45 INF] Shortcuts: StartMenuRoot
+[16:04:45 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:45 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[16:04:45 INF] Complete: Pre-process steps
+[16:04:45 INF] Starting: Code-sign application
+[16:04:45 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[16:04:45 INF] Complete: Code-sign application
+[16:04:45 INF] Starting: Building portable package
+[16:04:45 INF] Starting: Building release 1.0.2-alpha.1
+[16:04:45 INF] Complete: Building portable package
+[16:04:45 INF] Complete: Building release 1.0.2-alpha.1
+[16:04:45 INF] Starting: Building setup package
+[16:04:45 INF] Setup bundle created 'BrowserAI.Measure-beta-Setup.exe'.
+[16:04:45 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[16:04:45 INF] Complete: Building setup package
+[16:04:45 INF] Starting: Post-process steps
+[16:04:46 INF] Complete: Post-process steps
+[16:04:46 INF] Finished in 00:00:01.0989101.
+vpk pack 1.0.2-alpha.1 (beta) took 1,8 s
+Copy-Item: C:\Source\SixFive7\BrowserAI\.work\step0-velopack\pack.ps1:52
+Line |
+  52 |  Copy-Item -LiteralPath (Join-Path $betaOut 'BrowserAI.Measure-1.0.2-a .
+     |  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\out\releases-beta\BrowserAI.Measure-1.0.2-alpha.1-full.nupkg'
+     | because it does not exist.
+exit=1

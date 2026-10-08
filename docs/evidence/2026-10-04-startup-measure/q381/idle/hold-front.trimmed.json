@@ -1,0 +1,53 @@
+{
+ "exe": "%USERPROFILE%\\Downloads\\tmp-startup-measure\\inst\\current\\BrowserAI.Server.exe",
+ "args": [],
+ "startUtc": "2026-10-04T01:32:02.651Z",
+ "events": [
+  {
+   "ms": 10.93,
+   "what": "spawned",
+   "pid": 85480
+  },
+  {
+   "ms": 11.451,
+   "what": "initialize sent"
+  },
+  {
+   "ms": 91.059,
+   "what": "initialize answered",
+   "serverInfo": {
+    "name": "BrowserAI",
+    "version": "1.1.1-alpha.0.192"
+   },
+   "capabilities": {
+    "tools": {}
+   }
+  },
+  {
+   "ms": 91.132,
+   "what": "tools/list sent"
+  },
+  {
+   "ms": 102.712,
+   "what": "tools/list answered",
+   "count": 78,
+   "first": [
+    "browserai_init",
+    "browserai_resume",
+    "browserai_catch_up"
+   ]
+  },
+  {
+   "ms": 120012.271,
+   "what": "no exit 60 s after start of wait: terminating it by its handle"
+  },
+  {
+   "ms": 120029.198,
+   "what": "exited",
+   "code": null,
+   "signal": "SIGTERM"
+  }
+ ],
+ "pid": 85480,
+ "stderr": "info: BrowserAI.Startup[1]\r\n      BrowserAI 1.1.1-alpha.0.192 started. pid=85480 image=%USERPROFILE%\\Downloads\\tmp-startup-measure\\inst\\current\\BrowserAI.Server.exe cwd=C:\\Source\\SixFive7\\BrowserAI\\.work\\startup-measure sqlite=3.53.4 sqliteBuild=intended\r\ninfo: BrowserAI.Updates[17]\r\n      Installed at %USERPROFILE%\\Downloads\\tmp-startup-measure\\inst. channel=win manifestVersion=1.1.1-alpha.0.192 assemblyVersion=1.1.1-alpha.0.192\r\nwarn: BrowserAI.Startup[4]\r\n      BROWSERAI_ROOT is set, so this BrowserAI's app root is %USERPROFILE%\\Downloads\\tmp-startup-measure\\data, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.\r\ninfo: BrowserAI.Startup[70]\r\n      Watching the MCP client, pid 21868, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.\r\ninfo: BrowserAI.Pipe[1]\r\n      Listening on \\\\.\\pipe\\BrowserAI-85480-6a13c9c69f7f4f078c2d3455d8f1d949 for describe and stop.\r\ninfo: BrowserAI.Startup[3]\r\n      BrowserAI relays its client to the session host on \\\\.\\pipe\\BrowserAI-Host-C429DBA98841F2BBC73DAFB506AEE381; the host holds the sessions and keeps them if this process ends.\r\nwarn: BrowserAI.Updates[2]\r\n      BROWSERAI_UPDATE_FEED is set, so this BrowserAI checks %USERPROFILE%\\Downloads\\tmp-startup-measure\\feed/releases.win.json for updates, not the feed it shipped with.\r\ninfo: BrowserAI.Updates[2]\r\n      BrowserAI 1.1.1-alpha.0.192 is a pre-release build and does not self-update. A version carrying a suffix was built from a commit that no tag points at, so there is no release for it to be newer or older than.\r\ninfo: BrowserAI.Sweep[1]\r\n      Stray sweep: outcome=Ran elapsed=18.2ms processes=672/514 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=58 titled=13 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=2 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=3 undetermined=0 abandonedGate=False why=-] abandonedGate=False\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after BrowserAI started, which collects what a run that was killed left behind, detached and not awaited: reaper=93556@134355511227606263.\r\n"
+}

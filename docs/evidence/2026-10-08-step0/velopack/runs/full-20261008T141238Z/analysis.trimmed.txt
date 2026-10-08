@@ -1,0 +1,1549 @@
+
+=== RUN install
+version before -> after:  -> 1.0.0; elapsed 3.87 s; timedOut=False
+  process 85192  started-by-orchestrator            created 2026-10-08T14:12:39.8810463Z exited 2026-10-08T14:12:41.0574650Z code 0 image C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.0\BrowserAI.Measure-win-Setup.exe
+  process 75944  stand-in --veloapp-install         created 2026-10-08T14:12:40.5527237Z exited 2026-10-08T14:12:40.7328160Z code 0 image 
+  packages before: 
+  packages after:  .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 75944 v1.0.0 args ['--veloapp-install' '1.0.0']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-install 1.0.0
+     VELOPACK at entry: 
+     parent: pid 85192 image C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.0\BrowserAI.Measure-win-Setup.exe created 2026-10-08T14:12:39.8810463Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:40.5527237Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: install 1.0.0 at 2026-10-08T14:12:40.7305131Z
+     {"t":"2026-10-08T14:12:40.7305279Z","event":"hook-return","hook":"install"}
+     velopack: Found fast exit hook: --veloapp-install
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:40.7328160Z; lifetime 180.1 ms
+
+=== RUN M1-B-1
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.11 s; timedOut=False
+  process 62032  started-by-orchestrator            created 2026-10-08T14:12:43.8032989Z exited 2026-10-08T14:12:43.9946591Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 62032 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:43.8032989Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:43.9850369Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:43.9909332Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:43.9946591Z; lifetime 191.4 ms
+  log: [lib-csharp:62032] [16:12:43] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-C-1
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.1 s; timedOut=False
+  process 99528  started-by-orchestrator            created 2026-10-08T14:12:44.9404060Z exited 2026-10-08T14:12:45.1312181Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 99528 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:44.9404060Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:45.1201641Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2-alpha.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:45.1247700Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","targetSize":2275997,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:45.1312181Z; lifetime 190.8 ms
+  log: [lib-csharp:99528] [16:12:45] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M1-D-1
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.1 s; timedOut=False
+  process 24924  started-by-orchestrator            created 2026-10-08T14:12:46.0347401Z exited 2026-10-08T14:12:46.2291111Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 24924 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:46.0347401Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:46.2210320Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:46.2267750Z","event":"check-result","found":true,"target":"1.0.2","targetFile":"BrowserAI.Measure-1.0.2-full.nupkg","targetSize":2275946,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:46.2291111Z; lifetime 194.4 ms
+  log: [lib-csharp:24924] [16:12:46] [Information] Unable to find any delta matching version 1.0.2, so delta updates will be disabled.
+
+=== RUN M1-E-1
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.05 s; timedOut=False
+  process 71384  started-by-orchestrator            created 2026-10-08T14:12:47.1808738Z exited 2026-10-08T14:12:47.3686887Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 71384 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:47.1808738Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:47.3612642Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:47.3663267Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:47.3686887Z; lifetime 187.8 ms
+  log: [lib-csharp:71384] [16:12:47] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-F-1
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.05 s; timedOut=False
+  process 66184  started-by-orchestrator            created 2026-10-08T14:12:48.2588720Z exited 2026-10-08T14:12:48.4501615Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 66184 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha' '--channel=beta']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha --channel=beta
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:48.2588720Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:48.4427619Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":"beta","downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg"]}
+     {"t":"2026-10-08T14:12:48.4477546Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg","targetSize":2276003,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:48.4501615Z; lifetime 191.3 ms
+  log: [lib-csharp:66184] [16:12:48] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M1-B-2
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.11 s; timedOut=False
+  process 39320  started-by-orchestrator            created 2026-10-08T14:12:49.3359184Z exited 2026-10-08T14:12:49.5215279Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 39320 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:49.3359184Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:49.5147312Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:49.5192824Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:49.5215279Z; lifetime 185.6 ms
+  log: [lib-csharp:39320] [16:12:49] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-C-2
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.06 s; timedOut=False
+  process 43932  started-by-orchestrator            created 2026-10-08T14:12:50.5116661Z exited 2026-10-08T14:12:50.6956674Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 43932 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:50.5116661Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:50.6880141Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2-alpha.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:50.6927342Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","targetSize":2275997,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:50.6956674Z; lifetime 184 ms
+  log: [lib-csharp:43932] [16:12:50] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M1-D-2
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.04 s; timedOut=False
+  process 48600  started-by-orchestrator            created 2026-10-08T14:12:51.5703516Z exited 2026-10-08T14:12:51.7505238Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 48600 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:51.5703516Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:51.7433604Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:51.7481011Z","event":"check-result","found":true,"target":"1.0.2","targetFile":"BrowserAI.Measure-1.0.2-full.nupkg","targetSize":2275946,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:51.7505238Z; lifetime 180.2 ms
+  log: [lib-csharp:48600] [16:12:51] [Information] Unable to find any delta matching version 1.0.2, so delta updates will be disabled.
+
+=== RUN M1-E-2
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.1 s; timedOut=False
+  process 69000  started-by-orchestrator            created 2026-10-08T14:12:52.6387610Z exited 2026-10-08T14:12:52.8806245Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 69000 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:52.6387610Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:52.8709710Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:52.8771377Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:52.8806245Z; lifetime 241.9 ms
+  log: [lib-csharp:69000] [16:12:52] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-F-2
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.1 s; timedOut=False
+  process 33020  started-by-orchestrator            created 2026-10-08T14:12:53.7686178Z exited 2026-10-08T14:12:53.9584260Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 33020 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha' '--channel=beta']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha --channel=beta
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:53.7686178Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:53.9508148Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":"beta","downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg"]}
+     {"t":"2026-10-08T14:12:53.9558103Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg","targetSize":2276003,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:53.9584260Z; lifetime 189.8 ms
+  log: [lib-csharp:33020] [16:12:53] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M1-B-3
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.09 s; timedOut=False
+  process 85928  started-by-orchestrator            created 2026-10-08T14:12:54.8876471Z exited 2026-10-08T14:12:55.0697499Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 85928 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:54.8876471Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:55.0625089Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:55.0673761Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:55.0697499Z; lifetime 182.1 ms
+  log: [lib-csharp:85928] [16:12:55] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-C-3
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.1 s; timedOut=False
+  process 35636  started-by-orchestrator            created 2026-10-08T14:12:55.9998774Z exited 2026-10-08T14:12:56.1853830Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 35636 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2-alpha.1
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:55.9998774Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:56.1782096Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2-alpha.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:56.1830318Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","targetSize":2275997,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:56.1853830Z; lifetime 185.5 ms
+  log: [lib-csharp:35636] [16:12:56] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M1-D-3
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.14 s; timedOut=False
+  process 96128  started-by-orchestrator            created 2026-10-08T14:12:57.1214777Z exited 2026-10-08T14:12:57.3252227Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 96128 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:57.1214777Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:57.3172053Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:57.3223387Z","event":"check-result","found":true,"target":"1.0.2","targetFile":"BrowserAI.Measure-1.0.2-full.nupkg","targetSize":2275946,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:57.3252227Z; lifetime 203.7 ms
+  log: [lib-csharp:96128] [16:12:57] [Information] Unable to find any delta matching version 1.0.2, so delta updates will be disabled.
+
+=== RUN M1-E-3
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.13 s; timedOut=False
+  process 100388 started-by-orchestrator            created 2026-10-08T14:12:58.3208122Z exited 2026-10-08T14:12:58.5271211Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 100388 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:58.3208122Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:58.5197397Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:12:58.5245383Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:58.5271211Z; lifetime 206.3 ms
+  log: [lib-csharp:100388] [16:12:58] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+
+=== RUN M1-F-3
+version before -> after: 1.0.0 -> 1.0.0; elapsed 1.06 s; timedOut=False
+  process 32776  started-by-orchestrator            created 2026-10-08T14:12:59.4667259Z exited 2026-10-08T14:12:59.6511290Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 32776 v1.0.0 args ['check' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha' '--channel=beta']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" check C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\win-1.0.1-plus-beta-alpha --channel=beta
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:12:59.4667259Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:12:59.6420025Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\win-1.0.1-plus-beta-alpha","channelAsked":"beta","downgrade":false,"assets":["Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg"]}
+     {"t":"2026-10-08T14:12:59.6468953Z","event":"check-result","found":true,"target":"1.0.2-alpha.1","targetFile":"BrowserAI.Measure-1.0.2-alpha.1-beta-full.nupkg","targetSize":2276003,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     exit seen by orchestrator: code 0 at 2026-10-08T14:12:59.6511290Z; lifetime 184.4 ms
+  log: [lib-csharp:32776] [16:12:59] [Information] Unable to find any delta matching version 1.0.2-alpha.1, so delta updates will be disabled.
+
+=== RUN M2-1
+version before -> after: 1.0.0 -> 1.0.1; elapsed 5.01 s; timedOut=False
+  process 65956  stand-in restarted                 created 2026-10-08T14:13:02.7986576Z exited 2026-10-08T14:13:02.9834562Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 25516  stand-in --veloapp-updated         created 2026-10-08T14:13:01.8886986Z exited 2026-10-08T14:13:02.0250519Z code 0 image 
+  process 16420  Update.exe                         created 2026-10-08T14:13:00.9803343Z exited 2026-10-08T14:13:02.8075113Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 86376  started-by-orchestrator            created 2026-10-08T14:13:00.5523021Z exited 2026-10-08T14:13:00.9977685Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 72520  stand-in --veloapp-obsolete        created 2026-10-08T14:13:01.0310854Z exited 2026-10-08T14:13:01.1745211Z code 0 image 
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.0-full.nupkg 2275922
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.1-full.nupkg 2275937, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 86376 v1.0.0 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1' 'restart' 'restarted' '--run=M2-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.1 restart restarted --run=M2-1 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:00.5523021Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.0; local packages: Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg
+     {"t":"2026-10-08T14:13:00.7338437Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.1","channelAsked":null,"downgrade":false,"assets":["Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:00.7387887Z","event":"check-result","found":true,"target":"1.0.1","targetFile":"BrowserAI.Measure-1.0.1-full.nupkg","targetSize":2275937,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:00.7979343Z","event":"downloaded","elapsedMs":58,"pendingRestart":"1.0.1","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.1-full.nupkg"]}
+     {"t":"2026-10-08T14:13:00.7979560Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M2-1","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.1-full.nupkg"}
+     velopack: Process started with ID: 16420
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:00.9977685Z; lifetime 445.5 ms
+  -- pid 72520 v1.0.0 args ['--veloapp-obsolete' '1.0.0']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.0
+     VELOPACK at entry: 
+     parent: pid 16420 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:00.9803343Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:01.0310854Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.0 at 2026-10-08T14:13:01.1716805Z
+     {"t":"2026-10-08T14:13:01.1716956Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:01.1745211Z; lifetime 143.4 ms
+  -- pid 25516 v1.0.1 args ['--veloapp-updated' '1.0.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.1
+     VELOPACK at entry: 
+     parent: pid 16420 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:00.9803343Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:01.8886986Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.1 at 2026-10-08T14:13:02.0223039Z
+     {"t":"2026-10-08T14:13:02.0225803Z","event":"hook-return","hook":"updated"}
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:02.0250519Z; lifetime 136.4 ms
+  -- pid 65956 v1.0.1 args ['restarted' '--run=M2-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M2-1 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 16420 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:00.9803343Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:13:02.7986576Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.1 at 2026-10-08T14:13:02.9757062Z
+     after Run(): VELOPACK now: ; installed 1.0.1; local packages: Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:02.9834562Z; lifetime 184.8 ms
+  log: [lib-csharp:86376] [16:13:00] [Information] Unable to find any delta matching version 1.0.1, so delta updates will be disabled.
+  log: [update:16420] [16:13:01] [INFO]     Restart: true
+  log: [update:16420] [16:13:01] [INFO]     Exe Args: Some(["restarted", "--run=M2-1", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:16420] [16:13:01] [WARN] Failed to wait for process (86376) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:16420] [16:13:01] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.0: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.1-full.nupkg"
+  log: [update:16420] [16:13:01] [INFO] Running --veloapp-obsolete hook...
+  log: [update:16420] [16:13:01] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:16420] [16:13:01] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:16420] [16:13:01] [INFO] Hook executed successfully (took 165.2048ms)
+  log: [update:16420] [16:13:01] [INFO] Inspected 790 running processes in 342ms, 1 matched directory
+  log: [update:16420] [16:13:01] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (16420)
+  log: [update:16420] [16:13:01] [INFO] Inspected 790 running processes in 320ms, 1 matched directory
+  log: [update:16420] [16:13:01] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (16420)
+  log: [update:16420] [16:13:01] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_uI21t3JubqmowGjW"
+  log: [update:16420] [16:13:01] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_kJAkgQmWpuitcwbV"
+  log: [update:16420] [16:13:01] [INFO] Running --veloapp-updated hook...
+  log: [update:16420] [16:13:01] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:16420] [16:13:01] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:16420] [16:13:02] [INFO] Hook executed successfully (took 181.8383ms)
+  log: [update:16420] [16:13:02] [INFO] Inspected 784 running processes in 292ms, 1 matched directory
+  log: [update:16420] [16:13:02] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (16420)
+  log: [update:16420] [16:13:02] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_uI21t3JubqmowGjW" in 2ms
+  log: [update:16420] [16:13:02] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.0"))
+  log: [update:16420] [16:13:02] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.1")
+  log: [update:16420] [16:13:02] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:16420] [16:13:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:16420] [16:13:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:16420] [16:13:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:16420] [16:13:02] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:16420] [16:13:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:16420] [16:13:02] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:16420] [16:13:02] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:16420] [16:13:02] [INFO] Package applied successfully.
+  log: [update:16420] [16:13:02] [INFO] Package version 1.0.1 applied successfully.
+  log: [update:16420] [16:13:02] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:16420] [16:13:02] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M2-2
+version before -> after: 1.0.1 -> 1.0.2; elapsed 5.55 s; timedOut=False
+  process 70312  stand-in restarted                 created 2026-10-08T14:13:08.3217260Z exited 2026-10-08T14:13:08.4910809Z code 0 image 
+  process 109228 stand-in --veloapp-updated         created 2026-10-08T14:13:07.1404420Z exited 2026-10-08T14:13:07.2759231Z code 0 image 
+  process 99444  Update.exe                         created 2026-10-08T14:13:06.1795629Z exited 2026-10-08T14:13:08.3315245Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 97400  stand-in --veloapp-obsolete        created 2026-10-08T14:13:06.2465553Z exited 2026-10-08T14:13:06.4063490Z code 0 image 
+  process 36380  started-by-orchestrator            created 2026-10-08T14:13:05.6328210Z exited 2026-10-08T14:13:06.2038815Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.1-full.nupkg 2275937, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.2-full.nupkg 2275946, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 36380 v1.0.1 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2' 'restart' 'restarted' '--run=M2-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.2 restart restarted --run=M2-2 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:05.6328210Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.1; local packages: Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg
+     {"t":"2026-10-08T14:13:05.8505372Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.2","channelAsked":null,"downgrade":false,"assets":["Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:05.8568955Z","event":"check-result","found":true,"target":"1.0.2","targetFile":"BrowserAI.Measure-1.0.2-full.nupkg","targetSize":2275946,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:05.9281731Z","event":"downloaded","elapsedMs":70,"pendingRestart":"1.0.2","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.2-full.nupkg"]}
+     {"t":"2026-10-08T14:13:05.9281908Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M2-2","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.2-full.nupkg"}
+     velopack: Process started with ID: 99444
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:06.2038815Z; lifetime 571.1 ms
+  -- pid 97400 v1.0.1 args ['--veloapp-obsolete' '1.0.1']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.1
+     VELOPACK at entry: 
+     parent: pid 99444 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:06.1795629Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:06.2465553Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.1 at 2026-10-08T14:13:06.4032655Z
+     {"t":"2026-10-08T14:13:06.4032807Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:06.4063490Z; lifetime 159.8 ms
+  -- pid 109228 v1.0.2 args ['--veloapp-updated' '1.0.2']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.2
+     VELOPACK at entry: 
+     parent: pid 99444 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:06.1795629Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:07.1404420Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.2 at 2026-10-08T14:13:07.2733986Z
+     {"t":"2026-10-08T14:13:07.2736372Z","event":"hook-return","hook":"updated"}
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:07.2759231Z; lifetime 135.5 ms
+  -- pid 70312 v1.0.2 args ['restarted' '--run=M2-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M2-2 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 99444 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:06.1795629Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:13:08.3217260Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.2 at 2026-10-08T14:13:08.4854969Z
+     after Run(): VELOPACK now: ; installed 1.0.2; local packages: Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:08.4910809Z; lifetime 169.4 ms
+  log: [lib-csharp:36380] [16:13:05] [Information] Unable to find any delta matching version 1.0.2, so delta updates will be disabled.
+  log: [update:99444] [16:13:06] [INFO]     Restart: true
+  log: [update:99444] [16:13:06] [INFO]     Exe Args: Some(["restarted", "--run=M2-2", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:99444] [16:13:06] [WARN] Failed to wait for process (36380) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:99444] [16:13:06] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.1: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.2-full.nupkg"
+  log: [update:99444] [16:13:06] [INFO] Running --veloapp-obsolete hook...
+  log: [update:99444] [16:13:06] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:99444] [16:13:06] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:99444] [16:13:06] [INFO] Hook executed successfully (took 181.94ms)
+  log: [update:99444] [16:13:06] [INFO] Inspected 824 running processes in 326ms, 1 matched directory
+  log: [update:99444] [16:13:06] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (99444)
+  log: [update:99444] [16:13:07] [INFO] Inspected 826 running processes in 331ms, 1 matched directory
+  log: [update:99444] [16:13:07] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (99444)
+  log: [update:99444] [16:13:07] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_u4vozgztBGX5A46F"
+  log: [update:99444] [16:13:07] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_PpJnZYLxxYIV4rxV"
+  log: [update:99444] [16:13:07] [INFO] Running --veloapp-updated hook...
+  log: [update:99444] [16:13:07] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:99444] [16:13:07] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:99444] [16:13:07] [INFO] Hook executed successfully (took 207.5563ms)
+  log: [update:99444] [16:13:07] [INFO] Inspected 824 running processes in 341ms, 1 matched directory
+  log: [update:99444] [16:13:07] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (99444)
+  log: [update:99444] [16:13:07] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_u4vozgztBGX5A46F" in 2ms
+  log: [update:99444] [16:13:07] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.1"))
+  log: [update:99444] [16:13:07] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.2")
+  log: [update:99444] [16:13:07] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:99444] [16:13:07] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:99444] [16:13:07] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:99444] [16:13:07] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:99444] [16:13:08] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:99444] [16:13:08] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:99444] [16:13:08] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:99444] [16:13:08] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:99444] [16:13:08] [INFO] Package applied successfully.
+  log: [update:99444] [16:13:08] [INFO] Package version 1.0.2 applied successfully.
+  log: [update:99444] [16:13:08] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:99444] [16:13:08] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M2-3
+version before -> after: 1.0.2 -> 1.0.3; elapsed 5.12 s; timedOut=False
+  process 74012  stand-in --veloapp-updated         created 2026-10-08T14:13:12.4542639Z exited 2026-10-08T14:13:12.5932308Z code 0 image 
+  process 70296  Update.exe                         created 2026-10-08T14:13:11.6166787Z exited 2026-10-08T14:13:13.4898019Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 34668  stand-in --veloapp-obsolete        created 2026-10-08T14:13:11.6709526Z exited 2026-10-08T14:13:11.8206054Z code 0 image 
+  process 92920  stand-in restarted                 created 2026-10-08T14:13:13.4808657Z exited 2026-10-08T14:13:13.6402081Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 58520  started-by-orchestrator            created 2026-10-08T14:13:11.1740607Z exited 2026-10-08T14:13:11.6351948Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.2-full.nupkg 2275946, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.3-full.nupkg 2275945, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 58520 v1.0.2 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.3' 'restart' 'restarted' '--run=M2-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.3 restart restarted --run=M2-3 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:11.1740607Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.2; local packages: Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg
+     {"t":"2026-10-08T14:13:11.3673495Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.3","channelAsked":null,"downgrade":false,"assets":["Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:11.3722396Z","event":"check-result","found":true,"target":"1.0.3","targetFile":"BrowserAI.Measure-1.0.3-full.nupkg","targetSize":2275945,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:11.4321925Z","event":"downloaded","elapsedMs":59,"pendingRestart":"1.0.3","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.3-full.nupkg"]}
+     {"t":"2026-10-08T14:13:11.4322105Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M2-3","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.3-full.nupkg"}
+     velopack: Process started with ID: 70296
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:11.6351948Z; lifetime 461.1 ms
+  -- pid 34668 v1.0.2 args ['--veloapp-obsolete' '1.0.2']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.2
+     VELOPACK at entry: 
+     parent: pid 70296 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:11.6166787Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:11.6709526Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.2 at 2026-10-08T14:13:11.8158851Z
+     {"t":"2026-10-08T14:13:11.8159040Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:11.8206054Z; lifetime 149.7 ms
+  -- pid 74012 v1.0.3 args ['--veloapp-updated' '1.0.3']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.3
+     VELOPACK at entry: 
+     parent: pid 70296 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:11.6166787Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:12.4542639Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.3 at 2026-10-08T14:13:12.5904633Z
+     {"t":"2026-10-08T14:13:12.5907045Z","event":"hook-return","hook":"updated"}
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:12.5932308Z; lifetime 139 ms
+  -- pid 92920 v1.0.3 args ['restarted' '--run=M2-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M2-3 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 70296 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:11.6166787Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:13:13.4808657Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.3 at 2026-10-08T14:13:13.6346287Z
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:13.6402081Z; lifetime 159.3 ms
+  log: [lib-csharp:58520] [16:13:11] [Information] Unable to find any delta matching version 1.0.3, so delta updates will be disabled.
+  log: [update:70296] [16:13:11] [INFO]     Restart: true
+  log: [update:70296] [16:13:11] [INFO]     Exe Args: Some(["restarted", "--run=M2-3", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:70296] [16:13:11] [WARN] Failed to wait for process (58520) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:70296] [16:13:11] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.2: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.3-full.nupkg"
+  log: [update:70296] [16:13:11] [INFO] Running --veloapp-obsolete hook...
+  log: [update:70296] [16:13:11] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:70296] [16:13:11] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:70296] [16:13:11] [INFO] Hook executed successfully (took 165.1538ms)
+  log: [update:70296] [16:13:12] [INFO] Inspected 790 running processes in 309ms, 1 matched directory
+  log: [update:70296] [16:13:12] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (70296)
+  log: [update:70296] [16:13:12] [INFO] Inspected 794 running processes in 282ms, 1 matched directory
+  log: [update:70296] [16:13:12] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (70296)
+  log: [update:70296] [16:13:12] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_gFpJiRSlrdRQlhwx"
+  log: [update:70296] [16:13:12] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_ACn6EB7EtGcf4YhL"
+  log: [update:70296] [16:13:12] [INFO] Running --veloapp-updated hook...
+  log: [update:70296] [16:13:12] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:70296] [16:13:12] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:70296] [16:13:12] [INFO] Hook executed successfully (took 177.698ms)
+  log: [update:70296] [16:13:12] [INFO] Inspected 790 running processes in 307ms, 1 matched directory
+  log: [update:70296] [16:13:12] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (70296)
+  log: [update:70296] [16:13:12] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_gFpJiRSlrdRQlhwx" in 3ms
+  log: [update:70296] [16:13:12] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.2"))
+  log: [update:70296] [16:13:12] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.3")
+  log: [update:70296] [16:13:12] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:70296] [16:13:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:70296] [16:13:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:70296] [16:13:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:70296] [16:13:13] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:70296] [16:13:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:70296] [16:13:13] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:70296] [16:13:13] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:70296] [16:13:13] [INFO] Package applied successfully.
+  log: [update:70296] [16:13:13] [INFO] Package version 1.0.3 applied successfully.
+  log: [update:70296] [16:13:13] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:70296] [16:13:13] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M3-1
+version before -> after: 1.0.3 -> 1.0.3; elapsed 14.26 s; timedOut=False
+  process 97020  stand-in --veloapp-obsolete        created 2026-10-08T14:13:16.9449109Z exited 2026-10-08T14:13:17.1034035Z code 0 image 
+  process 106996 Update.exe                         created 2026-10-08T14:13:16.8774562Z exited 2026-10-08T14:13:27.9043234Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 105516 started-by-orchestrator            created 2026-10-08T14:13:16.3520756Z exited 2026-10-08T14:13:16.9035578Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  missed: 104420: missed
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.3-full.nupkg 2275945, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 105516 v1.0.3 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4' 'restart' 'restarted' '--run=M3-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4 restart restarted --run=M3-1 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:16.3520756Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg
+     {"t":"2026-10-08T14:13:16.5951758Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.4","channelAsked":null,"downgrade":false,"assets":["Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:16.6004613Z","event":"check-result","found":true,"target":"1.0.4","targetFile":"BrowserAI.Measure-1.0.4-full.nupkg","targetSize":2275939,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:16.6645388Z","event":"downloaded","elapsedMs":63,"pendingRestart":"1.0.4","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.4-full.nupkg"]}
+     {"t":"2026-10-08T14:13:16.6645684Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M3-1","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.4-full.nupkg"}
+     velopack: Process started with ID: 106996
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:16.9035578Z; lifetime 551.5 ms
+  -- pid 97020 v1.0.3 args ['--veloapp-obsolete' '1.0.3']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.3
+     VELOPACK at entry: 
+     parent: pid 106996 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:16.8774562Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:16.9449109Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.3 at 2026-10-08T14:13:17.1010673Z
+     {"t":"2026-10-08T14:13:17.1010828Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:17.1034035Z; lifetime 158.5 ms
+  -- pid 104420 v1.0.3 args ['restarted' '--run=M3-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M3-1 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 106996 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:16.8774562Z state-at-entry 'exited 1' olderThanMe=True
+     created 2026-10-08T14:13:27.8962516Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.3 at 2026-10-08T14:13:28.0536999Z
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: True, autoApply: False)
+  log: [lib-csharp:105516] [16:13:16] [Information] Unable to find any delta matching version 1.0.4, so delta updates will be disabled.
+  log: [update:106996] [16:13:16] [INFO]     Restart: true
+  log: [update:106996] [16:13:16] [INFO]     Exe Args: Some(["restarted", "--run=M3-1", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:106996] [16:13:16] [WARN] Failed to wait for process (105516) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:106996] [16:13:16] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.3: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.4-full.nupkg"
+  log: [update:106996] [16:13:16] [INFO] Running --veloapp-obsolete hook...
+  log: [update:106996] [16:13:16] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\...
+  log: [update:106996] [16:13:16] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:106996] [16:13:17] [INFO] Hook executed successfully (took 179.4784ms)
+  log: [update:106996] [16:13:17] [INFO] Inspected 792 running processes in 341ms, 1 matched directory
+  log: [update:106996] [16:13:17] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (106996)
+  log: [update:106996] [16:13:17] [INFO] Inspected 790 running processes in 397ms, 1 matched directory
+  log: [update:106996] [16:13:17] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (106996)
+  log: [update:106996] [16:13:17] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_KYmQo9ERYnHmCSlQ"
+  log: [update:106996] [16:13:17] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:18] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:19] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:20] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:21] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:22] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:23] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:24] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:25] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:26] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:106996] [16:13:27] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_N57j1v1BS2j1Ryng" in 2ms
+  log: [update:106996] [16:13:27] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\...
+  log: [update:106996] [16:13:27] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+  log: [update:106996] [16:13:27] [ERROR] Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+  log: [update:106996] [16:13:27] [ERROR] An error has occurred: Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+
+=== RUN M3-1-after
+version before -> after: 1.0.3 -> 1.0.3; elapsed 2.83 s; timedOut=False
+  process 85072  started-by-orchestrator            created 2026-10-08T14:13:30.6389818Z exited 2026-10-08T14:13:30.8204470Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 85072 v1.0.3 args ['info']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" info
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:30.6389818Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:30.8204470Z; lifetime 181.5 ms
+
+=== RUN M3-2
+version before -> after: 1.0.3 -> 1.0.3; elapsed 14.47 s; timedOut=False
+  process 70752  Update.exe                         created 2026-10-08T14:13:33.7710186Z exited 2026-10-08T14:13:45.1172036Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 72012  started-by-orchestrator            created 2026-10-08T14:13:33.5034595Z exited 2026-10-08T14:13:33.7855663Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 99384  stand-in --veloapp-obsolete        created 2026-10-08T14:13:33.8343837Z exited 2026-10-08T14:13:34.0680995Z code 0 image 
+  process 104552 stand-in restarted                 created 2026-10-08T14:13:45.1082374Z exited 2026-10-08T14:13:45.3287202Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 72012 v1.0.3 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4' 'restart' 'restarted' '--run=M3-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4 restart restarted --run=M3-2 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:33.5034595Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     {"t":"2026-10-08T14:13:33.7094090Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.4","channelAsked":null,"downgrade":false,"assets":["Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:33.7167550Z","event":"check-result","found":true,"target":"1.0.4","targetFile":"BrowserAI.Measure-1.0.4-full.nupkg","targetSize":2275939,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:33.7329443Z","event":"downloaded","elapsedMs":15,"pendingRestart":"1.0.4","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.4-full.nupkg"]}
+     {"t":"2026-10-08T14:13:33.7329679Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M3-2","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.4-full.nupkg"}
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     velopack: Process started with ID: 70752
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:33.7855663Z; lifetime 282.1 ms
+  -- pid 99384 v1.0.3 args ['--veloapp-obsolete' '1.0.3']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.3
+     VELOPACK at entry: 
+     parent: pid 70752 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:33.7710186Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:33.8343837Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.3 at 2026-10-08T14:13:34.0607215Z
+     {"t":"2026-10-08T14:13:34.0607400Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:34.0680995Z; lifetime 233.7 ms
+  -- pid 104552 v1.0.3 args ['restarted' '--run=M3-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M3-2 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 70752 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:33.7710186Z state-at-entry 'exited 1' olderThanMe=True
+     created 2026-10-08T14:13:45.1082374Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.3 at 2026-10-08T14:13:45.3226066Z
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: True, autoApply: False)
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:45.3287202Z; lifetime 220.5 ms
+  log: [lib-csharp:72012] [16:13:33] [Information] Unable to find any delta matching version 1.0.4, so delta updates will be disabled.
+  log: [update:70752] [16:13:33] [INFO]     Restart: true
+  log: [update:70752] [16:13:33] [INFO]     Exe Args: Some(["restarted", "--run=M3-2", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:70752] [16:13:33] [WARN] Failed to wait for process (72012) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:70752] [16:13:33] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.3: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.4-full.nupkg"
+  log: [update:70752] [16:13:33] [INFO] Running --veloapp-obsolete hook...
+  log: [update:70752] [16:13:33] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:70752] [16:13:33] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:70752] [16:13:34] [INFO] Hook executed successfully (took 260.3276ms)
+  log: [update:70752] [16:13:34] [INFO] Inspected 802 running processes in 612ms, 1 matched directory
+  log: [update:70752] [16:13:34] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (70752)
+  log: [update:70752] [16:13:35] [INFO] Inspected 803 running processes in 363ms, 1 matched directory
+  log: [update:70752] [16:13:35] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (70752)
+  log: [update:70752] [16:13:35] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_tupZYj2COkCq3GuR"
+  log: [update:70752] [16:13:35] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:36] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:37] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:38] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:39] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:40] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:41] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:42] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:43] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:44] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:70752] [16:13:45] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_qdfIG4LaOX8YjvU5" in 3ms
+  log: [update:70752] [16:13:45] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:70752] [16:13:45] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+  log: [update:70752] [16:13:45] [ERROR] Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+  log: [update:70752] [16:13:45] [ERROR] An error has occurred: Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+
+=== RUN M3-2-after
+version before -> after: 1.0.3 -> 1.0.3; elapsed 2.77 s; timedOut=False
+  process 103564 started-by-orchestrator            created 2026-10-08T14:13:47.9921069Z exited 2026-10-08T14:13:48.1462565Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 103564 v1.0.3 args ['info']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" info
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:47.9921069Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:48.1462565Z; lifetime 154.1 ms
+
+=== RUN M3-3
+version before -> after: 1.0.3 -> 1.0.3; elapsed 13.92 s; timedOut=False
+  process 47452  stand-in --veloapp-obsolete        created 2026-10-08T14:13:51.0328099Z exited 2026-10-08T14:13:51.1807603Z code 0 image 
+  process 100900 Update.exe                         created 2026-10-08T14:13:50.9946111Z exited 2026-10-08T14:14:01.9955104Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 34996  started-by-orchestrator            created 2026-10-08T14:13:50.7897171Z exited 2026-10-08T14:13:51.0071055Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  missed: 38416: missed
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 34996 v1.0.3 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4' 'restart' 'restarted' '--run=M3-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4 restart restarted --run=M3-3 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:50.7897171Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     {"t":"2026-10-08T14:13:50.9753460Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.4","channelAsked":null,"downgrade":false,"assets":["Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:13:50.9802473Z","event":"check-result","found":true,"target":"1.0.4","targetFile":"BrowserAI.Measure-1.0.4-full.nupkg","targetSize":2275939,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:13:50.9915388Z","event":"downloaded","elapsedMs":10,"pendingRestart":"1.0.4","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.4-full.nupkg"]}
+     {"t":"2026-10-08T14:13:50.9915563Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M3-3","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.4-full.nupkg"}
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     velopack: Process started with ID: 100900
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:51.0071055Z; lifetime 217.4 ms
+  -- pid 47452 v1.0.3 args ['--veloapp-obsolete' '1.0.3']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.3
+     VELOPACK at entry: 
+     parent: pid 100900 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:50.9946111Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:13:51.0328099Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.3 at 2026-10-08T14:13:51.1782810Z
+     {"t":"2026-10-08T14:13:51.1782971Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:13:51.1807603Z; lifetime 148 ms
+  -- pid 38416 v1.0.3 args ['restarted' '--run=M3-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M3-3 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 100900 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:13:50.9946111Z state-at-entry 'exited 1' olderThanMe=True
+     created 2026-10-08T14:14:01.9864037Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.3 at 2026-10-08T14:14:02.1350916Z
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: True, autoApply: False)
+  log: [lib-csharp:34996] [16:13:50] [Information] Unable to find any delta matching version 1.0.4, so delta updates will be disabled.
+  log: [update:100900] [16:13:51] [INFO]     Restart: true
+  log: [update:100900] [16:13:51] [INFO]     Exe Args: Some(["restarted", "--run=M3-3", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:100900] [16:13:51] [WARN] Failed to wait for process (34996) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:100900] [16:13:51] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.3: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.4-full.nupkg"
+  log: [update:100900] [16:13:51] [INFO] Running --veloapp-obsolete hook...
+  log: [update:100900] [16:13:51] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\...
+  log: [update:100900] [16:13:51] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:100900] [16:13:51] [INFO] Hook executed successfully (took 169.0359ms)
+  log: [update:100900] [16:13:51] [INFO] Inspected 797 running processes in 431ms, 1 matched directory
+  log: [update:100900] [16:13:51] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (100900)
+  log: [update:100900] [16:13:51] [INFO] Inspected 795 running processes in 321ms, 1 matched directory
+  log: [update:100900] [16:13:51] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (100900)
+  log: [update:100900] [16:13:51] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_gnwVktXmBs6xJYm3"
+  log: [update:100900] [16:13:51] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:52] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:53] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:54] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:55] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:56] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:57] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:58] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:13:59] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:14:00] [WARN] Retrying operation in 1000ms... (error was: Some(Os { code: 5, kind: PermissionDenied, message: "Access is denied." }))
+  log: [update:100900] [16:14:01] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_xTVedhiwX0D9IBNB" in 2ms
+  log: [update:100900] [16:14:01] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\...
+  log: [update:100900] [16:14:01] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+  log: [update:100900] [16:14:01] [ERROR] Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+  log: [update:100900] [16:14:01] [ERROR] An error has occurred: Apply error: Error applying package: Unable to start the update, because one or more running processes prevented it. Try again later, or if the issue persists, restart your computer.
+
+=== RUN M3-3-after
+version before -> after: 1.0.3 -> 1.0.3; elapsed 2.77 s; timedOut=False
+  process 59952  started-by-orchestrator            created 2026-10-08T14:14:04.7274705Z exited 2026-10-08T14:14:04.8885567Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): True; files after: 8
+  -- pid 59952 v1.0.3 args ['info']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" info
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:04.7274705Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:04.8885567Z; lifetime 161.1 ms
+
+=== RUN M3-recover
+version before -> after: 1.0.3 -> 1.0.4; elapsed 5.24 s; timedOut=False
+  process 75184  stand-in --veloapp-obsolete        created 2026-10-08T14:14:07.7859189Z exited 2026-10-08T14:14:07.9357566Z code 0 image 
+  process 43616  stand-in --veloapp-updated         created 2026-10-08T14:14:08.7077130Z exited 2026-10-08T14:14:08.8481921Z code 0 image 
+  process 5088   Update.exe                         created 2026-10-08T14:14:07.7446208Z exited 2026-10-08T14:14:09.8316505Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 23672  started-by-orchestrator            created 2026-10-08T14:14:07.5178247Z exited 2026-10-08T14:14:07.7531720Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 107000 stand-in restarted                 created 2026-10-08T14:14:09.8227888Z exited 2026-10-08T14:14:09.9846396Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 23672 v1.0.3 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4' 'restart' 'restarted' '--run=M3-recover' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.4 restart restarted --run=M3-recover "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:07.5178247Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.3; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     {"t":"2026-10-08T14:14:07.7223055Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.4","channelAsked":null,"downgrade":false,"assets":["Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:14:07.7290140Z","event":"check-result","found":true,"target":"1.0.4","targetFile":"BrowserAI.Measure-1.0.4-full.nupkg","targetSize":2275939,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:14:07.7414406Z","event":"downloaded","elapsedMs":11,"pendingRestart":"1.0.4","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.4-full.nupkg"]}
+     {"t":"2026-10-08T14:14:07.7414679Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M3-recover","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.4-full.nupkg"}
+     velopack: Launching app is out-dated. Current: 1.0.3, Newest Local Available: 1.0.4
+     velopack: Pre-condition failed, we will not restart to apply updates. (restarted: False, autoApply: False)
+     velopack: Process started with ID: 5088
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:07.7531720Z; lifetime 235.3 ms
+  -- pid 75184 v1.0.3 args ['--veloapp-obsolete' '1.0.3']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.3
+     VELOPACK at entry: 
+     parent: pid 5088 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:07.7446208Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:07.7859189Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.3 at 2026-10-08T14:14:07.9324371Z
+     {"t":"2026-10-08T14:14:07.9324524Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:07.9357566Z; lifetime 149.8 ms
+  -- pid 43616 v1.0.4 args ['--veloapp-updated' '1.0.4']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.4
+     VELOPACK at entry: 
+     parent: pid 5088 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:07.7446208Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:08.7077130Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.4 at 2026-10-08T14:14:08.8457131Z
+     {"t":"2026-10-08T14:14:08.8459576Z","event":"hook-return","hook":"updated"}
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:08.8481921Z; lifetime 140.5 ms
+  -- pid 107000 v1.0.4 args ['restarted' '--run=M3-recover' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M3-recover "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 5088 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:07.7446208Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:14:09.8227888Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.4 at 2026-10-08T14:14:09.9755670Z
+     after Run(): VELOPACK now: ; installed 1.0.4; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:09.9846396Z; lifetime 161.9 ms
+  log: [lib-csharp:23672] [16:14:07] [Information] Unable to find any delta matching version 1.0.4, so delta updates will be disabled.
+  log: [update:5088] [16:14:07] [INFO]     Restart: true
+  log: [update:5088] [16:14:07] [INFO]     Exe Args: Some(["restarted", "--run=M3-recover", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:5088] [16:14:07] [WARN] Failed to wait for process (23672) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:5088] [16:14:07] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.3: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.4-full.nupkg"
+  log: [update:5088] [16:14:07] [INFO] Running --veloapp-obsolete hook...
+  log: [update:5088] [16:14:07] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\Br...
+  log: [update:5088] [16:14:07] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:5088] [16:14:07] [INFO] Hook executed successfully (took 166.53261ms)
+  log: [update:5088] [16:14:08] [INFO] Inspected 807 running processes in 430ms, 1 matched directory
+  log: [update:5088] [16:14:08] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (5088)
+  log: [update:5088] [16:14:08] [INFO] Inspected 791 running processes in 299ms, 1 matched directory
+  log: [update:5088] [16:14:08] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (5088)
+  log: [update:5088] [16:14:08] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_iR5VYAKhu5a4BdhA"
+  log: [update:5088] [16:14:08] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_cm5Ac2bp92o8HHHO"
+  log: [update:5088] [16:14:08] [INFO] Running --veloapp-updated hook...
+  log: [update:5088] [16:14:08] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\Br...
+  log: [update:5088] [16:14:08] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:5088] [16:14:08] [INFO] Hook executed successfully (took 181.5376ms)
+  log: [update:5088] [16:14:09] [INFO] Inspected 791 running processes in 312ms, 1 matched directory
+  log: [update:5088] [16:14:09] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (5088)
+  log: [update:5088] [16:14:09] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_iR5VYAKhu5a4BdhA" in 2ms
+  log: [update:5088] [16:14:09] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.3"))
+  log: [update:5088] [16:14:09] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.4")
+  log: [update:5088] [16:14:09] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:5088] [16:14:09] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:5088] [16:14:09] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:5088] [16:14:09] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:5088] [16:14:09] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:5088] [16:14:09] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:5088] [16:14:09] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:5088] [16:14:09] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:5088] [16:14:09] [INFO] Package applied successfully.
+  log: [update:5088] [16:14:09] [INFO] Package version 1.0.4 applied successfully.
+  log: [update:5088] [16:14:09] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\Br...
+  log: [update:5088] [16:14:09] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M4a-1
+version before -> after: 1.0.4 -> 1.0.5; elapsed 20.69 s; timedOut=False
+  process 61908  stand-in restarted                 created 2026-10-08T14:14:30.6582668Z exited 2026-10-08T14:14:30.8490400Z code 0 image 
+  process 105512 stand-in --veloapp-obsolete        created 2026-10-08T14:14:13.5540723Z exited 2026-10-08T14:14:13.7976456Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 58744  Update.exe                         created 2026-10-08T14:14:13.4715900Z exited 2026-10-08T14:14:30.6718920Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 28860  started-by-orchestrator            created 2026-10-08T14:14:12.8128511Z exited 2026-10-08T14:14:13.4915359Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 12648  stand-in --veloapp-updated         created 2026-10-08T14:14:14.6985451Z exited 2026-10-08T14:14:29.7067634Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.4-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.5-full.nupkg 2275942, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 28860 v1.0.4 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.5' 'restart' 'restarted' '--run=M4a-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.5 restart restarted --run=M4a-1 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:12.8128511Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.4; local packages: Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg
+     {"t":"2026-10-08T14:14:13.1322611Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.5","channelAsked":null,"downgrade":false,"assets":["Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:14:13.1405460Z","event":"check-result","found":true,"target":"1.0.5","targetFile":"BrowserAI.Measure-1.0.5-full.nupkg","targetSize":2275942,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:14:13.2259423Z","event":"downloaded","elapsedMs":84,"pendingRestart":"1.0.5","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.5-full.nupkg"]}
+     {"t":"2026-10-08T14:14:13.2259853Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M4a-1","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.5-full.nupkg"}
+     velopack: Process started with ID: 58744
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:13.4915359Z; lifetime 678.7 ms
+  -- pid 105512 v1.0.4 args ['--veloapp-obsolete' '1.0.4']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.4
+     VELOPACK at entry: 
+     parent: pid 58744 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:13.4715900Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:13.5540723Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.4 at 2026-10-08T14:14:13.7938304Z
+     {"t":"2026-10-08T14:14:13.7938493Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:13.7976456Z; lifetime 243.6 ms
+  -- pid 12648 v1.0.5 args ['--veloapp-updated' '1.0.5']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.5
+     VELOPACK at entry: 
+     parent: pid 58744 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:13.4715900Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:14.6985451Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.5 at 2026-10-08T14:14:15.0393285Z
+     {"t":"2026-10-08T14:14:15.0429220Z","event":"heartbeat-start","who":"hook-sleep","seconds":90,"intervalMs":100}
+     heartbeats: 145, who=hook-sleep, first 2026-10-08T14:14:15.0433009Z, last 2026-10-08T14:14:29.6969084Z (elapsedMs 14653); last record overall: heartbeat at 2026-10-08T14:14:29.6969084Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 1 at 2026-10-08T14:14:29.7067634Z; lifetime 15008.2 ms
+  -- pid 61908 v1.0.5 args ['restarted' '--run=M4a-1' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M4a-1 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 58744 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:13.4715900Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:14:30.6582668Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.5 at 2026-10-08T14:14:30.8432300Z
+     after Run(): VELOPACK now: ; installed 1.0.5; local packages: Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:30.8490400Z; lifetime 190.8 ms
+  log: [lib-csharp:28860] [16:14:13] [Information] Unable to find any delta matching version 1.0.5, so delta updates will be disabled.
+  log: [update:58744] [16:14:13] [INFO]     Restart: true
+  log: [update:58744] [16:14:13] [INFO]     Exe Args: Some(["restarted", "--run=M4a-1", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:58744] [16:14:13] [WARN] Failed to wait for process (28860) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:58744] [16:14:13] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.4: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.5-full.nupkg"
+  log: [update:58744] [16:14:13] [INFO] Running --veloapp-obsolete hook...
+  log: [update:58744] [16:14:13] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:58744] [16:14:13] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:58744] [16:14:13] [INFO] Hook executed successfully (took 268.5048ms)
+  log: [update:58744] [16:14:14] [INFO] Inspected 809 running processes in 460ms, 1 matched directory
+  log: [update:58744] [16:14:14] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (58744)
+  log: [update:58744] [16:14:14] [INFO] Inspected 807 running processes in 389ms, 1 matched directory
+  log: [update:58744] [16:14:14] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (58744)
+  log: [update:58744] [16:14:14] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_oCHEGRUxJg6Y0pEE"
+  log: [update:58744] [16:14:14] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_riSzUxrAiWU4buEF"
+  log: [update:58744] [16:14:14] [INFO] Running --veloapp-updated hook...
+  log: [update:58744] [16:14:14] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:58744] [16:14:14] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:58744] [16:14:29] [ERROR] Process timed out after 15s and was killed.
+  log: [update:58744] [16:14:30] [INFO] Inspected 805 running processes in 394ms, 1 matched directory
+  log: [update:58744] [16:14:30] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (58744)
+  log: [update:58744] [16:14:30] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_oCHEGRUxJg6Y0pEE" in 2ms
+  log: [update:58744] [16:14:30] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.4"))
+  log: [update:58744] [16:14:30] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.5")
+  log: [update:58744] [16:14:30] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:58744] [16:14:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:58744] [16:14:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:58744] [16:14:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:58744] [16:14:30] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:58744] [16:14:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:58744] [16:14:30] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:58744] [16:14:30] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:58744] [16:14:30] [INFO] Package applied successfully.
+  log: [update:58744] [16:14:30] [INFO] Package version 1.0.5 applied successfully.
+  log: [update:58744] [16:14:30] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:58744] [16:14:30] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M4a-2
+version before -> after: 1.0.5 -> 1.0.6; elapsed 21.77 s; timedOut=False
+  process 72092  stand-in --veloapp-updated         created 2026-10-08T14:14:36.5012004Z exited 2026-10-08T14:14:51.5097992Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 85800  started-by-orchestrator            created 2026-10-08T14:14:33.5553259Z exited 2026-10-08T14:14:35.1940710Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 57304  stand-in restarted                 created 2026-10-08T14:14:52.4818652Z exited 2026-10-08T14:14:52.7243468Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 57616  Update.exe                         created 2026-10-08T14:14:35.0702257Z exited 2026-10-08T14:14:52.4991829Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 92324  stand-in --veloapp-obsolete        created 2026-10-08T14:14:35.3092407Z exited 2026-10-08T14:14:35.6412733Z code 0 image 
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.5-full.nupkg 2275942, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.6-full.nupkg 2275939, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 85800 v1.0.5 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.6' 'restart' 'restarted' '--run=M4a-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.6 restart restarted --run=M4a-2 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:33.5553259Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.5; local packages: Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg
+     {"t":"2026-10-08T14:14:34.2051206Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.6","channelAsked":null,"downgrade":false,"assets":["Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg","Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:14:34.2235578Z","event":"check-result","found":true,"target":"1.0.6","targetFile":"BrowserAI.Measure-1.0.6-full.nupkg","targetSize":2275939,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:14:34.4731172Z","event":"downloaded","elapsedMs":248,"pendingRestart":"1.0.6","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.6-full.nupkg"]}
+     {"t":"2026-10-08T14:14:34.4731565Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M4a-2","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.6-full.nupkg"}
+     velopack: Process started with ID: 57616
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:35.1940710Z; lifetime 1638.7 ms
+  -- pid 92324 v1.0.5 args ['--veloapp-obsolete' '1.0.5']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.5
+     VELOPACK at entry: 
+     parent: pid 57616 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:35.0702257Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:35.3092407Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.5 at 2026-10-08T14:14:35.6368578Z
+     {"t":"2026-10-08T14:14:35.6368738Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:35.6412733Z; lifetime 332 ms
+  -- pid 72092 v1.0.6 args ['--veloapp-updated' '1.0.6']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.6
+     VELOPACK at entry: 
+     parent: pid 57616 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:35.0702257Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:36.5012004Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.6 at 2026-10-08T14:14:36.6520413Z
+     {"t":"2026-10-08T14:14:36.6525719Z","event":"heartbeat-start","who":"hook-sleep","seconds":90,"intervalMs":100}
+     heartbeats: 146, who=hook-sleep, first 2026-10-08T14:14:36.6527797Z, last 2026-10-08T14:14:51.4925952Z (elapsedMs 14840); last record overall: heartbeat at 2026-10-08T14:14:51.4925952Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 1 at 2026-10-08T14:14:51.5097992Z; lifetime 15008.6 ms
+  -- pid 57304 v1.0.6 args ['restarted' '--run=M4a-2' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M4a-2 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 57616 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:35.0702257Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:14:52.4818652Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.6 at 2026-10-08T14:14:52.7161933Z
+     after Run(): VELOPACK now: ; installed 1.0.6; local packages: Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:52.7243468Z; lifetime 242.5 ms
+  log: [lib-csharp:85800] [16:14:34] [Information] Unable to find any delta matching version 1.0.6, so delta updates will be disabled.
+  log: [update:57616] [16:14:35] [INFO]     Restart: true
+  log: [update:57616] [16:14:35] [INFO]     Exe Args: Some(["restarted", "--run=M4a-2", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:57616] [16:14:35] [WARN] Failed to wait for process (85800) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:57616] [16:14:35] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.5: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.6-full.nupkg"
+  log: [update:57616] [16:14:35] [INFO] Running --veloapp-obsolete hook...
+  log: [update:57616] [16:14:35] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:57616] [16:14:35] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:57616] [16:14:35] [INFO] Hook executed successfully (took 356.266ms)
+  log: [update:57616] [16:14:36] [INFO] Inspected 810 running processes in 419ms, 1 matched directory
+  log: [update:57616] [16:14:36] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (57616)
+  log: [update:57616] [16:14:36] [INFO] Inspected 813 running processes in 390ms, 1 matched directory
+  log: [update:57616] [16:14:36] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (57616)
+  log: [update:57616] [16:14:36] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_OfZKFtm8iXzhYWCt"
+  log: [update:57616] [16:14:36] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_nobDAvrG3NrmPjsk"
+  log: [update:57616] [16:14:36] [INFO] Running --veloapp-updated hook...
+  log: [update:57616] [16:14:36] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:57616] [16:14:36] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:57616] [16:14:51] [ERROR] Process timed out after 15s and was killed.
+  log: [update:57616] [16:14:51] [INFO] Inspected 851 running processes in 405ms, 1 matched directory
+  log: [update:57616] [16:14:51] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (57616)
+  log: [update:57616] [16:14:51] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_OfZKFtm8iXzhYWCt" in 2ms
+  log: [update:57616] [16:14:51] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.5"))
+  log: [update:57616] [16:14:51] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.6")
+  log: [update:57616] [16:14:51] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:57616] [16:14:51] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:57616] [16:14:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:57616] [16:14:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:57616] [16:14:52] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:57616] [16:14:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:57616] [16:14:52] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:57616] [16:14:52] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:57616] [16:14:52] [INFO] Package applied successfully.
+  log: [update:57616] [16:14:52] [INFO] Package version 1.0.6 applied successfully.
+  log: [update:57616] [16:14:52] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:57616] [16:14:52] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M4a-3
+version before -> after: 1.0.6 -> 1.0.7; elapsed 20.43 s; timedOut=False
+  process 43804  Update.exe                         created 2026-10-08T14:14:55.9450675Z exited 2026-10-08T14:15:13.0552151Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 94808  started-by-orchestrator            created 2026-10-08T14:14:55.3506773Z exited 2026-10-08T14:14:55.9741325Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 20156  stand-in --veloapp-updated         created 2026-10-08T14:14:57.1658410Z exited 2026-10-08T14:15:12.1796873Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 86144  stand-in --veloapp-obsolete        created 2026-10-08T14:14:56.0217430Z exited 2026-10-08T14:14:56.2467986Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  missed: 66884: missed
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.6-full.nupkg 2275939, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.7-full.nupkg 2275946, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 94808 v1.0.6 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.7' 'restart' 'restarted' '--run=M4a-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.7 restart restarted --run=M4a-3 "two words" "embedded\"quote" trailing\
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:55.3506773Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.6; local packages: Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg
+     {"t":"2026-10-08T14:14:55.5566877Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.7","channelAsked":null,"downgrade":false,"assets":["Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg","Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg","Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:14:55.5617891Z","event":"check-result","found":true,"target":"1.0.7","targetFile":"BrowserAI.Measure-1.0.7-full.nupkg","targetSize":2275946,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:14:55.6307325Z","event":"downloaded","elapsedMs":67,"pendingRestart":"1.0.7","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.7-full.nupkg"]}
+     {"t":"2026-10-08T14:14:55.6307638Z","event":"apply-requesting","restart":true,"restartArgs":["restarted","--run=M4a-3","two words","embedded\"quote","trailing\\"],"asset":"BrowserAI.Measure-1.0.7-full.nupkg"}
+     velopack: Process started with ID: 43804
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:55.9741325Z; lifetime 623.5 ms
+  -- pid 86144 v1.0.6 args ['--veloapp-obsolete' '1.0.6']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.6
+     VELOPACK at entry: 
+     parent: pid 43804 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:55.9450675Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:56.0217430Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.6 at 2026-10-08T14:14:56.2442168Z
+     {"t":"2026-10-08T14:14:56.2442327Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:14:56.2467986Z; lifetime 225.1 ms
+  -- pid 20156 v1.0.7 args ['--veloapp-updated' '1.0.7']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.7
+     VELOPACK at entry: 
+     parent: pid 43804 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:55.9450675Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:14:57.1658410Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.7 at 2026-10-08T14:14:57.3221631Z
+     {"t":"2026-10-08T14:14:57.3226954Z","event":"heartbeat-start","who":"hook-sleep","seconds":90,"intervalMs":100}
+     heartbeats: 147, who=hook-sleep, first 2026-10-08T14:14:57.3229074Z, last 2026-10-08T14:15:12.1707248Z (elapsedMs 14848); last record overall: heartbeat at 2026-10-08T14:15:12.1707248Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 1 at 2026-10-08T14:15:12.1796873Z; lifetime 15013.8 ms
+  -- pid 66884 v1.0.7 args ['restarted' '--run=M4a-3' 'two words' 'embedded"quote' 'trailing\']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" restarted --run=M4a-3 "two words" embedded\"quote trailing\
+     VELOPACK at entry: VELOPACK_RESTART=true
+     parent: pid 43804 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:14:55.9450675Z state-at-entry 'exited 0' olderThanMe=True
+     created 2026-10-08T14:15:13.0462480Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: restarted 1.0.7 at 2026-10-08T14:15:13.2057758Z
+     after Run(): VELOPACK now: ; installed 1.0.7; local packages: Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg
+  log: [lib-csharp:94808] [16:14:55] [Information] Unable to find any delta matching version 1.0.7, so delta updates will be disabled.
+  log: [update:43804] [16:14:56] [INFO]     Restart: true
+  log: [update:43804] [16:14:56] [INFO]     Exe Args: Some(["restarted", "--run=M4a-3", "two words", "embedded\"quote", "trailing\\"])
+  log: [update:43804] [16:14:56] [WARN] Failed to wait for process (94808) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:43804] [16:14:56] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.6: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.7-full.nupkg"
+  log: [update:43804] [16:14:56] [INFO] Running --veloapp-obsolete hook...
+  log: [update:43804] [16:14:56] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:43804] [16:14:56] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:43804] [16:14:56] [INFO] Hook executed successfully (took 242.5389ms)
+  log: [update:43804] [16:14:56] [INFO] Inspected 830 running processes in 456ms, 1 matched directory
+  log: [update:43804] [16:14:56] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (43804)
+  log: [update:43804] [16:14:57] [INFO] Inspected 837 running processes in 407ms, 1 matched directory
+  log: [update:43804] [16:14:57] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (43804)
+  log: [update:43804] [16:14:57] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_R06oMKz5GSLCceX8"
+  log: [update:43804] [16:14:57] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_naGe0D9TZ1kqNNnu"
+  log: [update:43804] [16:14:57] [INFO] Running --veloapp-updated hook...
+  log: [update:43804] [16:14:57] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:43804] [16:14:57] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:43804] [16:15:12] [ERROR] Process timed out after 15s and was killed.
+  log: [update:43804] [16:15:12] [INFO] Inspected 788 running processes in 365ms, 1 matched directory
+  log: [update:43804] [16:15:12] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (43804)
+  log: [update:43804] [16:15:12] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_R06oMKz5GSLCceX8" in 2ms
+  log: [update:43804] [16:15:12] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.6"))
+  log: [update:43804] [16:15:12] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.7")
+  log: [update:43804] [16:15:12] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:43804] [16:15:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:43804] [16:15:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:43804] [16:15:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:43804] [16:15:12] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:43804] [16:15:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:43804] [16:15:13] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:43804] [16:15:13] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:43804] [16:15:13] [INFO] Package applied successfully.
+  log: [update:43804] [16:15:13] [INFO] Package version 1.0.7 applied successfully.
+  log: [update:43804] [16:15:13] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:43804] [16:15:13] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(1024)
+
+=== RUN M4b-1
+version before -> after: 1.0.7 -> 1.0.8; elapsed 95.24 s; timedOut=False
+  process 75988  started-by-orchestrator            created 2026-10-08T14:15:15.8014994Z exited 2026-10-08T14:15:16.3305694Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 77028  child-outside-root                 created 2026-10-08T14:15:17.6581168Z exited 2026-10-08T14:16:48.4278414Z code 0 image C:\Program Files\PowerShell\7\pwsh.exe
+  process 42160  Update.exe                         created 2026-10-08T14:15:16.2931677Z exited 2026-10-08T14:15:21.8899836Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 62240  stand-in --veloapp-obsolete        created 2026-10-08T14:15:16.3823581Z exited 2026-10-08T14:15:16.5508944Z code 0 image 
+  process 80744  stand-in --veloapp-updated         created 2026-10-08T14:15:17.5040696Z exited 2026-10-08T14:15:20.6926257Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 88240  child-under-root                   created 2026-10-08T14:15:17.6524972Z exited 2026-10-08T14:15:21.1545810Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.7-full.nupkg 2275946, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.8-full.nupkg 2275941, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 75988 v1.0.7 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.8' 'norestart']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.8 norestart
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:15:15.8014994Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.7; local packages: Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg
+     {"t":"2026-10-08T14:15:16.0057502Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.8","channelAsked":null,"downgrade":false,"assets":["Full 1.0.8 BrowserAI.Measure-1.0.8-full.nupkg","Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg","Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg","Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:15:16.0112198Z","event":"check-result","found":true,"target":"1.0.8","targetFile":"BrowserAI.Measure-1.0.8-full.nupkg","targetSize":2275941,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:15:16.0736314Z","event":"downloaded","elapsedMs":61,"pendingRestart":"1.0.8","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.8-full.nupkg"]}
+     {"t":"2026-10-08T14:15:16.0736511Z","event":"apply-requesting","restart":false,"restartArgs":[],"asset":"BrowserAI.Measure-1.0.8-full.nupkg"}
+     velopack: Process started with ID: 42160
+     exit seen by orchestrator: code 0 at 2026-10-08T14:15:16.3305694Z; lifetime 529.1 ms
+  -- pid 62240 v1.0.7 args ['--veloapp-obsolete' '1.0.7']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.7
+     VELOPACK at entry: 
+     parent: pid 42160 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:15:16.2931677Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:15:16.3823581Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.7 at 2026-10-08T14:15:16.5483514Z
+     {"t":"2026-10-08T14:15:16.5483672Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:15:16.5508944Z; lifetime 168.5 ms
+  -- pid 80744 v1.0.8 args ['--veloapp-updated' '1.0.8']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.8
+     VELOPACK at entry: 
+     parent: pid 42160 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:15:16.2931677Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:15:17.5040696Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.8 at 2026-10-08T14:15:17.6505244Z
+     {"t":"2026-10-08T14:15:17.6569585Z","event":"spawned","role":"child-under-root","childPid":88240,"childStartUtc":"2026-10-08T14:15:17.6524972Z","file":"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe","arguments":["child","90"]}
+     {"t":"2026-10-08T14:15:17.6640549Z","event":"spawned","role":"child-outside-root","childPid":77028,"childStartUtc":"2026-10-08T14:15:17.6581168Z","file":"C:\\Program Files\\PowerShell\\7\\pwsh.exe","arguments":["-NoLogo","-NoProfile","-NonInteractive","-File","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\outside-child.ps1","-LogDirectory","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\runs\\full-20261008T141238Z\\logs\\M4b-1","-Seconds","90","-Spawner","80744"]}
+     {"t":"2026-10-08T14:15:17.6648126Z","event":"heartbeat-start","who":"hook-wait","seconds":3,"intervalMs":250}
+     {"t":"2026-10-08T14:15:20.6883370Z","event":"heartbeat-done","who":"hook-wait","n":12,"elapsedMs":3023}
+     {"t":"2026-10-08T14:15:20.6885193Z","event":"hook-return","hook":"updated"}
+     heartbeats: 12, who=hook-wait, first 2026-10-08T14:15:17.6650513Z, last 2026-10-08T14:15:20.4287411Z (elapsedMs 2763); last record overall: velopack at 2026-10-08T14:15:20.6885516Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:15:20.6926257Z; lifetime 3188.6 ms
+  -- pid 88240 v1.0.8 args ['child' '90']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" child 90
+     VELOPACK at entry: 
+     parent: pid 80744 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe created 2026-10-08T14:15:17.5040696Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:15:17.6524972Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.8; local packages: Full 1.0.8 BrowserAI.Measure-1.0.8-full.nupkg
+     {"t":"2026-10-08T14:15:17.8277716Z","event":"heartbeat-start","who":"child","seconds":90,"intervalMs":250}
+     heartbeats: 14, who=child, first 2026-10-08T14:15:17.8279800Z, last 2026-10-08T14:15:21.0879960Z (elapsedMs 3260); last record overall: heartbeat at 2026-10-08T14:15:21.0879960Z
+     exit seen by orchestrator: code 1 at 2026-10-08T14:15:21.1545810Z; lifetime 3502.1 ms
+  -- outside child file outside-77028.txt: 354 lines; first: 2026-10-08T14:15:18.1770156Z start pid=77028 created=2026-10-08T14:15:17.6581168Z spawner=80744 seconds=90; last: 2026-10-08T14:16:48.4123624Z finished beats=352 elapsedMs=90247
+  log: [lib-csharp:75988] [16:15:16] [Information] Unable to find any delta matching version 1.0.8, so delta updates will be disabled.
+  log: [update:42160] [16:15:16] [INFO]     Restart: false
+  log: [update:42160] [16:15:16] [INFO]     Exe Args: None
+  log: [update:42160] [16:15:16] [WARN] Failed to wait for process (75988) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:42160] [16:15:16] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.7: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.8-full.nupkg"
+  log: [update:42160] [16:15:16] [INFO] Running --veloapp-obsolete hook...
+  log: [update:42160] [16:15:16] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:42160] [16:15:16] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:42160] [16:15:16] [INFO] Hook executed successfully (took 194.33191ms)
+  log: [update:42160] [16:15:17] [INFO] Inspected 796 running processes in 554ms, 1 matched directory
+  log: [update:42160] [16:15:17] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42160)
+  log: [update:42160] [16:15:17] [INFO] Inspected 797 running processes in 348ms, 1 matched directory
+  log: [update:42160] [16:15:17] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42160)
+  log: [update:42160] [16:15:17] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_o9ALo4uMBUrtBVkj"
+  log: [update:42160] [16:15:17] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_BdcRr1vE8zeVdSdT"
+  log: [update:42160] [16:15:17] [INFO] Running --veloapp-updated hook...
+  log: [update:42160] [16:15:17] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:42160] [16:15:17] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:42160] [16:15:20] [INFO] Hook executed successfully (took 3226.6665ms)
+  log: [update:42160] [16:15:21] [INFO] Inspected 790 running processes in 447ms, 2 matched directory
+  log: [update:42160] [16:15:21] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42160)
+  log: [update:42160] [16:15:21] [WARN] Killing process: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe (88240)
+  log: [update:42160] [16:15:21] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_o9ALo4uMBUrtBVkj" in 3ms
+  log: [update:42160] [16:15:21] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.7"))
+  log: [update:42160] [16:15:21] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.8")
+  log: [update:42160] [16:15:21] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:42160] [16:15:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:42160] [16:15:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:42160] [16:15:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:42160] [16:15:21] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:42160] [16:15:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:42160] [16:15:21] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:42160] [16:15:21] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:42160] [16:15:21] [INFO] Package applied successfully.
+  log: [update:42160] [16:15:21] [INFO] Package version 1.0.8 applied successfully.
+
+=== RUN M4b-2
+version before -> after: 1.0.8 -> 1.0.9; elapsed 95 s; timedOut=False
+  process 89540  child-under-root                   created 2026-10-08T14:16:52.9376344Z exited 2026-10-08T14:16:56.6300229Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 81988  started-by-orchestrator            created 2026-10-08T14:16:51.0708280Z exited 2026-10-08T14:16:51.5417103Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 18324  stand-in --veloapp-obsolete        created 2026-10-08T14:16:51.5753305Z exited 2026-10-08T14:16:51.7244349Z code 0 image 
+  process 42448  Update.exe                         created 2026-10-08T14:16:51.5248538Z exited 2026-10-08T14:16:57.5661952Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 101328 child-outside-root                 created 2026-10-08T14:16:52.9497979Z exited 2026-10-08T14:18:23.4951328Z code 0 image C:\Program Files\PowerShell\7\pwsh.exe
+  process 89732  stand-in --veloapp-updated         created 2026-10-08T14:16:52.7637344Z exited 2026-10-08T14:16:56.0463026Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.8-full.nupkg 2275941, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.9-full.nupkg 2275948, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 81988 v1.0.8 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.9' 'norestart']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.9 norestart
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:16:51.0708280Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.8; local packages: Full 1.0.8 BrowserAI.Measure-1.0.8-full.nupkg
+     {"t":"2026-10-08T14:16:51.2672591Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.9","channelAsked":null,"downgrade":false,"assets":["Full 1.0.9 BrowserAI.Measure-1.0.9-full.nupkg","Full 1.0.8 BrowserAI.Measure-1.0.8-full.nupkg","Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg","Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg","Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:16:51.2721759Z","event":"check-result","found":true,"target":"1.0.9","targetFile":"BrowserAI.Measure-1.0.9-full.nupkg","targetSize":2275948,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:16:51.3373909Z","event":"downloaded","elapsedMs":64,"pendingRestart":"1.0.9","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.9-full.nupkg"]}
+     {"t":"2026-10-08T14:16:51.3374110Z","event":"apply-requesting","restart":false,"restartArgs":[],"asset":"BrowserAI.Measure-1.0.9-full.nupkg"}
+     velopack: Process started with ID: 42448
+     exit seen by orchestrator: code 0 at 2026-10-08T14:16:51.5417103Z; lifetime 470.9 ms
+  -- pid 18324 v1.0.8 args ['--veloapp-obsolete' '1.0.8']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.8
+     VELOPACK at entry: 
+     parent: pid 42448 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:16:51.5248538Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:16:51.5753305Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.8 at 2026-10-08T14:16:51.7215481Z
+     {"t":"2026-10-08T14:16:51.7215635Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:16:51.7244349Z; lifetime 149.1 ms
+  -- pid 89732 v1.0.9 args ['--veloapp-updated' '1.0.9']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.9
+     VELOPACK at entry: 
+     parent: pid 42448 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:16:51.5248538Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:16:52.7637344Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.9 at 2026-10-08T14:16:52.9353266Z
+     {"t":"2026-10-08T14:16:52.9483630Z","event":"spawned","role":"child-under-root","childPid":89540,"childStartUtc":"2026-10-08T14:16:52.9376344Z","file":"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe","arguments":["child","90"]}
+     {"t":"2026-10-08T14:16:53.0329376Z","event":"spawned","role":"child-outside-root","childPid":101328,"childStartUtc":"2026-10-08T14:16:52.9497979Z","file":"C:\\Program Files\\PowerShell\\7\\pwsh.exe","arguments":["-NoLogo","-NoProfile","-NonInteractive","-File","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\outside-child.ps1","-LogDirectory","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\runs\\full-20261008T141238Z\\logs\\M4b-2","-Seconds","90","-Spawner","89732"]}
+     {"t":"2026-10-08T14:16:53.0334093Z","event":"heartbeat-start","who":"hook-wait","seconds":3,"intervalMs":250}
+     {"t":"2026-10-08T14:16:56.0425637Z","event":"heartbeat-done","who":"hook-wait","n":12,"elapsedMs":3009}
+     {"t":"2026-10-08T14:16:56.0427522Z","event":"hook-return","hook":"updated"}
+     heartbeats: 12, who=hook-wait, first 2026-10-08T14:16:53.0336448Z, last 2026-10-08T14:16:55.7906526Z (elapsedMs 2757); last record overall: velopack at 2026-10-08T14:16:56.0427826Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:16:56.0463026Z; lifetime 3282.6 ms
+  -- pid 89540 v1.0.9 args ['child' '90']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" child 90
+     VELOPACK at entry: 
+     parent: pid 89732 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe created 2026-10-08T14:16:52.7637344Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:16:52.9376344Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.9; local packages: Full 1.0.9 BrowserAI.Measure-1.0.9-full.nupkg
+     {"t":"2026-10-08T14:16:53.1172644Z","event":"heartbeat-start","who":"child","seconds":90,"intervalMs":250}
+     heartbeats: 14, who=child, first 2026-10-08T14:16:53.1174541Z, last 2026-10-08T14:16:56.3887981Z (elapsedMs 3271); last record overall: heartbeat at 2026-10-08T14:16:56.3887981Z
+     exit seen by orchestrator: code 1 at 2026-10-08T14:16:56.6300229Z; lifetime 3692.4 ms
+  -- outside child file outside-101328.txt: 359 lines; first: 2026-10-08T14:16:53.3719597Z start pid=101328 created=2026-10-08T14:16:52.9497979Z spawner=89732 seconds=90; last: 2026-10-08T14:18:23.4801980Z finished beats=357 elapsedMs=90115
+  log: [lib-csharp:81988] [16:16:51] [Information] Unable to find any delta matching version 1.0.9, so delta updates will be disabled.
+  log: [update:42448] [16:16:51] [INFO]     Restart: false
+  log: [update:42448] [16:16:51] [INFO]     Exe Args: None
+  log: [update:42448] [16:16:51] [WARN] Failed to wait for process (81988) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:42448] [16:16:51] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.8: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.9-full.nupkg"
+  log: [update:42448] [16:16:51] [INFO] Running --veloapp-obsolete hook...
+  log: [update:42448] [16:16:51] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:42448] [16:16:51] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:42448] [16:16:51] [INFO] Hook executed successfully (took 175.6391ms)
+  log: [update:42448] [16:16:52] [INFO] Inspected 805 running processes in 499ms, 1 matched directory
+  log: [update:42448] [16:16:52] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42448)
+  log: [update:42448] [16:16:52] [INFO] Inspected 812 running processes in 481ms, 1 matched directory
+  log: [update:42448] [16:16:52] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42448)
+  log: [update:42448] [16:16:52] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_FY8Qua1ez1ymjTam"
+  log: [update:42448] [16:16:52] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_IKRqFyBFzTqLsf2k"
+  log: [update:42448] [16:16:52] [INFO] Running --veloapp-updated hook...
+  log: [update:42448] [16:16:52] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:42448] [16:16:52] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:42448] [16:16:56] [INFO] Hook executed successfully (took 3334.015ms)
+  log: [update:42448] [16:16:56] [INFO] Inspected 832 running processes in 559ms, 2 matched directory
+  log: [update:42448] [16:16:56] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (42448)
+  log: [update:42448] [16:16:56] [WARN] Killing process: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe (89540)
+  log: [update:42448] [16:16:56] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_FY8Qua1ez1ymjTam" in 3ms
+  log: [update:42448] [16:16:56] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.8"))
+  log: [update:42448] [16:16:56] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.9")
+  log: [update:42448] [16:16:56] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:42448] [16:16:56] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:42448] [16:16:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:42448] [16:16:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:42448] [16:16:57] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:42448] [16:16:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:42448] [16:16:57] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:42448] [16:16:57] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:42448] [16:16:57] [INFO] Package applied successfully.
+  log: [update:42448] [16:16:57] [INFO] Package version 1.0.9 applied successfully.
+
+=== RUN M4b-3
+version before -> after: 1.0.9 -> 1.0.10; elapsed 95.36 s; timedOut=False
+  process 66912  stand-in --veloapp-updated         created 2026-10-08T14:18:28.1075891Z exited 2026-10-08T14:18:31.3394761Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 35772  started-by-orchestrator            created 2026-10-08T14:18:26.1078671Z exited 2026-10-08T14:18:27.0384703Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 36800  Update.exe                         created 2026-10-08T14:18:27.0121006Z exited 2026-10-08T14:18:32.6888528Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 65484  child-under-root                   created 2026-10-08T14:18:28.3092858Z exited 2026-10-08T14:18:31.8293575Z code 1 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+  process 94292  stand-in --veloapp-obsolete        created 2026-10-08T14:18:27.0782168Z exited 2026-10-08T14:18:27.2443626Z code 0 image 
+  process 78664  child-outside-root                 created 2026-10-08T14:18:28.3197451Z exited 2026-10-08T14:19:58.8185143Z code 0 image C:\Program Files\PowerShell\7\pwsh.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.9-full.nupkg 2275948, VelopackTemp\
+  packages after:  .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.10-full.nupkg 2275957, VelopackTemp\
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 8
+  -- pid 35772 v1.0.9 args ['update' 'C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.10' 'norestart']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" update C:\Source\SixFive7\BrowserAI\.work\step0-velopack\feeds\after-1.0.10 norestart
+     VELOPACK at entry: 
+     parent: pid 18368 image C:\Program Files\PowerShell\7\pwsh.exe created 2026-10-08T14:12:38.1235035Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:18:26.1078671Z; cwd C:\Source\SixFive7\BrowserAI\.work\step0-velopack; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.9; local packages: Full 1.0.9 BrowserAI.Measure-1.0.9-full.nupkg
+     {"t":"2026-10-08T14:18:26.3101119Z","event":"feed","folder":"C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\feeds\\after-1.0.10","channelAsked":null,"downgrade":false,"assets":["Full 1.0.10 BrowserAI.Measure-1.0.10-full.nupkg","Full 1.0.9 BrowserAI.Measure-1.0.9-full.nupkg","Full 1.0.8 BrowserAI.Measure-1.0.8-full.nupkg","Full 1.0.7 BrowserAI.Measure-1.0.7-full.nupkg","Full 1.0.6 BrowserAI.Measure-1.0.6-full.nupkg","Full 1.0.5 BrowserAI.Measure-1.0.5-full.nupkg","Full 1.0.4 BrowserAI.Measure-1.0.4-full.nupkg","Full 1.0.3 BrowserAI.Measure-1.0.3-full.nupkg","Full 1.0.2 BrowserAI.Measure-1.0.2-full.nupkg","Full 1.0.2-alpha.1 BrowserAI.Measure-1.0.2-alpha.1-full.nupkg","Full 1.0.1 BrowserAI.Measure-1.0.1-full.nupkg","Full 1.0.0 BrowserAI.Measure-1.0.0-full.nupkg"]}
+     {"t":"2026-10-08T14:18:26.7357322Z","event":"check-result","found":true,"target":"1.0.10","targetFile":"BrowserAI.Measure-1.0.10-full.nupkg","targetSize":2275957,"isDowngrade":false,"baseRelease":null,"deltas":0}
+     {"t":"2026-10-08T14:18:26.8000083Z","event":"downloaded","elapsedMs":63,"pendingRestart":"1.0.10","packages":[".betaId",".velopack_lock","BrowserAI.Measure-1.0.10-full.nupkg"]}
+     {"t":"2026-10-08T14:18:26.8000388Z","event":"apply-requesting","restart":false,"restartArgs":[],"asset":"BrowserAI.Measure-1.0.10-full.nupkg"}
+     velopack: Process started with ID: 36800
+     exit seen by orchestrator: code 0 at 2026-10-08T14:18:27.0384703Z; lifetime 930.6 ms
+  -- pid 94292 v1.0.9 args ['--veloapp-obsolete' '1.0.9']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-obsolete 1.0.9
+     VELOPACK at entry: 
+     parent: pid 36800 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:18:27.0121006Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:18:27.0782168Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: obsolete 1.0.9 at 2026-10-08T14:18:27.2367019Z
+     {"t":"2026-10-08T14:18:27.2367171Z","event":"hook-return","hook":"obsolete"}
+     velopack: Found fast exit hook: --veloapp-obsolete
+     exit seen by orchestrator: code 0 at 2026-10-08T14:18:27.2443626Z; lifetime 166.1 ms
+  -- pid 66912 v1.0.10 args ['--veloapp-updated' '1.0.10']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-updated 1.0.10
+     VELOPACK at entry: 
+     parent: pid 36800 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:18:27.0121006Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:18:28.1075891Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: updated 1.0.10 at 2026-10-08T14:18:28.3047151Z
+     {"t":"2026-10-08T14:18:28.3179466Z","event":"spawned","role":"child-under-root","childPid":65484,"childStartUtc":"2026-10-08T14:18:28.3092858Z","file":"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe","arguments":["child","90"]}
+     {"t":"2026-10-08T14:18:28.3269048Z","event":"spawned","role":"child-outside-root","childPid":78664,"childStartUtc":"2026-10-08T14:18:28.3197451Z","file":"C:\\Program Files\\PowerShell\\7\\pwsh.exe","arguments":["-NoLogo","-NoProfile","-NonInteractive","-File","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\outside-child.ps1","-LogDirectory","C:\\Source\\SixFive7\\BrowserAI\\.work\\step0-velopack\\runs\\full-20261008T141238Z\\logs\\M4b-3","-Seconds","90","-Spawner","66912"]}
+     {"t":"2026-10-08T14:18:28.3274850Z","event":"heartbeat-start","who":"hook-wait","seconds":3,"intervalMs":250}
+     {"t":"2026-10-08T14:18:31.3361706Z","event":"heartbeat-done","who":"hook-wait","n":12,"elapsedMs":3008}
+     {"t":"2026-10-08T14:18:31.3363392Z","event":"hook-return","hook":"updated"}
+     heartbeats: 12, who=hook-wait, first 2026-10-08T14:18:28.3279626Z, last 2026-10-08T14:18:31.0856926Z (elapsedMs 2758); last record overall: velopack at 2026-10-08T14:18:31.3363666Z
+     velopack: Found fast exit hook: --veloapp-updated
+     exit seen by orchestrator: code 0 at 2026-10-08T14:18:31.3394761Z; lifetime 3231.9 ms
+  -- pid 65484 v1.0.10 args ['child' '90']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" child 90
+     VELOPACK at entry: 
+     parent: pid 66912 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe created 2026-10-08T14:18:28.1075891Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:18:28.3092858Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     after Run(): VELOPACK now: ; installed 1.0.10; local packages: Full 1.0.10 BrowserAI.Measure-1.0.10-full.nupkg
+     {"t":"2026-10-08T14:18:28.5380472Z","event":"heartbeat-start","who":"child","seconds":90,"intervalMs":250}
+     heartbeats: 14, who=child, first 2026-10-08T14:18:28.5382495Z, last 2026-10-08T14:18:31.7952352Z (elapsedMs 3257); last record overall: heartbeat at 2026-10-08T14:18:31.7952352Z
+     exit seen by orchestrator: code 1 at 2026-10-08T14:18:31.8293575Z; lifetime 3520.1 ms
+  -- outside child file outside-78664.txt: 359 lines; first: 2026-10-08T14:18:28.7543741Z start pid=78664 created=2026-10-08T14:18:28.3197451Z spawner=66912 seconds=90; last: 2026-10-08T14:19:58.8073497Z finished beats=357 elapsedMs=90062
+  log: [lib-csharp:35772] [16:18:26] [Information] Unable to find any delta matching version 1.0.10, so delta updates will be disabled.
+  log: [update:36800] [16:18:27] [INFO]     Restart: false
+  log: [update:36800] [16:18:27] [INFO]     Exe Args: None
+  log: [update:36800] [16:18:27] [WARN] Failed to wait for process (35772) to exit (Access is denied. (os error -2147024891)). Continuing...
+  log: [update:36800] [16:18:27] [INFO] Getting ready to apply package to BrowserAI.Measure ver 1.0.9: "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\BrowserAI.Measure-1.0.10-full.nupkg"
+  log: [update:36800] [16:18:27] [INFO] Running --veloapp-obsolete hook...
+  log: [update:36800] [16:18:27] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:36800] [16:18:27] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:36800] [16:18:27] [INFO] Hook executed successfully (took 211.57741ms)
+  log: [update:36800] [16:18:27] [INFO] Inspected 818 running processes in 407ms, 1 matched directory
+  log: [update:36800] [16:18:27] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (36800)
+  log: [update:36800] [16:18:28] [INFO] Inspected 830 running processes in 369ms, 1 matched directory
+  log: [update:36800] [16:18:28] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (36800)
+  log: [update:36800] [16:18:28] [INFO] Backing up current dir to "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_0WbbR2YgauqLtmZc"
+  log: [update:36800] [16:18:28] [INFO] Replacing current dir with "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_y5Vl6i01siBWVl2x"
+  log: [update:36800] [16:18:28] [INFO] Running --veloapp-updated hook...
+  log: [update:36800] [16:18:28] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:36800] [16:18:28] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:36800] [16:18:31] [INFO] Hook executed successfully (took 3290.4697ms)
+  log: [update:36800] [16:18:31] [INFO] Inspected 830 running processes in 468ms, 2 matched directory
+  log: [update:36800] [16:18:31] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (36800)
+  log: [update:36800] [16:18:31] [WARN] Killing process: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe (65484)
+  log: [update:36800] [16:18:31] [INFO] Removed temp dir "%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_0WbbR2YgauqLtmZc" in 4ms
+  log: [update:36800] [16:18:31] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(START_MENU_ROOT) (Some("1.0.9"))
+  log: [update:36800] [16:18:31] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.0.10")
+  log: [update:36800] [16:18:31] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:36800] [16:18:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:36800] [16:18:32] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:36800] [16:18:32] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:36800] [16:18:32] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:36800] [16:18:32] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:36800] [16:18:32] [INFO] Will update all current shortcuts: [(ShortcutLocationFlags(START_MENU), Lnk("%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"))]
+  log: [update:36800] [16:18:32] [INFO] Updating existing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:36800] [16:18:32] [INFO] Package applied successfully.
+  log: [update:36800] [16:18:32] [INFO] Package version 1.0.10 applied successfully.
+
+=== RUN uninstall
+version before -> after: 1.0.10 -> ; elapsed 10.95 s; timedOut=False
+  process 80712  started-by-orchestrator            created 2026-10-08T14:20:01.4946663Z exited 2026-10-08T14:20:02.8057288Z code 0 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe
+  process 11900  descendant of 80712 via 80712: cmd.exe created 2026-10-08T14:20:02.7941732Z exited 2026-10-08T14:20:05.8643681Z code 0 image C:\Windows\SysWOW64\cmd.exe
+  process 44324  descendant of 80712 via 11900: conhost.exe created 2026-10-08T14:20:02.8180448Z exited 2026-10-08T14:20:05.8738045Z code 0 image C:\Windows\System32\conhost.exe
+  process 95152  stand-in --veloapp-uninstall       created 2026-10-08T14:20:01.8097404Z exited 2026-10-08T14:20:01.9464558Z code 0 image 
+  process 42312  descendant of 80712 via 11900: choice.exe created 2026-10-08T14:20:02.8412409Z exited 2026-10-08T14:20:05.8572513Z code 1 image C:\Windows\SysWOW64\choice.exe
+  packages before: .betaId 35, .velopack_lock 0, BrowserAI.Measure-1.0.10-full.nupkg 2275957, VelopackTemp\
+  packages after:  
+  VelopackTemp after: 
+  current\ identical before and after (path, size, sha256 prefix): False; files after: 0
+  -- pid 95152 v1.0.10 args ['--veloapp-uninstall' '1.0.10']
+     exe: %USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe
+     raw command line: "%USERPROFILE%\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe" --veloapp-uninstall 1.0.10
+     VELOPACK at entry: 
+     parent: pid 80712 image %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe created 2026-10-08T14:20:01.4946663Z state-at-entry 'running' olderThanMe=True
+     created 2026-10-08T14:20:01.8097404Z; cwd %USERPROFILE%\AppData\Local\BrowserAI.Measure\current; inJob=False
+     callback: uninstall 1.0.10 at 2026-10-08T14:20:01.9443453Z
+     {"t":"2026-10-08T14:20:01.9443599Z","event":"hook-return","hook":"uninstall"}
+     velopack: Found fast exit hook: --veloapp-uninstall
+     exit seen by orchestrator: code 0 at 2026-10-08T14:20:01.9464558Z; lifetime 136.7 ms
+  log: [update:80712] [16:20:01] [INFO] Inspected 814 running processes in 290ms, 1 matched directory
+  log: [update:80712] [16:20:01] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (80712)
+  log: [update:80712] [16:20:01] [INFO] Running --veloapp-uninstall hook...
+  log: [update:80712] [16:20:01] [INFO] About to launch: 'WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\B...
+  log: [update:80712] [16:20:01] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+  log: [update:80712] [16:20:01] [INFO] Hook executed successfully (took 159.2228ms)
+  log: [update:80712] [16:20:02] [INFO] Inspected 816 running processes in 308ms, 1 matched directory
+  log: [update:80712] [16:20:02] [WARN] Skipping killing self: %USERPROFILE%\AppData\Local\BrowserAI.Measure\Update.exe (80712)
+  log: [update:80712] [16:20:02] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:80712] [16:20:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+  log: [update:80712] [16:20:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+  log: [update:80712] [16:20:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+  log: [update:80712] [16:20:02] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' because target '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"' matched.
+  log: [update:80712] [16:20:02] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+  log: [update:80712] [16:20:02] [INFO] Removing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.Measure.lnk"' (ShortcutLocationFlags(START_MENU)).
+  log: [update:80712] [16:20:02] [INFO] Removing directory '"%USERPROFILE%\\AppData\\Local\\BrowserAI.Measure"'
+  log: [update:80712] [16:20:02] [INFO] Removing directory '"%USERPROFILE%\\AppData\\Local\\Temp\\velopack_BrowserAI.Measure"'
+  log: [update:80712] [16:20:02] [INFO] Finished successfully.
+  log: [update:80712] [16:20:02] [INFO] Scheduling removal of install directory...
+  log: [update:80712] [16:20:02] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "%USERPROFILE%\AppData\Local\BrowserAI.Measure"

@@ -1,0 +1,5 @@
+RegisterAI v0.2.0 from https://github.com/SixFive7/RegisterAI/releases/tag/v0.2.0
+sha256: 84f01dd20414cbe46255f3d989a4f0bda1429024f6e21690105b4dbfaabfdbaf (matches SHA256SUMS)
+version: 0.2.0
+RegisterAI.exe: C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\payload\registerai\RegisterAI.exe
+Stamp: C:\Source\SixFive7\BrowserAI\.work\wt\onebinary\build\payload\registerai.json

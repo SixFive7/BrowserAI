@@ -1,0 +1,10 @@
+2026-10-04T00:44:31.443294Z	BEFORE	claude.json mcpServers (top level)	73A30150B59671AB
+2026-10-04T00:44:31.443294Z	BEFORE	claude.json mcpServers (per project)	DF79B910F9A702B7
+2026-10-04T00:44:31.443294Z	BEFORE	codex config.toml (whole file)	9554670F60A55552
+2026-10-04T00:44:31.443294Z	BEFORE	codex config.toml mtime	2026-10-03T12:11:23.434946Z
+2026-10-04T00:44:31.443294Z	BEFORE	installed BrowserAI.app tree (names, sizes, mtimes)	7233844CEAFD0DC8 (223 files)
+2026-10-04T01:56:22.089127Z	AFTER	claude.json mcpServers (top level)	73A30150B59671AB
+2026-10-04T01:56:22.089127Z	AFTER	claude.json mcpServers (per project)	DF79B910F9A702B7
+2026-10-04T01:56:22.089127Z	AFTER	codex config.toml (whole file)	9554670F60A55552
+2026-10-04T01:56:22.089127Z	AFTER	codex config.toml mtime	2026-10-03T12:11:23.434946Z
+2026-10-04T01:56:22.089127Z	AFTER	installed BrowserAI.app tree (names, sizes, mtimes)	26AF1807EB737274 (220 files)
