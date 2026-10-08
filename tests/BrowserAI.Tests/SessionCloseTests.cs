@@ -205,7 +205,9 @@ internal sealed class SessionCloseTests
         await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
 
         // The timer's sentence belongs to the timer's close and to nothing else.
-        await Assert.That(TextOf(refused)).DoesNotContain("no browser call had reached it");
+        // Corrected 2026-10-08 (previously "no browser call had reached it"), with
+        // the idle close's own sentence, E2.
+        await Assert.That(TextOf(refused)).DoesNotContain("because no call had named the session for");
 
         // Nothing reached a child.
         await Assert.That(first.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(1);

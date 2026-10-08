@@ -173,8 +173,13 @@ internal sealed class ConfigRoundTripTests
         await Assert.That((bool?)preferences["browser.sessionstore.restore_on_demand"]).IsFalse();
         await Assert.That((bool?)preferences["browser.sessionstore.restore_tabs_lazily"]).IsFalse();
 
-        // Upstream's hour for a headless launch, and nothing for a headed one.
-        await Assert.That((int?)chromium["timeouts"]!["idle"]).IsEqualTo(3_600_000);
+        // Nothing for any launch since 2026-10-08, E2 and F2 (previously upstream's
+        // hour for a headless launch and nothing for a headed one): an agent may set
+        // a session's idle time past that hour or to never, and every call that names
+        // the session restarts BrowserAI's countdown where upstream's restarts only on
+        // a call it receives. Planted red against the generator as it stood.
+        await Assert.That((int?)chromium["timeouts"]!["idle"]).IsEqualTo(0);
+        await Assert.That((int?)firefox["timeouts"]!["idle"]).IsEqualTo(0);
         await Assert.That((int?)headed["timeouts"]!["idle"]).IsEqualTo(0);
     }
 

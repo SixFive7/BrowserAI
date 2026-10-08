@@ -98,6 +98,30 @@ internal sealed record SessionEnvironment
     /// </remarks>
     public TimeSpan BrowserIdlePeriod { get; init; } = BrowserIdleTimer.DefaultIdlePeriod;
 
+    /// <summary>
+    /// How long one idle setting lasts in this environment: its minutes, at the scale
+    /// <see cref="BrowserIdlePeriod"/> sets, or <see langword="null"/> for never.
+    /// </summary>
+    /// <remarks>
+    /// <b>The seam scales and does not replace, since 2026-10-08 (E2).</b>
+    /// <see cref="BrowserIdlePeriod"/> is what the hidden default lasts, so one minute of
+    /// a setting lasts a tenth of it: a minute in the product, and 80 ms in a test that
+    /// sets the period to 800 ms, where a visible window's hour lasts six of its periods.
+    /// That is what lets the suite drive every setting at the speed it drives the
+    /// hidden one, and what keeps the product's derivation, minutes times one minute,
+    /// the one under test.
+    /// </remarks>
+    /// <param name="idle">The setting.</param>
+    /// <returns>The period, or <see langword="null"/> when the setting is never.</returns>
+    public TimeSpan? IdlePeriodFor(IdleSetting idle)
+    {
+        ArgumentNullException.ThrowIfNull(idle);
+
+        return idle.Minutes is { } minutes
+            ? BrowserIdlePeriod / SessionTimes.HiddenIdleMinutes * minutes
+            : null;
+    }
+
     // ⚠️ RETIRED 2026-10-04: `ShutdownCloseBudget` stood here, one second by default
     // and thirty in the session host, which set it. D4.2, the maintainer's words
     // verbatim: "Same 1 min. under option d (lane c)". Every close takes

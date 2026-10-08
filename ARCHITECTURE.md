@@ -394,7 +394,7 @@ The largest area, and the one everything else keys on.
 | The two files themselves, and the SQLite they rest on | `src/BrowserAI/Storage/` -- [its own rules](src/BrowserAI/Storage/AGENTS.md) |
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
-| Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
+| Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs`; since 2026-10-08 the idle setting in `src/BrowserAI/Sessions/IdleSetting.cs` and the countdowns the update reads in `src/BrowserAI/Sessions/SessionCountdown.cs` |
 | A browser that ends with nobody asking, and why every close happened, *added 2026-10-04, 8 b* | `src/BrowserAI/Sessions/BrowserExitWatch.cs` over `BrowserProcesses.HoldTheEarliest` in `src/BrowserAI.Core/Interop/BrowserProcesses.cs`; `LiveSession.TheBrowserEnded` and the `closed` and `opened` statements `SessionLock.AppendLifecycle` writes; `src/BrowserAI/Sessions/CloseReasons.cs` for the sentence every answer gives; `SessionRecord.LastClose` for the reading back |
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and -- since 2026-08-20 -- `src/BrowserAI.Core/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
@@ -948,6 +948,20 @@ no browser up starts one, and ends the browser server all the same, so after it 
 session is closed whatever it held. BrowserAI goes on sending `browser_close` to a
 session's own child for the idle close, the shutdown and `browserai_close`, and no
 verdict is asked about those.
+
+⚠️ **Corrected 2026-10-08, by addition, E2 and F2.** The countdown is per session:
+`LiveSession` builds a `BrowserIdleTimer` from the session's own idle setting,
+`IdleSetting`, minutes or never, at the scale `SessionEnvironment.IdlePeriodFor`
+gives it, so a visible window has one too (Q326 a reversed) and a session set to
+never has none. Every call that names a live session restarts it:
+`BrowserProxy` calls `SessionManager.NoteActivity` for each call before anything
+can refuse it, `LiveSession.NoteActivity` notes the moment and
+`BrowserIdleTimer.Touch` re-arms the deadline, and a forwarded call still holds the
+countdown through `LiveSession.Driving`. No launch writes upstream's own hour any
+more (`BrowserConfiguration.NoIdleTimeout`). The countdowns are read by the update
+and the dashboard through `SessionManager.Countdowns`, one `SessionCountdown` per
+open session with its deadline (`BrowserIdleTimer.CountdownEndsAt`), and none for a
+closed one.
 
 ### `browserai_page_tool`, and how a page tool's name is resolved
 

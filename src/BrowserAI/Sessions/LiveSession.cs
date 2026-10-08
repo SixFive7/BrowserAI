@@ -98,21 +98,30 @@ internal sealed class LiveSession : IAsyncDisposable
         _cutShortToken = _cutShort.Token;
         Logger = logging.Factory.CreateLogger<LiveSession>();
 
-        // ⚠️ NO TIMER AT ALL FOR A HEADED SESSION, Q326 a, the maintainer's
-        // words of 2026-10-03, verbatim: "Q326 a - the timer is there to
-        // conserve system resources the user cannot see. Also, interactive
-        // windows mostly hold user state so they are super valuable." Not a
-        // timer that is never armed: an object that does not exist cannot be
-        // armed by a call nobody thought about. Its config writes upstream's own
-        // idle timeout as zero for the same reason (BrowserConfiguration).
-        Idle = settings.Headed
-            ? null
-            : new BrowserIdleTimer(
+        // ⚠️ A TIMER FOR EVERY SESSION BUT ONE SET TO NEVER, since 2026-10-08, E2.
+        // Until that day there was no timer at all for a headed session, Q326 a, the
+        // maintainer's words of 2026-10-03, verbatim: "Q326 a - the timer is there
+        // to conserve system resources the user cannot see. Also, interactive
+        // windows mostly hold user state so they are super valuable." His E2 of
+        // 2026-10-07 reverses it: "What if we change the never to 1 hour and then
+        // allow the calling agent to change this default behaviour with a
+        // parameter? This would allow critical interactive user processes to remain
+        // indefinite but have a sensical timeout default for interactive sessions
+        // that can be restarted." So a visible window gets an hour unless the agent
+        // says otherwise, and "never" is the agent's to say, for either mode. A
+        // session set to never still has no timer at all, for the reason Q326 a's
+        // headed session had none: an object that does not exist cannot be armed by
+        // a call nobody thought about.
+        Idle = environment.IdlePeriodFor(settings.Idle) is { } period
+            ? new BrowserIdleTimer(
                 location.FullPath,
-                environment.BrowserIdlePeriod,
+                period,
                 FireIdleAsync,
                 logging.Factory.CreateLogger<BrowserIdleTimer>(),
-                environment.Clock);
+                environment.Clock)
+            : null;
+
+        _lastActivity = _clock.GetUtcNow().UtcTicks;
     }
 
     /// <summary>
@@ -449,9 +458,14 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </para>
     /// </remarks>
     public const string IdleCloseWhy =
-        "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
+        "BrowserAI closed this session's browser itself: no call had named the session for its idle period, and in a visible window nobody had used it, "
         + "so it ended the browser server, node child included. Every browser call is refused until browserai_resume starts a new one, "
         + "and the browser's own session restore then reopens the tabs that were open.";
+
+    // ⚠️ Corrected 2026-10-08 (previously "nothing had been forwarded through the
+    // session for the idle period"): since E2 and F2 every call that names the
+    // session restarts the countdown, and in a visible window the person's input does
+    // too (F4).
 
     // ⚠️ DELETED 2026-10-08: `NothingWasOpenToClose`, what a caller's own
     // `browser_close` was answered with when no browser was up -- "No browser was
@@ -512,6 +526,7 @@ internal sealed class LiveSession : IAsyncDisposable
     private readonly CancellationToken _cutShortToken;
 
     private SessionClosure? _closed;
+    private long _lastActivity;
     private int _reapOwed;
     private int _disposed;
 
@@ -736,15 +751,104 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <summary>
     /// The one timer: this session's browser server is ended once nothing has
     /// driven it for <see cref="BrowserIdleTimer.Period"/>. <see langword="null"/>
-    /// for a headed session, which is never idle-closed.
+    /// when the session's idle setting is never.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// It belongs to this lifetime and not to the manager because everything
     /// it acts on does: one session is one child, one job and one log, and a
     /// timer owned anywhere else would need a way to name a session that has
     /// already gone.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "<see langword="null"/> for a headed
+    /// session, which is never idle-closed"), E2</i>: a visible window has one too.
+    /// </para>
     /// </remarks>
     public BrowserIdleTimer? Idle { get; }
+
+    /// <summary>
+    /// When a call last named this session, or the person last used its window, as a
+    /// moment on the session's clock.
+    /// </summary>
+    public DateTimeOffset LastActivity => new(Volatile.Read(ref _lastActivity), TimeSpan.Zero);
+
+    /// <summary>
+    /// A call named this session, or the person used its window: the moment is
+    /// noted and the countdown starts again, whatever the call is answered with.
+    /// </summary>
+    /// <remarks>
+    /// <b>F2, the maintainer's words of 2026-10-08 verbatim:</b> <i>"Also, any type of
+    /// call, even if refused once because the settings are different should reset the
+    /// countdown timer on live sessions."</i> A closed session has no browser to keep,
+    /// and its countdown is over; noting the call costs it nothing.
+    /// </remarks>
+    public void NoteActivity()
+    {
+        Volatile.Write(ref _lastActivity, _clock.GetUtcNow().UtcTicks);
+        Idle?.Touch();
+    }
+
+    /// <summary>
+    /// Marks one forwarded call as driving this session, so its countdown cannot run
+    /// out under the call, and notes the activity at both ends of it.
+    /// </summary>
+    /// <returns>A scope to dispose when the call is answered.</returns>
+    public IDisposable Driving()
+    {
+        Volatile.Write(ref _lastActivity, _clock.GetUtcNow().UtcTicks);
+
+        return new DrivingScope(this);
+    }
+
+    /// <summary>
+    /// This session's idle countdown for the update and the dashboard, or
+    /// <see langword="null"/> once it is closed and holds nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>The seam ARCH and UI read, added 2026-10-08</b>: per open session, its
+    /// directory, its purpose, whether it has a window, and the deadline of its
+    /// countdown, <see langword="null"/> exactly when the agent set it to never. Read
+    /// from memory and never from the store, so a reader once a second waits on
+    /// nothing.
+    /// </remarks>
+    /// <returns>The countdown, or <see langword="null"/>.</returns>
+    public SessionCountdown? Countdown()
+    {
+        if (Closed is not null)
+        {
+            return null;
+        }
+
+        return new SessionCountdown(
+            Location.FullPath,
+            Lock.Record.Purpose is { Length: > 0 } purpose ? purpose : null,
+            Settings.Headed,
+            Idle?.CountdownEndsAt,
+            LastActivity,
+            BrowserIsOpen);
+    }
+
+    /// <summary>The forwarded call's scope: the countdown held, and the activity noted when it ends.</summary>
+    /// <param name="session">The session.</param>
+    private sealed class DrivingScope(LiveSession session) : IDisposable
+    {
+        /// <summary>The countdown's own scope, or <see langword="null"/> for a session set to never.</summary>
+        private readonly IDisposable? _call = session.Idle?.Call();
+
+        private int _disposed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) is not 0)
+            {
+                return;
+            }
+
+            Volatile.Write(ref session._lastActivity, session._clock.GetUtcNow().UtcTicks);
+            _call?.Dispose();
+        }
+    }
 
     /// <summary>
     /// Whether this session's browser server has a browser up: anything in the
@@ -1453,7 +1557,11 @@ internal sealed class LiveSession : IAsyncDisposable
         var before = ProcessesInTheJob();
         var browserWasUp = TheJobHoldsABrowser();
 
-        var idle = new SessionClosure(SessionCloseCause.Idle, _clock.GetUtcNow(), Idle?.Period);
+        // A visible window's close says nobody had used the window either (E2, F4).
+        var idle = new SessionClosure(SessionCloseCause.Idle, _clock.GetUtcNow(), Idle?.Period)
+        {
+            Detail = Settings.Headed ? CloseReasons.NobodyUsedTheWindow : null,
+        };
 
         if (Interlocked.CompareExchange(ref _closed, idle, null) is not null)
         {
@@ -1635,7 +1743,12 @@ internal sealed class LiveSession : IAsyncDisposable
 /// </param>
 /// <param name="Debug">Whether this session's own log is at debug level.</param>
 /// <param name="Run">Everything else a caller can set per run.</param>
-internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run);
+/// <param name="Idle">
+/// How long the browser may sit unused before BrowserAI closes it, minutes or never.
+/// ⚠️ <i>Added 2026-10-08, E2</i>: the countdown is per session since that day, and a
+/// visible window has one too.
+/// </param>
+internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run, IdleSetting Idle);
 
 /// <summary>How <c>browserai_close</c> ended.</summary>
 internal enum AgentClose

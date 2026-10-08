@@ -40,6 +40,18 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **Every session's browser closes after its own idle time, and a visible window after an hour.**
+  E2, the maintainer's words verbatim: *"What if we change the never to 1 hour and then allow the
+  calling agent to change this default behaviour with a parameter?"* `browserai_init` and
+  `browserai_resume` take `idleMinutes`, a whole number of minutes or `never`, with ten minutes
+  without a window and sixty with one when a call names none. A visible window was never closed
+  for being idle until now. Every call that names a live session starts its countdown again,
+  whatever the answer, a refused call and BrowserAI's own tools included, where only a forwarded
+  call did; a resume of a live session says so and names no time. Upstream's own one-hour idle
+  timeout is off for every launch, so BrowserAI's countdown is the only one, and the update and
+  the dashboard read every open session's deadline from it. `IdleCountdownTests` holds it, planted
+  red first.
+
 - ✨ **`browserai_close` ends a session's browser and keeps the session.**
   D1 and F1 a, the maintainer's words verbatim: *"1 b - but think through if browserai_stop and
   browserai_close could then not just become a single thing."* and *"f1 a"*. The ninth tool of

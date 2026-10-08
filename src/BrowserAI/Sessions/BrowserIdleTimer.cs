@@ -59,6 +59,16 @@ namespace BrowserAI.Sessions;
 /// closed. The first forwarded tool call arms it.
 /// </para>
 /// <para>
+/// ⚠️ <b>Corrected 2026-10-08, by addition (the paragraph above is the design until
+/// that day), E2 and F2.</b> Every session has a countdown of its own length, a
+/// visible one included (Q326 a reversed), and none at all when an agent sets it to
+/// never; the length is the session's idle setting at the environment's scale
+/// (<c>SessionEnvironment.IdlePeriodFor</c>). And every call that names the session
+/// restarts it, whatever the answer (<see cref="Touch"/>), so the call that opens a
+/// session starts it: a countdown that runs out with no browser up still closes
+/// nothing and writes no row (Q327 a), and the session's next call starts it again.
+/// </para>
+/// <para>
 /// <b>A call in flight is a session being driven, however long the call takes.</b>
 /// <see cref="Call"/> both resets the period and marks the call outstanding, so a
 /// navigation that outlives the whole period cannot have the browser closed
@@ -145,6 +155,12 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// </remarks>
     internal static TimeSpan CloseBudget { get; } = SessionTimes.BrowserCloseCap + ChildProcessOptions.DefaultShutdownTimeout;
 
+    /// <summary>
+    /// The longest due time the platform timer takes: 4,294,967,294 ms, about 49.7
+    /// days, the documented limit of <see cref="Timer.Change(TimeSpan, TimeSpan)"/>.
+    /// </summary>
+    private static readonly TimeSpan LongestWait = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+
     private readonly Lock _gate = new();
     private readonly string _session;
     private readonly Func<Task<BrowserCloseResult?>> _closeBrowser;
@@ -197,6 +213,10 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
         _time = time;
 
         _timer = time.CreateTimer(static state => ((BrowserIdleTimer)state!).OnIdle(), this, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+        // A countdown nothing has started reads as run out, never as one far in the
+        // future: a timestamp of zero would put it at the machine's boot.
+        Deadline = time.GetTimestamp();
     }
 
     /// <summary>The period this session's browser may sit idle for.</summary>
@@ -233,6 +253,74 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 
                 return remaining > TimeSpan.Zero ? _time.GetUtcNow() + remaining : null;
             }
+        }
+    }
+
+    /// <summary>
+    /// When the countdown runs out if nothing restarts it first: the idle deadline, as
+    /// a moment and never as a remaining time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The seam the update reads, added 2026-10-08</b> for the background's
+    /// <c>UpdateHoldSnapshot</c>, whose <c>HoldingSession.ClosesAt</c> is this. Unlike
+    /// <see cref="ClosesAt"/>, which a description reads and which is empty while a
+    /// call runs, this always has an answer: while a call runs it is a whole period
+    /// from now, the earliest the close can come once the call ends; while a close runs
+    /// it is now; and once the countdown has run out with nothing to close it is the
+    /// moment it ran out, in the past, so a reader sees a browser that holds nothing.
+    /// </para>
+    /// </remarks>
+    public DateTimeOffset CountdownEndsAt
+    {
+        get
+        {
+            lock (_gate)
+            {
+                var now = _time.GetUtcNow();
+
+                if (_closing || Volatile.Read(ref _disposed) is not 0)
+                {
+                    return now;
+                }
+
+                return _inFlight > 0
+                    ? now + Period
+                    : now + _time.GetElapsedTime(_time.GetTimestamp(), Deadline);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Starts the countdown again, because a call named this session or the person
+    /// used its window.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F2, decided 2026-10-08 by the maintainer, in his words verbatim:</b> <i>"Also,
+    /// any type of call, even if refused once because the settings are different should
+    /// reset the countdown timer on live sessions."</i> Until that day only a forwarded
+    /// call reset it, "the one timer, reset here and nowhere else" in
+    /// <c>BrowserProxy</c>; a call that runs still holds it through <see cref="Call"/>,
+    /// and every other call that names the session restarts it here, held back,
+    /// refused or answered by BrowserAI itself. F4 adds the person's input in a visible
+    /// window.
+    /// </para>
+    /// <para>
+    /// <b>A close already decided is not called off</b>: the browser is going, and the
+    /// call that touched it is answered with the closed session's sentence.
+    /// </para>
+    /// </remarks>
+    public void Touch()
+    {
+        lock (_gate)
+        {
+            if (Volatile.Read(ref _disposed) is not 0 || _closing)
+            {
+                return;
+            }
+
+            Arm();
         }
     }
 
@@ -319,7 +407,13 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
             // One-shot: fired once, it stays disarmed until the next call. A
             // periodic timer would re-close a browser that is already closed
             // every ten minutes for as long as the session lives.
-            _ = _timer.Change(delay, Timeout.InfiniteTimeSpan);
+            //
+            // ⚠️ AND NEVER LONGER THAN THE PLATFORM TIMER TAKES, since 2026-10-08:
+            // an agent may set a period of up to 2,147,483,647 minutes (E2), and
+            // Timer.Change refuses a due time past 4,294,967,294 ms. A wake-up that
+            // comes before the deadline re-arms for what is left (OnIdle), so the
+            // deadline is kept and the wait is only taken in steps.
+            _ = _timer.Change(delay > LongestWait ? LongestWait : delay, Timeout.InfiniteTimeSpan);
         }
         catch (ObjectDisposedException)
         {

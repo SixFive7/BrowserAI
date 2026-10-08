@@ -98,11 +98,12 @@ internal sealed class ModelSurfaceTests
     /// </remarks>
     private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
     [
+        // ⚠️ `idleMinutes` on both since 2026-10-08, E2.
         (SessionToolSurface.Init,
-            ["directory", "purpose", "headed", "browser", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug"],
+            ["directory", "purpose", "headed", "browser", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug", "idleMinutes"],
             ["directory", "purpose"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "why", "headed", "debug", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
+            ["directory", "purpose", "why", "headed", "debug", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "idleMinutes"],
             ["directory", "why"]),
         // ⚠️ ADDED 2026-10-08, F1 a: the ninth authored tool.
         (SessionToolSurface.Close, ["session", "why"], ["session", "why"]),

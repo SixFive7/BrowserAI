@@ -27,7 +27,41 @@ internal static class SessionTimes
     /// How long a headless session's browser may go unused before it is closed:
     /// ten minutes. <c>BrowserIdleTimer.DefaultIdlePeriod</c> is this value.
     /// </summary>
-    public static TimeSpan BrowserIdlePeriod { get; } = TimeSpan.FromMinutes(10);
+    /// <remarks>
+    /// ⚠️ <b>The hidden default since 2026-10-08, E2</b> (previously the only
+    /// period): an agent may set another per session, in whole minutes or never, and
+    /// a visible window's default is <see cref="VisibleIdleMinutes"/>. Derived from
+    /// <see cref="HiddenIdleMinutes"/>, so the two cannot disagree.
+    /// </remarks>
+    public static TimeSpan BrowserIdlePeriod { get; } = TimeSpan.FromMinutes(HiddenIdleMinutes);
+
+    /// <summary>
+    /// The idle setting a session without a window gets when the call names none:
+    /// <b>ten minutes</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Chosen, and unchanged since the first build</b>: long enough that ordinary
+    /// think-time between calls never closes a browser, short enough that a browser
+    /// nobody uses does not hold memory for long. E2, the maintainer's words of
+    /// 2026-10-07 verbatim: <i>"Right now browsers automatically close after 10 min. of
+    /// inactivity and interactive windows never do. What if we change the never to 1
+    /// hour and then allow the calling agent to change this default behaviour with a
+    /// parameter?"</i> A new row for the numbers index (F3).
+    /// </remarks>
+    public const int HiddenIdleMinutes = 10;
+
+    /// <summary>
+    /// The idle setting a session with a window gets when the call names none:
+    /// <b>sixty minutes</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Decided 2026-10-07 by the maintainer, E2</b>, in the words quoted on
+    /// <see cref="HiddenIdleMinutes"/>: an hour where a visible window was never
+    /// closed for idleness before (Q326 a of 2026-10-03, reversed by this), so a window
+    /// nobody uses closes overnight and lets an update in. A person's input in the
+    /// window counts as use (F4). A new row for the numbers index (F3).
+    /// </remarks>
+    public const int VisibleIdleMinutes = 60;
 
     /// <summary>
     /// How long Chromium's cookie store holds a change before it commits it to disk:

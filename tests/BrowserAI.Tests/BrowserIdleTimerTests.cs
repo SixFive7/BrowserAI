@@ -1031,93 +1031,15 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(child.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(2);
     }
 
-    /// <summary>
-    /// A headed session is never idle-closed, and its config turns upstream's own
-    /// idle timeout off as well; a headless one keeps both.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q326 a, the maintainer's words of 2026-10-03, verbatim: "Q326 a - the
-    /// timer is there to conserve system resources the user cannot see. Also,
-    /// interactive windows mostly hold user state so they are super
-    /// valuable."</b> A field report of 2026-10-01 had an agent calling something
-    /// every four minutes to keep a window open while a person signed in.
-    /// </para>
-    /// <para>
-    /// <b>Fifty periods with a browser up is fifty chances</b> for a timer that
-    /// was armed after all, and the headless session beside it, under the same
-    /// clock, is the control that shows the clock was able to close one.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AHeadedSessionIsNeverIdleClosedAndItsConfigTurnsUpstreamsTimeoutOff()
-    {
-        var clock = new ManualClock();
-
-        await using var rig = RigSessionEnvironment.Create(
-            configure: child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
-            opensDefaultSession: false,
-            browserIdlePeriod: ShortPeriod,
-            clock: clock);
-
-        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
-
-        var headed = Path.Combine(rig.Root, "headed");
-        var headless = Path.Combine(rig.Root, "headless");
-
-        foreach (var (directory, window) in new[] { (headed, true), (headless, false) })
-        {
-            _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-            {
-                ["name"] = "browserai_init",
-                ["arguments"] = new JsonObject
-                {
-                    ["directory"] = directory,
-                    ["purpose"] = "a session left idle under the same clock as its neighbour",
-                    ["headed"] = window,
-                },
-            });
-
-            _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-            {
-                ["name"] = "browser_navigate",
-                ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = directory, ["why"] = "the call that starts the browser" },
-            });
-        }
-
-        var headedChild = rig.SessionChildren[0];
-        var headlessChild = rig.SessionChildren[1];
-
-        await WaitUntilAsync(
-            () =>
-            {
-                clock.Advance(ShortPeriod);
-                return headlessChild.HasStopped;
-            },
-            TestDefaults.InProcessHang,
-            "the headless control was never idle-closed, so this clock could not have closed the headed one either");
-
-        clock.Advance(ShortPeriod * 50);
-
-        _ = await harness.Client.RoundTripAsync("tools/list");
-
-        await Assert.That(headedChild.HasStopped).IsFalse();
-        await Assert.That(RecordedSession.LogOf(headed).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsFalse();
-
-        // And the browser's own timer is off for the headed launch and upstream's
-        // hour for the headless one.
-        await Assert.That((int?)ConfigOf(rig.Launches[0])["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.NoIdleTimeout);
-        await Assert.That((int?)ConfigOf(rig.Launches[1])["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.IdleTimeoutMilliseconds);
-
-        var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-        {
-            ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = headed, ["why"] = "the call after fifty idle periods" },
-        });
-
-        await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
-    }
+    // ⚠️ DELETED 2026-10-08: `AHeadedSessionIsNeverIdleClosedAndItsConfigTurnsUpstreamsTimeoutOff`,
+    // which held Q326 a of 2026-10-03 -- a headed session never idle-closed, its
+    // launch writing upstream's own idle timeout as zero, and a headless launch
+    // writing upstream's hour -- over fifty idle periods beside a headless control.
+    // E2 of 2026-10-07 reverses it: a visible window closes after its own hour, an
+    // agent may set either mode to minutes or never, and no launch writes
+    // upstream's hour. `IdleCountdownTests.AVisibleWindowClosesAfterItsOwnHourAndNoLaunchCarriesUpstreamsTimeout`
+    // holds the reversal, and `IdleCountdownTests.AnIdleSettingIsTheCountdownsLengthAndNeverMeansNever`
+    // the fifty periods with nothing closed, for a session set to never.
 
     /// <summary>The generated config a launch was given, read back off disk.</summary>
     /// <param name="launch">The launch, as the rig recorded it.</param>

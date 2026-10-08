@@ -226,6 +226,14 @@ internal static class BrowserConfiguration
     /// </summary>
     /// <remarks>
     /// <para>
+    /// ⚠️ <b>No launch writes it since 2026-10-08</b>, E2 and F2: every launch writes
+    /// <see cref="NoIdleTimeout"/>, because an agent may set a session's idle time past
+    /// this hour or to never, and every call that names the session restarts
+    /// BrowserAI's countdown where upstream's is restarted only by a call it receives.
+    /// The value and its reasoning are kept below as the record of what upstream's
+    /// default is.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>It cannot fire, and that is why it is written down.</b>
     /// <see cref="Sessions.BrowserIdleTimer.DefaultIdlePeriod"/> is ten minutes
     /// and both timers are reset by the same event -- a tool call -- so BrowserAI's
@@ -269,8 +277,9 @@ internal static class BrowserConfiguration
     public const int IdleTimeoutMilliseconds = 3_600_000;
 
     /// <summary>
-    /// What a <b>headed</b> launch writes for upstream's idle timeout: zero, which
-    /// upstream reads as no idle close at all.
+    /// What every launch writes for upstream's idle timeout since 2026-10-08, and a
+    /// <b>headed</b> one since 2026-10-03: zero, which upstream reads as no idle close
+    /// at all.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1145,8 +1154,15 @@ internal static class BrowserConfiguration
             // ⚠️ A HEADED LAUNCH WRITES ZERO since 2026-10-03, Q326 a: BrowserAI
             // no longer arms its own timer for one, so the hour would have been
             // the timer that closes a person's window. See `NoIdleTimeout`.
+            //
+            // ⚠️ AND SO DOES EVERY LAUNCH since 2026-10-08, E2 and F2. An agent may
+            // set a session's idle time past an hour, or to never, and every call
+            // that names the session restarts BrowserAI's countdown where upstream's
+            // is restarted only by a call it receives, so upstream's hour would close
+            // a browser BrowserAI is still keeping. BrowserAI's own countdown is the
+            // only one.
             writer.WriteStartObject("timeouts");
-            writer.WriteNumber("idle", request.Headless ? IdleTimeoutMilliseconds : NoIdleTimeout);
+            writer.WriteNumber("idle", NoIdleTimeout);
             writer.WriteEndObject();
 
             // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN AND NOT OMITTED, AND THIS

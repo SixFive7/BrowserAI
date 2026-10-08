@@ -257,15 +257,34 @@ internal sealed class SessionManager : IAsyncDisposable
     /// the answer says so instead of claiming nothing changed. A decision taken
     /// 2026-10-04 for the maintainer's review.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>It says the countdown started again, and names no time, since
+    /// 2026-10-08.</b> F2, the maintainer's words verbatim: <i>"f2 resuming an already
+    /// live session with the same settings should reset the idle timer for that
+    /// session and respond back to the calling agent that the session is "already
+    /// live". Just accepting it and not returning the call "already live" signal
+    /// prevents us from teaching the calling agent how the timeout works."</i>, and of
+    /// the first draft, which named ten minutes and an hour: <i>"Either remove the
+    /// specific amount of timeout in these responses. Or make sure these values are
+    /// correct based on the possible overrided values set on init or resume. But given
+    /// the possible values and different wording I'd opt for not communicating the
+    /// specific values. Just generic "the timeout has been reset" or something alike.
+    /// Think of your own text."</i> A session set to never has no countdown to start,
+    /// and the answer says that instead.
+    /// </para>
     /// </remarks>
     /// <param name="browserUp">Whether the session's browser is up.</param>
     /// <param name="purposeChanged">Whether the call passed a purpose, which was recorded.</param>
+    /// <param name="never">Whether the session's idle setting is never.</param>
     /// <returns>The line, without a <c>NOTE: </c> prefix.</returns>
-    public static string AlreadyLive(bool browserUp, bool purposeChanged) =>
+    public static string AlreadyLive(bool browserUp, bool purposeChanged, bool never = false) =>
         $"The session is already live, so nothing changed{(purposeChanged ? " but its recorded purpose, which is now the one you passed" : string.Empty)}: "
         + (browserUp
             ? "its browser, its tabs and its settings are as they were."
-            : "its browser has not started yet, and the first browser call starts it with the settings the session already has.");
+            : "its browser has not started yet, and the first browser call starts it with the settings the session already has.")
+        + (never
+            ? " It has no idle countdown, because its idle setting is never."
+            : " This call started its idle countdown again, as every call that names the session does.");
 
     /// <summary>
     /// What <c>browserai_close</c> answers once the session's browser has closed
@@ -628,6 +647,40 @@ internal sealed class SessionManager : IAsyncDisposable
                 DrivenThrough: driving?.ClientProcessId,
                 IdleCloseAt: live.Idle?.ClosesAt);
         })];
+
+    /// <summary>
+    /// Every open session's idle countdown, read from memory: the seam the background's
+    /// update holds and the dashboard read.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 for lanes ARCH and UI.</b> A closed session is not listed: it
+    /// holds no browser until a resume opens it again. The read takes no lock a session
+    /// holds and opens no store, so it can be asked once a second.
+    /// </remarks>
+    /// <returns>One countdown per open session, in no particular order.</returns>
+    public IReadOnlyList<SessionCountdown> Countdowns() =>
+        [.. _live.Values.Select(static live => live.Countdown()).OfType<SessionCountdown>()];
+
+    /// <summary>
+    /// A call named a session: if this process has it open, its countdown starts again,
+    /// whatever the call is answered with.
+    /// </summary>
+    /// <remarks>
+    /// <b>F2, the maintainer's words of 2026-10-08 verbatim:</b> <i>"Also, any type of
+    /// call, even if refused once because the settings are different should reset the
+    /// countdown timer on live sessions."</i> The proxy calls this for every call that
+    /// carries a session or a session directory, before anything can refuse it.
+    /// </remarks>
+    /// <param name="directory">The <c>session</c> or <c>directory</c> argument, as it arrived.</param>
+    public void NoteActivity(string? directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Find(directory)?.NoteActivity();
+    }
 
     /// <summary>
     /// Why a <c>session</c> argument resolved to nothing, in terms the caller can
@@ -1090,14 +1143,20 @@ internal sealed class SessionManager : IAsyncDisposable
         if (live.Logger.IsEnabled(LogLevel.Information))
         {
             var ended = connection.Describe();
+            // ⚠️ Corrected 2026-10-08, E2 (previously "for as long as its window is
+            // open: a headed session has no idle timer"): a visible window has a
+            // countdown too, and only a session set to never has none.
             var until = live.Idle is { } idle
-                ? $"until it has gone {SessionErrors.Duration(idle.Period)} with no call, when the idle close ends it and the session is let go"
-                : $"for as long as its window is open: a headed session has no idle timer, so it is looked at every {SessionErrors.Duration(LiveSession.DetachedWindowLook)} and let go once the window is closed";
+                ? $"until it has gone {SessionErrors.Duration(idle.Period)} with no call{(live.Settings.Headed ? " and nobody using its window, or until its window is closed" : string.Empty)}, when the session is let go"
+                : $"for as long as its browser is up: its idle setting is never, so it is looked at every {SessionErrors.Duration(LiveSession.DetachedWindowLook)} and let go once its browser has gone";
 
             SessionToolLog.KeptWithoutAClient(live.Logger, live.Location.FullPath, ended, until);
         }
 
-        if (live.Idle is null)
+        // ⚠️ A visible window is looked at as well as counted down, since 2026-10-08:
+        // the look is what lets a session go once the person has closed its window,
+        // when the wait on the browser did not see it.
+        if (live.Idle is null || live.Settings.Headed)
         {
             // ⚠️ ALIGNED WITH 8 b, 2026-10-04: a person closing a kept window closes
             // the session as it closes an attached one, recorded as theirs, and the
@@ -1197,6 +1256,9 @@ internal sealed class SessionManager : IAsyncDisposable
             var run = Run(arguments);
             var debug = Flag(arguments, "debug") ?? false;
 
+            // E2, 2026-10-08: minutes or never, with the mode's own default.
+            var idle = IdleSetting.From(arguments) ?? IdleSetting.DefaultFor(headed);
+
             // Being made to say "resume" is the point: it converts an accidental
             // collision into a stated intent. There is deliberately no difference
             // between a lost session, a neatly closed one and one this very process
@@ -1261,7 +1323,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // half of that refusal the ungated look above cannot guarantee.
                     RefuseAnExistingRecord = true,
                 },
-                new SessionRunSettings(headed, transcript, debug, run),
+                new SessionRunSettings(headed, transcript, debug, run, idle),
                 createdHere: true,
                 SpellingNote(named, location, verdict) is { } note ? [note] : [],
                 held,
@@ -1298,6 +1360,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var headed = Flag(arguments, "headed") ?? false;
             var transcript = Flag(arguments, "transcript") ?? false;
             var run = Run(arguments);
+            var idle = IdleSetting.From(arguments) ?? IdleSetting.DefaultFor(headed);
 
             // A profile is browser-specific and a session cannot change what it is,
             // so a caller asking to resume a Firefox directory as Chromium is
@@ -1317,7 +1380,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // 2026-10-03 -- so the line could not be reached. The refusal carries
             // resume's own definition, whose description says why.
 
-            var requested = new SessionRunSettings(headed, transcript, debug, run);
+            var requested = new SessionRunSettings(headed, transcript, debug, run, idle);
             var notes = new List<string>();
             var createdHere = false;
             var noticeGiven = false;
@@ -1458,7 +1521,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                     return new ToolOutcome(
-                        Describe(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null)),
+                        Describe(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null, never: already.Settings.Idle.IsNever)),
                         IsError: false);
                 }
 
@@ -3537,6 +3600,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // Everything above is now owned by the dictionary.
             handedOver = true;
 
+            // The call that opened the session named it, so its countdown starts now
+            // (F2, 2026-10-08), and the answer below can say so of every session.
+            session.NoteActivity();
+
             // ⚠️ THE ROW THE ACQUISITION WROTE IS SETTLED HERE AND NOWHERE
             // EARLIER. It was written `in-flight` before the child was launched,
             // which is the same ordering every forwarded call uses and for the
@@ -3801,7 +3868,17 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // ⚠️ ADDED 2026-10-03. The field report of 2026-10-01 had nothing
             // in this answer to tell it the session had come back headless.
-            .Append("  headed: ").Append(session.Settings.Headed ? "true -- a window is open for this run, and it is never closed for being idle" : "false")
+            .Append("  headed: ").Append(session.Settings.Headed ? "true -- a window is open for this run" : "false")
+            .Append('\n')
+
+            // ⚠️ ADDED 2026-10-08, E2: the idle setting the countdown runs on, which
+            // replaced the headed line's "and it is never closed for being idle".
+            .Append("  ").Append(IdleSetting.ParameterName).Append(": ").Append(session.Settings.Idle.ToString())
+            .Append(session.Settings.Idle.IsNever
+                ? " -- this browser is never closed for being idle"
+                : session.Settings.Headed
+                    ? $" -- the browser closes after {session.Settings.Idle.InWords()} with no call naming this session and nobody using its window"
+                    : $" -- the browser closes after {session.Settings.Idle.InWords()} with no call naming this session")
             .Append('\n')
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName))
@@ -4460,6 +4537,7 @@ internal sealed class SessionManager : IAsyncDisposable
         compare("timezone", zone(running.Run.TimeZone), zone(requested.Run.TimeZone));
         compare("ignoreHTTPSErrors", shown(running.Run.IgnoreHttpsErrors), shown(requested.Run.IgnoreHttpsErrors));
         compare("captureNetwork", shown(running.Run.CaptureNetwork), shown(requested.Run.CaptureNetwork));
+        compare(IdleSetting.ParameterName, running.Idle.ToString(), requested.Idle.ToString());
 
         return unapplied;
 

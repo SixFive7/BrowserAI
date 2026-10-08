@@ -229,6 +229,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <returns>One entry per held session.</returns>
     public IReadOnlyList<HeldSession> HeldSessions() => _sessions.Held();
 
+    /// <summary>Every open session's idle countdown, for the update and the dashboard.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08</b>, the seam lane SESS exposes for lanes ARCH and UI; see
+    /// <see cref="SessionManager.Countdowns"/>.
+    /// </remarks>
+    /// <returns>One countdown per open session.</returns>
+    public IReadOnlyList<SessionCountdown> SessionCountdowns() => _sessions.Countdowns();
+
     /// <summary>Starts the run's own child and completes the handshake with it.</summary>
     /// <param name="options">What to start, from <see cref="Runtime.ChildLaunch"/>.</param>
     /// <param name="loggerFactory">Where the proxy, the transport and the session log.</param>
@@ -1017,6 +1025,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ EVERY CALL THAT NAMES A LIVE SESSION RESTARTS ITS COUNTDOWN, WHATEVER
+        // THE ANSWER, since 2026-10-08 -- F2, the maintainer's words verbatim: "Also,
+        // any type of call, even if refused once because the settings are different
+        // should reset the countdown timer on live sessions." Asked here, before
+        // anything below can refuse the call, so a tool BrowserAI does not have, an
+        // argument a schema does not list, a session another client drives, a closed
+        // session and a held-back resume all restart it, and so does every one of
+        // BrowserAI's own tools. A session is named by `session`, or by `directory` on
+        // the three tools that take a session's own directory there; `browserai_list`
+        // takes a tree and names no session. Until that day only a forwarded call
+        // reset the countdown, below.
+        _sessions.NoteActivity(session ?? SessionDirectoryNamedBy(name, arguments));
+
         var signatures = await SignaturesAsync(cancellationToken).ConfigureAwait(false);
         var signature = signatures.Find(name);
 
@@ -1424,7 +1445,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
             //
             // ⚠️ NO TIMER AT ALL ON A HEADED SESSION since 2026-10-03, Q326 a, so
             // there is nothing to reset there.
-            using var driving = live.Idle?.Call();
+            //
+            // ⚠️ REVERSED 2026-10-08, both paragraphs above, by F2 and E2: every call
+            // that names a live session restarts its countdown, refused or not, at the
+            // top of this method, and a visible window has a countdown too, so this is
+            // no longer the only reset. What stays here is the half only a forwarded
+            // call has: the scope that holds the countdown while the call runs.
+            using var driving = live.Driving();
 
             // 8 b: whether this call closes a tab decides how a browser that ends
             // right after it is described.
@@ -1580,6 +1607,26 @@ internal sealed class BrowserProxy : IAsyncDisposable
             live.WatchTheBrowser();
         }
     }
+
+    /// <summary>
+    /// The session directory a call names in its <c>directory</c> argument, for the
+    /// three tools that take a session's own directory there, or
+    /// <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read leniently and never refused here</b>: a <c>directory</c> of the wrong
+    /// kind is refused by the tool itself, with its own sentence, and a call that
+    /// names no live session restarts nothing.
+    /// </remarks>
+    /// <param name="tool">The tool name.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>The directory, or <see langword="null"/>.</returns>
+    private static string? SessionDirectoryNamedBy(string? tool, JsonObject? arguments) =>
+        tool is SessionToolSurface.Init or SessionToolSurface.Resume or SessionToolSurface.Destroy
+            && arguments?["directory"] is JsonValue value
+            && value.GetValueKind() is JsonValueKind.String
+            ? value.GetValue<string>()
+            : null;
 
     /// <summary>
     /// A string argument, or a named refusal when it arrived as something else.

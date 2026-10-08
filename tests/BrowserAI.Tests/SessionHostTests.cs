@@ -267,12 +267,19 @@ internal sealed class SessionHostTests
     /// <summary>
     /// The host says, of every session it holds, which client drives it and through
     /// which server, and of a session whose client has gone that it is kept, with the
-    /// time its idle close ends it, or none for a headed one.
+    /// time its idle close ends it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>What the sessions page reads to show a kept session for what it is</b>, asked
     /// by the root session on 2026-10-03 when option c arrived. The time is the idle
     /// timer's own deadline, read under its lock on the rig's clock.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A headed one has a time too since 2026-10-08</b>, E2 (previously "or none
+    /// for a headed one"): a visible window closes after its own hour, six of this
+    /// rig's periods.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -294,9 +301,13 @@ internal sealed class SessionHostTests
         // close is read once the call's own scope has been released.
         var idleCloseAt = clock.GetUtcNow() + ShortPeriod;
 
+        // ⚠️ And the headed one's, six periods after its last call since 2026-10-08:
+        // a visible window's hour at this rig's scale.
+        var headedCloseAt = clock.GetUtcNow() + (ShortPeriod * (SessionTimes.VisibleIdleMinutes / SessionTimes.HiddenIdleMinutes));
+
         await WaitUntilAsync(
-            () => Held(rig, headless).IdleCloseAt == idleCloseAt,
-            "the headless session never said its idle close lies a period after its last call");
+            () => Held(rig, headless).IdleCloseAt == idleCloseAt && Held(rig, headed).IdleCloseAt == headedCloseAt,
+            "the sessions never said their idle closes lie their own periods after their last calls");
 
         var drivenHeadless = Held(rig, headless);
         var drivenHeaded = Held(rig, headed);
@@ -309,7 +320,7 @@ internal sealed class SessionHostTests
         await Assert.That(drivenHeaded.Headed).IsTrue();
         await Assert.That(drivenHeaded.DrivenBy).IsEqualTo("claude-code");
         await Assert.That(drivenHeaded.DrivenThrough).IsEqualTo(drivenHeadless.DrivenThrough);
-        await Assert.That(drivenHeaded.IdleCloseAt).IsNull();
+        await Assert.That(drivenHeaded.IdleCloseAt).IsEqualTo(headedCloseAt);
 
         // The client goes: both are kept, nobody drives them, and what ends each is said.
         await client.EndAsync();
@@ -327,7 +338,7 @@ internal sealed class SessionHostTests
         await Assert.That(keptHeadless.IdleCloseAt).IsEqualTo(idleCloseAt);
         await Assert.That(keptHeaded.BrowserOpen).IsTrue();
         await Assert.That(keptHeaded.DrivenBy).IsNull();
-        await Assert.That(keptHeaded.IdleCloseAt).IsNull();
+        await Assert.That(keptHeaded.IdleCloseAt).IsEqualTo(headedCloseAt);
     }
 
     /// <summary>

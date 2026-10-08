@@ -41,6 +41,18 @@ internal static class CloseReasons
     /// </remarks>
     public const string LogRowTool = "(browser closed)";
 
+    /// <summary>
+    /// The clause a visible window's idle close adds to its reason: nobody had used the
+    /// window either.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 with E2 and F4</b>: a visible window is closed for being idle
+    /// since that day, and only once the person's input in it has stopped too, so its
+    /// reason says both. Kept in the close's own record, so the sentence read back later
+    /// is the one said at the time.
+    /// </remarks>
+    public const string NobodyUsedTheWindow = "nobody had used its window either";
+
     /// <summary>The sentence for a close this process saw happen.</summary>
     /// <param name="closure">The close.</param>
     /// <param name="asking">The connection the sentence is for, or <see langword="null"/> when it is for the record.</param>
@@ -79,8 +91,13 @@ internal static class CloseReasons
 
         return close.Cause switch
         {
+            // ⚠️ Corrected 2026-10-08 (previously "because no browser call had reached
+            // it for P; it closes an idle headless browser so that one nobody is using
+            // does not hold memory"): since E2 and F2 every call that names the session
+            // restarts its countdown, a visible window has one too, and in a visible
+            // window the person's input counts (F4).
             SessionCloseCause.Idle =>
-                $"BrowserAI closed this session's browser at {when} because no browser call had reached it for {SessionErrors.Duration(idlePeriod)}; it closes an idle headless browser so that one nobody is using does not hold memory.",
+                $"BrowserAI closed this session's browser at {when} because no call had named the session for {SessionErrors.Duration(idlePeriod)}{(close.Detail is { } nobody ? $", and {nobody}" : string.Empty)}; it closes an idle browser so that one nobody is using does not hold memory or hold back an update.",
 
             // ⚠️ browserai_close since 2026-10-08, F1 a (previously "by a browser_close
             // call from"). A record written before that day holds the same cause for a
