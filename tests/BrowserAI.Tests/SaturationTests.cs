@@ -936,6 +936,10 @@ internal sealed partial class SaturationTests
                     {
                         ["directory"] = Session,
                         ["purpose"] = $"saturation peer {index.ToString(CultureInfo.InvariantCulture)}",
+                        ["headed"] = false,
+                        ["transcript"] = false,
+                        ["captureNetwork"] = false,
+                        ["idleMinutes"] = 10,
                     },
                 });
 
@@ -983,7 +987,7 @@ internal sealed partial class SaturationTests
                     var resumed = await client.RoundTripAsync("tools/call", new JsonObject
                     {
                         ["name"] = SessionToolSurface.Resume,
-                        ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite resuming after its own close" },
+                        ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite resuming after its own close", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
                     });
 
                     if ((bool?)resumed["isError"] is true)

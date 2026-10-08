@@ -56,6 +56,10 @@ internal sealed class UnrecognisedArgumentTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session an init with an unknown argument must not create",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
             ["tracing"] = true,
             ["notAnArgument"] = "x",
         });
@@ -105,6 +109,9 @@ internal sealed class UnrecognisedArgumentTests
             ["directory"] = directory,
             ["purpose"] = "the same init, with only the arguments it takes",
             ["transcript"] = true,
+            ["headed"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
@@ -144,6 +151,10 @@ internal sealed class UnrecognisedArgumentTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a forwarded call with an argument its schema does not have",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var refused = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -230,6 +241,10 @@ internal sealed class UnrecognisedArgumentTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a list whose navigate takes waitUntil",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var forwarded = await CallAsync(rig, "browser_navigate", new JsonObject

@@ -324,6 +324,10 @@ internal sealed class ServerRegistryReapTests
             {
                 ["directory"] = directory,
                 ["purpose"] = purpose,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 

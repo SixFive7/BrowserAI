@@ -409,6 +409,10 @@ internal sealed class SessionHostTests
         {
             ["directory"] = directory,
             ["why"] = "the suite's client after a restart, resuming what it had",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var text = HostConnection.TextOf(resumed);
@@ -456,6 +460,9 @@ internal sealed class SessionHostTests
             ["directory"] = directory,
             ["why"] = "the suite asking a kept session for a window",
             ["headed"] = true,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var refusal = HostConnection.TextOf(refused);
@@ -470,6 +477,10 @@ internal sealed class SessionHostTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming the kept session without asking for anything",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var text = HostConnection.TextOf(bare);
@@ -598,6 +609,9 @@ internal sealed class SessionHostTests
             ["directory"] = directory,
             ["purpose"] = "a session the session host's arms open",
             ["headed"] = headed,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = headed ? 60 : 10,
         });
 
         if ((bool?)answer["isError"] is true)

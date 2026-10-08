@@ -559,6 +559,9 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 // inherits the answer instead of rediscovering the defect.
                 ["headed"] = sessions.DefaultSessionHeaded,
                 ["purpose"] = "the in-process rig's own session",
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = sessions.DefaultSessionHeaded ? 60 : 10,
             },
         });
 

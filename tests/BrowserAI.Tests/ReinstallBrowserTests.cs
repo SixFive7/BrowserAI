@@ -119,6 +119,10 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = session,
             ["purpose"] = "the session a reinstall must refuse to act around",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // A real process whose image path is inside the browsers root. That is
@@ -322,6 +326,10 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = session,
             ["purpose"] = "open, with no browser process of its own",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
@@ -421,6 +429,10 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = built,
             ["purpose"] = "a session that exists so resume has something to name",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
@@ -451,9 +463,13 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = Path.Combine(sessions.Root, "must-not-be-created"),
             ["purpose"] = "a session that must not start while the browsers are being replaced",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
-        var refusedResume = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = session, ["why"] = "the suite exercising this call" }));
+        var refusedResume = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = session, ["why"] = "the suite exercising this call", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 }));
 
         foreach (var text in new[] { refusedInit, refusedResume })
         {
@@ -710,6 +726,10 @@ internal sealed class ReinstallBrowserTests
             ["directory"] = session,
             ["purpose"] = "open on the other family while the shared components are asked for",
             ["browser"] = ProvisionedBrowsers.Firefox,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
@@ -798,6 +818,10 @@ internal sealed class ReinstallBrowserTests
             ["directory"] = Path.Combine(sessions.Root, "a-session-driven-by-a-codec"),
             ["purpose"] = "names something that is not a browser",
             ["browser"] = ProvisionedBrowsers.Shared,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -890,6 +914,10 @@ internal sealed class ReinstallBrowserTests
             {
                 ["directory"] = directory,
                 ["purpose"] = "one of two sessions holding the browsers root at once",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
 
             await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
@@ -1039,6 +1067,10 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = Path.Combine(sessions.Root, "refused-before-the-download"),
             ["purpose"] = "refused while the tree is being deleted",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(beforeTheDownload).Contains("nothing in the download staging directory");
@@ -1057,6 +1089,10 @@ internal sealed class ReinstallBrowserTests
         {
             ["directory"] = Path.Combine(sessions.Root, "refused-during-the-download"),
             ["purpose"] = "refused while the archive is arriving",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(duringTheDownload).Contains("2.5 MB downloaded in");

@@ -213,6 +213,10 @@ internal sealed class FirstRunProvisioningTests
         {
             ["directory"] = session,
             ["purpose"] = "the first-run session, created before any browser exists",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // ⚠️ The bullet this whole step turns on, and it is asserted on STATE

@@ -78,6 +78,10 @@ internal sealed class DeadChildTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose browser server is about to die",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // The child dies the way a killed node child dies: its end of the pipe
@@ -89,6 +93,10 @@ internal sealed class DeadChildTests
         {
             ["directory"] = directory,
             ["why"] = "the suite exercising a resume against a session whose child has gone",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(resumed).Contains(SessionManager.ChildWasRelaunched);
@@ -147,12 +155,20 @@ internal sealed class DeadChildTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session nothing is wrong with",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var resumed = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = directory,
             ["why"] = "the suite exercising a resume against a session that is fine",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(resumed).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
@@ -204,6 +220,10 @@ internal sealed class DeadChildTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose browser server dies before the next call",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await sessions.SessionChildren[0].DisposeAsync();
@@ -260,6 +280,10 @@ internal sealed class DeadChildTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose page action takes a while",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var slow = CallAsync(rig, "browser_navigate", new JsonObject

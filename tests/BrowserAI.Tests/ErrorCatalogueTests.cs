@@ -367,6 +367,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = closed,
             ["purpose"] = "opened and then destroyed to leave a record behind",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // A record on disk with nothing driving it: written by a live session,
@@ -464,6 +468,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = "C:\\a\0b",
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)malformed["isError"]).IsTrue();
@@ -495,6 +503,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Share,
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)uncInit["isError"]).IsTrue();
@@ -507,7 +519,7 @@ internal sealed partial class ErrorCatalogueTests
         // a refusal added to one and forgotten on another is a red build.
         (string Tool, JsonObject Arguments)[] doors =
         [
-            (SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
+            (SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 }),
             (SessionToolSurface.Destroy, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
             (SessionToolSurface.ChangePurpose, new JsonObject { ["session"] = Share, ["purpose"] = "should never be recorded", ["why"] = "the suite exercising this call" }),
             (SessionToolSurface.CatchUp, new JsonObject { ["why"] = "the suite reading back what this session did", ["session"] = Share }),
@@ -534,6 +546,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = @"\\.\" + real,
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)device["isError"]).IsTrue();
@@ -554,6 +570,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
             ["purpose"] = "the same directory, named through the extended-length prefix",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)aliased["isError"]).IsNotEqualTo(true);
@@ -577,6 +597,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = original,
             ["purpose"] = "the original a copy is taken of",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // Row 4 -- init on a directory that already holds a session.
@@ -584,6 +608,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = original,
             ["purpose"] = "a second attempt",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var record = SessionLock.ReadRecord(SessionPath.For(original))!;
@@ -612,6 +640,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["why"] = "the suite exercising this call",
             ["directory"] = original,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
             ["browser"] = "firefox",
         });
 
@@ -659,6 +691,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "the unattended session an annotation call would hang",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
@@ -741,6 +777,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a listed tool with no verdict and an argument no schema has",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var unjudged = await CallAsync(rig, Unjudged, new JsonObject
@@ -889,6 +929,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a runtime that will not start",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -979,6 +1023,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a new child that will not start",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await sessions.SessionChildren[0].DisposeAsync();
@@ -990,6 +1038,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["why"] = "the suite provoking a resume whose new child cannot start",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -1006,6 +1058,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming once a child can start again",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)again["isError"]).IsNotEqualTo(true);
@@ -1051,6 +1107,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a call after its browser was closed",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         foreach (var tool in new[] { "browser_navigate", SessionToolSurface.Close, "browser_navigate" })
@@ -1158,6 +1218,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a resume that asks for a window while its browser is up",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -1172,6 +1236,9 @@ internal sealed partial class ErrorCatalogueTests
             ["directory"] = directory,
             ["why"] = "the suite asking for a window on a browser that is up",
             ["headed"] = true,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -1206,6 +1273,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a browser server that has ended",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await sessions.SessionChildren[0].DisposeAsync();
@@ -1254,6 +1325,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a screenshot taller than Chromium captures",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var answer = await CallAsync(rig, ScreenshotLimit.ScreenshotTool, new JsonObject
@@ -1331,6 +1406,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = hostile,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
@@ -1376,6 +1455,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "created before the browser exists",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // Row 6. The condition is real -- this rig's browsers root is empty and
@@ -1443,6 +1526,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Path.Combine(sessions.Root, "refused-while-the-browsers-are-replaced"),
             ["purpose"] = "a session that must not start during a reinstall",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -1522,6 +1609,10 @@ internal sealed partial class ErrorCatalogueTests
             {
                 ["directory"] = Path.Combine(sessions.Root, "refused-because-the-claim-cannot-be-opened"),
                 ["purpose"] = "a session whose browsers claim cannot be opened at all",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
         }
 
@@ -1546,6 +1637,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Path.Combine(sessions.Root, "opens-once-the-claim-can-be-opened"),
             ["purpose"] = "a session whose browsers claim opens normally",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)allowed["isError"]).IsNotEqualTo(true);
@@ -1880,6 +1975,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "the catalogue's driven-elsewhere arm",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(HostConnection.TextOf(opened));
@@ -2493,6 +2592,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = real,
             ["purpose"] = "opened so its two files can be copied and corrupted three ways",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // FileShare.ReadWrite | FileShare.Delete, because the live session holds
@@ -2622,6 +2725,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = bell,
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         // The code point is named in words -- that part was always right -- and
@@ -2636,6 +2743,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = @"C:\",
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(volumeRoot).Contains("volume root");
@@ -2698,6 +2809,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = overlong,
             ["purpose"] = "should never be created",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         await Assert.That(refused).Contains("is not a usable directory path");
@@ -2719,6 +2834,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Path.Combine(sessions.Root, "ordinary"),
             ["purpose"] = "the control that says this door still opens a session",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)ordinary["isError"]).IsNotEqualTo(true);

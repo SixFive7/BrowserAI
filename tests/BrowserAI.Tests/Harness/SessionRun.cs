@@ -114,12 +114,20 @@ internal sealed record SessionRun
             {
                 ["directory"] = alpha,
                 ["purpose"] = "the first session's purpose",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             answers["initAgain"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = alpha,
                 ["purpose"] = "a second attempt on the same directory",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             // No browser is launched by this one, which is what makes the round
@@ -248,7 +256,7 @@ internal sealed record SessionRun
                 ("absent", null),
             })
             {
-                var arguments = new JsonObject { ["purpose"] = "should never be created" };
+                var arguments = new JsonObject { ["purpose"] = "should never be created", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 };
 
                 if (directory is not null)
                 {
@@ -257,7 +265,7 @@ internal sealed record SessionRun
 
                 answers["init-" + label] = await CallAsync(client, SessionToolSurface.Init, arguments).ConfigureAwait(false);
 
-                var resumeArguments = new JsonObject { ["why"] = "the suite exercising this call" };
+                var resumeArguments = new JsonObject { ["why"] = "the suite exercising this call", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 };
 
                 if (directory is not null)
                 {
@@ -276,6 +284,9 @@ internal sealed record SessionRun
                 ["directory"] = Path.Combine(root, "bad-headed"),
                 ["purpose"] = "should never be created",
                 ["headed"] = "yes",
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             var notASession = Path.Combine(root, "not-a-session");
@@ -285,6 +296,10 @@ internal sealed record SessionRun
             {
                 ["why"] = "the suite exercising this call",
                 ["directory"] = notASession,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             // ⚠️ Was `resumeWithMode` until 2026-08-20. `mode` is not an
@@ -296,6 +311,10 @@ internal sealed record SessionRun
             {
                 ["why"] = "the suite exercising this call",
                 ["directory"] = alpha,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
                 ["browser"] = "firefox",
             }).ConfigureAwait(false);
 
@@ -317,12 +336,19 @@ internal sealed record SessionRun
                 ["purpose"] = "the session that gets destroyed",
                 ["transcript"] = true,
                 ["debug"] = true,
+                ["headed"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             answers["initGamma"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = gamma,
                 ["purpose"] = "the session that gets moved",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             }).ConfigureAwait(false);
 
             // ⚠️ THE NINTH AUTHORED TOOL, added 2026-10-08 with F1 a: browserai_close,
@@ -462,6 +488,10 @@ internal sealed record SessionRun
             ["why"] = "the suite exercising this call",
             ["directory"] = moved,
             ["purpose"] = "and resumed after the move",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }).ConfigureAwait(false);
 
         // ⚠️ Copied AFTER the resume above, and the order is the test and
@@ -484,6 +514,10 @@ internal sealed record SessionRun
         {
             ["why"] = "the suite exercising this call",
             ["directory"] = copy,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }).ConfigureAwait(false);
 
         // A real session directory that this process is not driving: alpha was

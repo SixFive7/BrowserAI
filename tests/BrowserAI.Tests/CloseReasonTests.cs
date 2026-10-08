@@ -89,6 +89,10 @@ internal sealed class CloseReasonTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming after a person closed the window",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
@@ -215,6 +219,10 @@ internal sealed class CloseReasonTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session two clients meet",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await first.CallAsync("browser_navigate", new JsonObject
@@ -288,6 +296,10 @@ internal sealed class CloseReasonTests
                 {
                     ["directory"] = directory,
                     ["why"] = "the suite resuming after the BrowserAI that held it ended",
+                    ["headed"] = false,
+                    ["transcript"] = false,
+                    ["captureNetwork"] = false,
+                    ["idleMinutes"] = 10,
                 });
 
                 await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
@@ -345,6 +357,10 @@ internal sealed class CloseReasonTests
             {
                 ["directory"] = directory,
                 ["why"] = "the suite resuming after a holder that died",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
 
             await Assert.That(TextOf(resumed)).Contains("why this session was last closed: No close was recorded after this session was last opened");
@@ -373,6 +389,9 @@ internal sealed class CloseReasonTests
             ["directory"] = directory,
             ["purpose"] = "a headed session kept while its client is away",
             ["headed"] = true,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 60,
         });
 
         _ = await client.CallAsync("browser_navigate", new JsonObject
@@ -400,6 +419,10 @@ internal sealed class CloseReasonTests
         {
             ["directory"] = directory,
             ["why"] = "the client coming back to its session",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That(HostConnection.TextOf(resumed)).Contains("why this session was last closed: A person closed this session's browser window at");
@@ -478,6 +501,9 @@ internal sealed class CloseReasonTests
             ["directory"] = directory,
             ["purpose"] = "a session whose closes the suite reads",
             ["headed"] = headed,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = headed ? 60 : 10,
         });
 
         if ((bool?)answer["isError"] is true)

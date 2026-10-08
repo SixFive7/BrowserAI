@@ -117,6 +117,10 @@ internal static partial class ClientProbe
             {
                 ["directory"] = session,
                 ["purpose"] = "the session the client-liveness watcher tears down",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 

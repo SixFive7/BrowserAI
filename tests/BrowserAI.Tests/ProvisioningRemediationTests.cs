@@ -127,6 +127,10 @@ internal sealed class ProvisioningRemediationTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose child answers with upstream's npx advice",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var answer = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -192,6 +196,10 @@ internal sealed class ProvisioningRemediationTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose child answers with a page quoting upstream's npx advice",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var answer = await CallAsync(rig, "browser_navigate", new JsonObject

@@ -289,6 +289,9 @@ internal sealed partial class RunOptionTests
             ["timezone"] = "America/New_York",
             ["ignoreHTTPSErrors"] = true,
             ["captureNetwork"] = true,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true);
@@ -316,6 +319,10 @@ internal sealed partial class RunOptionTests
             ["directory"] = Path.Combine(sessions.Root, "never-created"),
             ["purpose"] = "should never be created",
             ["viewport"] = "enormous",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();

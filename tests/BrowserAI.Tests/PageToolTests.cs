@@ -356,6 +356,10 @@ internal sealed record PageToolRun
         {
             ["directory"] = session,
             ["purpose"] = "the page-tool suite's own session",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }).ConfigureAwait(false);
 
         async Task<JsonObject> navigateAsync(string url) =>

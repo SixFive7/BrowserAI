@@ -287,6 +287,10 @@ internal sealed class FlatOutputTests
         {
             ["directory"] = directory,
             ["purpose"] = "one of several sessions under one root",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>

@@ -66,6 +66,10 @@ internal sealed class SessionListTests
         {
             ["directory"] = driven,
             ["purpose"] = "a session this BrowserAI is driving",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // The other three are made the way a previous process would have made
@@ -357,6 +361,10 @@ internal sealed class SessionListTests
         {
             ["directory"] = session,
             ["purpose"] = "a session listed through an alias of the tree above it",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var link = Path.Combine(sessions.Root, "link");

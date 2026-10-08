@@ -99,6 +99,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = harness.Session!,
             ["why"] = "the suite resuming a session whose idle close is still waiting",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = harness.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -191,6 +195,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming while its own close is still being answered",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = rig.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -460,6 +468,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite's client resuming the session it found closing",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = next.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -519,6 +531,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite's client resuming, its first call after the restart",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = next.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -596,6 +612,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite's next client resuming the session that was let go",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(HostConnection.TextOf(resumed));
@@ -690,6 +710,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming while the browser is still closing",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = rig.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -835,6 +859,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["why"] = "the suite's client resuming after its restart, while the browser is closing",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         }));
 
         var resumed = next.Client.AwaitAsync(resumeId, SessionToolSurface.Resume);
@@ -953,6 +981,10 @@ internal sealed class CloseOrderingTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session the close ordering arms open",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         };
 
         if (browser is not null)

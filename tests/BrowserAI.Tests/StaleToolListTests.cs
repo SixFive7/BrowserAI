@@ -79,6 +79,10 @@ internal sealed class StaleToolListTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session a refused first call did not open",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         };
 
         var first = await CallAsync(rig, SessionToolSurface.Init, arguments.DeepClone().AsObject());
@@ -187,6 +191,10 @@ internal sealed class StaleToolListTests
         {
             ["directory"] = older,
             [SessionToolSurface.WhyParameter] = "the suite reading the courtesy line back",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumedOlder["isError"]).IsFalse();
@@ -202,6 +210,10 @@ internal sealed class StaleToolListTests
         {
             ["directory"] = same,
             [SessionToolSurface.WhyParameter] = "the suite checking the note stays silent",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumedSame["isError"]).IsFalse();

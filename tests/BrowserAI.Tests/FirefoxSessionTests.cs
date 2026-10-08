@@ -137,6 +137,10 @@ internal sealed class FirefoxSessionTests
             ["directory"] = session,
             ["purpose"] = "the first session anybody ever asked Firefox for",
             ["browser"] = ProvisionedBrowsers.Firefox,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
@@ -344,6 +348,10 @@ internal sealed class FirefoxSessionTests
             ["directory"] = Path.Combine(sessions.Root, "webkit-please"),
             ["purpose"] = "a browser nobody provisions",
             ["browser"] = "webkit",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -364,6 +372,10 @@ internal sealed class FirefoxSessionTests
             ["directory"] = Path.Combine(sessions.Root, "shouty"),
             ["purpose"] = "a family named in the wrong case",
             ["browser"] = "ChRoMiUm",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)created["isError"]).IsFalse();

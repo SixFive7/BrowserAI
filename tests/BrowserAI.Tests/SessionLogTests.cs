@@ -52,6 +52,10 @@ internal sealed class SessionLogTests
         {
             ["directory"] = directory,
             ["purpose"] = "reproducing the checkout 500 on staging",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -149,6 +153,10 @@ internal sealed class SessionLogTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session somebody else will pick up",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // Already open in this BrowserAI, which is the arm that returns early
@@ -157,6 +165,10 @@ internal sealed class SessionLogTests
         {
             ["directory"] = directory,
             ["why"] = "picking this up after the overnight run stopped",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var log = await SettledLogOf(directory);
@@ -259,6 +271,10 @@ internal sealed class SessionLogTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session whose navigation fails",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -333,6 +349,10 @@ internal sealed class SessionLogTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session whose call is watched while it is outstanding",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var call = CallAsync(rig, "browser_navigate", new JsonObject

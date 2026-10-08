@@ -45,6 +45,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "reproducing the checkout 500 on staging",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -154,6 +158,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "holds every kind of file with login data in it",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var output = Path.Combine(directory, SessionLayout.OutputFolderName);
@@ -251,6 +259,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "holds every kind of file that can hold something sensitive",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var output = Path.Combine(directory, SessionLayout.OutputFolderName);
@@ -368,6 +380,10 @@ internal sealed class CatchUpTests
             {
                 ["directory"] = directory,
                 ["purpose"] = "a profile without a cookie store",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
         }
 
@@ -435,6 +451,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session that is being held while it is read",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // Read the way a bystander has to: the holder keeps the file open
@@ -504,6 +524,10 @@ internal sealed class CatchUpTests
             {
                 ["directory"] = directory,
                 ["purpose"] = "a session read by a BrowserAI that does not hold it",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
         }
 
@@ -575,6 +599,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = Purpose,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
@@ -634,6 +662,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "reproducing the checkout 500 on staging",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
@@ -641,6 +673,10 @@ internal sealed class CatchUpTests
             ["directory"] = directory,
             ["purpose"] = "and the same 500 on the mobile checkout",
             ["why"] = "picking this up after the overnight run stopped",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await CallAsync(rig, SessionToolSurface.ChangePurpose, new JsonObject
@@ -731,6 +767,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session with more entries than fit on one page",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // One past the page size, so there are exactly two pages and the second
@@ -849,6 +889,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session asked for a page number no page could ever have",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // 2^32 + 1, which truncates to 1 -- the page that exists.
@@ -914,6 +958,10 @@ internal sealed class CatchUpTests
         {
             ["directory"] = directory,
             ["purpose"] = "a session with a call that never came back",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // ⚠️ Planted directly, because the state this renders is one no

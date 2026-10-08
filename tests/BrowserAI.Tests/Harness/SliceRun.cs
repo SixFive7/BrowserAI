@@ -179,6 +179,10 @@ internal sealed record SliceRun(
             {
                 ["directory"] = session,
                 ["purpose"] = "the vertical slice's own session",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         }).ConfigureAwait(false);
 

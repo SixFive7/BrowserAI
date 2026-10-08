@@ -288,6 +288,10 @@ internal sealed partial class BrowserIdleTimerTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the session driven continuously",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 
@@ -413,6 +417,10 @@ internal sealed partial class BrowserIdleTimerTests
             {
                 ["directory"] = session,
                 ["purpose"] = "a session left to go idle",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 
@@ -939,7 +947,7 @@ internal sealed partial class BrowserIdleTimerTests
         var resumed = await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = SessionToolSurface.Resume,
-            ["arguments"] = new JsonObject { ["directory"] = harness.Session!, ["why"] = "the suite resuming the session the timer closed" },
+            ["arguments"] = new JsonObject { ["directory"] = harness.Session!, ["why"] = "the suite resuming the session the timer closed", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
@@ -996,6 +1004,10 @@ internal sealed partial class BrowserIdleTimerTests
                 ["directory"] = session,
                 ["purpose"] = "a session whose browser is not up when the timer fires",
                 ["debug"] = true,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 
@@ -1091,6 +1103,10 @@ internal sealed partial class BrowserIdleTimerTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the session stdin EOF tears down",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 

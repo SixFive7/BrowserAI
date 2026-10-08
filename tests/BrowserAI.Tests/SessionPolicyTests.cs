@@ -323,6 +323,10 @@ internal sealed class SessionPolicyTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a tool from the future",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var answer = await CallAsync(rig, FromTheFuture, new JsonObject
@@ -403,6 +407,10 @@ internal sealed class SessionPolicyTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets names this BrowserAI does not have",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // The list the refusal names, since 2026-10-04 (2 b): every tool this
@@ -508,6 +516,10 @@ internal sealed class SessionPolicyTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets Playwright's own close, which BrowserAI does not offer",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var navigate = new JsonObject
@@ -650,6 +662,9 @@ internal sealed class SessionPolicyTests
                 ["directory"] = directory,
                 ["purpose"] = $"a headed={headed} session that reaches for the annotation tool by name",
                 ["headed"] = headed,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = headed ? 60 : 10,
             });
 
             var callsBefore = sessions.SessionChildren.Sum(child =>
@@ -739,6 +754,10 @@ internal sealed class SessionPolicyTests
         {
             ["directory"] = directory,
             ["purpose"] = "reaches for Playwright's debugger resume tool by name",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var callsBefore = sessions.SessionChildren.Sum(child =>
@@ -1176,6 +1195,10 @@ internal sealed class SessionPolicyTests
             {
                 ["directory"] = directory,
                 ["purpose"] = $"the {name} session driven concurrently",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
 
             await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true);
@@ -1242,6 +1265,10 @@ internal sealed class SessionPolicyTests
                 {
                     ["directory"] = churn,
                     ["purpose"] = "opened and destroyed while the probes run",
+                    ["headed"] = false,
+                    ["transcript"] = false,
+                    ["captureNetwork"] = false,
+                    ["idleMinutes"] = 10,
                 },
             }));
 

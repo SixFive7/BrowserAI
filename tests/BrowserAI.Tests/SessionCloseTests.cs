@@ -78,6 +78,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session left to go idle",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser and arms the timer");
@@ -115,6 +119,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming a session the timer closed",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
@@ -175,6 +183,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose agent closes its browser",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
@@ -216,6 +228,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming after its own close",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
@@ -270,6 +286,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose browser never started",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
@@ -335,6 +355,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = closedTwice,
             ["purpose"] = "the session closed twice",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, closedTwice, "the call that starts the browser");
@@ -365,6 +389,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = ended,
             ["purpose"] = "the session whose browser server dies",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await sessions.SessionChildren[^1].DisposeAsync();
@@ -497,6 +525,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose close never answers",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
@@ -530,6 +562,10 @@ internal sealed class SessionCloseTests
             {
                 ["directory"] = directory,
                 ["why"] = "the suite getting a wedged session back",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 
@@ -627,6 +663,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose browser is up when it is resumed",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
@@ -639,6 +679,8 @@ internal sealed class SessionCloseTests
             ["headed"] = true,
             ["transcript"] = true,
             ["viewport"] = "1280x720",
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -679,6 +721,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming without asking for anything",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true);
@@ -690,8 +736,8 @@ internal sealed class SessionCloseTests
         // and neither is a mix of one with an argument left out.
         foreach (var asked in new[]
         {
-            new JsonObject { ["headed"] = false },
-            new JsonObject { ["headed"] = false, ["viewport"] = BrowserConfiguration.DefaultViewport.ToString() },
+            new JsonObject { ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
+            new JsonObject { ["headed"] = false, ["viewport"] = BrowserConfiguration.DefaultViewport.ToString(), ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
         })
         {
             asked["directory"] = directory;
@@ -732,6 +778,9 @@ internal sealed class SessionCloseTests
             ["purpose"] = "the session resumed bare before its browser started",
             ["viewport"] = "1280x720",
             ["transcript"] = true,
+            ["headed"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var bare = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
@@ -788,12 +837,20 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session resumed before its browser ever started",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var unchanged = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming with what the session already has",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That(TextOf(unchanged)).StartsWith("The session is already live");
@@ -807,6 +864,9 @@ internal sealed class SessionCloseTests
             ["why"] = "the suite asking for a window and a smaller viewport",
             ["headed"] = true,
             ["viewport"] = "1280x720",
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 60,
         });
 
         await Assert.That((bool?)applied["isError"]).IsNotEqualTo(true);
@@ -858,6 +918,9 @@ internal sealed class SessionCloseTests
             ["directory"] = directory,
             ["purpose"] = "the session capturing across a close",
             ["captureNetwork"] = true,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["idleMinutes"] = 10,
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
@@ -873,6 +936,9 @@ internal sealed class SessionCloseTests
             ["directory"] = directory,
             ["why"] = "the suite capturing again after the close",
             ["captureNetwork"] = true,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // Read off each answer, which names the archive its launch writes: the
@@ -969,6 +1035,10 @@ internal sealed class SessionCloseTests
                 {
                     ["directory"] = directory,
                     ["purpose"] = "a session open when the server shuts down",
+                    ["headed"] = false,
+                    ["transcript"] = false,
+                    ["captureNetwork"] = false,
+                    ["idleMinutes"] = 10,
                 });
 
                 _ = await NavigateAsync(rig, directory, "the call that starts the browser");
@@ -1087,6 +1157,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose child is asked whether a browser is up",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         // No browser call yet, so no close is sent to the child.
@@ -1102,6 +1176,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite reopening the session it closed with nothing up",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)reopened["isError"]).IsNotEqualTo(true).Because(TextOf(reopened));
@@ -1181,6 +1259,10 @@ internal sealed class SessionCloseTests
             ["directory"] = directory,
             ["purpose"] = "the session whose tabs a resume brings back",
             ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)(await NavigateToAsync(rig, directory, site.Url("first")))["isError"]).IsNotEqualTo(true);
@@ -1220,6 +1302,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming so the browser restores its tabs",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
@@ -1300,6 +1386,10 @@ internal sealed class SessionCloseTests
             ["directory"] = directory,
             ["purpose"] = "the session whose browser is killed and then resumed",
             ["browser"] = ProvisionedBrowsers.Chromium,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)(await NavigateToAsync(rig, directory, site.Url("first")))["isError"]).IsNotEqualTo(true);
@@ -1394,6 +1484,10 @@ internal sealed class SessionCloseTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming a session whose browser was killed",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));

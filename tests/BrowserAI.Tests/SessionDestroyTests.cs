@@ -113,6 +113,10 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while a peer tries to take the directory out from under it",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         for (var i = 0; i < PlantedFiles; i++)
@@ -239,6 +243,10 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while this test holds one of its files open",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var held = Path.Combine(directory, "something-still-has-this-open.bin");
@@ -348,6 +356,10 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while this test holds more files open than the answer will name",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         var held = new List<FileStream>();

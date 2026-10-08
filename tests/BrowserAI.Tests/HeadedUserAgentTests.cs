@@ -158,6 +158,10 @@ internal sealed class HeadedUserAgentTests
         {
             ["directory"] = directory,
             ["purpose"] = "a hidden session whose user agent the suite reads",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));

@@ -94,6 +94,10 @@ internal sealed class PageBrowserTests
             ["directory"] = session,
             ["purpose"] = "the suite opening BrowserAI's own page in a headless browser",
             ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         try

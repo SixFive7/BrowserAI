@@ -77,6 +77,10 @@ internal sealed partial class FileAccessRootTests
         {
             ["directory"] = session,
             ["purpose"] = "establishing whether upstream's file-access roots actually contain a write",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
@@ -215,6 +219,10 @@ internal sealed partial class FileAccessRootTests
         {
             ["directory"] = session,
             ["purpose"] = "reading back every pointer the child publishes",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);

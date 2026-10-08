@@ -168,7 +168,7 @@ internal sealed class IdleCountdownTests
 
         // A call BrowserAI answers itself starts the countdown at a moment this arm
         // knows: one tick short of three minutes after it, the browser is open.
-        _ = await ResumeAsync(harness, three);
+        _ = await ResumeAsync(harness, three, headed: false, idle: 3);
 
         var named = clock.GetUtcNow();
 
@@ -226,6 +226,9 @@ internal sealed class IdleCountdownTests
                 ["directory"] = directory,
                 ["purpose"] = "never created, because its idle setting is not one",
                 [IdleSetting.ParameterName] = value,
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
             });
 
             await Assert.That((bool?)answer["isError"]).IsTrue().Because(label);
@@ -240,6 +243,9 @@ internal sealed class IdleCountdownTests
             ["directory"] = Path.Combine(rig.Root, "never-in-capitals"),
             ["purpose"] = "set to never, written in capitals",
             [IdleSetting.ParameterName] = "NEVER",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
         });
 
         await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true).Because(TextOf(accepted));
@@ -282,7 +288,7 @@ internal sealed class IdleCountdownTests
 
         var calls = new (string Tool, JsonObject Arguments)[]
         {
-            (SessionToolSurface.Resume, new JsonObject { ["directory"] = directory, ["why"] = "a resume of a session that is live" }),
+            (SessionToolSurface.Resume, new JsonObject { ["directory"] = directory, ["why"] = "a resume of a session that is live", ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, [IdleSetting.ParameterName] = 10 }),
             (SessionToolSurface.CatchUp, new JsonObject { ["session"] = directory, ["why"] = "reading back what the session did" }),
             (SessionToolSurface.ChangePurpose, new JsonObject { ["session"] = directory, ["purpose"] = "a purpose set to keep the session named", ["why"] = "naming the session again" }),
             ("browser_frobnicate", new JsonObject { ["session"] = directory, ["why"] = "a tool BrowserAI does not have" }),
@@ -332,9 +338,9 @@ internal sealed class IdleCountdownTests
         await InitAsync(harness, notYet, headed: false);
         await InitAsync(harness, never, headed: false, idle: IdleSetting.NeverWord);
 
-        var upAnswer = TextOf(await ResumeAsync(harness, up));
-        var notYetAnswer = TextOf(await ResumeAsync(harness, notYet));
-        var neverAnswer = TextOf(await ResumeAsync(harness, never, idle: IdleSetting.NeverWord));
+        var upAnswer = TextOf(await ResumeAsync(harness, up, headed: false));
+        var notYetAnswer = TextOf(await ResumeAsync(harness, notYet, headed: false));
+        var neverAnswer = TextOf(await ResumeAsync(harness, never, headed: false, idle: IdleSetting.NeverWord));
 
         await Assert.That(upAnswer).StartsWith(SessionManager.AlreadyLive(browserUp: true, purposeChanged: false));
         await Assert.That(upAnswer).StartsWith(
@@ -478,7 +484,7 @@ internal sealed class IdleCountdownTests
 
         // A call BrowserAI answers itself starts the visible countdown at a moment
         // this arm knows.
-        _ = await ResumeAsync(harness, visible);
+        _ = await ResumeAsync(harness, visible, headed: true);
 
         var hour = OneMinute * SessionTimes.VisibleIdleMinutes;
 
@@ -538,7 +544,7 @@ internal sealed class IdleCountdownTests
 
         var child = rig.SessionChildren[^1];
 
-        _ = await ResumeAsync(harness, visible);
+        _ = await ResumeAsync(harness, visible, headed: true);
 
         var hour = OneMinute * SessionTimes.VisibleIdleMinutes;
 
@@ -586,6 +592,9 @@ internal sealed class IdleCountdownTests
             ["directory"] = directory,
             ["purpose"] = "a session whose countdown the suite reads",
             ["headed"] = headed,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            [IdleSetting.ParameterName] = headed ? 60 : 10,
         };
 
         if (idle is not null)
@@ -601,9 +610,17 @@ internal sealed class IdleCountdownTests
         }
     }
 
-    private static Task<JsonObject> ResumeAsync(McpTestHarness harness, string directory, JsonNode? idle = null)
+    private static Task<JsonObject> ResumeAsync(McpTestHarness harness, string directory, bool headed, JsonNode? idle = null)
     {
-        var arguments = new JsonObject { ["directory"] = directory, ["why"] = "the suite resuming a session that is live" };
+        var arguments = new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite resuming a session that is live",
+            ["headed"] = headed,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            [IdleSetting.ParameterName] = headed ? 60 : 10,
+        };
 
         if (idle is not null)
         {

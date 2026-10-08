@@ -322,6 +322,10 @@ internal sealed class ScreenshotLimitTests
             ["directory"] = directory,
             ["purpose"] = "a session whose screenshots the suite judges",
             ["browser"] = browser,
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         if ((bool?)answer["isError"] is true)
