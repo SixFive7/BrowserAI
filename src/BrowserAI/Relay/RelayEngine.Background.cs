@@ -11,14 +11,6 @@ namespace BrowserAI.Relay;
 /// <summary>The background's half: finding it, greeting it, passing calls to it, and noticing when it stops answering.</summary>
 internal sealed partial class RelayEngine
 {
-    private const string MethodPrefix = "browserai/";
-    private const string HelloMethod = "browserai/hello";
-    private const string ReadyToEndMethod = "browserai/ready-to-end";
-    private const string CalledOffMethod = "browserai/called-off";
-    private const string EndMethod = "browserai/end";
-    private const string ActivityMethod = "browserai/activity";
-    private const string WithdrawMethod = "browserai/withdraw";
-
     private readonly Dictionary<RequestId, Forwarded> _forwarded = [];
     private readonly HashSet<RequestId> _answeredByRelay = [];
     private readonly HashSet<RequestId> _probes = [];
@@ -174,7 +166,7 @@ internal sealed partial class RelayEngine
 
         _link.Send(RelayWire.Request(
             Hello,
-            HelloMethod,
+            RelayProtocol.Hello,
             new JsonObject
             {
                 ["build"] = _facts.Build,
@@ -204,11 +196,11 @@ internal sealed partial class RelayEngine
                 await OnBackgroundResponseAsync(frame).ConfigureAwait(false);
                 break;
 
-            case FrameKind.Request when frame.Method!.StartsWith(MethodPrefix, StringComparison.Ordinal):
+            case FrameKind.Request when frame.Method!.StartsWith(RelayProtocol.MethodPrefix, StringComparison.Ordinal):
                 OnBackgroundOwnRequest(frame);
                 break;
 
-            case FrameKind.Notification when frame.Method!.StartsWith(MethodPrefix, StringComparison.Ordinal):
+            case FrameKind.Notification when frame.Method!.StartsWith(RelayProtocol.MethodPrefix, StringComparison.Ordinal):
                 await OnBackgroundOwnNotificationAsync(frame).ConfigureAwait(false);
                 break;
 
@@ -335,7 +327,11 @@ internal sealed partial class RelayEngine
         var refusal = Text(Member(Member(error, "data"), "refusal"));
 
         // The kind and never the sentence: a log record names, it does not quote.
-        RelayLog.Refused(_logger, refusal is "build" or "dataRoot" or "updating" or "stopping" ? refusal : "other");
+        RelayLog.Refused(
+            _logger,
+            refusal is RelayProtocol.RefusedForTheBuild or RelayProtocol.RefusedForTheDataRoot or RelayProtocol.RefusedForAnUpdate or RelayProtocol.RefusedWhileStopping
+                ? refusal
+                : "other");
 
         var held = _held.ToList();
         _held.Clear();
@@ -345,7 +341,7 @@ internal sealed partial class RelayEngine
         {
             await AnswerInPlaceAsync(
                 call.Id,
-                refusal is "updating"
+                refusal is RelayProtocol.RefusedForAnUpdate
                     ? RelayErrors.UpdateInstalling(call.Tool, null, _clientName)
                     : RelayErrors.BackgroundRefused(call.Tool, sentence),
                 "the background refused this relay").ConfigureAwait(false);
@@ -373,7 +369,7 @@ internal sealed partial class RelayEngine
             return;
         }
 
-        if (frame.Method is ReadyToEndMethod)
+        if (frame.Method is RelayProtocol.ReadyToEnd)
         {
             AnswerReadyToEnd(id);
             return;
@@ -387,11 +383,11 @@ internal sealed partial class RelayEngine
     {
         switch (frame.Method)
         {
-            case CalledOffMethod:
+            case RelayProtocol.CalledOff:
                 await OnCalledOffAsync().ConfigureAwait(false);
                 break;
 
-            case EndMethod:
+            case RelayProtocol.End:
                 await OnEndAsync(RelayFrame.Node(frame.Params)).ConfigureAwait(false);
                 break;
 

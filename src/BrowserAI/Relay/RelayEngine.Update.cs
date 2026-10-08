@@ -74,7 +74,7 @@ internal sealed partial class RelayEngine
         if (!_withdrawn)
         {
             _withdrawn = true;
-            _link?.Send(RelayWire.Notification(WithdrawMethod, new JsonObject { ["idleAt"] = RelayWire.Instant(_idleAt) }));
+            _link?.Send(RelayWire.Notification(RelayProtocol.Withdraw, new JsonObject { ["idleAt"] = RelayWire.Instant(_idleAt) }));
             _reportedIdleAt = _idleAt;
             _lastReportAt = now;
             RelayLog.Withdrawn(_logger);
@@ -102,7 +102,7 @@ internal sealed partial class RelayEngine
             return;
         }
 
-        _link.Send(RelayWire.Notification(ActivityMethod, new JsonObject { ["idleAt"] = RelayWire.Instant(_idleAt) }));
+        _link.Send(RelayWire.Notification(RelayProtocol.Activity, new JsonObject { ["idleAt"] = RelayWire.Instant(_idleAt) }));
         _reportedIdleAt = _idleAt;
         _lastReportAt = now;
     }

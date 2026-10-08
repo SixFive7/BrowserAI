@@ -244,7 +244,7 @@ internal sealed partial class RelayEngine
     {
         // Read leniently: a name that is not a string is the background's to refuse
         // by name, and here it only labels a sentence.
-        var tool = RelayFrame.StringMember(frame.Params, "name"u8) ?? "<none>";
+        var tool = ToolOf(frame);
 
         if (await RefuseAStaleListAsync(id, tool).ConfigureAwait(false))
         {

@@ -275,7 +275,7 @@ internal static class RelayErrors
     /// <returns>One or two sentences.</returns>
     private static string UpdateRemedy(string? clientName) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "Run with -p or in VS Code, your client starts the updated BrowserAI by itself on that call. In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
+            ? "When your client runs with -p or in VS Code, it starts the updated BrowserAI by itself on your next call. In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Your client does not start BrowserAI again once this one has ended, so BrowserAI answers again in a new conversation."
                 : "If your client then shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
