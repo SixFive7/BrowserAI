@@ -60,6 +60,75 @@ internal interface IUpdateClient
 }
 
 /// <summary>
+/// What the one resident background asks of Velopack: the four members of
+/// <see cref="IUpdateClient"/>, the package already staged, and an apply that
+/// starts BrowserAI again with arguments of its own.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>An extension of <see cref="IUpdateClient"/> by derivation, added
+/// 2026-10-08 for the one-binary build</b>, so that the per-server update lane
+/// and its test doubles compile unchanged until that lane is deleted. When it
+/// is, these two members belong on <see cref="IUpdateClient"/> itself and this
+/// interface goes.
+/// </para>
+/// <para>
+/// <b>The apply restarts, and that is the opposite of
+/// <see cref="IUpdateClient.ApplyAfterThisProcessExits"/>.</b> A server a client
+/// started had no reason to come back after an update, because no client would
+/// be speaking to the process Velopack started. The background has one: Velopack
+/// starts the main executable again after a successful apply and after a failed
+/// one, with the same arguments both times, and that start is the only process
+/// of BrowserAI's that can tell the two apart and say so (RESOLUTIONS of
+/// 2026-10-08, "do the after-update work in Velopack's restart").
+/// </para>
+/// </remarks>
+internal interface IBackgroundUpdateClient : IUpdateClient
+{
+    /// <summary>
+    /// The newest package already downloaded whose version is above the
+    /// installed one, or <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>No request is made.</b> It is what Velopack's
+    /// <c>UpdatePendingRestart</c> answers from the packages directory, read at
+    /// Velopack 1.2.161 (<c>UpdateManager.cs:39-46</c>): the newest full package
+    /// on disk whose version is above the installed one, <b>whatever its pack
+    /// id</b>, so a caller compares <see cref="UpdateCandidate.PackId"/> before
+    /// it trusts the answer. A downgrade staged by an earlier run is never
+    /// returned, because its version is below the installed one.
+    /// </remarks>
+    /// <returns>The candidate, carrying Velopack's own asset.</returns>
+    UpdateCandidate? Staged();
+
+    /// <summary>
+    /// Hands a downloaded package to <c>Update.exe</c>, which applies it once this
+    /// process has exited and then starts BrowserAI with
+    /// <paramref name="restartArguments"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Silent, with a restart, and never <c>ApplyUpdatesAndRestart</c></b>:
+    /// that one runs <c>Update.exe</c> without <c>--silent</c>, which shows a
+    /// progress window, read at Velopack 1.2.161 (<c>UpdateManager.cs:325-329</c>).
+    /// It returns at once. <b>Exiting is the caller's job, within 60 s</b>, the
+    /// longest <c>Update.exe</c> waits for this process before it goes on.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-10-08 at Velopack 1.2.161</b> (step 0 of the one-binary
+    /// build, <c>.work/step0-velopack/FINDINGS.md</c>): after a successful apply
+    /// the new <c>current\&lt;mainExe&gt;</c> starts with exactly these arguments,
+    /// nothing added, plus <c>VELOPACK_RESTART=true</c> in its environment; after a
+    /// failed one the OLD version starts the same way, with the same arguments and
+    /// the same variable.
+    /// </para>
+    /// </remarks>
+    /// <param name="candidate">The candidate that was downloaded.</param>
+    /// <param name="restartArguments">What BrowserAI is started with afterwards.</param>
+    void ApplyAndRestartAfterThisProcessExits(UpdateCandidate candidate, IReadOnlyList<string> restartArguments);
+}
+
+/// <summary>
 /// What the coordinator asks of Velopack: whether a newer package is already on
 /// disk, and to apply it once this process has gone.
 /// </summary>
@@ -133,6 +202,23 @@ internal sealed record UpdateCandidate
 
     /// <summary>The size of the full package behind this candidate, in bytes.</summary>
     public required long FullPackageSize { get; init; }
+
+    /// <summary>
+    /// The pack id the package was published under, or <see langword="null"/>
+    /// when the source did not say.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 for the pack-id check of the one-binary build.</b>
+    /// Velopack 1.2.161 picks the newest full package in a feed and the newest
+    /// one on disk without looking at its pack id
+    /// (<c>UpdateManager.cs:139</c> and <c>VelopackLocator.cs:155-160</c>), and
+    /// BrowserAI allows downgrades, so a feed or a packages directory that holds a
+    /// second pack can offer it. The background downloads and applies only a
+    /// candidate whose pack id is the installed one, and one that carries none is
+    /// refused with the rest. Optional and not <c>required</c>, so the candidates
+    /// the per-server lane and its doubles build stay valid until that lane goes.
+    /// </remarks>
+    public string? PackId { get; init; }
 
     /// <summary>Velopack's own object. Opaque outside the real client.</summary>
     public object? Native { get; init; }

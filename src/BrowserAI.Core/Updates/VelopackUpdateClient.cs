@@ -39,7 +39,7 @@ namespace BrowserAI.Updates;
 /// that owns the locator.
 /// </para>
 /// </remarks>
-internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
+internal sealed class VelopackUpdateClient : IBackgroundUpdateClient, IStagedUpdates
 {
     private readonly UpdateManager _manager;
     private readonly UpdateFeed _feed;
@@ -82,6 +82,7 @@ internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
                 IsDowngrade = info.IsDowngrade,
                 DeltaCount = info.DeltasToTarget.Length,
                 FullPackageSize = info.TargetFullRelease.Size,
+                PackId = info.TargetFullRelease.PackageId,
                 Native = info,
             };
     }
@@ -111,9 +112,17 @@ internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
                 IsDowngrade = false,
                 DeltaCount = 0,
                 FullPackageSize = asset.Size,
+                PackId = asset.PackageId,
                 Native = asset,
             }
             : null;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The same reading as <see cref="Pending"/>, which is the coordinator's name
+    /// for it; the background's seam names it for what it is.
+    /// </remarks>
+    public UpdateCandidate? Staged() => Pending();
 
     /// <inheritdoc cref="IUpdateClient.ApplyAfterThisProcessExits" />
     public void ApplyAfterThisProcessExits(UpdateCandidate candidate)
@@ -182,5 +191,25 @@ internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
         };
 
         _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: true);
+    }
+
+    /// <inheritdoc />
+    public void ApplyAndRestartAfterThisProcessExits(UpdateCandidate candidate, IReadOnlyList<string> restartArguments)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(restartArguments);
+
+        var asset = candidate.Native switch
+        {
+            UpdateInfo info => info.TargetFullRelease,
+            VelopackAsset staged => staged,
+            _ => throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it."),
+        };
+
+        // silent: no window and no dialog, the background has nobody at a
+        // keyboard. restart: true, so Velopack starts BrowserAI again after the
+        // apply, and after a failed one too, which is the only way a failure is
+        // ever told. waitPid is this process, supplied by Velopack itself.
+        _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: true, restartArgs: [.. restartArguments]);
     }
 }
