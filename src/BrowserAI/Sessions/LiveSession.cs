@@ -132,8 +132,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
     /// <summary>
     /// How often a headed session whose client went is asked whether its browser
-    /// is still up: the session host's own look,
-    /// <see cref="Proxy.SessionHostServer.LingerLook"/>, <b>15 s</b>.
+    /// is still up: <b>15 s</b>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -144,15 +143,17 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// notices. Asking is one membership read of the child's job.
     /// </para>
     /// <para>
-    /// <b>One cadence with the host's</b>: when the last window closes, this look lets
-    /// the session go and the host's next look at its own emptiness sees it, so the
-    /// host's linger starts no later than two looks after the window closed. The price
-    /// of the period is a closed window's node child, about 50 MB, held for at most one
-    /// look. It is a seam for the suite through the session environment's clock, as the
-    /// idle period is.
+    /// <b>The price of the period</b> is a closed window's node child, about 50 MB, held
+    /// for at most one look. It is a seam for the suite through the session
+    /// environment's clock, as the idle period is. ⚠️ <i>Corrected 2026-10-08
+    /// (previously "One cadence with the host's ... the session host's own look,
+    /// SessionHostServer.LingerLook", a quarter of the host's minute-long linger)</i>:
+    /// the session host went with the coordinator when the one resident background
+    /// took both their places, and the background never ends on its own (S a), so
+    /// there is no linger to keep in step with. The period stays the 15 s it was.
     /// </para>
     /// </remarks>
-    public static TimeSpan DetachedWindowLook { get; } = Proxy.SessionHostServer.LingerLook;
+    public static TimeSpan DetachedWindowLook { get; } = TimeSpan.FromSeconds(15);
 
     /// <summary>
     /// Which connection drives this session now, and whether the host is letting it go.

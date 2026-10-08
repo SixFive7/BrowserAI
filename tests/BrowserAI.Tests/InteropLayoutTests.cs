@@ -110,6 +110,12 @@ internal sealed class InteropLayoutTests
         // GetLastInputInfo fills, the first hand-written struct in the server's
         // own assembly since JobObject moved to BrowserAI.Core.
         (nameof(InputActivity), "LastInputInfo", 8),
+
+        // Added 2026-10-08 with the background's hidden window (S a): the class it
+        // registers and the message its loop reads, for WM_QUERYENDSESSION and
+        // WM_ENDSESSION at a sign-out and WM_CLOSE from the Task Scheduler's End.
+        (nameof(SessionEndWindow), "WndClassEx", 80),
+        (nameof(SessionEndWindow), "Msg", 48),
     ];
 
     /// <summary>
@@ -168,7 +174,9 @@ internal sealed class InteropLayoutTests
         // brought a second OVERLAPPED.
         // Corrected 2026-10-08 to 13 (previously 12): the visible-input check's
         // LASTINPUTINFO.
-        await Assert.That(Structs.Length).IsEqualTo(13);
+        // Corrected 2026-10-08 to 15 (previously 13): the background's hidden
+        // window brought WNDCLASSEXW and MSG.
+        await Assert.That(Structs.Length).IsEqualTo(15);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -276,6 +284,13 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("TokenUser")).IsEqualTo(16);
         await Assert.That(SizeOfMetadata("Variant")).IsEqualTo(24);
         await Assert.That(SizeOfMetadata("LastInputInfo")).IsEqualTo(8);
+        await Assert.That(SizeOfMetadata("WndClassEx")).IsEqualTo(80);
+        await Assert.That(SizeOfMetadata("Msg")).IsEqualTo(48);
+
+        // The window procedure's address is the third field of WNDCLASSEXW on both
+        // sides, after the size and the style.
+        await Assert.That((int)Marshal.OffsetOf(Nested(nameof(SessionEndWindow), "WndClassEx"), "WindowProcedure")).IsEqualTo(8);
+        await Assert.That((int)Marshal.OffsetOf<W.UI.WindowsAndMessaging.WNDCLASSEXW>("lpfnWndProc")).IsEqualTo(8);
 
         // VARIANT's value begins after the type and three reserved words.
         await Assert.That((int)Marshal.OffsetOf(Nested(nameof(TaskSchedulerInterop), "Variant"), "Value")).IsEqualTo(8);
@@ -449,6 +464,8 @@ internal sealed class InteropLayoutTests
         // VARIANT in COM interface mode, and ComVariant is Microsoft's own.
         "Variant" => sizeof(System.Runtime.InteropServices.Marshalling.ComVariant),
         "LastInputInfo" => sizeof(W.UI.Input.KeyboardAndMouse.LASTINPUTINFO),
-        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the eleven."),
+        "WndClassEx" => Marshal.SizeOf<W.UI.WindowsAndMessaging.WNDCLASSEXW>(),
+        "Msg" => sizeof(W.UI.WindowsAndMessaging.MSG),
+        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the hand-written structs."),
     };
 }

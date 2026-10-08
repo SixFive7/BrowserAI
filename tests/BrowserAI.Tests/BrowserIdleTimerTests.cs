@@ -1293,12 +1293,26 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task TheClientWatchIsAHandleRatherThanAPingAndFiresExactlyOnce()
     {
+        // ⚠️ THE RELAY'S PROBE OF ITS OWN BACKGROUND IS NOT A WATCH ON A CLIENT --
+        // 2026-10-08, D10 b. Corrected that day (previously no file of the product
+        // could name a ping): the relay asks the background whether it is alive with
+        // MCP's own ping while a call is outstanding, between two BrowserAI processes
+        // that speak revision 2025-11-25, where the method exists. Every other file
+        // still may not, and the relay's two files are named so that a third file
+        // that pings is a red build.
+        string[] relaysProbe =
+        [
+            Path.Combine("src", "BrowserAI", "Relay", "RelayEngine.Background.cs"),
+            Path.Combine("src", "BrowserAI", "Relay", "RelayEngine.Client.cs"),
+        ];
+
         var pinging = RepositoryLayout.ProductSourceFiles
             .Where(file => File.ReadAllText(file.FullName) is var text
                 && (text.Contains("\"ping\"", StringComparison.OrdinalIgnoreCase)
                     || text.Contains("RequestMethods.Ping", StringComparison.Ordinal)
                     || text.Contains("PingAsync", StringComparison.Ordinal)))
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
+            .Where(file => !relaysProbe.Contains(file, StringComparer.OrdinalIgnoreCase))
             .Order(StringComparer.Ordinal);
 
         await Assert.That(string.Join(Environment.NewLine, pinging)).IsEmpty();

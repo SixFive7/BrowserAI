@@ -153,7 +153,11 @@ internal static class Program
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(buffered);
 
-        var paths = new LocalAppDataPaths(LocalAppDataPaths.Overridden());
+        // The override, as the one-binary build carries it: the --data-root the hooks
+        // wrote from the installer's environment, and the variable for a start that
+        // has no such argument. Never anything derived from the install root.
+        var overridden = DataRootFrom(args) ?? LocalAppDataPaths.Overridden();
+        var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
         var logger = log.Factory.CreateLogger("BrowserAI.App");
@@ -208,151 +212,131 @@ internal static class Program
             return 0;
         }
 
-        var occasion = restarted ? Occasion.AfterUpdate : firstRun ? Occasion.FirstRun : Occasion.Ordinary;
+        // ⚠️ AFTER AN UPDATE -- T and the step-0 research, settled by the root session
+        // on 2026-10-08. Velopack's restart starts this program with the version the
+        // apply was meant to install, in the new version after a success and in the
+        // old one after a failure, with the same arguments either way. The two are told
+        // apart by comparing that version with this build's, and the background is
+        // asked for through the task in both cases: every BrowserAI process has gone.
+        if (AfterUpdate.TargetIn(args) is { } target)
+        {
+            AfterUpdate.Report(
+                target,
+                BuildVersion.Current,
+                InstallLocation.AppId is { Length: > 0 } packId
+                    ? AfterUpdate.VelopackLogPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), packId)
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "velopack"),
+                UpdateToasts.ForThisProcess(null, paths, logger),
+                () => AskTheTaskForTheBackground(PersonStart.StartedAfterAnUpdate, logger),
+                logger);
 
-        // ⚠️ WHO THE COORDINATOR IS, SETTLED BEFORE ANYTHING IS OPENED -- Q280 b,
-        // Q284 a, 2026-09-25. Holding the pipe is being the coordinator. A start that
-        // finds it held hands its verb over and exits here; a person's start gets the
-        // address of a new tab back (Q334 a, Q337 a) and opens it, and a hidden start
-        // that is not needed costs a few milliseconds. The root is the census's own:
-        // the install root, or the data root of a build that is not installed, which
-        // is what keeps a scratch BROWSERAI_ROOT one coordinator.
-        var mode = StartModes.Of(args);
-        var root = InstallLocation.RootAppDir ?? paths.RootAppDir;
-        var person = StartModes.IsAPersons(mode);
-        var verb = StartModes.VerbOf(mode);
+            return 0;
+        }
+
+        // ⚠️ A PERSON'S START -- D13 a, the maintainer's words of 2026-10-08,
+        // verbatim: "d13 a", amended by R the same day. Corrected 2026-10-08
+        // (previously this settled who the coordinator was: a start that held the
+        // coordinator's pipe became the coordinator, with the tab, the sign-in step
+        // and the apply loop, and one that found it held handed its verb over). The
+        // background holds the tab now, and a person's start only asks it for one,
+        // starting it through the task when none runs. It is also the only thing that
+        // restarts BrowserAI after a crash or a hang (R).
+        var page = PageNameOf(args);
         var writeAddress = PageOpener.WriteAddressFrom(args);
-        var feed = UpdateConfiguration.Resolve(logger);
+        var installRoot = InstallLocation.RootAppDir;
+        var pipe = PipeFrom(args) ?? BackgroundPipe.NameFor(installRoot, paths.RootAppDir);
 
-        // ⚠️ THE SESSION HOST'S KEEPER, BEFORE THE PIPE -- Q366 b, 2026-10-03. A
-        // server's `host` is answered on the pipe's own thread, which may run the
-        // moment the pipe exists, so what it starts the host with has to exist first.
-        // An empty job and nothing started until somebody asks; a start that hands
-        // over closes it again. Declared before the inbox and the pipe so it is
-        // disposed after them: the pipe stops answering, and then the job's close
-        // ends the host and everything it started.
-        using var keeper = SessionHostKeeper.ForThisInstall(Environment.ProcessPath, paths.RootAppDir, logger);
-        using var inbox = new CoordinatorInbox(keeper is null ? null : keeper.EnsureStarted);
-
-        // ⚠️ THE PAGE EXISTS BEFORE THE PIPE, AND STARTS NOTHING UNTIL ASKED -- Q315 a,
-        // 2026-10-03. The pipe hands out tabs from its first connection on, so the
-        // page it hands them out of has to be there first; its listener starts on the
-        // first hand-out and not before.
-        using var page = new PageService(
-            PageOpener.FactsFor(paths),
-            occasion,
-            new VelopackPageUpdates(feed, InstallLocation.IsInstalled),
-            new CensusPageSessions(root, TimeProvider.System),
-            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory), logger),
-            new DesktopPageHost(inbox, logger),
-            inbox.Wake,
-            TimeProvider.System,
-            PageTabs.ProductLinger,
-            logger)
-        {
-            // An install from the page stops the session host the way this
-            // process's own apply does (Q366 b).
-            SessionHost = keeper,
-
-            // The changelog page reads the section this build carries for its own
-            // version (T, 2026-10-08). What holds an update is reported by the
-            // resident background, which is not this process yet, so the update page
-            // says nothing reports it.
-            Changelog = ShippedChangelog.ForThisBuild(),
-        };
-
-        var start = CoordinatorStart.Settle(
-            root,
-            inbox,
-            verb,
-            person ? Foreground.Grant : null,
-            logger,
-            addressFor: asked => page.HandOut(StartModes.PageOf(asked)));
-
-        if (start.Outcome is CoordinatorStartOutcome.HandedOver)
-        {
-            if (person)
+        var (outcome, address) = PersonStart.Show(
+            new PersonStartSettings
             {
-                _ = PageOpener.Deliver(start.HandOver?.Address, writeAddress, ShellInterop.OpenUrl, logger);
-            }
+                PipeName = pipe,
+                RecordPath = BackgroundRecord.PathFor(paths.RootAppDir, pipe),
+                InstallRoot = installRoot,
+                DataRoot = paths.RootAppDir,
+                TaskName = TaskNameForThisInstall(),
+                Definition = () => installRoot is null ? null : SignInTask.SavedDefinition(installRoot),
+                Tasks = ScheduledTasks.Instance,
+                StartedBy = firstRun ? PersonStart.StartedByTheInstaller : restarted ? PersonStart.StartedAfterAnUpdate : PersonStart.StartedByPerson,
+            },
+            page,
+            logger);
 
-            return 0;
-        }
-
-        using var pipe = start.Pipe;
-
-        // The session host and everything it started run from the install too, and
-        // are this process's own to stop before an apply, not processes it waits
-        // for: the scan leaves them out (Q366 b).
-        RootScan scanRoot() => keeper is null
-            ? BrowserProcesses.HeldUnder(root, Environment.ProcessId)
-            : keeper.LeaveOutMine(BrowserProcesses.HeldUnder(root, Environment.ProcessId));
-
-        if (pipe is null)
+        if (outcome is not PersonStartOutcome.Shown)
         {
-            // Neither the coordinator nor handed over, and the log says why. A
-            // person still gets the tab they asked for, served by this process alone
-            // until it closes; a hidden start has nothing to do without the pipe.
-            if (!person)
-            {
-                return 1;
-            }
-
-            _ = PageOpener.Deliver(page.HandOut(StartModes.PageOf(verb)), writeAddress, ShellInterop.OpenUrl, logger);
-            _ = new CoordinatorLoop(root, inbox, NothingStaged.Instance, scanRoot, page, logger).Run();
-            return 0;
+            return 1;
         }
 
-        var started = mode.ToString();
-
-        CoordinatorLog.Became(logger, pipe.Name, started);
-
-        if (person)
-        {
-            _ = PageOpener.Deliver(page.HandOut(StartModes.PageOf(verb)), writeAddress, ShellInterop.OpenUrl, logger);
-        }
-
-        // A server found neither a host nor a coordinator and ran the logon task to
-        // have one started; the loop below then stays for as long as it runs.
-        if (mode is StartMode.StartHost)
-        {
-            _ = keeper?.EnsureStarted();
-        }
-
-        IStagedUpdates staged = feed is not null
-            ? new VelopackUpdateClient(feed)
-            : NothingStaged.Instance;
-
-        // ⚠️ THE SIGN-IN STEP -- Q282 a and Q285 a, 2026-09-25. One pass: a staged
-        // package and nothing else running from the install is handed to Update.exe
-        // and this process exits so it can apply; anything else is logged and this
-        // process exits too. The one exception is a verb that reached the pipe during
-        // the pass -- a person's start asking for a tab, or a blocked server's start
-        // handing over its recheck -- which the loop below then answers, since the
-        // start that sent it has already exited.
-        if (mode is StartMode.SignIn)
-        {
-            var signIn = SignInStep.Run(staged, scanRoot, logger, keeper);
-
-            // Q366 b: a host a server asked for during the pass keeps this process,
-            // whose job it is in, even before that server's verb reaches the inbox.
-            if (signIn.Outcome is SignInOutcome.Applied || (inbox.IsEmpty && !page.IsServing && keeper?.Running is null))
-            {
-                return 0;
-            }
-        }
-
-        // ⚠️ THE APPLY LOOP -- Q285 a, 2026-09-25, and since 2026-10-03 the tab's loop
-        // too (Q336 a). It waits on every process the scan holds and on the pipe,
-        // re-scans on each exit and each verb, applies once nothing else runs from the
-        // install, and stops when nothing is staged and no tab has been open for a
-        // minute. A build with no update feed has nothing staged, so it stops as soon
-        // as its page has nobody left. Since 2026-10-03 it also stays for as long as
-        // the session host it started runs, and stops that host before an apply
-        // (Q366 b).
-        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, page, logger) { Host = keeper }.Run();
-
+        _ = PageOpener.Deliver(address, writeAddress, ShellInterop.OpenUrl, logger);
         return 0;
+    }
+
+    /// <summary>The page a person's start asks for, by the names the background's <c>show</c> takes.</summary>
+    /// <param name="args">The command line.</param>
+    /// <returns>The page's name, or <see langword="null"/> for the status page.</returns>
+    internal static string? PageNameOf(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        return args.Contains(CoordinatorProtocol.SessionsArgument, StringComparer.Ordinal) ? "sessions"
+            : args.Contains(CoordinatorProtocol.UpdateArgument, StringComparer.Ordinal) ? "update"
+            : args.Contains(CoordinatorProtocol.ChangelogArgument, StringComparer.Ordinal) ? "changelog"
+            : null;
+    }
+
+    /// <summary>The data root a start names, or <see langword="null"/>.</summary>
+    /// <param name="args">The command line.</param>
+    /// <returns>The data root.</returns>
+    private static string? DataRootFrom(string[] args)
+    {
+        for (var index = 0; index < args.Length - 1; index++)
+        {
+            if (string.Equals(args[index], DataRootArgument, StringComparison.Ordinal))
+            {
+                return args[index + 1];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The argument that names the data root: the one executable's, read here for a person's start.</summary>
+    public const string DataRootArgument = "--data-root";
+
+    /// <summary>The suite's pipe, when a start names one.</summary>
+    /// <param name="args">The command line.</param>
+    /// <returns>The pipe, or <see langword="null"/>.</returns>
+    private static string? PipeFrom(string[] args)
+    {
+        for (var index = 0; index < args.Length - 1; index++)
+        {
+            if (string.Equals(args[index], BackgroundPipe.PipeArgument, StringComparison.Ordinal))
+            {
+                return args[index + 1];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The task this install's background runs as, or <see langword="null"/> when it is not installed.</summary>
+    /// <returns>The name.</returns>
+    private static string? TaskNameForThisInstall() =>
+        InstallLocation.RootAppDir is { } root && InstallLocation.AppId is { Length: > 0 } appId
+            ? SignInTask.NameFor(appId, root)
+            : null;
+
+    /// <summary>Asks the Task Scheduler to run this install's task, for a start that is not a person's.</summary>
+    /// <param name="startedBy">What <c>$(Arg0)</c> carries.</param>
+    /// <param name="logger">Where the outcome is recorded.</param>
+    private static void AskTheTaskForTheBackground(string startedBy, ILogger logger)
+    {
+        if (TaskNameForThisInstall() is not { } name)
+        {
+            return;
+        }
+
+        var run = ScheduledTasks.Instance.Run(name, startedBy);
+        AppLog.TaskAsked(logger, run.Change, run.Detail);
     }
 
     /// <summary>
@@ -411,6 +395,12 @@ internal static partial class AppLog
         Level = LogLevel.Warning,
         Message = "Velopack reported a problem: {Message}")]
     public static partial void VelopackProblem(ILogger logger, string message, Exception? failure);
+
+    [LoggerMessage(
+        EventId = 6006,
+        Level = LogLevel.Information,
+        Message = "Asked the Task Scheduler for BrowserAI's background: {Change}. {Detail}")]
+    public static partial void TaskAsked(ILogger logger, TaskChange change, string detail);
 
     // Ids 6001 (the window opening) and 6005 (a click in the window threw) went with
     // the configuration window on 2026-10-03, which the browser tab replaced. A log

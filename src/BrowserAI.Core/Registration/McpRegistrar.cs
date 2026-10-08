@@ -188,6 +188,7 @@ internal static class McpRegistrar
     /// <param name="tool">RegisterAI.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
+    /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
     /// <returns>One pass per client, in the order given. Never throws.</returns>
     public static IReadOnlyList<ClientRegistration> Apply(
         IReadOnlyList<RegistrationClient> clients,
@@ -195,7 +196,8 @@ internal static class McpRegistrar
         string? imagePath,
         IRegisterAi tool,
         ILogger logger,
-        bool replace = false)
+        bool replace = false,
+        IReadOnlyList<string>? commandArguments = null)
     {
         ArgumentNullException.ThrowIfNull(clients);
         ArgumentNullException.ThrowIfNull(tool);
@@ -219,7 +221,7 @@ internal static class McpRegistrar
             var command = target!.Command;
             var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
             var run = tool.Run(
-                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, target.Arguments),
+                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, commandArguments ?? target.Arguments),
                 ToolBudget);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))

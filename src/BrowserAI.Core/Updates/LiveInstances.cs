@@ -219,7 +219,7 @@ internal sealed record LiveMarkerReclaim
 /// <para>
 /// ⚠️ <b>Reclaim used to happen only here, and that was measured to be nowhere.</b>
 /// Until 2026-08-20 the only code that removed a marker whose holder had died
-/// was <see cref="Census"/>, which <see cref="UpdateService"/> reaches
+/// was <see cref="Census"/>, which <c>UpdateService</c> reaches
 /// <i>after</i> an update has been found <b>and</b> downloaded. That had never
 /// once happened on the machine this product is developed on, and
 /// <b>755 unheld markers</b> had accumulated in two days. Reclaim is now a
@@ -438,12 +438,12 @@ internal sealed class LiveInstances : IDisposable
     /// <c>UpdateTests.EveryCensusAnswerOtherThanAloneStillReadsAsNotAloneToTheUpdater</c>
     /// asserts the mapping over all three values, and
     /// <c>UpdateTests.AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes</c>
-    /// asserts it through <see cref="UpdateService"/> itself and not through
+    /// asserts it through <c>UpdateService</c> itself and not through
     /// this signature.
     /// </para>
     /// <para>
     /// <b>Widening a return type is where a consumer silently changes</b>, so the
-    /// widening deliberately did not touch this one. <see cref="UpdateService"/>
+    /// widening deliberately did not touch this one. <c>UpdateService</c>
     /// still calls this and nothing else.
     /// </para>
     /// </remarks>

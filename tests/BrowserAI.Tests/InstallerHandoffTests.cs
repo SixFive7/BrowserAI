@@ -286,8 +286,22 @@ internal sealed class InstallerHandoffTests
         // console). The one executable serves a client only under --mcp with a pipe
         // on standard input, and a console is not a pipe, so the old shape is held
         // by the narrower rule.
-        await Assert.That(program).Contains("if (args.Contains(McpArgument, StringComparer.Ordinal) && !StandardInput.IsAPipe())");
+        // ⚠️ And since the background and the relay, the same day, the check stands
+        // on the one path that serves a client: after the task's start and the sweep
+        // have branched off, and before the relay (previously "if
+        // (args.Contains(McpArgument, StringComparer.Ordinal) &&
+        // !StandardInput.IsAPipe())", when the in-process server's path also served
+        // the session host).
+        await Assert.That(program).Contains("if (!StandardInput.IsAPipe())");
         await Assert.That(program).DoesNotContain("StandardInput.IsAConsole()");
+
+        var sweep = program.IndexOf("args.Contains(SweepArgument, StringComparer.Ordinal)", StringComparison.Ordinal);
+        var check = program.IndexOf("if (!StandardInput.IsAPipe())", StringComparison.Ordinal);
+        var relay = program.IndexOf("RunTheRelayAsync(args", StringComparison.Ordinal);
+
+        await Assert.That(sweep).IsGreaterThan(-1);
+        await Assert.That(check).IsGreaterThan(sweep);
+        await Assert.That(relay).IsGreaterThan(check);
 
         // It says why, and it exits cleanly instead of refusing to start.
         var at = program.IndexOf("!StandardInput.IsAPipe()", StringComparison.Ordinal);

@@ -42,7 +42,7 @@ namespace BrowserAI.Relay;
 internal static class RelayProtocol
 {
     /// <summary>What every method of the relay's own starts with.</summary>
-    public const string MethodPrefix = "browserai/";
+    public const string MethodPrefix = Coordination.BackgroundPipe.MethodPrefix;
 
     /// <summary>The relay's greeting, a request.</summary>
     public const string Hello = MethodPrefix + "hello";

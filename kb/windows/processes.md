@@ -1431,9 +1431,11 @@ server at `245edac`. Everything it was read from:
 [`docs/evidence/2026-09-24-ipc-review`](../../docs/evidence/2026-09-24-ipc-review/README.md).
 It settled Q268 and, with the lifecycle research, Q284 -- the maintainer's words
 verbatim, *"Q284 a"*: one raw named pipe per server, answering `describe` from
-memory and `stop` by acknowledging and then stopping. The product's half is
-[`Coordination/ServerPipe.cs`](../../src/BrowserAI.Core/Coordination/ServerPipe.cs)
-and [`Coordination/ServerPipeClient.cs`](../../src/BrowserAI.Core/Coordination/ServerPipeClient.cs).
+memory and `stop` by acknowledging and then stopping. The product's half was
+`Coordination/ServerPipe.cs` and `Coordination/ServerPipeClient.cs` until
+2026-10-08, when the one-binary build (S a) deleted the per-server pipe with both
+(*corrected 2026-10-08, previously "The product's half is" with a link to each*).
+What was measured here stands as it was taken.
 
 ### A record rewritten in place is read torn, and the torn read parses
 
@@ -1597,7 +1599,10 @@ against 248 before. **What it does not measure** is where system resources run
 out, which was not pushed for on a machine other work shares, and the cost of
 the thread `ServerPipe` gives every connection, which the probe has no
 equivalent of. `ServerPipeTests.APipeHoldsMoreCallersThan255AtOnceAndStillAnswersTheNext`
-holds 300 silent callers through the product's own pipe on every run.
+holds 300 silent callers through the product's own pipe on every run. *Corrected
+2026-10-08 by addition:* that arm is deleted with the per-server pipe (S a), and no
+arm holds this for the resident background's pipe, which gives every connection an
+instance of its own the same way; what was measured here stands as it was taken.
 
 **Re-establish it** with the rig: `dotnet run instances.cs -- 300 600 1000 2000`,
 then `dotnet run instances.cs -- --max 254 300` for the control. Each target runs
@@ -2259,6 +2264,7 @@ does not know and ignores. That start was not run, because it takes a real sign-
 
 **A task started on demand is the scheduler's child, and this user cannot open its
 parent.** `CoordinatorWakeTests.ATaskStartedOnDemandRunsTheAppWithCoordinateAsTheSchedulersChild`
+(deleted 2026-10-08 with the one-binary build, S a)
 measured it on 2026-09-24 against the published configuration app: the process the
 task started had as its parent the pid the service control manager gives for the
 `Schedule` service, and that parent's image could not be read. The writer opened the
@@ -2319,7 +2325,9 @@ handle to: list, open, query the image, wait with a zero timeout.
 2026-09-25. That is why `CoordinatorLoop.ProcessesPerWait` is 63: the pipe's inbox is
 the 64th, and a pass holding more processes than that waits on the first 63 and still
 holds and counts the rest. `CoordinatorTests.MoreProcessesThanOneWaitCanHoldAreAllWaitedForSixtyThreeAtATime`
-is the arm.
+is the arm. *Added 2026-10-08 by addition:* the coordinator's loop and that arm are
+deleted with the one-binary build (S a), and the resident background's loop waits on
+two handles, its stop and the tab's inbox; the limit stands as measured.
 
 ## A new environment's Path is the machine's entries, then the user's, and a running program keeps its own -- measured 2026-09-24
 

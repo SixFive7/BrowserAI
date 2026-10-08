@@ -162,9 +162,9 @@ internal sealed class ChildProcessOptions
     /// is over three times the slowest.
     /// </para>
     /// <para>
-    /// <b>It bounds the session host's stop as well</b>:
-    /// <c>SessionHostProtocol.StopBound</c> has to cover the browsers' closes and then
-    /// each child given this long, and <c>SessionHostBoundsTests</c> holds that it does.
+    /// <b>It bounded the session host's stop as well</b>, until the host went with the
+    /// coordinator on 2026-10-08: <c>SessionHostProtocol.StopBound</c> had to cover the
+    /// browsers' closes and then each child given this long.
     /// </para>
     /// </remarks>
     public static TimeSpan DefaultShutdownTimeout { get; } = TimeSpan.FromSeconds(5);

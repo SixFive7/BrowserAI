@@ -24,8 +24,9 @@ namespace BrowserAI.Tests;
 /// <see cref="BrowserIdleTimerTests"/> for the idle close,
 /// <see cref="SessionCloseTests"/> for the shutdown and the caller's own close, and
 /// <see cref="CloseOrderingTests"/> for everything that waits on a close in flight.
-/// The coordinator's wait for the session host, twice the cap, is held with the host's
-/// other bounds in <see cref="SessionHostBoundsTests"/>.
+/// The coordinator's wait for the session host, twice the cap, was held with the host's
+/// other bounds in <c>SessionHostBoundsTests</c> until the host and the coordinator went
+/// on 2026-10-08, when the one resident background took both their places.
 /// </para>
 /// </remarks>
 internal sealed class CloseBoundsTests

@@ -68,7 +68,7 @@ internal enum CoordinatorVerb
 /// <para>
 /// <b>The framing is a server pipe's</b>: one verb and a newline in, four bytes of
 /// little-endian length and that much UTF-8 JSON out, through the same serving
-/// loop (<see cref="ServerPipe.OpenNamed(string, IPipeAnswers, Microsoft.Extensions.Logging.ILogger)"/>).
+/// loop (<c>ServerPipe.OpenNamed</c>, deleted with the coordinator's pipe on 2026-10-08).
 /// </para>
 /// </remarks>
 internal static class CoordinatorProtocol

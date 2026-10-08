@@ -59,6 +59,8 @@ internal sealed class RawStdioClient : IAsyncDisposable
 
     private readonly JobObject _job;
     private readonly LaunchedProcess _process;
+    private readonly LaunchedProcess? _background;
+    private readonly string? _backgroundRecord;
     private readonly StreamWriter _toChild;
     private readonly StreamReader _fromChild;
     private readonly StringBuilder _standardError = new();
@@ -69,10 +71,12 @@ internal sealed class RawStdioClient : IAsyncDisposable
     private int _nextId;
     private int _disposed;
 
-    private RawStdioClient(JobObject job, LaunchedProcess process, TimeSpan perExchange)
+    private RawStdioClient(JobObject job, LaunchedProcess process, TimeSpan perExchange, LaunchedProcess? background, string? backgroundRecord)
     {
         _job = job;
         _process = process;
+        _background = background;
+        _backgroundRecord = backgroundRecord;
         _perExchange = perExchange;
 
         _toChild = new StreamWriter(process.StandardInput, Utf8NoBom) { NewLine = "\n", AutoFlush = false };
@@ -85,6 +89,17 @@ internal sealed class RawStdioClient : IAsyncDisposable
 
     /// <summary>The pid of the process this client started.</summary>
     public int ProcessId => _process.Id;
+
+    /// <summary>
+    /// The background the harness started beside a published relay, in the same job,
+    /// or <see langword="null"/> for any other start.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 with the one resident background (S a)</b>: a published
+    /// relay holds no session, so an arm that reads what a session's process did reads
+    /// it here, and an arm that ends "the server" to see what dies with it ends this.
+    /// </remarks>
+    public int? BackgroundProcessId => _background?.Id;
 
     /// <summary>What this client calls itself in its handshake unless told otherwise.</summary>
     public const string DefaultClientName = "BrowserAI.RawStdioClient";
@@ -148,7 +163,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
             return null;
         }
 
-        return $"RawStdioClient speaks MCP over stdio, and the published BrowserAI.exe serves stdio only under {Program.McpArgument}, {Program.HostArgument} or {Program.SweepArgument}. "
+        return $"RawStdioClient speaks MCP over stdio, and the published BrowserAI.exe serves stdio only under {Program.McpArgument} or {Program.SweepArgument}. "
             + $"Started with [{string.Join(' ', arguments)}] it is a person's start, which opens BrowserAI's page with the shell on the screen of whoever is at this machine, so nothing was started. "
             + "Pass PublishedSlice.Mcp.";
     }
@@ -180,16 +195,33 @@ internal sealed class RawStdioClient : IAsyncDisposable
         }
 
         var job = JobObject.CreateKillOnClose();
+        LaunchedProcess? background = null;
 
         try
         {
-            var process = JobLauncher.Start(job, command, arguments, workingDirectory, environment);
+            string? record = null;
+            var relayArguments = arguments;
 
-            return new RawStdioClient(job, process, perExchange ?? TestDefaults.BrowserHang);
+            // A published relay holds no session and starts nothing: the background
+            // does, and the harness starts one for it, in the same job, on a pipe of
+            // its own (D11 a).
+            if (PublishedBackground.IsAPublishedRelay(command, arguments))
+            {
+                var pipe = PublishedBackground.NewPipeName();
+
+                background = PublishedBackground.Start(job, workingDirectory, environment, pipe, arguments);
+                record = PublishedBackground.RecordFor(environment, arguments, pipe);
+                relayArguments = [.. arguments, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe];
+            }
+
+            var process = JobLauncher.Start(job, command, relayArguments, workingDirectory, environment);
+
+            return new RawStdioClient(job, process, perExchange ?? TestDefaults.BrowserHang, background, record);
         }
         catch
         {
             job.Dispose();
+            background?.Dispose();
             throw;
         }
     }
@@ -489,6 +521,22 @@ internal sealed class RawStdioClient : IAsyncDisposable
         _toChild.Dispose();
         _fromChild.Dispose();
         _process.Dispose();
+        _background?.Dispose();
+
+        // The background's record, which the job's close left saying it crashed: the
+        // suite's backgrounds share the data root with whatever else uses it, and a
+        // record per arm would pile up there.
+        if (_backgroundRecord is not null)
+        {
+            try
+            {
+                File.Delete(_backgroundRecord);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // Left for the next run: a stale record names a pid that is gone.
+            }
+        }
     }
 
     private static string Trim(string line) => line.Length <= 400 ? line : line[..400] + "...";

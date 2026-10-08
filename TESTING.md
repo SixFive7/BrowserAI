@@ -696,6 +696,24 @@ opens a browser tab. `AppBinaryTests` reads the one file's subsystem and manifes
 and holds the mode decision; the release pack carries one binary and
 `ReleaseLayout.PackedBinaries` compares one.
 
+⚠️ **A relay and one resident background since 2026-10-08 -- S a and p a, the
+maintainer's words verbatim: *"s a"* and *"p a"*.** *Added by addition.* A published
+`--mcp` start is a relay, which serves no call by itself, so `RawStdioClient` starts a
+background beside every published relay that names no pipe: in the relay's own job,
+on a pipe of its own named from `BackgroundPipe.NamePrefix`, the run's pid and a GUID,
+and handed to both with `--pipe`, the way D11 a says a developer starts one
+(`tests/BrowserAI.Tests/Harness/PublishedBackground.cs`). The background is the
+containment subject `SliceRun` reads, and its record is deleted with the client.
+`RelayTests` drive the relay in process against hand-written backgrounds,
+`BackgroundUpdatesTests` the update core with every seam replaced, and
+`BackgroundProcessTests` the published background and its relays against a real
+Chromium. No arm starts a background through the real task, and none raises a real
+toast. Deleted with what they drove: `SessionHostCoordinatorTests`,
+`SessionHostAccessTests`, `SessionHostBoundsTests`, `SessionHostProcessTests`,
+`CoordinatorWakeTests`, `CoordinatorTests`, `ServerPipeTests`, `SignInStepTests` and
+`UpdateInProgressTests` as whole files, and arms of `UpdateTests` and
+`PageServiceTests`, which keep a `RETIRED` remark where each stood.
+
 | What | How the suite reaches it | What it cannot see |
 |---|---|---|
 | `BrowserAI.Server.exe` | The **published slice**: a real NativeAOT publish driven over stdio. `PublishedSlice.Executable` moved to this name on 2026-09-15 | Nothing new. This is the half that was always covered. *Added 2026-10-03 by addition, with option c (Q366 b):* **an installed server's road to its session host.** The published host and front are driven over the `--host` and `--relay` seams, and the front's search through the coordinator and the logon task in process with a scheduler that starts nothing; no arm runs an installed server that reaches its host through the real task, because that would start a coordinator through the scheduler from inside the suite |

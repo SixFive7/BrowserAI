@@ -53,6 +53,9 @@ internal static partial class TaskSchedulerInterop
     /// <summary>What the scheduler answers for a task or folder that is not there.</summary>
     public const int NotFound = unchecked((int)0x80070002);
 
+    /// <summary><c>TASK_STATE_DISABLED</c>, from <c>taskschd.h</c>.</summary>
+    public const int StateDisabled = 1;
+
     /// <summary><c>RPC_E_CHANGED_MODE</c>: the thread is already in the other apartment.</summary>
     public const int ChangedMode = unchecked((int)0x80010106);
 
@@ -275,8 +278,8 @@ internal partial interface IRegisteredTask : IDispatchSlots
     /// <returns>The state.</returns>
     int GetState();
 
-    /// <summary>Never called.</summary>
-    /// <returns>Never read.</returns>
+    /// <summary>Whether the task is enabled, as a <c>VARIANT_BOOL</c>: zero when it is not.</summary>
+    /// <returns>The flag.</returns>
     short GetEnabled();
 
     /// <summary>Never called.</summary>

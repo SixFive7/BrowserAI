@@ -64,6 +64,13 @@ internal static partial class NamedPipes
     /// <summary>No pipe of that name exists: nobody is serving it.</summary>
     public const int ErrorFileNotFound = 2;
 
+    /// <summary>
+    /// What <c>CreateNamedPipeW</c> answers with <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c>
+    /// when another process already serves the name, measured 2026-10-03 on the
+    /// coordinator's pipe as <c>0x80070005</c>.
+    /// </summary>
+    public const int ErrorAccessDenied = 5;
+
     /// <summary>The wait for a free instance ran out.</summary>
     public const int ErrorSemaphoreTimeout = 121;
 

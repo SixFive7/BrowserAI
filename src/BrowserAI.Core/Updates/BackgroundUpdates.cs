@@ -314,11 +314,15 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <para>
     /// <b>Every connected relay is listed, holding or not</b>, with what its client
     /// needs once the update ends it. Codex needs a new conversation, measured
-    /// 2026-10-03 (<see cref="RelayReconnect"/>). <b>Claude Code is reported as
-    /// <see cref="RelayReconnect.Unknown"/></b>: its terminal UI needs
-    /// <c>/mcp</c> and Reconnect while the VS Code extension and <c>claude -p</c>
-    /// need nothing, and whether a relay can tell them apart from what it observes
-    /// has not been measured yet. Unknown until it has, and not a guess.
+    /// 2026-10-03 (<see cref="RelayReconnect"/>). ⚠️ <i>Corrected 2026-10-08
+    /// (previously "Claude Code is reported as Unknown ... whether a relay can tell
+    /// them apart from what it observes has not been measured yet")</i>: it was
+    /// measured that day over 41 runs, and the relay judges it from its client's name,
+    /// the command line of the process that started it and the entrypoint variable,
+    /// the measurement's option d, and sends the answer in its greeting
+    /// (<see cref="RelayState.Reconnect"/>). The client's name alone, which is all this
+    /// core reads, still answers <see cref="RelayReconnect.Unknown"/> for Claude Code
+    /// when a relay sent no answer.
     /// </para>
     /// </remarks>
     public UpdateHoldSnapshot Read()
@@ -350,7 +354,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         foreach (var relay in _relays.Connected())
         {
-            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, ReconnectOf(relay.ClientName)));
+            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label));
         }
 
         return new UpdateHoldSnapshot(

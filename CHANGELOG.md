@@ -831,6 +831,27 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 💥 **One BrowserAI runs in the background, and a client's `--mcp` start passes its calls to it.**
+  S a and p a, the maintainer's words verbatim: *"s a"* and *"p a"*. The Task Scheduler starts
+  `BrowserAI.exe --background` at sign-in, and nothing else starts it: a Start Menu click asks the
+  task to, and so does the start Velopack makes after an update. That one process holds every
+  session, the dashboard and the update, and ends at sign-out, at an uninstall or for an update,
+  never because it is idle. A client's `--mcp` start is a relay: it answers the handshake, the
+  tool list and `ping` itself, passes every other message to the background byte for byte, and
+  holds a call for up to 150 s while no background is there. A background that ended without a
+  clean exit is recorded as a crash, in his words *"R I like option 1 and the call response"*:
+  every call is then answered at once with when it happened and which log to read, and only a
+  Start Menu start clears it. With no crash recorded, a call held for 150 s is answered with why
+  there is no background, read from the task, which BrowserAI never changes (D12 b). A build that
+  is not installed starts no background (D11 a), and its relay says so at once, with the command
+  that starts one. The coordinator, the session host's own process, the per-server pipes and each
+  server's own update check are gone: an update waits for the sessions' and the relays' own
+  countdowns, asks every relay before it installs, installs with no window and starts BrowserAI
+  again afterwards. `RelayTests`, `BackgroundUpdatesTests`, `AfterUpdateTests` and
+  `UpdateSourceTests` hold it, each arm watched red against a defect planted for it;
+  `BackgroundProcessTests` drives the published background and its relays against a real
+  Chromium, and was not watched red.
+
 - 🔧 **The tool list comes from the binary, and no Playwright starts until a session opens.**
   The maintainer's words of 2026-10-04 verbatim: *"I'd argue that the relay always answers the
   tool list from the binary. I see no reason why it would ever defer to Playwright, as the

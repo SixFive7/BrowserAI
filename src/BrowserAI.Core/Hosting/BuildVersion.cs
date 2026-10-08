@@ -77,7 +77,7 @@ internal static class BuildVersion
     /// <b>Corrected 2026-08-17 (previously "Nothing consumes it yet; §G does, at
     /// build-order step 19").</b> The update path shipped and it consumes the
     /// rule and not this property:
-    /// <see cref="Updates.UpdateService.StartInBackground"/> calls
+    /// <c>UpdateService.StartInBackground</c> called
     /// <see cref="HasPreReleaseSuffix"/> on the version it was handed, because
     /// the suite has to be able to drive that decision with a version string
     /// this assembly was not built as. This property is the same predicate

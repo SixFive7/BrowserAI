@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using BrowserAI.App.Interop;
-using BrowserAI.Coordination;
 using BrowserAI.Registration;
 using BrowserAI.Updates;
 using Microsoft.AspNetCore.Http;
@@ -111,7 +110,7 @@ internal interface IPageSessions
 /// taken under the lock and never the fields themselves.
 /// </para>
 /// </remarks>
-internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyncDisposable, IDisposable
+internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisposable
 {
     private readonly Lock _gate = new();
     private readonly PageFacts _facts;
@@ -146,12 +145,6 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private bool _readingRegistration;
     private bool _installingNow;
     private string? _holdsSignature;
-
-    /// <summary>
-    /// The coordinator's hold on the session host, or <see langword="null"/> where
-    /// there is none: an install stops the host through it (Q366 b).
-    /// </summary>
-    internal ISessionHostHold? SessionHost { get; init; }
 
     /// <summary>
     /// What holds a downloaded update, and the person's install-now, or
@@ -688,7 +681,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         {
             // Bounded by the update's own tripwire: closing every session is each one's
             // minute at most, and then the hand-over.
-            using var bounded = new CancellationTokenSource(UpdateService.CrashTripwire, _clock);
+            using var bounded = new CancellationTokenSource(UpdateBudgets.CrashTripwire, _clock);
 
             refused = await holds.InstallNowAsync(version, bounded.Token).ConfigureAwait(false) is { } why
                 ? new PageNote(why)
@@ -779,14 +772,14 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
                 // can be given up from the page; the request itself takes no token.
                 var check = _updates.CheckAsync(cancel.Token);
                 var gaveUp = Task.Delay(Timeout.InfiniteTimeSpan, cancel.Token);
-                var outOfTime = Task.Delay(UpdateService.CrashTripwire, _clock, cancel.Token);
+                var outOfTime = Task.Delay(UpdateBudgets.CrashTripwire, _clock, cancel.Token);
                 var first = await Task.WhenAny(check, gaveUp, outOfTime).ConfigureAwait(false);
 
                 if (first != check)
                 {
                     result = cancel.IsCancellationRequested
                         ? new UpdateView(UpdateStage.NotChecked)
-                        : new UpdateView(UpdateStage.Failed, Details: $"The release feed did not answer within {UpdateService.CrashTripwire.TotalMinutes:F0} minutes.");
+                        : new UpdateView(UpdateStage.Failed, Details: $"The release feed did not answer within {UpdateBudgets.CrashTripwire.TotalMinutes:F0} minutes.");
                 }
                 else
                 {
@@ -896,21 +889,16 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     /// left once this process has gone, which is what Velopack does on every apply.
     /// </para>
     /// <para>
-    /// <b>The session host is this process's own (Q366 b)</b>, and it is stopped the
-    /// way the coordinator's own apply stops it: after the servers, through
-    /// <see cref="ISessionHostHold.StopForUpdate"/>, which has it close every
-    /// browser, waits for it to end and starts no other. Without that, the hand-over
-    /// ends this process and its job takes the host and every browser down
-    /// mid-close. An install that does not happen lets a host start again.
-    /// <i>Added 2026-10-04, the day after the session host arrived.</i>
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "The session host is this process's own
+    /// (Q366 b), and it is stopped the way the coordinator's own apply stops it ...
+    /// through ISessionHostHold.StopForUpdate")</i>: the session host went with the
+    /// coordinator when the one resident background took both their places (S a), and
+    /// the background's own install goes through its update core.
     /// </para>
     /// </remarks>
     /// <param name="candidate">What to install.</param>
     private async Task InstallAsync(UpdateCandidate candidate)
     {
-        var hold = SessionHost;
-        var holding = false;
-
         try
         {
             var running = await _sessions.ReadAsync(CancellationToken.None).ConfigureAwait(false);
@@ -920,15 +908,9 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
                 _ = await _sessions.CloseAsync(server, CancellationToken.None).ConfigureAwait(false);
             }
 
-            if (hold is not null)
-            {
-                holding = true;
-                _ = hold.StopForUpdate();
-            }
-
             // Bounded by the server's own tripwire for the same download, the bound the
             // window's install ran under.
-            using var bounded = new CancellationTokenSource(UpdateService.CrashTripwire, _clock);
+            using var bounded = new CancellationTokenSource(UpdateBudgets.CrashTripwire, _clock);
 
             await _updates.InstallAsync(candidate, bounded.Token).ConfigureAwait(false);
         }
@@ -936,11 +918,6 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            if (holding)
-            {
-                hold!.Reopen();
-            }
-
             lock (_gate)
             {
                 _update = new UpdateView(UpdateStage.InstallFailed, candidate.Version, Details: failure.Message);

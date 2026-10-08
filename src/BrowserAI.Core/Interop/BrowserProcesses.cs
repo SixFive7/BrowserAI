@@ -240,6 +240,89 @@ internal static partial class BrowserProcesses
     }
 
     /// <summary>
+    /// Holds the process at the other end of a pipe this caller is connected to, by
+    /// the pid Windows reads off the connection.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 for a relay and its background</b>: while the connection
+    /// stands, the pid Windows names as the pipe's server is that server's and cannot
+    /// have been reused, so the creation time is read off the handle opened now and
+    /// becomes the other half of the identity. Held with <c>SYNCHRONIZE</c> and the
+    /// query right and nothing else, so the relay can read the exit code a background
+    /// that crashed leaves, and can end nothing.
+    /// </remarks>
+    /// <param name="processId">The pid Windows read off the connection.</param>
+    /// <returns>The held process, or <see langword="null"/> when it could not be opened.</returns>
+    public static HeldProcess? HoldConnected(int processId)
+    {
+        var handle = OpenProcessToWaitOn(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
+
+        if (handle.IsInvalid || !GetProcessTimes(handle, out var created, out _, out _, out _))
+        {
+            handle.Dispose();
+            return null;
+        }
+
+        return new HeldProcess(processId, created, ImagePathOf(handle) ?? string.Empty, handle);
+    }
+
+    /// <summary>
+    /// Opens a process to end it, once all three halves of its identity agree: the
+    /// pid, the creation time recorded for it, and an image under a root BrowserAI
+    /// owns.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 for a person's start that finds the background hung</b>
+    /// (R, RESOLUTIONS 10): the background's record names its pid and creation time,
+    /// and its image must lie under the install root, every spelling of it, the way
+    /// <see cref="HeldUnder"/> matches a root. Anything else is refused and nothing
+    /// is opened with <c>PROCESS_TERMINATE</c> beyond this call. The candidate's
+    /// <see cref="StrayCandidate.TryTerminate"/> checks the creation time once more
+    /// before it ends anything.
+    /// </remarks>
+    /// <param name="processId">The pid the record names.</param>
+    /// <param name="createdFileTime">The creation time the record names.</param>
+    /// <param name="root">The install root its image must lie under.</param>
+    /// <param name="refusal">Why it was not opened, when it was not.</param>
+    /// <returns>The process, held with the right to end it, or <see langword="null"/>.</returns>
+    public static StrayCandidate? OpenToEnd(int processId, long createdFileTime, string root, out string? refusal)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+
+        var prefixes = ImageSpellings.OfDirectory(root).Matched
+            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
+            .ToArray();
+
+        var handle = OpenProcess(ProcessQueryLimitedInformation | ProcessTerminate, bInheritHandle: false, (uint)processId);
+
+        if (handle.IsInvalid)
+        {
+            refusal = $"pid {processId} could not be opened: {new Win32Exception(Marshal.GetLastPInvokeError()).Message}";
+            handle.Dispose();
+            return null;
+        }
+
+        if (!GetProcessTimes(handle, out var created, out _, out _, out _) || created != createdFileTime)
+        {
+            refusal = $"pid {processId} is not the process the record names: its creation time differs, so the pid has been reused";
+            handle.Dispose();
+            return null;
+        }
+
+        var path = ImagePathOf(handle);
+
+        if (path is null || !Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            refusal = $"pid {processId} runs '{path ?? "an image that could not be read"}', which is not under '{root}'";
+            handle.Dispose();
+            return null;
+        }
+
+        refusal = null;
+        return new StrayCandidate(processId, created, path, handle);
+    }
+
+    /// <summary>
     /// Holds one process this caller started, by its identity, so it can be waited
     /// on beside other handles.
     /// </summary>

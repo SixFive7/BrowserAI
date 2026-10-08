@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
@@ -144,7 +145,9 @@ internal static class HookRegistration
             ScheduledTasks.Instance,
             InstallLocation.AppId,
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
-            message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message));
+            message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message),
+            settings: InstallerSettings.Read(),
+            toastActivator: ToastActivatorStep.Apply);
 
     /// <summary>
     /// Runs one pass against a supplied image path and client seam.
@@ -187,6 +190,15 @@ internal static class HookRegistration
     /// Which clients to register with, or <see langword="null"/> for
     /// <see cref="RegistrationClient.All"/>.
     /// </param>
+    /// <param name="settings">
+    /// What the installer's environment named, read once by the caller
+    /// (<see cref="InstallerSettings.Read"/>), or <see langword="null"/> for nothing.
+    /// </param>
+    /// <param name="toastActivator">
+    /// Registers or removes the toasts' activator for an install root and says what it
+    /// did, or <see langword="null"/> to leave it alone: the suite's in-process hooks
+    /// write no class into the user's registry.
+    /// </param>
     /// <returns>What happened.</returns>
     /// <remarks>
     /// <para>
@@ -212,7 +224,9 @@ internal static class HookRegistration
         string? appId,
         bool silent = true,
         Func<string, bool>? ask = null,
-        IReadOnlyList<RegistrationClient>? clients = null)
+        IReadOnlyList<RegistrationClient>? clients = null,
+        InstallerSettings? settings = null,
+        Func<RegistrationIntent, string, string>? toastActivator = null)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(paths);
@@ -237,13 +251,32 @@ internal static class HookRegistration
 
                 RegistrationHookLog.HookRunning(logger, intent, version, imagePath ?? "<unknown>");
 
+                // ⚠️ THE BACKGROUND STOPS FIRST, AND THROUGH ITS PIPE -- 2026-10-08, S a.
+                // An uninstall asks a running background to close every session and
+                // end, never through the task's End, which would end every browser
+                // with no clean close, and waits for it within its bound before the
+                // task, the registrations and the PATH entry go.
+                if (intent is RegistrationIntent.Uninstall && RegistrationTarget.TryResolve(imagePath, out var installing, out _))
+                {
+                    var pipe = BackgroundPipe.NameFor(installing!.InstallRoot, paths.RootAppDir);
+                    var (stopped, detail) = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
+
+                    RegistrationHookLog.BackgroundStopped(logger, stopped, detail);
+                }
+
                 // ⚠️ EVERY CLIENT, AND ONE ANSWER EACH -- 2026-09-24, Q258 step 2.
                 // Each carries its own ownership read, so a foreign entry in one
                 // client's configuration refuses that client and says nothing
                 // about the other. Since 2026-10-03 the pass is one run of
                 // RegisterAI for all of them, bounded as a whole, and
                 // McpRegistrar.Apply still never throws.
-                passes = McpRegistrar.Apply(who, intent, imagePath, tool, logger);
+                // ⚠️ THE INSTALLER'S SETTINGS, AS ARGUMENTS -- 2026-10-08. A running
+                // BrowserAI reads no BROWSERAI_ variable, so the data root the
+                // installer named travels in the registration's own arguments, and
+                // the relay a client starts finds the background for that root.
+                var installed = settings ?? InstallerSettings.None;
+
+                passes = McpRegistrar.Apply(who, intent, imagePath, tool, logger, commandArguments: installed.RelayArguments);
 
                 WriteRecord(paths.RootAppDir, passes, intent, version, logger);
 
@@ -266,8 +299,19 @@ internal static class HookRegistration
                 // here costs this step its own sentence and nothing before it, and
                 // SignInTask.Apply never throws.
                 signIn = RegistrationTarget.TryResolve(imagePath, out var target, out _)
-                    ? SignInTask.Apply(intent, target!, appId, tasks, logger)
+                    ? SignInTask.Apply(intent, target!, appId, tasks, logger, SignInTask.ArgumentsFor(installed.DataRoot, installed.UpdateSource))
                     : null;
+
+                // ⚠️ THE TOASTS' ACTIVATOR -- T, decided 2026-10-08. A click on one of
+                // BrowserAI's toasts reaches a COM class registered under the user's own
+                // classes for this install's application id, which the install and
+                // update hooks register and the uninstall hook removes. It never fails
+                // a hook: a toast with no activator shows and opens nothing.
+                if (target is not null && toastActivator is not null)
+                {
+                    var activator = toastActivator(intent, target.InstallRoot);
+                    RegistrationHookLog.ToastActivator(logger, activator);
+                }
 
                 // ⚠️ LAST, AND ONLY ON AN UNINSTALL. It is the only part of a
                 // hook that may wait for a human, so everything an uninstall must
@@ -402,4 +446,17 @@ internal static partial class RegistrationHookLog
         Level = LogLevel.Information,
         Message = "User PATH: {Change}. {Detail}")]
     public static partial void PathChanged(ILogger logger, UserPathChange change, string detail);
+
+    /// <summary>What asking the background to stop came to, at an uninstall.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="outcome">How it came out.</param>
+    /// <param name="detail">A sentence for the installer's log.</param>
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Background stop: {Outcome}. {Detail}")]
+    public static partial void BackgroundStopped(ILogger logger, BackgroundStopOutcome outcome, string detail);
+
+    /// <summary>What the hook did to the toasts' activator.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="detail">A sentence for the installer's log.</param>
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Toast activator: {Detail}")]
+    public static partial void ToastActivator(ILogger logger, string detail);
 }

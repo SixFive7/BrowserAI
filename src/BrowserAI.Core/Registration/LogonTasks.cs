@@ -34,6 +34,27 @@ internal enum TaskChange
 /// <param name="Detail">A sentence for the log, naming the task.</param>
 internal sealed record TaskReport(TaskChange Change, string Detail);
 
+/// <summary>Where a task stands, read without changing it.</summary>
+internal enum ScheduledTaskState
+{
+    /// <summary>Registered and enabled.</summary>
+    Ready,
+
+    /// <summary>Registered and disabled: left so (D12 b).</summary>
+    Disabled,
+
+    /// <summary>Not registered.</summary>
+    Missing,
+
+    /// <summary>The scheduler could not be asked, or did not say.</summary>
+    Unknown,
+}
+
+/// <summary>What a read-only look at a task found.</summary>
+/// <param name="State">Where it stands.</param>
+/// <param name="Detail">The scheduler's own failure, when it could not be asked; otherwise <see langword="null"/>.</param>
+internal sealed record ScheduledTaskReading(ScheduledTaskState State, string? Detail);
+
 /// <summary>
 /// The three things BrowserAI asks of the task scheduler: register a task, remove
 /// it, and start it on demand with an argument.
@@ -229,6 +250,54 @@ internal sealed class ScheduledTasks : ILogonTasks
         });
 
         return report.Change is TaskChange.Failed ? throw new InvalidOperationException(report.Detail) : last;
+    }
+
+    /// <summary>
+    /// Where a task stands, read without changing it: a relay's question when no
+    /// background answers.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>RESOLUTIONS 9 and D12 b, settled 2026-10-08</b>: a relay never runs,
+    /// registers or enables the task. It reads whether the task is there and enabled,
+    /// and names what it found in the sentence its client gets.
+    /// </para>
+    /// <para>
+    /// <b>Measured in step 0, 2026-10-08</b>: a missing task is
+    /// <c>0x80070002</c> from <c>GetTask</c>, and a disabled one read state 1,
+    /// <c>TASK_STATE_DISABLED</c>, and <c>Enabled</c> false
+    /// ([kb](../../../kb/windows/processes.md#what-the-task-scheduler-does-with-a-second-run-a-missing-or-disabled-task-end-and-a-child-left-behind----measured-2026-10-08)).
+    /// Both are read here, so a task that says either one is disabled.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The task's name.</param>
+    /// <returns>What was found; <see cref="ScheduledTaskState.Unknown"/> with the scheduler's own failure when it could not be asked.</returns>
+    public static ScheduledTaskReading StateOf(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        ScheduledTaskReading? reading = null;
+
+        var report = Call($"read '{name}'", folder =>
+        {
+            try
+            {
+                var task = folder.GetTask(name);
+
+                reading = task.GetEnabled() is 0 || task.GetState() is TaskSchedulerInterop.StateDisabled
+                    ? new ScheduledTaskReading(ScheduledTaskState.Disabled, null)
+                    : new ScheduledTaskReading(ScheduledTaskState.Ready, null);
+
+                return new TaskReport(TaskChange.Registered, name);
+            }
+            catch (Exception failure) when (failure.HResult == TaskSchedulerInterop.NotFound)
+            {
+                reading = new ScheduledTaskReading(ScheduledTaskState.Missing, null);
+                return new TaskReport(TaskChange.Absent, name);
+            }
+        });
+
+        return reading ?? new ScheduledTaskReading(ScheduledTaskState.Unknown, report.Detail);
     }
 
     /// <summary>Runs one call against the root folder on a thread of its own.</summary>

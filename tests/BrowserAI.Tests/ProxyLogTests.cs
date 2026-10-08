@@ -127,10 +127,10 @@ internal sealed class ProxyLogTests
             .IsTrue()
             .Because("StartupLog retired id 8, the installer exit, on 2026-09-24 under Q276 a and must carry the marker line this test reads it from");
 
-        await Assert.That(retired.TryGetValue("ServerPipeLog", out var pipe) && pipe.Contains(7))
-            .IsTrue()
-            .Because("ServerPipeLog retired id 7, the every-instance-busy warning, on 2026-10-03 when a pipe was measured to have no such ceiling, and must carry the marker line this test reads it from");
-
+        // ServerPipeLog retired id 7, the every-instance-busy warning, on 2026-10-03,
+        // and was deleted with its marker and the per-server pipe on 2026-10-08 (S a).
+        // A class that no longer exists has no id left to reuse, so its control went
+        // with it.
         var reused = events
             .Where(e => retired.TryGetValue(e.Class, out var ids) && ids.Contains(e.Id))
             .Select(e => $"{e.File}({e.Line}): {e.Class}.{e.Member} uses {EventIdSpelling} {e.Id}, which that class's own"

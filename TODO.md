@@ -128,8 +128,10 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **Clearance reading 8 matches two task-name patterns only**,
       `BrowserAI.app sign-in *` and `BrowserAI.app.test *`, so a leftover
       `BrowserAI.app.test.planted` task passes unseen.
-- [ ] **`SignInStepTests`' stand-ins lack the scan-visible wait** that
-      `PlantedProcess` has.
+- [x] **`SignInStepTests`' stand-ins lack the scan-visible wait** that
+      `PlantedProcess` has. *Done by deletion 2026-10-08: the sign-in step and
+      `SignInStepTests` are deleted with the one-binary build (S a), and the task
+      starts the resident background itself.*
 - [ ] **The stuck Firefox launch is explained (safe mode), and four records
       predate the explanation**: re-verification row 34, the stuck-launch
       paragraph in `kb/playwright/provisioning-and-timings.md`, README's sentence

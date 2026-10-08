@@ -69,6 +69,20 @@ MCP client ──stdio──> BrowserAI.Server.exe ──pipe──> BrowserAI.S
                                                       coordinator's own job)
 ```
 
+⚠️ **One resident background since 2026-10-08 -- S a, the maintainer's words
+verbatim: *"s a"*.** *Added by addition; the two diagrams above are the record of the
+server and the front.* A client starts a relay, `current\BrowserAI.exe --mcp`, which
+answers the handshake and the tool list from the binary and passes every call to the
+one background of its user, install root and data root; the background holds every
+session, the tab and the update, from sign-in to sign-out, and only the Task
+Scheduler starts it. [The background and its relays](#the-background-and-its-relays-s-a)
+maps it to the code.
+
+```
+MCP client ──stdio──> BrowserAI.exe --mcp ──pipe──> BrowserAI.exe --background ──stdio──> node.exe ──> browser
+                        (a relay per client)          (one resident background)
+```
+
 **What BrowserAI is, in one sentence:** a session-lifecycle manager and reason
 logger wrapped around a verbatim Playwright pipe. Nothing sits between the two
 servers except the session system and the reason system, and
@@ -1314,7 +1328,73 @@ is `RmStartSession` → `RmRegisterResources` → `RmGetList` via
 candidate set and guarded on `ProcessStartTime`, because the Restart Manager
 answers about whatever file it is handed and is never actionable alone.
 
+## The background and its relays (S a)
+
+**Decided 2026-10-08 by the maintainer, in his words verbatim:** *"s a"*, one
+resident background per user, install root and data root, from sign-in to sign-out;
+*"p a"*, one relay per client plus that background; *"R I like option 1 and the call
+response"* and *"r ok"*, a background that ends without a clean exit is a recorded
+crash that only a person's Start Menu start clears; *"d13 a"*, a person's start goes
+through the task; *"d11 a"*, a build that is not installed starts no background;
+*"d12 b"*, a disabled task is named and left as it is. The design and every
+alternative are in [`docs/design/one-binary`](docs/design/one-binary/README.md). The
+background is the coordinator and the session host of the two sections below, made
+one process; the relay replaced the front.
+
+```
+MCP client ──stdio──> BrowserAI.exe --mcp ──pipe──> BrowserAI.exe --background ──stdio──> node.exe ──> browser
+                       (a relay per client)          (one per user, install root and data root;
+                                                       the Task Scheduler starts it, nothing else)
+```
+
+| Concern | Implemented by |
+|---|---|
+| Which job a start does: the task's start, a client's relay, one sweep, or everything else, which is a person's start, a toast's click, `--after-update` or `--report` | `src/BrowserAI/Program.cs` (`Main`, `ServesStdio`, `IsTheTasksStart`, `ServeAsync`), `src/BrowserAI.App/Program.cs` (`Run`) |
+| The background: its pipe taken first, its record, its hidden window, the one stray sweep, the sessions, the tab, the update core, and a single-threaded apartment that runs the tab's shell calls | `src/BrowserAI/Program.Background.cs` (`RunTheBackground`, `Serve`) |
+| One background per pipe name: `FILE_FLAG_FIRST_PIPE_INSTANCE`, a second start exits; the name keyed to the install root and the data root | `src/BrowserAI/Background/BackgroundServer.cs`, `src/BrowserAI.Core/Coordination/BackgroundPipe.cs` (`NameFor`), `src/BrowserAI.Core/Hosting/RootKey.cs` |
+| What a connection is: a relay's greeting judged against the build, the data root and whether an update is installing; a person's `browserai/show`; the uninstall hook's `browserai/stop` | `BackgroundServer.ConverseAsync`, `Judge`, `AnswerShowAsync`; `src/BrowserAI/Background/BackgroundVerbs.cs` |
+| A relay's MCP traffic passed to the session host, and BrowserAI's own messages taken out of it: activity, a withdrawn yes, answers to the background's questions; the calls in flight counted | `src/BrowserAI/Background/RelayLink.cs` |
+| Every relay, as the update core reads it: countdown, call in flight, the reconnect the relay judged, and the agreement's question, call-off and end | `src/BrowserAI/Background/RelayRoster.cs` (`IUpdateRelays`) |
+| The sessions as the update core reads them, and the page's sessions from memory | `src/BrowserAI/Background/BackgroundSessions.cs`, `BackgroundPageSessions.cs` |
+| The crash record: written at start, marked at a clean end (stop, update, sign-out, the Task Scheduler's End), the exit a relay saw written into it | `src/BrowserAI.Core/Coordination/BackgroundRecord.cs` |
+| `WM_QUERYENDSESSION`, `WM_ENDSESSION` and the End command's `WM_CLOSE`, heard on a hidden top-level window of its own thread | `src/BrowserAI/Interop/SessionEndWindow.cs` |
+| The relay: the handshake, the tool list and `ping` from the binary; calls held for a background, passed byte for byte, and answered in its place; the hang probe; the activity countdown; the update agreement's relay half | `src/BrowserAI/Program.Relay.cs`, `src/BrowserAI/Relay/RelayEngine*.cs`, `RelayErrors.cs`, `RelayProtocol.cs`, `SdkHandshake.cs` |
+| Why there is no background, read and never repaired: the updater running, the record, the build not installed, the task's state | `src/BrowserAI/Relay/BackgroundFinder.cs`, `ScheduledTasks.StateOf` in `src/BrowserAI.Core/Registration/LogonTasks.cs` |
+| What a client needs after an update, judged by the relay from what it observes (option d, behind `ReadsTheParent`) | `src/BrowserAI/Relay/ClientRecognition.cs` |
+| Q261 b's stale-list refusal, which is the relay's: the background's proxy never refuses a relay's first call | `BrowserProxy.ListsThroughTheRelay`, called by `BackgroundServer` |
+| A person's start: `show` with its bound, the task run and registered again from the definition the hooks saved, a recorded crash cleared, a hung background ended by its verified pid | `src/BrowserAI.App/PersonStart.cs`, `src/BrowserAI.Core/Coordination/BackgroundClient.cs`, `BrowserProcesses.OpenToEnd` |
+| The task: the background's arguments, `IgnoreNew`, the description, the saved definition | `src/BrowserAI.Core/Registration/SignInTask.cs` (`ArgumentsFor`, `DefinitionFor`, `SavedDefinition`, `Apply`) |
+| The hooks' one read of the installer's environment, written as arguments into the task's action and the registrations | `src/BrowserAI.Core/Registration/InstallerSettings.cs`, `HookRegistration.Run` |
+| An uninstall stopping the background through its pipe and waiting, never through the task's End | `src/BrowserAI.Core/Coordination/BackgroundStop.cs`, called by `HookRegistration.Run` |
+| The toasts' activator registered and removed by the hooks | `src/BrowserAI.Core/Registration/ToastActivatorStep.cs` |
+| The update core, the toasts and the update page wired into the background | `Program.Background.Serve`: `BackgroundUpdates`, `UpdateToasts.ForThisProcess` through `DeferredUpdateHolds`, `PageService.Holds` and `Changelog` |
+
+**Deleted with it, 2026-10-08:** the in-process server in `Program.cs`, the front and
+the session host's mode in `Program.Host.cs`, `SessionHostAccess`,
+`SessionHostKeeper`, `SessionHostServer`, `CoordinatorWake`, the coordinator's pipe
+and client (`CoordinatorPipe`, `CoordinatorClient`, `CoordinatorStart`), its loop and
+sign-in step (`CoordinatorLoop`, `SignInStep`), the per-server pipes (`ServerPipe`,
+`ServerPipeClient`, `ServerPipeResponder`), the census page sessions' reading, the
+foreground grant, and `UpdateService`, a server's own update lane, whose four budgets
+moved to `UpdateBudgets` and whose log records to `UpdateLog`.
+
+**The arms.** `RelayTests` drive the relay in process against hand-written
+backgrounds; `BackgroundUpdatesTests`, `AfterUpdateTests` and `UpdateSourceTests` the
+update core; `BackgroundProcessTests` the published background and relays against a
+real Chromium, a relay killed the way Codex ends a server and one whose input ended,
+each session kept and taken over, and a background whose death takes every child with
+it and leaves every relay answering with the crash at once. The harness starts a
+background beside every published relay it starts, in the relay's own job and on a
+pipe of its own (`tests/BrowserAI.Tests/Harness/PublishedBackground.cs`), the way D11 a
+says a developer does.
+
 ## The session host (Q366 b)
+
+⚠️ **Replaced 2026-10-08 by [the background and its relays](#the-background-and-its-relays-s-a)**,
+by addition: the session host and the coordinator are one process now, the front is
+the relay, and every row of the table below names code that was deleted that day or
+that the background took over. The section stays as the record of option c.
+
 
 **Decided 2026-10-03 by the maintainer, in his words verbatim:** *"Q366 b - lets go
 with a fully build option c. If the server crashes and the coordinator loses the

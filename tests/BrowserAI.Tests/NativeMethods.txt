@@ -43,6 +43,10 @@
 // check (F4 a) hands GetLastInputInfo, which Windows refuses unless cbSize is set,
 // and whose dwTime is the whole of what the check reads.
 //
+// AND WNDCLASSEXW AND MSG SINCE 2026-10-08, added by addition: the class and the
+// message of the background's hidden top-level window, the one window it keeps so
+// that a sign-out, a shutdown and the Task Scheduler's End reach it (S a).
+//
 // AND TWO MORE COM INTERFACES SINCE 2026-10-08, added by addition: the update
 // toast's activator, INotificationActivationCallback, and the class factory COM
 // asks it for, IClassFactory, which the product declares by hand through
@@ -61,6 +65,8 @@ JOBOBJECT_BASIC_LIMIT_INFORMATION
 JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 TOKEN_USER
 LASTINPUTINFO
+WNDCLASSEXW
+MSG
 ITaskService
 ITaskFolder
 IRegisteredTask

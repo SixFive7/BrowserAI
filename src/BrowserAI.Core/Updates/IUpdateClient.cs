@@ -19,7 +19,7 @@ namespace BrowserAI.Updates;
 /// <b>It is deliberately four members.</b> Every one of them is a place Velopack
 /// is touched, and a fifth would mean a fifth thing the suite cannot see. The
 /// timers, the gate, the channel and the decision to apply are all on this side
-/// of the seam, in <see cref="UpdateService"/>, where they are ordinary code.
+/// of the seam, in <c>UpdateService</c>, where they are ordinary code.
 /// </para>
 /// </remarks>
 internal interface IUpdateClient

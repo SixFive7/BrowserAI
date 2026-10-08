@@ -77,24 +77,27 @@ internal sealed class AppBinaryTests
 
     /// <summary>
     /// The argument chooses what a start of the one executable does, and a start
-    /// with no argument never serves stdio.
+    /// with no argument never serves stdio and never becomes the background.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>D7 a, 2026-10-08.</b> The server half runs for <c>--mcp</c>, a client's
-    /// registration; for <c>--host</c> with a pipe, the session host the
-    /// coordinator starts; and for <c>--sweep</c>, a kb re-verification row's one
-    /// pass. Every other start is the configuration app's: no argument (the Start
-    /// Menu, <c>Setup.exe</c> after a non-silent install, a double-click),
-    /// <c>--sessions</c>, <c>--report</c>, the logon task's <c>--sign-in</c>. The
-    /// windowless file reads end of input at once when it is started with no
-    /// handles, measured 6 of 6 on 2026-10-04, so a start with no argument may never
-    /// be a server.
+    /// <b>D7 a and S a, 2026-10-08.</b> Stdio is served for <c>--mcp</c>, a client's
+    /// relay, and for <c>--sweep</c>, a kb re-verification row's one pass. The
+    /// background runs for <c>--background</c>, the task's start, and for the three
+    /// arguments a task registered before that day still passes: <c>--sign-in</c>,
+    /// <c>--coordinate</c> and <c>--start-host</c>. Every other start is the
+    /// configuration app's: no argument (the Start Menu, <c>Setup.exe</c> after a
+    /// non-silent install, a double-click), <c>--sessions</c>, <c>--update</c>,
+    /// <c>--changelog</c>, <c>--report</c>, <c>--after-update</c>. The windowless file
+    /// reads end of input at once when it is started with no handles, measured 6 of 6
+    /// on 2026-10-04, so a start with no argument may never be a relay.
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-08</b> with <c>ServesStdio</c> answering
-    /// <see langword="true"/> for a start with no argument, the shape the server
-    /// had while it was its own file.
+    /// <see langword="true"/> for a start with no argument, the shape the server had
+    /// while it was its own file; and again with <c>IsTheTasksStart</c> answering
+    /// <see langword="false"/> for <c>--sign-in</c>, which would make the sign-in start
+    /// of a task registered before the update a person's start, opening a tab.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -102,18 +105,26 @@ internal sealed class AppBinaryTests
     public async Task TheArgumentChoosesTheModeAndNoArgumentIsAPersonsStart()
     {
         await Assert.That(Program.ServesStdio([Program.McpArgument])).IsTrue();
-        await Assert.That(Program.ServesStdio([Program.McpArgument, Program.RelayArgument, @"\\.\pipe\x"])).IsTrue();
-        await Assert.That(Program.ServesStdio([Program.HostArgument, @"\\.\pipe\x"])).IsTrue();
+        await Assert.That(Program.ServesStdio([Program.McpArgument, Program.DataRootArgument, @"C:\root"])).IsTrue();
         await Assert.That(Program.ServesStdio([Program.SweepArgument])).IsTrue();
 
         await Assert.That(Program.ServesStdio([])).IsFalse();
         await Assert.That(Program.ServesStdio(["--sessions"])).IsFalse();
         await Assert.That(Program.ServesStdio(["--report", "report.json"])).IsFalse();
-        await Assert.That(Program.ServesStdio(["--sign-in", "$(Arg0)"])).IsFalse();
         await Assert.That(Program.ServesStdio(["--write-address", "address.txt"])).IsFalse();
+        await Assert.That(Program.ServesStdio([Program.BackgroundArgument])).IsFalse();
 
-        // A pipe name with no argument before it is not the host's mode.
-        await Assert.That(Program.ServesStdio([Program.HostArgument])).IsFalse();
+        // The session host's mode went with the coordinator.
+        await Assert.That(Program.ServesStdio(["--host", @"\\.\pipe\x"])).IsFalse();
+
+        await Assert.That(Program.IsTheTasksStart([Program.BackgroundArgument, Program.StartedByArgument, "$(Arg0)"])).IsTrue();
+        await Assert.That(Program.IsTheTasksStart([Program.LegacySignInArgument, "$(Arg0)"])).IsTrue();
+        await Assert.That(Program.IsTheTasksStart([Program.LegacyCoordinateArgument, "$(Arg0)"])).IsTrue();
+        await Assert.That(Program.IsTheTasksStart([Program.LegacyStartHostArgument, "$(Arg0)"])).IsTrue();
+
+        await Assert.That(Program.IsTheTasksStart([])).IsFalse();
+        await Assert.That(Program.IsTheTasksStart(["--sessions"])).IsFalse();
+        await Assert.That(Program.IsTheTasksStart([Program.McpArgument])).IsFalse();
     }
 
     /// <summary>
@@ -151,7 +162,8 @@ internal sealed class AppBinaryTests
         // Every mode that serves stdio is started, and so is anything that is not
         // the published binary.
         await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, PublishedSlice.Mcp)).IsNull();
-        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, [Program.HostArgument, @"\\.\pipe\x"])).IsNull();
+        // The session host's mode went with the coordinator, so it is refused too.
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, ["--host", @"\\.\pipe\x"])).IsNotNull();
         await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, [Program.SweepArgument])).IsNull();
         await Assert.That(RawStdioClient.RefusalFor(Path.Combine(Environment.SystemDirectory, "cmd.exe"), [])).IsNull();
 

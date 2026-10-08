@@ -762,288 +762,37 @@ internal sealed class UpdateTests
 
     // ---- The service ---------------------------------------------------------
 
-    /// <summary>An update is downloaded, staged and NOT applied when something else is live.</summary>
-    [Test]
-    public async Task AnUpdateIsStagedButNotAppliedWhileAnotherInstanceIsLive()
-    {
-        using var scratch = ScratchDirectory.Create("update-staged");
-        var paths = new LocalAppDataPaths(scratch.Path);
+    // RETIRED 2026-10-08: AnUpdateIsStagedButNotAppliedWhileAnotherInstanceIsLive, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-        using var other = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+    // RETIRED 2026-10-08: AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        var client = new ScriptedUpdateClient();
-        var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
+    // RETIRED 2026-10-08: TheStagedLineSaysHowManyItIsWaitingOnAndWhatWasAlreadyFetched, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        var outcome = await service.RunOnceAsync(CancellationToken.None);
+    // RETIRED 2026-10-08: AloneTheSamePassAppliesAndAsksForShutdownRatherThanExiting, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        await Assert.That(outcome).IsEqualTo(UpdateOutcome.StagedButNotAlone);
-        await Assert.That(client.Downloads).IsEqualTo(1);
-        await Assert.That(client.Applies).IsEqualTo(0);
-        await Assert.That(shutdowns).IsEqualTo(0);
-    }
+    // RETIRED 2026-10-08: AStagedUpdateThatIsBlockedWakesTheCoordinatorAndNoOtherOutcomeDoes, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-    /// <summary>
-    /// An <b>undetermined</b> census stages the update and applies nothing --
-    /// byte for byte the outcome a <b>not alone</b> census produces.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Asserted through <see cref="UpdateService"/> and not through
-    /// <see cref="LiveInstances.AmIAlone"/>'s signature, because the signature is
-    /// not what the maintainer's instruction was about.</b> The requirement was
-    /// that the updater keep treating <c>Undetermined</c> exactly as it treats
-    /// <c>NotAlone</c>, and only the service can be asked that: it is the one
-    /// consumer, and every assertion below is on what it <i>did</i> -- one
-    /// download, zero applies, no shutdown request.
-    /// </para>
-    /// <para>
-    /// <b>The census is asserted to be undetermined first, so this cannot pass
-    /// for the wrong reason.</b> Without that line an implementation that
-    /// answered <c>NotAlone</c> here -- the pre-widening behaviour -- would produce
-    /// an identical result and the test would report a property it never checked.
-    /// </para>
-    /// </remarks>
-    [Test]
-    public async Task AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes()
-    {
-        using var scratch = ScratchDirectory.Create("update-undetermined");
-        var paths = new LocalAppDataPaths(scratch.Path);
+    // RETIRED 2026-10-08: NothingOnOfferIsAQuietPass, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+    // RETIRED 2026-10-08: AFeedThatThrowsDoesNotTakeTheProcessWithIt, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        // Left the set: this process is no longer a member of the thing it is
-        // being asked about, which is undetermined and is not "not alone".
-        mine!.Dispose();
-        await Assert.That(mine.Census().State).IsEqualTo(Liveness.Undetermined);
-
-        var client = new ScriptedUpdateClient();
-        var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
-
-        var outcome = await service.RunOnceAsync(CancellationToken.None);
-
-        await Assert.That(outcome).IsEqualTo(UpdateOutcome.StagedButNotAlone);
-        await Assert.That(client.Downloads).IsEqualTo(1);
-        await Assert.That(client.Applies).IsEqualTo(0);
-        await Assert.That(shutdowns).IsEqualTo(0);
-    }
-
-    /// <summary>
-    /// The staged-but-not-applied line says what it is waiting on and how far in
-    /// it got.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-08-20, and the line it asserts replaced one that said
-    /// only "another BrowserAI is running out of this install".</b> That read the
-    /// same whether one peer was up or forty, and read the same again when the
-    /// census could not be taken at all -- which is not a wait but a permanent
-    /// block. Whoever finds this line in a log has to act differently in those
-    /// two cases, so the line has to distinguish them.
-    /// </para>
-    /// <para>
-    /// <b>Both arms are here and not one.</b> A version that hard-coded a
-    /// count would satisfy the first and fail the second, and one that printed
-    /// the census enum would satisfy neither.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheStagedLineSaysHowManyItIsWaitingOnAndWhatWasAlreadyFetched()
-    {
-        using var scratch = ScratchDirectory.Create("update-staged-says-why");
-        var paths = new LocalAppDataPaths(scratch.Path);
-
-        using var provider = new CapturingLoggerProvider();
-
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-        using var other = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        _ = await new UpdateService(
-            new ScriptedUpdateClient(),
-            mine,
-            provider.CreateLogger("BrowserAI.Updates"),
-            () => { },
-            new RecordedWake()).RunOnceAsync(CancellationToken.None);
-
-        // One peer, counted and not implied, and the package the apply is no
-        // longer waiting on.
-        await Assert.That(provider.Logged("at least 1 other BrowserAI process(es) are running")).IsTrue();
-        await Assert.That(provider.Logged("112.4 MB was fetched in")).IsTrue();
-        await Assert.That(provider.Logged("Nothing more has to be downloaded")).IsTrue();
-
-        // And the other arm: a census that could not be taken is a permanent
-        // block and not a queue, and the line says so and says why.
-        using var undetermined = new CapturingLoggerProvider();
-        var lost = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        lost!.Dispose();
-
-        await Assert.That(lost.Census().State).IsEqualTo(Liveness.Undetermined);
-
-        _ = await new UpdateService(
-            new ScriptedUpdateClient(),
-            lost,
-            undetermined.CreateLogger("BrowserAI.Updates"),
-            () => { },
-            new RecordedWake()).RunOnceAsync(CancellationToken.None);
-
-        await Assert.That(undetermined.Logged("the census could not be taken, so solitude cannot be proven")).IsTrue();
-        await Assert.That(undetermined.Logged("at least")).IsFalse();
-    }
-
-    /// <summary>Alone, the same pass applies and asks the process to end.</summary>
-    /// <remarks>
-    /// <b>It asks and does not exit.</b> <c>Update.exe</c> is waiting on this
-    /// pid and will not swap <c>current\</c> until it is gone, so the ordinary
-    /// shutdown has to run first -- the session locks release, the job objects
-    /// close, the log flushes. An <c>Environment.Exit</c> here would skip all
-    /// three.
-    /// </remarks>
-    [Test]
-    public async Task AloneTheSamePassAppliesAndAsksForShutdownRatherThanExiting()
-    {
-        using var scratch = ScratchDirectory.Create("update-applies");
-        var paths = new LocalAppDataPaths(scratch.Path);
-
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        var client = new ScriptedUpdateClient();
-        var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
-
-        var outcome = await service.RunOnceAsync(CancellationToken.None);
-
-        await Assert.That(outcome).IsEqualTo(UpdateOutcome.Applying);
-        await Assert.That(client.Applies).IsEqualTo(1);
-        await Assert.That(shutdowns).IsEqualTo(1);
-    }
-
-    /// <summary>
-    /// A package staged while another instance is live wakes the coordinator, once;
-    /// an undetermined census does the same; applying alone and finding nothing wake
-    /// nobody.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q283 a, the maintainer's words verbatim: <i>"Q283 a"</i>.</b> A server whose
-    /// update is staged and blocked starts the per-user logon task, or sends the
-    /// serving coordinator a recheck, so a coordinator outside the client's process
-    /// tree applies once the install is idle. The wake itself is
-    /// <see cref="CoordinatorWakeTests"/>'s; this is the lane asking for it.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AStagedUpdateThatIsBlockedWakesTheCoordinatorAndNoOtherOutcomeDoes()
-    {
-        using var scratch = ScratchDirectory.Create("update-wake");
-        var paths = new LocalAppDataPaths(scratch.Path);
-
-        using (var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance))
-        using (LiveInstances.Join(paths.RootAppDir, NullLogger.Instance))
-        {
-            var wake = new RecordedWake();
-
-            await Assert.That(await new UpdateService(new ScriptedUpdateClient(), mine, NullLogger.Instance, () => { }, wake).RunOnceAsync(CancellationToken.None))
-                .IsEqualTo(UpdateOutcome.StagedButNotAlone);
-            await Assert.That(wake.Wakes).IsEqualTo(1);
-        }
-
-        var lost = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        lost!.Dispose();
-
-        var undetermined = new RecordedWake();
-
-        await Assert.That(await new UpdateService(new ScriptedUpdateClient(), lost, NullLogger.Instance, () => { }, undetermined).RunOnceAsync(CancellationToken.None))
-            .IsEqualTo(UpdateOutcome.StagedButNotAlone);
-        await Assert.That(undetermined.Wakes).IsEqualTo(1);
-
-        using var alone = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        var applying = new RecordedWake();
-
-        await Assert.That(await new UpdateService(new ScriptedUpdateClient(), alone, NullLogger.Instance, () => { }, applying).RunOnceAsync(CancellationToken.None))
-            .IsEqualTo(UpdateOutcome.Applying);
-        await Assert.That(applying.Wakes).IsEqualTo(0);
-
-        var nothing = new RecordedWake();
-
-        await Assert.That(await new UpdateService(new ScriptedUpdateClient { Candidate = null }, alone, NullLogger.Instance, () => { }, nothing).RunOnceAsync(CancellationToken.None))
-            .IsEqualTo(UpdateOutcome.NothingToDo);
-        await Assert.That(nothing.Wakes).IsEqualTo(0);
-    }
-
-    /// <summary>Nothing on offer is not a failure, and nothing is asked of the process.</summary>
-    [Test]
-    public async Task NothingOnOfferIsAQuietPass()
-    {
-        using var scratch = ScratchDirectory.Create("update-nothing");
-        var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        var client = new ScriptedUpdateClient { Candidate = null };
-        var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
-
-        await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.NothingToDo);
-        await Assert.That(shutdowns).IsEqualTo(0);
-    }
-
-    /// <summary>A failing feed is a log line and nothing else.</summary>
-    /// <remarks>
-    /// A 404 is what an unpublished channel returns as well as what a
-    /// misconfigured URL returns, so nothing here treats one as an alarm. What
-    /// matters is that BrowserAI keeps serving.
-    /// </remarks>
-    [Test]
-    public async Task AFeedThatThrowsDoesNotTakeTheProcessWithIt()
-    {
-        using var scratch = ScratchDirectory.Create("update-failing");
-        var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        var client = new ScriptedUpdateClient { CheckFailure = new HttpRequestException("404") };
-        var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
-
-        await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.Failed);
-        await Assert.That(shutdowns).IsEqualTo(0);
-    }
-
-    /// <summary>
-    /// The stall timer is reset by progress, so a slow-but-moving download is
-    /// not aborted.
-    /// </summary>
-    /// <remarks>
-    /// <b>This is the assertion the three-timer design exists for.</b> A stall
-    /// timer that is not reset by the thing it watches is an absolute timeout
-    /// wearing a second name -- and against a large package on a slow link that
-    /// is the difference between an update that lands and one that never can.
-    /// The double's <c>FullPackageSize</c> is 112.4 MB, which is what the
-    /// 30-minute budget carries at ~500 kbit/s and not a measured package
-    /// size (the real one is <b>49,050,382 bytes</b>): the double is
-    /// deliberately larger than life, because a stall timer has to hold for the
-    /// worst package this design admits and not for today's.
-    /// The double reports progress at intervals longer than a test can wait
-    /// for the real 60 s budget, so what is asserted is the reset itself: a
-    /// download that reports progress repeatedly completes, and the pass gets to
-    /// the apply.
-    /// </remarks>
-    [Test]
-    public async Task ProgressResetsTheStallTimerSoASlowButMovingDownloadSurvives()
-    {
-        using var scratch = ScratchDirectory.Create("update-stall");
-        var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        var client = new ScriptedUpdateClient { ProgressSteps = 40, DelayPerStep = TimeSpan.FromMilliseconds(25) };
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => { }, new RecordedWake());
-
-        await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.Applying);
-        await Assert.That(client.ProgressReported).IsEqualTo(40);
-    }
+    // RETIRED 2026-10-08: ProgressResetsTheStallTimerSoASlowButMovingDownloadSurvives, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
     /// <summary>
     /// The three budgets are ordered, and the tripwire is outside the other two
@@ -1058,24 +807,24 @@ internal sealed class UpdateTests
     [Test]
     public async Task TheOuterDeadlineIsATripwireRatherThanASecondBudget()
     {
-        await Assert.That(UpdateService.StallBudget).IsLessThan(UpdateService.AbsoluteBudget);
-        await Assert.That(UpdateService.CrashTripwire).IsGreaterThan(UpdateService.AbsoluteBudget + UpdateService.StallBudget);
+        await Assert.That(UpdateBudgets.StallBudget).IsLessThan(UpdateBudgets.AbsoluteBudget);
+        await Assert.That(UpdateBudgets.CrashTripwire).IsGreaterThan(UpdateBudgets.AbsoluteBudget + UpdateBudgets.StallBudget);
 
         // ⚠️ AND THE CHECK IS INSIDE IT TOO, added 2026-09-24. This is the
         // arithmetic the tripwire's own remarks claim, and until the check had a
         // budget it was FALSE: 30 minutes of unbounded check plus a 30-minute
         // download is 60 against a 45-minute tripwire, so a pass in which every
         // timer behaved could reach the deadline that exists to prove one did not.
-        await Assert.That(UpdateService.CheckBudget + UpdateService.AbsoluteBudget)
-            .IsLessThanOrEqualTo(UpdateService.CrashTripwire)
+        await Assert.That(UpdateBudgets.CheckBudget + UpdateBudgets.AbsoluteBudget)
+            .IsLessThanOrEqualTo(UpdateBudgets.CrashTripwire)
             .Because("the tripwire says reaching it means an inner timer failed; that is only true while the inner timers fit inside it");
 
         // And the budgets record is the product's own four and nothing else, so a
         // test that scales them is scaling what ships.
-        await Assert.That(UpdateBudgets.Default.Check).IsEqualTo(UpdateService.CheckBudget);
-        await Assert.That(UpdateBudgets.Default.Absolute).IsEqualTo(UpdateService.AbsoluteBudget);
-        await Assert.That(UpdateBudgets.Default.Stall).IsEqualTo(UpdateService.StallBudget);
-        await Assert.That(UpdateBudgets.Default.Tripwire).IsEqualTo(UpdateService.CrashTripwire);
+        await Assert.That(UpdateBudgets.Default.Check).IsEqualTo(UpdateBudgets.CheckBudget);
+        await Assert.That(UpdateBudgets.Default.Absolute).IsEqualTo(UpdateBudgets.AbsoluteBudget);
+        await Assert.That(UpdateBudgets.Default.Stall).IsEqualTo(UpdateBudgets.StallBudget);
+        await Assert.That(UpdateBudgets.Default.Tripwire).IsEqualTo(UpdateBudgets.CrashTripwire);
     }
 
     /// <summary>
@@ -1145,48 +894,9 @@ internal sealed class UpdateTests
         await Assert.That(Notice).StartsWith(VelopackStartup.NotInstalledNotice);
     }
 
-    /// <summary>A process going down abandons the pass without reporting a failure.</summary>
-    [Test]
-    public async Task ShutdownAbandonsThePassQuietly()
-    {
-        using var scratch = ScratchDirectory.Create("update-shutdown");
-        var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-
-        using var stopping = new CancellationTokenSource();
-        var client = new ScriptedUpdateClient { ProgressSteps = 200, DelayPerStep = TimeSpan.FromMilliseconds(20) };
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => { }, new RecordedWake());
-
-        var pass = service.RunOnceAsync(stopping.Token);
-
-        // ⚠️ Cancelled on the EVENT that the download really started, not after a
-        // guess at how long starting takes.
-        //
-        // Corrected 2026-08-18 (previously `await Task.Delay(80)`). Eighty
-        // milliseconds against a scripted pass of 200 × 20 ms assumed the pass
-        // would still be running when the cancel landed; at unbounded suite
-        // parallelism that delay can overshoot the whole four seconds, the pass
-        // then COMPLETES, and this test fails claiming the product applied an
-        // update during shutdown. The first reported progress step is the
-        // observable that says the download is under way, and it cannot be
-        // reached late relative to itself.
-        var waited = System.Diagnostics.Stopwatch.StartNew();
-
-        while (client.ProgressReported is 0)
-        {
-            if (waited.Elapsed > TestDefaults.InProcessHang)
-            {
-                throw new TimeoutException("The scripted download never reported a step, so there was no pass in flight to cancel.");
-            }
-
-            await Task.Delay(5);
-        }
-
-        await stopping.CancelAsync();
-
-        await Assert.That(await pass).IsEqualTo(UpdateOutcome.NothingToDo);
-        await Assert.That(client.Applies).IsEqualTo(0);
-    }
+    // RETIRED 2026-10-08: ShutdownAbandonsThePassQuietly, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
     // ---- The single lines, each of which survived its own deletion green -----
 
@@ -1446,6 +1156,14 @@ internal sealed class UpdateTests
     /// moves with <c>--installto</c>, and the uninstall hook would then offer to
     /// delete a directory the running product never used.
     /// </para>
+    /// <para>
+    /// <b>The override arrives as an argument too, since 2026-10-08.</b> The install
+    /// and update hooks read the installer's environment once and write it into the
+    /// task's action and every registration as <c>--data-root</c>, and both
+    /// <c>Program</c>s read that argument into the same <c>overridden</c> local the
+    /// variable fills when there is none. It is still the override and nothing else,
+    /// and the scan reads it the same way.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1554,192 +1272,8 @@ internal sealed class UpdateTests
     /// </summary>
     private const string Composition = "new LocalAppDataPaths(";
 
-    /// <summary>
-    /// A check that never answers ends on the CHECK budget and is reported as a
-    /// check timeout, not as the tripwire firing.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The maintainer's decision, 2026-09-24, verbatim:</b> <i>"Wrap the check
-    /// in its own timer. So all three timers sit in the tripwire's time."</i>
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>WHAT WAS BROKEN WAS THE ATTRIBUTION, not only the bound.</b>
-    /// Velopack's <c>CheckForUpdatesAsync()</c> takes no
-    /// <see cref="CancellationToken"/>, so a stalled manifest fetch ended on
-    /// Velopack's own 30-minute <c>HttpClient.Timeout</c> by throwing
-    /// <c>TaskCanceledException</c> -- which is an
-    /// <see cref="OperationCanceledException"/>, so the one log line that means
-    /// <i>this is a defect in our own timers</i> was also the line an ordinary
-    /// network timeout produced. <b>Planted red 2026-09-24</b> against the
-    /// unfixed service, where this arm saw <c>TripwireFired</c>, event 11, at the
-    /// tripwire's own budget.
-    /// </para>
-    /// <para>
-    /// <b>The durations are the product's, divided.</b>
-    /// <c>UpdateBudgets.Scaled</c> takes all four by the same factor, so this arm
-    /// runs against the product's own arithmetic -- check plus absolute inside the
-    /// tripwire -- and not against four numbers written here. Every assertion
-    /// below is expressed in those scaled values, so a change to
-    /// <c>CheckBudget</c> or <c>CrashTripwire</c> carries into this test instead
-    /// of leaving it asserting a number that used to be right.
-    /// </para>
-    /// <para>
-    /// <b>The bound on the elapsed time is a hang detector</b>: it asks only that
-    /// the pass ended before the TRIPWIRE could have, which is the whole claim --
-    /// that the check is bounded by something smaller than the outer deadline.
-    /// Nothing here asserts promptness.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>THE FACTOR WAS 4,500 AND IT MADE THIS A PROMPTNESS TEST BY
-    /// ACCIDENT -- corrected 2026-09-24 (previously "4,500 takes the product's
-    /// 15 / 30 / 1 / 45 minutes to 200 ms / 400 ms / 13 ms / 600 ms").</b> At
-    /// that factor the tripwire is 600 ms, which is smaller than the scheduling
-    /// noise of a machine running the whole suite: the arm passed every filtered
-    /// run and went <b>red in the first full two-shell gate it met</b>, at
-    /// <b>1,054 ms against 600 ms</b>, with every other assertion in it green --
-    /// the budget fired, event 21 was logged and event 11 was not. <b>The claim
-    /// was never wrong and the instrument could not make it.</b> At 450 the same
-    /// four numbers are 2 s / 4 s / 133 ms / 6 s, the orderings are still the
-    /// product's own because one factor divides all four, and an 850 ms overshoot
-    /// is a seventh of the bound instead of double it. <b>Watched red at the new
-    /// factor</b> with the check budget parked above the tripwire: the pass ran
-    /// <b>7.4 s</b>, to the tripwire and past it, and the arm went red on the
-    /// attribution assertion -- event 21 absent -- with the elapsed bound behind
-    /// it. That is the ordering this arm wants, because <i>the check budget did
-    /// not fire</i> is the finding and <i>it took too long</i> is the symptom.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo()
-    {
-        // 450 takes the product's 15 / 30 / 1 / 45 minutes to 2 s / 4 s / 133 ms /
-        // 6 s. One factor, so the orderings the service depends on are the
-        // product's own -- and the smallest of the four has to stay above this
-        // machine's scheduling noise under a full run, which 4,500 did not.
-        var budgets = UpdateBudgets.Default.Scaled(450);
+    // RETIRED 2026-10-08: ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo, which drove UpdateService, a server's own
+    // update lane. The lane went with the in-process server when the one resident
+    // background took its place (S a); BackgroundUpdates is the only update core.
 
-        using var scratch = ScratchDirectory.Create("check-budget");
-        var paths = new LocalAppDataPaths(scratch.Path);
-
-        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
-        using var capture = new CapturingLoggerProvider();
-
-        var client = new NeverAnsweringUpdateClient();
-        var service = new UpdateService(client, mine, capture.CreateLogger("BrowserAI.Update"), () => { }, new RecordedWake(), budgets);
-
-        var clock = System.Diagnostics.Stopwatch.StartNew();
-        var outcome = await service.RunOnceAsync(CancellationToken.None);
-
-        clock.Stop();
-
-        await Assert.That(outcome).IsEqualTo(UpdateOutcome.Failed);
-
-        // ⚠️ THE PRECONDITION. A client whose check returned would end the pass
-        // for a different reason and every assertion below would be about
-        // nothing.
-        await Assert.That(client.Checks).IsEqualTo(1);
-        await Assert.That(client.Downloads).IsEqualTo(0);
-
-        // The attribution, which is the change.
-        await Assert.That(capture.Records.Any(record => record.EventId.Id is 21))
-            .IsTrue()
-            .Because("a check that outran its own budget logs UpdateLog.CheckTimedOut, event 21");
-
-        await Assert.That(capture.Records.Any(record => record.EventId.Id is 11))
-            .IsFalse()
-            .Because("event 11 is TripwireFired and means the inner timers did not fire; a check timeout is not that");
-
-        // And the bound: ended before the tripwire could have, which is the claim.
-        await Assert.That(clock.Elapsed)
-            .IsLessThan(budgets.Tripwire)
-            .Because("the check is bounded by CheckBudget, which is smaller than CrashTripwire; reaching the tripwire would mean it is not");
-    }
-
-    /// <summary>A client whose check never answers, which is the shape Velopack can produce.</summary>
-    /// <remarks>
-    /// <b>It ignores the token on purpose</b>, because that is what Velopack does:
-    /// <c>CheckForUpdatesAsync()</c> takes none, so a token handed to
-    /// <c>CheckAsync</c> is inert past the point where it is passed on. A probe
-    /// that honoured cancellation would be testing a seam the product does not
-    /// have.
-    /// </remarks>
-    private sealed class NeverAnsweringUpdateClient : IUpdateClient
-    {
-        public string ManifestUrl => "file:///never-answers/releases.win.json";
-
-        public int Checks { get; private set; }
-
-        public int Downloads { get; private set; }
-
-        public Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken)
-        {
-            Checks++;
-
-            return new TaskCompletionSource<UpdateCandidate?>().Task;
-        }
-
-        public Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken)
-        {
-            Downloads++;
-            return Task.CompletedTask;
-        }
-
-        public void ApplyAfterThisProcessExits(UpdateCandidate candidate)
-        {
-        }
-    }
-
-    /// <summary>
-    /// A scripted <see cref="IUpdateClient"/>: everything the service asks for,
-    /// and nothing that touches Velopack.
-    /// </summary>
-    private sealed class ScriptedUpdateClient : IUpdateClient
-    {
-        public string ManifestUrl => "file:///scripted/releases.win.json";
-
-        public UpdateCandidate? Candidate { get; init; } = new()
-        {
-            Version = "0.9.1",
-            IsDowngrade = false,
-            DeltaCount = 1,
-            FullPackageSize = 112_400_000,
-        };
-
-        public Exception? CheckFailure { get; init; }
-
-        public int ProgressSteps { get; init; } = 10;
-
-        public TimeSpan DelayPerStep { get; init; } = TimeSpan.Zero;
-
-        public int Downloads { get; private set; }
-
-        public int Applies { get; private set; }
-
-        public int ProgressReported { get; private set; }
-
-        public Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken) =>
-            CheckFailure is not null ? Task.FromException<UpdateCandidate?>(CheckFailure) : Task.FromResult(Candidate);
-
-        public async Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken)
-        {
-            Downloads++;
-
-            for (var step = 1; step <= ProgressSteps; step++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (DelayPerStep > TimeSpan.Zero)
-                {
-                    await Task.Delay(DelayPerStep, cancellationToken).ConfigureAwait(false);
-                }
-
-                ProgressReported++;
-                progress(step * 100 / ProgressSteps);
-            }
-        }
-
-        public void ApplyAfterThisProcessExits(UpdateCandidate candidate) => Applies++;
-    }
 }

@@ -1,19 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.ComponentModel;
-using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
-using BrowserAI.Protocol;
-using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Storage;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
 using Velopack.Logging;
 
 namespace BrowserAI;
@@ -112,6 +107,13 @@ internal static partial class Program
     /// </remarks>
     public const string SweepArgument = "--sweep";
 
+    /// <summary>The file name Velopack gives its updater, directly under the install root.</summary>
+    /// <remarks>
+    /// A relay that finds it running from its own install root answers at once with
+    /// the update sentence (U2), found by its full image path and never by its name.
+    /// </remarks>
+    public const string UpdaterFileName = "Update.exe";
+
     /// <summary>
     /// The argument a client's registration starts the one executable with: serve
     /// this client over stdio.
@@ -174,31 +176,85 @@ internal static partial class Program
 
         App.Program.ClearTheInstallersOwnVariables();
 
-        return ServesStdio(args)
+        return ServesStdio(args) || IsTheTasksStart(args)
             ? ServeAsync(args, velopack).GetAwaiter().GetResult()
             : App.Program.Run(args, firstRun, restarted, velopack);
     }
 
-    /// <summary>Whether the arguments name a mode this file's server half runs.</summary>
+    /// <summary>Whether the arguments name a mode that serves stdio.</summary>
     /// <remarks>
-    /// <b>Three of them</b>: <see cref="McpArgument"/>, a client's; <see cref="HostArgument"/>,
-    /// the session host the coordinator starts; and <see cref="SweepArgument"/>, one
-    /// stray sweep for a kb re-verification row. Every other start, no argument
-    /// included, is the configuration app's: a person's start, the logon task's,
+    /// <b>Two of them</b>: <see cref="McpArgument"/>, a client's relay, and
+    /// <see cref="SweepArgument"/>, one stray sweep for a kb re-verification row.
+    /// <i>Corrected 2026-10-08 (previously three, with <c>--host</c> and a pipe, the
+    /// session host the coordinator started)</i>: the background holds every session
+    /// since S a, and the session host went with the coordinator. Every other start
+    /// is the background's (<see cref="IsTheTasksStart"/>) or the configuration
+    /// app's: a person's start, a toast's click, <c>--after-update</c>,
     /// <c>--report</c>.
     /// </remarks>
     /// <param name="args">The command line.</param>
-    /// <returns>Whether the server half runs.</returns>
+    /// <returns>Whether the start serves stdio.</returns>
     internal static bool ServesStdio(IReadOnlyList<string> args)
     {
         ArgumentNullException.ThrowIfNull(args);
 
         return args.Contains(McpArgument, StringComparer.Ordinal)
-            || args.Contains(SweepArgument, StringComparer.Ordinal)
-            || ValueOf([.. args], HostArgument) is { Length: > 0 };
+            || args.Contains(SweepArgument, StringComparer.Ordinal);
     }
 
-    /// <summary>The server half: a client's server, the session host, or one sweep.</summary>
+    /// <summary>Whether the Task Scheduler started this process: the background's start.</summary>
+    /// <remarks>
+    /// <b><see cref="BackgroundArgument"/>, and the three arguments a task registered
+    /// before 2026-10-08 still passes</b>: <c>--sign-in</c> at sign-in,
+    /// <c>--coordinate</c> and <c>--start-host</c> from a server of that build. Such a
+    /// task runs this file once the update has swapped it in, until the update hook
+    /// registers the task again, and each of its starts is the task's. Read as a
+    /// person's start, a sign-in would open a tab.
+    /// </remarks>
+    /// <param name="args">The command line.</param>
+    /// <returns>Whether the background runs.</returns>
+    internal static bool IsTheTasksStart(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        return args.Contains(BackgroundArgument, StringComparer.Ordinal)
+            || args.Contains(LegacySignInArgument, StringComparer.Ordinal)
+            || args.Contains(LegacyCoordinateArgument, StringComparer.Ordinal)
+            || args.Contains(LegacyStartHostArgument, StringComparer.Ordinal);
+    }
+
+    /// <summary>What a task registered before 2026-10-08 passes at sign-in.</summary>
+    public const string LegacySignInArgument = "--sign-in";
+
+    /// <summary>What a server of a build before 2026-10-08 ran that task with.</summary>
+    public const string LegacyCoordinateArgument = "--coordinate";
+
+    /// <summary>What a server of a build before 2026-10-08 ran that task with to have its session host started.</summary>
+    public const string LegacyStartHostArgument = "--start-host";
+
+    /// <summary>The value after an argument, or <see langword="null"/>.</summary>
+    /// <param name="args">The command line.</param>
+    /// <param name="argument">The argument.</param>
+    /// <returns>The value that follows it.</returns>
+    internal static string? ValueOf(IReadOnlyList<string>? args, string argument)
+    {
+        if (args is null)
+        {
+            return null;
+        }
+
+        for (var index = 0; index < args.Count - 1; index++)
+        {
+            if (string.Equals(args[index], argument, StringComparison.Ordinal))
+            {
+                return args[index + 1];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The server half: the background, a client's relay, or one sweep.</summary>
     /// <param name="args">The command line.</param>
     /// <param name="velopack">What Velopack said before the log existed, to replay into it.</param>
     /// <returns>The exit code.</returns>
@@ -213,7 +269,7 @@ internal static partial class Program
         // AppContext.BaseDirectory, which resolves INSIDE current\ and is
         // replaced by every update; never the image path, which moves with
         // --installto. See Hosting/IAppPaths.cs for the whole argument.
-        var overridden = LocalAppDataPaths.Overridden();
+        var overridden = ValueOf(args, DataRootArgument) is { Length: > 0 } named ? named : LocalAppDataPaths.Overridden();
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -284,57 +340,39 @@ internal static partial class Program
             StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
         }
 
-        // ⚠️ THE SESSION HOST -- Q366 b, the maintainer's words of 2026-10-03,
-        // verbatim: "Q366 b - lets go with a fully build option c." Started by the
-        // coordinator inside a kill-on-close job of its own, outside every client's
-        // tree and job, it holds every session and serves them over a pipe. It has
-        // no client of its own, so it branches off before the client watch and the
-        // no-client check below. See Program.Host.cs.
-        if (ValueOf(args, HostArgument) is { Length: > 0 } hostPipe)
+        // ⚠️ THE BACKGROUND -- S a, the maintainer's words of 2026-10-08, verbatim:
+        // "s a". One resident process per user, install root and data root holds
+        // every session, the tab and the update, from sign-in to sign-out. The Task
+        // Scheduler starts it, and nothing else does (RESOLUTIONS 9). A task
+        // registered by a build before 2026-10-08 still starts the program with
+        // --sign-in, --coordinate or --start-host until the update hook registers it
+        // again, and each of those starts is the task's: it becomes the background,
+        // where until that day it became the coordinator. See Program.Background.cs.
+        if (IsTheTasksStart(args))
         {
-            return await RunTheSessionHostAsync(paths, log, logger, updateLogger, hostPipe).ConfigureAwait(false);
+            return RunTheBackground(args, paths, log, logger);
         }
 
-        // ⚠️ THERE IS NO INSTALLER EXIT HERE ANY MORE -- Q276 a, 2026-09-24, the
-        // maintainer's words verbatim: "Q276 a". A branch stood here that exited
-        // 0 when VELOPACK_FIRSTRUN=true, logging Startup[8], for the start
-        // Velopack performs itself after an install (evidence:
-        // docs/evidence/2026-09-14-firstrun/). It could never fire where it was
-        // meant to: VelopackApp.Run() at the top of Main clears that variable in
-        // an installed process before this line (VelopackApp.cs:227-238 at
-        // 1.2.158), and Setup.exe has started the configuration app and not this
-        // binary since 2026-09-15. So it is deleted, its event id is retired in
-        // StartupLog, and the general exit below is the whole of the answer to
-        // the installer's shape -- as it already was on every real install.
+        // ⚠️ ONE SWEEP, FOR A KB RE-VERIFICATION ROW, AND NOTHING ELSE. A person's
+        // measurement from a terminal: it judges the roots the way the background
+        // does and prints nothing to a client.
+        if (args.Contains(SweepArgument, StringComparer.Ordinal))
+        {
+            var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir);
 
-        // ⚠️ THE GENERAL CASE, BEFORE ANYTHING COSTS
-        // ANYTHING -- moved here 2026-09-15. Everything below this line spends
-        // something: the root judgement walks the filesystem, the sweep
-        // enumerates every process on the machine, the live marker takes a
-        // machine-wide mutex, the instance directory is created and the child
-        // spawn provisions 768 MB on a first run.
-        //
-        // The measured cost of deciding late is not hypothetical. On the first
-        // non-silent install of v1.0.0 the playwright-mcp child was started
-        // 506 ms BEFORE this question was asked -- the sweep and the update
-        // check ran before it too -- so the run with the least reason to cost
-        // anything cost the most, and left a second orphan behind when it did
-        // not exit. The installer exit above had been placed here for exactly
-        // this reason and this one had not, which is how the general case went
-        // on paying for a conversation nobody was having. (That installer exit
-        // is gone since 2026-09-24; this one is what it never managed to be.)
-        //
-        // ⚠️ THE WATCH IS ATTACHED HERE, NOT MERELY ASKED ABOUT. Whether
-        // a handle can be held on the launcher is half the decision, and a
-        // predicate beside the watcher would be a second source of truth about
-        // the same OpenProcess -- two answers, one of them not the watch this
-        // process actually holds. What the watch DOES when it fires is
-        // registered further down, once there is a transport to close; the
-        // cancellation is the whole of it until then, and `server.RunAsync` is
-        // handed the same token.
-        using var stopping = new CancellationTokenSource();
+            if (scope.Unestablished is { } unestablished)
+            {
+                StartupLog.AppRootScopeUnestablished(logger, unestablished);
+            }
 
-        using var client = ClientLivenessWatcher.ForParentProcess(stopping.Cancel, logger);
+            if (!scope.MayServe)
+            {
+                StartupLog.AppRootIsShared(logger, scope.Refusal!);
+                return 1;
+            }
+
+            return SweepOnce(paths, InstallLocation.RootAppDir ?? paths.RootAppDir, log.Factory, logger);
+        }
 
         // ⚠️ A CLIENT'S START WITH NO PIPE ON STANDARD INPUT IS NOBODY TO SERVE --
         // 2026-10-08, D7 a. Every client gives the process it starts a pipe, 54 of
@@ -346,548 +384,21 @@ internal static partial class Program
         // serving nobody until the machine was rebooted). The installer never
         // starts a server since 2026-09-15, and a pipe cannot be that console, so
         // the narrower rule holds the old shape too; StartupLog[9] is retired with
-        // it. The sweep is a person's measurement from a terminal and is exempt.
-        if (args.Contains(McpArgument, StringComparer.Ordinal) && !StandardInput.IsAPipe())
+        // it.
+        if (!StandardInput.IsAPipe())
         {
             StartupLog.NoPipeToServe(logger, ProcessLiveness.ParentProcessId());
             return 0;
         }
 
-        // ⚠️ BEFORE EVERYTHING THAT CREATES STATE, and that ordering is the
-        // whole value of the check: below this line come the sweep, the live
-        // marker, the instance directory and every session. A root two Windows
-        // users share loses the live-instance census silently -- the file locks
-        // span users and the Global\ mutexes do not -- and an apply then kills
-        // the other user's browsers. Measured 2026-08-20; see InstallRootScope,
-        // whose remarks also name what this narrows and does not close.
-        //
-        // It is AFTER the log, deliberately: the log is the only channel a
-        // refusal has. stdout is the protocol and Console is banned outright, so
-        // a refusal written anywhere else would be a server that exits 1 saying
-        // nothing at all.
-        // ⚠️ BOTH ROOTS SINCE 2026-09-15, and the install root is read here
-        // and not below because a judgement that ran after the census was
-        // keyed would be judging a root this process had already committed to.
-        // `InstallLocation` is already resolved at this point -- the Velopack
-        // log replay above reads it -- so this costs nothing, and it answers
-        // null when this process is not an install, which is what tells
-        // InstallRootScope there is no second root to judge.
-        var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir);
-
-        if (scope.Unestablished is { } unestablished)
-        {
-            StartupLog.AppRootScopeUnestablished(logger, unestablished);
-        }
-
-        if (!scope.MayServe)
-        {
-            StartupLog.AppRootIsShared(logger, scope.Refusal!);
-            return 1;
-        }
-
-        // The measurement mode: one pass, synchronously, and nothing else -- no
-        // child, no stdio, no server. See SweepArgument for its one remaining
-        // caller, which is a kb re-verification row and not the product.
-        // ⚠️ THE OTHER ROOT, AND THE ONLY THING LEFT THAT USES IT -- 2026-09-15.
-        // The live-marker census asks "is any other process running out of this
-        // INSTALL?", because that is the set an apply's force_stop_package
-        // terminates; every other path in this process works on the data root
-        // resolved above. An uninstalled BrowserAI has no install root to ask
-        // about, so it asks about its own data root -- which is what the two
-        // were before this date, and what keeps a scratch BROWSERAI_ROOT one
-        // self-consistent set of markers.
-        var installRoot = InstallLocation.RootAppDir ?? paths.RootAppDir;
-
-        if (args is not null && Array.Exists(args, argument => string.Equals(argument, SweepArgument, StringComparison.Ordinal)))
-        {
-            return SweepOnce(paths, installRoot, log.Factory, logger);
-        }
-
-        // ⚠️ IS THIS INSTALL'S UPDATER RUNNING -- Q286 b, 2026-09-24, the
-        // maintainer's words verbatim: "Q286 b". Asked BEFORE the sweep, because a
-        // server that starts during an apply starts no sweep of its own until the
-        // updater has gone. The match is the full image path
-        // <install root>\Update.exe, read with QueryFullProcessImageNameW, and the
-        // handle it holds can wait and cannot terminate: this is detection and
-        // nothing else.
-        //
-        // ⚠️ CORRECTED 2026-10-03 WITH Q296 c, the maintainer's words verbatim:
-        // "Q296 c" (previously "Asked BEFORE the sweep, because a server that
-        // starts during an apply must start nothing of its own: the updater's kill
-        // pass ends every process under the install root, and anything this server
-        // started there would hold files the swap needs"). Such a server now starts
-        // its own child, because the real tool list comes from nowhere else. A
-        // server started before the swap is ended by the kill pass, and the child
-        // with it: measured 2026-09-24 at Velopack 1.2.158, the kill pass ended
-        // eight servers and their eight node.exe children together. One started
-        // after the swap runs the new version from the new current\, which the
-        // swap no longer needs.
-        using var updater = FindTheUpdater(installRoot, logger);
-
-        // Fire-and-forget, on its own background thread, before anything that
-        // can be slow. Nothing on the request path waits for it or observes it,
-        // and it is deliberately never a startup gate: a BrowserAI that cannot
-        // sweep is degraded, one that will not start is broken. Not during an
-        // update: a sweep that ends a stray browser starts a registry reap, and
-        // that is a node process from the payload under the install root. A
-        // server that started during one sweeps when the updater has gone, through
-        // this same function: one way to start the background sweep, so the two
-        // moments a server does it cannot come to build two different sweeps.
-        void startTheSweep() => StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
-
-        if (updater is null)
-        {
-            startTheSweep();
-        }
-
-        // ⚠️ TAKEN BY EVERY RUN, NOT ONLY BY ONE THAT CHECKS FOR UPDATES, and
-        // held for the whole process life. It is what another instance's census
-        // sees, so a run that did not join would be invisible to whichever
-        // instance is deciding whether an apply is safe -- and an apply
-        // terminates every process under the install root, including other
-        // agents' browsers. Failing to join is a warning and never a refusal to
-        // start; it costs this process the ability to update and nothing else.
-        using var live = LiveInstances.Join(installRoot, updateLogger);
-
-        // ⚠️ AFTER THE JOIN AND ON ITS OWN THREAD, added 2026-08-20. Reclaim ran
-        // only inside the updater's "am I alone?" path until then -- which fires
-        // only after an update has been FOUND and DOWNLOADED, and had therefore
-        // never once run on the machine this product is developed on: 755 unheld
-        // markers in two days. It takes the same per-root mutex the join above
-        // does, at ZERO timeout, so one process reclaims and every other pays an
-        // acquire and leaves. Startup never waits for it, and the marker this
-        // process just created is safe by construction because it is HELD.
-        LiveInstances.StartReclaimInBackground(installRoot, updateLogger);
-
-        // ⚠️ THE PIPE, NAMED AFTER THE MARKER JUST TAKEN -- Q284 a, 2026-09-24, the
-        // maintainer's words verbatim: "Q284 a". One raw named pipe per server,
-        // answering `describe` from this process's memory and `stop` by
-        // acknowledging and then ending the conversation the way a client leaving
-        // ends it. Named after the marker so that the census entry IS the address:
-        // whoever can list the markers can reach every server, and a marker nobody
-        // holds names a pipe nobody serves.
-        //
-        // AFTER the join, because the name is the join's; a process that could not
-        // join is invisible to the census and so has nothing to be addressed by.
-        // BEFORE everything slow, so a coordinator can see a server that is still
-        // starting -- it says so -- and stop one that has not begun serving.
-        var activity = new ServerActivity(TimeProvider.System, Environment.CurrentDirectory);
-
-        // Set once the proxy exists; until then a stop has no calls to refuse.
-        BrowserProxy? serving = null;
-
-        var responder = new ServerPipeResponder(
-            activity,
-            () => _ = StopThroughThePipeAsync(() => Volatile.Read(ref serving), () => RequestStop(stopping), logger));
-
-        using var pipe = OpenPipe(live, responder, log.Factory.CreateLogger("BrowserAI.Pipe"));
-
-        // ⚠️ THE FRONT -- Q366 b, 2026-10-03. A server that can reach the session
-        // host relays its client's bytes to it and holds no session of its own, so
-        // the sessions outlive this process: the client's kill, or VS Code closing,
-        // ends this relay and nothing the host holds. In the census and serving its
-        // own pipe like any server, and still running the update lane, because a
-        // feed nobody checks is an update nobody gets. Not while an update installs:
-        // that server serves in-process, as Q296 c has it.
-        if (updater is null)
-        {
-#pragma warning disable CA2000 // RelayAsync owns the pipe from here and disposes it on every path.
-            var host = FindTheSessionHost(args, installRoot, logger, out var relayTo);
-#pragma warning restore CA2000
-
-            if (host is not null)
-            {
-                HostLog.Relaying(logger, relayTo);
-                responder.Role = ServerDescription.Roles.Relay;
-                activity.Serving();
-                StartTheUpdateLane(installRoot, live, updateLogger, stopping);
-
-                return await RelayAsync(host, logger, stopping.Token).ConfigureAwait(false);
-            }
-        }
-
-        // ⚠️ A SERVER THAT STARTED DURING AN UPDATE TAKES THE ORDINARY PATH -- Q296
-        // c, 2026-10-03. Corrected (previously "A SERVER THAT STARTED DURING AN
-        // UPDATE -- Q286 b. It answers the handshake, refuses every tool call with
-        // the update refusal, starts no browser server and never checks the feed;
-        // its pipe describes it as "updating". The updater's kill pass ends it, and
-        // the client starts one again on its next call", and a branch here returned
-        // into a server of its own). It starts its child, answers tools/list with
-        // the real list, refuses every call until the updater has gone, and then
-        // serves: see BeginServing below.
-
-        // One run, one directory. It holds the config generated for every session
-        // this run opens and their children's temporary folder; each session's own
-        // directory is the caller's. Corrected 2026-10-08 (previously "It holds this
-        // run's own child -- the one that answers `tools/list` before any session
-        // exists -- together with its profile and the config generated for every
-        // session this run opens"): that child is gone, and the list comes from
-        // the binary.
-        // ⚠️ THE MARKER IS TAKEN HERE, BY THIS PROCESS, and that is the whole of
-        // what closes the hazard both 2026-08-18 adversarial reviews found
-        // independently. Until 2026-08-24 the only thing holding this directory
-        // was the SURFACE CHILD, which holds it as a working directory -- while
-        // the directory holds the generated config of every session in the run.
-        // A surface child that died while the run kept serving left it unheld,
-        // and another BrowserAI's startup sweep deleted it five minutes later.
-        // The marker is released by the kernel however this process dies, so the
-        // signal no longer depends on any child at all.
-        //
-        // Declared before the try and released in the finally: the pattern
-        // CA2000 asks for, and the one this file already uses for a named object
-        // created outside a guarded region.
-        var run = InstanceDirectory.CreateFresh(paths, logger);
-        var instance = run.Directory;
-
-        try
-        {
-            var payload = new PayloadLayout();
-
-            // ⚠️ READ BEFORE THE PROXY EXISTS, AND A FAILURE HERE STOPS THE
-            // PROCESS. BrowserAI denies by default, so verdicts it cannot read do
-            // not degrade to permissive -- they would refuse every browser call,
-            // which presents as "nothing works" with no file named anywhere. The
-            // failure names what was wrong and reaches the caller through the
-            // ordinary startup path, not through a refusal per call. Corrected
-            // 2026-10-08 (previously read from the payload's own copy of the file,
-            // "Sessions.ToolVerdicts.Read(payload.ToolVerdicts)", before a child of
-            // the run's own was started to answer tools/list): both the verdicts
-            // and the tool list are compiled into the binary since that day, so no
-            // child starts before the handshake is answered.
-            var verdicts = Sessions.ToolVerdicts.Compiled;
-            var upstreamTools = Sessions.UpstreamToolList.Compiled;
-
-            // Created before the proxy, and it starts nothing: the first init
-            // decides whether a download is needed and never waits for one.
-            using var provisioner = new BrowserProvisioner(payload, paths.BrowsersDirectory, log.Factory);
-
-            var environment = new SessionEnvironment
-            {
-                Paths = paths,
-                Payload = payload,
-                Verdicts = verdicts,
-                UpstreamTools = upstreamTools,
-                Provisioner = provisioner,
-                InstanceDirectory = instance,
-                OpenSessionLog = ProcessLog.OpenSessionLog,
-            };
-
-            var proxy = BrowserProxy.Create(log.Factory, environment, activity);
-
-            // ⚠️ Q296 c: BEFORE the conversation opens, so no call can arrive
-            // ahead of the refusal. tools/list is answered as ever, from the list
-            // compiled in; every tools/call is refused until the updater goes.
-            if (updater is not null)
-            {
-                proxy.RefuseCallsWhileAnUpdateInstalls();
-            }
-
-            // The pipe describes the sessions from here on; until this line it
-            // said "starting" and listed none, which was the truth. And a stop
-            // from here on refuses this proxy's calls in flight before it acts.
-            responder.AttachSessions(proxy.HeldSessions);
-            Volatile.Write(ref serving, proxy);
-
-            // `await using var x = ...` awaits its DisposeAsync on the captured
-            // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable
-            // in its own local is the shape that keeps both the object usable
-            // and the disposal context-free.
-            await using var proxyScope = proxy.ConfigureAwait(false);
-
-            // Last, and only once everything that could fail loudly has. From
-            // here stdout is the protocol channel and nothing else in the
-            // process can reach it.
-            using var channel = StdioChannel.OpenStandardStreams();
-
-            var transport = new DirectStdioServerTransport(channel, log.Factory);
-            await using var transportScope = transport.ConfigureAwait(false);
-
-            var server = McpServer.Create(transport, proxy.ServerOptions(), log.Factory);
-            await using var serverScope = server.ConfigureAwait(false);
-
-            // ⚠️ WHAT THE WATCH ATTACHED ABOVE ACTUALLY DOES, wired here because
-            // this is the first moment there is a conversation to end. The watch
-            // itself is the second of the two teardown mechanisms, and neither
-            // is a close tool: stdin EOF is the backstop, and this covers what
-            // EOF cannot -- a client that started BrowserAI through a wrapper, so
-            // the pipe outlives the process that owns the conversation. It is an
-            // OpenProcess handle, never a ping: `ping` was removed at protocol
-            // revision 2026-07-28, and a handle is an event, not a poll.
-            //
-            // ⚠️ It disposes the transport and does not only cancel.
-            // Measured 2026-08-16 against ModelContextProtocol 2.2.0 over real
-            // stdio: cancelling `RunAsync`'s token does NOT end it, because the
-            // read is parked in a syscall on the console handle and a token
-            // cannot wake it -- the transport's own DisposeAsync says as much
-            // about the child leg, and it is just as true here. Closing the
-            // channel is what produces the end-of-input this process would have
-            // seen if the client had closed its end, so there is one shutdown
-            // path and not two.
-            //
-            // ⚠️ A registration, not a second closure, and that is what
-            // closes the window the move above would otherwise have opened: a
-            // client that dies during startup cancels the token before this line
-            // runs, and `Register` on an already-cancelled token invokes the
-            // callback synchronously, here, instead of dropping it. Disposed
-            // before the transport because it is declared after it.
-            using var closeOnDeparture = stopping.Token.Register(
-                () => _ = EndTheConversationAsync(transport, logger));
-
-            StartupLog.Serving(logger, BrowserProxy.CallerProtocolVersion, BrowserProxy.ChildProtocolVersion);
-
-            if (updater is null)
-            {
-                activity.Serving();
-                StartTheUpdateLane(installRoot, live, updateLogger, stopping);
-            }
-            else
-            {
-                // ⚠️ A SERVER THAT STARTED DURING AN UPDATE -- Q296 c, 2026-10-03,
-                // the maintainer's words verbatim: "Q296 c". It answers the
-                // handshake and tools/list as any server does, refuses every call
-                // while the updater runs, and describes itself on its pipe as
-                // "updating". When the updater goes it becomes an ordinary server:
-                // its calls are served, its pipe says "serving", and the stray sweep
-                // and the update lane it skipped start then. A server the updater's
-                // kill pass ends never gets that far, and its client starts one
-                // again on its next call.
-                StartupLog.UpdateInProgress(logger, updater.ProcessId, updater.ImagePath);
-                activity.Updating();
-
-                updater.WhenExited(() =>
-                {
-                    // The conversation may have ended first -- the client went, or
-                    // a stop arrived -- and then there is nothing left to serve.
-                    if (stopping.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    StartupLog.UpdaterExited(logger, updater.ProcessId);
-                    proxy.TheUpdateHasGone();
-                    activity.Serving();
-                    startTheSweep();
-                    StartTheUpdateLane(installRoot, live, updateLogger, stopping);
-                });
-            }
-
-            try
-            {
-                // Ends when the caller closes our stdin, which is the same
-                // graceful path BrowserAI uses on its own child -- or when the
-                // watcher above reports the client gone, which does not wait
-                // for EOF at all. Either way the disposals below take every
-                // session's child, browser and job with them.
-                await server.RunAsync(stopping.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // The watcher asked for this. It has already said why.
-            }
-
-            return 0;
-        }
-#pragma warning disable CA1031 // The process boundary reports every failure the same way: a log record and a non-zero exit code.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            StartupLog.Failed(logger, ex);
-            return 1;
-        }
-        finally
-        {
-            // ⚠️ THE MARKER FIRST, THEN THE TREE. It is a file inside the
-            // directory about to be walked, so releasing it second would have
-            // this process's own handle named back to it as the one node that
-            // would not go.
-            run.Dispose();
-
-            // The clean path. The killed path is the next run's sweep, because
-            // nothing here runs when the process is terminated from outside.
-            InstanceDirectory.Delete(instance, logger);
-        }
-    }
-
-    /// <summary>Opens this server's pipe, or says why there is none and serves without it.</summary>
-    /// <remarks>
-    /// <b>A pipe that cannot be created is not a server that cannot start</b>, the
-    /// posture the live join takes for the same kind of claim. A name somebody
-    /// else created first is refused by <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> and
-    /// lands here: this server then serves its client and no coordinator can
-    /// describe or stop it, which the log says.
-    /// </remarks>
-    /// <param name="live">This process's membership of the census, or <see langword="null"/> when it could not join.</param>
-    /// <param name="responder">What the pipe answers with.</param>
-    /// <param name="logger">Where the pipe reports.</param>
-    /// <returns>The serving pipe, or <see langword="null"/>.</returns>
-    private static ServerPipe? OpenPipe(LiveInstances? live, IServerPipeResponder responder, ILogger logger)
-    {
-        if (live is null)
-        {
-            // Not in the census, so there is no marker to be named after and
-            // nothing a coordinator could have found this server by. The join
-            // has already logged why.
-            return null;
-        }
-
-        try
-        {
-            return ServerPipe.Open(live.OwnFile, responder, logger);
-        }
-        catch (Exception failure) when (failure is IOException or Win32Exception)
-        {
-            ServerPipeLog.NotCreated(logger, ServerPipeProtocol.NameFor(live.OwnFile), failure);
-            return null;
-        }
-    }
-
-    /// <summary>The updater of this install, when it is running, found by its full image path.</summary>
-    /// <param name="installRoot">The install root; the updater is <c>Update.exe</c> directly beneath it.</param>
-    /// <param name="logger">Where a process list that could not be read is reported.</param>
-    /// <returns>The running updater, held open to be waited on, or <see langword="null"/>.</returns>
-    private static WatchedProcess? FindTheUpdater(string installRoot, ILogger logger)
-    {
-        try
-        {
-            return BrowserProcesses.FirstRunning(Path.Combine(installRoot, UpdaterFileName));
-        }
-        catch (Win32Exception failure)
-        {
-            // A process list that cannot be read cannot say an update is running,
-            // and refusing every call on a guess would break a server that is not
-            // in the way of anything. Served normally, and said.
-            StartupLog.UpdaterNotChecked(logger, failure);
-            return null;
-        }
-    }
-
-    /// <summary>The file name Velopack gives its updater, directly under the install root.</summary>
-    public const string UpdaterFileName = "Update.exe";
-
-    /// <summary>
-    /// Starts the update lane: one feed check off the message loop, when this build
-    /// has a feed to check.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Off the message loop and after the server is up, because a
-    /// <c>tools/call</c> has to stay answerable while a package is in flight. It
-    /// ends the conversation exactly the way the client watcher does -- there is
-    /// one shutdown path, not two -- so the session locks are released and the job
-    /// objects closed before <c>Update.exe</c>, which is waiting on this pid, swaps
-    /// <c>current\</c>.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>A method since 2026-10-03, Q296 c, because it has two callers</b>: the
-    /// ordinary start, and the moment a server that started during an update sees
-    /// its updater go. <i>Previously the block stood inline in <c>Main</c>, and a
-    /// server that started during an update never checked the feed at all, because
-    /// it ended with the updater (Q286 b): <c>ServeWhileUpdatingAsync</c>, deleted
-    /// that day with <c>UpdateInProgressServer</c>.</i>
-    /// </para>
-    /// </remarks>
-    /// <param name="installRoot">The root whose census an apply consults.</param>
-    /// <param name="live">This process's membership of that census, when it joined.</param>
-    /// <param name="updateLogger">Where the lane reports.</param>
-    /// <param name="stopping">The process's own stop signal, which an apply fires.</param>
-    private static void StartTheUpdateLane(string installRoot, LiveInstances? live, ILogger updateLogger, CancellationTokenSource stopping)
-    {
-        if (UpdateConfiguration.Resolve(updateLogger) is { } feed)
-        {
-            new UpdateService(
-                new VelopackUpdateClient(feed),
-                live,
-                updateLogger,
-                stopping.Cancel,
-                new CoordinatorWake(installRoot, InstallLocation.AppId, Registration.ScheduledTasks.Instance, updateLogger))
-                .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
-        }
-    }
-
-    /// <summary>
-    /// What an acknowledged stop does: refuse the calls still in flight, then
-    /// take the one graceful path there is.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q286 b.</b> The refusals go out first and inside
-    /// <see cref="ServerPipeProtocol.CallBound"/>, the same bound a caller gives
-    /// the stop itself; a write that cannot finish in that is abandoned, because
-    /// a stop that waited on a client which is not reading would be a stop that
-    /// never came.
-    /// </remarks>
-    /// <param name="serving">The proxy, once there is one.</param>
-    /// <param name="stop">The graceful path, <see cref="RequestStop"/> over the process's own stop signal.</param>
-    /// <param name="logger">Where a failure to refuse is reported.</param>
-    /// <returns>The stop.</returns>
-    private static async Task StopThroughThePipeAsync(Func<BrowserProxy?> serving, Action stop, ILogger logger)
-    {
-        try
-        {
-            if (serving() is { } proxy)
-            {
-                // 8 b: the sessions this stop closes record why.
-                proxy.StoppingThroughThePipe();
-
-                using var bound = new CancellationTokenSource(ServerPipeProtocol.CallBound);
-                await proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token).ConfigureAwait(false);
-            }
-        }
-#pragma warning disable CA1031 // The refusals are a courtesy to the client; nothing about them may stand between a stop and the stop.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            StartupLog.StopRefusalsFailed(logger, failure);
-        }
-
-        stop();
-    }
-
-    /// <summary>What an acknowledged stop does: the one graceful path there is.</summary>
-    /// <remarks>
-    /// <b>The same cancellation the client watcher fires when a client leaves</b>,
-    /// so a stop tears down exactly what a departure tears down -- every session,
-    /// its child and browser, the locks and the instance directory -- and there is
-    /// one shutdown path and not two.
-    /// </remarks>
-    /// <param name="stopping">The process's own stop signal.</param>
-    private static void RequestStop(CancellationTokenSource stopping)
-    {
-        try
-        {
-            stopping.Cancel();
-        }
-        catch (ObjectDisposedException)
-        {
-            // Main is already on its way out; the stop has nothing left to do.
-        }
-    }
-
-    /// <summary>
-    /// Closes the caller-facing transport once the client has gone, and reports
-    /// a failure to do so instead of discarding it.
-    /// </summary>
-    /// <remarks>
-    /// <b>Fire-and-forget with the result observed, which is not the same as
-    /// fire-and-forget.</b> This runs on a thread-pool callback that must not
-    /// block, so nothing awaits it -- but a discarded <c>Task</c> is a discarded
-    /// exception, and the one thing that must never happen here is the shutdown
-    /// path failing in silence while every other signal stays green.
-    /// </remarks>
-    /// <param name="transport">The caller-facing transport. Disposing it is what ends <c>RunAsync</c>.</param>
-    /// <param name="logger">Where a failure is reported.</param>
-    /// <returns>The disposal.</returns>
-    private static async Task EndTheConversationAsync(DirectStdioServerTransport transport, ILogger logger)
-    {
-        try
-        {
-            await transport.DisposeAsync().ConfigureAwait(false);
-        }
-#pragma warning disable CA1031 // The process is going down either way; what matters is that a failure to close cleanly is not silent.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            StartupLog.ChannelNotClosed(logger, failure);
-        }
+        // ⚠️ THE RELAY, AND NOTHING ELSE SERVES A CLIENT -- S a and R, 2026-10-08.
+        // Corrected 2026-10-08 (previously this method went on to serve the client
+        // in this process: a census marker, a pipe of its own, the front's search
+        // for the session host, the surface child and an MCP server over stdio,
+        // with Q296 c's serving during an update). The relay answers the handshake
+        // and the tool list from the binary and passes every call to the
+        // background; with none, it holds and then says why, and it starts nothing.
+        return await RunTheRelayAsync(args, paths, log, logger).ConfigureAwait(false);
     }
 
     /// <summary>

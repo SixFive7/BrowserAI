@@ -150,7 +150,14 @@ internal sealed record SliceRun(
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 
-        var browserAi = client.ProcessId;
+        // ⚠️ THE BACKGROUND IS THE PROCESS THAT HOLDS THE SESSION -- S a, 2026-10-08.
+        // Corrected 2026-10-08 (previously the client's own server, the process the
+        // client started). The relay the client starts holds no session, so the
+        // process this run's log and its containment are about is the background
+        // the harness started beside it, in the same job.
+        var relay = client.ProcessId;
+        var browserAi = client.BackgroundProcessId
+            ?? throw new InvalidOperationException("The slice's published relay was started with no background beside it.");
         var browserAiCreated = ProcessIdentity.CreationTimeOf(browserAi);
 
         var initialize = await client.InitializeAsync(OfferedProtocolVersion).ConfigureAwait(false);
@@ -223,8 +230,10 @@ internal sealed record SliceRun(
         // last job handle can clean up.
         ProcessIdentity.Terminate(browserAi, browserAiCreated);
 
+        // The relay is left alone: it outlives its background by design, holding the
+        // client's next call for one to appear (R), and the job's close ends it.
         var survivors = await WaitForNoneAliveAsync(
-            [.. processes.Where(process => process.ProcessId != browserAi)],
+            [.. processes.Where(process => process.ProcessId != browserAi && process.ProcessId != relay)],
             TestDefaults.ProcessHang).ConfigureAwait(false);
 
         // ⚠️ DRAINED, never `StandardErrorSoFar`, and this is read AFTER the

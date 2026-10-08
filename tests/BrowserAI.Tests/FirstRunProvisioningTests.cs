@@ -281,11 +281,15 @@ internal sealed class FirstRunProvisioningTests
 
         // ⚠️ AND NOT A MOMENT LONGER THAN THE PRODUCT SAYS IT IS STILL TRYING --
         // 2026-10-08. On the gate of f68ae4cf upstream's installer exited 1 at
-        // 15:48:40Z, its own lock judged compromised under the gate's load, and this
-        // wait then sat out the rest of its 45 minutes for a marker nothing was
-        // still writing, until the test host was stopped by hand at 34 minutes.
-        // BrowserAI writes the installer's failure into its log as it happens, so
-        // the wait reads that too and ends with what the log said.
+        // 15:48:40Z with its own install lock judged compromised, and this wait then
+        // sat out the rest of its 45 minutes for a marker nothing was still writing,
+        // until the test host was stopped by hand at 34 minutes. Corrected
+        // 2026-10-08 (previously "its own lock judged compromised under the gate's
+        // load"): the stack ran through the branch of the lock's refresh that finds
+        // the lock directory gone, and the downloaded archive was gone from this
+        // app root afterwards, so both were deleted under the install; nothing
+        // points at the load. BrowserAI writes the installer's failure into its log
+        // as it happens, so the wait reads that too and ends with what the log said.
         var (landed, failure) = await WaitForMarkerAsync(installed, Patience, () => ProvisioningFailureIn(appRoot));
 
         await Assert.That(landed).IsTrue().Because(failure ?? "the marker did not land within the patience, and BrowserAI's log reported no failure");

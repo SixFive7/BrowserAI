@@ -516,6 +516,20 @@ it to `install.rs`'s rename-and-delete.*
 
 ### How often the feed is asked, and by what -- measured 2026-09-22
 
+⚠️ **Superseded 2026-10-08 by D9, read in the code that replaced it.** `UpdateService`
+is deleted with the one-binary build (S a), and the rest of this section is the record
+of what it did. Since then the resident background alone asks the feed, on a timer, at
+most once every `BackgroundUpdates.CheckInterval`, ten minutes, and keeps the time a
+check began under the data root, so a crash or a restart adds no check
+(`UpdateCheckStampFile`,
+`BackgroundUpdatesTests.TheRecordOfTheLastCheckSurvivesARestartAndNoSecondCheckRunsInsideTheInterval`).
+A relay never asks. The first guard below moved with it
+(`BackgroundUpdatesTests.ABuildThatIsNotInstalledNeverChecks`); the second changed with
+H2 a, and an installed pre-release now checks a folder and never a URL
+(`BackgroundUpdatesTests.APreReleaseBuildChecksAFolderAndNeverAUrl`). The answer to the
+maintainer's question is the same in kind: a hundred browsers ask nothing, and the one
+background asks at most six times an hour.
+
 **One request per server start of an INSTALLED, non-pre-release BrowserAI, and
 none at all from anything else.** There is no timer, no interval and no retry:
 `UpdateService.StartInBackground` calls `RunOnceAsync` once and the type holds no
@@ -2034,7 +2048,10 @@ Velopack download is one this product chooses.
 its `HttpClient.Timeout` by throwing **`TaskCanceledException`** -- which *is* an
 `OperationCanceledException`, so a catch that reads cancellation as *somebody
 cancelled us* reads a network timeout as that instead. `UpdateService`'s crash
-tripwire says so in place.
+tripwire says so in place. *Added 2026-10-08 by addition:* `UpdateService` is deleted
+with the one-binary build (S a); the four budgets moved unchanged to `UpdateBudgets`,
+with their remarks, and the background's update core awaits its check through the
+check budget the same way (`BackgroundUpdates`).
 
 ⚠️ **WHAT BROWSERAI DOES ABOUT IT, ADDED 2026-09-24 SO THIS ENTRY IS NOT READ AS
 A LIVE GAP.** The maintainer's decision, verbatim: *"Wrap the check in its own

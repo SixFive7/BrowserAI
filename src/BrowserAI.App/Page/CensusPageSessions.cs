@@ -7,27 +7,26 @@ using System.Text;
 using BrowserAI.Coordination;
 using BrowserAI.Proxy;
 using BrowserAI.Sessions;
-using BrowserAI.Updates;
 
 namespace BrowserAI.App.Page;
 
 /// <summary>
-/// The sessions page's servers in the product: the live census under the install
-/// root, each server asked through its own pipe.
+/// The sessions page's servers, composed from what each describes of itself.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Q254 and Q317 c.</b> Every live server is described by itself, from its own
-/// memory (<c>describe</c>, Q284 a), and closed by itself (<c>stop</c>), so a call
-/// it is answering gets Q286 b's sentence and its browsers close themselves. The
-/// census is read first and decides which pipes are asked at all, which is the
-/// rule <see cref="ServerPipeClient"/> keeps.
+/// ⚠️ <b>Corrected 2026-10-08 (previously "The sessions page's servers in the
+/// product: the live census under the install root, each server asked through its
+/// own pipe")</b>. The census and the per-server pipes went with the in-process
+/// server when the one resident background took its place (S a): the background
+/// composes the page from its own memory, its sessions and its relays, through the
+/// helpers below, which are what is left of this class.
 /// </para>
 /// <para>
-/// <b>Two warnings are load-bearing</b> and they are computed here, from what the
-/// server said: a Codex-hosted server does not get its server back in the same
-/// thread, and a server that answered a call within the browser-idle period, or is
-/// answering one, may be in the middle of a task (Q269).
+/// <b>Two warnings are load-bearing</b> and they are computed here, from what each
+/// entry says: a Codex client does not get its server back in the same thread, and a
+/// client that made a call within the browser-idle period, or is making one, may be
+/// in the middle of a task (Q269).
 /// </para>
 /// <para>
 /// <b>The page sends back opaque names and never a path.</b> A session's name is a
@@ -35,54 +34,8 @@ namespace BrowserAI.App.Page;
 /// action names something this read found and nothing the page made up.
 /// </para>
 /// </remarks>
-/// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
-/// <param name="clock">What <i>recently</i> is measured against.</param>
-internal sealed class CensusPageSessions(string installRoot, TimeProvider clock) : IPageSessions
+internal static class CensusPageSessions
 {
-    /// <inheritdoc />
-    public async Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken)
-    {
-        var directory = LiveInstances.DirectoryUnder(installRoot);
-        var now = clock.GetUtcNow();
-
-        if (!Directory.Exists(directory))
-        {
-            return new SessionsSnapshot(now, [], []);
-        }
-
-        var markers = Directory.GetFiles(directory, "*.live")
-            .Where(marker => !(ServerPipeProtocol.TryProcessIdOf(marker, out var pid) && pid == Environment.ProcessId))
-            .ToList();
-
-        var answers = await Task.WhenAll(markers.Select(async marker =>
-            (Marker: marker, Answer: await ServerPipeClient.DescribeAsync(marker, null, cancellationToken).ConfigureAwait(false))))
-            .ConfigureAwait(false);
-
-        var answered = new List<(string Marker, ServerDescription Description)>();
-        var unanswered = new List<string>();
-
-        foreach (var (marker, answer) in answers)
-        {
-            switch (answer.Outcome)
-            {
-                case ServerPipeOutcome.Answered when answer.Description is { } description:
-                    answered.Add((marker, description));
-                    break;
-
-                case ServerPipeOutcome.NotRunning:
-                    // A marker nobody holds is a server that has gone; the census is right
-                    // to leave it out.
-                    break;
-
-                default:
-                    unanswered.Add($"{Path.GetFileName(marker)}: {answer.Why}");
-                    break;
-            }
-        }
-
-        return Compose(now, answered, unanswered);
-    }
-
     /// <summary>The page's servers from what each one said.</summary>
     /// <remarks>
     /// <b>Q366 b: a server that relays to the session host holds nothing</b> and never
@@ -115,16 +68,6 @@ internal sealed class CensusPageSessions(string installRoot, TimeProvider clock)
             .ToList();
 
         return new SessionsSnapshot(now, servers, unanswered);
-    }
-
-    /// <inheritdoc />
-    public async Task<string?> CloseAsync(ServerEntry server, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(server);
-
-        var answer = await ServerPipeClient.StopAsync(server.Marker, null, cancellationToken).ConfigureAwait(false);
-
-        return answer.Outcome is ServerPipeOutcome.Answered ? null : answer.Why;
     }
 
     /// <summary>What the page shows about one server.</summary>

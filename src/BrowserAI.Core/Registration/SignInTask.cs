@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Security;
-using BrowserAI.Coordination;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
@@ -49,8 +49,40 @@ internal sealed record SignInTaskReport(string? Name, TaskChange Change, string 
 /// </remarks>
 internal static class SignInTask
 {
-    /// <summary>The action's arguments, with the placeholder a started-on-demand run fills.</summary>
-    public const string Arguments = CoordinatorProtocol.SignInArgument + " $(Arg0)";
+    /// <summary>
+    /// The argument the action starts the one executable with: the background
+    /// (S a, 2026-10-08).
+    /// </summary>
+    public const string BackgroundArgument = "--background";
+
+    /// <summary>The argument that carries the data root the install was made for.</summary>
+    public const string DataRootArgument = "--data-root";
+
+    /// <summary>The argument that carries who asked the task for a start, filled from <c>$(Arg0)</c>.</summary>
+    public const string StartedByArgument = "--started-by";
+
+    /// <summary>
+    /// The action's arguments with no setting the installer named: the background,
+    /// and the placeholder a started-on-demand run fills.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-08 (previously <c>--sign-in $(Arg0)</c>, the
+    /// coordinator's)</i>: the task starts the resident background, and the
+    /// placeholder stays literal at sign-in, which is how the background tells the
+    /// trigger's start from a person's.
+    /// </remarks>
+    public const string Arguments = BackgroundArgument + " " + StartedByArgument + " $(Arg0)";
+
+    /// <summary>The file beside the install that keeps the definition the hooks registered.</summary>
+    /// <remarks>
+    /// <b>A person's start registers a missing task again from it</b> (RESOLUTIONS 9):
+    /// the arguments the install hook read out of the installer's environment exist
+    /// nowhere else once the installer has gone, and a definition composed without
+    /// them would point an install that takes its updates from a folder (H2 a) back
+    /// at GitHub. Under the install root and outside <c>current\</c>, so an update
+    /// keeps it until the update hook writes it again.
+    /// </remarks>
+    public const string SavedDefinitionFileName = "background-task.xml";
 
     /// <summary>The task's name for one pack id and one install root.</summary>
     /// <param name="appId">The Velopack pack id: <c>BrowserAI.app</c>, or the suite's <c>BrowserAI.app.test</c>.</param>
@@ -61,17 +93,22 @@ internal static class SignInTask
         ArgumentException.ThrowIfNullOrWhiteSpace(appId);
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
 
-        return $"{appId} sign-in {LiveInstances.RootKeyFor(installRoot)}";
+        return $"{appId} sign-in {RootKey.For(installRoot)}";
     }
 
     /// <summary>The task's Task Scheduler 1.2 definition.</summary>
     /// <remarks>
     /// <para>
     /// <b>Every setting that differs from the scheduler's default is written, and why
-    /// is here.</b> <c>MultipleInstancesPolicy</c> is <c>Parallel</c>, where the
-    /// default ignores a start while an instance runs: the coordinator's pipe decides
-    /// which start is the coordinator, and an ignored start could be the only one a
-    /// blocked server makes. <c>DisallowStartIfOnBatteries</c> is false, where the
+    /// is here.</b> <c>MultipleInstancesPolicy</c> is <c>IgnoreNew</c>, the scheduler's
+    /// default, written out: the task never starts a second background while one runs
+    /// (S a). Step 0 measured it on 2026-10-08 with stand-ins: twenty requests at one
+    /// moment started one instance, 10 of 10 rounds, and none started while one ran.
+    /// ⚠️ <i>Corrected 2026-10-08 (previously <c>Parallel</c>, "the coordinator's pipe
+    /// decides which start is the coordinator, and an ignored start could be the only
+    /// one a blocked server makes")</i>: no server runs the task since S a, and the
+    /// background's pipe admits one background besides.
+    /// <c>DisallowStartIfOnBatteries</c> is false, where the
     /// default would skip the sign-in step on a laptop on battery.
     /// <c>ExecutionTimeLimit</c> is <c>PT0S</c>, no limit, where the default ends the
     /// process after three days: the coordinator waits for every server to exit, and
@@ -88,8 +125,9 @@ internal static class SignInTask
     /// <param name="appImage">The configuration app the task starts: <c>&lt;install root&gt;\current\BrowserAI.exe</c>.</param>
     /// <param name="userSid">The installing user's SID.</param>
     /// <param name="installRoot">The install root, for the description.</param>
+    /// <param name="arguments">The action's arguments: <see cref="ArgumentsFor"/>, or <see cref="Arguments"/> when the installer named no setting.</param>
     /// <returns>The XML.</returns>
-    public static string DefinitionFor(string appImage, string userSid, string installRoot)
+    public static string DefinitionFor(string appImage, string userSid, string installRoot, string arguments = Arguments)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(appImage);
         ArgumentException.ThrowIfNullOrWhiteSpace(userSid);
@@ -98,13 +136,14 @@ internal static class SignInTask
         var image = SecurityElement.Escape(appImage);
         var sid = SecurityElement.Escape(userSid);
         var root = SecurityElement.Escape(installRoot);
+        var action = SecurityElement.Escape(arguments);
 
         return $"""
             <?xml version="1.0" encoding="UTF-16"?>
             <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
               <RegistrationInfo>
                 <Author>BrowserAI</Author>
-                <Description>Starts BrowserAI when you sign in, to install an update it has already downloaded if nothing else runs from {root}. A BrowserAI server whose update is waiting starts it too.</Description>
+                <Description>Starts BrowserAI, installed in {root}, when you sign in, when you start it from the Start Menu and after an update. BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, which registers it again.</Description>
               </RegistrationInfo>
               <Triggers>
                 <LogonTrigger>
@@ -120,7 +159,7 @@ internal static class SignInTask
                 </Principal>
               </Principals>
               <Settings>
-                <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+                <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
                 <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
                 <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
                 <AllowStartOnDemand>true</AllowStartOnDemand>
@@ -133,11 +172,57 @@ internal static class SignInTask
               <Actions Context="Author">
                 <Exec>
                   <Command>{image}</Command>
-                  <Arguments>{Arguments}</Arguments>
+                  <Arguments>{action}</Arguments>
                 </Exec>
               </Actions>
             </Task>
             """;
+    }
+
+    /// <summary>The action's arguments for the settings the installer named.</summary>
+    /// <remarks>
+    /// <b>The design's settings rule</b>: a running BrowserAI reads no
+    /// <c>BROWSERAI_</c> variable, so the install and update hooks read the
+    /// installer's environment once and write what they find here, as plain arguments
+    /// and never inside <c>$(Arg0)</c>. A path or a source is quoted, with any trailing
+    /// separator taken off, because a backslash before the closing quote would escape
+    /// it on the way to the process's own command line.
+    /// </remarks>
+    /// <param name="dataRoot">The data root the installer named, or <see langword="null"/> for the default.</param>
+    /// <param name="updateSource">The update source the installer named, or <see langword="null"/> for the production feed.</param>
+    /// <returns>The arguments.</returns>
+    public static string ArgumentsFor(string? dataRoot, string? updateSource)
+    {
+        var arguments = BackgroundArgument;
+
+        if (dataRoot is { Length: > 0 })
+        {
+            arguments += $" {DataRootArgument} \"{Path.TrimEndingDirectorySeparator(dataRoot)}\"";
+        }
+
+        if (updateSource is { Length: > 0 })
+        {
+            arguments += $" {UpdateSource.Argument} \"{updateSource.TrimEnd('\\', '/')}\"";
+        }
+
+        return arguments + " " + StartedByArgument + " $(Arg0)";
+    }
+
+    /// <summary>The definition the hooks last registered for an install, or <see langword="null"/> when there is none.</summary>
+    /// <param name="installRoot">The install root.</param>
+    /// <returns>The XML.</returns>
+    public static string? SavedDefinition(string installRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
+
+        try
+        {
+            return File.ReadAllText(Path.Combine(installRoot, SavedDefinitionFileName));
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>What one installer hook does to the task: register it, or remove it.</summary>
@@ -146,13 +231,15 @@ internal static class SignInTask
     /// <param name="appId">The pack id, or <see langword="null"/> when the locator gave none.</param>
     /// <param name="tasks">The scheduler.</param>
     /// <param name="logger">Where the outcome is recorded.</param>
+    /// <param name="arguments">The action's arguments (<see cref="ArgumentsFor"/>).</param>
     /// <returns>What happened.</returns>
     public static SignInTaskReport Apply(
         RegistrationIntent intent,
         RegistrationTarget target,
         string? appId,
         ILogonTasks tasks,
-        ILogger logger)
+        ILogger logger,
+        string arguments = Arguments)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(tasks);
@@ -165,22 +252,37 @@ internal static class SignInTask
             report = new SignInTaskReport(
                 null,
                 TaskChange.Failed,
-                "The pack id is unknown, so the sign-in task has no name and was not changed. BrowserAI works without it; a staged update then waits for a server to start the coordinator.");
+                "The pack id is unknown, so the task that starts BrowserAI has no name and was not changed. BrowserAI then starts only once it is installed again.");
         }
         else
         {
             var name = NameFor(appId, target.InstallRoot);
+            var saved = Path.Combine(target.InstallRoot, SavedDefinitionFileName);
 
             try
             {
-                var outcome = intent is RegistrationIntent.Uninstall
-                    ? tasks.Remove(name)
-                    : tasks.Register(
-                        name,
-                        DefinitionFor(
-                            Path.Combine(target.InstallRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName),
-                            NamedPipes.CurrentUserSid(),
-                            target.InstallRoot));
+                TaskReport outcome;
+
+                if (intent is RegistrationIntent.Uninstall)
+                {
+                    outcome = tasks.Remove(name);
+                    File.Delete(saved);
+                }
+                else
+                {
+                    var definition = DefinitionFor(
+                        Path.Combine(target.InstallRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName),
+                        NamedPipes.CurrentUserSid(),
+                        target.InstallRoot,
+                        arguments);
+
+                    outcome = tasks.Register(name, definition);
+
+                    if (outcome.Change is TaskChange.Registered)
+                    {
+                        File.WriteAllText(saved, definition);
+                    }
+                }
 
                 report = new SignInTaskReport(name, outcome.Change, outcome.Detail);
             }
@@ -188,7 +290,7 @@ internal static class SignInTask
             catch (Exception failure)
 #pragma warning restore CA1031
             {
-                report = new SignInTaskReport(name, TaskChange.Failed, $"The sign-in task '{name}' was not changed: {failure.Message}");
+                report = new SignInTaskReport(name, TaskChange.Failed, $"The task '{name}' was not changed: {failure.Message}");
             }
         }
 

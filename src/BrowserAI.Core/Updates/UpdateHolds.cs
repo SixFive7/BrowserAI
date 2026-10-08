@@ -63,7 +63,21 @@ internal sealed record HoldingSession(string Directory, string? Purpose, DateTim
 /// </param>
 /// <param name="CallInFlight">Whether a call from its client is running now.</param>
 /// <param name="Reconnect">What its client needs once the update has ended it.</param>
-internal sealed record HoldingRelay(string Client, string? ProjectFolder, DateTimeOffset IdleAt, bool CallInFlight, RelayReconnect Reconnect);
+/// <param name="Conversation">
+/// Which conversation of its client the relay serves, as the relay could tell it, or
+/// <see langword="null"/> when it could not: room left on 2026-10-08 for the
+/// maintainer's ask to tell several conversations of one client apart, whose
+/// measurement is running.
+/// </param>
+/// <param name="Label">What the person sees that conversation called, or <see langword="null"/>.</param>
+internal sealed record HoldingRelay(
+    string Client,
+    string? ProjectFolder,
+    DateTimeOffset IdleAt,
+    bool CallInFlight,
+    RelayReconnect Reconnect,
+    string? Conversation = null,
+    string? Label = null);
 
 /// <summary>
 /// The downloaded update, and everything that holds it back, read at one moment.

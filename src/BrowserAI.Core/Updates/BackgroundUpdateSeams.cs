@@ -35,7 +35,30 @@ internal sealed record RelayState(
     string? ClientVersion,
     string? ProjectFolder,
     DateTimeOffset IdleAt,
-    bool CallInFlight);
+    bool CallInFlight)
+{
+    /// <summary>
+    /// What the client needs once the update has ended the relay, as the relay judged it
+    /// from what it can observe and sent in its greeting (H1-T a);
+    /// <see cref="RelayReconnect.Unknown"/> when it could not tell, or sent nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08</b>: the relay reads its client's name, the command line of
+    /// the process that started it and the client's entrypoint variable, which the
+    /// background never sees, so the judgement is the relay's and travels with it.
+    /// </remarks>
+    public RelayReconnect Reconnect { get; init; } = RelayReconnect.Unknown;
+
+    /// <summary>
+    /// Which conversation of its client the relay serves, from its greeting, or
+    /// <see langword="null"/> when it sent none: room for the measurement of how a relay
+    /// tells a client's conversations apart, running on 2026-10-08.
+    /// </summary>
+    public string? Conversation { get; init; }
+
+    /// <summary>What the person sees that conversation called, from the greeting, or <see langword="null"/>.</summary>
+    public string? Label { get; init; }
+}
 
 /// <summary>A relay's answer to <i>ready to end?</i>.</summary>
 /// <param name="Ready">

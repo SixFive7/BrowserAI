@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
-using BrowserAI.App;
 using BrowserAI.App.Page;
 using BrowserAI.Coordination;
-using BrowserAI.Interop;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
 
@@ -134,7 +131,7 @@ internal sealed class PageServiceTests
     /// <b>What the window's
     /// <c>ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline</c>
     /// held, moved with the window's deletion on 2026-10-03</b>: the bound on a check is
-    /// <see cref="BrowserAI.Updates.UpdateService.CrashTripwire"/> and no number of the
+    /// <see cref="BrowserAI.Updates.UpdateBudgets.CrashTripwire"/> and no number of the
     /// page's own. The arm moves the clock to the newest timer, which is the check's,
     /// and not by a guess at how long the bound is.
     /// </remarks>
@@ -154,14 +151,14 @@ internal sealed class PageServiceTests
         await Assert.That(await StateContainingAsync(stream, "Asking the release feed")).IsNotNull();
 
         // The check's own deadline is the newest timer once the check has started.
-        await Assert.That(await WaitForAsync(() => rig.Clock.UntilTheNewestTimerFires() == UpdateService.CrashTripwire)).IsTrue();
+        await Assert.That(await WaitForAsync(() => rig.Clock.UntilTheNewestTimerFires() == UpdateBudgets.CrashTripwire)).IsTrue();
 
-        rig.Clock.Advance(UpdateService.CrashTripwire);
+        rig.Clock.Advance(UpdateBudgets.CrashTripwire);
 
         var failed = await StateContainingAsync(stream, "The update check did not finish.");
 
         await Assert.That(failed).IsNotNull();
-        await Assert.That(failed!).Contains($"<details><summary>Show details</summary><pre>The release feed did not answer within {UpdateService.CrashTripwire.TotalMinutes:F0} minutes.</pre></details>");
+        await Assert.That(failed!).Contains($"<details><summary>Show details</summary><pre>The release feed did not answer within {UpdateBudgets.CrashTripwire.TotalMinutes:F0} minutes.</pre></details>");
         await Assert.That(failed).Contains("data-action=\"check-updates\"");
     }
 
@@ -400,60 +397,10 @@ internal sealed class PageServiceTests
         await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
     }
 
-    /// <summary>
-    /// An install from the page asks every client's server to stop, then has the
-    /// session host close every browser and end through the coordinator's hold on it,
-    /// and only then hands over; an install that fails lets a host start again.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q366 b's rule for updates, the way the coordinator's own apply has it</b>: the
-    /// host and its children run from the install root, so an apply stops them, every
-    /// browser closed cleanly first. The page's install link is the second way an
-    /// apply starts in the coordinator, and without this the hand-over ends the
-    /// coordinator and its job takes the host down mid-close.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver()
-    {
-        using var rig = new PageRig(sessionHost: true);
-
-        rig.Updates.StagedCandidate = Candidate("9.2.0");
-        rig.Sessions.Snapshot = CensusPageSessions.Compose(
-            Now,
-            [
-                (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, [])),
-                (@"C:\install\live\900-0.live", Description(900, ServerDescription.Roles.Host, [])),
-            ],
-            []);
-
-        // The page reads what is staged when it is loaded, as a person's tab does.
-        await Assert.That((await PageRig.GetAsync(rig.HandOut())).Body).Contains("BrowserAI 9.2.0 is downloaded and ready to install.");
-
-        using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
-
-        // An install that fails: the client's server was asked, the host was stopped
-        // after it, and a host may start again.
-        rig.Updates.FailInstall = "The package could not be downloaded.";
-
-        await rig.ActAsync("""{"action":"install-update","version":"9.2.0"}""");
-
-        await Assert.That(await StateContainingAsync(stream, "The package could not be downloaded.")).IsNotNull();
-        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
-        await Assert.That(rig.HostHold!.Stops.ToArray()).IsEquivalentTo([(1, 0)]);
-        await Assert.That(rig.HostHold.Reopens).IsEqualTo(1);
-
-        // One that goes through: the server, then the host, then the hand-over, and no reopen.
-        rig.Updates.FailInstall = null;
-
-        await rig.ActAsync("""{"action":"install-update","version":"9.2.0"}""");
-
-        await Assert.That(await stream.NextNamedAsync(PageEvents.Closing)).IsNotNull();
-        await Assert.That(rig.Updates.Installed.Select(candidate => candidate.Version).ToArray()).IsEquivalentTo(["9.2.0"]);
-        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1", "301-1"]);
-        await Assert.That(rig.HostHold.Stops.ToArray()).IsEquivalentTo([(1, 0), (2, 0)]);
-        await Assert.That(rig.HostHold.Reopens).IsEqualTo(1);
-    }
+    // RETIRED 2026-10-08: AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver,
+    // which held the page's install stopping the session host through the
+    // coordinator's hold on it. The session host and the hold went with the
+    // coordinator when the one resident background took both their places (S a).
 
     /// <summary>
     /// A button names a folder, a session or a server by a name the page was given,
@@ -556,9 +503,9 @@ internal sealed class PageServiceTests
     }
 
     /// <summary>
-    /// The coordinator keeps running while a tab is connected, keeps running for a
-    /// minute after the last one leaves so a reload keeps working, and stops once the
-    /// minute is up; after that it hands out nothing.
+    /// The tab's listener stays for a minute after the last tab leaves, so a reload
+    /// keeps working, and stops once the minute is up; the next person's start opens
+    /// a new one.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -567,49 +514,27 @@ internal sealed class PageServiceTests
     /// (because that does not take 1 min.)"</i></b>
     /// </para>
     /// <para>
-    /// <b>The product's own loop and the product's own minute, on a clock the arm
-    /// moves.</b> Each <i>still running</i> is a pass the arm forced and saw end in a
-    /// wait, through the loop's one seam for that question, so no reading here is a
-    /// wait for something that should not happen.
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "The coordinator stops a minute after
+    /// the last tab leaves", driven through the coordinator's own loop, whose process
+    /// then exited)</i>: the one resident background holds the page now and never
+    /// ends on its own (S a), so what stops after the minute is the listener, asked
+    /// through <see cref="PageService.TryStop"/> on every wake the way the background's
+    /// loop asks it, and the next hand-out starts a listener again.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheCoordinatorStopsAMinuteAfterTheLastTabLeavesAndAReloadKeepsItRunning()
+    public async Task TheListenerStopsAMinuteAfterTheLastTabLeavesAndTheNextStartOpensANewOne()
     {
-        using var root = ScratchDirectory.Create("page-linger");
-        using var inbox = new CoordinatorInbox();
-        using var rig = new PageRig(wake: inbox.Wake);
-        using var waits = new SemaphoreSlim(0);
-
-        var loop = new CoordinatorLoop(root.Path, inbox, NothingStaged.Instance, () => new RootScan([], []), rig.Page, NullLogger.Instance)
-        {
-            Waiting = () => waits.Release(),
-        };
+        using var rig = new PageRig();
 
         _ = rig.HandOut();
-
-        var run = RunOnItsOwnThread(loop);
-
-        async Task stillRunningAsync()
-        {
-            while (await waits.WaitAsync(TimeSpan.Zero))
-            {
-            }
-
-            inbox.Wake();
-
-            await Assert.That(await waits.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
-            await Assert.That(run.IsCompleted).IsFalse();
-        }
-
-        await stillRunningAsync();
 
         // A tab connected, and five minutes pass.
         var tab = await rig.StreamAsync(rig.Gate.Root, 1);
 
         rig.Clock.Advance(TimeSpan.FromMinutes(5));
-        await stillRunningAsync();
+        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
 
         // It leaves, and 59 seconds pass.
         tab.Dispose();
@@ -617,7 +542,7 @@ internal sealed class PageServiceTests
         await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
 
         rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await stillRunningAsync();
+        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
 
         // It reloads inside the minute and leaves again: the minute starts over.
         using (var reload = await rig.StreamAsync(rig.Gate.Root, 1))
@@ -628,51 +553,23 @@ internal sealed class PageServiceTests
         await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
 
         rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await stillRunningAsync();
+        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
 
-        // The minute runs out.
+        // The minute runs out, and the listener stops.
         rig.Clock.Advance(TimeSpan.FromSeconds(1));
 
-        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.NothingPending);
+        await Assert.That(rig.Page.TryStop(final: false)).IsTrue();
         await Assert.That(rig.Page.IsServing).IsFalse();
-        await Assert.That(rig.Page.HandOut(PageKind.Status)).IsNull();
+
+        // A person's start after that is handed a tab on a new listener.
+        await Assert.That(rig.Page.HandOut(PageKind.Status)).IsNotNull();
+        await Assert.That(rig.Page.IsServing).IsTrue();
     }
 
-    /// <summary>
-    /// An open tab does not hold an update back: with a package staged and nothing
-    /// else running from the install, the tab is told to open BrowserAI again from the
-    /// Start Menu, and the package is handed over.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q336 a's second half</b>, in the decision's words: <i>when one is staged and
-    /// no server runs from the install, the tab is told, the update is applied, and
-    /// the old tab says to reopen BrowserAI from the Start Menu</i>.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnOpenTabDoesNotHoldAnUpdateBackAndIsToldToReopenFromTheStartMenu()
-    {
-        using var root = ScratchDirectory.Create("page-apply");
-        using var inbox = new CoordinatorInbox();
-        using var rig = new PageRig(wake: inbox.Wake);
-
-        var staged = new ScriptedStaged { Candidate = Candidate("9.3.0") };
-
-        _ = rig.HandOut();
-
-        using var tab = await rig.StreamAsync(rig.Gate.Root, 1);
-
-        await Assert.That(await tab.NextNamedAsync(PageEvents.State)).IsNotNull();
-
-        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, () => new RootScan([], []), rig.Page, NullLogger.Instance));
-
-        var closing = await tab.NextNamedAsync(PageEvents.Closing);
-
-        await Assert.That(closing).IsNotNull();
-        await Assert.That(closing!.Member("sentence")).Contains("Open BrowserAI from the Start Menu again");
-        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.Applied);
-        await Assert.That(staged.Applies).IsEqualTo(1);
-    }
+    // RETIRED 2026-10-08: AnOpenTabDoesNotHoldAnUpdateBackAndIsToldToReopenFromTheStartMenu,
+    // which drove the coordinator's loop to apply a staged update with a tab open. The
+    // loop went with the coordinator (S a); the background's update core decides when
+    // an update installs, and the background tells every open tab why it stops.
 
     /// <summary>
     /// A person's start opens the address it was handed with the shell, or writes it
@@ -751,32 +648,6 @@ internal sealed class PageServiceTests
         return true;
     }
 
-    private static Task<CoordinatorEnd> RunOnItsOwnThread(CoordinatorLoop loop)
-    {
-        var completion = new TaskCompletionSource<CoordinatorEnd>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                completion.SetResult(loop.Run());
-            }
-#pragma warning disable CA1031 // Whatever the loop threw belongs to the awaiting arm, not to this thread.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                completion.SetException(failure);
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "coordinator loop under test",
-        };
-
-        thread.Start();
-        return completion.Task;
-    }
-
     private static UpdateCandidate Candidate(string version, bool older = false) => new()
     {
         Version = version,
@@ -820,17 +691,5 @@ internal sealed class PageServiceTests
             [new HeldSession(directory, purpose, BrowserOpen: true)]);
 
         return CensusPageSessions.Entry($@"C:\install\live\{pid}-0.live", description, Now);
-    }
-
-    /// <summary>A staged update the arm controls.</summary>
-    private sealed class ScriptedStaged : IStagedUpdates
-    {
-        public UpdateCandidate? Candidate { get; set; }
-
-        public int Applies { get; private set; }
-
-        public UpdateCandidate? Pending() => Candidate;
-
-        public void ApplyAfterThisProcessExits(UpdateCandidate candidate) => Applies++;
     }
 }

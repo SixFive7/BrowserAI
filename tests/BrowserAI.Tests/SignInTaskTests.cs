@@ -35,17 +35,22 @@ internal sealed class SignInTaskTests
 {
     /// <summary>
     /// The definition is a logon trigger scoped to the current user, with no delay,
-    /// a principal that runs as that user, and an action that starts the app with
-    /// the sign-in argument and the placeholder a started-on-demand run fills.
+    /// a principal that runs as that user, an action that starts the background and
+    /// says who started it through the placeholder a started-on-demand run fills, and
+    /// a second start ignored while one runs.
     /// </summary>
     /// <remarks>
     /// <b>Read as XML and not as text</b>, so the arm holds what the scheduler will
     /// read. The app's path carries an ampersand, which is the positive control for
     /// the escaping: an unescaped one makes the document fail to parse.
+    /// <b>Changed 2026-10-08 with S a</b> (previously "--sign-in $(Arg0)" and
+    /// <c>Parallel</c>): the task starts the one resident background, and
+    /// <c>IgnoreNew</c> is the second of its two guards against a second one, the
+    /// first being its pipe's first instance.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheDefinitionIsAUserScopedLogonTriggerWithNoDelayThatStartsTheAppForTheSignInStep()
+    public async Task TheDefinitionIsAUserScopedLogonTriggerWithNoDelayThatStartsOneBackground()
     {
         const string Image = @"C:\Users\someone\AppData\Local\Tom & Jerry\current\BrowserAI.exe";
 
@@ -67,10 +72,10 @@ internal sealed class SignInTaskTests
         await Assert.That(principal.Elements().Single(element => element.Name.LocalName == "RunLevel").Value).IsEqualTo("LeastPrivilege");
 
         await Assert.That(one("Command").Value).IsEqualTo(Image);
-        await Assert.That(one("Arguments").Value).IsEqualTo("--sign-in $(Arg0)");
+        await Assert.That(one("Arguments").Value).IsEqualTo("--background --started-by $(Arg0)");
         await Assert.That(task.Descendants().Count(element => element.Name.LocalName == "Exec")).IsEqualTo(1);
 
-        await Assert.That(one("MultipleInstancesPolicy").Value).IsEqualTo("Parallel");
+        await Assert.That(one("MultipleInstancesPolicy").Value).IsEqualTo("IgnoreNew");
         await Assert.That(one("DisallowStartIfOnBatteries").Value).IsEqualTo("false");
         await Assert.That(one("ExecutionTimeLimit").Value).IsEqualTo("PT0S");
         await Assert.That(one("AllowStartOnDemand").Value).IsEqualTo("true");

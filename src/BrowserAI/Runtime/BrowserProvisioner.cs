@@ -167,7 +167,7 @@ internal sealed record ProvisioningTimers
     /// </para>
     /// <para>
     /// <b>It is deliberately ten times
-    /// <see cref="Updates.UpdateService.StallBudget"/>, which is 60 s "twice
+    /// <see cref="Updates.UpdateBudgets.StallBudget"/>, which is 60 s "twice
     /// upstream's <c>NET_DEFAULT_TIMEOUT</c>".</b> That reasoning is right there
     /// and wrong here: a Velopack download has no directory lock in front of it,
     /// so the only thing a stall can mean is a dead socket. Here a stall can also
@@ -188,7 +188,7 @@ internal sealed record ProvisioningTimers
     /// <c>NET_DEFAULT_TIMEOUT = 3e4</c> at <c>coreBundle.js:9087</c> is read
     /// exactly once, at line 34415, as <c>downloadSocketTimeout</c> for a
     /// <i>browser download in Node</i> -- which is this download and nothing
-    /// else. <c>UpdateService.StallBudget</c>
+    /// else. <c>UpdateBudgets.StallBudget</c>
     /// carries the correction for the lane it does not govern.
     /// </para>
     /// </remarks>

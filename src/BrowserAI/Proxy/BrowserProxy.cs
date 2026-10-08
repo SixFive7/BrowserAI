@@ -151,6 +151,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private int _toolsListed;
 
+    /// <summary>
+    /// Whether a relay answers this connection's client's <c>tools/list</c>, so the
+    /// stale-list refusal is the relay's and never this proxy's
+    /// (<see cref="ListsThroughTheRelay"/>).
+    /// </summary>
+    private int _listedByTheRelay;
+
     /// <summary>Whether the one stale-list refusal has already been made.</summary>
     /// <remarks>
     /// <b>Once per connection, and the second call is forwarded.</b> Refusing
@@ -277,6 +284,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
         return For(SessionHost.Create(loggerFactory, environment), new CallerConnection(), activity, ownsHost: true);
 #pragma warning restore CA2000
     }
+
+    /// <summary>
+    /// Marks this connection as a relay's: its client lists BrowserAI's tools from the
+    /// relay, which never passes <c>tools/list</c> on, so this proxy never refuses a
+    /// first call for a list it was not asked for.
+    /// </summary>
+    /// <remarks>
+    /// <b>The design's "What moves", 2026-10-08: Q261 b's stale-list refusal moves into
+    /// the relay</b>, which is what knows whether its client has listed. A relay
+    /// replays its client's <c>initialize</c> to every background it reaches and
+    /// answers the list itself, so without this mark the background would refuse the
+    /// first call of every relay.
+    /// </remarks>
+    public void ListsThroughTheRelay() => Volatile.Write(ref _listedByTheRelay, 1);
 
     /// <summary>The options the caller-facing MCP server is built from.</summary>
     /// <returns>Server options whose tool methods are short-circuited by a message filter.</returns>
@@ -632,7 +653,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         JsonRpcRequest request,
         CancellationToken cancellationToken)
     {
-        if (Volatile.Read(ref _toolsListed) is not 0)
+        if (Volatile.Read(ref _toolsListed) is not 0 || Volatile.Read(ref _listedByTheRelay) is not 0)
         {
             return false;
         }
