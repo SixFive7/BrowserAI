@@ -31,16 +31,30 @@ namespace BrowserAI.Tests;
 internal sealed class BuiltInToolListTests
 {
     /// <summary>
-    /// The published server answers <c>tools/list</c> while nothing from the payload
-    /// runs in its job, and the list is the compiled one through the rewrite.
+    /// The published server answers <c>tools/list</c> while no Playwright server runs
+    /// in its job, and the list is the compiled one through the rewrite.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Planted red 2026-10-08 against the published binary that still started its
     /// own child before serving: the job held the payload's <c>node.exe</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-08 (previously
+    /// <c>ThePublishedServerAnswersTheToolListWithNothingFromThePayloadRunning</c>,
+    /// which held that no process in the job ran an image from the payload)</i>:
+    /// the server's own stray sweep starts the registry reap when it ends a stray
+    /// browser, which is the payload's <c>node.exe</c> running
+    /// <c>playwright-core</c>'s registry, in this job because the server is. The Git
+    /// Bash half of lane S1's gate at <c>079e3d1c</c> met one. What this arm is about
+    /// is the child that answered <c>tools/list</c>, a <c>node.exe</c> from the
+    /// payload running <c>@playwright/mcp</c>'s <c>cli.js</c>, so that is what it
+    /// looks for, by the command line.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePublishedServerAnswersTheToolListWithNothingFromThePayloadRunning()
+    public async Task ThePublishedServerAnswersTheToolListWithNoPlaywrightServerRunning()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
@@ -59,15 +73,17 @@ internal sealed class BuiltInToolListTests
         var listed = await client.RoundTripAsync("tools/list", new JsonObject());
 
         var payload = Path.Combine(PublishedSlice.Directory, "payload") + Path.DirectorySeparatorChar;
+        var cli = Path.Combine("mcp", "node_modules", "@playwright", "mcp", "cli.js");
 
-        var fromThePayload = client.JobProcessIds()
+        var playwrightServers = client.JobProcessIds()
             .Where(processId => processId != client.ProcessId)
-            .Select(processId => (Id: processId, Image: ProcessCommandLine.ImagePathOf(processId)))
-            .Where(member => member.Image?.StartsWith(payload, StringComparison.OrdinalIgnoreCase) is true)
-            .Select(member => $"{member.Id} {member.Image}")
+            .Select(processId => (Id: processId, Image: ProcessCommandLine.ImagePathOf(processId), CommandLine: ProcessCommandLine.Of(processId)))
+            .Where(member => member.Image?.StartsWith(payload, StringComparison.OrdinalIgnoreCase) is true
+                && member.CommandLine?.Contains(cli, StringComparison.OrdinalIgnoreCase) is true)
+            .Select(member => $"{member.Id} {member.CommandLine}")
             .ToList();
 
-        await Assert.That(string.Join("; ", fromThePayload)).IsEmpty();
+        await Assert.That(string.Join("; ", playwrightServers)).IsEmpty();
 
         var expected = SessionToolSurface.Rewrite(UpstreamToolList.Compiled.Result(), RepositoryVerdicts.Committed);
 

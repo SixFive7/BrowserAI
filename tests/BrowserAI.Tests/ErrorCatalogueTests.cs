@@ -2150,7 +2150,14 @@ internal sealed partial class ErrorCatalogueTests
         // `SessionHeldByAnotherBrowserAi` arrived with `browserai_close`, F1 a: a
         // close of a session another BrowserAI process holds is refused, because
         // only its holder can act on its browser.
-        await Assert.That(rows.Count).IsEqualTo(40);
+        //
+        // ⚠️ **Corrected 2026-10-08 a second time, to 41 (previously 40).**
+        // `InstallIsBroken` arrived with the tool list compiled into the binary:
+        // a session whose child lists different tools from the list this
+        // BrowserAI was built with is refused as a broken install, naming the
+        // first tool that differs. It arrived without moving this count, and the
+        // first gates after it read 41 against 40.
+        await Assert.That(rows.Count).IsEqualTo(41);
     }
 
     /// <summary>

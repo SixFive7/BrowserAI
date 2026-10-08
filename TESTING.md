@@ -115,7 +115,7 @@ answers `tools/list` from it, so the comparison above now runs at two moments: t
 build regenerates the snapshot from the payload and fails on a difference, and every
 session the product opens asks its own child for its list and refuses to open on a
 difference, byte for byte. `BuiltInToolListTests` holds the published server
-answering with nothing from the payload running, a real session opening in each
+answering with no Playwright server running, a real session opening in each
 family, the binary carrying the snapshot and the comparison naming the first tool
 that differs; `ErrorCatalogueTests.TheInstallIsBrokenRowIsEmittedByASessionChildWhoseListDiffers`
 holds the refusal. **`LosslessPassthroughTests` changed meaning with it**: it held the

@@ -1,0 +1,58 @@
+=== HEAD 079e3d1c 0 uncommitted
+=== PUBLISH 22:27:53
+=== server publish exit 0
+=== WAITING for the suite lock 22:30:02: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:31:03: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:32:04: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:33:05: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:34:06: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:35:07: lane ui started 2026-10-08T22:26:51Z the ordinary two-shell gate on b0aebc02, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 22:36:07: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:37:08: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:38:08: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:39:08: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:40:08: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:41:09: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:42:09: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:43:09: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:44:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:45:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:46:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:47:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:48:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:49:10: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:50:11: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:51:11: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:52:11: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:53:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:54:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:55:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:56:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:57:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:58:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 22:59:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:00:12: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:01:13: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:02:13: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:03:13: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:04:13: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:05:13: lane arch started: 2026-10-08T22:35:32Z running: filtered runs of the published classes on the one-background build (step 3/4) from /c/Source/SixFive7/BrowserAI/.work/wt/arch3 
+=== WAITING for the suite lock 23:06:14: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:07:15: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:08:15: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:09:15: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:10:15: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:11:16: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:12:16: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:13:17: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:14:17: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:15:18: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:16:18: lane ui started 2026-10-08T23:05:44Z the ordinary two-shell gate on f91b1cc8, from /c/Source/SixFive7/BrowserAI/.work/wt/ui 
+=== WAITING for the suite lock 23:17:18: lane: drift-1009 started: 2026-10-08T23:17:02Z running: tree-scan classes only, filtered, --no-build, nothing starts a browser or a server, from /c/Source/SixFive7/BrowserAI/.work/wt/drift-1009 at 5bf
+=== LOCK TAKEN 23:18:18
+=== PS HALF 23:18:18
+=== PS HALF exit 0 23:23:27
+=== BASH HALF 23:23:27
+=== BASH HALF exit 0 23:28:48
+=== GATE DONE 23:28:48
+=== LOCK RELEASED 23:28:48

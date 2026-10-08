@@ -81,16 +81,22 @@ internal sealed class SandboxFlagTests
         // simply stopped adding --no-sandbox, so the positive half is asserted
         // too: our flag really is on the child's command line, read back from
         // the running node process and not from the argument list we built.
-        // EVERY node child, and there are now two of them -- the run's own,
-        // which answers tools/list before any session exists, and the session's.
-        // Step 13 made `session` mandatory, so the browser above belongs to a
-        // session; the previous `SingleOrDefault` here threw the moment a second
-        // child appeared, which is the right failure and the wrong assertion.
+        // EVERY node child, and since 2026-10-08 that is the session's alone.
+        // Corrected 2026-10-08 (previously "there are now two of them -- the
+        // run's own, which answers tools/list before any session exists, and the
+        // session's", with at least two asserted): the run's own child is gone,
+        // because the list is compiled into the binary, and BuiltInToolListTests
+        // holds that no Playwright server runs before a session opens. Step
+        // 13 made `session` mandatory, so the browser above belongs to a session
+        // and its child is the one read here. The previous `SingleOrDefault`
+        // threw the moment a second child appeared, which was the right failure
+        // and the wrong assertion, so every child is read, and at least one must
+        // be, or the check below would pass with nothing to check.
         var children = run.Processes
             .Where(process => process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true)
             .ToList();
 
-        await Assert.That(children.Count).IsGreaterThanOrEqualTo(2);
+        await Assert.That(children.Count).IsGreaterThanOrEqualTo(1);
 
         var unflagged = children
             .Where(process => process.CommandLine?.Contains(ChildLaunch.SandboxFlag, StringComparison.Ordinal) is not true)

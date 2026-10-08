@@ -1,0 +1,129 @@
+Running tests from C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed TheOneExecutableIsAWindowsSubsystemBinary (169ms)
+  [Test Failure] AssertionException: Expected to be false
+but found True
+
+at Assert.That(File.Exists(Path.Combine(
+            RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "bin", "Debug", "net10.0-windows", "BrowserAI.exe"))).IsFalse()
+  from C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be false
+  but found True
+  
+  at Assert.That(File.Exists(Path.Combine(
+              RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "bin", "Debug", "net10.0-windows", "BrowserAI.exe"))).IsFalse()
+    at BrowserAI.Tests.AppBinaryTests.TheOneExecutableIsAWindowsSubsystemBinary() in C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\AppBinaryTests.cs:74
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed NoProcessOfOurBrowserRunsWithTheSandboxDisabled (3ms)
+  [Test Failure] AssertionException: Expected to be greater than or equal to 2
+but received 1
+
+at Assert.That(children.Count).IsGreaterThanOrEqualTo(2)
+  from C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be greater than or equal to 2
+  but received 1
+  
+  at Assert.That(children.Count).IsGreaterThanOrEqualTo(2)
+    at BrowserAI.Tests.SandboxFlagTests.NoProcessOfOurBrowserRunsWithTheSandboxDisabled() in C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\SandboxFlagTests.cs:93
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed AServerStartedWhileItsInstallsUpdaterRunsListsItsToolsRefusesCallsAndServesOnceTheUpdaterHasGone (1s 196ms)
+  [Test Failure] AssertionException: Expected to be greater than 0
+but received 0
+
+at Assert.That(PayloadChildrenIn(client).Count).IsGreaterThan(0)
+  from C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be greater than 0
+  but received 0
+  
+  at Assert.That(PayloadChildrenIn(client).Count).IsGreaterThan(0)
+    at BrowserAI.Tests.UpdateInProgressTests.AServerStartedWhileItsInstallsUpdaterRunsListsItsToolsRefusesCallsAndServesOnceTheUpdaterHasGone() in C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\UpdateInProgressTests.cs:196
+    at BrowserAI.Tests.UpdateInProgressTests.AServerStartedWhileItsInstallsUpdaterRunsListsItsToolsRefusesCallsAndServesOnceTheUpdaterHasGone() in C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\UpdateInProgressTests.cs:227
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+failed EveryRowInTheCatalogueWasTriggeredBySomethingAbove (2ms)
+  [Test Failure] AssertionException: Expected to be 40
+but found 41
+
+at Assert.That(rows.Count).IsEqualTo(40)
+  from C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be 40
+  but found 41
+  
+  at Assert.That(rows.Count).IsEqualTo(40)
+    at BrowserAI.Tests.ErrorCatalogueTests.EveryRowInTheCatalogueWasTriggeredBySomethingAbove() in C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\ErrorCatalogueTests.cs:2153
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 4 error(s) (4m 18s 490ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage -- what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\payload\payload.json
+    Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+    Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+    packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.240-full.nupkg
+    client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+    release installer   PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\Releases\test-pack\BrowserAI.test-installer.exe
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\s1b rev-parse --is-inside-work-tree said true
+    Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+    publish freshness   FRESH      exe 2026-10-08T22:30:02.305Z is 12m25s newer than the newest of 170 inputs (src\BrowserAI\Sessions\UpstreamToolList.cs, 2026-10-08T22:17:36.683Z) ┬╖ exe and tree both 1.1.1-alpha.0.240 ┬╖ the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CDN      downloaded 208.8 MB from the CDN because no cached tree exists yet under 'C:\Source\SixFive7\BrowserAI\.work\wt\s1b\.work\first-run-cache' (40.5 s). Cached 315 files / 462016284 B for the next 60 min.
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ ┬╖ cwd C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows ┬╖ BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly ┬╖ read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ΓÜá∩╕Å  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 60,841 MiB (43.1%) ┬╖ end 62,652 MiB (44.4%) ┬╖ limit 141,229 MiB ┬╖ \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+    windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 4475 events, 8 about visible root windows and none of them this run's, 83 windows in the baseline
+    firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 116 scans, 450 processes read under the browsers root and the scratch roots
+    installer lock      HELD     held by pid=34684 created=134359750990557856, alive, the holder named in BROWSERAI_INSTALLER_LOCK_HELD: this run neither waited for it nor lets it go
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\s1b\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 1079
+  failed: 4
+  succeeded: 1075
+  skipped: 0
+  duration: 4m 18s 950ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\payload\payload.json
+  Chromium            PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+  Firefox             PRESENT  %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\Releases\test-pack\twin\BrowserAI.app-1.1.1-alpha.0.240-full.nupkg
+  client CLI          PRESENT  %USERPROFILE%\.local\bin\claude.exe
+  release installer   PRESENT  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\Releases\test-pack\BrowserAI.test-installer.exe
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI\.work\wt\s1b rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  %USERPROFILE%\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-10-08T22:30:02.305Z is 12m25s newer than the newest of 170 inputs (src\BrowserAI\Sessions\UpstreamToolList.cs, 2026-10-08T22:17:36.683Z) · exe and tree both 1.1.1-alpha.0.240 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     CDN      downloaded 208.8 MB from the CDN because no cached tree exists yet under 'C:\Source\SixFive7\BrowserAI\.work\wt\s1b\.work\first-run-cache' (40.5 s). Cached 315 files / 462016284 B for the next 60 min.
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\.work\wt\s1b\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+  filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 60,841 MiB (43.1%) · end 62,652 MiB (44.4%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  windows             CLEAN    nothing this run started showed a window or took the foreground on desktop 'Default': 4475 events, 8 about visible root windows and none of them this run's, 83 windows in the baseline
+  firefox safe mode   CLEAN    no Firefox this run started carried -safeMode or -safe-mode: 116 scans, 450 processes read under the browsers root and the scratch roots
+  installer lock      HELD     held by pid=34684 created=134359750990557856, alive, the holder named in BROWSERAI_INSTALLER_LOCK_HELD: this run neither waited for it nor lets it go
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================

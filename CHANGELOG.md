@@ -867,9 +867,9 @@ release body; nothing else depends on it.
   under five session configurations, Chromium and Firefox, hidden and headed. The schema rule
   reads: schemas come from the child's `tools/list` at build time, from the same pinned payload,
   and are checked against the live child at run time. `BuiltInToolListTests` holds the published
-  server answering with nothing from the payload running, a session opening in each family, and
+  server answering with no Playwright server running, a session opening in each family, and
   the binary carrying the snapshot; `ErrorCatalogueTests` holds the refusal. Both were watched red
-  first.
+  first. The catalogue's census is 41.
 
 - 💥 **BrowserAI is one program again, `BrowserAI.exe`, and a client starts it with `--mcp`.**
   D7 a, the maintainer's words verbatim: *"d7 a"*. Release 1.1.0 carried two programs:
