@@ -402,6 +402,33 @@ internal static class SessionErrors
         + $"{SessionToolSurface.Init} creates one, and {SessionToolSurface.List} shows the sessions under a directory and which are in use. "
         + "If that client goes away, the next call that names this session takes it over.";
 
+    /// <summary>
+    /// Row 2's third companion -- the session is open in another BrowserAI process,
+    /// and only its holder can act on its browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-08 with <c>browserai_close</c>, F1 a.</b> A close is an act on
+    /// a running browser, and the browser belongs to the process that holds the
+    /// session's guard: no other process can send it its close, and BrowserAI never
+    /// ends a process it did not start. <see cref="SessionNotOpen"/> is the wrong
+    /// sentence here, because it sends the caller to <c>browserai_resume</c>, which
+    /// that same holder refuses.
+    /// </para>
+    /// <para>
+    /// <b>It names no holder</b>, for the reason <c>browserai_list</c> names none: a
+    /// sharing violation on the guard says the file is held and never by whom, and the
+    /// record's newest holder statement is a different question from whether anybody
+    /// still has it.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="path">The session directory.</param>
+    /// <returns>The refusal.</returns>
+    public static string SessionHeldByAnotherBrowserAi(string tool, string path) =>
+        $"'{path}' is open in another BrowserAI process, so '{tool}' was not run and nothing was changed: only the BrowserAI that holds a session can act on its browser. "
+        + $"Make the call through the client that is driving that session, or use a session of your own: {SessionToolSurface.Init} creates one.";
+
     /// <summary>Row 3 -- the directory is empty, relative or malformed.</summary>
     /// <param name="argument">Which argument was wrong.</param>
     /// <param name="value">What arrived.</param>
@@ -1465,6 +1492,11 @@ internal static class SessionErrors
     /// out."</i>
     /// </para>
     /// </remarks>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "call browser_close on this session"):
+    /// the close is <c>browserai_close</c> since F1 a, which denies Playwright's
+    /// own.</i>
+    /// </para>
     /// <param name="path">The session directory.</param>
     /// <param name="unapplied">One clause per argument that differs, naming both values.</param>
     /// <returns>The refusal.</returns>
@@ -1478,7 +1510,7 @@ internal static class SessionErrors
             + (one
                 ? $"This setting differs from the one its browser was started with: {unapplied[0]}. "
                 : $"These settings differ from the ones its browser was started with: {string.Join("; ", unapplied)}. ")
-            + $"If you need {(one ? "it" : "them")}, call {LiveSession.BrowserCloseTool} on this session, then {SessionToolSurface.Resume} with {(one ? "it" : "them")}; "
+            + $"If you need {(one ? "it" : "them")}, call {SessionToolSurface.Close} on this session, then {SessionToolSurface.Resume} with {(one ? "it" : "them")}; "
             + "that closes the Playwright browser and opens a new one with the new settings: the tabs come back, but page snapshots and element references from before no longer apply. "
             + "If you don't, no resume is needed: the session is live, so carry on with its tools.";
     }

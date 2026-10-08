@@ -43,7 +43,7 @@ internal sealed class CloseOrderingTests
     /// <summary>What a teardown that waits for a close in flight logs.</summary>
     private const string TeardownWaits = "before its child is ended";
 
-    /// <summary>What the session logs when the caller of a <c>browser_close</c> stops waiting for it.</summary>
+    /// <summary>What the session logs when the caller of its own close stops waiting for it.</summary>
     private const string CallerLeft = "stopped waiting for its answer";
 
     /// <summary>What a destroy that cuts a close in flight short logs.</summary>
@@ -133,14 +133,22 @@ internal sealed class CloseOrderingTests
     }
 
     /// <summary>
-    /// A resume that arrives while the caller's own <c>browser_close</c> is still being
-    /// answered waits for it, the caller gets the browser's own answer, and then the
-    /// session opens again.
+    /// A resume that arrives while the agent's own close is still being answered waits
+    /// for it, the agent's close is answered as a clean close, and then the session
+    /// opens again.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Planted red against the tree as it stood on 2026-10-04</b>, where the resume
     /// ended the child under the close at once and the caller was answered with the
     /// child's failure to answer.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously the
+    /// caller's own <c>browser_close</c>, answered with the browser's own bytes). It is
+    /// answered with BrowserAI's own sentence for a clean close. Planted red again
+    /// against the tree with the tool listed and not answered.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -167,7 +175,7 @@ internal sealed class CloseOrderingTests
 
         await NavigateAsync(rig.Client, directory);
 
-        var closeId = await rig.Client.BeginAsync("tools/call", Call(LiveSession.BrowserCloseTool, new JsonObject
+        var closeId = await rig.Client.BeginAsync("tools/call", Call(SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing its browser, slowly",
@@ -202,26 +210,32 @@ internal sealed class CloseOrderingTests
         await Assert.That((bool?)response.Result?["isError"]).IsNotEqualTo(true).Because(TextOf(response.Result));
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
 
-        // The caller's close was answered by the browser, byte for byte, and not by
-        // the child's ending under it.
+        // The agent's close was answered as the clean close it was, and not by the
+        // child's ending under it.
         await rig.Client.ReadUntilAsync(() => AnswerTo(rig.Client, closeId) is not null);
 
         var closed = AnswerTo(rig.Client, closeId)!;
 
         await Assert.That(closed["error"]).IsNull();
         await Assert.That((bool?)closed["result"]?["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(closed["result"]?.AsObject())).IsEqualTo("### Result\nNo open tabs. Navigate to a URL to create one.");
+        await Assert.That(TextOf(closed["result"]?.AsObject())).IsEqualTo(SessionManager.ClosedByTheAgent);
     }
 
     /// <summary>
-    /// A caller that stops waiting for its own <c>browser_close</c> leaves the close to
-    /// finish: the child is not told to stop it, and is ended only once the browser has
-    /// answered.
+    /// A caller that stops waiting for its own close leaves the close to finish: the
+    /// child is not told to stop it, and is ended only once the browser has answered.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Planted red against the tree as it stood on 2026-10-04</b>, where the caller's
     /// cancellation went on to the child and the child was ended at once, with the close
     /// still running in it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously
+    /// <c>browser_close</c>). Planted red again against the tree with the tool listed and
+    /// not answered.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -244,7 +258,7 @@ internal sealed class CloseOrderingTests
 
         await NavigateAsync(rig.Client, directory);
 
-        var closeId = await rig.Client.BeginAsync("tools/call", Call(LiveSession.BrowserCloseTool, new JsonObject
+        var closeId = await rig.Client.BeginAsync("tools/call", Call(SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing its browser and then giving up on the answer",

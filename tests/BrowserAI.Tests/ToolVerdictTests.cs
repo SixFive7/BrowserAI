@@ -150,7 +150,9 @@ internal sealed class ToolVerdictTests
         await Assert.That(authored.Count).IsEqualTo(SessionToolSurface.Names.Count);
         // ⚠️ *Corrected 2026-09-21 to 8 (previously 7)*, with
         // `browserai_page_tool`.
-        await Assert.That(authored.Count).IsEqualTo(8);
+        // ⚠️ *Corrected 2026-10-08 to 9 (previously 8)*, with `browserai_close`,
+        // the maintainer's F1 a.
+        await Assert.That(authored.Count).IsEqualTo(9);
     }
 
     /// <summary>
@@ -324,7 +326,12 @@ internal sealed class ToolVerdictTests
         // storage before it loads a saved file, so an old file replaces a newer
         // login, and the profile already keeps logins. Planted red against the
         // file as it stood, with the row still `allow`.
-        await Assert.That(denied.Count).IsEqualTo(8);
+        //
+        // ⚠️ NINE since 2026-10-08 (previously eight): the maintainer's F1 a, in
+        // his words, "f1 a". browser_close is replaced by BrowserAI's own
+        // browserai_close. Planted red against the file as it stood, with the row
+        // still `allow`.
+        await Assert.That(denied.Count).IsEqualTo(9);
 
         // And them by name, because a count is satisfied by the wrong row. The
         // dates are the file's own: `browser_annotate` judged at the 0.0.79
@@ -333,6 +340,7 @@ internal sealed class ToolVerdictTests
             .IsEquivalentTo((string[])
             [
                 "browser_annotate",
+                "browser_close",
                 "browser_generate_locator",
                 "browser_resume",
                 "browser_set_storage_state",

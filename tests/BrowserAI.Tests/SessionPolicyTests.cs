@@ -164,13 +164,19 @@ internal sealed class SessionPolicyTests
     /// file, so the numerator lost one and <see cref="Withholds"/> went 7 → 8.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-10-08 to 63 of 72 (previously 64 of 72)</b>: the
+    /// maintainer's F1 a denied <c>browser_close</c>, which BrowserAI's own
+    /// <c>browserai_close</c> replaces, so the numerator lost one and
+    /// <see cref="Withholds"/> went 8 → 9.
+    /// </para>
+    /// <para>
     /// <b>Written down and not derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
     /// construction and could never fail. This one still can -- a refusal
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 64;
+    private const int Advertises = 63;
 
     /// <summary>
     /// How many tools this build withholds, written down beside
@@ -205,7 +211,9 @@ internal sealed class SessionPolicyTests
     // maintainer's words verbatim, "Q365.1 a" -- browser_set_storage_state is
     // denied, because it replaces the profile's logins with whatever an older
     // saved file holds.
-    private const int Withholds = 8;
+    // ⚠️ Nine since 2026-10-08 (previously eight): F1 a, the maintainer's words
+    // verbatim, "f1 a", denies browser_close beside BrowserAI's own browserai_close.
+    private const int Withholds = 9;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.
@@ -456,6 +464,94 @@ internal sealed class SessionPolicyTests
         var browserToolNoSession = await CallAsync(rig, "browser_navigate", new JsonObject { ["why"] = "the suite exercising this call" });
 
         await Assert.That(TextOf(browserToolNoSession)).IsEqualTo(SessionErrors.SessionMissing("browser_navigate"));
+    }
+
+    /// <summary>
+    /// Playwright's <c>browser_close</c> is answered like any tool BrowserAI does not
+    /// have, is not in the tool list, and closes nothing; <c>browserai_close</c> is in
+    /// the list in its place.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F1 a, decided 2026-10-08 by the maintainer, with no tailored refusal, in his
+    /// words verbatim:</b> <i>"f1 - I remember that for the other tools on the deny
+    /// list we just send the generic "unknown command" response and that we do not
+    /// have tailored answers. If I remember correctly do not make an exception.
+    /// Otherwise proceed."</i> So the refusal is
+    /// <see cref="SessionErrors.ToolDoesNotExist"/>, character for character, and
+    /// nothing in it names <c>browserai_close</c> except the tool list it carries.
+    /// </para>
+    /// <para>
+    /// <b>The session is untouched, which is the half that matters</b>: the browser
+    /// stays up, the next call reaches the same child, and the double never received
+    /// a close.
+    /// </para>
+    /// <para>
+    /// <b>Planted red on 2026-10-08</b> against the tree as it stood, where the call
+    /// was forwarded and closed the session.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task PlaywrightsBrowserCloseIsAnsweredLikeAToolBrowserAiDoesNotHave()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.Tools["browser_navigate"] = new FakeToolBehaviour();
+            child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "browser-close-denied");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets Playwright's own close, which BrowserAI does not offer",
+        });
+
+        var navigate = new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite bringing the browser up",
+            ["url"] = "data:text/html,<h1>up</h1>",
+        };
+
+        await Assert.That((bool?)(await CallAsync(rig, "browser_navigate", (JsonObject)navigate.DeepClone()))["isError"]).IsNotEqualTo(true);
+
+        var tools = await rig.ListedToolsAsync();
+
+        var answer = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite reaching for Playwright's own close",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+        await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolDoesNotExist(LiveSession.BrowserCloseTool, tools));
+        await Assert.That(TextOf(answer)).StartsWith($"BrowserAI has no tool '{LiveSession.BrowserCloseTool}', so nothing ran.");
+
+        // Not advertised, and its replacement is.
+        await Assert.That(tools.Find(LiveSession.BrowserCloseTool)).IsNull();
+        await Assert.That(tools.Find(SessionToolSurface.Close)).IsNotNull();
+
+        // Nothing closed: the double never heard of it, and the next call reaches the
+        // same child.
+        var session = sessions.SessionChildren.Single(child => child.ToolCallsReceived.Contains("browser_navigate"));
+
+        await Assert.That(session.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+
+        navigate["why"] = "the suite calling after the refused close";
+
+        await Assert.That((bool?)(await CallAsync(rig, "browser_navigate", (JsonObject)navigate.DeepClone()))["isError"]).IsNotEqualTo(true);
+        await Assert.That(session.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(2);
+        await Assert.That(session.HasStopped).IsFalse();
+
+        // And the refused call is in the record, as every refused call is.
+        var recorded = RecordedSession.LogOf(directory).Single(row => row.Tool == LiveSession.BrowserCloseTool);
+
+        await Assert.That(recorded.Outcome).IsEqualTo(SessionStore.Failed);
     }
 
     /// <summary>

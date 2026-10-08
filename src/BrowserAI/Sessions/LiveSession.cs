@@ -453,30 +453,16 @@ internal sealed class LiveSession : IAsyncDisposable
         + "so it ended the browser server, node child included. Every browser call is refused until browserai_resume starts a new one, "
         + "and the browser's own session restore then reopens the tabs that were open.";
 
-    /// <summary>
-    /// What a caller's own <c>browser_close</c> is answered with when no browser
-    /// was open to close.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Not forwarded, because forwarding it would start a browser.</b> Measured
-    /// 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83: a
-    /// <c>browser_close</c> with no browser up launched 8 to 9 browser processes in
-    /// order to close them, rewrote a network capture empty and left a registry
-    /// descriptor nothing reaps. In a headed session that is a window that appears
-    /// and goes again.
-    /// </para>
-    /// <para>
-    /// <b>An answer and not a refusal</b>, so it lives here and not in
-    /// <c>SessionErrors</c>: closing what is not open has done what it was asked.
-    /// And it does NOT close the session, which is the idle close's rule applied
-    /// to the caller's (P3 b): a timer that finds only the node child does nothing,
-    /// and so does this.
-    /// </para>
-    /// </remarks>
-    public const string NothingWasOpenToClose =
-        "No browser was open in this session, so there was nothing to close and none was started in order to close it. "
-        + "The session is unchanged: the next browser call starts a browser as usual.";
+    // ⚠️ DELETED 2026-10-08: `NothingWasOpenToClose`, what a caller's own
+    // `browser_close` was answered with when no browser was up -- "No browser was
+    // open in this session, so there was nothing to close and none was started in
+    // order to close it. The session is unchanged: the next browser call starts a
+    // browser as usual." F1 a denies `browser_close` at the door, and
+    // `browserai_close` with no browser up closes the session all the same
+    // (`SessionManager.ClosedWithNoBrowserUp`), still without sending a close: one
+    // with no browser up starts a browser in order to close it, measured 2026-10-03
+    // at 8 to 9 browser processes, a capture rewritten empty and a registry
+    // descriptor nothing reaps.
 
     // ⚠️ RETIRED 2026-10-04: `ShutdownCloseBudget`, one second, and
     // `IdleCloseBudget`, thirty seconds, stood here. D4.1 and D4.2, the
@@ -795,36 +781,43 @@ internal sealed class LiveSession : IAsyncDisposable
     }
 
     /// <summary>
-    /// Marks this session closed by the caller's own <c>browser_close</c>, records the
-    /// close as in flight, and sends it, in that order.
+    /// <c>browserai_close</c>: marks this session closed by the agent, records why,
+    /// asks the browser to close itself, and ends the child once the browser has
+    /// answered or the one close cap has run out, in that order.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>P3 b, the maintainer's words of 2026-10-03, verbatim: "p3 b".</b> The
-    /// caller's close is treated like the idle close: every later call is refused
-    /// until <c>browserai_resume</c>, which starts the browser again and lets its
-    /// own session restore reopen the tabs. Marked before the close is forwarded,
-    /// so a close that never answers still leaves a session the resume can
-    /// recover; see <see cref="Closed"/>.
+    /// <b>F1 a, decided 2026-10-08 by the maintainer</b>: one tool of BrowserAI's own
+    /// ends a session's browser and keeps the session, and Playwright's
+    /// <c>browser_close</c> is denied. <i>Previously <c>SendTheCallersCloseAsync</c> and
+    /// <c>EndTheChildAfterTheCallersCloseAsync</c>, which sent the caller's own
+    /// <c>browser_close</c> on to the child (P3 b, 2026-10-03) and ended the child once
+    /// the proxy had the answer.</i> What carried over unchanged is every rule those
+    /// two kept: the session is closed and the close recorded before anything is sent,
+    /// so a close that never answers still leaves a session the resume recovers
+    /// (<see cref="Closed"/>); the close is in flight from the moment it is sent, so a
+    /// resume, a release and a shutdown wait for it; and the close is sent with no
+    /// token of the caller's, so a caller that stops waiting leaves it to finish and
+    /// the child is ended once it is over.
     /// </para>
     /// <para>
-    /// ⚠️ <b>One step since 2026-10-04</b> (previously the proxy marked the session
-    /// closed and forwarded the close a few lines later with the caller's own token).
-    /// A resume that landed between the two met a closed session with nothing in
-    /// flight and ended the child under the close it was about to receive. And the
-    /// close is sent with no token of the caller's: a caller that cancels it, or a
-    /// connection that ends under it, stops waiting for the answer and leaves the close
-    /// to finish in the child, which is ended only once the close is over
-    /// (<see cref="EndTheChildAfterTheCallersCloseAsync"/>). Whoever waits for it waits
-    /// at most <see cref="SessionTimes.BrowserCloseCap"/> from now.
+    /// <b>What changed is the cap's reach.</b> The caller's own close was let go of at
+    /// the cap for whoever waited behind it, and the caller itself went on waiting for
+    /// an answer a wedged browser never gave. This answers its caller at the cap too:
+    /// the close is BrowserAI's, so BrowserAI says how it ended.
+    /// </para>
+    /// <para>
+    /// <b>With no browser up nothing is sent</b>, because a <c>browser_close</c> with no
+    /// browser up starts one in order to close it (measured 2026-10-03), and the child
+    /// is ended all the same: after <c>browserai_close</c> a session is closed whatever
+    /// it held. A decision taken 2026-10-08 for the maintainer's review.
     /// </para>
     /// </remarks>
-    /// <param name="method">The JSON-RPC method, as the caller sent it.</param>
-    /// <param name="parameters">The caller's parameters, with BrowserAI's own taken out.</param>
     /// <param name="by">The connection the close arrived on, which the reason names.</param>
     /// <param name="why">What the call gave as its reason.</param>
-    /// <returns>The child's answer, for the caller to wait on under its own token.</returns>
-    public Task<ChildAnswer> SendTheCallersCloseAsync(string method, JsonNode? parameters, CallerConnection by, string why)
+    /// <param name="cancellationToken">The caller's token: it ends the caller's wait and never the close.</param>
+    /// <returns>How the close ended.</returns>
+    public async Task<AgentClose> CloseForTheAgentAsync(CallerConnection by, string why, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(by);
 
@@ -836,65 +829,69 @@ internal sealed class LiveSession : IAsyncDisposable
         };
 
         // 8 b: the reason is recorded, and its row is the call's own.
-        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
+        if (Interlocked.CompareExchange(ref _closed, closure, null) is not null)
         {
-            Record(closure, writeRow: false);
+            return AgentClose.AlreadyClosed;
+        }
+
+        Record(closure, writeRow: false);
+
+        if (!BrowserIsOpen)
+        {
+            await Child.DisposeAsync().ConfigureAwait(false);
+            return AgentClose.NothingWasOpen;
+        }
+
+        // The reap is owed now, for the reason the shutdown's close gives: the child
+        // is ended below, and a teardown that finds no job starts no reap.
+        if (TheJobHoldsABrowser())
+        {
+            Volatile.Write(ref _reapOwed, 1);
         }
 
         var finished = BeginTheCloseInFlight();
-        var asked = Child.AskAsync(method, parameters, CancellationToken.None);
 
-        _ = LetTheCallersCloseGoAtTheCapAsync(asked, finished);
+        var asked = Child.AskAsync(
+            RequestMethods.ToolsCall,
+            new JsonObject
+            {
+                ["name"] = BrowserCloseTool,
+                ["arguments"] = new JsonObject(),
+            },
+            CancellationToken.None);
 
-        return asked;
-    }
+        // Observed, so a close the child never answers, which faults once the child is
+        // ended, is not left as an exception nobody read.
+        _ = asked.ContinueWith(
+            static task => _ = task.Exception,
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
 
-    /// <summary>
-    /// Ends this session's child once the caller's own <c>browser_close</c> is over,
-    /// so a closed session holds no node process either.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The same teardown the idle close makes</b>, and cheap here: the browser
-    /// has already gone, so the node child exits in about 20 ms once its stdin
-    /// closes (measured 2026-10-03, 14 to 36 ms over twelve runs). A session that
-    /// is closed holds nothing until the resume that opens it again.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Over means answered or out of its cap, and not that the caller stopped
-    /// waiting</b>, since 2026-10-04: a caller that cancelled its close, or whose
-    /// connection ended, leaves the close running in the child, and ending the child
-    /// then would force-kill a browser that is in the middle of closing.
-    /// </para>
-    /// <para>
-    /// <b>A caller that left is not waited for here</b>: the child is ended once the
-    /// close is over, off the caller's own request, so a connection that ended under
-    /// its close is let go at once and a client that comes back meets the session
-    /// closing and not driven by the connection it left behind.
-    /// </para>
-    /// </remarks>
-    /// <param name="answered">Whether the caller had the answer, or stopped waiting before it.</param>
-    /// <returns>A task that completes once the child is gone, or once its end is under way for a caller that left.</returns>
-    public async Task EndTheChildAfterTheCallersCloseAsync(bool answered)
-    {
-        if (Closed is not { Cause: SessionCloseCause.Caller })
+        // What decides the answer is how the wait ended and not whether the close has
+        // ended by the time this reads it: a resume waiting behind the same close can
+        // end the child the moment the cap runs out, and the close then faults, which
+        // would read as answered.
+        var answeredInTime = LetTheAgentsCloseGoAtTheCapAsync(asked, finished);
+
+        bool answered;
+
+        try
         {
-            return;
+            answered = await answeredInTime.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
-
-        if (answered)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await WaitForTheCloseInFlightAsync().ConfigureAwait(false);
-            await Child.DisposeAsync().ConfigureAwait(false);
-            return;
-        }
-
-        if (CloseIsInFlight)
-        {
+            // The caller stopped waiting; the close goes on, and the child is ended
+            // once it is over, off the caller's own request.
             IdleLog.CallerLeftItsClose(Logger, Location.FullPath, SessionTimes.BrowserCloseCap);
+            _ = EndTheChildOnceTheCloseIsOverAsync();
+            throw;
         }
 
-        _ = EndTheChildOnceTheCloseIsOverAsync();
+        await Child.DisposeAsync().ConfigureAwait(false);
+
+        return answered ? AgentClose.Closed : AgentClose.CapRanOut;
     }
 
     /// <summary>Ends the child once every close in flight is over, for a caller that did not wait.</summary>
@@ -1018,32 +1015,42 @@ internal sealed class LiveSession : IAsyncDisposable
     }
 
     /// <summary>
-    /// Lets go of the caller's own close at the cap, measured from when it was sent,
+    /// Lets go of the agent's own close at the cap, measured from when it was sent,
     /// so whatever waits for it waits no longer.
     /// </summary>
     /// <remarks>
-    /// <b>It ends nothing itself.</b> A close that never answers, an armed debugger
-    /// pause, keeps the caller waiting as it always did; what the cap bounds is the
-    /// resume, the release or the shutdown that is waiting behind it, which then ends
-    /// the child through its stdin, and the child ending answers the caller.
+    /// <para>
+    /// <b>It ends nothing itself.</b> What the cap bounds is the agent's own call, and
+    /// the resume, the release or the shutdown waiting behind it; whichever goes on
+    /// first ends the child through its stdin.
+    /// </para>
+    /// <para>
+    /// <i>Renamed 2026-10-08 (previously <c>LetTheCallersCloseGoAtTheCapAsync</c>,
+    /// for the caller's own <c>browser_close</c>, "A close that never answers, an armed
+    /// debugger pause, keeps the caller waiting as it always did").</i> The agent's own
+    /// call is answered at the cap now.
+    /// </para>
     /// </remarks>
-    /// <param name="close">The caller's close, as sent.</param>
+    /// <param name="close">The agent's close, as sent.</param>
     /// <param name="finished">Completed once the close is answered or the cap has run out.</param>
-    /// <returns>The wait.</returns>
-    private async Task LetTheCallersCloseGoAtTheCapAsync(Task close, TaskCompletionSource finished)
+    /// <returns>Whether the browser answered within the cap; a close that failed did not.</returns>
+    private async Task<bool> LetTheAgentsCloseGoAtTheCapAsync(Task close, TaskCompletionSource finished)
     {
         try
         {
             await close.WaitAsync(SessionTimes.BrowserCloseCap, _clock).ConfigureAwait(false);
+            return true;
         }
         catch (TimeoutException)
         {
             IdleLog.CallersCloseUnanswered(Logger, Location.FullPath, SessionTimes.BrowserCloseCap);
+            return false;
         }
-#pragma warning disable CA1031 // The close's own failure is the caller's to read in the answer; this only marks it over.
+#pragma warning disable CA1031 // A close that failed did not finish cleanly, which is what the answer says; this only marks it over.
         catch (Exception)
 #pragma warning restore CA1031
         {
+            return false;
         }
         finally
         {
@@ -1630,6 +1637,22 @@ internal sealed class LiveSession : IAsyncDisposable
 /// <param name="Run">Everything else a caller can set per run.</param>
 internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run);
 
+/// <summary>How <c>browserai_close</c> ended.</summary>
+internal enum AgentClose
+{
+    /// <summary>The browser answered its close within the cap, and the child was ended.</summary>
+    Closed,
+
+    /// <summary>No browser was up, so no close was sent, and the child was ended.</summary>
+    NothingWasOpen,
+
+    /// <summary>The browser did not answer within the cap, and the child was ended through its stdin.</summary>
+    CapRanOut,
+
+    /// <summary>Another close got there first, and this one did nothing.</summary>
+    AlreadyClosed,
+}
+
 /// <summary>Whether a connection may drive a session the host holds.</summary>
 internal enum SessionClaim
 {
@@ -1658,7 +1681,10 @@ internal enum SessionCloseCause
     /// <summary>BrowserAI's own idle timer, after a headless session went unused.</summary>
     Idle,
 
-    /// <summary>A <c>browser_close</c> call, from this client or another.</summary>
+    /// <summary>
+    /// A close call, from this client or another: <c>browserai_close</c> since
+    /// 2026-10-08, and <c>browser_close</c> in a record written before that day.
+    /// </summary>
     Caller,
 
     /// <summary>A person closed a headed session's window: the browser exited cleanly with nobody asking.</summary>

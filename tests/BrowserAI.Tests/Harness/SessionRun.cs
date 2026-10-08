@@ -325,6 +325,17 @@ internal sealed record SessionRun
                 ["purpose"] = "the session that gets moved",
             }).ConfigureAwait(false);
 
+            // ⚠️ THE NINTH AUTHORED TOOL, added 2026-10-08 with F1 a: browserai_close,
+            // on a session whose browser never started, so no browser is started in
+            // order to close it and the session is closed all the same. Gamma is only
+            // moved after this process has gone, so closing it here changes nothing the
+            // second process asks of it but the close its record now carries.
+            answers["closeGamma"] = await CallAsync(client, SessionToolSurface.Close, new JsonObject
+            {
+                ["session"] = gamma,
+                ["why"] = "the suite closing a session before it is moved",
+            }).ConfigureAwait(false);
+
             bool lockGone;
             bool heldSurvived;
 

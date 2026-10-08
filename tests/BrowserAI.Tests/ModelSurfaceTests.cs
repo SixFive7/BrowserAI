@@ -104,6 +104,8 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Resume,
             ["directory", "purpose", "why", "headed", "debug", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
             ["directory", "why"]),
+        // ⚠️ ADDED 2026-10-08, F1 a: the ninth authored tool.
+        (SessionToolSurface.Close, ["session", "why"], ["session", "why"]),
         (SessionToolSurface.CatchUp, ["session", "page", "why"], ["session", "why"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
@@ -450,8 +452,14 @@ internal sealed class ModelSurfaceTests
         // Q365.1 a denied browser_set_storage_state, which is `storage` and not
         // one of the ten, so the base lost one the way it did for
         // browser_resume. 64.
+        //
+        // ⚠️ The base is 58 since 2026-10-08 (previously 59): the maintainer's
+        // F1 a denied browser_close, which is `core` and not one of the ten, so
+        // the base lost one the way it did for browser_set_storage_state, and
+        // BrowserAI's own browserai_close took its place among the authored
+        // tools, which this count leaves out. 63.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(59 + TheNewlyGrantedTen.Length - TheTestHelpersDropped.Length);
+            .IsEqualTo(58 + TheNewlyGrantedTen.Length - TheTestHelpersDropped.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>

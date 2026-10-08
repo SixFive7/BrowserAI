@@ -267,6 +267,86 @@ internal sealed class SessionManager : IAsyncDisposable
             ? "its browser, its tabs and its settings are as they were."
             : "its browser has not started yet, and the first browser call starts it with the settings the session already has.");
 
+    /// <summary>
+    /// What <c>browserai_close</c> answers once the session's browser has closed
+    /// itself.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F1 a, decided 2026-10-08 by the maintainer</b>: one tool ends a session's
+    /// browser and keeps the session. What it says was kept is what was measured after
+    /// a clean close on 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83: the
+    /// reopened tabs kept their history, <c>sessionStorage</c>, typed text and session
+    /// cookies, 24 of 24, and the profile kept persistent cookies,
+    /// <c>localStorage</c> and IndexedDB (<see cref="ResumedAfterAClose"/>).
+    /// </para>
+    /// <para>
+    /// <b>An answer and not a refusal</b>, so it lives here and not in
+    /// <c>SessionErrors</c>.
+    /// </para>
+    /// </remarks>
+    public const string ClosedByTheAgent =
+        "Closed. The browser closed itself, so what it held is written to disk, and the session is kept: its profile with the logins and cookies, its site storage, and its tabs with their history. "
+        + "Every call that names this session is refused until browserai_resume opens it again, and the first browser call after that reopens the tabs.";
+
+    /// <summary>
+    /// What <c>browserai_close</c> answers when the session had no browser up.
+    /// </summary>
+    /// <remarks>
+    /// <b>No close is sent</b>: with no browser up, upstream starts one in order to
+    /// close it, measured 2026-10-03 at 8 to 9 browser processes, a capture rewritten
+    /// empty and a registry descriptor nothing reaps. The session is closed all the
+    /// same, a decision taken 2026-10-08 for the maintainer's review, so that after
+    /// this tool a session is closed whatever it held.
+    /// </remarks>
+    public const string ClosedWithNoBrowserUp =
+        "Closed. No browser had started in this session, so none was started in order to close it and nothing was lost. "
+        + "Every call that names this session is refused until browserai_resume opens it again.";
+
+    /// <summary>
+    /// What <c>browserai_close</c> answers when the browser did not finish closing
+    /// within the one close cap.
+    /// </summary>
+    /// <remarks>
+    /// <b>The cap is <see cref="SessionTimes.BrowserCloseCap"/>, one minute</b>, D4.1
+    /// and D4.2 of 2026-10-04. Past it the child is ended through its stdin, on which
+    /// <c>@playwright/mcp</c> force-kills the browser, and a hard kill keeps a write
+    /// only once the browser's own commit timer has run: the longest measured is
+    /// Chromium's cookie store at 30 s, so recent cookie and <c>localStorage</c>
+    /// writes are what the answer names.
+    /// </remarks>
+    public const string ClosedWhenTheCapRanOut =
+        "Closed, but the browser did not finish closing within a minute, so BrowserAI ended it: what it had not yet written to disk may be lost, recent cookie and localStorage writes first. "
+        + "The session is kept with everything that reached the disk. Every call that names this session is refused until browserai_resume opens it again.";
+
+    /// <summary>
+    /// What <c>browserai_close</c> answers when the session was closed already.
+    /// </summary>
+    /// <param name="reason">Why it was closed, from <see cref="CloseReasons"/>.</param>
+    /// <returns>The answer.</returns>
+    public static string AlreadyClosed(string reason) =>
+        $"Nothing was done: this session's browser was already closed. {reason} {SessionToolSurface.Resume} opens it again.";
+
+    /// <summary>
+    /// What <c>browserai_close</c> answers when the session's browser server had ended
+    /// on its own.
+    /// </summary>
+    public const string ServerHadAlreadyEnded =
+        "Nothing was done: this session's browser server had already ended, so there was no browser to close. "
+        + "browserai_resume starts a new one. A browser that ends without a clean close keeps only what it had already written to disk.";
+
+    /// <summary>
+    /// What <c>browserai_close</c> answers for a session that exists and that no
+    /// BrowserAI holds.
+    /// </summary>
+    /// <param name="path">The session directory.</param>
+    /// <param name="lastClose">Why it was last closed, or <see langword="null"/> when the record knows of no close.</param>
+    /// <returns>The answer.</returns>
+    public static string NotOpenSoNothingToClose(string path, string? lastClose) =>
+        $"Nothing was done: '{path}' is not open, so it has no browser to close. "
+        + (lastClose is null ? string.Empty : $"Its last close: {lastClose} ")
+        + $"{SessionToolSurface.Resume} opens it again.";
+
     // ⚠️ DELETED 2026-10-04: `BrowserIsUpSoNothingWasApplied` and
     // `NothingNeededApplying`, the two notes a resume of a live session answered
     // with since Q324 a -- "this session is open in this BrowserAI and its browser
@@ -818,6 +898,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 SessionToolSurface.Init => await InitAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.Resume => await ResumeAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
+                SessionToolSurface.Close => await CloseAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.CatchUp => CatchUp(arguments),
                 SessionToolSurface.List => List(arguments),
                 SessionToolSurface.Destroy => await DestroyAsync(connection, arguments).ConfigureAwait(false),
@@ -1546,6 +1627,194 @@ internal sealed class SessionManager : IAsyncDisposable
         finally
         {
             claim?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// <c>browserai_close</c>: ends a session's browser and keeps the session, with the
+    /// reason recorded, and every later call refused until a resume.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F1 a, decided 2026-10-08 by the maintainer, in his words verbatim:</b> <i>"1 b
+    /// - but think through if browserai_stop and browserai_close could then not just
+    /// become a single thing."</i> and <i>"f1 a"</i>. The close itself is
+    /// <see cref="LiveSession.CloseForTheAgentAsync"/>; this is who may make it and
+    /// what the caller is told.
+    /// </para>
+    /// <para>
+    /// <b>Who may close a session is who may drive it</b>: a session another open
+    /// connection drives is refused the way every call naming it is, and one whose
+    /// client went is taken over and then closed, so the reason a later call reads
+    /// names the client that closed it.
+    /// </para>
+    /// <para>
+    /// <b>Nothing to close is an answer and not a refusal</b>: a session that is
+    /// closed already, whose browser server has ended, or that this BrowserAI does not
+    /// hold has done what the call asked. A session another BrowserAI process holds is
+    /// refused, because only its holder can close its browser.
+    /// </para>
+    /// </remarks>
+    /// <param name="connection">The connection the call arrived on.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="cancellationToken">The caller's token, which ends its wait and never the close.</param>
+    /// <returns>What to tell the caller.</returns>
+    private async Task<ToolOutcome> CloseAsync(CallerConnection connection, JsonObject? arguments, CancellationToken cancellationToken)
+    {
+        var location = Resolve(Required(arguments, SessionToolSurface.SessionParameter), SessionToolSurface.SessionParameter);
+        var why = Why(arguments, SessionToolSurface.Close);
+
+        LiveSession? live = null;
+
+        while (_live.TryGetValue(location.Key, out var found))
+        {
+            var driving = found.Claim(connection, out var holder);
+
+            if (driving is SessionClaim.Releasing)
+            {
+                await found.Released.WaitAsync(cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            if (driving is SessionClaim.HeldElsewhere)
+            {
+                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Close, location.FullPath, holder!.Describe());
+
+                RecordTheRefusal(found, SessionToolSurface.Close, why, elsewhere);
+                return new ToolOutcome(elsewhere, IsError: true);
+            }
+
+            if (driving is SessionClaim.TakenOver && found.Logger.IsEnabled(LogLevel.Information))
+            {
+                var taking = connection.Describe();
+
+                SessionToolLog.TakenOver(found.Logger, location.FullPath, taking);
+            }
+
+            live = found;
+            break;
+        }
+
+        if (live is null)
+        {
+            return NothingHereToClose(location, why);
+        }
+
+        SessionToolLog.Why(live.Logger, SessionToolSurface.Close, why);
+
+        long row;
+
+        try
+        {
+            row = live.Lock.Append(SessionToolSurface.Close, why);
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            return new ToolOutcome(
+                SessionErrors.SessionLogCouldNotBeWritten(SessionToolSurface.Close, live.Lock.Location.DataFile, failure.Message),
+                IsError: true);
+        }
+
+        var settled = false;
+
+        try
+        {
+            string answer;
+
+            if (live.Closed is { } closure)
+            {
+                answer = AlreadyClosed(CloseReasons.Of(closure, connection));
+            }
+            else if (live.Child.ChildHasGone)
+            {
+                // 8 b: a browser server that ended on its own is recorded as the close.
+                live.RecordTheServerEnded();
+                answer = ServerHadAlreadyEnded;
+            }
+            else
+            {
+                answer = await live.CloseForTheAgentAsync(connection, why, cancellationToken).ConfigureAwait(false) switch
+                {
+                    AgentClose.Closed => ClosedByTheAgent,
+                    AgentClose.NothingWasOpen => ClosedWithNoBrowserUp,
+                    AgentClose.CapRanOut => ClosedWhenTheCapRanOut,
+                    _ => AlreadyClosed(live.Closed is { } other ? CloseReasons.Of(other, connection) : string.Empty),
+                };
+            }
+
+            live.Lock.Settle(row, SessionStore.Successful, failure: null);
+            settled = true;
+
+            return new ToolOutcome(answer, IsError: false);
+        }
+        finally
+        {
+            if (!settled)
+            {
+                live.Lock.Settle(
+                    row,
+                    SessionStore.Failed,
+                    Encoding.UTF8.GetBytes("The caller stopped waiting before the close was over. The close went on, and the session's browser server was ended once it was."));
+            }
+        }
+    }
+
+    /// <summary>What <c>browserai_close</c> answers for a session this process does not hold.</summary>
+    /// <param name="location">The session directory.</param>
+    /// <param name="why">What the call gave as its reason, for the process log.</param>
+    /// <returns>The answer, or a refusal when there is no session or another process holds it.</returns>
+    private ToolOutcome NothingHereToClose(SessionPath location, string why)
+    {
+        SessionRecord? record;
+
+        try
+        {
+            record = SessionLock.ReadRecord(location);
+        }
+        catch (SessionRecordException failure)
+        {
+            return new ToolOutcome(failure.Message, IsError: true);
+        }
+
+        if (record is null)
+        {
+            return new ToolOutcome(SessionErrors.SessionNamesNoSession(SessionToolSurface.Close, location.FullPath), IsError: true);
+        }
+
+        var liveness = SessionLock.ProbeLiveness(location).State;
+
+        if (liveness is SessionLiveness.Held)
+        {
+            return new ToolOutcome(SessionErrors.SessionHeldByAnotherBrowserAi(SessionToolSurface.Close, location.FullPath), IsError: true);
+        }
+
+        SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.Close, location.FullPath, why);
+
+        // 8 b: why it was last closed, which only a session nobody holds has.
+        var last = liveness is SessionLiveness.NotHeld && record.LastClose is { } close ? CloseReasons.Of(close) : null;
+
+        return new ToolOutcome(NotOpenSoNothingToClose(location.FullPath, last), IsError: false);
+    }
+
+    /// <summary>
+    /// Writes a refusal of an authored call onto the session it named, as the proxy
+    /// writes a refused forwarded call.
+    /// </summary>
+    /// <param name="live">The session.</param>
+    /// <param name="tool">The tool.</param>
+    /// <param name="why">What the caller said it was for.</param>
+    /// <param name="refusal">What the caller is told.</param>
+    private static void RecordTheRefusal(LiveSession live, string tool, string why, string refusal)
+    {
+        try
+        {
+            var row = live.Lock.Append(tool, why);
+
+            live.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            ProxyLog.LogEntryRefused(live.Logger, tool, live.Location.FullPath, failure);
         }
     }
 

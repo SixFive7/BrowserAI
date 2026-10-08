@@ -134,19 +134,27 @@ internal sealed class SessionCloseTests
     }
 
     /// <summary>
-    /// The caller's own <c>browser_close</c> closes the session the way the idle
-    /// close does: answered as upstream answers it, its child ended, and every
-    /// later call refused until a resume.
+    /// <c>browserai_close</c> ends the session's browser the way the idle close does
+    /// and keeps the session: BrowserAI's own clean close goes to the browser, the
+    /// child is ended, the answer says what was kept, and every later call is refused
+    /// until a resume, with the reason naming who closed it.
     /// </summary>
     /// <remarks>
-    /// <b>P3 b.</b> A field report of 2026-10-01 met the old shape from the other
-    /// side: after the caller's own close, the timer wrote a row ten minutes later
-    /// saying BrowserAI had closed a browser that was already gone, and sent a
-    /// close that started one in order to close it.
+    /// <para>
+    /// <b>F1 a, decided 2026-10-08 by the maintainer</b>: one tool of BrowserAI's own,
+    /// <c>browserai_close</c>, and Playwright's <c>browser_close</c> denied. Until then
+    /// this arm drove <c>browser_close</c> itself (P3 b), whose name and description are
+    /// Playwright's and say it closes the page.
+    /// </para>
+    /// <para>
+    /// <b>Planted red on 2026-10-08</b> against the tree with <c>browserai_close</c>
+    /// listed and not answered: the call was refused as no BrowserAI session tool and
+    /// the double never received a close.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheCallersOwnCloseClosesTheSessionLikeTheIdleClose()
+    public async Task BrowserAiCloseEndsTheBrowserKeepsTheSessionAndSaysWhoClosedIt()
     {
         await using var sessions = RigSessionEnvironment.Create(
             child =>
@@ -161,39 +169,46 @@ internal sealed class SessionCloseTests
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var directory = Path.Combine(sessions.Root, "closed-by-the-caller");
+        var directory = Path.Combine(sessions.Root, "closed-by-the-agent");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["purpose"] = "the session whose caller closes its browser",
+            ["purpose"] = "the session whose agent closes its browser",
         });
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
 
-        var closed = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing the browser it opened",
         });
 
-        // Upstream's own answer, byte for byte: the close was forwarded.
-        await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(closed)).IsEqualTo("### Result\nNo open tabs. Navigate to a URL to create one.");
+        // BrowserAI's own answer, and not upstream's: the close is BrowserAI's.
+        await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true).Because(TextOf(closed));
+        await Assert.That(TextOf(closed)).IsEqualTo(SessionManager.ClosedByTheAgent);
 
         var first = sessions.SessionChildren[0];
 
-        await Assert.That(first.ToolCallsReceived).Contains(LiveSession.BrowserCloseTool);
-        await WaitUntilAsync(() => first.HasStopped, "the caller's close never ended the session's child");
+        await Assert.That(first.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+        await WaitUntilAsync(() => first.HasStopped, "browserai_close never ended the session's child");
 
-        var refused = await NavigateAsync(rig, directory, "the call after the caller's own close");
+        // The row is the call's own, settled as answered.
+        await Assert.That(RecordedSession.LogOf(directory).Any(row =>
+            row.Tool == SessionToolSurface.Close && row.Outcome == SessionStore.Successful)).IsTrue();
+
+        var refused = await NavigateAsync(rig, directory, "the call after the agent's own close");
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(TextOf(refused)).Contains($"by a {LiveSession.BrowserCloseTool} call");
+        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"the suite closing the browser it opened\"");
         await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
 
         // The timer's sentence belongs to the timer's close and to nothing else.
         await Assert.That(TextOf(refused)).DoesNotContain("no browser call had reached it");
+
+        // Nothing reached a child.
+        await Assert.That(first.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(1);
 
         var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
@@ -202,7 +217,7 @@ internal sealed class SessionCloseTests
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(resumed)).Contains($"by a {LiveSession.BrowserCloseTool} call");
+        await Assert.That(TextOf(resumed)).Contains($"by a {SessionToolSurface.Close} call");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
 
         var after = await NavigateAsync(rig, directory, "the call the new child answers");
@@ -211,19 +226,31 @@ internal sealed class SessionCloseTests
     }
 
     /// <summary>
-    /// A caller's <c>browser_close</c> with no browser up is not forwarded, is
-    /// answered as done, and leaves the session open.
+    /// <c>browserai_close</c> with no browser up closes the session all the same,
+    /// without starting a browser in order to close it.
     /// </summary>
     /// <remarks>
-    /// <b>Forwarded, it would start a browser in order to close it</b>: measured
+    /// <para>
+    /// <b>Forwarded, a close would start a browser in order to close it</b>: measured
     /// 2026-10-03 at <c>@playwright/mcp</c> 0.0.82 and 0.0.83, 8 to 9 browser
-    /// processes, a capture rewritten empty and a descriptor nothing reaps. With
-    /// nothing up there is nothing to close, so like the idle close in the same
-    /// state it closes nothing and changes nothing.
+    /// processes, a capture rewritten empty and a descriptor nothing reaps. So no
+    /// <c>browser_close</c> reaches the child.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The session is closed, which the caller's own <c>browser_close</c> did not
+    /// do</b> (P3 b, previously "closes nothing and changes nothing"). A decision taken
+    /// 2026-10-08 for the maintainer's review: after <c>browserai_close</c> a session is
+    /// closed, whatever it held, so one sentence describes the tool and the child that
+    /// was waiting for a browser is ended too.
+    /// </para>
+    /// <para>
+    /// <b>Planted red on 2026-10-08</b> against the tree with <c>browserai_close</c>
+    /// listed and not answered.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ACallersCloseWithNoBrowserUpIsNotForwardedAndLeavesTheSessionOpen()
+    public async Task BrowserAiCloseWithNoBrowserUpClosesTheSessionWithoutStartingOne()
     {
         await using var sessions = RigSessionEnvironment.Create(
             child =>
@@ -243,26 +270,134 @@ internal sealed class SessionCloseTests
             ["purpose"] = "the session whose browser never started",
         });
 
-        var closed = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing a browser that never started",
         });
 
-        await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(closed)).IsEqualTo(LiveSession.NothingWasOpenToClose);
-        await Assert.That(sessions.SessionChildren[0].ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+        var first = sessions.SessionChildren[0];
+
+        await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true).Because(TextOf(closed));
+        await Assert.That(TextOf(closed)).IsEqualTo(SessionManager.ClosedWithNoBrowserUp);
+        await Assert.That(first.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
+        await WaitUntilAsync(() => first.HasStopped, "browserai_close left the child of a session with no browser running");
 
         // The row is written and settled like any call's.
         await Assert.That(RecordedSession.LogOf(directory).Any(row =>
-            row.Tool == LiveSession.BrowserCloseTool && row.Outcome == SessionStore.Successful)).IsTrue();
+            row.Tool == SessionToolSurface.Close && row.Outcome == SessionStore.Successful)).IsTrue();
 
-        // And the session is still open: the next call reaches the same child.
-        var after = await NavigateAsync(rig, directory, "the call after a close that closed nothing");
+        // And the session is closed: the next call is refused, and nothing new starts.
+        var after = await NavigateAsync(rig, directory, "the call after a close that found nothing up");
 
-        await Assert.That((bool?)after["isError"]).IsNotEqualTo(true);
+        await Assert.That((bool?)after["isError"]).IsTrue();
+        await Assert.That(TextOf(after)).Contains(SessionToolSurface.Resume);
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
-        await Assert.That(sessions.SessionChildren[0].ToolCallsReceived).Contains("browser_navigate");
+        await Assert.That(first.ToolCallsReceived).DoesNotContain("browser_navigate");
+    }
+
+    /// <summary>
+    /// <c>browserai_close</c> with nothing to close is an answer and not a refusal:
+    /// a session closed already says why, one whose browser server has ended says
+    /// so, and one no BrowserAI holds says it is not open.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>F1 a, 2026-10-08.</b> The call asked for a closed session and has one, so
+    /// none of the three is an error, and none of them starts a browser or a browser
+    /// server. Each says the way back, which is <c>browserai_resume</c>.
+    /// </para>
+    /// <para>
+    /// <b>Planted red on 2026-10-08</b> against the tree with <c>browserai_close</c>
+    /// listed and not answered.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task BrowserAiCloseWithNothingToCloseSaysSoAndChangesNothing()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+            },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // Closed already: the second close quotes the first.
+        var closedTwice = Path.Combine(sessions.Root, "closed-twice");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = closedTwice,
+            ["purpose"] = "the session closed twice",
+        });
+
+        _ = await NavigateAsync(rig, closedTwice, "the call that starts the browser");
+
+        _ = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = closedTwice,
+            ["why"] = "the first close",
+        });
+
+        var again = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = closedTwice,
+            ["why"] = "the second close",
+        });
+
+        await Assert.That((bool?)again["isError"]).IsNotEqualTo(true).Because(TextOf(again));
+        await Assert.That(TextOf(again)).StartsWith("Nothing was done: this session's browser was already closed.");
+        await Assert.That(TextOf(again)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"the first close\"");
+        await Assert.That(TextOf(again)).EndsWith($"{SessionToolSurface.Resume} opens it again.");
+        await Assert.That(sessions.SessionChildren[0].ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+
+        // A browser server that ended on its own: nothing to close, and resume says
+        // what it restarts.
+        var ended = Path.Combine(sessions.Root, "server-ended");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = ended,
+            ["purpose"] = "the session whose browser server dies",
+        });
+
+        await sessions.SessionChildren[^1].DisposeAsync();
+        await WaitUntilAsync(() => rig.Logs.Logged("the peer closed its end of the connection"), "the transport never noticed the child had gone");
+
+        var nothingLeft = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = ended,
+            ["why"] = "closing a session whose browser server has gone",
+        });
+
+        await Assert.That((bool?)nothingLeft["isError"]).IsNotEqualTo(true).Because(TextOf(nothingLeft));
+        await Assert.That(TextOf(nothingLeft)).IsEqualTo(SessionManager.ServerHadAlreadyEnded);
+
+        // A session no BrowserAI holds: its record says it exists, and nothing is open.
+        var nobody = Path.Combine(sessions.Root, "held-by-nobody");
+
+        _ = Directory.CreateDirectory(nobody);
+
+        SessionLock.TryAcquire(
+            SessionPath.For(nobody),
+            new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a session nobody holds" },
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance).Acquired!.Dispose();
+
+        var notOpen = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            ["session"] = nobody,
+            ["why"] = "closing a session nobody has open",
+        });
+
+        await Assert.That((bool?)notOpen["isError"]).IsNotEqualTo(true).Because(TextOf(notOpen));
+        await Assert.That(TextOf(notOpen)).IsEqualTo(SessionManager.NotOpenSoNothingToClose(SessionPath.For(nobody).FullPath, lastClose: null));
+
+        // Nothing was started for any of the three.
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
     }
 
     /// <summary>
@@ -304,6 +439,14 @@ internal sealed class SessionCloseTests
     /// kept the teardown waiting for good: the first run of this arm on 2026-10-04 had
     /// written every row of its session record and was still in its teardown ten
     /// minutes later.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously
+    /// the caller's own <c>browser_close</c>, forwarded, which stayed unanswered until the
+    /// child ended under it). BrowserAI's close answers its caller at the cap itself,
+    /// saying the browser did not finish closing, so the caller is never left waiting on
+    /// a wedged browser. Planted red against the tree with the tool listed and not
+    /// answered.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -358,7 +501,7 @@ internal sealed class SessionCloseTests
 
         var parked = await rig.Client.BeginAsync("tools/call", new JsonObject
         {
-            ["name"] = LiveSession.BrowserCloseTool,
+            ["name"] = SessionToolSurface.Close,
             ["arguments"] = new JsonObject
             {
                 ["session"] = directory,
@@ -407,6 +550,8 @@ internal sealed class SessionCloseTests
 
         await Assert.That(resuming.IsCompleted).IsFalse();
         await Assert.That(first.HasStopped).IsFalse();
+        await Assert.That(AnswerTo(rig, parked)).IsNull()
+            .Because("browserai_close answered before its cap had run out, while the browser was still closing");
 
         // The cap runs out, and the resume goes ahead.
         clock.AdvanceTicks(ManualClock.OneTick);
@@ -416,17 +561,20 @@ internal sealed class SessionCloseTests
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true);
         await WaitUntilAsync(() => first.HasStopped, "the resume did not end the child whose close never answered");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
-        await Assert.That(rig.Logs.Logged("did not answer the caller's browser_close within")).IsTrue();
+        await Assert.That(rig.Logs.Logged("did not answer the agent's close within")).IsTrue();
 
-        // The parked close is answered now, by the child that ended under it,
-        // and not left outstanding for ever. Read off every frame the client
-        // has had: the resume's own round trip may already have read it past,
-        // because a round trip skips answers to anything else.
+        // The parked close is answered at the cap by BrowserAI itself, saying the
+        // browser did not finish closing, and not left outstanding for ever. Read off
+        // every frame the client has had: the resume's own round trip may already have
+        // read it past, because a round trip skips answers to anything else.
         await rig.Client.ReadUntilAsync(() => AnswerTo(rig, parked) is not null);
 
         var answer = AnswerTo(rig, parked)!;
 
-        await Assert.That(answer["error"] is not null || (bool?)answer["result"]?["isError"] == true).IsTrue();
+        await Assert.That(answer["error"]).IsNull();
+        await Assert.That((bool?)answer["result"]?["isError"]).IsNotEqualTo(true);
+        await Assert.That(string.Concat((answer["result"]?["content"]?.AsArray() ?? []).Select(block => (string?)block?["text"] ?? string.Empty)))
+            .IsEqualTo(SessionManager.ClosedWhenTheCapRanOut);
 
         var after = await NavigateAsync(rig, directory, "the call the new child answers");
 
@@ -511,7 +659,7 @@ internal sealed class SessionCloseTests
         await Assert.That(refusal).Contains("'headed' (running: false, asked: true)");
         await Assert.That(refusal).Contains("'transcript' (running: false, asked: true)");
         await Assert.That(refusal).Contains($"'viewport' (running: {BrowserConfiguration.DefaultViewport}, asked: 1280x720)");
-        await Assert.That(refusal).Contains($"call {LiveSession.BrowserCloseTool} on this session, then {SessionToolSurface.Resume} with them");
+        await Assert.That(refusal).Contains($"call {SessionToolSurface.Close} on this session, then {SessionToolSurface.Resume} with them");
         await Assert.That(refusal).Contains("closes the Playwright browser and opens a new one with the new settings");
         await Assert.That(refusal).Contains("page snapshots and element references from before no longer apply");
         await Assert.That(refusal).Contains("no resume is needed: the session is live, so carry on with its tools");
@@ -712,7 +860,7 @@ internal sealed class SessionCloseTests
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
 
-        _ = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        _ = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing a browser that is capturing",
@@ -911,9 +1059,15 @@ internal sealed class SessionCloseTests
     /// nothing up started a browser in order to close it.
     /// </para>
     /// <para>
-    /// <b>Both directions, through the caller's own close</b>, because it is the
-    /// one call whose answer differs: with nothing up it is answered here, and with
-    /// a page up it is forwarded and closes the session.
+    /// <b>Both directions, through the agent's own close</b>, because it is the
+    /// one call whose answer differs: with nothing up no close is sent, and with a
+    /// page up BrowserAI's own close reaches the browser.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Through <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously the
+    /// caller's own <c>browser_close</c>, which with nothing up left the session open).
+    /// A close with nothing up closes the session now, so the page is opened by a
+    /// resume in between.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -933,14 +1087,22 @@ internal sealed class SessionCloseTests
             ["purpose"] = "the session whose child is asked whether a browser is up",
         });
 
-        // No browser call yet, so the close is answered here and not forwarded.
-        var nothing = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        // No browser call yet, so no close is sent to the child.
+        var nothing = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing a browser that never started",
         });
 
-        await Assert.That(TextOf(nothing)).IsEqualTo(LiveSession.NothingWasOpenToClose);
+        await Assert.That(TextOf(nothing)).IsEqualTo(SessionManager.ClosedWithNoBrowserUp);
+
+        var reopened = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite reopening the session it closed with nothing up",
+        });
+
+        await Assert.That((bool?)reopened["isError"]).IsNotEqualTo(true).Because(TextOf(reopened));
 
         var opened = await CallAsync(rig, "browser_navigate", new JsonObject
         {
@@ -951,15 +1113,15 @@ internal sealed class SessionCloseTests
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
 
-        // A page is up: the close is forwarded, and it closes the session.
-        var closed = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        // A page is up: BrowserAI's own close goes to the browser, and it closes the session.
+        var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing the browser it opened",
         });
 
         await Assert.That((bool?)closed["isError"]).IsNotEqualTo(true).Because(TextOf(closed));
-        await Assert.That(TextOf(closed)).IsNotEqualTo(LiveSession.NothingWasOpenToClose);
+        await Assert.That(TextOf(closed)).IsEqualTo(SessionManager.ClosedByTheAgent);
 
         var refused = await NavigateAsync(rig, directory, "the suite calling after its own close");
 
@@ -983,9 +1145,10 @@ internal sealed class SessionCloseTests
     /// <para>
     /// <b>Two tabs on two pages of a loopback site, both families.</b> A restore
     /// that brought one tab back, or a blank one, would read as half a pass with a
-    /// single page. The caller's close is used because it is a clean close the
+    /// single page. The agent's own close is used because it is a clean close the
     /// test can wait for; the idle close is the same teardown and its arm is in
-    /// <see cref="BrowserIdleTimerTests"/>.
+    /// <see cref="BrowserIdleTimerTests"/>. <i>Corrected 2026-10-08 (previously "The
+    /// caller's close is used"): the close is <c>browserai_close</c> since F1 a.</i>
     /// </para>
     /// </remarks>
     /// <param name="browser">The family.</param>
@@ -1043,7 +1206,7 @@ internal sealed class SessionCloseTests
 
         await Assert.That(Directory.EnumerateDirectories(temporary, "playwright-artifacts-*").Any()).IsTrue();
 
-        var closed = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing the browser so a resume can reopen it",

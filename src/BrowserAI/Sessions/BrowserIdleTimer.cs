@@ -535,21 +535,33 @@ internal static partial class IdleLog
         Message = "The session at {Session} is being torn down and waits up to {Cap} for its browser to finish the close in flight before its child is ended.")]
     public static partial void TeardownWaitsForTheClose(ILogger logger, string session, TimeSpan cap);
 
-    /// <summary>The caller of a <c>browser_close</c> stopped waiting, and the close goes on without it.</summary>
+    /// <summary>The caller of <c>browserai_close</c> stopped waiting, and the close goes on without it.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-08 (previously "The caller of browser_close on the session at
+    /// {Session} stopped waiting..."): the agent's close is <c>browserai_close</c> since
+    /// F1 a.</i>
+    /// </remarks>
     /// <param name="logger">Where it goes.</param>
     /// <param name="session">The session directory.</param>
     /// <param name="cap">The longest the close is given.</param>
     [LoggerMessage(
         EventId = 68,
         Level = LogLevel.Information,
-        Message = "The caller of browser_close on the session at {Session} stopped waiting for its answer; the close goes on, up to {Cap}, and the child is ended once it is over.")]
+        Message = "The caller of browserai_close on the session at {Session} stopped waiting for its answer; the close goes on, up to {Cap}, and the child is ended once it is over.")]
     public static partial void CallerLeftItsClose(ILogger logger, string session, TimeSpan cap);
 
-    /// <summary>The caller's own <c>browser_close</c> did not answer within the cap.</summary>
+    /// <summary>The agent's own close did not answer within the cap.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Warning, for the reason the idle close's own is one</b>: whatever was waiting
     /// for the close goes ahead and ends the child without the flush the close was
     /// for.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-08 (previously "did not answer the caller's browser_close
+    /// within {Cap}"): the agent's close is <c>browserai_close</c> since F1 a, and the
+    /// close it sends the browser is BrowserAI's own.</i>
+    /// </para>
     /// </remarks>
     /// <param name="logger">Where it goes.</param>
     /// <param name="session">The session directory.</param>
@@ -557,7 +569,7 @@ internal static partial class IdleLog
     [LoggerMessage(
         EventId = 69,
         Level = LogLevel.Warning,
-        Message = "The browser on the session at {Session} did not answer the caller's browser_close within {Cap}; whatever waits for that close goes ahead, and the child is ended through its stdin.")]
+        Message = "The browser on the session at {Session} did not answer the agent's close within {Cap}; whatever waits for that close goes ahead, and the child is ended through its stdin.")]
     public static partial void CallersCloseUnanswered(ILogger logger, string session, TimeSpan cap);
 
     /// <summary>A destroy cut a close in flight short.</summary>

@@ -971,10 +971,12 @@ internal sealed partial class SaturationTests
                     // half that says the close was a close and not a teardown"):
                     // the caller's own close now closes the session, every call
                     // is refused until browserai_resume starts a new child, and
-                    // the way back is that resume.
+                    // the way back is that resume. The close is browserai_close
+                    // since 2026-10-08, F1 a (previously browser_close, denied that
+                    // day).
                     _ = await client.RoundTripAsync("tools/call", new JsonObject
                     {
-                        ["name"] = LiveSession.BrowserCloseTool,
+                        ["name"] = SessionToolSurface.Close,
                         ["arguments"] = new JsonObject { ["session"] = Session, ["why"] = "the suite exercising this call" },
                     });
 
@@ -986,7 +988,7 @@ internal sealed partial class SaturationTests
 
                     if ((bool?)resumed["isError"] is true)
                     {
-                        return report with { Failure = $"browserai_resume was refused after browser_close: {TextOf(resumed)}" };
+                        return report with { Failure = $"browserai_resume was refused after browserai_close: {TextOf(resumed)}" };
                     }
 
                     var again = await client.RoundTripAsync("tools/call", new JsonObject
@@ -997,7 +999,7 @@ internal sealed partial class SaturationTests
 
                     if ((bool?)again["isError"] is true)
                     {
-                        return report with { Failure = $"the browser did not come back after browser_close and browserai_resume: {TextOf(again)}" };
+                        return report with { Failure = $"the browser did not come back after browserai_close and browserai_resume: {TextOf(again)}" };
                     }
 
                     browsers = Math.Max(browsers, BrowsersIn(client));

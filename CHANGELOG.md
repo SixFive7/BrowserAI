@@ -40,6 +40,21 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **`browserai_close` ends a session's browser and keeps the session.**
+  D1 and F1 a, the maintainer's words verbatim: *"1 b - but think through if browserai_stop and
+  browserai_close could then not just become a single thing."* and *"f1 a"*. The ninth tool of
+  BrowserAI's own asks the browser to close itself, gives it up to a minute to write what it holds
+  to disk, ends its browser server and answers; the profile with its logins and cookies, the site
+  storage and the tabs with their history are kept, and every later call naming the session is
+  refused, quoting who closed it and why, until `browserai_resume`. A session with no browser up
+  is closed without starting one. `browser_close` describes itself as closing the page, while in
+  BrowserAI it ends the whole browser, so it is a `deny` row now: out of the tool list, and a call
+  naming it gets the answer any tool BrowserAI does not have gets, with no text of its own, in his
+  words *"do not make an exception"*. BrowserAI still sends `browser_close` to a session's own
+  child for every clean close it makes. Playwright's own `browser_close` is no longer offered.
+  `SessionCloseTests`, `CloseOrderingTests`, `CloseReasonTests` and `SessionPolicyTests` hold it,
+  planted red first.
+
 - ✨ **Every close of a session's browser is recorded with its reason, and the agent is told it.**
   8 b, the maintainer's words verbatim: *"8 b - log in our catchup resume that it was the user who
   closed it. Also whe ntelling the agent it needs to resume first give it the reason for the last

@@ -587,9 +587,13 @@ internal sealed partial class RecordedCountTests
         // test-writing helpers, and Q365.1 a, of 2026-10-04, denied
         // `browser_set_storage_state`, which clears the profile's cookies and site
         // storage before it loads a saved file.
+        //
+        // ⚠️ `withheld` is 9 since 2026-10-08 (previously 8), and the maintainer
+        // decided it: F1 a denies `browser_close`, which BrowserAI's own
+        // `browserai_close` replaces.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
         await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
-        await Assert.That(withheld).IsEqualTo(8);
+        await Assert.That(withheld).IsEqualTo(9);
     }
 
     /// <summary>

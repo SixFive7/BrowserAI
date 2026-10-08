@@ -932,6 +932,23 @@ cuts it short (`LiveSession.CutTheCloseShort`). The caller's close is marked,
 recorded and sent in one step, `LiveSession.SendTheCallersCloseAsync`, with no
 token of the caller's, so a caller that stops waiting leaves it to finish.
 
+⚠️ **Corrected 2026-10-08, by addition (the paragraphs above are the design
+until that day), D1 and F1 a.** There is a close tool, and it is BrowserAI's
+own: `browserai_close`, answered by `SessionManager.CloseAsync`, which claims the
+session the way every call naming it does and then hands the close to
+`LiveSession.CloseForTheAgentAsync`. Playwright's `browser_close` is a `deny` row
+in `tool-verdicts.json`, so it is out of the tool list and a call naming it is
+answered at the door like a tool BrowserAI does not have; `BrowserProxy` has no
+close of its own any more, and `SendTheCallersCloseAsync` went with it. The
+agent's close keeps every rule the caller's had -- marked closed and recorded
+before anything is sent, in flight until it is answered or out of the cap, sent
+with no token of the caller's -- and it answers its own caller at the cap too, then
+ends the browser server. With no browser up it sends nothing, because a close with
+no browser up starts one, and ends the browser server all the same, so after it a
+session is closed whatever it held. BrowserAI goes on sending `browser_close` to a
+session's own child for the idle close, the shutdown and `browserai_close`, and no
+verdict is asked about those.
+
 ### `browserai_page_tool`, and how a page tool's name is resolved
 
 | Concern | Implemented by |

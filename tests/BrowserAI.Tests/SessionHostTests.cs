@@ -207,7 +207,8 @@ internal sealed class SessionHostTests
 
         await NavigateAsync(client, directory);
 
-        var closed = await client.CallAsync(LiveSession.BrowserCloseTool, new JsonObject
+        // browserai_close since 2026-10-08, F1 a (previously browser_close).
+        var closed = await client.CallAsync(SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the suite closing its own browser before it goes",

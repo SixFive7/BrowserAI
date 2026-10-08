@@ -1361,37 +1361,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // ⚠️ THE CALLER'S OWN CLOSE, P3 b, the maintainer's words of 2026-10-03,
-        // verbatim: "p3 b". Treated like the idle close: the session is closed
-        // BEFORE the call goes out, so a close that never answers -- the
-        // armed-close wedge, 12 of 12 on 0.0.82 and 6 of 6 on 0.0.83 -- still
-        // leaves every later call refused with a sentence naming
-        // `browserai_resume`, which ends that child through its stdin.
-        //
-        // And with no browser up it is not forwarded at all: upstream starts a
-        // browser in order to close it, measured 2026-10-03 at 8 to 9 browser
-        // processes, a network capture rewritten empty and a registry
-        // descriptor nothing reaps. Nothing was open, so like the idle close
-        // with only the node child left, it closes nothing and leaves the
-        // session open.
-        var callersClose = string.Equals(tool, LiveSession.BrowserCloseTool, StringComparison.Ordinal);
-
-        // ⚠️ THE CLOSED MARK MOVED INTO THE SEND, 2026-10-04: the session is marked
-        // closed, the close recorded as in flight and the request sent in one step,
-        // `LiveSession.SendTheCallersCloseAsync`, below. Marked here and sent further
-        // down, a resume landing between the two met a closed session with no close
-        // in flight and ended the child under the close it was about to receive.
-        if (callersClose && !live.BrowserIsOpen)
-        {
-            live.Lock.Settle(row, SessionStore.Successful, failure: null);
-
-            await caller.SendMessageAsync(
-                new JsonRpcResponse { Id = request.Id, Result = TextResult(LiveSession.NothingWasOpenToClose, isError: false) },
-                cancellationToken).ConfigureAwait(false);
-
-            return;
-        }
-
+        // ⚠️ DELETED 2026-10-08: the caller's own `browser_close`, which stood here
+        // since 2026-10-03 (P3 b) -- the session was marked closed before the call
+        // went out, a close with no browser up was answered without being forwarded,
+        // and the child was ended once the close was over. F1 a, the maintainer's
+        // words verbatim: "f1 a", and of the denied tool "do not make an exception".
+        // `browser_close` is a deny row since that day, so a call naming it is
+        // answered at the door like any tool BrowserAI does not have and never
+        // reaches this line; the close itself is `browserai_close`, which
+        // `LiveSession.CloseForTheAgentAsync` makes with the same ordering.
         var outcome = SessionStore.InFlight;
         byte[]? payload = null;
 
@@ -1492,16 +1470,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             try
             {
-                // ⚠️ THE CALLER'S OWN CLOSE OUTLIVES THE CALLER'S WAIT, 2026-10-04.
-                // Nothing may cut a clean close short, and a caller that cancels its
-                // close, or a connection that ends under it, would otherwise have the
-                // cancellation sent on to the child and the child ended at once, with
-                // its browser in the middle of closing. The close is sent with no token
-                // of the caller's, the caller waits for it under its own, and the child
-                // is ended once the close is over, in the `finally` below.
-                answer = callersClose
-                    ? await live.SendTheCallersCloseAsync(request.Method, forwarded, Connection, why).WaitAsync(cancellationToken).ConfigureAwait(false)
-                    : await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
+                // ⚠️ The caller's own close went from here on 2026-10-08 with F1 a; its
+                // rule, that a close outlives the caller's wait, is
+                // `LiveSession.CloseForTheAgentAsync`'s now.
+                answer = await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (budget is { IsCancellationRequested: true } && !cancellationToken.IsCancellationRequested)
             {
@@ -1532,10 +1504,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // between the answer and the `finally` was never watched, and the next
             // call met upstream starting a new browser. Found on 2026-10-04 by the
             // double's crash arm, which lost that race in its second iteration.
-            if (!callersClose)
-            {
-                live.WatchTheBrowser();
-            }
+            live.WatchTheBrowser();
 
             // ⚠️ THE ONE SUCCESSFUL ANSWER BROWSERAI READS, Q380, decided
             // 2026-10-04 by the maintainer, in his words verbatim: "9 d - and add a
@@ -1604,22 +1573,11 @@ internal sealed class BrowserProxy : IAsyncDisposable
                     ? Encoding.UTF8.GetBytes("The call did not reach the child, or the caller cancelled it before an answer arrived. BrowserAI never saw a result.")
                     : payload);
 
-            // After the answer and the row, and never before: the caller's
-            // close has been answered, so ending the child now takes only a
-            // node process with no browser left in it. A caller that stopped
-            // waiting first leaves the close to finish, and the child is ended
-            // once it has, bounded by the cap.
-            if (callersClose)
-            {
-                await live.EndTheChildAfterTheCallersCloseAsync(answered: outcome is not SessionStore.InFlight).ConfigureAwait(false);
-            }
-            else
-            {
-                // 8 b: once a call has left a browser up, its end is watched, so a
-                // person closing its window closes the session. Armed above for an
-                // answered call; this covers every other way out of the block.
-                live.WatchTheBrowser();
-            }
+            // 8 b: once a call has left a browser up, its end is watched, so a
+            // person closing its window closes the session. Armed above for an
+            // answered call; this covers every other way out of the block. The
+            // caller's own close ended the child here until 2026-10-08, F1 a.
+            live.WatchTheBrowser();
         }
     }
 

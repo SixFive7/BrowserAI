@@ -502,10 +502,14 @@ internal sealed class FakeChildHarnessTests
         }
 
         // The tools that arm actually calls are permitted, so the change costs
-        // it nothing. `browser_navigate` is the call under test and the close
-        // tool is the product's own idle close.
+        // it nothing. `browser_navigate` is the call under test.
+        //
+        // ⚠️ Corrected 2026-10-08 (previously this also held `browser_close`
+        // permitted, "the close tool is the product's own idle close"). F1 a denies
+        // it at the door, and the idle close never passes the door: BrowserAI sends
+        // it to its own child. So it is one of the denials above now.
         await Assert.That(RepositoryVerdicts.Committed.Decide("browser_navigate").Refusal).IsNull();
-        await Assert.That(RepositoryVerdicts.Committed.Decide(LiveSession.BrowserCloseTool).Refusal).IsNull();
+        await Assert.That(RepositoryVerdicts.TheDenials.Select(denial => denial.Name)).Contains(LiveSession.BrowserCloseTool);
     }
 
     /// <summary>

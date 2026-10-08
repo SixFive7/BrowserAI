@@ -146,9 +146,14 @@ internal sealed class CloseReasonTests
     }
 
     /// <summary>
-    /// The agent's own <c>browser_close</c> is recorded with the client that sent it
-    /// and the reason it gave, and the refusal after it says it was this client's.
+    /// The agent's own close is recorded with the client that sent it and the reason
+    /// it gave, and the refusal after it says it was this client's.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously
+    /// Playwright's <c>browser_close</c>, forwarded, which is denied since that day).
+    /// Planted red against the tree with the tool listed and not answered.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheCallersOwnCloseIsRecordedWithItsClientAndItsReason()
@@ -161,7 +166,7 @@ internal sealed class CloseReasonTests
         await InitAsync(rig, directory, headed: false);
         await NavigateAsync(rig, directory, "the call that brings the browser up");
 
-        var closed = await CallAsync(rig, LiveSession.BrowserCloseTool, new JsonObject
+        var closed = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "done with the checkout page",
@@ -171,7 +176,7 @@ internal sealed class CloseReasonTests
 
         var refused = await NavigateAsync(rig, directory, "the call after the caller's own close");
 
-        await Assert.That(TextOf(refused)).Contains($"by a {LiveSession.BrowserCloseTool} call from this client, which gave the reason \"done with the checkout page\".");
+        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"done with the checkout page\".");
 
         var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
 
@@ -181,13 +186,20 @@ internal sealed class CloseReasonTests
     }
 
     /// <summary>
-    /// Another client's <c>browser_close</c> is named as that client's to the next one
-    /// that names the session.
+    /// Another client's close is named as that client's to the next one that names
+    /// the session.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Through the session host</b>, which is where two clients meet one session:
     /// the first closes the browser and goes, the host lets the closed session go, and
     /// the second is sent to <c>browserai_resume</c> with the first's close as the reason.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously
+    /// <c>browser_close</c>). Planted red against the tree with the tool listed and not
+    /// answered.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -212,7 +224,7 @@ internal sealed class CloseReasonTests
             ["url"] = "data:text/html,<h1>one</h1>",
         });
 
-        _ = await first.CallAsync(LiveSession.BrowserCloseTool, new JsonObject
+        _ = await first.CallAsync(SessionToolSurface.Close, new JsonObject
         {
             ["session"] = directory,
             ["why"] = "the first client is finished with it",
@@ -235,7 +247,7 @@ internal sealed class CloseReasonTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(text).Contains("Its last close: This session's browser was closed at");
-        await Assert.That(text).Contains($"by a {LiveSession.BrowserCloseTool} call from client 'agent-one'");
+        await Assert.That(text).Contains($"by a {SessionToolSurface.Close} call from client 'agent-one'");
         await Assert.That(text).Contains("which gave the reason \"the first client is finished with it\"");
     }
 

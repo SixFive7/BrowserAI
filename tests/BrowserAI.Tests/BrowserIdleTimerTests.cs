@@ -148,18 +148,30 @@ internal sealed partial class BrowserIdleTimerTests
     }
 
     /// <summary>
-    /// The tool the timer calls is upstream's, by the name upstream publishes.
+    /// The tool the timer calls is upstream's, by the name upstream publishes, and
+    /// since 2026-10-08 BrowserAI is the only one that calls it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>An upstream rename must turn the build red instead of turning the
     /// timer into a no-op.</b> A <c>tools/call</c> naming a tool that no longer
     /// exists is answered with an error the timer logs and nothing else notices --
     /// and the browser then stays open forever, which is exactly the defect this
     /// step exists to remove, restored silently by a version bump.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Renamed 2026-10-08 (previously
+    /// <c>TheCloseToolIsUpstreamsOwnAndIsCallableInEveryMode</c>)</b>, and the second
+    /// half inverted: F1 a denies <c>browser_close</c> at the door and withholds it
+    /// from the tool list, because <c>browserai_close</c> replaces it. The idle close,
+    /// the shutdown and <c>browserai_close</c> send it to the session's own child,
+    /// which no verdict is asked about, so the deny costs the timer nothing; the arms
+    /// below that watch the double receive it are what hold that.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheCloseToolIsUpstreamsOwnAndIsCallableInEveryMode()
+    public async Task TheCloseToolIsUpstreamsOwnAndOnlyBrowserAiCallsIt()
     {
         await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
 
@@ -185,11 +197,13 @@ internal sealed partial class BrowserIdleTimerTests
         // than it was. The idle timer calls this tool itself, so a build that
         // shipped a verdicts file with no row for it would close no browser and
         // report nothing.
-        await Assert.That(RepositoryVerdicts.Committed.Decide(LiveSession.BrowserCloseTool).IsAllowed).IsTrue();
-
-        // And it is in the surface a caller sees, which is the other half of
-        // "callable": the timer's own tool must not be the withheld one.
-        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(LiveSession.BrowserCloseTool)).IsFalse();
+        //
+        // ⚠️ Inverted 2026-10-08, F1 a (previously "IsAllowed ... IsTrue" and
+        // "the timer's own tool must not be the withheld one"): a caller may not
+        // call it, and it is not in the surface a caller sees. The timer goes on
+        // closing browsers because it never asks the door.
+        await Assert.That(RepositoryVerdicts.Committed.Decide(LiveSession.BrowserCloseTool).IsAllowed).IsFalse();
+        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(LiveSession.BrowserCloseTool)).IsTrue();
     }
 
     /// <summary>

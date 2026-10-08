@@ -59,6 +59,29 @@ internal static class SessionToolSurface
     /// <summary>Takes over a directory that already is one.</summary>
     public const string Resume = "browserai_resume";
 
+    /// <summary>Ends a session's browser and keeps the session.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-10-08, F1 a, the maintainer's words verbatim:</b> <i>"1 b - but
+    /// think through if browserai_stop and browserai_close could then not just become a
+    /// single thing."</i> and then <i>"f1 a"</i>. Underneath there is one operation: the
+    /// browser ends and the session stays until the next resume brings it back. The
+    /// idle countdown, a person closing the window, an update and this tool are all that
+    /// operation with a different recorded reason, so it has one tool and one word.
+    /// </para>
+    /// <para>
+    /// <b>Playwright's own <c>browser_close</c> is denied in the same change</b>, and a
+    /// call naming it is answered like any tool BrowserAI does not have, with no text
+    /// of its own: his words of 2026-10-08, <i>"I remember that for the other tools on
+    /// the deny list we just send the generic "unknown command" response and that we
+    /// do not have tailored answers. If I remember correctly do not make an
+    /// exception."</i> BrowserAI still sends <c>browser_close</c> to a session's child
+    /// itself, for every clean close it makes; the deny is about who may call it, and
+    /// the door is the only place a deny is read.
+    /// </para>
+    /// </remarks>
+    public const string Close = "browserai_close";
+
     /// <summary>Reports every session beneath a directory.</summary>
     public const string List = "browserai_list";
 
@@ -412,14 +435,21 @@ internal static class SessionToolSurface
         "browser_verify_value",
     ];
 
-    /// <summary>The eight authored tools, in the order they are offered.</summary>
+    /// <summary>The nine authored tools, in the order they are offered.</summary>
     /// <remarks>
+    /// <para>
     /// <b><see cref="PageTool"/> is last, and it is the only one that is not
     /// about a session's own life.</b> The order is what a model reads first:
     /// creating, reopening and reading a session come before deleting one, and
     /// reaching into a page comes after all of them.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Nine since 2026-10-08</b> (previously eight): <see cref="Close"/> sits beside
+    /// <see cref="Resume"/>, because the two are a pair -- one ends a session's browser
+    /// and the other opens it again.
+    /// </para>
     /// </remarks>
-    public static IReadOnlyList<string> Names { get; } = [Init, Resume, CatchUp, List, Destroy, ChangePurpose, ReinstallBrowser, PageTool];
+    public static IReadOnlyList<string> Names { get; } = [Init, Resume, Close, CatchUp, List, Destroy, ChangePurpose, ReinstallBrowser, PageTool];
 
     /// <summary>Whether a tool name is one BrowserAI answers itself.</summary>
     /// <remarks>
@@ -781,7 +811,7 @@ internal static class SessionToolSurface
                 // ⚠️ Q371 c, 2026-10-04: `tracing` is `transcript`. See
                 // TranscriptDescription for what both descriptions said before.
                 ["transcript"] = Property("boolean", TranscriptDescription),
-                ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browser_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
+                ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browserai_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
                 ["viewport"] = Property("string", $"The browser window's size in CSS pixels, written WIDTHxHEIGHT. Defaults to '{BrowserConfiguration.DefaultViewport}', between {ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)} on each side. IT DECIDES WHAT A SCREENSHOT COSTS YOU, measured through this server: 1920x1080 arrives as 2,691 visual tokens, 1280x720 as 1,196, and 2560x1440 as 4,784 -- which is exactly the per-image cap, with no headroom. What you set is what you get: nothing downscales the image on the way back, so a larger viewport is a larger bill on every screenshot, not a sharper one. Set it smaller when you are taking many screenshots and larger only when the layout genuinely needs it."),
                 ["locale"] = Property("string", $"The BCP-47 locale the browser reports and formats dates and numbers with -- 'en-GB', 'de-DE'. Defaults to this machine's, which is '{BrowserConfiguration.HostLocale}'. Set it only when you are deliberately testing another market: left alone, the page sees what a person at this keyboard would see, and changing it changes what a site serves."),
                 ["timezone"] = Property("string", $"The IANA time zone the browser reports -- 'Europe/Amsterdam', 'America/New_York'. Defaults to this machine's{(BrowserConfiguration.HostTimeZone is { } zone ? $", which is '{zone}'" : ", which could not be determined on this machine, so the browser's own default applies")}. Set it only when a page's behaviour depends on the clock and you are testing another region."),
@@ -794,7 +824,7 @@ internal static class SessionToolSurface
             Resume,
             "Take over a directory that is already a BrowserAI session.",
             "Reopens a session that exists, and replays what it was: its recorded browser, purpose and history. Every per-run argument init takes is accepted here too and none is read back from last time. "
-            + $"They take effect when a browser starts: while this BrowserAI has the session's browser up, nothing is applied and an argument that differs is refused, so call {LiveSession.BrowserCloseTool} first; otherwise they are applied, and the browser reopens the tabs it last had. "
+            + $"They take effect when a browser starts: while this BrowserAI has the session's browser up, nothing is applied and an argument that differs is refused, so call {Close} first; otherwise they are applied, and the browser reopens the tabs it last had. "
             + $"After {BrowserIdleTimer.DefaultIdlePeriod.TotalMinutes.ToString(CultureInfo.InvariantCulture)} minutes with no call BrowserAI closes a headless session's browser, and every browser call is then refused until this is called. "
             + "'browser' is NOT an argument -- it was bound when the session was created and a profile on disk belongs to its browser -- and passing it is refused. "
             + "A session is resumable forever; there is no expiry, so a directory that exists can always be resumed. "
@@ -805,17 +835,33 @@ internal static class SessionToolSurface
                 ["directory"] = Property("string", "Absolute path of an existing session directory, on a LOCAL drive -- the same refusal as init, and any other spelling of it is taken as the directory it names."),
                 ["purpose"] = Property("string", "Optional, and NOT the same thing as 'why'. This is the session's STANDING description -- what the directory is for, in one sentence written for the next agent that meets it, shown by browserai_list six weeks from now. Given here it is APPENDED to the recorded purpose, not replacing it, so the directory keeps saying what it has been for. Leave it out unless what the session is FOR has changed; if you only want to say why you are opening it now, that is 'why'."),
                 [WhyParameter] = Property("string", "Required, and NOT the same thing as 'purpose'. This is DISPOSABLE: why you are taking this session over at this moment, one short clause -- \"picking up the checkout bug after the overnight run stopped\". It becomes one entry in this session's log, in order, beside the browser calls that follow it; it does not change what the session says it is for and nothing shows it in a listing."),
-                ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false, and it is NOT read back from what the session was last time -- every run says what it wants. Accepted here as well as on init because the case that matters is a session created headless that now needs a human to sign in: if its browser is up, call browser_close first, and the window opens on the tabs it had."),
-                ["debug"] = Property("boolean", "Raise this session's own log level for this run. Defaults to false. Like every per-run argument it takes effect when a browser starts, so on a session whose browser is up it needs browser_close first."),
+                ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false, and it is NOT read back from what the session was last time -- every run says what it wants. Accepted here as well as on init because the case that matters is a session created headless that now needs a human to sign in: if its browser is up, call browserai_close first, and the window opens on the tabs it had."),
+                ["debug"] = Property("boolean", "Raise this session's own log level for this run. Defaults to false. Like every per-run argument it takes effect when a browser starts, so on a session whose browser is up it needs browserai_close first."),
                 // ⚠️ Q371 c, 2026-10-04, as on init.
                 ["transcript"] = Property("boolean", TranscriptDescription),
-                ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browser_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
+                ["captureNetwork"] = Property("boolean", "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. Defaults to false. THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. (2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a session whose browser is already up must be closed with browserai_close and resumed with it first. (3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds."),
                 ["viewport"] = Property("string", $"The browser window's size in CSS pixels, written WIDTHxHEIGHT. Defaults to '{BrowserConfiguration.DefaultViewport}', between {ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)} on each side. IT DECIDES WHAT A SCREENSHOT COSTS YOU, measured through this server: 1920x1080 arrives as 2,691 visual tokens, 1280x720 as 1,196, and 2560x1440 as 4,784 -- which is exactly the per-image cap, with no headroom. What you set is what you get: nothing downscales the image on the way back, so a larger viewport is a larger bill on every screenshot, not a sharper one. Set it smaller when you are taking many screenshots and larger only when the layout genuinely needs it."),
                 ["locale"] = Property("string", $"The BCP-47 locale the browser reports and formats dates and numbers with -- 'en-GB', 'de-DE'. Defaults to this machine's, which is '{BrowserConfiguration.HostLocale}'. Set it only when you are deliberately testing another market: left alone, the page sees what a person at this keyboard would see, and changing it changes what a site serves."),
                 ["timezone"] = Property("string", $"The IANA time zone the browser reports -- 'Europe/Amsterdam', 'America/New_York'. Defaults to this machine's{(BrowserConfiguration.HostTimeZone is { } local ? $", which is '{local}'" : ", which could not be determined on this machine, so the browser's own default applies")}. Set it only when a page's behaviour depends on the clock and you are testing another region."),
                 ["ignoreHTTPSErrors"] = Property("boolean", "Continue past TLS certificate errors instead of failing the navigation. Defaults to false. Turn it on for a staging site with a self-signed certificate; leave it off for anything else, because the error it suppresses is the one that tells you the connection is not what it claims to be."),
             },
             ["directory", WhyParameter]);
+
+        // ⚠️ ADDED 2026-10-08, F1 a: the one close tool, BrowserAI's own. See `Close`.
+        yield return Tool(
+            Close,
+            "Close a session's browser and keep the session.",
+            "Closes the session's browser cleanly and keeps the session: its profile with the logins and cookies, its site storage, its tabs with their history, and its folder and log. "
+            + "The browser is asked to close itself and given up to a minute to write what it holds to disk. "
+            + $"After this, every call that names the session is refused, saying who closed it and why, until {Resume} opens it again; the first browser call after that reopens the tabs. "
+            + "Call it when the work in a session is done for now and the session should stay resumable, or to free what an open browser holds. "
+            + $"To delete the session and everything in it, call {Destroy} instead.",
+            new JsonObject
+            {
+                [SessionParameter] = Property("string", "Absolute path of the session directory whose browser to close."),
+                [WhyParameter] = Property("string", "Why you are closing it -- not what closing does. One short clause: \"the report is saved and the rest waits for tomorrow\" beats \"closing the browser\". It is recorded as the reason, and every call refused afterwards quotes it."),
+            },
+            [SessionParameter, WhyParameter]);
 
         yield return Tool(
             CatchUp,

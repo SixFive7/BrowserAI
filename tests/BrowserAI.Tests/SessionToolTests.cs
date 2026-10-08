@@ -87,7 +87,14 @@ internal sealed class SessionToolTests
         // the one shape of it that needs no page-side rig. Its real behaviour --
         // an answer, a hang, a navigation, a collision -- is `PageToolTests`,
         // against pages that really register some.
-        await Assert.That(SessionToolSurface.Names.Count).IsEqualTo(8);
+        //
+        // ⚠️ Corrected 2026-10-08 (previously 8): the ninth is `browserai_close`,
+        // F1 a, whose round trip in this capture closes a session whose browser
+        // never started, which closes the session and starts no browser.
+        await Assert.That(SessionToolSurface.Names.Count).IsEqualTo(9);
+
+        await Assert.That(run.IsError("closeGamma")).IsFalse();
+        await Assert.That(run.Text("closeGamma")).IsEqualTo(SessionManager.ClosedWithNoBrowserUp);
 
         // The eighth, answering. `isError` is TRUE and that is the tool working:
         // the session's tab is on a page with no WebMCP tools, so the only

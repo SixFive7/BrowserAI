@@ -82,8 +82,12 @@ internal static class CloseReasons
             SessionCloseCause.Idle =>
                 $"BrowserAI closed this session's browser at {when} because no browser call had reached it for {SessionErrors.Duration(idlePeriod)}; it closes an idle headless browser so that one nobody is using does not hold memory.",
 
+            // ⚠️ browserai_close since 2026-10-08, F1 a (previously "by a browser_close
+            // call from"). A record written before that day holds the same cause for a
+            // browser_close call, and is read back with this tool's name: the cause is
+            // the stored spelling and the tool's name was never stored.
             SessionCloseCause.Caller =>
-                $"This session's browser was closed at {when} by a {LiveSession.BrowserCloseTool} call from {client ?? close.By ?? "a client"}{why}.",
+                $"This session's browser was closed at {when} by a {SessionToolSurface.Close} call from {client ?? close.By ?? "a client"}{why}.",
 
             SessionCloseCause.WindowClosed =>
                 $"A person closed this session's browser window at {when}: the browser exited cleanly, and BrowserAI had not asked it to close.",

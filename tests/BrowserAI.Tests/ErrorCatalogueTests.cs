@@ -971,10 +971,17 @@ internal sealed partial class ErrorCatalogueTests
     /// refused with the way back and what was kept and lost.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Provoked by the caller's own close</b>, because the moment it names is
     /// then the moment a clock nobody moves reads, and the whole sentence can be
     /// compared; the idle close's wording, with the period in it, is
     /// <c>SessionCloseTests</c>'s.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The close is <c>browserai_close</c> since 2026-10-08, F1 a</b> (previously
+    /// <c>browser_close</c>, sent in the same loop as the two navigations with their
+    /// arguments). It takes no <c>url</c>, so it is its own call between them.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1001,16 +1008,22 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "meets a call after its browser was closed",
         });
 
-        foreach (var tool in new[] { "browser_navigate", LiveSession.BrowserCloseTool, "browser_navigate" })
+        foreach (var tool in new[] { "browser_navigate", SessionToolSurface.Close, "browser_navigate" })
         {
-            var answer = await CallAsync(rig, tool, new JsonObject
+            var arguments = new JsonObject
             {
                 [SessionToolSurface.SessionParameter] = directory,
                 [SessionToolSurface.WhyParameter] = "the suite exercising this call",
-                ["url"] = "data:text/html,x",
-            });
+            };
 
-            if (tool is LiveSession.BrowserCloseTool || (bool?)answer["isError"] is not true)
+            if (tool is not SessionToolSurface.Close)
+            {
+                arguments["url"] = "data:text/html,x";
+            }
+
+            var answer = await CallAsync(rig, tool, arguments);
+
+            if (tool is SessionToolSurface.Close || (bool?)answer["isError"] is not true)
             {
                 continue;
             }
@@ -1035,6 +1048,49 @@ internal sealed partial class ErrorCatalogueTests
         }
 
         await Assert.That(Triggered.Contains(nameof(SessionErrors.SessionWasClosed))).IsTrue();
+    }
+
+    /// <summary>
+    /// Row 2's third companion -- a close of a session another BrowserAI process
+    /// holds.
+    /// </summary>
+    /// <remarks>
+    /// <b>The other holder is this test, holding the session's guard the way a second
+    /// BrowserAI process holds it</b>: the proxy's own manager does not have the
+    /// session, and the guard answers held. Added 2026-10-08 with
+    /// <c>browserai_close</c>, F1 a, and planted red against the tree with the tool
+    /// listed and not answered.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHeldByAnotherBrowserAiRowIsEmittedByACloseOfASessionAnotherHolderHas()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "held-elsewhere");
+
+        _ = Directory.CreateDirectory(directory);
+
+        var location = SessionPath.For(directory);
+
+        using var held = SessionLock.TryAcquire(
+            location,
+            new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance).Acquired!;
+
+        var answer = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite closing a session it does not hold",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.SessionHeldByAnotherBrowserAi),
+            SessionErrors.SessionHeldByAnotherBrowserAi(SessionToolSurface.Close, location.FullPath));
     }
 
     /// <summary>
@@ -2044,7 +2100,12 @@ internal sealed partial class ErrorCatalogueTests
         // reports success, so it is refused with the Chromium bug's link and what
         // to do instead. It is the first row here produced by reading a
         // successful answer.
-        await Assert.That(rows.Count).IsEqualTo(39);
+        //
+        // ⚠️ **Corrected 2026-10-08 to 40 (previously 39).**
+        // `SessionHeldByAnotherBrowserAi` arrived with `browserai_close`, F1 a: a
+        // close of a session another BrowserAI process holds is refused, because
+        // only its holder can act on its browser.
+        await Assert.That(rows.Count).IsEqualTo(40);
     }
 
     /// <summary>
