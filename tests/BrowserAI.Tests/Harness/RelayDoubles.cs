@@ -68,6 +68,8 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
 
     private BackgroundAbsence _absence = new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null);
     private int _looks;
+    private bool _failsToLook;
+    private bool _failsToExplain;
 
     /// <summary>What <see cref="Explain"/> answers.</summary>
     public BackgroundAbsence Absence
@@ -85,6 +87,46 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
             lock (_gate)
             {
                 _absence = value;
+            }
+        }
+    }
+
+    /// <summary>Whether a look throws, as a finder whose pipe call failed in a way nobody foresaw does.</summary>
+    public bool FailsToLook
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _failsToLook;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _failsToLook = value;
+            }
+        }
+    }
+
+    /// <summary>Whether <see cref="Explain"/> throws, as a finder that could not read the Task Scheduler does.</summary>
+    public bool FailsToExplain
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _failsToExplain;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                _failsToExplain = value;
             }
         }
     }
@@ -136,6 +178,11 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
         {
             _looks++;
 
+            if (_failsToLook)
+            {
+                throw new IOException("The suite's finder failed to open the pipe.");
+            }
+
             return Task.FromResult<Stream?>(_offered.TryDequeue(out var hop) ? DuplexStream.Over(hop) : null);
         }
     }
@@ -146,7 +193,10 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
         lock (_gate)
         {
             _explained.Add(lastBackgroundPid);
-            return _absence;
+
+            return _failsToExplain
+                ? throw new InvalidOperationException("The suite's finder could not read the Task Scheduler.")
+                : _absence;
         }
     }
 
@@ -213,6 +263,21 @@ internal sealed class FakeBackground(PipeDuplex hop) : IDisposable
     public async Task<WireFrame> GreetAsync(int pid = Pid)
     {
         var hello = await NextAsync();
+        await AnswerGreetingAsync(hello, pid);
+        return hello;
+    }
+
+    /// <summary>
+    /// Answers a greeting already read, then the replayed <c>initialize</c>, and reads
+    /// <c>notifications/initialized</c>.
+    /// </summary>
+    /// <param name="hello">The greeting.</param>
+    /// <param name="pid">The pid to answer with.</param>
+    /// <returns>The task.</returns>
+    public async Task AnswerGreetingAsync(WireFrame hello, int pid = Pid)
+    {
+        ArgumentNullException.ThrowIfNull(hello);
+
         await SendAsync(Frames.HelloAnswer(hello.IdText!, pid));
 
         var replay = await NextAsync();
@@ -220,9 +285,10 @@ internal sealed class FakeBackground(PipeDuplex hop) : IDisposable
 
         var initialized = await NextAsync();
 
-        return initialized.Method is "notifications/initialized"
-            ? hello
-            : throw new InvalidOperationException($"The relay sent {initialized.Text} where notifications/initialized was due.");
+        if (initialized.Method is not "notifications/initialized")
+        {
+            throw new InvalidOperationException($"The relay sent {initialized.Text} where notifications/initialized was due.");
+        }
     }
 
     /// <summary>Closes the background's end, as a background that exits does.</summary>
@@ -355,6 +421,7 @@ internal sealed class GatedStream(Stream inner) : Stream
     private readonly Lock _gate = new();
     private TaskCompletionSource? _closed;
     private TaskCompletionSource _waiting = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private bool _broken;
 
     /// <inheritdoc />
     public override bool CanRead => false;
@@ -397,6 +464,15 @@ internal sealed class GatedStream(Stream inner) : Stream
         }
     }
 
+    /// <summary>Breaks the stream: every write from here on fails, as one into a pipe whose reader has gone does.</summary>
+    public void Break()
+    {
+        lock (_gate)
+        {
+            _broken = true;
+        }
+    }
+
     /// <summary>Opens the gate.</summary>
     public void Open()
     {
@@ -418,6 +494,11 @@ internal sealed class GatedStream(Stream inner) : Stream
 
         lock (_gate)
         {
+            if (_broken)
+            {
+                throw new IOException("The pipe is being closed.");
+            }
+
             if (_closed is { } closed)
             {
                 wait = closed.Task;
