@@ -221,6 +221,29 @@ Every item here has a decision behind it in
 [`DECISIONS.md`](DECISIONS.md#open-design-decisions); the one group that does not
 is named as candidates and says so.
 
+- [ ] **Implement MCP revision `2026-07-28`, and only then offer it again.** Since
+      2026-10-08 the caller-facing server offers exactly `2025-11-25`
+      (`BrowserProxy.CallerProtocolVersion`). From 2026-09-30 Claude Code opened
+      with `server/discover` at `2026-07-28`, and the installed 1.1.0, which offered
+      every revision the SDK implements, then answered `tools/list` with a result
+      that revision rejects: 145 of 153 connections listed no tool
+      ([kb](kb/mcp/protocol.md#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08),
+      [the hazard row](HAZARDS.md#hazard-index)). Decided for a later build in the
+      resolutions of 2026-10-08, after the pin was put to the maintainer three
+      times and he left the stopgap carrying it in place
+      ([`DECISIONS.md`](DECISIONS.md#the-next-build-decided-2026-10-07-and-2026-10-08)).
+      **What the revision asks that BrowserAI does not do:** a `resultType` on
+      every result, which Claude Code's check names; `ttlMs` and `cacheScope`,
+      which the SDK's own `server/discover` result carried when BrowserAI still
+      answered one; no `initialize` and no `ping`
+      ([kb](kb/mcp/protocol.md#the-protocol-split)). BrowserAI answers
+      `tools/list` and every `tools/call` from bytes a child wrote at
+      `2025-11-25`, and keys a client's name, the count since the handshake and
+      Q261 b's stale-list refusal on `initialize`, so each of those needs its
+      counterpart first. **Done when** a build answers every method it serves at
+      both revisions, a test sends both openings to the published binary, and
+      the pin offers both.
+
 - [ ] **The update toast, and the sessions page it opens.** The decision is
       [Q254](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
       and the alternatives are at

@@ -66,6 +66,33 @@ internal sealed class BrowserProxy : IAsyncDisposable
     public const string ChildProtocolVersion = ChildConnection.ChildProtocolVersion;
 
     /// <summary>
+    /// The one protocol revision BrowserAI offers <b>to its caller</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Pinned 2026-10-08, and the same value as the child's pin for a different
+    /// reason.</b> The child's is the child's measured ceiling; this one is the
+    /// newest revision whose answers BrowserAI writes correctly. Revision
+    /// <c>2026-07-28</c> requires a <c>resultType</c> on every result, and BrowserAI
+    /// answers <c>tools/list</c> itself, so a caller that chose it got a list it
+    /// had to reject. The SDK offers every revision it implements unless one is
+    /// set, and 2.2.0 implements <c>2026-07-28</c>.
+    /// </para>
+    /// <para>
+    /// <b>What the pin does on the wire</b>, read in <c>McpServerImpl</c> at
+    /// <c>v2.2.0</c> and held against the published binary by
+    /// <c>ProtocolSplitTests</c>: a request whose per-request <c>_meta</c> names
+    /// any other revision is refused with <c>-32022</c> and a
+    /// <c>data.supported</c> of this revision alone, which is the refusal Claude
+    /// Code falls back to <c>initialize</c> on; and <c>initialize</c> answers this
+    /// revision whatever the caller offered. Implementing <c>2026-07-28</c> is in
+    /// <c>TODO.md</c>
+    /// ([kb](../../../kb/mcp/protocol.md#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08)).
+    /// </para>
+    /// </remarks>
+    public const string CallerProtocolVersion = "2025-11-25";
+
+    /// <summary>
     /// What <c>CreateRemoteProtocolExceptionFromError</c> puts in front of every
     /// message it lifts out of a child's JSON-RPC error.
     /// </summary>
@@ -339,12 +366,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // 2026-08-18 measurement @ Claude Code 2.1.234 retired.
             ServerInstructions = Proxy.ServerInstructions.Text,
 
-            // Upward: null means every revision the SDK implements. The caller
-            // is a client this project does not control and does not get to hold
-            // back; the child's ceiling is the child's business and stops at the
-            // pin in ChildConnection. That split is the whole point, and it is
-            // why these two disagree on purpose.
-            ProtocolVersion = null,
+            // ⚠️ UPWARD: EXACTLY THE ONE REVISION BROWSERAI IMPLEMENTS. Corrected
+            // 2026-10-08 @ ModelContextProtocol 2.2.0 (previously null, "Upward:
+            // null means every revision the SDK implements. The caller is a client this project
+            // does not control and does not get to hold back; the child's ceiling
+            // is the child's business and stops at the pin in ChildConnection.
+            // That split is the whole point, and it is why these two disagree on
+            // purpose."). Null offered 2026-07-28 too, which ModelContextProtocol
+            // 2.2.0 implements and BrowserAI's own answers do not: its tools/list
+            // carries no resultType. From 2026-09-30 Claude Code opened with
+            // server/discover at 2026-07-28, and 145 of 153 connections to the
+            // installed 1.1.0 then listed no tool. Pinned, the SDK refuses that
+            // opening with -32022 naming this revision alone, and Claude Code
+            // falls back to initialize, read in its own code. See CallerProtocolVersion.
+            ProtocolVersion = CallerProtocolVersion,
 
             Capabilities = new ServerCapabilities
             {

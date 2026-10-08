@@ -178,6 +178,15 @@ the positive control and removed after: the scan named `observe.ps1` and no file
 of the rig. **The scan would still flag eleven files, and only `observe.ps1`
 selects a process by name.**
 
+⚠️ *Added 2026-10-08.* **Thirty-six**, counted as its subdirectories, when
+[`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) arrived with the
+pin to one protocol revision. The count read thirty-five before it, one more than
+the paragraph above says, because [`2026-10-04-behave`](2026-10-04-behave/README.md)
+arrived without a paragraph or a row; neither is written here for it. The new rig
+holds Python and Markdown only, which the scan does not read, and selects no
+process. **The scan would still flag eleven files, and only `observe.ps1` selects
+a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -255,3 +264,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-coordinator-survival`](2026-10-03-coordinator-survival/README.md) | The client-exit rig with a coordinator stand-in started by a scratch logon task, a host in that coordinator's job and browsers nested below it: whether they outlive every way a client ends its server, and whether the coordinator's death ends them | false positives |
 | [`2026-10-03-look`](2026-10-03-look/README.md) | A picture of a headless session taken beside an agent's call: what it takes from the agent's next answer, what it leaves in the session's folder, and what one picture costs in each family | |
 | [`2026-10-04-lifetime`](2026-10-04-lifetime/README.md) | A desktop of the rig's own for a headed browser, with a window census over both desktops, row 152's headed arms run on it, and a 50,000 px page screenshotted full-page through the published server | |
+| [`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) | The opening Claude Code sends since 2026-09-30, sent to a BrowserAI server by hand, and Claude Code's own logs and transcripts counted, read-only, for which opening each connection took and what came of it | |

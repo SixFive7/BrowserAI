@@ -737,6 +737,21 @@ the only onboarding-named variable in the bundle is a force-**on**, and the
 published documentation does not document the marker at all -- so the key is
 `[FLOATS]` against somebody else's self-updating binary.
 
+⚠️ **A Claude Code the suite starts opens with `initialize`, and a person's opens
+with `server/discover` at `2026-07-28` -- *added 2026-10-08*.** From 2026-09-30 the
+maintainer's own sessions opened the new way and the installed 1.1.0 failed 145 of
+153 of them, while every run under a scratch `CLAUDE_CONFIG_DIR` still opened with
+`initialize`, so no arm saw it
+([kb](kb/mcp/protocol.md#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08)).
+**So the new opening is sent by hand.**
+`ProtocolSplitTests.TheNewOpeningRequestIsRefusedWithTheOneRevisionBrowserAiOffersAndTheOldOneListsTheTools`
+drives the published binary over raw stdio with Claude Code's two frames and holds
+the refusal, the fallback and the tool list; the class now describes a revision
+offered upward and a revision pinned downward, and no longer a split between the
+newest and a pin. What it cannot see is the client: which opening a real session
+takes is read in the client's own logs, with
+[the rig](docs/probes/2026-10-08-protocol-pin/README.md).
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

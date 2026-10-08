@@ -217,9 +217,18 @@ whose page is serving a tab, for the same reason and for as long as the page ser
 | Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{RegistrationTarget, RegisterAi, McpRegistrar, RegistrationRecord, HookRegistration}.cs` -- *corrected 2026-10-03 (previously `{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs`)*: `RegisterAiTool` runs the RegisterAI the payload carries and `ToolDocuments` reads its schema-1 document; `McpRegistrar` builds the command line and turns each answer into BrowserAI's status and sentence. The program itself is `build/Get-RegisterAi.ps1`'s, checked against its release's `SHA256SUMS` (Q349 a) |
 | Registering with Codex, and everything that differs between the two clients | `src/BrowserAI.Core/Registration/RegistrationClient.cs` -- *added 2026-09-24 (Q258), and narrowed 2026-10-03 (previously `{RegistrationClient, CodexRegistration, CodexRegistryView}.cs`)*: how each client is found, asked and written is RegisterAI's; what stays per client is the name, RegisterAI's id, the command a project file is given, the line to run by hand and the sentences. The ownership rule is RegisterAI's, once, given this install's root |
 
-**The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`
-is `null` upward -- whatever the caller asks for -- while `McpClientOptions.
-ProtocolVersion` is pinned to the child's ceiling downward. The pair is logged as
+**The protocol version is pinned in both directions, for two different reasons.**
+`McpServerOptions.ProtocolVersion` is `BrowserProxy.CallerProtocolVersion`,
+`2025-11-25`, upward: the newest revision whose answers BrowserAI writes
+correctly, so a caller that opens with a later one is refused with `-32022` naming
+that revision alone, and Claude Code then falls back to `initialize`
+([kb](kb/mcp/protocol.md#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08)).
+⚠️ *Corrected 2026-10-08 (previously "`McpServerOptions.ProtocolVersion` is `null`
+upward -- whatever the caller asks for -- while")*: `null` offered `2026-07-28`
+too, which the SDK implements and BrowserAI's own `tools/list` answer does not
+satisfy, and 145 of 153 Claude Code connections to the installed 1.1.0 listed no
+tool once the client opened with it. `McpClientOptions.ProtocolVersion` is pinned to
+the child's ceiling downward. The pair is logged as
 `requested=... negotiated=...` and **throws** when they differ, because the child caps
 or echoes silently and never rejects, so that assertion is the only place a
 mis-negotiation is visible.

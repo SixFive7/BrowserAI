@@ -36,13 +36,25 @@ frame to each end of the running proxy: **BrowserAI answers `-32602`** -- *"The
 protocol version"* -- while **the child answers `-32601` Method not found**. The
 method exists on one side and not on the other, which a version string cannot
 show, because a version can be echoed. Re-establish by running
-`ProtocolSplitTests.TheServerReachesARevisionTheChildDoesNotImplement`, which
-asks both ends the same question in the same run. `[FLOATS]`
+`ProtocolSplitTests.TheServerKnowsTheNewOpeningMethodAndTheChildDoesNot`, which
+asks both ends the same question in the same run. `[FLOATS]` *Renamed 2026-10-08
+(previously `ProtocolSplitTests.TheServerReachesARevisionTheChildDoesNotImplement`)*:
+BrowserAI no longer serves that revision, and refuses a request naming it
+([below](#the-new-opening-request-and-the-one-revision-browserai-offers----measured-2026-10-08)).
 
 > The same run also confirms the downward pin is independent of the caller:
 > offering `2025-06-18` to BrowserAI returns `2025-06-18` while the child
 > session in that same process is at `2025-11-25`. A server that merely
 > forwarded the child's answer would return `2025-11-25` there.
+>
+> ⚠️ `Corrected 2026-10-08 @ ModelContextProtocol 2.2.0 (previously "offering
+> 2025-06-18 to BrowserAI returns 2025-06-18")` -- **true of every build until
+> the pin, and not since.** BrowserAI offers exactly `2025-11-25`, and the SDK
+> answers a caller offering `2025-06-18` with it;
+> `ProtocolSplitTests.ACallerOfferingAnOlderRevisionIsAnsweredWithTheOneBrowserAiOffers`
+> holds the new answer, and was watched red against the unpinned build, which
+> still answered `2025-06-18`. The two negotiations stay separate in the code; they
+> happen to name one revision.
 
 **The current spec is `2026-07-28`, a breaking rewrite.** It removes `initialize`
 and `notifications/initialized`, adds `server/discover`, replaces server→client
@@ -1231,6 +1243,98 @@ them, and refusing those would refuse calls upstream accepts.
 `UnrecognisedArgumentTests` holds the refusal for an authored tool and for a
 forwarded one, that the list the caller was given decides, and the refusal's
 size against the budget above for every tool.
+
+## The new opening request, and the one revision BrowserAI offers -- measured 2026-10-08
+
+`[FLOATS]` Claude Code **2.1.285 to 2.1.289** for the failures, **2.1.288 and
+2.1.294** for the code read below, `ModelContextProtocol` **2.2.0**, codex-cli
+**0.155.0-alpha.9.2 and 0.160.0** with `rmcp` **3.2.0**, the installed BrowserAI
+**1.1.0**, Windows 11. [Rig](../../docs/probes/2026-10-08-protocol-pin/README.md).
+
+**From 2026-09-30T10:52Z Claude Code opened its stdio servers with
+`server/discover` at `2026-07-28`, and the installed 1.1.0 accepted a revision it
+could not serve.** BrowserAI set `McpServerOptions.ProtocolVersion` to `null`,
+which offers every revision the SDK implements, and 2.2.0 implements
+`2026-07-28`. So the client chose it, and BrowserAI's own `tools/list` answer,
+rewritten from a child pinned at `2025-11-25`, carried no `resultType`. The
+client's log reads *"tools/list failed (Invalid result for tools/list: missing
+required resultType ... servers implementing protocol revision 2026-07-28 MUST
+include it ...)"*, retries at 250, 500 and 1,000 ms and ends at *"Failed to fetch
+tools"*: the session keeps BrowserAI's instructions and has no BrowserAI tool.
+Counted from the client's own MCP logs, read and never written: of the **153**
+connections to the installed server that started from 2026-09-30T10:52:31Z to
+2026-10-04T17:56:02Z, in 12 project folders, **145 failed with the `resultType`
+error**, 2 failed otherwise and 6 worked. Every failure had negotiated
+`2026-07-28`; the six that worked had opened with `initialize` at `2025-11-25`.
+The 443 connections from 2026-09-16 up to the first failure all opened with
+`initialize` at `2025-11-25`. Where a connection's session transcript could be
+matched, 73 of the 153, it names 2.1.285 to 2.1.289 for 68; five carry older
+stamps and 80 have no transcript left. First counted 2026-10-04 at about 18:00Z
+and re-counted 2026-10-08 to the same figures.
+
+**No run of the suite could see it.** Every Claude Code the suite starts runs
+under a scratch configuration folder, and those opened with `initialize`
+throughout, 2026-10-04 included. The client carries switches named
+`tengu_mcp_protocol_negotiation_stdio`, `_http`, `_claudeai` and `_ccr`, present
+in 2.1.294, which reads as a rollout a scratch configuration does not receive.
+That is an inference from the names and is not established.
+
+**Since 2026-10-08 the caller-facing server offers exactly `2025-11-25`.** With
+`ProtocolVersion` set, 2.2.0's supported list is that one revision
+(`GetConfiguredSupportedProtocolVersions` in `McpServerImpl.cs` at `v2.2.0`), and
+a request whose per-request `_meta` names another revision is refused with
+`-32022`, `UnsupportedProtocolVersionError`, with `data.supported` set to
+`["2025-11-25"]` and `data.requested` to what was asked. `initialize` then
+answers `2025-11-25` whatever the client offered: the handler returns the
+configured revision and echoes the client's only when none is configured. The
+2025-11-25 lifecycle lets a server answer the one revision it supports, and the
+client decides whether to go on.
+`ProtocolSplitTests.TheNewOpeningRequestIsRefusedWithTheOneRevisionBrowserAiOffersAndTheOldOneListsTheTools`
+sends Claude Code's opening frames to the published binary and holds all of it;
+against the unpinned build the same frame was answered with a `server/discover`
+result offering `2026-07-28`, and an `initialize` at `2025-06-18` with
+`2025-06-18`.
+
+**Claude Code falls back to `initialize` on that refusal, read in its own code.**
+A text search of the 2.1.288 and 2.1.294 binaries finds the same handler for an
+error answer to `server/discover`. On `-32022` it reads `data.supported`: with no
+list it falls back; with a revision of `2026-07-28` or later that it speaks, it
+retries at that revision; with only later revisions it does not speak, it fails;
+and with no revision of `2026-07-28` or later it falls back to `initialize` when
+it speaks an earlier one, which it does. Every other error code falls back too,
+which is why a server with no `server/discover` at all works. **So the list has
+to be exactly `["2025-11-25"]`**: naming `2026-07-28` in it would send the client
+straight back to the revision BrowserAI cannot serve.
+
+**The installed stopgap carries the same pin on 1.1.0 since 2026-10-04T18:12Z.**
+Of the 60 connections to it that started from 2026-10-04T19:26Z to
+2026-10-08T12:05Z, in 8 project folders, 55 opened with `initialize` at
+`2025-11-25` and listed the tools, and 5 did not, every one of them while the
+client itself was shutting down. One log of the failure window holds both
+halves: its connection failed at 13:36Z on 2026-10-04, and the same session
+reconnected at 18:13:44Z, opened with `initialize` and served every call.
+
+**Codex is not affected, read in its own code.** For a stdio server codex-cli
+0.155.0-alpha.9.2 and 0.160.0 send `initialize` at `2025-06-18` unless the
+server's own entry sets `CODEX_MCP_PROTOCOL_VERSION` to `2026-07-28` and the
+client's modern mode is on (`protocol_mode.rs` in `codex-rs/rmcp-client`), and
+`rmcp` 3.2.0's `legacy_startup` keeps whatever revision the server answers
+without checking it (`crates/rmcp/src/service/client.rs` at `rmcp-v3.2.0`). Its
+own log of 2026-10-02 shows 1.1.0 answering it `2025-06-18`; the pinned build
+answers `2025-11-25`. ⚠️ **Its modern mode would fail**: `rmcp`'s automatic
+lifecycle treats `-32022` as a version negotiation and gives up when the list
+holds no revision it prefers, so a Codex in that mode would not fall back. No
+BrowserAI registration opts in to it.
+
+**Implementing `2026-07-28` is [`TODO.md`](../../TODO.md)'s**, and the condition is
+[a hazard row](../../HAZARDS.md#hazard-index): a protocol revision BrowserAI
+offers but does not implement.
+
+**Re-establish** with [the rig](../../docs/probes/2026-10-08-protocol-pin/README.md):
+`count.py` counts the client's own logs in a window and `clientver.py` matches
+each connection to its transcript, both printing counts only; `opening.py` sends
+the two openings to any BrowserAI server; and the test above is the standing
+check on the server's half.
 
 ## Tooling around the protocol
 

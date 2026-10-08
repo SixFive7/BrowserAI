@@ -1769,6 +1769,19 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
+  From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision
+  `2026-07-28`. BrowserAI offered every revision its SDK implements, so it accepted that one,
+  and then answered `tools/list` without the `resultType` the revision requires: of 153
+  connections to the installed 1.1.0 counted in the client's own logs, 145 listed no tool, and
+  the session had BrowserAI's instructions and nothing to call. BrowserAI now offers revision
+  `2025-11-25` alone, so the new opening is refused with `-32022` naming it, and Claude Code
+  falls back to the `initialize` handshake, as its own code reads at 2.1.288 and 2.1.294. A
+  client that offers an older revision is answered `2025-11-25`; Codex offers `2025-06-18` and
+  keeps whatever revision a server names. The suite's own Claude Code runs never open the new
+  way, so `ProtocolSplitTests` sends both openings to the published binary, watched red against
+  the old setting. Implementing `2026-07-28` is in `TODO.md`.
+
 - 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.**
   9 d, the maintainer's words verbatim: *"9 d - and add a todo to the repo to track the progress of
   the bug for when to remove our checks. Also, the refusal should mention the chromium bug link."*
