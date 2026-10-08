@@ -103,7 +103,11 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// <param name="roster">Every relay, kept for the update.</param>
     /// <param name="verbs">What a person's start and a stop are answered with.</param>
     /// <param name="loggerFactory">Where the connections log.</param>
-    /// <exception cref="System.ComponentModel.Win32Exception">The name is taken: another background serves it.</exception>
+    /// <exception cref="IOException">
+    /// The name is taken: another background serves it, and <see cref="Exception.HResult"/> is
+    /// <c>HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)</c>, the answer <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> gives.
+    /// </exception>
+    /// <exception cref="System.ComponentModel.Win32Exception">The current user's security descriptor for the pipe could not be built.</exception>
     public BackgroundServer(SessionHost host, BackgroundIdentity identity, RelayRoster roster, IBackgroundVerbs verbs, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(host);
