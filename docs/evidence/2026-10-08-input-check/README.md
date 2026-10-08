@@ -25,9 +25,10 @@ watched red in. The rig is
 - **The plant logs are trimmed.** Each is stored under a `.trimmed.` name with the
   user profile path, which the run's coverage block prints for the provisioned
   browsers, replaced by `C:\Users\<user>`; `plants/originals.sha256` carries each
-  original's digest and size. Nothing else in them was changed.
-- **The step-0 files are copies**, byte for byte, of the ones in the root's
-  scratch folder; the raw files left out are named with their digests in
-  `step0/left-out.sha256`. `step0/findings-section-5.txt` is lines cut from a
-  longer file and says so above.
-- The rig's outputs are as written.
+  original's digest and size. Nothing else in them was changed but the line endings.
+- **The step-0 files are copies** of the ones in the root's scratch folder, with
+  nothing changed but the line endings, which this repository stores as LF the way
+  [the index](../README.md) says of every batch; the raw files left out are named
+  with their digests in `step0/left-out.sha256`. `step0/findings-section-5.txt` is
+  lines cut from a longer file and says so above.
+- The rig's outputs are as written, line endings aside.
