@@ -148,8 +148,11 @@ internal sealed class ToolListInRefusalsTests
             await Assert.That(refusal).Contains(Header);
         }
 
+        // ⚠️ 63 upstream tools since 2026-10-08 (previously 64): F1 a denied
+        // browser_close beside the eight denials before it, and browserai_close joined
+        // BrowserAI's own, so the block still lists 72 and Names counts one more.
         await Assert.That(refusals[0].Split('\n').Count(line => line.StartsWith("- ", StringComparison.Ordinal)))
-            .IsEqualTo(SessionToolSurface.Names.Count + 64);
+            .IsEqualTo(SessionToolSurface.Names.Count + 63);
     }
 
     /// <summary>

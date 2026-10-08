@@ -135,9 +135,13 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 64 of 72 is what DECISIONS records
+        // Stated as a number as well, because 63 of 72 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-10-04 a second time, previously 65 of 72: the
+        // say so. *(Corrected 2026-10-08, previously 64 of 72: F1 a denied
+        // browser_close, which BrowserAI's own browserai_close replaces, so the
+        // denominator held still and this number lost one while Names gained
+        // one. Found by lane REC's gate at 6694dda8, because lane SESS's gate on
+        // the commit that made the change never finished.)* *(Corrected 2026-10-04 a second time, previously 65 of 72: the
         // maintainer's Q365.1 a denied browser_set_storage_state.)* *(Corrected
         // 2026-10-04, previously 70 of 72: the maintainer
         // dropped the five test-writing helpers, Q365.2 a, so five `allow` rows
@@ -165,7 +169,7 @@ internal sealed class VerticalSliceTests
         // previously 71 of 72: the maintainer removed browser_resume, so the
         // denominator held still and this number lost one. It is the first move
         // here that a decision made and not an upstream release.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 64);
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 63);
 
         // ⚠️ And every withheld tool is absent from the REAL binary's real
         // answer, named individually. The list comparison above would also catch

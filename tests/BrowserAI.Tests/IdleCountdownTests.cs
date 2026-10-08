@@ -49,11 +49,24 @@ internal sealed class IdleCountdownTests
     /// upstream's own idle timeout any more.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Q326 a reversed.</b> Until 2026-10-08 a headed session had no timer at all
     /// and its launch wrote upstream's timeout as zero; a headless launch wrote
     /// upstream's hour. An agent may now set a time past that hour, and every call
     /// that names a session restarts BrowserAI's countdown where upstream's restarts
     /// only on a call it receives, so every launch writes zero.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The clock moves to each deadline exactly and then stands still while the
+    /// close runs</b>, since 2026-10-08 (previously it stepped a whole hidden period
+    /// every 20 ms until the hidden session's child had stopped, then three periods
+    /// more). A close is a round trip to the child on the thread pool, so under load
+    /// the stepping ran on past the visible window's hour before the hidden close had
+    /// finished, and the arm went red with "a visible window closed before its hour had
+    /// passed" in the PowerShell half of lane REC's gate at <c>6694dda8</c>. Planted
+    /// red the same day by slowing the hidden child's close by 300 ms, which the old
+    /// arm failed and this one passes.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -76,22 +89,37 @@ internal sealed class IdleCountdownTests
         var visibleChild = rig.SessionChildren[0];
         var hiddenChild = rig.SessionChildren[1];
 
-        // The hidden one goes first, at its ten minutes.
-        await AdvanceUntilAsync(clock, ShortPeriod, () => hiddenChild.HasStopped, "the hidden session was never idle-closed");
+        // The clock moves a minute so the navigations' own scopes have gone, and a
+        // call BrowserAI answers itself then names both sessions at one moment this
+        // arm knows.
+        clock.Advance(OneMinute);
+        _ = await harness.Client.RoundTripAsync("tools/list");
+        await CatchUpAsync(harness, visible);
+        await CatchUpAsync(harness, hidden);
+
+        var named = clock.GetUtcNow();
+        var hour = OneMinute * SessionTimes.VisibleIdleMinutes;
+
+        // The hidden one goes first, at its ten minutes, and the clock stands still
+        // while its close runs.
+        clock.Advance(ShortPeriod);
+        await WaitUntilAsync(() => hiddenChild.HasStopped, "the hidden session was not idle-closed at its ten minutes");
 
         await Assert.That(visibleChild.HasStopped).IsFalse()
             .Because("a visible window closed at the hidden default instead of its own hour");
 
-        // Three more hidden defaults, which is five at most since its last call and
-        // short of its hour whichever way the navigation's own scope was released.
-        clock.Advance(ShortPeriod * 3);
+        // One tick short of its hour, measured from the call that named it: open, with
+        // its deadline at the hour.
+        clock.AdvanceTicks((hour - ShortPeriod).Ticks - ManualClock.OneTick);
         _ = await harness.Client.RoundTripAsync("tools/list");
 
         await Assert.That(visibleChild.HasStopped).IsFalse()
             .Because("a visible window closed before its hour had passed");
+        await Assert.That(CountdownOf(harness, visible).ClosesAt).IsEqualTo(named + hour);
 
-        // And the visible one at its hour, measured from its own last call.
-        await AdvanceUntilAsync(clock, ShortPeriod, () => visibleChild.HasStopped, "the visible window was never idle-closed");
+        // And the visible one at its hour.
+        clock.AdvanceTicks(ManualClock.OneTick);
+        await WaitUntilAsync(() => visibleChild.HasStopped, "the visible window was not idle-closed at its hour");
 
         await Assert.That(RecordedSession.LogOf(visible).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsTrue();
 
@@ -149,10 +177,15 @@ internal sealed class IdleCountdownTests
 
         await Assert.That(threeChild.HasStopped).IsFalse();
 
-        await AdvanceUntilAsync(clock, OneMinute, () => threeChild.HasStopped, "the three-minute session was never idle-closed");
+        // ⚠️ Moved to the deadline exactly and then held still while the close runs,
+        // since 2026-10-08 (previously stepped a minute every 20 ms until the child had
+        // stopped, which a slow close carried past the ten minutes the next line rules
+        // out: planted red the same day with the close slowed by a second).
+        clock.AdvanceTicks(ManualClock.OneTick);
+        await WaitUntilAsync(() => threeChild.HasStopped, "the three-minute session was not idle-closed at its three minutes");
 
         // Three of the minutes and not ten: the hidden default would have needed more.
-        await Assert.That(clock.GetUtcNow() - named).IsLessThan(ShortPeriod);
+        await Assert.That(clock.GetUtcNow() - named).IsEqualTo(OneMinute * 3);
 
         // Fifty hidden defaults later, the one set to never is still open.
         clock.Advance(ShortPeriod * 50);
@@ -438,7 +471,10 @@ internal sealed class IdleCountdownTests
         rig.Desktop.PersonTypes();
         rig.Desktop.Check();
 
-        await AdvanceUntilAsync(clock, OneMinute, () => hiddenChild.HasStopped, "the hidden session was never idle-closed");
+        // At its ten minutes, and the clock stands still while the close runs, so no
+        // step can carry it on towards the visible window's hour (2026-10-08).
+        clock.Advance(ShortPeriod);
+        await WaitUntilAsync(() => hiddenChild.HasStopped, "the hidden session was not idle-closed at its ten minutes");
 
         // A call BrowserAI answers itself starts the visible countdown at a moment
         // this arm knows.
@@ -576,6 +612,23 @@ internal sealed class IdleCountdownTests
 
         return CallAsync(harness, SessionToolSurface.Resume, arguments);
     }
+
+    private static async Task CatchUpAsync(McpTestHarness harness, string directory)
+    {
+        var answer = await CallAsync(harness, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite naming the session at a moment it knows",
+        });
+
+        if ((bool?)answer["isError"] is true)
+        {
+            throw new InvalidOperationException($"The arm could not name '{directory}': {TextOf(answer)}");
+        }
+    }
+
+    private static SessionCountdown CountdownOf(McpTestHarness harness, string directory) =>
+        harness.Proxy.SessionCountdowns().Single(entry => string.Equals(entry.Directory, SessionPath.For(directory).FullPath, StringComparison.OrdinalIgnoreCase));
 
     private static Task<JsonObject> NavigateAsync(McpTestHarness harness, string directory, string why) =>
         CallAsync(harness, "browser_navigate", new JsonObject
