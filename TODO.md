@@ -1225,6 +1225,43 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
       If Chromium fails such a capture with an error instead, the check is no
       longer needed either, because the error reaches the caller as it is.
+- [ ] **WATCH [openai/codex#11489](https://github.com/openai/codex/issues/11489)
+      and [#16899](https://github.com/openai/codex/issues/16899), a Codex thread
+      that never starts a dead stdio server again.** The maintainer decided on
+      2026-10-08 that BrowserAI ends an idle relay process to let an update
+      install. Claude Code gets the server back in the same conversation: on
+      the next call under `claude -p` and the stream-json transport the VS Code
+      extension drives, and through `/mcp` Reconnect in its terminal UI. A Codex
+      thread does not. Every later BrowserAI call in it answers
+      *"Transport closed"* until an app-server host sends a reload, the
+      thread's directory or permissions change, or the user opens a new thread
+      ([kb](kb/mcp/protocol.md#codex-never-re-launches-on-the-failure-path-and-does-on-the-next-refresh),
+      measured at codex-cli 0.155.0-alpha.9.2 and 0.160.0). **Nothing has
+      changed upstream, read 2026-10-08** at `rust-v0.161.0`, the newest stable
+      release (2026-10-07), at `rust-v0.162.0-alpha.20` and on `main` at
+      `2fdf047`: `reusable_client` in
+      `codex-rs/codex-mcp/src/connection_manager.rs` still replaces a closed
+      client only during a refresh, `Op::RefreshMcpServers` still has no caller
+      outside Codex's own tests, and the 0.160.1 and 0.161.0 release notes say
+      nothing about it. #11489 asks for an automatic reconnect and #16899
+      reports the CLI case. Both are open, and no maintainer has replied to
+      either. Two more belong to the same question:
+      [#4955](https://github.com/openai/codex/issues/4955), a restart command,
+      assigned to `gpeal` on 2025-10-09 with no word from the assignee since,
+      and [PR #30083](https://github.com/openai/codex/pull/30083), a refresh of
+      one server by `viyatb-oai`, whose changes do ship in Codex releases, open
+      with merge conflicts and untouched since 2026-07-07. Codex
+      [takes no outside pull requests](https://github.com/openai/codex/blob/rust-v0.161.0/docs/contributing.md),
+      so a fix has to come from its own team. **What to do:** check the four at
+      least once a week and read the notes of every Codex release. **When a
+      released Codex brings a dead stdio server back inside the same thread**,
+      on its own at the next call or turn or through a command the user types,
+      measured with that kb section's rig and never inferred from an issue's
+      state, correct the section and its row in `HAZARDS.md` with dated
+      previously clauses. Tell the maintainer which of the two it is, because
+      it changes what the 2026-10-08 decision costs a Codex user, and close
+      this item. If #11489 and #16899 both close without a fix, record the
+      reason in the kb section and close this item.
 
 ---
 
