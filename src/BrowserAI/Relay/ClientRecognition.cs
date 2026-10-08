@@ -70,7 +70,22 @@ internal static class ClientRecognition
     /// </param>
     /// <param name="entrypoint">The value of <see cref="EntrypointVariable"/>, or <see langword="null"/>.</param>
     /// <returns>The answer, <see cref="RelayReconnect.Unknown"/> whenever it cannot be told.</returns>
-    public static RelayReconnect Reconnect(string? clientName, string? parentCommandLine, string? entrypoint)
+    public static RelayReconnect Reconnect(string? clientName, string? parentCommandLine, string? entrypoint) =>
+        Reconnect(clientName, parentCommandLine, entrypoint, ReadsTheParent);
+
+    /// <summary>What the client needs once an update has ended its relay, under either of the measurement's options.</summary>
+    /// <remarks>
+    /// <b>The suite's way to hold option c</b>, which <see cref="ReadsTheParent"/> chooses
+    /// for the product: <paramref name="readsTheParent"/> set to <see langword="false"/>
+    /// answers <see cref="RelayReconnect.Unknown"/> for every Claude Code session and
+    /// changes nothing else.
+    /// </remarks>
+    /// <param name="clientName">What the client put in <c>clientInfo.name</c>, or <see langword="null"/>.</param>
+    /// <param name="parentCommandLine">The command line of the process that started the relay, or <see langword="null"/>.</param>
+    /// <param name="entrypoint">The value of <see cref="EntrypointVariable"/>, or <see langword="null"/>.</param>
+    /// <param name="readsTheParent">Option d when <see langword="true"/>, option c when <see langword="false"/>.</param>
+    /// <returns>The answer, <see cref="RelayReconnect.Unknown"/> whenever it cannot be told.</returns>
+    internal static RelayReconnect Reconnect(string? clientName, string? parentCommandLine, string? entrypoint, bool readsTheParent)
     {
         if (string.Equals(clientName, Codex, StringComparison.Ordinal))
         {
@@ -79,7 +94,7 @@ internal static class ClientRecognition
             return RelayReconnect.NewConversation;
         }
 
-        if (!string.Equals(clientName, ClaudeCode, StringComparison.Ordinal) || !ReadsTheParent)
+        if (!string.Equals(clientName, ClaudeCode, StringComparison.Ordinal) || !readsTheParent)
         {
             return RelayReconnect.Unknown;
         }
