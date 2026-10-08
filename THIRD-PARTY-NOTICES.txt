@@ -416,37 +416,29 @@ the full license text.
 Microsoft.Extensions.* - MIT
 ----------------------------
 
-17 Microsoft.Extensions packages are linked into BrowserAI.exe, every one
-of them MIT and none with a file of its own in this artifact. BrowserAI
-references two directly - Microsoft.Extensions.Logging and
-Microsoft.Extensions.Logging.Console - and the rest arrive transitively through
-those and through the MCP SDK. The whole set, as src/BrowserAI/packages.lock.json
-resolved it:
+BrowserAI.exe links the Microsoft.Extensions libraries it uses from the ASP.NET
+Core shared framework, Microsoft.AspNetCore.App, which the product references
+since 2026-10-08, when the server and the configuration app became one
+executable. They are MIT, and none has a file of its own in this artifact. The
+win-x64 runtime pack of that framework, 10.0.12, names
+https://github.com/dotnet/dotnet as its repository, MIT as its licence and
+"Copyright (c) .NET Foundation and Contributors" in its own LICENSE.txt, read
+2026-10-08 from the package's .nuspec and LICENSE.txt. Until that day the server
+took 17 Microsoft.Extensions packages from NuGet instead, two of them directly,
+and this section listed all 17.
+
+1 Microsoft.Extensions package still arrives on its own, through the MCP SDK, as
+src/BrowserAI/packages.lock.json resolves it:
 
   Microsoft.Extensions.AI.Abstractions
-  Microsoft.Extensions.Caching.Abstractions
-  Microsoft.Extensions.Configuration
-  Microsoft.Extensions.Configuration.Abstractions
-  Microsoft.Extensions.Configuration.Binder
-  Microsoft.Extensions.DependencyInjection
-  Microsoft.Extensions.DependencyInjection.Abstractions
-  Microsoft.Extensions.Diagnostics.Abstractions
-  Microsoft.Extensions.FileProviders.Abstractions
-  Microsoft.Extensions.Hosting.Abstractions
-  Microsoft.Extensions.Logging
-  Microsoft.Extensions.Logging.Abstractions
-  Microsoft.Extensions.Logging.Configuration
-  Microsoft.Extensions.Logging.Console
-  Microsoft.Extensions.Options
-  Microsoft.Extensions.Options.ConfigurationExtensions
-  Microsoft.Extensions.Primitives
 
-That list is asserted against the lock file by ThirdPartyNoticeTests rather than
+That list is asserted against the lock file by ThirdPartyNoticeTests and not
 maintained by hand, so a package entering the closure on some later bump is a
-red build here rather than a licence nobody noticed had arrived.
+red build here and not a licence nobody noticed had arrived. The framework
+reference is asserted against the project files the same way.
 
-16 of the 17 are built from https://github.com/dotnet/dotnet and one
-- Microsoft.Extensions.AI.Abstractions - from https://github.com/dotnet/extensions.
+The shared framework is built from https://github.com/dotnet/dotnet and
+Microsoft.Extensions.AI.Abstractions from https://github.com/dotnet/extensions.
 The two repositories carry the same MIT licence under different copyright lines,
 so both are reproduced. Retrieved 2026-08-16 from the commits each package's own
 .nuspec records.

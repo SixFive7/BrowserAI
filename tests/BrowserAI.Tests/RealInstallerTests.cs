@@ -1324,10 +1324,20 @@ internal sealed partial class RealInstallerTests
     }
 
     /// <summary>
-    /// The packed release carries both executables and names the configuration
-    /// app as its main one.
+    /// The pack carries the one executable alone and names it as its main one.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-08 (previously "The packed release carries both
+    /// executables and names the configuration app as its main one", read from the
+    /// shipping package, <c>FullPackage(test: false)</c>)</b>: the shipping package
+    /// under <c>Releases\</c> is the last release's, 1.1.0 with two binaries, until a
+    /// release is cut from a tree that has one, so the arm read the past and went red
+    /// on every gate after D7 a, first in lane REC's gate on <c>6694dda8</c>. It reads
+    /// the test pack, which every gate packs from the tree it tests with the same
+    /// <c>--mainExe</c> and <c>--shortcuts</c> the shipping pack takes
+    /// (<c>build/New-Release.ps1</c>).
+    /// </para>
     /// <para>
     /// ⚠️ <b>Read out of the package and not out of the script that wrote
     /// it.</b> <c>ReleaseScriptTests</c> holds what
@@ -1347,13 +1357,13 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePackedReleaseNamesTheAppAsItsMainExeAndCarriesBothBinaries()
+    public async Task ThePackNamesTheOneExecutableAsItsMainExeAndCarriesItAlone()
     {
-        _ = SuiteEnvironment.RequirePackagedRelease();
+        _ = SuiteEnvironment.RequireReleaseInstaller();
 
-        var package = ReleaseLayout.FullPackage(test: false);
+        var package = ReleaseLayout.FullPackage(test: true);
 
-        await Assert.That(package is null ? "no shipping .nupkg" : string.Empty).IsEmpty();
+        await Assert.That(package is null ? "no test pack .nupkg" : string.Empty).IsEmpty();
 
         using var archive = await ZipFile.OpenReadAsync(package!.FullName);
 

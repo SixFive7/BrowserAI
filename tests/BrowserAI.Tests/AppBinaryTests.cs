@@ -117,6 +117,57 @@ internal sealed class AppBinaryTests
     }
 
     /// <summary>
+    /// The suite's stdio client refuses to start the published binary as a person's
+    /// start, and starts nothing when it refuses.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-10-08, after the suite put BrowserAI's page on the
+    /// maintainer's screen.</b> The gate on <c>f68ae4cf</c> started the published
+    /// binary with no argument from <c>ProtocolSplitTests</c>' new-opening arm: a
+    /// person's start, which became a coordinator over the default data root and
+    /// opened the page in his browser with the shell at 15:47:57Z
+    /// (<see cref="RawStdioClient.RefusalFor"/>). A client that only speaks MCP over
+    /// stdio has no use for any other mode, so the refusal costs no arm anything.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-08</b> with <c>RefusalFor</c> answering
+    /// <see langword="null"/> for every start, and again with <c>Start</c> no longer
+    /// asking it. The second half is read off the source and never run, because a run
+    /// of a <c>Start</c> that had stopped asking would itself be the incident.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSuitesStdioClientNeverStartsThePublishedBinaryAsAPersonsStart()
+    {
+        var refusal = RawStdioClient.RefusalFor(PublishedSlice.Executable, []);
+
+        await Assert.That(refusal).IsNotNull();
+        await Assert.That(refusal!).Contains(Program.McpArgument);
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, ["--sessions"])).IsNotNull();
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, ["--write-address", "address.txt"])).IsNotNull();
+
+        // Every mode that serves stdio is started, and so is anything that is not
+        // the published binary.
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, PublishedSlice.Mcp)).IsNull();
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, [Program.HostArgument, @"\\.\pipe\x"])).IsNull();
+        await Assert.That(RawStdioClient.RefusalFor(PublishedSlice.Executable, [Program.SweepArgument])).IsNull();
+        await Assert.That(RawStdioClient.RefusalFor(Path.Combine(Environment.SystemDirectory, "cmd.exe"), [])).IsNull();
+
+        // And Start asks before it starts anything. Read as text and never run:
+        // run, a Start that had stopped asking would start a real person's start.
+        var source = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "tests", "BrowserAI.Tests", "Harness", "RawStdioClient.cs"));
+        var start = source.IndexOf("public static RawStdioClient Start(", StringComparison.Ordinal);
+        var asks = source.IndexOf("RefusalFor(command, arguments)", start, StringComparison.Ordinal);
+        var launches = source.IndexOf("JobLauncher.Start(", start, StringComparison.Ordinal);
+
+        await Assert.That(start).IsGreaterThanOrEqualTo(0);
+        await Assert.That(asks).IsGreaterThan(start);
+        await Assert.That(launches).IsGreaterThan(asks);
+    }
+
+    /// <summary>
     /// The configuration app's embedded manifest declares the three things
     /// without which it has no window, no long paths and no correct scaling.
     /// </summary>

@@ -98,6 +98,43 @@ internal sealed class FirstRunProvisioningTests
     /// </summary>
     private static readonly TimeSpan Patience = TimeSpan.FromMinutes(45);
 
+    /// <summary>
+    /// The wait for the marker ends as soon as BrowserAI's log says the install gave
+    /// up, and carries what the log said.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08</b>, after the arm below waited 34 minutes on the gate of
+    /// <c>f68ae4cf</c> for a marker an installer that had exited 1 at 15:48:40Z was
+    /// never going to write. <b>Planted red</b> with the log reader answering
+    /// <see langword="null"/> for every root.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheWaitForTheMarkerEndsWhenTheLogReportsAFailedInstall()
+    {
+        using var root = ScratchDirectory.Create("first-run-failed-wait");
+
+        var logs = Directory.CreateDirectory(Path.Combine(root.Path, "logs"));
+        var never = Path.Combine(root.Path, "browsers", "chromium-0");
+
+        await Assert.That(ProvisioningFailureIn(root.Path)).IsNull();
+
+        // The record's shape as the gate's own log carried it, category and event id included.
+        await File.WriteAllTextAsync(
+            Path.Combine(logs.FullName, "browserai-20261008-000.log"),
+            "2026-10-08T15:48:40.2443340Z  made=2026-10-08T15:48:40.2442817Z  ERROR  pid=1@2  BrowserAI.Runtime.BrowserProvisioner[64]  The installer for chromium exited 1 without completing.\n");
+
+        var failure = ProvisioningFailureIn(root.Path);
+
+        await Assert.That(failure).IsNotNull();
+        await Assert.That(failure!).Contains("BrowserProvisioner[64]");
+
+        var (landed, reported) = await WaitForMarkerAsync(never, TestDefaults.InProcessHang, () => ProvisioningFailureIn(root.Path));
+
+        await Assert.That(landed).IsFalse();
+        await Assert.That(reported).IsEqualTo(failure);
+    }
+
     [Test]
     public async Task AnEmptyBrowsersRootIsProvisionedAndTheSameChildThenNavigates()
     {
@@ -241,9 +278,17 @@ internal sealed class FirstRunProvisioningTests
         // Now wait for the real thing: the marker upstream writes last, into the
         // directory the payload's own browsers.json names.
         var installed = Path.Combine(browsers, $"chromium-{BrowserAiPaths.ChromiumRevision}");
-        var landed = await WaitForMarkerAsync(installed, Patience);
 
-        await Assert.That(landed).IsTrue();
+        // ⚠️ AND NOT A MOMENT LONGER THAN THE PRODUCT SAYS IT IS STILL TRYING --
+        // 2026-10-08. On the gate of f68ae4cf upstream's installer exited 1 at
+        // 15:48:40Z, its own lock judged compromised under the gate's load, and this
+        // wait then sat out the rest of its 45 minutes for a marker nothing was
+        // still writing, until the test host was stopped by hand at 34 minutes.
+        // BrowserAI writes the installer's failure into its log as it happens, so
+        // the wait reads that too and ends with what the log said.
+        var (landed, failure) = await WaitForMarkerAsync(installed, Patience, () => ProvisioningFailureIn(appRoot));
+
+        await Assert.That(landed).IsTrue().Because(failure ?? "the marker did not land within the patience, and BrowserAI's log reported no failure");
 
         // ⚠️ In-session recovery, and this is the assertion the plan asks for by
         // name. Same session, same child, no restart and no second init: the
@@ -346,7 +391,15 @@ internal sealed class FirstRunProvisioningTests
         return null;
     }
 
-    private static async Task<bool> WaitForMarkerAsync(string directory, TimeSpan patience)
+    /// <summary>
+    /// Waits for the completion marker in one directory, or for BrowserAI to report
+    /// that the install it was waiting on has failed.
+    /// </summary>
+    /// <param name="directory">The browser's directory.</param>
+    /// <param name="patience">How long to wait at most: a hang detector.</param>
+    /// <param name="failed">What BrowserAI reported as a failed install, or <see langword="null"/> while it reported none.</param>
+    /// <returns>Whether the marker landed, and the failure that ended the wait when one did.</returns>
+    internal static async Task<(bool Landed, string? Failure)> WaitForMarkerAsync(string directory, TimeSpan patience, Func<string?> failed)
     {
         var marker = Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker);
         var waited = Stopwatch.StartNew();
@@ -355,14 +408,78 @@ internal sealed class FirstRunProvisioningTests
         {
             if (File.Exists(marker))
             {
-                return true;
+                return (true, null);
+            }
+
+            if (failed() is { } failure)
+            {
+                return (false, failure);
             }
 
             await Task.Delay(250);
         }
 
-        return false;
+        return (false, null);
     }
+
+    /// <summary>
+    /// The first record in an app root's logs that says provisioning gave up: the
+    /// installer exiting without completing, a cap firing, or the provisioning
+    /// failing outright.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read through <see cref="FileShare.ReadWrite"/> and <see cref="FileShare.Delete"/></b>,
+    /// because the process writing the log holds it open for the whole run.
+    /// </remarks>
+    /// <param name="appRoot">The app root whose <c>logs</c> folder is read.</param>
+    /// <returns>The record, or <see langword="null"/> when there is none yet.</returns>
+    internal static string? ProvisioningFailureIn(string appRoot)
+    {
+        var logs = Path.Combine(appRoot, "logs");
+
+        if (!Directory.Exists(logs))
+        {
+            return null;
+        }
+
+        foreach (var log in Directory.EnumerateFiles(logs, "*.log"))
+        {
+            string text;
+
+            try
+            {
+                using var stream = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(stream);
+                text = reader.ReadToEnd();
+            }
+            catch (IOException)
+            {
+                continue;
+            }
+
+            foreach (var line in text.Split('\n'))
+            {
+                if (ProvisioningFailureEvents.Any(name => line.Contains(name, StringComparison.Ordinal)))
+                {
+                    return line.TrimEnd('\r');
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The provisioner's three records of an install that gave up, by the category
+    /// and event id every log record carries: 64, the installer exited without
+    /// completing; 65, a cap fired; 70, provisioning failed.
+    /// </summary>
+    private static readonly string[] ProvisioningFailureEvents =
+    [
+        "BrowserAI.Runtime.BrowserProvisioner[64]",
+        "BrowserAI.Runtime.BrowserProvisioner[65]",
+        "BrowserAI.Runtime.BrowserProvisioner[70]",
+    ];
 
     private static async Task<JsonObject> CallAsync(RawStdioClient client, string tool, JsonObject arguments)
     {

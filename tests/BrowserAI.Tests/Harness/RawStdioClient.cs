@@ -110,6 +110,49 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// </remarks>
     public IReadOnlyList<int> JobProcessIds() => _job.ProcessIds();
 
+    /// <summary>
+    /// Why this client refuses to start the published binary with these arguments,
+    /// or <see langword="null"/> when it starts it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A start of the one executable with no mode argument is a person's
+    /// start</b>, and a person's start opens BrowserAI's page with the shell, in
+    /// whatever browser the person at this machine uses. On 2026-10-08 at 15:47:57Z
+    /// exactly that happened: the gate on <c>f68ae4cf</c> ran
+    /// <c>ProtocolSplitTests</c>' new-opening arm, whose call site still passed the
+    /// empty argument list the two-file build's server took, and the start became a
+    /// coordinator over the default data root and put the page on his screen. The
+    /// arm then waited its whole 30-minute exchange bound for an answer a person's
+    /// start never writes.
+    /// </para>
+    /// <para>
+    /// <b>So this client, which only ever speaks MCP over stdio, refuses every start
+    /// of the published binary that names no mode serving stdio</b>
+    /// (<see cref="Program.ServesStdio"/>), before anything is started. The rule is
+    /// keyed to the published path alone: every other executable this client starts
+    /// is a probe or a stand-in and has no person's start.
+    /// </para>
+    /// </remarks>
+    /// <param name="command">The executable's path.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>The sentence, or <see langword="null"/>.</returns>
+    public static string? RefusalFor(string command, IReadOnlyList<string> arguments)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(command);
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        if (!string.Equals(Path.GetFullPath(command), Path.GetFullPath(PublishedSlice.Executable), StringComparison.OrdinalIgnoreCase)
+            || Program.ServesStdio(arguments))
+        {
+            return null;
+        }
+
+        return $"RawStdioClient speaks MCP over stdio, and the published BrowserAI.exe serves stdio only under {Program.McpArgument}, {Program.HostArgument} or {Program.SweepArgument}. "
+            + $"Started with [{string.Join(' ', arguments)}] it is a person's start, which opens BrowserAI's page with the shell on the screen of whoever is at this machine, so nothing was started. "
+            + "Pass PublishedSlice.Mcp.";
+    }
+
     /// <summary>Starts a process and prepares to speak JSON-RPC to it.</summary>
     /// <param name="command">The executable's absolute path.</param>
     /// <param name="arguments">Its arguments.</param>
@@ -120,6 +163,10 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <see cref="TestDefaults.BrowserHang"/>.
     /// </param>
     /// <returns>The client. Dispose it to close the job and stop everything in it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The command is the published <c>BrowserAI.exe</c> and the arguments name no
+    /// mode that serves stdio (<see cref="RefusalFor"/>). Nothing is started.
+    /// </exception>
     public static RawStdioClient Start(
         string command,
         IReadOnlyList<string> arguments,
@@ -127,6 +174,11 @@ internal sealed class RawStdioClient : IAsyncDisposable
         IReadOnlyDictionary<string, string> environment,
         TimeSpan? perExchange = null)
     {
+        if (RefusalFor(command, arguments) is { } refusal)
+        {
+            throw new InvalidOperationException(refusal);
+        }
+
         var job = JobObject.CreateKillOnClose();
 
         try

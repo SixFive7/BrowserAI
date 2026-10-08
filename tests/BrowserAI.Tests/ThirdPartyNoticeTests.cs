@@ -244,6 +244,11 @@ internal sealed class ThirdPartyNoticeTests
     /// <c>src/BrowserAI/packages.lock.json</c> makes a new arrival a red build
     /// here and not a licence nobody noticed had appeared, which is the same
     /// property <see cref="Obligations"/> has and the reason both are data.
+    /// ⚠️ <i>Corrected 2026-10-08 by addition</i>: the one executable references the
+    /// ASP.NET Core shared framework, which brings the Microsoft.Extensions
+    /// libraries with it, so the lock file names one such package where it named
+    /// seventeen, and the frameworks are read from the project files beside it. The
+    /// gate on <c>f68ae4cf</c> found it, red at the old guard's "greater than 10".
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -254,16 +259,29 @@ internal sealed class ThirdPartyNoticeTests
 
         // A guard on the derivation itself: an empty set would make the loop
         // below vacuously green, which is the failure mode a data-driven
-        // assertion has and a hand-written one does not.
-        await Assert.That(packages.Count).IsGreaterThan(10);
+        // assertion has and a hand-written one does not. ⚠️ Corrected
+        // 2026-10-08 (previously "IsGreaterThan(10)"): the one executable takes
+        // the Microsoft.Extensions libraries from the ASP.NET Core shared
+        // framework, so the lock file carries one such package, and the guard is
+        // now a positive control the same derivation must find, the MCP SDK.
+        await Assert.That(ProductPackagesStartingWith("ModelContextProtocol")).IsNotEmpty();
+        await Assert.That(packages).IsNotEmpty();
 
         var unnamed = packages.Where(package => !notices.Contains(package, StringComparison.Ordinal)).ToList();
         await Assert.That(string.Join(Environment.NewLine, unnamed)).IsEmpty();
 
-        // The two counts the prose states, which a reader takes at face value
-        // and which nothing else would contradict when a bump adds a package.
-        await Assert.That(notices).Contains($"{packages.Count} Microsoft.Extensions packages");
-        await Assert.That(notices).Contains($"{packages.Count - 1} of the {packages.Count} are built from");
+        // The count the prose states, which a reader takes at face value and which
+        // nothing else would contradict when a bump adds a package.
+        await Assert.That(notices).Contains($"{packages.Count} Microsoft.Extensions package");
+
+        // Every shared framework a product project references is named too: since
+        // 2026-10-08 that is where most of the Microsoft.Extensions code comes from.
+        var frameworks = ProductFrameworkReferences();
+
+        await Assert.That(frameworks).Contains("Microsoft.AspNetCore.App");
+
+        var unnamedFrameworks = frameworks.Where(framework => !notices.Contains(framework, StringComparison.Ordinal)).ToList();
+        await Assert.That(string.Join(Environment.NewLine, unnamedFrameworks)).IsEmpty();
 
         // Both copyright lines. The two source repositories carry the same MIT
         // text under different holders, and asserting only one would go green
@@ -695,6 +713,31 @@ internal sealed class ThirdPartyNoticeTests
                 .Select(entry => entry.Name)
                 .Where(name => name.StartsWith("node_modules/", StringComparison.Ordinal))
                 .Select(name => name["node_modules/".Length..])
+                .Order(StringComparer.Ordinal),
+        ];
+    }
+
+    /// <summary>
+    /// Every shared framework the product's three projects reference, read from
+    /// their project files.
+    /// </summary>
+    /// <returns>The frameworks, each once, in order.</returns>
+    private static IReadOnlyList<string> ProductFrameworkReferences()
+    {
+        string[] projects =
+        [
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"),
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "BrowserAI.App.csproj"),
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.Core", "BrowserAI.Core.csproj"),
+        ];
+
+        return
+        [
+            .. projects
+                .SelectMany(project => System.Xml.Linq.XDocument.Load(project).Descendants("FrameworkReference"))
+                .Select(reference => (string?)reference.Attribute("Include"))
+                .OfType<string>()
+                .Distinct(StringComparer.Ordinal)
                 .Order(StringComparer.Ordinal),
         ];
     }
