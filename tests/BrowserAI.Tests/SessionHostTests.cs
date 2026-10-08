@@ -428,21 +428,20 @@ internal sealed class SessionHostTests
     }
 
     /// <summary>
-    /// A resume of a KEPT session that asks for a setting its browser was not
-    /// started with is refused by the maintainer's text, and one that asks for
-    /// nothing different is answered "the session is already live".
+    /// A resume of a KEPT session that asks for a setting its last run did not have is
+    /// held back once, and one that asks for what it runs with is answered "the session
+    /// is already live".
     /// </summary>
     /// <remarks>
-    /// <b>The maintainer's rule of 2026-10-03 covers a kept session too</b>, because
-    /// a resume of one goes through the same branch once the claim has taken it
-    /// over: in his words, <i>"A resume on an active session is fine and a noop and
-    /// returns "the session is already live" if and only if there are no
-    /// conflicting settings."</i> Lane c left this arm for the lane that built the
-    /// texts, 2026-10-04.
+    /// <b>The rule covers a kept session too</b>, because a resume of one goes through
+    /// the same branch once the claim has taken it over. ⚠️ <i>Rewritten 2026-10-08 for
+    /// F2 d (previously <c>AResumeOfAKeptSessionIsRefusedOnAConflictingSettingAndAlreadyLiveWithout</c>,
+    /// which asserted Q324 a's refusal, deleted the same day)</i>: the held-back call
+    /// started no child, and its countdown started again.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AResumeOfAKeptSessionIsRefusedOnAConflictingSettingAndAlreadyLiveWithout()
+    public async Task AResumeOfAKeptSessionIsHeldBackOnAChangedSettingAndAlreadyLiveWithout()
     {
         await using var sessions = NewSessions();
         await using var rig = await SessionHostRig.StartAsync(sessions);
@@ -455,7 +454,7 @@ internal sealed class SessionHostTests
 
         var second = await rig.ConnectAsync();
 
-        var refused = await second.CallAsync("browserai_resume", new JsonObject
+        var held = await second.CallAsync("browserai_resume", new JsonObject
         {
             ["directory"] = directory,
             ["why"] = "the suite asking a kept session for a window",
@@ -465,27 +464,31 @@ internal sealed class SessionHostTests
             ["idleMinutes"] = 10,
         });
 
-        var refusal = HostConnection.TextOf(refused);
+        var heldText = HostConnection.TextOf(held);
+        var lastRun = new SessionRunSettings(false, false, false, BrowserAI.Runtime.RunOptions.Default, IdleSetting.Of(10));
 
-        await Assert.That((bool?)refused["isError"]).IsTrue().Because(refusal);
-        await Assert.That(refusal).IsEqualTo(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
-            SessionPath.For(directory).FullPath,
-            ["'headed' (running: false, asked: true)"]));
-        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("a refused resume starts no child");
+        await Assert.That((bool?)held["isError"]).IsTrue().Because(heldText);
+        await Assert.That(heldText).IsEqualTo(SessionErrors.SettingsHeldBack(
+            [new SettingDifference(RunSettingNames.Headed, "false", "true", LeftOut: false)],
+            lastRun,
+            lastRun with { Headed = true },
+            ResumeFinds.LiveWithItsBrowserUp,
+            countdownStarted: true));
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("a held-back resume starts no child");
 
-        var bare = await second.CallAsync("browserai_resume", new JsonObject
+        var same = await second.CallAsync("browserai_resume", new JsonObject
         {
             ["directory"] = directory,
-            ["why"] = "the suite resuming the kept session without asking for anything",
+            ["why"] = "the suite resuming the kept session as it runs",
             ["headed"] = false,
             ["transcript"] = false,
             ["captureNetwork"] = false,
             ["idleMinutes"] = 10,
         });
 
-        var text = HostConnection.TextOf(bare);
+        var text = HostConnection.TextOf(same);
 
-        await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true).Because(text);
+        await Assert.That((bool?)same["isError"]).IsNotEqualTo(true).Because(text);
         await Assert.That(text).StartsWith("The session is already live");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("the resume started no child");
     }

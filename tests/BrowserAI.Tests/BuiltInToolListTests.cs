@@ -143,6 +143,10 @@ internal sealed class BuiltInToolListTests
                 ["directory"] = session,
                 ["browser"] = browser,
                 ["purpose"] = "the built-in tool list's own check",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             },
         });
 

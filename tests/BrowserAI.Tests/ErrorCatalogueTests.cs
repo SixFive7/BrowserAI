@@ -974,6 +974,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a browser server that lists different tools",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -1198,13 +1202,43 @@ internal sealed partial class ErrorCatalogueTests
             SessionErrors.SessionHeldByAnotherBrowserAi(SessionToolSurface.Close, location.FullPath));
     }
 
+    // ⚠️ DELETED 2026-10-08: `TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp`,
+    // Q324 a's row, with the row: F1 a and F2 d hold such a resume back once, and the
+    // three arms below provoke the rows that replaced it.
+
     /// <summary>
-    /// Q324 a's row -- a resume of a session whose browser is up, asked for a
-    /// per-run setting that browser was not launched with.
+    /// F2's row -- an <c>init</c> that leaves out settings every call states.
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp()
+    public async Task TheSettingsNotStatedRowIsEmittedByAnInitThatLeavesTwoOut()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "two-left-out"),
+            ["purpose"] = "an init that leaves two settings out",
+            [RunSettingNames.Headed] = false,
+            [RunSettingNames.Transcript] = false,
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.SettingsNotStated),
+            SessionErrors.SettingsNotStated(SessionToolSurface.Init, [RunSettingNames.CaptureNetwork, IdleSetting.ParameterName]));
+    }
+
+    /// <summary>
+    /// F2 d's row -- a resume of a live session that asks for a window its last run
+    /// did not have, held back once.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSettingsHeldBackRowIsEmittedByAResumeThatAsksForAWindow()
     {
         await using var sessions = RigSessionEnvironment.Create(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
@@ -1218,10 +1252,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a resume that asks for a window while its browser is up",
-            ["headed"] = false,
-            ["transcript"] = false,
-            ["captureNetwork"] = false,
-            ["idleMinutes"] = 10,
+            [RunSettingNames.Headed] = false,
+            [RunSettingNames.Transcript] = false,
+            [RunSettingNames.CaptureNetwork] = false,
+            [IdleSetting.ParameterName] = 10,
         });
 
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
@@ -1235,20 +1269,54 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["why"] = "the suite asking for a window on a browser that is up",
-            ["headed"] = true,
-            ["transcript"] = false,
-            ["captureNetwork"] = false,
-            ["idleMinutes"] = 10,
+            [RunSettingNames.Headed] = true,
+            [RunSettingNames.Transcript] = false,
+            [RunSettingNames.CaptureNetwork] = false,
+            [IdleSetting.ParameterName] = 10,
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        var defaults = new SessionRunSettings(false, false, false, BrowserAI.Runtime.RunOptions.Default, IdleSetting.Of(10));
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.SettingsHeldBack),
+            SessionErrors.SettingsHeldBack(
+                [new SettingDifference(RunSettingNames.Headed, "false", "true", LeftOut: false)],
+                defaults,
+                defaults with { Headed = true },
+                ResumeFinds.LiveWithItsBrowserUp,
+                countdownStarted: true));
+    }
+
+    /// <summary>
+    /// F2 d's and E2's row -- an <c>init</c> that sets a longer idle time than its
+    /// mode's default, held back once with the warning that updates wait.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheLongerIdleHeldBackRowIsEmittedByAnInitThatSetsNever()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "never-closed"),
+            ["purpose"] = "an init that asks never to be closed for being idle",
+            [RunSettingNames.Headed] = true,
+            [RunSettingNames.Transcript] = false,
+            [RunSettingNames.CaptureNetwork] = false,
+            [IdleSetting.ParameterName] = IdleSetting.NeverWord,
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
 
         Match(
             TextOf(answer),
-            nameof(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp),
-            SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
-                SessionPath.For(directory).FullPath,
-                ["'headed' (running: false, asked: true)"]));
+            nameof(SessionErrors.LongerIdleHeldBack),
+            SessionErrors.LongerIdleHeldBack(new SessionRunSettings(true, false, false, BrowserAI.Runtime.RunOptions.Default, IdleSetting.Never)));
     }
 
     /// <summary>
@@ -2016,7 +2084,10 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(ARuntimeThatWillNotStartForAResumeGetsRowSevenAndLeavesTheDirectoryFree))]
     [DependsOn(nameof(TheDeadBrowserServerRowIsEmittedByACallForwardedAfterTheChildDied))]
     [DependsOn(nameof(TheClosedSessionRowIsEmittedByACallAfterTheCallersOwnClose))]
-    [DependsOn(nameof(TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp))]
+    [DependsOn(nameof(TheSettingsNotStatedRowIsEmittedByAnInitThatLeavesTwoOut))]
+    [DependsOn(nameof(TheSettingsHeldBackRowIsEmittedByAResumeThatAsksForAWindow))]
+    [DependsOn(nameof(TheLongerIdleHeldBackRowIsEmittedByAnInitThatSetsNever))]
+    [DependsOn(nameof(TheHeldByAnotherBrowserAiRowIsEmittedByACloseOfASessionAnotherHolderHas))]
     [DependsOn(nameof(APurposeIsCappedStrippedAndFramedAsRecordedData))]
     [DependsOn(nameof(TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen))]
     [DependsOn(nameof(AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning))]
@@ -2256,7 +2327,16 @@ internal sealed partial class ErrorCatalogueTests
         // BrowserAI was built with is refused as a broken install, naming the
         // first tool that differs. It arrived without moving this count, and the
         // first gates after it read 41 against 40.
-        await Assert.That(rows.Count).IsEqualTo(41);
+        //
+        // ⚠️ **Corrected 2026-10-09, to 43 (previously 41)**, with F2. Three arrived
+        // and one went. `SettingsNotStated` refuses an init or a resume that leaves
+        // out one of the four settings every call states; `SettingsHeldBack` holds
+        // back once a resume whose settings differ from the last run's, naming each
+        // difference; and `LongerIdleHeldBack` holds back once a longer idle time with
+        // nothing to compare it with, with E2's warning that updates wait.
+        // `ResumeCannotApplyWhileTheBrowserIsUp`, Q324 a's row, went: the same resume
+        // is held back now, and sent again it switches the browser itself (F1 a).
+        await Assert.That(rows.Count).IsEqualTo(43);
     }
 
     /// <summary>

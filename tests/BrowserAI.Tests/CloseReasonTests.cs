@@ -89,10 +89,13 @@ internal sealed class CloseReasonTests
         {
             ["directory"] = directory,
             ["why"] = "the suite resuming after a person closed the window",
-            ["headed"] = false,
+
+            // The last run's own settings, so the resume goes through at once: since
+            // 2026-10-08 (F2 d) a resume that changes them is held back once first.
+            ["headed"] = true,
             ["transcript"] = false,
             ["captureNetwork"] = false,
-            ["idleMinutes"] = 10,
+            ["idleMinutes"] = 60,
         });
 
         await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
@@ -419,10 +422,12 @@ internal sealed class CloseReasonTests
         {
             ["directory"] = directory,
             ["why"] = "the client coming back to its session",
-            ["headed"] = false,
+
+            // The last run's own settings, as in the arm above.
+            ["headed"] = true,
             ["transcript"] = false,
             ["captureNetwork"] = false,
-            ["idleMinutes"] = 10,
+            ["idleMinutes"] = 60,
         });
 
         await Assert.That(HostConnection.TextOf(resumed)).Contains("why this session was last closed: A person closed this session's browser window at");

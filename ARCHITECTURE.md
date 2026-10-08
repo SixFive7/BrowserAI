@@ -553,6 +553,29 @@ acquisition in which the directory is unheld; a peer that takes it then is
 answered by the acquisition's own refusal, and the session is that peer's.
 `SessionCloseTests` drives every branch.
 
+⚠️ **Added 2026-10-08, F1 a and F2 d: a resume is compared with the session's last
+run, and a difference is held back once.** `init` and `resume` take `headed`,
+`transcript`, `captureNetwork` and `idleMinutes` on every call
+(`RunSettingNames.Stated`), and a call missing any is refused with
+`SessionErrors.SettingsNotStated` before anything is read or created. Every opening
+writes the run's settings into the record as a `settings` statement
+(`RecordFields.Settings`, through `SessionLock.AppendSettings`, which adds a row only
+when they change), and a resume compares the call with the last run through
+`SettingsHoldBack.Differences`: the live session's own `LiveSession.Settings` when
+this process holds it, `SessionRecord.LastRunSettings` when it does not, an optional
+setting the call left out at its default. A difference is held back once with
+`SessionErrors.SettingsHeldBack`, and the call held back just before on the same
+connection for the same session goes through (`CallerConnection.HeldBack`, a
+`HeldBackCalls`). On a live session whose browser is up that call is the switch:
+`LiveSession.CloseForTheAgentAsync`, with `SessionCloseCause.SettingsChanged`, closes
+the browser cleanly under the one close cap, and the reopen path above opens the
+session at the new settings. The paragraph above's refusal by name is gone with
+`ResumeCannotApplyWhileTheBrowserIsUp`. At `init`, and for a record written before
+settings were kept, the one thing held back is an idle time longer than the mode's
+default, with `SessionErrors.LongerIdleHeldBack`. An answer that opens a visible
+window ends with `SettingsHoldBack.HeadedHint`, F5 a. `SettingsHoldBackTests` drives
+each branch.
+
 **Our own files reject what they do not recognise.** ⚠️ *Corrected 2026-08-26
 (previously "`LockRecord.Read` is a hand-written `Utf8JsonReader` parse that
 refuses an unknown key at any of the three levels, a missing key, an **empty
@@ -568,6 +591,8 @@ know, **with the version as the reason**, and there is no converter. Each refusa
 names a recovery and says that repeating the call will fail identically.
 
 **Eight authored tools, and `session` and `why` are both mandatory.**
+⚠️ *Nine since 2026-10-08 (previously eight): `browserai_close`, F1 a, ends a
+session's browser and keeps the session.*
 `browserai_init`, `browserai_resume`, `browserai_catch_up`, `browserai_list`,
 `browserai_destroy`, `browserai_change_purpose` (*`browserai_set_purpose` until
 2026-10-04, renamed with no alias*), `browserai_reinstall_browser` and

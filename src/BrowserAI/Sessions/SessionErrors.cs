@@ -1482,68 +1482,172 @@ internal static class SessionErrors
             + kept;
     }
 
+    // ⚠️ DELETED 2026-10-08: `ResumeCannotApplyWhileTheBrowserIsUp(path, unapplied)`,
+    // Q324 a of 2026-10-03 and the maintainer's rule of the same day, which refused a
+    // resume of a live session whose browser was up when a setting it passed differed,
+    // and sent the caller to close the session first. F1 a and F2 d reversed it on
+    // 2026-10-08: such a resume is held back once (`SettingsHeldBack` below), and the
+    // same call sent again closes the browser and opens it with the new settings itself.
+    // Its last text, verbatim: "'<path>' is already live, so browserai_resume changed
+    // nothing. This setting differs from the one its browser was started with:
+    // 'headed' (running: false, asked: true). If you need it, call browserai_close on
+    // this session, then browserai_resume with it; that closes the Playwright browser
+    // and opens a new one with the new settings: the tabs come back, but page snapshots
+    // and element references from before no longer apply. If you don't, no resume is
+    // needed: the session is live, so carry on with its tools."
+
     /// <summary>
-    /// Q324 a -- a resume of a session whose browser is up, asked for per-run
-    /// settings that browser was not launched with.
+    /// F2 -- an <c>init</c> or a <c>resume</c> that leaves out one of the four settings
+    /// every call states.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The maintainer's words of 2026-10-03, verbatim: "Q324 your
-    /// recommendation"</b>, which was to apply nothing while a browser is up, say
-    /// so, and refuse when the settings asked for differ, then to apply them once
-    /// no browser is up. A per-run setting is read by a child once, at its start,
-    /// so applying one means starting a new child, and that ends the browser and
-    /// whatever a person is doing in its window.
+    /// <b>F2, decided 2026-10-08 by the maintainer</b>, from his words of 2026-10-07,
+    /// verbatim: <i>"What if we make all the init and resume parameters mandetory and
+    /// then go withpattern b."</i> The proposal he took narrowed "all" to the four a
+    /// person notices; the other five keep this machine's defaults.
     /// </para>
     /// <para>
-    /// <b>Only the arguments the call actually passed are compared.</b> An
-    /// omitted one would otherwise read as its default, and a bare resume of a
-    /// headed session would be refused for asking for no window. A field report
-    /// of 2026-10-01 is what this answers: two resumes asking for a window were
-    /// both told "nothing was changed", with no error, and the session stayed
-    /// headless.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>REWRITTEN 2026-10-04 to the maintainer's rule and his own draft.</b>
-    /// The rule of 2026-10-03, in his words: <i>"If any of the settings are
-    /// different the resume is refused with an explicit message that the models
-    /// needs to call close and then resume with the different settings. Name the
-    /// parameters that triggered this refusal. Also explain in the response that
-    /// this will close and re-open the playwright browser."</i> And of the line the
-    /// first draft ended with, in his words: <i>"Why would we say 'To keep the
-    /// browser as it is, leave those settings out.' having it call resume with the
-    /// same settings over just advicing it to not resume at all?"</i> So the last
-    /// sentence says no resume is needed. <i>Previously: "'path' is open in this
-    /// BrowserAI and its browser is up, so browserai_resume applied nothing and
-    /// changed nothing. It was asked for per-run settings this browser was not
-    /// launched with: ... A per-run setting takes effect only when a browser
-    /// starts. To apply them, call browser_close on this session and then
-    /// browserai_resume again with the same arguments; the first browser call after
-    /// that reopens the tabs. To keep this browser as it is, leave those arguments
-    /// out."</i>
+    /// <b>Every missing one is named at once</b>, so the next call can succeed, and
+    /// nothing was created or changed: the check runs before the directory is touched.
     /// </para>
     /// </remarks>
-    /// <para>
-    /// ⚠️ <i>Corrected 2026-10-08 (previously "call browser_close on this session"):
-    /// the close is <c>browserai_close</c> since F1 a, which denies Playwright's
-    /// own.</i>
-    /// </para>
-    /// <param name="path">The session directory.</param>
-    /// <param name="unapplied">One clause per argument that differs, naming both values.</param>
+    /// <param name="tool">The tool called.</param>
+    /// <param name="missing">The settings the call left out, in the order the tool lists them.</param>
     /// <returns>The refusal.</returns>
-    public static string ResumeCannotApplyWhileTheBrowserIsUp(string path, IReadOnlyList<string> unapplied)
+    public static string SettingsNotStated(string tool, IReadOnlyList<string> missing)
     {
-        ArgumentNullException.ThrowIfNull(unapplied);
+        ArgumentNullException.ThrowIfNull(missing);
 
-        var one = unapplied.Count is 1;
+        return $"{tool} takes {listed(RunSettingNames.Stated)} on every call, and this one left out {listed(missing)}. Nothing was created and nothing was changed. "
+            + "Each is something a person notices: a window on their screen, what is written to disk in plain text, and how long the browser stays open and holds BrowserAI's updates back, so BrowserAI does not choose them for you. "
+            + $"Send the call again with all four: true or false for the first three, and for {IdleSetting.ParameterName} a whole number of minutes or \"{IdleSetting.NeverWord}\", "
+            + $"where {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one are the defaults.";
 
-        return $"'{path}' is already live, so {SessionToolSurface.Resume} changed nothing. "
-            + (one
-                ? $"This setting differs from the one its browser was started with: {unapplied[0]}. "
-                : $"These settings differ from the ones its browser was started with: {string.Join("; ", unapplied)}. ")
-            + $"If you need {(one ? "it" : "them")}, call {SessionToolSurface.Close} on this session, then {SessionToolSurface.Resume} with {(one ? "it" : "them")}; "
-            + "that closes the Playwright browser and opens a new one with the new settings: the tabs come back, but page snapshots and element references from before no longer apply. "
-            + "If you don't, no resume is needed: the session is live, so carry on with its tools.";
+        static string listed(IReadOnlyList<string> names)
+        {
+            var quoted = names.Select(name => $"'{name}'").ToList();
+
+            return quoted.Count switch
+            {
+                1 => quoted[0],
+                2 => $"{quoted[0]} and {quoted[1]}",
+                _ => $"{string.Join(", ", quoted.Take(quoted.Count - 1))} and {quoted[^1]}",
+            };
+        }
+    }
+
+    /// <summary>
+    /// F2 d -- a resume whose settings differ from what the session's last run used,
+    /// held back once.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's words of 2026-10-08, verbatim:</b> <i>"f2 d - so we need to
+    /// store this in the session. Also, explain in the hold text what parameter is
+    /// different, what the previous values was and what the newly requested value was.
+    /// The agent can then do 1 of 3 things: request the original/lastrun parameter set
+    /// with an instant ok, request the same changed parameter set as the last call with
+    /// an instant ok, or request a new parameter set with a similar single refuse message
+    /// again."</i> And of the first refusal, 2026-10-07: <i>"I want to prevent the
+    /// calling agent from thinking the parameters are wrong on the first refusal and it
+    /// thinking it should work differently."</i> So it opens with
+    /// <see cref="SettingsHoldBack.NothingIsWrong"/>, lists every difference with both
+    /// values, marks a setting the call left out as its default (RESOLUTIONS 4), and
+    /// names both ways on: the same call again, and the last run's settings written as a
+    /// call.
+    /// </para>
+    /// <para>
+    /// <b>F1 a says what the same call does on a live session</b>: its browser closes
+    /// and opens again with the new settings, and nothing is lost. A longer idle time
+    /// adds <see cref="SettingsHoldBack.UpdatesWait"/>, E2's strong warning, and so does
+    /// a switch of mode that leaves the time longer than the new mode's default. A live
+    /// session's countdown started again with this call, F2's rule of 2026-10-08, and
+    /// the answer says so without naming a time.
+    /// </para>
+    /// <para>
+    /// <b>Held back and not refused for a fault</b>, but it is still a call that did not
+    /// do what it asked, so it lives here with every answer that did not, and its
+    /// <c>isError</c> is set.
+    /// </para>
+    /// </remarks>
+    /// <param name="differences">What differs, from <see cref="SettingsHoldBack.Differences"/>.</param>
+    /// <param name="lastRun">What the session's last run used.</param>
+    /// <param name="asked">What this call asks for.</param>
+    /// <param name="session">Where the session is, which says what the same call sent again does.</param>
+    /// <param name="countdownStarted">Whether this call started a live session's idle countdown again.</param>
+    /// <returns>The answer.</returns>
+    public static string SettingsHeldBack(
+        IReadOnlyList<SettingDifference> differences,
+        SessionRunSettings lastRun,
+        SessionRunSettings asked,
+        ResumeFinds session,
+        bool countdownStarted)
+    {
+        ArgumentNullException.ThrowIfNull(differences);
+        ArgumentNullException.ThrowIfNull(lastRun);
+        ArgumentNullException.ThrowIfNull(asked);
+
+        var text = new System.Text.StringBuilder()
+            .Append(SettingsHoldBack.NothingIsWrong)
+            .Append(" It asks for settings that differ from the ones this session's last run used, and BrowserAI holds back such a call once, so that a change is a choice and not an accident.\n")
+            .Append("What differs:\n");
+
+        foreach (var difference in differences)
+        {
+            _ = text.Append("- ").Append(difference.Name).Append(": the last run had ").Append(difference.LastRun)
+                .Append(", this call asks for ").Append(difference.Asked)
+                .Append(difference.LeftOut ? " (the default, because the call left it out)" : string.Empty)
+                .Append('\n');
+        }
+
+        // The warning goes with a longer time this call chooses, and with a time that
+        // is longer only because the call switches mode: a visible window's hour kept
+        // for a browser with no window is longer than that mode's default too.
+        // RESOLUTIONS 7: a long time identical to the last run, in the same mode, goes
+        // through with no warning, so the warning is never repeated on a call that passes.
+        if (asked.Idle.IsLongerThanTheDefaultFor(asked.Headed)
+            && differences.Any(difference => difference.Name is IdleSetting.ParameterName or RunSettingNames.Headed))
+        {
+            _ = text.Append(SettingsHoldBack.UpdatesWait(asked)).Append('\n');
+        }
+
+        _ = text.Append("If you meant it, send exactly the same call again and it will go through")
+            .Append(session switch
+            {
+                ResumeFinds.LiveWithItsBrowserUp => ": the session's browser then closes and opens again with these settings, and its logins, cookies, storage, tabs and history are kept.\n",
+                ResumeFinds.LiveWithNoBrowserYet => ": the session's browser has not started yet, so the first browser call after it starts the browser with these settings.\n",
+                _ => ", and the session opens with these settings.\n",
+            })
+            .Append("To keep the last run's settings, send them instead: ").Append(SettingsHoldBack.LastRunAsACall(lastRun)).Append('.');
+
+        if (countdownStarted)
+        {
+            _ = text.Append("\nThis call started the session's idle countdown again, as every call that names it does.");
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>
+    /// F2 d and E2 -- a call that sets a longer idle time than its mode's default with
+    /// no last run to compare with, held back once.
+    /// </summary>
+    /// <remarks>
+    /// <b>RESOLUTIONS 6 and 7 of 2026-10-08</b>: at <c>init</c> there is no last run, so
+    /// nothing is held back except a longer idle time, which is held with the strong
+    /// warning. A resume of a session whose record says nothing of its last run, because
+    /// a build before 2026-10-08 wrote it, is treated as an <c>init</c> here.
+    /// </remarks>
+    /// <param name="asked">What this call asks for.</param>
+    /// <returns>The answer.</returns>
+    public static string LongerIdleHeldBack(SessionRunSettings asked)
+    {
+        ArgumentNullException.ThrowIfNull(asked);
+
+        return $"{SettingsHoldBack.NothingIsWrong} It sets a longer idle time than the default, and BrowserAI holds back such a call once, so that it is a choice and not an accident.\n"
+            + $"{SettingsHoldBack.UpdatesWait(asked)}\n"
+            + $"If you meant it, send exactly the same call again and it will go through. Otherwise send it with {IdleSetting.ParameterName}: {IdleSetting.DefaultFor(asked.Headed)} or less.";
     }
 
     /// <summary>

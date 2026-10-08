@@ -248,8 +248,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// an active session is fine and a noop and returns "the session is already
     /// live" if and only if there are no conflicting settings. So the same
     /// settings or no settings given or a mix."</i> So the answer leads with his
-    /// words and says nothing changed. A setting that does conflict is
-    /// <see cref="SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp"/>.
+    /// words and says nothing changed. ⚠️ <i>Corrected 2026-10-08 (previously "A
+    /// setting that does conflict is <c>SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp</c>.")</i>:
+    /// since F2 d the call is compared with every setting of the last run, a left-out one
+    /// at its default, and a call that differs is held back once with
+    /// <see cref="SessionErrors.SettingsHeldBack"/>, so this answer is for a call that
+    /// asks for exactly what the session runs with.
     /// </para>
     /// <para>
     /// <b>A purpose is the one thing such a resume still changes</b>, because
@@ -375,6 +379,17 @@ internal sealed class SessionManager : IAsyncDisposable
     // and its browser has not started yet; the per-run settings this call asked
     // for are the ones it will start with, so nothing needed applying." Both are
     // `AlreadyLive` above now, which leads with the maintainer's own words.
+
+    /// <summary>
+    /// What a resume says when the close it made to change the settings ran out of time.
+    /// </summary>
+    /// <remarks>
+    /// <b>F1 a, 2026-10-08</b>: a resume sent again unchanged after its settings were held
+    /// back closes the browser itself, with the one close cap, and a close that ran out
+    /// ended the browser the way <see cref="ClosedWhenTheCapRanOut"/> says.
+    /// </remarks>
+    public const string SwitchedWhenTheCapRanOut =
+        "the browser did not finish closing within a minute, so BrowserAI ended it before opening it with the new settings: what it had not yet written to disk may be lost, recent cookie and localStorage writes first.";
 
     /// <summary>
     /// What a resume says when it applied its settings to a session that had no
@@ -1266,13 +1281,10 @@ internal sealed class SessionManager : IAsyncDisposable
             var location = Resolve(named, "directory", out var verdict);
             var purpose = Required(arguments, "purpose");
             var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
-            var headed = Flag(arguments, "headed") ?? false;
-            var transcript = Flag(arguments, "transcript") ?? false;
-            var run = Run(arguments);
-            var debug = Flag(arguments, "debug") ?? false;
 
-            // E2, 2026-10-08: minutes or never, with the mode's own default.
-            var idle = IdleSetting.From(arguments) ?? IdleSetting.DefaultFor(headed);
+            // ⚠️ F2, 2026-10-08: the four settings a person notices are stated on every
+            // call, and the other five keep this machine's defaults.
+            var asked = Asked(SessionToolSurface.Init, arguments);
 
             // Being made to say "resume" is the point: it converts an accidental
             // collision into a stated intent. There is deliberately no difference
@@ -1299,6 +1311,23 @@ internal sealed class SessionManager : IAsyncDisposable
             if (Existing(location) is { } existing)
             {
                 return new ToolOutcome(existing, IsError: true);
+            }
+
+            // ⚠️ F2 d and E2, 2026-10-08. At init there is no last run to compare with,
+            // so the one thing held back is an idle time longer than the mode's default:
+            // once, with the warning that updates wait, and the same call sent again on
+            // this connection goes through. Asked before anything is created, so a call
+            // held back leaves nothing behind.
+            if (asked.Idle.IsLongerThanTheDefaultFor(asked.Headed))
+            {
+                if (!connection.HeldBack.GoesThrough(SessionToolSurface.Init, location.Key, asked))
+                {
+                    return new ToolOutcome(SessionErrors.LongerIdleHeldBack(asked), IsError: true);
+                }
+            }
+            else
+            {
+                connection.HeldBack.Forget(SessionToolSurface.Init, location.Key);
             }
 
             try
@@ -1338,7 +1367,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // half of that refusal the ungated look above cannot guarantee.
                     RefuseAnExistingRecord = true,
                 },
-                new SessionRunSettings(headed, transcript, debug, run, idle),
+                asked,
                 createdHere: true,
                 SpellingNote(named, location, verdict) is { } note ? [note] : [],
                 held,
@@ -1371,11 +1400,9 @@ internal sealed class SessionManager : IAsyncDisposable
             var location = Resolve(named, "directory", out var verdict);
             var why = Why(arguments, SessionToolSurface.Resume);
             var appended = Optional(arguments, "purpose");
-            var debug = Flag(arguments, "debug") ?? false;
-            var headed = Flag(arguments, "headed") ?? false;
-            var transcript = Flag(arguments, "transcript") ?? false;
-            var run = Run(arguments);
-            var idle = IdleSetting.From(arguments) ?? IdleSetting.DefaultFor(headed);
+
+            // ⚠️ F2, 2026-10-08, as on init.
+            var requested = Asked(SessionToolSurface.Resume, arguments);
 
             // A profile is browser-specific and a session cannot change what it is,
             // so a caller asking to resume a Firefox directory as Chromium is
@@ -1395,7 +1422,6 @@ internal sealed class SessionManager : IAsyncDisposable
             // 2026-10-03 -- so the line could not be reached. The refusal carries
             // resume's own definition, whose description says why.
 
-            var requested = new SessionRunSettings(headed, transcript, debug, run, idle);
             var notes = new List<string>();
             var createdHere = false;
             var noticeGiven = false;
@@ -1463,7 +1489,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 // docs/evidence/2026-09-17-resume-wedge.
                 //
                 // ⚠️ AND SINCE 2026-10-03 IT ALSO ASKS WHETHER A BROWSER IS UP,
-                // Q324 a then c, the maintainer's words of 2026-10-03, verbatim:
+                // Q324 a then c (its refusal superseded on 2026-10-08 by F2 d, below),
+                // the maintainer's words of 2026-10-03, verbatim:
                 // "Q324 your recommendation". The per-run settings live in a
                 // config a child reads once, so they can be applied only by
                 // starting a child, and starting one ends whatever browser is up.
@@ -1476,8 +1503,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 // shape: two resumes asking for a window, both answered "nothing
                 // was changed" with no error, and a session that stayed headless.
                 //
-                // ⚠️ AND SINCE 2026-10-04 ONLY THE ARGUMENTS THE CALL PASSED
-                // DECIDE ANYTHING, with a browser up or not -- the maintainer's
+                // ⚠️ AND FROM 2026-10-04 TO 2026-10-08 ONLY THE ARGUMENTS THE CALL
+                // PASSED DECIDED ANYTHING, with a browser up or not -- the maintainer's
                 // rule of 2026-10-03, in his words: "A resume on an active session
                 // is fine and a noop and returns "the session is already live" if
                 // and only if there are no conflicting settings. So the same
@@ -1499,13 +1526,45 @@ internal sealed class SessionManager : IAsyncDisposable
                 // Asked once: the job is the kernel's, and two readings either
                 // side of a browser starting would answer two different questions.
                 var browserUp = already.BrowserIsOpen;
-                var conflicting = Unapplied(arguments, already.Settings, requested);
+                var stillLive = already.Closed is null && !already.Child.ChildHasGone;
 
-                var reopen = already.Closed is not null
-                    || already.Child.ChildHasGone
-                    || (!browserUp && conflicting.Count > 0);
+                // ⚠️ SINCE 2026-10-08 EVERY SETTING IS COMPARED WITH THE LAST RUN'S, F2 d,
+                // the maintainer's words verbatim: "f2 d - so we need to store this in the
+                // session. Also, explain in the hold text what parameter is different, what
+                // the previous values was and what the newly requested value was." A
+                // setting the call left out counts as its default (RESOLUTIONS 4), so a
+                // bare resume of a session started at another viewport is held back and
+                // says so, where until that day it changed nothing. A call that differs
+                // is held back once, and the same call sent again on this connection goes
+                // through (RESOLUTIONS 5). Previously Q324 a, the maintainer's rule of
+                // 2026-10-03 and 2026-10-04: only the arguments a call passed were
+                // compared, a difference with a browser up was refused by name with the
+                // instruction to close first, and with no browser up it was applied.
+                var differences = SettingsHoldBack.Differences(already.Settings, requested, arguments);
 
-                if (!reopen)
+                if (differences.Count > 0 && !connection.HeldBack.GoesThrough(SessionToolSurface.Resume, location.Key, requested))
+                {
+                    SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
+
+                    var heldRow = already.Lock.Append(SessionToolSurface.Resume, why);
+                    var heldBack = SessionErrors.SettingsHeldBack(
+                        differences,
+                        already.Settings,
+                        requested,
+                        !stillLive ? ResumeFinds.NotLive : browserUp ? ResumeFinds.LiveWithItsBrowserUp : ResumeFinds.LiveWithNoBrowserYet,
+                        countdownStarted: stillLive && !already.Settings.Idle.IsNever);
+
+                    already.Lock.Settle(heldRow, SessionStore.Failed, Encoding.UTF8.GetBytes(heldBack));
+
+                    return new ToolOutcome(heldBack, IsError: true);
+                }
+
+                if (differences.Count is 0)
+                {
+                    connection.HeldBack.Forget(SessionToolSurface.Resume, location.Key);
+                }
+
+                if (stillLive && differences.Count is 0)
                 {
                     SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
 
@@ -1514,19 +1573,6 @@ internal sealed class SessionManager : IAsyncDisposable
                     // every row is what lets `browserai_catch_up` say "no answer
                     // was recorded" without having to know which tool wrote it.
                     var row = already.Lock.Append(SessionToolSurface.Resume, why);
-
-                    // Only the arguments the caller actually passed: an omitted
-                    // one is a default, and a bare resume must never be refused
-                    // for, or take away, a window a person has open. Reached with
-                    // a conflict only while a browser is up, by the condition above.
-                    if (conflicting.Count > 0)
-                    {
-                        var refusal = SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(location.FullPath, conflicting);
-
-                        already.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
-
-                        return new ToolOutcome(refusal, IsError: true);
-                    }
 
                     if (appended is not null)
                     {
@@ -1538,6 +1584,18 @@ internal sealed class SessionManager : IAsyncDisposable
                     return new ToolOutcome(
                         Describe(already, notes, lead: AlreadyLive(browserUp, purposeChanged: appended is not null, never: already.Settings.Idle.IsNever)),
                         IsError: false);
+                }
+
+                // ⚠️ THE SWITCH, F1 a, decided 2026-10-08 by the maintainer: a resume held
+                // back for its settings and sent again unchanged closes the browser itself,
+                // cleanly and with the one close cap, recorded as closed for new settings,
+                // and the path below opens the session again with them. The close a caller
+                // used to be told to make first, made here, so nothing is lost that the
+                // caller's own close would have kept.
+                if (stillLive && browserUp
+                    && await already.CloseForTheAgentAsync(connection, why, cancellationToken, SessionCloseCause.SettingsChanged).ConfigureAwait(false) is AgentClose.CapRanOut)
+                {
+                    notes.Add(SwitchedWhenTheCapRanOut);
                 }
 
                 // Opened again from scratch, and that IS the restart: the whole
@@ -1597,6 +1655,40 @@ internal sealed class SessionManager : IAsyncDisposable
                 ?? throw new SessionToolException(
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
                     + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists -- {SessionToolSurface.List} will show what is under a path.");
+
+            // ⚠️ F2 d, 2026-10-08, for a session this BrowserAI does not hold: compared
+            // with the settings its record says the last run used. A record with none was
+            // written before that day, and is treated as an init: only an idle time longer
+            // than the default is held back (RESOLUTIONS 6 and 7).
+            if (already is null)
+            {
+                if (record.LastRunSettings is { } lastRun)
+                {
+                    var differences = SettingsHoldBack.Differences(lastRun, requested, arguments);
+
+                    if (differences.Count is 0)
+                    {
+                        connection.HeldBack.Forget(SessionToolSurface.Resume, location.Key);
+                    }
+                    else if (!connection.HeldBack.GoesThrough(SessionToolSurface.Resume, location.Key, requested))
+                    {
+                        return new ToolOutcome(
+                            SessionErrors.SettingsHeldBack(differences, lastRun, requested, ResumeFinds.NotLive, countdownStarted: false),
+                            IsError: true);
+                    }
+                }
+                else if (requested.Idle.IsLongerThanTheDefaultFor(requested.Headed))
+                {
+                    if (!connection.HeldBack.GoesThrough(SessionToolSurface.Resume, location.Key, requested))
+                    {
+                        return new ToolOutcome(SessionErrors.LongerIdleHeldBack(requested), IsError: true);
+                    }
+                }
+                else
+                {
+                    connection.HeldBack.Forget(SessionToolSurface.Resume, location.Key);
+                }
+            }
 
             string? movedFrom = null;
 
@@ -3641,14 +3733,16 @@ internal sealed class SessionManager : IAsyncDisposable
             // ⚠️ 8 b, 2026-10-04: a close nobody recorded is written down now, dated
             // when it was found, and then this opening, so a reader can tell an
             // opening no close followed. Best effort: the session is open either way.
-            RecordTheOpening(held, request.Entry?.Tool ?? SessionToolSurface.Init, unrecorded, sessionLogger);
+            RecordTheOpening(held, request.Entry?.Tool ?? SessionToolSurface.Init, unrecorded, settings, sessionLogger);
 
             if (why is not null)
             {
                 SessionToolLog.Why(sessionLogger, SessionToolSurface.Resume, why);
             }
 
-            var answer = new ToolOutcome(Describe(session, notes), IsError: false);
+            // ⚠️ F5 a, 2026-10-08: every answer that opens a visible window ends with the
+            // line that says the window can go again at no loss.
+            var answer = new ToolOutcome(Describe(session, notes, closing: settings.Headed ? SettingsHoldBack.HeadedHint : null), IsError: false);
 
             // ⚠️ A CONNECTION THAT ENDED WHILE THIS OPEN RAN has already detached
             // whatever it found in the dictionary, and this session was not in it
@@ -3748,8 +3842,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="held">The open's lock.</param>
     /// <param name="tool">The tool that opened it.</param>
     /// <param name="unrecorded">The close nobody recorded, read before the open, or <see langword="null"/>.</param>
+    /// <param name="settings">
+    /// What this run uses, written as a <c>settings</c> statement when it differs from the
+    /// newest: F2 d, 2026-10-08, what a later resume is compared with.
+    /// </param>
     /// <param name="logger">The session's own logger.</param>
-    private static void RecordTheOpening(SessionLock held, string tool, Statement<RecordedClose>? unrecorded, ILogger logger)
+    private static void RecordTheOpening(SessionLock held, string tool, Statement<RecordedClose>? unrecorded, SessionRunSettings settings, ILogger logger)
     {
         try
         {
@@ -3763,6 +3861,7 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             held.AppendLifecycle(RecordFields.Opened, tool);
+            _ = held.AppendSettings(settings.Write());
         }
         catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
@@ -3860,7 +3959,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <returns>The prefix.</returns>
     private static string ChildRequestIdPrefix(SessionPath location) => $"browserai-{location.Hash[..8]}-";
 
-    private string Describe(LiveSession session, IReadOnlyList<string> notes, string? lead = null)
+    private string Describe(LiveSession session, IReadOnlyList<string> notes, string? lead = null, string? closing = null)
     {
         var record = session.Lock.Record;
         var text = new StringBuilder();
@@ -3956,6 +4055,13 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             _ = text.Append('\n');
+        }
+
+        // The answer's last line, when the call has one thing to leave the caller with:
+        // since 2026-10-08 that is F5's line on an answer that opened a visible window.
+        if (closing is not null)
+        {
+            _ = text.Append(closing).Append('\n');
         }
 
         return text.ToString();
@@ -4512,10 +4618,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Read the same way on both calls, deliberately.</b> None of these is
-    /// written to the record, so there is nothing to read back and nothing a
-    /// resume could contradict: a session created at one viewport is resumed at
-    /// another without being destroyed first.
+    /// <b>Read the same way on both calls, deliberately.</b> ⚠️ <i>Corrected 2026-10-08
+    /// (previously "None of these is written to the record, so there is nothing to read
+    /// back and nothing a resume could contradict: a session created at one viewport is
+    /// resumed at another without being destroyed first.")</i>: since F2 d each run's
+    /// settings are recorded and a resume is compared with them, so a session created at
+    /// one viewport is resumed at another after one hold-back, still without being
+    /// destroyed first. Nothing is read back INTO a call: one that leaves an optional
+    /// setting out asks for its default.
     /// </para>
     /// <para>
     /// ⚠️ <b><c>consoleLevel</c> was here until 2026-08-20 and is gone.</b> The
@@ -4538,56 +4648,41 @@ internal sealed class SessionManager : IAsyncDisposable
         CaptureNetwork = Flag(arguments, "captureNetwork") ?? false,
     };
 
+    // ⚠️ DELETED 2026-10-08: `Unapplied`, which listed every per-run argument a resume
+    // PASSED that differed from what the live session's browser was launched with, as
+    // "'name' (running: value, asked: value)", for Q324 a's refusal. F2 d compares every
+    // setting, a left-out one at its default, in `SettingsHoldBack.Differences`.
+
     /// <summary>
-    /// Every per-run argument a call actually passed that differs from what the
-    /// session's browser was launched with, as one clause each.
+    /// The per-run settings an <c>init</c> or a <c>resume</c> asks for: the four it
+    /// states, and the five it may leave to this machine's defaults.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>Passed, not defaulted.</b> An argument the caller left out is compared
-    /// as nothing at all: read as its default, a bare resume of a headed session
-    /// would be refused for asking for no window, which is the opposite of what a
-    /// caller who said nothing meant.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Each clause is <c>'name' (running: value, asked: value)</c> since
-    /// 2026-10-04</b> <i>(previously "'name' is value and you asked for
-    /// value")</i>, the shape of the maintainer's own draft of the refusal, and a
-    /// value a caller wrote -- a locale, a time zone -- is escaped, because it is
-    /// quoted back into a model's context.
-    /// </para>
+    /// <b>F2, decided 2026-10-08 by the maintainer</b>: <c>headed</c>,
+    /// <c>transcript</c>, <c>captureNetwork</c> and <c>idleMinutes</c> are stated on
+    /// every call, and a call that leaves any out is refused naming every one it left
+    /// out, before anything is read or created. A wrong type is refused by the reader of
+    /// each, as before.
     /// </remarks>
-    /// <param name="arguments">The call's arguments, as they arrived.</param>
-    /// <param name="running">What the session's child was launched with.</param>
-    /// <param name="requested">What this call asked for, defaults included.</param>
-    /// <returns>One clause per differing argument, naming both values; empty when nothing differs.</returns>
-    private static List<string> Unapplied(JsonObject? arguments, SessionRunSettings running, SessionRunSettings requested)
+    /// <param name="tool">The tool called, which the refusal names.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>What the call asks for, every optional setting it left out at its default.</returns>
+    /// <exception cref="SessionToolException">A stated setting is missing or is not a value it takes.</exception>
+    private static SessionRunSettings Asked(string tool, JsonObject? arguments)
     {
-        var unapplied = new List<string>();
+        var missing = RunSettingNames.Stated.Where(name => arguments?[name] is null).ToList();
 
-        compare("headed", shown(running.Headed), shown(requested.Headed));
-        compare("transcript", shown(running.Transcript), shown(requested.Transcript));
-        compare("debug", shown(running.Debug), shown(requested.Debug));
-        compare("viewport", running.Run.Viewport.ToString(), requested.Run.Viewport.ToString());
-        compare("locale", RecordText.Escape(running.Run.Locale), RecordText.Escape(requested.Run.Locale));
-        compare("timezone", zone(running.Run.TimeZone), zone(requested.Run.TimeZone));
-        compare("ignoreHTTPSErrors", shown(running.Run.IgnoreHttpsErrors), shown(requested.Run.IgnoreHttpsErrors));
-        compare("captureNetwork", shown(running.Run.CaptureNetwork), shown(requested.Run.CaptureNetwork));
-        compare(IdleSetting.ParameterName, running.Idle.ToString(), requested.Idle.ToString());
-
-        return unapplied;
-
-        void compare(string name, string inUse, string asked)
+        if (missing.Count is not 0)
         {
-            if (arguments?[name] is not null && !string.Equals(inUse, asked, StringComparison.Ordinal))
-            {
-                unapplied.Add($"'{name}' (running: {inUse}, asked: {asked})");
-            }
+            throw new SessionToolException(SessionErrors.SettingsNotStated(tool, missing));
         }
 
-        static string shown(bool value) => value ? "true" : "false";
-
-        static string zone(string? value) => value is null ? "the browser's own" : RecordText.Escape(value);
+        return new SessionRunSettings(
+            Flag(arguments, RunSettingNames.Headed) ?? false,
+            Flag(arguments, RunSettingNames.Transcript) ?? false,
+            Flag(arguments, RunSettingNames.Debug) ?? false,
+            Run(arguments),
+            IdleSetting.From(arguments) ?? throw new SessionToolException(SessionErrors.SettingsNotStated(tool, [IdleSetting.ParameterName])));
     }
 
     /// <summary>The viewport a call named, or the default.</summary>

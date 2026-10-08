@@ -1435,6 +1435,18 @@ machine.**
 samples every 25 ms until a condition holds can make a run slower; it cannot make
 it redder. What matters is the deadline the loop gives up at.
 
+⚠️ **Unless the loop moves a `ManualClock` as it samples.** *Added 2026-10-08, by
+addition.* A loop that advances the clock a step each time it finds the condition
+not yet true makes the clock a function of the machine's speed: every sample a
+slow event costs is one more step, and an assertion about a moment after the loop
+reads a time the machine chose. `IdleCountdownTests` stepped a whole idle period
+every 20 ms until a closed session's child had stopped, and in the PowerShell half
+of a gate at `6694dda8` a slow close carried the clock past a visible window's hour
+before the arm asserted the window open. The shape that cannot do it is to move the
+clock to the moment the event is due and then wait for the event with the clock
+still. A closed row in [the hazard index](HAZARDS.md#hazard-index) records it, with
+the two plants that reproduced it.
+
 ## What the build itself must fail on
 
 **Settled 2026-08-16.** Some of this suite's job is done before a single test

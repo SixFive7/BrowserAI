@@ -75,7 +75,8 @@ internal sealed class UnrecognisedArgumentTests
         // served in -- the description, and every argument with its own.
         await Assert.That(text).Contains($"\n\n{SessionToolSurface.Init}: ");
         await Assert.That(text).Contains("\n- 'directory' (required, string): Absolute path of the session directory");
-        await Assert.That(text).Contains("\n- 'transcript' (boolean): ");
+        // ⚠️ Required since 2026-10-08, F2 (previously "\n- 'transcript' (boolean): ").
+        await Assert.That(text).Contains("\n- 'transcript' (required, boolean): ");
 
         // No history and no translation: the old name is one more name the
         // schema does not have. Read off the refusal's own sentences, above the

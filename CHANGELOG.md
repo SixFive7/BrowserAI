@@ -40,6 +40,16 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **Every answer that opens a visible window says the window can go again at no loss.**
+  F5 a, the maintainer's words verbatim: *"f5 a"*, realising E1, which asked to *"teach the model
+  that it can then immediately after make it a headless session"*. Such an answer from
+  `browserai_init` or `browserai_resume` ends with *"When the part that needs the person is done,
+  resuming with headed: false keeps everything."*, and `headed`'s description now says what a window
+  costs: Chromium's comes to the front and takes the keyboard focus when it opens, Firefox's may,
+  and like any open browser it holds BrowserAI's updates back until it closes. It also says that
+  switching between visible and hidden keeps logins, cookies, storage, tabs and history.
+  `SettingsHoldBackTests` holds both, planted red first.
+
 - ✨ **A person typing or clicking in a visible window keeps that window open.**
   F4, the maintainer's words verbatim: *"f4 a - but only if this is easy."* and *"Make sure the
   keyboard and mouse input check does not lag the system."* One check for the whole BrowserAI,
@@ -871,6 +881,27 @@ release body; nothing else depends on it.
   the binary carrying the snapshot; `ErrorCatalogueTests` holds the refusal. Both were watched red
   first. The catalogue's census is 41.
 
+- 💥 **`browserai_init` and `browserai_resume` state four settings on every call.**
+  D2 b and F2, the maintainer's words verbatim: *"What if we make all the init and resume
+  parameters mandetory and then go withpattern b."* They are `headed`, `transcript`,
+  `captureNetwork` and `idleMinutes`, and a call that leaves any of them out is
+  refused, naming every one it left out, and nothing is created or changed. Each is something a
+  person notices: a window on their screen, what is written to disk in plain text, and how long the
+  browser stays open and holds updates back. `viewport`, `locale`, `timezone`,
+  `ignoreHTTPSErrors` and `debug` keep this machine's defaults when a call leaves them out.
+- 🔧 **A resume that changes a session's settings is held back once, then switches the browser itself.**
+  F2 d and F1 a, the maintainer's words verbatim: *"explain in the hold text what parameter is
+  different, what the previous values was and what the newly requested value was."* Every opening
+  now records the settings its run uses in `browserai.data`, and a resume is compared with the last
+  run on every setting, one the call left out counting as its default. A difference is answered once
+  with *"Not done yet, and nothing in this call is wrong."*, each setting with both values, and the
+  two ways on: the same call again, or the last run's settings written as a call. The same call
+  sent again on the same connection goes through, and on a session whose browser is up it closes
+  that browser cleanly and opens it with the new settings, keeping its logins, cookies, storage,
+  tabs and history, where until now it was refused and the caller told to close the session first.
+  At `browserai_init` only an idle time longer than the default is held back, with a warning that
+  BrowserAI's updates wait while the browser is open. `SettingsHoldBackTests` holds each branch,
+  planted red first.
 - 💥 **BrowserAI is one program again, `BrowserAI.exe`, and a client starts it with `--mcp`.**
   D7 a, the maintainer's words verbatim: *"d7 a"*. Release 1.1.0 carried two programs:
   `BrowserAI.Server.exe`, which a client started, and `BrowserAI.exe`, which a person started and

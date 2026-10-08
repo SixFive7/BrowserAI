@@ -71,6 +71,10 @@ internal sealed class BackgroundProcessTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the background arm's session, kept across a relay's death",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
 
             await CallOkAsync(first, "browser_navigate", new JsonObject
@@ -136,6 +140,10 @@ internal sealed class BackgroundProcessTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the background arm's session, kept across a relay whose input ended",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
             });
 
             await CallOkAsync(first, "browser_navigate", new JsonObject
@@ -197,6 +205,10 @@ internal sealed class BackgroundProcessTests
         {
             ["directory"] = session,
             ["purpose"] = "the background arm's session, which dies with its background",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
         });
 
         await CallOkAsync(relay, "browser_navigate", new JsonObject

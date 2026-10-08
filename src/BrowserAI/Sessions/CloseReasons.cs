@@ -61,7 +61,7 @@ internal static class CloseReasons
     {
         ArgumentNullException.ThrowIfNull(closure);
 
-        var client = closure.Cause is SessionCloseCause.Caller && asking is not null && closure.ClosedBy is { } by
+        var client = closure.Cause is SessionCloseCause.Caller or SessionCloseCause.SettingsChanged && asking is not null && closure.ClosedBy is { } by
             ? ReferenceEquals(by, asking) ? "this client" : $"another client, {by.Describe()}"
             : null;
 
@@ -82,7 +82,7 @@ internal static class CloseReasons
     /// <param name="cause">The cause.</param>
     /// <returns>Whether it was clean.</returns>
     public static bool WasACleanClose(SessionCloseCause cause) =>
-        cause is SessionCloseCause.Idle or SessionCloseCause.Caller or SessionCloseCause.Stopped or SessionCloseCause.ServerShutDown;
+        cause is SessionCloseCause.Idle or SessionCloseCause.Caller or SessionCloseCause.SettingsChanged or SessionCloseCause.Stopped or SessionCloseCause.ServerShutDown;
 
     private static string Of(RecordedClose close, DateTimeOffset at, TimeSpan? idlePeriod, string? client)
     {
@@ -105,6 +105,12 @@ internal static class CloseReasons
             // the stored spelling and the tool's name was never stored.
             SessionCloseCause.Caller =>
                 $"This session's browser was closed at {when} by a {SessionToolSurface.Close} call from {client ?? close.By ?? "a client"}{why}.",
+
+            // ⚠️ Added 2026-10-08, F1 a and F2 d: a resume that asked for other settings
+            // and was sent again unchanged closes the browser itself, cleanly, to open it
+            // with them.
+            SessionCloseCause.SettingsChanged =>
+                $"This session's browser was closed at {when} to open again with the settings a {SessionToolSurface.Resume} call from {client ?? close.By ?? "a client"} asked for{why}.",
 
             SessionCloseCause.WindowClosed =>
                 $"A person closed this session's browser window at {when}: the browser exited cleanly, and BrowserAI had not asked it to close.",

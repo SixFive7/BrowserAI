@@ -492,6 +492,41 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
+    /// Says what settings this run of the session uses, by adding a statement when they
+    /// differ from the newest one.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08 for F2 d</b>, beside <see cref="AppendLifecycle"/> and under the
+    /// same in-process lock. <b>Deduplicated, unlike an opening or a close</b>: what a
+    /// resume compares with is the newest row, and a session resumed a thousand times at
+    /// the same settings has one fact to record and not a thousand.
+    /// </remarks>
+    /// <param name="value">The JSON of the run's <see cref="SessionRunSettings"/>.</param>
+    /// <returns>Whether a statement was added.</returns>
+    /// <exception cref="SqliteException">The statement could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    public bool AppendSettings(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        lock (_inProcess)
+        {
+            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
+
+            if (Record.SettingsHistory is [.., var newest] && string.Equals(newest.Value, value, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            _store.Append(new StoredStatement(RecordFields.Settings, SessionRecordReader.Stamp(DateTimeOffset.Now), value));
+
+            Record = SessionRecordReader.Read(_store);
+
+            return true;
+        }
+    }
+
+    /// <summary>
     /// Releases the directory and deletes what is left of it, with the release
     /// and the delete inside <b>one hold</b> of the per-directory gate.
     /// </summary>

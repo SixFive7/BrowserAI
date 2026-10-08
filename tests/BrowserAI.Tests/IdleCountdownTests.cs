@@ -237,8 +237,10 @@ internal sealed class IdleCountdownTests
             await Assert.That(File.Exists(Path.Combine(directory, SessionLayout.DataFileName))).IsFalse().Because(label);
         }
 
-        // The positive control: the word in another case is the word.
-        var accepted = await CallAsync(harness, SessionToolSurface.Init, new JsonObject
+        // The positive control: the word in another case is the word. It is held back
+        // once first, since 2026-10-08, as every idle time longer than the default is
+        // at init, and the same call sent again goes through.
+        var capitals = new JsonObject
         {
             ["directory"] = Path.Combine(rig.Root, "never-in-capitals"),
             ["purpose"] = "set to never, written in capitals",
@@ -246,7 +248,13 @@ internal sealed class IdleCountdownTests
             ["headed"] = false,
             ["transcript"] = false,
             ["captureNetwork"] = false,
-        });
+        };
+
+        var held = await CallAsync(harness, SessionToolSurface.Init, (JsonObject)capitals.DeepClone());
+
+        await Assert.That(TextOf(held)).StartsWith(SettingsHoldBack.NothingIsWrong);
+
+        var accepted = await CallAsync(harness, SessionToolSurface.Init, capitals);
 
         await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true).Because(TextOf(accepted));
         await Assert.That(TextOf(accepted)).Contains($"  {IdleSetting.ParameterName}: never -- this browser is never closed for being idle");
@@ -603,6 +611,15 @@ internal sealed class IdleCountdownTests
         }
 
         var answer = await CallAsync(harness, SessionToolSurface.Init, arguments);
+
+        // ⚠️ Since 2026-10-08, F2 d and E2: an idle time longer than the mode's
+        // default is held back once at init, and the same call sent again goes
+        // through. The arms here are about the countdown and not the hold-back, which
+        // SettingsHoldBackTests holds, so the helper sends it again.
+        if ((bool?)answer["isError"] is true && TextOf(answer).StartsWith(SettingsHoldBack.NothingIsWrong, StringComparison.Ordinal))
+        {
+            answer = await CallAsync(harness, SessionToolSurface.Init, (JsonObject)arguments.DeepClone());
+        }
 
         if ((bool?)answer["isError"] is true)
         {

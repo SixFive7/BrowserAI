@@ -57,6 +57,21 @@ internal static class RecordFields
     /// <see cref="RecordedClose"/>.
     /// </remarks>
     public const string Closed = "closed";
+
+    /// <summary>
+    /// The settings a run of the session used, one row each time they change: what a
+    /// resume compares its own with.
+    /// </summary>
+    /// <remarks>
+    /// <b>F2 d, decided 2026-10-08 by the maintainer, in his words verbatim:</b> <i>"f2 d
+    /// - so we need to store this in the session."</i> The value is the JSON of
+    /// <see cref="SessionRunSettings"/>, every per-run setting at the value the run used,
+    /// a default included. ⚠️ <b>Until that day nothing a run was asked for was recorded
+    /// at all</b>, by design: every run said what it wanted, and a session created at
+    /// one viewport was resumed at another with nothing on disk to contradict. A record
+    /// with no row was written before it, and a resume of it compares with nothing.
+    /// </remarks>
+    public const string Settings = "settings";
 }
 
 /// <summary>One timestamped thing a session said about itself.</summary>
@@ -151,6 +166,21 @@ internal sealed class SessionRecord
 
     /// <summary>Every close of the session's browser, oldest first.</summary>
     public IReadOnlyList<Statement<RecordedClose>> ClosedHistory { get; init; } = [];
+
+    /// <summary>Every change of the settings a run used, oldest first, as stored.</summary>
+    public IReadOnlyList<Statement<string>> SettingsHistory { get; init; } = [];
+
+    /// <summary>
+    /// The settings the session's last run used, or <see langword="null"/> when the
+    /// record says nothing a resume can compare with.
+    /// </summary>
+    /// <remarks>
+    /// <b>Unreadable is nothing to compare with, never a refusal</b>, the rule
+    /// <see cref="RecordedClose.Read"/> keeps: a row a later build wrote in a shape this
+    /// one cannot read costs a resume its comparison, and refusing over it would cost
+    /// the session.
+    /// </remarks>
+    public SessionRunSettings? LastRunSettings => SettingsHistory.Count is 0 ? null : SessionRunSettings.Read(SettingsHistory[^1].Value);
 
     /// <summary>How many rows the log holds.</summary>
     public required long LogLength { get; init; }
@@ -405,6 +435,7 @@ internal static class SessionRecordReader
         var holder = new List<Statement<LockFileHolder>>();
         var opened = new List<Statement<string>>();
         var closed = new List<Statement<RecordedClose>>();
+        var settings = new List<Statement<string>>();
 
         var oldest = DateTimeOffset.MaxValue;
         var newest = DateTimeOffset.MinValue;
@@ -453,6 +484,10 @@ internal static class SessionRecordReader
                     closed.Add(new Statement<RecordedClose>(at, RecordedClose.Read(row.Value)));
                     break;
 
+                case RecordFields.Settings:
+                    settings.Add(new Statement<string>(at, row.Value));
+                    break;
+
                 default:
                     // Deliberately kept and not refused. A field this build
                     // does not know is a field a LATER build wrote, and the
@@ -479,6 +514,7 @@ internal static class SessionRecordReader
             HolderHistory = holder,
             OpenedHistory = opened,
             ClosedHistory = closed,
+            SettingsHistory = settings,
             LogLength = store.LogLength(),
             Created = oldest == DateTimeOffset.MaxValue ? DateTimeOffset.MinValue : oldest,
             LastUsed = newest,

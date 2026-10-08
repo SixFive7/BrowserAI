@@ -48,6 +48,18 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     /// <summary>Whether the conversation is still open.</summary>
     public bool IsOpen => Volatile.Read(ref _ended) is 0;
 
+    /// <summary>
+    /// The <c>init</c> and <c>resume</c> calls held back on this connection, which go
+    /// through when sent again unchanged.
+    /// </summary>
+    /// <remarks>
+    /// <b>Per connection, RESOLUTIONS 5 of 2026-10-08</b>: the call that goes through is
+    /// the one held back just before on the same connection for the same session, and
+    /// any other connection meets its own hold-back. See
+    /// <see cref="Sessions.SettingsHoldBack"/>.
+    /// </remarks>
+    public Sessions.HeldBackCalls HeldBack { get; } = new();
+
     /// <summary>The server this connection is answered through, once a message has arrived on it.</summary>
     public McpServer? Server => Volatile.Read(ref _server);
 

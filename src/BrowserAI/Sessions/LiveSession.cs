@@ -957,12 +957,18 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// <param name="by">The connection the close arrived on, which the reason names.</param>
     /// <param name="why">What the call gave as its reason.</param>
     /// <param name="cancellationToken">The caller's token: it ends the caller's wait and never the close.</param>
+    /// <param name="cause">
+    /// Why it is closed: <see cref="SessionCloseCause.Caller"/> for <c>browserai_close</c>,
+    /// and <see cref="SessionCloseCause.SettingsChanged"/> for a resume that closes the
+    /// browser to open it with other settings, F1 a and F2 d of 2026-10-08. The close is
+    /// the same either way; only the reason recorded differs.
+    /// </param>
     /// <returns>How the close ended.</returns>
-    public async Task<AgentClose> CloseForTheAgentAsync(CallerConnection by, string why, CancellationToken cancellationToken)
+    public async Task<AgentClose> CloseForTheAgentAsync(CallerConnection by, string why, CancellationToken cancellationToken, SessionCloseCause cause = SessionCloseCause.Caller)
     {
         ArgumentNullException.ThrowIfNull(by);
 
-        var closure = new SessionClosure(SessionCloseCause.Caller, _clock.GetUtcNow(), Idle?.Period)
+        var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)
         {
             ClosedBy = by,
             By = by.Describe(),
@@ -1789,9 +1795,12 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 /// </summary>
 /// <remarks>
 /// <b>A record, so two of them compare by value</b> -- which is the whole of how a
-/// resume decides whether it has anything to apply. None of it is written to the
-/// session's record: every run says what it wants, and this is what the current
-/// run said.
+/// resume decides whether it has anything to apply. ⚠️ <i>Corrected 2026-10-08
+/// (previously "None of it is written to the session's record: every run says what it
+/// wants, and this is what the current run said.")</i>: F2 d records what each run used,
+/// as <see cref="RecordFields.Settings"/>, so a resume can say what it would change;
+/// every run still says what it wants, and the record is what a call is compared with,
+/// never what it is filled in from.
 /// </remarks>
 /// <param name="Headed">Whether the browser has a window.</param>
 /// <param name="Transcript">
@@ -1806,7 +1815,92 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 /// ⚠️ <i>Added 2026-10-08, E2</i>: the countdown is per session since that day, and a
 /// visible window has one too.
 /// </param>
-internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run, IdleSetting Idle);
+internal sealed record SessionRunSettings(bool Headed, bool Transcript, bool Debug, RunOptions Run, IdleSetting Idle)
+{
+    /// <summary>The JSON a <c>settings</c> statement carries: every setting, named as a call names it.</summary>
+    /// <returns>The value.</returns>
+    public string Write() =>
+        new JsonObject
+        {
+            [RunSettingNames.Headed] = Headed,
+            [RunSettingNames.Transcript] = Transcript,
+            [RunSettingNames.CaptureNetwork] = Run.CaptureNetwork,
+            [IdleSetting.ParameterName] = Idle.Minutes is { } minutes ? JsonValue.Create(minutes) : JsonValue.Create(IdleSetting.NeverWord),
+            [RunSettingNames.Viewport] = Run.Viewport.ToString(),
+            [RunSettingNames.Locale] = Run.Locale,
+            [RunSettingNames.TimeZone] = Run.TimeZone,
+            [RunSettingNames.IgnoreHttpsErrors] = Run.IgnoreHttpsErrors,
+            [RunSettingNames.Debug] = Debug,
+        }.ToJsonString();
+
+    /// <summary>A <c>settings</c> statement back out of its value.</summary>
+    /// <remarks>
+    /// <b>All of it or nothing</b>: a value missing a setting, or carrying one in a
+    /// shape this build does not read, is <see langword="null"/>, which a resume reads
+    /// as nothing to compare with. A comparison against half a run would hold a call
+    /// back for a difference nobody asked for.
+    /// </remarks>
+    /// <param name="value">The stored text.</param>
+    /// <returns>The settings, or <see langword="null"/>.</returns>
+    public static SessionRunSettings? Read(string value)
+    {
+        try
+        {
+            if (JsonNode.Parse(value) is not JsonObject read
+                || flag(read, RunSettingNames.Headed) is not { } headed
+                || flag(read, RunSettingNames.Transcript) is not { } transcript
+                || flag(read, RunSettingNames.CaptureNetwork) is not { } capture
+                || flag(read, RunSettingNames.IgnoreHttpsErrors) is not { } ignore
+                || flag(read, RunSettingNames.Debug) is not { } debug
+                || text(read, RunSettingNames.Locale) is not { } locale
+                || text(read, RunSettingNames.Viewport) is not { } viewport
+                || !ViewportSize.TryParse(viewport, out var size)
+                || idle(read) is not { } setting
+                || read[RunSettingNames.TimeZone] is not (null or JsonValue))
+            {
+                return null;
+            }
+
+            var zone = read[RunSettingNames.TimeZone] is JsonValue named && named.TryGetValue<string>(out var spelled) ? spelled : null;
+
+            if (read[RunSettingNames.TimeZone] is not null && zone is null)
+            {
+                return null;
+            }
+
+            return new SessionRunSettings(
+                headed,
+                transcript,
+                debug,
+                new RunOptions
+                {
+                    Viewport = size,
+                    Locale = locale,
+                    TimeZone = zone,
+                    IgnoreHttpsErrors = ignore,
+                    CaptureNetwork = capture,
+                },
+                setting);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+
+        static bool? flag(JsonObject node, string name) =>
+            node[name] is JsonValue value && value.TryGetValue<bool>(out var read) ? read : null;
+
+        static string? text(JsonObject node, string name) =>
+            node[name] is JsonValue value && value.TryGetValue<string>(out var read) ? read : null;
+
+        static IdleSetting? idle(JsonObject node) => node[IdleSetting.ParameterName] switch
+        {
+            JsonValue value when value.TryGetValue<int>(out var minutes) && minutes >= 1 => IdleSetting.Of(minutes),
+            JsonValue value when value.TryGetValue<string>(out var word) && string.Equals(word, IdleSetting.NeverWord, StringComparison.Ordinal) => IdleSetting.Never,
+            _ => null,
+        };
+    }
+}
 
 /// <summary>How <c>browserai_close</c> ended.</summary>
 internal enum AgentClose
@@ -1881,6 +1975,12 @@ internal enum SessionCloseCause
 
     /// <summary>The session host let a session go whose client went away, with nothing to keep.</summary>
     Released,
+
+    /// <summary>
+    /// A resume asked for other settings, and its same call sent again closed the browser
+    /// to open it with them: F1 a and F2 d, 2026-10-08.
+    /// </summary>
+    SettingsChanged,
 
     /// <summary>Read back, never recorded: an opening no close followed.</summary>
     Unrecorded,

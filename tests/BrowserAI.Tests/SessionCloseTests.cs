@@ -621,34 +621,31 @@ internal sealed class SessionCloseTests
     }
 
     /// <summary>
-    /// A resume of a session whose browser is up applies nothing, refuses a
-    /// per-run setting it was asked for that differs, and answers <i>the session
-    /// is already live</i> to the same call without it.
+    /// A resume of a session whose browser is up that asks for other settings is held
+    /// back once and changes nothing, and one that asks for what the session runs with
+    /// is answered <i>the session is already live</i>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Q324 a.</b> A field report of 2026-10-01: two resumes asking for a
-    /// window were each told "nothing was changed", with no error, and the
-    /// session stayed headless. Only the arguments a call passes are compared, so
-    /// a bare resume is never refused for asking for nothing.
+    /// <b>F2 d and F1 a, decided 2026-10-08 by the maintainer.</b> A call that differs
+    /// from the last run is held back once, naming each difference, and the same call
+    /// sent again switches the browser itself; the switch is
+    /// <c>SettingsHoldBackTests</c>'. The texts are asserted as LITERALS as well as
+    /// against the method that writes them, because comparing a sentence to the method
+    /// that produces it cannot tell a true sentence from a false one.
     /// </para>
     /// <para>
-    /// <b>And the maintainer's rule of 2026-10-03, in his words:</b> <i>"A resume
-    /// on an active session is fine and a noop and returns "the session is already
-    /// live" if and only if there are no conflicting settings. So the same settings
-    /// or no settings given or a mix. If any of the settings are different the
-    /// resume is refused with an explicit message that the models needs to call
-    /// close and then resume with the different settings. Name the parameters that
-    /// triggered this refusal. Also explain in the response that this will close
-    /// and re-open the playwright browser."</i> The texts are asserted as
-    /// LITERALS as well as against the method that writes them, because comparing
-    /// a sentence to the method that produces it cannot tell a true sentence from
-    /// a false one.
+    /// ⚠️ <i>Rewritten 2026-10-08 (previously
+    /// <c>AResumeWithTheBrowserUpAppliesNothingAndRefusesWhatItCannotApply</c>, over
+    /// Q324 a and the maintainer's rule of 2026-10-03, which refused such a resume by
+    /// name and told the caller to close the session first).</i> What carried over: a
+    /// call that is not done records no purpose and starts no child, and a resume that
+    /// asks for what is in use is no difference.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AResumeWithTheBrowserUpAppliesNothingAndRefusesWhatItCannotApply()
+    public async Task AResumeWithTheBrowserUpThatAsksForOtherSettingsIsHeldBackAndChangesNothing()
     {
         await using var sessions = RigSessionEnvironment.Create(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
@@ -671,162 +668,170 @@ internal sealed class SessionCloseTests
 
         _ = await NavigateAsync(rig, directory, "the call that starts the browser");
 
-        var refused = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        var held = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = directory,
             ["why"] = "the suite asking for a window on a browser that is up",
-            ["purpose"] = "a purpose a refused resume must not record",
+            ["purpose"] = "a purpose a held-back resume must not record",
             ["headed"] = true,
             ["transcript"] = true,
-            ["viewport"] = "1280x720",
             ["captureNetwork"] = false,
             ["idleMinutes"] = 10,
+            ["viewport"] = "1280x720",
         });
 
-        await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ResumeCannotApplyWhileTheBrowserIsUp(
-            location.FullPath,
+        var lastRun = new SessionRunSettings(false, false, false, RunOptions.Default, IdleSetting.Of(10));
+
+        await Assert.That((bool?)held["isError"]).IsTrue();
+        await Assert.That(TextOf(held)).IsEqualTo(SessionErrors.SettingsHeldBack(
             [
-                "'headed' (running: false, asked: true)",
-                "'transcript' (running: false, asked: true)",
-                $"'viewport' (running: {BrowserConfiguration.DefaultViewport}, asked: 1280x720)",
-            ]));
+                new SettingDifference("headed", "false", "true", LeftOut: false),
+                new SettingDifference("transcript", "false", "true", LeftOut: false),
+                new SettingDifference("viewport", $"'{BrowserConfiguration.DefaultViewport}'", "'1280x720'", LeftOut: false),
+            ],
+            lastRun,
+            lastRun with { Headed = true, Transcript = true, Run = RunOptions.Default with { Viewport = new ViewportSize(1280, 720) } },
+            ResumeFinds.LiveWithItsBrowserUp,
+            countdownStarted: true));
 
-        // What the maintainer asked the refusal to say, each half on its own:
-        // every parameter that triggered it with both values, that nothing
-        // changed, the two calls that apply them, that those close the
-        // Playwright browser and open a new one, and that a live session needs
-        // no resume at all.
-        var refusal = TextOf(refused);
+        // What the maintainer asked the text to say, each half on its own: that the
+        // call did not go through and nothing in it is wrong, every setting that
+        // differs with both values, what the same call does when it comes again, and
+        // the last run's settings as a call.
+        var text = TextOf(held);
 
-        await Assert.That(refusal).StartsWith($"'{location.FullPath}' is already live, so {SessionToolSurface.Resume} changed nothing.");
-        await Assert.That(refusal).Contains("'headed' (running: false, asked: true)");
-        await Assert.That(refusal).Contains("'transcript' (running: false, asked: true)");
-        await Assert.That(refusal).Contains($"'viewport' (running: {BrowserConfiguration.DefaultViewport}, asked: 1280x720)");
-        await Assert.That(refusal).Contains($"call {SessionToolSurface.Close} on this session, then {SessionToolSurface.Resume} with them");
-        await Assert.That(refusal).Contains("closes the Playwright browser and opens a new one with the new settings");
-        await Assert.That(refusal).Contains("page snapshots and element references from before no longer apply");
-        await Assert.That(refusal).Contains("no resume is needed: the session is live, so carry on with its tools");
-        await Assert.That(refusal).DoesNotContain("leave those");
+        await Assert.That(text).StartsWith("Not done yet, and nothing in this call is wrong.");
+        await Assert.That(text).Contains("- headed: the last run had false, this call asks for true\n");
+        await Assert.That(text).Contains("- transcript: the last run had false, this call asks for true\n");
+        await Assert.That(text).Contains($"- viewport: the last run had '{BrowserConfiguration.DefaultViewport}', this call asks for '1280x720'\n");
+        await Assert.That(text).Contains("If you meant it, send exactly the same call again and it will go through: the session's browser then closes and opens again with these settings, and its logins, cookies, storage, tabs and history are kept.\n");
+        await Assert.That(text).Contains("To keep the last run's settings, send them instead: headed: false, transcript: false, captureNetwork: false, idleMinutes: 10.");
 
-        // Nothing changed: no new child, and the purpose the refused call
-        // carried is not in the record.
+        // Nothing changed: no new child, and the purpose the held call carried is not
+        // in the record.
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
         await Assert.That(SessionLock.ReadRecord(location)!.Purpose).IsEqualTo("the session whose browser is up when it is resumed");
 
-        // The positive control: the same session, resumed without the
-        // arguments, is answered and still left alone -- and the answer leads
-        // with the maintainer's own words.
-        var bare = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
-        {
-            ["directory"] = directory,
-            ["why"] = "the suite resuming without asking for anything",
-            ["headed"] = false,
-            ["transcript"] = false,
-            ["captureNetwork"] = false,
-            ["idleMinutes"] = 10,
-        });
+        // The positive control: the same session, resumed with what it runs with, is
+        // answered and still left alone -- and the answer leads with the maintainer's
+        // own words. A setting that names what is already in use is not a difference,
+        // and neither is an optional one left out at the value it runs with.
+        JsonObject[] cases =
+        [
+            [],
+            new() { ["viewport"] = BrowserConfiguration.DefaultViewport.ToString() },
+        ];
 
-        await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(bare)).StartsWith(SessionManager.AlreadyLive(browserUp: true, purposeChanged: false));
-        await Assert.That(TextOf(bare)).StartsWith("The session is already live");
-        await Assert.That(TextOf(bare)).Contains("nothing changed");
-
-        // An argument that names what is already in use is not a difference,
-        // and neither is a mix of one with an argument left out.
-        foreach (var asked in new[]
-        {
-            new JsonObject { ["headed"] = false, ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
-            new JsonObject { ["headed"] = false, ["viewport"] = BrowserConfiguration.DefaultViewport.ToString(), ["transcript"] = false, ["captureNetwork"] = false, ["idleMinutes"] = 10 },
-        })
+        foreach (var asked in cases)
         {
             asked["directory"] = directory;
             asked["why"] = "the suite asking for what the browser already has";
+            asked["headed"] = false;
+            asked["transcript"] = false;
+            asked["captureNetwork"] = false;
+            asked["idleMinutes"] = 10;
 
             var same = await CallAsync(rig, SessionToolSurface.Resume, asked);
 
             await Assert.That((bool?)same["isError"]).IsNotEqualTo(true);
+            await Assert.That(TextOf(same)).StartsWith(SessionManager.AlreadyLive(browserUp: true, purposeChanged: false));
             await Assert.That(TextOf(same)).StartsWith("The session is already live");
             await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
         }
     }
 
     /// <summary>
-    /// A resume of a live session whose browser has not started, passing
-    /// nothing, is the no-op the maintainer's rule describes: the session keeps
-    /// the settings it has and nothing is started.
+    /// A resume that leaves out an optional setting its last run set is held back once,
+    /// because a left-out setting is its default, and starts nothing; the same resume
+    /// stating the setting is the no-op.
     /// </summary>
     /// <remarks>
-    /// <b>The rule of 2026-10-03: <i>"no settings given"</i> is a no-op that
-    /// answers <i>"the session is already live"</i>.</b> Until then a resume with no
-    /// browser up compared the call's DEFAULTS with what the session was running,
-    /// so a bare resume of a session started at another viewport opened it again
-    /// at the default one and said it had applied settings nobody had asked for.
+    /// ⚠️ <b>Reversed 2026-10-08 by F2 d and RESOLUTIONS 4</b> <i>(previously
+    /// <c>ABareResumeWithNoBrowserUpKeepsTheSettingsTheSessionHas</c>, over the
+    /// maintainer's rule of 2026-10-03 that a resume giving no settings is a no-op)</i>:
+    /// an optional setting a call leaves out counts as its default when compared, and
+    /// the hold-back says so, so a resume of a session started at another viewport says
+    /// what it would change instead of keeping a size the call never named. The four
+    /// settings every call states are stated here at what the session runs with.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ABareResumeWithNoBrowserUpKeepsTheSettingsTheSessionHas()
+    public async Task AResumeThatLeavesOutASettingItsLastRunSetIsHeldBackAndStartsNothing()
     {
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var directory = Path.Combine(sessions.Root, "bare-resume-no-browser");
+        var directory = Path.Combine(sessions.Root, "left-out-before-the-browser");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["purpose"] = "the session resumed bare before its browser started",
-            ["viewport"] = "1280x720",
-            ["transcript"] = true,
+            ["purpose"] = "the session resumed before its browser started",
             ["headed"] = false,
+            ["transcript"] = true,
             ["captureNetwork"] = false,
             ["idleMinutes"] = 10,
+            ["viewport"] = "1280x720",
         });
 
-        var bare = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        var stated = new JsonObject
         {
             ["directory"] = directory,
-            ["why"] = "the suite resuming without asking for anything",
-        });
+            ["why"] = "the suite resuming with the four it states and nothing else",
+            ["headed"] = false,
+            ["transcript"] = true,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        };
 
-        await Assert.That((bool?)bare["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(bare)).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
-        await Assert.That(TextOf(bare)).StartsWith("The session is already live");
-        await Assert.That(TextOf(bare)).Contains("nothing changed");
-        await Assert.That(TextOf(bare)).Contains("viewport: 1280x720");
+        var held = await CallAsync(rig, SessionToolSurface.Resume, stated);
 
-        // Nothing was started, and the one child there is keeps the config it
-        // was launched with: the viewport and the transcript the init asked for.
+        await Assert.That((bool?)held["isError"]).IsTrue();
+        await Assert.That(TextOf(held)).Contains($"- viewport: the last run had '1280x720', this call asks for '{BrowserConfiguration.DefaultViewport}' (the default, because the call left it out)\n");
+        await Assert.That(TextOf(held)).Contains("the session's browser has not started yet, so the first browser call after it starts the browser with these settings.");
+
+        // Nothing was started, and the one child there is keeps the config it was
+        // launched with: the viewport and the transcript the init asked for.
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
 
         var config = ConfigOf(sessions.Launches[^1]);
 
         await Assert.That((int?)config["browser"]?["contextOptions"]?["viewport"]?["width"]).IsEqualTo(1280);
         await Assert.That((bool?)config["saveSession"]).IsTrue();
+
+        // Stated, it is the no-op.
+        var withTheViewport = (JsonObject)stated.DeepClone();
+
+        withTheViewport["viewport"] = "1280x720";
+
+        var same = await CallAsync(rig, SessionToolSurface.Resume, withTheViewport);
+
+        await Assert.That((bool?)same["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(same)).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
+        await Assert.That(TextOf(same)).Contains("viewport: 1280x720");
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
     }
 
     /// <summary>
-    /// A resume of a session with no browser up applies the settings it was
-    /// asked for, by starting a new child at them.
+    /// A resume of a session with no browser up that asks for other settings is held
+    /// back once, and sent again applies them by starting a new child at them.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Q324 c.</b> Nothing a new child can take away is up, so the settings go
-    /// into the new child's config; a resume that asked for what the session
-    /// already has starts nothing.
+    /// <b>Q324 c.</b> Nothing a new child can take away is up, so the settings go into
+    /// the new child's config; a resume that asked for what the session already has
+    /// starts nothing.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Kept on 2026-10-04 beside the maintainer's rule of 2026-10-03, and
-    /// recorded for his review.</b> His rule refuses a differing setting on an
-    /// active session and tells the caller to close and resume; a session whose
-    /// browser has not started has no Playwright browser to close, so this case
-    /// still applies the setting by opening the session again, and nothing is
-    /// lost by it.
+    /// ⚠️ <b>Held back once first since 2026-10-08, F2 d</b> <i>(previously applied at
+    /// once, a decision of 2026-10-04 kept for the maintainer's review; the arm was
+    /// <c>AResumeWithNoBrowserUpAppliesItsSettingsByStartingANewChild</c>)</i>: every
+    /// difference from the last run is held back once, with a browser up or not.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AResumeWithNoBrowserUpAppliesItsSettingsByStartingANewChild()
+    public async Task AResumeWithNoBrowserUpAppliesItsSettingsByStartingANewChildWhenSentAgain()
     {
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -856,18 +861,25 @@ internal sealed class SessionCloseTests
         await Assert.That(TextOf(unchanged)).StartsWith("The session is already live");
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
 
-        // A window and a smaller viewport for a session created headless: the
-        // case the field report could not get.
-        var applied = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        // A window and a smaller viewport for a session created headless: the case
+        // the field report could not get.
+        var asked = new JsonObject
         {
             ["directory"] = directory,
             ["why"] = "the suite asking for a window and a smaller viewport",
             ["headed"] = true,
-            ["viewport"] = "1280x720",
             ["transcript"] = false,
             ["captureNetwork"] = false,
-            ["idleMinutes"] = 60,
-        });
+            ["idleMinutes"] = 10,
+            ["viewport"] = "1280x720",
+        };
+
+        var held = await CallAsync(rig, SessionToolSurface.Resume, (JsonObject)asked.DeepClone());
+
+        await Assert.That((bool?)held["isError"]).IsTrue();
+        await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
+
+        var applied = await CallAsync(rig, SessionToolSurface.Resume, asked);
 
         await Assert.That((bool?)applied["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(applied)).Contains(SessionManager.AppliedWithNoBrowserUp);
@@ -876,8 +888,8 @@ internal sealed class SessionCloseTests
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
         await WaitUntilAsync(() => sessions.SessionChildren[0].HasStopped, "the resume that applied its settings did not end the old child");
 
-        // The new child's config is the one with the window and the new
-        // viewport: what a browser launched from it gets.
+        // The new child's config is the one with the window and the new viewport:
+        // what a browser launched from it gets.
         var config = ConfigOf(sessions.Launches[^1]);
 
         await Assert.That((bool?)config["browser"]?["launchOptions"]?["headless"]).IsFalse();

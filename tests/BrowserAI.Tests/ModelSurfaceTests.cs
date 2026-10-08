@@ -2066,6 +2066,18 @@ internal sealed class ModelSurfaceTests
     /// principle from the other end.
     /// </para>
     /// <para>
+    /// ⚠️ <b>The design rule gives way once, by the maintainer's decision, and the
+    /// assertion still holds.</b> <i>Added 2026-10-08.</i> D2 b and F2 d: a resume that
+    /// changes a session's settings, and an idle time longer than the default, are held
+    /// back once and go through when the same call is sent again. His words of
+    /// 2026-10-07, verbatim: <i>"What if we make all the init and resume parameters
+    /// mandetory and then go withpattern b. But do make sure to communicate clearly to
+    /// the llm that the first call did not work but that the second call will
+    /// work."</i> No property confirms it, so nothing here changed: the same call is the
+    /// confirmation, which is why the sweep below still finds no flag.
+    /// <c>SettingsHoldBack</c> carries the rest.
+    /// </para>
+    /// <para>
     /// <b>The matcher is proved before it is trusted.</b> A pattern that matches
     /// nothing is indistinguishable from a genuine absence, so the deleted flag's
     /// own name is run through it first: a sweep that cannot find the thing it

@@ -756,10 +756,12 @@ internal static class BrowserConfiguration
     /// Whether a browser window appears. ⚠️ <b>A per-run argument since
     /// 2026-08-20 (previously <c>SessionModeDefinition mode</c>, whose
     /// <c>Headed</c> flag was bound at <c>init</c> and permanent for the
-    /// directory's life).</b> Headedness is a property of <i>this launch</i>: it
-    /// changes nothing on disk, so nothing is served by recording it, and a
+    /// directory's life).</b> Headedness is a property of <i>this launch</i>, and a
     /// caller that wants to watch a session it created headless should not have
-    /// to destroy it first.
+    /// to destroy it first. ⚠️ <i>Corrected 2026-10-08 (previously "it changes
+    /// nothing on disk, so nothing is served by recording it")</i>: F2 d records
+    /// every setting a run used, this one included, so a resume can say what it
+    /// would change; it is still never read back into a launch.
     /// </param>
     /// <param name="browser">
     /// The family this session was created for, read from its own
@@ -1396,11 +1398,13 @@ internal sealed record ViewportSize(int Width, int Height)
 /// The per-run arguments a caller gives one launch of a session.
 /// </summary>
 /// <remarks>
-/// <b>Every one of these is regenerated at every child launch and none is
-/// written to the session record</b> -- the same rule <c>headed</c>, <c>transcript</c>
-/// and <c>debug</c> follow. A session created at one viewport is resumed at
-/// another without being destroyed first, and nothing on disk differs between
-/// the two.
+/// <b>Every one of these is regenerated at every child launch</b> -- the same rule
+/// <c>headed</c>, <c>transcript</c> and <c>debug</c> follow. A session created at one
+/// viewport is resumed at another without being destroyed first. ⚠️ <i>Corrected
+/// 2026-10-08 (previously "and none is written to the session record ... and nothing on
+/// disk differs between the two.")</i>: F2 d writes what each run used into the record
+/// as a <c>settings</c> statement, which a resume is compared with and never filled in
+/// from.
 /// </remarks>
 internal sealed record RunOptions
 {
