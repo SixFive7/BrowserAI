@@ -325,7 +325,8 @@ internal sealed class ConfigRoundTripTests
             }
         }
 
-        check("surface", BrowserConfiguration.ForSurface(Path.Combine(ScratchRoot.Path, "unrestricted-file-access-surface")));
+        // ⚠️ The run's own child's config was one more case until 2026-10-08, when
+        // that child was deleted with the tool list compiled into the binary.
 
         await Assert.That(string.Join(Environment.NewLine, refused)).IsEmpty();
 

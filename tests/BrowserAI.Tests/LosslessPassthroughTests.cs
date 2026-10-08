@@ -556,8 +556,18 @@ internal sealed class LosslessPassthroughTests
 
     /// <summary>
     /// <c>tools/list</c> is the one answer that is deliberately rewritten, and
-    /// everything about the child's own tools has to survive the rewrite.
+    /// everything about upstream's own tools has to survive the rewrite.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The schema rule in its words of 2026-10-08: schemas come from the
+    /// child's <c>tools/list</c> at build time, from the same pinned payload, and
+    /// are checked against the live child at run time.</b> <i>Corrected (previously
+    /// "everything about the child's own tools", when the list was the run's own
+    /// child's answer, asked at run time)</i>: the rig hands its BrowserAI the list
+    /// the product would have compiled in, and the rewrite runs over it exactly as
+    /// it runs over the compiled one. Nothing about a schema is written here or in
+    /// the product, which is the rule.
+    /// </remarks>
     /// <remarks>
     /// ⚠️ <b>This test asserted byte-identity until build-order step 12, and the
     /// assertion had to go, not be relaxed.</b> Rewriting <c>tools/list</c>
@@ -571,7 +581,8 @@ internal sealed class LosslessPassthroughTests
     /// <remarks>
     /// ⚠️ <b>Two injected parameters since 2026-08-20 (previously one).</b>
     /// <c>why</c> rides the same path <c>session</c> does -- mutating the
-    /// <see cref="JsonNode"/> the child sent instead of rebuilding it -- so this
+    /// <see cref="JsonNode"/> parsed from the child's own list instead of
+    /// rebuilding it -- so this
     /// test is what says the second one did not disturb the first: <c>url</c>
     /// still holds position 0, both are appended in order, and upstream's own
     /// <c>required</c> entry is still ahead of both.
@@ -587,7 +598,7 @@ internal sealed class LosslessPassthroughTests
         const string Tools =
             """{"tools":[{"name":"browser_navigate","description":"a","inputSchema":{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"url":{"type":"string","x-vendor-hint":"absolute"}},"required":["url"]},"x-tool-extension":{"kept":true}},{"name":"browser_click","description":"b","inputSchema":{"type":"object","properties":{}}},{"name":"browser_snapshot","description":"c","inputSchema":{"type":"object","properties":{}}}]}""";
 
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child => child.ToolsListResult = Tools);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(toolsList: Tools);
 
         var response = await rig.Client.SendAsync("tools/list");
 
@@ -624,7 +635,7 @@ internal sealed class LosslessPassthroughTests
     /// <summary>
     /// A tool the verdicts file gives a BrowserAI note keeps upstream's own
     /// description, unchanged, with the note after it, and everything else about
-    /// the tool is what the child sent.
+    /// the tool is what the child listed.
     /// </summary>
     /// <remarks>
     /// <b>Decided 2026-10-03 by the maintainer, in his words:</b> <i>"Rewrite the
@@ -632,7 +643,10 @@ internal sealed class LosslessPassthroughTests
     /// that tool as a short note, declared beside its verdict in
     /// <c>tool-verdicts.json</c>, appended at run time and marked as BrowserAI's.
     /// A note is not a schema: the schema and every other member of the tool still
-    /// come from the child, and this holds both halves on the wire.
+    /// come from the child's own list, taken at build time from the same pinned
+    /// payload and checked against the live child at run time, and this holds both
+    /// halves on the wire. <i>Corrected 2026-10-08 (previously "still come from the
+    /// child").</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -641,7 +655,7 @@ internal sealed class LosslessPassthroughTests
         const string Tools =
             """{"tools":[{"name":"browser_take_screenshot","description":"upstream's own words","inputSchema":{"type":"object","properties":{"fullPage":{"type":"boolean","x-vendor-hint":"kept"}}},"x-tool-extension":{"kept":true}},{"name":"browser_snapshot","description":"c","inputSchema":{"type":"object","properties":{}}}]}""";
 
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child => child.ToolsListResult = Tools);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(toolsList: Tools);
 
         var response = await rig.Client.SendAsync("tools/list");
         var tools = response.Result!["tools"]!.AsArray();

@@ -55,11 +55,10 @@ internal sealed class ToolSignatures
 
     private readonly FrozenDictionary<string, ToolSignature> _tools;
 
-    private ToolSignatures(FrozenDictionary<string, ToolSignature> tools, IReadOnlyList<ToolSignature> inOrder, bool carriesTheChildsTools)
+    private ToolSignatures(FrozenDictionary<string, ToolSignature> tools, IReadOnlyList<ToolSignature> inOrder)
     {
         _tools = tools;
         InOrder = inOrder;
-        CarriesTheChildsTools = carriesTheChildsTools;
     }
 
     /// <summary>Every tool, in the order the list carries them.</summary>
@@ -69,22 +68,16 @@ internal sealed class ToolSignatures
     /// </remarks>
     public IReadOnlyList<ToolSignature> InOrder { get; }
 
-    /// <summary>
-    /// Whether the list this was read from carried the run's own child's tools,
-    /// and not only BrowserAI's own.
-    /// </summary>
-    /// <remarks>
-    /// <see langword="false"/> when the child could not be asked for its list:
-    /// the authored tools are still checked, and a forwarded tool is then judged
-    /// by the verdicts file alone.
-    /// </remarks>
-    public bool CarriesTheChildsTools { get; }
+    // ⚠️ DELETED 2026-10-08: `CarriesTheChildsTools`, which was false when the
+    // run's own child could not be asked for its list, so a forwarded tool was
+    // then judged by the verdicts file alone and the catalogue was left empty.
+    // The list is compiled into the binary since that day, and there is no child
+    // to ask and none that can fail to answer.
 
     /// <summary>Reads a <c>tools/list</c> result.</summary>
     /// <param name="result">The result, as BrowserAI answers it -- rewritten.</param>
-    /// <param name="carriesTheChildsTools">Whether the child's own tools are in it.</param>
     /// <returns>Every tool it names, with what it takes.</returns>
-    public static ToolSignatures From(JsonObject result, bool carriesTheChildsTools = true)
+    public static ToolSignatures From(JsonObject result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -126,7 +119,7 @@ internal sealed class ToolSignatures
             }
         }
 
-        return new ToolSignatures(tools.ToFrozenDictionary(StringComparer.Ordinal), inOrder, carriesTheChildsTools);
+        return new ToolSignatures(tools.ToFrozenDictionary(StringComparer.Ordinal), inOrder);
     }
 
     /// <summary>
@@ -142,16 +135,15 @@ internal sealed class ToolSignatures
     /// that long whole.
     /// </para>
     /// <para>
-    /// <b>Empty when the list did not carry the child's tools</b>, because a block
-    /// naming BrowserAI's eight alone would tell a model that the browser tools are
-    /// gone.
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "<b>Empty when the list did not carry
+    /// the child's tools</b>, because a block naming BrowserAI's eight alone would
+    /// tell a model that the browser tools are gone")</i>: the list is compiled into
+    /// the binary, so it always carries them.
     /// </para>
     /// </remarks>
-    /// <returns>The lines, joined by line breaks, or the empty string.</returns>
+    /// <returns>The lines, joined by line breaks.</returns>
     public string Catalogue() =>
-        CarriesTheChildsTools
-            ? string.Join('\n', InOrder.Select(tool => tool.WhatItDoes() is { Length: > 0 } said ? $"- {tool.Name}: {said}" : $"- {tool.Name}"))
-            : string.Empty;
+        string.Join('\n', InOrder.Select(tool => tool.WhatItDoes() is { Length: > 0 } said ? $"- {tool.Name}: {said}" : $"- {tool.Name}"));
 
     /// <summary>One tool's signature, or <see langword="null"/> when the list does not carry it.</summary>
     /// <param name="tool">The name a call carried.</param>

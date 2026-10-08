@@ -7,10 +7,20 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Runtime;
 
 /// <summary>
-/// The directory one run of BrowserAI gives its child: the generated config, the
-/// surface child's profile, and the child's working directory.
+/// The directory one run of BrowserAI gives its sessions' children: each one's
+/// generated config and their temporary folder.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-08 (previously "The directory one run of BrowserAI
+/// gives its child: the generated config, the surface child's profile, and the
+/// child's working directory").</b> The run's own child, which answered
+/// <c>tools/list</c> before any session existed and was the only process ever to
+/// use this directory as its working directory, is gone: the tool list is compiled
+/// into the binary. What the directory holds is the config of every session the
+/// run opens and the temporary folder their children are given, and the marker
+/// below is what holds it.
+/// </para>
 /// <para>
 /// <b>It cannot be cleaned up only on the way out, and that is measured and
 /// not anticipated.</b> The containment contract says BrowserAI may be

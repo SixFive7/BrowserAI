@@ -3,13 +3,12 @@
 
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Client;
 
 namespace BrowserAI.Proxy;
 
 /// <summary>
-/// What every connection of one process shares: the child that answers
-/// <c>tools/list</c>, the sessions, and the verdicts.
+/// What every connection of one process shares: the sessions, the tool list and
+/// the verdicts.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,6 +20,13 @@ namespace BrowserAI.Proxy;
 /// opened it and the next connection can drive it.
 /// </para>
 /// <para>
+/// ⚠️ <b>It starts no child, since 2026-10-08.</b> <i>Corrected (previously "the
+/// child that answers <c>tools/list</c>, the sessions, and the verdicts", with a
+/// <c>Surface</c> started over a transport before the host existed)</i>: the tool
+/// list is compiled into the binary, so a host is ready the moment it is made, and
+/// the only children are the sessions'.
+/// </para>
+/// <para>
 /// <b>Disposing this ends every session</b>, each browser asked to close first
 /// (<see cref="SessionManager.DisposeAsync"/>); ending one connection only detaches
 /// what it drove (<see cref="EndAsync"/>).
@@ -30,19 +36,16 @@ internal sealed class SessionHost : IAsyncDisposable
 {
     private int _disposed;
 
-    private SessionHost(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ILoggerFactory loggerFactory)
+    private SessionHost(SessionManager sessions, SessionEnvironment environment, ILoggerFactory loggerFactory)
     {
-        Surface = surface;
         Sessions = sessions;
-        Verdicts = verdicts;
+        Verdicts = environment.Verdicts;
+        UpstreamTools = environment.UpstreamTools;
         LoggerFactory = loggerFactory;
     }
 
     /// <summary>Where the host and every proxy over it log.</summary>
     public ILoggerFactory LoggerFactory { get; }
-
-    /// <summary>The child that answers <c>tools/list</c> before any session exists.</summary>
-    public ChildConnection Surface { get; }
 
     /// <summary>Every session this process holds.</summary>
     public SessionManager Sessions { get; }
@@ -50,63 +53,23 @@ internal sealed class SessionHost : IAsyncDisposable
     /// <summary>What this build does with a call naming each tool.</summary>
     public ToolVerdicts Verdicts { get; }
 
-    /// <summary>Starts the tool list's own child over a transport, and the sessions beside it.</summary>
-    /// <param name="transport">The transport to the tool list's child. The SDK client owns it.</param>
-    /// <param name="loggerFactory">Where the host, its children and its sessions log.</param>
-    /// <param name="environment">Where sessions keep their index, payload and configs.</param>
-    /// <param name="cancellationToken">Cancels the connect.</param>
+    /// <summary>Upstream's tools as this build was compiled with them.</summary>
+    public UpstreamToolList UpstreamTools { get; }
+
+    /// <summary>Makes the sessions' manager, and nothing else: no child is started.</summary>
+    /// <param name="loggerFactory">Where the host and its sessions log.</param>
+    /// <param name="environment">Where sessions keep their index, payload and configs, and the list and verdicts.</param>
     /// <returns>The host.</returns>
-    public static async Task<SessionHost> ConnectAsync(
-        IClientTransport transport,
-        ILoggerFactory loggerFactory,
-        SessionEnvironment environment,
-        CancellationToken cancellationToken = default)
+    public static SessionHost Create(ILoggerFactory loggerFactory, SessionEnvironment environment)
     {
-        ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(environment);
 
-        // CA2000 is disabled for these two statements and nothing else, for the
-        // reason BrowserProxy has always given: both are IAsyncDisposable, owned by
-        // the host once it exists, and disposed in the finally on every path that
-        // does not get that far.
-        SessionManager? sessions = null;
-        ChildConnection? surface = null;
-
-        try
-        {
+        // CA2000 is disabled for this one statement: the manager is
+        // IAsyncDisposable and owned by the host from here, which disposes it.
 #pragma warning disable CA2000
-            sessions = new SessionManager(environment, loggerFactory);
-
-            // The tool list's child carries no session and no progress worth
-            // relaying: `tools/list` has no progress token to report against.
-            surface = await ChildConnection.ConnectAsync(
-                transport,
-                loggerFactory,
-                "browserai-",
-                static (_, _) => ValueTask.CompletedTask,
-                cancellationToken).ConfigureAwait(false);
+        return new SessionHost(new SessionManager(environment, loggerFactory), environment, loggerFactory);
 #pragma warning restore CA2000
-
-            var host = new SessionHost(surface, sessions, environment.Verdicts, loggerFactory);
-
-            sessions = null;
-            surface = null;
-
-            return host;
-        }
-        finally
-        {
-            if (surface is not null)
-            {
-                await surface.DisposeAsync().ConfigureAwait(false);
-            }
-
-            if (sessions is not null)
-            {
-                await sessions.DisposeAsync().ConfigureAwait(false);
-            }
-        }
     }
 
     /// <summary>A proxy for one more connection, over this host's sessions.</summary>
@@ -133,10 +96,9 @@ internal sealed class SessionHost : IAsyncDisposable
             return;
         }
 
-        // Sessions first: each owns a child whose job holds a browser, and each
-        // holds a directory lock that should be released while the process is
-        // still able to log why.
+        // Each session owns a child whose job holds a browser, and each holds a
+        // directory lock that should be released while the process is still able
+        // to log why.
         await Sessions.DisposeAsync().ConfigureAwait(false);
-        await Surface.DisposeAsync().ConfigureAwait(false);
     }
 }

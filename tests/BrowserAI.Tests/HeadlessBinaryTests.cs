@@ -93,7 +93,10 @@ internal sealed class HeadlessBinaryTests
             browsers,
             work,
             Path.Combine(work, "playwright-mcp.config.json"),
-            BrowserConfiguration.ForSurface(work));
+
+            // A session's config, the only kind left since 2026-10-08 (previously
+            // the run's own child's, deleted that day with the tool list compiled in).
+            BrowserConfiguration.ForSession(SessionPath.For(Path.Combine(scratch.Path, "session")), headed: false, BrowserConfiguration.BrowserName, transcript: false, RunOptions.Default));
 
         await using var client = RawStdioClient.Start(
             options.Command,

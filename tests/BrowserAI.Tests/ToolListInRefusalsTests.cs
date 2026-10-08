@@ -46,7 +46,7 @@ internal sealed class ToolListInRefusalsTests
     public async Task ANameBrowserAiDoesNotHaveIsAnsweredWithEveryToolItHasAndWhatEachDoes()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
         var answer = await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -79,9 +79,9 @@ internal sealed class ToolListInRefusalsTests
     [Test]
     public async Task TheStaleListRefusalNamesEveryToolTheServerHasNow()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false,
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions,
             listsBeforeCalling: false);
 

@@ -618,14 +618,15 @@ internal static class SessionErrors
     /// doesn't have: a) Yes, in the same lane."</i> A name the tool list does not
     /// carry and the verdicts file has no row for gets
     /// <see cref="ToolDoesNotExist"/> now; this is left to a name the list
-    /// carries with no row, which is a defect in the build. <b>How it can still
-    /// happen at run time</b>: the list is read from the run's own child, so a
-    /// payload carrying an upstream tool the shipped verdicts file was never told
-    /// about -- a developer build run after a payload was resolved again and
-    /// before it was adjudicated, while its suite is red, or an install whose
-    /// payload or verdicts file was changed by hand -- advertises the name and
+    /// carries with no row, which is a defect in the build. ⚠️ <i>Corrected
+    /// 2026-10-08 (previously "<b>How it can still happen at run time</b>: the list
+    /// is read from the run's own child, so a payload carrying an upstream tool the
+    /// shipped verdicts file was never told about [...] advertises the name and
     /// refuses it here. And when the run's own child cannot be asked for its list
-    /// at all, a name with no row lands here too, whatever it is. <i>Previously:
+    /// at all, a name with no row lands here too, whatever it is.")</i>: the list and
+    /// the verdicts are both compiled into the binary since that day, and
+    /// <c>ToolVerdictTests</c> holds the two against each other on every build, so
+    /// only a build that shipped with its suite red can reach this. <i>Previously:
     /// "BrowserAI has no forwarding verdict for the tool you named, so nothing was
     /// sent to the browser and nothing was changed. This is a GAP, not a decision:
     /// a tool this build was deliberately told not to forward refuses with its own
@@ -694,9 +695,11 @@ internal static class SessionErrors
     /// <b>Held under what a client hands a model whole</b>, by
     /// <c>ToolListInRefusalsTests</c>: the longest spelling, with the whole surface
     /// this build advertises, is measured against
-    /// <see cref="ClientTruncationBudget.ErrorResultCharacters"/>. Nothing is added
-    /// when the list could not be read, because a block naming BrowserAI's own tools
-    /// alone would say the browser tools are gone.
+    /// <see cref="ClientTruncationBudget.ErrorResultCharacters"/>. ⚠️ <i>Corrected
+    /// 2026-10-08 (previously "Nothing is added when the list could not be read,
+    /// because a block naming BrowserAI's own tools alone would say the browser
+    /// tools are gone")</i>: the list is compiled into the binary and is always
+    /// read, so the block is added whenever a list is handed in.
     /// </para>
     /// </remarks>
     /// <param name="tools">The list, or <see langword="null"/>.</param>
@@ -1323,6 +1326,34 @@ internal static class SessionErrors
     public static string BrowserRuntimeDidNotStart(string path, string why) =>
         $"The browser runtime for '{path}' did not start: {why} The directory is left as it is, nothing is running, and the lock has been released. "
         + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
+
+    /// <summary>
+    /// The session's browser server lists tools that differ from the list this
+    /// BrowserAI was built with: the install is broken, and the session does not
+    /// open.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-08 with the tool list compiled into the binary</b>, step 1
+    /// of the one-binary plan. Each session's child is asked <c>tools/list</c>
+    /// right after its handshake, before any page exists, and its answer is
+    /// compared byte for byte with <see cref="UpstreamToolList"/>. The payload and
+    /// the binary are packed and replaced together, so a difference means one of
+    /// them is not what was built: a payload changed by hand, an update left half
+    /// done, or a developer build run against a payload resolved again since.
+    /// </para>
+    /// <para>
+    /// <b>It names the first tool that differs and nothing more.</b> What follows
+    /// is a person's to repair, and the sentence says so: no retry and no other
+    /// session can succeed until the install is put right.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The session directory.</param>
+    /// <param name="difference">The first difference, as <see cref="UpstreamToolList.FirstDifference"/> words it.</param>
+    /// <returns>The refusal.</returns>
+    public static string InstallIsBroken(string path, string difference) =>
+        $"BrowserAI did not open '{path}': this BrowserAI install is broken. The browser server it starts for every session lists different tools from the list this BrowserAI was built with, and the first difference is {difference}. "
+        + "Nothing was opened, nothing is running, and the directory is as it was. Every session will be refused the same way until BrowserAI is reinstalled, so stop and tell the person that it needs reinstalling.";
 
     /// <summary>
     /// Row 7's other companion -- the session's browser server has gone, so the

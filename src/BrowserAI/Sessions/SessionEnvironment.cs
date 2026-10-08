@@ -34,16 +34,31 @@ internal sealed record SessionEnvironment
     /// forwarded, refused or answered here.
     /// </summary>
     /// <remarks>
-    /// <b>Required and not read from <see cref="Payload"/> on demand, and for
-    /// the reason <see cref="Provisioner"/> is.</b> Loading it lazily at the door
-    /// would put a file read -- and a possible failure naming a missing payload --
-    /// on the path of a call that has already been accepted; loading it here
-    /// means a process that cannot read its verdicts never starts serving.
-    /// Handing it in also lets the suite vary the file without writing one, which
-    /// is the only way an arm can plant a second denial or an unjudged name
-    /// without changing what the product ships.
+    /// <b>Required and not read on demand, and for the reason
+    /// <see cref="Provisioner"/> is.</b> Loading it lazily at the door would put a
+    /// read -- and a possible failure naming the file -- on the path of a call that
+    /// has already been accepted; loading it here means a process that cannot read
+    /// its verdicts never starts serving. Handing it in also lets the suite vary the
+    /// file without writing one, which is the only way an arm can plant a second
+    /// denial or an unjudged name without changing what the product ships.
+    /// ⚠️ <i>Corrected 2026-10-08 (previously "Required and not read from
+    /// <c>Payload</c> on demand")</i>: the product's copy is compiled into the
+    /// binary since that day, <see cref="ToolVerdicts.Compiled"/>, and nothing reads
+    /// it from the payload.
     /// </remarks>
     public required ToolVerdicts Verdicts { get; init; }
+
+    /// <summary>
+    /// Upstream's tools as this build was compiled with them: what <c>tools/list</c>
+    /// is answered from, and what each session's child is checked against.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-08, and required for the reason <see cref="Verdicts"/> is.</b>
+    /// The product's is <see cref="UpstreamToolList.Compiled"/>; the in-process rig
+    /// hands in the list its doubles answer, so an arm can vary what is advertised
+    /// without a child to ask.
+    /// </remarks>
+    public required UpstreamToolList UpstreamTools { get; init; }
 
     /// <summary>
     /// First-run browser provisioning: what <c>init</c> starts and never waits

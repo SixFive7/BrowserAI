@@ -13,16 +13,18 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The TRACKED file at the repository root, not the payload's copy.</b> The
-/// two are the same bytes -- a build target copies one to the other, and
-/// <c>ToolVerdictTests</c> asserts the copy landed -- but the tracked one is
-/// there on a clean clone with no payload assembled, so every arm that only
-/// needs to know what this build judges runs without the capability gate.
+/// <b>The TRACKED file at the repository root</b>, which is what the build
+/// compiles into the binary, and <c>BuiltInToolListTests</c> asserts the binary
+/// carries it byte for byte. ⚠️ <i>Corrected 2026-10-08 (previously "not the
+/// payload's copy. The two are the same bytes -- a build target copies one to the
+/// other"): the payload carries no copy since that day.</i>
 /// </para>
 /// <para>
-/// <b>Read through <see cref="ToolVerdicts.Read"/> and not parsed here.</b> A
+/// <b>Read through <see cref="ToolVerdicts.Parse"/> and not parsed here.</b> A
 /// second reader in the suite would eventually disagree with the product's, and
-/// the disagreement would be reported as a product defect.
+/// the disagreement would be reported as a product defect. <i>Corrected
+/// 2026-10-08 (previously through <c>ToolVerdicts.Read</c>, deleted that day with
+/// the product's last read of the file from disk).</i>
 /// </para>
 /// </remarks>
 internal static class RepositoryVerdicts
@@ -32,7 +34,7 @@ internal static class RepositoryVerdicts
         System.IO.Path.Combine(RepositoryLayout.Root.FullName, ToolVerdicts.FileName);
 
     /// <summary>The committed file, parsed once.</summary>
-    public static ToolVerdicts Committed { get; } = ToolVerdicts.Read(Path);
+    public static ToolVerdicts Committed { get; } = ToolVerdicts.Parse(File.ReadAllBytes(Path), Path);
 
     /// <summary>
     /// Every tool this build ships a <c>deny</c> for, found and not named,

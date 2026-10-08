@@ -13,8 +13,12 @@ is defending against.
 
 **One rule runs through all of it: BrowserAI is a proxy.** It spawns
 `@playwright/mcp` over stdio and forwards JSON-RPC. Every tool schema originates
-from the child's own `tools/list` at runtime, no tool definition is written in
-C#, and Playwright is never driven directly. Rewriting the advertised surface --
+from the child's own `tools/list`, taken at build time from the same pinned
+payload and checked against the live child at run time; no tool definition is
+written in C#, and Playwright is never driven directly. *Corrected 2026-10-08
+(previously "Every tool schema originates from the child's own `tools/list` at
+runtime"), when the list was compiled into the binary:
+[the tool list](#the-tool-list-compiled-into-the-binary).* Rewriting the advertised surface --
 filtering it, appending to descriptions, injecting a `session` parameter -- is in
 scope; renaming, or composing new tools out of several upstream calls, is not.
 
@@ -272,6 +276,9 @@ short-circuits both methods, and the answer is the child's `result` sliced by
 `Utf8JsonReader` token offset and written with `WriteRawValue`. That is what makes
 passthrough lossless -- an unknown content type, an unmodelled tool member and a
 non-ASCII character all survive, none of which a typed round trip preserves.
+⚠️ *Corrected 2026-10-08 by addition:* for `tools/list` the child's own bytes are
+the ones the payload's child gave the build, compiled into the binary, and no child
+is asked at run time; a `tools/call` answer is still the session's child's.
 
 **A call is refused, not forwarded, when the session's child has gone.**
 ⚠️ *Added 2026-09-17.* `BrowserProxy` asks `ChildConnection.ChildHasGone`
@@ -289,6 +296,35 @@ faulted by nothing
 always been answered: the SDK faults it as `IOException: The server shut down
 unexpectedly`. **No timeout was added**, here or anywhere on the forward path;
 the wait was not slow, it was endless.
+
+### The tool list, compiled into the binary
+
+**Step 1 of the [one-binary plan](docs/design/one-binary/README.md), built
+2026-10-08.** The maintainer's words of 2026-10-04, verbatim: *"I'd argue that the
+relay always answers the tool list from the binary. I see no reason why it would
+ever defer to Playwright, as the Playwright version is bound to that binary version
+is it not?"* Until then every server, and the session host, started a Playwright
+child of its own before it answered its handshake, for one purpose: to be asked
+`tools/list`. That child, its configuration (`BrowserConfiguration.ForSurface`)
+and its place in the run's directory are deleted, so a server answers its
+handshake and its tool list at once and starts a child only for a session.
+
+| Concern | Implemented by |
+|---|---|
+| The list, compiled in from `upstream-snapshots/tools-list.json`, and the bytes a correctly installed child writes | `src/BrowserAI/Sessions/UpstreamToolList.cs`, embedded by `src/BrowserAI/BrowserAI.csproj` |
+| Answering `tools/list` from it, through the rewrite | `BrowserProxy.AnswerToolsListAsync`, `SessionToolSurface.Rewrite` |
+| Holding each session's child to it byte for byte, right after its handshake | `UpstreamToolList.CheckSessionChildAsync`, called from `SessionManager.OpenAsync` |
+| What a difference answers: a broken install, naming the first tool that differs | `SessionErrors.InstallIsBroken` |
+| The verdicts beside it | `ToolVerdicts.Compiled`, embedded the same way |
+
+**Byte for byte, and measured to hold**: the child writes its list with
+`JSON.stringify`, the snapshot generator writes the same value indented, and with
+the indentation taken out the two are the same 45,612 bytes under every session
+configuration tried, Chromium and Firefox, hidden and headed
+([kb](kb/playwright/tools-and-artifacts.md#the-list-compiled-into-the-binary-is-the-childs-own-bytes----measured-2026-10-08)).
+The question is asked before any page exists, so a page's own tools never take
+part. Q261 b's refusal of a tool list that predates the server is unchanged: it
+reads the same compiled list.
 
 ### Byte-identical, and the one exception
 
@@ -815,7 +851,9 @@ page's text, whatever the verdicts file says.
 That type is deleted. **The judgement is a file now** --
 [`tool-verdicts.json`](tool-verdicts.json), one row per tool, shipped inside the
 payload it describes and read at startup -- and the sentence above is a fact about
-what the file says, not about what the code decides. ⚠️ **`browser_annotate` was
+what the file says, not about what the code decides. *Corrected 2026-10-08 by
+addition: compiled into the binary beside the tool list since that day, and the
+payload carries no copy.* ⚠️ **`browser_annotate` was
 the only `deny` this build shipped until 2026-09-15** *(previously "is still the
 only `deny` this build ships")*; `browser_webmcp_call` is the second, and the
 reasoning that was a doc comment beside a C# constant is now each row's own
@@ -831,9 +869,8 @@ a constant could not.
 | Concern | Implemented by |
 |---|---|
 | What this build knows of every tool, and what it does with a call naming one | [`tool-verdicts.json`](tool-verdicts.json), tracked at the repository root |
-| Reading it, and refusing to serve on one it cannot read | `src/BrowserAI/Sessions/ToolVerdicts.cs` |
-| Where it lives at run time, and an incomplete payload naming itself | `PayloadLayout.ToolVerdicts`, `PayloadLayout.Verify` |
-| Getting the tracked copy into the payload | `CopyToolVerdictsIntoThePayload`, in `src/BrowserAI/BrowserAI.csproj` |
+| Reading it, and refusing to serve on one it cannot read | `src/BrowserAI/Sessions/ToolVerdicts.cs`, through `ToolVerdicts.Compiled` |
+| Where it lives at run time | Inside the binary, embedded by `src/BrowserAI/BrowserAI.csproj` -- *corrected 2026-10-08 (previously "`PayloadLayout.ToolVerdicts`, `PayloadLayout.Verify`", the payload's copy, and "Getting the tracked copy into the payload: `CopyToolVerdictsIntoThePayload`"); the build removes a copy a payload assembled earlier still holds, `RemoveTheVerdictsLeftInThePayload`* |
 | The door, and the advertised list | `BrowserProxy.AnswerToolsCallAsync`, `SessionToolSurface.Rewrite` |
 | That it agrees with the golden snapshot, both directions | `ToolVerdictTests` |
 | A BrowserAI note appended to an allowed tool's description, *added 2026-10-04* | `ToolVerdicts`, `SessionToolSurface.Rewrite` |

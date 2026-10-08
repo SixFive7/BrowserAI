@@ -10,8 +10,8 @@ using ModelContextProtocol.Server;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// The session host in process: one <see cref="SessionHost"/> over a fake tool-list
-/// child and a rig's session doubles, and any number of client connections to it.
+/// The session host in process: one <see cref="SessionHost"/> over a rig's session
+/// doubles, and any number of client connections to it.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -28,27 +28,28 @@ namespace BrowserAI.Tests.Harness;
 /// closes, the server's read sees the end of input, and the proxy is disposed, which
 /// detaches what it drove. Nothing in the host is told anything else.
 /// </para>
+/// <para>
+/// ⚠️ <i>Corrected 2026-10-08 (previously "over a fake tool-list child and a rig's
+/// session doubles", with that double started first): the host answers
+/// <c>tools/list</c> from the list compiled into the binary, here the rig's own
+/// list, and starts no child for it.</i>
+/// </para>
 /// </remarks>
 internal sealed class SessionHostRig : IAsyncDisposable
 {
     private readonly List<HostConnection> _connections = [];
     private readonly ILoggerFactory _loggerFactory;
-    private readonly PipeDuplex _surfaceHop;
     private int _clients;
     private int _disposed;
 
     private SessionHostRig(
         SessionHost host,
         RigSessionEnvironment sessions,
-        FakePlaywrightChild surface,
-        PipeDuplex surfaceHop,
         ILoggerFactory loggerFactory,
         CapturingLoggerProvider logs)
     {
         Host = host;
         Sessions = sessions;
-        Surface = surface;
-        _surfaceHop = surfaceHop;
         _loggerFactory = loggerFactory;
         Logs = logs;
     }
@@ -59,16 +60,13 @@ internal sealed class SessionHostRig : IAsyncDisposable
     /// <summary>The environment its sessions are opened in.</summary>
     public RigSessionEnvironment Sessions { get; }
 
-    /// <summary>The double that answers <c>tools/list</c>.</summary>
-    public FakePlaywrightChild Surface { get; }
-
     /// <summary>Everything the product logged.</summary>
     public CapturingLoggerProvider Logs { get; }
 
     /// <summary>Starts a host over a rig's sessions.</summary>
     /// <param name="sessions">The rig's sessions, which the caller owns and disposes after this.</param>
     /// <returns>The rig, with no connection yet.</returns>
-    public static async Task<SessionHostRig> StartAsync(RigSessionEnvironment sessions)
+    public static Task<SessionHostRig> StartAsync(RigSessionEnvironment sessions)
     {
         ArgumentNullException.ThrowIfNull(sessions);
 
@@ -82,27 +80,7 @@ internal sealed class SessionHostRig : IAsyncDisposable
 
         sessions.CaptureSessionRecordsInto(logs);
 
-        var surfaceHop = new PipeDuplex("surface hop (session host ↔ fake child)");
-        var surface = new FakePlaywrightChild(surfaceHop);
-        surface.Start();
-
-        try
-        {
-            var host = await SessionHost.ConnectAsync(
-                new PipeClientTransport(surfaceHop, loggerFactory),
-                loggerFactory,
-                sessions.Environment);
-
-            return new SessionHostRig(host, sessions, surface, surfaceHop, loggerFactory, logs);
-        }
-        catch
-        {
-            await surfaceHop.CompleteWritersAsync();
-            await surface.DisposeAsync();
-            loggerFactory.Dispose();
-            logs.Dispose();
-            throw;
-        }
+        return Task.FromResult(new SessionHostRig(SessionHost.Create(loggerFactory, sessions.Environment), sessions, loggerFactory, logs));
     }
 
     /// <summary>A new client connection, handshaken and, unless asked not to, listed.</summary>
@@ -168,8 +146,6 @@ internal sealed class SessionHostRig : IAsyncDisposable
         }
 
         await Host.DisposeAsync();
-        await _surfaceHop.CompleteWritersAsync();
-        await Surface.DisposeAsync();
 
         _loggerFactory.Dispose();
         Logs.Dispose();

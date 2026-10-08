@@ -310,28 +310,38 @@
   </Target>
 
   <!--
-    The verdicts file travels INSIDE the payload, so the tracked copy at the
-    repository root is copied in on every build.
+    THE TOOL LIST AND THE VERDICTS ARE COMPILED INTO THE BINARY, added
+    2026-10-08: step 1 of the one-binary plan, the maintainer's words of
+    2026-10-04 verbatim: "I'd argue that the relay always answers the tool list
+    from the binary. I see no reason why it would ever defer to Playwright, as
+    the Playwright version is bound to that binary version is it not?"
 
-    Here and not in build/Build-Payload.ps1, and that is the whole of the
-    reason: the payload build resolves npm and downloads node, so a rule that
-    only it applied would mean editing tool-verdicts.json had no effect until
-    somebody re-ran a several-minute step, and the suite, which reads the
-    assembled payload, would go on testing yesterday's file. This runs on every
-    build, is incremental against the source, and is the ONE place the copy
-    happens; a second copier would be a second answer to "which file ships".
-
-    Conditional on payload.json for the same reason AddPayloadToPublish is: a
-    clean clone has no payload/ at all, and writing one file into a directory
-    that does not exist would manufacture a payload that is 99% missing.
+    The snapshot is what build/upstream-snapshots.mjs wrote from the payload's
+    own child, and the build compares it with the payload on every run, so the
+    list compiled in and the Playwright beside it cannot come from two versions.
+    UpstreamToolList reads it, and ToolVerdicts reads the verdicts beside it.
+    Both are read from the repository root and from nowhere else; a missing file
+    is a build that fails naming it.
   -->
-  <Target Name="CopyToolVerdictsIntoThePayload"
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)..\..\upstream-snapshots\tools-list.json"
+                      LogicalName="BrowserAI.upstream-snapshots.tools-list.json" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)..\..\tool-verdicts.json"
+                      LogicalName="BrowserAI.tool-verdicts.json" />
+  </ItemGroup>
+
+  <!--
+    THE PAYLOAD'S COPY OF THE VERDICTS IS GONE, 2026-10-08. Corrected
+    (previously the target CopyToolVerdictsIntoThePayload, "The verdicts file
+    travels INSIDE the payload, so the tracked copy at the repository root is
+    copied in on every build"): the binary carries the file now. A payload
+    assembled before that day still holds a copy, which nothing reads and which
+    would ship and go stale beside the binary that does, so the build removes it.
+  -->
+  <Target Name="RemoveTheVerdictsLeftInThePayload"
           BeforeTargets="Build"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')"
-          Inputs="$(MSBuildThisFileDirectory)..\..\tool-verdicts.json"
-          Outputs="$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json">
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\tool-verdicts.json"
-          DestinationFiles="$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json" />
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json')">
+    <Delete Files="$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json" />
   </Target>
 
   <Target Name="AddPayloadToPublish"

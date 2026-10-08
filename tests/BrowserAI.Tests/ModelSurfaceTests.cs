@@ -293,9 +293,9 @@ internal sealed class ModelSurfaceTests
     public async Task EverySessionGetsEveryCapabilityAndTheNewlyGrantedTenAreInTheSurface()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var missing = new List<string>();
 
         // 1. The two lists agree, in both directions. The product's own list is
@@ -596,9 +596,9 @@ internal sealed class ModelSurfaceTests
     public async Task TheDirectoryAndPurposeAdviceIsOnTheArgumentsItIsAbout()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
 
         string described(string tool, string argument) =>
             (string?)advertised[tool]?["inputSchema"]?["properties"]?[argument]?["description"] ?? string.Empty;
@@ -760,9 +760,9 @@ internal sealed class ModelSurfaceTests
         var missing = new List<string>();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var upstreamScreenshot = UpstreamSurface.SnapshotDescriptions()
             .Single(tool => tool.Name == "browser_take_screenshot").Description;
         var description = (string?)advertised["browser_take_screenshot"]?["description"] ?? string.Empty;
@@ -862,9 +862,9 @@ internal sealed class ModelSurfaceTests
         }
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
 
         foreach (var tool in coordinateTools)
         {
@@ -942,9 +942,9 @@ internal sealed class ModelSurfaceTests
         var missing = new List<string>();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var descriptions = new List<string>();
 
         foreach (var tool in new[] { SessionToolSurface.Init, SessionToolSurface.Resume })
@@ -1051,9 +1051,9 @@ internal sealed class ModelSurfaceTests
     public async Task EveryToolDescriptionFitsTheSameBudget()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var oversized = new List<string>();
 
         foreach (var (name, tool) in advertised)
@@ -1100,9 +1100,9 @@ internal sealed class ModelSurfaceTests
     public async Task TheCreationToolsDescriptionCarriesTheProfileWarningAndTheRetentionPolicy()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var description = (string?)Advertised(rig.SurfaceChild.ToolsListResult)[SessionToolSurface.Init]?["description"] ?? string.Empty;
+        var description = (string?)Advertised(rig.ToolsList)[SessionToolSurface.Init]?["description"] ?? string.Empty;
         var missing = new List<string>();
 
         foreach (var required in RequiredInitPhrases)
@@ -1141,9 +1141,9 @@ internal sealed class ModelSurfaceTests
     public async Task EveryLoadBearingUpstreamPhraseSurvivesOurRewrite()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var lost = new List<string>();
 
         foreach (var (tool, phrase) in LoadBearingUpstreamPhrases)
@@ -1702,9 +1702,9 @@ internal sealed class ModelSurfaceTests
     public async Task EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var upstream = UpstreamSurface.SnapshotDescriptions();
         var offenders = new List<string>();
 
@@ -1960,9 +1960,9 @@ internal sealed class ModelSurfaceTests
         // same reason the description assertions are: the rewrite is what a
         // model receives, and it is the rewrite that could lose a property.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var wrong = new List<string>();
 
         foreach (var (tool, expectedProperties, expectedRequired) in TheAuthoredSignatures)
@@ -2029,9 +2029,9 @@ internal sealed class ModelSurfaceTests
     public async Task EverySchemaInTheSurfaceSaysItTakesNothingItDoesNotList()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var open = advertised
             .Where(tool => tool.Value?["inputSchema"]?["additionalProperties"]?.GetValueKind() is not System.Text.Json.JsonValueKind.False)
             .Select(tool => tool.Key)
@@ -2091,9 +2091,9 @@ internal sealed class ModelSurfaceTests
         await Assert.That(asksForConfirmation(confirmations, "directory")).IsFalse();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var advertised = Advertised(rig.ToolsList);
         var found = new List<string>();
         var examined = 0;
 

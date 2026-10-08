@@ -47,8 +47,8 @@ internal enum ToolVerdictKind
 internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Why, string? Since, string? Note = null);
 
 /// <summary>
-/// Every tool BrowserAI knows of, read from the <c>tool-verdicts.json</c> that
-/// ships beside the payload it describes.
+/// Every tool BrowserAI knows of, read from the <c>tool-verdicts.json</c> compiled
+/// into the binary beside the tool list it judges.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -93,22 +93,48 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// allowlist.</b> Under deny-by-default an empty set denies everything, so a
 /// silent fallback would present as <i>every tool suddenly refused</i> with
 /// nothing anywhere naming the file. Every refusal below names the file and what
-/// was wrong with it, and <see cref="Runtime.PayloadLayout.Verify"/> reports an
-/// absent one as an incomplete payload before a child is ever started.
+/// was wrong with it.
+/// </para>
+/// <para>
+/// ⚠️ <b>Compiled into the binary since 2026-10-08</b>, with the tool list it
+/// judges (<see cref="UpstreamToolList"/>). <i>Corrected (previously "the
+/// <c>tool-verdicts.json</c> that ships beside the payload it describes", read from
+/// the payload at startup through <c>Read</c>, and "<c>PayloadLayout.Verify</c>
+/// reports an absent one as an incomplete payload before a child is ever
+/// started")</i>. A file that is absent is a build that fails naming it, and one
+/// this code cannot read fails the first read of <see cref="Compiled"/>, at
+/// startup, with the loader's own sentence.
 /// </para>
 /// </remarks>
 internal sealed class ToolVerdicts
 {
-    /// <summary>The file this is read from, at the repository root and in the payload.</summary>
+    /// <summary>The file the build compiles in, at the repository root.</summary>
     public const string FileName = "tool-verdicts.json";
+
+    /// <summary>The name the build gives the file it compiles into the binary.</summary>
+    public const string ResourceName = "BrowserAI.tool-verdicts.json";
+
+    private static readonly Lazy<ToolVerdicts> CompiledVerdicts = new(FromResource);
+
+    /// <summary>The verdicts this binary was built with.</summary>
+    /// <remarks>
+    /// <b>A <see cref="Lazy{T}"/> and not a static initializer</b>, so that a file
+    /// this build cannot read fails the first read with the loader's own sentence
+    /// naming the resource, and not with a type initializer's.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The build embedded no verdicts, or ones this code cannot read.</exception>
+    public static ToolVerdicts Compiled => CompiledVerdicts.Value;
 
     /// <summary>
     /// The only schema this build can read.
     /// </summary>
     /// <remarks>
-    /// Checked and not ignored: the file travels inside the payload, which an
-    /// update replaces wholesale, so a binary meeting a shape it does not
-    /// understand should say so instead of reading the half it recognises.
+    /// Checked and not ignored: a shape this code does not understand should be
+    /// said instead of read by the half it recognises. ⚠️ <i>Corrected 2026-10-08
+    /// (previously "the file travels inside the payload, which an update replaces
+    /// wholesale, so a binary meeting a shape it does not understand should say
+    /// so")</i>: the file is compiled in, so the meeting happens at the first read
+    /// of a build that changed one without the other.
     /// </remarks>
     public const int SchemaVersion = 1;
 
@@ -176,31 +202,34 @@ internal sealed class ToolVerdicts
     /// </summary>
     /// <remarks>
     /// Nothing at run time compares this with the child that is actually running:
-    /// the file travels inside the payload it describes, so the two move
-    /// together or the install is broken in a way this check could not repair.
-    /// What compares it is <c>ToolVerdictTests</c>, against the committed payload
-    /// lock, which is where a disagreement is still fixable.
+    /// the file is compiled into the binary that is packed with the payload it
+    /// describes, so the two move together or the install is broken, which is what
+    /// each session's check on its child's tool list says
+    /// (<see cref="UpstreamToolList"/>). What compares it is <c>ToolVerdictTests</c>,
+    /// against the committed payload lock, which is where a disagreement is still
+    /// fixable. <i>Corrected 2026-10-08 (previously "the file travels inside the
+    /// payload it describes").</i>
     /// </remarks>
     public IReadOnlyDictionary<string, string> JudgedAgainst { get; }
 
-    /// <summary>Reads the file from disk.</summary>
-    /// <param name="path">The file, named absolutely.</param>
+    // ⚠️ DELETED 2026-10-08: `Read(string path)`, which read the payload's copy of
+    // the file at startup and refused a missing one as an incomplete payload. The
+    // file is compiled into the binary since that day, `Compiled` below, and
+    // nothing reads it from disk.
+
+    /// <summary>Reads the copy the build compiled into the binary.</summary>
     /// <returns>The verdicts.</returns>
-    /// <exception cref="FileNotFoundException">There is no such file.</exception>
-    /// <exception cref="InvalidOperationException">There is one and this build cannot read it.</exception>
-    public static ToolVerdicts Read(string path)
+    /// <exception cref="InvalidOperationException">There is no such resource, or it cannot be read.</exception>
+    private static ToolVerdicts FromResource()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        using var stream = typeof(ToolVerdicts).Assembly.GetManifestResourceStream(ResourceName)
+            ?? throw new InvalidOperationException(
+                $"This BrowserAI was built without its tool verdicts: the resource '{ResourceName}' is not in the binary, so it cannot tell which tools it may forward.");
 
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException(
-                $"The payload is incomplete: '{path}' does not exist, so BrowserAI cannot tell which tools it is allowed to forward. "
-                + "Every call would be refused. Run build/Build-Payload.ps1 and rebuild, or reinstall.",
-                path);
-        }
+        using var bytes = new MemoryStream();
+        stream.CopyTo(bytes);
 
-        return Parse(File.ReadAllBytes(path), path);
+        return Parse(bytes.ToArray(), ResourceName);
     }
 
     /// <summary>Reads the file from bytes somebody else supplied.</summary>

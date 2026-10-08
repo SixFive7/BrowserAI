@@ -144,7 +144,9 @@ internal interface IAppPaths
     /// and not part of a session's durable state -- and no artifact is ever at
     /// a session's root, so a third file there is out. See
     /// <see cref="Sessions.SessionLayout"/> for what the root is allowed to hold
-    /// and why.
+    /// and why. ⚠️ <i>Corrected 2026-10-08 by addition:</i> the first of the two
+    /// went that day, when the tool list was compiled into the binary and the run's
+    /// own child stopped being started; the second is what this directory is for.
     /// </para>
     /// <para>
     /// <b>Corrected 2026-08-16 (previously "Sessions replace this at build-order

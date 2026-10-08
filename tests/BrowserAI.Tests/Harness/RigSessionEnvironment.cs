@@ -71,10 +71,24 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ManualClock? clock,
         bool realSessionChildren,
         ToolVerdicts? verdicts,
-        string? holdBrowserCloseUntil = null)
+        string? holdBrowserCloseUntil = null,
+        string? toolsList = null)
     {
         Root = root;
         Clock = clock;
+
+        // ⚠️ THE LIST THE BINARY ANSWERS WITH, handed in -- 2026-10-08, when the
+        // product began compiling it in and stopped asking a child of its own.
+        // Real children answer the real list, so a rig of them uses the product's
+        // own; a rig of doubles uses whatever the arm gives, the double's two
+        // tools by default, and every double it starts answers the same list, so
+        // each session's check on its child's list passes unless an arm makes a
+        // double answer something else.
+        var upstream = realSessionChildren
+            ? UpstreamToolList.Compiled
+            : UpstreamToolList.Parse(System.Text.Encoding.UTF8.GetBytes(toolsList ?? FakePlaywrightChild.DefaultToolsList), "the rig's tool list");
+
+        ToolsList = System.Text.Encoding.UTF8.GetString(upstream.ResultBytes);
 
         // ⚠️ THE ONE RIG THAT STARTS A REAL BROWSER STARTS IT WITHOUT A WINDOW,
         // and that is decided HERE and not at the call site so it cannot be
@@ -162,9 +176,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             Paths = paths,
             Payload = RepositoryPayload.Layout,
 
-            // The committed file and not the payload's copy of it: the two
-            // are the same bytes and only one of them exists on a clean clone.
+            // The committed file, which is what the build compiles in.
             Verdicts = verdicts ?? RepositoryVerdicts.Committed,
+            UpstreamTools = upstream,
             Provisioner = Provisioner,
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
@@ -249,6 +263,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                     // relative `filename` this double is handed resolves where
                     // upstream would resolve it.
                     WorkingDirectory = options.WorkingDirectory,
+
+                    // The list the binary answers with, as a correctly installed
+                    // child answers it; an arm can program another after this.
+                    ToolsListResult = ToolsList,
                 };
 
                 configure?.Invoke(child);
@@ -295,6 +313,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// and checks by hand. Added 2026-10-08 with F4.
     /// </summary>
     public RigDesktop Desktop { get; } = new();
+
+    /// <summary>
+    /// The list this rig's BrowserAI answers <c>tools/list</c> with before the
+    /// rewrite, as the bytes a session's child is checked against.
+    /// </summary>
+    public string ToolsList { get; }
 
     /// <summary>The scratch tree every session this rig opens lives under.</summary>
     public string Root { get; }
@@ -456,6 +480,13 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// in <see cref="CloseRelayProbePath"/>, which runs the real child behind it, so
     /// a close is still running when an arm wants it to be.
     /// </param>
+    /// <param name="toolsList">
+    /// For a rig of doubles: the list the BrowserAI over this rig answers
+    /// <c>tools/list</c> with before the rewrite, which every double answers too
+    /// unless <paramref name="configure"/> programs another. Defaults to the
+    /// double's own two tools. A rig of real children answers the compiled list
+    /// and ignores this.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
@@ -465,8 +496,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ManualClock? clock = null,
         bool realSessionChildren = false,
         ToolVerdicts? verdicts = null,
-        string? holdBrowserCloseUntil = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil)
+        string? holdBrowserCloseUntil = null,
+        string? toolsList = null) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList)
         {
             OpensDefaultSession = opensDefaultSession,
         };

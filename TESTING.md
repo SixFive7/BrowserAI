@@ -109,6 +109,19 @@ cut. `VerticalSliceTests` also asserts every one of those names gained
 BrowserAI's `session` parameter, because a tool that slipped through the rewrite
 would be answerable by the run's own child.
 
+⚠️ *Added 2026-10-08 by addition: the snapshot is what the product answers with
+since that day.* The server compiles `upstream-snapshots/tools-list.json` in and
+answers `tools/list` from it, so the comparison above now runs at two moments: the
+build regenerates the snapshot from the payload and fails on a difference, and every
+session the product opens asks its own child for its list and refuses to open on a
+difference, byte for byte. `BuiltInToolListTests` holds the published server
+answering with nothing from the payload running, a real session opening in each
+family, the binary carrying the snapshot and the comparison naming the first tool
+that differs; `ErrorCatalogueTests.TheInstallIsBrokenRowIsEmittedByASessionChildWhoseListDiffers`
+holds the refusal. **`LosslessPassthroughTests` changed meaning with it**: it held the
+rewrite of a list the run's own child answered, and holds the rewrite of the list
+the rig hands its BrowserAI, which is what the product compiles in.
+
 ⚠️ *Corrected 2026-08-18 (previously "assert **every** tool name carries an
 explicit session-type classification. An unclassified tool fails the build. That
 turns 'a new upstream tool leaks into interactive mode' from a security incident
@@ -1272,7 +1285,7 @@ What we build, and what each replaces:
 | Component | Purpose | Replaces |
 |---|---|---|
 | `McpTestHarness` | The **two-hop** topology: test client → BrowserAI (server) ... BrowserAI (client) → fake child. Two pipe pairs, not one. | `ClientServerTestBase` |
-| `FakePlaywrightChild` | Scriptable in-process MCP server standing in for `@playwright/mcp`: canned `tools/list`, programmable `tools/call` results, injectable errors, delays, oversized payloads, unknown content types, mid-call death | `TestServerTransport` |
+| `FakePlaywrightChild` | Scriptable in-process MCP server standing in for each session's `@playwright/mcp` -- *since 2026-10-08 only the sessions': the rig stands no double where the run's own child was, and hands its BrowserAI the list the product compiles in, which each double answers unless an arm programs another*: canned `tools/list`, programmable `tools/call` results, injectable errors, delays, oversized payloads, unknown content types, mid-call death | `TestServerTransport` |
 | `TUnitLoggerProvider` | Routes `ILogger` into TUnit's per-test output | `XunitLoggerProvider` + `DelegatingTestOutputHelper` |
 | `CapturingLoggerProvider` | Captures log records for assertions | `MockLoggerProvider` |
 | `TestDefaults` | The suite's whole vocabulary of **hang detectors** -- `InProcessHang`, `ProcessHang`, `BrowserHang` -- plus the probe-timeout pin above and the initialization pin below | `TestConstants` |

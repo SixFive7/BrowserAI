@@ -139,9 +139,13 @@ internal sealed class UpdateInProgressTests
     /// <para>
     /// <b>The list is the one a server without an updater gives</b>: every authored
     /// name, and the upstream tools with BrowserAI's <c>session</c> parameter
-    /// injected, which only the run's own child can supply. So the child is in the
-    /// server's job here, and that is the cost the decision took: a server started
-    /// before an apply's swap is ended by its kill pass, child and all.
+    /// injected. ⚠️ <i>Corrected 2026-10-08 (previously "which only the run's own
+    /// child can supply. So the child is in the server's job here, and that is the
+    /// cost the decision took: a server started before an apply's swap is ended by
+    /// its kill pass, child and all")</i>: the list is compiled into the binary
+    /// since that day, so no child is in the server's job until a session opens,
+    /// and a server started before an apply's swap is ended by its kill pass with
+    /// nothing under it.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

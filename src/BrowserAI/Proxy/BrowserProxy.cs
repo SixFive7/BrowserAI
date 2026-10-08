@@ -13,7 +13,6 @@ using BrowserAI.Sessions;
 using BrowserAI.Storage;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
-using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -44,10 +43,13 @@ namespace BrowserAI.Proxy;
 /// byte-identical</b>, because rewriting it is the job: the five authored tools
 /// go in front and a required <c>session</c> parameter is injected into every
 /// upstream <c>inputSchema</c>. The rewrite is done on the
-/// <see cref="JsonNode"/> the child sent, never on a typed schema, so a
-/// tool-level member no contract knows about still survives --
+/// <see cref="JsonNode"/> parsed from the child's own answer, never on a typed
+/// schema, so a tool-level member no contract knows about still survives --
 /// <c>LosslessPassthroughTests</c> asserts exactly that. Renaming remains
-/// forbidden: upstream names pass through byte for byte.
+/// forbidden: upstream names pass through byte for byte. ⚠️ <i>Corrected
+/// 2026-10-08 (previously "the <see cref="JsonNode"/> the child sent"): the answer
+/// is the one the payload's child gave the build, compiled into the binary, and
+/// each session's child is held to it byte for byte (<see cref="UpstreamToolList"/>).</i>
 /// </para>
 /// <para>
 /// <b>There is deliberately no typed fallback.</b> <c>Handlers</c> carries
@@ -105,20 +107,21 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
     private readonly SessionHost _host;
     private readonly bool _ownsHost;
-    private readonly ChildConnection _surface;
     private readonly SessionManager _sessions;
     private readonly ToolVerdicts _verdicts;
+    private readonly UpstreamToolList _upstream;
     private readonly ILogger _logger;
 
     private int _disposed;
 
     /// <summary>
-    /// What every tool in the surface takes, read off the list this server last
-    /// answered <c>tools/list</c> with, or <see langword="null"/> before the first.
+    /// What every tool in the surface takes, read off the list this server
+    /// answers <c>tools/list</c> with, or <see langword="null"/> before the first
+    /// reading.
     /// </summary>
     /// <remarks>
     /// One list for the whole run: the surface is static, and every reading of it
-    /// is the same list. See <see cref="SignaturesAsync"/>.
+    /// is the same list. See <see cref="Signatures"/>.
     /// </remarks>
     private ToolSignatures? _signatures;
 
@@ -138,9 +141,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>Set on ARRIVAL and not on a successful answer.</b> The question is
-    /// whether the client asked, not whether the child managed to reply: a
-    /// <c>tools/list</c> the run's own child failed to answer still tells us the
+    /// whether the client asked, not whether the answer reached it: a
+    /// <c>tools/list</c> whose answer could not be written still tells us the
     /// client is not working from a list it inherited from a dead server.
+    /// <i>Corrected 2026-10-08 (previously "not whether the child managed to reply:
+    /// a <c>tools/list</c> the run's own child failed to answer"): the list is
+    /// answered from the binary and no child is asked for it.</i>
     /// </para>
     /// </remarks>
     private int _toolsListed;
@@ -181,9 +187,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
         _host = host;
         Connection = connection;
         _ownsHost = ownsHost;
-        _surface = host.Surface;
         _sessions = host.Sessions;
         _verdicts = host.Verdicts;
+        _upstream = host.UpstreamTools;
         Activity = activity;
         _logger = logger;
     }
@@ -216,9 +222,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
             host.LoggerFactory.CreateLogger<BrowserProxy>());
     }
 
-    /// <summary>The revision negotiated with the run's own child.</summary>
-    public string? NegotiatedChildProtocolVersion => _surface.NegotiatedProtocolVersion;
-
     /// <summary>
     /// What this proxy has been doing, for the server's pipe to describe: its
     /// client, and when its tool calls arrive and finish.
@@ -237,83 +240,42 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <returns>One countdown per open session.</returns>
     public IReadOnlyList<SessionCountdown> SessionCountdowns() => _sessions.Countdowns();
 
-    /// <summary>Starts the run's own child and completes the handshake with it.</summary>
-    /// <param name="options">What to start, from <see cref="Runtime.ChildLaunch"/>.</param>
-    /// <param name="loggerFactory">Where the proxy, the transport and the session log.</param>
-    /// <param name="environment">Where sessions keep their index, payload and configs.</param>
-    /// <param name="activity">
-    /// Where this proxy records what it does for the server's pipe, or
-    /// <see langword="null"/> for a record nobody reads.
-    /// </param>
-    /// <param name="cancellationToken">Cancels the connect.</param>
-    /// <returns>The connected proxy.</returns>
-    public static async Task<BrowserProxy> ConnectAsync(
-        ChildProcessOptions options,
-        ILoggerFactory loggerFactory,
-        SessionEnvironment environment,
-        ServerActivity? activity = null,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(loggerFactory);
-
-        return await ConnectAsync(
-            new DirectStdioClientTransport(options, loggerFactory),
-            loggerFactory,
-            environment,
-            activity,
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Completes the handshake over a transport the caller supplies, and not
-    /// over one this class starts a process for.
-    /// </summary>
+    /// <summary>A server's one proxy, owning a host of its own.</summary>
     /// <remarks>
-    /// <b>The seam exists for the in-process test layer and nothing else uses
-    /// it.</b> A proxy has two hops, so a harness that stands a fake child on the
-    /// far end has to reach the client leg without a process. Everything that
-    /// decides behaviour -- the pinned revision, the negotiation check, the raw
-    /// forwarding path, the <c>tools/list</c> rewrite -- is below this line and
-    /// not above it, so the harness exercises the same code the product runs.
+    /// <para>
+    /// <b>One connection, and it owns its host</b> -- the shape of every server a
+    /// client starts, and of the in-process rig. Since 2026-10-03 the sessions and
+    /// the verdicts live in a <see cref="SessionHost"/> (Q366 b), and a server with
+    /// one connection is a host with one proxy that owns it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Nothing is started and nothing is awaited, since 2026-10-08.</b>
+    /// <i>Corrected (previously <c>ConnectAsync</c>, in two overloads: "Starts the
+    /// run's own child and completes the handshake with it", and one over a
+    /// transport the caller supplied, "The seam exists for the in-process test layer
+    /// and nothing else uses it")</i>. The tool list is compiled into the binary,
+    /// so there is no child to start before a server can answer, and the rig no
+    /// longer needs a seam to stand a double where that child was.
+    /// </para>
     /// </remarks>
-    /// <param name="transport">The client transport to connect over. The SDK client owns it.</param>
-    /// <param name="loggerFactory">Where the proxy and the session log.</param>
-    /// <param name="environment">Where sessions keep their index, payload and configs.</param>
+    /// <param name="loggerFactory">Where the proxy and the sessions log.</param>
+    /// <param name="environment">Where sessions keep their index, payload and configs, and the list and verdicts.</param>
     /// <param name="activity">
     /// Where this proxy records what it does for the server's pipe, or
     /// <see langword="null"/> for a record nobody reads.
     /// </param>
-    /// <param name="cancellationToken">Cancels the connect.</param>
-    /// <returns>The connected proxy.</returns>
-    public static async Task<BrowserProxy> ConnectAsync(
-        IClientTransport transport,
+    /// <returns>The proxy.</returns>
+    public static BrowserProxy Create(
         ILoggerFactory loggerFactory,
         SessionEnvironment environment,
-        ServerActivity? activity = null,
-        CancellationToken cancellationToken = default)
+        ServerActivity? activity = null)
     {
-        ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(environment);
 
-        // ⚠️ ONE CONNECTION, AND IT OWNS ITS HOST -- the shape of every server a
-        // client starts, and of the in-process rig. Since 2026-10-03 the surface
-        // child, the sessions and the verdicts live in a SessionHost (Q366 b),
-        // and a server with one connection is a host with one proxy that owns it.
-#pragma warning disable CA2000 // Ownership moves into the proxy, and the catch disposes the host on the one path that does not get there.
-        var host = await SessionHost.ConnectAsync(transport, loggerFactory, environment, cancellationToken).ConfigureAwait(false);
+#pragma warning disable CA2000 // Ownership moves into the proxy, which disposes the host.
+        return For(SessionHost.Create(loggerFactory, environment), new CallerConnection(), activity, ownsHost: true);
 #pragma warning restore CA2000
-
-        try
-        {
-            return For(host, new CallerConnection(), activity, ownsHost: true);
-        }
-        catch
-        {
-            await host.DisposeAsync().ConfigureAwait(false);
-            throw;
-        }
     }
 
     /// <summary>The options the caller-facing MCP server is built from.</summary>
@@ -697,7 +659,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             ProxyLog.ToolListPredatesThisServer(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
         }
 
-        var signatures = await SignaturesAsync(cancellationToken).ConfigureAwait(false);
+        var signatures = Signatures();
 
         await caller.SendMessageAsync(
             new JsonRpcNotification { Method = NotificationMethods.ToolListChangedNotification },
@@ -779,8 +741,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// c"</i>.</b> A server that starts while its own install's <c>Update.exe</c> is
     /// running answers <c>tools/list</c> with the real list, refuses calls while the
     /// update runs, and keeps serving once the updater has exited. This is the
-    /// middle third; the list is the ordinary answer, from the run's own child, and
-    /// the last third is <see cref="TheUpdateHasGone"/>.
+    /// middle third; the list is the ordinary answer, and the last third is
+    /// <see cref="TheUpdateHasGone"/>. <i>Corrected 2026-10-08 (previously "the
+    /// list is the ordinary answer, from the run's own child"): it comes from the
+    /// binary since that day.</i>
     /// </para>
     /// <para>
     /// ⚠️ <i>Previously, under Q286 b, such a server was a different server
@@ -879,14 +843,27 @@ internal sealed class BrowserProxy : IAsyncDisposable
     }
 
     /// <summary>
-    /// Answers <c>tools/list</c> from the run's own child, rewritten.
+    /// Answers <c>tools/list</c> from the list compiled into this binary, rewritten.
     /// </summary>
     /// <remarks>
     /// <para>
+    /// ⚠️ <b>From the binary, and no child is asked, since 2026-10-08</b> -- step 1
+    /// of the one-binary plan, the maintainer's words of 2026-10-04 verbatim: <i>"I'd
+    /// argue that the relay always answers the tool list from the binary. I see no
+    /// reason why it would ever defer to Playwright, as the Playwright version is
+    /// bound to that binary version is it not?"</i> <i>Corrected (previously
+    /// "Answers <c>tools/list</c> from the run's own child, rewritten", with the
+    /// child started before the handshake was answered and asked on every
+    /// <c>tools/list</c>)</i>. The list is what that child answered when the build
+    /// asked it, and each session's own child is held to it byte for byte when it
+    /// starts (<see cref="UpstreamToolList"/>).
+    /// </para>
+    /// <para>
     /// <b>One static list, and it has to be the union.</b> The MCP spec forbids
     /// the tool set varying per connection and SEP-2567 removed protocol-level
-    /// sessions outright, so <c>init</c> cannot shrink it. The run's own child is
-    /// started with every capability any mode can have.
+    /// sessions outright, so <c>init</c> cannot shrink it. The list was taken from
+    /// a child started with every capability, and every session's child is started
+    /// with the same capabilities.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-26 (previously "The one refusal this proxy still
@@ -909,19 +886,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private async Task AnswerToolsListAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
     {
-        var answer = await _surface.AskAsync(request.Method, request.Params, cancellationToken).ConfigureAwait(false);
-
-        if (answer.Response is not { } response)
-        {
-            // The run's own child, which no session owns -- so this one stays in
-            // the machine-wide log, where a child that will not answer
-            // `tools/list` is visible to whoever is looking at the machine.
-            await AnswerFailureAsync(_logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        var result = response.Result as JsonObject ?? [];
-        var rewritten = SessionToolSurface.Rewrite(result, _verdicts);
+        // A fresh copy each time: the rewrite changes the object it is handed.
+        var rewritten = SessionToolSurface.Rewrite(_upstream.Result(), _verdicts);
 
         // The list a call is checked against is the list a caller was given,
         // read here before it goes out. See ToolSignatures.
@@ -937,42 +903,27 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// answers <c>tools/list</c> with.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>The list a caller was given, and asked for here only when this
-    /// connection never asked.</b> <see cref="AnswerToolsListAsync"/> keeps what
-    /// it sent; a call that arrives first asks the run's own child for the same
-    /// list and rewrites it the same way, because the surface is one static list
-    /// and either reading is that list.
-    /// </para>
-    /// <para>
-    /// <b>A child that cannot answer leaves BrowserAI's own tools still
-    /// checked</b>: their schemas are this build's, so the authored half of the
-    /// list is read with no child at all, and a forwarded tool is then judged by
-    /// the verdicts file alone. That is logged, and the next call asks again.
-    /// </para>
+    /// <b>The list a caller was given, and read here only when this connection
+    /// never asked.</b> <see cref="AnswerToolsListAsync"/> keeps what it sent; a
+    /// call that arrives first reads the same compiled list and rewrites it the
+    /// same way, because the surface is one static list and either reading is that
+    /// list. ⚠️ <i>Corrected 2026-10-08 (previously "a call that arrives first asks
+    /// the run's own child for the same list", with "A child that cannot answer
+    /// leaves BrowserAI's own tools still checked")</i>: there is no child to ask and
+    /// none that can fail to answer, so every reading carries upstream's tools.
     /// </remarks>
-    /// <param name="cancellationToken">The caller's token.</param>
     /// <returns>The signatures, never <see langword="null"/>.</returns>
-    private async Task<ToolSignatures> SignaturesAsync(CancellationToken cancellationToken)
+    private ToolSignatures Signatures()
     {
         if (Volatile.Read(ref _signatures) is { } known)
         {
             return known;
         }
 
-        var answer = await _surface.AskAsync(RequestMethods.ToolsList, null, cancellationToken).ConfigureAwait(false);
+        var read = ToolSignatures.From(SessionToolSurface.Rewrite(_upstream.Result(), _verdicts));
 
-        if (answer.Response?.Result is JsonObject result)
-        {
-            var read = ToolSignatures.From(SessionToolSurface.Rewrite(result, _verdicts));
-
-            Volatile.Write(ref _signatures, read);
-            return read;
-        }
-
-        ProxyLog.ToolListUnreadable(_logger);
-
-        return ToolSignatures.From(SessionToolSurface.Rewrite([], _verdicts), carriesTheChildsTools: false);
+        Volatile.Write(ref _signatures, read);
+        return read;
     }
 
     /// <summary>
@@ -1038,7 +989,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // reset the countdown, below.
         _sessions.NoteActivity(session ?? SessionDirectoryNamedBy(name, arguments));
 
-        var signatures = await SignaturesAsync(cancellationToken).ConfigureAwait(false);
+        var signatures = Signatures();
         var signature = signatures.Find(name);
 
         // ⚠️ A TOOL THIS BROWSERAI DOES NOT HAVE IS TOLD SO PLAINLY, since
@@ -1048,21 +999,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // verdicts file is no tool of this build, and the answer says so and sends
         // the caller to its tool list. Until then such a name met the verdict
         // door's sentence for a gap a human must adjudicate, or, with no session,
-        // "this needs a session". A name in BrowserAI's own namespace is judged
-        // by the authored names alone, which need no list; any other name needs
-        // the list, and with no list the verdict door decides, as before.
+        // "this needs a session". Corrected 2026-10-08 (previously "A name in
+        // BrowserAI's own namespace is judged by the authored names alone, which
+        // need no list; any other name needs the list, and with no list the
+        // verdict door decides, as before."): the list is compiled into the
+        // binary, so there is always one, and every name is judged against it.
         //
         // ⚠️ AND A DENIED TOOL IS ANSWERED THE SAME WAY, since the same day: a
         // tool BrowserAI does not offer should look to a model like any other it
         // does not have, and a deny row's `why` is the human record in the file.
-        // A deny row is known without the list, so it is answered here whether
-        // or not the list could be read.
         var verdict = _verdicts.Find(name);
 
         if (signature is null
             && !SessionToolSurface.IsAuthored(name)
-            && verdict is not { Kind: ToolVerdictKind.Allow }
-            && (verdict is { Kind: ToolVerdictKind.Deny } || signatures.CarriesTheChildsTools || SessionToolSurface.IsInTheAuthoredNamespace(name)))
+            && verdict is not { Kind: ToolVerdictKind.Allow })
         {
             var named = name ?? "<none>";
             var absent = SessionErrors.ToolDoesNotExist(named, signatures);
@@ -1120,10 +1070,11 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         var tool = name ?? "<none>";
 
-        // Mandatory, with no fall-through to the run's own child. Before this
-        // step a call naming no session was answered by the surface child, which
-        // is a session nobody chose the mode of -- so every enforcement decision
-        // below could be sidestepped by omitting an argument.
+        // Mandatory, with no fall-through. Before build step 13 a call naming no
+        // session was answered by the run's own child, which was a session nobody
+        // chose the mode of -- so every enforcement decision below could be
+        // sidestepped by omitting an argument. That child is gone since
+        // 2026-10-08, and the session is still mandatory: it is routing.
         if (string.IsNullOrWhiteSpace(session))
         {
             // ⚠️ ONE OF THE TWO RECORDS IN THIS METHOD THAT STAY IN THE
@@ -2157,7 +2108,7 @@ internal static partial class ProxyLog
     [LoggerMessage(
         EventId = 8,
         Level = LogLevel.Information,
-        Message = "'{Tool}' named no session; it was refused, not sent to this run's own child.")]
+        Message = "'{Tool}' named no session; it was refused, and nothing was sent to a child.")]
     public static partial void SessionMissing(ILogger logger, string tool);
 
     /// <summary>
@@ -2357,17 +2308,6 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' arrived with arguments its schema does not have ({Arguments}); the call was refused and nothing ran.")]
     public static partial void UnrecognisedArguments(ILogger logger, string tool, string arguments);
-
-    /// <summary>
-    /// The run's own child did not answer <c>tools/list</c>, so a call was checked
-    /// against BrowserAI's own tools and the verdicts file only.
-    /// </summary>
-    /// <param name="logger">Where to write.</param>
-    [LoggerMessage(
-        EventId = 25,
-        Level = LogLevel.Warning,
-        Message = "The run's own child did not answer tools/list, so this call was checked against BrowserAI's own tools and tool-verdicts.json only; the next call asks again.")]
-    public static partial void ToolListUnreadable(ILogger logger);
 
     /// <summary>A refusal for a call cut off by a stop could not be written.</summary>
     /// <param name="logger">Where to write.</param>

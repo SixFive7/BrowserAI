@@ -62,9 +62,10 @@ internal sealed class VerticalSliceTests
         // page's own WebMCP tools to tools/list and notifies when that set
         // moves. BrowserAI's does not, and must not say it does.
         //
-        // WHY NOT, MEASURED , NOT ARGUED: BrowserAI answers tools/list
-        // from the run's own child, which never navigates and so has no page to
-        // collect from. Driven end to end on 2026-09-21 against a page
+        // WHY NOT, MEASURED , NOT ARGUED: BrowserAI answered tools/list
+        // from the run's own child, which never navigated and so had no page to
+        // collect from. Since 2026-10-08 it answers from the list compiled into
+        // the binary, which no page can reach at all. Driven end to end on 2026-09-21 against a page
         // registering two WebMCP tools, BrowserAI's tools/list was 78 before and
         // 78 after while the child's went 72 -> 74
         // (docs/probes/2026-09-21-webmcp, re-verification row 133). So
@@ -81,7 +82,7 @@ internal sealed class VerticalSliceTests
             .Because(
                 "BrowserAI advertises tools and nothing else. It deliberately does NOT mirror the child's "
                 + "`listChanged`: the child's tool list changes with the page and BrowserAI's does not, because "
-                + "tools/list is answered from the run's own child, which never navigates.");
+                + "tools/list is answered from the list compiled into the binary, which no page can reach.");
 
         // The control on the sentence above, and it is the reason this arm stopped
         // comparing the two: the child really does advertise something BrowserAI
@@ -108,7 +109,10 @@ internal sealed class VerticalSliceTests
         //
         // The seven authored tools come first; upstream's follow, and it is the
         // WHOLE exposable surface -- 69 and not the default 24 -- because the
-        // run's own child is started with every capability upstream declares.
+        // list was taken from a child started with every capability upstream
+        // declares, as every session's child is started. Corrected 2026-10-08
+        // (previously "because the run's own child is started with every
+        // capability"): that child is gone and the list is compiled in.
         // The spec forbids the tool set varying per connection, so one static
         // list is the only shape available and it has to be everything.
         //
@@ -218,10 +222,13 @@ internal sealed class VerticalSliceTests
         }
 
         // And every one of them gains BrowserAI's `session` parameter, asserted
-        // against the REAL child's list and not against the snapshot the
-        // build regenerates from it: routing is the one thing this proxy cannot
+        // against the list the published binary answers with. Corrected
+        // 2026-10-08 (previously "against the REAL child's list and not against
+        // the snapshot the build regenerates from it"): the binary answers from
+        // that snapshot since that day, and each session's child is held to it
+        // byte for byte when it starts. Routing is the one thing this proxy cannot
         // get wrong, and a tool upstream added that slipped through the rewrite
-        // would be answerable by the run's own child.
+        // would be answerable by a session's child.
         //
         // Corrected 2026-08-18 (previously this asserted every name carried a
         // row in `SessionToolPolicy.Classification`, deny-by-default). That

@@ -2169,8 +2169,10 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Named here and not hand-written as a schema.</b> This is a tool
     /// NAME and an argument VALUE -- both of them upstream's own spellings, both
     /// read out of the golden snapshot -- and not a definition of anything:
-    /// the schema still comes from the child at run time and is what
-    /// <c>UpstreamSnapshotTests</c> diffs. If upstream ever renames this tool the
+    /// the schema comes from the child's own list, taken at build time from the
+    /// same pinned payload and checked against the live child at run time, and is
+    /// what <c>UpstreamSnapshotTests</c> diffs. <i>Corrected 2026-10-08 (previously
+    /// "the schema still comes from the child at run time").</i> If upstream ever renames this tool the
     /// snapshot diff is what says so.
     /// </remarks>
     private const string TabsTool = "browser_tabs";
@@ -3592,6 +3594,14 @@ internal sealed class SessionManager : IAsyncDisposable
                 relay,
                 cancellationToken).ConfigureAwait(false);
 
+            // ⚠️ THE CHILD'S OWN LIST AGAINST THE ONE THIS BINARY ANSWERS WITH, byte
+            // for byte, right after the handshake and before any call -- step 1 of
+            // the one-binary plan, 2026-10-08. tools/list is answered from the list
+            // compiled into the binary, so a child that lists anything else is a
+            // broken install, and the session does not open. No page exists yet, so
+            // none of a page's own tools can be in the answer.
+            await _environment.UpstreamTools.CheckSessionChildAsync(child, location.FullPath, cancellationToken).ConfigureAwait(false);
+
             session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap, BrowserExecutableFor(request.Browser))
             {
                 NoticeGiven = noticeGiven,
@@ -3650,6 +3660,17 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             return answer;
+        }
+        catch (InstallIsBrokenException broken)
+        {
+            // ⚠️ 2026-10-08: the session's child lists different tools from the
+            // list this binary answers with, which is a broken install and not a
+            // runtime that failed to start. The refusal is the exception's own
+            // message, and it names the first tool that differs.
+            SessionToolLog.CouldNotOpen(_logger, location.FullPath, broken);
+            Failed(acquired, broken);
+
+            return new ToolOutcome(broken.Message, IsError: true);
         }
         catch (FirefoxProfileLockedException collision)
         {

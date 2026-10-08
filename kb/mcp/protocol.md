@@ -480,6 +480,11 @@ stdio and timing from `spawn`:
 The handshake is **three hundred and forty milliseconds against a ten-second
 budget**, and the surface child's own `tools/list` is inside it -- the 79 tools come
 from a node child that was spawned, handshaken and answered within that figure.
+*Added 2026-10-08 by addition: since that day the server spawns no child for its
+tool list, which is compiled into the binary
+([kb](../playwright/tools-and-artifacts.md#the-list-compiled-into-the-binary-is-the-childs-own-bytes----measured-2026-10-08)),
+so these figures are a measurement of the build that did, and have not been
+re-taken.*
 
 ⚠️ **WHAT WAS NOT MEASURED, and it is the only path that could approach the
 budget.** These rounds are warm: the binary had just been published and the payload

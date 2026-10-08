@@ -141,32 +141,25 @@ internal static partial class Program
         try
         {
             var payload = new PayloadLayout();
-            var verdicts = ToolVerdicts.Read(payload.ToolVerdicts);
 
-            var options = ChildLaunch.Create(
-                payload,
-                paths.BrowsersDirectory,
-                instance,
-                Path.Combine(instance, "playwright-mcp.config.json"),
-                BrowserConfiguration.ForSurface(instance),
-                name: "playwright-mcp[surface]");
-
+            // ⚠️ The verdicts and the tool list are compiled into the binary since
+            // 2026-10-08, so the host starts no child of its own: corrected
+            // (previously the verdicts were read from the payload and a child was
+            // started over a transport to answer tools/list).
             using var provisioner = new BrowserProvisioner(payload, paths.BrowsersDirectory, log.Factory);
 
             var environment = new SessionEnvironment
             {
                 Paths = paths,
                 Payload = payload,
-                Verdicts = verdicts,
+                Verdicts = ToolVerdicts.Compiled,
+                UpstreamTools = UpstreamToolList.Compiled,
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = ProcessLog.OpenSessionLog,
             };
 
-            var host = await SessionHost.ConnectAsync(
-                new DirectStdioClientTransport(options, log.Factory),
-                log.Factory,
-                environment).ConfigureAwait(false);
+            var host = SessionHost.Create(log.Factory, environment);
 
             await using var hostScope = host.ConfigureAwait(false);
 

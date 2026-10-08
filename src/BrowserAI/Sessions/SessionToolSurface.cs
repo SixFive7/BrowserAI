@@ -15,8 +15,11 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>This is not a hand-written upstream schema.</b> The scope boundary forbids
 /// typing a <c>@playwright/mcp</c> tool definition into C# -- every one of those
-/// originates from the child's <c>tools/list</c> at runtime, and this file never
-/// describes one. What it declares is BrowserAI's own six tools -- the six in
+/// originates from the child's <c>tools/list</c>, taken at build time from the same
+/// pinned payload and checked against the live child at run time, and this file
+/// never describes one. <i>Corrected 2026-10-08 (previously "originates from the
+/// child's <c>tools/list</c> at runtime"), when the list was compiled into the
+/// binary.</i> What it declares is BrowserAI's own six tools -- the six in
 /// <see cref="Names"/> -- which no child
 /// knows about, and the <c>session</c> property that is <b>injected into</b> the
 /// child's raw schemas instead of replacing them.

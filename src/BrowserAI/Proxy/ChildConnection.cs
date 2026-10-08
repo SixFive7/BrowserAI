@@ -18,12 +18,14 @@ namespace BrowserAI.Proxy;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>There is one of these per child, and there are now several children per
-/// process.</b> Each session owns one, plus one for the run itself -- the child
-/// that answers <c>tools/list</c> before any session exists. Splitting it out of
+/// <b>There is one of these per child, and there are several children per
+/// process.</b> Each session owns one. Splitting it out of
 /// <see cref="BrowserProxy"/> is what made that possible: the proxy is the
 /// caller-facing server and decides <i>which</i> child a call goes to, and this
-/// type is everything about speaking to one.
+/// type is everything about speaking to one. ⚠️ <i>Corrected 2026-10-08
+/// (previously "Each session owns one, plus one for the run itself -- the child
+/// that answers <c>tools/list</c> before any session exists"): the tool list is
+/// compiled into the binary, and the run starts no child of its own.</i>
 /// </para>
 /// <para>
 /// <b>The id on the outgoing request is ours, and that is what makes

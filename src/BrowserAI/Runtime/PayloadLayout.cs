@@ -78,40 +78,29 @@ internal sealed class PayloadLayout(string? root = null)
     public string ServerRegistryModule =>
         Path.Combine(Root, "mcp", "node_modules", "playwright-core", "lib", "serverRegistry.js");
 
-    /// <summary>
-    /// Every tool BrowserAI knows of and whether it forwards a call naming one.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Inside the payload and not beside the binary, because the verdicts
-    /// describe the <c>cli.js</c> they shipped with.</b> An update replaces the
-    /// payload wholesale, so a new binary can never read an old build's
-    /// judgements about a tool set that has moved underneath it -- which is the
-    /// same property the paragraph above gives <c>browsers.json</c>, for the same
-    /// reason. Published beside the binary it would survive an update and start
-    /// describing an upstream nobody judged.
-    /// </para>
-    /// <para>
-    /// The tracked copy is at the repository root; a build target copies it here.
-    /// </para>
-    /// </remarks>
-    public string ToolVerdicts => Path.Combine(Root, Sessions.ToolVerdicts.FileName);
+    // ⚠️ DELETED 2026-10-08: `ToolVerdicts`, the payload's copy of
+    // tool-verdicts.json, which a build target copied in from the repository root
+    // because "the verdicts describe the cli.js they shipped with". They still do,
+    // and the binary is what carries them now: the file is compiled into it beside
+    // the tool list (ToolVerdicts.Compiled), and the binary and the payload are
+    // packed and replaced together, so the same property holds with no file to
+    // copy and none that can be missing.
 
     /// <summary>
-    /// Checks that the payload's three required files exist, so an incomplete
+    /// Checks that the payload's two required files exist, so an incomplete
     /// payload names itself.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Three since 2026-08-26 (previously two).</b> The verdicts file joins
-    /// the executable and the CLI because its absence is the same class of
-    /// failure and a worse presentation: BrowserAI denies by default, so a payload
-    /// without it does not degrade to permissive -- it refuses every call, and
-    /// without this check nothing anywhere would name the missing file.
+    /// ⚠️ <b>Two since 2026-10-08 (previously three, "Three since 2026-08-26
+    /// (previously two). The verdicts file joins the executable and the CLI").</b>
+    /// The verdicts are compiled into the binary since that day, so a payload
+    /// without the file is not incomplete, and a binary built without them does
+    /// not build.
     /// </remarks>
     /// <exception cref="FileNotFoundException">Any of them is missing.</exception>
     public void Verify()
     {
-        foreach (var file in new[] { NodeExecutable, PlaywrightMcpCli, ToolVerdicts })
+        foreach (var file in new[] { NodeExecutable, PlaywrightMcpCli })
         {
             if (!File.Exists(file))
             {

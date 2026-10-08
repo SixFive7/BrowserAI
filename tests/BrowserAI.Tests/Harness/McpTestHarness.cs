@@ -9,8 +9,8 @@ using ModelContextProtocol.Server;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// The in-process rig: test client → BrowserAI → fake child, over pipes, with
-/// no process anywhere and nothing on disk.
+/// The in-process rig: test client → BrowserAI → each session's fake child, over
+/// pipes, with no process anywhere.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -68,7 +68,8 @@ internal sealed class McpTestHarness : IAsyncDisposable
     private readonly CancellationTokenSource _stopping;
     private readonly ILoggerFactory _loggerFactory;
     private readonly PipeDuplex? _callerHop;
-    private readonly PipeDuplex _childHop;
+    private readonly PipeDuplex? _childHop;
+    private readonly FakePlaywrightChild? _directChild;
     private readonly BrowserProxy? _proxy;
     private readonly McpServer? _server;
     private readonly DirectStdioServerTransport? _serverTransport;
@@ -83,6 +84,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
         _stopping = parts.Stopping;
         _loggerFactory = parts.LoggerFactory;
         _childHop = parts.ChildHop;
+        _directChild = parts.Child;
         _callerHop = parts.CallerHop;
         _proxy = parts.Proxy;
         _server = parts.Server;
@@ -91,7 +93,6 @@ internal sealed class McpTestHarness : IAsyncDisposable
         _sessions = parts.Sessions;
 
         Logs = parts.Logs;
-        SurfaceChild = parts.Child;
         Session = parts.Session;
         Client = parts.Client;
 
@@ -100,7 +101,10 @@ internal sealed class McpTestHarness : IAsyncDisposable
             _hops.Add(parts.CallerHop);
         }
 
-        _hops.Add(parts.ChildHop);
+        if (parts.ChildHop is not null)
+        {
+            _hops.Add(parts.ChildHop);
+        }
     }
 
     /// <summary>The hand-written client on the caller's end.</summary>
@@ -119,23 +123,29 @@ internal sealed class McpTestHarness : IAsyncDisposable
         BrowserAI.Sessions.ToolSignatures.From(await Client.RoundTripAsync("tools/list", new System.Text.Json.Nodes.JsonObject()));
 
     /// <summary>
-    /// The double a <c>tools/call</c> reaches: the default session's child where
-    /// there is one, and otherwise the run's own.
+    /// The double a <c>tools/call</c> reaches: the default session's child, or the
+    /// one double of a rig that speaks straight to it.
     /// </summary>
     /// <remarks>
-    /// <b>These stopped being the same object at step 13.</b> Once <c>session</c>
-    /// became mandatory, a <c>tools/call</c> goes to the child of the session it
-    /// names and never to the run's own -- so a test asserting on what the child
-    /// received has to look at the session's. <c>tools/list</c> still comes from
-    /// <see cref="SurfaceChild"/>, because the tool set may not vary per
-    /// connection and one static list has to be answerable before any session
-    /// exists.
+    /// ⚠️ <b>Corrected 2026-10-08 (previously "the default session's child where
+    /// there is one, and otherwise the run's own", with <c>SurfaceChild</c>, "The
+    /// double that answers <c>tools/list</c> for the whole run", beside it).</b> The
+    /// product answers <c>tools/list</c> from the list compiled into the binary and
+    /// starts no child of its own, so the rig stands no double where that child
+    /// was. The list it answers with is <see cref="ToolsList"/>.
     /// </remarks>
+    /// <exception cref="InvalidOperationException">No session is open and the rig has no double of its own.</exception>
     public FakePlaywrightChild Child =>
-        _sessions?.SessionChildren is [var first, ..] ? first : SurfaceChild;
+        _sessions?.SessionChildren is [var first, ..] ? first
+        : _directChild ?? throw new InvalidOperationException("This rig has opened no session, so there is no child double to read.");
 
-    /// <summary>The double that answers <c>tools/list</c> for the whole run.</summary>
-    public FakePlaywrightChild SurfaceChild { get; }
+    /// <summary>
+    /// The list this rig's BrowserAI answers <c>tools/list</c> with, before the
+    /// rewrite: what the product compiles into its binary, here handed in.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">This rig speaks straight to a double.</exception>
+    public string ToolsList =>
+        _sessions?.ToolsList ?? throw new InvalidOperationException("This rig speaks straight to the double; there is no BrowserAI in it.");
 
     /// <summary>
     /// The default session this rig opened, or <see langword="null"/> if it could
@@ -155,10 +165,14 @@ internal sealed class McpTestHarness : IAsyncDisposable
         _proxy ?? throw new InvalidOperationException("This rig speaks straight to the double; there is no proxy in it.");
 
     /// <summary>
-    /// The full topology: test client → BrowserAI → fake child, handshaken on
-    /// both hops.
+    /// The full topology: test client → BrowserAI → each session's fake child.
     /// </summary>
-    /// <param name="configure">Programs the surface double before it is started.</param>
+    /// <param name="configure">
+    /// Programs each session's double before it is started, for a rig that builds
+    /// its own sessions. ⚠️ <i>Corrected 2026-10-08 (previously "Programs the surface
+    /// double before it is started"): there is no surface double, so a rig handed
+    /// <paramref name="sessions"/> refuses one, which would otherwise go unused.</i>
+    /// </param>
     /// <param name="sessions">
     /// The environment sessions are opened in. Supplied by a test that means to
     /// open one; the default can open none, which keeps every other test in this
@@ -176,26 +190,36 @@ internal sealed class McpTestHarness : IAsyncDisposable
     /// What the client calls itself in <c>clientInfo.name</c>, for the arms about
     /// what BrowserAI says to a particular client. Defaults to the rig's own name.
     /// </param>
+    /// <param name="toolsList">
+    /// The list the rig's BrowserAI answers <c>tools/list</c> with, before the
+    /// rewrite, for a rig that builds its own sessions; every session's double
+    /// answers the same list unless an arm programs it otherwise. Defaults to the
+    /// double's own two tools.
+    /// </param>
     /// <returns>The rig, ready for a request.</returns>
+    /// <exception cref="ArgumentException">A rig handed its sessions was also handed something only a rig that builds them can use.</exception>
     public static async Task<McpTestHarness> ThroughTheProxyAsync(
         Action<FakePlaywrightChild>? configure = null,
         RigSessionEnvironment? sessions = null,
         bool listsBeforeCalling = true,
-        string? clientName = null)
+        string? clientName = null,
+        string? toolsList = null)
     {
+        if (sessions is not null && (configure is not null || toolsList is not null))
+        {
+            throw new ArgumentException(
+                "A rig handed its sessions programs their doubles and their list where they were built: pass configure and toolsList to RigSessionEnvironment.Create.",
+                nameof(sessions));
+        }
+
         var logs = new CapturingLoggerProvider();
         var loggerFactory = NewLoggerFactory(logs);
         var stopping = new CancellationTokenSource();
 
-        var childHop = new PipeDuplex("child hop (BrowserAI ↔ fake child)");
-        var child = new FakePlaywrightChild(childHop);
-        configure?.Invoke(child);
-        child.Start();
-
         BrowserProxy? proxy = null;
         DirectStdioServerTransport? serverTransport = null;
         McpServer? server = null;
-        var sessionEnvironment = sessions ?? RigSessionEnvironment.Create(configure);
+        var sessionEnvironment = sessions ?? RigSessionEnvironment.Create(configure, toolsList: toolsList);
 
         // Before the first session is opened, so `Logs` means "this rig logged
         // it" at either scope. A session's records stopped reaching the
@@ -205,10 +229,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
         try
         {
-            proxy = await BrowserProxy.ConnectAsync(
-                new PipeClientTransport(childHop, loggerFactory),
-                loggerFactory,
-                sessionEnvironment.Environment);
+            proxy = BrowserProxy.Create(loggerFactory, sessionEnvironment.Environment);
 
             var callerHop = new PipeDuplex("caller hop (test client ↔ BrowserAI)");
 
@@ -252,8 +273,6 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 Stopping = stopping,
                 LoggerFactory = loggerFactory,
                 Logs = logs,
-                ChildHop = childHop,
-                Child = child,
                 CallerHop = callerHop,
                 Client = client,
                 Proxy = proxy,
@@ -281,7 +300,6 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 await proxy.DisposeAsync();
             }
 
-            await child.DisposeAsync();
             await sessionEnvironment.DisposeAsync();
             stopping.Dispose();
             loggerFactory.Dispose();
@@ -410,8 +428,16 @@ internal sealed class McpTestHarness : IAsyncDisposable
             await _sessions.DisposeAsync();
         }
 
-        await _childHop.CompleteWritersAsync();
-        await Child.DisposeAsync();
+        if (_childHop is not null)
+        {
+            await _childHop.CompleteWritersAsync();
+        }
+
+        if (_directChild is not null)
+        {
+            await _directChild.DisposeAsync();
+        }
+
         await Client.DisposeAsync();
 
         // 5. The providers last, so anything logged on the way down is still
@@ -467,7 +493,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 "the MCP server task was still running when dispose began AND is still running after it: cancelling the token and completing the caller hop's writers did not end it, and neither did disposing everything below it");
         }
 
-        if (!Child.HasStopped)
+        if (_directChild is { HasStopped: false })
         {
             faults.Add("the fake child's read loop is still running");
         }
@@ -492,9 +518,9 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
         public required CapturingLoggerProvider Logs { get; init; }
 
-        public required PipeDuplex ChildHop { get; init; }
+        public PipeDuplex? ChildHop { get; init; }
 
-        public required FakePlaywrightChild Child { get; init; }
+        public FakePlaywrightChild? Child { get; init; }
 
         public required RawPipeClient Client { get; init; }
 

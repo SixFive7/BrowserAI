@@ -185,7 +185,10 @@ from one surface child, which is Chromium-configured, and the MCP spec forbids
 the tool set varying per connection -- so a family-dependent surface would mean
 Firefox sessions advertising tools their child does not have, or the reverse.
 Every tool-surface number in this repository is a claim about **both** families,
-and it is now measured, not assumed.
+and it is now measured, not assumed. *Corrected 2026-10-08 by addition: the list
+is compiled into the binary from the snapshot since that day, and each session's
+child, Chromium or Firefox, is held to it byte for byte when it starts
+([below](#the-list-compiled-into-the-binary-is-the-childs-own-bytes----measured-2026-10-08)).*
 
 **Re-establish it** by giving [`build/upstream-snapshots.mjs`](../../build/upstream-snapshots.mjs)'s
 `session()` helper a config carrying `browser.browserName: "firefox"` -- plus the
@@ -1896,7 +1899,11 @@ is what `browserai_page_tool`'s own description sends it to.
 **Two mechanisms close the two halves, and neither was built for this.**
 BrowserAI answers `tools/list` from [the run's own child](../../ARCHITECTURE.md),
 which never navigates and therefore has no page to collect from -- so a page
-cannot reach the advertised surface however many tools it registers. And a name
+cannot reach the advertised surface however many tools it registers. *Corrected
+2026-10-08 by addition: it answers from the list compiled into the binary since
+that day, which no page can reach at all, and each session's child is asked for
+its own list before any page exists
+([below](#the-list-compiled-into-the-binary-is-the-childs-own-bytes----measured-2026-10-08)).* And a name
 with no row in [`tool-verdicts.json`](../../tool-verdicts.json) is refused before
 anything is forwarded, which is deny-by-default meeting a name **a web page
 invented**. That is the strongest demonstration of that rule this repository has:
@@ -2007,6 +2014,42 @@ on the way through.
 serve a page whose `invokeTool` is `() => new Promise(() => {})`, call it, and
 keep asking the same child for snapshots while it pends.
 
+
+## The list compiled into the binary is the child's own bytes -- measured 2026-10-08
+
+`[FLOATS]` `@playwright/mcp` 0.0.83 / `playwright-core` 1.64.0-alpha-1790635538000 /
+node v24.21.0, the payload the build resolved, Windows 11.
+[Rig](../../docs/probes/2026-10-08-built-in-tool-list/README.md).
+
+**The payload's own child answers `tools/list` with the same 45,612 bytes under
+every session configuration tried, and they are the snapshot's `tools` with the
+indentation taken out.** The child was started five times, each with a
+configuration shaped as BrowserAI writes one: the snapshot generator's own, every
+declared capability and nothing else; a hidden Chromium session; a hidden Firefox
+session; a headed Chromium session; and a Chromium session writing a transcript
+and a network capture, with a time zone set and HTTPS errors ignored. Each was
+asked `initialize` and `tools/list` before any page existed, and the bytes of the
+`result` member as the child wrote them were compared with `{"tools":`, the
+snapshot's `tools` value with every whitespace byte outside a string removed, and
+`}`: byte-identical, 5 of 5. `JSON.stringify` writes both the child's wire and the
+snapshot, and the snapshot's indentation is the only difference it puts between
+them. **The positive control** compared the same five answers with the 0.0.82
+snapshot: all five differed, first at byte 12,300, inside `browser_find`'s schema.
+
+**So BrowserAI compiles that file in and holds each session's child to it.** Since
+2026-10-08 `tools/list` is answered from the list compiled into the binary, and a
+session's child is asked for its own list right after its handshake: any byte that
+differs refuses the session open as a broken install, naming the first tool that
+differs. No page exists when it is asked, so a page's own tools never take part.
+
+**What would change it:** an upstream that writes a configuration value into a
+tool's description or schema, a key BrowserAI sets for one family or one run and
+not another, or a snapshot generator that writes with something other than
+`JSON.stringify`. The first two reach every session as the broken-install refusal,
+and the suite's real-session arms meet it on the first run.
+
+**Re-establish** with the rig's `probe.py` against an assembled payload; with
+`--snapshot` pointed at an older snapshot it is its own positive control.
 
 ## The surface BrowserAI does not use -- read 2026-09-24
 

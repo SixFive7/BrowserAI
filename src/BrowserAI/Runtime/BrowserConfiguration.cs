@@ -853,37 +853,13 @@ internal static class BrowserConfiguration
         });
     }
 
-    /// <summary>
-    /// The config for the run's own child -- the one that answers
-    /// <c>tools/list</c> before any session exists.
-    /// </summary>
-    /// <remarks>
-    /// <b>It carries the same capability set every session gets.</b> This child
-    /// produces the one static tool list every caller sees, so it has to expose
-    /// every tool a session could reach -- and since 2026-08-20 every session
-    /// reaches all of them, so the two lists are the same list and not one
-    /// being the union of several. It also carries a <c>userDataDir</c> for a reason
-    /// that has nothing to do with sessions: with the key unset, upstream writes
-    /// each run's profile into <c>%LOCALAPPDATA%\ms-playwright-mcp\</c>, keyed by
-    /// a hash of the client's working directory -- 159 directories and 877 MB had
-    /// accumulated on this machine before this step set the key.
-    /// </remarks>
-    /// <param name="instanceDirectory">This run's own directory.</param>
-    /// <returns>The bytes to write, and every opinion they carry.</returns>
-    public static GeneratedConfig ForSurface(string instanceDirectory)
-    {
-        ArgumentNullException.ThrowIfNull(instanceDirectory);
-
-        return Generate(new BrowserConfigurationRequest
-        {
-            Headless = true,
-            UserDataDirectory = Path.Combine(instanceDirectory, SessionLayout.ProfileFolderName),
-            OutputDirectory = Path.Combine(instanceDirectory, SessionLayout.OutputFolderName),
-            DownloadsDirectory = Path.Combine(instanceDirectory, SessionLayout.DownloadsFolderName),
-            Capabilities = GrantedCapabilities,
-            SaveSession = false,
-        });
-    }
+    // ⚠️ DELETED 2026-10-08: `ForSurface(string instanceDirectory)`, the config of
+    // the run's own child -- "the one that answers tools/list before any session
+    // exists" -- headless, every capability, and a profile, output and downloads
+    // folder of its own in the run's directory. The tool list is compiled into the
+    // binary since that day and no such child is started. Every child left is a
+    // session's, configured by ForSession above with the same capability set the
+    // list was taken with.
 
     /// <summary>Writes a generated config, creating the directories it names.</summary>
     /// <param name="path">Where the config file goes. Overwritten if present.</param>
@@ -1282,9 +1258,10 @@ internal sealed record BrowserConfigurationRequest
     /// true when Firefox was offered -- <see cref="BrowserConfiguration.ForSession"/> passes whatever
     /// the session's <c>browserai.data</c> records. The default survives for the
     /// reason it always had: it keeps the Firefox branch a property of the
-    /// session's own record and not a decision each call site takes, and
-    /// <see cref="BrowserConfiguration.ForSurface"/> -- the run's own browser-less child -- genuinely
-    /// has no family to state.
+    /// session's own record and not a decision each call site takes.
+    /// <i>Corrected 2026-10-08 (previously it went on "and <c>ForSurface</c> -- the
+    /// run's own browser-less child -- genuinely has no family to state"): that
+    /// child is gone with the tool list compiled into the binary.</i>
     /// </remarks>
     public string Browser { get; init; } = BrowserConfiguration.BrowserName;
 

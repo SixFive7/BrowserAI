@@ -132,10 +132,10 @@ internal sealed class UnrecognisedArgumentTests
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
                 child.Tools["browser_take_screenshot"] = new FakeToolBehaviour();
             },
-            opensDefaultSession: false);
+            opensDefaultSession: false,
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "forwarded-unknown");
@@ -206,9 +206,11 @@ internal sealed class UnrecognisedArgumentTests
     /// <remarks>
     /// <b>The arm that fails against a hand-written table.</b> Upstream's real
     /// <c>browser_navigate</c> takes <c>url</c> alone, and the arm above refuses
-    /// <c>waitUntil</c> on it; here the run's own child advertises a
+    /// <c>waitUntil</c> on it; here the rig's list advertises a
     /// <c>browser_navigate</c> that takes <c>waitUntil</c> too, and the same call
-    /// goes through.
+    /// goes through. <i>Corrected 2026-10-08 (previously "here the run's own child
+    /// advertises"): the list is the binary's since that day, and here the
+    /// rig's.</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -216,11 +218,10 @@ internal sealed class UnrecognisedArgumentTests
     {
         await using var sessions = RigSessionEnvironment.Create(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
-            opensDefaultSession: false);
+            opensDefaultSession: false,
+            toolsList: """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"},"waitUntil":{"type":"string"}},"required":["url"],"additionalProperties":false}}]}""");
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult =
-                """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"},"waitUntil":{"type":"string"}},"required":["url"],"additionalProperties":false}}]}""",
             sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "another-list");

@@ -311,11 +311,10 @@ internal sealed class SessionPolicyTests
     {
         const string FromTheFuture = "browser_a_tool_from_the_future";
 
-        await using var sessions = RigSessionEnvironment.Create(child => child.Tools[FromTheFuture] = new FakeToolBehaviour());
+        await using var sessions = RigSessionEnvironment.Create(child => child.Tools[FromTheFuture] = new FakeToolBehaviour(),
+            toolsList: """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{}}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""");
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult =
-                """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{}}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""",
             sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "a-tool-from-the-future");
@@ -612,19 +611,19 @@ internal sealed class SessionPolicyTests
             child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"the human drew something"}]}""",
-            });
+            },
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        // The surface child answers with upstream's own committed list, so the
-        // absence asserted below is a filter and not a double that never had
+        // The list the binary answers with is upstream's own committed one, so
+        // the absence asserted below is a filter and not a list that never had
         // the tool.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions);
 
-        // The surface half, off the wire: the child advertises it, BrowserAI
-        // does not. Both halves matter -- "absent from our list" is satisfied
-        // vacuously by a child that never had it.
-        var childsOwn = rig.SurfaceChild.ToolsListResult;
+        // The surface half, off the wire: upstream's list carries it, BrowserAI
+        // does not advertise it. Both halves matter -- "absent from our list" is
+        // satisfied vacuously by a list that never had it.
+        var childsOwn = rig.ToolsList;
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
 
         var names = (advertised["tools"]?.AsArray() ?? [])
@@ -709,13 +708,13 @@ internal sealed class SessionPolicyTests
         // The session child would answer it, so a proxy that forwarded would
         // visibly succeed here instead of failing for some other reason.
         await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools[DebuggerResume] = new FakeToolBehaviour());
+            child.Tools[DebuggerResume] = new FakeToolBehaviour(),
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        // The surface child answers with upstream's own committed list, so the
-        // absence asserted below is a filter and not a double that never had
+        // The list the binary answers with is upstream's own committed one, so
+        // the absence asserted below is a filter and not a list that never had
         // the tool.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions);
 
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
@@ -726,7 +725,7 @@ internal sealed class SessionPolicyTests
 
         // Not vacuous: upstream's own list carries it, and BrowserAI's own
         // resume tool is still advertised beside the gap.
-        await Assert.That(rig.SurfaceChild.ToolsListResult).Contains(DebuggerResume);
+        await Assert.That(rig.ToolsList).Contains(DebuggerResume);
         await Assert.That(names).DoesNotContain(DebuggerResume);
         await Assert.That(names).Contains(SessionToolSurface.Resume);
 
@@ -851,13 +850,13 @@ internal sealed class SessionPolicyTests
         // would visibly succeed here instead of failing for some other reason.
         await using var sessions = RigSessionEnvironment.Create(
             child => child.Tools[Denied] = new FakeToolBehaviour(),
-            verdicts: RepositoryVerdicts.Denying(Denied, Why));
+            verdicts: RepositoryVerdicts.Denying(Denied, Why),
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
-        // The surface child answers with upstream's own committed list, so the
-        // absence asserted below is a filter and not a double that never had
+        // The list the binary answers with is upstream's own committed one, so
+        // the absence asserted below is a filter and not a list that never had
         // the tool.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions);
 
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
@@ -867,7 +866,7 @@ internal sealed class SessionPolicyTests
             .ToList();
 
         // Not vacuous: the child really does advertise it.
-        await Assert.That(rig.SurfaceChild.ToolsListResult).Contains(Denied);
+        await Assert.That(rig.ToolsList).Contains(Denied);
         await Assert.That(names).DoesNotContain(Denied);
 
         // And nothing of it is left in the surface for a model to read: no
@@ -951,10 +950,10 @@ internal sealed class SessionPolicyTests
                 child.Tools[Unjudged] = new FakeToolBehaviour();
                 child.Tools[Nowhere] = new FakeToolBehaviour();
             },
-            verdicts: RepositoryVerdicts.Without(Unjudged));
+            verdicts: RepositoryVerdicts.Without(Unjudged),
+            toolsList: UpstreamSurface.SnapshotToolsListResult());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
             sessions: sessions);
 
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
@@ -1121,9 +1120,10 @@ internal sealed class SessionPolicyTests
         await Assert.That((bool?)answer["isError"]).IsTrue();
         await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.SessionMissing("browser_navigate"));
 
-        // Neither a session child nor the run's own surface child was asked.
+        // No session child was asked. Corrected 2026-10-08 (previously "Neither a
+        // session child nor the run's own surface child was asked", with a second
+        // assertion on that child): the run starts no child of its own any more.
         await Assert.That(sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count)).IsEqualTo(callsBefore);
-        await Assert.That(rig.SurfaceChild.ToolCallsReceived).DoesNotContain("browser_navigate");
 
         // And it is required in the advertised schema too, so a model is told
         // before it is refused and not after.

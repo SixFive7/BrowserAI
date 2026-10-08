@@ -78,7 +78,9 @@ internal static class SessionHostAccess
     /// <b>Half for the wait and half for what follows it.</b> A client's
     /// <c>initialize</c> waits through both: this bound, and then, when no host came,
     /// the in-process start the server falls back to, which is the same work the
-    /// host's own start does, a surface child spawned and handshaken. Splitting the
+    /// host's own start does. <i>Corrected 2026-10-08 (previously "a surface child
+    /// spawned and handshaken"): neither start spawns a child any more, because the
+    /// tool list is compiled into the binary.</i> Splitting the
     /// client's allowance evenly gives each the same room. <i>Corrected 2026-10-03,
     /// before any release carried it (previously 6 s, "under Codex's own: Codex gives
     /// a stdio server ten seconds to start by default"), when that default was read in

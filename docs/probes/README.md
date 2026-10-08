@@ -194,6 +194,12 @@ spellings `ProcessSelection` keys on, by a search that found two in `observe.ps1
 the positive control, so the scan has nothing to read in it and it was not put to
 the scan. **It adds nothing to what the scan would flag.**
 
+⚠️ *Added 2026-10-08, later again.* **Thirty-eight**, counted as its
+subdirectories, when [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md)
+arrived with the tool list compiled into the binary. It holds Python and Markdown
+only, and starts the payload's child by its path. **The scan would still flag
+eleven files, and only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -273,3 +279,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-04-lifetime`](2026-10-04-lifetime/README.md) | A desktop of the rig's own for a headed browser, with a window census over both desktops, row 152's headed arms run on it, and a 50,000 px page screenshotted full-page through the published server | |
 | [`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) | The opening Claude Code sends since 2026-09-30, sent to a BrowserAI server by hand, and Claude Code's own logs and transcripts counted, read-only, for which opening each connection took and what came of it | |
 | [`2026-10-08-input-check`](2026-10-08-input-check/README.md) | What the visible-input check costs: each read and the product's whole check in tight loops, and the shipped coalescable timer over twelve minutes beside the same timer with no tolerance, a timer that wakes for nothing and a process with no timer | |
+| [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md) | The payload's own child asked for its tools under five session configurations, its answer compared byte for byte with the snapshot BrowserAI compiles in, and an older snapshot as the control | |

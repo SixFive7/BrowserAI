@@ -197,7 +197,11 @@ internal sealed class SandboxFlagTests
         using var scratch = ScratchDirectory.Create("sandbox-generated-config");
 
         var path = Path.Combine(scratch.Path, "config.json");
-        BrowserConfiguration.WriteTo(path, BrowserConfiguration.ForSurface(scratch.Path));
+        // A session's config, the only kind left since 2026-10-08 (previously the
+        // run's own child's, deleted that day with the tool list compiled in).
+        BrowserConfiguration.WriteTo(
+            path,
+            BrowserConfiguration.ForSession(SessionPath.For(Path.Combine(scratch.Path, "session")), headed: false, BrowserConfiguration.BrowserName, transcript: false, RunOptions.Default));
 
         using var generated = JsonDocument.Parse(File.ReadAllText(path));
 

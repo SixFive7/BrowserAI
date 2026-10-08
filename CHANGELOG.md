@@ -831,6 +831,25 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **The tool list comes from the binary, and no Playwright starts until a session opens.**
+  The maintainer's words of 2026-10-04 verbatim: *"I'd argue that the relay always answers the
+  tool list from the binary. I see no reason why it would ever defer to Playwright, as the
+  Playwright version is bound to that binary version is it not?"* Every server, and the session
+  host, started a Playwright of its own before it answered its handshake, for one purpose: to be
+  asked `tools/list`. The snapshot the build already takes from the payload's own Playwright,
+  `upstream-snapshots/tools-list.json`, is now compiled into the server with `tool-verdicts.json`
+  beside it, and `tools/list` is answered from it through the same rewrite, so a server answers
+  at once and starts a Playwright only for a session. Each session's own Playwright is asked for
+  its list right after its handshake, before any page exists, and held to the compiled list byte
+  for byte; a difference refuses the session as a broken install and names the first tool that
+  differs. Measured first: the payload's Playwright answers the same 45,612 bytes as the snapshot
+  under five session configurations, Chromium and Firefox, hidden and headed. The schema rule
+  reads: schemas come from the child's `tools/list` at build time, from the same pinned payload,
+  and are checked against the live child at run time. `BuiltInToolListTests` holds the published
+  server answering with nothing from the payload running, a session opening in each family, and
+  the binary carrying the snapshot; `ErrorCatalogueTests` holds the refusal. Both were watched red
+  first.
+
 - 💥 **BrowserAI is one program again, `BrowserAI.exe`, and a client starts it with `--mcp`.**
   D7 a, the maintainer's words verbatim: *"d7 a"*. Release 1.1.0 carried two programs:
   `BrowserAI.Server.exe`, which a client started, and `BrowserAI.exe`, which a person started and
@@ -841,6 +860,7 @@ release body; nothing else depends on it.
   or `.codex\config.toml` that names `BrowserAI.Server.exe` stops working once and has to be
   registered again from BrowserAI's page, and so does a client that kept the old command across
   the update. A start with `--mcp` and no pipe on standard input exits at once and says why.
+
 - 🔧 **A person closing a visible session's window closes the session, as `browser_close` does.**
   Also 8 b. Until now nothing noticed: the next call met `@playwright/mcp` starting a new browser
   on its own, and `browserai_resume` answered that the session was already live, measured
@@ -1765,6 +1785,12 @@ release body; nothing else depends on it.
   first: the list carried no `browserai_change_purpose`.
 
 ### Removed
+
+- 🗑️ **The payload's copy of `tool-verdicts.json` is gone, with the child that answered the tool list.**
+  The verdicts are compiled into the server beside the tool list they judge, so nothing reads the
+  copy a build target used to put in the payload; the build removes one a payload assembled earlier
+  still holds, and the payload is complete with `node.exe` and `cli.js`. The run's own Playwright,
+  its configuration and its folders in the run's directory went the same day.
 
 - 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
   The maintainer's decision, in his words: *"I am leaning to remove playwrights own browser_resume

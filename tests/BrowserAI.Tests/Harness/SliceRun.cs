@@ -67,6 +67,11 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// logged is on disk whatever happens to the process afterwards.
 /// </param>
 /// <param name="SessionDirectory">The session this run's browser belongs to.</param>
+/// <param name="InitText">
+/// Every text block of the <c>browserai_init</c> answer that opened the session,
+/// which names the revision its child negotiated. Added 2026-10-08, when that
+/// child became the only one whose negotiation a run can show.
+/// </param>
 internal sealed record SliceRun(
     JsonObject InitializeResult,
     IReadOnlyList<string> ToolNames,
@@ -81,7 +86,8 @@ internal sealed record SliceRun(
     IReadOnlyList<ObservedProcess> Survivors,
     string StandardError,
     string ProcessLog,
-    string SessionDirectory)
+    string SessionDirectory,
+    string InitText)
 {
     private static readonly Lazy<Task<SliceRun>> Shared = new(CaptureAsync);
 
@@ -159,7 +165,7 @@ internal sealed record SliceRun(
         // decision. The browser this slice contains is now this session's.
         var session = Path.Combine(scratch.Path, "slice-session");
 
-        _ = await client.EnvelopeAsync("tools/call", new JsonObject
+        var init = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browserai_init",
             ["arguments"] = new JsonObject
@@ -168,6 +174,12 @@ internal sealed record SliceRun(
                 ["purpose"] = "the vertical slice's own session",
             },
         }).ConfigureAwait(false);
+
+        var initText = string.Join(
+            "\n",
+            (init["result"]?["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
 
         var navigate = await client.EnvelopeAsync("tools/call", new JsonObject
         {
@@ -241,7 +253,8 @@ internal sealed record SliceRun(
             survivors,
             standardError,
             ProcessLogRecords.For(browserAi, browserAiCreated),
-            session);
+            session,
+            initText);
     }
 
     /// <summary>

@@ -150,11 +150,14 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// The canned <c>tools/list</c> result. <b>This is the double's payload,
     /// not a schema the product declares</b> -- the scope rule that forbids
     /// hand-written tool schemas is about what BrowserAI ships, and what
-    /// BrowserAI ships comes from the child at runtime. The real surface lives
-    /// in <c>upstream-snapshots/tools-list.json</c>, and a test that needs it
-    /// can point <see cref="ToolsListResult"/> there.
+    /// BrowserAI ships comes from the child's own <c>tools/list</c>, taken at build
+    /// time from the same pinned payload and checked against the live child at run
+    /// time. The real surface lives in <c>upstream-snapshots/tools-list.json</c>,
+    /// and a rig that needs it hands it in as the list the binary answers with.
+    /// <i>Corrected 2026-10-08 (previously "comes from the child at runtime ... a
+    /// test that needs it can point <see cref="ToolsListResult"/> there").</i>
     /// </summary>
-    private const string DefaultToolsList =
+    internal const string DefaultToolsList =
         """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}},{"name":"browser_snapshot","description":"Capture an accessibility snapshot","inputSchema":{"type":"object","properties":{}}}]}""";
 
     private readonly FrameChannel _channel;

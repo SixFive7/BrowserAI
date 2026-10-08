@@ -137,25 +137,22 @@ internal sealed class ProtocolSplitTests
             .IsEqualTo(SliceRun.OfferedProtocolVersion);
 
         // The child half. It is not visible on the wire at all -- the caller
-        // sees only its own negotiation -- so the product logs it, and this is
-        // the assertion the kb's protocol row has been owed since it was
+        // sees only its own negotiation -- so the product reports it, and this
+        // is the assertion the kb's protocol row has been owed since it was
         // written.
         //
-        // ⚠️ ASSERTED ON THE PROCESS LOG, NOT ON STDERR, and the difference is a
-        // durability guarantee and not a preference. Corrected 2026-08-18
-        // (previously `run.StandardError`), which was red on CI twice for a
-        // record the product had written correctly both times. stderr goes
-        // through `AddConsole`, which hands records to a background processor
-        // thread; `SliceRun` then kills BrowserAI with TerminateProcess, on
-        // purpose, to prove containment -- and the queue's contents go with it.
-        // The two runs lost different amounts of the tail, which is the
-        // signature of a queue and not of a missing call. `RollingFileWriter`
-        // is unbuffered per record and `ProcessLog`'s own remarks say so, so the
-        // file is where "the product recorded this" can actually be asserted.
-        // Scoped to this run's pid, because that log is machine-wide.
-        await Assert.That(run.ProcessLog)
-            .Contains($"requested={BrowserProxy.ChildProtocolVersion} negotiated={BrowserProxy.ChildProtocolVersion}")
-            .Because($"BrowserAI ran as pid {run.BrowserAiProcessId} and wrote {run.ProcessLog.Split('\n').Length} record(s) to the shared process log");
+        // ⚠️ READ FROM THE SESSION'S OWN ANSWER since 2026-10-08. Corrected
+        // (previously asserted on the process log, "requested=... negotiated=...",
+        // the record the run's own child left there at startup -- and on the
+        // process log and not on stderr because stderr's tail is lost when
+        // `SliceRun` kills BrowserAI on purpose). That child is gone with the
+        // tool list compiled into the binary, and a session's child records its
+        // negotiation in the session's own stack, which is stderr. The init
+        // answer is on the wire and names the revision the session's child
+        // negotiated, so it is the durable reading.
+        await Assert.That(run.InitText)
+            .Contains($"child protocol: {BrowserProxy.ChildProtocolVersion}")
+            .Because(run.InitText);
 
         // And the pin itself is the child's measured ceiling and not a
         // number somebody liked: the same value the snapshot generator recorded

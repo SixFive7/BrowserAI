@@ -113,9 +113,8 @@ internal sealed class FakeChildHarnessTests
     [Test]
     public async Task TheFakeChildServesACannedToolsList()
     {
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
-            child.ToolsListResult =
-                """{"tools":[{"name":"browser_take_screenshot","description":"Take a screenshot","inputSchema":{"type":"object","properties":{}}}]}""");
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            toolsList: """{"tools":[{"name":"browser_take_screenshot","description":"Take a screenshot","inputSchema":{"type":"object","properties":{}}}]}""");
 
         var tools = await rig.Client.RoundTripAsync("tools/list");
 

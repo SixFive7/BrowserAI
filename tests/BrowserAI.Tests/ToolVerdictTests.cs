@@ -501,14 +501,11 @@ internal sealed class ToolVerdictTests
         await Assert.That(broken!.Message).Contains("the-broken-file.json");
         await Assert.That(broken.InnerException).IsNotNull();
 
-        // A file that is not there at all, which is what a half-copied payload
-        // looks like. FileNotFoundException and not the above, so an
-        // incomplete install and a corrupt one read differently.
-        var absent = Path.Combine(ScratchRoot.Path, $"absent-{Guid.NewGuid():N}", ToolVerdicts.FileName);
-        var missing = Assert.Throws<FileNotFoundException>(() => ToolVerdicts.Read(absent));
-
-        await Assert.That(missing!.Message).Contains(absent);
-        await Assert.That(missing.Message).Contains("Build-Payload.ps1");
+        // ⚠️ DELETED 2026-10-08: the arm for a file that is not there at all,
+        // which read the payload's copy through ToolVerdicts.Read and expected a
+        // FileNotFoundException naming Build-Payload.ps1. The file is compiled
+        // into the binary since that day, so an absent one is a build that fails
+        // naming it and nothing reads one at run time.
 
         await Assert.That(string.Join(Environment.NewLine, faults)).IsEmpty();
 
@@ -517,21 +514,37 @@ internal sealed class ToolVerdictTests
         await Assert.That(RepositoryVerdicts.Parse(RepositoryVerdicts.Document()).Upstream.Count).IsGreaterThan(40);
     }
 
+    /// <summary>
+    /// The binary carries the committed file byte for byte, and the payload no
+    /// copy of it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Changed 2026-10-08 (previously <c>ThePayloadCarriesTheCommittedFileByteForByte</c>,
+    /// over the copy a build target put in the payload).</b> The file is compiled into
+    /// the binary since that day, so what ships and what is judged are compared there;
+    /// and a copy left in the payload would ship beside it and go stale, so the build
+    /// removes one and this holds that it is gone.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePayloadCarriesTheCommittedFileByteForByte()
+    public async Task TheBinaryCarriesTheCommittedFileByteForByteAndThePayloadNoCopy()
     {
-        // The copy step is a build target, and a build target that silently
-        // stopped running would leave the product reading a file the suite never
-        // tests -- so what ships and what is judged are compared, not
-        // assumed. Gated, because a clean clone has no payload and a scan of a
-        // tree that is not there passes trivially.
-        SuiteEnvironment.RequireRepositoryPayload();
+        var committed = await File.ReadAllBytesAsync(RepositoryVerdicts.Path);
 
-        var shipped = RepositoryPayload.Layout.ToolVerdicts;
+        using var stream = typeof(ToolVerdicts).Assembly.GetManifestResourceStream(ToolVerdicts.ResourceName);
 
-        await Assert.That(File.Exists(shipped)).IsTrue();
-        await Assert.That(await File.ReadAllTextAsync(shipped))
-            .IsEqualTo(await File.ReadAllTextAsync(RepositoryVerdicts.Path));
+        await Assert.That(stream).IsNotNull();
+
+        using var carried = new MemoryStream();
+        await stream!.CopyToAsync(carried);
+
+        await Assert.That(carried.ToArray().AsSpan().SequenceEqual(committed)).IsTrue();
+        await Assert.That(ToolVerdicts.Compiled.Upstream.Count).IsEqualTo(RepositoryVerdicts.Committed.Upstream.Count);
+
+        if (RepositoryPayload.IsPresent)
+        {
+            await Assert.That(File.Exists(Path.Combine(RepositoryPayload.Layout.Root, ToolVerdicts.FileName))).IsFalse();
+        }
     }
 
     /// <summary>

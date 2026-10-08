@@ -516,11 +516,13 @@ internal static partial class Program
         // the real list, refuses every call until the updater has gone, and then
         // serves: see BeginServing below.
 
-        // One run, one directory. It holds this run's own child -- the one that
-        // answers `tools/list` before any session exists -- together with its
-        // profile and the config generated for every session this run opens.
-        // Sessions do not replace it: they are additional, and each has its own
-        // directory chosen by the caller.
+        // One run, one directory. It holds the config generated for every session
+        // this run opens and their children's temporary folder; each session's own
+        // directory is the caller's. Corrected 2026-10-08 (previously "It holds this
+        // run's own child -- the one that answers `tools/list` before any session
+        // exists -- together with its profile and the config generated for every
+        // session this run opens"): that child is gone, and the list comes from
+        // the binary.
         // ⚠️ THE MARKER IS TAKEN HERE, BY THIS PROCESS, and that is the whole of
         // what closes the hazard both 2026-08-18 adversarial reviews found
         // independently. Until 2026-08-24 the only thing holding this directory
@@ -541,23 +543,19 @@ internal static partial class Program
         {
             var payload = new PayloadLayout();
 
-            // ⚠️ READ BEFORE THE FIRST CHILD IS STARTED, AND A FAILURE HERE
-            // STOPS THE PROCESS. BrowserAI denies by default, so a payload
-            // whose verdicts file is missing or unreadable does not degrade to
-            // permissive -- it refuses every browser call, which presents as
-            // "nothing works" with no file named anywhere. Both failures name
-            // the file and what was wrong with it, and both reach the caller
-            // through the ordinary startup path and not through a refusal
-            // per call.
-            var verdicts = Sessions.ToolVerdicts.Read(payload.ToolVerdicts);
-
-            var options = ChildLaunch.Create(
-                payload,
-                paths.BrowsersDirectory,
-                instance,
-                Path.Combine(instance, "playwright-mcp.config.json"),
-                BrowserConfiguration.ForSurface(instance),
-                name: "playwright-mcp[surface]");
+            // ⚠️ READ BEFORE THE PROXY EXISTS, AND A FAILURE HERE STOPS THE
+            // PROCESS. BrowserAI denies by default, so verdicts it cannot read do
+            // not degrade to permissive -- they would refuse every browser call,
+            // which presents as "nothing works" with no file named anywhere. The
+            // failure names what was wrong and reaches the caller through the
+            // ordinary startup path, not through a refusal per call. Corrected
+            // 2026-10-08 (previously read from the payload's own copy of the file,
+            // "Sessions.ToolVerdicts.Read(payload.ToolVerdicts)", before a child of
+            // the run's own was started to answer tools/list): both the verdicts
+            // and the tool list are compiled into the binary since that day, so no
+            // child starts before the handshake is answered.
+            var verdicts = Sessions.ToolVerdicts.Compiled;
+            var upstreamTools = Sessions.UpstreamToolList.Compiled;
 
             // Created before the proxy, and it starts nothing: the first init
             // decides whether a download is needed and never waits for one.
@@ -568,16 +566,17 @@ internal static partial class Program
                 Paths = paths,
                 Payload = payload,
                 Verdicts = verdicts,
+                UpstreamTools = upstreamTools,
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = ProcessLog.OpenSessionLog,
             };
 
-            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment, activity).ConfigureAwait(false);
+            var proxy = BrowserProxy.Create(log.Factory, environment, activity);
 
             // ⚠️ Q296 c: BEFORE the conversation opens, so no call can arrive
-            // ahead of the refusal. tools/list is answered as ever, from the child
-            // just started; every tools/call is refused until the updater goes.
+            // ahead of the refusal. tools/list is answered as ever, from the list
+            // compiled in; every tools/call is refused until the updater goes.
             if (updater is not null)
             {
                 proxy.RefuseCallsWhileAnUpdateInstalls();
@@ -634,7 +633,7 @@ internal static partial class Program
             using var closeOnDeparture = stopping.Token.Register(
                 () => _ = EndTheConversationAsync(transport, logger));
 
-            StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
+            StartupLog.Serving(logger, BrowserProxy.CallerProtocolVersion, BrowserProxy.ChildProtocolVersion);
 
             if (updater is null)
             {
@@ -1013,8 +1012,8 @@ internal static partial class StartupLog
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Information,
-        Message = "BrowserAI is serving stdio. childProtocol={ChildProtocol}")]
-    public static partial void Serving(ILogger logger, string childProtocol);
+        Message = "BrowserAI is serving stdio. callerProtocol={CallerProtocol} childProtocol={ChildProtocol}")]
+    public static partial void Serving(ILogger logger, string callerProtocol, string childProtocol);
 
     [LoggerMessage(
         EventId = 3,

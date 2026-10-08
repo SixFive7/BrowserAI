@@ -4,7 +4,8 @@
 # Sends a BrowserAI server the two opening frames Claude Code sends since 2026-09-30, and prints what
 # came back: server/discover carrying revision 2026-07-28 as per-request metadata, then, on the same
 # connection, the initialize handshake at 2025-11-25 and tools/list.
-# Usage: python opening.py <path to BrowserAI.Server.exe>
+# Usage: python opening.py <the server's executable> [its arguments]: BrowserAI.Server.exe with none when this
+# ran on 2026-10-08, and BrowserAI.exe --mcp since the one executable of the same day.
 # It starts the server with no window and ends it by closing its input; it starts no browser.
 import json
 import queue
@@ -15,7 +16,7 @@ import time
 
 CREATE_NO_WINDOW = 0x08000000
 
-server = subprocess.Popen([sys.argv[1]], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+server = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                           stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
 lines = queue.Queue()
 threading.Thread(target=lambda: [lines.put(line) for line in iter(server.stdout.readline, b'')],

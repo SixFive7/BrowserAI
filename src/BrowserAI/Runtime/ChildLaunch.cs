@@ -107,9 +107,11 @@ internal static class ChildLaunch
     /// resolves against <c>INIT_CWD</c> first.
     /// </param>
     /// <param name="workingDirectory">
-    /// The child's working directory. For a session that is the session
-    /// directory itself; for the run's own child it is the instance directory.
-    /// It must already exist.
+    /// The child's working directory, which for a session is the session's output
+    /// folder, as <c>SessionManager</c> starts it. It must already exist.
+    /// <i>Corrected 2026-10-08 (previously "For a session that is the session
+    /// directory itself; for the run's own child it is the instance directory"):
+    /// the run's own child is gone with the tool list compiled into the binary.</i>
     /// </param>
     /// <param name="configFile">
     /// Where to write the generated config. <b>Never inside a session

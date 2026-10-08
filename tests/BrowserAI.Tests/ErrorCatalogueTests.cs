@@ -705,8 +705,11 @@ internal sealed partial class ErrorCatalogueTests
     /// <para>
     /// <b>The first is a defect in a build, and the provocation has to make
     /// one.</b> <c>ToolVerdictTests</c> holds the committed verdicts file against
-    /// the golden snapshot in both directions, so the run's own child is given a
-    /// list carrying a name the file has no row for.
+    /// the golden snapshot in both directions, so the rig's list, which its
+    /// BrowserAI answers with, carries a name the file has no row for.
+    /// <i>Corrected 2026-10-08 (previously "so the run's own child is given a list
+    /// carrying a name the file has no row for"): the list is the binary's since
+    /// that day, and here the rig's.</i>
     /// </para>
     /// <para>
     /// <b>The second is the maintainer's rule of 2026-10-03, in his words:</b>
@@ -726,11 +729,10 @@ internal sealed partial class ErrorCatalogueTests
         {
             child.Tools[Unjudged] = new FakeToolBehaviour();
             child.Tools["browser_navigate"] = new FakeToolBehaviour();
-        });
+        },
+            toolsList: """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"],"additionalProperties":false}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""");
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            child => child.ToolsListResult =
-                """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"],"additionalProperties":false}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""",
             sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "list-and-call-disagree");
@@ -898,6 +900,49 @@ internal sealed partial class ErrorCatalogueTests
         // what "recoverable" means and is not implied by the sentence alone.
         var record = SessionLock.ReadRecord(SessionPath.For(directory));
         await Assert.That(record).IsNotNull();
+    }
+
+    /// <summary>
+    /// The broken-install row, provoked by a session's child whose tool list is
+    /// not the list the binary answers with.
+    /// </summary>
+    /// <remarks>
+    /// <b>Step 1 of the one-binary plan, 2026-10-08.</b> The list is compiled into
+    /// the binary, each session's child is asked <c>tools/list</c> right after its
+    /// handshake, and its answer is held to that list byte for byte. Here the
+    /// double answers the rig's list with one description changed, so the first
+    /// tool that differs is the second. Planted red the same day against the build
+    /// with no check, where the session opened.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstallIsBrokenRowIsEmittedByASessionChildWhoseListDiffers()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.ToolsListResult = child.ToolsListResult.Replace("Capture an accessibility snapshot", "Capture an accessibility snapshot, changed", StringComparison.Ordinal),
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "broken-install");
+
+        var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a browser server that lists different tools",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.InstallIsBroken),
+            SessionErrors.InstallIsBroken(directory, "'browser_snapshot', whose definition differs"));
+
+        // Nothing was opened: the session is unknown to the next call.
+        var listed = await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root });
+
+        await Assert.That(TextOf(listed)).DoesNotContain("in use: YES");
     }
 
     /// <summary>
@@ -2146,7 +2191,6 @@ internal sealed partial class ErrorCatalogueTests
 
         await using var sessions = RigSessionEnvironment.Create(child =>
         {
-            child.ToolsListResult = WithPageTools;
             child.Tools["browser_tabs"] = new FakeToolBehaviour
             {
                 RawResult = $$"""{"content":[{"type":"text","text":"{{TabLine}}({{Here}})"}]}""",
@@ -2161,6 +2205,12 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // A page's own tools arrive once a page is up, after the open: the check
+        // there holds the child to the list the binary answers with, which no
+        // page has touched yet. Moved here 2026-10-08 (previously programmed
+        // before the double started).
+        rig.Child.ToolsListResult = WithPageTools;
 
         List<PageTool> present =
         [
@@ -2231,9 +2281,6 @@ internal sealed partial class ErrorCatalogueTests
     {
         await using var sessions = RigSessionEnvironment.Create(child =>
         {
-            child.ToolsListResult =
-                """{"tools":[{"name":"webmcp_alpha","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"alpha"}}]}""";
-
             child.Tools["browser_tabs"] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"### Result\n- there are no tabs open"}]}""",
@@ -2241,6 +2288,12 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // A page's own tools arrive once a page is up, after the open: the check
+        // there holds the child to the list the binary answers with, which no
+        // page has touched yet. Moved here 2026-10-08 (previously programmed
+        // before the double started).
+        rig.Child.ToolsListResult = """{"tools":[{"name":"webmcp_alpha","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"alpha"}}]}""";
 
         var unknown = await PageToolAsync(rig, "alpha", "http://example.test/here");
 
@@ -2276,9 +2329,6 @@ internal sealed partial class ErrorCatalogueTests
 
         await using var sessions = RigSessionEnvironment.Create(child =>
         {
-            child.ToolsListResult =
-                """{"tools":[{"name":"webmcp_slow","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"slow"}}]}""";
-
             child.Tools["webmcp_slow"] = new FakeToolBehaviour
             {
                 HoldUntil = Task.Delay(Timeout.Infinite, release.Token),
@@ -2286,6 +2336,12 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // A page's own tools arrive once a page is up, after the open: the check
+        // there holds the child to the list the binary answers with, which no
+        // page has touched yet. Moved here 2026-10-08 (previously programmed
+        // before the double started).
+        rig.Child.ToolsListResult = """{"tools":[{"name":"webmcp_slow","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"slow"}}]}""";
 
         try
         {
