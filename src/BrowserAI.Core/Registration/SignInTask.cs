@@ -75,14 +75,22 @@ internal static partial class SignInTask
     /// </remarks>
     public const string Arguments = BackgroundArgument + " " + StartedByArgument + " $(Arg0)";
 
-    /// <summary>The file beside the install that keeps the definition the hooks registered.</summary>
+    /// <summary>The file beside the install that keeps the definition the hooks registered, or tried to.</summary>
     /// <remarks>
+    /// <para>
     /// <b>A person's start registers a missing task again from it</b> (RESOLUTIONS 9):
     /// the arguments the install hook read out of the installer's environment exist
     /// nowhere else once the installer has gone, and a definition composed without
     /// them would point an install that takes its updates from a folder (H2 a) back
     /// at GitHub. Under the install root and outside <c>current\</c>, so an update
     /// keeps it until the update hook writes it again.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-09 by addition (previously "The file beside the install
+    /// that keeps the definition the hooks registered.")</i>: the hooks write it whether
+    /// or not the scheduler took the task, because a task the hook could not register
+    /// is the one a person's start finds missing (hazard row 331).
+    /// </para>
     /// </remarks>
     public const string SavedDefinitionFileName = "background-task.xml";
 
@@ -293,7 +301,17 @@ internal static partial class SignInTask
     [GeneratedRegex(@"(^|\s)--update-source\s+""(?<value>[^""]+)""")]
     private static partial Regex SavedUpdateSource();
 
-    /// <summary>The definition the hooks last registered for an install, or <see langword="null"/> when there is none.</summary>
+    /// <summary>
+    /// The definition the hooks last wrote for an install, whether or not the scheduler
+    /// took it, or <see langword="null"/> when there is none.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-09 by addition (previously "The definition the hooks last
+    /// registered for an install, or null when there is none.")</i>: what the hooks last
+    /// wrote, registered or not. A person's start registers a missing task from it, and
+    /// <see cref="InstallerSettings.Read"/> reads the data root and the update source
+    /// back from it for a hook that runs without the installer's environment.
+    /// </remarks>
     /// <param name="installRoot">The install root.</param>
     /// <returns>The XML.</returns>
     public static string? SavedDefinition(string installRoot)
@@ -363,10 +381,13 @@ internal static partial class SignInTask
 
                     outcome = tasks.Register(name, definition);
 
-                    if (outcome.Change is TaskChange.Registered)
-                    {
-                        File.WriteAllText(saved, definition);
-                    }
+                    // ⚠️ SAVED WHATEVER THE SCHEDULER SAID -- 2026-10-09. Corrected
+                    // (previously written only once the scheduler had registered the
+                    // task): a person's start registers a missing task from this file,
+                    // and a task the hook could not register is the one that will be
+                    // missing, so the file was absent in exactly the case it is for
+                    // (hazard row 331).
+                    File.WriteAllText(saved, definition);
                 }
 
                 report = new SignInTaskReport(name, outcome.Change, outcome.Detail);

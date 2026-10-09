@@ -239,11 +239,20 @@ internal sealed class SignInTaskTests
     /// <summary>
     /// A task the scheduler will not register fails nothing: the hook returns, the
     /// rest of what it did stands, the installer's own log carries a warning naming the
-    /// task, and no definition is saved for a task that is not there.
+    /// task, and the definition is saved all the same, for a person's start to register
+    /// the missing task from.
     /// </summary>
     /// <remarks>
-    /// <b>The saved definition is extended 2026-10-09</b>, and planted red that day
-    /// against a hook that saved the definition whatever the scheduler answered.
+    /// ⚠️ <b>Corrected 2026-10-09</b> (previously "and no definition is saved for a task
+    /// that is not there", with the remark "The saved definition is extended 2026-10-09,
+    /// and planted red that day against a hook that saved the definition whatever the
+    /// scheduler answered"). Lane ARCH's helper T1 held that no definition is saved and
+    /// watched it red against a hook that saved one anyway; lane ARCH chose the saved
+    /// file the same day. A person's start registers a missing task only from that file
+    /// (RESOLUTIONS 9), and a task the hook could not register is the one that will be
+    /// missing (hazard row 331). The assertion now holds the file there, and
+    /// <see cref="ATaskTheSchedulerRefusedStillLeavesItsDefinitionForAPersonsStart"/>
+    /// holds what it carries.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -260,7 +269,8 @@ internal sealed class SignInTaskTests
         await Assert.That(outcome.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
         await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
         await Assert.That(outcome.PathEntry).IsNotNull();
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNull().Because("a definition was saved for a task the scheduler refused");
+        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNotNull()
+            .Because("a person's start registers the missing task from the saved definition, and none was saved for a task the scheduler refused");
 
         var lines = new List<(VelopackLogLevel Level, string Message)>();
 
@@ -440,6 +450,44 @@ internal sealed class SignInTaskTests
         // The background's own stop runs once its answer is written, so it is waited
         // for, not assumed.
         await BackgroundServerRig.WaitUntilAsync(() => background.Verbs.Stops is 1, "the background was never asked to stop");
+    }
+
+    /// <summary>
+    /// A task the scheduler refused still leaves its definition beside the install, so
+    /// a person's start can register the task once the scheduler takes it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Hazard row 331, added 2026-10-09.</b> A person's start registers a missing task
+    /// from <see cref="SignInTask.SavedDefinitionFileName"/>, and until that day the hook
+    /// wrote the file only once the scheduler had registered the task, so a task the hook
+    /// could not register, the one that is missing, had no definition to register it from
+    /// and the start could only say so in its log. The real-installer arm holds the rest
+    /// of the path through the real scheduler.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATaskTheSchedulerRefusedStillLeavesItsDefinitionForAPersonsStart()
+    {
+        using var install = ScratchDirectory.Create("sign-in-refused-saved");
+        using var data = ScratchDirectory.Create("sign-in-refused-saved-data");
+
+        var image = InstalledLayout.Create(install.Path);
+        var tasks = new ScratchLogonTasks { FailWith = "The task scheduler could not register it: 0x80070005, Access is denied." };
+
+        var outcome = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+
+        await Assert.That(outcome.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
+
+        var saved = SignInTask.SavedDefinition(install.Path);
+
+        await Assert.That(saved).IsNotNull().Because("the definition is what a person's start registers the missing task from");
+
+        var definition = XDocument.Parse(saved!);
+
+        await Assert.That(definition.Descendants().Single(element => element.Name.LocalName == "Command").Value)
+            .IsEqualTo(Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        await Assert.That(definition.Descendants().Single(element => element.Name.LocalName == "Arguments").Value)
+            .IsEqualTo(SignInTask.Arguments);
     }
 
     /// <summary>
