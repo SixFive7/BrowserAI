@@ -40,6 +40,19 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
+  F3, after the maintainer's question of 2026-10-07, verbatim: *"Maybe we should start tracking all
+  magical numbers used in this project in an index of sorts so that we can at a later date re-check
+  the data by using the provenance of these records to re-determine if the number is still
+  accurate?"* `kb/numbers.md` gives each number the member the code reads, its value, what it
+  governs, whether it was measured, derived, chosen or set by an upstream, the evidence, when, and
+  how to check it again. Every duration the product waits on now lives in one of six named classes,
+  and the code that reads it takes its value from there, unchanged. `NumbersIndexTests` holds the
+  index and the code against each other in both directions, refuses a duration written as a number
+  anywhere else in the product's source, and answers the maintainer's question of R as a test: every
+  wait a tool call can meet ends inside the stricter client's limit on one call. Planted red four
+  ways first.
+
 - ✨ **Every answer that opens a visible window says the window can go again at no loss.**
   F5 a, the maintainer's words verbatim: *"f5 a"*, realising E1, which asked to *"teach the model
   that it can then immediately after make it a headless session"*. Such an answer from

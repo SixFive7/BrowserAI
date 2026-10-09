@@ -67,7 +67,7 @@ answered by number.")*
 | E2 | 2026-10-07, his own | Visible windows close after an idle hour; agents may lengthen either default behind a warning | stands, refined by F2 and F4 |
 | F1 | 2026-10-08, "f1 a" | One tool, `browserai_close`; a resume switches settings itself | stands; the refusal for `browser_close` is the generic one |
 | F2 | 2026-10-08, "f2 d" | Four mandatory settings; a hold-back only on a difference from the last run; every call restarts the countdown | stands, amended twice |
-| F3 | 2026-10-08, "f3 a" | A numbers index, held against the code both ways | stands |
+| F3 | 2026-10-08, "f3 a" | A numbers index, held against the code both ways | stands; built 2026-10-09 |
 | F4 | 2026-10-08, "f4 a" | A person's input in a visible window counts as activity; no title-bar countdown | stands, amended twice |
 | F5 | 2026-10-08, "f5 a" | The hint goes in the `headed` description and in answers that open a window | stands |
 | H1 | 2026-10-08, "h1 a" with his changes | Browsers and active relays hold an update; relays end only by a two-phase agreement | stands |
@@ -686,7 +686,11 @@ client, Codex, so nothing differs per client:
 
 A person who lowers a client's own limit below ours in its settings has the client
 give up first, and BrowserAI's explanation never arrives; BrowserAI cannot see those
-settings. Each of these numbers is a row of the numbers index (F3).
+settings. Each of these numbers is a row of the numbers index (F3). *Corrected
+2026-10-09 by addition:* Codex's start limit is 30 s by default, measured on
+2026-10-03 ([kb](../../../kb/mcp/protocol.md#registering-with-codex-and-what-its-startup-timeout-costs----measured-2026-09-24)),
+and the table's 10 s is the figure the kb carried before that measurement; the table
+is left as the root's of 2026-10-08 had it.
 
 ### The tool list
 
@@ -2133,6 +2137,18 @@ hold, the 150 s hang, the 60 s close, the 60 s page tool, and the clients' limit
 30 s and 10 s to start and 30 minutes and 300 s per call. `AGENTS.md` cannot take a
 new top-level file, so the index is a kb article; lane REC builds it once the code
 lanes have landed their numbers.
+
+**Built 2026-10-09**, *added by addition*: [`kb/numbers.md`](../../../kb/numbers.md),
+the six named classes it names, and `NumbersIndexTests`, which holds the index and the
+code in both directions, refuses a literal duration outside the named classes, and
+holds R's question as a test: every wait a tool call can meet ends inside the stricter
+client's limit. ⚠️ **One figure above was already out of date when it was written**:
+Codex's default limit on a server's start is 30 s and not 10 s, measured on 2026-10-03
+at 0.155 and 0.160
+([kb](../../../kb/mcp/protocol.md#registering-with-codex-and-what-its-startup-timeout-costs----measured-2026-09-24)),
+a day before the timeout table in "The first call" quoted the figure the kb carried
+until then. The index carries 30 s. No number of BrowserAI's is derived from it,
+because the relay answers the handshake from the binary.
 
 ### H1. What holds an update
 

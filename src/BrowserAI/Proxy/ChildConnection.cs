@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
 using BrowserAI.Protocol;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -144,7 +145,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// same reason in <c>TestDefaults.InitializationHang</c>.
     /// </para>
     /// </remarks>
-    public static TimeSpan ChildInitializationHang { get; } = TimeSpan.FromMinutes(10);
+    public static TimeSpan ChildInitializationHang { get; } = SessionTimes.ChildInitializationHang;
 
     /// <summary>The revision actually negotiated, as opposed to the one asked for.</summary>
     public string? NegotiatedProtocolVersion { get; }

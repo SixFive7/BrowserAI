@@ -164,7 +164,7 @@ internal sealed record UpdateToastFacts(string RunningVersion, string VelopackLo
 internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
 {
     /// <summary>How often the countdown is written: <b>once a second</b>, the unit it counts in.</summary>
-    public static TimeSpan Tick { get; } = TimeSpan.FromSeconds(1);
+    public static TimeSpan Tick { get; } = UpdateBudgets.ToastTick;
 
     private readonly Lock _gate = new();
     private readonly IToastSurface _surface;

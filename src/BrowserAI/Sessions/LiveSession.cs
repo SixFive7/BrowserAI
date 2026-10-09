@@ -153,7 +153,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// there is no linger to keep in step with. The period stays the 15 s it was.
     /// </para>
     /// </remarks>
-    public static TimeSpan DetachedWindowLook { get; } = TimeSpan.FromSeconds(15);
+    public static TimeSpan DetachedWindowLook { get; } = SessionTimes.DetachedWindowLook;
 
     /// <summary>
     /// Which connection drives this session now, and whether the host is letting it go.

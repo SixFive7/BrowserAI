@@ -182,7 +182,7 @@ internal sealed partial class PageListener : IAsyncDisposable, IDisposable
     {
         try
         {
-            using var bounded = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var bounded = new CancellationTokenSource(ProcessBounds.PageListenerStopBound);
             await _application.StopAsync(bounded.Token).ConfigureAwait(false);
         }
         finally

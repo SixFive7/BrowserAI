@@ -131,7 +131,12 @@ internal static class RenameWindow
     /// <para>
     /// <b>A hang detector, not a budget, and it is stated once so the two
     /// sides of the rename cannot drift apart.</b>
-    /// <c>SessionLock.MoveBudget</c> is this same value and reads it from here.
+    /// <c>SessionLock.ReadRecord</c> takes it as its default patience and
+    /// reads it from here. <i>Corrected 2026-10-09 (previously
+    /// "<c>SessionLock.MoveBudget</c> is this same value and reads it from
+    /// here")</i>: that member went on 2026-08-26 with the record that was its
+    /// own lock. Its value is <c>SessionTimes.RenameBudget</c>, a row of
+    /// <see href="../../../kb/numbers.md">the numbers index</see>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously two seconds, itself raised from
@@ -170,7 +175,7 @@ internal static class RenameWindow
     /// different numbers, and the reason is written at both.
     /// </para>
     /// </remarks>
-    public static TimeSpan Budget { get; } = TimeSpan.FromSeconds(30);
+    public static TimeSpan Budget { get; } = SessionTimes.RenameBudget;
 
     /// <summary>
     /// Runs an open that this process is entitled to make, retrying only while
@@ -257,7 +262,7 @@ internal static class RenameWindow
         ArgumentNullException.ThrowIfNull(open);
 
         var clock = Stopwatch.StartNew();
-        var delay = 5;
+        var delay = SessionTimes.RenameRetryFirstDelayMilliseconds;
 
         while (true)
         {
@@ -268,12 +273,12 @@ internal static class RenameWindow
             catch (UnauthorizedAccessException) when (clock.Elapsed < Budget)
             {
                 Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, 100);
+                delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
             }
             catch (IOException failure) when (aSharingViolationToo && IsSharingViolation(failure) && clock.Elapsed < Budget)
             {
                 Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, 100);
+                delay = Math.Min(delay * 2, SessionTimes.RenameRetryLongestDelayMilliseconds);
             }
         }
     }

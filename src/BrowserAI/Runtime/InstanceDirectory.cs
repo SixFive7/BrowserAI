@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Hosting;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Runtime;
@@ -123,7 +124,7 @@ internal static class InstanceDirectory
     /// covers the instants between <see cref="CreateFresh"/> creating a directory
     /// and the same method opening its marker two statements later.
     /// </summary>
-    private static readonly TimeSpan YoungEnoughToStillBeStarting = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan YoungEnoughToStillBeStarting = SessionTimes.InstanceDirectoryYoungAge;
 
     /// <summary>
     /// The file one run holds open inside its own instance directory for the

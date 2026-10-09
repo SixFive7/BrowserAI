@@ -1806,6 +1806,13 @@ where the version comes from are in [`STACK.md`](STACK.md). The short form:
   reads `AssemblyVersion`.
 - **The MCP SDK is deviated from in nine specific places**, each recorded in
   `STACK.md` with what it costs and what would make it unnecessary.
+- **Every number the product tunes has a row in [the numbers index](kb/numbers.md)**
+  -- *added 2026-10-09, F3*. Every duration is declared in one of six named classes:
+  `SessionTimes` and `ProcessBounds`, `ClientLimits` and `WordingTimes` at the root of
+  `src/BrowserAI.Core/`, `UpdateBudgets` in its `Updates/`, and `RelayConstants` in
+  `src/BrowserAI/Relay/`. The member that reads a number keeps its name and takes its
+  value from the named class, so its remarks still say why the value is what it is.
+  Sizes, counts and lengths stay with their owners and have rows too.
 
 ## The suite
 
@@ -1826,6 +1833,7 @@ the two gates. What implements it:
 | Whether this machine could have seen a browser take the foreground at all -- read, reported in the coverage block, never repaired | `tests/BrowserAI.Tests/Harness/ForegroundLock.cs`, `tests/BrowserAI.Tests/ForegroundLockTests.cs` |
 | The upstream-review gate | `upstream-snapshots/`, `build/upstream-snapshots.mjs`, `build/Update-UpstreamSnapshots.ps1`, `build/UpstreamSnapshots.targets`, `tests/BrowserAI.Tests/{UpstreamSnapshotTests, UpstreamReviewTests, ReVerificationIndexTests, ResolvedVersions}.cs` |
 | The documents themselves | `tests/BrowserAI.Tests/{DocumentationLinkTests, HazardIndexTests, ChangelogTests, BuildConfigurationTests}.cs` |
+| The numbers index against the code, both ways, and the scan that refuses a literal duration outside the named classes -- **added 2026-10-09, F3** | `tests/BrowserAI.Tests/NumbersIndexTests.cs`, over [`kb/numbers.md`](kb/numbers.md) |
 
 **The raw client is mandatory, not a nicety.** With both SDK transports replaced,
 an `McpClient` would be testing the code under test using the code under test.

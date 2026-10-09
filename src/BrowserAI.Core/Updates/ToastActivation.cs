@@ -182,7 +182,7 @@ internal static partial class ToastActivation
     /// detector. COM hands it over as soon as the class is registered; measured
     /// 2026-09-24, COM started the activator 21 to 40 ms after the click.
     /// </summary>
-    public static TimeSpan ActivationBound { get; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan ActivationBound { get; } = UpdateBudgets.ToastActivationBound;
 
     private static readonly StrategyBasedComWrappers Wrappers = new();
 

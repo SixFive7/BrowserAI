@@ -38,6 +38,7 @@ reading upstream source -- together with enough provenance to re-establish it.
 | [`packaging/velopack.md`](packaging/velopack.md) | The update path, its nine landmines, the install/update/rollback verification of each, and the restart/mutex handover race |
 | [`packaging/dependencies.md`](packaging/dependencies.md) | Package provenance with date stamps, token cost, the licence terms of everything shipped, and **what vendoring a runtime cost two long-lived repositories** |
 | [`toolchain.md`](toolchain.md) | MSBuild, NuGet, npm, PowerShell, analyzers, git line endings and the test host -- traps in the tooling that builds this, none of them about processes or browsers |
+| [`numbers.md`](numbers.md) | **Every number the product tunes**, one row each: the member the code reads, its value, what it governs, whether it was measured, derived, chosen or set by an upstream, the evidence, when, and how to check it again. Not a measurement article: a measured row links the entry that holds the measurement, and `NumbersIndexTests` holds the page and the code against each other. *Added 2026-10-09, F3* |
 
 Two pages are not articles and are maintained differently:
 

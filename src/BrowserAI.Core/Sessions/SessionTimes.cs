@@ -153,9 +153,11 @@ internal static class SessionTimes
     /// (<see href="https://learn.microsoft.com/windows/win32/sync/waitable-timer-objects">Waitable Timer Objects</see>).
     /// </para>
     /// <para>
-    /// ⚠️ <b>A new number for the numbers index of decision F3, which does not exist
-    /// yet.</b> When it does, this and <see cref="VisibleInputCheckTolerance"/> are two
-    /// of its rows.
+    /// ⚠️ <b>Two rows of the numbers index of decision F3</b>, this and
+    /// <see cref="VisibleInputCheckTolerance"/>, in
+    /// <see href="../../../kb/numbers.md">kb/numbers.md</see> since 2026-10-09
+    /// (previously "a new number for the numbers index of decision F3, which does not
+    /// exist yet").
     /// </para>
     /// <para>
     /// What a check costs, and what the timer costs over more than ten minutes against a
@@ -180,9 +182,148 @@ internal static class SessionTimes
     /// timer's own terms, a twentieth of the shortest countdown.
     /// </para>
     /// <para>
-    /// ⚠️ <b>A new number for the numbers index of decision F3, which does not exist
-    /// yet</b>, beside <see cref="VisibleInputCheckInterval"/>.
+    /// ⚠️ <b>A row of the numbers index of decision F3</b>, beside
+    /// <see cref="VisibleInputCheckInterval"/>'s, in
+    /// <see href="../../../kb/numbers.md">kb/numbers.md</see> since 2026-10-09
+    /// (previously "which does not exist yet").
     /// </para>
     /// </remarks>
     public static TimeSpan VisibleInputCheckTolerance { get; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// How long a session's child gets to answer <c>initialize</c> before it is called
+    /// hung: 10 minutes. The value of <c>ChildConnection.ChildInitializationHang</c>,
+    /// whose remarks say why.
+    /// </summary>
+    public static TimeSpan ChildInitializationHang { get; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How long the stderr reader of a child is given to drain after the child exits:
+    /// 2 s. The value of <c>ChildProcessSession.StandardErrorDrainTimeout</c>.
+    /// </summary>
+    public static TimeSpan ChildStandardErrorDrain { get; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// How long a child gets to exit after its stdin closes before its job is closed:
+    /// 5 s. The value of <c>ChildProcessOptions.DefaultShutdownTimeout</c>.
+    /// </summary>
+    public static TimeSpan ChildShutdown { get; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// How long asking a browser build for its headed user agent may take before
+    /// BrowserAI launches with its own: 30 s. The value of <c>HeadedUserAgent.AskBound</c>.
+    /// </summary>
+    public static TimeSpan HeadedUserAgentAskBound { get; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// How recently an instance directory may have been touched and still be spared by
+    /// a sweep: 5 minutes. The value of <c>InstanceDirectory.YoungEnoughToStillBeStarting</c>.
+    /// </summary>
+    public static TimeSpan InstanceDirectoryYoungAge { get; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// How often a headed session whose client went is asked whether its browser is
+    /// still up: 15 s. The value of <c>LiveSession.DetachedWindowLook</c>.
+    /// </summary>
+    public static TimeSpan DetachedWindowLook { get; } = TimeSpan.FromSeconds(15);
+
+    /// <summary>
+    /// How long a reader waits out a rename that is replacing the file it opens: 30 s.
+    /// The value of <c>RenameWindow.Budget</c>.
+    /// </summary>
+    public static TimeSpan RenameBudget { get; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// The first pause of the loop that waits out a rename, in milliseconds: 5, doubled
+    /// after every refusal. Read by <c>RenameWindow</c>.
+    /// </summary>
+    public const int RenameRetryFirstDelayMilliseconds = 5;
+
+    /// <summary>
+    /// The longest pause of that loop, in milliseconds: 100.
+    /// </summary>
+    public const int RenameRetryLongestDelayMilliseconds = 100;
+
+    /// <summary>
+    /// How long a rename of a session-index entry keeps retrying: 500 ms. The value of
+    /// <c>SessionIndex.MoveBudget</c>.
+    /// </summary>
+    public static TimeSpan IndexMoveBudget { get; } = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>
+    /// The first pause between two tries of that rename, in milliseconds: 5, doubled
+    /// after every refusal. Read by <c>SessionIndex</c>.
+    /// </summary>
+    public const int IndexMoveRetryFirstDelayMilliseconds = 5;
+
+    /// <summary>
+    /// The longest pause between two tries of that rename, in milliseconds: 50.
+    /// </summary>
+    public const int IndexMoveRetryLongestDelayMilliseconds = 50;
+
+    /// <summary>
+    /// How old the session index's own rename litter must be before a sweep clears it:
+    /// 1 hour. The value of <c>SessionIndex.LitterAge</c>.
+    /// </summary>
+    public static TimeSpan IndexLitterAge { get; } = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// The first pause of the loop that waits out a transient refusal to open a
+    /// session's record, in milliseconds: 5, doubled after every refusal. Read by
+    /// <c>SessionLock.ReadRecord</c>.
+    /// </summary>
+    public const int RecordReadRetryFirstDelayMilliseconds = 5;
+
+    /// <summary>
+    /// The longest pause of that loop, in milliseconds: 100.
+    /// </summary>
+    public const int RecordReadRetryLongestDelayMilliseconds = 100;
+
+    /// <summary>
+    /// How long BrowserAI waits for a page's own tool to answer: 60 s. The value of
+    /// <c>SessionToolSurface.PageToolBudget</c>.
+    /// </summary>
+    public static TimeSpan PageToolBudget { get; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// Upstream's own idle timeout, in milliseconds: one hour, which no launch writes
+    /// since 2026-10-08. The value of <c>BrowserConfiguration.IdleTimeoutMilliseconds</c>.
+    /// </summary>
+    public const int UpstreamIdleTimeoutMilliseconds = 3_600_000;
+
+    /// <summary>
+    /// How long provisioning may make no progress at all before its job is closed: 10
+    /// minutes. The default of <c>ProvisioningTimers.StallCap</c>.
+    /// </summary>
+    public static TimeSpan ProvisioningStallCap { get; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How long everything after a browser's own directory first appears may take: 10
+    /// minutes. The default of <c>ProvisioningTimers.ExtractionCap</c>.
+    /// </summary>
+    public static TimeSpan ProvisioningExtractionCap { get; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How often provisioning's phase watcher looks: 1 s. The default of
+    /// <c>ProvisioningTimers.Poll</c>.
+    /// </summary>
+    public static TimeSpan ProvisioningPoll { get; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Playwright's own per-socket stall timeout on a browser download, which BrowserAI
+    /// never sets: 30 s. The value of <c>BrowserProvisioner.UpstreamStallTimeout</c>.
+    /// </summary>
+    public static TimeSpan UpstreamDownloadStallTimeout { get; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// The bounded wait on a session directory's own gate: 120 s. The value of
+    /// <c>LockScopes.PerDirectoryGate</c>, whose remarks say why.
+    /// </summary>
+    public static TimeSpan PerDirectoryGate { get; } = TimeSpan.FromSeconds(120);
+
+    /// <summary>
+    /// The bounded wait on the live-instance set's own gate: 5 s. The value of
+    /// <c>LockScopes.LiveInstanceGate</c>.
+    /// </summary>
+    public static TimeSpan LiveInstanceGate { get; } = TimeSpan.FromSeconds(5);
 }

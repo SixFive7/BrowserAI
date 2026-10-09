@@ -90,7 +90,7 @@ internal static class ServerPipeProtocol
     /// once -- which is why a caller reads the census first.
     /// </para>
     /// </remarks>
-    public static TimeSpan CallBound { get; } = TimeSpan.FromMilliseconds(500);
+    public static TimeSpan CallBound { get; } = ProcessBounds.ServerPipeCallBound;
 
     /// <summary>The pipe name a server with this live marker listens on.</summary>
     /// <param name="markerPath">The marker file, <c>&lt;pid&gt;-&lt;guid&gt;.live</c>.</param>

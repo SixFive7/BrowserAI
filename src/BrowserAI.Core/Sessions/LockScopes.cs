@@ -200,7 +200,7 @@ internal static class LockScopes
     /// B1. What is asserted now is the sum.
     /// </para>
     /// </remarks>
-    public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(120);
+    public static TimeSpan PerDirectoryGate => SessionTimes.PerDirectoryGate;
 
     /// <summary>
     /// How many <c>RenameWindow.Budget</c>-bounded waits one hold of
@@ -260,5 +260,5 @@ internal static class LockScopes
     /// it means a caller is told the wrong thing about who owns a session.
     /// </para>
     /// </remarks>
-    public static TimeSpan LiveInstanceGate => TimeSpan.FromSeconds(5);
+    public static TimeSpan LiveInstanceGate => SessionTimes.LiveInstanceGate;
 }

@@ -509,11 +509,11 @@ internal static class PageContent
     {
         var elapsed = now - then;
 
-        return elapsed < TimeSpan.FromMinutes(1) ? "less than a minute ago"
-            : elapsed < TimeSpan.FromMinutes(2) ? "a minute ago"
-            : elapsed < TimeSpan.FromHours(1) ? $"{(int)elapsed.TotalMinutes} minutes ago"
-            : elapsed < TimeSpan.FromHours(2) ? "an hour ago"
-            : elapsed < TimeSpan.FromDays(1) ? $"{(int)elapsed.TotalHours} hours ago"
+        return elapsed < WordingTimes.Minute ? "less than a minute ago"
+            : elapsed < WordingTimes.TwoMinutes ? "a minute ago"
+            : elapsed < WordingTimes.Hour ? $"{(int)elapsed.TotalMinutes} minutes ago"
+            : elapsed < WordingTimes.TwoHours ? "an hour ago"
+            : elapsed < WordingTimes.Day ? $"{(int)elapsed.TotalHours} hours ago"
             : $"{(int)elapsed.TotalDays} days ago";
     }
 

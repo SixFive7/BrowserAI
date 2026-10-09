@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Text;
 using BrowserAI.Interop;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Protocol;
@@ -45,7 +46,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// is bounded because a grandchild that inherited the write end can hold it
     /// open, and a teardown must not wait on a process nobody is tracking.
     /// </summary>
-    private static readonly TimeSpan StandardErrorDrainTimeout = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan StandardErrorDrainTimeout = SessionTimes.ChildStandardErrorDrain;
 
     private readonly LaunchedProcess _process;
     private readonly Action<string>? _standardErrorLines;

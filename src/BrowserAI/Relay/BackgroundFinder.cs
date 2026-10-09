@@ -42,14 +42,14 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
     /// How long one look waits while every instance of the pipe is busy: a hang
     /// detector on a look that the engine repeats anyway.
     /// </summary>
-    public static TimeSpan BusyBound { get; } = TimeSpan.FromSeconds(2);
+    public static TimeSpan BusyBound { get; } = ProcessBounds.BackgroundBusyBound;
 
     /// <summary>
     /// How long <see cref="Explain"/> waits for a background whose pipe has closed to
     /// finish exiting, so its exit code can be read: a hang detector, since a pipe
     /// closes as its process ends.
     /// </summary>
-    public static TimeSpan ExitBound { get; } = TimeSpan.FromSeconds(2);
+    public static TimeSpan ExitBound { get; } = ProcessBounds.BackgroundExitBound;
 
     private readonly BackgroundFinderSettings _settings;
     private readonly ILogger _logger;

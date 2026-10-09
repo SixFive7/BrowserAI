@@ -274,7 +274,7 @@ internal static class BrowserConfiguration
     /// without a call. See <see cref="NoIdleTimeout"/>.
     /// </para>
     /// </remarks>
-    public const int IdleTimeoutMilliseconds = 3_600_000;
+    public const int IdleTimeoutMilliseconds = SessionTimes.UpstreamIdleTimeoutMilliseconds;
 
     /// <summary>
     /// What every launch writes for upstream's idle timeout since 2026-10-08, and a

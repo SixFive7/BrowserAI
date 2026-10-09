@@ -45,7 +45,7 @@ internal static class BackgroundStop
     /// How long the uninstall hook waits for the background to end once asked: within
     /// Velopack's 60 s for the hook, with room for the rest of the hook after it.
     /// </summary>
-    public static TimeSpan Bound { get; } = TimeSpan.FromSeconds(45);
+    public static TimeSpan Bound { get; } = ProcessBounds.BackgroundStopBound;
 
     /// <summary>Asks the background to stop and waits for it to end.</summary>
     /// <param name="pipeName">The background's pipe.</param>

@@ -155,10 +155,10 @@ internal static class McpRegistrar
     /// Sized against the tightest hook, <c>--veloapp-updated</c>'s fifteen seconds, and
     /// not against the measurement: a pass took 1 to 2 s in the 2026-10-01 survey.
     /// </remarks>
-    public static TimeSpan ToolTimeout { get; } = TimeSpan.FromSeconds(12);
+    public static TimeSpan ToolTimeout { get; } = ProcessBounds.RegisterAiTimeout;
 
     /// <summary>How long BrowserAI waits for that run: the tool's own budget and a margin to stop its clients.</summary>
-    public static TimeSpan ToolBudget { get; } = TimeSpan.FromSeconds(14);
+    public static TimeSpan ToolBudget { get; } = ProcessBounds.RegisterAiBudget;
 
     /// <summary>Runs one user-scope pass for one client.</summary>
     /// <param name="who">The client.</param>

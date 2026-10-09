@@ -103,10 +103,10 @@ internal static class BackgroundRecord
     /// How long a write goes on trying to rename itself over a record a reader has
     /// open: a hang detector over a read that takes one call, chosen and not measured.
     /// </summary>
-    public static TimeSpan WriteBound { get; } = TimeSpan.FromSeconds(2);
+    public static TimeSpan WriteBound { get; } = ProcessBounds.BackgroundRecordWriteBound;
 
     /// <summary>How long a write waits between two tries of the rename.</summary>
-    public static TimeSpan WriteRetry { get; } = TimeSpan.FromMilliseconds(20);
+    public static TimeSpan WriteRetry { get; } = ProcessBounds.BackgroundRecordWriteRetry;
 
     /// <summary>Writes this process's record as a background that has started.</summary>
     /// <param name="path">The record's path.</param>

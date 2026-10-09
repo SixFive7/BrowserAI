@@ -130,7 +130,9 @@ internal sealed record UpdateBudgets
     /// <para>
     /// <b>15 minutes, and the number is derived and not chosen.</b> The
     /// arithmetic the tripwire needs is <c>this + AbsoluteBudget &lt;
-    /// CrashTripwire</c>, and at 30 and 45 that leaves 15 as the ceiling. It is
+    /// CrashTripwire</c>, and at 30 and 45 that leaves 15 as the ceiling. Since
+    /// 2026-10-09 the code computes it that way, <see cref="CrashTripwire"/> less
+    /// <see cref="AbsoluteBudget"/>, so the ceiling moves with either. It is
     /// taken whole and not shaded down, because the check is one small HTTPS
     /// GET of a JSON feed and 15 minutes is already three orders of magnitude
     /// above it: **a bound this far out is a hang detector and not a promptness
@@ -150,7 +152,7 @@ internal sealed record UpdateBudgets
     /// be ended at all.
     /// </para>
     /// </remarks>
-    public static TimeSpan CheckBudget => TimeSpan.FromMinutes(15);
+    public static TimeSpan CheckBudget => CrashTripwire - AbsoluteBudget;
 
     /// <summary>
     /// The outer deadline. <b>A crash tripwire, never flow control.</b>
@@ -184,6 +186,36 @@ internal sealed record UpdateBudgets
     /// </para>
     /// </remarks>
     public static TimeSpan CrashTripwire => TimeSpan.FromMinutes(45);
+
+    /// <summary>
+    /// How often the background asks its update source: at most once every ten minutes,
+    /// across crashes and restarts (D9). The value of <c>BackgroundUpdates.CheckInterval</c>.
+    /// </summary>
+    public static TimeSpan CheckInterval => TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How long each relay's answer to "ready to end?" is waited for, and how long the
+    /// relays are given to end: 10 s. The value of <c>BackgroundUpdates.ReadyToEndBound</c>.
+    /// </summary>
+    public static TimeSpan ReadyToEndBound => TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// How long the toast's activator waits for COM to hand it the click: 10 s. The
+    /// value of <c>ToastActivation.ActivationBound</c>.
+    /// </summary>
+    public static TimeSpan ToastActivationBound => TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// How often the ready toast's countdown is written: once a second. The value of
+    /// <c>UpdateToasts.Tick</c>.
+    /// </summary>
+    public static TimeSpan ToastTick => TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// How long a caller waits for Windows to answer one toast call: 10 s. The value of
+    /// <c>WindowsToastSurface.CallBound</c>.
+    /// </summary>
+    public static TimeSpan ToastCallBound => TimeSpan.FromSeconds(10);
 
     /// <summary>The product's own four, and the only set it ever runs with.</summary>
     public static UpdateBudgets Default { get; } = new()

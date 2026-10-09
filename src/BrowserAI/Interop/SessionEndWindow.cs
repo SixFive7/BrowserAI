@@ -155,7 +155,7 @@ internal sealed partial class SessionEndWindow : IDisposable
     /// How long disposal waits for the window's thread to leave its loop: a hang
     /// detector, since leaving is one posted message and one return.
     /// </summary>
-    public static TimeSpan LeaveBound { get; } = TimeSpan.FromSeconds(5);
+    public static TimeSpan LeaveBound { get; } = ProcessBounds.SessionEndWindowLeaveBound;
 
     /// <summary>The window procedure's address, which only an unsafe context may take.</summary>
     /// <returns>The address.</returns>

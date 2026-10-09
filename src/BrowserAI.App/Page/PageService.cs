@@ -455,7 +455,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// state when it has changed: <b>once a second</b>, the unit the countdowns count
     /// in. The countdowns themselves run in the page's script.
     /// </summary>
-    internal static TimeSpan HoldsWatchPeriod { get; } = TimeSpan.FromSeconds(1);
+    internal static TimeSpan HoldsWatchPeriod { get; } = ProcessBounds.PageHoldsWatchPeriod;
 
     /// <summary>Stops the listener, waiting on the calling thread.</summary>
     public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();

@@ -78,13 +78,18 @@ internal sealed class SessionIndex
 
     /// <summary>How long a rename keeps retrying before the entry is given up on.</summary>
     /// <remarks>
-    /// Shorter than <see cref="SessionLock"/>'s two seconds, and deliberately so.
+    /// Shorter than <see cref="RenameWindow.Budget"/>'s thirty seconds, and
+    /// deliberately so. <i>Corrected 2026-10-09 (previously "Shorter than
+    /// <see cref="SessionLock"/>'s two seconds")</i>: the lock's rename budget
+    /// went from two seconds to thirty on 2026-08-18, when
+    /// <see cref="RenameWindow"/> took it over, the lock's own member went on
+    /// 2026-08-26, and this sentence followed neither.
     /// Nothing holds an index entry open -- this store's own reader shares
     /// <c>Delete</c> -- so contention here means something outside BrowserAI has
     /// the file, and the fail-safe answer is to give up quickly and let the next
     /// use re-assert instead of stalling a session start.
     /// </remarks>
-    private static readonly TimeSpan MoveBudget = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan MoveBudget = SessionTimes.IndexMoveBudget;
 
     /// <summary>How old our own rename litter must be before a sweep clears it.</summary>
     /// <remarks>
@@ -95,7 +100,7 @@ internal sealed class SessionIndex
     /// name pattern is what stops it ever touching a file this product did not
     /// write.
     /// </remarks>
-    private static readonly TimeSpan LitterAge = TimeSpan.FromHours(1);
+    private static readonly TimeSpan LitterAge = SessionTimes.IndexLitterAge;
 
     private readonly IAppPaths _paths;
     private readonly ILogger _logger;
@@ -913,7 +918,7 @@ internal sealed class SessionIndex
     private static void Replace(string temp, string entry)
     {
         var clock = Stopwatch.StartNew();
-        var delay = 5;
+        var delay = SessionTimes.IndexMoveRetryFirstDelayMilliseconds;
 
         while (true)
         {
@@ -944,7 +949,7 @@ internal sealed class SessionIndex
                 }
 
                 Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, 50);
+                delay = Math.Min(delay * 2, SessionTimes.IndexMoveRetryLongestDelayMilliseconds);
             }
         }
     }

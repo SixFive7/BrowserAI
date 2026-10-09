@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Interop;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -167,7 +168,7 @@ internal sealed class ChildProcessOptions
     /// browsers' closes and then each child given this long.
     /// </para>
     /// </remarks>
-    public static TimeSpan DefaultShutdownTimeout { get; } = TimeSpan.FromSeconds(5);
+    public static TimeSpan DefaultShutdownTimeout { get; } = SessionTimes.ChildShutdown;
 
     /// <summary>How long a child gets to exit after its stdin closes before it is killed.</summary>
     public TimeSpan ShutdownTimeout { get; init; } = DefaultShutdownTimeout;

@@ -123,7 +123,7 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// so the bound is more than 200 times the slowest; it sits inside the 15 s
     /// Velopack gives the update hook, which also registers with every client.
     /// </remarks>
-    public static TimeSpan CallBound { get; } = TimeSpan.FromSeconds(5);
+    public static TimeSpan CallBound { get; } = ProcessBounds.ScheduledTasksCallBound;
 
     /// <inheritdoc />
     public TaskReport Register(string name, string definition)

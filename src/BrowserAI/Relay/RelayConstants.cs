@@ -17,7 +17,11 @@ namespace BrowserAI.Relay;
 /// tool call 300 s by default, read in its source at 0.155 and 0.160, and Claude
 /// Code 30 minutes, read in its binary, both for the one-binary plan of 2026-10-04;
 /// the maintainer accepted one set on 2026-10-08 ("r ok") on the ground that a
-/// number inside Codex's limit is inside Claude Code's too.
+/// number inside Codex's limit is inside Claude Code's too. Since 2026-10-09 the
+/// code says so as well: <see cref="HoldBound"/> and <see cref="HangBound"/> are
+/// <see cref="ClientLimits.StricterToolCall"/> halved, and
+/// <see cref="ClientLimits"/> holds both clients' limits as rows of the numbers
+/// index.
 /// </para>
 /// </remarks>
 internal static class RelayConstants
@@ -29,7 +33,7 @@ internal static class RelayConstants
     /// call. The background appears in that time at sign-in and after an update; a
     /// relay never starts one itself.
     /// </remarks>
-    public static TimeSpan HoldBound { get; } = TimeSpan.FromSeconds(150);
+    public static TimeSpan HoldBound { get; } = ClientLimits.StricterToolCall / 2;
 
     /// <summary>How long the background may leave every liveness probe unanswered before it is reported hung: 150 s.</summary>
     /// <remarks>
@@ -38,7 +42,7 @@ internal static class RelayConstants
     /// nothing restarts when it runs out; the calls are answered with a sentence that
     /// sends the person to the log.
     /// </remarks>
-    public static TimeSpan HangBound { get; } = TimeSpan.FromSeconds(150);
+    public static TimeSpan HangBound { get; } = ClientLimits.StricterToolCall / 2;
 
     /// <summary>How often the relay asks the background whether it is alive while a call is outstanding: 10 s.</summary>
     /// <remarks>

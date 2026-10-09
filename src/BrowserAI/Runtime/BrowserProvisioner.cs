@@ -192,7 +192,7 @@ internal sealed record ProvisioningTimers
     /// carries the correction for the lane it does not govern.
     /// </para>
     /// </remarks>
-    public TimeSpan StallCap { get; init; } = TimeSpan.FromMinutes(10);
+    public TimeSpan StallCap { get; init; } = SessionTimes.ProvisioningStallCap;
 
     /// <summary>
     /// How long everything after the browser's own directory first appears may
@@ -216,10 +216,10 @@ internal sealed record ProvisioningTimers
     /// slow-but-working case for it to punish.
     /// </para>
     /// </remarks>
-    public TimeSpan ExtractionCap { get; init; } = TimeSpan.FromMinutes(10);
+    public TimeSpan ExtractionCap { get; init; } = SessionTimes.ProvisioningExtractionCap;
 
     /// <summary>How often the phase watcher looks.</summary>
-    public TimeSpan Poll { get; init; } = TimeSpan.FromSeconds(1);
+    public TimeSpan Poll { get; init; } = SessionTimes.ProvisioningPoll;
 
     /// <summary>
     /// The clock every duration above is measured against, and the one that
@@ -344,7 +344,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// a stated figure, and it is never set, so it can never drift from
     /// upstream's.
     /// </remarks>
-    public static TimeSpan UpstreamStallTimeout { get; } = TimeSpan.FromSeconds(30);
+    public static TimeSpan UpstreamStallTimeout { get; } = SessionTimes.UpstreamDownloadStallTimeout;
 
     /// <summary>The variable that would override it, named so its absence is testable.</summary>
     public const string UpstreamStallTimeoutVariable = "PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT";

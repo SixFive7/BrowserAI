@@ -197,7 +197,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// timer longer than this one.
     /// </para>
     /// </remarks>
-    public static TimeSpan CheckInterval { get; } = TimeSpan.FromMinutes(10);
+    public static TimeSpan CheckInterval { get; } = UpdateBudgets.CheckInterval;
 
     /// <summary>
     /// How long each relay's answer to <i>ready to end?</i> is waited for, and how
@@ -211,7 +211,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// relay that does not answer calls the update off, so the cost of the bound
     /// being reached is a later install, never a relay ended by mistake.
     /// </remarks>
-    public static TimeSpan ReadyToEndBound { get; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan ReadyToEndBound { get; } = UpdateBudgets.ReadyToEndBound;
 
     /// <summary>
     /// Decides whether this build checks at all, holds a package an earlier run left

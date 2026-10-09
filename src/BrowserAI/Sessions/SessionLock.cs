@@ -819,7 +819,7 @@ internal sealed class SessionLock : IDisposable
 
         var budget = patience ?? RenameWindow.Budget;
         var clock = Stopwatch.StartNew();
-        var delay = 5;
+        var delay = SessionTimes.RecordReadRetryFirstDelayMilliseconds;
 
         while (true)
         {
@@ -854,7 +854,7 @@ internal sealed class SessionLock : IDisposable
                 }
 
                 Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, 100);
+                delay = Math.Min(delay * 2, SessionTimes.RecordReadRetryLongestDelayMilliseconds);
             }
         }
     }

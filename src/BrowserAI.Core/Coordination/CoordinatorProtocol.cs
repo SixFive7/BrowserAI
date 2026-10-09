@@ -117,7 +117,7 @@ internal static class CoordinatorProtocol
     /// bound is a hang detector for a person's start: a coordinator that has not
     /// answered by then is not starting a listener.
     /// </remarks>
-    public static TimeSpan HandOutBound { get; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan HandOutBound { get; } = ProcessBounds.HandOutBound;
 
     /// <summary>Whether a verb asks the coordinator for a tab.</summary>
     /// <param name="verb">The verb.</param>

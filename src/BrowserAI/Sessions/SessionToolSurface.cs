@@ -346,7 +346,7 @@ internal static class SessionToolSurface
     /// page's code -- nothing can, from here -- and the refusal says so.
     /// </para>
     /// </remarks>
-    public static TimeSpan PageToolBudget { get; } = TimeSpan.FromSeconds(60);
+    public static TimeSpan PageToolBudget { get; } = SessionTimes.PageToolBudget;
 
     /// <summary>
     /// What the client silently truncates a tool description at, and therefore

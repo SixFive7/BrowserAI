@@ -36,7 +36,7 @@ namespace BrowserAI.Updates;
 internal sealed class WindowsToastSurface : IToastSurface, IDisposable
 {
     /// <summary>How long a caller waits for Windows to answer one call: <b>10 s</b>.</summary>
-    public static TimeSpan CallBound { get; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan CallBound { get; } = UpdateBudgets.ToastCallBound;
 
     /// <summary><c>ERROR_NOT_FOUND</c> as an <c>HRESULT</c>, which a removal of a toast that is not there may answer.</summary>
     private const int NotFound = unchecked((int)0x80070490);

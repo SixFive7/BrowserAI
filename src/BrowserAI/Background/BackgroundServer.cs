@@ -80,7 +80,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// How long a connection may take to send its first message: a hang detector, since
     /// every caller of ours writes it first, at once.
     /// </summary>
-    public static TimeSpan FirstFrameBound { get; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan FirstFrameBound { get; } = ProcessBounds.BackgroundFirstFrameBound;
 
     private readonly SessionHost _host;
     private readonly BackgroundIdentity _identity;

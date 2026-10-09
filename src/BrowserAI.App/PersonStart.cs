@@ -81,10 +81,10 @@ internal static partial class PersonStart
     /// How long a person's start waits for a background the task started to open its
     /// pipe: a hang detector over a start measured at a few hundred milliseconds.
     /// </summary>
-    public static TimeSpan DefaultStartBound { get; } = TimeSpan.FromSeconds(30);
+    public static TimeSpan DefaultStartBound { get; } = ProcessBounds.PersonStartBound;
 
     /// <summary>How often the pipe is looked for while it waits.</summary>
-    public static TimeSpan LookInterval { get; } = TimeSpan.FromMilliseconds(100);
+    public static TimeSpan LookInterval { get; } = ProcessBounds.PersonStartLookInterval;
 
     /// <summary>The value the task's <c>$(Arg0)</c> carries for a person's start.</summary>
     public const string StartedByPerson = "person";

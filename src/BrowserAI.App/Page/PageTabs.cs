@@ -160,7 +160,7 @@ internal static class PageEvents
 internal sealed class PageTabs : IDisposable
 {
     /// <summary>How long the coordinator waits after the last tab leaves: one minute, Q336 a.</summary>
-    public static readonly TimeSpan ProductLinger = TimeSpan.FromMinutes(1);
+    public static readonly TimeSpan ProductLinger = ProcessBounds.PageTabsLinger;
 
     private readonly Lock _gate = new();
     private readonly List<TabStream> _streams = [];

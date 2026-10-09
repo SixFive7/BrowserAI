@@ -73,7 +73,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// logs sat inside the directory each update replaced wholesale, so the
     /// retention window could never once have been reached.
     /// </summary>
-    private const int RetentionDays = 30;
+    private const int RetentionDays = ProcessBounds.ProcessLogRetentionDays;
 
     private const string FilePrefix = "browserai-";
     private const string FileSuffix = ".log";

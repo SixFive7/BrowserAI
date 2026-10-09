@@ -1082,7 +1082,7 @@ internal static class SessionErrors
     /// <param name="span">The duration.</param>
     /// <returns>Seconds under a minute, minutes and seconds above it.</returns>
     private static string Elapsed(TimeSpan span) =>
-        span < TimeSpan.FromMinutes(1)
+        span < WordingTimes.Minute
             ? $"{span.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)} s"
             : $"{((int)span.TotalMinutes).ToString(CultureInfo.InvariantCulture)} m {span.Seconds.ToString(CultureInfo.InvariantCulture)} s";
 

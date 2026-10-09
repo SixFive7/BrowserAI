@@ -88,7 +88,7 @@ internal sealed partial class CoalescableTimer : IDisposable
     public static CoalescableTimer Start(TimeSpan period, TimeSpan tolerance, Action tick)
     {
         ArgumentNullException.ThrowIfNull(tick);
-        ArgumentOutOfRangeException.ThrowIfLessThan(period, TimeSpan.FromMilliseconds(1));
+        ArgumentOutOfRangeException.ThrowIfLessThan(period, ProcessBounds.ShortestTimerPeriod);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(period, TimeSpan.FromMilliseconds(int.MaxValue));
         ArgumentOutOfRangeException.ThrowIfLessThan(tolerance, TimeSpan.Zero);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(tolerance, TimeSpan.FromMilliseconds(int.MaxValue));

@@ -177,7 +177,7 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
     {
         try
         {
-            var both = await Task.WhenAll(output, error).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            var both = await Task.WhenAll(output, error).WaitAsync(ProcessBounds.RegisterAiOutputDrain).ConfigureAwait(false);
 
             return (both[0], both[1]);
         }

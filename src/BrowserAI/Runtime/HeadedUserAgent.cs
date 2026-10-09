@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using BrowserAI.Interop;
 using BrowserAI.Protocol;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Runtime;
@@ -86,7 +87,7 @@ internal static class HeadedUserAgent
     /// scanner reading every file, and it is spent once per browser build, because
     /// the answer is kept.
     /// </remarks>
-    public static TimeSpan AskBound { get; } = TimeSpan.FromSeconds(30);
+    public static TimeSpan AskBound { get; } = SessionTimes.HeadedUserAgentAskBound;
 
     /// <summary>The page the browser renders: it writes its own user agent as its body.</summary>
     private const string Page = "data:text/html,<title>ua</title><script>document.write(navigator.userAgent)</script>";
