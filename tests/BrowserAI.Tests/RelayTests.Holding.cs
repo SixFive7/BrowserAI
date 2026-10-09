@@ -300,6 +300,44 @@ internal sealed partial class RelayTests
     }
 
     /// <summary>
+    /// A look whose timer fires before its moment by the relay's clock is armed again:
+    /// the relay looks when the moment comes, and goes on looking after it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Found 2026-10-09 by the real-scheduler arm of <c>RealInstallerTests</c></b>,
+    /// where a relay started before its background never reached it, and planted red
+    /// that day against a look timer that looked only when its moment had come and was
+    /// otherwise left unarmed. Most real timers fire early by that clock; the
+    /// measurement is on <c>RelayEngine.OnLookTimer</c> and on
+    /// <see cref="ManualClock.FireEarly"/>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ALookWhoseTimerFiresEarlyIsArmedAgainAndTheRelayGoesOnLooking()
+    {
+        await using var rig = RelayRig.Start();
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+        await Assert.That(rig.Finder.Looks).IsEqualTo(1);
+
+        // A tick before the moment, the timer fires.
+        await rig.StepAsync(RelayConstants.LookWhileIdle - OneTick);
+        rig.Clock.FireEarly(OneTick);
+        await rig.SettledAsync();
+        await Assert.That(rig.Finder.Looks).IsEqualTo(1);
+
+        // The moment comes, and the relay looks.
+        await rig.StepAsync(OneTick);
+        await Assert.That(rig.Finder.Looks).IsEqualTo(2).Because("a look whose timer fired early was never armed again");
+
+        // And it goes on looking at its pace.
+        await rig.StepAsync(RelayConstants.LookWhileIdle);
+        await Assert.That(rig.Finder.Looks).IsEqualTo(3);
+    }
+
+    /// <summary>
     /// The greeting carries every fact the background needs about the client, and
     /// nothing it read from the environment.
     /// </summary>

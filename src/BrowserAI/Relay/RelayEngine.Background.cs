@@ -100,13 +100,42 @@ internal sealed partial class RelayEngine
         }
     }
 
+    /// <summary>The look's moment has come: the relay looks, or arms the timer again for a moment that has not.</summary>
+    /// <remarks>
+    /// ⚠️ <b>A timer fires before its moment by the clock read here, and most of the
+    /// time</b>, found 2026-10-09 by the real-scheduler arm of <c>RealInstallerTests</c>:
+    /// a relay started before its background answered every call after the background
+    /// had started with the hang sentence, its process log naming no connection in
+    /// 150 s while the pipe had a free instance. Measured the same day on .NET
+    /// 10.0.12 and Windows 10.0.26300, with timers armed the way <see cref="Arm"/>
+    /// arms them on <see cref="TimeProvider.System"/>: 146 of 200 two-second timers and
+    /// 136 of 200 half-second timers ran their callback while
+    /// <see cref="TimeProvider.GetUtcNow"/> was still before the moment, by at most
+    /// 1.847 ms. <i>Corrected 2026-10-09 (previously the timer looked only when
+    /// <c>Now &gt;= _lookAt</c> and was otherwise left unarmed)</i>, so the first early
+    /// fire stopped every look for the rest of the relay's life, and
+    /// <see cref="LookSooner"/> could not bring one back, because the moment it
+    /// compares against was already past. Every other timer of the engine arms itself
+    /// again when it finds its moment not yet come. Re-established by arming a few
+    /// hundred one-shot timers through <see cref="TimeProvider.System"/> for a moment
+    /// read off <see cref="TimeProvider.GetUtcNow"/>, and counting the callbacks that
+    /// read the clock before it.
+    /// </remarks>
+    /// <returns>A completed task.</returns>
     private Task OnLookTimer()
     {
-        if (_phase is LinkPhase.Looking && Now >= _lookAt)
+        if (_phase is not LinkPhase.Looking)
         {
-            Look();
+            return Task.CompletedTask;
         }
 
+        if (Now < _lookAt)
+        {
+            Arm(RelayTimer.Look, _lookAt);
+            return Task.CompletedTask;
+        }
+
+        Look();
         return Task.CompletedTask;
     }
 

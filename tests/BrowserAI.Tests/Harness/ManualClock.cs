@@ -139,6 +139,39 @@ internal sealed class ManualClock : TimeProvider
     }
 
     /// <summary>
+    /// Fires, once each and without moving the clock, every timer due within
+    /// <paramref name="window"/> of now: a real timer that runs its callback a little
+    /// before its moment by the clock the product reads.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-09 for the relay's look timer</b>, which stopped looking for
+    /// good the first time that happened. Measured that day on .NET 10.0.12 and Windows
+    /// 10.0.26300: 146 of 200 two-second timers armed through
+    /// <see cref="TimeProvider.System"/> ran their callback while
+    /// <see cref="TimeProvider.GetUtcNow"/> was still before the moment. A callback that
+    /// finds its moment not yet come has to arm itself again, and this is how an arm
+    /// holds that one does. A callback that re-arms is not fired a second time here.
+    /// </remarks>
+    /// <param name="window">How far ahead of now a due timer is fired.</param>
+    public void FireEarly(TimeSpan window)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(window, TimeSpan.Zero);
+
+        var horizon = GetTimestamp() + window.Ticks;
+        List<ManualTimer> due;
+
+        lock (_gate)
+        {
+            due = [.. _timers.Where(timer => timer.DueAt is { } at && at <= horizon)];
+        }
+
+        foreach (var timer in due)
+        {
+            timer.Fire();
+        }
+    }
+
+    /// <summary>
     /// Moves the clock forward and fires everything that becomes due, in order.
     /// </summary>
     /// <param name="by">How far to move.</param>
