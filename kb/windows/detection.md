@@ -180,8 +180,10 @@ misses, forward slashes miss, and a `NULL` class finds nothing at all. `[FLOATS]
 
 That is the whole pass -- process enumeration, the window walk, a title read per
 window, and the index self-clean -- not just the process half. Re-establish with
-`BrowserAI.Server.exe --sweep` under a scratch `BROWSERAI_ROOT` **inside your own profile** (a root outside it has been refused at startup since 2026-08-20) and read the process
-log, or with the probe's `stray-sweep` mode. ⚠️ *Corrected 2026-09-16
+`BrowserAI.exe --sweep --data-root <scratch>` with the scratch root **inside your own profile** (a root outside it has been refused at startup since 2026-08-20) and read the process
+log, or with the probe's `stray-sweep` mode. ⚠️ *Corrected 2026-10-08 (previously "`BrowserAI.Server.exe --sweep` under a scratch `BROWSERAI_ROOT`")*:
+one executable since D7 a, and since step 5 of the one-binary build no running BrowserAI
+reads the variable. ⚠️ *Corrected 2026-09-16
 (previously `BrowserAI.exe --sweep`)* -- that name is the configuration app since
 2026-09-15 and does not take the argument, so following the old line **opens a
 window** instead of measuring anything. The procedure was broken, not untidy.

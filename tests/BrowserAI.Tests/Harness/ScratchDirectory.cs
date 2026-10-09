@@ -50,7 +50,8 @@ internal sealed class ScratchDirectory : IDisposable
     /// See <see cref="ScratchRoot.ProfileScratch"/>: a published BrowserAI
     /// refuses to serve out of an app root outside the current user's profile,
     /// so an app root handed to one through
-    /// <see cref="BrowserAiPaths.AppRootOverride"/> has to come from here.
+    /// <see cref="BrowserAiPaths.DataRootArgument"/>, or to an installer through
+    /// <see cref="BrowserAiPaths.AppRootOverride"/>, has to come from here.
     /// Nothing else may.
     /// </remarks>
     /// <param name="label">What the directory is for.</param>

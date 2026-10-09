@@ -157,15 +157,21 @@ internal static class PublishedBackground
         }
     }
 
-    /// <summary>The record a background on a pipe keeps, under the data root the environment names.</summary>
-    /// <param name="environment">The environment the background was started with.</param>
+    /// <summary>The record a background on a pipe keeps, under the data root the relay's arguments name.</summary>
+    /// <remarks>
+    /// <i>Changed 2026-10-08 by step 5 of the one-binary build (previously the relay's
+    /// argument, else the environment's <c>BROWSERAI_ROOT</c>)</i>: no running BrowserAI
+    /// reads the variable, so neither does this.
+    /// </remarks>
+    /// <param name="environment">The environment the background was started with, which names no data root.</param>
     /// <param name="relayArguments">The relay's arguments.</param>
     /// <param name="pipe">The pipe.</param>
     /// <returns>The record's path.</returns>
     public static string RecordFor(IReadOnlyDictionary<string, string> environment, IReadOnlyList<string> relayArguments, string pipe)
     {
-        var root = Program.ValueOf(relayArguments, Program.DataRootArgument)
-            ?? (environment.TryGetValue(LocalAppDataPaths.RootVariable, out var named) && named is { Length: > 0 } ? named : LocalAppDataPaths.Default);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        var root = Program.ValueOf(relayArguments, Program.DataRootArgument) ?? LocalAppDataPaths.Default;
 
         return BackgroundRecord.PathFor(root, pipe);
     }

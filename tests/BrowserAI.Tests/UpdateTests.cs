@@ -971,12 +971,16 @@ internal sealed class UpdateTests
         // which is what "must not silently lose an arm" means. A name that is no
         // longer in Program.cs is now a red test that says so, and whoever moves
         // one next has to re-point it deliberately.
+        //
+        // ⚠️ RE-POINTED AGAIN 2026-10-08 (previously `LocalAppDataPaths.Overridden(`),
+        // step 5 of the one-binary build: no running BrowserAI reads the variable, and
+        // the data root is read from --data-root, the read that took its place.
         string[] afterTheVelopackCall =
         [
             "InstallLocation.RootAppDir",
             "new LocalAppDataPaths(",
             "ProcessLog.Create(",
-            "LocalAppDataPaths.Overridden(",
+            "ValueOf(args, DataRootArgument)",
         ];
 
         foreach (var after in afterTheVelopackCall)

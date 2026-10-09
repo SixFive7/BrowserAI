@@ -47,11 +47,14 @@ internal static partial class Program
     /// over <c>VelopackLocator.Current.RootAppDir</c>").</b> It moves the data
     /// root and <b>never the install root</b>, which is Velopack's to choose and
     /// which this process only ever reads. It is also read inside
-    /// <see cref="LocalAppDataPaths.Overridden"/> now and not here, because
+    /// <c>LocalAppDataPaths.Overridden</c> now and not here, because
     /// <c>Main</c> is not the only entry point into this binary: a Velopack
     /// fast-exit hook never reaches this method's body, and the uninstall hook
     /// offers to delete the data root -- so a second reader that answered
     /// differently would be offering to delete a directory nobody used.
+    /// <i>Changed 2026-10-08 by step 5 of the one-binary build:</i> that method is
+    /// gone, the hooks read the variable once in <c>InstallerSettings.Read</c> and
+    /// hand every start <c>--data-root</c>, and no running BrowserAI reads it.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-15 (previously the declaration itself).</b> The
@@ -93,7 +96,8 @@ internal static partial class Program
     /// produce a wrong number: it produced a dialog. ⚠️ <i>And corrected again
     /// 2026-10-08 by addition</i>: there is one executable, so the row's command is
     /// <c>BrowserAI.exe --sweep</c> once more, and the argument is what makes it a
-    /// sweep (<see cref="ServesStdio"/>). That row is the
+    /// sweep (<see cref="ServesStdio"/>); since step 5 the scratch root is
+    /// <c>--data-root</c>, because no running BrowserAI reads the variable. That row is the
     /// only route to the <b>published AOT</b> column of
     /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) --
     /// the test probe is a framework-dependent Debug build and measures the
@@ -269,7 +273,12 @@ internal static partial class Program
         // AppContext.BaseDirectory, which resolves INSIDE current\ and is
         // replaced by every update; never the image path, which moves with
         // --installto. See Hosting/IAppPaths.cs for the whole argument.
-        var overridden = ValueOf(args, DataRootArgument) is { Length: > 0 } named ? named : LocalAppDataPaths.Overridden();
+        //
+        // ⚠️ THE ARGUMENT AND NOTHING ELSE SINCE 2026-10-08, step 5 of the one-binary
+        // build: the hooks write --data-root from the installer's environment into the
+        // task's action and every registration, and no running BrowserAI reads a
+        // BROWSERAI_ variable (previously the variable, read when no argument named one).
+        var overridden = ValueOf(args, DataRootArgument) is { Length: > 0 } named ? named : null;
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -337,7 +346,7 @@ internal static partial class Program
 
         if (overridden is not null)
         {
-            StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
+            StartupLog.AppRootOverridden(logger, DataRootArgument, overridden);
         }
 
         // ⚠️ THE BACKGROUND -- S a, the maintainer's words of 2026-10-08, verbatim:

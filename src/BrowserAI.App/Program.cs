@@ -153,10 +153,12 @@ internal static class Program
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(buffered);
 
-        // The override, as the one-binary build carries it: the --data-root the hooks
-        // wrote from the installer's environment, and the variable for a start that
-        // has no such argument. Never anything derived from the install root.
-        var overridden = DataRootFrom(args) ?? LocalAppDataPaths.Overridden();
+        // The override, as the one-binary build carries it (step 5, 2026-10-08): the
+        // --data-root a start was handed, and for a start that was handed none, a
+        // person's or Velopack's, the one the hooks wrote into this install's task.
+        // Never a variable, and never anything derived from the install root.
+        var overridden = DataRootFrom(args)
+            ?? (InstallLocation.RootAppDir is { } installed ? SignInTask.DataRootIn(SignInTask.SavedDefinition(installed)) : null);
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -207,7 +209,7 @@ internal static class Program
         // here, and the page reads it each time a tab loads its status page.
         if (ReportPathFrom(args) is { Length: > 0 } report)
         {
-            var written = StatusReport.Write(AppState.Read(tool, Environment.CurrentDirectory), report);
+            var written = StatusReport.Write(AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), report);
             AppLog.ReportWritten(logger, written);
             return 0;
         }

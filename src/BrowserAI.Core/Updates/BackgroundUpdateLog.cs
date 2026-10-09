@@ -12,7 +12,7 @@ namespace BrowserAI.Updates;
 /// <remarks>
 /// <b>Event ids from 30 up, and that is the whole of the numbering rule here.</b>
 /// The background logs updates under the category <c>BrowserAI.Updates</c>, where
-/// <c>UpdateLog</c> already holds 1 to 21 and <c>UpdateConfigurationLog</c> 1 to 3,
+/// <c>UpdateLog</c> already holds 1 to 21 and <c>UpdateConfigurationLog</c> held 1 to 3 until 2026-10-08,
 /// so an id below 30 would answer a saved query written for one of theirs. None is
 /// retired here yet.
 /// </remarks>

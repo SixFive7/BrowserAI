@@ -42,8 +42,10 @@ namespace BrowserAI.Tests;
 /// seeded through <see cref="OnboardedClientConfig"/>; <c>CODEX_HOME</c> is a
 /// scratch directory with a <c>config.toml</c> this file writes; the model is a
 /// local HTTP stub, so <b>no credential is used and no inference happens
-/// anywhere</b>; and <see cref="BrowserAiPaths.AppRootOverride"/> points the
-/// server BrowserAI's own data root at <see cref="ScratchRoot.ProfileScratch"/>.
+/// anywhere</b>; and <see cref="BrowserAiPaths.DataRootArgument"/> points the
+/// server BrowserAI's own data root at <see cref="ScratchRoot.ProfileScratch"/>
+/// (<i>the argument since 2026-10-08, step 5 of the one-binary build; previously
+/// <c>BROWSERAI_ROOT</c> in each client's configuration</i>).
 /// </para>
 /// <para>
 /// ⚠️ <b>The app-root override is not tidiness -- it is the one thing that keeps
@@ -148,7 +150,6 @@ internal sealed class ClientReconnectTests
                         ["Q261_TAG"] = run,
                         ["Q261_DIE_AFTER_CALLS"] = "1",
                         ["Q261_DIED_MARKER"] = Path.Combine(work.FullName, "died-once"),
-                        [BrowserAiPaths.AppRootOverride] = appRoot,
                     },
                 },
             },
@@ -294,8 +295,7 @@ internal sealed class ClientReconnectTests
                 + $"Q261_SERVER_ARGS = {Quote(background.RelayArguments)}, "
                 + $"Q261_LOGDIR = {Quote(work.FullName)}, "
                 + $"Q261_TAG = {Quote(run)}, "
-                + "Q261_DIE_AFTER_CALLS = \"0\", "
-                + $"{BrowserAiPaths.AppRootOverride} = {Quote(appRoot)} }}",
+                + "Q261_DIE_AFTER_CALLS = \"0\" }",
             "startup_timeout_sec = 60",
             "tool_timeout_sec = 120",
             string.Empty));
@@ -469,13 +469,15 @@ internal sealed class ClientReconnectTests
         await Assert.That(listed.UserScope.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
 
         // The sandbox, added through RegisterAI and Codex's own flag and not by
-        // writing its file: the same entry, rewritten with the one variable Codex
-        // would otherwise drop, and since 2026-10-09 the pipe of the background the
-        // arm started, which a build that is not installed is given (D11 a).
+        // writing its file: the same entry, rewritten with the data root as an
+        // argument (since step 5; previously the one variable Codex would otherwise
+        // drop, BROWSERAI_ROOT, which no running BrowserAI reads any more), and since
+        // 2026-10-09 the pipe of the background the arm started, which a build that is
+        // not installed is given (D11 a).
         var sandboxed = tool.Run(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
-                "--owned-root", install, "--replace", "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server, RegistrationTarget.McpArgument,
+                "--owned-root", install, "--replace", "--", server, RegistrationTarget.McpArgument, BrowserAiPaths.DataRootArgument, appRoot,
                 BrowserAI.Coordination.BackgroundPipe.PipeArgument, background.Pipe,
             ],
             McpRegistrar.ToolBudget);
@@ -855,11 +857,12 @@ internal sealed class ClientReconnectTests
     {
         private readonly JobObject _job;
 
-        private ArmBackground(JobObject job, LaunchedProcess process, string pipe)
+        private ArmBackground(JobObject job, LaunchedProcess process, string pipe, string appRoot)
         {
             _job = job;
             Process = process;
             Pipe = pipe;
+            AppRoot = appRoot;
             Created = ProcessIdentity.CreationTimeOf(process.Id);
         }
 
@@ -872,8 +875,15 @@ internal sealed class ClientReconnectTests
         /// <summary>Its creation time, the other half of its identity.</summary>
         public long Created { get; }
 
-        /// <summary>A relay's arguments, space-separated as the shim takes them: <c>--mcp</c> and the pipe.</summary>
-        public string RelayArguments => $"{Program.McpArgument} {BrowserAI.Coordination.BackgroundPipe.PipeArgument} {Pipe}";
+        /// <summary>Its data root, a scratch root under the profile, with no space in it.</summary>
+        public string AppRoot { get; }
+
+        /// <summary>
+        /// A relay's arguments, space-separated as the shim takes them: <c>--mcp</c>, the
+        /// data root and the pipe. <i>The data root since 2026-10-08, step 5 (previously
+        /// each client's configuration carried the suite's <c>BROWSERAI_ROOT</c>).</i>
+        /// </summary>
+        public string RelayArguments => $"{Program.McpArgument} {BrowserAiPaths.DataRootArgument} {AppRoot} {BrowserAI.Coordination.BackgroundPipe.PipeArgument} {Pipe}";
 
         /// <summary>Starts one and waits for its pipe.</summary>
         /// <param name="appRoot">The scratch data root.</param>
@@ -892,12 +902,10 @@ internal sealed class ClientReconnectTests
                     _ = environment.Remove(inherited);
                 }
 
-                environment[BrowserAiPaths.AppRootOverride] = appRoot;
-
                 var pipe = PublishedBackground.NewPipeName();
-                var process = PublishedBackground.Start(job, work.FullName, environment, pipe, []);
+                var process = PublishedBackground.Start(job, work.FullName, environment, pipe, [BrowserAiPaths.DataRootArgument, appRoot]);
 
-                return new ArmBackground(job, process, pipe);
+                return new ArmBackground(job, process, pipe, appRoot);
             }
             catch
             {

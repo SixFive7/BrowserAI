@@ -714,6 +714,15 @@ toast. Deleted with what they drove: `SessionHostCoordinatorTests`,
 `UpdateInProgressTests` as whole files, and arms of `UpdateTests` and
 `PageServiceTests`, which keep a `RETIRED` remark where each stood.
 
+⚠️ **A published binary is given its data root as `--data-root` since 2026-10-08, step 5
+of the one-binary build.** *Added by addition.* No running BrowserAI reads
+`BROWSERAI_ROOT` any more, so an arm that wants a scratch data root for a relay passes
+`BrowserAiPaths.DataRootArgument`, and the harness hands it on to the background it
+starts beside that relay. Only the real-installer arms still set `BROWSERAI_ROOT`, in
+the installer's environment, where the install hook reads it once and writes
+`--data-root` into the task and the registrations
+(`HouseRuleTests.NoRunningBrowserAiReadsABrowserAiVariable`).
+
 | What | How the suite reaches it | What it cannot see |
 |---|---|---|
 | `BrowserAI.Server.exe` | The **published slice**: a real NativeAOT publish driven over stdio. `PublishedSlice.Executable` moved to this name on 2026-09-15 | Nothing new. This is the half that was always covered. *Added 2026-10-03 by addition, with option c (Q366 b):* **an installed server's road to its session host.** The published host and front are driven over the `--host` and `--relay` seams, and the front's search through the coordinator and the logon task in process with a scheduler that starts nothing; no arm runs an installed server that reaches its host through the real task, because that would start a coordinator through the scheduler from inside the suite |

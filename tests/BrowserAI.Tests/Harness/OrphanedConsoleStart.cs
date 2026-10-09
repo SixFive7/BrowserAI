@@ -260,7 +260,6 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     {
         var environment = PublishedSlice.InheritedEnvironment();
 
-        environment[BrowserAiPaths.AppRootOverride] = _appRoot;
         _ = environment.Remove(VelopackStartup.FirstRunVariable);
 
         _launcherReport = ScratchDirectory.Create("orphan-launcher");
@@ -274,7 +273,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         _handingOn = BrowserAI.Interop.JobLauncher.Start(
             _job,
             Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"),
-            ["launch-suspended-handing-on", _executable, report, .. arguments],
+            ["launch-suspended-handing-on", _executable, report, .. arguments, BrowserAiPaths.DataRootArgument, _appRoot],
             _appRoot,
             environment);
 
@@ -519,9 +518,9 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
     private void Launch(bool startedByTheInstaller, LauncherCorpse corpse)
     {
+        // The root through --data-root since step 5 (previously the suite's
+        // BROWSERAI_ROOT), added beside --mcp where the launcher is told the arguments.
         var environment = PublishedSlice.InheritedEnvironment();
-
-        environment[BrowserAiPaths.AppRootOverride] = _appRoot;
 
         if (startedByTheInstaller)
         {
@@ -592,6 +591,8 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         // would open a browser tab. Every arm this rig serves is about the server's
         // guard against a start with nobody to serve.
         start.ArgumentList.Add(Program.McpArgument);
+        start.ArgumentList.Add(BrowserAiPaths.DataRootArgument);
+        start.ArgumentList.Add(_appRoot);
         start.Environment.Clear();
 
         foreach (var (name, value) in environment)

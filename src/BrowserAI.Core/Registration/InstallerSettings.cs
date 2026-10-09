@@ -42,10 +42,43 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
             ? [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, root]
             : [RegistrationTarget.McpArgument];
 
-    /// <summary>The hooks' one read of the installer's environment.</summary>
-    /// <returns>What it named.</returns>
-    public static InstallerSettings Read() =>
-        new(
-            LocalAppDataPaths.Overridden(),
-            Environment.GetEnvironmentVariable(UpdateConfiguration.FeedVariable) is { Length: > 0 } source ? source : null);
+    /// <summary>
+    /// The hooks' one read of the installer's environment, and for a setting it does
+    /// not name, the value the install wrote into its task.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The only read of a <c>BROWSERAI_</c> variable in the product</b>, held so by
+    /// <c>HouseRuleTests.NoRunningBrowserAiReadsABrowserAiVariable</c>, and called only
+    /// by <see cref="HookRegistration"/>. A relative data root is ignored, not
+    /// resolved, for the reason a relative <c>PLAYWRIGHT_BROWSERS_PATH</c> is refused:
+    /// it would land somewhere nobody chose and report nothing. <i>Moved here
+    /// 2026-10-08 from <c>LocalAppDataPaths.Overridden</c>, which every start called
+    /// and which went with step 5 of the one-binary build.</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The saved definition is what keeps a setting fixed at install time.</b>
+    /// Velopack runs the update hook under <c>Update.exe</c>, which the background
+    /// started, and the background's environment is the one the Task Scheduler
+    /// built, with no <c>BROWSERAI_</c> variable in it. Read from the environment
+    /// alone, the first update would register the task again with neither the data
+    /// root nor H2 a's update folder, and the updated background would serve the
+    /// default root and check GitHub. The uninstall hook, run from Windows' own list
+    /// of programs, has no installer's environment either, and stops and offers to
+    /// delete the root the install was really using.
+    /// </para>
+    /// </remarks>
+    /// <param name="installRoot">The install the hook runs in, whose saved definition is read; <see langword="null"/> when there is none.</param>
+    /// <param name="environment">The environment, a seam for the suite; the process's own when <see langword="null"/>.</param>
+    /// <returns>What the installer named, or the install saved.</returns>
+    public static InstallerSettings Read(string? installRoot, Func<string, string?>? environment = null)
+    {
+        environment ??= Environment.GetEnvironmentVariable;
+
+        var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
+
+        return new(
+            environment(LocalAppDataPaths.RootVariable) is { Length: > 0 } named && Path.IsPathFullyQualified(named) ? named : SignInTask.DataRootIn(saved),
+            environment(UpdateConfiguration.FeedVariable) is { Length: > 0 } source ? source : SignInTask.UpdateSourceIn(saved));
+    }
 }

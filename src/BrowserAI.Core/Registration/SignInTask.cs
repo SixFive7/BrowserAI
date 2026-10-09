@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Security;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Updates;
@@ -47,7 +49,7 @@ internal sealed record SignInTaskReport(string? Name, TaskChange Change, string 
 /// it.
 /// </para>
 /// </remarks>
-internal static class SignInTask
+internal static partial class SignInTask
 {
     /// <summary>
     /// The argument the action starts the one executable with: the background
@@ -230,6 +232,66 @@ internal static class SignInTask
 
         return trimmed;
     }
+
+    /// <summary>The data root a definition's action names, or <see langword="null"/> for the default.</summary>
+    /// <remarks>
+    /// <b>How a start that was handed no <c>--data-root</c> finds its install's</b>
+    /// (step 5 of the one-binary build, 2026-10-08): a person's start from the Start
+    /// Menu and Velopack's start after an update carry no arguments of ours, and the
+    /// background's pipe is named for the data root, so they read the root the hooks
+    /// wrote into the task (<see cref="ArgumentsFor"/>) from the definition the hooks
+    /// saved beside the install. A file the hooks wrote, never a variable. A root that
+    /// is not fully qualified is the default, as in the hooks' read.
+    /// </remarks>
+    /// <param name="definition">The task's XML, or <see langword="null"/>.</param>
+    /// <returns>The data root.</returns>
+    public static string? DataRootIn(string? definition) =>
+        QuotedIn(definition, SavedDataRoot()) is { } root && Path.IsPathFullyQualified(root) ? root : null;
+
+    /// <summary>The update source a definition's action names, or <see langword="null"/> for the production feed.</summary>
+    /// <remarks>
+    /// <b>H2 a's folder survives an update this way</b>: the update hook runs under
+    /// <c>Update.exe</c>, which the background started and whose environment the Task
+    /// Scheduler built, so it carries no <c>BROWSERAI_UPDATE_FEED</c>, and the source
+    /// the install hook wrote is read back from the definition it saved.
+    /// </remarks>
+    /// <param name="definition">The task's XML, or <see langword="null"/>.</param>
+    /// <returns>The update source.</returns>
+    public static string? UpdateSourceIn(string? definition) => QuotedIn(definition, SavedUpdateSource());
+
+    /// <summary>One quoted value of a definition's action, as <see cref="ArgumentsFor"/> writes it.</summary>
+    /// <param name="definition">The task's XML, or <see langword="null"/>.</param>
+    /// <param name="argument">The argument and its value.</param>
+    /// <returns>The value, or <see langword="null"/>.</returns>
+    private static string? QuotedIn(string? definition, Regex argument)
+    {
+        if (definition is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        try
+        {
+            var arguments = XDocument.Parse(definition).Descendants()
+                .FirstOrDefault(element => element.Name.LocalName == "Arguments")?.Value;
+
+            return arguments is not null && argument.Match(arguments) is { Success: true } named
+                ? named.Groups["value"].Value
+                : null;
+        }
+        catch (System.Xml.XmlException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The data root in an action's arguments, quoted as <see cref="ArgumentsFor"/> writes it.</summary>
+    [GeneratedRegex(@"(^|\s)--data-root\s+""(?<value>[^""]+)""")]
+    private static partial Regex SavedDataRoot();
+
+    /// <summary>The update source in an action's arguments, quoted as <see cref="ArgumentsFor"/> writes it.</summary>
+    [GeneratedRegex(@"(^|\s)--update-source\s+""(?<value>[^""]+)""")]
+    private static partial Regex SavedUpdateSource();
 
     /// <summary>The definition the hooks last registered for an install, or <see langword="null"/> when there is none.</summary>
     /// <param name="installRoot">The install root.</param>

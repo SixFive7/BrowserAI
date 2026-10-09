@@ -74,7 +74,7 @@ internal sealed class InheritedEnvironmentTests
         using var output = ScratchDirectory.Create("environment-report");
         using var planted = Plant(token);
 
-        var state = AppState.Read(new FakeRegisterAi(), output.Path);
+        var state = AppState.Read(new FakeRegisterAi(), output.Path, output.Path);
         var text = await File.ReadAllTextAsync(StatusReport.Write(state, Path.Combine(output.Path, "report.json")));
 
         await Assert.That(text).Contains("\"schemaVersion\"").Because("the report was not written at all");

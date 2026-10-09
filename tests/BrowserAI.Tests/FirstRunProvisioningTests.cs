@@ -191,12 +191,14 @@ internal sealed class FirstRunProvisioningTests
             await Assert.That(elsewhere.Held).IsTrue();
         }
 
+        // The empty root through --data-root since step 5 (previously the suite's
+        // BROWSERAI_ROOT, which no running BrowserAI reads any more); the harness hands
+        // it on to the background it starts beside the relay.
         var environment = PublishedSlice.InheritedEnvironment();
-        environment[BrowserAiPaths.AppRootOverride] = appRoot;
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,
-            PublishedSlice.Mcp,
+            [.. PublishedSlice.Mcp, BrowserAiPaths.DataRootArgument, appRoot],
             scratch.Path,
             environment);
 

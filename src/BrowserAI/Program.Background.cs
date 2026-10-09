@@ -277,7 +277,7 @@ internal static partial class Program
             },
             new VelopackPageUpdates(null, InstallLocation.IsInstalled),
             new BackgroundPageSessions(host, roster, clock),
-            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory), backgroundLogger),
+            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), backgroundLogger),
             new DesktopPageHost(inbox, backgroundLogger),
             inbox.Wake,
             clock,

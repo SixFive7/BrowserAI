@@ -24,7 +24,8 @@ namespace BrowserAI.Tests.Harness;
 /// have used").</b> That was false whenever <see cref="AppRootOverride"/> is
 /// set, which is a case this suite creates on purpose:
 /// <c>Program.Main</c> reads <see cref="AppRootOverride"/> and takes it over
-/// the computed default, and
+/// the computed default (since step 5, 2026-10-08, it reads
+/// <see cref="DataRootArgument"/> instead, and the case is the same), and
 /// <see cref="PublishedSlice.InheritedEnvironment"/> copies the whole
 /// environment -- that variable included -- into the published child. This type
 /// constructs <see cref="LocalAppDataPaths"/> with <b>no</b> root argument, so
@@ -63,15 +64,31 @@ internal static class BrowserAiPaths
     public static string BrowsersDirectory => Paths.BrowsersDirectory;
 
     /// <summary>
-    /// The variable that moves a published binary's <b>data</b> root, named from
+    /// The variable that moves an <b>installer's</b> data root, named from the
+    /// product and not typed here.
+    /// </summary>
+    /// <remarks>
+    /// <i>Narrowed 2026-10-08 by step 5 of the one-binary build (previously "The
+    /// variable that moves a published binary's data root ... The only way to give a
+    /// real BrowserAI an empty browsers root")</i>: no running BrowserAI reads it.
+    /// The install hook reads it from the installer's environment and writes
+    /// <c>--data-root</c> into the task and the registrations, so the real-installer
+    /// arms still set it, in the installer's environment and nowhere else. A published
+    /// binary is given its data root with <see cref="DataRootArgument"/>.
+    /// </remarks>
+    public static string AppRootOverride => Program.AppRootVariable;
+
+    /// <summary>
+    /// The argument that gives a published binary its <b>data</b> root, named from
     /// the product and not typed here.
     /// </summary>
     /// <remarks>
-    /// The only way to give a real BrowserAI an <b>empty</b> browsers root
-    /// without deleting the developer's own -- which would destroy 430 MiB and
-    /// break every other browser test running beside it.
+    /// The way to give a real BrowserAI an <b>empty</b> browsers root without
+    /// deleting the developer's own, which would destroy 430 MiB and break every
+    /// other browser test running beside it. A relay passes it on to the background
+    /// the harness starts beside it (<see cref="PublishedBackground"/>).
     /// </remarks>
-    public static string AppRootOverride => Program.AppRootVariable;
+    public static string DataRootArgument => Program.DataRootArgument;
 
     /// <summary>
     /// Every path the product resolves under the default data root -- the same

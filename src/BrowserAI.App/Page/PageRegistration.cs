@@ -68,7 +68,7 @@ internal interface IPageRegistration
 /// <b>The image path and the read are handed in</b>, the seam the window's session
 /// had since Q289 b, so the suite drives the real registrar against an in-process
 /// RegisterAI, a scratch install and a state it built. The product passes
-/// <c>Environment.ProcessPath</c> and <see cref="AppState.Read(IRegisterAi, string)"/>.
+/// <c>Environment.ProcessPath</c> and <see cref="AppState.Read(IRegisterAi, string, string)"/>.
 /// </para>
 /// </remarks>
 /// <param name="tool">RegisterAI.</param>

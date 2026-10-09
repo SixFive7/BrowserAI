@@ -202,13 +202,12 @@ internal sealed class InstallerHandoffTests
         using var root = ScratchDirectory.CreateUnderProfile("installer-variable-serves");
 
         var environment = PublishedSlice.InheritedEnvironment();
-        environment[BrowserAiPaths.AppRootOverride] = root.Path;
         environment[VelopackStartup.FirstRunVariable] = "true";
 
         // Inside a kill-on-close job, the suite's standing rule for a real
         // BrowserAI, with the background the harness starts beside every published
         // relay, so an assertion that fails below leaves nothing running.
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [.. PublishedSlice.Mcp, BrowserAiPaths.DataRootArgument, root.Path], root.Path, environment);
 
         var relay = client.ProcessId;
         var relayCreated = ProcessIdentity.CreationTimeOf(relay);
@@ -537,9 +536,8 @@ internal sealed class InstallerHandoffTests
         using var backgroundJob = JobObject.CreateKillOnClose();
 
         var environment = PublishedSlice.InheritedEnvironment();
-        environment[BrowserAiPaths.AppRootOverride] = root.Path;
 
-        using var background = PublishedBackground.Start(backgroundJob, root.Path, environment, pipe, []);
+        using var background = PublishedBackground.Start(backgroundJob, root.Path, environment, pipe, [BrowserAiPaths.DataRootArgument, root.Path]);
 
         // The writer owns the write end of the relay's standard input: disposing it is
         // the relay's end of input, and the finally disposes it again when an

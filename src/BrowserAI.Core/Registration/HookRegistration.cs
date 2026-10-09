@@ -138,15 +138,26 @@ internal static class HookRegistration
         Run(
             intent,
             version,
+            InstallerSettings.Read(RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out _) ? target!.InstallRoot : null));
+
+    /// <summary>Runs one pass with what the installer's environment named, read once.</summary>
+    /// <param name="intent">Which hook is asking.</param>
+    /// <param name="version">The version Velopack handed the callback.</param>
+    /// <param name="overridden">The hooks' one read of the installer's environment, the override every start is then handed.</param>
+    /// <returns>What happened.</returns>
+    private static HookOutcome Run(RegistrationIntent intent, string version, InstallerSettings overridden) =>
+        Run(
+            intent,
+            version,
             Environment.ProcessPath,
             RegisterAiTool.Beside(Environment.ProcessPath),
-            new LocalAppDataPaths(LocalAppDataPaths.Overridden()),
+            new LocalAppDataPaths(overridden.DataRoot),
             RegistryUserPathStore.User,
             ScheduledTasks.Instance,
             InstallLocation.AppId,
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
             message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message),
-            settings: InstallerSettings.Read(),
+            settings: overridden,
             toastActivator: ToastActivatorStep.Apply);
 
     /// <summary>

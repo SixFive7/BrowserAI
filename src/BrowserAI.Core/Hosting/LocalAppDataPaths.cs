@@ -26,11 +26,15 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// <b>The constructor still takes a root, and the one thing that supplies one is
-/// <see cref="Overridden"/>.</b> The suite needs an <i>empty</i> browsers root
-/// to prove first-run provisioning against, and a stdio server has no channel
-/// but the environment -- so <c>BROWSERAI_ROOT</c> survives, scoped to the data
-/// root and to nothing else. It never moves the install root, which is Velopack's
-/// to choose.
+/// <c>--data-root</c>.</b> The suite needs an <i>empty</i> browsers root to prove
+/// first-run provisioning against, and an install may name a root of its own, so
+/// the data root can move; it never moves the install root, which is Velopack's to
+/// choose. <i>Changed 2026-10-08 by step 5 of the one-binary build (previously "the
+/// one thing that supplies one is Overridden ... a stdio server has no channel but
+/// the environment -- so BROWSERAI_ROOT survives")</i>: every start is handed
+/// <c>--data-root</c>, the hooks write it from the installer's <c>BROWSERAI_ROOT</c>,
+/// read once in <c>InstallerSettings.Read</c>, and no running BrowserAI reads the
+/// variable.
 /// </para>
 /// <para>
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> An installed BrowserAI runs out
@@ -106,34 +110,10 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// </remarks>
     public const string RootVariable = "BROWSERAI_ROOT";
 
-    /// <summary>
-    /// The data root <see cref="RootVariable"/> names, or
-    /// <see langword="null"/> when it names nothing usable.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Read here and not at each entry point</b>, because there is more
-    /// than one: <c>Program.Main</c> serves stdio, and
-    /// <c>Registration.HookRegistration</c> runs inside an installer callback
-    /// that never reaches <c>Main</c>'s body. Two readers would eventually
-    /// answer differently, and the one that would matter is the uninstall hook --
-    /// it offers to delete the data root, and a root it resolved differently
-    /// from the running product is a root nobody was using.
-    /// </para>
-    /// <para>
-    /// <b>A relative value is ignored, not resolved</b>, for the reason a
-    /// relative <c>PLAYWRIGHT_BROWSERS_PATH</c> is refused: it would land
-    /// somewhere nobody chose and report nothing. Never cached -- the suite sets
-    /// this variable in-process around a scope and expects the next read to see
-    /// it.
-    /// </para>
-    /// </remarks>
-    /// <returns>The override, or <see langword="null"/>.</returns>
-    public static string? Overridden() =>
-        Environment.GetEnvironmentVariable(RootVariable) is { Length: > 0 } value
-        && Path.IsPathFullyQualified(value)
-            ? value
-            : null;
+    // Overridden() WENT 2026-10-08 with step 5 of the one-binary build: every start
+    // read the variable through it, and a running BrowserAI reads none now. Its one
+    // reader left is the hooks', InstallerSettings.Read, which keeps its rule that a
+    // relative value is ignored, not resolved.
 
     /// <inheritdoc />
     public string RootAppDir { get; } = rootAppDir ?? Default;

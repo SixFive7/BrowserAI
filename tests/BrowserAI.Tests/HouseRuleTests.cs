@@ -2784,6 +2784,143 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>
+    /// <b>No running BrowserAI process reads a <c>BROWSERAI_</c> variable</b>: the
+    /// installer's hooks read the installer's environment once, and every other start
+    /// is handed its settings as arguments.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one-binary design's settings rule, built 2026-10-08 as step 5 of the
+    /// build the maintainer approved that day.</b> Its reason is measured: the
+    /// task-started host wrote to the default data root although the installer had
+    /// <c>BROWSERAI_ROOT</c> set to scratch, because a process the Task Scheduler starts
+    /// never sees its starter's environment (the one-binary measurement, risk 1, in
+    /// <c>docs/design/one-binary/README.md</c>). So the install and update hooks read
+    /// the installer's environment in one place, <see cref="TheHooksOneRead"/>, and
+    /// write what they find into the task's action and every registration as
+    /// <c>--data-root</c> and <c>--update-source</c>; nothing else may read one, and
+    /// nothing but the hooks may call that read.
+    /// </para>
+    /// <para>
+    /// <b>The names are found, not listed</b>: every <c>const string</c> under
+    /// <c>src</c> whose value is a <c>BROWSERAI_</c> literal, and every constant that
+    /// aliases one, so a variable added tomorrow is covered the day it is declared.
+    /// <b>Watched red 2026-10-08 against the tree as it stood</b>, where it named
+    /// <c>LocalAppDataPaths.Overridden</c>, which every start called for its data root,
+    /// and <c>UpdateConfiguration.Resolve</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoRunningBrowserAiReadsABrowserAiVariable()
+    {
+        var names = await BrowserAiVariableNamesAsync();
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var relative = Relative(file);
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+            var isTheRead = relative.Equals(TheHooksOneRead, StringComparison.OrdinalIgnoreCase);
+
+            if (!isTheRead)
+            {
+                offenders.AddRange(BrowserAiVariableReads(code, names)
+                    .Select(read => $"{relative}: reads a BROWSERAI_ variable ({read}). A running BrowserAI is handed its settings as arguments; "
+                        + $"only the installer's hooks read the installer's environment, once, in {TheHooksOneRead}."));
+            }
+
+            if (!isTheRead
+                && !relative.Equals(TheHooksEntry, StringComparison.OrdinalIgnoreCase)
+                && code.Contains("InstallerSettings.Read(", StringComparison.Ordinal))
+            {
+                offenders.Add($"{relative}: calls InstallerSettings.Read, the hooks' one read of the installer's environment, from outside the hooks ({TheHooksEntry}).");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROLS. A scan whose names were never found, or whose
+        // pattern stopped matching, reports the tree clean, and that reads exactly
+        // like a tree that is.
+        await Assert.That(names).Contains("RootVariable").Because("the data root's variable is a constant of LocalAppDataPaths");
+        await Assert.That(names).Contains("FeedVariable").Because("the update source's variable is a constant of UpdateConfiguration");
+        await Assert.That(names).Contains("AppRootVariable").Because("Program aliases the data root's variable, and an alias is a name too");
+        await Assert.That(BrowserAiVariableReads("var root = Environment.GetEnvironmentVariable(LocalAppDataPaths.RootVariable);", names)).IsNotEmpty();
+        await Assert.That(BrowserAiVariableReads("var feed = Environment.GetEnvironmentVariable(\n    \"BROWSERAI_" + "UPDATE_FEED\");", names)).IsNotEmpty();
+        await Assert.That(BrowserAiVariableReads("var path = Environment.GetEnvironmentVariable(\"PATH\");", names)).IsEmpty();
+    }
+
+    /// <summary>The one file the hooks read the installer's environment in.</summary>
+    private static readonly string TheHooksOneRead = Path.Combine("src", "BrowserAI.Core", "Registration", "InstallerSettings.cs");
+
+    /// <summary>The one file that may call that read: the hooks' own entry.</summary>
+    private static readonly string TheHooksEntry = Path.Combine("src", "BrowserAI.Core", "Registration", "HookRegistration.cs");
+
+    /// <summary>
+    /// Every constant under <c>src</c> that names a <c>BROWSERAI_</c> variable, and
+    /// every constant that aliases one of those.
+    /// </summary>
+    /// <returns>The constants' names.</returns>
+    private static async Task<HashSet<string>> BrowserAiVariableNamesAsync()
+    {
+        var declarations = new List<(string Name, string Value)>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            declarations.AddRange(ConstantString().Matches(code)
+                .Select(match => (match.Groups["name"].Value, match.Groups["value"].Value.Trim())));
+        }
+
+        var names = declarations
+            .Where(declaration => declaration.Value.StartsWith("\"BROWSERAI_", StringComparison.Ordinal))
+            .Select(declaration => declaration.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        // An alias of an alias is found on the next pass, until a pass finds nothing new.
+        for (var added = true; added;)
+        {
+            added = false;
+
+            foreach (var (name, value) in declarations)
+            {
+                var aliased = value.Split('.')[^1];
+
+                if (!names.Contains(name) && names.Contains(aliased))
+                {
+                    added = names.Add(name);
+                }
+            }
+        }
+
+        return names;
+    }
+
+    /// <summary>Every read of the environment in a piece of code that names one of these variables.</summary>
+    /// <param name="code">The code, comments blanked.</param>
+    /// <param name="names">The constants that name a <c>BROWSERAI_</c> variable.</param>
+    /// <returns>Each such read, as written.</returns>
+    private static List<string> BrowserAiVariableReads(string code, HashSet<string> names) =>
+        [.. EnvironmentRead().Matches(code)
+            .Where(match => match.Groups["argument"].Value.Contains("\"BROWSERAI_", StringComparison.Ordinal)
+                || IdentifierToken().Matches(match.Groups["argument"].Value).Any(token => names.Contains(token.Value)))
+            .Select(match => string.Join(' ', match.Value.Split((char[])['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Select(part => part.Trim())))];
+
+    /// <summary>A <c>const string</c> declaration and its initializer.</summary>
+    [GeneratedRegex(@"const\s+string\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?<value>[^;]+);")]
+    private static partial Regex ConstantString();
+
+    /// <summary>A call that reads one variable of the environment, and its argument.</summary>
+    [GeneratedRegex(@"GetEnvironmentVariable\s*\(\s*(?<argument>[^)]*)\)", RegexOptions.Singleline)]
+    private static partial Regex EnvironmentRead();
+
+    /// <summary>An identifier.</summary>
+    [GeneratedRegex(@"[A-Za-z_][A-Za-z0-9_]*")]
+    private static partial Regex IdentifierToken();
+
+    /// <summary>
     /// <b>Nothing in this tree asks a volume how much room it has.</b>
     /// </summary>
     /// <remarks>

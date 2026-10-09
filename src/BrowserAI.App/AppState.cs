@@ -112,11 +112,17 @@ internal sealed record AppState
     /// <summary>Reads the whole state.</summary>
     /// <param name="tool">RegisterAI, which reads every client's registration.</param>
     /// <param name="workingDirectory">Where the search for a project file starts.</param>
+    /// <param name="dataRoot">
+    /// The data root of the process asking, which it was handed as <c>--data-root</c>
+    /// or took as the default. <i>A parameter since 2026-10-08 (previously read here
+    /// from <c>BROWSERAI_ROOT</c>), step 5 of the one-binary build.</i>
+    /// </param>
     /// <returns>What is true right now.</returns>
-    public static AppState Read(IRegisterAi tool, string workingDirectory)
+    public static AppState Read(IRegisterAi tool, string workingDirectory, string dataRoot)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
 
         var installRoot = InstallLocation.RootAppDir;
         var resolved = RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out var refusal);
@@ -131,7 +137,7 @@ internal sealed record AppState
         {
             Version = BuildVersion.Current,
             InstallRoot = installRoot,
-            DataRoot = new LocalAppDataPaths(LocalAppDataPaths.Overridden()).RootAppDir,
+            DataRoot = dataRoot,
             ServerCommand = resolved ? target!.Command : null,
             ServerRefusal = resolved ? null : refusal,
             Clients = [.. readings.Select(reading => ClientState.From(reading, resolved))],
@@ -143,6 +149,7 @@ internal sealed record AppState
     /// window and <c>--report</c> do.
     /// </summary>
     /// <param name="workingDirectory">Where the search for a project registration starts.</param>
+    /// <param name="dataRoot">The data root of the process asking.</param>
     /// <returns>What is true right now.</returns>
     /// <remarks>
     /// <b>The one call for a caller that only wants to show the state.</b> Each
@@ -152,6 +159,6 @@ internal sealed record AppState
     /// RegisterAI once, and once more per client that has a project file at or above
     /// <paramref name="workingDirectory"/>, so it belongs off a UI thread.
     /// </remarks>
-    public static AppState Read(string workingDirectory) =>
-        Read(RegisterAiTool.Beside(Environment.ProcessPath), workingDirectory);
+    public static AppState Read(string workingDirectory, string dataRoot) =>
+        Read(RegisterAiTool.Beside(Environment.ProcessPath), workingDirectory, dataRoot);
 }

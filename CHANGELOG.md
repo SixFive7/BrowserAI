@@ -841,6 +841,16 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **A running BrowserAI takes its data root and update source from its arguments, never a variable.**
+  Step 5 of the one-binary build, which the maintainer approved on 2026-10-08 with the rest of it. The
+  installer's `BROWSERAI_ROOT` and `BROWSERAI_UPDATE_FEED` are read once, by the install hook, and
+  written into the scheduled task and the client registrations as `--data-root` and `--update-source`.
+  An update and an uninstall run their hooks with neither variable, so they read what the install
+  wrote into its task, and a folder chosen for updates at install time (H2 a) stays the source after
+  the first update; a Start Menu start finds its install's data root the same way. A variable set
+  later in a user's environment moves nothing. `HouseRuleTests.NoRunningBrowserAiReadsABrowserAiVariable`
+  and `InstallerSettingsTests` hold it, each watched red first.
+
 - 💥 **One BrowserAI runs in the background, and a client's `--mcp` start passes its calls to it.**
   S a and p a, the maintainer's words verbatim: *"s a"* and *"p a"*. The Task Scheduler starts
   `BrowserAI.exe --background` at sign-in, and nothing else starts it: a Start Menu click asks the

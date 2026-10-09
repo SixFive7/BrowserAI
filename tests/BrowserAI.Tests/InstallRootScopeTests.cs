@@ -289,18 +289,17 @@ internal sealed class InstallRootScopeTests
     /// spread to another user, and the relay judges nothing: a relay started over
     /// this root serves its client and waits on its input, which is how this arm
     /// hung for its whole <c>BrowserHang</c> on 529e2d77. So the start is the
-    /// background's, on a pipe of its own, with the root both ways it can arrive: the
-    /// suite's variable, and <c>--data-root</c>, the argument the task carries. And
+    /// background's, on a pipe of its own, with the root as <c>--data-root</c>, the
+    /// argument the task carries. <i>Corrected 2026-10-08 by step 5 of the one-binary
+    /// build (previously "with the root both ways it can arrive: the suite's variable,
+    /// and --data-root")</i>: no running BrowserAI reads the variable. And
     /// it is bounded by its own outcome as well as by the hang detector: a background
     /// that writes that it serves has not refused, and the arm says so at once.
     /// </para>
     /// </remarks>
-    /// <param name="asAnArgument">Whether the root arrives as <c>--data-root</c>, as the task passes it, or through the suite's variable.</param>
     /// <returns>The assertion task.</returns>
     [Test]
-    [Arguments(false)]
-    [Arguments(true)]
-    public async Task ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog(bool asAnArgument)
+    public async Task ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
@@ -310,17 +309,7 @@ internal sealed class InstallRootScopeTests
 
         var environment = PublishedSlice.InheritedEnvironment();
         var pipe = PublishedBackground.NewPipeName();
-        List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe];
-
-        if (asAnArgument)
-        {
-            _ = environment.Remove(BrowserAiPaths.AppRootOverride);
-            arguments.AddRange([Program.DataRootArgument, outside.Path]);
-        }
-        else
-        {
-            environment[BrowserAiPaths.AppRootOverride] = outside.Path;
-        }
+        List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe, Program.DataRootArgument, outside.Path];
 
         // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
         // starting a real BrowserAI: a test that leaks one leaks whatever it
@@ -388,12 +377,7 @@ internal sealed class InstallRootScopeTests
         // and the log that says why, and never holds it for a background that cannot
         // come. The finding of 2026-10-09: with no record it held each call for its
         // whole bound and then said that no background was running.
-        List<string> relayArguments = [Program.McpArgument, BackgroundPipe.PipeArgument, pipe];
-
-        if (asAnArgument)
-        {
-            relayArguments.AddRange([Program.DataRootArgument, outside.Path]);
-        }
+        List<string> relayArguments = [Program.McpArgument, BackgroundPipe.PipeArgument, pipe, Program.DataRootArgument, outside.Path];
 
         await using var relay = RawStdioClient.Start(PublishedSlice.Executable, relayArguments, outside.Path, environment);
 
