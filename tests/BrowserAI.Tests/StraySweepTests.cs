@@ -496,8 +496,13 @@ internal sealed class StraySweepTests
         // processes, because what could drift is a second spelling and that is
         // what the check above already forbids -- this half only proves the two
         // entry points are the same code.
-        var program = await File.ReadAllTextAsync(
-            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs"));
+        //
+        // Two files of one class since 2026-10-08 (previously Program.cs alone):
+        // the resident background's sweep is in Program.Background.cs (S a), and
+        // the --sweep pass stayed in Program.cs.
+        var program = string.Concat(
+            await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs")),
+            await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.Background.cs")));
 
         await Assert.That(program).DoesNotContain("BrowserAI-Sweep");
         await Assert.That(Regex.Count(program, @"CreateSweep\(paths, ", RegexOptions.None, TimeSpan.FromSeconds(5))).IsEqualTo(2);

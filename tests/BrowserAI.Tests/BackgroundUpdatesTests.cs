@@ -238,6 +238,179 @@ internal sealed class BackgroundUpdatesTests
         await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
     }
 
+    // ---- A pass that does not go to plan --------------------------------------------
+    //
+    // Ported 2026-10-08 from the arms of UpdateTests that drove UpdateService, a server's
+    // own update lane, deleted with it in dcded85b: ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo,
+    // AFeedThatThrowsDoesNotTakeTheProcessWithIt, NothingOnOfferIsAQuietPass,
+    // ProgressResetsTheStallTimerSoASlowButMovingDownloadSurvives and
+    // ShutdownAbandonsThePassQuietly. The behaviours moved into the background's update
+    // core with the budgets, and these hold them there.
+
+    /// <summary>
+    /// A check that never answers is given up at the check budget, the log says so,
+    /// and the next check runs as soon as it is due.
+    /// </summary>
+    /// <remarks>
+    /// <b>Velopack's own check takes no token</b>, so the core bounds it by waiting and
+    /// not by cancelling (<see cref="UpdateBudgets.CheckBudget"/>). The budget is longer
+    /// than <see cref="BackgroundUpdates.CheckInterval"/>, so the next check is already
+    /// due when it runs out. <b>Planted red 2026-10-08</b> with the check awaited through
+    /// the shutdown token alone: one tick past the budget nothing was logged and no
+    /// second check ran.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACheckThatNeverAnswersEndsAtItsBudgetAndTheNextCheckRuns()
+    {
+        using var rig = new BackgroundUpdateRig();
+        rig.Client.CheckHangs = true;
+
+        _ = rig.Start();
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(1);
+
+        rig.Clock.Advance(UpdateBudgets.CheckBudget - OneTick);
+
+        await Assert.That(rig.Logged(65)).IsFalse().Because("the check still has a tick of its budget left");
+        await Assert.That(rig.Client.Checks).IsEqualTo(1);
+
+        rig.Client.CheckHangs = false;
+        rig.Clock.Advance(OneTick);
+        rig.Settle();
+
+        await Assert.That(rig.Logged(65)).IsTrue().Because("event 65 says the check outlived its budget");
+        await Assert.That(rig.Logged(64)).IsFalse().Because("a check that ran out of time is not a pass that failed");
+        await Assert.That(rig.Client.Checks).IsEqualTo(2).Because("the next check was due ten minutes after the first began");
+    }
+
+    /// <summary>
+    /// A feed that throws costs that pass and nothing else: the log says so, the next
+    /// check runs at its time, and a check with nothing on offer is quiet.
+    /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-08</b> with the next check armed only when a pass
+    /// returns, as a <c>try</c> without its <c>finally</c> would: at the interval no
+    /// second check ran.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFeedThatThrowsCostsThatPassAndTheNextCheckRunsAtItsTime()
+    {
+        using var rig = new BackgroundUpdateRig();
+        rig.Relays.Connect(BusyRelay(rig, "a"));
+        rig.Client.CheckFailure = new HttpRequestException("the feed is down");
+
+        var updates = rig.Start();
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(1);
+        await Assert.That(rig.Logged(64)).IsTrue().Because("event 64 says the pass failed and when the next one runs");
+
+        rig.Client.CheckFailure = null;
+        rig.Clock.Advance(BackgroundUpdates.CheckInterval - OneTick);
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(1);
+
+        rig.Clock.Advance(OneTick);
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(2);
+
+        // Nothing was on offer: no download, no toast, nothing held.
+        await Assert.That(rig.Logged(41)).IsTrue().Because("event 41 says nothing is available");
+        await Assert.That(rig.Client.Downloads).IsEqualTo(0);
+        await Assert.That(rig.EventsStartingWith("toast")).IsEmpty();
+        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+    }
+
+    /// <summary>
+    /// A download that keeps reporting progress is never stopped by the stall budget,
+    /// however long it takes, and one that stops reporting is abandoned at it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The reset is the mechanism</b>: a stall bound the download does not push back
+    /// is an absolute bound under a second name. <b>Planted red 2026-10-08</b> with the
+    /// reset taken out: the download that moved every 59 s was abandoned at the first
+    /// minute.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADownloadThatKeepsMovingOutlivesTheStallBudgetAndOneThatStopsIsAbandonedAtIt()
+    {
+        using (var rig = new BackgroundUpdateRig())
+        {
+            rig.Relays.Connect(BusyRelay(rig, "a"));
+            rig.Client.Offer = BackgroundUpdateRig.Candidate("9.9.9");
+            rig.Client.DownloadWaits = true;
+
+            var updates = rig.Start();
+
+            await Assert.That(rig.Client.Downloads).IsEqualTo(1);
+
+            // Five reports, each a tick inside the stall budget of the one before.
+            for (var step = 1; step <= 5; step++)
+            {
+                rig.Clock.Advance(UpdateBudgets.StallBudget - OneTick);
+                rig.Client.ReportProgress(step * 10);
+            }
+
+            rig.Client.FinishDownload();
+            rig.Settle();
+
+            await Assert.That(rig.Logged(48)).IsFalse().Because("a download that moves is never a stall, " + string.Join(" | ", rig.Events));
+            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+        }
+
+        using (var rig = new BackgroundUpdateRig())
+        {
+            rig.Relays.Connect(BusyRelay(rig, "a"));
+            rig.Client.Offer = BackgroundUpdateRig.Candidate("9.9.9");
+            rig.Client.DownloadWaits = true;
+
+            var updates = rig.Start();
+
+            rig.Client.ReportProgress(10);
+            rig.Clock.Advance(UpdateBudgets.StallBudget - OneTick);
+
+            await Assert.That(rig.Logged(48)).IsFalse();
+
+            rig.Clock.Advance(OneTick);
+            rig.Settle();
+
+            await Assert.That(rig.Logged(48)).IsTrue().Because("event 48 says the download was abandoned and why");
+            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+        }
+    }
+
+    /// <summary>
+    /// A background that stops during a check abandons the pass quietly: no failure in
+    /// the log, and no check after the stop.
+    /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-08</b> with the shutdown's cancellation no longer told
+    /// apart from a failure: the stop was logged as a pass that failed.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStopDuringACheckAbandonsThePassQuietly()
+    {
+        using var rig = new BackgroundUpdateRig();
+        rig.Client.CheckHangs = true;
+
+        var updates = rig.Start();
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(1);
+
+        updates.Dispose();
+        rig.Settle();
+
+        await Assert.That(rig.Logged(64)).IsFalse().Because("a stop is not a pass that failed");
+        await Assert.That(rig.Logged(65)).IsFalse();
+
+        rig.Clock.Advance(UpdateBudgets.CheckBudget + BackgroundUpdates.CheckInterval);
+
+        await Assert.That(rig.Client.Checks).IsEqualTo(1).Because("nothing checks after the stop");
+    }
+
     // ---- What holds ---------------------------------------------------------------
 
     /// <summary>

@@ -186,11 +186,45 @@ internal sealed class ScriptedBackgroundClient(ConcurrentQueue<string> events) :
     /// <summary>How many downloads ran.</summary>
     public int Downloads => events.Count(entry => entry.StartsWith("download ", StringComparison.Ordinal));
 
+    /// <summary>What a check throws, as a feed that is down does, or <see langword="null"/>.</summary>
+    public Exception? CheckFailure { get; set; }
+
+    /// <summary>
+    /// Whether a check never answers and ignores its token, as Velopack's own check
+    /// does once it has started.
+    /// </summary>
+    public bool CheckHangs { get; set; }
+
+    /// <summary>
+    /// Whether a download waits for the arm: it reports progress through
+    /// <see cref="ReportProgress"/> and ends at <see cref="FinishDownload"/> or when
+    /// its token fires.
+    /// </summary>
+    public bool DownloadWaits { get; set; }
+
+    private Action<int>? _progress;
+    private TaskCompletionSource? _download;
+
+    /// <summary>Reports progress for the download that waits.</summary>
+    /// <param name="percent">How far it is.</param>
+    public void ReportProgress(int percent) =>
+        (_progress ?? throw new InvalidOperationException("No download is waiting."))(percent);
+
+    /// <summary>Lets the download that waits finish.</summary>
+    public void FinishDownload() =>
+        _ = (_download ?? throw new InvalidOperationException("No download is waiting.")).TrySetResult();
+
     /// <inheritdoc />
     public Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken)
     {
         events.Enqueue("check");
-        return Task.FromResult(Offer);
+
+        if (CheckFailure is { } failure)
+        {
+            return Task.FromException<UpdateCandidate?>(failure);
+        }
+
+        return CheckHangs ? new TaskCompletionSource<UpdateCandidate?>().Task : Task.FromResult(Offer);
     }
 
     /// <inheritdoc />
@@ -206,9 +240,33 @@ internal sealed class ScriptedBackgroundClient(ConcurrentQueue<string> events) :
             return Task.FromException(failure);
         }
 
+        if (DownloadWaits)
+        {
+            return WaitForTheArmAsync(candidate, progress, cancellationToken);
+        }
+
         progress(100);
         StagedCandidate = candidate;
         return Task.CompletedTask;
+    }
+
+    /// <summary>A download that moves only when the arm says so.</summary>
+    /// <param name="candidate">What is downloaded.</param>
+    /// <param name="progress">Where its progress goes.</param>
+    /// <param name="cancellationToken">The core's deadlines.</param>
+    /// <returns>The download; it ends cancelled when the token fires first.</returns>
+    private async Task WaitForTheArmAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken)
+    {
+        var finished = new TaskCompletionSource();
+        _progress = progress;
+        _download = finished;
+
+        using (cancellationToken.Register(() => finished.TrySetCanceled(cancellationToken)))
+        {
+            await finished.Task;
+        }
+
+        StagedCandidate = candidate;
     }
 
     /// <inheritdoc />
