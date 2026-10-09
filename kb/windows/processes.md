@@ -2329,6 +2329,61 @@ is the arm. *Added 2026-10-08 by addition:* the coordinator's loop and that arm 
 deleted with the one-binary build (S a), and the resident background's loop waits on
 two handles, its stop and the tab's inbox; the limit stands as measured.
 
+## A timer armed through TimeProvider.System fires before its moment by that clock, most of the time -- measured 2026-10-09
+
+`[MACHINE]`. Windows 11 Pro 10.0.26300, .NET 10.0.12, measured by lane ARCH's helper T3
+while it ran the real-scheduler arms. A one-shot timer armed the way
+`RelayEngine.Arm` arms one, its delay the moment less `TimeProvider.System.GetUtcNow()`,
+ran its callback while that same clock still read before the moment **146 times in
+200** at a two-second delay and **136 in 200** at half a second, early by 0.001 to
+1.847 ms; the rest ran on or after it, late by up to 6.937 ms. So a callback that
+compares the clock with its moment and does nothing when it is early is, most of the
+time, a callback that does nothing.
+
+**What it changed:** `RelayEngine.OnLookTimer` looked only once the clock said the
+moment had come, and left its timer unarmed otherwise, so the first early fire stopped
+every look for the rest of the relay's life and a relay started before its background
+never reached it. It arms itself again for the moment now, as every other timer of the
+engine already did (`2293770e`), and
+`RelayTests.ALookWhoseTimerFiresEarlyIsArmedAgainAndTheRelayGoesOnLooking` holds it
+through `ManualClock.FireEarly`. The defect is a closed row of the
+[hazard index](../../HAZARDS.md#hazard-index).
+
+**Re-establish it** with this file, run as `dotnet run early.cs 200 2000` and again with
+`200 500`, and read the count of early callbacks against the total. It starts nothing
+and needs no lock:
+
+```csharp
+using System.Collections.Concurrent;
+using System.Globalization;
+
+var count = args.Length > 0 ? int.Parse(args[0], CultureInfo.InvariantCulture) : 200;
+var ms = args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 2000;
+var clock = TimeProvider.System;
+var early = new ConcurrentBag<double>();
+var onOrAfter = new ConcurrentBag<double>();
+using var done = new CountdownEvent(count);
+var timers = new List<ITimer>();
+
+for (var i = 0; i < count; i++)
+{
+    Thread.Sleep(i % 3);
+    var moment = clock.GetUtcNow() + TimeSpan.FromMilliseconds(ms);
+    var delay = moment - clock.GetUtcNow();
+    var timer = clock.CreateTimer(_ =>
+    {
+        var diff = (clock.GetUtcNow() - moment).TotalMilliseconds;
+        (diff < 0 ? early : onOrAfter).Add(Math.Abs(diff));
+        done.Signal();
+    }, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+    timers.Add(timer);
+    _ = timer.Change(delay, Timeout.InfiniteTimeSpan);
+}
+
+_ = done.Wait(TimeSpan.FromMilliseconds((ms * 3) + 10000));
+Console.WriteLine($"timers={count} delay={ms}ms early={early.Count} onOrAfter={onOrAfter.Count} earlyMax={(early.IsEmpty ? 0 : early.Max()):F3}ms runtime={Environment.Version}");
+```
+
 ## A new environment's Path is the machine's entries, then the user's, and a running program keeps its own -- measured 2026-09-24
 
 `[MACHINE]` for the counts; `[STABLE]` for what a running program keeps, which is
