@@ -125,7 +125,11 @@ internal sealed class UpdatePageTests
     {
         var none = Render(UpdateHoldSnapshot.Nothing(Now));
 
-        await Assert.That(none).Contains("No downloaded update is waiting. BrowserAI 9.0.0 is installed. The status page checks for a newer one.");
+        // ⚠️ Corrected 2026-10-09 (previously "... BrowserAI 9.0.0 is installed. The
+        // status page checks for a newer one."): since the one resident background,
+        // the status page checks for nothing itself, so the sentence ends at what is
+        // installed.
+        await Assert.That(none).Contains("<p>No downloaded update is waiting. BrowserAI 9.0.0 is installed.</p>");
         await Assert.That(none).DoesNotContain("data-action=\"install-now\"");
 
         var installing = Render(new UpdateHoldSnapshot(Now, UpdateHoldState.Installing, "1.2.0", [], [], []));
@@ -228,6 +232,91 @@ internal sealed class UpdatePageTests
         await Assert.That(changed).IsNotNull();
         await Assert.That(changed!).Contains("C:\\Source\\four");
     }
+
+    /// <summary>
+    /// Where the page checks for nothing itself and the background reports what holds
+    /// an update, the status page's update section says what is waiting and leads to
+    /// the update page, and never that no release feed is set, because the background
+    /// has one; where nothing reports, the stage's own sentence stands.
+    /// </summary>
+    /// <remarks>
+    /// The background builds its page with no feed of its own since 2026-10-08, so
+    /// the page's own check and install are off and the stage reads
+    /// <see cref="UpdateStage.NoFeed"/> on every installed BrowserAI. Its sentence was
+    /// written for a build with no feed at all.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStatusPageSaysWhatTheBackgroundHoldsAndNeverThatNoFeedIsSet()
+    {
+        const string NoFeed = "No release feed is set for this build";
+
+        var held = Status(Held());
+
+        await Assert.That(held).Contains("<p>BrowserAI 1.2.0 is downloaded and ready to install. It installs by itself once BrowserAI has been idle.</p>");
+        await Assert.That(held).Contains("<p><a href=\"update?tab=3\">See what holds it, or install it now</a></p>");
+        await Assert.That(held).DoesNotContain(NoFeed);
+        await Assert.That(held).DoesNotContain("data-action=\"check-updates\"");
+
+        var none = Status(UpdateHoldSnapshot.Nothing(Now));
+
+        await Assert.That(none).Contains("<p>No downloaded update is waiting.</p>");
+        await Assert.That(none).DoesNotContain(NoFeed);
+
+        var installing = Status(new UpdateHoldSnapshot(Now, UpdateHoldState.Installing, "1.2.0", [], [], []));
+
+        await Assert.That(installing).Contains("<p>BrowserAI 1.2.0 is installing now.</p>");
+        await Assert.That(installing).DoesNotContain(NoFeed);
+
+        await Assert.That(Status(null)).Contains(NoFeed);
+    }
+
+    /// <summary>
+    /// A status tab is sent a new state when an update becomes held, by the same
+    /// once-a-second watch that keeps the update page current.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStatusTabIsSentANewStateWhenAnUpdateBecomesHeld()
+    {
+        var holds = new ScriptedHolds(UpdateHoldSnapshot.Nothing(Now));
+
+        using var rig = new PageRig(holds: holds, unavailable: UpdateStage.NoFeed);
+
+        _ = rig.HandOut(PageKind.Status);
+
+        using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
+
+        await Assert.That(await StateContainingAsync(stream, "No downloaded update is waiting.")).IsNotNull();
+
+        holds.Snapshot = Held();
+        rig.Clock.Advance(PageService.HoldsWatchPeriod);
+
+        await Assert.That(await StateContainingAsync(stream, "BrowserAI 1.2.0 is downloaded and ready to install.")).IsNotNull();
+    }
+
+    /// <summary>The status page's main part, rendered for tab 3 of a page that checks for nothing itself.</summary>
+    private static string Status(UpdateHoldSnapshot? holds) =>
+        PageContent.Fragment(
+            new PageView(
+                new PageFacts
+                {
+                    Version = "9.0.0",
+                    InstallRoot = @"C:\install",
+                    DataRoot = @"C:\data",
+                    LogDirectory = @"C:\data\logs",
+                    ServerCommand = null,
+                    ServerRefusal = null,
+                },
+                new UpdateView(UpdateStage.NoFeed),
+                null,
+                SessionsSnapshot.Empty,
+                null,
+                Holds: holds),
+            PageKind.Status,
+            3,
+            Occasion.Ordinary,
+            Now);
 
     private static string Render(UpdateHoldSnapshot? holds) =>
         UpdatePageContent.Render(

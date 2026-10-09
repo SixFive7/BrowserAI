@@ -22,9 +22,13 @@ internal sealed class PageRig : IDisposable
         IPageRegistration? registration = null,
         Occasion occasion = Occasion.Ordinary,
         IUpdateHolds? holds = null,
-        ChangelogSection? changelog = null)
+        ChangelogSection? changelog = null,
+        UpdateStage? unavailable = null)
     {
         Registration = registration ?? new FakeRegistration();
+
+        // Read once, when the page is built, as the product's own update machinery is.
+        Updates.Unavailable = unavailable;
 
         Facts = new PageFacts
         {

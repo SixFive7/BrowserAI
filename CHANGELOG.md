@@ -101,9 +101,9 @@ release body; nothing else depends on it.
   place with no new banner and no sound, and each toast has a tag of its own with the others removed
   first, because a replacement under one tag popped up again in only 4 of 6. A click reaches a COM
   activator that the install hooks register for a class derived from the application id, so the
-  suite's test pack never takes over a real install's. ⚠️ Nothing raises them yet: the resident
-  background that holds updates calls them, and it lands with the rest of the one-binary build.
-  `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and `ToastActivationTests`
+  suite's test pack never takes over a real install's. The background raises the ready and
+  installing toasts, and the start Velopack makes after an update raises the installed or the
+  failed one. `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and `ToastActivationTests`
   hold it, planted red first, and no test shows a toast.
 
 - ✨ **The dashboard has an update page: what holds the update, each with a countdown, and Install now.**
@@ -113,10 +113,10 @@ release body; nothing else depends on it.
   windows, each marked *Close this to let the update proceed*, and the agents' connections, each
   with the reconnect its client will need, are listed with a countdown the page counts down by
   itself; what installing now does is said beside the button, which asks the background to close
-  everything cleanly and install at once. The toast activator opens it with `--update`, which hands
-  the pipe's new `update` verb to a running coordinator. Until the resident background reports what
-  holds an update, the page says nothing reports it. `UpdatePageTests` and `ToastPageStartTests`
-  hold it, planted red first.
+  everything cleanly and install at once. The toast's **Install now** opens it the way a Start Menu
+  click opens the dashboard, with `--update`, and the status page's update section says whether an
+  update waits and leads to it. `UpdatePageTests` and `ToastPageStartTests` hold it, planted red
+  first.
 
 - ✨ **The dashboard has a changelog page, read from the changelog the build carries.**
   The installed toast's **Changelog** opens it. `CHANGELOG.md` is embedded in the executable, and

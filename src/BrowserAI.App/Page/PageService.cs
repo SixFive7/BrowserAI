@@ -363,7 +363,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     {
         // Read outside the lock: the background answers it from its own memory, and
         // a page that waited on the background under its own lock would wait twice.
-        var holds = kind is PageKind.Update ? ReadHolds() : null;
+        // The status page reads it too, for its update section.
+        var holds = kind is PageKind.Update or PageKind.Status ? ReadHolds() : null;
 
         lock (_gate)
         {

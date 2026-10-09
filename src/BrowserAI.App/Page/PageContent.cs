@@ -92,7 +92,7 @@ internal static class PageContent
             PageKind.Sessions => SessionsMain(view, now),
             PageKind.Update => UpdatePageContent.Render(view, now),
             PageKind.Changelog => ChangelogPageContent.Render(view),
-            _ => StatusMain(view, occasion),
+            _ => StatusMain(view, occasion, tab),
         };
     }
 
@@ -163,7 +163,7 @@ internal static class PageContent
         return links.ToString();
     }
 
-    private static string StatusMain(PageView view, Occasion occasion)
+    private static string StatusMain(PageView view, Occasion occasion, int tab)
     {
         var facts = view.Facts;
         var html = new StringBuilder();
@@ -179,7 +179,7 @@ internal static class PageContent
         }
 
         AppendNote(html, view.Note);
-        AppendUpdate(html, view);
+        AppendUpdate(html, view, tab);
         AppendRegistration(html, view);
         AppendWhere(html, facts);
 
@@ -217,12 +217,22 @@ internal static class PageContent
         }
     }
 
-    private static void AppendUpdate(StringBuilder html, PageView view)
+    private static void AppendUpdate(StringBuilder html, PageView view, int tab)
     {
         var facts = view.Facts;
         var update = view.Update;
 
         _ = html.Append("<section id=\"update\"><h2>Updates</h2>\n");
+
+        // The resident background builds this page with no feed of its own and
+        // reports what holds an update, so where the page checks for nothing itself
+        // the section says what the background holds and leads to the update page.
+        if (update.Stage is UpdateStage.NoFeed && view.Holds is { } holds)
+        {
+            UpdatePageContent.AppendStatusSection(html, holds, tab);
+            _ = html.Append("</section>\n");
+            return;
+        }
 
         // Q310 a: a package a server has already downloaded is offered first, with a
         // link that installs it, whatever the last check said.

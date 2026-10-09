@@ -1625,7 +1625,10 @@ countdown the page's script counts down from a deadline in the element, and the 
 background to install now; the listener reads what holds the update once a second and sends every tab a
 new state when it has changed. The changelog page shows the installed version's section of the changelog
 embedded in the build, or the unreleased one for a development build. The toasts' **Install now** and
-**Changelog** open them.
+**Changelog** open them. *Added 2026-10-09 by addition:* the background builds the page with no feed of
+its own, so the status page checks for nothing itself; its update section reads what holds the update
+from the same source the update page does, says whether a downloaded update waits, and links to the
+update page (`UpdatePageContent.AppendStatusSection`).
 
 ## Updates
 

@@ -69,8 +69,11 @@ internal static class UpdatePageContent
                 break;
 
             case { State: UpdateHoldState.None }:
+                // The sentence ends at what is installed: since 2026-10-08 the status
+                // page checks for nothing itself, and whether the background checks is
+                // not something a snapshot says.
                 _ = html.Append("<p>")
-                    .Append(PageContent.Text($"No downloaded update is waiting. BrowserAI {view.Facts.Version} is installed. The status page checks for a newer one."))
+                    .Append(PageContent.Text($"No downloaded update is waiting. BrowserAI {view.Facts.Version} is installed."))
                     .Append("</p>\n");
                 break;
 
@@ -131,12 +134,48 @@ internal static class UpdatePageContent
         _ => "After the update it may need BrowserAI reconnected: BrowserAI cannot tell whether this client reconnects by itself.",
     };
 
+    /// <summary>The first sentence about a downloaded update that waits, the same on the status page and on this one.</summary>
+    /// <param name="version">The version, or <see langword="null"/> where the background named none.</param>
+    /// <returns>The sentence.</returns>
+    public static string HeldSentence(string? version) =>
+        $"BrowserAI {version ?? "the new version"} is downloaded and ready to install. It installs by itself once BrowserAI has been idle.";
+
+    /// <summary>
+    /// The status page's update section where the page checks for nothing itself and
+    /// the background reports what holds an update: what waits, and the way to this page.
+    /// </summary>
+    /// <remarks>
+    /// The background builds its page with no feed of its own since 2026-10-08, so the
+    /// stage reads <see cref="UpdateStage.NoFeed"/> on every installed BrowserAI, and
+    /// that stage's sentence, written for a build with no feed at all, would tell a
+    /// person no feed is set while the background checks one. The section says what
+    /// the background holds; it claims nothing about checks, which a snapshot does not
+    /// carry.
+    /// </remarks>
+    /// <param name="html">Where to write.</param>
+    /// <param name="holds">What the background reports.</param>
+    /// <param name="tab">The tab the link keeps.</param>
+    internal static void AppendStatusSection(StringBuilder html, UpdateHoldSnapshot holds, int tab)
+    {
+        ArgumentNullException.ThrowIfNull(html);
+        ArgumentNullException.ThrowIfNull(holds);
+
+        _ = holds.State switch
+        {
+            UpdateHoldState.Held => html.Append("<p>").Append(PageContent.Text(HeldSentence(holds.Version))).Append("</p>\n")
+                .Append("<p><a href=\"").Append(PageNames.RouteOf(PageKind.Update)).Append("?tab=").Append(tab.ToString(CultureInfo.InvariantCulture))
+                .Append("\">See what holds it, or install it now</a></p>\n"),
+            UpdateHoldState.Installing => html.Append("<p>").Append(PageContent.Text($"BrowserAI {holds.Version ?? "the new version"} is installing now.")).Append("</p>\n"),
+            _ => html.Append("<p>No downloaded update is waiting.</p>\n"),
+        };
+    }
+
     private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, DateTimeOffset now)
     {
         var version = holds.Version ?? "the new version";
         var wait = holds.WaitAt(now);
 
-        _ = html.Append("<p>").Append(PageContent.Text($"BrowserAI {version} is downloaded and ready to install. It installs by itself once BrowserAI has been idle."))
+        _ = html.Append("<p>").Append(PageContent.Text(HeldSentence(holds.Version)))
             .Append("</p>\n<p class=\"wait\">");
 
         _ = wait switch
