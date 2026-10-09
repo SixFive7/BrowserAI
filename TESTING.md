@@ -519,6 +519,27 @@ all four drivers. **One file for every checkout**: a linked worktree resolves th
 checkout's `.work` through its `.git` file, because the state the lock guards is the
 machine's.
 
+### The installed background runs through the real Task Scheduler
+
+**D14 b, the maintainer's words of 2026-10-08, verbatim: *"d14 b"*.** Four arms of
+`RealInstallerTests`, in `RealInstallerTests.Scheduler.cs`, each install the suite's
+pack with its real `Setup.exe` into scratch roots and drive the one background the way
+an installed BrowserAI is driven: a person's start runs the task and the background is
+the Task Scheduler's process, serving the dashboard and keeping a session across a
+killed relay; a relay started while the install's `Update.exe` runs answers at once; a
+deleted task and a disabled one are each named once a relay's 150 s hold has run out,
+and a person's start registers the deleted one again and starts a background the same
+relay then reaches; and a data root BrowserAI refuses is a crash every call is told at
+once. **The two holds are waited out**: the hold is
+the product's own `RelayConstants.HoldBound`, and nothing in the suite shortens it.
+Each arm uninstalls what it installed, which takes back the task, the registrations,
+the PATH entry and the toasts' activator, and stops a background through its pipe,
+never through the task's End. **Nothing reaches the screen**: every person's start
+carries `--write-address` and runs on a desktop of the suite's own, every session is
+headless, and the background keeps one hidden window, which the first arm finds. The
+relays and the person's starts get a client's environment, with no `BROWSERAI_ROOT` and
+no `BROWSERAI_UPDATE_FEED`, so the data root reaches them as an argument.
+
 ### The two spellings are forced, and the run says which one it got
 
 **Settled 2026-08-24, at the maintainer's decision, and it replaces a property

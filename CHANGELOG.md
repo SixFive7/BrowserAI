@@ -883,7 +883,17 @@ release body; nothing else depends on it.
   again afterwards. `RelayTests`, `BackgroundUpdatesTests`, `AfterUpdateTests` and
   `UpdateSourceTests` hold it, each arm watched red against a defect planted for it;
   `BackgroundProcessTests` drives the published background and its relays against a real
-  Chromium, and was not watched red.
+  Chromium, and was not watched red. `RealInstallerTests` installs the suite's own pack with its
+  real `Setup.exe` and runs it through the real Task Scheduler (D14 b): a Start Menu start
+  whose background is the scheduler's process, serves the dashboard and keeps a session across
+  a killed relay; a relay started during an update; a deleted task, named after the hold and
+  registered again by a Start Menu start; a disabled one, left disabled; and a data root
+  BrowserAI refuses, whose start is now recorded as the crash it is. The install hook now keeps
+  the task's definition beside the install even when the Task Scheduler refused the task,
+  which is the case a Start Menu start registers it from. A relay started before its
+  background now reaches it once it starts: the relay's look timer, which fires a little early
+  more often than not, stopped looking at its first early fire. Each was watched red against a
+  defect planted for it.
 
 - 🔧 **The tool list comes from the binary, and no Playwright starts until a session opens.**
   The maintainer's words of 2026-10-04 verbatim: *"I'd argue that the relay always answers the
