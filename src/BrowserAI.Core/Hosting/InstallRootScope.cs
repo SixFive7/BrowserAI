@@ -379,7 +379,7 @@ internal static class InstallRootScope
         + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
         + (which is JudgedRoot.Install
             ? $"Recovery: install BrowserAI inside '{profile}' -- the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"Recovery: clear {LocalAppDataPaths.RootVariable} and start BrowserAI again -- with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
+            : $"Recovery: give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so install it again with that variable cleared or naming a directory under that profile; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
         + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
 }
 

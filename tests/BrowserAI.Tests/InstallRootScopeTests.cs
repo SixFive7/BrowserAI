@@ -62,7 +62,11 @@ internal sealed class InstallRootScopeTests
     /// repository's whole error catalogue exists against.</b> The root is
     /// checked because an operator has to know which one was found; the census
     /// clause because the danger is invisible without it; the variable's name
-    /// because clearing it is the recovery.
+    /// because clearing it is the recovery. <i>Changed 2026-10-09 with step 5 of the
+    /// one-binary build</i>: no running BrowserAI reads the variable, so the recovery
+    /// names both levers, the installer's variable and the <c>--data-root</c> it
+    /// becomes in the task and the registrations. Planted red against the sentence
+    /// as it was, which named the variable alone.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -78,6 +82,7 @@ internal sealed class InstallRootScopeTests
 
         await Assert.That(refusal).Contains(outside.Path);
         await Assert.That(refusal).Contains(Program.AppRootVariable);
+        await Assert.That(refusal).Contains(Program.DataRootArgument);
         await Assert.That(refusal).Contains("live-instance set");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
