@@ -514,13 +514,21 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.Started).IsTrue();
 
-        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second and not ten
-        // minutes. Both sentences are written by the same few lines of the product,
-        // so whichever arrives is the decision it took.
+        // ⚠️ EVERY DECISION THE WATCH CAN WRITE, so that losing this one costs a
+        // second and not ten minutes. Each is written by the same few lines of the
+        // product, so whichever arrives is the decision it took. Corrected 2026-10-09
+        // (previously "EITHER OUTCOME", with the corpse and the live watch alone): a
+        // plant that removed the corpse branch sent an exited launcher down the wait's
+        // other branch, "could not be read", which neither awaited sentence names, and
+        // the arm sat out its whole hang detector.
         var seen = run.WaitUntilItSaysOneOf(
             TestDefaults.ProcessHang,
             "has already exited",
-            "Watching the MCP client");
+            "Watching the MCP client",
+            "could not be read: WaitForSingleObject",
+            "A handle could not be opened on the MCP client",
+            "could not identify the process that started it",
+            "is a different process from the one that number named");
 
         await Assert.That(seen).IsEqualTo("has already exited").Because(run.Records());
 
