@@ -46,8 +46,9 @@ internal interface IRegisterAi
 /// <para>
 /// <b>Where it is.</b> <c>build/Get-RegisterAi.ps1</c> puts it at
 /// <c>payload\registerai\RegisterAI.exe</c>, and the payload lands in <c>current\</c>
-/// beside both executables, so the file is found from the running image's own folder:
-/// the hooks run as <c>current\BrowserAI.exe</c>.
+/// beside the executable, so the file is found from the running image's own folder:
+/// the hooks run as <c>current\BrowserAI.exe</c>. <i>Corrected 2026-10-09 (previously
+/// "beside both executables"): one executable since D7 a, 2026-10-08.</i>
 /// </para>
 /// <para>
 /// <b>UTF-8 on both pipes, no window, stdin closed.</b> The tool writes one JSON

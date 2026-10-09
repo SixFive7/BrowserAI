@@ -4,9 +4,14 @@
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// The durations both executables read about a session, declared once.
+/// The durations BrowserAI reads about a session, declared once.
 /// </summary>
 /// <remarks>
+/// <para>
+/// <i>Corrected 2026-10-09 (previously "The durations both executables read about a
+/// session")</i>: one executable since D7 a, 2026-10-08, and the paragraphs below are
+/// the record of why the class exists from the days of two.
+/// </para>
 /// <para>
 /// <b>Moved here from the server on 2026-10-03</b>, when the configuration app's
 /// sessions page began to ask the question the server's idle timer answers. Q269

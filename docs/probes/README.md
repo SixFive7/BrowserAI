@@ -200,6 +200,16 @@ arrived with the tool list compiled into the binary. It holds Python and Markdow
 only, and starts the payload's child by its path. **The scan would still flag
 eleven files, and only `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-09.* **Still thirty-eight**, and
+[`2026-10-04-behave`](2026-10-04-behave/README.md) has the paragraph and the row
+the thirty-six paragraph above found missing. Its four PowerShell and five
+JavaScript files went through the real scan, copied under `build/` with
+`observe.ps1` beside them as the positive control and removed after: the scan
+named `observe.ps1` and no file of the rig. Its one spelling of the eight,
+`Win32_Process` in `mcp.mjs`, walks the descendants of a pid by parent-pid lineage
+and selects nothing by name. **The scan would still flag eleven files, and only
+`observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -277,6 +287,7 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-coordinator-survival`](2026-10-03-coordinator-survival/README.md) | The client-exit rig with a coordinator stand-in started by a scratch logon task, a host in that coordinator's job and browsers nested below it: whether they outlive every way a client ends its server, and whether the coordinator's death ends them | false positives |
 | [`2026-10-03-look`](2026-10-03-look/README.md) | A picture of a headless session taken beside an agent's call: what it takes from the agent's next answer, what it leaves in the session's folder, and what one picture costs in each family | |
 | [`2026-10-04-lifetime`](2026-10-04-lifetime/README.md) | A desktop of the rig's own for a headed browser, with a window census over both desktops, row 152's headed arms run on it, and a 50,000 px page screenshotted full-page through the published server | |
+| [`2026-10-04-behave`](2026-10-04-behave/README.md) | What a hidden Chromium's user agent is to a server and a page, the exact size at which a Chromium screenshot starts to repeat, and the exit code a browser leaves for each way it can end, through the published server | |
 | [`2026-10-08-protocol-pin`](2026-10-08-protocol-pin/README.md) | The opening Claude Code sends since 2026-09-30, sent to a BrowserAI server by hand, and Claude Code's own logs and transcripts counted, read-only, for which opening each connection took and what came of it | |
 | [`2026-10-08-input-check`](2026-10-08-input-check/README.md) | What the visible-input check costs: each read and the product's whole check in tight loops, and the shipped coalescable timer over twelve minutes beside the same timer with no tolerance, a timer that wakes for nothing and a process with no timer | |
 | [`2026-10-08-built-in-tool-list`](2026-10-08-built-in-tool-list/README.md) | The payload's own child asked for its tools under five session configurations, its answer compared byte for byte with the snapshot BrowserAI compiles in, and an older snapshot as the control | |

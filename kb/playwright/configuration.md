@@ -584,10 +584,17 @@ and passed down to `request.setTimeout`. **BrowserAI sets nothing**, so the
 figure stays upstream's instead of being duplicated into a constant of ours that
 would drift the day theirs moved; the variable is absent from the installer's
 environment by construction, because
-`src/BrowserAI/Protocol/ChildEnvironment.cs` is an allowlist. The three caps
-BrowserAI *does* own -- 45 minutes absolute, 10 minutes on extraction, 60 as a
-crash tripwire -- are all far above it, so a stalled socket is upstream's retry
-loop's business and not ours. Re-establish by grepping `NET_DEFAULT_TIMEOUT` in
+`src/BrowserAI/Protocol/ChildEnvironment.cs` is an allowlist. The two caps
+BrowserAI *does* own -- 10 minutes with no progress and 10 minutes on extraction
+-- are both far above it, so a stalled socket is upstream's retry loop's business
+and not ours. *Corrected 2026-10-09 (previously "The three caps BrowserAI *does*
+own -- 45 minutes absolute, 10 minutes on extraction, 60 as a crash tripwire --
+are all far above it")*: the cap on the total gave way to the cap on no progress
+on 2026-08-19, at the maintainer's decision, and the sixty-minute tripwire went the
+same day, so `ProvisioningTimers` carries two caps and a poll. *Added 2026-10-09:*
+the figure is recorded, and never set, as `SessionTimes.UpstreamDownloadStallTimeout`,
+so the caps can be weighed against it; its row in
+[the numbers index](../numbers.md) says how to read it again. Re-establish by grepping `NET_DEFAULT_TIMEOUT` in
 `coreBundle.js`. `[FLOATS]`
 
 **The four download-host variants, named.** Measured 2026-08-16 from the
