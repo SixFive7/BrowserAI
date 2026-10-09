@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json.Nodes;
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
+using BrowserAI.Relay;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -258,9 +261,9 @@ internal sealed class InstallRootScopeTests
     }
 
     /// <summary>
-    /// The published binary really refuses: it exits non-zero, it writes the
-    /// refusal into the process log, and it creates nothing else under the
-    /// root.
+    /// The published binary's background really refuses: it exits non-zero, it writes the
+    /// refusal into the process log, it creates nothing else under the root but the
+    /// record that names it a crash, and a relay over that root says so at once.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -269,59 +272,163 @@ internal sealed class InstallRootScopeTests
     /// channel a refusal has, since <c>stdout</c> is the protocol and
     /// <c>System.Console</c> is banned outright -- and before the sweep, the live
     /// marker, the instance directory and every session. So the assertion is not
-    /// only <i>it exited</i>: it is that <c>logs\</c> is the <b>only</b> thing
-    /// under the root afterwards.
+    /// only <i>it exited</i>: it is that <c>logs\</c> and the background's crash
+    /// record are the <b>only</b> things under the root afterwards. <i>Corrected
+    /// 2026-10-09 (previously "that <c>logs\</c> is the <b>only</b> thing"): R
+    /// records the refusal as a crash, which is what a relay answers with.</i>
     /// </para>
     /// <para>
     /// <b>Nothing is written to this process's stdin.</b> A refusing BrowserAI
     /// never reaches <c>StdioChannel.OpenStandardStreams</c>, so there is no
     /// conversation to have; what is measured is the exit and what the log says.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The background since 2026-10-09</b> (previously the start was the
+    /// client's, <c>--mcp</c>, which judged its roots before it served). Since S a the
+    /// background is what judges the data root and holds what a shared one would
+    /// spread to another user, and the relay judges nothing: a relay started over
+    /// this root serves its client and waits on its input, which is how this arm
+    /// hung for its whole <c>BrowserHang</c> on 529e2d77. So the start is the
+    /// background's, on a pipe of its own, with the root both ways it can arrive: the
+    /// suite's variable, and <c>--data-root</c>, the argument the task carries. And
+    /// it is bounded by its own outcome as well as by the hang detector: a background
+    /// that writes that it serves has not refused, and the arm says so at once.
+    /// </para>
     /// </remarks>
+    /// <param name="asAnArgument">Whether the root arrives as <c>--data-root</c>, as the task passes it, or through the suite's variable.</param>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog(bool asAnArgument)
     {
         SuiteEnvironment.RequirePublishedSlice();
+
+        PublishedSlice.EnsureFresh();
 
         using var outside = ScratchDirectory.Create("install-root-published");
 
         var environment = PublishedSlice.InheritedEnvironment();
-        environment[BrowserAiPaths.AppRootOverride] = outside.Path;
+        var pipe = PublishedBackground.NewPipeName();
+        List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe];
+
+        if (asAnArgument)
+        {
+            _ = environment.Remove(BrowserAiPaths.AppRootOverride);
+            arguments.AddRange([Program.DataRootArgument, outside.Path]);
+        }
+        else
+        {
+            environment[BrowserAiPaths.AppRootOverride] = outside.Path;
+        }
 
         // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
         // starting a real BrowserAI: a test that leaks one leaks whatever it
-        // started. It is also the hang detector -- a build in which the check was
-        // deleted starts serving and waits on stdin for ever, and what fails
-        // then has to be this assertion and not the whole run.
+        // started. It is also the containment for a build in which the check was
+        // deleted, which starts serving and never exits on its own.
         using var job = JobObject.CreateKillOnClose();
 
-        using var process = JobLauncher.Start(job, PublishedSlice.Executable, PublishedSlice.Mcp, outside.Path, environment);
-
-        var exited = await process.WaitForExitAsync(TestDefaults.BrowserHang);
-
-        await Assert.That(exited).IsTrue();
-        await Assert.That(process.TryReadExitCode()).IsNotEqualTo(0);
+        using var process = JobLauncher.Start(job, PublishedSlice.Executable, arguments, outside.Path, environment);
 
         var logs = Path.Combine(outside.Path, "logs");
-        var said = Directory.Exists(logs)
-            ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
-            : string.Empty;
+        var said = string.Empty;
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        // Until it exits or says that it serves: a hang detector, not a budget.
+        while (!process.HasExited && waited.Elapsed < TestDefaults.ProcessHang)
+        {
+            said = Said(logs);
+
+            if (said.Contains(ServesSentence, StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        var exited = await process.WaitForExitAsync(TimeSpan.Zero);
+
+        said = Said(logs);
+
+        await Assert.That(said).DoesNotContain(ServesSentence);
+        await Assert.That(exited).IsTrue().Because(said);
+        await Assert.That(process.TryReadExitCode()).IsEqualTo(1);
 
         await Assert.That(said).Contains("will not serve out of the data root");
         await Assert.That(said).Contains(Program.AppRootVariable);
 
-        // ⚠️ And nothing else was created. `live\`, `instances\`, `index\` and
-        // `browsers\` are exactly the state a second user's census reads, so a
-        // refusal that had already written one would have done the harm it
-        // refused to do.
+        // ⚠️ And nothing else was created but the record that names the refusal as a
+        // crash. `live\`, `instances\`, `index\` and `browsers\` are exactly the state
+        // a second user's census reads, so a refusal that had already written one
+        // would have done the harm it refused to do. Corrected 2026-10-09 (previously
+        // `logs\` and nothing else): R records a background that ends with no clean
+        // end as a crash, written before it ends, so that a relay names it at once.
+        var record = BackgroundRecord.PathFor(outside.Path, pipe);
+
         var created = Directory.EnumerateFileSystemEntries(outside.Path)
             .Select(Path.GetFileName)
-            .Where(name => !string.Equals(name, "logs", StringComparison.OrdinalIgnoreCase))
+            .Where(name => !string.Equals(name, "logs", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(name, BackgroundRecord.DirectoryName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         await Assert.That(string.Join(", ", created)).IsEmpty();
+        await Assert.That(string.Join(", ", Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(record)!).Select(Path.GetFileName)))
+            .IsEqualTo(Path.GetFileName(record));
+
+        // The record reads as the crash it is: this background started it, and
+        // nothing ended it cleanly.
+        var state = BackgroundRecord.Read(record);
+
+        await Assert.That(state).IsNotNull();
+        await Assert.That(state!.ProcessId).IsEqualTo(process.Id);
+        await Assert.That(state.Ended).IsNull();
+
+        // So a relay over this root answers its first call at once, with the crash
+        // and the log that says why, and never holds it for a background that cannot
+        // come. The finding of 2026-10-09: with no record it held each call for its
+        // whole bound and then said that no background was running.
+        List<string> relayArguments = [Program.McpArgument, BackgroundPipe.PipeArgument, pipe];
+
+        if (asAnArgument)
+        {
+            relayArguments.AddRange([Program.DataRootArgument, outside.Path]);
+        }
+
+        await using var relay = RawStdioClient.Start(PublishedSlice.Executable, relayArguments, outside.Path, environment);
+
+        _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        var answered = System.Diagnostics.Stopwatch.StartNew();
+        var crash = await relay.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_snapshot",
+            ["arguments"] = new JsonObject
+            {
+                ["session"] = Path.Combine(outside.Path, "never-opened"),
+                ["why"] = "the suite calling a relay whose background refused its root",
+            },
+        });
+
+        var text = string.Concat((crash["content"]?.AsArray() ?? []).Select(block => (string?)block?["text"] ?? string.Empty));
+
+        await Assert.That((bool?)crash["isError"]).IsTrue();
+        await Assert.That(text).Contains("crashed").Because(text);
+        await Assert.That(text).Contains(logs);
+        await Assert.That(answered.Elapsed).IsLessThan(RelayConstants.HoldBound)
+            .Because("a recorded crash is answered at once; holding cannot change it");
     }
+
+    /// <summary>What a background writes once its pipe is taken and it serves.</summary>
+    private const string ServesSentence = "BrowserAI's background serves";
+
+    /// <summary>Every log file under a root's <c>logs\</c>, joined.</summary>
+    /// <param name="logs">The directory.</param>
+    /// <returns>Their text, or an empty string when there is none.</returns>
+    private static string Said(string logs) =>
+        Directory.Exists(logs)
+            ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
+            : string.Empty;
 
     /// <summary>
     /// Reads a log file the writer may still hold open.

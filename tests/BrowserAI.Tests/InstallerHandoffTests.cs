@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
@@ -179,12 +180,24 @@ internal sealed class InstallerHandoffTests
     /// against a published build that still carried the branch: it exited 0
     /// logging <c>Startup[8]</c> instead of serving.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A relay and its background since 2026-10-09</b> (previously the server
+    /// was started alone and the arm waited for its <i>"BrowserAI is serving
+    /// stdio"</i>, which was the in-process server's line and which nothing writes
+    /// since S a). What a client starts is a relay, which reaches its background only
+    /// after the handshake, so the arm speaks it: the harness starts a background
+    /// beside the relay, in the same job and with the same environment, and the
+    /// relay's own records must say it reached that background. Watched red with a
+    /// relay that ended on the installer's variable.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ThePublishedBinaryServesTheClientThatStartedItWithTheInstallersVariableSet()
     {
         SuiteEnvironment.RequirePublishedSlice();
+
+        PublishedSlice.EnsureFresh();
 
         using var root = ScratchDirectory.CreateUnderProfile("installer-variable-serves");
 
@@ -193,49 +206,45 @@ internal sealed class InstallerHandoffTests
         environment[VelopackStartup.FirstRunVariable] = "true";
 
         // Inside a kill-on-close job, the suite's standing rule for a real
-        // BrowserAI, so an assertion that fails below leaves nothing running.
-        using var job = JobObject.CreateKillOnClose();
+        // BrowserAI, with the background the harness starts beside every published
+        // relay, so an assertion that fails below leaves nothing running.
+        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
 
-        using var process = JobLauncher.Start(job, PublishedSlice.Executable, PublishedSlice.Mcp, root.Path, environment);
-
+        var relay = client.ProcessId;
+        var relayCreated = ProcessIdentity.CreationTimeOf(relay);
         var logs = Path.Combine(root.Path, "logs");
 
-        // Until it says it is serving, or goes: a hang detector, not a budget.
+        // Served: the handshake is answered, and the relay goes on to its background.
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        // Until it says it reached the background, or goes: a hang detector, not a budget.
         var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
-        var said = string.Empty;
+        var said = ProcessLogRecords.In(logs, relay, relayCreated);
 
-        while (DateTime.UtcNow < deadline && !process.HasExited)
+        while (DateTime.UtcNow < deadline && client.ExitCode is null && !said.Contains(ConnectedSentence, StringComparison.Ordinal))
         {
-            said = Directory.Exists(logs)
-                ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
-                : string.Empty;
-
-            if (said.Contains(ServingSentence, StringComparison.Ordinal))
-            {
-                break;
-            }
-
             await Task.Delay(50);
+            said = ProcessLogRecords.In(logs, relay, relayCreated);
         }
 
-        // Read once more, so that a server that went says what it said.
-        said = Directory.Exists(logs)
-            ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
-            : string.Empty;
+        // Read once more, so that a relay that went says what it said.
+        said = ProcessLogRecords.In(logs, relay, relayCreated);
 
-        await Assert.That(process.HasExited).IsFalse().Because(said);
-        await Assert.That(said).Contains(ServingSentence);
+        await Assert.That(client.ExitCode).IsNull().Because(said);
+        await Assert.That(said).Contains(ConnectedSentence);
         await Assert.That(said).DoesNotContain(RetiredInstallerExitSentence);
 
         // And it ends the way a served conversation ends: on end-of-file.
-        await process.StandardInput.DisposeAsync();
-
-        await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
-        await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
+        await Assert.That(await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(client.ExitCode).IsEqualTo(0);
     }
 
-    /// <summary>The line the server writes once it is serving.</summary>
-    private const string ServingSentence = "BrowserAI is serving stdio";
+    /// <summary>The line a relay writes once it has reached its background and been answered.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-09 (previously <c>ServingSentence</c>, "BrowserAI is serving
+    /// stdio", the in-process server's line).</i>
+    /// </remarks>
+    private const string ConnectedSentence = "Relay: connected to the background";
 
     /// <summary>
     /// What the retired installer exit, <c>Startup[8]</c>, said, which no build
@@ -313,12 +322,20 @@ internal sealed class InstallerHandoffTests
         await Assert.That(decision).Contains("StartupLog.NoPipeToServe");
         await Assert.That(decision).Contains("return 0;");
 
-        // And the watcher is what supplies `client`, so the condition cannot be
-        // read as being about something else.
-        var watcher = program.IndexOf("ClientLivenessWatcher.ForParentProcess(", StringComparison.Ordinal);
+        // ⚠️ AND THE LAUNCHER IS ASKED ABOUT ONLY AFTER THE CHECK, BY THE RELAY --
+        // corrected 2026-10-09 (previously "And the watcher is what supplies
+        // `client`, so the condition cannot be read as being about something else",
+        // which required the watch in this file and in front of the check, when the
+        // check was the conjunction of a launcher gone and a console). The check is
+        // one condition since 2026-10-08, and a start with no pipe ends having opened
+        // nothing of its launcher's: the watch is the relay's, and the check stands in
+        // front of the relay.
+        await Assert.That(program).DoesNotContain("ClientLivenessWatcher");
 
-        await Assert.That(watcher).IsGreaterThan(-1);
-        await Assert.That(watcher).IsLessThan(at);
+        var relayMode = await RepositoryLayout.ReadCodeAsync(
+            new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.Relay.cs")));
+
+        await Assert.That(relayMode).Contains("ClientLivenessWatcher.ForParentProcess(");
     }
 
     /// <summary>
@@ -446,66 +463,155 @@ internal sealed class InstallerHandoffTests
         await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
     }
 
+    // ⚠️ RETIRED 2026-10-09: `ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe`,
+    // which held that a launcher that had exited and still opened was nobody to serve,
+    // for a start with a console on standard input, and that the product said which of
+    // the two dead shapes it saw before it exited. The one executable's --mcp start
+    // with no pipe ends before it looks at its launcher since 2026-10-08 (Startup[14]),
+    // so a console start says nothing about either shape, and its exit is held by the
+    // two arms either side of this one. The corpse is still read, by the relay, of a
+    // client that gave it a pipe: that is the arm below.
+
     /// <summary>
-    /// A launcher that has <b>exited and whose pid still opens</b> is nobody to
-    /// serve too, and the product says which of the two it saw.
+    /// A relay whose launcher has exited and still opens watches nothing, says which
+    /// shape it saw, and serves its pipe until the pipe's end.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>This is the flake of 2026-09-15, turned into a property.</b>
-    /// <see cref="ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog"/>
-    /// went red once in four full runs -- at the full
-    /// <c>TestDefaults.ProcessHang</c>, waiting for a record that was never
-    /// going to arrive -- because the launcher's pid happened to still be
-    /// openable when the product looked. <c>OpenProcess</c> succeeding was read
-    /// as <i>there is somebody there</i>, the fast exit was skipped, and the
-    /// product went on to serve nobody.
+    /// <b>Carried over 2026-10-09 from
+    /// <c>ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe</c></b>,
+    /// retired above. The corpse decision is the 2026-09-15 flake turned into a
+    /// property: <c>OpenProcess</c> succeeding on a launcher that had exited was read
+    /// as <i>there is somebody there</i>. For the relay the cost runs the other way: a
+    /// watch armed on an exited process fires at once, and a relay whose client gave
+    /// it a live pipe would end before its first call. So the relay must see the
+    /// corpse, arm nothing, and be ended by its input alone.
     /// </para>
     /// <para>
-    /// <b>A corpse that opens is not a rig artefact.</b> Windows keeps a process
-    /// object for as long as any handle anywhere names it, and for a launcher
-    /// that ran in a console the console host is one such holder -- so the
-    /// installer's own <c>Setup.exe</c> leaves either shape behind depending on
-    /// nothing the product can see. <see cref="LauncherCorpse.Openable"/>
-    /// produces it deterministically, by keeping the handle in the test host.
-    /// </para>
-    /// <para>
-    /// <b>Asserted on WHICH of the two it saw</b>, not merely that it exited.
-    /// The two routes to <i>nobody to serve</i> are a pid that cannot be opened
-    /// and a pid that opens onto a corpse, and a build that took the first
-    /// branch here would be passing while testing the other rig.
+    /// <b>The rig hands the relay three pipes from a launcher that is gone</b>
+    /// (<see cref="OrphanedConsoleStart.BeginHandingOnPipes"/>), holds the write end
+    /// of its standard input, and keeps the launcher's handle, so its pid opens onto a
+    /// corpse. A background on the relay's pipe and a handshake show that the relay
+    /// which watched nothing is serving; closing the write end is its end.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe()
+    public async Task ARelayWhoseLauncherExitedButStillOpensWatchesNothingAndServesItsInputToTheEnd()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
+        PublishedSlice.EnsureFresh();
+
         using var root = ScratchDirectory.CreateUnderProfile("orphan-corpse");
 
-        using var run = OrphanedConsoleStart.Begin(
+        var pipe = PublishedBackground.NewPipeName();
+
+        using var run = OrphanedConsoleStart.BeginHandingOnPipes(
             root.Path,
-            startedByTheInstaller: false,
             TestDefaults.ProcessHang,
-            LauncherCorpse.Openable);
+            [Program.McpArgument, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe]);
 
         await Assert.That(run.Started).IsTrue();
 
-        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second and
-        // not ten minutes. Both sentences are written by the same few lines of
-        // the product, so whichever arrives is the decision it took.
+        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second and not ten
+        // minutes. Both sentences are written by the same few lines of the product,
+        // so whichever arrives is the decision it took.
         var seen = run.WaitUntilItSaysOneOf(
             TestDefaults.ProcessHang,
             "has already exited",
             "Watching the MCP client");
 
-        await Assert.That(seen).IsEqualTo("has already exited");
+        await Assert.That(seen).IsEqualTo("has already exited").Because(run.Records());
 
-        // And the decision that follows from it, which is the one the installer
-        // incident was about.
-        await Assert.That(run.WaitUntilItSays("standard input is not a pipe, so there is no client to serve", TestDefaults.ProcessHang)).IsTrue();
+        // A relay that watched nothing still serves: a background on its pipe, in a
+        // job of the arm's own, and the handshake that sends the relay to it.
+        using var backgroundJob = JobObject.CreateKillOnClose();
+
+        var environment = PublishedSlice.InheritedEnvironment();
+        environment[BrowserAiPaths.AppRootOverride] = root.Path;
+
+        using var background = PublishedBackground.Start(backgroundJob, root.Path, environment, pipe, []);
+
+        // The writer owns the write end of the relay's standard input: disposing it is
+        // the relay's end of input, and the finally disposes it again when an
+        // assertion throws first.
+        var toRelay = new StreamWriter(run.StandardInput, Utf8NoBom) { NewLine = "\n", AutoFlush = true };
+        using var fromRelay = new StreamReader(run.StandardOutput, Utf8NoBom, leaveOpen: true);
+
+        try
+        {
+            await ServeOneHandshakeAndEndAsync(run, toRelay, fromRelay);
+        }
+        finally
+        {
+            await toRelay.DisposeAsync();
+        }
+
+        await Assert.That(run.Records()).DoesNotContain("Watching the MCP client");
+    }
+
+    /// <summary>UTF-8 with no byte-order mark, which is what the relay reads and writes.</summary>
+    private static readonly System.Text.UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
+    /// <summary>
+    /// The handshake that sends a relay to its background, the relay's record that it
+    /// got there, and then the relay's end of input and its exit.
+    /// </summary>
+    /// <param name="run">The relay's rig.</param>
+    /// <param name="toRelay">The relay's standard input.</param>
+    /// <param name="fromRelay">The relay's standard output.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task ServeOneHandshakeAndEndAsync(OrphanedConsoleStart run, StreamWriter toRelay, StreamReader fromRelay)
+    {
+        await toRelay.WriteLineAsync(new JsonObject
+        {
+            ["jsonrpc"] = "2.0",
+            ["id"] = 1,
+            ["method"] = "initialize",
+            ["params"] = new JsonObject
+            {
+                ["protocolVersion"] = SliceRun.OfferedProtocolVersion,
+                ["capabilities"] = new JsonObject(),
+                ["clientInfo"] = new JsonObject { ["name"] = RawStdioClient.DefaultClientName, ["version"] = "1" },
+            },
+        }.ToJsonString());
+
+        using (var deadline = new CancellationTokenSource(TestDefaults.ProcessHang))
+        {
+            var answer = await ReadAnswerAsync(fromRelay, 1, deadline.Token);
+
+            await Assert.That(answer["result"]).IsNotNull().Because(answer.ToJsonString());
+        }
+
+        await toRelay.WriteLineAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = "notifications/initialized" }.ToJsonString());
+
+        await Assert.That(run.WaitUntilItSays(ConnectedSentence, TestDefaults.ProcessHang)).IsTrue().Because(run.Records());
+        await Assert.That(run.IsAlive()).IsTrue().Because(run.Records());
+
+        // And its input's end is what ends it.
+        await toRelay.DisposeAsync();
+
+        await Assert.That(run.WaitUntilItSays("Relay: the client closed its input, so the relay ends.", TestDefaults.ProcessHang)).IsTrue().Because(run.Records());
         await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+    }
+
+    /// <summary>Reads lines until the answer to one request arrives.</summary>
+    /// <param name="reader">The relay's standard output.</param>
+    /// <param name="id">The request's id.</param>
+    /// <param name="cancellationToken">The hang detector.</param>
+    /// <returns>The answer's envelope.</returns>
+    private static async Task<JsonObject> ReadAnswerAsync(StreamReader reader, int id, CancellationToken cancellationToken)
+    {
+        while (await reader.ReadLineAsync(cancellationToken) is { } line)
+        {
+            if (line.Length is not 0 && JsonNode.Parse(line) is JsonObject envelope && (int?)envelope["id"] == id)
+            {
+                return envelope;
+            }
+        }
+
+        throw new InvalidOperationException($"The relay closed its standard output before answering request {id}.");
     }
 
     /// <summary>

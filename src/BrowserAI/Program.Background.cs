@@ -59,7 +59,15 @@ internal static partial class Program
     /// <returns>The exit code.</returns>
     private static int RunTheBackground(string[] args, LocalAppDataPaths paths, ProcessLog log, ILogger logger)
     {
-        var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir);
+        var installRoot = InstallLocation.RootAppDir;
+        var pipeName = ValueOf(args, BackgroundPipe.PipeArgument) is { Length: > 0 } named
+            ? named
+            : BackgroundPipe.NameFor(installRoot, paths.RootAppDir);
+        var recordPath = BackgroundRecord.PathFor(paths.RootAppDir, pipeName);
+        var startedBy = ValueOf(args, StartedByArgument);
+        var clock = TimeProvider.System;
+
+        var scope = InstallRootScope.Judge(paths.RootAppDir, installRoot);
 
         if (scope.Unestablished is { } unestablished)
         {
@@ -70,18 +78,26 @@ internal static partial class Program
         {
             // R: a background that cannot serve is a crash every relay names, with the
             // record written first so that it reads as one and not as a background that
-            // never started.
+            // never started. ⚠️ Corrected 2026-10-09: until then the refusal returned
+            // before any record was written, so a relay found none, held each call for
+            // its whole bound and then said that no background was running, where the
+            // crash text sends the person to the log that holds this refusal at once.
             StartupLog.AppRootIsShared(logger, scope.Refusal!);
+
+            try
+            {
+                _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // The refusal stands without its record: a relay then holds its calls
+                // and says that no background runs, and the log above still says why.
+                StartupLog.Failed(logger, failure);
+            }
+
             return 1;
         }
 
-        var installRoot = InstallLocation.RootAppDir;
-        var pipeName = ValueOf(args, BackgroundPipe.PipeArgument) is { Length: > 0 } named
-            ? named
-            : BackgroundPipe.NameFor(installRoot, paths.RootAppDir);
-        var recordPath = BackgroundRecord.PathFor(paths.RootAppDir, pipeName);
-        var startedBy = ValueOf(args, StartedByArgument);
-        var clock = TimeProvider.System;
         var backgroundLogger = log.Factory.CreateLogger("BrowserAI.Background");
 
         var roster = new RelayRoster(clock);

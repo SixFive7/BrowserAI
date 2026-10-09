@@ -13,8 +13,8 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.TestProbe;
 
 /// <summary>
-/// Stands in for an MCP client that started BrowserAI <b>through a wrapper</b>,
-/// so that killing the client does not close BrowserAI's stdin.
+/// Stands in for an MCP client that started BrowserAI's relay <b>through a
+/// wrapper</b>, so that killing the client does not close the relay's stdin.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -38,9 +38,16 @@ namespace BrowserAI.TestProbe;
 /// so an assertion that throws still takes the browser down.
 /// </para>
 /// <para>
-/// It drives a real session and a real navigation first, because "tears the
-/// session down" is only a claim worth making about a session that had a browser
-/// in it.
+/// It drives a real session and a real navigation first, because "the session is
+/// left to the background" is only a claim worth making about a session that had a
+/// browser in it.
+/// </para>
+/// <para>
+/// ⚠️ <b>A relay since 2026-10-09, and the background is the test's</b>
+/// (previously the process started here was the whole server, and its job held the
+/// session's node child and browser). The relay holds no session (S a, 2026-10-08):
+/// it is started with the background's pipe, and the session's tree lives in the
+/// background's jobs, which the test holds. This job holds the relay alone.
 /// </para>
 /// </remarks>
 internal static partial class ClientProbe
@@ -55,8 +62,9 @@ internal static partial class ClientProbe
     /// <param name="workingDirectory">Where BrowserAI runs, and where its session goes.</param>
     /// <param name="testProcessId">The test host, which the handles are duplicated into.</param>
     /// <param name="reportPath">Where to write the report, once everything is up.</param>
+    /// <param name="backgroundPipe">The pipe of the background the test started, which the relay reaches.</param>
     /// <returns>Nothing, ever: it blocks until this process is terminated.</returns>
-    public static int Start(string browserAi, string workingDirectory, int testProcessId, string reportPath)
+    public static int Start(string browserAi, string workingDirectory, int testProcessId, string reportPath, string backgroundPipe)
     {
         // CA2000 is disabled for this statement and the two stream wrappers
         // below, and nothing else. Nothing here is ever disposed on purpose:
@@ -79,7 +87,14 @@ internal static partial class ClientProbe
         }
 
         // --mcp since 2026-10-08: the one executable serves a client only under it.
-        var process = JobLauncher.Start(job, browserAi, [global::BrowserAI.Program.McpArgument], workingDirectory, environment);
+        // And the background's pipe since 2026-10-09, the seam every published relay
+        // of the suite is given its background through.
+        var process = JobLauncher.Start(
+            job,
+            browserAi,
+            [global::BrowserAI.Program.McpArgument, global::BrowserAI.Coordination.BackgroundPipe.PipeArgument, backgroundPipe],
+            workingDirectory,
+            environment);
 
         // Drained on a background thread, so a BrowserAI writing diagnostics
         // cannot fill a pipe nobody is reading and block.
@@ -116,7 +131,7 @@ internal static partial class ClientProbe
             ["arguments"] = new JsonObject
             {
                 ["directory"] = session,
-                ["purpose"] = "the session the client-liveness watcher tears down",
+                ["purpose"] = "the session a killed client's relay leaves to the background",
                 ["headed"] = false,
                 ["transcript"] = false,
                 ["captureNetwork"] = false,

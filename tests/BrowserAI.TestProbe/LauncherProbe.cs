@@ -40,6 +40,18 @@ internal static partial class LauncherProbe
     /// <summary><c>CREATE_NO_WINDOW</c>: a console with no window.</summary>
     private const uint CreateNoWindow = 0x08000000;
 
+    /// <summary><c>STARTF_USESTDHANDLES</c>: the three standard handles are the struct's.</summary>
+    private const uint StartFUseStdHandles = 0x00000100;
+
+    /// <summary><c>STD_INPUT_HANDLE</c>.</summary>
+    private const int StdInputHandle = -10;
+
+    /// <summary><c>STD_OUTPUT_HANDLE</c>.</summary>
+    private const int StdOutputHandle = -11;
+
+    /// <summary><c>STD_ERROR_HANDLE</c>.</summary>
+    private const int StdErrorHandle = -12;
+
     /// <summary>
     /// Starts a program suspended and reports <c>&lt;pid&gt; &lt;thread id&gt;</c>.
     /// </summary>
@@ -86,6 +98,82 @@ internal static partial class LauncherProbe
             return 1;
         }
 
+        return Report(reportPath, information);
+    }
+
+    /// <summary>
+    /// Starts a program suspended with this launcher's own three standard handles as
+    /// its own, reports <c>&lt;pid&gt; &lt;thread id&gt;</c>, and exits.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-09 for the relay, whose start with no pipe on standard input
+    /// ends before it looks at its launcher</b> (Startup[14]). A launcher that has
+    /// exited and still opens is a question the relay asks of a client that gave it a
+    /// pipe, so this launcher gives it one: the caller starts this probe with pipes on
+    /// all three standard handles, and they become the program's, so the caller goes
+    /// on holding the write end of the program's standard input after this launcher has
+    /// gone.
+    /// </para>
+    /// <para>
+    /// <b>Inheritance hands on these three and nothing else</b>, because the caller
+    /// starts this probe through <c>JobLauncher</c>, whose handle list gives it exactly
+    /// three inheritable handles. The program also lands in this probe's job, which
+    /// is the caller's.
+    /// </para>
+    /// </remarks>
+    /// <param name="executable">The program's absolute path.</param>
+    /// <param name="reportPath">Where the pid and the main thread's id go.</param>
+    /// <param name="arguments">What the program is started with after its own name, as <see cref="LaunchSuspended"/> takes them.</param>
+    /// <returns>Zero when the program was created; one with the error in the report otherwise.</returns>
+    public static int LaunchSuspendedHandingOn(string executable, string reportPath, string[] arguments)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        if (Array.Exists(arguments, argument => argument.Length is 0 || argument.AsSpan().IndexOfAny(" \t\"") >= 0))
+        {
+            File.WriteAllText(reportPath, "error an argument is empty or carries a space, a tab or a quote");
+            return 1;
+        }
+
+        var spelled = "\"" + executable + "\"" + string.Concat(arguments.Select(argument => " " + argument));
+        Span<char> commandLine = [.. spelled, '\0'];
+
+        var handedOn = default(StartupInfo);
+        handedOn.Cb = Marshal.SizeOf<StartupInfo>();
+        handedOn.Flags = StartFUseStdHandles;
+        handedOn.StdInput = GetStdHandle(StdInputHandle);
+        handedOn.StdOutput = GetStdHandle(StdOutputHandle);
+        handedOn.StdError = GetStdHandle(StdErrorHandle);
+
+        if (!CreateProcessW(
+                executable,
+                commandLine,
+                nint.Zero,
+                nint.Zero,
+                bInheritHandles: true,
+                CreateSuspended | CreateNoWindow,
+                nint.Zero,
+                null,
+                ref handedOn,
+                out var information))
+        {
+            File.WriteAllText(
+                reportPath,
+                "error " + Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture));
+
+            return 1;
+        }
+
+        return Report(reportPath, information);
+    }
+
+    /// <summary>Writes <c>&lt;pid&gt; &lt;thread id&gt;</c> and closes both handles.</summary>
+    /// <param name="reportPath">Where it goes.</param>
+    /// <param name="information">What <c>CreateProcessW</c> answered.</param>
+    /// <returns>Zero.</returns>
+    private static int Report(string reportPath, ProcessInformation information)
+    {
         try
         {
             File.WriteAllText(
@@ -154,4 +242,8 @@ internal static partial class LauncherProbe
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint hObject);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint GetStdHandle(int nStdHandle);
 }

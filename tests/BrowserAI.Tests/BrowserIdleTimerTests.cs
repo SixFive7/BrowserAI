@@ -1063,24 +1063,41 @@ internal sealed partial class BrowserIdleTimerTests
         return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
     }
 
+    // ⚠️ RETIRED 2026-10-09: `StdinEofTearsDownTheNodeChildTheBrowserAndTheJob`, which
+    // held that a client closing BrowserAI's standard input ended the session's node
+    // child and browser and left its profile free to delete, by BrowserAI's own
+    // shutdown and without upstream's 15-second hard exit. S a of 2026-10-08 took the
+    // premise away: the process a client starts is a relay that holds no session, and
+    // a session whose relay goes is KEPT in the background while its browser is up,
+    // until its idle countdown runs out. What still holds is the arm below: the relay
+    // ends on end of input, with nothing killed, and its session's tree is the
+    // background's, alive. The tree going with its owner is now the background's
+    // death, `BackgroundProcessTests.KillingTheBackgroundTakesEveryChildWithItAndEveryRelayAnswersWithTheCrashAtOnce`.
+
     /// <summary>
-    /// stdin EOF reaps everything: no node child, no browser, and every member
-    /// of the job gone.
+    /// End of input ends the relay, and nothing else: the session's node child and its
+    /// browser stay up in the background, which says it kept the session.
     /// </summary>
     /// <remarks>
-    /// <b>This is the graceful path and it is not the same claim
-    /// <c>VerticalSliceTests</c> makes.</b> That one terminates BrowserAI from
-    /// outside, so the kernel closing the last job handle is what cleans up. Here
-    /// BrowserAI runs its own shutdown -- the session's child gets its stdin
-    /// closed, which trips upstream's <c>setupExitWatchdog</c> -- and the
-    /// assertion is that the graceful path reaches the same end state without
-    /// leaning on the 15-second hard exit at the end of it.
+    /// <para>
+    /// <b>Carried over 2026-10-09 from <c>StdinEofTearsDownTheNodeChildTheBrowserAndTheJob</c></b>,
+    /// retired above, with its premise reversed by S a: what a client's end of input
+    /// ends is the relay, at once and with no kill, and the session it drove is left to
+    /// the background.
+    /// </para>
+    /// <para>
+    /// <b>The background's own record is the event the survivors are read after</b>,
+    /// never a pause: it writes that a relay went, with the sessions it still holds,
+    /// once it has judged what that relay drove. A survivor check taken the moment the
+    /// relay exits would pass for a session the background was still closing.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task StdinEofTearsDownTheNodeChildTheBrowserAndTheJob()
+    public async Task StdinEofEndsTheRelayAndLeavesItsSessionToTheBackground()
     {
         SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireProvisionedChromium();
 
         PublishedSlice.EnsureFresh();
 
@@ -1092,196 +1109,313 @@ internal sealed partial class BrowserIdleTimerTests
             scratch.Path,
             PublishedSlice.InheritedEnvironment());
 
+        var relay = client.ProcessId;
+        var relayCreated = ProcessIdentity.CreationTimeOf(relay);
+        var background = client.BackgroundProcessId
+            ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
+        var backgroundCreated = ProcessIdentity.CreationTimeOf(background);
+
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
         var session = Path.Combine(scratch.Path, "eof-session");
 
-        _ = await client.EnvelopeAsync("tools/call", new JsonObject
+        await CallOkAsync(client, SessionToolSurface.Init, new JsonObject
         {
-            ["name"] = "browserai_init",
-            ["arguments"] = new JsonObject
-            {
-                ["directory"] = session,
-                ["purpose"] = "the session stdin EOF tears down",
-                ["headed"] = false,
-                ["transcript"] = false,
-                ["captureNetwork"] = false,
-                ["idleMinutes"] = 10,
-            },
+            ["directory"] = session,
+            ["purpose"] = "the session a relay's end of input leaves to the background",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            [IdleSetting.ParameterName] = 10,
         });
 
-        _ = await client.EnvelopeAsync("tools/call", new JsonObject
+        await CallOkAsync(client, "browser_navigate", new JsonObject
         {
-            ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = session, ["why"] = "the suite exercising this call" },
+            ["url"] = SliceRun.TargetUrl,
+            ["session"] = session,
+            ["why"] = "the suite bringing a browser up before the relay's input ends",
         });
 
-        // Read while the browser is up: a job holding only BrowserAI itself
-        // would satisfy every assertion below for the wrong reason.
-        var members = client.JobProcessIds()
-            .Where(pid => pid != client.ProcessId)
-            .Select(pid => (Pid: pid, Created: TryCreationTimeOf(pid)))
-            .Where(entry => entry.Created is not null)
-            .Select(entry => (entry.Pid, Created: entry.Created!.Value))
-            .ToList();
-
-        await Assert.That(members.Count).IsGreaterThanOrEqualTo(2);
+        // Read while the browser is up: the session's node child and its browser,
+        // which a background that closed the session would end.
+        var tree = SessionTreeIn(client.JobProcessIds());
 
         // Closing stdin, and nothing else. No kill anywhere on this path.
-        var exited = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang);
+        await Assert.That(await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(client.ExitCode).IsEqualTo(0);
 
-        await Assert.That(exited).IsTrue();
+        await Assert.That(ProcessLogRecords.For(relay, relayCreated)).Contains(RelayEndedOnEndOfInput);
 
-        var survivors = new List<int>();
+        var went = await WaitForRecordAsync(background, backgroundCreated, RelayWent(relay), TeardownPatience);
 
-        await WaitUntilAsync(
-            () =>
-            {
-                survivors = [.. members.Where(entry => ProcessIdentity.IsAlive(entry.Pid, entry.Created)).Select(entry => entry.Pid)];
-                return survivors.Count is 0;
-            },
-            TeardownPatience,
-            "something in the job outlived stdin EOF");
+        await Assert.That(went).Contains(OneSessionLeft)
+            .Because("a session whose relay went with its browser up is kept in the background (S a)");
 
-        await Assert.That(string.Join(", ", survivors)).IsEmpty();
-
-        // The half a survivor count cannot make. A process that is gone from the
-        // table but still holds a mapped file leaves a profile Windows refuses
-        // to remove, and that is the difference between "reported dead" and
-        // "nothing is left".
-        var failures = await ScratchDirectory.RemoveTreeWhenReleasedAsync(
-            Path.Combine(session, SessionLayout.ProfileFolderName),
-            TeardownPatience);
-
-        await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
+        await Assert.That(ProcessIdentity.IsAlive(background, backgroundCreated)).IsTrue();
+        await Assert.That(string.Join(", ", tree.Where(member => !ProcessIdentity.IsAlive(member.Pid, member.Created)).Select(member => member.Pid))).IsEmpty()
+            .Because("the session's node child and browser are the background's, and nothing ended them");
     }
 
+    // ⚠️ RETIRED 2026-10-09: `KillingTheClientTearsTheSessionDownWithoutWaitingForEof`,
+    // which held that a client killed through a wrapper, with BrowserAI's standard
+    // input still open, ended BrowserAI through the handle it holds on its client,
+    // and that the session's whole tree went with it. The first half still holds and
+    // is the arm below, now of the relay; the second is reversed by S a, since the
+    // tree is the background's and is kept when the relay goes.
+
     /// <summary>
-    /// Killing the client BrowserAI holds a handle on tears everything down
-    /// <b>without</b> stdin ever reaching EOF.
+    /// Killing the client the relay holds a handle on ends the relay <b>without</b>
+    /// stdin ever reaching EOF, and leaves the session to the background.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The whole test is arranged around making EOF impossible</b>, because
-    /// otherwise EOF would be the explanation and the watcher would be unproven.
-    /// A wrapper process starts BrowserAI, duplicates the write end of its stdin
-    /// into this test, and is then killed: the parent is gone, the pipe is still
-    /// open -- a Windows pipe signals EOF only when its <i>last</i> write handle
-    /// closes -- and the only remaining route to a teardown is the
-    /// <c>OpenProcess</c> handle BrowserAI holds on its client.
+    /// <b>Carried over 2026-10-09 from <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c></b>,
+    /// retired above. <b>The whole arm is still arranged around making EOF
+    /// impossible</b>, because otherwise EOF would be the explanation and the watch
+    /// would be unproven. A wrapper process starts the relay, duplicates the write end
+    /// of its stdin into this test, and is then killed: the parent is gone, the pipe is
+    /// still open -- a Windows pipe signals EOF only when its <i>last</i> write handle
+    /// closes -- and the only remaining route to the relay's end is the
+    /// <c>OpenProcess</c> handle it holds on its client. That the handle is still
+    /// ours when the relay exits is asserted, with <c>GetHandleInformation</c>, and
+    /// the relay's own record names the client's exit and not the end of its input.
     /// </para>
     /// <para>
-    /// That the handle is still ours when BrowserAI exits is asserted, not
-    /// argued, with <c>GetHandleInformation</c>.
+    /// <b>The background runs in a job of the arm's own</b>, the way the Task
+    /// Scheduler's job holds it in production, and the wrapper's job holds the relay
+    /// alone, so nothing done to the client can reach the session through a job.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task KillingTheClientTearsTheSessionDownWithoutWaitingForEof()
+    public async Task KillingTheClientEndsTheRelayWithoutWaitingForEofAndLeavesTheSessionToTheBackground()
     {
         SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireProvisionedChromium();
 
         PublishedSlice.EnsureFresh();
 
         using var scratch = ScratchDirectory.Create("client-liveness");
-        using var scope = new JobObjectScope();
+        using var backgroundJob = JobObject.CreateKillOnClose();
 
-        var reportPath = Path.Combine(scratch.Path, "report.json");
+        var environment = PublishedSlice.InheritedEnvironment();
+        var pipe = PublishedBackground.NewPipeName();
+        var record = PublishedBackground.RecordFor(environment, [], pipe);
 
-        var wrapper = scope.Launch(
-            ProbePath,
-            scratch.Path,
-            [
-                "client-parent",
-                PublishedSlice.Executable,
-                scratch.Path,
-                Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                reportPath,
-            ]);
+        using var background = PublishedBackground.Start(backgroundJob, scratch.Path, environment, pipe, []);
 
-        var wrapperCreated = ProcessIdentity.CreationTimeOf(wrapper.Id);
-
-        // ⚠️ Read through ProbeReport and not File.Exists plus
-        // File.ReadAllTextAsync, corrected 2026-08-19 after a full-suite run
-        // failed here. `File.Exists` is true the instant the NAME appears, which
-        // is before the writer has finished with it: the read was refused as a
-        // sharing violation once in three consecutive runs, and a read arriving
-        // one instant later would have parsed a truncated report and failed on
-        // an assertion about the product instead. ProbeReport exists for exactly
-        // this, opens FileShare.ReadWrite | FileShare.Delete, and reports a
-        // timeout as a timeout; the probe now publishes by rename as the other
-        // two already did.
-        var report = (JsonObject)await ProbeReport.ReadAsync(reportPath, TestDefaults.ProcessHang);
-
-        // Handed to this process by the wrapper, and this process's to close.
-        var standardInput = (nint)(long)report["standardInputHandle"]!;
-        var job = (nint)(long)report["jobHandle"]!;
+        var backgroundCreated = ProcessIdentity.CreationTimeOf(background.Id);
 
         try
         {
-            await Assert.That((bool)report["navigated"]!).IsTrue();
+            using var scope = new JobObjectScope();
 
-            // ⚠️ The wrapper really is BrowserAI's parent, asserted, not
-            // assumed. A watcher pointed at the wrong process fires at the wrong
-            // moment and looks identical in every other signal -- which is
-            // exactly what happened the first time this test ran.
-            await Assert.That((int)report["wrapperPid"]!).IsEqualTo(wrapper.Id);
+            var reportPath = Path.Combine(scratch.Path, "report.json");
 
-            var browserAi = (int)report["browserAiPid"]!;
-            var browserAiCreated = ProcessIdentity.CreationTimeOf(browserAi);
+            var wrapper = scope.Launch(
+                ProbePath,
+                scratch.Path,
+                [
+                    "client-parent",
+                    PublishedSlice.Executable,
+                    scratch.Path,
+                    Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    reportPath,
+                    pipe,
+                ]);
 
-            var members = report["jobPids"]!.AsArray()
-                .Select(node => (int)node!)
-                .Where(pid => pid != browserAi)
-                .Select(pid => (Pid: pid, Created: TryCreationTimeOf(pid)))
-                .Where(entry => entry.Created is not null)
-                .Select(entry => (entry.Pid, Created: entry.Created!.Value))
-                .ToList();
+            var wrapperCreated = ProcessIdentity.CreationTimeOf(wrapper.Id);
 
-            // BrowserAI, its node child, a browser and its helpers.
-            await Assert.That(members.Count).IsGreaterThanOrEqualTo(2);
+            // ⚠️ Read through ProbeReport and not File.Exists plus
+            // File.ReadAllTextAsync, corrected 2026-08-19 after a full-suite run
+            // failed here. `File.Exists` is true the instant the NAME appears, which
+            // is before the writer has finished with it; ProbeReport opens
+            // FileShare.ReadWrite | FileShare.Delete and reports a timeout as a
+            // timeout, and the probe publishes by rename.
+            var report = (JsonObject)await ProbeReport.ReadAsync(reportPath, TestDefaults.ProcessHang);
 
-            // ⚠️ The assertion that stops this test passing for the wrong
-            // reason. Everything below observes BrowserAI going away; without
-            // this line, a BrowserAI that had already died -- of a crash, of a
-            // watcher pointed at the wrong process, of anything -- would satisfy
-            // it instantly. Found by reading the log of a run that passed in
-            // three seconds, 2026-08-16, not by the test failing.
-            await Assert.That(ProcessIdentity.IsAlive(browserAi, browserAiCreated)).IsTrue();
+            // Handed to this process by the wrapper, and this process's to close.
+            var standardInput = (nint)(long)report["standardInputHandle"]!;
+            var job = (nint)(long)report["jobHandle"]!;
 
-            // The event under test. TerminateProcess on the wrapper: it runs no
-            // code afterwards, so nothing it does can be the explanation.
-            ProcessIdentity.Terminate(wrapper.Id, wrapperCreated);
+            try
+            {
+                await Assert.That((bool)report["navigated"]!).IsTrue().Because(report.ToJsonString());
 
-            await WaitUntilAsync(
-                () => !ProcessIdentity.IsAlive(browserAi, browserAiCreated),
-                TeardownPatience,
-                "BrowserAI outlived the client it holds a handle on, with its stdin still open");
+                // ⚠️ The wrapper really is the relay's parent, asserted, not
+                // assumed. A watch pointed at the wrong process fires at the wrong
+                // moment and looks identical in every other signal -- which is
+                // exactly what happened the first time this test ran.
+                await Assert.That((int)report["wrapperPid"]!).IsEqualTo(wrapper.Id);
 
-            // ⚠️ Asserted at the moment BrowserAI's exit is observed, not
-            // afterwards: this is the claim that the exit was NOT stdin EOF. A
-            // handle this process still holds is a write end that never closed.
-            await Assert.That(HandleIsOurs(standardInput)).IsTrue();
+                var relay = (int)report["browserAiPid"]!;
+                var relayCreated = ProcessIdentity.CreationTimeOf(relay);
 
-            var survivors = new List<int>();
+                // The session's tree is the background's, in the arm's own job.
+                var tree = SessionTreeIn(backgroundJob.ProcessIds());
 
-            await WaitUntilAsync(
-                () =>
-                {
-                    survivors = [.. members.Where(entry => ProcessIdentity.IsAlive(entry.Pid, entry.Created)).Select(entry => entry.Pid)];
-                    return survivors.Count is 0;
-                },
-                TeardownPatience,
-                "the session's tree outlived the client");
+                // ⚠️ The assertion that stops this test passing for the wrong
+                // reason. Everything below observes the relay going away; without
+                // this line, a relay that had already died -- of a crash, of a
+                // watch pointed at the wrong process, of anything -- would satisfy
+                // it instantly. Found by reading the log of a run that passed in
+                // three seconds, 2026-08-16, not by the test failing.
+                await Assert.That(ProcessIdentity.IsAlive(relay, relayCreated)).IsTrue();
 
-            await Assert.That(string.Join(", ", survivors)).IsEmpty();
+                // The event under test. TerminateProcess on the wrapper: it runs no
+                // code afterwards, so nothing it does can be the explanation.
+                ProcessIdentity.Terminate(wrapper.Id, wrapperCreated);
+
+                await WaitUntilAsync(
+                    () => !ProcessIdentity.IsAlive(relay, relayCreated),
+                    TeardownPatience,
+                    "the relay outlived the client it holds a handle on, with its stdin still open");
+
+                // ⚠️ Asserted at the moment the relay's exit is observed, not
+                // afterwards: this is the claim that the exit was NOT stdin EOF. A
+                // handle this process still holds is a write end that never closed.
+                await Assert.That(HandleIsOurs(standardInput)).IsTrue();
+
+                var relaySaid = ProcessLogRecords.For(relay, relayCreated);
+
+                await Assert.That(relaySaid).Contains($"The MCP client, pid {wrapper.Id}, has exited");
+                await Assert.That(relaySaid).DoesNotContain(RelayEndedOnEndOfInput);
+
+                var went = await WaitForRecordAsync(background.Id, backgroundCreated, RelayWent(relay), TeardownPatience);
+
+                await Assert.That(went).Contains(OneSessionLeft)
+                    .Because("a session whose relay went with its browser up is kept in the background (S a)");
+
+                await Assert.That(ProcessIdentity.IsAlive(background.Id, backgroundCreated)).IsTrue();
+                await Assert.That(string.Join(", ", tree.Where(member => !ProcessIdentity.IsAlive(member.Pid, member.Created)).Select(member => member.Pid))).IsEmpty()
+                    .Because("the session's node child and browser are the background's, and nothing ended them");
+            }
+            finally
+            {
+                // The wrapper's job first: it is the containment net it handed over,
+                // and closing it reaps a relay an assertion left behind.
+                NativeHandle.Close(job);
+                NativeHandle.Close(standardInput);
+            }
         }
         finally
         {
-            // The job first: closing it is what reaps anything an assertion left
-            // behind, and it is the containment net the wrapper handed over.
-            NativeHandle.Close(job);
-            NativeHandle.Close(standardInput);
+            // The background's job ends it and the session's tree with it.
+            backgroundJob.Dispose();
+            DeleteRecord(record);
+        }
+    }
+
+    /// <summary>What a relay writes when its client's input has ended.</summary>
+    private const string RelayEndedOnEndOfInput = "Relay: the client closed its input, so the relay ends.";
+
+    /// <summary>The background's record of a relay going, with what it still holds.</summary>
+    private const string OneSessionLeft = "0 relay(s) and 1 session(s) are left";
+
+    /// <summary>The start of the background's record of one relay going.</summary>
+    /// <param name="relay">The relay's pid, which the background's name for it begins with.</param>
+    /// <returns>The text both halves of the record carry.</returns>
+    private static string RelayWent(int relay) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"Relay {relay}-");
+
+    /// <summary>
+    /// The session's node child and browser among a job's members, with their
+    /// creation times, which are what a later liveness check needs.
+    /// </summary>
+    /// <param name="members">The job's members.</param>
+    /// <returns>The node child and the browser process: never empty, or it throws.</returns>
+    private static List<(int Pid, long Created)> SessionTreeIn(IEnumerable<int> members)
+    {
+        var tree = new List<(int Pid, long Created)>();
+        var browsers = BrowserAiPaths.BrowsersDirectory;
+
+        foreach (var pid in members)
+        {
+            var image = ProcessCommandLine.ImagePathOf(pid);
+            var line = ProcessCommandLine.Of(pid);
+
+            var isNode = image?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true;
+            var isBrowser = image?.StartsWith(browsers, StringComparison.OrdinalIgnoreCase) is true
+                && line?.Contains("--remote-debugging-pipe", StringComparison.Ordinal) is true
+                && line?.Contains("--type=", StringComparison.Ordinal) is not true;
+
+            if ((isNode || isBrowser) && TryCreationTimeOf(pid) is { } created)
+            {
+                tree.Add((pid, created));
+            }
+        }
+
+        // A node child and a browser, or the liveness checks below would pass over
+        // nothing at all.
+        if (tree.Count < 2)
+        {
+            throw new InvalidOperationException(
+                $"The session's node child and browser should both be up, and the job held only these of them: {string.Join(", ", tree.Select(member => member.Pid))}.");
+        }
+
+        return tree;
+    }
+
+    /// <summary>Waits for a record of one process that carries a given text, and returns that record.</summary>
+    /// <param name="processId">The process.</param>
+    /// <param name="created">Its creation time.</param>
+    /// <param name="text">What the record carries.</param>
+    /// <param name="patience">A hang detector.</param>
+    /// <returns>The record's line.</returns>
+    private static async Task<string> WaitForRecordAsync(int processId, long created, string text, TimeSpan patience)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            var line = ProcessLogRecords.For(processId, created)
+                .Split('\n')
+                .FirstOrDefault(record => record.Contains(text, StringComparison.Ordinal) && record.Contains(" went; ", StringComparison.Ordinal));
+
+            if (line is not null)
+            {
+                return line;
+            }
+
+            if (waited.Elapsed > patience)
+            {
+                throw new TimeoutException($"Process {processId} wrote no record carrying '{text}' within {waited.Elapsed.TotalSeconds:F1} s.");
+            }
+
+            await Task.Delay(100);
+        }
+    }
+
+    /// <summary>Calls a tool and requires an answer that is not an error.</summary>
+    /// <param name="client">The relay.</param>
+    /// <param name="tool">The tool.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task CallOkAsync(RawStdioClient client, string tool, JsonObject arguments)
+    {
+        var result = await client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = tool,
+            ["arguments"] = arguments,
+        });
+
+        if ((bool?)result["isError"] is true)
+        {
+            throw new InvalidOperationException($"'{tool}' was refused: {TextOf(result)}{Environment.NewLine}{client.StandardErrorSoFar()}");
+        }
+    }
+
+    /// <summary>Deletes a background's record, which a background ended by its job leaves saying it crashed.</summary>
+    /// <param name="record">The record.</param>
+    private static void DeleteRecord(string record)
+    {
+        try
+        {
+            File.Delete(record);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            // Left for the next run: a stale record names a pid that is gone.
         }
     }
 

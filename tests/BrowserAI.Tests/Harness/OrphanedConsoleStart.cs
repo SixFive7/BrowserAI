@@ -105,6 +105,15 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// </summary>
     private ScratchDirectory? _launcherReport;
 
+    /// <summary>The job a start that hands on pipes runs its launcher and the product in.</summary>
+    private BrowserAI.Interop.JobObject? _job;
+
+    /// <summary>
+    /// The launcher of a start that hands on pipes, kept undisposed: its process
+    /// handle keeps its pid openable, and its three pipes are the product's.
+    /// </summary>
+    private BrowserAI.Interop.LaunchedProcess? _handingOn;
+
     private OrphanedConsoleStart(string executable, string appRoot)
     {
         _executable = executable;
@@ -182,6 +191,131 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         rig.WaitUntilItSaysWhoItIs(patience);
 
         return rig;
+    }
+
+    /// <summary>
+    /// Starts the published binary with a launcher that is gone and pipes on all
+    /// three standard handles, the write end of whose standard input this rig holds,
+    /// and waits until it has written its first record.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-09 for the relay.</b> The one executable started with
+    /// <c>--mcp</c> and a console on standard input ends at once, before it looks at
+    /// its launcher (Startup[14]), so the launcher's two dead shapes are a question
+    /// only a relay with a pipe asks. This start gives it one: the test probe is
+    /// started through <c>JobLauncher</c>, with three pipes and in a kill-on-close job
+    /// of this rig's, and hands those three handles on to the product, which it starts
+    /// suspended and leaves. The product lands in the same job.
+    /// </para>
+    /// <para>
+    /// <b>The launcher's corpse stays openable</b>, <see cref="LauncherCorpse.Openable"/>'s
+    /// shape, because this rig holds the launcher's process handle for as long as it
+    /// holds the pipes. A freed launcher would need the pipes let go of too.
+    /// </para>
+    /// <para>
+    /// <b>Standard error is drained</b>: the product writes its records there as well
+    /// as to its log, and a pipe nobody reads stops its writer once it fills.
+    /// </para>
+    /// </remarks>
+    /// <param name="appRoot">The scratch data root, under the user's profile.</param>
+    /// <param name="patience">A hang detector for the start, never a budget.</param>
+    /// <param name="arguments">The product's arguments: <c>--mcp</c>, and whatever else the arm needs.</param>
+    /// <returns>The started rig, whether or not the product wrote anything.</returns>
+    public static OrphanedConsoleStart BeginHandingOnPipes(string appRoot, TimeSpan patience, IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(appRoot);
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        var rig = new OrphanedConsoleStart(PublishedSlice.Executable, appRoot);
+
+        try
+        {
+            rig.LaunchHandingOnPipes(arguments, patience);
+            rig.WaitUntilItSaysWhoItIs(patience);
+        }
+        catch
+        {
+            rig.Dispose();
+            throw;
+        }
+
+        return rig;
+    }
+
+    /// <summary>
+    /// The write end of the product's standard input, for a rig started by
+    /// <see cref="BeginHandingOnPipes"/>: closing it is the product's end of input.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The rig was started with a console.</exception>
+    public Stream StandardInput =>
+        _handingOn?.StandardInput ?? throw new InvalidOperationException("This rig gave the product a console, so there is no pipe to write to.");
+
+    /// <summary>The read end of the product's standard output, for a rig started by <see cref="BeginHandingOnPipes"/>.</summary>
+    /// <exception cref="InvalidOperationException">The rig was started with a console.</exception>
+    public Stream StandardOutput =>
+        _handingOn?.StandardOutput ?? throw new InvalidOperationException("This rig gave the product a console, so there is no pipe to read.");
+
+    private void LaunchHandingOnPipes(IReadOnlyList<string> arguments, TimeSpan patience)
+    {
+        var environment = PublishedSlice.InheritedEnvironment();
+
+        environment[BrowserAiPaths.AppRootOverride] = _appRoot;
+        _ = environment.Remove(VelopackStartup.FirstRunVariable);
+
+        _launcherReport = ScratchDirectory.Create("orphan-launcher");
+        _job = BrowserAI.Interop.JobObject.CreateKillOnClose();
+
+        var report = Path.Combine(_launcherReport.Path, "launched.txt");
+
+        // ⚠️ KEPT, AND THE KEEPING IS THE MECHANISM, as in the console shape: the
+        // process handle inside is what keeps the launcher's pid answering
+        // OpenProcess once it has exited, and its three pipes are the product's.
+        _handingOn = BrowserAI.Interop.JobLauncher.Start(
+            _job,
+            Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"),
+            ["launch-suspended-handing-on", _executable, report, .. arguments],
+            _appRoot,
+            environment);
+
+        // Drained, and never waited for: it ends when the pipes are closed.
+        _ = DrainAsync(_handingOn.StandardError);
+
+        if (!_handingOn.WaitForExitAsync(patience).GetAwaiter().GetResult())
+        {
+            throw new InvalidOperationException($"The launcher probe did not exit within {patience}.");
+        }
+
+        var exitCode = _handingOn.TryReadExitCode();
+        var said = File.Exists(report) ? File.ReadAllText(report).Trim() : "<no report>";
+        var parts = said.Split(' ');
+
+        if (exitCode is not 0
+            || parts.Length is not 2
+            || !int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var processId)
+            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var threadId))
+        {
+            throw new InvalidOperationException(
+                $"The launcher probe exited {exitCode?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"} and reported '{said}' for '{_executable}'.");
+        }
+
+        // ONLY NOW, with the launcher provably gone.
+        Resume(processId, threadId);
+    }
+
+    /// <summary>Reads a stream to its end and drops what it read.</summary>
+    /// <param name="stream">The product's standard error.</param>
+    /// <returns>A task that completes at the stream's end, or when it is closed under the read.</returns>
+    private static async Task DrainAsync(Stream stream)
+    {
+        try
+        {
+            await stream.CopyToAsync(Stream.Null).ConfigureAwait(false);
+        }
+        catch (Exception failure) when (failure is IOException or ObjectDisposedException)
+        {
+            // Closed by Dispose under the read, which is how this rig ends it.
+        }
     }
 
     /// <summary>Everything the product recorded, read from its own log file.</summary>
@@ -310,6 +444,14 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
             // its client.
             _launcher?.Dispose();
             _launcher = null;
+
+            // The pipes, the launcher's handle and then the job, which ends anything
+            // still in it: the product, if the terminate above could not.
+            _handingOn?.Dispose();
+            _handingOn = null;
+            _job?.Dispose();
+            _job = null;
+
             _launcherReport?.Dispose();
             _launcherReport = null;
         }

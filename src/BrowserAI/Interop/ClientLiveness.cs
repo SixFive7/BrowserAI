@@ -453,12 +453,21 @@ internal static partial class ClientLivenessLog
     public static partial void ClientWaitCannotBeInterpreted(ILogger logger, int processId, uint wait, string reason);
 
     /// <summary>The client exited and teardown was asked for.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-09</b> (previously "so BrowserAI is closing its own
+    /// protocol channel -- which ends the conversation exactly as stdin EOF would,
+    /// without waiting for it. Every session's child, its browser and its job go down
+    /// with this process."). The one process that watches its client is the relay
+    /// since S a, and a relay holds no session: what it drove is the background's,
+    /// which keeps a session whose browser is up when its relay goes. The record
+    /// said the opposite of what happens next.
+    /// </remarks>
     /// <param name="logger">Where it goes.</param>
     /// <param name="processId">The client's pid.</param>
     [LoggerMessage(
         EventId = 73,
         Level = LogLevel.Information,
-        Message = "The MCP client, pid {ProcessId}, has exited, so BrowserAI is closing its own protocol channel -- which ends the conversation exactly as stdin EOF would, without waiting for it. Every session's child, its browser and its job go down with this process.")]
+        Message = "The MCP client, pid {ProcessId}, has exited, so this relay ends without waiting for the end of its input. It holds no session: each one it drove is the background's, which keeps it while its browser is up.")]
     public static partial void ClientExited(ILogger logger, int processId);
 
     /// <summary>Asking for teardown threw.</summary>

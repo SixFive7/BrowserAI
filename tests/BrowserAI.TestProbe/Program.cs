@@ -66,8 +66,15 @@ internal static class Program
             // arguments arrived 2026-10-08 with the one executable, whose mode is
             // its argument.
             "launch-suspended" when args.Length >= 3 => LauncherProbe.LaunchSuspended(args[1], args[2], args[3..]),
-            "client-parent" when args.Length is 5 =>
-                ClientProbe.Start(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
+            // The same, with this probe's own three standard handles handed on to
+            // the program, for a relay that has to meet a gone launcher with a pipe
+            // on its standard input (2026-10-09).
+            "launch-suspended-handing-on" when args.Length >= 3 => LauncherProbe.LaunchSuspendedHandingOn(args[1], args[2], args[3..]),
+            // <browserAi> <workingDirectory> <testPid> <reportPath> <backgroundPipe>.
+            // The pipe arrived 2026-10-09: the process a client starts is a relay,
+            // which holds no session, and the background it reaches is the arm's.
+            "client-parent" when args.Length is 6 =>
+                ClientProbe.Start(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4], args[5]),
             "session-index" when args.Length is 6 =>
                 SessionProbe.Index(args[1], args[2], args[3], args[4], int.Parse(args[5], CultureInfo.InvariantCulture)),
             // <releaseFile> <command> [arguments...]. Runs a real @playwright/mcp
