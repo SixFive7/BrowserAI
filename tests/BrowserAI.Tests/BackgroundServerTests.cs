@@ -830,6 +830,10 @@ internal sealed class BackgroundServerTests
         string.Equals(Path.GetFullPath(first).TrimEnd(Path.DirectorySeparatorChar), Path.GetFullPath(second).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The arguments of a <c>browserai_init</c> call opening one session.</summary>
+    /// <remarks>
+    /// <b>All four of the session's settings are named</b>, at today's defaults: lane
+    /// SESS's batch C refuses an init that leaves one out.
+    /// </remarks>
     /// <param name="directory">The session directory.</param>
     /// <returns>The call's parameters.</returns>
     private static JsonObject Init(string directory) => new()
@@ -840,6 +844,9 @@ internal sealed class BackgroundServerTests
             ["directory"] = directory,
             ["purpose"] = "a session the background's pipe arms open",
             ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = SessionTimes.HiddenIdleMinutes,
         },
     };
 

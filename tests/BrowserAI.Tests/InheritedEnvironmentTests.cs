@@ -206,6 +206,9 @@ internal sealed class InheritedEnvironmentTests
             ["directory"] = directory,
             ["purpose"] = "a session opened while the client's messaging variables are set",
             ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = SessionTimes.HiddenIdleMinutes,
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(HostConnection.TextOf(opened));
