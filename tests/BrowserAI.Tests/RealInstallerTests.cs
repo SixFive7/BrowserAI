@@ -7,7 +7,6 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using BrowserAI.App.Page;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Registration;
@@ -122,6 +121,7 @@ internal sealed partial class RealInstallerTests
         using var dataRoot = ScratchDirectory.CreateUnderProfile("real-install-data");
         using var clientConfig = ScratchDirectory.Create("real-install-client");
         using var logs = ScratchDirectory.Create("real-install-logs");
+        using var feed = ScratchDirectory.Create("real-install-feed");
 
         var paths = new LocalAppDataPaths(dataRoot.Path);
         var planted = Plant(paths);
@@ -134,11 +134,19 @@ internal sealed partial class RealInstallerTests
         // finding no entry there, write one -- which is not something a test may
         // do to somebody's machine, and is not something the clearance snapshot
         // would have caught before this line existed.
+        //
+        // AND THE UPDATE FEED SINCE 2026-10-09, an empty scratch folder: the install
+        // hook reads the installer's BROWSERAI_UPDATE_FEED once and writes it into the
+        // task's action as --update-source, beside the data root, and this arm holds
+        // both arguments where the hook wrote them.
+        var codexHome = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName;
+
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+            [RegistrationTests.CodexHomeVariable] = codexHome,
+            [UpdateConfiguration.FeedVariable] = feed.Path,
         });
 
         // ⚠️ THE REAL INSTALL'S OWN ADD/REMOVE ENTRY, READ BEFORE ANYTHING RUNS.
@@ -169,7 +177,7 @@ internal sealed partial class RealInstallerTests
 
         try
         {
-            await InstallTwiceAndUninstall(setup, installRoot, dataRoot, logs, planted);
+            await InstallTwiceAndUninstall(setup, installRoot, dataRoot, logs, planted, new ClientSandbox(clientConfig.Path, codexHome, feed.Path));
         }
         finally
         {
@@ -263,192 +271,18 @@ internal sealed partial class RealInstallerTests
                     .OrderBy(shortcut => shortcut.Key, StringComparer.OrdinalIgnoreCase)
                     .Select(shortcut => $"{shortcut.Key}\t{Convert.ToHexString(SHA256.HashData(shortcut.Value))}"));
 
-    /// <summary>
-    /// The installed main executable serves its page at the address it was handed,
-    /// shows no window of its own and no console, counts in the census while it
-    /// serves, and exits a minute after its last tab has gone.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>This is the arm the whole two-binary design was cut for.</b> A
-    /// non-silent <c>Setup.exe</c> finishes by starting the main executable with
-    /// <c>CREATE_UNICODE_ENVIRONMENT</c> and nothing else, and on 2026-09-15
-    /// that put a <b>1506×1490 Windows Terminal window</b> on the user's screen,
-    /// serving nobody, for 215 seconds. The window is gone because the main
-    /// executable is a Windows-subsystem binary now.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Rewritten 2026-10-03 for the browser tab -- Q315 a, the maintainer's
-    /// words verbatim: <i>"Q315 a"</i></b> (previously <i>opens one task dialog, owns
-    /// no console window, and closes when it is asked to</i>). A person's start opens
-    /// a tab in the person's own browser and no window of its own, so what the arm
-    /// asserts moved with it: the page answers at the address the start was handed,
-    /// the executable shows no top-level window at all on its desktop, and it leaves
-    /// a minute after its last tab closes (Q336 a), with exit code 0. The start
-    /// carries <c>--write-address</c>, which writes the address to a file and opens
-    /// nothing, because a browser tab is exactly what this suite may never put on
-    /// the screen of the person at the machine.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>It installs SILENTLY and launches the binary itself, deliberately.</b>
-    /// A non-silent install would put a progress dialog on the maintainer's
-    /// screen and hand the start to Velopack -- which is the very thing whose
-    /// flags cannot be influenced from here. Launching the same file the same
-    /// way, from a parent with no window, exercises the property under test and
-    /// nothing else.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The console check is BY PID, and that is weaker than it looks --
-    /// said here and not left to be discovered.</b> With the default
-    /// terminal set to Windows Terminal, a console allocated to a process shows
-    /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
-    /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
-    /// screen while two windows were on it. What carries that guarantee is
-    /// <c>AppBinaryTests.TheOneExecutableIsAWindowsSubsystemBinary</c>
-    /// (<c>TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c> until 2026-10-08, and
-    /// <c>TaskDialogLayoutTests</c> until 2026-10-03), which reads the subsystem out
-    /// of the binary -- the cause and not the symptom.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The app runs on a desktop nobody is looking at, since 2026-09-24 --
-    /// Q279</b>, created with <c>CreateDesktopW</c> and launched through
-    /// <c>JobLauncher</c> with <c>STARTUPINFO.lpDesktop</c> naming it. Two windows on
-    /// that desktop are the input framework's and are left out by class, as they
-    /// were when the arm looked for a dialog.
-    /// </para>
-    /// <para>
-    /// <b>The minute is the product's own</b> (<see cref="PageTabs.ProductLinger"/>),
-    /// so this arm waits it out once; the wait is bounded by
-    /// <see cref="TestDefaults.ProcessHang"/>, a hang detector, and nothing asserts
-    /// how long the exit took.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn()
-    {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
-
-        using var installRoot = ScratchDirectory.CreateUnderProfile("real-install-window");
-        using var dataRoot = ScratchDirectory.CreateUnderProfile("real-install-window-data");
-        using var clientConfig = ScratchDirectory.Create("real-install-window-client");
-        using var logs = ScratchDirectory.Create("real-install-window-logs");
-
-        // ⚠️ CODEX_HOME IS THE THIRD VARIABLE SINCE 2026-09-24, AND IT IS THE ONE
-        // THAT STOPS A WRITE. The install and uninstall hooks register with Codex
-        // now, and Codex has no scope flag: `codex mcp add` writes whichever
-        // configuration CODEX_HOME names. Left alone, this arm's real installer
-        // would run the maintainer's own codex.exe against his own ~\.codex and,
-        // finding no entry there, write one -- which is not something a test may
-        // do to somebody's machine, and is not something the clearance snapshot
-        // would have caught before this line existed.
-        using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
-        {
-            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
-            [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
-        });
-
-        try
-        {
-            await Assert.That(await RunAsync(
-                setup, ["--silent", "--log", Path.Combine(logs.Path, "setup.log"), "--installto", installRoot.Path]))
-                .IsEqualTo(0);
-
-            var app = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
-            var addressFile = Path.Combine(logs.Path, "address.txt");
-
-            await Assert.That(File.Exists(app)).IsTrue();
-
-            // ⚠️ ON A DESKTOP OF ITS OWN, Q279, and with --write-address: the start
-            // writes the address it would have opened and opens nothing.
-            using var desktop = PrivateDesktop.Create("real-install-window");
-            using var job = JobObject.CreateKillOnClose();
-            using var process = desktop.Launch(job, app, [PageOpener.WriteAddressArgument, addressFile], installRoot.Path, PublishedSlice.InheritedEnvironment());
-
-            // Drained, because a pipe nobody reads can stop a child that writes to
-            // it; the app is a GUI binary and is not expected to.
-            var drained = DrainAsync(process);
-
-            try
-            {
-                var address = await WaitForTheAddressAsync(addressFile, process);
-
-                await Assert.That(address).IsNotNull();
-
-                var uri = new Uri(address!);
-                var page = await RawHttp.SendAsync(uri.Port, RawHttp.Get(uri.Port, uri.PathAndQuery, $"Host: 127.0.0.1:{uri.Port}", "Sec-Fetch-Site: none"));
-
-                await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-                await Assert.That(page.Body).Contains("<h1>BrowserAI ");
-
-                // No visible top-level window of the app's own: the invisible ones are
-                // the input-method windows every GUI process on this machine carries,
-                // and the two input-indicator classes are the input framework's on a
-                // desktop with no taskbar, named in the remarks and left out by name.
-                var visible = desktop.TopLevelWindows()
-                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id && TopLevelWindows.IsVisible(window))
-                    .Select(TopLevelWindows.ClassNameOf)
-                    .Where(name => !InputIndicatorClasses.Contains(name, StringComparer.Ordinal))
-                    .ToList();
-
-                await Assert.That(string.Join(", ", visible)).IsEmpty();
-
-                var owned = desktop.TopLevelWindows()
-                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id)
-                    .Select(TopLevelWindows.ClassNameOf)
-                    .ToList();
-
-                await Assert.That(owned.Where(name =>
-                        name is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow"))
-                    .IsEmpty();
-
-                // ⚠️ AND IT IS IN THE LIVE-INSTANCE CENSUS WHILE IT SERVES A PAGE,
-                // which is what stops a server's update lane applying an update out
-                // from under a tab: Velopack's apply ends in `force_stop_package`,
-                // which kills by image path under the install root. Asserted from
-                // OUTSIDE the process, on the marker file it holds.
-                var live = LiveInstances.DirectoryUnder(installRoot.Path);
-
-                await Assert.That(await WaitForAsync(() => Directory.Exists(live) && Directory.EnumerateFiles(live, "*.live").Any())).IsTrue();
-
-                // A tab connects and closes: the minute starts, and then it leaves.
-                var token = uri.AbsolutePath.Trim('/');
-
-                using (var tab = await RawEventStream.OpenAsync(uri.Port, token, tab: 1))
-                {
-                    await Assert.That(tab.Status).IsEqualTo(200);
-                    await Assert.That(await tab.NextNamedAsync(PageEvents.State)).IsNotNull();
-                }
-
-                await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
-                await drained;
-                await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
-
-                // And it leaves the census on the way out. The marker is released by
-                // the handle closing, so this is a property of the process ending and
-                // not of any cleanup it performs.
-                await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsFalse();
-            }
-            finally
-            {
-                // The job, and not a kill by pid: KILL_ON_JOB_CLOSE takes the app
-                // with it if an assertion above left it running, and the desktop
-                // goes when its last handle and its last thread do.
-                job.Dispose();
-            }
-
-            var update = Path.Combine(installRoot.Path, "Update.exe");
-
-            await Assert.That(File.Exists(update)).IsTrue();
-            await Assert.That(await RunAsync(update, ["--uninstall", "--silent"])).IsEqualTo(0);
-            await WaitOutTheDeferredRemoval(Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName));
-        }
-        finally
-        {
-            await ReclaimAsync(installRoot.Path);
-        }
-    }
+    // RETIRED 2026-10-09: TheInstalledMainExecutableServesItsPageAndShowsNoWindowOfItsOwn,
+    // which held that a person's start of the installed main executable served its
+    // page itself, counted in the live-instance census while it served, and exited a
+    // minute after its last tab. A person's start serves nothing since the one resident
+    // background (S a, D13 a): it runs the task, asks the background for a tab and
+    // exits, so the census of a person's start and the coordinator's minute went with
+    // it. What still holds moved to the background and is held in
+    // RealInstallerTests.Scheduler.cs by
+    // APersonsStartRunsTheTaskAndTheBackgroundServesThePageAndKeepsASessionAcrossItsRelays:
+    // the page answering at the address the start was handed, no visible window of
+    // BrowserAI's own on the desktop, and the tab's listener stopping a minute after
+    // its last tab while the background stays.
 
     /// <summary>Reads both of a launched child's output pipes to their end.</summary>
     /// <param name="process">The child.</param>
@@ -461,36 +295,6 @@ internal sealed partial class RealInstallerTests
     /// 2026-09-24 in the app's own pid and not the app's user interface.
     /// </summary>
     private static readonly string[] InputIndicatorClasses = ["UAC_InputIndicatorOverlayWnd", "UAC Input Indicator"];
-
-    /// <summary>
-    /// Waits for the address file a start with <c>--write-address</c> writes, or for
-    /// the start to exit without writing it.
-    /// </summary>
-    /// <param name="file">The file.</param>
-    /// <param name="process">The start.</param>
-    /// <returns>The address, or <see langword="null"/> when none was written.</returns>
-    /// <remarks>Polled, and bounded by a hang detector that is not a promptness claim.</remarks>
-    private static async Task<string?> WaitForTheAddressAsync(string file, LaunchedProcess process)
-    {
-        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
-
-        while (DateTime.UtcNow < deadline)
-        {
-            if (File.Exists(file) && (await File.ReadAllTextAsync(file)) is { Length: > 0 } address)
-            {
-                return address;
-            }
-
-            if (process.HasExited)
-            {
-                return null;
-            }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
-        }
-
-        return null;
-    }
 
     /// <summary>Polls a condition until it holds or the hang detector runs out.</summary>
     /// <param name="condition">The condition.</param>
@@ -568,8 +372,8 @@ internal sealed partial class RealInstallerTests
         try
         {
             // The key's own root first, then the root the key no longer names.
-            await InstallTwoRootsAndUninstall(setup, namedRootFirst.Path, namedRootSecond.Path, uninstallTheNamedRootFirst: true, logs.Path);
-            await InstallTwoRootsAndUninstall(setup, otherRootFirst.Path, otherRootSecond.Path, uninstallTheNamedRootFirst: false, logs.Path);
+            await InstallTwoRootsAndUninstall(setup, namedRootFirst.Path, namedRootSecond.Path, uninstallTheNamedRootFirst: true, logs.Path, dataRoot.Path);
+            await InstallTwoRootsAndUninstall(setup, otherRootFirst.Path, otherRootSecond.Path, uninstallTheNamedRootFirst: false, logs.Path, dataRoot.Path);
         }
         finally
         {
@@ -605,13 +409,15 @@ internal sealed partial class RealInstallerTests
     /// <param name="second">The root installed second, which the key ends up naming.</param>
     /// <param name="uninstallTheNamedRootFirst">Whether the first uninstall is the root the key names.</param>
     /// <param name="logs">Where Velopack's own logs go.</param>
+    /// <param name="dataRoot">The scratch data root the installer named, which each task's action carries.</param>
     /// <returns>The assertion task.</returns>
     private static async Task InstallTwoRootsAndUninstall(
         string setup,
         string first,
         string second,
         bool uninstallTheNamedRootFirst,
-        string logs)
+        string logs,
+        string dataRoot)
     {
         var order = uninstallTheNamedRootFirst ? "named-first" : "other-first";
 
@@ -634,10 +440,15 @@ internal sealed partial class RealInstallerTests
         await Assert.That(PathEntriesNaming(secondEntry)).IsEqualTo(1);
 
         // ⚠️ AND EACH ROOT REGISTERED ITS OWN SIGN-IN TASK -- Q282 a -- named for the
-        // test pack's id and that root's key, starting that root's app with the
-        // sign-in argument. The uninstalls below take each off with its root.
-        await Assert.That(SignInCommandOf(first)).IsEqualTo(Path.Combine(first, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
-        await Assert.That(SignInCommandOf(second)).IsEqualTo(Path.Combine(second, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        // test pack's id and that root's key, starting that root's one executable as
+        // the background, for the data root the installer named. The uninstalls below
+        // take each off with its root. Corrected 2026-10-09 (previously "starting that
+        // root's app with the sign-in argument", `--sign-in $(Arg0)`): the task starts
+        // the resident background since S a.
+        var background = SignInTask.ArgumentsFor(dataRoot, updateSource: null);
+
+        await Assert.That(SignInCommandOf(first, background)).IsEqualTo(Path.Combine(first, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        await Assert.That(SignInCommandOf(second, background)).IsEqualTo(Path.Combine(second, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
 
         var (goesFirst, staysBehind) = uninstallTheNamedRootFirst ? (second, first) : (first, second);
 
@@ -654,15 +465,15 @@ internal sealed partial class RealInstallerTests
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(1);
 
         // So did the scheduler: the uninstalled root's task is gone, the other's stays.
-        await Assert.That(SignInCommandOf(goesFirst)).IsNull();
-        await Assert.That(SignInCommandOf(staysBehind)).IsNotNull();
+        await Assert.That(SignInCommandOf(goesFirst, background)).IsNull();
+        await Assert.That(SignInCommandOf(staysBehind, background)).IsNotNull();
 
         // And the root left behind still uninstalls cleanly, finding no key.
         await Assert.That(await RunAsync(Path.Combine(staysBehind, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
         await WaitOutTheDeferredRemoval(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
-        await Assert.That(SignInCommandOf(staysBehind)).IsNull();
+        await Assert.That(SignInCommandOf(staysBehind, background)).IsNull();
     }
 
     /// <summary>
@@ -672,25 +483,212 @@ internal sealed partial class RealInstallerTests
     /// <remarks>
     /// <b>Read from what the scheduler stored</b>, so it is the installed hook's
     /// registration that is asserted and not the product's composition of it. The
-    /// arguments are held to <c>--sign-in $(Arg0)</c> here too, since a command
-    /// alone would pass a task that starts the window.
+    /// arguments are held to what the caller expects here too, since a command alone
+    /// would pass a task that starts something else. <i>Corrected 2026-10-09
+    /// (previously held to <c>--sign-in $(Arg0)</c>, the coordinator's)</i>: the
+    /// task starts the background, with the installer's settings as arguments.
     /// </remarks>
     /// <param name="installRoot">The scratch root the test pack was installed into.</param>
+    /// <param name="arguments">The action's arguments the hook should have written.</param>
     /// <returns>The command, or <see langword="null"/>.</returns>
-    private static string? SignInCommandOf(string installRoot)
+    private static string? SignInCommandOf(string installRoot, string arguments)
     {
-        if (ScheduledTasks.DefinitionOf(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot)) is not { } xml)
+        if (StoredTaskOf(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot)) is not { } task)
         {
             return null;
         }
 
-        var task = System.Xml.Linq.XDocument.Parse(xml);
-        var exec = task.Descendants().Single(element => element.Name.LocalName == "Exec");
-        var arguments = exec.Elements().Single(element => element.Name.LocalName == "Arguments").Value;
+        return task.Arguments == arguments
+            ? task.Command
+            : $"<a task whose arguments are '{task.Arguments}'>";
+    }
 
-        return arguments == SignInTask.Arguments
-            ? exec.Elements().Single(element => element.Name.LocalName == "Command").Value
-            : $"<a task whose arguments are '{arguments}'>";
+    /// <summary>The scratch client configurations and the update feed an arm's installer is given.</summary>
+    /// <param name="ClaudeConfig">The directory <c>CLAUDE_CONFIG_DIR</c> names, seeded as onboarded.</param>
+    /// <param name="CodexHome">The directory <c>CODEX_HOME</c> names.</param>
+    /// <param name="UpdateFeed">The empty folder <c>BROWSERAI_UPDATE_FEED</c> names.</param>
+    private sealed record ClientSandbox(string ClaudeConfig, string CodexHome, string UpdateFeed);
+
+    /// <summary>
+    /// What a Task Scheduler definition says about the three things the hooks set: the
+    /// command, its arguments and what the scheduler does with a second start.
+    /// </summary>
+    /// <param name="Command">The action's command.</param>
+    /// <param name="Arguments">The action's arguments, <c>$(Arg0)</c> unexpanded.</param>
+    /// <param name="InstancesPolicy">
+    /// <c>MultipleInstancesPolicy</c>, or <see cref="IgnoreNew"/> when the definition
+    /// leaves it out, which is the scheduler's own default.
+    /// </param>
+    private sealed record StoredTask(string Command, string Arguments, string InstancesPolicy)
+    {
+        /// <summary>The policy under which a start while one runs starts nothing (S a).</summary>
+        public const string IgnoreNew = "IgnoreNew";
+
+        /// <summary>Reads the three out of a definition.</summary>
+        /// <param name="xml">A Task Scheduler 1.2 definition, as stored or as the hook saved it.</param>
+        /// <returns>What it says.</returns>
+        public static StoredTask Parse(string xml)
+        {
+            var task = System.Xml.Linq.XDocument.Parse(xml);
+
+            string? valueOf(string name) =>
+                task.Descendants().FirstOrDefault(element => element.Name.LocalName == name)?.Value;
+
+            return new(valueOf("Command") ?? "<no command>", valueOf("Arguments") ?? "<no arguments>", valueOf("MultipleInstancesPolicy") ?? IgnoreNew);
+        }
+    }
+
+    /// <summary>What the scheduler stored for a task, or <see langword="null"/> when there is no such task.</summary>
+    /// <param name="name">The task's name.</param>
+    /// <returns>The task.</returns>
+    private static StoredTask? StoredTaskOf(string name) =>
+        ScheduledTasks.DefinitionOf(name) is { } xml ? StoredTask.Parse(xml) : null;
+
+    /// <summary>A command and its arguments as one comparable string, the command normalised.</summary>
+    /// <param name="parts">The command, then each argument.</param>
+    /// <returns>One line each.</returns>
+    private static string Spelled(IReadOnlyList<string> parts) =>
+        string.Join("\n", parts.Select((part, at) => at is 0 && Path.IsPathRooted(part) ? Normalised(part) : part));
+
+    /// <summary>
+    /// The command and arguments a scratch Claude Code configuration registers
+    /// BrowserAI with, at user scope, or <see langword="null"/> when it registers none.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read as a file and parsed</b>, the way the clearance snapshot reads the real
+    /// one (Q281 a): asking the client would start it.
+    /// </remarks>
+    /// <param name="configDirectory">The directory <c>CLAUDE_CONFIG_DIR</c> named.</param>
+    /// <returns>The entry, <see cref="Spelled"/>.</returns>
+    private static string? ClaudeEntryIn(string configDirectory)
+    {
+        var file = Path.Combine(configDirectory, OnboardedClientConfig.FileName);
+
+        if (!File.Exists(file))
+        {
+            return null;
+        }
+
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
+
+        if (!document.RootElement.TryGetProperty("mcpServers", out var servers)
+            || !servers.TryGetProperty(McpRegistrar.ServerName, out var entry))
+        {
+            return null;
+        }
+
+        var command = entry.TryGetProperty("command", out var named) ? named.GetString() : null;
+        List<string> arguments = entry.TryGetProperty("args", out var listed) && listed.ValueKind is System.Text.Json.JsonValueKind.Array
+            ? [.. listed.EnumerateArray().Select(argument => argument.GetString() ?? "<null>")]
+            : [];
+
+        return Spelled([command ?? "<no command>", .. arguments]);
+    }
+
+    /// <summary>
+    /// The command and arguments a scratch Codex configuration registers BrowserAI
+    /// with, or <see langword="null"/> when it registers none.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read as text</b>, the <c>[mcp_servers.browserai]</c> table alone, as the
+    /// clearance snapshot reads the real one (Q292 a). Codex writes a path as a TOML
+    /// literal string, in single quotes, and may write any other value as a basic one,
+    /// so both are read.
+    /// </remarks>
+    /// <param name="codexHome">The directory <c>CODEX_HOME</c> named.</param>
+    /// <returns>The entry, <see cref="Spelled"/>.</returns>
+    private static string? CodexEntryIn(string codexHome)
+    {
+        var file = Path.Combine(codexHome, "config.toml");
+
+        if (!File.Exists(file))
+        {
+            return null;
+        }
+
+        var text = File.ReadAllText(file);
+        var header = Regex.Match(text, $@"(?m)^[ \t]*\[mcp_servers\.{McpRegistrar.ServerName}\][ \t]*\r?$");
+
+        if (!header.Success)
+        {
+            return null;
+        }
+
+        var rest = text[(header.Index + header.Length)..];
+        var next = Regex.Match(rest, @"(?m)^[ \t]*\[");
+        var table = next.Success ? rest[..next.Index] : rest;
+
+        var command = TomlCommand().Match(table) is { Success: true } named ? TomlStrings(named.Groups["value"].Value).FirstOrDefault() : null;
+        var arguments = TomlArguments().Match(table) is { Success: true } listed ? TomlStrings(listed.Groups["items"].Value) : [];
+
+        return Spelled([command ?? "<no command>", .. arguments]);
+    }
+
+    /// <summary>Every TOML string in a value, basic or literal, in order.</summary>
+    /// <param name="value">The value's text.</param>
+    /// <returns>The strings.</returns>
+    private static List<string> TomlStrings(string value) =>
+        [.. TomlString().Matches(value).Select(match => match.Groups["basic"].Success
+            ? Regex.Unescape(match.Groups["basic"].Value)
+            : match.Groups["literal"].Value)];
+
+    [GeneratedRegex(@"(?m)^[ \t]*command[ \t]*=[ \t]*(?<value>.+)$")]
+    private static partial Regex TomlCommand();
+
+    [GeneratedRegex(@"(?ms)^[ \t]*args[ \t]*=[ \t]*\[(?<items>.*?)\]")]
+    private static partial Regex TomlArguments();
+
+    [GeneratedRegex(@"""(?<basic>(?:[^""\\]|\\.)*)""|'(?<literal>[^']*)'")]
+    private static partial Regex TomlString();
+
+    /// <summary>The application id an install's processes run under, out of its own manifest.</summary>
+    /// <remarks>
+    /// <c>vpk</c> writes <c>shortcutAumid</c> into the package's manifest and
+    /// <c>VelopackApp.Run()</c> sets it on every installed process, the hooks
+    /// included, which is the id the toasts' activator is derived from
+    /// (re-verification row 156). Read and never composed, so a change in how
+    /// <c>vpk</c> names it moves this with it.
+    /// </remarks>
+    /// <param name="installRoot">The install root.</param>
+    /// <returns>The id.</returns>
+    private static string AppUserModelIdOf(string installRoot)
+    {
+        var manifest = System.Xml.Linq.XDocument.Load(Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName, "sq.version"));
+
+        return manifest.Descendants().FirstOrDefault(element => element.Name.LocalName == "shortcutAumid")?.Value
+            ?? throw new InvalidOperationException($"The manifest under '{installRoot}' names no shortcutAumid, so the toasts' activator cannot be found.");
+    }
+
+    /// <summary>
+    /// What the user's own classes register as the toasts' activator for an
+    /// application id, or <see langword="null"/> when neither half is there.
+    /// </summary>
+    /// <param name="aumid">The application id.</param>
+    /// <returns>The class the id names, the class derived from it, and what COM starts for it, upper-cased.</returns>
+    private static string? ToastActivatorOf(string aumid)
+    {
+        var activator = ToastActivatorRegistration.ClassFor(aumid).ToString("B").ToUpperInvariant();
+
+        using var server = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"Software\Classes\CLSID\{activator}\LocalServer32");
+        using var id = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"Software\Classes\AppUserModelId\{aumid}");
+
+        var command = server?.GetValue(string.Empty) as string;
+        var named = id?.GetValue(ToastActivatorRegistration.CustomActivatorValue) as string;
+
+        return command is null && named is null
+            ? null
+            : $"{named ?? "<no CustomActivator>"} -> {activator}: {command ?? "<no LocalServer32>"}".ToUpperInvariant();
+    }
+
+    /// <summary>What <see cref="ToastActivatorOf"/> reads for an install's own activator.</summary>
+    /// <param name="aumid">The application id.</param>
+    /// <param name="app">The one executable the activator starts.</param>
+    /// <returns>The reading.</returns>
+    private static string ExpectedToastActivator(string aumid, string app)
+    {
+        var activator = ToastActivatorRegistration.ClassFor(aumid).ToString("B").ToUpperInvariant();
+
+        return $"{activator} -> {activator}: {ToastActivatorRegistration.CommandFor(app)}".ToUpperInvariant();
     }
 
     /// <summary>
@@ -842,13 +840,15 @@ internal sealed partial class RealInstallerTests
     /// <param name="dataRoot">The scratch data root.</param>
     /// <param name="logs">Where Velopack's own logs go.</param>
     /// <param name="planted">Each planted path and the SHA-256 it held.</param>
+    /// <param name="sandbox">The scratch client configurations and update feed the installer was given.</param>
     /// <returns>The assertion task.</returns>
     private static async Task InstallTwiceAndUninstall(
         string setup,
         ScratchDirectory installRoot,
         ScratchDirectory dataRoot,
         ScratchDirectory logs,
-        IReadOnlyList<(string Path, string Sha256)> planted)
+        IReadOnlyList<(string Path, string Sha256)> planted,
+        ClientSandbox sandbox)
     {
         // ⚠️ TWICE. The first install creates a non-empty root; the second one is
         // the one that renames it aside and deletes it.
@@ -939,6 +939,55 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(PathEntriesNaming(entry)).IsEqualTo(1);
 
+        // ⚠️ WHAT THE HOOKS PUT ON THE MACHINE FOR THE ONE BACKGROUND -- S a, D7 a and
+        // T, 2026-10-09. Read first and held together, so that one run names every
+        // piece that is wrong.
+        //
+        // The task: named for the suite's pack id and this install root, starting the
+        // one executable as the background, never a second copy, with the two settings
+        // the hook read once out of the installer's environment written into its action
+        // as arguments, this arm's scratch data root and its empty update feed. Read
+        // back from what the scheduler stored, so it is the hook's registration and
+        // not the product's composition of it that is held; and none under the
+        // shipping id for this root.
+        //
+        // The definition a person's start registers a missing task from, under the
+        // install root and outside current\: the arguments the hook read exist nowhere
+        // else once the installer has gone.
+        //
+        // The clients, in their sandboxed configurations: each names the one
+        // executable as a relay, with the data root the installer named, read out of
+        // the files the real clients wrote and not out of the record.
+        //
+        // The toasts' activator: the class derived from the install's own application
+        // id, under the user's own classes, starting the one executable.
+        var app = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+        var taskName = SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot.Path);
+        var action = SignInTask.ArgumentsFor(dataRoot.Path, sandbox.UpdateFeed);
+        var task = StoredTaskOf(taskName);
+        var saved = Path.Combine(installRoot.Path, SignInTask.SavedDefinitionFileName);
+        var kept = File.Exists(saved) ? StoredTask.Parse(await File.ReadAllTextAsync(saved)) : null;
+        var aumid = AppUserModelIdOf(installRoot.Path);
+
+        IReadOnlyList<string> relay = [app, RegistrationTarget.McpArgument, SignInTask.DataRootArgument, dataRoot.Path];
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(task?.Command is { } command ? Normalised(command) : "<no task>").IsEqualTo(Normalised(app));
+            await Assert.That(task?.Arguments).IsEqualTo(action);
+            await Assert.That(task?.InstancesPolicy).IsEqualTo(StoredTask.IgnoreNew);
+            await Assert.That(ScheduledTasks.DefinitionOf(SignInTask.NameFor(ReleaseLayout.PackId, installRoot.Path))).IsNull();
+
+            await Assert.That(kept?.Command is { } savedCommand ? Normalised(savedCommand) : "<no saved definition>").IsEqualTo(Normalised(app));
+            await Assert.That(kept?.Arguments).IsEqualTo(action);
+            await Assert.That(kept?.InstancesPolicy).IsEqualTo(StoredTask.IgnoreNew);
+
+            await Assert.That(ClaudeEntryIn(sandbox.ClaudeConfig)).IsEqualTo(Spelled(relay));
+            await Assert.That(CodexEntryIn(sandbox.CodexHome)).IsEqualTo(Spelled(relay));
+
+            await Assert.That(ToastActivatorOf(aumid)).IsEqualTo(ExpectedToastActivator(aumid, app));
+        }
+
         // ---- And uninstall, in the same sandbox --------------------------------
         var update = Path.Combine(installRoot.Path, "Update.exe");
 
@@ -958,6 +1007,18 @@ internal sealed partial class RealInstallerTests
 
         // And the uninstall hook took this install's folder off the PATH.
         await Assert.That(PathEntriesNaming(entry)).IsEqualTo(0);
+
+        // ⚠️ AND EVERYTHING ELSE THE INSTALL PUT ON THE MACHINE -- 2026-10-09: the task,
+        // the definition beside the install, both clients' registrations and the
+        // toasts' activator.
+        using (Assert.Multiple())
+        {
+            await Assert.That(ScheduledTasks.DefinitionOf(taskName)).IsNull();
+            await Assert.That(File.Exists(saved)).IsFalse();
+            await Assert.That(ClaudeEntryIn(sandbox.ClaudeConfig)).IsNull();
+            await Assert.That(CodexEntryIn(sandbox.CodexHome)).IsNull();
+            await Assert.That(ToastActivatorOf(aumid)).IsNull();
+        }
     }
 
     /// <summary>How many entries of the real user PATH name a folder.</summary>
@@ -994,9 +1055,14 @@ internal sealed partial class RealInstallerTests
     /// <returns>The reclaim.</returns>
     private static async Task ReclaimAsync(string installRoot)
     {
+        // THE INSTALL'S OWN UPDATE.EXE FIRST -- 2026-10-09. An arm that put a stand-in
+        // at its path and died before putting it back would otherwise run the
+        // stand-in, a copy of cmd.exe, as the uninstaller; one that cannot be put back
+        // is not run at all, and the steps below take back what they can by name.
+        var theInstallersOwn = PutTheUpdaterBack(installRoot);
         var update = Path.Combine(installRoot, "Update.exe");
 
-        if (File.Exists(update))
+        if (theInstallersOwn && File.Exists(update))
         {
             try
             {
@@ -1059,6 +1125,14 @@ internal sealed partial class RealInstallerTests
 #pragma warning restore CA1031
         {
         }
+
+        // ⚠️ NOT THE TOASTS' ACTIVATOR, said here because it is the one thing an
+        // install leaves that this reclaim cannot take back. The install hook
+        // registers a class under the user's own classes for the suite pack's
+        // application id, and the uninstall above removes it; but no test may write
+        // under those classes (tests/BrowserAI.Tests/BannedSymbols.txt bans
+        // ToastActivatorRegistration.UserClasses), so a run whose uninstall never ran
+        // leaves that class behind, and no clearance reading looks there.
     }
 
     /// <summary>

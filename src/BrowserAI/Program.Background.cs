@@ -59,13 +59,15 @@ internal static partial class Program
     /// <returns>The exit code.</returns>
     private static int RunTheBackground(string[] args, LocalAppDataPaths paths, ProcessLog log, ILogger logger)
     {
+        const int Refused = 1;
+
         var installRoot = InstallLocation.RootAppDir;
         var pipeName = ValueOf(args, BackgroundPipe.PipeArgument) is { Length: > 0 } named
             ? named
             : BackgroundPipe.NameFor(installRoot, paths.RootAppDir);
         var recordPath = BackgroundRecord.PathFor(paths.RootAppDir, pipeName);
-        var startedBy = ValueOf(args, StartedByArgument);
         var clock = TimeProvider.System;
+        var backgroundLogger = log.Factory.CreateLogger("BrowserAI.Background");
 
         var scope = InstallRootScope.Judge(paths.RootAppDir, installRoot);
 
@@ -77,28 +79,22 @@ internal static partial class Program
         if (!scope.MayServe)
         {
             // R: a background that cannot serve is a crash every relay names, with the
-            // record written first so that it reads as one and not as a background that
-            // never started. ⚠️ Corrected 2026-10-09: until then the refusal returned
-            // before any record was written, so a relay found none, held each call for
-            // its whole bound and then said that no background was running, where the
-            // crash text sends the person to the log that holds this refusal at once.
+            // record written before it exits so that it reads as one and not as a
+            // background that never started. ⚠️ Corrected 2026-10-09 (previously this
+            // comment said so and the branch returned without writing anything): a
+            // relay then found no record, held every call for the whole hold bound and
+            // answered that no background was running, which sends the person to the
+            // Start Menu for a start that fails the same way. Held through the real
+            // Task Scheduler by
+            // RealInstallerTests.ABackgroundWhoseDataRootIsRefusedIsARecordedCrashThatEveryCallIsToldAtOnce,
+            // and over the published background by
+            // InstallRootScopeTests.ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog.
             StartupLog.AppRootIsShared(logger, scope.Refusal!);
-
-            try
-            {
-                _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-            {
-                // The refusal stands without its record: a relay then holds its calls
-                // and says that no background runs, and the log above still says why.
-                StartupLog.Failed(logger, failure);
-            }
-
-            return 1;
+            RecordTheRefusedStart(recordPath, Refused, clock, backgroundLogger);
+            return Refused;
         }
 
-        var backgroundLogger = log.Factory.CreateLogger("BrowserAI.Background");
+        var startedBy = ValueOf(args, StartedByArgument);
 
         var roster = new RelayRoster(clock);
         var verbs = new BackgroundVerbs(backgroundLogger);
@@ -171,6 +167,45 @@ internal static partial class Program
         {
             run.Dispose();
             InstanceDirectory.Delete(instance, logger);
+        }
+    }
+
+    /// <summary>
+    /// Writes the record of a start the data root's judgement refused, as the crash it
+    /// is under R: started, and gone with the exit code it is about to return.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The exit code is written by the process itself</b>, because no relay holds a
+    /// handle on a background that never opened its pipe, and a record with no code
+    /// would make every relay say "exit code unknown" for a code this process knows.
+    /// </para>
+    /// <para>
+    /// <b>Never over a background that runs</b>: a record naming another live process
+    /// is that process's, and it is left as it is.
+    /// </para>
+    /// </remarks>
+    /// <param name="recordPath">The record of the pipe this start was meant to serve.</param>
+    /// <param name="exitCode">The exit code this process returns.</param>
+    /// <param name="clock">The clock.</param>
+    /// <param name="logger">The background's logger.</param>
+    private static void RecordTheRefusedStart(string recordPath, int exitCode, TimeProvider clock, ILogger logger)
+    {
+        if (BackgroundRecord.Read(recordPath) is { } other
+            && other.ProcessId != Environment.ProcessId
+            && ProcessLiveness.IsAlive(other.ProcessId, other.CreatedFileTime))
+        {
+            return;
+        }
+
+        try
+        {
+            var started = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
+            _ = BackgroundRecord.Exited(recordPath, started.ProcessId, started.CreatedFileTime, exitCode, clock.GetUtcNow());
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            BackgroundLog.RefusalNotRecorded(logger, recordPath, failure);
         }
     }
 
@@ -342,4 +377,7 @@ internal static partial class BackgroundLog
 
     [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "The background's record at {Record} could not be written ({Why}), so it serves without one: if it crashes, relays will name the task's state and not the crash.")]
     public static partial void RecordNotWritten(ILogger logger, string record, string why);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Error, Message = "The background's record at {Path} could not be written, so a relay does not know that this start was refused and holds its calls as though no background had started.")]
+    public static partial void RefusalNotRecorded(ILogger logger, string path, Exception failure);
 }
