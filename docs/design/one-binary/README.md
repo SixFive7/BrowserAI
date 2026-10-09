@@ -1126,7 +1126,9 @@ while other agents run.").*
 parallel; it starts and keeps running on battery; no execution time limit (`PT0S`);
 normal priority; `InteractiveToken` at least privilege; no idle condition. **Under S a
 the task never runs a second copy while one runs**, which the step-0 brief named as
-`IgnoreNew`. What `Run` returns under it is not documented; step 0 measured it with
+`IgnoreNew`. *Corrected 2026-10-09 by addition: the opening sentence of this paragraph is the
+definition as it was read before S a was built; since step 3 `SignInTask.DefinitionFor` writes
+`IgnoreNew`, which `SignInTaskTests` holds.* What `Run` returns under it is not documented; step 0 measured it with
 stand-ins: twenty requests at the same moment started one instance, 10 of 10 rounds,
 and none while one ran, 10 of 10, every requester getting `S_OK` and a fresh instance
 id, so only the returned running-task object tells the request that started it from
@@ -1219,7 +1221,7 @@ action and into the registration's arguments, as plain arguments and not inside
 | Today | Read by | Under the design |
 |---|---|---|
 | `BROWSERAI_ROOT`, the data root | `LocalAppDataPaths.Overridden`, in both programs and in the hooks | `--data-root` on the background, from the task's action, and on the relay, from the registration's arguments; part of the background's pipe name |
-| `BROWSERAI_UPDATE_FEED` | `UpdateConfiguration.Resolve` | `--update-feed` on the background, from the task's action; his install's local folder (H2 a) reaches the background this way, fixed at install time |
+| `BROWSERAI_UPDATE_FEED` | `UpdateConfiguration.Resolve` | `--update-feed` on the background, from the task's action; his install's local folder (H2 a) reaches the background this way, fixed at install time. *Corrected 2026-10-09 by addition: the code names the argument `--update-source` (`UpdateSource.Argument`), and since step 5 an update's hook, which has no installer's environment, reads it back from the definition the install saved.* |
 | `VELOPACK_FIRSTRUN`, `VELOPACK_RESTART` | the app's `Main` | unchanged: Velopack's own way of telling the main program why it was started. A restart after a failed apply sets `VELOPACK_RESTART` exactly as one after a success does (the step-0 research), so the after-update mode tells the two apart by the version it carries |
 | The coordinator's whole environment, copied into the host it starts | `SessionHostKeeper.EnsureStarted` | deleted with the keeper |
 | What a session's Playwright inherits: `PATH`, `TEMP`, the proxy and CA names, `PWTEST_SERVER_REGISTRY` | `ChildEnvironment`, from the server's own environment | the same mechanism, now fed by the background's environment, which the Task Scheduler builds for the user (weakest point 12) |

@@ -169,8 +169,11 @@ internal static partial class PersonStart
 
         if (run.Change is not TaskChange.Started)
         {
-            // D12 b: a disabled task stays disabled, and the sentence says how to
-            // enable it; any other refusal carries the Task Scheduler's own HRESULT.
+            // D12 b: a disabled task stays disabled. This log line carries what the
+            // Task Scheduler said, its HRESULT included; the sentence that says how to
+            // enable the task is the relay's (RelayErrors.NotRunning), which every call
+            // meets. Corrected 2026-10-09 (previously "the sentence says how to enable
+            // it"), found by lane ARCH's helper T1.
             PersonStartLog.TaskNotRun(logger, run.Change, run.Detail);
             return (PersonStartOutcome.NotShown, null);
         }
