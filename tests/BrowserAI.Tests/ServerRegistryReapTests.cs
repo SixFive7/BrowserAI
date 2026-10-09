@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using BrowserAI.Coordination;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 
@@ -155,8 +156,12 @@ internal sealed class ServerRegistryReapTests
 
         // The record, read out of the machine's process log and scoped to this
         // slice's own identity -- never the whole file, which every BrowserAI on
-        // this machine appends to.
-        var records = ProcessLogRecords.For(client.ProcessId, ProcessIdentity.CreationTimeOf(client.ProcessId));
+        // this machine appends to. ⚠️ The background's since 2026-10-09
+        // (previously the relay's own pid, the process the client started): the
+        // background holds the sessions and writes their records (S a).
+        var background = client.BackgroundProcessId
+            ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
+        var records = ProcessLogRecords.For(background, ProcessIdentity.CreationTimeOf(background));
         var reaper = ReaperIdentity.Match(records);
 
         await Assert.That(reaper.Success)
@@ -246,6 +251,15 @@ internal sealed class ServerRegistryReapTests
     /// end of input is the shutdown a client asks for; nothing here kills
     /// anything.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The background's stop since 2026-10-09</b> (previously the end of the
+    /// server's input, which was its shutdown). Since S a a client's end of input ends
+    /// its relay and leaves the session kept in the background, so no browser closes
+    /// and nothing is reaped then. The shutdown that closes every browser first is the
+    /// background's, and the one a caller can ask for is through its pipe, which is
+    /// how the uninstall hook stops it (<c>BackgroundStop</c>); its records are the
+    /// background's.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -272,10 +286,13 @@ internal sealed class ServerRegistryReapTests
 
         await OpenWithABrowserAsync(client, session, "the session whose browser a shutdown closes first");
 
-        var pid = client.ProcessId;
+        var pid = client.BackgroundProcessId
+            ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
         var created = ProcessIdentity.CreationTimeOf(pid);
 
-        await Assert.That(await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        var (outcome, detail) = BackgroundStop.AskAndWait(client.BackgroundPipe!, client.BackgroundRecordPath!, BackgroundStop.Bound);
+
+        await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
 
         var records = ProcessLogRecords.For(pid, created);
 

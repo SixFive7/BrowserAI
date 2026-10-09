@@ -51,11 +51,17 @@ namespace BrowserAI.Tests;
 /// names its own directory and no other's, and each session's <c>browserai.lock</c>
 /// names the pid that opened it. A shared static, a path collision or a
 /// cross-wired session shows up here as one directory claimed twice.
+/// ⚠️ <i>Since 2026-10-09 the lock names the one background for every session,
+/// and a session belongs to exactly one relay: the one whose answer names it.</i>
 /// </description></item>
 /// <item><description>
 /// <b>The jobs are pairwise disjoint.</b> No pid is in two BrowserAIs' job
 /// objects. This is what containment <i>means</i> at scale: one client's
 /// teardown must not be able to take another client's browser with it.
+/// ⚠️ <i>Corrected 2026-10-09 (previously the whole claim): a relay starts
+/// nothing, so the job a client holds holds its relay alone, and every session's
+/// tree is in the background's job, which holds a Playwright per open session and
+/// no other.</i>
 /// </description></item>
 /// <item><description>
 /// <b>Nothing survives teardown.</b> Every pid recorded while the browsers were
@@ -125,6 +131,9 @@ internal sealed partial class SaturationTests
     /// of them opens a real session with a real <c>node.exe</c> behind it, so
     /// this is a hundred BrowserAIs and a hundred children contending for one
     /// process log, one session index, one instance root and one sweep mutex.
+    /// ⚠️ <i>Since 2026-10-09 the hundred are relays, and the hundred sessions and
+    /// their children are one background's (S a): the contention moved from a
+    /// hundred processes' starts into one process's pipe, session table and log.</i>
     /// Measured 2026-08-17 on a 32-core / 128 GB machine
     /// ([kb](../../kb/windows/processes.md#saturation-the-100-process-design-point)).
     /// </remarks>
@@ -192,9 +201,22 @@ internal sealed partial class SaturationTests
     private static readonly TimeSpan Conversation = TestDefaults.BrowserHang;
 
     /// <summary>
-    /// A hundred BrowserAI processes, two dozen browsers, one process log, and
-    /// nothing crossed or leaked.
+    /// A hundred relays, one background holding a hundred sessions, eight browsers,
+    /// one process log, and nothing crossed or leaked.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A hundred relays and one background since 2026-10-09</b> (previously a
+    /// hundred whole servers, each holding its own session in its own job). S a, the
+    /// maintainer's words of 2026-10-08 verbatim: <i>"s a"</i>; and P a, one relay per
+    /// client plus that background. The design point is now what the design says
+    /// runs: a relay per client and every session in one process, so the background
+    /// carries a hundred sessions, a hundred Playwrights and the browser subset at the
+    /// same moment, and a hundred relays reach it at once. The claims move with it,
+    /// each said where it is asserted: a session's lock names the background; a
+    /// relay's job holds the relay alone, because a relay starts nothing; and the
+    /// census is taken with every session open, between the opening half of every
+    /// conversation and the closing half.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     // No key: in TUnit that means beside nothing at all. The assertion is about
@@ -212,16 +234,26 @@ internal sealed partial class SaturationTests
         var logsBefore = LogFilesNow();
         var started = DateTimeOffset.UtcNow;
 
-        var peers = Enumerable.Range(0, Processes).Select(index => new Peer(index, scratch.Path)).ToList();
+        // ⚠️ THE ONE BACKGROUND, in a job of this test's own, the way the Task
+        // Scheduler's job holds it in production, on a pipe nothing else serves.
+        using var backgroundJob = JobObject.CreateKillOnClose();
+
+        var environment = PublishedSlice.InheritedEnvironment();
+        var pipe = PublishedBackground.NewPipeName();
+        var record = PublishedBackground.RecordFor(environment, [], pipe);
+
+        using var background = PublishedBackground.Start(backgroundJob, scratch.Path, environment, pipe, []);
+
+        var peers = Enumerable.Range(0, Processes).Select(index => new Peer(index, scratch.Path, pipe)).ToList();
 
         try
         {
             // Everything at once. Task.WhenAll and not a throttle, because a
             // throttle would be this test deciding the machine cannot take what
             // it is named for.
-            var reports = await Task.WhenAll(peers.Select(peer => peer.RunAsync()));
+            var reports = await Task.WhenAll(peers.Select(peer => peer.OpenAsync()));
 
-            // ---- 1. Every process answered ---------------------------------
+            // ---- 1. Every relay answered -----------------------------------
 
             var broken = reports.Where(report => report.Failure is not null)
                 .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}: {report.Failure}")
@@ -230,7 +262,7 @@ internal sealed partial class SaturationTests
             await Assert.That(string.Join(Environment.NewLine + Environment.NewLine, broken)).IsEmpty();
             await Assert.That(reports.Length).IsEqualTo(Processes);
 
-            // ---- 2. Every session belongs to exactly one process ------------
+            // ---- 2. Every session belongs to exactly one relay, and is the background's
 
             // The answer a peer got names its own directory. Asserted as a set
             // and not per peer, so a cross-wiring shows up as a duplicate
@@ -251,73 +283,75 @@ internal sealed partial class SaturationTests
             await Assert.That(string.Join(Environment.NewLine, mixedUp)).IsEmpty();
 
             // And on disk: the lock in each session directory names the process
-            // that opened it, which is the product's own record and not the
-            // harness's bookkeeping.
+            // that holds it, which is the product's own record and not the
+            // harness's bookkeeping. ⚠️ The background, for every one of them,
+            // since 2026-10-09 (previously "names the process that opened it", each
+            // peer's own server): a relay holds no session.
             var misheld = reports
-                .Where(report => report.LockHolder != report.ProcessId)
-                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}: {report.Session} records holder pid {report.LockHolder.ToString(CultureInfo.InvariantCulture)}, but the process that opened it is {report.ProcessId.ToString(CultureInfo.InvariantCulture)}")
+                .Where(report => report.LockHolder != background.Id)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}: {report.Session} records holder pid {report.LockHolder.ToString(CultureInfo.InvariantCulture)}, but the background that holds every session is {background.Id.ToString(CultureInfo.InvariantCulture)}")
                 .ToList();
 
             await Assert.That(string.Join(Environment.NewLine, misheld)).IsEmpty();
 
-            // ---- 3. The jobs are pairwise disjoint --------------------------
+            // ---- 3. Containment: a relay holds nothing, the background everything
 
-            // ⚠️ Keyed on (pid, creation time) and never on the pid alone, and
-            // this test is where that rule earns its keep and not where it is
-            // recited. The first version compared pids: it reported TWELVE
-            // processes shared between jobs on its very first run, every one of
-            // them a pid Windows had recycled between two peers reading their
-            // job membership. Twenty-four browser trees closing at once frees
-            // roughly two hundred pids in a second, so at this scale reuse is
-            // not the unlucky case -- it is the normal one, and a pid on its own
-            // is not an identity.
-            var owners = new Dictionary<(int ProcessId, long Created), int>();
-            var shared = new List<string>();
-
-            foreach (var report in reports)
-            {
-                foreach (var member in report.JobMembers)
-                {
-                    var identity = (member.ProcessId, member.CreatedFileTime);
-
-                    if (owners.TryGetValue(identity, out var first))
-                    {
-                        shared.Add($"pid {member.ProcessId.ToString(CultureInfo.InvariantCulture)} created at {member.CreatedFileTime.ToString(CultureInfo.InvariantCulture)} ({member.ImagePath}) is in the jobs of peers {first.ToString(CultureInfo.InvariantCulture)} and {report.Index.ToString(CultureInfo.InvariantCulture)}");
-                        continue;
-                    }
-
-                    owners[identity] = report.Index;
-                }
-            }
-
-            await Assert.That(string.Join(Environment.NewLine, shared)).IsEmpty();
-
-            // A job that held only its own BrowserAI would satisfy disjointness
-            // vacuously: every peer opened a session, so every peer has a node
-            // child in its job as well.
-            var thin = reports.Where(report => report.JobMembers.Count < 2)
-                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} had {report.JobMembers.Count.ToString(CultureInfo.InvariantCulture)} process(es) in its job")
+            // ⚠️ Corrected 2026-10-09 (previously "The jobs are pairwise disjoint", no
+            // pid in two BrowserAIs' jobs, with at least a node child in each). A
+            // relay starts nothing (S a), so the job its client holds holds the relay
+            // alone, and one client's teardown cannot reach a browser because no
+            // client's job has one. Keyed on (pid, creation time), never on the pid
+            // alone: at this scale a recycled pid is the normal case.
+            var holding = reports
+                .Where(report => report.JobMembers.Count is not 1 || report.JobMembers[0].ProcessId != report.ProcessId)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}'s job held {string.Join(", ", report.JobMembers.Select(member => $"pid {member.ProcessId.ToString(CultureInfo.InvariantCulture)} ({member.ImagePath})"))}, where its relay, pid {report.ProcessId.ToString(CultureInfo.InvariantCulture)}, is the only process it may hold")
                 .ToList();
 
-            await Assert.That(string.Join(Environment.NewLine, thin)).IsEmpty();
+            await Assert.That(string.Join(Environment.NewLine, holding)).IsEmpty();
 
-            // The browser half, which is what makes disjointness a containment
-            // claim and not an arithmetic one: a real browser tree really was
-            // up inside each of the peers that launched one.
-            var withoutABrowser = reports.Where(report => report.LaunchesABrowser && report.BrowsersInJob is 0)
-                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} navigated and had no process running out of the browsers root in its job")
+            // The census, with every session open at once: the background's job holds
+            // a Playwright per open session and no other (D5 a), so a session that
+            // shares a child, or a child for nobody, is a count that is not a hundred.
+            var census = Observe(backgroundJob.ProcessIds());
+            var cli = new BrowserAI.Runtime.PayloadLayout(Path.Combine(PublishedSlice.Directory, "payload")).PlaywrightMcpCli;
+            var playwrights = census.Count(member => member.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true
+                && ProcessCommandLine.Of(member.ProcessId)?.Contains(cli, StringComparison.OrdinalIgnoreCase) is true);
+
+            await Assert.That(playwrights).IsEqualTo(Processes)
+                .Because($"{Processes.ToString(CultureInfo.InvariantCulture)} sessions are open in one background, and its job held {census.Count.ToString(CultureInfo.InvariantCulture)} process(es)");
+
+            // The browser half, which is what makes containment a claim about real
+            // trees and not arithmetic: each peer that launched a browser has one up
+            // in the background's job, started on its own session's profile.
+            var browsers = census
+                .Where(member => member.ImagePath?.StartsWith(BrowserAiPaths.BrowsersDirectory, StringComparison.OrdinalIgnoreCase) is true)
+                .Select(member => ProcessCommandLine.Of(member.ProcessId) ?? string.Empty)
+                .ToList();
+
+            var withoutABrowser = reports
+                .Where(report => report.LaunchesABrowser
+                    && !browsers.Any(line => line.Contains(report.Session + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} navigated and no process in the background's job runs out of the browsers root on its session's profile")
                 .ToList();
 
             await Assert.That(string.Join(Environment.NewLine, withoutABrowser)).IsEmpty();
 
+            // ---- The closing half of every conversation, all at once --------
+
+            var closed = await Task.WhenAll(peers.Select(peer => peer.DestroyAsync()));
+
+            await Assert.That(string.Join(Environment.NewLine + Environment.NewLine, closed.Where(failure => failure is not null))).IsEmpty();
+
             // ---- 4. Nothing survives teardown ------------------------------
 
-            var recorded = reports.SelectMany(report => report.JobMembers).ToList();
+            var recorded = reports.SelectMany(report => report.JobMembers).Concat(census).ToList();
 
             foreach (var peer in peers)
             {
                 await peer.DisposeAsync();
             }
+
+            backgroundJob.Dispose();
 
             var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
 
@@ -342,8 +376,9 @@ internal sealed partial class SaturationTests
             //
             // Read before the torn check and not after it because both are
             // now scoped by it, which is the same rule applied to the same file
-            // twice.
-            var ours = new HashSet<int>(reports.Select(report => report.ProcessId));
+            // twice. The background is one of this run's processes since
+            // 2026-10-09, and the one that writes for every session.
+            var ours = new HashSet<int>(reports.Select(report => report.ProcessId)) { background.Id };
 
             var torn = TornRecordsThisRunWasPartyTo(lines, ours);
 
@@ -362,14 +397,19 @@ internal sealed partial class SaturationTests
                 && ours.Contains(pid));
 
             await Assert.That(written).IsGreaterThanOrEqualTo(Processes)
-                .Because($"{ours.Count.ToString(CultureInfo.InvariantCulture)} peers ran and the shared log holds {lines.Count.ToString(CultureInfo.InvariantCulture)} line(s) across {LogFilesNow().Count.ToString(CultureInfo.InvariantCulture)} file(s)");
+                .Because($"{ours.Count.ToString(CultureInfo.InvariantCulture)} processes ran and the shared log holds {lines.Count.ToString(CultureInfo.InvariantCulture)} line(s) across {LogFilesNow().Count.ToString(CultureInfo.InvariantCulture)} file(s)");
 
-            // Every peer really did write into it. Without this the check above
-            // passes against a log none of them reached.
+            // Every relay, and the background, really did write into it. Without
+            // this the check above passes against a log none of them reached.
             var missing = reports
                 .Where(report => !pids.Contains(report.ProcessId))
                 .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} (pid {report.ProcessId.ToString(CultureInfo.InvariantCulture)}) wrote no record into the shared process log")
                 .ToList();
+
+            if (!pids.Contains(background.Id))
+            {
+                missing.Add($"the background (pid {background.Id.ToString(CultureInfo.InvariantCulture)}) wrote no record into the shared process log");
+            }
 
             await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
@@ -388,7 +428,18 @@ internal sealed partial class SaturationTests
                 await peer.DisposeAsync();
             }
 
-            ReclaimOurOwnBookkeeping([.. peers.Select(peer => peer.ProcessId).Where(id => id is not 0)]);
+            backgroundJob.Dispose();
+
+            ReclaimOurOwnBookkeeping([.. peers.Select(peer => peer.ProcessId).Where(id => id is not 0), background.Id]);
+
+            try
+            {
+                File.Delete(record);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // Left for the next run: a stale record names a pid that is gone.
+            }
         }
     }
 
@@ -843,7 +894,7 @@ internal sealed partial class SaturationTests
         }
     }
 
-    /// <summary>One process in the job of one peer, with the identity that makes a pid mean something.</summary>
+    /// <summary>One process in a job, with the identity that makes a pid mean something.</summary>
     /// <param name="ProcessId">The pid.</param>
     /// <param name="CreatedFileTime">Its creation time. Without this a recycled pid reads as a survivor.</param>
     /// <param name="ImagePath">Its image, for the failure message.</param>
@@ -854,6 +905,7 @@ internal sealed partial class SaturationTests
     {
         public required int Index { get; init; }
 
+        /// <summary>The peer's relay.</summary>
         public required int ProcessId { get; init; }
 
         public required string Session { get; init; }
@@ -864,17 +916,20 @@ internal sealed partial class SaturationTests
 
         public int LockHolder { get; init; }
 
+        /// <summary>Every process in the job the peer's client holds, which is the relay's.</summary>
         public List<JobMember> JobMembers { get; init; } = [];
-
-        public int BrowsersInJob { get; init; }
 
         public string? Failure { get; init; }
     }
 
     /// <summary>
-    /// One BrowserAI process, its session, and -- for some of them -- its browser.
+    /// One client: its relay, its session in the one background, and -- for some of
+    /// them -- its browser.
     /// </summary>
-    private sealed class Peer(int index, string root) : IAsyncDisposable
+    /// <param name="index">Which peer.</param>
+    /// <param name="root">The scratch tree every peer's home is under.</param>
+    /// <param name="pipe">The one background's pipe.</param>
+    private sealed class Peer(int index, string root, string pipe) : IAsyncDisposable
     {
         private readonly string _home = Path.Combine(root, $"peer-{index.ToString("D3", CultureInfo.InvariantCulture)}");
 
@@ -886,7 +941,7 @@ internal sealed partial class SaturationTests
         public string Session => Path.Combine(_home, "session");
 
         /// <summary>
-        /// This peer's BrowserAI pid, or zero if it never started.
+        /// This peer's relay pid, or zero if it never started.
         /// </summary>
         /// <remarks>
         /// Kept on the peer and not only on its report, because the report
@@ -903,13 +958,21 @@ internal sealed partial class SaturationTests
         /// </remarks>
         public bool LaunchesABrowser => index < WithBrowsers;
 
-        public async Task<PeerReport> RunAsync()
+        /// <summary>
+        /// The opening half of the conversation: a relay to the one background, a
+        /// session, and for the browser subset a browser launched, closed, resumed and
+        /// launched again. The session stays open for the census.
+        /// </summary>
+        /// <returns>What the peer did, or why it could not.</returns>
+        public async Task<PeerReport> OpenAsync()
         {
             _ = Directory.CreateDirectory(_home);
 
+            // ⚠️ THE ONE BACKGROUND'S PIPE, so the harness starts no background beside
+            // this relay: every peer reaches the same one (2026-10-09).
             var client = RawStdioClient.Start(
                 PublishedSlice.Executable,
-                PublishedSlice.Mcp,
+                [Program.McpArgument, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe],
                 _home,
                 PublishedSlice.InheritedEnvironment(),
                 Conversation);
@@ -950,8 +1013,6 @@ internal sealed partial class SaturationTests
                     return report with { Failure = $"browserai_init was refused: {report.InitText}" };
                 }
 
-                var browsers = 0;
-
                 if (LaunchesABrowser)
                 {
                     // Launch.
@@ -965,8 +1026,6 @@ internal sealed partial class SaturationTests
                     {
                         return report with { Failure = $"browser_navigate was refused: {TextOf(navigated)}" };
                     }
-
-                    browsers = BrowsersIn(client);
 
                     // Close, resume, then launch again: a session whose browser
                     // cannot come back has been broken by the close. Corrected
@@ -1005,29 +1064,14 @@ internal sealed partial class SaturationTests
                     {
                         return report with { Failure = $"the browser did not come back after browserai_close and browserai_resume: {TextOf(again)}" };
                     }
-
-                    browsers = Math.Max(browsers, BrowsersIn(client));
                 }
 
-                // Read while everything is up. Everything after this is teardown.
-                var members = Observe(client.JobProcessIds());
-
-                report = report with
+                // Read while everything is up.
+                return report with
                 {
-                    JobMembers = members,
-                    BrowsersInJob = browsers,
+                    JobMembers = Observe(client.JobProcessIds()),
                     LockHolder = HolderOf(Session),
                 };
-
-                // The session goes before the process does, so the index entry
-                // is removed by the product and not by the scratch sweep.
-                _ = await client.RoundTripAsync("tools/call", new JsonObject
-                {
-                    ["name"] = SessionToolSurface.Destroy,
-                    ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite exercising this call" },
-                });
-
-                return report;
             }
 #pragma warning disable CA1031 // One peer's failure is REPORTED, never thrown: a hundred peers means a hundred failures worth reading, and the first exception to escape would hide the other ninety-nine.
             catch (Exception failure)
@@ -1040,6 +1084,38 @@ internal sealed partial class SaturationTests
             }
         }
 
+        /// <summary>
+        /// The closing half: the session goes before the relay does, so the index entry
+        /// is removed by the product and not by the scratch sweep.
+        /// </summary>
+        /// <returns><see langword="null"/>, or why the session could not be destroyed.</returns>
+        public async Task<string?> DestroyAsync()
+        {
+            if (_client is not { } client)
+            {
+                return null;
+            }
+
+            try
+            {
+                var destroyed = await client.RoundTripAsync("tools/call", new JsonObject
+                {
+                    ["name"] = SessionToolSurface.Destroy,
+                    ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite exercising this call" },
+                });
+
+                return (bool?)destroyed["isError"] is true
+                    ? $"peer {index.ToString(CultureInfo.InvariantCulture)}: browserai_destroy was refused: {TextOf(destroyed)}"
+                    : null;
+            }
+#pragma warning disable CA1031 // Reported with the others, as the opening half's failures are.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                return $"peer {index.ToString(CultureInfo.InvariantCulture)}: {failure.GetType().Name}: {failure.Message}";
+            }
+        }
+
         public async ValueTask DisposeAsync()
         {
             if (_client is { } client)
@@ -1047,40 +1123,6 @@ internal sealed partial class SaturationTests
                 _client = null;
                 await client.DisposeAsync();
             }
-        }
-
-        private static int BrowsersIn(RawStdioClient client)
-        {
-            var members = client.JobProcessIds().ToHashSet();
-
-            return BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
-                .Count(process => members.Contains(process.ProcessId));
-        }
-
-        private static List<JobMember> Observe(IEnumerable<int> processIds)
-        {
-            var observed = new List<JobMember>();
-
-            foreach (var processId in processIds)
-            {
-                long created;
-
-                try
-                {
-                    created = ProcessIdentity.CreationTimeOf(processId);
-                }
-                catch (System.ComponentModel.Win32Exception)
-                {
-                    // Exited between the job reporting it and this call. Its pid
-                    // is meaningless now, and recording it would make the
-                    // survivor check act on a number that may be reused.
-                    continue;
-                }
-
-                observed.Add(new JobMember(processId, created, ProcessCommandLine.ImagePathOf(processId)));
-            }
-
-            return observed;
         }
 
         /// <summary>The pid the session's own lock record names, or zero.</summary>
@@ -1106,5 +1148,34 @@ internal sealed partial class SaturationTests
                 (answer["content"]?.AsArray() ?? [])
                     .Where(block => (string?)block!["type"] == "text")
                     .Select(block => (string?)block!["text"] ?? string.Empty));
+    }
+
+    /// <summary>Every process in a job, with its creation time and image.</summary>
+    /// <param name="processIds">The job's members.</param>
+    /// <returns>The members that were still there to be read.</returns>
+    private static List<JobMember> Observe(IEnumerable<int> processIds)
+    {
+        var observed = new List<JobMember>();
+
+        foreach (var processId in processIds)
+        {
+            long created;
+
+            try
+            {
+                created = ProcessIdentity.CreationTimeOf(processId);
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // Exited between the job reporting it and this call. Its pid
+                // is meaningless now, and recording it would make the
+                // survivor check act on a number that may be reused.
+                continue;
+            }
+
+            observed.Add(new JobMember(processId, created, ProcessCommandLine.ImagePathOf(processId)));
+        }
+
+        return observed;
     }
 }

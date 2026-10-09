@@ -11,7 +11,6 @@ using BrowserAI.Proxy;
 using BrowserAI.Registration;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
-using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
@@ -56,6 +55,16 @@ namespace BrowserAI.Tests;
 /// no other arm can inherit it -- which is the defect
 /// <see cref="HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
 /// exists for, avoided and not serialised around.
+/// </para>
+/// <para>
+/// ⚠️ <b>A relay and a background since 2026-10-09.</b> What a client starts is a
+/// relay, which holds no session and starts nothing (S a), and a build that is not
+/// installed starts no background (D11 a). So every arm here starts the background
+/// itself, in a job of the arm's own and over the same scratch data root, and hands
+/// the relay its pipe: through <c>Q261_SERVER_ARGS</c> where the shim starts it, and
+/// in the registration's arguments where the client starts it the product's way. The
+/// re-dialled server of the first arm is a second relay to the same background, and
+/// the stale-list refusal it answers is the relay's (Q261 b).
 /// </para>
 /// <para>
 /// <b>The tool both arms call is <c>browserai_list</c>, and the choice is
@@ -117,6 +126,9 @@ internal sealed class ClientReconnectTests
         var arguments = new JsonObject { ["directory"] = sessions }.ToJsonString();
         var call = $"tool:mcp__browserai__{SessionToolSurface.List}:{arguments}";
 
+        // The background both relays reach, the first and the one re-dialled.
+        await using var background = BackgroundOver(appRoot, work);
+
         var mcp = Path.Combine(work.FullName, "mcp.json");
 
         await File.WriteAllTextAsync(mcp, new JsonObject
@@ -131,7 +143,7 @@ internal sealed class ClientReconnectTests
                     ["env"] = new JsonObject
                     {
                         ["Q261_SERVER"] = PublishedSlice.Executable,
-                        ["Q261_SERVER_ARGS"] = Program.McpArgument,
+                        ["Q261_SERVER_ARGS"] = background.RelayArguments,
                         ["Q261_LOGDIR"] = work.FullName,
                         ["Q261_TAG"] = run,
                         ["Q261_DIE_AFTER_CALLS"] = "1",
@@ -259,6 +271,8 @@ internal sealed class ClientReconnectTests
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
         var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
 
+        await using var background = BackgroundOver(appRoot, work);
+
         // TOML, and the quoting is why it is written here and not composed by a
         // helper: every path goes in as a JSON string so a backslash cannot end a
         // value early, which is the one way this file can fail silently.
@@ -277,7 +291,7 @@ internal sealed class ClientReconnectTests
             $"args = [{Quote(Path.Combine(Rig, "shim.js"))}]",
             "env = { "
                 + $"Q261_SERVER = {Quote(PublishedSlice.Executable)}, "
-                + $"Q261_SERVER_ARGS = {Quote(Program.McpArgument)}, "
+                + $"Q261_SERVER_ARGS = {Quote(background.RelayArguments)}, "
                 + $"Q261_LOGDIR = {Quote(work.FullName)}, "
                 + $"Q261_TAG = {Quote(run)}, "
                 + "Q261_DIE_AFTER_CALLS = \"0\", "
@@ -389,6 +403,18 @@ internal sealed class ClientReconnectTests
     /// could only ever answer "not held" would pass against a server that never
     /// wrote one.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>No marker since 2026-10-09, and the question moved to the background's
+    /// roster</b> (previously the two directions above). Nothing in the product joins
+    /// the live-instance census since the one resident background (S a): what holds an
+    /// update is what the background's update core reads, every relay with its
+    /// countdown and every kept session (H1), and the background writes what it still
+    /// holds each time a relay goes. So the positive control is the relay the
+    /// background recorded as connected, alive while Codex serves; and after Codex,
+    /// that relay is gone and the background's record of it going leaves no relay and
+    /// no session. The registration is the product's own, with the background's pipe
+    /// added beside the variable Codex would otherwise drop.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -405,6 +431,8 @@ internal sealed class ClientReconnectTests
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
         var install = Directory.CreateDirectory(Path.Combine(work.FullName, "install")).FullName;
         var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
+
+        await using var background = BackgroundOver(appRoot, work);
 
         var current = Path.Combine(install, RegistrationTarget.CurrentDirectoryName);
 
@@ -442,11 +470,13 @@ internal sealed class ClientReconnectTests
 
         // The sandbox, added through RegisterAI and Codex's own flag and not by
         // writing its file: the same entry, rewritten with the one variable Codex
-        // would otherwise drop.
+        // would otherwise drop, and since 2026-10-09 the pipe of the background the
+        // arm started, which a build that is not installed is given (D11 a).
         var sandboxed = tool.Run(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
                 "--owned-root", install, "--replace", "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server, RegistrationTarget.McpArgument,
+                BrowserAI.Coordination.BackgroundPipe.PipeArgument, background.Pipe,
             ],
             McpRegistrar.ToolBudget);
 
@@ -487,13 +517,13 @@ internal sealed class ClientReconnectTests
             },
             steps);
 
-        // ---- While it serves: its marker is HELD -------------------------------
+        // ---- While it serves: the background holds its relay ----------------------
         await UntilTheLogSays(driverLog, "RESP id=3", driver);
 
-        var serving = LiveInstances.ReclaimStaleMarkers(appRoot, NullLogger.Instance);
+        var (pid, created) = RelayOf(appRoot, background);
 
-        await Assert.That(serving.Held).IsGreaterThanOrEqualTo(1)
-            .Because("the positive control: a live server's marker must read as held, or the check below proves nothing");
+        await Assert.That(ProcessLiveness.IsAlive(pid, created)).IsTrue()
+            .Because("the positive control: while Codex serves, the relay the background recorded is alive, or the check below proves nothing");
 
         await WaitFor(driver, "the real Codex app-server run");
 
@@ -509,39 +539,97 @@ internal sealed class ClientReconnectTests
         await Assert.That(exited).IsGreaterThanOrEqualTo(0);
         await Assert.That(killed < 0 || exited < killed).IsTrue();
 
-        // ---- After Codex: the process is gone, and nothing it left is held ------
-        var (pid, created) = ServerStartedIn(appRoot);
-
+        // ---- After Codex: the relay is gone, and the background holds nothing ----
         await Assert.That(ProcessLiveness.IsAlive(pid, created)).IsFalse()
-            .Because($"BrowserAI pid {pid.ToString(CultureInfo.InvariantCulture)} outlived the Codex app-server that started it, and a server that outlives its host holds every update");
+            .Because($"BrowserAI's relay, pid {pid.ToString(CultureInfo.InvariantCulture)}, outlived the Codex app-server that started it, and a relay that outlives its host holds every update");
 
-        var after = LiveInstances.ReclaimStaleMarkers(appRoot, NullLogger.Instance);
+        var went = await RelayWentAsync(appRoot, background, pid);
 
-        await Assert.That(after.Held).IsEqualTo(0);
-        await Assert.That(after.Reclaimed).IsGreaterThanOrEqualTo(1);
+        await Assert.That(went).Contains("0 relay(s) and 0 session(s) are left")
+            .Because("the background's update core reads its relays and its kept sessions, and Codex left it neither");
 
         // The control for the liveness read itself: it can say "alive".
         await Assert.That(ProcessLiveness.IsAlive(Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess())).IsTrue();
     }
 
     /// <summary>
-    /// The pid and creation time the server stamped on its own start line.
+    /// The relay the background recorded as connected, as the pid and creation time
+    /// the relay stamped on its own start line.
     /// </summary>
     /// <remarks>
     /// <b>The pair and never the pid alone</b>, read off the <c>pid=N@FILETIME</c>
     /// stamp every line of the process log carries: a pid on its own can be
     /// Windows' next process by the time it is asked about, and a liveness answer
-    /// about a stranger is worse than none.
+    /// about a stranger is worse than none. ⚠️ <i>Corrected 2026-10-09 (previously
+    /// <c>ServerStartedIn</c>, the first start line under the root): the background
+    /// writes the first one, so the relay is found through the background's record
+    /// of it.</i>
     /// </remarks>
-    /// <param name="appRoot">The app root the server was given.</param>
-    /// <returns>The pid and its creation time.</returns>
-    private static (int Pid, long Created) ServerStartedIn(string appRoot)
+    /// <param name="appRoot">The app root both were given.</param>
+    /// <param name="background">The background.</param>
+    /// <returns>The relay's pid and creation time.</returns>
+    private static (int Pid, long Created) RelayOf(string appRoot, ArmBackground background)
     {
+        var said = ProcessLogRecords.In(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created);
+        var connected = System.Text.RegularExpressions.Regex.Match(said, @"Relay (?<pid>\d+)-\d+ connected");
+
+        if (!connected.Success)
+        {
+            throw new InvalidOperationException($"The background recorded no relay connecting under '{appRoot}'. Its records:{Environment.NewLine}{said}");
+        }
+
+        var relay = int.Parse(connected.Groups["pid"].Value, CultureInfo.InvariantCulture);
+
+        return StartOf(appRoot, relay);
+    }
+
+    /// <summary>The background's record of one relay going, once it is written.</summary>
+    /// <remarks>A hang detector and not a promptness claim, on the bound <see cref="WaitFor"/> uses.</remarks>
+    /// <param name="appRoot">The app root the background was given.</param>
+    /// <param name="background">The background.</param>
+    /// <param name="relay">The relay's pid.</param>
+    /// <returns>The record's line.</returns>
+    private static async Task<string> RelayWentAsync(string appRoot, ArmBackground background, int relay)
+    {
+        var needle = string.Create(CultureInfo.InvariantCulture, $"Relay {relay}-");
+        using var deadline = new CancellationTokenSource(TestDefaults.RealClientHang);
+
+        while (true)
+        {
+            var line = ProcessLogRecords.In(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created)
+                .Split('\n')
+                .FirstOrDefault(record => record.Contains(needle, StringComparison.Ordinal) && record.Contains(" went; ", StringComparison.Ordinal));
+
+            if (line is not null)
+            {
+                return line;
+            }
+
+            if (deadline.IsCancellationRequested)
+            {
+                throw new TimeoutException($"The background recorded no going of relay {relay.ToString(CultureInfo.InvariantCulture)}. That bound is a hang detector: a relay's pipe closes when it ends.");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None);
+        }
+    }
+
+    /// <summary>The pid and creation time one process stamped on its own start line.</summary>
+    /// <param name="appRoot">The app root it was given.</param>
+    /// <param name="processId">The pid.</param>
+    /// <returns>The pid and its creation time.</returns>
+    private static (int Pid, long Created) StartOf(string appRoot, int processId)
+    {
+        var header = string.Create(CultureInfo.InvariantCulture, $" pid={processId}@");
+
+        // Read shared: the background and the relay are both alive and appending to
+        // these files while the arm reads them (2026-10-09; the reader this replaced
+        // ran once the one server it looked for had gone).
         foreach (var file in Directory.EnumerateFiles(Path.Combine(appRoot, "logs"), "*.log"))
         {
-            foreach (var line in File.ReadLines(file))
+            foreach (var line in ReadShared(file).Split('\n'))
             {
-                if (!line.Contains(" started. pid=", StringComparison.Ordinal))
+                if (!line.Contains(" started. pid=", StringComparison.Ordinal) || !line.Contains(header, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -556,7 +644,7 @@ internal sealed class ClientReconnectTests
             }
         }
 
-        throw new InvalidOperationException($"No BrowserAI start line under '{appRoot}': the server Codex was asked to start never logged one.");
+        throw new InvalidOperationException($"No start line of pid {processId.ToString(CultureInfo.InvariantCulture)} under '{appRoot}'.");
     }
 
     /// <summary>
@@ -746,6 +834,86 @@ internal sealed class ClientReconnectTests
     /// <returns>The quoted literal.</returns>
     private static string Quote(string value) =>
         "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+
+    /// <summary>
+    /// A published background over a scratch data root, in a job of the arm's own, on
+    /// a pipe nothing else serves.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-09.</b> The data root reaches it the way it reaches the relay,
+    /// through the suite's variable on its own environment, and never through this
+    /// process's: the background judges the relay's greeting against its data root,
+    /// so the two must name the same one.
+    /// </remarks>
+    /// <param name="appRoot">The scratch data root, under the user's profile.</param>
+    /// <param name="work">Its working directory.</param>
+    /// <returns>The background.</returns>
+    private static ArmBackground BackgroundOver(string appRoot, DirectoryInfo work) => ArmBackground.Start(appRoot, work);
+
+    /// <summary>A background an arm started, and what a relay needs to reach it.</summary>
+    private sealed class ArmBackground : IAsyncDisposable
+    {
+        private readonly JobObject _job;
+
+        private ArmBackground(JobObject job, LaunchedProcess process, string pipe)
+        {
+            _job = job;
+            Process = process;
+            Pipe = pipe;
+            Created = ProcessIdentity.CreationTimeOf(process.Id);
+        }
+
+        /// <summary>The background.</summary>
+        public LaunchedProcess Process { get; }
+
+        /// <summary>Its pipe.</summary>
+        public string Pipe { get; }
+
+        /// <summary>Its creation time, the other half of its identity.</summary>
+        public long Created { get; }
+
+        /// <summary>A relay's arguments, space-separated as the shim takes them: <c>--mcp</c> and the pipe.</summary>
+        public string RelayArguments => $"{Program.McpArgument} {BrowserAI.Coordination.BackgroundPipe.PipeArgument} {Pipe}";
+
+        /// <summary>Starts one and waits for its pipe.</summary>
+        /// <param name="appRoot">The scratch data root.</param>
+        /// <param name="work">Its working directory.</param>
+        /// <returns>The background.</returns>
+        public static ArmBackground Start(string appRoot, DirectoryInfo work)
+        {
+            var job = JobObject.CreateKillOnClose();
+
+            try
+            {
+                var environment = PublishedSlice.InheritedEnvironment();
+
+                foreach (var inherited in ParentClientVariables)
+                {
+                    _ = environment.Remove(inherited);
+                }
+
+                environment[BrowserAiPaths.AppRootOverride] = appRoot;
+
+                var pipe = PublishedBackground.NewPipeName();
+                var process = PublishedBackground.Start(job, work.FullName, environment, pipe, []);
+
+                return new ArmBackground(job, process, pipe);
+            }
+            catch
+            {
+                job.Dispose();
+                throw;
+            }
+        }
+
+        /// <inheritdoc />
+        public ValueTask DisposeAsync()
+        {
+            _job.Dispose();
+            Process.Dispose();
+            return ValueTask.CompletedTask;
+        }
+    }
 
     /// <summary>A port nothing is listening on, taken by binding it and letting go.</summary>
     /// <remarks>

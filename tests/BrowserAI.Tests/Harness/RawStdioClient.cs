@@ -60,7 +60,8 @@ internal sealed class RawStdioClient : IAsyncDisposable
     private readonly JobObject _job;
     private readonly LaunchedProcess _process;
     private readonly LaunchedProcess? _background;
-    private readonly string? _backgroundRecord;
+    private readonly StringBuilder _backgroundStandardError = new();
+    private readonly Task _backgroundStandardErrorPump;
     private readonly StreamWriter _toChild;
     private readonly StreamReader _fromChild;
     private readonly StringBuilder _standardError = new();
@@ -71,12 +72,23 @@ internal sealed class RawStdioClient : IAsyncDisposable
     private int _nextId;
     private int _disposed;
 
-    private RawStdioClient(JobObject job, LaunchedProcess process, TimeSpan perExchange, LaunchedProcess? background, string? backgroundRecord)
+    private RawStdioClient(
+        JobObject job,
+        LaunchedProcess process,
+        TimeSpan perExchange,
+        LaunchedProcess? background,
+        string? backgroundPipe,
+        string? backgroundRecord,
+        StringBuilder backgroundStandardError,
+        Task backgroundStandardErrorPump)
     {
         _job = job;
         _process = process;
         _background = background;
-        _backgroundRecord = backgroundRecord;
+        BackgroundPipe = backgroundPipe;
+        BackgroundRecordPath = backgroundRecord;
+        _backgroundStandardError = backgroundStandardError;
+        _backgroundStandardErrorPump = backgroundStandardErrorPump;
         _perExchange = perExchange;
 
         _toChild = new StreamWriter(process.StandardInput, Utf8NoBom) { NewLine = "\n", AutoFlush = false };
@@ -100,6 +112,19 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// it here, and an arm that ends "the server" to see what dies with it ends this.
     /// </remarks>
     public int? BackgroundProcessId => _background?.Id;
+
+    /// <summary>
+    /// The pipe of the background the harness started beside a published relay, or
+    /// <see langword="null"/> for any other start.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-09</b> for the arms that stop that background the way the
+    /// uninstall hook does, through its pipe and never by its pid.
+    /// </remarks>
+    public string? BackgroundPipe { get; }
+
+    /// <summary>The record of the background the harness started, or <see langword="null"/>.</summary>
+    public string? BackgroundRecordPath { get; }
 
     /// <summary>What this client calls itself in its handshake unless told otherwise.</summary>
     public const string DefaultClientName = "BrowserAI.RawStdioClient";
@@ -196,10 +221,13 @@ internal sealed class RawStdioClient : IAsyncDisposable
 
         var job = JobObject.CreateKillOnClose();
         LaunchedProcess? background = null;
+        var backgroundError = new StringBuilder();
+        var backgroundPump = Task.CompletedTask;
 
         try
         {
             string? record = null;
+            string? pipe = null;
             var relayArguments = arguments;
 
             // A published relay holds no session and starts nothing: the background
@@ -207,16 +235,16 @@ internal sealed class RawStdioClient : IAsyncDisposable
             // its own (D11 a).
             if (PublishedBackground.IsAPublishedRelay(command, arguments))
             {
-                var pipe = PublishedBackground.NewPipeName();
+                pipe = PublishedBackground.NewPipeName();
 
-                background = PublishedBackground.Start(job, workingDirectory, environment, pipe, arguments);
+                background = PublishedBackground.Start(job, workingDirectory, environment, pipe, arguments, backgroundError, out backgroundPump);
                 record = PublishedBackground.RecordFor(environment, arguments, pipe);
                 relayArguments = [.. arguments, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe];
             }
 
             var process = JobLauncher.Start(job, command, relayArguments, workingDirectory, environment);
 
-            return new RawStdioClient(job, process, perExchange ?? TestDefaults.BrowserHang, background, record);
+            return new RawStdioClient(job, process, perExchange ?? TestDefaults.BrowserHang, background, pipe, record, backgroundError, backgroundPump);
         }
         catch
         {
@@ -480,6 +508,45 @@ internal sealed class RawStdioClient : IAsyncDisposable
     }
 
     /// <summary>
+    /// Everything the background the harness started beside a published relay wrote
+    /// to stderr, once that pipe has reached end-of-file.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-09</b>: a session's records are the background's since S a,
+    /// and the relay's stderr carries none of them. <b>End-of-file needs the background
+    /// gone</b>, so a caller disposes this client first, which closes the job; until
+    /// then the capture is returned with a line saying it is incomplete, as
+    /// <see cref="DrainedStandardErrorAsync"/> does.
+    /// </remarks>
+    /// <returns>The captured stderr, complete unless the returned text says otherwise.</returns>
+    public async Task<string> DrainedBackgroundStandardErrorAsync()
+    {
+        var complete = true;
+
+        try
+        {
+            await _backgroundStandardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            complete = false;
+        }
+
+        string captured;
+
+        lock (_backgroundStandardError)
+        {
+            captured = _backgroundStandardError.ToString();
+        }
+
+        return complete
+            ? captured
+            : captured
+                + Environment.NewLine
+                + $"<INCOMPLETE CAPTURE: the background's stderr had not reached end-of-file after {TestDefaults.InProcessHang.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s.>";
+    }
+
+    /// <summary>
     /// Closes the peer's stdin and waits for it to exit on its own.
     /// </summary>
     /// <param name="timeout">How long to wait.</param>
@@ -507,8 +574,10 @@ internal sealed class RawStdioClient : IAsyncDisposable
         {
             // The job closed above kills the peer, which closes the pipe, which
             // ends the pump -- so this normally returns at once. The bound is a
-            // hang detector on a teardown path and nothing asserts on it.
+            // hang detector on a teardown path and nothing asserts on it. The
+            // background's pump likewise, since the same job ends it.
             await _standardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
+            await _backgroundStandardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A stderr reader that will not finish must not turn a teardown into a hang.
         catch (Exception)
@@ -526,11 +595,11 @@ internal sealed class RawStdioClient : IAsyncDisposable
         // The background's record, which the job's close left saying it crashed: the
         // suite's backgrounds share the data root with whatever else uses it, and a
         // record per arm would pile up there.
-        if (_backgroundRecord is not null)
+        if (BackgroundRecordPath is not null)
         {
             try
             {
-                File.Delete(_backgroundRecord);
+                File.Delete(BackgroundRecordPath);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {

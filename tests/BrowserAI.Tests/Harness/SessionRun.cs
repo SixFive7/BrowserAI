@@ -381,7 +381,15 @@ internal sealed record SessionRun
 
             // Closed, not killed: BrowserAI's own graceful path, and what
             // releases the session directory so the move below can happen.
+            //
+            // ⚠️ AND THEN THE BACKGROUND, SINCE 2026-10-09 (previously the close
+            // above was all, because the process it ended held the sessions). The
+            // close ends the relay, and the background keeps what it judged worth
+            // keeping; disposing the client closes the job the harness started that
+            // background in, which ends it and its children and releases every
+            // directory, the way a restart of the machine would.
             _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
+            await client.DisposeAsync().ConfigureAwait(false);
 
             // ⚠️ DRAINED, AND AFTER THE CLOSE. *Corrected 2026-08-26 (previously
             // `client.StandardErrorSoFar()` taken mid-run, with the comment "Read
@@ -401,7 +409,10 @@ internal sealed record SessionRun
             // it. What is gained is that the read is an event and not a
             // duration -- everything holding the write end has exited by this
             // line, so there is nothing left to arrive.
-            var sessionLog = await client.DrainedStandardErrorAsync().ConfigureAwait(false);
+            //
+            // ⚠️ THE BACKGROUND'S STDERR SINCE 2026-10-09 (previously the client's
+            // own peer's, which is the relay now and writes no session record).
+            var sessionLog = await client.DrainedBackgroundStandardErrorAsync().ConfigureAwait(false);
 
             return new FirstProcess
             {

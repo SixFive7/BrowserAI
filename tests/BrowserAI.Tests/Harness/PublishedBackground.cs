@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Text;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
@@ -63,7 +64,37 @@ internal static class PublishedBackground
         string workingDirectory,
         IReadOnlyDictionary<string, string> environment,
         string pipe,
-        IReadOnlyList<string> relayArguments)
+        IReadOnlyList<string> relayArguments) =>
+        Start(job, workingDirectory, environment, pipe, relayArguments, standardError: null, out _);
+
+    /// <summary>
+    /// Starts a background in a job, drains both its streams, keeps what it writes to
+    /// stderr when asked to, and waits for its pipe.
+    /// </summary>
+    /// <remarks>
+    /// <b>Both streams are read, always, since 2026-10-09.</b> The background writes
+    /// every record to stderr as well as to its log, through a console logger whose
+    /// queue blocks the caller once it is full, and an anonymous pipe nobody reads
+    /// takes about 4 KiB: a background the harness started and never read would stop
+    /// on its own logging after enough records, which a hundred sessions reach.
+    /// </remarks>
+    /// <param name="job">The job it runs in.</param>
+    /// <param name="workingDirectory">Its working directory.</param>
+    /// <param name="environment">Its environment.</param>
+    /// <param name="pipe">The pipe it serves.</param>
+    /// <param name="relayArguments">The relay's arguments, whose data root, if any, the background takes too.</param>
+    /// <param name="standardError">Where its stderr goes, line by line, or <see langword="null"/> to drop it.</param>
+    /// <param name="standardErrorPump">The read of its stderr, which ends when every holder of the write end has gone.</param>
+    /// <returns>The background.</returns>
+    /// <exception cref="InvalidOperationException">It ended, or opened no pipe within <see cref="StartBound"/>.</exception>
+    public static LaunchedProcess Start(
+        JobObject job,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string> environment,
+        string pipe,
+        IReadOnlyList<string> relayArguments,
+        StringBuilder? standardError,
+        out Task standardErrorPump)
     {
         List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe];
 
@@ -73,6 +104,10 @@ internal static class PublishedBackground
         }
 
         var background = JobLauncher.Start(job, PublishedSlice.Executable, arguments, workingDirectory, environment);
+
+        _ = PumpAsync(background.StandardOutput, into: null);
+        standardErrorPump = PumpAsync(background.StandardError, standardError);
+
         var waited = Stopwatch.StartNew();
 
         while (!NamedPipes.WaitForFreeInstance(pipe, 1))
@@ -92,6 +127,34 @@ internal static class PublishedBackground
         }
 
         return background;
+    }
+
+    /// <summary>Reads a stream line by line to its end, keeping the lines when asked to.</summary>
+    /// <param name="stream">One of the background's streams.</param>
+    /// <param name="into">Where the lines go, or <see langword="null"/>.</param>
+    /// <returns>A task that ends at the stream's end, or when it is closed under the read.</returns>
+    private static async Task PumpAsync(Stream stream, StringBuilder? into)
+    {
+        try
+        {
+            using var reader = new StreamReader(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+            while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
+            {
+                if (into is not null)
+                {
+                    lock (into)
+                    {
+                        _ = into.AppendLine(line);
+                    }
+                }
+            }
+        }
+        catch (Exception failure) when (failure is IOException or ObjectDisposedException)
+        {
+            // The pipe closing under a read in flight is how this ends when the
+            // launched process is disposed first.
+        }
     }
 
     /// <summary>The record a background on a pipe keeps, under the data root the environment names.</summary>

@@ -350,6 +350,11 @@ internal sealed class FirstRunProvisioningTests
 
         _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang);
 
+        // ⚠️ AND THEN THE BACKGROUND, since 2026-10-09 (previously the close above
+        // ended everything): the close ends the relay, and the background keeps the
+        // session whose browser runs out of this tree until the client's job closes.
+        await client.DisposeAsync();
+
         // Published only by the run that actually paid for the bytes, and after
         // the client is gone so nothing still holds a file in the tree. A cached
         // run deliberately touches nothing: the TTL runs from the download, so a
