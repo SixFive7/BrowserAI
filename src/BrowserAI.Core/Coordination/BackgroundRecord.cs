@@ -99,6 +99,15 @@ internal static class BackgroundRecord
         return Path.Combine(dataRoot, DirectoryName, safe + ".json");
     }
 
+    /// <summary>
+    /// How long a write goes on trying to rename itself over a record a reader has
+    /// open: a hang detector over a read that takes one call, chosen and not measured.
+    /// </summary>
+    public static TimeSpan WriteBound { get; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>How long a write waits between two tries of the rename.</summary>
+    public static TimeSpan WriteRetry { get; } = TimeSpan.FromMilliseconds(20);
+
     /// <summary>Writes this process's record as a background that has started.</summary>
     /// <param name="path">The record's path.</param>
     /// <param name="build">This build's version.</param>
@@ -127,6 +136,13 @@ internal static class BackgroundRecord
     /// <param name="how">How it ended.</param>
     /// <param name="now">The time.</param>
     /// <returns>Whether the record was this process's and is marked now.</returns>
+    /// <remarks>
+    /// <b>Never throws</b>: it is called from the hidden window's procedure at a
+    /// sign-out and from an update's hand-over, where an exception would end the
+    /// process mid-way. A record that cannot be written within <see cref="WriteBound"/>
+    /// is answered <see langword="false"/>, and the end then reads as a crash, which is
+    /// the direction the record is built to err in.
+    /// </remarks>
     public static bool EndedCleanly(string path, BackgroundEnd how, DateTimeOffset now)
     {
         if (Read(path) is not { } state
@@ -136,8 +152,15 @@ internal static class BackgroundRecord
             return false;
         }
 
-        Write(path, state with { Ended = how, EndedAt = now });
-        return true;
+        try
+        {
+            Write(path, state with { Ended = how, EndedAt = now });
+            return true;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -264,6 +287,40 @@ internal static class BackgroundRecord
         var temporary = path + "." + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + ".tmp";
 
         File.WriteAllBytes(temporary, buffer.ToArray());
-        File.Move(temporary, path, overwrite: true);
+
+        // ⚠️ A READER HOLDS THE RENAME OFF. Windows renames a file over another only
+        // when nobody has the target open, sharing it for deletion or not, measured by
+        // lane ARCH's helper T1 on 2026-10-09 (BackgroundRecordTests). A relay or a
+        // person's start reads the record whole in one call, so the rename is tried
+        // again until WriteBound has gone by, and the file beside it never outlives a
+        // write that gave up.
+        var deadline = Environment.TickCount64 + (long)WriteBound.TotalMilliseconds;
+
+        while (true)
+        {
+            try
+            {
+                File.Move(temporary, path, overwrite: true);
+                return;
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                if (Environment.TickCount64 >= deadline)
+                {
+                    try
+                    {
+                        File.Delete(temporary);
+                    }
+                    catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+                    {
+                        // The rename's failure is the one worth reporting.
+                    }
+
+                    throw;
+                }
+
+                Thread.Sleep(WriteRetry);
+            }
+        }
     }
 }

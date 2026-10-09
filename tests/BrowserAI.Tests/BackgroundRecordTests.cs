@@ -311,7 +311,10 @@ internal sealed class BackgroundRecordTests
     /// what this arm holds; that the write is lost, and that
     /// <see cref="BackgroundRecord.Started"/> and
     /// <see cref="BackgroundRecord.EndedCleanly"/> let the failure escape, is reported
-    /// to lane ARCH and not held here either way.
+    /// to lane ARCH and not held here either way. <i>Fixed 2026-10-09 by lane ARCH:</i>
+    /// a write now waits out a reader for <see cref="BackgroundRecord.WriteBound"/>,
+    /// <see cref="BackgroundRecord.EndedCleanly"/> never throws, the background serves
+    /// on when its start cannot be recorded, and the arm below holds the write's side.
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-09</b> against a write straight into the record's own
@@ -369,4 +372,67 @@ internal sealed class BackgroundRecordTests
         await Assert.That(string.Join(" | ", Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(path)!).Select(Path.GetFileName)))
             .IsEqualTo(Path.GetFileName(path)).Because("a write left a file of its own beside the record");
     }
+
+    /// <summary>
+    /// A write waits out a reader that has the record open and then goes through
+    /// whole, and one that cannot get through within the write bound gives up; neither
+    /// leaves anything beside the record.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The defect the arm above found</b>: Windows renames a file over another only
+    /// when nobody has the target open, so a relay or a person's start reading the
+    /// record at the moment the background wrote it made the write fail, and at the
+    /// background's start that failure ended the process with exit code 1.
+    /// <see cref="BackgroundRecord.WriteBound"/> covers a read that takes one call.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-09</b> with the rename tried once: the write gave up at
+    /// once while the reader held the record.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWriteWaitsOutAReaderAndOneThatCannotGetThroughLeavesNothingBesideTheRecord()
+    {
+        using var data = ScratchDirectory.Create("background-record-waits");
+
+        var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "waits.json");
+
+        _ = BackgroundRecord.Started(path, "9.9.9-record-tests", "image", StartedAt);
+
+        Task<bool> ending;
+
+        // A reader that opened the record the way BackgroundRecord.Read does, held for a
+        // tenth of the bound.
+        using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            ending = Task.Run(() => BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, StartedAt.AddHours(1)));
+
+            await Task.Delay(BackgroundRecord.WriteBound / 10);
+
+            await Assert.That(ending.IsCompleted).IsFalse()
+                .Because("a write gave up while a reader held the record for a tenth of its bound");
+        }
+
+        await Assert.That(await ending.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
+        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Stopped);
+        await Assert.That(Beside(path)).IsEqualTo(Path.GetFileName(path)).Because("a write that waited left a file of its own beside the record");
+
+        // A reader that holds it past the bound: the write gives up, the record is as it
+        // was, and nothing is left beside it.
+        using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.Update, StartedAt.AddHours(2))).IsFalse();
+        }
+
+        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Stopped);
+        await Assert.That(Beside(path)).IsEqualTo(Path.GetFileName(path)).Because("a write that gave up left a file of its own beside the record");
+    }
+
+    /// <summary>Every name in the record's folder, joined.</summary>
+    /// <param name="path">The record's path.</param>
+    /// <returns>The names.</returns>
+    private static string Beside(string path) =>
+        string.Join(" | ", Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(path)!).Select(Path.GetFileName));
 }

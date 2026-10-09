@@ -209,7 +209,16 @@ internal static partial class Program
 
         // R: written once the pipe is ours and before anything can fail, so that
         // an end without the mark the clean ends write reads as the crash it is.
-        _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
+        try
+        {
+            _ = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            // Serving without a record costs a crash its name, and a relay then reports
+            // the task's state instead; not serving at all would cost every call.
+            BackgroundLog.RecordNotWritten(backgroundLogger, recordPath, failure.Message);
+        }
 
         BackgroundLog.Started(backgroundLogger, server.Name, startedBy ?? "nobody named", recordPath);
 
@@ -330,4 +339,7 @@ internal static partial class BackgroundLog
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Windows is ending the background: {How}. It is recorded as a clean end.")]
     public static partial void EndingBecause(ILogger logger, BackgroundEnd how);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "The background's record at {Record} could not be written ({Why}), so it serves without one: if it crashes, relays will name the task's state and not the crash.")]
+    public static partial void RecordNotWritten(ILogger logger, string record, string why);
 }
