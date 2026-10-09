@@ -98,13 +98,17 @@ internal sealed class ModelSurfaceTests
     /// </remarks>
     private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
     [
-        // ⚠️ `idleMinutes` on both since 2026-10-08, E2.
+        // ⚠️ `idleMinutes` on both since 2026-10-08, E2. ⚠️ And `headed`,
+        // `transcript`, `captureNetwork` and `idleMinutes` REQUIRED on both since
+        // 2026-10-09, F2 d (previously the required lists were ["directory",
+        // "purpose"] and ["directory", "why"]): every call states the four settings a
+        // person notices.
         (SessionToolSurface.Init,
             ["directory", "purpose", "headed", "browser", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug", "idleMinutes"],
-            ["directory", "purpose"]),
+            ["directory", "purpose", "headed", "transcript", "captureNetwork", "idleMinutes"]),
         (SessionToolSurface.Resume,
             ["directory", "purpose", "why", "headed", "debug", "transcript", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "idleMinutes"],
-            ["directory", "why"]),
+            ["directory", "why", "headed", "transcript", "captureNetwork", "idleMinutes"]),
         // ⚠️ ADDED 2026-10-08, F1 a: the ninth authored tool.
         (SessionToolSurface.Close, ["session", "why"], ["session", "why"]),
         (SessionToolSurface.CatchUp, ["session", "page", "why"], ["session", "why"]),
@@ -1026,14 +1030,20 @@ internal sealed class ModelSurfaceTests
 
     /// <summary>
     /// What the <c>transcript</c> description has to keep saying, however it is
-    /// reworded: the file it writes, and that what is typed into a page is in it.
+    /// reworded: the file it writes, that what is typed into a page is in it, and
+    /// that every call states it.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-09 (previously "Defaults to false")</i>: F2 d made the
+    /// argument required on both tools, so the description says a call states it,
+    /// true or false, where it said what leaving it out meant.
+    /// </remarks>
     private static readonly string[] RequiredTranscriptPhrases =
     [
         "session.md",
         "passwords included",
         "plain text",
-        "Defaults to false",
+        "True or false, stated on every call",
     ];
 
     /// <summary>
