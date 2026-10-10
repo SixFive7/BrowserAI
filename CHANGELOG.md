@@ -895,6 +895,12 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.**
+  13 a, from the maintainer's answers of 2026-10-10. sqlite.org released 3.54.0 on 2026-10-09, and the
+  amalgamation was downloaded into scratch, checked against the SHA3-256 sqlite.org publishes before
+  it was unzipped, and vendored in place of 3.53.4. `drift-check.json` records the new pin, archive
+  and file hashes, and `SqliteTests` read the linked version off the published binary.
+
 - 🔧 **A running BrowserAI takes its data root and update source from its arguments, never a variable.**
   Step 5 of the one-binary build, which the maintainer approved on 2026-10-08 with the rest of it. The
   installer's `BROWSERAI_ROOT` and `BROWSERAI_UPDATE_FEED` are read once, by the install hook, and

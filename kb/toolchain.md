@@ -784,6 +784,24 @@ upstreams the build floats and a name added there has to exist in
 `upstream-review.json` too. *(Six since 2026-10-03, previously "the five":
 RegisterAI joined them, floating to its newest release.)*
 
+⚠️ **The pin moved to 3.54.0 on 2026-10-10** -- *added by addition, on the maintainer's
+13 a of that day*. The drift check had read sqlite.org's line as
+`PRODUCT,3.54.0,2026/sqlite-amalgamation-3540000.zip,2990479,7b670a62fdfbd672b75fef004cb703c8a3e87d3a5cc7d675b4a08337004a2d93`
+that morning, and it read the same at 00:37:51Z, the page's `Last-Modified` header
+Fri, 09 Oct 2026 16:36:04 GMT. The archive downloaded from that path was
+**2,990,479 bytes and hashed to exactly that SHA3-256 before it was unzipped**, and
+the routine's positive control, the SHA3-256 of no bytes, read
+`a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a`, as the standard
+gives it. Its `sqlite3.c` is 9,580,800 bytes with **271,072 LF and zero CR**, and its
+`sqlite3.h` 695,737 bytes with 14,447 LF and zero CR, so they still ship LF and git
+rewrites nothing; `SQLITE_VERSION` is `"3.54.0"` and `SQLITE_SOURCE_ID`
+`2026-10-09 15:46:58 be8d059e...`. The 3.53.4 pair hashed to the recorded
+`b1dd5d74...` and `919e7f2e...` just before it was replaced, which is the control that
+the hashing reads what the row records. The next publish compiled the new pair and
+printed no warning, and `SqliteTests`' published arms read `sqlite=3.54.0` and
+`sqliteBuild=intended` off the binary's own process log the same hour. The pin, the
+archive record and the two file hashes are in [`drift-check.json`](../drift-check.json).
+
 **The amalgamation ships LF and is warning-clean at `/W4`.** Measured
 2026-08-26: `sqlite3.c` carries **269,649 LF and zero CR**, so
 `.gitattributes`' `* text=auto eol=lf` rewrites nothing on the way into or out
