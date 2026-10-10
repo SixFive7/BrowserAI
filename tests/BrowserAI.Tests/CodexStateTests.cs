@@ -43,8 +43,8 @@ internal sealed class CodexStateTests
     /// would otherwise read as its own.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-10</b>, at SQLite 3.53.4, the version this build vendors and
-    /// the suite loads: a reader that opened read-only whatever lay beside the database
+    /// <b>Planted red 2026-10-10</b>, at SQLite 3.53.4, the version the suite's test host
+    /// loads, and the version the build vendored until 3.54.0 replaced it the same night: a reader that opened read-only whatever lay beside the database
     /// left <i>state_5.sqlite, state_5.sqlite-shm, state_5.sqlite-wal</i> in the first
     /// folder, which is the premise seen again; one that always opened it immutable read
     /// no title from the writer's log; one that opened a log with no <c>-shm</c> read the

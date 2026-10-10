@@ -23,7 +23,7 @@ namespace BrowserAI.Clients;
 /// </para>
 /// <para>
 /// ⚠️ <b>A read-only open can still put files in Codex's home</b>, measured 2026-10-10
-/// with SQLite 3.50.4 and held by the suite at 3.53.4, the version this build vendors: a
+/// with SQLite 3.50.4 and held by the suite at 3.53.4, the SQLite its test host loads: a
 /// database in write-ahead-log mode with no <c>-wal</c> beside it, which is how a
 /// database is left when its last connection closed cleanly, gains a <c>-wal</c> and a
 /// <c>-shm</c> from a read-only open, and keeps both after it closes. So the files beside
@@ -44,7 +44,8 @@ namespace BrowserAI.Clients;
 /// <para>
 /// <b>Never held</b>: one statement, then closed. SQLite's Windows layer opens the file
 /// sharing read and write and not delete (<c>winOpen</c> in the amalgamation this build
-/// vendors, 3.53.4), so for that one statement Codex could not delete or rename it. A
+/// vendors, read at 3.53.4 and again at 3.54.0), so for that one statement Codex could
+/// not delete or rename it. A
 /// read that fails is tried once more, and a second failure is a thread with no first
 /// message here.
 /// </para>

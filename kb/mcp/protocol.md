@@ -1764,8 +1764,9 @@ its log, an `immutable=1` open finds no table and a `mode=ro` open reads the row
 the writer closed, so that only the database is left, a `mode=ro` open reads the row and
 leaves a `-wal` and a `-shm` behind it; and with only the database, an `immutable=1` open
 reads the row and leaves nothing. The suite holds the product's three-way open against
-SQLite 3.53.4, the version this build vendors, in `CodexStateTests`, and the arm planted
-with the plain read-only open left `-wal` and `-shm` behind.
+SQLite 3.53.4, the version the suite's test host loads, in `CodexStateTests`, and the arm planted
+with the plain read-only open left `-wal` and `-shm` behind. The binary links the vendored
+SQLite, 3.54.0 since the same night, and no arm reads a Codex database with that one.
 
 **Re-establish it** with [the batch](../../docs/evidence/2026-10-10-codex-first-message/README.md):
 `measure.py.txt` over the folder that holds the Codex homes and an empty folder for the
