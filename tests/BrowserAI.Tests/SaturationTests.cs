@@ -71,7 +71,9 @@ namespace BrowserAI.Tests;
 /// <item><description>
 /// <b>The shared process log is still readable.</b> No record header appears
 /// anywhere but at the start of a line in anything this run's processes wrote,
-/// and every one of this test's processes appears in it by pid. A hundred
+/// and every one of this test's processes appears in it by pid and creation time
+/// (<i>corrected 2026-10-10, previously "by pid"</i>: a pid alone was answered by
+/// the log's history). A hundred
 /// processes appending to one file is the charter's own claim about
 /// <c>FILE_APPEND_DATA</c>, and this is the only test that puts a hundred
 /// processes behind it.
@@ -205,6 +207,7 @@ internal sealed partial class SaturationTests
     /// one process log, and nothing crossed or leaked.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b>A hundred relays and one background since 2026-10-09</b> (previously a
     /// hundred whole servers, each holding its own session in its own job). S a, the
     /// maintainer's words of 2026-10-08 verbatim: <i>"s a"</i>; and P a, one relay per
@@ -216,6 +219,67 @@ internal sealed partial class SaturationTests
     /// relay's job holds the relay alone, because a relay starts nothing; and the
     /// census is taken with every session open, between the opening half of every
     /// conversation and the closing half.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10, one assertion at a time</b>, after the rebuild of
+    /// 2026-10-09 had left every new assertion unwatched: each plant a defect in the
+    /// published product, each run a hundred relays against it, and each red at its own
+    /// assertion with every assertion before it green.
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>Every relay answered</b>, against a background that refused its hundredth
+    /// <c>browserai_init</c>: <i>"peer 98: browserai_init was refused"</i> with the
+    /// planted sentence.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Every session's lock names the background</b>, against a session record that
+    /// named the background's parent as its holder: <i>"records holder pid 70300, but the
+    /// background that holds every session is 61904"</i>, once for every peer.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Each relay's job holds the relay alone</b>, against a relay that started an idle
+    /// <c>node.exe</c> of the payload's and kept it: <i>"peer 0's job held"</i> the relay,
+    /// that <c>node.exe</c> and its <c>conhost.exe</c>, <i>"where its relay ... is the only
+    /// process it may hold"</i>, once for every peer.
+    /// </description></item>
+    /// <item><description>
+    /// <b>The census</b>, twice. Against a second Playwright started for every session and
+    /// kept for nobody: <i>"Expected to be 100, because 100 sessions are open in one
+    /// background, and its job held 468 process(es) but found 200"</i>. Against a browser
+    /// profile made beside the session directory and not in it: <i>"peer 0 navigated and no
+    /// process in the background's job runs out of the browsers root on its session's
+    /// profile"</i>, for each of the eight peers that navigate.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Nothing survives the jobs</b>, against <c>JobLauncher</c> taking a reference on
+    /// the job's handle for the background's start and never giving it back, so the
+    /// arm's job outlived its <c>Dispose</c>: <i>"pid 58884 (...\BrowserAI.exe) was still
+    /// alive after every job closed"</i>, once the ten minutes of
+    /// <see cref="TeardownPatience"/> had run out, and gone once the test host had
+    /// exited. ⚠️ <b>That is the only shape this assertion can catch, and it is what it
+    /// is for</b>: every pid it reads was in one of the arm's kill-on-close jobs when it
+    /// was read, and a job that grants no breakaway turns an escape into a launch
+    /// failure (<c>JobObject</c>'s remarks), which shows up at the first assertion and
+    /// never here. What can outlive the arm is a handle to one of its jobs held
+    /// somewhere else.
+    /// </description></item>
+    /// <item><description>
+    /// <b>The closing half</b>, against a background that refused its fiftieth
+    /// <c>browserai_destroy</c>: <i>"peer 57: browserai_destroy was refused"</i> with the
+    /// planted sentence.
+    /// </description></item>
+    /// <item><description>
+    /// ⚠️ <b>The shared log, which was green when broken.</b> Against a background whose
+    /// records reached stderr alone, the arm passed: the check that every process wrote
+    /// a record read the pid alone over thirty days of the machine's log, and the
+    /// background was pid 70276, on which 36 records of a BrowserAI of 2026-09-17 still
+    /// stood. It reads each writer's pid and creation time since that day (see
+    /// <see cref="ReadProcessLogSince"/>), and the same plant then read <i>"the
+    /// background (pid 67712) wrote no record into the shared process log"</i>, a pid
+    /// carried by 44 records of three other processes in those files.
+    /// </description></item>
+    /// </list>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -243,6 +307,11 @@ internal sealed partial class SaturationTests
         var record = PublishedBackground.RecordFor(environment, [], pipe);
 
         using var background = PublishedBackground.Start(backgroundJob, scratch.Path, environment, pipe, []);
+
+        // The background's whole identity, read while it is certainly alive, because
+        // the shared log is matched on the pair and never on the pid alone (see
+        // ReadProcessLogSince).
+        var backgroundCreated = ProcessIdentity.CreationTimeOf(background.Id);
 
         var peers = Enumerable.Range(0, Processes).Select(index => new Peer(index, scratch.Path, pipe)).ToList();
 
@@ -362,7 +431,7 @@ internal sealed partial class SaturationTests
 
             // ---- 5. The shared process log is still readable ----------------
 
-            var (lines, pids) = ReadProcessLogSince(logsBefore, started);
+            var (lines, writers) = ReadProcessLogSince(logsBefore, started);
 
             // ⚠️ COUNTED OVER THIS RUN'S OWN PIDS, and that is the 2026-08-18
             // correction. It used to count every record header in every log file
@@ -374,11 +443,22 @@ internal sealed partial class SaturationTests
             // "what this run wrote" must not be answerable by what a previous one
             // wrote, however many files that takes.
             //
+            // ⚠️ AND OVER THEIR WHOLE IDENTITY, (pid, creation time), since
+            // 2026-10-10 (previously "this run's own pids", the pid alone). The log is
+            // kept for thirty days and Windows reuses pids inside that window, so a
+            // bare pid was answered by a stranger's history in exactly the way the
+            // paragraph above describes for the unscoped count. Planted red that day
+            // with the background's records kept out of the shared log, this arm
+            // stayed green: the background was pid 70276, and 36 records of a
+            // BrowserAI of 2026-09-17 that had worn the same number stood in the
+            // files it reads. Every record carries the pair, and ProcessLogRecords
+            // has matched on it since 2026-08-29.
+            //
             // Read before the torn check and not after it because both are
             // now scoped by it, which is the same rule applied to the same file
             // twice. The background is one of this run's processes since
             // 2026-10-09, and the one that writes for every session.
-            var ours = new HashSet<int>(reports.Select(report => report.ProcessId)) { background.Id };
+            var ours = new HashSet<(int Pid, long Created)>(reports.Select(report => (report.ProcessId, report.ProcessCreated))) { (background.Id, backgroundCreated) };
 
             var torn = TornRecordsThisRunWasPartyTo(lines, ours);
 
@@ -390,11 +470,8 @@ internal sealed partial class SaturationTests
 
             var written = lines.Count(line =>
                 RecordHeader().Match(line) is { Success: true, Index: 0 } header
-                && int.TryParse(
-                    header.Groups["pid"].ValueSpan,
-                    CultureInfo.InvariantCulture,
-                    out var pid)
-                && ours.Contains(pid));
+                && WriterOf(header) is { } writer
+                && ours.Contains(writer));
 
             await Assert.That(written).IsGreaterThanOrEqualTo(Processes)
                 .Because($"{ours.Count.ToString(CultureInfo.InvariantCulture)} processes ran and the shared log holds {lines.Count.ToString(CultureInfo.InvariantCulture)} line(s) across {LogFilesNow().Count.ToString(CultureInfo.InvariantCulture)} file(s)");
@@ -402,11 +479,11 @@ internal sealed partial class SaturationTests
             // Every relay, and the background, really did write into it. Without
             // this the check above passes against a log none of them reached.
             var missing = reports
-                .Where(report => !pids.Contains(report.ProcessId))
+                .Where(report => !writers.Contains((report.ProcessId, report.ProcessCreated)))
                 .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} (pid {report.ProcessId.ToString(CultureInfo.InvariantCulture)}) wrote no record into the shared process log")
                 .ToList();
 
-            if (!pids.Contains(background.Id))
+            if (!writers.Contains((background.Id, backgroundCreated)))
             {
                 missing.Add($"the background (pid {background.Id.ToString(CultureInfo.InvariantCulture)}) wrote no record into the shared process log");
             }
@@ -466,6 +543,13 @@ internal sealed partial class SaturationTests
     /// and this test goes red instead of quietly asserting about a shape
     /// nothing writes any more.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A scope of whole identities since 2026-10-10</b> (previously the pid
+    /// alone), and so a third direction: a record of another process that wore one of
+    /// this run's pids is a stranger's. The live arm was planted green-when-broken that
+    /// day on exactly that, a recycled pid in the log's history, and this line is the
+    /// control for the fix, watched red with the scope cut back to the pid alone.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -478,7 +562,10 @@ internal sealed partial class SaturationTests
         const int Stranger = 9191;
         const int AnotherStranger = 9193;
 
-        var ours = new HashSet<int> { Ours };
+        // Another process that wore our pid, weeks before this run.
+        const long Earlier = 132000000000000000;
+
+        var ours = new HashSet<(int Pid, long Created)> { (Ours, SyntheticCreated) };
 
         // The control on the control: the expression really does find a header
         // at a non-zero offset in a line built this way, so an empty result
@@ -500,6 +587,11 @@ internal sealed partial class SaturationTests
         // same defect seen from the other side, and just as much ours.
         await Assert.That(TornRecordsThisRunWasPartyTo([Torn(Stranger, Ours)], ours).Count).IsEqualTo(1);
 
+        // Our pid on another process's record is a stranger's history, at either end:
+        // the shape the live arm was green over on 2026-10-10.
+        await Assert.That(TornRecordsThisRunWasPartyTo([SyntheticRecord(Ours, Earlier) + SyntheticRecord(Stranger)], ours)).IsEmpty();
+        await Assert.That(TornRecordsThisRunWasPartyTo([SyntheticRecord(Stranger) + SyntheticRecord(Ours, Earlier)], ours)).IsEmpty();
+
         // The cap survives the scope: ten reported, not one per line.
         await Assert.That(TornRecordsThisRunWasPartyTo(
             [.. Enumerable.Repeat(Torn(Ours, Stranger), 25)],
@@ -517,12 +609,16 @@ internal sealed partial class SaturationTests
     private static string Torn(int interrupted, int interrupting) =>
         SyntheticRecord(interrupted) + SyntheticRecord(interrupting);
 
+    /// <summary>The creation time every synthetic record's writer has unless an arm says otherwise.</summary>
+    private const long SyntheticCreated = 133000000000000000;
+
     /// <summary>One whole record, in the form <c>FileLoggerProvider</c> writes.</summary>
     /// <param name="processId">The pid that wrote it.</param>
+    /// <param name="created">The writer's creation time, the other half of its identity.</param>
     /// <returns>The record.</returns>
-    private static string SyntheticRecord(int processId) => string.Create(
+    private static string SyntheticRecord(int processId, long created = SyntheticCreated) => string.Create(
         CultureInfo.InvariantCulture,
-        $"2026-08-24T03:38:00.0000000Z  made=2026-08-24T03:38:00.0000000Z  INFO   pid={processId}@133000000000000000  BrowserAI  a record");
+        $"2026-08-24T03:38:00.0000000Z  made=2026-08-24T03:38:00.0000000Z  INFO   pid={processId}@{created}  BrowserAI  a record");
 
     /// <summary>
     /// The torn records among these lines that this run's own processes were
@@ -557,11 +653,19 @@ internal sealed partial class SaturationTests
     /// is the same defect as a stranger's failing to be atomic against ours.
     /// Only a line naming none of this run's pids is somebody else's history.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously "Scoped by pid" and "this run's pids",
+    /// the pid alone).</b> Scoped by each process's whole identity, its pid and its
+    /// creation time, which every header carries after the <c>@</c>. A pid on its own
+    /// is answered by the log's thirty days of history, where Windows has reused it;
+    /// the live arm was green that day with the background's records missing for that
+    /// reason, and here it would make a stranger's old tear this run's failure.
+    /// </para>
     /// </remarks>
     /// <param name="lines">The log's lines.</param>
-    /// <param name="ours">The pids this run started.</param>
+    /// <param name="ours">The identities of the processes this run started.</param>
     /// <returns>Up to ten findings, empty when there are none.</returns>
-    private static List<string> TornRecordsThisRunWasPartyTo(IReadOnlyList<string> lines, HashSet<int> ours)
+    private static List<string> TornRecordsThisRunWasPartyTo(IReadOnlyList<string> lines, HashSet<(int Pid, long Created)> ours)
     {
         var found = new List<string>();
 
@@ -569,11 +673,7 @@ internal sealed partial class SaturationTests
         {
             var headers = RecordHeader().Matches(line);
 
-            if (!headers.Any(header => int.TryParse(
-                    header.Groups["pid"].ValueSpan,
-                    CultureInfo.InvariantCulture,
-                    out var pid)
-                && ours.Contains(pid)))
+            if (!headers.Any(header => WriterOf(header) is { } writer && ours.Contains(writer)))
             {
                 continue;
             }
@@ -762,10 +862,25 @@ internal sealed partial class SaturationTests
     /// everything after the last <c>pid=</c> as an integer and there is a
     /// <c>@</c> and a FILETIME behind it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And so is the FILETIME, since 2026-10-10</b> (previously matched by
+    /// <c>@\d+</c> and never read): it is the writer's creation time, the half of its
+    /// identity a recycled pid does not share, and every scope in this class is the
+    /// pair (see <see cref="WriterOf"/>).
+    /// </para>
     /// </remarks>
     /// <returns>The compiled expression.</returns>
-    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\smade=\S+\s\s\S+\s+pid=(?<pid>\d+)@\d+")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\smade=\S+\s\s\S+\s+pid=(?<pid>\d+)@(?<created>\d+)")]
     private static partial System.Text.RegularExpressions.Regex RecordHeader();
+
+    /// <summary>The writer a record header names: its pid and its creation time.</summary>
+    /// <param name="header">A match of <see cref="RecordHeader"/>.</param>
+    /// <returns>The writer's identity, or <see langword="null"/> when a half does not parse.</returns>
+    private static (int Pid, long Created)? WriterOf(System.Text.RegularExpressions.Match header) =>
+        int.TryParse(header.Groups["pid"].ValueSpan, CultureInfo.InvariantCulture, out var pid)
+        && long.TryParse(header.Groups["created"].ValueSpan, CultureInfo.InvariantCulture, out var created)
+            ? (pid, created)
+            : null;
 
     private static List<string> IndexEntriesPointingInto(string root)
     {
@@ -809,20 +924,32 @@ internal sealed partial class SaturationTests
     }
 
     /// <summary>
-    /// The process log's lines, and the pids that wrote them.
+    /// The process log's lines, and the processes that wrote them, each by its pid and
+    /// its creation time.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Read with <c>FileShare.ReadWrite | Delete</c> and never locked</b>: a
     /// hundred BrowserAIs and whatever else the suite is running are appending
     /// to this file while it is read, and a reader that took an exclusive share
     /// would be the thing that broke the property under test.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously "the pids that wrote them", read from
+    /// the first <c>"  pid="</c> of a line).</b> A writer is the pair its header
+    /// carries, read through <see cref="RecordHeader"/> at the start of a line. Every
+    /// file is read, as the loop below says, and the files hold thirty days of every
+    /// BrowserAI on the machine, so a pid alone named whichever process had worn it
+    /// last: the arm went green with the background's records missing, on 36 records
+    /// of a process of 2026-09-17 under the background's number.
+    /// </para>
     /// </remarks>
-    private static (IReadOnlyList<string> Lines, HashSet<int> Pids) ReadProcessLogSince(
+    private static (IReadOnlyList<string> Lines, HashSet<(int Pid, long Created)> Writers) ReadProcessLogSince(
         IReadOnlyList<string> before,
         DateTimeOffset started)
     {
         var lines = new List<string>();
-        var pids = new HashSet<int>();
+        var writers = new HashSet<(int Pid, long Created)>();
 
         foreach (var file in LogFilesNow())
         {
@@ -837,7 +964,7 @@ internal sealed partial class SaturationTests
             //
             // Reading everything costs a few megabytes and is correct by
             // construction. What establishes that THIS run's records were seen
-            // is the pid check, not the file selection.
+            // is the identity check, not the file selection.
             _ = before;
 
             using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -847,30 +974,14 @@ internal sealed partial class SaturationTests
             {
                 lines.Add(line);
 
-                const string Marker = "  pid=";
-                var at = line.IndexOf(Marker, StringComparison.Ordinal);
-
-                if (at < 0)
+                if (RecordHeader().Match(line) is { Success: true, Index: 0 } header && WriterOf(header) is { } writer)
                 {
-                    continue;
-                }
-
-                var from = at + Marker.Length;
-                var to = from;
-
-                while (to < line.Length && char.IsAsciiDigit(line[to]))
-                {
-                    to++;
-                }
-
-                if (to > from && int.TryParse(line.AsSpan(from, to - from), CultureInfo.InvariantCulture, out var pid))
-                {
-                    _ = pids.Add(pid);
+                    _ = writers.Add(writer);
                 }
             }
         }
 
-        return (lines, pids);
+        return (lines, writers);
     }
 
     private static async Task<List<JobMember>> WaitForNoneAliveAsync(
@@ -907,6 +1018,9 @@ internal sealed partial class SaturationTests
 
         /// <summary>The peer's relay.</summary>
         public required int ProcessId { get; init; }
+
+        /// <summary>The relay's creation time, the half of its identity a recycled pid does not share; zero if it had gone before it was read.</summary>
+        public required long ProcessCreated { get; init; }
 
         public required string Session { get; init; }
 
@@ -984,6 +1098,7 @@ internal sealed partial class SaturationTests
             {
                 Index = index,
                 ProcessId = client.ProcessId,
+                ProcessCreated = CreationTimeOrZero(client.ProcessId),
                 Session = Session,
                 LaunchesABrowser = LaunchesABrowser,
             };
@@ -1122,6 +1237,23 @@ internal sealed partial class SaturationTests
             {
                 _client = null;
                 await client.DisposeAsync();
+            }
+        }
+
+        /// <summary>A process's creation time, or zero once it has gone.</summary>
+        /// <param name="processId">The pid, read the moment the process was started.</param>
+        /// <returns>The creation time, or zero, which no record's writer carries.</returns>
+        private static long CreationTimeOrZero(int processId)
+        {
+            try
+            {
+                return ProcessIdentity.CreationTimeOf(processId);
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // Gone before it could be read: the conversation that follows fails
+                // and the first assertion reports it with this relay's stderr.
+                return 0;
             }
         }
 

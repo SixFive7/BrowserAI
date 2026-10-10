@@ -175,6 +175,20 @@ Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`,
 never match processes by image name -- a test that kills `chrome.exe` by name will
 one day close the developer's browser.
 
+**A record in the machine's shared process log is matched by its writer's whole
+identity, `(pid, creationFileTime)`, and never by the pid alone.** *Added
+2026-10-10.* The log keeps thirty days of every BrowserAI on the machine and
+Windows reuses pids inside that window, so a check scoped by a bare pid is
+answered by a stranger's history. `ProcessLogRecords` has matched on the pair
+since 2026-08-29, and `SaturationTests.TheDesignPointHoldsWithEveryProcessBrowserAndSessionAtOnce`
+did not: planted red on 2026-10-10 with the background's records kept out of the
+shared log, it passed, because the background was pid 70276 and 36 records of a
+BrowserAI of 2026-09-17 under that number stood in the files it read. Its
+torn-record scope, its record count and its every-process-wrote check now read the
+pair from each record's header, and
+`SaturationTests.AStrangersTornRecordIsNotThisRunsAndOneThisRunWasPartyToIs` holds
+a recycled pid as a stranger's at either end of a tear.
+
 **Every run starts by reclaiming what a previous run may have leaked.** Settled
 2026-08-16. This suite drives machine-wide named objects, real processes and real
 directories, so a run that is killed -- a failed assertion taking the host with

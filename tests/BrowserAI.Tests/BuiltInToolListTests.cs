@@ -97,11 +97,26 @@ internal sealed class BuiltInToolListTests
     /// compiled list byte for byte.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>No browser starts</b>: <c>browserai_init</c> starts the session's child and
     /// the check, and a browser starts at the first browser call. Measured before the
     /// check was built, 2026-10-08: five configurations of the payload's own child,
     /// Chromium and Firefox among them, each answered the 45,612 bytes the compiled
     /// list produces.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10, one row at a time</b>, after lane S1's build of
+    /// 2026-10-08 had left both rows unwatched, with the session child of one family
+    /// started without the <c>testing</c> capability and the other family's left as it
+    /// was. The <c>firefox</c> row was refused as a broken install, <i>"the first
+    /// difference is 'browser_generate_locator', where the browser server lists
+    /// 'browser_storage_state'"</i>, with the <c>chromium</c> row green beside it; then
+    /// the <c>chromium</c> row in the same words, with the <c>firefox</c> row green.
+    /// What these rows cannot see is a check deleted outright, under which a session
+    /// opens just the same: that half is
+    /// <c>ErrorCatalogueTests.TheInstallIsBrokenRowIsEmittedByASessionChildWhoseListDiffers</c>'s,
+    /// red against a tree with no check.
+    /// </para>
     /// </remarks>
     /// <param name="browser">The family.</param>
     /// <returns>The assertion task.</returns>
@@ -167,6 +182,14 @@ internal sealed class BuiltInToolListTests
     }
 
     /// <summary>The list compiled into the binary is the committed snapshot's tools, with the indentation taken out.</summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-10, twice, in <c>UpstreamToolList</c></b>, after lane S1's
+    /// build of 2026-10-08 had left it unwatched. With the compaction keeping a newline
+    /// outside a string, it read <i>"Expected to not contain "\n""</i> over the compiled
+    /// list's text, which began <c>{"tools":[</c> and a newline; and with the list read
+    /// out of the binary one character longer in its first description, <i>"Expected to be
+    /// true but found False"</i> at the comparison with the committed file's own parse.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheCompiledListIsTheCommittedSnapshotsToolsWithTheIndentationTakenOut()
@@ -203,6 +226,24 @@ internal sealed class BuiltInToolListTests
     }
 
     /// <summary>The comparison, every shape of difference it names, and the bytes it takes as the same.</summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-10, once for each of its nine assertions</b>, after lane S1's
+    /// build of 2026-10-08 had left it unwatched, each plant a defect in
+    /// <c>UpstreamToolList</c> and each red at its own line. With the same bytes no longer
+    /// taken as the same list, the first read <i>"Expected to be null but found the list
+    /// around the tools, which hold the same bytes"</i>, and with the whole document kept
+    /// and not its tools alone, the indented one read the same. A tool compared by its name
+    /// alone: <i>"Expected to be equal to "'second', whose definition differs" but received
+    /// "the list around the tools, which hold the same bytes""</i>. The two names swapped:
+    /// <i>"but received "'other', where the browser server lists 'second'""</i>. One more
+    /// tool named as one fewer: <i>"but received "'third', which this BrowserAI lists and the
+    /// browser server does not""</i>. A tool the child does not list let through, and an
+    /// answer with no list let through: each <i>"but received """</i>, the method having
+    /// answered null. The child's whitespace taken out before the comparison: <i>"Expected
+    /// to not be null but received null"</i> for <c>[ {</c>. And only the tools array
+    /// compared, so the list with <c>nextCursor</c> beside it answered null where <i>"the
+    /// list around the tools, which hold the same bytes"</i> was expected.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task EveryDifferenceNamesTheFirstToolItMeets()

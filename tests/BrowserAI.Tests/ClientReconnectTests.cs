@@ -415,6 +415,15 @@ internal sealed class ClientReconnectTests
     /// no session. The registration is the product's own, with the background's pipe
     /// added beside the variable Codex would otherwise drop.
     /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 for the positive control</b>, which helper T2's plant of
+    /// 2026-10-09 did not reach separately, against a relay that ended once it had passed
+    /// on its first answer: Codex got the call's answer, and the relay the background had
+    /// recorded as connected was already gone, <i>"Expected to be true, because the
+    /// positive control: while Codex serves, the relay the background recorded is alive,
+    /// or the check below proves nothing but found False"</i>. That relay is the shape
+    /// the two checks after Codex would have passed over.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

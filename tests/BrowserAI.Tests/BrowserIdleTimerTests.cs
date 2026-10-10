@@ -1091,6 +1091,13 @@ internal sealed partial class BrowserIdleTimerTests
     /// once it has judged what that relay drove. A survivor check taken the moment the
     /// relay exits would pass for a session the background was still closing.
     /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 for the relay's own record</b>, which helper T2's plants of
+    /// 2026-10-09 did not reach separately, against a relay that ended on the end of its
+    /// input and wrote nothing about it: <i>"Expected to contain "Relay: the client closed
+    /// its input, so the relay ends.""</i> over the relay's records, the last two of which
+    /// said it had ended for <c>ClientWentAway</c>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1184,6 +1191,15 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>The background runs in a job of the arm's own</b>, the way the Task
     /// Scheduler's job holds it in production, and the wrapper's job holds the relay
     /// alone, so nothing done to the client can reach the session through a job.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 for the relay's two records</b>, which helper T2's plant of
+    /// 2026-10-09 did not reach separately. Against a watch that ended the relay and wrote
+    /// nothing: <i>"Expected to contain "The MCP client, pid 54472, has exited""</i>, the
+    /// relay's records ending in <c>Relay: ended (Cancelled)</c>. And against a relay that
+    /// wrote the end-of-input record on its client's exit as well: <i>"Expected to not
+    /// contain "Relay: the client closed its input, so the relay ends.""</i>, the record
+    /// standing in the relay's log right after the one that named the client's exit.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

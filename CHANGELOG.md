@@ -936,6 +936,15 @@ release body; nothing else depends on it.
   it was unzipped, and vendored in place of 3.53.4. `drift-check.json` records the new pin, archive
   and file hashes, and `SqliteTests` read the linked version off the published binary.
 
+- ✅ **The hundred-relay arm's shared-log checks read each writer's pid and creation time.**
+  Planted red on 2026-10-10 with the background's records kept out of the shared log, the arm
+  passed: its every-process-wrote check, its record count and its torn-record scope matched the
+  pid alone over thirty days of every BrowserAI's log, and the background was pid 70276, which a
+  BrowserAI of 2026-09-17 had worn for 36 records still in those files. They now read the pair each
+  record's header carries, which `ProcessLogRecords` has matched on since 2026-08-29; the synthetic
+  arm beside it holds a recycled pid as a stranger's at either end of a tear, red against a scope cut
+  back to the pid; and the same plant turned the arm red, naming the background.
+
 - 🔧 **A running BrowserAI takes its data root and update source from its arguments, never a variable.**
   Step 5 of the one-binary build, which the maintainer approved on 2026-10-08 with the rest of it. The
   installer's `BROWSERAI_ROOT` and `BROWSERAI_UPDATE_FEED` are read once, by the install hook, and

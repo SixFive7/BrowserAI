@@ -67,6 +67,18 @@ internal sealed class InstallerSettingsTests
     /// The installer's environment wins over what the install saved, and with neither
     /// there is nothing: the default data root and the production feed.
     /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-10, once for each of its three halves</b>, after the plant of
+    /// 2026-10-08 that turned the update-hook arm red had left this one unreached, each a
+    /// defect in the hooks' read. With what the install saved read before the installer's
+    /// environment: <i>"Expected to be equal to"</i> the path ending in <c>named</c>,
+    /// <i>"but received"</i> the one ending in <c>saved</c>. With the default data root
+    /// named when the installer and the install named none: the fresh install's read,
+    /// <i>"Expected to be null but found"</i> the default root, <c>%LOCALAPPDATA%\BrowserAI</c>
+    /// written out. And with
+    /// a task written with no data root naming the default one: the fresh install's read
+    /// stayed null and the last one went red in the same words.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheInstallersEnvironmentWinsAndWithNeitherThereIsNothing()
@@ -109,6 +121,17 @@ internal sealed class InstallerSettingsTests
     /// A relative data root is ignored, not resolved, from the environment and from a
     /// saved definition alike, and a definition that is not XML names nothing.
     /// </summary>
+    /// <remarks>
+    /// <b>Planted red 2026-10-10, three ways</b>, after the plant of 2026-10-08 that turned
+    /// the update-hook arm red had left this one unreached, each a defect in the read the
+    /// hooks make. A relative root from the installer's environment resolved: <i>"Expected
+    /// to be null but found"</i> the test host's own <c>bin\Debug\net10.0-windows\also\relative</c>,
+    /// which is where a resolved relative root lands. A relative root in the saved
+    /// definition resolved, with the environment's still ignored: the same, ending in
+    /// <c>relative\root</c>. And a definition that is not XML let through to its reader,
+    /// which threw <i>"XmlException: Data at the root level is invalid. Line 1, position
+    /// 1."</i> out of <c>SignInTask.DataRootIn</c> at the line that reads it.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ARelativeRootIsIgnoredAndADefinitionThatIsNotXmlNamesNothing()

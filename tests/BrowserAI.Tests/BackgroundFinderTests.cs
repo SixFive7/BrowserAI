@@ -346,6 +346,18 @@ internal sealed class BackgroundFinderTests
     /// <b>Planted red 2026-10-09</b> against a finder that named a missing task as one it
     /// could not read.
     /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 for the other three rows</b>, which the plant above did
+    /// not reach, against a finder that named a ready task missing, a disabled one ready
+    /// and one it could not read missing: each read <i>"differs at member Task"</i>, the
+    /// <c>Ready</c> row expecting <c>Ready</c> but finding <c>Missing</c>, the
+    /// <c>Disabled</c> row expecting <c>Disabled</c> but finding <c>Ready</c> and the
+    /// <c>Unknown</c> row expecting <c>Unknown</c> but finding <c>Missing</c>, and the
+    /// <c>Missing</c> row, whose mapping the plant left alone, stayed green. Then against a
+    /// finder that dropped what the Task Scheduler said: the <c>Unknown</c> row alone
+    /// went red, <i>"differs at member Detail"</i> with the scheduler's sentence expected
+    /// and null found, since no other row carries one.
+    /// </para>
     /// </remarks>
     /// <param name="read">What the Task Scheduler says.</param>
     /// <param name="named">What the relay's answer names.</param>
