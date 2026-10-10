@@ -135,7 +135,6 @@ zero, `LockScopes.NeverWaits`.
 | Symbol | Value | Governs | Kind | Evidence | Established | Re-check |
 |---|---|---|---|---|---|---|
 | `ProcessBounds.HandOutBound` | `10 s` | How long a start waits for a verb that asks the background for a tab, `CoordinatorProtocol.HandOutBound`; a person's start from the Start Menu judges the background hung by it | **Chosen**, a hang detector | Such a verb may start the page's listener, which is Kestrel starting and not a pipe answering from memory | Line written 2026-10-03; its use for a hang settled in planning on 2026-10-08 | A judgement, nothing to re-run |
-| `ProcessBounds.BackgroundFirstFrameBound` | `10 s` | How long a connection to the background may take to send its first message, `BackgroundServer.FirstFrameBound` | **Chosen**, a hang detector | Every caller of the background writes its first message at once | Line written 2026-10-08 | A judgement, nothing to re-run |
 | `ProcessBounds.BackgroundBusyBound` | `2 s` | How long one look for the background waits while every instance of its pipe is busy, `BackgroundFinder.BusyBound` | **Chosen**, a hang detector | The relay repeats the look anyway | Line written 2026-10-08 | A judgement, nothing to re-run |
 | `ProcessBounds.BackgroundExitBound` | `2 s` | How long a relay waits for a background whose pipe has closed to finish exiting, so that its exit code can be read, `BackgroundFinder.ExitBound` | **Chosen**, a hang detector | A pipe closes as its process ends | Line written 2026-10-08 | A judgement, nothing to re-run |
 | `ProcessBounds.SessionEndWindowLeaveBound` | `5 s` | How long disposal waits for the sign-out window's thread to leave its loop, `SessionEndWindow.LeaveBound` | **Chosen**, a hang detector | Leaving is one posted message and one return | Line written 2026-10-08 | A judgement, nothing to re-run |
@@ -164,6 +163,19 @@ and chosen 2026-09-24
 The pipe per server and the client that asked it went with S a on 2026-10-08, nothing read
 the bound after that day, and it went with the rest of `ServerPipeProtocol`.
 
+**A second row was deleted on 2026-10-11, with the number it described**, by the
+maintainer's decision 34 d, in his words verbatim *"24 d"*, which he meant as 34 d:
+`BackgroundFirstFrameBound`, `10 s`, how long a connection to the background could take to
+send its first message, the value of `BackgroundServer.FirstFrameBound`. Its row read
+**Chosen**, a hang detector, on the ground that every caller of the background writes its
+first message at once, in a line written 2026-10-08. In the Git Bash half of the gate at
+`07ea5d60` and in that half run again, an arm of `BackgroundServerTests` met a connection
+the background had closed with no frame and no line, each about 10 s after the refusal
+before it, which reads as that bound spent and was not reproduced alone
+([the hazard index](../HAZARDS.md#hazard-index)). Since 2026-10-11 the background waits as
+long as a relay holds a call and then answers with a refusal, and the row for
+`RelayConstants.HoldBound` names the bound.
+
 ## The update -- `UpdateBudgets`
 
 | Symbol | Value | Governs | Kind | Evidence | Established | Re-check |
@@ -182,7 +194,7 @@ the bound after that day, and it went with the rest of `ServerPipeProtocol`.
 
 | Symbol | Value | Governs | Kind | Evidence | Established | Re-check |
 |---|---|---|---|---|---|---|
-| `RelayConstants.HoldBound` | `150 s` | How long a call is held while there is no background | **Derived**: half of `ClientLimits.StricterToolCall` | D8 a, then R and S: the sentence that says why reaches the model before the client gives up on the call | Decided 2026-10-08; computed that way since 2026-10-09 | Follows its source row |
+| `RelayConstants.HoldBound` | `150 s` | How long a call is held while there is no background, and since 2026-10-11, 34 d, how long the background waits for a connection's first message before it refuses the connection, `BackgroundServer.FirstFrameBound` | **Derived**: half of `ClientLimits.StricterToolCall` | D8 a, then R and S: the sentence that says why reaches the model before the client gives up on the call | Decided 2026-10-08; computed that way since 2026-10-09 | Follows its source row |
 | `RelayConstants.HangBound` | `150 s` | How long the background may leave every liveness probe unanswered before the calls are answered with the hang's sentence | **Derived**: half of `ClientLimits.StricterToolCall` | D10 and R, which the maintainer asked to be *"on a forgiving timeout"*; nothing is killed when it runs out | Decided 2026-10-08; computed that way since 2026-10-09 | Follows its source row |
 | `RelayConstants.ProbeInterval` | `10 s` | How often the relay asks the background whether it is alive while a call is outstanding | **Chosen** | D3's liveness interval, kept when R moved the detector to `RelayConstants.HangBound`: fifteen probes fit in one hang bound, so one slow answer decides nothing | Decided 2026-10-08 | A judgement, nothing to re-run |
 | `RelayConstants.LookWhileHolding` | `500 ms` | How often the relay looks for the background while it holds a call | **Chosen** against a measurement | About one start through the Task Scheduler, measured at 514 to 674 ms for the session host of the design before this one, so a held call waits for the background and not for the relay's next look | Measured 2026-10-04; chosen 2026-10-08 | [kb](windows/processes.md#the-real-programs-through-the-real-task-scheduler----measured-2026-10-04) |

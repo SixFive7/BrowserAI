@@ -78,10 +78,35 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     public const int FirstFrameLimit = 64 * 1024;
 
     /// <summary>
-    /// How long a connection may take to send its first message: a hang detector, since
-    /// every caller of ours writes it first, at once.
+    /// The kind of the refusal a connection meets when its first message has not come
+    /// within <see cref="FirstFrameBound"/>, in <c>data.refusal</c>.
     /// </summary>
-    public static TimeSpan FirstFrameBound { get; } = ProcessBounds.BackgroundFirstFrameBound;
+    public const string RefusedForNoFirstMessage = "firstMessage";
+
+    /// <summary>
+    /// How long a connection may take to send its first message: as long as a relay holds
+    /// a call while no background answers.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>34 d, the maintainer's decision, in his words verbatim <i>"24 d"</i>, which he
+    /// meant as 34 d</b>: a connection whose first message has not come by then is
+    /// answered with a refusal of the kind <see cref="RefusedForNoFirstMessage"/>, a
+    /// sentence and a null id, since it asked nothing, and is closed after it; and the
+    /// bound is <see cref="RelayConstants.HoldBound"/>, not a number of its own. A stop
+    /// that ends the wait first closes the connection with no frame, as before.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-11 (previously <c>ProcessBounds.BackgroundFirstFrameBound</c>,
+    /// 10 s, "a hang detector, since every caller of ours writes it first, at once", and a
+    /// connection that missed it closed with no frame and no line)</i>: in the Git Bash half
+    /// of the gate at <c>07ea5d60</c> and in that half run again, a suite's connection met
+    /// that close about 10 s after the refusal before it, which reads as the bound spent by
+    /// a test host too busy to read its greeting, and nothing said which side had waited
+    /// (<c>HAZARDS.md</c>).
+    /// </para>
+    /// </remarks>
+    public static TimeSpan FirstFrameBound { get; } = RelayConstants.HoldBound;
 
     private readonly SessionHost _host;
     private readonly BackgroundIdentity _identity;
@@ -329,11 +354,12 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         {
             try
             {
-                // The bound runs on the server's clock, and a stop ends the wait as well.
-                using var bound = new CancellationTokenSource(FirstFrameBound, Clock);
-                using var firstFrame = CancellationTokenSource.CreateLinkedTokenSource(_stopping.Token, bound.Token);
+                var (first, refused) = await ReadOrRefuseAsync(stream, client).ConfigureAwait(false);
 
-                var first = await ReadFirstFrameAsync(stream, firstFrame.Token).ConfigureAwait(false);
+                if (refused)
+                {
+                    return;
+                }
 
                 if (first is not JsonRpcRequest request)
                 {
@@ -366,7 +392,8 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
             }
             catch (OperationCanceledException)
             {
-                // The background is stopping, or the first message never came.
+                // The background is stopping. A connection whose first message the bound
+                // ran out on was refused in ReadOrRefuseAsync, unless the stop came first.
             }
 #pragma warning disable CA1031 // A connection's own boundary: one that fails costs that connection, never the background.
             catch (Exception failure)
@@ -535,6 +562,50 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         return null;
     }
 
+    /// <summary>
+    /// Reads a connection's first message within <see cref="FirstFrameBound"/>, and refuses
+    /// the connection when the bound runs out first.
+    /// </summary>
+    /// <remarks>
+    /// <b>34 d</b>: never closed without a word. The line goes to the log before the frame
+    /// goes out, so a reader of either finds the other.
+    /// </remarks>
+    /// <param name="stream">The connection.</param>
+    /// <param name="client">The pid Windows reads off the pipe, when it could.</param>
+    /// <returns>
+    /// The message, or <see langword="null"/> for a connection that closed or sent no
+    /// JSON-RPC message; and whether the connection was refused for sending none in time.
+    /// </returns>
+    /// <exception cref="OperationCanceledException">The background is stopping.</exception>
+    private async Task<(JsonRpcMessage? First, bool Refused)> ReadOrRefuseAsync(Stream stream, int? client)
+    {
+        // The bound runs on the server's clock, and a stop ends the wait as well. Both end
+        // with the read: nothing a connection does after its first message is timed here.
+        using var bound = new CancellationTokenSource(FirstFrameBound, Clock);
+        using var firstFrame = CancellationTokenSource.CreateLinkedTokenSource(_stopping.Token, bound.Token);
+
+        try
+        {
+            return (await ReadFirstFrameAsync(stream, firstFrame.Token).ConfigureAwait(false), false);
+        }
+        catch (OperationCanceledException) when (bound.IsCancellationRequested && !_stopping.IsCancellationRequested)
+        {
+            var seconds = FirstFrameBound.TotalSeconds;
+
+            BackgroundServerLog.NoFirstMessage(_logger, client ?? 0, seconds);
+
+            // No request arrived, so the answer carries a null id, as JSON-RPC answers a
+            // request whose id it could not read.
+            await WriteAsync(stream, Refusal(
+                default,
+                (int)McpErrorCode.InvalidRequest,
+                string.Create(CultureInfo.InvariantCulture, $"This connection sent no complete first message in the {seconds:0} s after it opened, so the background closes it."),
+                RefusedForNoFirstMessage)).ConfigureAwait(false);
+
+            return (null, true);
+        }
+    }
+
     private static async Task<JsonRpcMessage?> ReadFirstFrameAsync(Stream stream, CancellationToken cancellationToken)
     {
         // One byte at a time: whatever follows the first newline belongs to the
@@ -635,4 +706,8 @@ internal static partial class BackgroundServerLog
 
     [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "The background's pipe is closed; it waits for {Connections} open connection(s) to end before it stops.")]
     public static partial void WaitingForConnections(ILogger logger, int connections);
+
+    // 34 d, 2026-10-11: a connection that missed the bound was closed with no line.
+    [LoggerMessage(EventId = 10, Level = LogLevel.Warning, Message = "A connection from pid {Client} sent no complete first message in {Seconds} s, and was refused and closed.")]
+    public static partial void NoFirstMessage(ILogger logger, int client, double seconds);
 }

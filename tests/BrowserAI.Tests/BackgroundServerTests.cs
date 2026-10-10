@@ -295,8 +295,8 @@ internal sealed class BackgroundServerTests
     /// <summary>
     /// A connection that never sends its first message, and one that sends half of it,
     /// hold up no other: a person's start and a relay are both served while they wait,
-    /// the half-sent one is served once it is finished, and the silent one is closed at
-    /// the first message's bound.
+    /// the half-sent one is served once it is finished, and the silent one is refused when
+    /// the first message's bound runs out, and closed.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -306,11 +306,16 @@ internal sealed class BackgroundServerTests
     /// start only after the first had given up.
     /// </para>
     /// <para>
-    /// <b>The silent one is closed at <see cref="BackgroundServer.FirstFrameBound"/></b>,
-    /// a hang detector of the product's own, and the wait for that close is the suite's
-    /// <see cref="TestDefaults.InProcessHang"/>: nothing asserts how soon it came. The
-    /// other answers have to arrive within that bound of the silent connection's accept,
-    /// which they do by several orders of magnitude.
+    /// <b>The silent one is refused when <see cref="BackgroundServer.FirstFrameBound"/>
+    /// runs out, on the rig's clock</b>, which only this arm moves and moves last, so the
+    /// other connections are served while the bound has not moved at all. <i>Corrected
+    /// 2026-10-11, 34 d (previously "The silent one is closed at
+    /// BackgroundServer.FirstFrameBound, a hang detector of the product's own, and the wait
+    /// for that close is the suite's TestDefaults.InProcessHang: nothing asserts how soon it
+    /// came. The other answers have to arrive within that bound of the silent connection's
+    /// accept, which they do by several orders of magnitude.")</i>: the bound is the relay's
+    /// hold since that day, 150 s, and the silent connection is answered with a refusal
+    /// before it is closed.
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-09</b> against a listener that served each connection on
@@ -323,11 +328,15 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AConnectionThatNeverSendsItsFirstMessageHoldsUpNoOther()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
 
         using var silent = rig.Connect();
+
+        await rig.FirstMessageBoundsArmedAsync(1);
+
         using var halfway = rig.Connect();
 
+        await rig.FirstMessageBoundsArmedAsync(2);
         await halfway.SendPartAsync("""{"jsonrpc":"2.0","id":"browserai-start-half","method":""");
 
         // A start behind both is answered.
@@ -353,7 +362,12 @@ internal sealed class BackgroundServerTests
         await Assert.That(late.IdText).IsEqualTo("browserai-start-half");
         await Assert.That(Json.Text(late.Result, "address")).IsEqualTo(FakeBackgroundVerbs.DefaultAddress).Because(late.Text);
 
-        // The one that never wrote anything is closed by the background.
+        // The one that never wrote anything is refused when the bound runs out, and closed.
+        rig.Clock.Advance(BackgroundServer.FirstFrameBound);
+
+        var refused = await silent.NextAsync();
+
+        await Assert.That(Kind(refused)).IsEqualTo("firstMessage").Because(refused.Text);
         await Assert.That(await silent.ClosedAsync()).IsTrue();
         await Assert.That(rig.Verbs.Pages.Count).IsEqualTo(2);
     }

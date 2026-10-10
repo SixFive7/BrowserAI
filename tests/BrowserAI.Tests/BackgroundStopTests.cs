@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text;
-using BrowserAI.Background;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Tests.Harness;
@@ -24,16 +23,20 @@ namespace BrowserAI.Tests;
 /// sentence and nothing else, and these arms hold the sentences.
 /// </para>
 /// <para>
-/// <b>The bound is the background's own on a first message</b>,
-/// <see cref="BackgroundServer.FirstFrameBound"/>: an in-process background answers a
-/// stop well inside it, and two arms wait it out once each, for a process that never
-/// ends and for a question nothing answers.
+/// <b>The bound is a person's start's on the same pipe</b>,
+/// <see cref="CoordinatorProtocol.HandOutBound"/>, which a start hands to the same
+/// <see cref="BackgroundClient.Ask"/>: an in-process background answers a stop well
+/// inside it, and two arms wait it out once each, for a process that never ends and for
+/// a question nothing answers. <i>Corrected 2026-10-11, with 34 d (previously "The bound
+/// is the background's own on a first message, BackgroundServer.FirstFrameBound")</i>:
+/// that bound is the relay's hold since that day, 150 s, so each of the two arms would
+/// wait that long.
 /// </para>
 /// </remarks>
 internal sealed class BackgroundStopTests
 {
     /// <summary>How long each stop here waits: for the answer, and then for the process to end.</summary>
-    private static TimeSpan Bound => BackgroundServer.FirstFrameBound;
+    private static TimeSpan Bound => CoordinatorProtocol.HandOutBound;
 
     /// <summary>
     /// A background that answers the stop and is still running when the bound runs out

@@ -40,11 +40,11 @@ internal static class ProcessBounds
     // on 2026-10-08, nothing read the bound after that, and it went with
     // ServerPipeProtocol. Its row left kb/numbers.md the same day.
 
-    /// <summary>
-    /// How long a connection to the background may take to send its first message:
-    /// 10 s. The value of <c>BackgroundServer.FirstFrameBound</c>.
-    /// </summary>
-    public static TimeSpan BackgroundFirstFrameBound { get; } = TimeSpan.FromSeconds(10);
+    // ⚠️ DELETED 2026-10-11, by the maintainer's decision 34 d: BackgroundFirstFrameBound,
+    // 10 s, the value of BackgroundServer.FirstFrameBound, how long a connection to the
+    // background could take to send its first message. That bound is
+    // RelayConstants.HoldBound since that day, and its row left kb/numbers.md the same
+    // day.
 
     /// <summary>
     /// How long one look for the background waits while every instance of its pipe is
