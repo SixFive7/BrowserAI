@@ -126,6 +126,15 @@ internal sealed record RegistrationClient
     /// </remarks>
     public required Func<string, IReadOnlyList<string>, string> ManualCommandFor { get; init; }
 
+    /// <summary>The line a person runs to remove BrowserAI's entry for this user by hand.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, round 2 of the texts review</b>: an unregister that was not
+    /// done, from the dashboard's Unregister or the uninstall hook, was given
+    /// <see cref="ManualCommandFor"/>'s line, which registers BrowserAI again. The client's
+    /// own removal, at the scope the hooks and the page register at.
+    /// </remarks>
+    public required string ManualRemoveCommand { get; init; }
+
     /// <summary>Arguments as a person types them after the command: a flag as it is, anything else in quotes.</summary>
     /// <param name="arguments">The arguments.</param>
     /// <returns>The arguments, separated by spaces.</returns>
@@ -147,6 +156,7 @@ internal sealed record RegistrationClient
         ProjectCommandFor = ClaudeProjectCommandFor,
         ProjectNoteAfter = (_, _) => null,
         ManualCommandFor = static (command, arguments) => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {Typed(arguments)}",
+        ManualRemoveCommand = $"claude mcp remove {McpRegistrar.ServerName} --scope user",
     };
 
     /// <summary>Codex, added 2026-09-24.</summary>
@@ -164,6 +174,7 @@ internal sealed record RegistrationClient
         ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.AppFileName, null),
         ProjectNoteAfter = CodexProjectNote,
         ManualCommandFor = static (command, arguments) => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\" {Typed(arguments)}",
+        ManualRemoveCommand = $"codex mcp remove {McpRegistrar.ServerName}",
     };
 
     /// <summary>Both clients, in the order a report lists them.</summary>

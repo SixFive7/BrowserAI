@@ -252,7 +252,9 @@ internal sealed class SignInTaskTests
         await Assert.That(string.Join(", ", tasks.Calls)).IsEqualTo($"register {name}, register {name}, remove {name}");
         await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNull();
         await Assert.That(File.Exists(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName))).IsFalse();
-        await Assert.That(HookLog(data.Path)).Contains($"Background stop: {BackgroundStopOutcome.NoneRunning}.");
+        // The sentence alone since 2026-10-10, round 2 of the texts review, #168
+        // (previously "Background stop: NoneRunning. ...").
+        await Assert.That(HookLog(data.Path)).Contains("Background stop: No BrowserAI background was running, so none was stopped.");
     }
 
     /// <summary>
@@ -462,7 +464,7 @@ internal sealed class SignInTaskTests
         var log = HookLog(data.Path);
         // NotWaitedFor since 2026-10-10, the texts review's #141 (previously Ended): this
         // background's record names no process, so nothing waited for it to end.
-        var stopped = log.IndexOf($"Background stop: {BackgroundStopOutcome.NotWaitedFor}.", StringComparison.Ordinal);
+        var stopped = log.IndexOf("Background stop: BrowserAI's background was asked to stop; its record named no process to wait for.", StringComparison.Ordinal);
         var taskGone = log.IndexOf($"Sign-in task: {TaskChange.Removed}.", StringComparison.Ordinal);
 
         await Assert.That(stopped).IsGreaterThanOrEqualTo(0).Because(log);

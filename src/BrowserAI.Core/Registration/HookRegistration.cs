@@ -270,9 +270,9 @@ internal static class HookRegistration
                 if (intent is RegistrationIntent.Uninstall && RegistrationTarget.TryResolve(imagePath, out var installing, out _))
                 {
                     var pipe = BackgroundPipe.NameFor(installing!.InstallRoot, paths.RootAppDir);
-                    var (stopped, detail) = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
+                    var (_, detail) = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
 
-                    RegistrationHookLog.BackgroundStopped(logger, stopped, detail);
+                    RegistrationHookLog.BackgroundStopped(logger, detail);
                 }
 
                 // ⚠️ EVERY CLIENT, AND ONE ANSWER EACH -- 2026-09-24, Q258 step 2.
@@ -460,14 +460,23 @@ internal static partial class RegistrationHookLog
 
     /// <summary>What asking the background to stop came to, at an uninstall.</summary>
     /// <param name="logger">Where to write.</param>
-    /// <param name="outcome">How it came out.</param>
-    /// <param name="detail">A sentence for the installer's log.</param>
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Background stop: {Outcome}. {Detail}")]
-    public static partial void BackgroundStopped(ILogger logger, BackgroundStopOutcome outcome, string detail);
+    /// <param name="detail">What happened, as a sentence a person reads.</param>
+    /// <remarks>
+    /// <b>The sentence alone since 2026-10-10</b>, round 2 of the texts review, #168
+    /// (previously "Background stop: {Outcome}. {Detail}", which put the outcome's .NET
+    /// name, <c>NoneRunning</c> or <c>NotWaitedFor</c>, in front of a sentence that
+    /// already says it in words). Written to the process log only.
+    /// </remarks>
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Background stop: {Detail}")]
+    public static partial void BackgroundStopped(ILogger logger, string detail);
 
     /// <summary>What the hook did to the toasts' activator.</summary>
     /// <param name="logger">Where to write.</param>
-    /// <param name="detail">A sentence for the installer's log.</param>
+    /// <param name="detail">
+    /// A sentence for the process log, the one place it is written. <i>Corrected
+    /// 2026-10-10, round 2 of the texts review, first page 142 (previously "A sentence for
+    /// the installer's log.")</i>: the installer's log carries no activator line.
+    /// </param>
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Toast activator: {Detail}")]
     public static partial void ToastActivator(ILogger logger, string detail);
 }

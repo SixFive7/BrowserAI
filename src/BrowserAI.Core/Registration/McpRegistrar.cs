@@ -229,7 +229,7 @@ internal static class McpRegistrar
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, ToolFailed(who, tool, problem, verb, command, arguments, logger)))];
+                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, ToolFailed(who, tool, problem, verb, command, arguments, logger, removing: intent is RegistrationIntent.Uninstall)))];
             }
 
             return
@@ -239,7 +239,7 @@ internal static class McpRegistrar
                     who.DisplayName,
                     document!.For(who.ToolId) is { } result
                         ? UserReport(who, intent, result, command, arguments, logger)
-                        : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, arguments, logger))),
+                        : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, arguments, logger, removing: intent is RegistrationIntent.Uninstall))),
             ];
         }
 #pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds, never an exception into the installer.
@@ -255,7 +255,13 @@ internal static class McpRegistrar
                     who.DisplayName,
                     new RegistrationReport(
                         RegistrationStatus.Failed,
-                        $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>", commandArguments ?? [RegistrationTarget.McpArgument])}",
+
+                        // A removal is told the line that removes the entry, round 2 of the
+                        // texts review, 2026-10-10 (previously every intent was told it was
+                        // not registered and given the line that registers it).
+                        intent is RegistrationIntent.Uninstall
+                            ? $"The unregistration pass threw: {failure.Message}. BrowserAI may still be registered with {who.DisplayName}; remove it by hand with: {who.ManualRemoveCommand}"
+                            : $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>", commandArguments ?? [RegistrationTarget.McpArgument])}",
                         null,
                         imagePath))),
             ];
@@ -455,7 +461,7 @@ internal static class McpRegistrar
                     result.Before.Command);
 
             default:
-                return NotDone(who, intent is RegistrationIntent.Uninstall ? "unregister" : "register", result, command, arguments, logger, Foreign(who, result, command, arguments, intent is RegistrationIntent.Uninstall));
+                return NotDone(who, intent is RegistrationIntent.Uninstall ? "unregister" : "register", result, command, arguments, logger, Foreign(who, result, command, arguments, intent is RegistrationIntent.Uninstall), removing: intent is RegistrationIntent.Uninstall);
         }
     }
 
@@ -497,15 +503,22 @@ internal static class McpRegistrar
                     result.Before.ResolvesTo);
 
             default:
-                return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, arguments, logger, Foreign(who, result, command, arguments, !register));
+                return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, arguments, logger, Foreign(who, result, command, arguments, !register, inProject: file));
         }
     }
 
     /// <summary>The refusals, the missing client and the failure, which read the same at either scope.</summary>
-    private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger, string foreign)
+    /// <remarks>
+    /// ⚠️ <b>A removal at user scope is told the line that removes the entry, since
+    /// 2026-10-10</b>, round 2 of the texts review: the dashboard's Unregister and the
+    /// uninstall hook were given the line that registers BrowserAI, so following it put
+    /// back what they had asked to remove. A project's removal keeps its line, which waits
+    /// with the maintainer's answer on project registrations.
+    /// </remarks>
+    private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger, string foreign, bool removing = false)
     {
         var client = result.ClientPath;
-        var manual = who.ManualCommandFor(command, arguments);
+        var manual = removing ? who.ManualRemoveCommand : who.ManualCommandFor(command, arguments);
 
         if (result.Action is "refused-foreign")
         {
@@ -523,6 +536,17 @@ internal static class McpRegistrar
 
         if (result.Action is "client-not-found")
         {
+            if (removing)
+            {
+                RegistrationLog.NoClientToRemoveFrom(logger, who.Executable, "where RegisterAI looks");
+
+                return new RegistrationReport(
+                    RegistrationStatus.ClientNotFound,
+                    $"{result.Error ?? $"{who.Executable} was not found."} So there is no {who.DisplayName} to remove BrowserAI from, and nothing was changed.",
+                    null,
+                    command);
+            }
+
             RegistrationLog.NoClient(logger, who.Executable, "where RegisterAI looks", manual);
 
             return new RegistrationReport(
@@ -533,6 +557,17 @@ internal static class McpRegistrar
         }
 
         var said = $"{result.Error ?? "RegisterAI reported the change as not done."}{(result.Said is { Length: > 0 } words ? $" What {who.Executable} printed: {words}" : string.Empty)}";
+
+        if (removing)
+        {
+            RegistrationLog.RemovalFailed(logger, client ?? who.Executable, said, manual);
+
+            return new RegistrationReport(
+                RegistrationStatus.Failed,
+                $"BrowserAI could not unregister itself from {who.DisplayName}. {said} The client may still point at BrowserAI. To remove it by hand, run: {manual}",
+                client,
+                command);
+        }
 
         RegistrationLog.Failed(logger, verb, client ?? who.Executable, said, manual);
 
@@ -549,11 +584,20 @@ internal static class McpRegistrar
     /// spelled with the other install's command, so following it put the other entry
     /// back). Found while the texts review's #138 and #139 were fixed.
     /// </remarks>
-    private static string Foreign(RegistrationClient who, ToolResult result, string command, IReadOnlyList<string> arguments, bool removing)
+    /// <remarks>
+    /// ⚠️ <b>In a project, what fixes that project, since 2026-10-10</b>, round 2 of the
+    /// texts review, #166 (previously the user-scope line for every scope, so following it
+    /// after a refusal in a project registered this install for every repository and left
+    /// the project as it was). The project's own line, and its data root, wait with the
+    /// maintainer's answer on project registrations; the page's button is the fix there now.
+    /// </remarks>
+    private static string Foreign(RegistrationClient who, ToolResult result, string command, IReadOnlyList<string> arguments, bool removing, string? inProject = null)
     {
         var advice = removing
             ? "That entry belongs to the other install, and removing it is for that install to do."
-            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command, arguments)}";
+            : inProject is { Length: > 0 } file
+                ? $"If this install is the one you want, remove the other install's 'browserai' entry from '{file}' and register this one in that project again, with BrowserAI's page: Register in a project for {who.DisplayName}."
+                : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command, arguments)}";
 
         return $"Another BrowserAI is registered at '{result.Before.Command ?? "<an entry with no local command>"}', which is not under this install root. "
             + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{ServerName}' entry it did not write. "
@@ -561,9 +605,22 @@ internal static class McpRegistrar
     }
 
     /// <summary>A run of RegisterAI that gave no answer BrowserAI can read.</summary>
-    private static RegistrationReport ToolFailed(RegistrationClient who, IRegisterAi tool, string problem, string verb, string command, IReadOnlyList<string> arguments, ILogger logger)
+    private static RegistrationReport ToolFailed(RegistrationClient who, IRegisterAi tool, string problem, string verb, string command, IReadOnlyList<string> arguments, ILogger logger, bool removing = false)
     {
         var said = $"RegisterAI at '{tool.Executable}' gave no answer: {problem}.";
+
+        // As NotDone: a removal at user scope is told the line that removes the entry.
+        if (removing)
+        {
+            RegistrationLog.RemovalFailed(logger, tool.Executable, said, who.ManualRemoveCommand);
+
+            return new RegistrationReport(
+                RegistrationStatus.Failed,
+                $"BrowserAI could not unregister itself from {who.DisplayName}. {said} The client may still point at BrowserAI. To remove it by hand, run: {who.ManualRemoveCommand}",
+                null,
+                command);
+        }
+
         var manual = who.ManualCommandFor(command, arguments);
 
         RegistrationLog.Failed(logger, verb, tool.Executable, said, manual);
@@ -656,6 +713,37 @@ internal static partial class RegistrationLog
         Level = LogLevel.Warning,
         Message = "No '{Executable}' was found {Where}, so BrowserAI has not registered itself with that client. It is installed and working; nothing is configured to talk to it. Register it by hand once the client is installed: {Manual}")]
     public static partial void NoClient(ILogger logger, string executable, string where, string manual);
+
+    /// <summary>A removal found no client to remove BrowserAI from.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, round 2 of the texts review</b>: a removal took the line
+    /// above, which says BrowserAI has not registered itself and gives the line that
+    /// registers it.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="executable">The client's executable.</param>
+    /// <param name="where">Where it was looked for.</param>
+    [LoggerMessage(
+        EventId = 12,
+        Level = LogLevel.Information,
+        Message = "No '{Executable}' was found {Where}, so there is no client to remove BrowserAI from, and nothing was changed.")]
+    public static partial void NoClientToRemoveFrom(ILogger logger, string executable, string where);
+
+    /// <summary>A removal the client did not do, with the line that removes the entry by hand.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, round 2 of the texts review</b>: a removal took
+    /// <see cref="Failed"/>, which says what is missing is the client's pointer at
+    /// BrowserAI and gives the line that adds it.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="client">The client executable, or RegisterAI when it gave no answer.</param>
+    /// <param name="said">What happened, in its own words where it had any.</param>
+    /// <param name="manual">The command that removes the entry by hand.</param>
+    [LoggerMessage(
+        EventId = 13,
+        Level = LogLevel.Error,
+        Message = "BrowserAI could not unregister itself from the MCP client. {Client} {Said} The client may still point at BrowserAI. Remove it by hand: {Manual}")]
+    public static partial void RemovalFailed(ILogger logger, string client, string said, string manual);
 
     /// <summary>BrowserAI refused to register the path it was given.</summary>
     /// <param name="logger">Where to write.</param>

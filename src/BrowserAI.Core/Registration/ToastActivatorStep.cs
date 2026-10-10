@@ -20,7 +20,11 @@ internal static class ToastActivatorStep
     /// <summary>Registers or removes the activator for one install.</summary>
     /// <param name="intent">Which hook is running.</param>
     /// <param name="installRoot">The install root.</param>
-    /// <returns>A sentence for the installer's log.</returns>
+    /// <returns>
+    /// A sentence for the process log, the one place the hook writes it. <i>Corrected
+    /// 2026-10-10, round 2 of the texts review, first page 142 (previously "A sentence for
+    /// the installer's log.")</i>.
+    /// </returns>
     public static string Apply(RegistrationIntent intent, string installRoot)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);

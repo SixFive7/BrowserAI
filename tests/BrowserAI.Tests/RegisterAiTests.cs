@@ -254,6 +254,86 @@ internal sealed class RegisterAiTests
     }
 
     /// <summary>
+    /// An unregister that is not done offers the line that removes the entry, and never one
+    /// that adds it; a client that is not there is told to be nothing to remove BrowserAI
+    /// from.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, the plain defect in the item the
+    /// maintainer decides.</b> The dashboard's Unregister and the uninstall hook take this
+    /// path, and every way it can fail ended with the line that registers BrowserAI: a
+    /// person who followed it put back the entry they had asked to remove. The client's own
+    /// removal is the line now, <c>claude mcp remove browserai --scope user</c> and
+    /// <c>codex mcp remove browserai</c>, and a missing client needs none.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the add line in each of the four.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUnregisterThatIsNotDoneOffersTheLineThatRemovesTheEntry()
+    {
+        using var install = ScratchDirectory.Create("registerai-remove-lines");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var (logger, _) = Capture();
+
+        string[] removals = ["claude mcp remove browserai --scope user", "codex mcp remove browserai"];
+        var said = new List<(string What, string Detail)>();
+
+        // A client whose removal did not hold.
+        var failing = new FakeRegisterAi { Failing = { "claude-code", "codex" } };
+        failing.Register("claude-code", server);
+        failing.Register("codex", server);
+
+        var failed = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, failing, logger);
+
+        for (var index = 0; index < failed.Count; index++)
+        {
+            await Assert.That(failed[index].Report.Status).IsEqualTo(RegistrationStatus.Failed);
+            await Assert.That(failed[index].Report.Detail).Contains(removals[index]);
+            said.Add(($"{failed[index].Key}, failed", failed[index].Report.Detail));
+        }
+
+        // A RegisterAI that gives no answer.
+        var silent = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger);
+
+        for (var index = 0; index < silent.Count; index++)
+        {
+            await Assert.That(silent[index].Report.Detail).Contains(removals[index]);
+            said.Add(($"{silent[index].Key}, no answer", silent[index].Report.Detail));
+        }
+
+        // A pass that throws.
+        var thrown = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Throws = true }, logger);
+
+        await Assert.That(thrown.Detail).Contains(removals[0]);
+        said.Add(("claude-code, thrown", thrown.Detail));
+
+        // A client that is not there: nothing to remove BrowserAI from, and no line.
+        var bare = new FakeRegisterAi { Missing = { "claude-code", "codex" } };
+        bare.Register("claude-code", server);
+
+        foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, bare, logger))
+        {
+            await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
+            await Assert.That(pass.Report.Detail).DoesNotContain("mcp remove");
+            said.Add(($"{pass.Key}, no client", pass.Report.Detail));
+        }
+
+        foreach (var (what, detail) in said)
+        {
+            await Assert.That(detail).DoesNotContain("mcp add").Because($"{what}: {detail}");
+            await Assert.That(detail).DoesNotContain("register it by hand").Because($"{what}: {detail}");
+        }
+
+        await Assert.That(said.Count).IsEqualTo(7);
+    }
+
+    /// <summary>
     /// A RegisterAI that is missing, hangs, prints something else, speaks another schema
     /// or does not understand its command line fails every client, with the line a
     /// person can run, and never the install.
@@ -399,6 +479,58 @@ internal sealed class RegisterAiTests
         await Assert.That(FakeRegisterAi.Command(claudeCall)).IsEqualTo(RegistrationClient.ClaudeCode.ProjectCommandFor(server, install.Path).Command);
         await Assert.That(FakeRegisterAi.Option(claudeCall, "--path-folder")).IsNull();
         await Assert.That(claude.Detail).Contains(".mcp.json");
+    }
+
+    /// <summary>
+    /// Another install's entry in a project's file is answered with what fixes that
+    /// project, and never with a line that registers this install for every repository.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, #166.</b> The advice over another
+    /// install's entry ended with the user-scope line, <c>--scope user</c> for Claude Code
+    /// and a plain <c>codex mcp add</c> for Codex, so following it after a refusal in a
+    /// project registered this install everywhere and left the project as it was. In a
+    /// project the advice names the file and the dashboard's button that registers in a
+    /// project; an unregister there still leaves the entry to the install that wrote it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the advice with the user-scope line in it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnotherInstallsEntryInAProjectIsAnsweredWithWhatFixesThatProject()
+    {
+        using var install = ScratchDirectory.Create("registerai-project-foreign");
+        using var elsewhere = ScratchDirectory.Create("registerai-project-foreign-other");
+        using var project = ScratchDirectory.Create("registerai-project-foreign-repo");
+
+        var image = InstalledLayout.Create(install.Path);
+        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
+        var (logger, _) = Capture();
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        foreach (var who in RegistrationClient.All)
+        {
+            var tool = new FakeRegisterAi();
+            tool.RegisterIn(who.ToolId, project.Path, theirs);
+
+            var refused = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, tool, logger);
+
+            await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
+            await Assert.That(refused.Detail).Contains("Another BrowserAI is registered at");
+            await Assert.That(refused.Detail).DoesNotContain("mcp add").Because(refused.Detail);
+            await Assert.That(refused.Detail).Contains(who.ProjectFileIn(project.Path)).Because(refused.Detail);
+            await Assert.That(refused.Detail).Contains($"Register in a project for {who.DisplayName}").Because(refused.Detail);
+
+            // An unregister in the project leaves the other install's entry to it.
+            var kept = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, tool, logger);
+
+            await Assert.That(kept.Status).IsEqualTo(RegistrationStatus.Refused);
+            await Assert.That(kept.Detail).EndsWith("That entry belongs to the other install, and removing it is for that install to do.");
+        }
     }
 
     /// <summary>
