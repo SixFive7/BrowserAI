@@ -830,6 +830,72 @@ internal sealed class BackgroundUpdatesTests
         await Assert.That(unnamed.Reconnect).IsEqualTo(RelayReconnect.Unknown);
     }
 
+    /// <summary>
+    /// The snapshot the toast and the dashboard draw names each relay's conversation from
+    /// the read that reads its client's records, and the core's own passes never make
+    /// that read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.3 c, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept all
+    /// your recommendations"</i></b>: the files are read when the dashboard or a toast is
+    /// drawn. The core decides whether an update may install every few seconds, and a
+    /// name decides nothing there, so a pass that read every client's records would read
+    /// them for nobody.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a snapshot read through
+    /// <see cref="IUpdateRelays.Connected"/>, which named nothing, and against a countdown
+    /// read that named every conversation.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSnapshotADrawReadsNamesEachConversationAndThePassesReadNoName()
+    {
+        using var rig = new BackgroundUpdateRig();
+        var now = rig.Clock.GetUtcNow();
+        var window = new ClientWindow("1200-134360600000000000", @"C:\project");
+
+        rig.Relays.Connect(new RelayState("1", KnownClients.ClaudeCode, "2.1.296", @"C:\project", now + TimeSpan.FromMinutes(9), CallInFlight: false) { Reconnect = RelayReconnect.None });
+        rig.Relays.Names["1"] = ("aaaaaaaa-1111-4111-8111-111111111111", new ConversationName("Apple scales", IsTitle: true), window);
+
+        var updates = rig.Build();
+
+        rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
+        updates.Start();
+        rig.Settle();
+
+        // Passes ran and a download is held, and nothing has drawn the snapshot yet:
+        // the rig's toasts are recorded, not drawn.
+        await Assert.That(rig.Relays.NamedReads).IsEqualTo(0).Because("one of the core's own passes read every client's records");
+
+        var snapshot = updates.Read();
+        var relay = snapshot.Relays.Single();
+
+        await Assert.That(snapshot.State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That(relay.Label).IsEqualTo(new ConversationName("Apple scales", IsTitle: true));
+        await Assert.That(relay.Conversation).IsEqualTo("aaaaaaaa-1111-4111-8111-111111111111");
+        await Assert.That(relay.Window).IsEqualTo(window);
+        await Assert.That(rig.Relays.NamedReads).IsEqualTo(1).Because("a draw read the names more than once, or not at all");
+
+        // Time passes and the core decides again: it reads no name.
+        var reads = rig.Relays.NamedReads;
+
+        rig.Clock.Advance(TimeSpan.FromMinutes(1));
+        rig.Settle();
+
+        await Assert.That(rig.Relays.NamedReads).IsEqualTo(reads).Because("one of the core's own passes read every client's records");
+
+        // And the toast's countdown reads the same snapshot with no name in it.
+        var countdown = updates.ReadCountdown();
+
+        await Assert.That(countdown.State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That(countdown.Relays.Single().Label).IsNull();
+        await Assert.That(countdown.Relays.Single().IdleAt).IsEqualTo(relay.IdleAt);
+        await Assert.That(rig.Relays.NamedReads).IsEqualTo(reads).Because("the countdown's read read every client's records");
+    }
+
     // ---- Two more paths the hold depends on ------------------------------------
 
     /// <summary>A package an earlier run left staged is held at once, with no download.</summary>

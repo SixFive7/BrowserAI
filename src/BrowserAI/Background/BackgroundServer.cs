@@ -346,8 +346,8 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
             ClientVersion: Text(parameters?["client"], "version"),
             Folder: Text(parameters, "folder"),
             Reconnect: Enum.TryParse<RelayReconnect>(Text(parameters, "reconnect"), out var reconnect) ? reconnect : RelayReconnect.Unknown,
-            Conversation: Text(parameters, "conversation"),
-            Label: Text(parameters, "label"));
+            Conversation: ConversationFacts.From(parameters?[ConversationFacts.Member]),
+            Window: Text(parameters, ConversationFacts.WindowMember));
         var idleAt = Instant(parameters, "idleAt") ?? DateTimeOffset.UtcNow;
 
         await WriteAsync(stream, new JsonRpcResponse

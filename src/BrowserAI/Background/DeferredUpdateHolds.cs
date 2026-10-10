@@ -23,6 +23,9 @@ internal sealed class DeferredUpdateHolds : IUpdateHolds
     public UpdateHoldSnapshot Read() => Target?.Read() ?? UpdateHoldSnapshot.Nothing(TimeProvider.System.GetUtcNow());
 
     /// <inheritdoc />
+    public UpdateHoldSnapshot ReadCountdown() => Target?.ReadCountdown() ?? UpdateHoldSnapshot.Nothing(TimeProvider.System.GetUtcNow());
+
+    /// <inheritdoc />
     public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
         Target is { } target
             ? target.InstallNowAsync(version, cancellationToken)

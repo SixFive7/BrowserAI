@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
 using BrowserAI.Registration;
+using BrowserAI.Updates;
 
 namespace BrowserAI.App.Page;
 
@@ -463,9 +464,31 @@ internal static class PageContent
         {
             _ = html.Append("<ul class=\"servers\">\n");
 
-            foreach (var server in sessions.Servers)
+            // 1.5 a, 2026-10-10: a VS Code window's tabs are drawn together, under the
+            // window, where the first of them would stand.
+            foreach (var (window, servers) in ByWindow(sessions.Servers, server => server.Window))
             {
-                AppendServer(html, server, now);
+                if (window is null)
+                {
+                    AppendServer(html, servers[0], now);
+                    continue;
+                }
+
+                _ = html.Append("<li class=\"window\"><p><strong>").Append(Text(window.Label())).Append("</strong>");
+
+                if (window.Folder is { Length: > 0 } folder)
+                {
+                    _ = html.Append(" <code>").Append(Text(folder)).Append("</code>");
+                }
+
+                _ = html.Append("</p>\n<ul class=\"servers\">\n");
+
+                foreach (var server in servers)
+                {
+                    AppendServer(html, server, now);
+                }
+
+                _ = html.Append("</ul></li>\n");
             }
 
             _ = html.Append("</ul>\n")
@@ -483,6 +506,44 @@ internal static class PageContent
         }
 
         return html.ToString();
+    }
+
+    /// <summary>
+    /// Items in their order, with every item of one VS Code window drawn together where
+    /// the first of them stands, and every other item on its own.
+    /// </summary>
+    /// <typeparam name="T">The item.</typeparam>
+    /// <param name="items">The items, in the order they are drawn.</param>
+    /// <param name="windowOf">The window an item is a tab of, or <see langword="null"/>.</param>
+    /// <returns>Each group: a window and its items, or no window and one item.</returns>
+    internal static List<(ClientWindow? Window, List<T> Items)> ByWindow<T>(IEnumerable<T> items, Func<T, ClientWindow?> windowOf)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(windowOf);
+
+        var groups = new List<(ClientWindow? Window, List<T> Items)>();
+        var byKey = new Dictionary<string, List<T>>(StringComparer.Ordinal);
+
+        foreach (var item in items)
+        {
+            if (windowOf(item) is not { } window)
+            {
+                groups.Add((null, [item]));
+                continue;
+            }
+
+            if (byKey.TryGetValue(window.Key, out var members))
+            {
+                members.Add(item);
+                continue;
+            }
+
+            members = [item];
+            byKey[window.Key] = members;
+            groups.Add((window, members));
+        }
+
+        return groups;
     }
 
     /// <summary>What a client calls itself on the page.</summary>
@@ -580,8 +641,15 @@ internal static class PageContent
             return;
         }
 
-        _ = html.Append("<li class=\"server\"><label><input type=\"checkbox\" name=\"server\" value=\"").Append(Text(server.Id)).Append("\"> ")
-            .Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture))
+        _ = html.Append("<li class=\"server\"><label><input type=\"checkbox\" name=\"server\" value=\"").Append(Text(server.Id)).Append("\"> ");
+
+        // 1.2 a, 2026-10-10: the conversation first, as the person sees it called.
+        if (server.Conversation is { } conversation)
+        {
+            _ = html.Append("<strong>").Append(Text(conversation.Shown())).Append("</strong>, ");
+        }
+
+        _ = html.Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture))
             .Append("</label>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ");
 
         if (server.IsRelay)

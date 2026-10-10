@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json.Nodes;
 using BrowserAI.Proxy;
 using BrowserAI.Relay;
 using BrowserAI.Tests.Harness;
@@ -369,12 +370,54 @@ internal sealed partial class RelayTests
         await Assert.That(facts.Count).IsEqualTo(8);
     }
 
+    /// <summary>
+    /// The greeting carries where the client keeps its conversation, and a VS Code tab's
+    /// window, exactly as the classifier read them, and only the members it read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.1 c, 1.4 a and 1.5 a, decided 2026-10-10</b>: the background reads the
+    /// client's records when it draws, from what the relay could see and it cannot, the
+    /// client's environment and its parent, so the greeting is where those travel. A
+    /// member the classifier did not read is left out, which is why a client BrowserAI
+    /// reads no records of is greeted with the eight members of the arm above.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a greeting that carried the conversation and
+    /// dropped the window.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheGreetingCarriesWhereTheClientKeepsItsConversationAndItsWindow()
+    {
+        var read = new ClientReading(
+            RelayReconnect.None,
+            new ConversationFacts(@"C:\Users\someone\.claude", 134360637732277608, "aaaaaaaa-1111-4111-8111-111111111111", null, null),
+            "1200-134360600000000000");
+
+        await using var rig = RelayRig.Start(readClient: _ => read);
+        var (_, hello) = await rig.ConnectedAsync(KnownClients.ClaudeCode);
+        var facts = hello.Params!;
+
+        await Assert.That(Json.Text(facts, "reconnect")).IsEqualTo(nameof(RelayReconnect.None));
+        await Assert.That(Json.Text(facts, ConversationFacts.WindowMember)).IsEqualTo("1200-134360600000000000");
+
+        var conversation = facts[ConversationFacts.Member] as JsonObject;
+
+        await Assert.That(conversation).IsNotNull().Because(hello.Text);
+        await Assert.That(ConversationFacts.From(conversation)).IsEqualTo(read.Conversation);
+        await Assert.That(Json.Text(conversation, "clientStarted")).IsEqualTo("134360637732277608").Because("a FILETIME travels as text");
+        await Assert.That(conversation!.Count).IsEqualTo(3).Because("a member the classifier did not read rode along");
+        await Assert.That(facts.Count).IsEqualTo(10);
+    }
+
     /// <summary>A classifier that fails leaves the greeting saying Unknown, and the relay connects all the same.</summary>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task AClassifierThatFailsLeavesTheGreetingSayingUnknown()
     {
-        await using var rig = RelayRig.Start(reconnectOf: Unclassifiable);
+        await using var rig = RelayRig.Start(readClient: Unclassifiable);
         var (background, hello) = await rig.ConnectedAsync(KnownClients.ClaudeCode);
 
         await Assert.That(Json.Text(hello.Params, "reconnect")).IsEqualTo(nameof(RelayReconnect.Unknown));

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Background;
+using BrowserAI.Clients;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Proxy;
@@ -71,7 +72,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
 
         Host = SessionHost.Create(_loggerFactory, sessions.Environment);
         Identity = new BackgroundIdentity(pipeName, Build, dataRoot ?? sessions.Environment.Paths.RootAppDir);
-        Roster = new RelayRoster(Clock);
+        Roster = new RelayRoster(Clock, ConversationReader.Files, _loggerFactory.CreateLogger<RelayRoster>());
         Roster.TellUpdatesThrough(() => _ = Interlocked.Increment(ref _changes), _withdrawn.Enqueue);
 
         try

@@ -81,6 +81,11 @@ internal static class Program
             // child behind it and holds its browser_close until the file exists;
             // see CloseRelayProbe.
             "close-relay" when args.Length >= 3 => CloseRelayProbe.Relay(args[1], args[2], args[3..]),
+            // <reportPath>. A middle process and the leaf it starts, the leaf reading
+            // its parent and its parent's parent as a relay does (2026-10-10); see
+            // ParentChainProbe.
+            "parent-chain-middle" when args.Length is 2 => ParentChainProbe.Middle(args[1]),
+            "parent-chain" when args.Length is 2 => ParentChainProbe.Leaf(args[1]),
             _ => Usage(),
         };
     }

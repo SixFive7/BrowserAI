@@ -324,8 +324,22 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// core reads, still answers <see cref="RelayReconnect.Unknown"/> for Claude Code
     /// when a relay sent no answer.
     /// </para>
+    /// <para>
+    /// <b>Each relay's conversation is named</b>, added 2026-10-10: this snapshot is what
+    /// the dashboard and the toast draw, so it is the read that reads the clients' own
+    /// records (1.3 c), through <see cref="IUpdateRelays.ConnectedWithNames"/>; the core's
+    /// own passes and the toast's countdown read none.
+    /// </para>
     /// </remarks>
-    public UpdateHoldSnapshot Read()
+    public UpdateHoldSnapshot Read() => Read(named: true);
+
+    /// <inheritdoc />
+    public UpdateHoldSnapshot ReadCountdown() => Read(named: false);
+
+    /// <summary>What holds the update now, each relay's conversation named or left unread.</summary>
+    /// <param name="named">Whether to read every relay's conversation from its client's records.</param>
+    /// <returns>The snapshot.</returns>
+    private UpdateHoldSnapshot Read(bool named)
     {
         var now = _clock.GetUtcNow();
         Phase phase;
@@ -352,9 +366,9 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
 
         var relays = new List<HoldingRelay>();
 
-        foreach (var relay in _relays.Connected())
+        foreach (var relay in named ? _relays.ConnectedWithNames() : _relays.Connected())
         {
-            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label));
+            relays.Add(new HoldingRelay(ClientOf(relay), relay.ProjectFolder, relay.IdleAt, relay.CallInFlight, relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect, relay.Conversation, relay.Label, relay.Window));
         }
 
         return new UpdateHoldSnapshot(

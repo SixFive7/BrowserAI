@@ -64,12 +64,17 @@ internal sealed record HoldingSession(string Directory, string? Purpose, DateTim
 /// <param name="CallInFlight">Whether a call from its client is running now.</param>
 /// <param name="Reconnect">What its client needs once the update has ended it.</param>
 /// <param name="Conversation">
-/// Which conversation of its client the relay serves, as the relay could tell it, or
-/// <see langword="null"/> when it could not: room left on 2026-10-08 for the
-/// maintainer's ask to tell several conversations of one client apart, whose
-/// measurement is running.
+/// Which conversation of its client the relay serves, as the background read it when
+/// the snapshot was taken, or <see langword="null"/> when it could not: Claude Code's
+/// session id or Codex's thread id. <i>Added 2026-10-10 by addition: room was left on
+/// 2026-10-08 for the maintainer's ask to tell several conversations of one client
+/// apart, and his answer of 2026-10-10 filled it.</i> No page shows it.
 /// </param>
-/// <param name="Label">What the person sees that conversation called, or <see langword="null"/>.</param>
+/// <param name="Label">
+/// What the person sees that conversation called, read when the snapshot was taken, or
+/// <see langword="null"/> for a client whose records BrowserAI does not read.
+/// </param>
+/// <param name="Window">The VS Code window its client is a tab of, or <see langword="null"/> for any other client.</param>
 internal sealed record HoldingRelay(
     string Client,
     string? ProjectFolder,
@@ -77,7 +82,8 @@ internal sealed record HoldingRelay(
     bool CallInFlight,
     RelayReconnect Reconnect,
     string? Conversation = null,
-    string? Label = null);
+    ConversationName? Label = null,
+    ClientWindow? Window = null);
 
 /// <summary>
 /// The downloaded update, and everything that holds it back, read at one moment.
@@ -227,8 +233,26 @@ internal readonly record struct UpdateWaitReading(UpdateWait Wait, DateTimeOffse
 internal interface IUpdateHolds
 {
     /// <summary>Reads what holds the downloaded update now.</summary>
+    /// <remarks>
+    /// <b>Since 2026-10-10 it names each relay's conversation</b>, read from its client's
+    /// own records at this moment (the maintainer's 1.3 c), because this is what the
+    /// dashboard and the ready toast are drawn from.
+    /// </remarks>
     /// <returns>The snapshot.</returns>
     UpdateHoldSnapshot Read();
+
+    /// <summary>
+    /// Reads what holds the update now with no conversation named: what the ready
+    /// toast's countdown reads once a second, which shows no name.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 with the names</b>, so that a toast left counting down for
+    /// hours reads no client's records once a second; the toast's reconnect line, which
+    /// does name them, is written from <see cref="Read"/> when the toast is raised. A
+    /// reader with no names to leave out answers <see cref="Read"/>.
+    /// </remarks>
+    /// <returns>The snapshot, every relay's conversation and name left unread.</returns>
+    UpdateHoldSnapshot ReadCountdown() => Read();
 
     /// <summary>
     /// The person's install-now, from the dashboard's update page: every session

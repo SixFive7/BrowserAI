@@ -33,6 +33,11 @@ namespace BrowserAI.Background;
 /// when its answer goes out, or when the client cancels it, since MCP has a cancelled
 /// request go unanswered.
 /// </para>
+/// <para>
+/// <b>And it reads the thread a Codex call names</b>, added 2026-10-10 (1.4 a): the first
+/// <c>tools/call</c> whose <c>_meta</c> carries a <c>threadId</c> tells the roster, which
+/// names the relay's conversation from it. The call passes on unchanged.
+/// </para>
 /// </remarks>
 internal sealed class RelayLink : TransportBase
 {
@@ -45,6 +50,9 @@ internal sealed class RelayLink : TransportBase
     private readonly Action<RelayLink, RelayNotice> _notice;
     private long _nextId;
     private int _disposed;
+
+    /// <summary>Whether a call has named its thread: read and written on the pump's thread alone.</summary>
+    private bool _threadTold;
 
     /// <summary>Starts passing the relay's frames on.</summary>
     /// <param name="inner">The pipe's transport. Owned from here.</param>
@@ -222,6 +230,15 @@ internal sealed class RelayLink : TransportBase
                     _notice(this, RelayNotice.CallsChanged);
                 }
 
+                // 1.4 a, 2026-10-10: Codex names its thread in every call's _meta, 24 of
+                // 24, and nothing else does. The first call that names one is told,
+                // once; the call itself goes on unchanged.
+                if (!_threadTold && ThreadIn(call.Params) is { } thread)
+                {
+                    _threadTold = true;
+                    _notice(this, RelayNotice.Conversation(thread));
+                }
+
                 return false;
 
             case JsonRpcNotification { Method: NotificationMethods.CancelledNotification } cancelled
@@ -243,6 +260,17 @@ internal sealed class RelayLink : TransportBase
             ? at
             : null;
 
+    /// <summary>The thread a call's <c>_meta</c> names, Codex's <c>threadId</c>, or <see langword="null"/>.</summary>
+    /// <param name="parameters">The call's parameters.</param>
+    /// <returns>The thread.</returns>
+    private static string? ThreadIn(JsonNode? parameters) =>
+        parameters is JsonObject named
+        && named.TryGetPropertyValue("_meta", out var meta) && meta is JsonObject metadata
+        && metadata.TryGetPropertyValue("threadId", out var thread) && thread is JsonValue value
+        && value.TryGetValue<string>(out var text) && text.Length > 0
+            ? text
+            : null;
+
     private static RequestId? RequestIdIn(JsonNode? parameters) =>
         parameters?["requestId"] is JsonValue value
             ? value.TryGetValue<string>(out var text) ? new RequestId(text)
@@ -254,8 +282,14 @@ internal sealed class RelayLink : TransportBase
 /// <summary>What a relay's connection told the background, for its roster.</summary>
 /// <param name="Kind">What happened.</param>
 /// <param name="IdleAt">The relay's countdown, when the notice carries one.</param>
-internal readonly record struct RelayNotice(RelayNoticeKind Kind, DateTimeOffset? IdleAt)
+/// <param name="Thread">The thread a call named, for <see cref="RelayNoticeKind.Conversation"/>.</param>
+internal readonly record struct RelayNotice(RelayNoticeKind Kind, DateTimeOffset? IdleAt, string? Thread = null)
 {
+    /// <summary>A call named the thread it was made in: Codex's <c>_meta.threadId</c>.</summary>
+    /// <param name="thread">The thread.</param>
+    /// <returns>The notice.</returns>
+    public static RelayNotice Conversation(string thread) => new(RelayNoticeKind.Conversation, null, thread);
+
     /// <summary>A call started or ended.</summary>
     public static RelayNotice CallsChanged { get; } = new(RelayNoticeKind.CallsChanged, null);
 
@@ -281,4 +315,7 @@ internal enum RelayNoticeKind
 
     /// <summary>The relay withdrew its yes.</summary>
     Withdrew,
+
+    /// <summary>A call of the relay's client named the thread it was made in.</summary>
+    Conversation,
 }

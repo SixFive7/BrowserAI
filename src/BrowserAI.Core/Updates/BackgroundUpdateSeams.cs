@@ -50,14 +50,25 @@ internal sealed record RelayState(
     public RelayReconnect Reconnect { get; init; } = RelayReconnect.Unknown;
 
     /// <summary>
-    /// Which conversation of its client the relay serves, from its greeting, or
-    /// <see langword="null"/> when it sent none: room for the measurement of how a relay
-    /// tells a client's conversations apart, running on 2026-10-08.
+    /// Which conversation of its client the relay serves, or <see langword="null"/>:
+    /// read from the client's own records by <see cref="IUpdateRelays.ConnectedWithNames"/>,
+    /// and never by <see cref="IUpdateRelays.Connected"/>.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "from its greeting, or null when it sent none:
+    /// room for the measurement of how a relay tells a client's conversations apart,
+    /// running on 2026-10-08")</i>: the measurement found that a greeting cannot carry
+    /// it, because the conversation a Claude Code process serves changes at
+    /// <c>/clear</c> with no message to its servers, so the background reads it when it
+    /// draws.
+    /// </remarks>
     public string? Conversation { get; init; }
 
-    /// <summary>What the person sees that conversation called, from the greeting, or <see langword="null"/>.</summary>
-    public string? Label { get; init; }
+    /// <summary>What the person sees that conversation called, read the same way, or <see langword="null"/>.</summary>
+    public ConversationName? Label { get; init; }
+
+    /// <summary>The VS Code window the relay's client is a tab of, from its greeting, or <see langword="null"/>.</summary>
+    public ClientWindow? Window { get; init; }
 }
 
 /// <summary>A relay's answer to <i>ready to end?</i>.</summary>
@@ -92,6 +103,25 @@ internal interface IUpdateRelays
     /// <summary>Every relay connected now, read from memory.</summary>
     /// <returns>The relays, in any order.</returns>
     IReadOnlyList<RelayState> Connected();
+
+    /// <summary>
+    /// Every relay connected now, each with its conversation and what the person sees
+    /// it called, read from its client's own records at this moment.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.3 c, decided 2026-10-10</b>: the files are read when the dashboard or a
+    /// toast is drawn, which is what <see cref="IUpdateHolds.Read"/> serves, and never
+    /// held open. So the core's own decisions read <see cref="Connected"/>, which reads
+    /// no file, and only the snapshot a reader draws reads this.
+    /// </para>
+    /// <para>
+    /// A seam that cannot read any client's records answers the relays as
+    /// <see cref="Connected"/> does, unnamed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The relays, in any order.</returns>
+    IReadOnlyList<RelayState> ConnectedWithNames() => Connected();
 
     /// <summary>
     /// Asks one relay <i>ready to end?</i> for an update to <paramref name="version"/>.

@@ -3,7 +3,6 @@
 
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
-using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Relay;
@@ -43,6 +42,18 @@ namespace BrowserAI.Relay;
 /// reads no environment variable at all, and its log records carry a frame's method
 /// and id and never its <c>params</c>, <c>result</c> or <c>error</c>.
 /// </para>
+/// <para>
+/// ⚠️ <i>Corrected 2026-10-10 by addition (previously the paragraph above said only
+/// "the relay reads no environment variable at all", and the entrypoint was already
+/// read for the classifier on 2026-10-08):</i> the engine itself reads none, and the
+/// classifier it is handed reads exactly four, each by name, off the loop:
+/// <c>CLAUDE_CODE_ENTRYPOINT</c>, <c>CLAUDE_CONFIG_DIR</c>, <c>CLAUDE_CODE_SESSION_ID</c>
+/// and <c>USERPROFILE</c> (<see cref="ClientRecognition.Read(string?, Interop.ParentReading?, Func{string, string?})"/>). The greeting carries
+/// the folder and the session id they name, which the background needs to name the
+/// conversation and cannot read itself; no log record carries either, and nothing
+/// enumerates the environment, so the messaging socket and its token stay where they
+/// were.
+/// </para>
 /// </remarks>
 internal sealed partial class RelayEngine
 {
@@ -51,7 +62,7 @@ internal sealed partial class RelayEngine
     private readonly IBackgroundFinder _finder;
     private readonly IHandshake _handshake;
     private readonly Func<JsonObject> _toolList;
-    private readonly Func<string?, RelayReconnect> _reconnectOf;
+    private readonly Func<string?, ClientReading> _readClient;
     private readonly RelayFacts _facts;
     private readonly TimeProvider _clock;
     private readonly ILogger _logger;
@@ -78,10 +89,11 @@ internal sealed partial class RelayEngine
     /// <param name="finder">How the background is reached, and why it is not.</param>
     /// <param name="handshake">What answers <c>initialize</c>, <c>ping</c> and every other request that needs no background.</param>
     /// <param name="toolList">The rewritten tool list, as <c>tools/list</c> answers it: asked once, when it is first needed.</param>
-    /// <param name="reconnectOf">
-    /// What a client of a given <c>clientInfo.name</c> needs once an update has ended its
-    /// relay (H1-T a): asked off the loop after each <c>initialize</c>, and sent in the
-    /// greeting and nowhere else.
+    /// <param name="readClient">
+    /// What the relay reads about a client of a given <c>clientInfo.name</c>: what it
+    /// needs once an update has ended its relay (H1-T a), where it keeps the
+    /// conversation, and its VS Code window (2026-10-10). Asked off the loop after each
+    /// <c>initialize</c>, and sent in the greeting and nowhere else.
     /// </param>
     /// <param name="facts">What the relay knows about itself and its client.</param>
     /// <param name="clock">The clock every countdown runs on.</param>
@@ -92,7 +104,7 @@ internal sealed partial class RelayEngine
         IBackgroundFinder finder,
         IHandshake handshake,
         Func<JsonObject> toolList,
-        Func<string?, RelayReconnect> reconnectOf,
+        Func<string?, ClientReading> readClient,
         RelayFacts facts,
         TimeProvider clock,
         ILogger logger)
@@ -102,7 +114,7 @@ internal sealed partial class RelayEngine
         ArgumentNullException.ThrowIfNull(finder);
         ArgumentNullException.ThrowIfNull(handshake);
         ArgumentNullException.ThrowIfNull(toolList);
-        ArgumentNullException.ThrowIfNull(reconnectOf);
+        ArgumentNullException.ThrowIfNull(readClient);
         ArgumentNullException.ThrowIfNull(facts);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(logger);
@@ -112,7 +124,7 @@ internal sealed partial class RelayEngine
         _finder = finder;
         _handshake = handshake;
         _toolList = toolList;
-        _reconnectOf = reconnectOf;
+        _readClient = readClient;
         _facts = facts;
         _clock = clock;
         _logger = logger;
@@ -415,9 +427,9 @@ internal sealed partial class RelayEngine
     /// <param name="Attempt">The finder's attempt, completed one way or another.</param>
     private sealed record LookFinished(Task<Stream?> Attempt) : RelayEvent;
 
-    /// <summary>The classifier said what this client needs once an update has ended its relay.</summary>
+    /// <summary>The classifier said what this client needs once an update has ended its relay, and where it keeps its conversation.</summary>
     /// <param name="Reading">The classifier's answer, completed one way or another.</param>
-    private sealed record Classified(Task<RelayReconnect> Reading) : RelayEvent;
+    private sealed record Classified(Task<ClientReading> Reading) : RelayEvent;
 
     /// <summary>The finder said why there is no background.</summary>
     /// <param name="Epoch">The connection state the question was asked in.</param>

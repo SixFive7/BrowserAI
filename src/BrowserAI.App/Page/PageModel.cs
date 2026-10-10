@@ -142,6 +142,17 @@ internal sealed record ServerEntry(
 
     /// <summary>Whether this server relays its client to the session host.</summary>
     public bool IsRelay => string.Equals(Description.Role, ServerDescription.Roles.Relay, StringComparison.Ordinal);
+
+    /// <summary>
+    /// What the person sees the conversation of this relay's client called, read from the
+    /// client's records when the page was read, or <see langword="null"/>.
+    /// </summary>
+    /// <remarks><b>Added 2026-10-10</b>, the maintainer's 1.2 a and 1.3 c.</remarks>
+    public ConversationName? Conversation { get; init; }
+
+    /// <summary>The VS Code window this relay's client is a tab of, or <see langword="null"/>.</summary>
+    /// <remarks><b>Added 2026-10-10</b>, the maintainer's 1.5 a: the page groups a window's tabs under it.</remarks>
+    public ClientWindow? Window { get; init; }
 }
 
 /// <summary>Everything the sessions page shows, read at one moment.</summary>

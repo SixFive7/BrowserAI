@@ -243,6 +243,46 @@ internal sealed partial class ProcessLivenessTests
         await Assert.That(watched).IsNotNull();
     }
 
+    /// <summary>
+    /// A relay reads its parent with its creation time, and its parent's parent, which
+    /// is a VS Code window's extension host, with that one's; both as the kernel has them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.1 c and 1.5 a, decided 2026-10-10</b>: Claude Code's file for its process is
+    /// accepted against the parent's creation time, and a window's tabs are grouped by the
+    /// parent's parent. The probe stands in for the chain: this test host where the
+    /// extension host is, a middle probe where the tab's Claude Code is, and a leaf where
+    /// the relay is, each alive while the leaf reads, so every number is held against the
+    /// process it names.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a reading that named the parent's own pid as
+    /// its parent's parent.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARelayReadsItsParentAndItsParentsParentEachWithItsCreationTime()
+    {
+        using var scratch = ScratchDirectory.Create("parent-chain");
+        var report = Path.Combine(scratch.Path, "leaf.json");
+
+        var run = await ProbeProcess.RunAsync("parent-chain-middle", report);
+
+        await Assert.That(run.ExitCode).IsEqualTo(0).Because(run.StandardError);
+
+        var leaf = System.Text.Json.Nodes.JsonNode.Parse(await File.ReadAllTextAsync(report))!;
+        var middle = System.Text.Json.Nodes.JsonNode.Parse(await File.ReadAllTextAsync(report + ".middle"))!;
+
+        await Assert.That((bool?)leaf["read"]).IsTrue().Because(leaf.ToJsonString());
+        await Assert.That((int?)leaf["pid"]).IsEqualTo((int?)middle["pid"]);
+        await Assert.That((string?)leaf["created"]).IsEqualTo((string?)middle["created"]);
+        await Assert.That((string?)leaf["commandLine"]).Contains("parent-chain-middle");
+        await Assert.That((int?)leaf["parentPid"]).IsEqualTo(Environment.ProcessId);
+        await Assert.That((string?)leaf["parentCreated"]).IsEqualTo(ProcessLiveness.CreationTimeOfThisProcess().ToString(CultureInfo.InvariantCulture));
+    }
+
     [Test]
     public async Task EveryProcessHandleOpenedInTheProductIsPairedWithACreationTimeRead()
     {

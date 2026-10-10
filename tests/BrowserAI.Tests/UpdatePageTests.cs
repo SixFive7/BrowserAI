@@ -77,6 +77,65 @@ internal sealed class UpdatePageTests
     }
 
     /// <summary>
+    /// Each agent is named by its conversation the way the person sees it, a title in
+    /// quotes and BrowserAI's own words as they are, before its client; a VS Code
+    /// window's tabs are listed together under the window where the first of them
+    /// stands; and a renamed conversation is a new state for the page.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.2 a and 1.5 a, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I
+    /// accept all your recommendations"</i></b>. Two windows on one folder are two groups
+    /// with one label, which is what the person has on the screen too.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a page that listed every agent in its own
+    /// order with no window, and against a signature that left the name out, which kept
+    /// a renamed conversation off an open tab.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EachAgentIsNamedByItsConversationAndAWindowsTabsAreListedTogether()
+    {
+        var window = new ClientWindow("1200-134360600000000000", @"C:\Source\BrowserAI");
+        var second = new ClientWindow("1300-134360600000000001", @"C:\Source\BrowserAI");
+
+        var holds = new UpdateHoldSnapshot(Now, UpdateHoldState.Held, "1.2.0", [], [],
+        [
+            new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s1", new ConversationName("Fix the <login> bug", IsTitle: true), window),
+            new HoldingRelay("claude-code 2.1.296", @"C:\Source\one", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.McpReconnect, "s2", new ConversationName("Claude Code in one", IsTitle: false)),
+            new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s3", new ConversationName("new conversation in BrowserAI", IsTitle: false), window),
+            new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s4", new ConversationName("Second window", IsTitle: true), second),
+            new HoldingRelay("someclient 1", null, Now.AddMinutes(8), CallInFlight: false, RelayReconnect.Unknown),
+        ]);
+
+        var agents = Section(Render(holds), "agents");
+
+        var first = agents.IndexOf("<strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296 in <code>C:\\Source\\BrowserAI</code>", StringComparison.Ordinal);
+        var unnamedTab = agents.IndexOf("<strong>new conversation in BrowserAI</strong>, claude-code 2.1.296", StringComparison.Ordinal);
+        var terminal = agents.IndexOf("<strong>Claude Code in one</strong>, claude-code 2.1.296 in <code>C:\\Source\\one</code>", StringComparison.Ordinal);
+        var secondWindow = agents.IndexOf("<strong>" + PageContent.Text("\"Second window\"") + "</strong>", StringComparison.Ordinal);
+        var stranger = agents.IndexOf("<strong>someclient 1</strong>", StringComparison.Ordinal);
+
+        await Assert.That(new[] { first, unnamedTab, terminal, secondWindow, stranger }.All(at => at >= 0)).IsTrue().Because(agents);
+
+        // The first window's two tabs together, where its first tab stands; then the
+        // terminal; then the second window; then the client named nothing.
+        await Assert.That(agents.IndexOf("VS Code window on BrowserAI", StringComparison.Ordinal)).IsLessThan(first);
+        await Assert.That(first).IsLessThan(unnamedTab);
+        await Assert.That(unnamedTab).IsLessThan(terminal);
+        await Assert.That(terminal).IsLessThan(secondWindow);
+        await Assert.That(secondWindow).IsLessThan(stranger);
+        await Assert.That(agents.Split("VS Code window on BrowserAI").Length - 1).IsEqualTo(2).Because("two windows on one folder are two groups");
+
+        // A renamed conversation is a new state for an open tab.
+        var renamed = holds with { Relays = [.. holds.Relays.Select(relay => relay.Conversation is "s1" ? relay with { Label = new ConversationName("Renamed", IsTitle: true) } : relay)] };
+
+        await Assert.That(UpdatePageContent.Signature(renamed, Now)).IsNotEqualTo(UpdatePageContent.Signature(holds, Now));
+    }
+
+    /// <summary>
     /// A wait no countdown leads says what it waits for, and a session or a window set
     /// never to close says so where its countdown would be.
     /// </summary>

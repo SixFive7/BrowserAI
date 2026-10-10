@@ -147,6 +147,9 @@ internal sealed record UpdateToastFacts(string RunningVersion, string VelopackLo
 /// <b>The countdown is read from <see cref="IUpdateHolds"/> every second</b>, which
 /// the background answers from its own memory, and written to the toast through
 /// <see cref="IToastSurface.Update"/> with a sequence number one higher each time.
+/// <i>Since 2026-10-10</i> it reads <see cref="IUpdateHolds.ReadCountdown"/>, which names
+/// no conversation, and the raise reads <see cref="IUpdateHolds.Read"/>, whose names the
+/// reconnect line carries.
 /// It stops when Windows answers that the toast is gone, which is what a person's
 /// click or dismissal leaves, and when the update stops waiting.
 /// </para>
@@ -407,8 +410,9 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
             version = _countdown is null ? null : _raisedFor;
         }
 
-        // Read outside the lock, for the reason Held gives.
-        if (version is null || Read() is not { } holds)
+        // Read outside the lock, for the reason Held gives, and with no conversation
+        // named: the countdown shows none, and a toast may count down for hours.
+        if (version is null || Read(countdown: true) is not { } holds)
         {
             return;
         }
@@ -471,12 +475,17 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     }
 
     /// <summary>What holds the update, or <see langword="null"/> when it could not be read.</summary>
+    /// <param name="countdown">
+    /// Whether this is a second of the countdown, which names no conversation
+    /// (<see cref="IUpdateHolds.ReadCountdown"/>); otherwise the raise, whose reconnect
+    /// line names each one (<see cref="IUpdateHolds.Read"/>).
+    /// </param>
     /// <returns>The snapshot.</returns>
-    private UpdateHoldSnapshot? Read()
+    private UpdateHoldSnapshot? Read(bool countdown = false)
     {
         try
         {
-            return _holds?.Read();
+            return countdown ? _holds?.ReadCountdown() : _holds?.Read();
         }
 #pragma warning disable CA1031 // A read that failed is a toast not raised or one second without an update, never a background that stops.
         catch (Exception failure)

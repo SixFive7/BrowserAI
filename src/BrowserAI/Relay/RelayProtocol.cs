@@ -19,7 +19,11 @@ namespace BrowserAI.Relay;
 /// the id <c>browserai-relay-hello</c>:
 /// <c>{"build":..., "relayPid":..., "clientPid":... or null, "client":{"name":..., "version":...},
 /// "reconnect":"None"|"McpReconnect"|"NewConversation"|"Unknown", "folder":..., "dataRoot":...,
-/// "idleAt":"ISO 8601, UTC"}</c>. The background answers <c>{"build":..., "pid":...}</c>,
+/// "idleAt":"ISO 8601, UTC"}</c>, and since 2026-10-10, when the relay read them,
+/// <c>"conversation":{"claudeConfig":..., "clientStarted":"FILETIME", "sessionId":...,
+/// "commandLineSessionId":..., "codexHome":...}</c>, each member only when it was read, and
+/// <c>"window":"pid-FILETIME"</c> for a VS Code tab (<see cref="ConversationFacts"/>).
+/// The background answers <c>{"build":..., "pid":...}</c>,
 /// or an error whose <c>message</c> is a sentence for the model and whose
 /// <c>data.refusal</c> is one of the four refusal kinds below. After an answer, the
 /// relay replays its client's <c>initialize</c> under an id of its own, sends

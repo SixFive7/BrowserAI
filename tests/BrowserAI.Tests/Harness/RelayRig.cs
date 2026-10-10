@@ -41,7 +41,7 @@ internal sealed class RelayRig : IAsyncDisposable
     private int _barriers;
     private int _lists;
 
-    private RelayRig(Func<string?, RelayReconnect>? reconnectOf, bool gated)
+    private RelayRig(Func<string?, ClientReading>? readClient, bool gated)
     {
         Client = new FrameChannel(_clientHop.ClientReads, _clientHop.ClientWrites);
         Gate = gated ? new GatedStream(_clientHop.ServerWrites) : null;
@@ -52,7 +52,7 @@ internal sealed class RelayRig : IAsyncDisposable
             Finder,
             _handshake,
             ToolList,
-            reconnectOf ?? Classify,
+            readClient ?? Classify,
             Facts,
             Clock,
             _logs.CreateLogger(nameof(RelayEngine)));
@@ -175,10 +175,10 @@ internal sealed class RelayRig : IAsyncDisposable
         "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\",\"params\":{\"requestId\":" + id + ",\"reason\":\"the suite\"}}";
 
     /// <summary>Starts a rig.</summary>
-    /// <param name="reconnectOf">The classifier, when an arm needs its own; otherwise one that records and answers <see cref="Classification"/>.</param>
+    /// <param name="readClient">The classifier, when an arm needs its own; otherwise one that records and answers <see cref="Classification"/>.</param>
     /// <param name="gated">Whether the relay's output passes through <see cref="Gate"/>.</param>
     /// <returns>The rig, running.</returns>
-    public static RelayRig Start(Func<string?, RelayReconnect>? reconnectOf = null, bool gated = false) => new(reconnectOf, gated);
+    public static RelayRig Start(Func<string?, ClientReading>? readClient = null, bool gated = false) => new(readClient, gated);
 
     /// <summary>Writes one frame as the client.</summary>
     /// <param name="json">The frame.</param>
@@ -337,13 +337,13 @@ internal sealed class RelayRig : IAsyncDisposable
         _ => "still running",
     };
 
-    private RelayReconnect Classify(string? clientName)
+    private ClientReading Classify(string? clientName)
     {
         lock (_gate)
         {
             _classified.Add(clientName);
         }
 
-        return Classification;
+        return new ClientReading(Classification);
     }
 }

@@ -340,6 +340,106 @@ internal static partial class ProcessLiveness
         }
     }
 
+    /// <summary>
+    /// The process that started this one, read through one handle: its pid, its creation
+    /// time, its command line, and the process that started it in turn.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What a relay tells the background about its client</b> (the maintainer's answer
+    /// of 2026-10-10, 1.1 c and 1.5 a): the creation time is what Claude Code's
+    /// per-process file is accepted against, the command line is what the client's kind
+    /// and a resumed session's id are read from, and the parent's parent is the VS Code
+    /// window's extension host, which groups a window's tabs.
+    /// </para>
+    /// <para>
+    /// <b>The same recycled-pid rule one generation up, and it is exact for the same
+    /// reason.</b> The grandparent existed at the instant it created the parent, so a
+    /// real one was created no later than the parent; a pid recycled from a grandparent
+    /// that has gone belongs to a process created after it went, which is after the
+    /// parent was created. A grandparent created after the parent is therefore never the
+    /// parent's, and is not reported.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// The reading, or <see langword="null"/> when the parent cannot be read or is not
+    /// this process's parent; its <see cref="ParentReading.Parent"/> is
+    /// <see langword="null"/> when the grandparent cannot be read or has gone.
+    /// </returns>
+    public static ParentReading? ReadParent()
+    {
+        try
+        {
+            var parent = ParentProcessId();
+
+            if (parent <= 0)
+            {
+                return null;
+            }
+
+            using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)parent);
+
+            if (handle.IsInvalid)
+            {
+                return null;
+            }
+
+            if (!StartedNoLaterThanThisProcess(handle.DangerousGetHandle(), out var created))
+            {
+                return null;
+            }
+
+            var line = CommandLineOf(handle);
+            var grandparent = ParentOf(handle, created);
+            GC.KeepAlive(handle);
+
+            return new ParentReading(parent, created, line, grandparent);
+        }
+#pragma warning disable CA1031 // An unreadable parent is 'unknown', which every reader of the reading already handles.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The process that started the one behind a handle, when it was created no later than that one.</summary>
+    /// <param name="child">The handle, carrying <c>PROCESS_QUERY_LIMITED_INFORMATION</c>.</param>
+    /// <param name="childCreated">Its creation time.</param>
+    /// <returns>The parent's pid and creation time, or <see langword="null"/>.</returns>
+    private static ProcessStamp? ParentOf(SafeProcessHandle child, long childCreated)
+    {
+        var status = NtQueryInformationProcess(
+            child.DangerousGetHandle(),
+            ProcessBasicInformationClass,
+            out var information,
+            Marshal.SizeOf<ProcessBasicInformation>(),
+            out _);
+
+        if (status < 0 || information.InheritedFromUniqueProcessId is 0)
+        {
+            return null;
+        }
+
+        var pid = (int)information.InheritedFromUniqueProcessId;
+
+        using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)pid);
+
+        if (handle.IsInvalid)
+        {
+            return null;
+        }
+
+        // Equal is allowed, as in StartedNoLaterThanThisProcess: two processes can share
+        // a tick of FILETIME.
+        var stamp = GetProcessTimes(handle.DangerousGetHandle(), out var created, out _, out _, out _) && created <= childCreated
+            ? new ProcessStamp(pid, created)
+            : (ProcessStamp?)null;
+
+        GC.KeepAlive(handle);
+        return stamp;
+    }
+
     private static unsafe string? CommandLineOf(SafeProcessHandle handle)
     {
         // The documented two-call shape: ask with nothing, be told the size, ask
@@ -454,3 +554,15 @@ internal static partial class ProcessLiveness
         int processInformationLength,
         out int returnLength);
 }
+
+/// <summary>One process, by the pair that identifies it: its pid and its creation time.</summary>
+/// <param name="ProcessId">The pid.</param>
+/// <param name="CreatedFileTime">Its creation time, as a Windows FILETIME.</param>
+internal readonly record struct ProcessStamp(int ProcessId, long CreatedFileTime);
+
+/// <summary>The process that started this one, as <see cref="ProcessLiveness.ReadParent"/> read it.</summary>
+/// <param name="ProcessId">Its pid.</param>
+/// <param name="CreatedFileTime">Its creation time, as a Windows FILETIME, which is no later than this process's own.</param>
+/// <param name="CommandLine">Its command line, or <see langword="null"/> when it could not be read.</param>
+/// <param name="Parent">The process that started it, or <see langword="null"/> when that could not be read or has gone.</param>
+internal sealed record ParentReading(int ProcessId, long CreatedFileTime, string? CommandLine, ProcessStamp? Parent);

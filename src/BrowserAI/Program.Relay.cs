@@ -73,10 +73,11 @@ internal static partial class Program
             finder,
             handshake,
             static () => SessionToolSurface.Rewrite(UpstreamToolList.Compiled.Result(), ToolVerdicts.Compiled),
-            static clientName => ClientRecognition.Reconnect(
-                clientName,
-                ClientRecognition.ReadsTheParent ? ProcessLiveness.ParentCommandLine() : null,
-                Environment.GetEnvironmentVariable(ClientRecognition.EntrypointVariable)),
+
+            // The parent is read whole here, off the loop: its command line decides the
+            // kind under option d, and its creation time and its own parent tell the
+            // background which conversation and which VS Code window (2026-10-10).
+            static clientName => ClientRecognition.Read(clientName, ProcessLiveness.ReadParent(), Environment.GetEnvironmentVariable),
             new RelayFacts(
                 BuildVersion.Current,
                 Environment.ProcessId,

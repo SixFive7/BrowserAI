@@ -20,6 +20,8 @@ internal sealed partial class RelayEngine
     private string? _clientName;
     private string? _clientVersion;
     private RelayReconnect _reconnect = RelayReconnect.Unknown;
+    private ConversationFacts? _conversation;
+    private string? _window;
     private byte[]? _toolsResult;
     private bool _clientGone;
 
@@ -158,13 +160,16 @@ internal sealed partial class RelayEngine
         Classify(_clientName);
     }
 
-    /// <summary>Asks the classifier, on the thread pool, what this client needs once an update has ended its relay.</summary>
+    /// <summary>
+    /// Asks the classifier, on the thread pool, what this client needs once an update has
+    /// ended its relay, where it keeps its conversation, and its VS Code window.
+    /// </summary>
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
     private void Classify(string? clientName)
     {
         Enter();
 
-        var reading = Task.Run(() => _reconnectOf(clientName), CancellationToken.None);
+        var reading = Task.Run(() => _readClient(clientName), CancellationToken.None);
 
         _ = reading.ContinueWith(
             static (done, state) =>
@@ -182,11 +187,15 @@ internal sealed partial class RelayEngine
     /// <summary>Keeps what the classifier said, for the next greeting, and makes the first look.</summary>
     /// <param name="reading">The classifier's completed call.</param>
     /// <returns>A task that completes once it is kept.</returns>
-    private async Task OnClassifiedAsync(Task<RelayReconnect> reading)
+    private async Task OnClassifiedAsync(Task<ClientReading> reading)
     {
         if (reading.IsCompletedSuccessfully)
         {
-            _reconnect = await reading.ConfigureAwait(false);
+            var read = await reading.ConfigureAwait(false);
+
+            _reconnect = read.Reconnect;
+            _conversation = read.Conversation;
+            _window = read.Window;
         }
         else
         {
@@ -196,6 +205,8 @@ internal sealed partial class RelayEngine
             }
 
             _reconnect = RelayReconnect.Unknown;
+            _conversation = null;
+            _window = null;
         }
 
         if (_phase is LinkPhase.NotLooking)

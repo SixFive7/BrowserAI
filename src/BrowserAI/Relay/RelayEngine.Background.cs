@@ -180,7 +180,13 @@ internal sealed partial class RelayEngine
     /// process ids, the client's name and version, what the client needs once an
     /// update has ended its relay, its folder, the data root and the moment the
     /// relay's activity countdown runs out. Nothing in it is read from this process's
-    /// environment.
+    /// environment. ⚠️ <i>Corrected 2026-10-10 by addition:</i> two values are, since
+    /// the conversation is named (1.1 c): Claude Code's configuration folder, from
+    /// <c>CLAUDE_CONFIG_DIR</c> or the profile, and its session id from
+    /// <c>CLAUDE_CODE_SESSION_ID</c>, each read by name in
+    /// <see cref="ClientRecognition.Read(string?, Interop.ParentReading?, Func{string, string?})"/> and sent under
+    /// <see cref="ConversationFacts.Member"/>; and a VS Code tab's window, read from its
+    /// parent, under <see cref="ConversationFacts.WindowMember"/>.
     /// </remarks>
     /// <param name="pipe">The connected pipe.</param>
     private void Greet(Stream pipe)
@@ -194,20 +200,32 @@ internal sealed partial class RelayEngine
         const string Hello = RelayWire.IdPrefix + "hello";
         _helloId = new RequestId(Hello);
 
-        _link.Send(RelayWire.Request(
-            Hello,
-            RelayProtocol.Hello,
-            new JsonObject
-            {
-                ["build"] = _facts.Build,
-                ["relayPid"] = _facts.RelayPid,
-                ["clientPid"] = _facts.ClientPid,
-                ["client"] = new JsonObject { ["name"] = _clientName, ["version"] = _clientVersion },
-                ["reconnect"] = NameOf(_reconnect),
-                ["folder"] = _facts.Folder,
-                ["dataRoot"] = _facts.DataRoot,
-                ["idleAt"] = RelayWire.Instant(_idleAt),
-            }));
+        var greeting = new JsonObject
+        {
+            ["build"] = _facts.Build,
+            ["relayPid"] = _facts.RelayPid,
+            ["clientPid"] = _facts.ClientPid,
+            ["client"] = new JsonObject { ["name"] = _clientName, ["version"] = _clientVersion },
+            ["reconnect"] = NameOf(_reconnect),
+            ["folder"] = _facts.Folder,
+            ["dataRoot"] = _facts.DataRoot,
+            ["idleAt"] = RelayWire.Instant(_idleAt),
+        };
+
+        // Added 2026-10-10: where the client keeps the conversation, and its VS Code
+        // window, each only when the classifier read one, so a client BrowserAI does not
+        // read records of is greeted exactly as before.
+        if (_conversation?.ToJson() is { Count: > 0 } conversation)
+        {
+            greeting[ConversationFacts.Member] = conversation;
+        }
+
+        if (_window is { Length: > 0 } window)
+        {
+            greeting[ConversationFacts.WindowMember] = window;
+        }
+
+        _link.Send(RelayWire.Request(Hello, RelayProtocol.Hello, greeting));
 
         // The greeting tells the background the countdown, so it is the report the
         // next activity report is spaced from.

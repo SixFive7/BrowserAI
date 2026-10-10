@@ -3,8 +3,11 @@
 
 using System.Globalization;
 using System.Text.Json.Nodes;
+using BrowserAI.Clients;
 using BrowserAI.Relay;
 using BrowserAI.Updates;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol.Protocol;
 
 namespace BrowserAI.Background;
@@ -17,8 +20,19 @@ namespace BrowserAI.Background;
 /// <param name="ClientVersion">The client's <c>clientInfo.version</c>, or <see langword="null"/>.</param>
 /// <param name="Folder">The folder the client runs in.</param>
 /// <param name="Reconnect">What the client needs once an update has ended the relay, as the relay judged it.</param>
-/// <param name="Conversation">Which conversation of the client the relay serves, when its greeting said; room for the measurement running on 2026-10-08.</param>
-/// <param name="Label">What the person sees that conversation called, when its greeting said.</param>
+/// <param name="Conversation">
+/// Where the relay said its client keeps the conversation it serves, or
+/// <see langword="null"/>. <i>Corrected 2026-10-10 (previously "Which conversation of the
+/// client the relay serves, when its greeting said; room for the measurement running on
+/// 2026-10-08")</i>: the measurement found the conversation moves at <c>/clear</c> with no
+/// message to the relay, so the greeting carries where to read it and the background
+/// reads it when it draws.
+/// </param>
+/// <param name="Window">
+/// The VS Code window the client is a tab of, as the relay read it, or <see langword="null"/>.
+/// <i>Replaced 2026-10-10 (previously a <c>Label</c>, "What the person sees that
+/// conversation called, when its greeting said")</i>, for the reason above.
+/// </param>
 internal sealed record RelayGreeting(
     string Id,
     int RelayPid,
@@ -27,8 +41,19 @@ internal sealed record RelayGreeting(
     string? ClientVersion,
     string? Folder,
     RelayReconnect Reconnect,
-    string? Conversation = null,
-    string? Label = null);
+    ConversationFacts? Conversation = null,
+    string? Window = null);
+
+/// <summary>One relay as a reader of the roster draws it: its greeting, its countdown, its call, and its conversation as read now.</summary>
+/// <param name="Greeting">What the relay said about itself.</param>
+/// <param name="IdleAt">When its countdown runs out.</param>
+/// <param name="CallInFlight">Whether a call of its client is running.</param>
+/// <param name="Reading">Which conversation it serves and what the person sees it called, read at this moment.</param>
+internal sealed record NamedRelay(RelayGreeting Greeting, DateTimeOffset IdleAt, bool CallInFlight, ConversationReading Reading)
+{
+    /// <summary>The VS Code window its client is a tab of, or <see langword="null"/>.</summary>
+    public ClientWindow? Window => Greeting.Window is { Length: > 0 } key ? new ClientWindow(key, Greeting.Folder) : null;
+}
 
 /// <summary>
 /// Every relay connected to the background, with what the update needs to know of
@@ -47,21 +72,37 @@ internal sealed record RelayGreeting(
 /// records and returns: a relay connecting or going, a countdown moving, a call
 /// starting or ending.
 /// </para>
+/// <para>
+/// <b>Which conversation each relay serves is read when somebody draws it, and only
+/// then</b> (1.3 c, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept
+/// all your recommendations"</i>): <see cref="ConnectedWithNames"/>, which the snapshot
+/// the dashboard and the toast draw is made from, and <see cref="Named"/>, which the
+/// sessions page reads, each ask the <see cref="ConversationReader"/> for every relay, out
+/// of the lock. <see cref="Connected"/>, which the update core decides by, reads no file.
+/// The log says where a relay's conversation and its name were found each time that
+/// moves, and never what they are.
+/// </para>
 /// </remarks>
 internal sealed class RelayRoster : IUpdateRelays
 {
     private readonly Lock _gate = new();
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     private readonly TimeProvider _clock;
+    private readonly ConversationReader _reader;
+    private readonly ILogger _logger;
     private Action _changed = static () => { };
     private Action<string> _withdrew = static _ => { };
 
     /// <summary>Creates an empty roster.</summary>
     /// <param name="clock">The clock a relay with no countdown reads as run out against.</param>
-    public RelayRoster(TimeProvider clock)
+    /// <param name="reader">What reads each relay's conversation from its client's records, or <see langword="null"/> for the files themselves.</param>
+    /// <param name="logger">Where the roster says where a conversation was found, or <see langword="null"/> for nowhere.</param>
+    public RelayRoster(TimeProvider clock, ConversationReader? reader = null, ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         _clock = clock;
+        _reader = reader ?? ConversationReader.Files;
+        _logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>How many relays are connected.</summary>
@@ -124,9 +165,19 @@ internal sealed class RelayRoster : IUpdateRelays
     {
         lock (_gate)
         {
-            if (_entries.TryGetValue(id, out var entry) && notice.IdleAt is { } idleAt)
+            if (_entries.TryGetValue(id, out var entry))
             {
-                entry.IdleAt = idleAt;
+                if (notice.IdleAt is { } idleAt)
+                {
+                    entry.IdleAt = idleAt;
+                }
+
+                // 1.4 a: the thread of the first call that names one, kept for the
+                // relay's life, since one Codex server serves one thread.
+                if (notice.Kind is RelayNoticeKind.Conversation && notice.Thread is { Length: > 0 } thread)
+                {
+                    entry.ThreadId ??= thread;
+                }
             }
         }
 
@@ -149,6 +200,7 @@ internal sealed class RelayRoster : IUpdateRelays
     }
 
     /// <inheritdoc />
+    /// <remarks>Reads no file: the update core decides by this, and a conversation's name decides nothing.</remarks>
     public IReadOnlyList<RelayState> Connected()
     {
         lock (_gate)
@@ -164,11 +216,64 @@ internal sealed class RelayRoster : IUpdateRelays
                     entry.Link.CallInFlight)
                 {
                     Reconnect = entry.Greeting.Reconnect,
-                    Conversation = entry.Greeting.Conversation,
-                    Label = entry.Greeting.Label,
                 }),
             ];
         }
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<RelayState> ConnectedWithNames() =>
+    [
+        .. Named().Select(static relay => new RelayState(
+            relay.Greeting.Id,
+            relay.Greeting.ClientName,
+            relay.Greeting.ClientVersion,
+            relay.Greeting.Folder,
+            relay.IdleAt,
+            relay.CallInFlight)
+        {
+            Reconnect = relay.Greeting.Reconnect,
+            Conversation = relay.Reading.Conversation,
+            Label = relay.Reading.Name,
+            Window = relay.Window,
+        }),
+    ];
+
+    /// <summary>
+    /// Every relay, each with its conversation and what the person sees it called, read
+    /// from its client's records now: what the dashboard and the toast draw.
+    /// </summary>
+    /// <remarks>
+    /// <b>The reads run out of the lock</b>, so a slow file never holds up a relay that
+    /// connects, reports or goes meanwhile; a relay that went during the read is drawn one
+    /// last time.
+    /// </remarks>
+    /// <returns>The relays, in no particular order.</returns>
+    public IReadOnlyList<NamedRelay> Named()
+    {
+        List<(RelayGreeting Greeting, DateTimeOffset IdleAt, bool CallInFlight, string? ThreadId, ConversationMemo Memo)> entries;
+
+        lock (_gate)
+        {
+            entries = [.. _entries.Values.Select(static entry => (entry.Greeting, entry.IdleAt, entry.Link.CallInFlight, entry.ThreadId, entry.Memo))];
+        }
+
+        var named = new List<NamedRelay>(entries.Count);
+
+        foreach (var (greeting, idleAt, callInFlight, threadId, memo) in entries)
+        {
+            var reading = _reader.Read(greeting.ClientName, greeting.Conversation, greeting.ClientPid, threadId, greeting.Folder, memo);
+
+            // Where it was found, each time that moves; never what it is.
+            if (reading.Name is not null && memo.Moved(reading.Source, reading.NameSource))
+            {
+                RelayRosterLog.ConversationFound(_logger, greeting.Id, reading.Source, reading.NameSource);
+            }
+
+            named.Add(new NamedRelay(greeting, idleAt, callInFlight, reading));
+        }
+
+        return named;
     }
 
     /// <inheritdoc />
@@ -254,5 +359,23 @@ internal sealed class RelayRoster : IUpdateRelays
         public RelayLink Link { get; } = link;
 
         public DateTimeOffset IdleAt { get; set; }
+
+        /// <summary>The thread of Codex's first call that named one, or <see langword="null"/>.</summary>
+        public string? ThreadId { get; set; }
+
+        /// <summary>What the reader keeps of this relay between two draws.</summary>
+        public ConversationMemo Memo { get; } = new();
     }
+}
+
+/// <summary>Source-generated log messages for <see cref="RelayRoster"/>.</summary>
+internal static partial class RelayRosterLog
+{
+    /// <summary>Where a relay's conversation and its name were found, never what they are.</summary>
+    /// <param name="logger">Where the record goes.</param>
+    /// <param name="relay">The relay.</param>
+    /// <param name="source">Where the conversation was found.</param>
+    /// <param name="name">Where its name was found.</param>
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Relay {Relay}'s conversation was found by {Source} and named by {Name}.")]
+    public static partial void ConversationFound(ILogger logger, string relay, ConversationSource source, NameSource name);
 }

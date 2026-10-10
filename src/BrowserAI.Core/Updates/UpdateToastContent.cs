@@ -189,11 +189,28 @@ internal static class UpdateToastContent
             ("Dismiss", Arguments(ToastAction.Dismiss, null)));
     }
 
+    /// <summary>How many names one part of the reconnect line spells out before it counts the rest: two.</summary>
+    /// <remarks>
+    /// <b>Chosen 2026-10-10, and weighed against no measurement</b>: a banner shows a few
+    /// lines of a toast's text and no more, and two titles cut to a tab's width already
+    /// make a long line, so the rest of a kind are counted.
+    /// </remarks>
+    public const int NamesSpelledOut = 2;
+
     /// <summary>The reconnects the update will cost, as one sentence, or <see langword="null"/> when it costs none.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Every relay counts, holding the update or not</b>: each one ends when the
     /// update installs (H1), and the person is told before it does which clients will
     /// not come back by themselves (H1-T a, 2026-10-08).
+    /// </para>
+    /// <para>
+    /// <b>Each one is named the way the person sees it</b>, added 2026-10-10 by the
+    /// maintainer's 1.2 a: a title as its VS Code tab cuts it, in quotes, or BrowserAI's
+    /// own words for a conversation it could not name, such as <i>Codex in BrowserAI</i>.
+    /// The first <see cref="NamesSpelledOut"/> of each kind are spelled out and the rest
+    /// counted, and a client BrowserAI names nothing of is counted as before.
+    /// </para>
     /// </remarks>
     /// <param name="holds">What holds the update.</param>
     /// <returns>The sentence.</returns>
@@ -201,33 +218,63 @@ internal static class UpdateToastContent
     {
         ArgumentNullException.ThrowIfNull(holds);
 
-        var terminals = holds.Relays.Count(relay => relay.Reconnect is RelayReconnect.McpReconnect);
-        var codex = holds.Relays.Count(relay => relay.Reconnect is RelayReconnect.NewConversation);
-        var unknown = holds.Relays.Count(relay => relay.Reconnect is RelayReconnect.Unknown);
         var parts = new List<string>();
 
-        if (terminals > 0)
+        if (Part(holds, RelayReconnect.McpReconnect, "Claude Code terminal", "Claude Code terminals", "/mcp, BrowserAI, Reconnect") is { } terminals)
         {
-            parts.Add(terminals is 1
-                ? "1 Claude Code terminal needs /mcp, BrowserAI, Reconnect"
-                : $"{terminals} Claude Code terminals need /mcp, BrowserAI, Reconnect");
+            parts.Add(terminals);
         }
 
-        if (codex > 0)
+        if (Part(holds, RelayReconnect.NewConversation, "Codex conversation", "Codex conversations", "a new conversation") is { } codex)
         {
-            parts.Add(codex is 1
-                ? "1 Codex conversation needs a new conversation"
-                : $"{codex} Codex conversations need a new conversation");
+            parts.Add(codex);
         }
 
-        if (unknown > 0)
+        if (Part(holds, RelayReconnect.Unknown, "client", "clients", null) is { } unknown)
         {
-            parts.Add(unknown is 1
-                ? "1 client may need BrowserAI reconnected"
-                : $"{unknown} clients may need BrowserAI reconnected");
+            parts.Add(unknown);
         }
 
         return parts.Count is 0 ? null : "After the update: " + string.Join("; ", parts) + ".";
+    }
+
+    /// <summary>One kind's part of the reconnect line: who, and what they need.</summary>
+    /// <param name="holds">What holds the update.</param>
+    /// <param name="reconnect">The kind.</param>
+    /// <param name="one">What one client of the kind is called when it has no name.</param>
+    /// <param name="many">What several are called.</param>
+    /// <param name="need">What the kind needs, or <see langword="null"/> for the kind that may need a reconnect.</param>
+    /// <returns>The part, or <see langword="null"/> when no relay is of the kind.</returns>
+    private static string? Part(UpdateHoldSnapshot holds, RelayReconnect reconnect, string one, string many, string? need)
+    {
+        var relays = holds.Relays.Where(relay => relay.Reconnect == reconnect).ToList();
+
+        if (relays.Count is 0)
+        {
+            return null;
+        }
+
+        var names = relays.Where(relay => relay.Label is not null).Select(relay => relay.Label!.ShownAsATab()).ToList();
+
+        string who;
+
+        if (names.Count is 0)
+        {
+            who = relays.Count is 1 ? $"1 {one}" : $"{relays.Count} {many}";
+        }
+        else
+        {
+            var spelled = names.Take(NamesSpelledOut).ToList();
+            var more = relays.Count - spelled.Count;
+
+            who = more > 0
+                ? $"{string.Join(", ", spelled)} and {more} more"
+                : spelled.Count is 1 ? spelled[0] : $"{spelled[0]} and {spelled[1]}";
+        }
+
+        return need is null
+            ? $"{who} may need BrowserAI reconnected"
+            : $"{who} {(relays.Count is 1 ? "needs" : "need")} {need}";
     }
 
     /// <summary>The ready toast's bound fields at one moment.</summary>

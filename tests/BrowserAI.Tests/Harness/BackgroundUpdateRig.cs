@@ -298,6 +298,7 @@ internal sealed class ScriptedRelays(ConcurrentQueue<string> events) : IUpdateRe
     private readonly Lock _gate = new();
     private readonly List<RelayState> _listed = [];
     private readonly Dictionary<string, TaskCompletionSource<RelayReadiness>> _waiting = new(StringComparer.Ordinal);
+    private int _namedReads;
 
     /// <summary>
     /// How a relay answers <i>ready to end?</i>: an answer at once, or
@@ -349,6 +350,31 @@ internal sealed class ScriptedRelays(ConcurrentQueue<string> events) : IUpdateRe
         lock (_gate)
         {
             return [.. _listed];
+        }
+    }
+
+    /// <summary>
+    /// What <see cref="ConnectedWithNames"/> gives a relay, by its id, as a background
+    /// that read its client's records would: its conversation, its name and its window.
+    /// </summary>
+    public ConcurrentDictionary<string, (string? Conversation, ConversationName? Label, ClientWindow? Window)> Names { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>How many times the core asked for the relays with their names, which is a read of every client's records.</summary>
+    public int NamedReads => Volatile.Read(ref _namedReads);
+
+    /// <inheritdoc />
+    public IReadOnlyList<RelayState> ConnectedWithNames()
+    {
+        _ = Interlocked.Increment(ref _namedReads);
+
+        lock (_gate)
+        {
+            return
+            [
+                .. _listed.Select(relay => Names.TryGetValue(relay.Id, out var name)
+                    ? relay with { Conversation = name.Conversation, Label = name.Label, Window = name.Window }
+                    : relay),
+            ];
         }
     }
 

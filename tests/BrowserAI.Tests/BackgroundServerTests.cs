@@ -3,6 +3,7 @@
 
 using System.Text.Json.Nodes;
 using BrowserAI.Background;
+using BrowserAI.Clients;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
 using BrowserAI.Relay;
@@ -736,6 +737,192 @@ internal sealed class BackgroundServerTests
         await Assert.That(refusal).Contains("ends with the client itself");
         await Assert.That(rig.Roster.Count).IsEqualTo(1);
     }
+
+    /// <summary>
+    /// A Claude Code relay's conversation is named from its client's own records when the
+    /// roster is drawn and at no other time, again at every draw, with the window its
+    /// greeting named; and the log says where each was found and never what.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept all your
+    /// recommendations"</i></b>: 1.1 c, the client's file for its process accepted by its
+    /// <c>procStart</c>; 1.2 a, the extension's title rule; 1.3 c, read when drawn and
+    /// never held; 1.5 a, the window. And from the brief: no log record carries a title,
+    /// a prompt or a session id, only which source answered.
+    /// </para>
+    /// <para>
+    /// <b>The records are the suite's, in scratch</b>, at the pid the rig's greeting names
+    /// for its client.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a roster that named its relays in
+    /// <see cref="RelayRoster.Connected"/>, which the update core decides by, against one
+    /// that kept the first name it read, and against a log record that named the title.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AClaudeCodeRelaysConversationIsNamedFromItsClientsRecordsWhenTheRosterIsDrawn()
+    {
+        const string Session = "aaaaaaaa-1111-4111-8111-111111111111";
+        const long Started = 134360637732277608;
+        const string Window = "1200-134360600000000000";
+
+        using var scratch = ScratchDirectory.Create("background-conversation");
+        var config = Path.Combine(scratch.Path, "claude-config");
+        var project = Path.Combine(config, "projects", ClaudeCodeRecords.Slug(BackgroundPipeClient.Folder));
+
+        _ = Directory.CreateDirectory(Path.Combine(config, "sessions"));
+        _ = Directory.CreateDirectory(project);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(config, "sessions", BackgroundPipeClient.ClientPid.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".json"),
+            new JsonObject { ["pid"] = BackgroundPipeClient.ClientPid, ["sessionId"] = Session, ["cwd"] = BackgroundPipeClient.Folder, ["procStart"] = Started.ToString(System.Globalization.CultureInfo.InvariantCulture) }.ToJsonString());
+
+        var record = Path.Combine(project, Session + ".jsonl");
+
+        await File.WriteAllTextAsync(record, """
+            {"type":"user","message":{"role":"user","content":"weigh the apples"}}
+            {"type":"ai-title","aiTitle":"Apple scales"}
+
+            """);
+
+        await using var rig = BackgroundServerRig.Start();
+        using var relay = rig.Connect();
+
+        await relay.SendAsync(Hello(rig, BackgroundPipeClient.ClientName, new ConversationFacts(config, Started, null, null, null), Window));
+        await Assert.That((await relay.NextAsync()).Result).IsNotNull();
+        _ = await relay.InitializeAsync();
+
+        // The update core's own read names nothing and reads nothing.
+        await Assert.That(rig.OnlyRelay().Label).IsNull();
+        await Assert.That(rig.OnlyRelay().Conversation).IsNull();
+
+        // A draw reads the records.
+        var drawn = rig.Roster.ConnectedWithNames().Single();
+
+        await Assert.That(drawn.Conversation).IsEqualTo(Session);
+        await Assert.That(drawn.Label).IsEqualTo(new ConversationName("Apple scales", IsTitle: true));
+        await Assert.That(drawn.Window).IsEqualTo(new ClientWindow(Window, BackgroundPipeClient.Folder));
+
+        // And again at the next draw: a rename is seen with no message from anybody.
+        await File.AppendAllTextAsync(record, """{"type":"custom-title","customTitle":"Apples, renamed"}""" + "\n");
+
+        await Assert.That(rig.Roster.ConnectedWithNames().Single().Label?.Text).IsEqualTo("Apples, renamed");
+
+        // The sessions page reads the same, with the window.
+        var page = await new BackgroundPageSessions(rig.Host, rig.Roster, rig.Clock).ReadAsync(CancellationToken.None);
+        var entry = page.Servers.Single(server => server.IsRelay);
+
+        await Assert.That(entry.Conversation).IsEqualTo(new ConversationName("Apples, renamed", IsTitle: true));
+        await Assert.That(entry.Window?.Key).IsEqualTo(Window);
+
+        // The log says where each was found, each time that moved, and never what.
+        var found = rig.Logs.Records.Where(log => log.Category.EndsWith(nameof(RelayRoster), StringComparison.Ordinal)).Select(log => log.Message).ToList();
+
+        await Assert.That(string.Join(" | ", found)).IsEqualTo(
+            $"Relay {drawn.Id}'s conversation was found by ProcessFile and named by AiTitle. | Relay {drawn.Id}'s conversation was found by ProcessFile and named by CustomTitle.");
+
+        foreach (var secret in new[] { Session, "Apple scales", "Apples, renamed", "weigh the apples" })
+        {
+            await Assert.That(rig.Logs.Records.Any(log => (log.Message + log.Exception).Contains(secret, StringComparison.Ordinal)))
+                .IsFalse().Because($"a log record carries '{secret}'");
+        }
+    }
+
+    /// <summary>
+    /// A Codex relay is <i>Codex in &lt;folder&gt;</i> until a call names its thread, and
+    /// then the name Codex's index gives the thread of the first call that named one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.4 a, decided 2026-10-10</b>: every Codex call's <c>_meta</c> carries
+    /// <c>threadId</c>, 24 of 24 in the measurement, and nothing names the thread before
+    /// the first call. The link reads it off the call on its way to the session host and
+    /// passes the call on unchanged.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a link that took the thread of every call,
+    /// so a later call naming another thread renamed the relay.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACodexRelayIsNamedByTheThreadItsFirstCallNamed()
+    {
+        const string Thread = "dddddddd-4444-7444-8444-444444444444";
+        const string Other = "eeeeeeee-5555-7555-8555-555555555555";
+
+        using var scratch = ScratchDirectory.Create("background-codex");
+        var home = Path.Combine(scratch.Path, "codex-home");
+
+        _ = Directory.CreateDirectory(home);
+        await File.WriteAllTextAsync(Path.Combine(home, "session_index.jsonl"), $$"""
+            {"id":"{{Thread}}","thread_name":"Lemon list","updated_at":"2026-10-08T22:49:45Z"}
+            {"id":"{{Other}}","thread_name":"Another thread","updated_at":"2026-10-08T22:50:45Z"}
+
+            """);
+
+        await using var rig = BackgroundServerRig.Start();
+        using var relay = rig.Connect();
+
+        await relay.SendAsync(Hello(rig, "codex-mcp-client", new ConversationFacts(null, null, null, null, home), window: null));
+        await Assert.That((await relay.NextAsync()).Result).IsNotNull();
+        _ = await relay.InitializeAsync();
+        _ = await relay.ListAsync();
+
+        var before = rig.Roster.ConnectedWithNames().Single();
+
+        await Assert.That(before.Label).IsEqualTo(new ConversationName("Codex in BackgroundTests", IsTitle: false));
+        await Assert.That(before.Conversation).IsNull();
+
+        // A call naming its thread, as every Codex call does; its answer, a refusal for
+        // naming no session, says the link has read it.
+        _ = await relay.RequestAsync("tools/call", CodexCall(Thread));
+
+        var after = rig.Roster.ConnectedWithNames().Single();
+
+        await Assert.That(after.Conversation).IsEqualTo(Thread);
+        await Assert.That(after.Label).IsEqualTo(new ConversationName("Lemon list", IsTitle: true));
+
+        // A later call naming another thread changes nothing: one server, one thread.
+        _ = await relay.RequestAsync("tools/call", CodexCall(Other));
+
+        await Assert.That(rig.Roster.ConnectedWithNames().Single().Label?.Text).IsEqualTo("Lemon list");
+    }
+
+    /// <summary>A relay's greeting from the rig, for another client and with the conversation's facts and a window.</summary>
+    /// <param name="rig">The background.</param>
+    /// <param name="clientName">What the client calls itself.</param>
+    /// <param name="facts">Where the client keeps its conversation.</param>
+    /// <param name="window">The VS Code window, or <see langword="null"/>.</param>
+    /// <returns>The frame.</returns>
+    private static string Hello(BackgroundServerRig rig, string clientName, ConversationFacts facts, string? window)
+    {
+        var hello = JsonNode.Parse(rig.Hello())!.AsObject();
+        var parameters = hello["params"]!.AsObject();
+
+        parameters["client"]!["name"] = clientName;
+        parameters[ConversationFacts.Member] = facts.ToJson();
+
+        if (window is not null)
+        {
+            parameters[ConversationFacts.WindowMember] = window;
+        }
+
+        return hello.ToJsonString();
+    }
+
+    /// <summary>A call's parameters as Codex sends them: a tool, and its thread in <c>_meta</c>.</summary>
+    /// <param name="thread">The thread.</param>
+    /// <returns>The parameters.</returns>
+    private static JsonObject CodexCall(string thread) => new()
+    {
+        ["_meta"] = new JsonObject { ["threadId"] = thread, ["sessionId"] = thread, ["callId"] = "call_suite_1", ["progressToken"] = 1 },
+        ["name"] = "browser_navigate",
+        ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" },
+    };
 
     /// <summary>Opens a connection, sends one request first, and reads its one answer.</summary>
     /// <param name="rig">The background.</param>

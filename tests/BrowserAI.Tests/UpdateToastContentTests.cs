@@ -296,6 +296,59 @@ internal sealed partial class UpdateToastContentTests
             "After the update: 2 Claude Code terminals need /mcp, BrowserAI, Reconnect; 2 Codex conversations need a new conversation; 1 client may need BrowserAI reconnected.");
     }
 
+    /// <summary>
+    /// Each reconnect names its conversation as its VS Code tab shows it: a title cut to
+    /// 24 characters and three full stops, in quotes, and BrowserAI's own words as they
+    /// are; two names of a kind are spelled out and the rest counted; and a client named
+    /// nothing is counted as before.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.2 a, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept
+    /// all your recommendations"</i></b>: the person is told which conversations will
+    /// need a reconnect, by the name each one has on the screen. A VS Code tab shows at
+    /// most 25 characters, read in the extension's webview at 2.1.292.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a line that counted every relay as before,
+    /// and against one that spelled out every name.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EachReconnectNamesItsConversationAsItsTabShowsIt()
+    {
+        static HoldingRelay relay(RelayReconnect reconnect, ConversationName? name) =>
+            new("Claude Code 2.1.296", @"C:\Source\BrowserAI", T0.AddMinutes(5), CallInFlight: false, reconnect, Label: name);
+
+        var holds = new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.2.0", [], [],
+        [
+            relay(RelayReconnect.McpReconnect, new ConversationName("Fix the login bug", IsTitle: true)),
+            relay(RelayReconnect.McpReconnect, new ConversationName("Refactor the session index for speed", IsTitle: true)),
+            relay(RelayReconnect.McpReconnect, new ConversationName("Claude Code in BrowserAI", IsTitle: false)),
+            relay(RelayReconnect.McpReconnect, null),
+            relay(RelayReconnect.NewConversation, new ConversationName("Codex in BrowserAI", IsTitle: false)),
+            relay(RelayReconnect.Unknown, null),
+            relay(RelayReconnect.None, new ConversationName("A tab that comes back by itself", IsTitle: true)),
+        ]);
+
+        await Assert.That(UpdateToastContent.Reconnects(holds)).IsEqualTo(
+            "After the update: \"Fix the login bug\", \"Refactor the session ind...\" and 2 more need /mcp, BrowserAI, Reconnect;"
+            + " Codex in BrowserAI needs a new conversation; 1 client may need BrowserAI reconnected.");
+
+        // One of a kind, named: its name and the singular.
+        var one = holds with { Relays = [relay(RelayReconnect.McpReconnect, new ConversationName("Fix the login bug", IsTitle: true))] };
+
+        await Assert.That(UpdateToastContent.Reconnects(one)).IsEqualTo("After the update: \"Fix the login bug\" needs /mcp, BrowserAI, Reconnect.");
+
+        // The ready toast carries the line as its third.
+        await Assert.That(Texts(Load(UpdateToastContent.Ready("1.2.0", one)))[2]).IsEqualTo("After the update: \"Fix the login bug\" needs /mcp, BrowserAI, Reconnect.");
+
+        // A cut never leaves half a surrogate pair.
+        await Assert.That(ConversationName.Cut(new string('a', 23) + "\U0001F600" + "bbb")).IsEqualTo(new string('a', 23) + "...");
+        await Assert.That(ConversationName.Cut("Exactly twenty-five chars")).IsEqualTo("Exactly twenty-five chars");
+    }
+
     /// <summary>What is left is whole seconds rounded up, in minutes and seconds, and in hours from an hour on.</summary>
     /// <returns>The assertion task.</returns>
     [Test]

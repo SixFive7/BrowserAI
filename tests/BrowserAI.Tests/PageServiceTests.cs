@@ -397,6 +397,69 @@ internal sealed class PageServiceTests
         await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
     }
 
+    /// <summary>
+    /// The sessions page names each client's conversation the way the person sees it,
+    /// before its client, and lists a VS Code window's tabs together under the window,
+    /// where the first of them stands.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.2 a and 1.5 a, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I
+    /// accept all your recommendations"</i></b>: a title in quotes, BrowserAI's own words
+    /// as they are, and a window labelled by its folder.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a page that drew the servers in their order
+    /// with no window and no name.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSessionsPageNamesEachConversationAndListsAWindowsTabsUnderIt()
+    {
+        using var rig = new PageRig();
+
+        var window = new ClientWindow("1200-134360600000000000", @"C:\Source\BrowserAI");
+        var composed = CensusPageSessions.Compose(
+            Now,
+            [
+                (@"C:\install\live\900-0.live", Description(900, ServerDescription.Roles.Host, [])),
+                (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
+                (@"C:\install\live\302-0.live", Description(302, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
+                (@"C:\install\live\303-0.live", Description(303, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
+            ],
+            []);
+
+        rig.Sessions.Snapshot = composed with
+        {
+            Servers =
+            [
+                .. composed.Servers.Select(server => server.Description.ProcessId switch
+                {
+                    301 => server with { Conversation = new ConversationName("Fix the <login> bug", IsTitle: true), Window = window },
+                    302 => server with { Conversation = new ConversationName("Claude Code in one", IsTitle: false) },
+                    303 => server with { Conversation = new ConversationName("new conversation in BrowserAI", IsTitle: false), Window = window },
+                    _ => server,
+                }),
+            ],
+        };
+
+        var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
+        var body = page.Body;
+
+        await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
+        await Assert.That(body).Contains("value=\"301-1\"> <strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296, pid 301");
+        await Assert.That(body).Contains("value=\"302-1\"> <strong>Claude Code in one</strong>, claude-code 2.1.296, pid 302");
+        await Assert.That(body).Contains("value=\"303-1\"> <strong>new conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
+
+        var heading = body.IndexOf("<strong>VS Code window on BrowserAI</strong>", StringComparison.Ordinal);
+
+        await Assert.That(heading).IsGreaterThan(-1).Because(body);
+        await Assert.That(heading).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
+        await Assert.That(body.IndexOf("pid 301", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 303", StringComparison.Ordinal));
+        await Assert.That(body.IndexOf("pid 303", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 302", StringComparison.Ordinal));
+    }
+
     // RETIRED 2026-10-08: AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver,
     // which held the page's install stopping the session host through the
     // coordinator's hold on it. The session host and the hold went with the
@@ -662,6 +725,9 @@ internal sealed class PageServiceTests
     };
 
     /// <summary>A description from a server of the given role, holding the given sessions.</summary>
+    /// <summary>A relay's client, as its greeting names Claude Code.</summary>
+    private static ClientIdentity ClaudeCode { get; } = new("claude-code", Title: null, "2.1.296");
+
     private static ServerDescription Description(int pid, string role, IReadOnlyList<HeldSession> sessions) =>
         new(
             ServerPipeProtocol.Version,

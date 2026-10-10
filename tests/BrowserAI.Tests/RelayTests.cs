@@ -9,7 +9,6 @@ using BrowserAI.Proxy;
 using BrowserAI.Relay;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
-using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
 
@@ -440,6 +439,6 @@ internal sealed partial class RelayTests
 
     private static bool SameBytes(byte[] observed, string sent) => observed.AsSpan().SequenceEqual(Utf8(sent));
 
-    private static RelayReconnect Unclassifiable(string? clientName) =>
+    private static ClientReading Unclassifiable(string? clientName) =>
         throw new InvalidOperationException($"The suite's classifier refuses '{clientName}'.");
 }

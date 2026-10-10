@@ -28,6 +28,11 @@ namespace BrowserAI.Background;
 /// or for an update through the agreement, and the background has no message that
 /// ends one relay alone. The page's close answers with a sentence that says so.
 /// </para>
+/// <para>
+/// <b>Each relay carries its conversation's name and its VS Code window</b>, added
+/// 2026-10-10 by the maintainer's 1.2 a and 1.5 a, read from the client's own records
+/// each time the page is read (<see cref="RelayRoster.Named"/>).
+/// </para>
 /// </remarks>
 /// <param name="host">The sessions.</param>
 /// <param name="roster">The relays.</param>
@@ -62,8 +67,14 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
 
         var answered = new List<(string Marker, ServerDescription Description)> { (BackgroundMarker, background) };
 
-        foreach (var (greeting, _, callInFlight) in roster.Read())
+        // Named, so the page shows each conversation as the person sees it, read from the
+        // client's records now (1.2 a, 1.3 c, 2026-10-10).
+        var relays = roster.Named();
+
+        foreach (var relay in relays)
         {
+            var greeting = relay.Greeting;
+
             answered.Add((RelayMarkerPrefix + greeting.Id, new ServerDescription(
                 ServerPipeProtocol.Version,
                 greeting.RelayPid,
@@ -75,12 +86,23 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
                 greeting.Folder ?? string.Empty,
                 Started: null,
                 LastToolCall: null,
-                callInFlight ? 1 : 0,
+                relay.CallInFlight ? 1 : 0,
                 [],
                 ServerDescription.Roles.Relay)));
         }
 
-        return Task.FromResult(CensusPageSessions.Compose(clock.GetUtcNow(), answered, []));
+        var byMarker = relays.ToDictionary(relay => RelayMarkerPrefix + relay.Greeting.Id, StringComparer.Ordinal);
+        var composed = CensusPageSessions.Compose(clock.GetUtcNow(), answered, []);
+
+        return Task.FromResult(composed with
+        {
+            Servers =
+            [
+                .. composed.Servers.Select(server => byMarker.TryGetValue(server.Marker, out var relay)
+                    ? server with { Conversation = relay.Reading.Name, Window = relay.Window }
+                    : server),
+            ],
+        });
     }
 
     /// <inheritdoc />

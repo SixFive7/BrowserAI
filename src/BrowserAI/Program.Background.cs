@@ -4,6 +4,7 @@
 using BrowserAI.App;
 using BrowserAI.App.Page;
 using BrowserAI.Background;
+using BrowserAI.Clients;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
@@ -96,7 +97,9 @@ internal static partial class Program
 
         var startedBy = ValueOf(args, StartedByArgument);
 
-        var roster = new RelayRoster(clock);
+        // The roster reads each relay's conversation from its client's own records when
+        // the dashboard or a toast is drawn (2026-10-10), and logs where it found it.
+        var roster = new RelayRoster(clock, ConversationReader.Files, backgroundLogger);
         var verbs = new BackgroundVerbs(backgroundLogger);
 
         var run = InstanceDirectory.CreateFresh(paths, logger);

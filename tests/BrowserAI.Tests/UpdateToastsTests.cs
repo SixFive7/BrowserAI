@@ -58,6 +58,43 @@ internal sealed class UpdateToastsTests
     }
 
     /// <summary>
+    /// The ready toast names the conversations its reconnect line speaks of once, when
+    /// it is raised, and its countdown names none: a second of it reads no client's
+    /// records.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.3 c, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept all
+    /// your recommendations"</i></b>: the files are read when a toast is drawn. The
+    /// reconnect line is written when the toast is raised and does not change after,
+    /// and the countdown shows no name, so a toast left counting down for hours would
+    /// otherwise read every client's records once a second for nothing.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a countdown that read the named snapshot.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRaiseNamesTheConversationsAndTheCountdownReadsNoName()
+    {
+        using var rig = new Rig();
+
+        rig.Toasts.Held("1.2.0");
+
+        await Assert.That(rig.Holds.NamedReads).IsEqualTo(1);
+        await Assert.That(rig.Holds.CountdownReads).IsEqualTo(0);
+
+        for (var second = 0; second < 3; second++)
+        {
+            rig.Clock.Advance(UpdateToasts.Tick);
+        }
+
+        await Assert.That(rig.Holds.CountdownReads).IsEqualTo(3);
+        await Assert.That(rig.Holds.NamedReads).IsEqualTo(1).Because("a second of the countdown read every client's records");
+    }
+
+    /// <summary>
     /// Once Windows answers that the ready toast is gone, which is what a click or a
     /// dismissal leaves, nothing more is written to it.
     /// </summary>
@@ -317,12 +354,31 @@ internal sealed class UpdateToastsTests
         public void Remove(string tag, string group) => _lines.Add($"remove {tag}");
     }
 
-    /// <summary>What holds the update, as the arm sets it.</summary>
+    /// <summary>What holds the update, as the arm sets it, counting the reads that name each conversation and the ones that do not.</summary>
     private sealed class ScriptedHolds : IUpdateHolds
     {
+        private int _named;
+        private int _countdown;
+
         public required UpdateHoldSnapshot Snapshot { get; set; }
 
-        public UpdateHoldSnapshot Read() => Snapshot;
+        /// <summary>How many reads named every relay's conversation, a read of every client's records.</summary>
+        public int NamedReads => Volatile.Read(ref _named);
+
+        /// <summary>How many reads were a second of the countdown.</summary>
+        public int CountdownReads => Volatile.Read(ref _countdown);
+
+        public UpdateHoldSnapshot Read()
+        {
+            _ = Interlocked.Increment(ref _named);
+            return Snapshot;
+        }
+
+        public UpdateHoldSnapshot ReadCountdown()
+        {
+            _ = Interlocked.Increment(ref _countdown);
+            return Snapshot;
+        }
 
         public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }

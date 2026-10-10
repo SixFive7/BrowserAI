@@ -249,6 +249,57 @@ internal sealed class InheritedEnvironmentTests
         await AssertCarriesNoneOfItAsync(hello.Text, token, "the relay's greeting");
     }
 
+    /// <summary>
+    /// What the relay reads of its client's environment to name the conversation carries
+    /// nothing of the messaging variables, while a folder planted where it does read
+    /// reaches the greeting.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 with the maintainer's 1.1 c</b>: the relay reads four variables
+    /// by name, the entrypoint, <c>CLAUDE_CONFIG_DIR</c>, <c>CLAUDE_CODE_SESSION_ID</c>
+    /// and <c>USERPROFILE</c>, and sends the folder and the session they name to the
+    /// background. This holds the product's own reading, over this process's real
+    /// environment and parent, with the messaging variables planted.
+    /// </para>
+    /// <para>
+    /// <b>The positive control is the token planted in <c>CLAUDE_CONFIG_DIR</c></b>,
+    /// which the reading does carry, so a search that could find nothing would fail.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a reading that carried every variable whose
+    /// name begins <c>CLAUDE_CODE_</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WhatTheRelayReadsToNameTheConversationCarriesNothingOfTheMessagingVariables()
+    {
+        var token = NewToken();
+
+        string greeting;
+
+        using (Plant(token))
+        {
+            var read = Relay.ClientRecognition.Read(Relay.ClientRecognition.ClaudeCode, Interop.ProcessLiveness.ReadParent(), Environment.GetEnvironmentVariable);
+
+            greeting = new JsonObject { ["conversation"] = read.Conversation?.ToJson(), ["window"] = read.Window }.ToJsonString();
+        }
+
+        await Assert.That(greeting).Contains("claudeConfig").Because("the reading read nothing at all");
+        await AssertCarriesNoneOfItAsync(greeting, token, "what the relay read for the conversation");
+
+        // The positive control.
+        string control;
+
+        using (Plant(token, (Relay.ClientRecognition.ConfigFolderVariable, @"C:\Users\someone\claude-" + token)))
+        {
+            control = Relay.ClientRecognition.Read(Relay.ClientRecognition.ClaudeCode, parent: null, Environment.GetEnvironmentVariable).Conversation!.ToJson().ToJsonString();
+        }
+
+        await Assert.That(control).Contains(token);
+    }
+
     /// <summary>A token no file and no log on this machine can hold by chance.</summary>
     /// <returns>The token.</returns>
     private static string NewToken() => $"suite-messaging-token-{Guid.NewGuid():N}";

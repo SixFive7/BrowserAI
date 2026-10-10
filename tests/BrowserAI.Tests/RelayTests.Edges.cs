@@ -233,7 +233,7 @@ internal sealed partial class RelayTests
         const string Token = "relay-suite-secret-token-4711";
         const string Argument = "relay-suite-secret-argument-0815";
 
-        await using var rig = RelayRig.Start(reconnectOf: _ => throw new InvalidOperationException($"CLAUDE_CODE_MESSAGING_SOCKET_TOKEN={Token}"));
+        await using var rig = RelayRig.Start(readClient: _ => throw new InvalidOperationException($"CLAUDE_CODE_MESSAGING_SOCKET_TOKEN={Token}"));
         rig.Finder.Absence = new BackgroundAbsence.Crashed(DateTimeOffset.UnixEpoch, 1, RelayRig.Facts.LogPath);
 
         _ = await rig.InitializeAsync();

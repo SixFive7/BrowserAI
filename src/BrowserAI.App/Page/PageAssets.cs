@@ -48,6 +48,8 @@ internal static class PageAssets
         .note { border-left: 3px solid color-mix(in srgb, currentColor 40%, transparent); padding-left: 0.8rem; }
         .holders > li { list-style: none; margin: 0.6rem 0; }
         .holders { padding-left: 0; }
+        .window > p { margin: 0.3rem 0; }
+        .window > ul { padding-left: 1.2rem; }
         .countdown { font-variant-numeric: tabular-nums; font-weight: 600; }
         details.entry, p.entry { margin: 0.4rem 0; }
         details.entry > summary { cursor: pointer; }

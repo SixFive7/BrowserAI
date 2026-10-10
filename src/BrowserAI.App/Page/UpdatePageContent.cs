@@ -23,7 +23,9 @@ namespace BrowserAI.App.Page;
 /// <b>Three lists, each with its countdown</b>: hidden browser sessions, visible
 /// windows, each marked <i>close this to let the update proceed</i>, and the agents'
 /// connections, each with the reconnect its client will need afterwards (H1-T a).
-/// Then what installing now does, and the button that does it.
+/// Then what installing now does, and the button that does it. <i>Added 2026-10-10:</i>
+/// each connection is named by its conversation the way the person sees it called, and
+/// a VS Code window's tabs are listed together under the window (1.2 a, 1.5 a).
 /// </para>
 /// <para>
 /// <b>Every countdown is a deadline in the page</b>, <c>data-ends-at</c> in
@@ -117,7 +119,8 @@ internal static class UpdatePageContent
         foreach (var relay in holds.Relays)
         {
             _ = text.Append("|r:").Append(relay.Client).Append(';').Append(relay.ProjectFolder).Append(';').Append(relay.IdleAt.ToUnixTimeMilliseconds())
-                .Append(';').Append(relay.CallInFlight).Append(';').Append(relay.Reconnect).Append(';').Append(relay.CallInFlight || relay.IdleAt > now);
+                .Append(';').Append(relay.CallInFlight).Append(';').Append(relay.Reconnect).Append(';').Append(relay.CallInFlight || relay.IdleAt > now)
+                .Append(';').Append(relay.Label?.Shown()).Append(';').Append(relay.Window?.Key);
         }
 
         return text.ToString();
@@ -255,29 +258,60 @@ internal static class UpdatePageContent
         _ = html.Append("<p>").Append(PageContent.Text("An agent holds the update for ten minutes after its client last sent BrowserAI anything. Every connection ends when the update installs, whether it holds the update or not."))
             .Append("</p>\n<ul class=\"holders\">\n");
 
-        foreach (var relay in relays)
+        // 1.5 a, 2026-10-10: a VS Code window's tabs are listed together, under the
+        // window, where the first of them would stand.
+        foreach (var (window, members) in PageContent.ByWindow(relays, relay => relay.Window))
         {
-            _ = html.Append("<li><strong>").Append(PageContent.Text(relay.Client)).Append("</strong>");
-
-            if (relay.ProjectFolder is { Length: > 0 } folder)
+            if (window is null)
             {
-                _ = html.Append(" in <code>").Append(PageContent.Text(folder)).Append("</code>");
+                AppendRelay(html, members[0], now);
+                continue;
             }
 
-            _ = html.Append("<br>");
+            _ = html.Append("<li class=\"window\"><p><strong>").Append(PageContent.Text(window.Label())).Append("</strong></p>\n<ul class=\"holders\">\n");
 
-            _ = relay.CallInFlight
-                ? html.Append("A call is running now, so it holds the update.")
-                : relay.IdleAt > now
-                    ? html.Append("Holds the update for ").Append(Countdown(relay.IdleAt, now)).Append(" more if its client sends nothing.")
-                    : html.Append("Idle: it no longer holds the update.");
+            foreach (var relay in members)
+            {
+                AppendRelay(html, relay, now);
+            }
 
-            _ = html.Append("<br>").Append(relay.Reconnect is RelayReconnect.None
-                ? PageContent.Text(ReconnectSentence(relay.Reconnect))
-                : "<span class=\"warning\">" + PageContent.Text(ReconnectSentence(relay.Reconnect)) + "</span>").Append("</li>\n");
+            _ = html.Append("</ul></li>\n");
         }
 
         _ = html.Append("</ul>\n</section>\n");
+    }
+
+    private static void AppendRelay(StringBuilder html, HoldingRelay relay, DateTimeOffset now)
+    {
+        _ = html.Append("<li>");
+
+        // 1.2 a, 2026-10-10: the conversation first, as the person sees it called, and
+        // its client after it.
+        if (relay.Label is { } label)
+        {
+            _ = html.Append("<strong>").Append(PageContent.Text(label.Shown())).Append("</strong>, ").Append(PageContent.Text(relay.Client));
+        }
+        else
+        {
+            _ = html.Append("<strong>").Append(PageContent.Text(relay.Client)).Append("</strong>");
+        }
+
+        if (relay.ProjectFolder is { Length: > 0 } folder)
+        {
+            _ = html.Append(" in <code>").Append(PageContent.Text(folder)).Append("</code>");
+        }
+
+        _ = html.Append("<br>");
+
+        _ = relay.CallInFlight
+            ? html.Append("A call is running now, so it holds the update.")
+            : relay.IdleAt > now
+                ? html.Append("Holds the update for ").Append(Countdown(relay.IdleAt, now)).Append(" more if its client sends nothing.")
+                : html.Append("Idle: it no longer holds the update.");
+
+        _ = html.Append("<br>").Append(relay.Reconnect is RelayReconnect.None
+            ? PageContent.Text(ReconnectSentence(relay.Reconnect))
+            : "<span class=\"warning\">" + PageContent.Text(ReconnectSentence(relay.Reconnect)) + "</span>").Append("</li>\n");
     }
 
     /// <summary>A countdown the page's script keeps live: the deadline in the element, the time left as its text.</summary>
