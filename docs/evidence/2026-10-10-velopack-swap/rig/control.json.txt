@@ -1,0 +1,11 @@
+{
+  "run": "F7-commit-sharedelete-uninstall",
+  "logDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\runs\\commit-extra-20261010T010104Z\\logs\\F7-commit-sharedelete-uninstall",
+  "updatedSleepSeconds": 0,
+  "updatedChildUnderRootSeconds": 0,
+  "updatedChildOutsideSeconds": 0,
+  "updatedWaitAfterSpawnMilliseconds": 0,
+  "heartbeatMilliseconds": 250,
+  "pwsh": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "outsideScript": "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\outside-child.ps1"
+}

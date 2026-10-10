@@ -55,6 +55,20 @@ it back the way BrowserAI would.
 
 Registration is never allowed to fail an install, and never allowed to fail silently: every outcome writes a log record *and* that file.
 
+**If BrowserAI is gone after an update** -- `%LocalAppData%\BrowserAI.app\current` is
+missing and no client can start BrowserAI -- **run the installer again**: download
+**`BrowserAI.exe`** from [the latest release](https://github.com/SixFive7/BrowserAI/releases/latest)
+and run it, with `--silent` if you want no window. It puts the program back. Your data is
+kept, because it lives in `%LocalAppData%\BrowserAI`, outside the install folder; anything
+else you put inside `%LocalAppData%\BrowserAI.app` is deleted by the repair. Until you have
+run it, uninstalling from Windows Settings fails as well. The cause is Velopack 1.2.161,
+which BrowserAI updates with: when another program, usually antivirus or backup software,
+keeps a file of the new version open for more than about 30 seconds while the update swaps
+the versions, it deletes the old version and starts nothing. That was measured on
+2026-10-10 and reported upstream with a fix,
+[velopack/velopack#1086](https://github.com/velopack/velopack/issues/1086); [the hazard row](HAZARDS.md#hazard-index)
+has the rest.
+
 ### Registering BrowserAI in one project, not for all of them
 
 The page's **Register in a project for Claude Code** asks for a folder in Windows'

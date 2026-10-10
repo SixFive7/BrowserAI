@@ -1,0 +1,156 @@
+using System.Diagnostics;
+using Velopack;
+using Velopack.Locators;
+using Velopack.Sources;
+
+namespace MyApp;
+
+/// <summary>
+/// A windowless stand-in desktop app. It shows nothing,
+/// asks nothing, and records what it was started with.
+/// </summary>
+internal static class Program
+{
+    private static int Main(string[] args)
+    {
+        // Reads only, and before Velopack on purpose: Run() clears the two
+        // variables this rig exists to see. A real app reads
+        // VELOPACK_FIRSTRUN at the same point for the same reason.
+        Journal.Remember(EntrySnapshot.Take(args));
+
+        VelopackApp.Build()
+            .SetAutoApplyOnStartup(false)
+            .SetArgs(args)
+            .SetLogger(new JournalLogger())
+            .OnFirstRun(static version => Journal.Write("callback", ("hook", "firstrun"), ("version", version.ToFullString())))
+            .OnRestarted(static version => Journal.Write("callback", ("hook", "restarted"), ("version", version.ToFullString())))
+            .OnAfterInstallFastCallback(static version => Hooks.Fast("install", version))
+            .OnAfterUpdateFastCallback(static version => Hooks.Fast("updated", version))
+            .OnBeforeUpdateFastCallback(static version => Hooks.Fast("obsolete", version))
+            .OnBeforeUninstallFastCallback(static version => Hooks.Fast("uninstall", version))
+            .Run();
+
+        Journal.Write("after-run", Describe());
+
+        try
+        {
+            return args switch
+            {
+                ["check", var feed, .. var rest] => Check(feed, rest).GetAwaiter().GetResult(),
+                ["update", var feed, var restart, .. var restartArgs] => Update(feed, restart == "restart", restartArgs).GetAwaiter().GetResult(),
+                ["child", var seconds, ..] => Child(int.Parse(seconds, System.Globalization.CultureInfo.InvariantCulture)),
+                _ => Info(),
+            };
+        }
+        catch (Exception exception)
+        {
+            Journal.Write("error", ("exception", exception.ToString()));
+            return 2;
+        }
+    }
+
+    private static int Info()
+    {
+        Journal.Write("exit", ("code", 0));
+        return 0;
+    }
+
+    private static (string Key, object? Value)[] Describe()
+    {
+        if (!VelopackLocator.IsCurrentSet)
+        {
+            return [("velopackVariablesAfterRun", EntrySnapshot.VelopackNow()), ("locator", "not set")];
+        }
+
+        var locator = VelopackLocator.Current;
+        return
+        [
+            ("velopackVariablesAfterRun", EntrySnapshot.VelopackNow()),
+            ("appId", locator.AppId),
+            ("installedVersion", locator.CurrentlyInstalledVersion?.ToFullString()),
+            ("channel", locator.Channel),
+            ("rootAppDir", locator.RootAppDir),
+            ("appContentDir", locator.AppContentDir),
+            ("packagesDir", locator.PackagesDir),
+            ("updateExePath", locator.UpdateExePath),
+            ("isPortable", locator.IsPortable),
+            ("localPackages", locator.GetLocalPackages().Select(static asset => $"{asset.Type} {asset.Version.ToFullString()} {asset.FileName}").ToArray()),
+            ("latestLocalFull", locator.GetLatestLocalFullPackage()?.Version.ToFullString()),
+        ];
+    }
+
+    private static async Task<int> Check(string feed, string[] options)
+    {
+        var (manager, _) = await Prepare(feed, options).ConfigureAwait(false);
+        var info = await manager.CheckForUpdatesAsync().ConfigureAwait(false);
+        Journal.Write("check-result", Result(info));
+        Journal.Write("exit", ("code", 0));
+        return 0;
+    }
+
+    private static async Task<int> Update(string feed, bool restart, string[] restartArgs)
+    {
+        var (manager, _) = await Prepare(feed, []).ConfigureAwait(false);
+        var info = await manager.CheckForUpdatesAsync().ConfigureAwait(false);
+        Journal.Write("check-result", Result(info));
+        if (info is null)
+        {
+            Journal.Write("exit", ("code", 3));
+            return 3;
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        await manager.DownloadUpdatesAsync(info).ConfigureAwait(false);
+        Journal.Write(
+            "downloaded",
+            ("elapsedMs", stopwatch.ElapsedMilliseconds),
+            ("pendingRestart", manager.UpdatePendingRestart?.Version.ToFullString()),
+            ("packages", Directory.GetFiles(VelopackLocator.Current.PackagesDir!).Select(Path.GetFileName).ToArray()));
+
+        Journal.Write("apply-requesting", ("restart", restart), ("restartArgs", restartArgs), ("asset", info.TargetFullRelease.FileName));
+        manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: true, restart: restart, restartArgs: restartArgs);
+        Journal.Write("exit", ("code", 0));
+        return 0;
+    }
+
+    private static async Task<(UpdateManager Manager, SimpleFileSource Source)> Prepare(string feed, string[] options)
+    {
+        var downgrade = options.Contains("--downgrade");
+        var channel = options.FirstOrDefault(static option => option.StartsWith("--channel=", StringComparison.Ordinal))?["--channel=".Length..];
+        var locator = VelopackLocator.Current;
+        var source = new SimpleFileSource(new DirectoryInfo(feed));
+
+        // What the folder offers, read through the same source the manager uses.
+        var listing = await source.GetReleaseFeed(locator.Log, locator.AppId, channel ?? locator.Channel ?? "win").ConfigureAwait(false);
+        Journal.Write(
+            "feed",
+            ("folder", feed),
+            ("channelAsked", channel),
+            ("downgrade", downgrade),
+            ("assets", listing.Assets.Select(static asset => $"{asset.Type} {asset.Version.ToFullString()} {asset.FileName}").ToArray()));
+
+        var manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel, AllowVersionDowngrade = downgrade });
+        return (manager, source);
+    }
+
+    private static (string Key, object? Value)[] Result(UpdateInfo? info) =>
+        info is null
+            ? [("found", false)]
+            :
+            [
+                ("found", true),
+                ("target", info.TargetFullRelease.Version.ToFullString()),
+                ("targetFile", info.TargetFullRelease.FileName),
+                ("targetSize", info.TargetFullRelease.Size),
+                ("isDowngrade", info.IsDowngrade),
+                ("baseRelease", info.BaseRelease?.Version.ToFullString()),
+                ("deltas", info.DeltasToTarget.Length),
+            ];
+
+    private static int Child(int seconds)
+    {
+        Hooks.Heartbeat("child", TimeSpan.FromSeconds(seconds));
+        Journal.Write("exit", ("code", 0));
+        return 0;
+    }
+}

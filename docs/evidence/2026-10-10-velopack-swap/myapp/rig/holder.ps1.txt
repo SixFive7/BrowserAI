@@ -1,0 +1,98 @@
+# Stands in for an antivirus scanner: waits for Update.exe to extract the new
+# version into packages\VelopackTemp\tmp_*, then holds one file in that folder
+# open for -HoldSeconds, which is longer than the ~30 s Update.exe retries the
+# rename of that folder to current\.
+#
+# The new-version folder is recognised by its sq.version naming -Version, so the
+# backup folder of the old version (also a tmp_* folder) is never chosen. The
+# file is opened only after the extractor has closed it: with -Share None the
+# open fails with a sharing violation while the extractor still writes it.
+#
+# Observation only: it opens one file for reading and starts nothing.
+param(
+    [Parameter(Mandatory)] [string] $TempRoot,
+    [Parameter(Mandatory)] [string] $Version,
+    [Parameter(Mandatory)] [int] $HoldSeconds,
+    [Parameter(Mandatory)] [string] $Log,
+    [ValidateSet('None', 'ReadWriteDelete')] [string] $Share = 'None',
+    [string] $FileName = 'measure-lock.txt',
+    [int] $GiveUpSeconds = 180
+)
+
+$ErrorActionPreference = 'Stop'
+
+function Stamp { [DateTime]::UtcNow.ToString('o') }
+function Say([string] $Text) { Add-Content -LiteralPath $Log -Value ('{0} {1}' -f (Stamp), $Text) -Encoding utf8 }
+
+$created = (Get-Process -Id $PID).StartTime.ToUniversalTime().ToString('o')
+$shareMode = if ($Share -eq 'None') { [System.IO.FileShare]::None } else { [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete }
+$needle = "<version>$Version</version>"
+$rejected = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$preexisting = @()
+if ([System.IO.Directory]::Exists($TempRoot)) { $preexisting = @([System.IO.Directory]::EnumerateDirectories($TempRoot, 'tmp_*')) }
+foreach ($dir in $preexisting) { $null = $rejected.Add($dir) }
+
+Say ("ready pid={0} created={1} tempRoot={2} version={3} hold={4}s share={5} preexisting={6}" -f $PID, $created, $TempRoot, $Version, $HoldSeconds, $Share, ($preexisting -join ';'))
+
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+$target = $null
+$handle = $null
+$attempts = 0
+$lastError = $null
+
+while ($clock.Elapsed.TotalSeconds -lt $GiveUpSeconds -and $null -eq $handle) {
+    if ($null -eq $target -and [System.IO.Directory]::Exists($TempRoot)) {
+        foreach ($dir in [System.IO.Directory]::EnumerateDirectories($TempRoot, 'tmp_*')) {
+            if ($rejected.Contains($dir)) { continue }
+            $manifest = Join-Path $dir 'sq.version'
+            if (-not [System.IO.File]::Exists($manifest)) { continue }
+            try {
+                $stream = [System.IO.FileStream]::new($manifest, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+                try { $text = [System.IO.StreamReader]::new($stream).ReadToEnd() } finally { $stream.Dispose() }
+            }
+            catch [System.IO.IOException] { continue }
+            catch [System.UnauthorizedAccessException] { continue }
+            if ($text.Contains($needle)) {
+                $target = $dir
+                Say "found new-version folder $dir"
+            }
+            elseif ($text.Contains('</version>')) {
+                $null = $rejected.Add($dir)
+                Say "rejected $dir (its sq.version names another version)"
+            }
+        }
+    }
+
+    if ($null -ne $target) {
+        $path = Join-Path $target $FileName
+        if ([System.IO.File]::Exists($path)) {
+            $attempts++
+            try {
+                $handle = [System.IO.FileStream]::new($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, $shareMode)
+            }
+            catch [System.IO.IOException] { $lastError = $_.Exception.Message }
+            catch [System.UnauthorizedAccessException] { $lastError = $_.Exception.Message }
+        }
+        elseif (-not [System.IO.Directory]::Exists($target)) {
+            Say "lost $target before the file could be opened"
+            $target = $null
+        }
+    }
+
+    if ($null -eq $handle) { Start-Sleep -Milliseconds 5 }
+}
+
+if ($null -eq $handle) {
+    Say ("gave up after {0:N1} s, attempts={1}, lastError={2}" -f $clock.Elapsed.TotalSeconds, $attempts, $lastError)
+    exit 3
+}
+
+Say ("held {0} share={1} attempts={2} lastError={3}" -f $path, $Share, $attempts, $lastError)
+$held = [System.Diagnostics.Stopwatch]::StartNew()
+while ($held.Elapsed.TotalSeconds -lt $HoldSeconds) {
+    Start-Sleep -Milliseconds 500
+    if (-not [System.IO.Directory]::Exists($target)) { Say "folder $target no longer exists under its name while the file is held" ; break }
+}
+$handle.Dispose()
+Say ("released {0} after {1:N1} s; folder exists={2}; file exists={3}" -f $path, $held.Elapsed.TotalSeconds, [System.IO.Directory]::Exists($target), [System.IO.File]::Exists($path))
+exit 0

@@ -76,6 +76,15 @@ release body; nothing else depends on it.
   `ReleaseScriptTests` drives the rule over copies of the real file and runs the release script into
   it, both watched red first.
 
+- 📝 **The README says what to do when an update leaves no BrowserAI.**
+  Velopack 1.2.161 deletes the old version when another program, usually antivirus or backup
+  software, holds a file of the new one open for more than about 30 seconds during the swap, and
+  then starts nothing. Measured with a stand-in on 2026-10-10, 4 of 4: the installer run again
+  with `--silent` put the program back and kept everything in `%LocalAppData%\BrowserAI`, while
+  deleting anything else inside the install folder; uninstalling from Windows Settings fails until
+  then. The hazard row says what was measured, and the report and a fix are upstream as
+  velopack/velopack#1086 and #1087.
+
 - ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
   F3, after the maintainer's question of 2026-10-07, verbatim: *"Maybe we should start tracking all
   magical numbers used in this project in an index of sorts so that we can at a later date re-check

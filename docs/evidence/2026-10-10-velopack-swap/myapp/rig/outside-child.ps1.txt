@@ -1,0 +1,23 @@
+# A process outside the install root, started by the --veloapp-updated hook.
+# It writes a heartbeat line every 250 ms for the given number of seconds, so
+# the line it stops at says when it stopped.
+param(
+    [Parameter(Mandatory)] [string] $LogDirectory,
+    [Parameter(Mandatory)] [int] $Seconds,
+    [Parameter(Mandatory)] [int] $Spawner)
+
+$file = Join-Path $LogDirectory ("outside-{0}.txt" -f $PID)
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+$created = (Get-Process -Id $PID).StartTime.ToUniversalTime().ToString('o')
+
+function Stamp { [DateTime]::UtcNow.ToString('o') }
+
+Add-Content -LiteralPath $file -Value ("{0} start pid={1} created={2} spawner={3} seconds={4}" -f (Stamp), $PID, $created, $Spawner, $Seconds)
+$beat = 0
+while ($clock.Elapsed.TotalSeconds -lt $Seconds) {
+    Add-Content -LiteralPath $file -Value ("{0} heartbeat {1} elapsedMs={2}" -f (Stamp), $beat, $clock.ElapsedMilliseconds)
+    $beat++
+    Start-Sleep -Milliseconds 250
+}
+
+Add-Content -LiteralPath $file -Value ("{0} finished beats={1} elapsedMs={2}" -f (Stamp), $beat, $clock.ElapsedMilliseconds)

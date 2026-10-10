@@ -1319,7 +1319,12 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `HAZARDS.md` that begins *"An apply whose last rename fails leaves no
       BrowserAI at all"*, correct its kb section with dated previously clauses,
       and close this item. If #1086 closes without a fix, record the reason in
-      the kb section and close this item.
+      the kb section and close this item. *Added 2026-10-10:* the rig's text and
+      its run reports are kept in
+      [the evidence batch](docs/evidence/2026-10-10-velopack-swap/README.md),
+      `myapp/` holding the held-file case, for the day `.work` is gone, and the
+      measurement has
+      [a kb section of its own](kb/packaging/velopack.md#an-apply-whose-last-rename-fails-leaves-no-program-and-the-installer-puts-it-back----measured-2026-10-10).
 
 ---
 

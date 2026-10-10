@@ -1172,6 +1172,72 @@ directories, the second of which is the old `current\`
 (`apply_windows_impl.rs:172-177`, `:275-278`, `locator.rs:206-213`). Nothing is
 restarted, because the old executable is gone, and only a reinstall recovers.
 
+⚠️ *Corrected 2026-10-10 by measurement, in the entry below (previously, and still
+above, "1.2.161 logs "Unable to complete the update, and the app was left in a broken
+state""):* on the path BrowserAI takes, an apply with a restart, that message is
+never logged, and the log ends "Unable to find executable to start". The rest of the
+reading held: no rollback runs, the old `current\` is deleted, nothing is restarted,
+and only running the installer again recovers.
+
+### An apply whose last rename fails leaves no program, and the installer puts it back -- measured 2026-10-10
+
+Under the marker of the section above, on Velopack **1.2.161**: the stock `Update.exe`
+that vpk 1.2.161 packs, Windows 11 Pro 10.0.26300.9550. Measured by lane VELO on
+2026-10-10 between 00:47Z and 01:03Z, under the suite and installer locks, with the
+step-0 stand-in under its own pack id, `BrowserAI.Measure`, installed with its
+`Setup.exe --silent` into `%LOCALAPPDATA%\BrowserAI.Measure`; nothing of
+`BrowserAI.app` was touched. Each update did what BrowserAI's does: check, download,
+then `WaitExitThenApplyUpdates(silent: true, restart: true)`. To make the second
+rename fail, a windowless process outside the install folder found the new
+version's folder under `packages\VelopackTemp\tmp_*` by its `sq.version` and held
+one file in it open for 60 s. Everything it was read from:
+[`docs/evidence/2026-10-10-velopack-swap`](../../docs/evidence/2026-10-10-velopack-swap/README.md).
+
+| Round | The held file | What was left |
+|---|---|---|
+| Control | none | 1.0.1 applied, `Update.exe` exit 0 |
+| R1, R2, R3 | opened with no sharing | ⭐ **no `current\`**, `Update.exe` exit 1 |
+| R4 | opened with read, write and delete sharing | ⭐ **no `current\`**, `Update.exe` exit 1 |
+
+- ⭐ **The old version is deleted and nothing says so in the words the source
+  suggested.** Each of the four logged 30 "Retrying operation in 1000ms" warnings
+  over about 30 s, "Failed to remove temp dir" for the new version's folder, then
+  "Removed temp dir" for the backup, which was the old `current\`, and ended "Apply
+  error: Unable to find executable to start: ...\current\BrowserAI.Measure.exe". The
+  "left in a broken state" message was logged 0 times: with a restart asked for, the
+  failed restart returns before the line that would log it.
+- **Sharing does not help.** A handle opened with `FileShare.ReadWrite |
+  FileShare.Delete` blocked the rename exactly as one opened with no sharing, 1 of 1.
+- **The uninstall fails and changes nothing.** `Update.exe --uninstall --silent`, the
+  quiet uninstall the app's own uninstall entry names, exited 1 with "This application
+  is not properly installed: Manifest file does not exist in the expected path
+  (...\current\sq.version)", and the install folder, the uninstall key and the Start
+  Menu shortcut were all still there, 4 of 4. The uninstall Windows Settings runs is
+  the same command without `--silent`, read in `registry.rs` and not run.
+- ⭐ **Running the installer again repairs it.** The new version's `Setup.exe --silent`
+  exited 0 and the app started as that version, 4 of 4. A marker outside the install
+  folder was kept, 4 of 4, and a marker inside it, outside `current\`, was deleted,
+  4 of 4, because Setup renames the old folder aside and removes it. **So BrowserAI's
+  data survives a repair** -- it lives in `%LOCALAPPDATA%\BrowserAI`, outside the
+  install folder `%LOCALAPPDATA%\BrowserAI.app` -- and anything else kept inside the
+  install folder does not.
+- **A fix restores the old version.** An `Update.exe` built from the fix lane VELO
+  wrote for upstream, `84af7e5` on the maintainer's fork, put the old version back in
+  `current\` and restarted it in 7 of 7 rounds with the file held, 4 of them with a
+  build of that commit itself, and applied normally without it. It was posted on
+  2026-10-10 as pull request [#1087](https://github.com/velopack/velopack/pull/1087), with the report,
+  issue [#1086](https://github.com/velopack/velopack/issues/1086); both are open, and no Velopack
+  release carries it, read the same day.
+- **Not measured:** that `current\` is missing for up to about 30 s while a rename
+  that later succeeds is being retried, which is what the source reads as happening.
+  The holder never let go inside the retry window.
+
+**Re-establish it** with the batch's `rig/orchestrate.ps1.txt` over the stand-in in
+`rig/app/`, packed by `rig/pack.ps1.txt` at vpk 1.2.161, under the suite lock and the
+installer lock; the hold is `rig/holder.ps1.txt`, and `rig/report.ps1.txt` writes the
+round tables the reports in the batch are. It installs and uninstalls the stand-in
+under `%LOCALAPPDATA%\BrowserAI.Measure` and touches nothing of BrowserAI's own.
+
 ### The update hook has 15 s, and what it starts under the root is ended
 
 `--veloapp-updated` runs after the swap with a limit of 15 s

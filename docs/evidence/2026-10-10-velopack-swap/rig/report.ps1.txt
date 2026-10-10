@@ -1,0 +1,58 @@
+# Turns a session's rounds.jsonl into one table and one block of facts per round.
+param([Parameter(Mandatory)] [string] $Session)
+
+$ErrorActionPreference = 'Stop'
+$rounds = @(Get-Content -LiteralPath (Join-Path $Session 'rounds.jsonl') | Where-Object { $_ } | ForEach-Object { $_ | ConvertFrom-Json })
+
+function Slice([string] $Round) {
+    $path = Join-Path (Join-Path (Join-Path $Session 'logs') "$Round-update") 'velopack-log-slice.txt'
+    if (Test-Path -LiteralPath $path) { return @(Get-Content -LiteralPath $path) }
+    return @()
+}
+
+function Retries([string] $Round) { return @(Slice $Round | Where-Object { $_ -match 'Retrying operation' }).Count }
+
+$out = [System.Collections.Generic.List[string]]::new()
+$out.Add('| Round | Updater | Hold | Update.exe exit | current\ after update | Version after | "Retrying" lines | Uninstall while broken | Repair (Setup.exe --silent) | Marker in root | Marker outside root | App starts after | Final uninstall |')
+$out.Add('|---|---|---|---|---|---|---|---|---|---|---|---|---|')
+foreach ($r in $rounds) {
+    $updater = switch ($r.feed) { 'after-1.0.2' { 'fixed, built 1 blank line before 84af7e5' } 'after-1.0.3' { 'fixed, 84af7e5' } default { 'stock 1.2.161' } }
+    $broken = if ($r.uninstallWhileBroken) { 'exit {0}, tree unchanged {1}' -f $r.uninstallWhileBroken.exitCode, $r.uninstallWhileBroken.treeUnchanged } else { 'not needed' }
+    $repair = if ($r.repair) { 'exit {0}, now {1}' -f $r.repair.exitCode, $r.repair.version } else { 'not needed' }
+    $inside = if ($r.repair) { if ($r.repair.insideMarkerKept) { 'kept' } else { 'GONE' } } else { 'n/a' }
+    $outside = if ($r.repair) { if ($r.repair.outsideMarkerKept) { 'kept' } else { 'GONE' } } else { 'n/a' }
+    $start = if ($r.start) { 'exit {0} ({1})' -f $r.start.exitCode, $r.start.version } else { 'no' }
+    $current = if ($r.update.currentExists) { 'present' } else { 'GONE' }
+    $out.Add(('| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} | {10} | {11} | exit {12}, root gone {13} |' -f `
+        $r.round, $updater, $r.hold, $r.update.updateExeExitCode, $current, $r.update.version, (Retries $r.round),
+        $broken, $repair, $inside, $outside, $start, $r.uninstall.exitCode, $r.uninstall.rootGone))
+}
+
+$keyLines = 'Starting Velopack Updater|Applying package|Backing up current dir|Replacing current dir|Failed to replace|restor|Restored|Failed to remove temp dir|Removed temp dir|is missing, keeping|Apply error|An error has occurred|applied successfully|About to launch'
+foreach ($r in $rounds) {
+    $out.Add('')
+    $out.Add("## $($r.round)")
+    $out.Add('holder:')
+    foreach ($line in @($r.update.holder)) { $out.Add("    $line") }
+    $out.Add("restarted after the update: $(@($r.update.restarted) -join '; ')")
+    $out.Add('root after the update (current\ excluded):')
+    foreach ($line in @($r.update.rootTree)) { $out.Add("    $line") }
+    $out.Add('update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):')
+    foreach ($line in @(Slice $r.round | Where-Object { $_ -match $keyLines })) { $out.Add("    $($line.Trim())") }
+    $out.Add(("    ({0} 'Retrying operation' lines)" -f (Retries $r.round)))
+    if ($r.uninstallWhileBroken) {
+        $out.Add(('uninstall while broken: exit {0}; root still there {1}; tree unchanged {2}; uninstall key still there {3}; shortcut still there {4}' -f `
+            $r.uninstallWhileBroken.exitCode, $r.uninstallWhileBroken.rootStillThere, $r.uninstallWhileBroken.treeUnchanged, $r.uninstallWhileBroken.uninstallKeyStillThere, $r.uninstallWhileBroken.shortcutStillThere))
+        foreach ($line in @($r.uninstallWhileBroken.log)) { $out.Add("    $line") }
+    }
+    if ($r.repair) {
+        $out.Add(('repair: exit {0}; version {1}; marker in root kept {2} (now "{3}"); marker outside root kept {4}' -f $r.repair.exitCode, $r.repair.version, $r.repair.insideMarkerKept, $r.repair.insideMarkerNow, $r.repair.outsideMarkerKept))
+        $out.Add("    %LOCALAPPDATA%\BrowserAI* before: $(@($r.repair.localAppDataNamesBefore) -join ', ')")
+        $out.Add("    %LOCALAPPDATA%\BrowserAI* after:  $(@($r.repair.localAppDataNamesAfter) -join ', ')")
+        foreach ($line in @($r.repair.setupLogTail)) { $out.Add("    $line") }
+    }
+    $out.Add("clean after the round: $(if (@($r.clean).Count -eq 0) { 'yes' } else { @($r.clean) -join '; ' })")
+}
+
+$out | Set-Content -LiteralPath (Join-Path $Session 'report.md') -Encoding utf8
+$out

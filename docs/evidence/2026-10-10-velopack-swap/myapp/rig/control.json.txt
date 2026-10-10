@@ -1,0 +1,11 @@
+{
+  "run": "F1-commit-uninstall",
+  "logDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig-myapp\\runs\\myapp-20261010T011820Z\\logs\\F1-commit-uninstall",
+  "updatedSleepSeconds": 0,
+  "updatedChildUnderRootSeconds": 0,
+  "updatedChildOutsideSeconds": 0,
+  "updatedWaitAfterSpawnMilliseconds": 0,
+  "heartbeatMilliseconds": 250,
+  "pwsh": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "outsideScript": "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig-myapp\\outside-child.ps1"
+}

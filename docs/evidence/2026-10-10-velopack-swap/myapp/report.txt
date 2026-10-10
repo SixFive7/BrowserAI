@@ -1,0 +1,139 @@
+| Round | Updater | Hold | Update.exe exit | current\ after update | Version after | "Retrying" lines | Uninstall while broken | Repair (Setup.exe --silent) | Marker in root | Marker outside root | App starts after | Final uninstall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| C-stock | stock 1.2.161 | off | 0 | present | 1.0.1 | 0 | not needed | not needed | n/a | n/a | exit 0 (1.0.1) | exit 0, root gone True |
+| R1-stock | stock 1.2.161 | ShareNone | 1 | GONE |  | 30 | exit 1, tree unchanged True | exit 0, now 1.0.1 | GONE | kept | exit 0 (1.0.1) | exit 0, root gone True |
+| F1-commit | fixed, 84af7e5 | ShareNone | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+
+## C-stock
+holder:
+    
+restarted after the update: C:\Users\<user>\AppData\Local\MyApp\current\MyApp.exe exit 0
+root after the update (current\ excluded):
+    current\
+    measure-data\
+    measure-data\marker.txt 54
+    MyApp.exe 400896
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\MyApp-1.0.1-full.nupkg 2275639
+    packages\VelopackTemp\
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:68660] [03:19:26] [INFO] Starting Velopack Updater (1.2.161)
+    [update:68660] [03:19:26] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:68660] [03:19:26] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:68660] [03:19:27] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_aEXrmECjTZR806zl"
+    [update:68660] [03:19:27] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_mDdoIVHjTIhm01zz"
+    [update:68660] [03:19:27] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" --veloapp-updated 1.0.1\0")
+    [update:68660] [03:19:27] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_aEXrmECjTZR806zl" in 2ms
+    [update:68660] [03:19:28] [INFO] Package applied successfully.
+    [update:68660] [03:19:28] [INFO] Package version 1.0.1 applied successfully.
+    [update:68660] [03:19:28] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" restarted --run=C-stock-update \"two words\" embedded\\\"quote trailing\\\0")
+    (0 'Retrying operation' lines)
+clean after the round: yes
+
+## R1-stock
+holder:
+    2026-10-10T01:19:48.7160402Z ready pid=53688 created=2026-10-10T01:19:48.3555899Z tempRoot=C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp version=1.0.1 hold=60s share=None preexisting=
+    2026-10-10T01:19:49.0936756Z found new-version folder C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c
+    2026-10-10T01:19:49.1015223Z held C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T01:20:49.2205038Z released C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    measure-data\
+    measure-data\marker.txt 55
+    MyApp.exe 400896
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\MyApp-1.0.1-full.nupkg 2275639
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\measure-lock.txt 146
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\MyApp.deps.json 1039
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\MyApp.dll 36352
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\MyApp.exe 162304
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\MyApp.runtimeconfig.json 399
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\MyApp.xml 11451
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\sq.version 447
+    packages\VelopackTemp\tmp_CMmH2R2rpByRYv5c\Velopack.dll 279040
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:42560] [03:19:49] [INFO] Starting Velopack Updater (1.2.161)
+    [update:42560] [03:19:49] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:42560] [03:19:49] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:42560] [03:19:50] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_pfHAPXu0QG5v5wOG"
+    [update:42560] [03:19:50] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_CMmH2R2rpByRYv5c"
+    [update:42560] [03:20:20] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_CMmH2R2rpByRYv5c" after 0ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:42560] [03:20:20] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_pfHAPXu0QG5v5wOG" in 2ms
+    [update:42560] [03:20:20] [ERROR] Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe"'
+    [update:42560] [03:20:20] [ERROR] An error has occurred: Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe"'
+    (30 'Retrying operation' lines)
+uninstall while broken: exit 1; root still there True; tree unchanged True; uninstall key still there True; shortcut still there True
+    [update:76020] [03:20:51] [INFO]     Silent: true
+    [update:76020] [03:20:51] [INFO]     Root Directory: None
+    [update:76020] [03:20:51] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig-myapp\\runs\\myapp-20261010T011820Z\\logs\\R1-stock-uninstall-while-broken-update.log"
+    [update:76020] [03:20:51] [INFO]     Context: IAmUpdateExe
+    [update:76020] [03:20:51] [INFO] Command: Uninstall
+    [update:76020] [03:20:51] [INFO] Auto-locating app manifest...
+    [update:76020] [03:20:51] [ERROR] Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\MyApp\current\sq.version)
+    [update:76020] [03:20:51] [ERROR] An error has occurred: Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\MyApp\current\sq.version)
+repair: exit 0; version 1.0.1; marker in root kept False (now ""); marker outside root kept True
+    %LOCALAPPDATA%\MyApp* before: BrowserAI, BrowserAI-test-scratch, BrowserAI.app, MyApp, MyApp.data
+    %LOCALAPPDATA%\MyApp* after:  BrowserAI, BrowserAI-test-scratch, BrowserAI.app, MyApp, MyApp.data
+    [setup:26836] [03:20:57] [INFO] Starting process install hook
+    [setup:26836] [03:20:57] [INFO] Running --veloapp-install hook...
+    [setup:26836] [03:20:57] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" --veloapp-install 1.0.1\0")
+    [setup:26836] [03:20:57] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+    [setup:26836] [03:20:57] [INFO] Waiting 30000ms for process handle to exit.
+    [setup:26836] [03:20:57] [INFO] Hook executed successfully (took 164.5771ms)
+    [setup:26836] [03:20:57] [INFO] Checking for running processes in: C:\Users\<user>\AppData\Local\MyApp
+    [setup:26836] [03:20:57] [INFO] Inspected 459 running processes in 244ms, 0 matched directory
+    [setup:26836] [03:20:57] [INFO] Force-stop check complete.
+    [setup:26836] [03:20:57] [INFO] Writing uninstall registry key...
+    [setup:26836] [03:20:57] [INFO] Installation completed successfully!
+    [setup:26836] [03:20:57] [INFO] Removing rollback directory...
+clean after the round: yes
+
+## F1-commit
+holder:
+    2026-10-10T01:21:17.7772025Z ready pid=68152 created=2026-10-10T01:21:17.4600546Z tempRoot=C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp version=1.0.2 hold=60s share=None preexisting=
+    2026-10-10T01:21:18.7610922Z found new-version folder C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn
+    2026-10-10T01:21:18.7664498Z held C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T01:22:18.8797533Z released C:\Users\<user>\AppData\Local\MyApp\packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update:  exit 0
+root after the update (current\ excluded):
+    current\
+    measure-data\
+    measure-data\marker.txt 56
+    MyApp.exe 400896
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\MyApp-1.0.2-full.nupkg 2322144
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\measure-lock.txt 146
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\MyApp.deps.json 1039
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\MyApp.dll 36352
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\MyApp.exe 162304
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\MyApp.runtimeconfig.json 399
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\MyApp.xml 11451
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\sq.version 447
+    packages\VelopackTemp\tmp_4dexRtPz0KG9Vihn\Velopack.dll 279040
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:76704] [03:21:18] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:76704] [03:21:18] [INFO] Applying package 1.0.2 to current: 1.0.0
+    [update:76704] [03:21:18] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:76704] [03:21:19] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_pPL86kibXkjqNZs4"
+    [update:76704] [03:21:19] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_4dexRtPz0KG9Vihn"
+    [update:76704] [03:21:49] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:76704] [03:21:49] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"
+    [update:76704] [03:21:49] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\MyApp\\packages\\VelopackTemp\\tmp_4dexRtPz0KG9Vihn" after 0ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:76704] [03:21:49] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\MyApp\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\MyApp\\current\\MyApp.exe\" restarted --run=F1-commit-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:76704] [03:21:49] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:76704] [03:21:49] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes

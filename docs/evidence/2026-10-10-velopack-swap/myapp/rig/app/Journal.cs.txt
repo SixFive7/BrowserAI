@@ -1,0 +1,138 @@
+using System.Collections;
+using System.Globalization;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+
+namespace MyApp;
+
+/// <summary>
+/// One JSON Lines file per process, flushed to the operating system after every
+/// record so that a process killed mid-run has already said everything it said.
+/// </summary>
+internal static class Journal
+{
+    private static readonly Lock Gate = new();
+
+    private static readonly JsonWriterOptions WriterOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    private static FileStream? _stream;
+
+    private static EntrySnapshot? _entry;
+
+    /// <summary>
+    /// Records what this process looked like at Main's first line. Written as the
+    /// first record of the file when the file is opened.
+    /// </summary>
+    /// <param name="entry">The snapshot.</param>
+    public static void Remember(EntrySnapshot entry) => _entry = entry;
+
+    /// <summary>Appends one record.</summary>
+    /// <param name="name">What happened.</param>
+    /// <param name="fields">Its details.</param>
+    public static void Write(string name, params (string Key, object? Value)[] fields)
+    {
+        lock (Gate)
+        {
+            try
+            {
+                var stream = _stream ??= Open();
+                Append(stream, name, fields);
+            }
+            catch (IOException)
+            {
+                // A journal that cannot be written must never change what the
+                // process under measurement does.
+            }
+        }
+    }
+
+    private static FileStream Open()
+    {
+        var control = Control.Current;
+        _ = Directory.CreateDirectory(control.LogDirectory);
+        var stamp = DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss'.'fffffff", CultureInfo.InvariantCulture);
+        var path = Path.Combine(control.LogDirectory, $"{stamp}-{Environment.ProcessId}.jsonl");
+        var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+        if (_entry is { } entry)
+        {
+            Append(stream, "process-start", entry.Fields(control.Run));
+        }
+
+        return stream;
+    }
+
+    private static void Append(FileStream stream, string name, (string Key, object? Value)[] fields)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer, WriterOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("t", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+            writer.WriteNumber("pid", Environment.ProcessId);
+            writer.WriteString("event", name);
+            foreach (var (key, value) in fields)
+            {
+                writer.WritePropertyName(key);
+                WriteValue(writer, value);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        buffer.WriteByte((byte)'\n');
+        stream.Write(buffer.GetBuffer(), 0, (int)buffer.Length);
+        stream.Flush(flushToDisk: false);
+    }
+
+    private static void WriteValue(Utf8JsonWriter writer, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                writer.WriteNullValue();
+                break;
+            case string text:
+                writer.WriteStringValue(text);
+                break;
+            case bool flag:
+                writer.WriteBooleanValue(flag);
+                break;
+            case int number:
+                writer.WriteNumberValue(number);
+                break;
+            case long number:
+                writer.WriteNumberValue(number);
+                break;
+            case uint number:
+                writer.WriteNumberValue(number);
+                break;
+            case double number:
+                writer.WriteNumberValue(number);
+                break;
+            case IReadOnlyDictionary<string, string> map:
+                writer.WriteStartObject();
+                foreach (var pair in map)
+                {
+                    writer.WriteString(pair.Key, pair.Value);
+                }
+
+                writer.WriteEndObject();
+                break;
+            case IEnumerable sequence:
+                writer.WriteStartArray();
+                foreach (var item in sequence)
+                {
+                    WriteValue(writer, item);
+                }
+
+                writer.WriteEndArray();
+                break;
+            default:
+                writer.WriteStringValue(Convert.ToString(value, CultureInfo.InvariantCulture));
+                break;
+        }
+    }
+}

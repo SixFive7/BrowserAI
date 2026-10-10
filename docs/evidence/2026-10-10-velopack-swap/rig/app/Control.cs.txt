@@ -1,0 +1,76 @@
+using System.Text.Json;
+
+namespace BrowserAI.Measure;
+
+/// <summary>
+/// What the orchestrator wants the next process to do, read from a file because
+/// a hook is started by Update.exe and cannot be handed arguments of ours.
+/// </summary>
+internal sealed class Control
+{
+    /// <summary>The rig's own directory, compiled in so that every process in the chain finds it.</summary>
+    internal const string BaseDirectory = @"C:\Source\SixFive7\BrowserAI\.work\velopack-fix\rig";
+
+    /// <summary>The run every record of this process belongs to.</summary>
+    public string Run { get; private init; } = "_nocontrol";
+
+    /// <summary>Where every process of the run writes its journal.</summary>
+    public string LogDirectory { get; private init; } = Path.Combine(BaseDirectory, "logs", "_nocontrol");
+
+    /// <summary>How long the --veloapp-updated hook keeps running, in seconds.</summary>
+    public int UpdatedSleepSeconds { get; private init; }
+
+    /// <summary>How long a detached child of the stand-in, started by that hook, runs.</summary>
+    public int UpdatedChildUnderRootSeconds { get; private init; }
+
+    /// <summary>How long a detached PowerShell outside the install root, started by that hook, runs.</summary>
+    public int UpdatedChildOutsideSeconds { get; private init; }
+
+    /// <summary>How long the hook waits after starting its children before it returns.</summary>
+    public int UpdatedWaitAfterSpawnMilliseconds { get; private init; }
+
+    /// <summary>The interval between heartbeat records.</summary>
+    public int HeartbeatMilliseconds { get; private init; } = 250;
+
+    /// <summary>The PowerShell executable for the child outside the root.</summary>
+    public string Pwsh { get; private init; } = @"C:\Program Files\PowerShell\7\pwsh.exe";
+
+    /// <summary>The script that child runs.</summary>
+    public string OutsideScript { get; private init; } = Path.Combine(BaseDirectory, "outside-child.ps1");
+
+    /// <summary>The control file as it read when this process first asked.</summary>
+    public static Control Current => field ??= Load();
+
+    private static Control Load()
+    {
+        var path = Path.Combine(BaseDirectory, "control.json");
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            var root = document.RootElement;
+            var run = Text(root, "run") ?? "_nocontrol";
+            return new Control
+            {
+                Run = run,
+                LogDirectory = Text(root, "logDirectory") ?? Path.Combine(BaseDirectory, "logs", run),
+                UpdatedSleepSeconds = Number(root, "updatedSleepSeconds", 0),
+                UpdatedChildUnderRootSeconds = Number(root, "updatedChildUnderRootSeconds", 0),
+                UpdatedChildOutsideSeconds = Number(root, "updatedChildOutsideSeconds", 0),
+                UpdatedWaitAfterSpawnMilliseconds = Number(root, "updatedWaitAfterSpawnMilliseconds", 0),
+                HeartbeatMilliseconds = Number(root, "heartbeatMilliseconds", 250),
+                Pwsh = Text(root, "pwsh") ?? @"C:\Program Files\PowerShell\7\pwsh.exe",
+                OutsideScript = Text(root, "outsideScript") ?? Path.Combine(BaseDirectory, "outside-child.ps1"),
+            };
+        }
+        catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException)
+        {
+            return new Control();
+        }
+    }
+
+    private static string? Text(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.String ? value.GetString() : null;
+
+    private static int Number(JsonElement root, string name, int fallback) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.Number ? value.GetInt32() : fallback;
+}

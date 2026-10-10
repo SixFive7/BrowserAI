@@ -1,0 +1,13 @@
+<Project>
+
+  <!--
+    Stops MSBuild from importing the repository's Directory.Packages.props.
+    The stand-in pins Velopack to exactly the version the repository's lock
+    files resolve today, 1.2.161, which is the point of the measurement.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,79 @@
+No newer Velopack changes this. As a class it is a known upstream bug: it was reported four times in 2024 and closed by a change that removed the rollback, which produced today's behaviour. The Windows behaviour in 1.2.161 itself has no issue or PR. Upstream fixed the same mechanism on macOS only, in July 2026.
+
+Nothing was run or installed. The source was read at tag `1.2.161` (commit `92d6a1c`), and the nine files cited match GitHub at that tag by blob SHA. Upstream state was read on 2026-10-09.
+
+## Upstream issues and PRs
+
+| Link | State | Opened, closed | Version | What it shows |
+|---|---|---|---|---|
+| [#228](https://github.com/velopack/velopack/issues/228) robocopy fallback fails, app unlaunchable | closed, label bug | 2024-09-17, 2024-12-02 | 0.0.589 | The closest match. A field log has the first rename succeeding and the second failing in the same second: "Failed to rename temp_path_new to current_dir (Access is denied. (os error 5))". Closed by PR #392 |
+| [#202](https://github.com/velopack/velopack/issues/202) Update Not Completing and Removing Software | closed, labels bug, os:windows | 2024-08-14, 2024-09-19 | 0.0.583 | `current\` deleted; the log ends at "Replacing current dir". The maintainer closed it "in favor of #228" |
+| [#198](https://github.com/velopack/velopack/issues/198) Access is denied ... deleting software | closed | 2024-08-06, 2024-08-08 | 0.0.359 | `current\` deleted. The reporter was told to upgrade to 0.0.582 or later |
+| [#159](https://github.com/velopack/velopack/issues/159) Rare sporadic PermissionDenied breaking the installation | closed by PR #160 | 2024-07-04 | 0.0.5xx, still seen on 0.0.561 | `current\` deleted, reinstall needed, ESET antivirus present. Maintainer: "there is something legitimately wrong here" |
+| [#897](https://github.com/velopack/velopack/issues/897) CrowdStrike blocks the update | closed | 2026-05-26, same day | 1.x | The maintainer's current position: "this is not an issue with Velopack and AV's running havoc is not something we can fix for". This was about the first, harmless rename |
+| [#947](https://github.com/velopack/velopack/issues/947) apply stalls about 14 s on an EDR machine | open | 2026-06-15 | 1.2.0 | Antivirus/EDR slowing the apply |
+| [#1041](https://github.com/velopack/velopack/issues/1041) | closed | 2026-08-20, 2026-08-24 | 1.2.x | An antivirus scan of staged packages takes "several minutes (sometimes over 10 minutes)" |
+| [PR #160](https://github.com/velopack/velopack/pull/160) | merged 2024-07-04 | | | Added a robocopy fallback and a rollback copied back from the backup |
+| [PR #392](https://github.com/velopack/velopack/pull/392) "Vastly simplify windows update for now" | merged 2024-12-02 | | | Removed robocopy and the rollback. Added the 11/31 retries and the "broken state" message, and left the "yolo a rollback" comment behind. First shipped in 0.0.970 (pre-release, 2024-12-04) and 0.0.1015 (stable, 2024-12-21); unchanged since |
+| [PR #972](https://github.com/velopack/velopack/pull/972) "Use atomic rename on macos" | merged 2026-07-01 | | | macOS now puts the old bundle back if the second rename fails, "otherwise the caller's cleanup would delete the only copy of the app", with a unit test |
+
+GitHub Discussions are disabled on the repository. I could not search Velopack's Discord. A web search found nothing else. One "broken state" hit, greenfield-inc/Pane#289, is not a Velopack app.
+
+## How 1.2.161 does the swap
+
+All paths are under `src/bins/src/` unless named otherwise.
+
+1. **Two temporary folders.** The new version and the backup of the old one are both random folders under `packages\VelopackTemp\tmp_*` (`commands/apply_windows_impl.rs:129-131`, `lib-rust/src/locator.rs:206-213`).
+2. **Before the swap.** The new version is extracted (`:138-147`), the old version's obsolete hook runs (`:151-156`), and every process under the install root is stopped (`:158-159`).
+3. **First rename** (`current\` to the backup folder): 11 attempts, 1 s apart (`:160-163`, retry helper at `shared/util_common.rs:36-52`). If it fails, `current\` is untouched. This is what was measured on 2026-10-08.
+4. **Second rename** (new folder to `current\`): 31 attempts, about 30 s (`:172-177`). The comment at `:173` promises a rollback, but `:177` just returns the error. The rollback it meant is the commented-out robocopy at `:187-205`, which copied the backup back at `:190`.
+5. **Cleanup.** After the step fails, both temporary folders are deleted unconditionally, including the backup, which is the old `current\` (`:275-278`).
+6. **What gets logged.** With a restart requested, `commands/apply.rs:57-61` tries to start the old program. That fails at `shared/util_windows.rs:108-110` with "Unable to find executable to start", and the early return means the "Error applying package" line at `:61` never runs.
+   - BrowserAI's background update path uses `restart: true` (`VelopackUpdateClient.cs:193`, `:213`).
+   - So, by reading, its log shows 30 "Retrying operation" warnings and ends with "Apply error: Unable to find executable to start".
+   - The "broken state" message is only logged on the `restart: false` path.
+   - In every case Update.exe exits 1 and shows no dialog (`update.rs:135`, `:141-144`).
+7. **Afterwards nothing can repair or remove it.**
+   - `Update.exe apply` and `Update.exe --uninstall` both need `current\sq.version` (`update.rs:277`, `:311`; `locator.rs:120-125`).
+   - Windows' Uninstall button runs exactly that `--uninstall` (`windows/registry.rs:32`, `:52`).
+   - `Update.exe start` fails at `commands/start_windows_impl.rs:114-117`.
+   - `Setup.exe` repairs it: `--silent` skips the dialog (`l18n/src/dialogs.rs:194-196`), and the installer itself rolls back on failure (`commands/install.rs:94-119`, `:150-165`).
+   - BrowserAI's data lives in `%LOCALAPPDATA%\BrowserAI`, outside the install root, so a repair keeps it.
+8. **macOS does it right.** At the same tag, `commands/apply_osx_impl.rs:43-47` restores the old bundle on this exact failure, tested at `:171-184`.
+9. **The docs say otherwise.** Velopack's own docs (`docs/packaging/operating-systems/windows.mdx:38-42`, main @ `1ca8eea6`) promise a lock dialog, an error message and the old version launched. The lock-dialog code was removed by PR #392 and commit `bfe2b5cc` (2026-02-27).
+
+**What triggers it:** something holding a file open inside the freshly extracted folder for more than about 30 s, realistically antivirus, EDR, backup or indexing software. Nothing of BrowserAI's own touches that folder. How often it happens is unknown.
+
+## Is there a newer release?
+
+No. Velopack and vpk on NuGet are both at 1.2.161 (published 2026-09-29), even with pre-releases included. 1.2.161 is GitHub's latest release and newest tag. The `develop` branch is identical to the tag. None of the open PRs that touch the Rust updater (#1079, #1073, #1066, #480) changes the swap.
+
+## Does upstream acknowledge it as a defect?
+
+Only in the code. The error text says "the app was left in a broken state". The rollback comment is a leftover. The macOS fix addresses exactly this. No issue tracks the Windows case, and the maintainer's 2026 stance on rename failures caused by antivirus is "not an issue with Velopack" (#897). The case is still strong, because the defect here is Velopack's own cleanup deleting its only backup, which its macOS code already guards against.
+
+## Corrections for the HAZARDS row (read, not measured)
+
+- On BrowserAI's restart path the log ends "Unable to find executable to start", not "broken state".
+- Uninstalling from Windows Settings also fails in that state, and `Setup.exe --silent` repairs it while keeping the data.
+- Even when the second rename succeeds on a retry, `current\` can be missing for up to about 30 s. Any relay or task start in that window fails.
+
+## Ways BrowserAI could respond
+
+| | Direction | Cost |
+|---|---|---|
+| **a** | Measure it in the stand-in rig, then file an upstream issue with the log and offer a PR copying the macOS fix: put the backup back if the second rename fails, and keep the backup whenever `current\` is missing | About half a day. Reuses `.work/step0-velopack`, adding a watcher that holds one file in the new folder for more than 31 s. Holds the installer and suite locks for about 10 minutes and installs/uninstalls a stand-in under `%LOCALAPPDATA%`. The PR needs a Rust toolchain. Filing is public, under his account. The fix protects from the first BrowserAI update built on a fixed Velopack, because the downloaded package's own Update.exe applies it (`UpdateManager.cs:290-311`) |
+| **b** | File upstream now on the source reading alone | 1 to 2 hours. A detail could be wrong (for example the log message), the maintainer may answer as in #897, and the HAZARDS row stays unmeasured |
+| **c** | Accept and document: README recovery note (run BrowserAI-win-Setup.exe again; data is kept; Settings > Uninstall will not work) and the row corrections above | Under an hour. Changes nothing about how often it happens |
+| **d** | BrowserAI repairs itself from outside `current\`: a launcher or task action that notices the program is missing and runs `Setup.exe --silent` | Days. A second binary next to the one-binary design, a cached or downloaded Setup.exe, a repair that could loop (his D10 "no crash retry restart loop"), and window/antivirus exposure of its own |
+| **e** | Ship a patched Update.exe from a Velopack fork | Highest. vpk takes its helpers from its own vendor folder with no switch (`HelperFile.cs`, `Velopack.Build/PackTask.cs:120-122`). Needs Rust in the release build and a pinned fork, against "everything floats; never pin to work around a break" |
+
+**My recommendation is a, plus the README note from c now.** Upstream already fixed this mechanism on macOS, and its maintainer acts quickly on clear bugs (#966 to PR #972 within a day, #1008 fixed the same day). The measurement is what the HAZARDS row names as its closing condition. d and e cost days to work around a bug that belongs upstream.
+
+## Not done
+
+- No measurement was run. That a held file in the new folder blocks its rename is inferred from the measured `current\` case.
+- Discord was not searched.
+- How often this happens was not quantified.
+
+I did not write the findings file, because my instructions forbid writing report files; everything is in this reply. The raw captures (issue bodies, the PR #392 diff, search results, the release list) are in `C:\Source\SixFive7\BrowserAI\.work\velopack-swap\`.

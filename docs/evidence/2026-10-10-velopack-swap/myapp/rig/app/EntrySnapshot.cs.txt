@@ -1,0 +1,67 @@
+using System.Collections;
+using System.Reflection;
+
+namespace MyApp;
+
+/// <summary>
+/// What this process was handed, read before <c>VelopackApp.Run()</c>, which
+/// clears <c>VELOPACK_FIRSTRUN</c> and <c>VELOPACK_RESTART</c> on an installed
+/// process. Reads only: no file is opened and nothing is written here.
+/// </summary>
+/// <param name="TakenUtc">When the snapshot was taken.</param>
+/// <param name="Arguments">The arguments as .NET parsed them.</param>
+/// <param name="CommandLine">The raw command line, from GetCommandLineW and not from .NET, which rewrites argv[0].</param>
+/// <param name="VelopackVariables">Every environment variable whose name starts with VELOPACK.</param>
+/// <param name="Parent">The parent, read while it may still be alive.</param>
+internal sealed record EntrySnapshot(
+    DateTime TakenUtc,
+    string[] Arguments,
+    string CommandLine,
+    IReadOnlyDictionary<string, string> VelopackVariables,
+    Native.ParentFacts Parent)
+{
+    /// <summary>Takes the snapshot.</summary>
+    /// <param name="args">Main's arguments.</param>
+    /// <returns>The snapshot.</returns>
+    public static EntrySnapshot Take(string[] args) =>
+        new(DateTime.UtcNow, args, Native.RawCommandLine(), VelopackNow(), Native.Parent());
+
+    /// <summary>The VELOPACK variables as they are at this moment.</summary>
+    /// <returns>Name to value, sorted by name.</returns>
+    public static IReadOnlyDictionary<string, string> VelopackNow()
+    {
+        var found = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (DictionaryEntry pair in Environment.GetEnvironmentVariables())
+        {
+            if (pair.Key is string name && name.StartsWith("VELOPACK", StringComparison.OrdinalIgnoreCase))
+            {
+                found[name] = pair.Value as string ?? string.Empty;
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>The snapshot as journal fields.</summary>
+    /// <param name="run">The run this process belongs to.</param>
+    /// <returns>The fields.</returns>
+    public (string Key, object? Value)[] Fields(string run) =>
+    [
+        ("run", run),
+        ("snapshotUtc", TakenUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+        ("createdUtc", Native.OwnCreatedUtc()),
+        ("exe", Environment.ProcessPath),
+        ("assemblyVersion", typeof(EntrySnapshot).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion),
+        ("args", Arguments),
+        ("commandLine", CommandLine),
+        ("velopackVariables", VelopackVariables),
+        ("parentPid", Parent.Pid),
+        ("parentImage", Parent.Image),
+        ("parentCreatedUtc", Parent.CreatedUtc),
+        ("parentOlderThanMe", Parent.OlderThanMe),
+        ("parentState", Parent.State),
+        ("cwd", Environment.CurrentDirectory),
+        ("inJob", Native.InJob()),
+        ("sessionId", System.Diagnostics.Process.GetCurrentProcess().SessionId),
+    ];
+}

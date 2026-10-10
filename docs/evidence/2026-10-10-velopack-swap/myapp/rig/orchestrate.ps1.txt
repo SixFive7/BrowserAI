@@ -1,0 +1,700 @@
+# Reproduces the Velopack swap defect against the stand-in MyApp,
+# and runs the same rounds against an Update.exe built with the fix.
+# Adapted from .work/step0-velopack/orchestrate.ps1 (same stand-in, same method).
+#
+# A round: install 1.0.0 with Setup.exe --silent, write two data markers, update
+# through the stand-in (check, download, WaitExitThenApplyUpdates with restart,
+# as a real app does), optionally with holder.ps1 holding one file open inside the
+# freshly extracted new-version folder for longer than the second rename's
+# retries. Then: when current\ is gone, try Update.exe --uninstall --silent, run
+# the 1.0.1 Setup.exe --silent as a repair, check the markers and start the app;
+# finally uninstall and check the machine is clean.
+#
+# Rules this script keeps, from .work/overnight/RULES.txt and the brief:
+#   - every process it starts is started with no window (UseShellExecute false,
+#     CreateNoWindow true), and every Velopack binary runs with --silent;
+#   - it never stops a process: it only opens handles to processes whose pid it
+#     recorded (from its own launches or from a journal record naming the pid
+#     and creation time) to read their exit code and exit time;
+#   - it takes the suite lock (.work/locks/suite) and the installer lock
+#     (.work/installer.lock) before installing, and lets both go at the end;
+#   - it touches nothing of any other installed app or its data.
+param(
+    [ValidateSet('myapp')] [string] $Mode = 'myapp',
+    [int] $HoldSeconds = 60
+)
+
+$ErrorActionPreference = 'Stop'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+
+$base = 'C:\Source\SixFive7\BrowserAI\.work\velopack-fix\rig-myapp'
+$repo = 'C:\Source\SixFive7\BrowserAI'
+Set-Location -LiteralPath $base
+
+$session = Join-Path $base ("runs\{0}-{1}" -f $Mode, [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ'))
+$logsRoot = Join-Path $session 'logs'
+$null = New-Item -ItemType Directory -Path $logsRoot
+$orchestratorLog = Join-Path $session 'orchestrator.jsonl'
+$roundsLog = Join-Path $session 'rounds.jsonl'
+
+$localAppData = $env:LOCALAPPDATA
+$root = Join-Path $localAppData 'MyApp'
+$exe = Join-Path $root 'current\MyApp.exe'
+$updateExe = Join-Path $root 'Update.exe'
+$tempRoot = Join-Path $root 'packages\VelopackTemp'
+$insideMarker = Join-Path $root 'measure-data\marker.txt'
+$outsideDataDir = Join-Path $localAppData 'MyApp.data'
+$outsideMarker = Join-Path $outsideDataDir 'marker.txt'
+$velopackLog = Join-Path $localAppData 'velopack\velopack_MyApp.log'
+$sharedLog = Join-Path $localAppData 'velopack\velopack.log'
+$uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MyApp'
+$shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'MyApp.lnk'
+$desktopShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'MyApp.lnk'
+$feeds = Join-Path $base 'feeds'
+$setupInstall = Join-Path $feeds 'after-1.0.0\MyApp-win-Setup.exe'
+$setupRepair = Join-Path $feeds 'after-1.0.1\MyApp-win-Setup.exe'
+$suiteLock = Join-Path $repo '.work\locks\suite'
+$installerLock = Join-Path $repo '.work\installer.lock'
+$pwsh = (Get-Command pwsh).Source
+$restartTail = @('two words', 'embedded"quote', 'trailing\')
+
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public static class Win
+{
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool CreateDirectoryW(string path, IntPtr security);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetExitCodeProcess(IntPtr handle, out uint code);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetProcessTimes(IntPtr handle, out long created, out long exited, out long kernel, out long user);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool QueryFullProcessImageNameW(IntPtr handle, uint flags, StringBuilder name, ref uint size);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+}
+
+public sealed class Watched
+{
+    public uint Pid;
+    public string Role;
+    public string Image;
+    public long Created;
+    public IntPtr Handle;
+    public bool Reported;
+
+    // SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION: enough to wait and read, not to act.
+    public static Watched Open(uint pid, string role)
+    {
+        IntPtr handle = Win.OpenProcess(0x00100000u | 0x1000u, false, pid);
+        if (handle == IntPtr.Zero) { return null; }
+        Watched watched = new Watched();
+        watched.Pid = pid;
+        watched.Role = role;
+        watched.Handle = handle;
+        StringBuilder name = new StringBuilder(32768);
+        uint size = (uint)name.Capacity;
+        if (Win.QueryFullProcessImageNameW(handle, 0, name, ref size)) { watched.Image = name.ToString(); }
+        long created, exited, kernel, user;
+        if (Win.GetProcessTimes(handle, out created, out exited, out kernel, out user)) { watched.Created = created; }
+        return watched;
+    }
+
+    public bool Exited { get { return Win.WaitForSingleObject(Handle, 0) == 0; } }
+
+    public uint ExitCode { get { uint code; Win.GetExitCodeProcess(Handle, out code); return code; } }
+
+    public long ExitTime { get { long created, exited, kernel, user; Win.GetProcessTimes(Handle, out created, out exited, out kernel, out user); return exited; } }
+
+    public void Close() { if (Handle != IntPtr.Zero) { Win.CloseHandle(Handle); Handle = IntPtr.Zero; } }
+}
+'@
+
+$allPids = [System.Collections.Generic.List[object]]::new()
+
+function Iso([long] $fileTime) {
+    if ($fileTime -le 0) { return $null }
+    return [DateTime]::FromFileTimeUtc($fileTime).ToString('o')
+}
+
+function FileTimeOf($value) {
+    if ($value -is [DateTime]) {
+        if ($value.Kind -eq [DateTimeKind]::Unspecified) { $value = [DateTime]::SpecifyKind($value, [DateTimeKind]::Utc) }
+        return $value.ToUniversalTime().ToFileTimeUtc()
+    }
+    return [DateTime]::Parse([string]$value, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind).ToUniversalTime().ToFileTimeUtc()
+}
+
+function Write-Orchestrator([string] $Name, [hashtable] $Fields = @{}) {
+    $record = [ordered]@{ t = [DateTime]::UtcNow.ToString('o'); event = $Name }
+    foreach ($key in $Fields.Keys) { $record[$key] = $Fields[$key] }
+    $line = $record | ConvertTo-Json -Compress -Depth 8
+    Add-Content -LiteralPath $orchestratorLog -Value $line -Encoding utf8
+    Write-Host $line
+}
+
+function Write-Control([string] $Run, [string] $LogDirectory) {
+    $control = [ordered]@{
+        run = $Run
+        logDirectory = $LogDirectory
+        updatedSleepSeconds = 0
+        updatedChildUnderRootSeconds = 0
+        updatedChildOutsideSeconds = 0
+        updatedWaitAfterSpawnMilliseconds = 0
+        heartbeatMilliseconds = 250
+        pwsh = $pwsh
+        outsideScript = (Join-Path $base 'outside-child.ps1')
+    }
+    $control | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $base 'control.json') -Encoding utf8
+    $control | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $LogDirectory 'control.json') -Encoding utf8
+}
+
+function Start-Hidden([string] $File, [string[]] $Arguments) {
+    $start = [System.Diagnostics.ProcessStartInfo]::new($File)
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.WorkingDirectory = $base
+    foreach ($argument in $Arguments) { $start.ArgumentList.Add($argument) }
+    return [System.Diagnostics.Process]::Start($start)
+}
+
+function Read-Lines([string] $Path) {
+    try {
+        $stream = [System.IO.FileStream]::new($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+        try { $text = [System.IO.StreamReader]::new($stream).ReadToEnd() } finally { $stream.Dispose() }
+    }
+    catch [System.IO.IOException] { return @() }
+    $end = $text.LastIndexOf("`n")
+    if ($end -lt 0) { return @() }
+    return $text.Substring(0, $end).Split("`n")
+}
+
+function Read-Marker([string] $Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $null }
+    return ([System.IO.File]::ReadAllText($Path)).Trim()
+}
+
+function Get-InstallState {
+    $state = [ordered]@{
+        t = [DateTime]::UtcNow.ToString('o')
+        rootExists = Test-Path -LiteralPath $root
+        currentExists = Test-Path -LiteralPath (Join-Path $root 'current')
+        shortcutExists = Test-Path -LiteralPath $shortcut
+        desktopShortcutExists = Test-Path -LiteralPath $desktopShortcut
+        uninstallKey = $null
+        manifestVersion = $null
+        insideMarker = Read-Marker $insideMarker
+        outsideMarker = Read-Marker $outsideMarker
+        current = @()
+        rootTree = @()
+    }
+
+    if (Test-Path -LiteralPath $uninstallKey) {
+        $key = Get-ItemProperty -LiteralPath $uninstallKey
+        $state.uninstallKey = [ordered]@{
+            DisplayName = $key.DisplayName
+            DisplayVersion = $key.DisplayVersion
+            InstallLocation = $key.InstallLocation
+            UninstallString = $key.UninstallString
+            QuietUninstallString = $key.QuietUninstallString
+        }
+    }
+
+    if ($state.rootExists) {
+        $manifest = Join-Path $root 'current\sq.version'
+        if (Test-Path -LiteralPath $manifest) {
+            $text = [System.IO.File]::ReadAllText($manifest)
+            if ($text -match '<version>(?<v>[^<]+)</version>') { $state.manifestVersion = $Matches['v'] }
+        }
+
+        $currentDir = Join-Path $root 'current'
+        if (Test-Path -LiteralPath $currentDir) {
+            $state.current = @(Get-ChildItem -LiteralPath $currentDir -Recurse -File | Sort-Object FullName | ForEach-Object {
+                $hash = try { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.Substring(0, 16) } catch { 'unreadable: ' + $_.Exception.Message }
+                '{0} {1} {2}' -f $_.FullName.Substring($currentDir.Length + 1), $_.Length, $hash
+            })
+        }
+
+        $state.rootTree = @(Get-ChildItem -LiteralPath $root -Recurse -Force | Where-Object { $_.FullName -notlike "$currentDir\*" } | Sort-Object FullName | ForEach-Object {
+            $relative = $_.FullName.Substring($root.Length + 1)
+            if ($_.PSIsContainer) { '{0}\' -f $relative } else { '{0} {1}' -f $relative, $_.Length }
+        })
+    }
+
+    return $state
+}
+
+function Get-LocalAppDataNames {
+    return @(Get-ChildItem -LiteralPath $localAppData -Force -Directory | Where-Object { $_.Name -like 'MyApp*' -or $_.Name -like 'BrowserAI*' } | ForEach-Object Name | Sort-Object)
+}
+
+function Watch-Pid([hashtable] $Watched, [uint32] $ProcessId, [string] $Role, [long] $ExpectedCreated, [string] $ExpectedImage, [long] $NotBefore) {
+    if ($Watched.ContainsKey([string]$ProcessId)) { return }
+    $handle = [Watched]::Open($ProcessId, $Role)
+    if ($null -eq $handle) {
+        Write-Orchestrator 'watch-missed' @{ pid = $ProcessId; role = $Role; why = 'OpenProcess failed: already gone' }
+        $Watched[[string]$ProcessId] = 'missed'
+        return
+    }
+
+    $ok = $true
+    if ($ExpectedCreated -gt 0 -and $handle.Created -ne $ExpectedCreated) { $ok = $false }
+    if ($ExpectedImage -and $handle.Image -ne $ExpectedImage) { $ok = $false }
+    if ($NotBefore -gt 0 -and $handle.Created -lt $NotBefore) { $ok = $false }
+    if (-not $ok) {
+        Write-Orchestrator 'watch-refused' @{ pid = $ProcessId; role = $Role; image = $handle.Image; created = (Iso $handle.Created); expectedCreated = (Iso $ExpectedCreated); expectedImage = $ExpectedImage }
+        $handle.Close()
+        $Watched[[string]$ProcessId] = 'refused'
+        return
+    }
+
+    $Watched[[string]$ProcessId] = $handle
+    $allPids.Add([pscustomobject]@{ pid = $ProcessId; created = $handle.Created; role = $Role; image = $handle.Image })
+    Write-Orchestrator 'watch' @{ pid = $ProcessId; role = $Role; image = $handle.Image; created = (Iso $handle.Created) }
+}
+
+function Read-VelopackLogSince([long] $Offset) {
+    if (-not (Test-Path -LiteralPath $velopackLog)) { return '' }
+    $stream = [System.IO.FileStream]::new($velopackLog, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    try {
+        $memory = [System.IO.MemoryStream]::new()
+        $stream.CopyTo($memory)
+        $bytes = $memory.ToArray()
+    }
+    finally { $stream.Dispose() }
+    $from = if ($bytes.Length -ge $Offset) { $Offset } else { 0 }
+    return [System.Text.Encoding]::UTF8.GetString($bytes, [int]$from, $bytes.Length - [int]$from)
+}
+
+function Invoke-Run {
+    param(
+        [Parameter(Mandatory)] [string] $Name,
+        [string] $File = $exe,
+        [string[]] $Arguments = @(),
+        [int] $TimeoutSeconds = 240,
+        [int] $QuietMilliseconds = 2500,
+        [hashtable] $Holder,
+        [switch] $FindChildrenOfStarted
+    )
+
+    $runDirectory = Join-Path $logsRoot $Name
+    $null = New-Item -ItemType Directory -Path $runDirectory
+    Write-Control $Name $runDirectory
+    $before = Get-InstallState
+    $logOffset = if (Test-Path -LiteralPath $velopackLog) { (Get-Item -LiteralPath $velopackLog).Length } else { 0 }
+
+    $watched = @{}
+    $lineCounts = @{}
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    $lastChange = 0
+    $timedOut = $false
+    $holderLog = $null
+
+    if ($Holder) {
+        $holderLog = Join-Path $runDirectory 'holder.log'
+        $holderProcess = Start-Hidden $pwsh @('-NoLogo', '-NoProfile', '-NonInteractive', '-File', (Join-Path $base 'holder.ps1'),
+            '-TempRoot', $tempRoot, '-Version', $Holder.Version, '-HoldSeconds', [string]$Holder.HoldSeconds, '-Share', $Holder.Share, '-Log', $holderLog)
+        Watch-Pid $watched ([uint32]$holderProcess.Id) 'holder (pwsh holder.ps1)' 0 $null 0
+        $ready = [DateTime]::UtcNow.AddSeconds(30)
+        while (-not ((Test-Path -LiteralPath $holderLog) -and ((Get-Content -LiteralPath $holderLog -Raw) -match ' ready pid='))) {
+            if ([DateTime]::UtcNow -ge $ready) { throw "The holder for $Name did not report ready within 30 s." }
+            Start-Sleep -Milliseconds 50
+        }
+        Write-Orchestrator 'holder-ready' @{ run = $Name; pid = $holderProcess.Id; version = $Holder.Version; holdSeconds = $Holder.HoldSeconds; share = $Holder.Share }
+    }
+
+    Write-Orchestrator 'run-start' @{ run = $Name; file = $File; arguments = $Arguments; holder = [bool]$Holder }
+    $started = Start-Hidden $File $Arguments
+    $startedCreated = $started.StartTime.ToUniversalTime().ToFileTimeUtc()
+    Watch-Pid $watched ([uint32]$started.Id) 'started-by-orchestrator' 0 $null 0
+    $startedWatch = $watched[[string]$started.Id]
+
+    while ($true) {
+        foreach ($journal in Get-ChildItem -LiteralPath $runDirectory -Filter '*.jsonl' -File) {
+            $lines = @(Read-Lines $journal.FullName)
+            $seen = if ($lineCounts.ContainsKey($journal.Name)) { $lineCounts[$journal.Name] } else { 0 }
+            if ($lines.Count -le $seen) { continue }
+            for ($i = $seen; $i -lt $lines.Count; $i++) {
+                $record = $lines[$i] | ConvertFrom-Json
+                switch ($record.event) {
+                    'process-start' {
+                        $role = if ($record.args.Count -gt 0) { [string]$record.args[0] } else { '(no args)' }
+                        Watch-Pid $watched ([uint32]$record.pid) "stand-in $role" (FileTimeOf $record.createdUtc) $null 0
+                    }
+                    'velopack' {
+                        if ($record.message -match '^Process started with ID: (?<id>\d+)') {
+                            $requester = $watched[[string]$record.pid]
+                            $notBefore = if ($requester -is [Watched]) { $requester.Created } else { 0 }
+                            Watch-Pid $watched ([uint32]$Matches['id']) 'Update.exe' 0 $updateExe $notBefore
+                        }
+                    }
+                }
+            }
+            $lineCounts[$journal.Name] = $lines.Count
+            $lastChange = $clock.ElapsedMilliseconds
+        }
+
+        if ($FindChildrenOfStarted) {
+            $all = @(Get-CimInstance -ClassName Win32_Process -ErrorAction SilentlyContinue)
+            $frontier = [System.Collections.Generic.Queue[uint32]]::new()
+            $frontier.Enqueue([uint32]$started.Id)
+            $visited = @{}
+            while ($frontier.Count -gt 0) {
+                $parentPid = $frontier.Dequeue()
+                if ($visited.ContainsKey([string]$parentPid)) { continue }
+                $visited[[string]$parentPid] = $true
+                foreach ($child in $all | Where-Object { $_.ParentProcessId -eq $parentPid }) {
+                    $childCreated = $child.CreationDate.ToUniversalTime().ToFileTimeUtc()
+                    if ($childCreated -ge $startedCreated) {
+                        Watch-Pid $watched ([uint32]$child.ProcessId) ("descendant of {0} via {1}" -f $started.Id, $parentPid) 0 $null $startedCreated
+                        $frontier.Enqueue([uint32]$child.ProcessId)
+                    }
+                }
+            }
+        }
+
+        $live = 0
+        foreach ($entry in @($watched.Values)) {
+            if ($entry -isnot [Watched]) { continue }
+            if ($entry.Exited) {
+                if (-not $entry.Reported) {
+                    $entry.Reported = $true
+                    Write-Orchestrator 'exited' @{ run = $Name; pid = $entry.Pid; role = $entry.Role; image = $entry.Image; created = (Iso $entry.Created); exitedUtc = (Iso $entry.ExitTime); exitCode = $entry.ExitCode }
+                    $lastChange = $clock.ElapsedMilliseconds
+                }
+            }
+            else { $live++ }
+        }
+
+        if ($live -eq 0 -and ($clock.ElapsedMilliseconds - $lastChange) -ge $QuietMilliseconds) { break }
+        if ($clock.Elapsed.TotalSeconds -ge $TimeoutSeconds) {
+            $timedOut = $true
+            Write-Orchestrator 'run-timeout' @{ run = $Name; live = $live }
+            break
+        }
+        Start-Sleep -Milliseconds 50
+    }
+
+    $after = Get-InstallState
+    $slice = Read-VelopackLogSince $logOffset
+    Set-Content -LiteralPath (Join-Path $runDirectory 'velopack-log-slice.txt') -Value $slice -Encoding utf8
+    [ordered]@{ before = $before; after = $after } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $runDirectory 'state.json') -Encoding utf8
+
+    $processes = @($watched.Values | Where-Object { $_ -is [Watched] } | ForEach-Object {
+        [ordered]@{ pid = $_.Pid; role = $_.Role; image = $_.Image; created = (Iso $_.Created); exited = (Iso $_.ExitTime); exitCode = $_.ExitCode }
+    })
+    $updateEntry = @($watched.Values | Where-Object { $_ -is [Watched] -and $_.Role -eq 'Update.exe' }) | Select-Object -First 1
+    $summary = [ordered]@{
+        run = $Name
+        timedOut = $timedOut
+        elapsedSeconds = [math]::Round($clock.Elapsed.TotalSeconds, 2)
+        startedExitCode = if ($startedWatch -is [Watched]) { $startedWatch.ExitCode } else { $null }
+        updateExeExitCode = if ($updateEntry) { $updateEntry.ExitCode } else { $null }
+        holderLog = if ($holderLog -and (Test-Path -LiteralPath $holderLog)) { @(Get-Content -LiteralPath $holderLog) } else { @() }
+        before = $before
+        after = $after
+        logTail = @(($slice -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 30)
+        processes = $processes
+        missed = @($watched.Keys | Where-Object { $watched[$_] -isnot [Watched] } | ForEach-Object { '{0}: {1}' -f $_, $watched[$_] })
+    }
+    $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $runDirectory 'summary.json') -Encoding utf8
+    foreach ($entry in @($watched.Values)) { if ($entry -is [Watched]) { $entry.Close() } }
+    Write-Orchestrator 'run-end' @{ run = $Name; timedOut = $timedOut; versionBefore = $before.manifestVersion; versionAfter = $after.manifestVersion; currentAfter = $after.currentExists; startedExitCode = $summary.startedExitCode; updateExeExitCode = $summary.updateExeExitCode; elapsedSeconds = $summary.elapsedSeconds }
+    return $summary
+}
+
+# --- Locks ---------------------------------------------------------------------
+
+$myCreated = (Get-Process -Id $PID).StartTime.ToUniversalTime().ToFileTimeUtc()
+$installerToken = "pid=$PID created=$myCreated"
+$haveSuiteLock = $false
+$haveInstallerLock = $false
+
+function Enter-SuiteLock {
+    $deadline = [DateTime]::UtcNow.AddHours(4)
+    while (-not [Win]::CreateDirectoryW($suiteLock, [IntPtr]::Zero)) {
+        $holder = if (Test-Path -LiteralPath (Join-Path $suiteLock 'owner.txt')) { (Get-Content -LiteralPath (Join-Path $suiteLock 'owner.txt') -Raw) -replace "`r?`n", ' | ' } else { '(no owner.txt yet)' }
+        if ([DateTime]::UtcNow -ge $deadline) { throw "The suite lock stayed held for 4 hours: $holder" }
+        Write-Orchestrator 'suite-lock-held-by-other' @{ holder = $holder }
+        Start-Sleep -Seconds 60
+    }
+
+    $owner = @(
+        'lane VELO'
+        ('started: {0}' -f [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        "running: Velopack swap repro ($Mode): installs the stand-in MyApp (its own pack id) to %LOCALAPPDATA%\MyApp with Setup.exe --silent, updates it while a file in the new-version folder is held, repairs and uninstalls it. Nothing of BrowserAI.app is touched."
+        "holder: pwsh pid $PID created $myCreated"
+    )
+    Set-Content -LiteralPath (Join-Path $suiteLock 'owner.txt') -Value $owner -Encoding utf8
+    $script:haveSuiteLock = $true
+    Write-Orchestrator 'suite-lock-taken' @{ path = $suiteLock }
+}
+
+function Test-HolderAlive([string] $Text) {
+    if ($Text -notmatch '\bpid(?:=|\s)(?<pid>\d+)') { return $null }
+    $holderPid = [int]$Matches['pid']
+    $holderCreated = if ($Text -match '\bcreated=(?<c>\d+)') { [long]$Matches['c'] } else { $null }
+    $process = Get-Process -Id $holderPid -ErrorAction SilentlyContinue
+    if (-not $process) { return $false }
+    if ($null -eq $holderCreated) { return $true }
+    try { return $process.StartTime.ToUniversalTime().ToFileTimeUtc() -eq $holderCreated } catch { return $true }
+}
+
+function Enter-InstallerLock {
+    # The protocol of build/InstallerLock.ps1 and the suite's InstallerLock.cs:
+    # CreateNew, one line naming the holder's pid and creation FILETIME; a file
+    # whose holder is gone is stale and is taken over; a live holder is waited for.
+    $deadline = [DateTime]::UtcNow.AddMinutes(30)
+    while ($true) {
+        try {
+            $stream = [System.IO.File]::Open($installerLock, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read -bor [System.IO.FileShare]::Delete)
+            try {
+                $bytes = [System.Text.Encoding]::UTF8.GetBytes("holder=velo $installerToken at=$([DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ'))`n")
+                $stream.Write($bytes, 0, $bytes.Length)
+            }
+            finally { $stream.Dispose() }
+            $script:haveInstallerLock = $true
+            Write-Orchestrator 'installer-lock-taken' @{ path = $installerLock; token = $installerToken }
+            return
+        }
+        catch [System.IO.IOException] {
+            $text = try { [System.IO.File]::ReadAllText($installerLock) } catch { $null }
+            if ($null -eq $text) { continue }
+            $alive = Test-HolderAlive $text
+            $age = [DateTime]::UtcNow - (Get-Item -LiteralPath $installerLock).LastWriteTimeUtc
+            if ($alive -eq $false -or ($null -eq $alive -and $age.TotalSeconds -ge 10)) {
+                Write-Orchestrator 'installer-lock-stale-removed' @{ text = $text.Trim() }
+                Remove-Item -LiteralPath $installerLock -Force
+                continue
+            }
+            if ([DateTime]::UtcNow -ge $deadline) { throw "The installer lock is held by a live holder: $($text.Trim())" }
+            Write-Orchestrator 'installer-lock-held-by-other' @{ text = $text.Trim() }
+            Start-Sleep -Seconds 15
+        }
+    }
+}
+
+function Exit-Locks {
+    if ($script:haveInstallerLock) {
+        $text = try { [System.IO.File]::ReadAllText($installerLock) } catch { '' }
+        if ($text -match [regex]::Escape($installerToken)) {
+            Remove-Item -LiteralPath $installerLock -Force
+            Write-Orchestrator 'installer-lock-released' @{}
+        }
+        else { Write-Orchestrator 'installer-lock-not-ours' @{ text = $text } }
+        $script:haveInstallerLock = $false
+    }
+
+    if ($script:haveSuiteLock) {
+        $owner = Get-Content -LiteralPath (Join-Path $suiteLock 'owner.txt') -Raw -ErrorAction SilentlyContinue
+        if ($owner -match "holder: pwsh pid $PID created $myCreated") {
+            Remove-Item -LiteralPath (Join-Path $suiteLock 'owner.txt') -Force
+            [System.IO.Directory]::Delete($suiteLock)
+            Write-Orchestrator 'suite-lock-released' @{}
+        }
+        else { Write-Orchestrator 'suite-lock-not-ours' @{ owner = $owner } }
+        $script:haveSuiteLock = $false
+    }
+}
+
+# --- Rounds --------------------------------------------------------------------
+
+function Assert-Clean([string] $When) {
+    $state = Get-InstallState
+    $problems = @()
+    if ($state.rootExists) { $problems += "root $root exists" }
+    if ($state.shortcutExists) { $problems += "shortcut $shortcut exists" }
+    if ($state.desktopShortcutExists) { $problems += "desktop shortcut $desktopShortcut exists" }
+    if ($state.uninstallKey) { $problems += 'uninstall key exists' }
+    if (Test-Path -LiteralPath $outsideDataDir) { $problems += "data dir $outsideDataDir exists" }
+    Write-Orchestrator 'clean-check' @{ when = $When; problems = $problems }
+    return $problems
+}
+
+function Invoke-Uninstall([string] $Name) {
+    $summary = Invoke-Run -Name $Name -File $updateExe -Arguments @('--uninstall', '--silent') -FindChildrenOfStarted -QuietMilliseconds 6000
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    while ((Test-Path -LiteralPath $root) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 250 }
+    return $summary
+}
+
+function Invoke-Round {
+    param(
+        [Parameter(Mandatory)] [string] $Name,
+        [Parameter(Mandatory)] [string] $Feed,
+        [Parameter(Mandatory)] [string] $Target,
+        [ValidateSet('off', 'ShareNone', 'ShareReadWriteDelete')] [string] $Hold = 'off'
+    )
+
+    $round = [ordered]@{ round = $Name; feed = $Feed; target = $Target; hold = $Hold; holdSeconds = $(if ($Hold -eq 'off') { 0 } else { $HoldSeconds }) }
+    $problems = Assert-Clean "$Name-before"
+    if ($problems.Count -gt 0) { throw "Round $Name cannot start: $($problems -join '; ')" }
+
+    $install = Invoke-Run -Name "$Name-install" -File $setupInstall -Arguments @('--silent', '--verbose', '--log', (Join-Path $logsRoot "$Name-install-setup.log"))
+    $round.install = [ordered]@{ exitCode = $install.startedExitCode; version = $install.after.manifestVersion }
+    if ($install.after.manifestVersion -ne '1.0.0') { throw "Round ${Name}: install did not leave 1.0.0 in current\ (found '$($install.after.manifestVersion)')." }
+
+    $token = [guid]::NewGuid().ToString('N')
+    $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $insideMarker)
+    Set-Content -LiteralPath $insideMarker -Value "inside-root $Name $token" -Encoding utf8
+    $null = New-Item -ItemType Directory -Force -Path $outsideDataDir
+    Set-Content -LiteralPath $outsideMarker -Value "outside-root $Name $token" -Encoding utf8
+    $round.markers = [ordered]@{ inside = "inside-root $Name $token"; outside = "outside-root $Name $token" }
+
+    $holder = if ($Hold -eq 'off') { $null } else { @{ Version = $Target; HoldSeconds = $HoldSeconds; Share = $Hold.Substring(5) } }
+    $arguments = @('update', (Join-Path $feeds $Feed), 'restart', 'restarted', "--run=$Name-update") + $restartTail
+    $update = Invoke-Run -Name "$Name-update" -Arguments $arguments -Holder $holder -TimeoutSeconds 240
+    $round.update = [ordered]@{
+        standInExitCode = $update.startedExitCode
+        updateExeExitCode = $update.updateExeExitCode
+        currentExists = $update.after.currentExists
+        version = $update.after.manifestVersion
+        rootTree = $update.after.rootTree
+        retryWarnings = @($update.logTail | Where-Object { $_ -match 'Retrying operation' }).Count
+        logTail = $update.logTail
+        holder = $update.holderLog
+        restarted = @($update.processes | Where-Object { $_.role -like 'stand-in restarted*' } | ForEach-Object { '{0} exit {1}' -f $_.image, $_.exitCode })
+    }
+
+    if (-not $update.after.currentExists) {
+        # The broken state: what still works.
+        $uninstallTry = Invoke-Run -Name "$Name-uninstall-while-broken" -File $updateExe -Arguments @('--uninstall', '--silent', '--log', (Join-Path $logsRoot "$Name-uninstall-while-broken-update.log")) -FindChildrenOfStarted -QuietMilliseconds 4000
+        $round.uninstallWhileBroken = [ordered]@{
+            exitCode = $uninstallTry.startedExitCode
+            rootStillThere = $uninstallTry.after.rootExists
+            treeUnchanged = (($uninstallTry.before.rootTree -join "`n") -eq ($uninstallTry.after.rootTree -join "`n"))
+            uninstallKeyStillThere = [bool]$uninstallTry.after.uninstallKey
+            shortcutStillThere = $uninstallTry.after.shortcutExists
+            log = @(Get-Content -LiteralPath (Join-Path $logsRoot "$Name-uninstall-while-broken-update.log") -ErrorAction SilentlyContinue | Select-Object -Last 8)
+        }
+
+        $beforeRepair = Get-LocalAppDataNames
+        $repair = Invoke-Run -Name "$Name-repair" -File $setupRepair -Arguments @('--silent', '--verbose', '--log', (Join-Path $logsRoot "$Name-repair-setup.log"))
+        $round.repair = [ordered]@{
+            exitCode = $repair.startedExitCode
+            version = $repair.after.manifestVersion
+            insideMarkerKept = ($repair.after.insideMarker -eq $round.markers.inside)
+            insideMarkerNow = $repair.after.insideMarker
+            outsideMarkerKept = ($repair.after.outsideMarker -eq $round.markers.outside)
+            localAppDataNamesBefore = $beforeRepair
+            localAppDataNamesAfter = Get-LocalAppDataNames
+            setupLogTail = @(Get-Content -LiteralPath (Join-Path $logsRoot "$Name-repair-setup.log") -ErrorAction SilentlyContinue | Select-Object -Last 12)
+        }
+    }
+
+    if (Test-Path -LiteralPath $exe) {
+        $info = Invoke-Run -Name "$Name-start" -Arguments @('info')
+        $round.start = [ordered]@{ exitCode = $info.startedExitCode; version = $info.after.manifestVersion }
+    }
+
+    $uninstall = Invoke-Uninstall "$Name-uninstall"
+    $round.uninstall = [ordered]@{ exitCode = $uninstall.startedExitCode; rootGone = -not (Test-Path -LiteralPath $root) }
+    if (Test-Path -LiteralPath $outsideDataDir) {
+        Remove-Item -LiteralPath $outsideMarker -Force
+        [System.IO.Directory]::Delete($outsideDataDir)
+    }
+    $round.clean = @(Assert-Clean "$Name-after")
+
+    $round | ConvertTo-Json -Compress -Depth 8 | Add-Content -LiteralPath $roundsLog -Encoding utf8
+    Write-Orchestrator 'round-end' @{ round = $Name; currentAfterUpdate = $round.update.currentExists; versionAfterUpdate = $round.update.version; updateExeExitCode = $round.update.updateExeExitCode; retries = $round.update.retryWarnings }
+}
+
+# --- Main ----------------------------------------------------------------------
+
+$preflight = Assert-Clean 'preflight'
+if ($preflight.Count -gt 0) { throw "Not starting: $($preflight -join '; ')" }
+if (Test-Path -LiteralPath $velopackLog) { throw "Not starting: $velopackLog already exists and would not be this rig's alone." }
+$sharedBefore = if (Test-Path -LiteralPath $sharedLog) { $item = Get-Item -LiteralPath $sharedLog; '{0} bytes, written {1}' -f $item.Length, $item.LastWriteTimeUtc.ToString('o') } else { 'absent' }
+$namesBefore = Get-LocalAppDataNames
+Write-Orchestrator 'preflight' @{
+    mode = $Mode
+    holdSeconds = $HoldSeconds
+    vpk = ((& vpk --help 2>&1 | Out-String) -split "`n" | Where-Object { $_ -match 'Velopack CLI' } | Select-Object -First 1).Trim()
+    os = [Environment]::OSVersion.VersionString
+    orchestratorPid = $PID
+    sharedVelopackLog = $sharedBefore
+    localAppDataNames = $namesBefore
+}
+
+try {
+    Enter-SuiteLock
+    Enter-InstallerLock
+
+    switch ($Mode) {
+        'myapp' {
+            # 1.0.0 and 1.0.1 carry the stock 1.2.161 Update.exe; 1.0.2 carries the build of the pushed commit 84af7e5.
+            Invoke-Round -Name 'C-stock' -Feed 'after-1.0.1' -Target '1.0.1'
+            Invoke-Round -Name 'R1-stock' -Feed 'after-1.0.1' -Target '1.0.1' -Hold 'ShareNone'
+            Invoke-Round -Name 'F1-commit' -Feed 'after-1.0.2' -Target '1.0.2' -Hold 'ShareNone'
+        }
+    }
+}
+catch {
+    Write-Orchestrator 'error' @{ message = $_.Exception.Message; at = $_.InvocationInfo.PositionMessage }
+}
+finally {
+    try {
+        if (Test-Path -LiteralPath $root) {
+            Write-Orchestrator 'final-cleanup' @{ why = 'the root still exists after the rounds' }
+            if (Test-Path -LiteralPath (Join-Path $root 'current\sq.version')) {
+                $null = Invoke-Uninstall 'final-uninstall'
+            }
+            else {
+                $null = Invoke-Run -Name 'final-repair' -File $setupRepair -Arguments @('--silent', '--verbose', '--log', (Join-Path $logsRoot 'final-repair-setup.log'))
+                $null = Invoke-Uninstall 'final-uninstall'
+            }
+        }
+        if (Test-Path -LiteralPath $outsideDataDir) {
+            Remove-Item -LiteralPath $outsideMarker -Force -ErrorAction SilentlyContinue
+            [System.IO.Directory]::Delete($outsideDataDir)
+        }
+
+        $problems = Assert-Clean 'after-all'
+        $survivors = @()
+        foreach ($recorded in $allPids) {
+            $process = Get-Process -Id $recorded.pid -ErrorAction SilentlyContinue
+            if ($process) {
+                $created = try { $process.StartTime.ToUniversalTime().ToFileTimeUtc() } catch { -1 }
+                if ($created -eq $recorded.created) { $survivors += ('{0} {1} {2}' -f $recorded.pid, $recorded.role, $recorded.image) }
+            }
+        }
+        $underRoot = @(Get-CimInstance -ClassName Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { '{0} {1}' -f $_.ProcessId, $_.ExecutablePath })
+        $underPwshFolder = @(Get-CimInstance -ClassName Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.StartsWith((Split-Path -Parent $pwsh) + '\', [StringComparison]::OrdinalIgnoreCase) }).Count
+        $sharedAfter = if (Test-Path -LiteralPath $sharedLog) { $item = Get-Item -LiteralPath $sharedLog; '{0} bytes, written {1}' -f $item.Length, $item.LastWriteTimeUtc.ToString('o') } else { 'absent' }
+        Write-Orchestrator 'cleanup-proof' @{
+            recordedPids = $allPids.Count
+            survivors = $survivors
+            processesUnderRoot = $underRoot
+            positiveControlProcessesUnderPwshFolder = $underPwshFolder
+            problems = $problems
+            sharedVelopackLogBefore = $sharedBefore
+            sharedVelopackLogAfter = $sharedAfter
+            localAppDataNamesBefore = $namesBefore
+            localAppDataNamesAfter = Get-LocalAppDataNames
+        }
+        $allPids | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $session 'recorded-pids.json') -Encoding utf8
+
+        if (Test-Path -LiteralPath $velopackLog) {
+            Copy-Item -LiteralPath $velopackLog -Destination (Join-Path $session 'velopack_MyApp.log')
+            Remove-Item -LiteralPath $velopackLog
+            Write-Orchestrator 'velopack-log-moved' @{ to = (Join-Path $session 'velopack_MyApp.log') }
+        }
+    }
+    finally {
+        Exit-Locks
+        Write-Orchestrator 'done' @{ session = $session }
+    }
+}

@@ -1,0 +1,409 @@
+| Round | Updater | Hold | Update.exe exit | current\ after update | Version after | "Retrying" lines | Uninstall while broken | Repair (Setup.exe --silent) | Marker in root | Marker outside root | App starts after | Final uninstall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| C-stock | stock 1.2.161 | off | 0 | present | 1.0.1 | 0 | not needed | not needed | n/a | n/a | exit 0 (1.0.1) | exit 0, root gone True |
+| R1-stock | stock 1.2.161 | ShareNone | 1 | GONE |  | 30 | exit 1, tree unchanged True | exit 0, now 1.0.1 | GONE | kept | exit 0 (1.0.1) | exit 0, root gone True |
+| R2-stock | stock 1.2.161 | ShareNone | 1 | GONE |  | 30 | exit 1, tree unchanged True | exit 0, now 1.0.1 | GONE | kept | exit 0 (1.0.1) | exit 0, root gone True |
+| R3-stock | stock 1.2.161 | ShareNone | 1 | GONE |  | 30 | exit 1, tree unchanged True | exit 0, now 1.0.1 | GONE | kept | exit 0 (1.0.1) | exit 0, root gone True |
+| R4-stock-sharedelete | stock 1.2.161 | ShareReadWriteDelete | 1 | GONE |  | 30 | exit 1, tree unchanged True | exit 0, now 1.0.1 | GONE | kept | exit 0 (1.0.1) | exit 0, root gone True |
+| C-fixed | fixed, built 1 blank line before 84af7e5 | off | 0 | present | 1.0.2 | 0 | not needed | not needed | n/a | n/a | exit 0 (1.0.2) | exit 0, root gone True |
+| F1-fixed | fixed, built 1 blank line before 84af7e5 | ShareNone | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+| F2-fixed | fixed, built 1 blank line before 84af7e5 | ShareNone | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+| F3-fixed | fixed, built 1 blank line before 84af7e5 | ShareNone | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+
+## C-stock
+holder:
+    
+restarted after the update:  exit 0
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 54
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.1-full.nupkg 2275962
+    packages\VelopackTemp\
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:54840] [02:47:36] [INFO] Starting Velopack Updater (1.2.161)
+    [update:54840] [02:47:36] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:54840] [02:47:36] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:54840] [02:47:36] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_aGk8gBSIqct4cJO5"
+    [update:54840] [02:47:36] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_T3jiRXz71WOrVMCA"
+    [update:54840] [02:47:36] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-updated 1.0.1\0")
+    [update:54840] [02:47:37] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_aGk8gBSIqct4cJO5" in 2ms
+    [update:54840] [02:47:37] [INFO] Package applied successfully.
+    [update:54840] [02:47:37] [INFO] Package version 1.0.1 applied successfully.
+    [update:54840] [02:47:37] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=C-stock-update \"two words\" embedded\\\"quote trailing\\\0")
+    (0 'Retrying operation' lines)
+clean after the round: yes
+
+## R1-stock
+holder:
+    2026-10-10T00:47:57.8723750Z ready pid=64024 created=2026-10-10T00:47:57.5336402Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.1 hold=60s share=None preexisting=
+    2026-10-10T00:47:58.4166237Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu
+    2026-10-10T00:47:58.4219825Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:48:58.5733183Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.1-full.nupkg 2275962
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\
+    packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\measure-lock.txt 146
+    packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\sq.version 519
+    packages\VelopackTemp\tmp_rTA53ZIjKsYnooqu\Velopack.dll 279040
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:15908] [02:47:58] [INFO] Starting Velopack Updater (1.2.161)
+    [update:15908] [02:47:58] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:15908] [02:47:58] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:15908] [02:47:58] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_9cwzREKMGAHULpIq"
+    [update:15908] [02:47:58] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_rTA53ZIjKsYnooqu"
+    [update:15908] [02:48:28] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_rTA53ZIjKsYnooqu" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:15908] [02:48:28] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_9cwzREKMGAHULpIq" in 2ms
+    [update:15908] [02:48:28] [ERROR] Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    [update:15908] [02:48:28] [ERROR] An error has occurred: Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    (30 'Retrying operation' lines)
+uninstall while broken: exit 1; root still there True; tree unchanged True; uninstall key still there True; shortcut still there True
+    [update:72728] [02:49:01] [INFO]     Silent: true
+    [update:72728] [02:49:01] [INFO]     Root Directory: None
+    [update:72728] [02:49:01] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\runs\\all-20261010T004730Z\\logs\\R1-stock-uninstall-while-broken-update.log"
+    [update:72728] [02:49:01] [INFO]     Context: IAmUpdateExe
+    [update:72728] [02:49:01] [INFO] Command: Uninstall
+    [update:72728] [02:49:01] [INFO] Auto-locating app manifest...
+    [update:72728] [02:49:01] [ERROR] Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+    [update:72728] [02:49:01] [ERROR] An error has occurred: Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+repair: exit 0; version 1.0.1; marker in root kept False (now ""); marker outside root kept True
+    %LOCALAPPDATA%\BrowserAI* before: BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    %LOCALAPPDATA%\BrowserAI* after:  BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    [setup:74804] [02:49:06] [INFO] Starting process install hook
+    [setup:74804] [02:49:06] [INFO] Running --veloapp-install hook...
+    [setup:74804] [02:49:06] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-install 1.0.1\0")
+    [setup:74804] [02:49:06] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+    [setup:74804] [02:49:06] [INFO] Waiting 30000ms for process handle to exit.
+    [setup:74804] [02:49:06] [INFO] Hook executed successfully (took 187.83249ms)
+    [setup:74804] [02:49:06] [INFO] Checking for running processes in: C:\Users\<user>\AppData\Local\BrowserAI.Measure
+    [setup:74804] [02:49:06] [INFO] Inspected 440 running processes in 121ms, 0 matched directory
+    [setup:74804] [02:49:06] [INFO] Force-stop check complete.
+    [setup:74804] [02:49:06] [INFO] Writing uninstall registry key...
+    [setup:74804] [02:49:06] [INFO] Installation completed successfully!
+    [setup:74804] [02:49:06] [INFO] Removing rollback directory...
+clean after the round: yes
+
+## R2-stock
+holder:
+    2026-10-10T00:49:27.5246971Z ready pid=72744 created=2026-10-10T00:49:27.1720592Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.1 hold=60s share=None preexisting=
+    2026-10-10T00:49:28.1348257Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV
+    2026-10-10T00:49:28.1404310Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:50:28.3694117Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\measure-lock.txt after 60,2 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.1-full.nupkg 2275962
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\
+    packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\measure-lock.txt 146
+    packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\sq.version 519
+    packages\VelopackTemp\tmp_6hrryrJhMQ4q4WAV\Velopack.dll 279040
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:75292] [02:49:28] [INFO] Starting Velopack Updater (1.2.161)
+    [update:75292] [02:49:28] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:75292] [02:49:28] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:75292] [02:49:28] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_KNdt5nXS0Et1Pvsc"
+    [update:75292] [02:49:28] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_6hrryrJhMQ4q4WAV"
+    [update:75292] [02:49:58] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_6hrryrJhMQ4q4WAV" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:75292] [02:49:58] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_KNdt5nXS0Et1Pvsc" in 2ms
+    [update:75292] [02:49:58] [ERROR] Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    [update:75292] [02:49:58] [ERROR] An error has occurred: Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    (30 'Retrying operation' lines)
+uninstall while broken: exit 1; root still there True; tree unchanged True; uninstall key still there True; shortcut still there True
+    [update:74916] [02:50:31] [INFO]     Silent: true
+    [update:74916] [02:50:31] [INFO]     Root Directory: None
+    [update:74916] [02:50:31] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\runs\\all-20261010T004730Z\\logs\\R2-stock-uninstall-while-broken-update.log"
+    [update:74916] [02:50:31] [INFO]     Context: IAmUpdateExe
+    [update:74916] [02:50:31] [INFO] Command: Uninstall
+    [update:74916] [02:50:31] [INFO] Auto-locating app manifest...
+    [update:74916] [02:50:31] [ERROR] Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+    [update:74916] [02:50:31] [ERROR] An error has occurred: Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+repair: exit 0; version 1.0.1; marker in root kept False (now ""); marker outside root kept True
+    %LOCALAPPDATA%\BrowserAI* before: BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    %LOCALAPPDATA%\BrowserAI* after:  BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    [setup:53336] [02:50:35] [INFO] Starting process install hook
+    [setup:53336] [02:50:35] [INFO] Running --veloapp-install hook...
+    [setup:53336] [02:50:35] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-install 1.0.1\0")
+    [setup:53336] [02:50:35] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+    [setup:53336] [02:50:35] [INFO] Waiting 30000ms for process handle to exit.
+    [setup:53336] [02:50:36] [INFO] Hook executed successfully (took 190.9435ms)
+    [setup:53336] [02:50:36] [INFO] Checking for running processes in: C:\Users\<user>\AppData\Local\BrowserAI.Measure
+    [setup:53336] [02:50:36] [INFO] Inspected 411 running processes in 104ms, 0 matched directory
+    [setup:53336] [02:50:36] [INFO] Force-stop check complete.
+    [setup:53336] [02:50:36] [INFO] Writing uninstall registry key...
+    [setup:53336] [02:50:36] [INFO] Installation completed successfully!
+    [setup:53336] [02:50:36] [INFO] Removing rollback directory...
+clean after the round: yes
+
+## R3-stock
+holder:
+    2026-10-10T00:50:55.8738316Z ready pid=55308 created=2026-10-10T00:50:55.5467756Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.1 hold=60s share=None preexisting=
+    2026-10-10T00:50:56.4053732Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn
+    2026-10-10T00:50:56.4107234Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:51:56.5569332Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.1-full.nupkg 2275962
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\
+    packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\measure-lock.txt 146
+    packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\sq.version 519
+    packages\VelopackTemp\tmp_PJtGFE5ZrBVX3tnn\Velopack.dll 279040
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:71832] [02:50:56] [INFO] Starting Velopack Updater (1.2.161)
+    [update:71832] [02:50:56] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:71832] [02:50:56] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:71832] [02:50:56] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_CqCJU8TMm2KySAFw"
+    [update:71832] [02:50:56] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_PJtGFE5ZrBVX3tnn"
+    [update:71832] [02:51:26] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_PJtGFE5ZrBVX3tnn" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:71832] [02:51:26] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_CqCJU8TMm2KySAFw" in 2ms
+    [update:71832] [02:51:26] [ERROR] Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    [update:71832] [02:51:26] [ERROR] An error has occurred: Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    (30 'Retrying operation' lines)
+uninstall while broken: exit 1; root still there True; tree unchanged True; uninstall key still there True; shortcut still there True
+    [update:60684] [02:51:59] [INFO]     Silent: true
+    [update:60684] [02:51:59] [INFO]     Root Directory: None
+    [update:60684] [02:51:59] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\runs\\all-20261010T004730Z\\logs\\R3-stock-uninstall-while-broken-update.log"
+    [update:60684] [02:51:59] [INFO]     Context: IAmUpdateExe
+    [update:60684] [02:51:59] [INFO] Command: Uninstall
+    [update:60684] [02:51:59] [INFO] Auto-locating app manifest...
+    [update:60684] [02:51:59] [ERROR] Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+    [update:60684] [02:51:59] [ERROR] An error has occurred: Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+repair: exit 0; version 1.0.1; marker in root kept False (now ""); marker outside root kept True
+    %LOCALAPPDATA%\BrowserAI* before: BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    %LOCALAPPDATA%\BrowserAI* after:  BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    [setup:71944] [02:52:04] [INFO] Starting process install hook
+    [setup:71944] [02:52:04] [INFO] Running --veloapp-install hook...
+    [setup:71944] [02:52:04] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-install 1.0.1\0")
+    [setup:71944] [02:52:04] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+    [setup:71944] [02:52:04] [INFO] Waiting 30000ms for process handle to exit.
+    [setup:71944] [02:52:04] [INFO] Hook executed successfully (took 185.27661ms)
+    [setup:71944] [02:52:04] [INFO] Checking for running processes in: C:\Users\<user>\AppData\Local\BrowserAI.Measure
+    [setup:71944] [02:52:04] [INFO] Inspected 430 running processes in 118ms, 0 matched directory
+    [setup:71944] [02:52:04] [INFO] Force-stop check complete.
+    [setup:71944] [02:52:04] [INFO] Writing uninstall registry key...
+    [setup:71944] [02:52:04] [INFO] Installation completed successfully!
+    [setup:71944] [02:52:04] [INFO] Removing rollback directory...
+clean after the round: yes
+
+## R4-stock-sharedelete
+holder:
+    2026-10-10T00:52:24.3065890Z ready pid=52128 created=2026-10-10T00:52:23.9348680Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.1 hold=60s share=ReadWriteDelete preexisting=
+    2026-10-10T00:52:24.8558798Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_dsjOjSKiTRKoKu70
+    2026-10-10T00:52:24.8618119Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_dsjOjSKiTRKoKu70\measure-lock.txt share=ReadWriteDelete attempts=1 lastError=
+    2026-10-10T00:52:55.4388577Z folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_dsjOjSKiTRKoKu70 no longer exists under its name while the file is held
+    2026-10-10T00:52:55.4473531Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_dsjOjSKiTRKoKu70\measure-lock.txt after 30,6 s; folder exists=False; file exists=False
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    measure-data\
+    measure-data\marker.txt 67
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.1-full.nupkg 2275962
+    packages\VelopackTemp\
+    Update.exe 3979264
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:67588] [02:52:24] [INFO] Starting Velopack Updater (1.2.161)
+    [update:67588] [02:52:24] [INFO] Applying package 1.0.1 to current: 1.0.0
+    [update:67588] [02:52:24] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:67588] [02:52:25] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_wSH10rqSFvOBMiho"
+    [update:67588] [02:52:25] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_dsjOjSKiTRKoKu70"
+    [update:67588] [02:52:55] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_dsjOjSKiTRKoKu70" in 2ms
+    [update:67588] [02:52:55] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_wSH10rqSFvOBMiho" in 2ms
+    [update:67588] [02:52:55] [ERROR] Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    [update:67588] [02:52:55] [ERROR] An error has occurred: Apply error: Unable to find executable to start: '"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe"'
+    (30 'Retrying operation' lines)
+uninstall while broken: exit 1; root still there True; tree unchanged True; uninstall key still there True; shortcut still there True
+    [update:69800] [02:52:58] [INFO]     Silent: true
+    [update:69800] [02:52:58] [INFO]     Root Directory: None
+    [update:69800] [02:52:58] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-fix\\rig\\runs\\all-20261010T004730Z\\logs\\R4-stock-sharedelete-uninstall-while-broken-update.log"
+    [update:69800] [02:52:58] [INFO]     Context: IAmUpdateExe
+    [update:69800] [02:52:58] [INFO] Command: Uninstall
+    [update:69800] [02:52:58] [INFO] Auto-locating app manifest...
+    [update:69800] [02:52:58] [ERROR] Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+    [update:69800] [02:52:58] [ERROR] An error has occurred: Uninstall error: This application is not properly installed: Manifest file does not exist in the expected path (C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\sq.version)
+repair: exit 0; version 1.0.1; marker in root kept False (now ""); marker outside root kept True
+    %LOCALAPPDATA%\BrowserAI* before: BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    %LOCALAPPDATA%\BrowserAI* after:  BrowserAI, BrowserAI-test-scratch, BrowserAI.app, BrowserAI.Measure, BrowserAI.Measure.data
+    [setup:57492] [02:53:03] [INFO] Starting process install hook
+    [setup:57492] [02:53:03] [INFO] Running --veloapp-install hook...
+    [setup:57492] [02:53:03] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-install 1.0.1\0")
+    [setup:57492] [02:53:03] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+    [setup:57492] [02:53:03] [INFO] Waiting 30000ms for process handle to exit.
+    [setup:57492] [02:53:03] [INFO] Hook executed successfully (took 167.1749ms)
+    [setup:57492] [02:53:03] [INFO] Checking for running processes in: C:\Users\<user>\AppData\Local\BrowserAI.Measure
+    [setup:57492] [02:53:03] [INFO] Inspected 416 running processes in 102ms, 0 matched directory
+    [setup:57492] [02:53:03] [INFO] Force-stop check complete.
+    [setup:57492] [02:53:03] [INFO] Writing uninstall registry key...
+    [setup:57492] [02:53:03] [INFO] Installation completed successfully!
+    [setup:57492] [02:53:03] [INFO] Removing rollback directory...
+clean after the round: yes
+
+## C-fixed
+holder:
+    
+restarted after the update: C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe exit 0
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 54
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.2-full.nupkg 2322458
+    packages\VelopackTemp\
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:72284] [02:53:22] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:72284] [02:53:22] [INFO] Applying package 1.0.2 to current: 1.0.0
+    [update:72284] [02:53:22] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:72284] [02:53:23] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_b3FNqcJcpLlW420x"
+    [update:72284] [02:53:23] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_RAu8ZQ8q61Sco308"
+    [update:72284] [02:53:23] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-updated 1.0.2\0")
+    [update:72284] [02:53:23] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_b3FNqcJcpLlW420x" in 1ms
+    [update:72284] [02:53:24] [INFO] Package applied successfully.
+    [update:72284] [02:53:24] [INFO] Package version 1.0.2 applied successfully.
+    [update:72284] [02:53:24] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=C-fixed-update \"two words\" embedded\\\"quote trailing\\\0")
+    (0 'Retrying operation' lines)
+clean after the round: yes
+
+## F1-fixed
+holder:
+    2026-10-10T00:53:43.6798227Z ready pid=57192 created=2026-10-10T00:53:43.3580075Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.2 hold=60s share=None preexisting=
+    2026-10-10T00:53:44.1283917Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0
+    2026-10-10T00:53:44.1333559Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:54:44.2779660Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.2-full.nupkg 2322458
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\
+    packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\measure-lock.txt 146
+    packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\sq.version 519
+    packages\VelopackTemp\tmp_d0BMxY6xBI5kDgp0\Velopack.dll 279040
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:69172] [02:53:44] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:69172] [02:53:44] [INFO] Applying package 1.0.2 to current: 1.0.0
+    [update:69172] [02:53:44] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:69172] [02:53:44] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_SBTpWDDIpAcmjZ5w"
+    [update:69172] [02:53:44] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_d0BMxY6xBI5kDgp0"
+    [update:69172] [02:54:14] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:69172] [02:54:14] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"
+    [update:69172] [02:54:14] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_d0BMxY6xBI5kDgp0" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:69172] [02:54:14] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=F1-fixed-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:69172] [02:54:14] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:69172] [02:54:14] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes
+
+## F2-fixed
+holder:
+    2026-10-10T00:55:03.9866081Z ready pid=74632 created=2026-10-10T00:55:03.6553923Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.2 hold=60s share=None preexisting=
+    2026-10-10T00:55:04.4317894Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_3OIaELZPg8mzNpql
+    2026-10-10T00:55:04.4366061Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:56:04.5851283Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.2-full.nupkg 2322458
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\
+    packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\measure-lock.txt 146
+    packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\sq.version 519
+    packages\VelopackTemp\tmp_3OIaELZPg8mzNpql\Velopack.dll 279040
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:73964] [02:55:04] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:73964] [02:55:04] [INFO] Applying package 1.0.2 to current: 1.0.0
+    [update:73964] [02:55:04] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:73964] [02:55:04] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_4RDluUy44GsPotWo"
+    [update:73964] [02:55:04] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_3OIaELZPg8mzNpql"
+    [update:73964] [02:55:34] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:73964] [02:55:34] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"
+    [update:73964] [02:55:34] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_3OIaELZPg8mzNpql" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:73964] [02:55:34] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=F2-fixed-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:73964] [02:55:34] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:73964] [02:55:34] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes
+
+## F3-fixed
+holder:
+    2026-10-10T00:56:25.2411096Z ready pid=58104 created=2026-10-10T00:56:24.9094565Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.2 hold=60s share=None preexisting=
+    2026-10-10T00:56:25.6977174Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh
+    2026-10-10T00:56:25.7025804Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T00:57:26.0139088Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\measure-lock.txt after 60,3 s; folder exists=True; file exists=True
+restarted after the update: C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe exit 0
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 55
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.2-full.nupkg 2322458
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\
+    packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\measure-lock.txt 146
+    packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\sq.version 519
+    packages\VelopackTemp\tmp_HHvI3V9EWNmfjxOh\Velopack.dll 279040
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:50124] [02:56:25] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:50124] [02:56:25] [INFO] Applying package 1.0.2 to current: 1.0.0
+    [update:50124] [02:56:25] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:50124] [02:56:26] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_Ofz0flNGLZRNLFkf"
+    [update:50124] [02:56:26] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_HHvI3V9EWNmfjxOh"
+    [update:50124] [02:56:56] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:50124] [02:56:56] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"
+    [update:50124] [02:56:56] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_HHvI3V9EWNmfjxOh" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:50124] [02:56:56] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=F3-fixed-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:50124] [02:56:56] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:50124] [02:56:56] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes

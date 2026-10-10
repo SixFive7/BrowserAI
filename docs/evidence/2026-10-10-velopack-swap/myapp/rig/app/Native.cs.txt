@@ -1,0 +1,140 @@
+using System.Globalization;
+using System.Runtime.InteropServices;
+
+namespace MyApp;
+
+/// <summary>
+/// Reads about this process and its parent. Observation only: nothing here
+/// stops, signals or waits on another process.
+/// </summary>
+internal static unsafe partial class Native
+{
+    private const uint ProcessQueryLimitedInformation = 0x1000;
+
+    private const uint StillActive = 259;
+
+    // PROCESS_BASIC_INFORMATION is six pointer-sized fields on x64, and the
+    // parent pid is the last of them.
+    private const int BasicInformationFields = 6;
+
+    private const int ParentPidField = 5;
+
+    /// <summary>The parent as Windows recorded it at creation, read once.</summary>
+    /// <param name="Pid">The parent pid from the process's own basic information.</param>
+    /// <param name="Image">The parent's image path, when it could still be opened.</param>
+    /// <param name="CreatedUtc">The parent's creation time, when it could still be opened.</param>
+    /// <param name="OlderThanMe">Whether the parent was created before this process, which rules out a recycled pid.</param>
+    /// <param name="State">running, exited with a code, or why it could not be read.</param>
+    internal sealed record ParentFacts(long Pid, string? Image, string? CreatedUtc, bool? OlderThanMe, string State);
+
+    /// <summary>This process's own creation time, UTC, ISO 8601.</summary>
+    /// <returns>The creation time.</returns>
+    internal static string OwnCreatedUtc() =>
+        GetProcessTimes(GetCurrentProcess(), out var created, out _, out _, out _)
+            ? Iso(created)
+            : "unreadable";
+
+    /// <summary>The command line exactly as the creator of this process passed it.</summary>
+    /// <returns>The raw command line.</returns>
+    internal static string RawCommandLine() => new(GetCommandLineW());
+
+    /// <summary>Whether this process is in any job object.</summary>
+    /// <returns>The answer, or null when the call failed.</returns>
+    internal static bool? InJob() => IsProcessInJob(GetCurrentProcess(), 0, out var result) ? result : null;
+
+    /// <summary>Reads the parent pid and, while it can still be opened, its image and creation time.</summary>
+    /// <returns>What could be read.</returns>
+    internal static ParentFacts Parent()
+    {
+        var self = GetCurrentProcess();
+        var info = stackalloc nint[BasicInformationFields];
+        var status = NtQueryInformationProcess(self, 0, info, BasicInformationFields * sizeof(nint), out _);
+        if (status != 0)
+        {
+            return new ParentFacts(-1, null, null, null, $"NtQueryInformationProcess status 0x{status:X8}");
+        }
+
+        var parentPid = (long)info[ParentPidField];
+        var handle = OpenProcess(ProcessQueryLimitedInformation, false, (uint)parentPid);
+        if (handle == 0)
+        {
+            return new ParentFacts(parentPid, null, null, null, $"OpenProcess failed, Win32 error {Marshal.GetLastPInvokeError()}");
+        }
+
+        try
+        {
+            var buffer = new char[32768];
+            var size = (uint)buffer.Length;
+            string? image = null;
+            fixed (char* pointer = buffer)
+            {
+                if (QueryFullProcessImageName(handle, 0, pointer, ref size))
+                {
+                    image = new string(buffer, 0, (int)size);
+                }
+            }
+
+            string? createdUtc = null;
+            bool? older = null;
+            if (GetProcessTimes(handle, out var created, out _, out _, out _))
+            {
+                createdUtc = Iso(created);
+                if (GetProcessTimes(self, out var mine, out _, out _, out _))
+                {
+                    older = created <= mine;
+                }
+            }
+
+            return new ParentFacts(parentPid, image, createdUtc, older, StateOf(handle));
+        }
+        finally
+        {
+            _ = CloseHandle(handle);
+        }
+    }
+
+    private static string StateOf(nint handle)
+    {
+        if (!GetExitCodeProcess(handle, out var code))
+        {
+            return $"exit code unreadable, Win32 error {Marshal.GetLastPInvokeError()}";
+        }
+
+        return code == StillActive ? "running" : $"exited {code}";
+    }
+
+    private static string Iso(long fileTime) =>
+        DateTime.FromFileTimeUtc(fileTime).ToString("O", CultureInfo.InvariantCulture);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial nint GetCurrentProcess();
+
+    [LibraryImport("kernel32.dll")]
+    private static partial char* GetCommandLineW();
+
+    [LibraryImport("ntdll.dll")]
+    private static partial int NtQueryInformationProcess(nint processHandle, int processInformationClass, nint* processInformation, int processInformationLength, out int returnLength);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint OpenProcess(uint desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint processId);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint handle);
+
+    [LibraryImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryFullProcessImageName(nint process, uint flags, char* exeName, ref uint size);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(nint process, out long creationTime, out long exitTime, out long kernelTime, out long userTime);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetExitCodeProcess(nint process, out uint exitCode);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsProcessInJob(nint process, nint job, [MarshalAs(UnmanagedType.Bool)] out bool result);
+}

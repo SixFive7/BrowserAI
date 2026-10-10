@@ -1,0 +1,75 @@
+| Round | Updater | Hold | Update.exe exit | current\ after update | Version after | "Retrying" lines | Uninstall while broken | Repair (Setup.exe --silent) | Marker in root | Marker outside root | App starts after | Final uninstall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| F6-commit | fixed, 84af7e5 | ShareNone | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+| F7-commit-sharedelete | fixed, 84af7e5 | ShareReadWriteDelete | 1 | present | 1.0.0 | 30 | not needed | not needed | n/a | n/a | exit 0 (1.0.0) | exit 0, root gone True |
+
+## F6-commit
+holder:
+    2026-10-10T01:01:09.5447568Z ready pid=10804 created=2026-10-10T01:01:09.1477807Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.3 hold=60s share=None preexisting=
+    2026-10-10T01:01:10.0594188Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5
+    2026-10-10T01:01:10.0643838Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\measure-lock.txt share=None attempts=1 lastError=
+    2026-10-10T01:02:10.1812299Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\measure-lock.txt after 60,1 s; folder exists=True; file exists=True
+restarted after the update: 
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 56
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.3-full.nupkg 2322455
+    packages\VelopackTemp\
+    packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\
+    packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\measure-lock.txt 146
+    packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\sq.version 519
+    packages\VelopackTemp\tmp_SS6ihL1WGUZAMKa5\Velopack.dll 279040
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:60088] [03:01:10] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:60088] [03:01:10] [INFO] Applying package 1.0.3 to current: 1.0.0
+    [update:60088] [03:01:10] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:60088] [03:01:10] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_aLuA6YpQaPTs3wu2"
+    [update:60088] [03:01:10] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_SS6ihL1WGUZAMKa5"
+    [update:60088] [03:01:40] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:60088] [03:01:40] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"
+    [update:60088] [03:01:40] [WARN] Failed to remove temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_SS6ihL1WGUZAMKa5" after 1ms: The process cannot access the file because it is being used by another process. (os error 32)
+    [update:60088] [03:01:40] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=F6-commit-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:60088] [03:01:40] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:60088] [03:01:40] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes
+
+## F7-commit-sharedelete
+holder:
+    2026-10-10T01:02:29.9065868Z ready pid=76684 created=2026-10-10T01:02:29.3425896Z tempRoot=C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp version=1.0.3 hold=60s share=ReadWriteDelete preexisting=
+    2026-10-10T01:02:30.4365497Z found new-version folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_jxWZqGeujebP9e1R
+    2026-10-10T01:02:30.4419825Z held C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_jxWZqGeujebP9e1R\measure-lock.txt share=ReadWriteDelete attempts=1 lastError=
+    2026-10-10T01:03:01.0445602Z folder C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_jxWZqGeujebP9e1R no longer exists under its name while the file is held
+    2026-10-10T01:03:01.0515886Z released C:\Users\<user>\AppData\Local\BrowserAI.Measure\packages\VelopackTemp\tmp_jxWZqGeujebP9e1R\measure-lock.txt after 30,6 s; folder exists=False; file exists=False
+restarted after the update: C:\Users\<user>\AppData\Local\BrowserAI.Measure\current\BrowserAI.Measure.exe exit 0
+root after the update (current\ excluded):
+    BrowserAI.Measure.exe 400896
+    current\
+    measure-data\
+    measure-data\marker.txt 68
+    packages\
+    packages\.betaId 35
+    packages\.velopack_lock 0
+    packages\BrowserAI.Measure-1.0.3-full.nupkg 2322455
+    packages\VelopackTemp\
+    Update.exe 4070912
+update log, key lines (the whole slice is logs\<round>-update\velopack-log-slice.txt):
+    [update:75324] [03:02:30] [INFO] Starting Velopack Updater (0.0.0-local)
+    [update:75324] [03:02:30] [INFO] Applying package 1.0.3 to current: 1.0.0
+    [update:75324] [03:02:30] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" --veloapp-obsolete 1.0.0\0")
+    [update:75324] [03:02:30] [INFO] Backing up current dir to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_kKDMV9eWmQ4ti93P"
+    [update:75324] [03:02:30] [INFO] Replacing current dir with "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_jxWZqGeujebP9e1R"
+    [update:75324] [03:03:00] [ERROR] Failed to replace current dir (Access is denied. (os error 5)), restoring the previous version...
+    [update:75324] [03:03:00] [INFO] Restored the previous version to "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"
+    [update:75324] [03:03:00] [INFO] Removed temp dir "C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\packages\\VelopackTemp\\tmp_jxWZqGeujebP9e1R" in 1ms
+    [update:75324] [03:03:00] [INFO] About to launch: 'WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe")' in dir 'Some(WideString("C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current"))' with arguments: WideString("\"C:\\Users\\<user>\\AppData\\Local\\BrowserAI.Measure\\current\\BrowserAI.Measure.exe\" restarted --run=F7-commit-sharedelete-update \"two words\" embedded\\\"quote trailing\\\0")
+    [update:75324] [03:03:00] [ERROR] Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    [update:75324] [03:03:00] [ERROR] An error has occurred: Apply error: Error applying package: Unable to complete the update, the previous version was restored. Try again later, or if the issue persists, restart your computer.
+    (30 'Retrying operation' lines)
+clean after the round: yes

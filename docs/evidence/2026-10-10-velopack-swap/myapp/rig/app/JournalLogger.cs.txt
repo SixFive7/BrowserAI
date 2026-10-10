@@ -1,0 +1,11 @@
+using Velopack.Logging;
+
+namespace MyApp;
+
+/// <summary>Puts Velopack's own records into this process's journal, beside its default log file.</summary>
+internal sealed class JournalLogger : IVelopackLogger
+{
+    /// <inheritdoc />
+    public void Log(VelopackLogLevel logLevel, string? message, Exception? exception) =>
+        Journal.Write("velopack", ("level", logLevel.ToString()), ("message", message), ("exception", exception?.ToString()));
+}

@@ -1,0 +1,61 @@
+# Publishes the stand-in at each version and packs it into one output directory,
+# snapshotting the feed after every pack. vpk regenerates releases.win.json from
+# every package in the directory, so each snapshot is a feed vpk itself wrote.
+# Installs nothing.
+#
+#   -Stage stock : 1.0.0 and 1.0.1, packed with the global vpk 1.2.161.
+#   -Stage fixed : -Version (1.0.2 unless given), packed with a copy of vpk 1.2.161
+#                  whose vendor\update.exe was replaced by the fixed build (-Vpk
+#                  names that copy's vpk.dll). 1.0.3 carries the build of the
+#                  pushed commit itself.
+param(
+    [Parameter(Mandatory)] [ValidateSet('stock', 'fixed')] [string] $Stage,
+    [string] $Vpk,
+    [string] $Version = '1.0.2'
+)
+
+$ErrorActionPreference = 'Stop'
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+$env:DOTNET_NOLOGO = '1'
+
+$base = 'C:\Source\SixFive7\BrowserAI\.work\velopack-fix\rig'
+$project = Join-Path $base 'app\BrowserAI.Measure.csproj'
+$publishRoot = Join-Path $base 'out\publish'
+$releases = Join-Path $base 'out\releases'
+$feeds = Join-Path $base 'feeds'
+
+function Publish([string] $version) {
+    $out = Join-Path $publishRoot $version
+    if (Test-Path -LiteralPath $out) { throw "$out already exists; this script publishes into empty directories only." }
+    & dotnet publish $project -c Release "-p:Version=$version" -o $out --disable-build-servers | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "dotnet publish $version failed with $LASTEXITCODE" }
+    return $out
+}
+
+function Pack([string] $version, [string] $packDir) {
+    $arguments = @('pack', '--packId', 'BrowserAI.Measure', '--packVersion', $version, '--packDir', $packDir, '--mainExe', 'BrowserAI.Measure.exe',
+        '--packTitle', 'BrowserAI.Measure', '--shortcuts', 'StartMenuRoot', '--delta', 'None', '--channel', 'win', '--outputDir', $releases)
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    if ($Vpk) { & dotnet $Vpk @arguments | Out-Host } else { & vpk @arguments | Out-Host }
+    if ($LASTEXITCODE -ne 0) { throw "vpk pack $version failed with $LASTEXITCODE" }
+    Write-Host ("vpk pack {0} took {1:N1} s" -f $version, $clock.Elapsed.TotalSeconds)
+    $snapshot = Join-Path $feeds "after-$version"
+    $null = New-Item -ItemType Directory -Path $snapshot
+    Copy-Item -Path (Join-Path $releases '*') -Destination $snapshot
+    Write-Host "snapshot $snapshot holds: $((Get-ChildItem -LiteralPath $snapshot -Name) -join ', ')"
+}
+
+if ($Stage -eq 'stock') {
+    if ($Vpk) { throw 'The stock stage packs with the global vpk only.' }
+    foreach ($dir in @($publishRoot, $releases, $feeds)) {
+        if (Test-Path -LiteralPath $dir) { throw "$dir already exists; the stock stage packs into empty directories only." }
+    }
+    Write-Host "global vpk: $((& vpk --help 2>&1 | Out-String) -split "`n" | Where-Object { $_ -match 'Velopack CLI' } | Select-Object -First 1)"
+    foreach ($version in @('1.0.0', '1.0.1')) { Pack $version (Publish $version) }
+}
+else {
+    if (-not $Vpk) { throw 'The fixed stage needs -Vpk.' }
+    Pack $Version (Publish $Version)
+}
+
+Write-Host 'PACK DONE'
