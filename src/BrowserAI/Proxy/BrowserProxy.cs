@@ -4,7 +4,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -175,7 +174,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     // an update meets (`RelayErrors.UpdateInstalling`,
     // `RelayErrors.UpdateInstallingDuringTheCall`).
 
-    private BrowserProxy(SessionHost host, CallerConnection connection, ServerActivity activity, bool ownsHost, ILogger logger)
+    // ⚠️ THE ACTIVITY RECORD WAS DELETED 2026-10-10, by the maintainer's decision
+    // "9 a": ServerActivity, kept "for the server's pipe to describe", with this
+    // proxy's Activity and HeldSessions. The per-server pipe went with S a on
+    // 2026-10-08, so the proxy went on writing every call and every introduction into
+    // a record that nothing read. The dashboard reads the background's sessions and
+    // relays from SessionManager.Held and the roster.
+
+    private BrowserProxy(SessionHost host, CallerConnection connection, bool ownsHost, ILogger logger)
     {
         _host = host;
         Connection = connection;
@@ -183,7 +189,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
         _sessions = host.Sessions;
         _verdicts = host.Verdicts;
         _upstream = host.UpstreamTools;
-        Activity = activity;
         _logger = logger;
     }
 
@@ -199,31 +204,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     /// <param name="host">The host.</param>
     /// <param name="connection">The connection.</param>
-    /// <param name="activity">Where the proxy records what it does, or <see langword="null"/> for a record nobody reads.</param>
     /// <param name="ownsHost">Whether disposing the proxy disposes the host.</param>
     /// <returns>The proxy.</returns>
-    internal static BrowserProxy For(SessionHost host, CallerConnection connection, ServerActivity? activity, bool ownsHost)
+    internal static BrowserProxy For(SessionHost host, CallerConnection connection, bool ownsHost)
     {
         ArgumentNullException.ThrowIfNull(host);
         ArgumentNullException.ThrowIfNull(connection);
 
-        return new BrowserProxy(
-            host,
-            connection,
-            activity ?? new ServerActivity(TimeProvider.System, Environment.CurrentDirectory),
-            ownsHost,
-            host.LoggerFactory.CreateLogger<BrowserProxy>());
+        return new BrowserProxy(host, connection, ownsHost, host.LoggerFactory.CreateLogger<BrowserProxy>());
     }
-
-    /// <summary>
-    /// What this proxy has been doing, for the server's pipe to describe: its
-    /// client, and when its tool calls arrive and finish.
-    /// </summary>
-    public ServerActivity Activity { get; }
-
-    /// <summary>Every session this process holds right now, for the server's pipe.</summary>
-    /// <returns>One entry per held session.</returns>
-    public IReadOnlyList<HeldSession> HeldSessions() => _sessions.Held();
 
     /// <summary>Every open session's idle countdown, for the update and the dashboard.</summary>
     /// <remarks>
@@ -253,21 +242,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     /// <param name="loggerFactory">Where the proxy and the sessions log.</param>
     /// <param name="environment">Where sessions keep their index, payload and configs, and the list and verdicts.</param>
-    /// <param name="activity">
-    /// Where this proxy records what it does for the server's pipe, or
-    /// <see langword="null"/> for a record nobody reads.
-    /// </param>
     /// <returns>The proxy.</returns>
-    public static BrowserProxy Create(
-        ILoggerFactory loggerFactory,
-        SessionEnvironment environment,
-        ServerActivity? activity = null)
+    public static BrowserProxy Create(ILoggerFactory loggerFactory, SessionEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(environment);
 
 #pragma warning disable CA2000 // Ownership moves into the proxy, which disposes the host.
-        return For(SessionHost.Create(loggerFactory, environment), new CallerConnection(), activity, ownsHost: true);
+        return For(SessionHost.Create(loggerFactory, environment), new CallerConnection(), ownsHost: true);
 #pragma warning restore CA2000
     }
 
@@ -514,24 +496,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
                     return;
 
                 case RequestMethods.ToolsCall:
-                    // ⚠️ EVERY CALL IS ACTIVITY, the refused ones included -- the
-                    // pipe's description reports when calls arrive and finish, and a
-                    // refused call is as much a model at work as a forwarded one.
-                    using (Activity.ToolCall())
+                    // ⚠️ THE TWO UPDATE DOORS WERE DELETED 2026-10-10, by the
+                    // maintainer's decision "9 a": a stop for an update that had
+                    // begun (Q286 b) and this install's updater still running (Q296
+                    // c) each refused the call here. Nothing set either after S a on
+                    // 2026-10-08. And so was the activity scope around this call the
+                    // same day, which counted every call for the server's pipe to
+                    // describe; nothing read it after that pipe went.
+                    if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
                     {
-                        // ⚠️ THE TWO UPDATE DOORS WERE DELETED 2026-10-10, by the
-                        // maintainer's decision "9 a": a stop for an update that
-                        // had begun (Q286 b) and this install's updater still
-                        // running (Q296 c) each refused the call here. Nothing set
-                        // either after S a on 2026-10-08.
-                        if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
-                        {
-                            return;
-                        }
-
-                        await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                        return;
                     }
 
+                    await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     return;
 
                 default:
@@ -542,11 +519,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await next(context, cancellationToken).ConfigureAwait(false);
 
         // After the SDK has handled the handshake, so what is recorded is what it
-        // accepted: the client's own name, title and version, for the pipe.
+        // accepted: the client's own name, which every refusal that names a client
+        // says. (Its title and version went to the activity record as well, until
+        // that record was deleted on 2026-10-10.)
         if (context.JsonRpcMessage is JsonRpcRequest { Method: RequestMethods.Initialize }
             && context.Server.ClientInfo is { } introduced)
         {
-            Activity.Introduced(new ClientIdentity(introduced.Name, introduced.Title, introduced.Version));
             Connection.Introduced(introduced.Name);
         }
     }

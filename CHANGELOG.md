@@ -1987,6 +1987,16 @@ release body; nothing else depends on it.
   produce them, and the arms that drove the deleted code are retired with a remark where
   each stood.
 
+- ♻️ **The rest of what nothing reads or calls since the one-binary build is deleted too.**
+  The same *"9 a"*, on what that pass found and left: `ServerActivity`, which every proxy
+  went on filling for a server's pipe that no longer exists, with the proxy's `Activity`
+  and `HeldSessions`; twelve records of the update log that the server's own update pass
+  wrote, ids 1 to 11 and 21, which the background's update core writes under ids of its
+  own, so the ids are retired and never taken again; and the two creations of the
+  parallel pipe the servers and the coordinator served. The pass had counted six of
+  the update log's records, because a search for each name also met the background's
+  record of the same name. Nothing a running BrowserAI does changes.
+
 - 🗑️ **The payload's copy of `tool-verdicts.json` is gone, with the child that answered the tool list.**
   The verdicts are compiled into the server beside the tool list they judge, so nothing reads the
   copy a build target used to put in the payload; the build removes one a payload assembled earlier
@@ -2134,6 +2144,16 @@ release body; nothing else depends on it.
   the cleanup takes only folders whose owner has exited, and every folder it deletes is a line in the
   machine's process log with the time and the deleting process. `ScratchReclaimTests` drives the
   cleanup from a second test host, watched red first against the old one.
+
+- ✅ **The hundred-relay arm's cleanup takes only the instance folder its own background made.**
+  Found by lane FIX's helper P on 2026-10-10. The arm removed every instance folder and live
+  marker whose name began with one of its pids, read after its processes had died, so a
+  process that had since been given one of those numbers, the person's own background among
+  them, could lose its folder. It takes a folder now only when the name begins with the
+  background's pid and the folder was created while that process lived; a relay makes no
+  instance folder and nothing makes a live marker since the one background.
+  `SaturationTests.TheBookkeepingReclaimTakesOnlyWhatThisRunsBackgroundMadeWhileItLived` holds
+  the rule, planted red first.
 
 - 🐛 **Every session the background closes when it ends says why: an update, a stop or a failure.**
   The texts review's #24. Each was recorded as shut down when its client went away, and one

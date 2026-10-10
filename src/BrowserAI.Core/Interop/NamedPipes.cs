@@ -130,69 +130,13 @@ internal static partial class NamedPipes
     private const int ErrorInsufficientBuffer = 122;
     private const uint SddlRevision1 = 1;
 
-    /// <summary>
-    /// Creates the first instance of a pipe that serves its connections in
-    /// parallel: readable and writable by the current user and nobody else, and
-    /// refused to other machines.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q297 b, decided 2026-10-03 by the maintainer, in his words: <i>"Q297
-    /// b"</i>.</b> A server's pipe takes as many connections at once as
-    /// <see cref="UnlimitedInstances"/> allows, which is no ceiling, so a caller
-    /// that connects and never finishes holds its own instance and nobody else's.
-    /// <i>Corrected 2026-10-03 (previously "takes up to
-    /// <see cref="UnlimitedInstances"/> connections at once").</i>
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Every pipe of ours since 2026-10-03, Q368 a, the maintainer's words
-    /// verbatim: <i>"Q368 a"</i>.</b> The coordinator's pipe was created by a
-    /// one-instance <c>CreateServer</c> until that day, which kept one instance per
-    /// name and answered a second creation with <c>0x800700E7</c>; it is gone with
-    /// its last caller.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b><c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is still on this creation and
-    /// is now the whole of what keeps a second server off the name</b>: a second
-    /// process asking for the first instance of a name that already has one is
-    /// refused with <c>0x80070005</c>, <c>ERROR_ACCESS_DENIED</c>, and so is this
-    /// one when somebody else created the name first. Before Q297 b one instance
-    /// per name did that job too, with <c>0x800700E7</c>.
-    /// </para>
-    /// </remarks>
-    /// <param name="name">The full pipe name, <c>\\.\pipe\...</c>.</param>
-    /// <returns>The first server end. The caller owns it.</returns>
-    /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
-    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    public static SafeFileHandle CreateParallelServer(string name) => Create(name, FileFlagFirstPipeInstance, UnlimitedInstances);
+    // ⚠️ CreateParallelServer AND CreateParallelInstance WERE DELETED 2026-10-10, by the
+    // maintainer's decision "9 a", with no caller left: they made a server's own pipe
+    // and the coordinator's (Q297 b and Q368 a, 2026-10-03), and both went with S a on
+    // 2026-10-08. The background's pipe is a stream pipe, and what their remarks held
+    // about the first-instance flag and about one more instance is on
+    // CreateStreamServer and CreateStreamInstance below.
 
-    /// <summary>
-    /// Creates one more instance of a parallel pipe that this process already
-    /// serves, for the next connection.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Without <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c>, and safe only while the
-    /// caller still holds an instance of the name.</b> A creation without the flag
-    /// joins whatever pipe carries the name, so it is made only by the thread that
-    /// holds an instance open at that moment: the name has then never been without
-    /// one of ours since <see cref="CreateParallelServer"/> made it, and nobody
-    /// else can have created it in between.
-    /// </para>
-    /// <para>
-    /// <i>Corrected 2026-10-03 (previously "When every instance Windows allows is
-    /// already in use this throws with <c>0x800700E7</c>,
-    /// <c>ERROR_PIPE_BUSY</c>").</i> Created with
-    /// <see cref="UnlimitedInstances"/>, a pipe has no such moment: measured to
-    /// 2,000 instances held at once, see that constant. What is left to refuse an
-    /// instance is the system running out of the resources one takes.
-    /// </para>
-    /// </remarks>
-    /// <param name="name">The full pipe name, exactly as <see cref="CreateParallelServer"/> was given it.</param>
-    /// <returns>The new server end. The caller owns it.</returns>
-    /// <exception cref="IOException">The instance was not created; <see cref="Exception.HResult"/> says why.</exception>
-    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    public static SafeFileHandle CreateParallelInstance(string name) => Create(name, 0, UnlimitedInstances);
 
     /// <summary>
     /// How much a stream pipe buffers in each direction: the session host's, which
@@ -228,6 +172,15 @@ internal static partial class NamedPipes
     /// that constant). So the host's sessions are bounded by nothing here: a
     /// connection is one per running client, and it carries any number of sessions.
     /// </para>
+    /// <para>
+    /// ⚠️ <b><c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is the whole of what keeps a second
+    /// server off the name</b>, moved here 2026-10-10 by addition from the parallel
+    /// pipe's creation, deleted that day: a second process asking for the first
+    /// instance of a name that already has one is refused with <c>0x80070005</c>,
+    /// <c>ERROR_ACCESS_DENIED</c>, and so is this one when somebody else created the
+    /// name first. The background reads that refusal as another background already
+    /// serving its roots, and exits.
+    /// </para>
     /// </remarks>
     /// <param name="name">The full pipe name, <c>\\.\pipe\...</c>.</param>
     /// <returns>The first server end. The caller owns it.</returns>
@@ -237,9 +190,17 @@ internal static partial class NamedPipes
         Create(name, FileFlagFirstPipeInstance | FileFlagOverlapped, UnlimitedInstances, StreamBufferBytes);
 
     /// <summary>
-    /// Creates one more instance of a stream pipe this process already serves, on the
-    /// rule <see cref="CreateParallelInstance"/> states.
+    /// Creates one more instance of a stream pipe this process already serves.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Without <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c>, and safe only while the
+    /// caller still holds an instance of the name.</b> A creation without the flag
+    /// joins whatever pipe carries the name, so it is made only by the thread that
+    /// holds an instance open at that moment: the name has then never been without one
+    /// of ours since <see cref="CreateStreamServer"/> made it, and nobody else can have
+    /// created it in between. <i>Moved here 2026-10-10 by addition (previously "on the
+    /// rule <c>CreateParallelInstance</c> states"), when that method was deleted.</i>
+    /// </remarks>
     /// <param name="name">The full pipe name, exactly as <see cref="CreateStreamServer"/> was given it.</param>
     /// <returns>The new server end. The caller owns it.</returns>
     /// <exception cref="IOException">The instance was not created; <see cref="Exception.HResult"/> says why.</exception>

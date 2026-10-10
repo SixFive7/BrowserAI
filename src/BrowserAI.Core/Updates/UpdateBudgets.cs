@@ -184,6 +184,13 @@ internal sealed record UpdateBudgets
     /// that is neither the lifetime nor the check reaches
     /// <c>UpdateLog.TripwireFired</c>.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 by addition:</b> <c>RunOnceAsync</c> went with the
+    /// server's update pass on 2026-10-08, and the two records above were deleted with
+    /// the rest of that pass's records under the maintainer's "9 a". The background's
+    /// check logs <c>BackgroundUpdateLog.CheckTimedOut</c> at its own budget, and this
+    /// deadline bounds the dashboard's <i>Install now</i> (<c>PageService</c>).
+    /// </para>
     /// </remarks>
     public static TimeSpan CrashTripwire => TimeSpan.FromMinutes(45);
 

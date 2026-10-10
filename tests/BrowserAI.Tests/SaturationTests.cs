@@ -6,7 +6,6 @@ using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
-using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
 
@@ -507,7 +506,9 @@ internal sealed partial class SaturationTests
 
             backgroundJob.Dispose();
 
-            ReclaimOurOwnBookkeeping([.. peers.Select(peer => peer.ProcessId).Where(id => id is not 0), background.Id]);
+            // The moment the background's job was closed: what its pid made after this
+            // is a later process's, which reused the number.
+            ReclaimOurOwnBookkeeping(background.Id, backgroundCreated, DateTime.UtcNow.ToFileTimeUtc());
 
             try
             {
@@ -726,41 +727,97 @@ internal sealed partial class SaturationTests
     /// sweep to reclaim, exactly as it would be for a run that was killed.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 by addition: a pid alone was not this run's.</b>
+    /// The pids were read after every relay and the background had died, and Windows
+    /// gives a dead process's number to the next one, so a BrowserAI started since,
+    /// the person's own background among them, could have its live instance
+    /// directory removed under it. Found by lane FIX's helper P that day. The reclaim
+    /// takes only what this run's background made: a directory whose name begins with
+    /// its pid and which was created while that process lived, between its own
+    /// creation time and the moment its job was closed (<see cref="MadeBy"/>). The
+    /// relays and the live markers are out of it: since the one background of
+    /// 2026-10-08 a relay makes no instance directory, and no process makes a live
+    /// marker, so a match among them could only ever be somebody else's.
+    /// </para>
+    /// <para>
     /// <b>What this does NOT do is assert.</b> A killed BrowserAI legitimately
     /// leaves both behind -- that is what the containment contract guarantees --
     /// so leaving them is not a defect and reclaiming them is not a fix. It is
     /// this test declining to make the machine worse.
     /// </para>
     /// </remarks>
-    /// <param name="ours">The pids this run started.</param>
-    private static void ReclaimOurOwnBookkeeping(HashSet<int> ours)
+    /// <param name="processId">The background's pid.</param>
+    /// <param name="createdFileTime">The background's creation time, as a FILETIME.</param>
+    /// <param name="endedFileTime">The moment its job was closed, as a FILETIME.</param>
+    private static void ReclaimOurOwnBookkeeping(int processId, long createdFileTime, long endedFileTime)
     {
-        var paths = BrowserAiPaths.Real;
-
-        foreach (var directory in Enumerate(paths.InstanceRoot, directories: true))
+        foreach (var directory in MadeBy(Enumerate(BrowserAiPaths.Real.InstanceRoot, directories: true), processId, createdFileTime, endedFileTime))
         {
-            if (ours.Contains(PidPrefixOf(Path.GetFileName(directory))))
-            {
-                _ = ScratchDirectory.RemoveTree(directory);
-            }
+            _ = ScratchDirectory.RemoveTree(directory);
         }
+    }
 
-        foreach (var file in Enumerate(LiveInstances.DirectoryUnder(paths.RootAppDir), directories: false))
+    /// <summary>
+    /// The instance directories one process made: its pid at the front of the name,
+    /// and created while it lived.
+    /// </summary>
+    /// <param name="directories">The candidates.</param>
+    /// <param name="processId">The process's pid.</param>
+    /// <param name="createdFileTime">When it was created, as a FILETIME.</param>
+    /// <param name="endedFileTime">When it was ended at the latest, as a FILETIME.</param>
+    /// <returns>Its directories, in the order given.</returns>
+    private static List<string> MadeBy(IEnumerable<string> directories, int processId, long createdFileTime, long endedFileTime) =>
+    [
+        .. directories.Where(directory =>
+            PidPrefixOf(Path.GetFileName(directory)) == processId
+            && Directory.GetCreationTimeUtc(directory).ToFileTimeUtc() is var made
+            && made >= createdFileTime
+            && made <= endedFileTime),
+    ];
+
+    /// <summary>
+    /// The bookkeeping reclaim takes only the instance directories this run's
+    /// background made while it lived, and nothing a later process with the same pid
+    /// made, nor one made before it, nor another pid's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10, from lane FIX's helper P</b>: the reclaim picked every
+    /// directory whose name began with one of this run's pids, read after the
+    /// processes had died, so a process that reused a number lost its directory. The
+    /// directories here are made in a scratch folder with their creation times set,
+    /// because a pid cannot be made to recur on demand.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the selection as it was, by pid prefix
+    /// alone: it also took the later process's directory and the earlier one's.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBookkeepingReclaimTakesOnlyWhatThisRunsBackgroundMadeWhileItLived()
+    {
+        using var root = ScratchDirectory.Create("saturation-reclaim");
+
+        const int Pid = 4242;
+        var started = new DateTime(2026, 10, 10, 1, 0, 0, DateTimeKind.Utc);
+        var ended = started.AddMinutes(5);
+
+        var ours = made($"{Pid}-this-runs-background", started.AddSeconds(1));
+        var later = made($"{Pid}-a-later-process-with-the-same-pid", ended.AddSeconds(30));
+        var earlier = made($"{Pid}-an-earlier-process-with-the-same-pid", started.AddMinutes(-30));
+        var other = made("4343-another-process", started.AddSeconds(2));
+
+        var taken = MadeBy(Directory.EnumerateDirectories(root.Path), Pid, started.ToFileTimeUtc(), ended.ToFileTimeUtc());
+
+        await Assert.That(string.Join(" | ", taken.Select(Path.GetFileName))).IsEqualTo(Path.GetFileName(ours))
+            .Because($"only the background's own directory may go, never '{Path.GetFileName(later)}', '{Path.GetFileName(earlier)}' or '{Path.GetFileName(other)}'");
+
+        string made(string name, DateTime createdUtc)
         {
-            if (ours.Contains(PidPrefixOf(Path.GetFileName(file))))
-            {
-                try
-                {
-                    File.Delete(file);
-                }
-                catch (IOException)
-                {
-                    // Still held, which means still running. Left alone.
-                }
-                catch (UnauthorizedAccessException)
-                {
-                }
-            }
+            var path = Directory.CreateDirectory(Path.Combine(root.Path, name)).FullName;
+            Directory.SetCreationTimeUtc(path, createdUtc);
+            return path;
         }
     }
 

@@ -13,160 +13,17 @@ namespace BrowserAI.Updates;
 // ⚠️ CORRECTED 2026-10-10 BY ADDITION: the census writes nothing since that day,
 // because it was deleted, by the maintainer's decision "9 a". Its three records
 // went with it, and their ids are retired at the end of this class.
+//
+// ⚠️ AND TWELVE MORE THE SAME DAY, under the same "9 a": every record of the
+// server's own update pass, which went with the in-process server (S a, 2026-10-08)
+// and left these with no caller. The background's update core writes its own,
+// under BrowserAI.Updates through BackgroundUpdateLog and from event 30, and what
+// is left here is the startup's Velopack lines, the install's own line and the
+// live-marker reclaim.
 
 /// <summary>Source-generated log messages for the update path.</summary>
 internal static partial class UpdateLog
 {
-    /// <summary>This process is not an installed one, so it will never update.</summary>
-    [LoggerMessage(
-        EventId = 1,
-        Level = LogLevel.Debug,
-        Message = "This BrowserAI was not installed by Velopack, so it does not check for updates. That is the normal state under a checkout, a `dotnet run` and every test host.")]
-    public static partial void NotAnInstall(ILogger logger);
-
-    /// <summary>A pre-release build refuses to update itself.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">The version this build carries.</param>
-    [LoggerMessage(
-        EventId = 2,
-        Level = LogLevel.Information,
-        Message = "BrowserAI {Version} is a pre-release build and does not self-update. A version carrying a suffix was built from a commit that no tag points at, so there is no release for it to be newer or older than.")]
-    public static partial void PreReleaseBuildDoesNotUpdate(ILogger logger, string version);
-
-    /// <summary>A check is starting, and where it is looking.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="manifestUrl">The composed manifest URL.</param>
-    /// <remarks>
-    /// <b>The composed URL is logged and not the base URL</b>, because the
-    /// feed-URL landmine is invisible in the base: it only becomes wrong once
-    /// Velopack has appended <c>releases.{channel}.json</c> to it. Nothing in
-    /// the deployment that lost auto-update for three versions ever printed this
-    /// line.
-    /// </remarks>
-    [LoggerMessage(
-        EventId = 3,
-        Level = LogLevel.Information,
-        Message = "Checking for updates at {ManifestUrl}.")]
-    public static partial void Checking(ILogger logger, string manifestUrl);
-
-    /// <summary>The feed answered, and had nothing.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="manifestUrl">Where it looked.</param>
-    [LoggerMessage(
-        EventId = 4,
-        Level = LogLevel.Debug,
-        Message = "No update available at {ManifestUrl}.")]
-    public static partial void NothingAvailable(ILogger logger, string manifestUrl);
-
-    /// <summary>Something is on offer.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">The version offered.</param>
-    /// <param name="isDowngrade">Whether it is a rollback.</param>
-    /// <param name="deltaCount">How many deltas stand between here and there; zero means a full download.</param>
-    /// <param name="fullPackageSize">The full package's size in bytes.</param>
-    [LoggerMessage(
-        EventId = 5,
-        Level = LogLevel.Information,
-        Message = "Update {Version} is available. rollback={IsDowngrade} deltas={DeltaCount} fullPackageBytes={FullPackageSize}")]
-    public static partial void Found(ILogger logger, string version, bool isDowngrade, int deltaCount, long fullPackageSize);
-
-    /// <summary>How far the download has got.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">What is being downloaded.</param>
-    /// <param name="percent">0 to 100.</param>
-    [LoggerMessage(
-        EventId = 6,
-        Level = LogLevel.Debug,
-        Message = "Downloading update {Version}: {Percent}%.")]
-    public static partial void DownloadProgress(ILogger logger, string version, int percent);
-
-    /// <summary>The package is on disk.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">What was downloaded.</param>
-    /// <param name="seconds">How long the whole pass took to this point.</param>
-    [LoggerMessage(
-        EventId = 7,
-        Level = LogLevel.Information,
-        Message = "Update {Version} downloaded and staged in {Seconds:F1}s.")]
-    public static partial void Downloaded(ILogger logger, string version, double seconds);
-
-    /// <summary>Staged, but somebody else is running.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">What is staged.</param>
-    /// <param name="waitingOn">What the apply is waiting on, in the census's own terms.</param>
-    /// <param name="size">What the staged package weighs.</param>
-    /// <param name="seconds">How long the download that produced it took.</param>
-    /// <remarks>
-    /// <para>
-    /// Information, not Warning, and the sentence says why nothing is
-    /// wrong: applying would kill every other BrowserAI's browsers, and the
-    /// staged package costs nothing to leave where it is.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>It says what it is waiting on and how far in it got, since
-    /// 2026-08-20</b> *(previously "because another BrowserAI is running out of
-    /// this install", and nothing else)*. The old line read the same whether one
-    /// peer was up or forty, and read the same again when the census could not
-    /// be taken at all -- which is not a wait, it is a permanent block, and the
-    /// two need different actions from whoever finds the line. The size and the
-    /// elapsed seconds are the <i>how far in</i> half: the work is done and
-    /// staged, so what is left is the exit of every other instance and not
-    /// any more bytes.
-    /// </para>
-    /// </remarks>
-    [LoggerMessage(
-        EventId = 8,
-        Level = LogLevel.Information,
-        Message = "Update {Version} is staged and was NOT applied: {WaitingOn}. Applying would terminate every process under the install root, including other agents' browsers. Nothing more has to be downloaded -- {Size} was fetched in {Seconds:F1} s and is waiting on disk -- so the last instance to exit applies it.")]
-    public static partial void StagedButNotAlone(ILogger logger, string version, string waitingOn, string size, double seconds);
-
-    /// <summary>The apply is armed and this process must now end.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="version">What is being applied.</param>
-    /// <param name="processId">The pid Update.exe is waiting on.</param>
-    [LoggerMessage(
-        EventId = 9,
-        Level = LogLevel.Information,
-        Message = "Update {Version} will be applied by Update.exe once this process exits. It is waiting on pid {ProcessId}; BrowserAI is shutting down so the session locks release first.")]
-    public static partial void Applying(ILogger logger, string version, int processId);
-
-    /// <summary>The pass threw.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="failure">Why.</param>
-    [LoggerMessage(
-        EventId = 10,
-        Level = LogLevel.Warning,
-        Message = "The update check failed. Nothing was changed and BrowserAI is unaffected; the next start will try again.")]
-    public static partial void PassFailed(ILogger logger, Exception failure);
-
-    /// <summary>The manifest check outran its own budget.</summary>
-    /// <remarks>
-    /// ⚠️ <b>ITS OWN EVENT ID, AND THAT IS THE POINT OF THE CHANGE.</b> Before
-    /// 2026-09-24 a stalled or timed-out check reported as <c>TripwireFired</c>,
-    /// event 11, which says the inner timers failed -- so the one line that was
-    /// supposed to mean "this is a defect" was also the line an ordinary network
-    /// timeout produced. Nothing is renumbered: event ids never change, and this
-    /// is a new one.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="budgetMinutes">The check's budget.</param>
-    /// <param name="elapsedMinutes">How long the pass ran before it was abandoned.</param>
-    [LoggerMessage(
-        EventId = 21,
-        Level = LogLevel.Warning,
-        Message = "The update check did not answer within its budget of {BudgetMinutes} minutes and was abandoned after {ElapsedMinutes:F1} minutes. That is a slow or dead feed, not a defect here; nothing was changed and the next start will try again.")]
-    public static partial void CheckTimedOut(ILogger logger, double budgetMinutes, double elapsedMinutes);
-
-    /// <summary>The outer deadline fired, which means the inner three did not.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tripwireMinutes">The deadline.</param>
-    /// <param name="elapsedMinutes">How long the pass actually ran.</param>
-    [LoggerMessage(
-        EventId = 11,
-        Level = LogLevel.Error,
-        Message = "The update pass hit its outer deadline of {TripwireMinutes} minutes after {ElapsedMinutes:F1} minutes. That deadline is a crash tripwire, not a budget, so reaching it means the absolute and stall timers did not fire when they should have. Nothing was applied.")]
-    public static partial void TripwireFired(ILogger logger, double tripwireMinutes, double elapsedMinutes);
-
     /// <summary>Velopack said something.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="message">What Velopack said.</param>
@@ -258,9 +115,19 @@ internal static partial class UpdateLog
     // build up to 1.1.0 writes them, so a saved query may still meet them in an old
     // log, and none of the three ids may be taken again.
     //
-    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
-    // machine-readable half of the paragraph above, beside it and not in place of
-    // it.
+    // ⚠️ EVENT IDS 1 TO 11 AND 21 ARE RETIRED TOO -- 2026-10-10, the same "9 a".
+    // They were the server's update pass, which nothing has run since S a on
+    // 2026-10-08: NotAnInstall (1), PreReleaseBuildDoesNotUpdate (2), Checking (3),
+    // NothingAvailable (4), Found (5), DownloadProgress (6), Downloaded (7),
+    // StagedButNotAlone (8), Applying (9), PassFailed (10), TripwireFired (11) and
+    // CheckTimedOut (21). Builds up to 1.1.0 wrote them under this category, so an
+    // old log still carries them, and none of these ids may be taken again. The
+    // background's own records of a check, an offer, a download and a failure are
+    // BackgroundUpdateLog's.
     //
-    // RETIRED-EVENT-IDS: 12, 13, 14
+    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
+    // machine-readable half of the two paragraphs above, beside them and not in
+    // place of them.
+    //
+    // RETIRED-EVENT-IDS: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21
 }

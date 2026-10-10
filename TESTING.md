@@ -187,7 +187,13 @@ BrowserAI of 2026-09-17 under that number stood in the files it read. Its
 torn-record scope, its record count and its every-process-wrote check now read the
 pair from each record's header, and
 `SaturationTests.AStrangersTornRecordIsNotThisRunsAndOneThisRunWasPartyToIs` holds
-a recycled pid as a stranger's at either end of a tear.
+a recycled pid as a stranger's at either end of a tear. ⚠️ *Added later on 2026-10-10
+by addition:* the same arm's cleanup of the shared app root keyed on the bare pid as
+well, read after its processes had died, and now takes only the instance folder its
+background made while it lived: the background's pid at the front of the name and a
+creation time between that process's own and the close of its job.
+`SaturationTests.TheBookkeepingReclaimTakesOnlyWhatThisRunsBackgroundMadeWhileItLived`
+holds the rule over folders whose creation times it sets.
 
 **Every run starts by reclaiming what a previous run may have leaked.** Settled
 2026-08-16. This suite drives machine-wide named objects, real processes and real

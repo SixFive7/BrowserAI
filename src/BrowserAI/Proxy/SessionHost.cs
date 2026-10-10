@@ -74,13 +74,12 @@ internal sealed class SessionHost : IAsyncDisposable
 
     /// <summary>A proxy for one more connection, over this host's sessions.</summary>
     /// <param name="connection">The connection.</param>
-    /// <param name="activity">What the connection does, for a description, or <see langword="null"/> for one nobody reads.</param>
     /// <returns>The proxy. Disposing it detaches what the connection drove and leaves the host running.</returns>
-    public BrowserProxy Accept(CallerConnection connection, ServerActivity? activity = null)
+    public BrowserProxy Accept(CallerConnection connection)
     {
         ArgumentNullException.ThrowIfNull(connection);
 
-        return BrowserProxy.For(this, connection, activity, ownsHost: false);
+        return BrowserProxy.For(this, connection, ownsHost: false);
     }
 
     /// <summary>Detaches what a connection drove, once it has ended.</summary>
