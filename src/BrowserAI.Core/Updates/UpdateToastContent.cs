@@ -205,9 +205,18 @@ internal static class UpdateToastContent
     }
 
     /// <summary>The failed toast.</summary>
+    /// <remarks>
+    /// <b>The third line names the two folders the logs are in</b>, since #60 of the texts
+    /// review of 2026-10-10. <i>What happened is in Velopack's log,
+    /// %LocalAppData%\velopack\velopack_BrowserAI.app.log, and in BrowserAI's log in
+    /// %LocalAppData%\BrowserAI\logs.</i>, whose path to Velopack's log is wider than a
+    /// line by itself, counts four lines below the second line's one where the banner has
+    /// four in all, as <c>UpdateToastContentTests</c> counts them, breaking at spaces only.
+    /// On screen on 2026-10-08 the same line with a shorter file name took three.
+    /// </remarks>
     /// <param name="version">The version that did not install.</param>
     /// <param name="running">The version still installed, which raises it.</param>
-    /// <param name="velopackLog">Where Velopack's log is.</param>
+    /// <param name="velopackLog">Where Velopack's log is; the toast names the folder it is in.</param>
     /// <param name="browserAiLog">Where BrowserAI's log is.</param>
     /// <returns>Its XML.</returns>
     public static string Failed(string version, string running, string velopackLog, string browserAiLog)
@@ -222,7 +231,7 @@ internal static class UpdateToastContent
             [
                 $"The update to {version} failed",
                 $"BrowserAI {running} is still installed.",
-                $"What happened is in Velopack's log, {velopackLog}, and in BrowserAI's log in {browserAiLog}.",
+                $"Velopack's log is in {FolderOf(velopackLog)}, and BrowserAI's in {browserAiLog}.",
             ],
             null,
             ("Dismiss", Arguments(ToastAction.Dismiss, null)));
@@ -235,6 +244,36 @@ internal static class UpdateToastContent
     /// make a long line, so the rest of a kind are counted.
     /// </remarks>
     public const int NamesSpelledOut = 2;
+
+    /// <summary>How many lines of the banner the reconnect line may take: three.</summary>
+    /// <remarks>
+    /// <b>Microsoft's four less one, read 2026-10-10</b>: the banner gives a toast's
+    /// second and third lines four
+    /// lines between them, in Microsoft's words <i>"up to 4 lines (combined) for the two
+    /// additional description elements"</i>, read that day in <i>App notification
+    /// content</i> on Microsoft Learn, and the failed toast showed all four on the
+    /// maintainer's screen on 2026-10-08. The ready toast's second line takes one of them
+    /// (<c>kb/windows/notifications.md</c>).
+    /// </remarks>
+    public const int ReconnectLines = 3;
+
+    /// <summary>How many characters a line of the reconnect line is counted to hold when names are weighed: 50.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Chosen 2026-10-10 against the banner measured on 2026-10-08</b>: the longest
+    /// line of a toast's description the banner showed whole held 52 characters, <i>After
+    /// the update: 1 Claude Code terminal needs /mcp,</i>, and a line of a path held 49.
+    /// Names are spelled out while the line, broken at spaces into lines of this many
+    /// characters, takes at most <see cref="ReconnectLines"/>; otherwise each kind names
+    /// one, and otherwise none, so a crowded update is counted and not cut.
+    /// </para>
+    /// <para>
+    /// <b>A count of characters stands in for a width only for text like a title</b>, so
+    /// <c>UpdateToastContentTests</c> measures every line this lets through, at every
+    /// count and with names of every kind, against the width the banner wraps at.
+    /// </para>
+    /// </remarks>
+    public const int DescriptionLineCharacters = 50;
 
     /// <summary>The reconnects the update will cost, as one sentence, or <see langword="null"/> when it costs none.</summary>
     /// <remarks>
@@ -250,6 +289,17 @@ internal static class UpdateToastContent
     /// The first <see cref="NamesSpelledOut"/> of each kind are spelled out and the rest
     /// counted, and a client BrowserAI names nothing of is counted as before.
     /// </para>
+    /// <para>
+    /// <b>And the line shows whole in the banner</b>, since #47 of the texts review of
+    /// 2026-10-10: names are spelled out while the line fits
+    /// <see cref="ReconnectLines"/> lines of <see cref="DescriptionLineCharacters"/>, and
+    /// counted when it would not. Counted, a
+    /// Codex conversation needs <i>a new one</i> and an unplaced client <i>a
+    /// reconnect</i>: <i>After the update: 1 Claude Code terminal needs /mcp, BrowserAI,
+    /// Reconnect; 2 Codex conversations need a new conversation; 1 client may need
+    /// BrowserAI reconnected.</i> counts four lines at the banner's width below the second
+    /// line's one, where the banner has four in all.
+    /// </para>
     /// </remarks>
     /// <param name="holds">What holds the update.</param>
     /// <returns>The sentence.</returns>
@@ -257,19 +307,68 @@ internal static class UpdateToastContent
     {
         ArgumentNullException.ThrowIfNull(holds);
 
+        for (var spelled = NamesSpelledOut; spelled > 0; spelled--)
+        {
+            if (Line(holds, spelled) is { } named && LinesAt(named, DescriptionLineCharacters) <= ReconnectLines)
+            {
+                return named;
+            }
+        }
+
+        return Line(holds, 0);
+    }
+
+    /// <summary>How many lines a text takes, broken at spaces into lines of so many characters.</summary>
+    /// <param name="text">The text.</param>
+    /// <param name="characters">How many characters a line holds.</param>
+    /// <returns>The lines; a word longer than a line takes as many as it fills.</returns>
+    internal static int LinesAt(string text, int characters)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentOutOfRangeException.ThrowIfLessThan(characters, 1);
+
+        var lines = 0;
+        var line = 0;
+
+        foreach (var word in text.Split(' '))
+        {
+            if (line > 0 && line + 1 + word.Length <= characters)
+            {
+                line += 1 + word.Length;
+                continue;
+            }
+
+            if (line > 0)
+            {
+                lines++;
+            }
+
+            lines += (word.Length - 1) / characters;
+            line = word.Length - ((word.Length - 1) / characters * characters);
+        }
+
+        return line > 0 ? lines + 1 : lines;
+    }
+
+    /// <summary>The reconnect line with at most so many names of each kind spelled out.</summary>
+    /// <param name="holds">What holds the update.</param>
+    /// <param name="spelledOut">How many names of each kind it spells out; none counts every kind.</param>
+    /// <returns>The sentence, or <see langword="null"/> when the update costs no reconnect.</returns>
+    private static string? Line(UpdateHoldSnapshot holds, int spelledOut)
+    {
         var parts = new List<string>();
 
-        if (Part(holds, RelayReconnect.McpReconnect, "Claude Code terminal", "Claude Code terminals", "/mcp, BrowserAI, Reconnect") is { } terminals)
+        if (Part(holds, RelayReconnect.McpReconnect, "Claude Code terminal", "Claude Code terminals", "/mcp, BrowserAI, Reconnect", "/mcp, BrowserAI, Reconnect", spelledOut) is { } terminals)
         {
             parts.Add(terminals);
         }
 
-        if (Part(holds, RelayReconnect.NewConversation, "Codex conversation", "Codex conversations", "a new conversation") is { } codex)
+        if (Part(holds, RelayReconnect.NewConversation, "Codex conversation", "Codex conversations", "a new conversation", "a new one", spelledOut) is { } codex)
         {
             parts.Add(codex);
         }
 
-        if (Part(holds, RelayReconnect.Unknown, "client", "clients", null) is { } unknown)
+        if (Part(holds, RelayReconnect.Unknown, "client", "clients", null, null, spelledOut) is { } unknown)
         {
             parts.Add(unknown);
         }
@@ -282,9 +381,11 @@ internal static class UpdateToastContent
     /// <param name="reconnect">The kind.</param>
     /// <param name="one">What one client of the kind is called when it has no name.</param>
     /// <param name="many">What several are called.</param>
-    /// <param name="need">What the kind needs, or <see langword="null"/> for the kind that may need a reconnect.</param>
+    /// <param name="named">What the kind needs when the part names it, or <see langword="null"/> for the kind that may need a reconnect.</param>
+    /// <param name="counted">What the kind needs when the part counts it, or <see langword="null"/> for that kind.</param>
+    /// <param name="spelledOut">How many names it spells out.</param>
     /// <returns>The part, or <see langword="null"/> when no relay is of the kind.</returns>
-    private static string? Part(UpdateHoldSnapshot holds, RelayReconnect reconnect, string one, string many, string? need)
+    private static string? Part(UpdateHoldSnapshot holds, RelayReconnect reconnect, string one, string many, string? named, string? counted, int spelledOut)
     {
         var relays = holds.Relays.Where(relay => relay.Reconnect == reconnect).ToList();
 
@@ -293,26 +394,28 @@ internal static class UpdateToastContent
             return null;
         }
 
-        var names = relays.Where(relay => relay.Label is not null).Select(relay => relay.Label!.ShownAsATab()).ToList();
+        var spelled = relays.Where(relay => relay.Label is not null).Select(relay => relay.Label!.ShownAsATab()).Take(spelledOut).ToList();
 
         string who;
+        string? need;
 
-        if (names.Count is 0)
+        if (spelled.Count is 0)
         {
             who = relays.Count is 1 ? $"1 {one}" : $"{relays.Count} {many}";
+            need = counted;
         }
         else
         {
-            var spelled = names.Take(NamesSpelledOut).ToList();
             var more = relays.Count - spelled.Count;
 
             who = more > 0
                 ? $"{string.Join(", ", spelled)} and {more} more"
                 : spelled.Count is 1 ? spelled[0] : $"{spelled[0]} and {spelled[1]}";
+            need = named;
         }
 
         return need is null
-            ? $"{who} may need BrowserAI reconnected"
+            ? $"{who} may need a reconnect"
             : $"{who} {(relays.Count is 1 ? "needs" : "need")} {need}";
     }
 
@@ -543,6 +646,11 @@ internal static class UpdateToastContent
 
         return xml.Append("</actions></toast>").ToString();
     }
+
+    /// <summary>The folder a log file is in, as its path names it, or the path itself when it names none.</summary>
+    /// <param name="path">The path.</param>
+    /// <returns>The folder.</returns>
+    private static string FolderOf(string path) => path.LastIndexOf('\\') is > 0 and var cut ? path[..cut] : path;
 
     private static string Escape(string text) => SecurityElement.Escape(text);
 }

@@ -155,18 +155,21 @@ release body; nothing else depends on it.
   afterwards. **Install now** opens the dashboard's update page and **Wait for inactivity** closes
   it; a version the person chose to wait for is raised again after a restart into the Notification
   Centre with no banner. Three more follow it: installing, with **Dismiss**; installed, with
-  **Changelog** and **Dismiss**; and failed, naming Velopack's log and BrowserAI's. The countdown is
-  the progress element's bound fields, which the screen measurement of 2026-10-08 saw update in
-  place with no new banner and no sound, and each toast has a tag of its own with the others removed
-  first, because a replacement under one tag popped up again in only 4 of 6. Measured on his screen
-  the same night and kept by his 2.1 a of 2026-10-10: a removal followed by a show under the
-  toast's own tag popped up 85 times of 86 while the old banner showed, against 58 of 77 for one
-  tag shared. A click reaches a COM
-  activator that the install hooks register for a class derived from the application id, so the
-  suite's test pack never takes over a real install's. The background raises the ready and
-  installing toasts, and the start Velopack makes after an update raises the installed or the
-  failed one. `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and `ToastActivationTests`
-  hold it, planted red first, and no test shows a toast.
+  **Changelog** and **Dismiss**; and failed, naming the folders Velopack's log and BrowserAI's are
+  in. The countdown is the progress element's bound fields, which the screen measurement of
+  2026-10-08 saw update in place with no new banner and no sound, and each toast has a tag of its
+  own with the others removed first, because a replacement under one tag popped up again in only 4
+  of 6. Measured on his screen the same night and kept by his 2.1 a of 2026-10-10: a removal
+  followed by a show under the toast's own tag popped up 85 times of 86 while the old banner showed,
+  against 58 of 77 for one tag shared. Every toast's text is held to its banner, a title in two
+  lines and the rest in four at the width the banner wraps at, read off that night's screen crops,
+  so the reconnect line spells out names while they fit and counts the clients when they would
+  not. A click reaches a COM activator that the install hooks register for a class derived from
+  the application id, so the suite's test pack never takes over a real install's. The background
+  raises the ready and installing toasts, and the failed one when handing the update to the
+  installer throws; the start Velopack makes after an update raises the installed or the failed
+  one. `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and
+  `ToastActivationTests` hold it, planted red first, and no test shows a toast.
 
 - ✨ **The dashboard has an update page: what holds the update, each with a countdown, and Install now.**
   T and H1, the maintainer's words verbatim: *"the install now button takes you to the browser

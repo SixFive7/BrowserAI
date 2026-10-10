@@ -158,7 +158,7 @@ internal sealed class UpdateToastsTests
 
         await Assert.That(after.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installing", "remove installed", "show failed seq=0 banner=yes reboot=no"));
         await Assert.That(after.Surface.Shown[^1].Xml).Contains("BrowserAI 1.1.0 is still installed.");
-        await Assert.That(after.Surface.Shown[^1].Xml).Contains(Rig.Facts.VelopackLog);
+        await Assert.That(after.Surface.Shown[^1].Xml).Contains(@"%LocalAppData%\velopack, and BrowserAI&apos;s in C:\data\logs.");
         await Assert.That(after.Memory.WaitedFor()).IsNull();
 
         // And a process that holds no update raises no ready toast.

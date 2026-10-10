@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
@@ -55,7 +56,7 @@ internal sealed partial class UpdateToastContentTests
         [
             "BrowserAI 1.2.0 is ready to install",
             "It installs by itself once BrowserAI has been idle.",
-            "After the update: 1 Claude Code terminal needs /mcp, BrowserAI, Reconnect; 1 Codex conversation needs a new conversation.",
+            "After the update: 1 Claude Code terminal needs /mcp, BrowserAI, Reconnect; 1 Codex conversation needs a new one.",
         ]));
 
         var progress = toast.Descendants("progress").Single();
@@ -133,7 +134,7 @@ internal sealed partial class UpdateToastContentTests
         [
             "The update to 1.2.0 failed",
             "BrowserAI 1.1.0 is still installed.",
-            $"What happened is in Velopack's log, {velopack}, and in BrowserAI's log in {own}.",
+            $@"Velopack's log is in %LocalAppData%\velopack, and BrowserAI's in {own}.",
         ]));
         await Assert.That(Joined(Buttons(failed))).IsEqualTo(Joined(["Dismiss"]));
         await Assert.That(Joined(Clicks(failed))).IsEqualTo(Joined([new ToastClick(ToastAction.Dismiss, null)]));
@@ -158,7 +159,7 @@ internal sealed partial class UpdateToastContentTests
 
         var failed = Load(UpdateToastContent.Failed(Odd, Odd, "<a>", "&b"));
 
-        await Assert.That(Texts(failed)[2]).IsEqualTo("What happened is in Velopack's log, <a>, and in BrowserAI's log in &b.");
+        await Assert.That(Texts(failed)[2]).IsEqualTo("Velopack's log is in <a>, and BrowserAI's in &b.");
     }
 
     /// <summary>
@@ -293,7 +294,7 @@ internal sealed partial class UpdateToastContentTests
 
         await Assert.That(values["progressTitle"]).IsEqualTo("5 agents, 2 hidden browsers, 2 windows");
         await Assert.That(UpdateToastContent.Reconnects(holds)).IsEqualTo(
-            "After the update: 2 Claude Code terminals need /mcp, BrowserAI, Reconnect; 2 Codex conversations need a new conversation; 1 client may need BrowserAI reconnected.");
+            "After the update: 2 Claude Code terminals need /mcp, BrowserAI, Reconnect; 2 Codex conversations need a new one; 1 client may need a reconnect.");
     }
 
     /// <summary>
@@ -312,6 +313,15 @@ internal sealed partial class UpdateToastContentTests
     /// <para>
     /// <b>Planted red 2026-10-10</b> against a line that counted every relay as before,
     /// and against one that spelled out every name.
+    /// </para>
+    /// <para>
+    /// <b>Its first line names one kind alone</b> since #47 of the texts review the same
+    /// day: with three kinds in it the line no longer fits the banner, and it is counted,
+    /// which <see cref="EveryToastsTextShowsWholeInItsBanner"/> holds.
+    /// <i>Changed 2026-10-10 (previously the first line named all three kinds, as
+    /// <i>After the update: "Fix the login bug", "Refactor the session ind..." and 2 more
+    /// need /mcp, BrowserAI, Reconnect; Codex in BrowserAI needs a new conversation; 1
+    /// client may need BrowserAI reconnected.</i>).</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -332,9 +342,19 @@ internal sealed partial class UpdateToastContentTests
             relay(RelayReconnect.None, new ConversationName("A tab that comes back by itself", IsTitle: true)),
         ]);
 
+        var terminals = holds with { Relays = [.. holds.Relays.Where(relay => relay.Reconnect is RelayReconnect.McpReconnect)] };
+
+        await Assert.That(UpdateToastContent.Reconnects(terminals)).IsEqualTo(
+            "After the update: \"Fix the login bug\", \"Refactor the session ind...\" and 2 more need /mcp, BrowserAI, Reconnect.");
+
+        // A Codex conversation named needs a new conversation; counted, a new one.
+        var codex = holds with { Relays = [.. holds.Relays.Where(relay => relay.Reconnect is RelayReconnect.NewConversation)] };
+
+        await Assert.That(UpdateToastContent.Reconnects(codex)).IsEqualTo("After the update: Codex in BrowserAI needs a new conversation.");
+
+        // All three kinds at once are too many names for the banner, so they are counted.
         await Assert.That(UpdateToastContent.Reconnects(holds)).IsEqualTo(
-            "After the update: \"Fix the login bug\", \"Refactor the session ind...\" and 2 more need /mcp, BrowserAI, Reconnect;"
-            + " Codex in BrowserAI needs a new conversation; 1 client may need BrowserAI reconnected.");
+            "After the update: 4 Claude Code terminals need /mcp, BrowserAI, Reconnect; 1 Codex conversation needs a new one; 1 client may need a reconnect.");
 
         // One of a kind, named: its name and the singular.
         var one = holds with { Relays = [relay(RelayReconnect.McpReconnect, new ConversationName("Fix the login bug", IsTitle: true))] };
@@ -398,6 +418,122 @@ internal sealed partial class UpdateToastContentTests
         await Assert.That(longest.Length)
             .IsLessThanOrEqualTo(UpdateToastContent.HoldersLineCharacters)
             .Because($"'{longest}' is {longest.Length} characters, and the banner showed {UpdateToastContent.HoldersLineCharacters} of the measured line whole");
+    }
+
+    /// <summary>
+    /// Every toast's text shows whole in its banner, at the longest counts and the names a
+    /// machine realistically reaches and with a default install's paths: a title in the two
+    /// lines a title has, and the second and third lines in the four the two share.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>#47 and #60 of the texts review of 2026-10-10</b>, held to the banner the holders
+    /// line was measured in. The crops of 2026-10-08 show the banner wrapping a text line at
+    /// the width the holders line's 54 characters take, and a count of characters is no
+    /// stand-in for that width here: a line of 53 characters of the failed toast did not
+    /// fit. So this holds the width itself, through <see cref="BannerText"/>, which is
+    /// measured against those crops first.
+    /// </para>
+    /// <para>
+    /// <b>Every combination is asked for</b>: none, 1, 2, 9 or 99 of each kind of
+    /// reconnect, counted or carrying names, a title a tab cuts or BrowserAI's own words
+    /// with a folder in them; the installing, installed and failed toasts of a
+    /// seven-character version with the default install's two log folders; and the broken
+    /// install's toast.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the wording before it, which counted five
+    /// lines of description for a reconnect line of three kinds, and five for the failed
+    /// toast with Velopack's whole path in it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryToastsTextShowsWholeInItsBanner()
+    {
+        // The instrument first, against what the banner showed on 2026-10-08.
+        foreach (var line in BannerText.ShownWhole)
+        {
+            await Assert.That(BannerText.Width(line)).IsLessThanOrEqualTo(BannerText.LinePixels).Because($"the banner showed '{line}' whole");
+        }
+
+        foreach (var text in BannerText.DidNotFit)
+        {
+            await Assert.That(BannerText.Width(text)).IsGreaterThan(BannerText.LinePixels).Because($"the banner did not fit '{text}' on one line");
+        }
+
+        foreach (var (text, lines) in BannerText.Wrapped)
+        {
+            await Assert.That(BannerText.Lines(text).Count).IsGreaterThanOrEqualTo(lines).Because($"the banner took {lines} lines for '{text}'");
+        }
+
+        // The reconnect line has what the second line leaves of the four.
+        await Assert.That(BannerText.Lines("It installs by itself once BrowserAI has been idle.").Count + UpdateToastContent.ReconnectLines)
+            .IsEqualTo(BannerText.DescriptionLines);
+
+        ConversationName[][] names =
+        [
+            [new("Refactor the session index for speed", IsTitle: true), new("Investigate the flaky test in CI", IsTitle: true), new("Claude Code in SixFive7-BrowserAI", IsTitle: false)],
+            [new("Codex in SixFive7-BrowserAI", IsTitle: false), new("Review The Release Notes For 1.2.0", IsTitle: true), new("Write the migration guide", IsTitle: true)],
+            [new("new conversation in RegisterAI", IsTitle: false), new("Summarise the open issues", IsTitle: true), new("Plan the next release", IsTitle: true)],
+        ];
+        RelayReconnect[] kinds = [RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.Unknown];
+        (int Count, bool Named)[] states = [(0, false), (1, false), (2, false), (9, false), (99, false), (1, true), (2, true), (9, true), (99, true)];
+
+        var toasts = new List<(string What, string Xml)>();
+
+        foreach (var terminals in states)
+        {
+            foreach (var codex in states)
+            {
+                foreach (var others in states)
+                {
+                    List<HoldingRelay> relays =
+                    [
+                        .. RelaysOf(kinds[0], terminals, names[0]),
+                        .. RelaysOf(kinds[1], codex, names[1]),
+                        .. RelaysOf(kinds[2], others, names[2]),
+                    ];
+
+                    var holds = new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.10.10", [], [], relays);
+
+                    toasts.Add(($"ready, {terminals}, {codex}, {others}", UpdateToastContent.Ready("1.10.10", holds)));
+                }
+            }
+        }
+
+        var velopack = UpdateToasts.VelopackLogFor("velopack.BrowserAI.app");
+        var own = UpdateToasts.Shortened(@"C:\Users\someone\AppData\Local\BrowserAI\logs", @"C:\Users\someone\AppData\Local");
+
+        toasts.Add(("installing", UpdateToastContent.Installing("1.10.10")));
+        toasts.Add(("installed", UpdateToastContent.Installed("1.10.10")));
+        toasts.Add(("failed", UpdateToastContent.Failed("1.10.10", "1.10.9", velopack, own)));
+        toasts.Add(("broken install", InstallToastContent.Broken()));
+
+        var over = new List<string>();
+        var named = 0;
+
+        foreach (var (what, xml) in toasts)
+        {
+            var texts = Texts(Load(xml));
+            var title = BannerText.Lines(texts[0]).Count;
+            var description = texts.Skip(1).Sum(text => BannerText.Lines(text).Count);
+
+            if (what.StartsWith("ready", StringComparison.Ordinal) && texts.Count > 2
+                && (texts[2].Contains('"', StringComparison.Ordinal) || texts[2].Contains(" in ", StringComparison.Ordinal)))
+            {
+                named++;
+            }
+
+            if (title > BannerText.TitleLines || description > BannerText.DescriptionLines)
+            {
+                over.Add($"{what}: the title takes {title} lines and the rest {description}: {string.Join(" / ", texts.Skip(1))}");
+            }
+        }
+
+        await Assert.That(toasts.Count).IsEqualTo((states.Length * states.Length * states.Length) + 4);
+        await Assert.That(named).IsGreaterThan(0).Because("a line with room for names spells them out");
+        await Assert.That(string.Join(Environment.NewLine, over)).IsEmpty();
     }
 
     /// <summary>What is left is whole seconds rounded up, in minutes and seconds, and in hours from an hour on.</summary>
@@ -506,6 +642,20 @@ internal sealed partial class UpdateToastContentTests
         [.. Enumerable.Range(0, hidden).Select(index => new HoldingSession($@"C:\work\hidden-{index}", null, T0.AddMinutes(10)))],
         [.. Enumerable.Range(0, visible).Select(index => new HoldingSession($@"C:\work\window-{index}", null, T0.AddMinutes(10)))],
         [.. Enumerable.Range(0, agents).Select(index => new HoldingRelay("Claude Code", null, T0.AddMinutes(10), CallInFlight: false, RelayReconnect.None))]);
+
+    /// <summary>So many relays of one kind, the first of them carrying the kind's names when they are named.</summary>
+    /// <param name="kind">The kind.</param>
+    /// <param name="state">How many, and whether they are named.</param>
+    /// <param name="names">The kind's names, in order.</param>
+    /// <returns>The relays.</returns>
+    private static IEnumerable<HoldingRelay> RelaysOf(RelayReconnect kind, (int Count, bool Named) state, ConversationName[] names) =>
+        Enumerable.Range(0, state.Count).Select(index => new HoldingRelay(
+            "Claude Code 2.1.296",
+            @"C:\Source\BrowserAI",
+            T0.AddMinutes(5),
+            CallInFlight: false,
+            kind,
+            Label: state.Named && index < names.Length ? names[index] : null));
 
     private static XDocument Load(string xml) => XDocument.Parse(xml);
 

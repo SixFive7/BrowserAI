@@ -545,6 +545,63 @@ screen unlocked. It removes its own groups and nothing else; what it leaves is
 Windows' own count of the shell's notifications, which went from 40 to 392 that
 night.
 
+### A toast's text wraps at the banner's width, in four lines of description at most -- read 2026-10-10
+
+`[MACHINE]`. Read on 2026-10-10 off two screen crops of the run above, 2026-10-08,
+Windows 11 Pro **10.0.26300.9550** at 3840x2160: the first round's ready toast and its
+first failed toast, each 1.5 s after its show, `shots/r01-S1-ready-1500.png` and
+`shots/r03-S3-failed-1500.png` in the batch's `out/left-out.sha256`, which names them
+by digest and leaves them out. What each shows, line by line:
+
+| Toast | Line on screen |
+|---|---|
+| ready | *BrowserAI 1.2.0 is ready to install* |
+| ready | *It installs by itself once BrowserAI has been idle.* |
+| ready | *After the update: 1 Claude Code terminal needs /mcp,* |
+| ready | *BrowserAI, Reconnect.* |
+| ready, the progress title | *In use by 3 agents, 2 hidden browsers and 1 visible wi*, cut |
+| failed | *The update to 1.2.0 failed* |
+| failed | *BrowserAI 1.1.0 is still installed.* |
+| failed | *What happened is in Velopack's log, %LocalAppData* |
+| failed | *%\velopack\velopack_BrowserAI.log, and in* |
+| failed | *BrowserAI's log in %LocalAppData%\BrowserAI\logs.* |
+
+- **A text line wraps at the width the holders line is cut at.** Measured through
+  GDI's `GetTextExtentPoint32W` in Segoe UI at 14 px, which agrees with
+  `TextRenderer.MeasureText` to a pixel, every line shown whole is at most 330 px
+  (330, 291, 330, 320 and 320), and each text the banner moved a word on from, or cut,
+  is 337 px or more: the holders line to its 55th character 338, the ready toast's
+  first reconnect line with *BrowserAI,* 399, and the failed toast's second with
+  *BrowserAI's* 337.
+- **A count of characters is a stand-in for that width only for text like the holders
+  line.** A full line of the reconnect line held 52 characters, a line of a path 49,
+  and 53 characters of the failed toast's path line did not fit.
+- **The banner breaks a path inside it**, between *%LocalAppData* and *%\velopack*,
+  so a line of a path can take fewer lines on screen than breaking at spaces counts:
+  the failed toast's third line took three, and breaking at spaces counts four.
+- **Four lines of description, all shown.** Microsoft's page gives a title two lines
+  and the second and third text elements four between them, *"The default (and
+  maximum) is up to 2 lines of text for the title, and up to 4 lines (combined) for
+  the two additional description elements"*, read 2026-10-10 in
+  [App notification content](https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/app-notifications-content#text-elements),
+  and the failed toast showed its four whole.
+- **What this is held by.** `UpdateToastContentTests.EveryToastsTextShowsWholeInItsBanner`
+  measures every toast BrowserAI raises, the broken install's included, through the
+  test harness's `BannerText`, which reads these lines back first and breaks at spaces
+  only, so it can count a line more than the banner takes, as it does for the failed
+  toast of that night. `UpdateToastContent.ReconnectLines` and
+  `.DescriptionLineCharacters` are what the reconnect line weighs names by
+  ([numbers](../numbers.md)).
+- **Not measured**: a description of five lines or more on screen, so what the banner
+  does past four is Microsoft's word; a ready toast with more than one kind of
+  reconnect; and the failed toast with the installed Velopack log's own name,
+  `velopack_BrowserAI.app.log`, four characters longer than the rig's.
+
+**Re-establish it** with the rig of the run above, plan `core`, and read the crops at
+1.5 s of the first ready and the first failed show; then measure each line and each
+line with its next word through `GetTextExtentPoint32W` with a Segoe UI of height
+-14 selected into a memory device context.
+
 ### What the hand-written interop met in Windows' own metadata and objects -- read and run 2026-10-08
 
 `[STABLE]` for the metadata's shape; `[MACHINE]` for the build it was read on.
