@@ -1,0 +1,22 @@
+12:37:45.555 HAND pid=74452 started=2026-10-10T12:37:45.3254510Z ready={"op":"ready","name":"now","pid":74452,"qpc":614875797623,"setting":"Enabled"}
+12:37:46.414 SHOWN 1-ready-longest tag=ready hist={"total":1,"mine":["ready"]}
+12:37:47.981 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\1-ready-longest.png banner rows 347..638 (292 px tall) on screen x 3460..3823 y 1807..2098
+12:37:54.458 REMOVED ready hist={"total":0,"mine":[]}
+12:37:55.197 SHOWN 1b-ready-counted tag=ready hist={"total":1,"mine":["ready"]}
+12:37:56.716 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\1b-ready-counted.png banner rows 347..638 (292 px tall) on screen x 3460..3823 y 1807..2098
+12:38:03.296 REMOVED ready hist={"total":0,"mine":[]}
+12:38:04.020 SHOWN 2-ready-older tag=ready hist={"total":1,"mine":["ready"]}
+12:38:05.541 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\2-ready-older.png banner rows 328..638 (311 px tall) on screen x 3460..3823 y 1788..2098
+12:38:12.033 REMOVED ready hist={"total":0,"mine":[]}
+12:38:12.761 SHOWN 3-installing tag=installing hist={"total":1,"mine":["installing"]}
+12:38:14.289 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\3-installing.png banner rows 482..638 (157 px tall) on screen x 3460..3823 y 1942..2098
+12:38:20.772 REMOVED installing hist={"total":0,"mine":[]}
+12:38:21.490 SHOWN 4-installed tag=installed hist={"total":1,"mine":["installed"]}
+12:38:23.020 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\4-installed.png banner rows 501..638 (138 px tall) on screen x 3460..3823 y 1961..2098
+12:38:29.508 REMOVED installed hist={"total":0,"mine":[]}
+12:38:30.229 SHOWN 5-failed tag=failed hist={"total":1,"mine":["failed"]}
+12:38:31.749 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\5-failed.png banner rows 445..638 (194 px tall) on screen x 3460..3823 y 1905..2098
+12:38:38.255 REMOVED failed hist={"total":0,"mine":[]}
+12:38:38.980 SHOWN 6-broken tag=install-broken hist={"total":1,"mine":["install-broken"]}
+12:38:40.498 SAVED C:\Source\SixFive7\BrowserAI\.work\toast-popup\now\6-broken.png banner rows 426..638 (213 px tall) on screen x 3460..3823 y 1886..2098
+12:38:47.070 DONE: group removed, 0 of ours left, 0 under the app id; hand exited=True code=0

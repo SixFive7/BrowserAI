@@ -112,6 +112,16 @@ internal sealed class SessionStore : IDisposable
     /// <summary>The <c>outcome</c> of a call that failed.</summary>
     public const string Failed = "failed";
 
+    /// <summary>The <c>outcome</c> of a call the hold-back held once: a valid call, and no failure.</summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.2 c, 2026-10-10</b>: a resume held back by the hold-back stays
+    /// an error to the client, and the session's own record and <c>browserai_catch_up</c>
+    /// list it as held back. <i>Added that day (previously such a row was settled
+    /// <see cref="Failed"/>).</i> A build older than this one reads the value as no outcome
+    /// it knows, which its <c>browserai_catch_up</c> lists as no answer recorded.
+    /// </remarks>
+    public const string HeldBack = "held-back";
+
     private readonly SqliteDatabase _database;
 
     private SessionStore(SqliteDatabase database, bool writable)
@@ -561,7 +571,7 @@ internal sealed record StoredStatement(string Field, string At, string Value);
 /// <param name="At">When the call was made, before it was forwarded.</param>
 /// <param name="Tool">The tool name, verbatim.</param>
 /// <param name="Why">What the caller said it was for.</param>
-/// <param name="Outcome">In flight, successful, or failed.</param>
+/// <param name="Outcome">In flight, successful, failed, or held back since 2026-10-10.</param>
 /// <param name="SettledAt">When the answer arrived, or <see langword="null"/> while it has not.</param>
 /// <param name="Failure">The failure payload, or <see langword="null"/> when there was none.</param>
 internal sealed record StoredLogEntry(

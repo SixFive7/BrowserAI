@@ -1,0 +1,79 @@
+[
+  {
+    "file": "1-ready-longest",
+    "tag": "ready",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=update-page\u0026amp;version=1.1.1-alpha.0.323\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EBrowserAI 1.1.1-alpha.0.323 is ready to install\u003C/text\u003E\u003Ctext\u003EIt installs by itself once BrowserAI has been idle.\u003C/text\u003E\u003Ctext\u003EAfter the update: 1 Codex conversation needs a new one; new conversation in RegisterAI, \u0026quot;Summarise the open issues\u0026quot; and 97 more may need a reconnect.\u003C/text\u003E\u003Cprogress title=\u0022{progressTitle}\u0022 value=\u0022{progressValue}\u0022 valueStringOverride=\u0022{progressValueString}\u0022 status=\u0022{progressStatus}\u0022/\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Install now\u0022 arguments=\u0022action=install-now\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003Caction content=\u0022Wait for inactivity\u0022 arguments=\u0022action=wait\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": true,
+    "note": "reconnect line with names: After the update: 1 Codex conversation needs a new one; new conversation in RegisterAI, \u0022Summarise the open issues\u0022 and 97 more may need a reconnect.",
+    "data": {
+      "progressTitle": "99 agents, 99 hidden browsers, 99 windows",
+      "progressStatus": "Installs in 10:00 if nothing uses it",
+      "progressValueString": "at 14:46",
+      "progressValue": "0.0000"
+    },
+    "seq": 1
+  },
+  {
+    "file": "1b-ready-counted",
+    "tag": "ready",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=update-page\u0026amp;version=1.1.1-alpha.0.323\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EBrowserAI 1.1.1-alpha.0.323 is ready to install\u003C/text\u003E\u003Ctext\u003EIt installs by itself once BrowserAI has been idle.\u003C/text\u003E\u003Ctext\u003EAfter the update: 99 Claude Code terminals need /mcp, BrowserAI, Reconnect; 99 Codex conversations need a new one; 99 clients may need a reconnect.\u003C/text\u003E\u003Cprogress title=\u0022{progressTitle}\u0022 value=\u0022{progressValue}\u0022 valueStringOverride=\u0022{progressValueString}\u0022 status=\u0022{progressStatus}\u0022/\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Install now\u0022 arguments=\u0022action=install-now\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003Caction content=\u0022Wait for inactivity\u0022 arguments=\u0022action=wait\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": true,
+    "note": "reconnect line counted: After the update: 99 Claude Code terminals need /mcp, BrowserAI, Reconnect; 99 Codex conversations need a new one; 99 clients may need a reconnect.",
+    "data": {
+      "progressTitle": "99 agents, 99 hidden browsers, 99 windows",
+      "progressStatus": "Installs in 10:00 if nothing uses it",
+      "progressValueString": "at 14:46",
+      "progressValue": "0.0000"
+    },
+    "seq": 1
+  },
+  {
+    "file": "2-ready-older",
+    "tag": "ready",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=update-page\u0026amp;version=1.1.1-alpha.0.323\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EBrowserAI 1.1.1-alpha.0.323, older than 1.1.1-alpha.0.325, is ready to install\u003C/text\u003E\u003Ctext\u003EIt installs by itself once BrowserAI has been idle.\u003C/text\u003E\u003Ctext\u003EAfter the update: 1 Codex conversation needs a new one; new conversation in RegisterAI, \u0026quot;Summarise the open issues\u0026quot; and 97 more may need a reconnect.\u003C/text\u003E\u003Cprogress title=\u0022{progressTitle}\u0022 value=\u0022{progressValue}\u0022 valueStringOverride=\u0022{progressValueString}\u0022 status=\u0022{progressStatus}\u0022/\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Install now\u0022 arguments=\u0022action=install-now\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003Caction content=\u0022Wait for inactivity\u0022 arguments=\u0022action=wait\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": true,
+    "note": "older than 1.1.1-alpha.0.325",
+    "data": {
+      "progressTitle": "99 agents, 99 hidden browsers, 99 windows",
+      "progressStatus": "Installs in 10:00 if nothing uses it",
+      "progressValueString": "at 14:46",
+      "progressValue": "0.0000"
+    },
+    "seq": 1
+  },
+  {
+    "file": "3-installing",
+    "tag": "installing",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=dismiss\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EInstalling BrowserAI 1.1.1-alpha.0.323 now\u003C/text\u003E\u003Ctext\u003EBrowserAI starts again by itself when it is done.\u003C/text\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Dismiss\u0022 arguments=\u0022action=dismiss\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": true,
+    "note": ""
+  },
+  {
+    "file": "4-installed",
+    "tag": "installed",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=changelog\u0026amp;version=1.1.1-alpha.0.323\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EBrowserAI 1.1.1-alpha.0.323 is installed\u003C/text\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Changelog\u0022 arguments=\u0022action=changelog\u0026amp;version=1.1.1-alpha.0.323\u0022 activationType=\u0022background\u0022/\u003E\u003Caction content=\u0022Dismiss\u0022 arguments=\u0022action=dismiss\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": false,
+    "note": ""
+  },
+  {
+    "file": "5-failed",
+    "tag": "failed",
+    "productGroup": "update",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=dismiss\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EThe update to 1.1.1-alpha.0.323 failed\u003C/text\u003E\u003Ctext\u003EBrowserAI 1.1.1-alpha.0.322 is still installed.\u003C/text\u003E\u003Ctext\u003EVelopack\u0026apos;s log is in %LocalAppData%\\velopack, and BrowserAI\u0026apos;s in %LocalAppData%\\BrowserAI\\logs.\u003C/text\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022Dismiss\u0022 arguments=\u0022action=dismiss\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": false,
+    "note": "velopack log %LocalAppData%\\velopack\\velopack_BrowserAI.app.log; own log %LocalAppData%\\BrowserAI\\logs"
+  },
+  {
+    "file": "6-broken",
+    "tag": "install-broken",
+    "productGroup": "install",
+    "xml": "\u003Ctoast scenario=\u0022reminder\u0022 launch=\u0022action=status-page\u0022\u003E\u003Cvisual\u003E\u003Cbinding template=\u0022ToastGeneric\u0022\u003E\u003Ctext\u003EBrowserAI needs reinstalling\u003C/text\u003E\u003Ctext\u003EPart of this install does not match the rest, so no browser session can open. Download BrowserAI.exe from the latest release and run it; your sessions and their files are kept.\u003C/text\u003E\u003C/binding\u003E\u003C/visual\u003E\u003Cactions\u003E\u003Caction content=\u0022How to reinstall\u0022 arguments=\u0022action=status-page\u0022 activationType=\u0022background\u0022/\u003E\u003Caction content=\u0022Dismiss\u0022 arguments=\u0022action=dismiss\u0022 activationType=\u0022background\u0022/\u003E\u003C/actions\u003E\u003C/toast\u003E",
+    "expiresOnReboot": false,
+    "note": ""
+  }
+]

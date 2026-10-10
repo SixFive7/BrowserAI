@@ -56,7 +56,7 @@ internal enum NameSource
     /// <summary>The thread's first message, from the start of its rollout.</summary>
     CodexRollout,
 
-    /// <summary>BrowserAI's words for a conversation with no record yet: <i>new conversation in &lt;folder&gt;</i>.</summary>
+    /// <summary>BrowserAI's words for a conversation with no record yet: <i>unnamed conversation in &lt;folder&gt;</i>, since 2026-10-10 (previously <i>new conversation in &lt;folder&gt;</i>).</summary>
     NoRecordYet,
 
     /// <summary>BrowserAI's words for a conversation it cannot tell: <i>Claude Code in &lt;folder&gt;</i> or <i>Codex in &lt;folder&gt;</i>.</summary>
@@ -151,7 +151,8 @@ internal sealed class ConversationMemo
 /// every <c>/clear</c>, 6 of 6.</item>
 /// <item><b>1.2 a, its name</b>: the VS Code extension's own title rule over the first and
 /// the last 64 KB of the session's record (<see cref="ClaudeCodeTitle"/>); a session with
-/// no record yet is <i>new conversation in &lt;folder&gt;</i>.</item>
+/// no record yet is <i>unnamed conversation in &lt;folder&gt;</i>, since the on-screen check
+/// of 2026-10-10 (previously <i>new conversation in &lt;folder&gt;</i>).</item>
 /// <item><b>1.3 c, when</b>: here, at every draw, and never held open
 /// (<see cref="ClientRecordFile"/>).</item>
 /// <item><b>1.4 a, Codex</b>: the thread of its first tool call named from Codex's index
@@ -307,7 +308,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
             && ClaudeCodeTitle.Of(ends.Head, ends.Tail) is { } title
             && ConversationName.Titled(title.Title) is { } titled
                 ? new(sessionId, titled, source, NameSourceOf(title.Source))
-                : new(sessionId, ClientFolder.Unnamed("new conversation", folder), source, NameSource.NoRecordYet);
+                : new(sessionId, ClientFolder.Unnamed(ClientFolder.UnnamedConversation, folder), source, NameSource.NoRecordYet);
     }
 
     private static NameSource NameSourceOf(TitleSource source) => source switch

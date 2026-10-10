@@ -1092,6 +1092,76 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains("✓");
     }
 
+    /// <summary>
+    /// A resume the hold-back holds is an error to the client and <i>held back</i> in the
+    /// session's own record and in <c>browserai_catch_up</c>, never <i>failed</i>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.2 c of 2026-10-10, verbatim: <i>"23 b - explain 2 and
+    /// 3. ratify the rest"</i>, then <i>"23.2 c"</i></b>, as the root relayed them: a
+    /// resume held back by the hold-back stays flagged as an error in the protocol, but
+    /// the session's own record and <c>browserai_catch_up</c> list it as <i>held back</i>.
+    /// A hold-back is a valid call held once (F2 d), and until that day its row was
+    /// settled <c>failed</c> and listed <i>FAILED</i> beside the calls that really failed.
+    /// <b>Planted red 2026-10-10</b> against the row settled <c>failed</c>, which the store
+    /// read back and the answer listed as <i>FAILED</i>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHeldBackResumeIsListedAsHeldBackAndNotAsFailed()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "held-back");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "a session resumed with another setting",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        var held = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite asking for a window the last run did not have",
+            ["headed"] = true,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        // The protocol half is unchanged: the client is told it did not go through.
+        await Assert.That((bool?)held["isError"]).IsTrue();
+        await Assert.That(TextOf(held)).StartsWith(SettingsHoldBack.HeldBackOnce);
+
+        // The session's own record says held back.
+        using (var store = SessionStore.OpenForReading(SessionPath.For(directory).DataFile))
+        {
+            var row = store.Log().Single(entry => entry.Tool == SessionToolSurface.Resume);
+
+            await Assert.That(row.Outcome).IsEqualTo(SessionStore.HeldBack);
+            await Assert.That(row.Outcome).IsEqualTo("held-back");
+        }
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading back what this session did",
+            ["session"] = directory,
+        }));
+
+        var line = text.Split('\n').Single(entry => entry.Contains($"  {SessionToolSurface.Resume}   ", StringComparison.Ordinal));
+
+        await Assert.That(line).Contains($"{SessionToolSurface.Resume}   HELD BACK");
+        await Assert.That(line).DoesNotContain("FAILED");
+        await Assert.That(text).Contains("      it was held back with: " + SettingsHoldBack.HeldBackOnce);
+        await Assert.That(text).DoesNotContain("it failed with:");
+    }
+
     /// <summary>The numbered log lines of one page, for a stability comparison.</summary>
     /// <param name="text">The page.</param>
     /// <returns>Its entry lines.</returns>

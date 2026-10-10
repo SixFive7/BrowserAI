@@ -159,15 +159,14 @@ internal static class UpdateToastContent
         ArgumentNullException.ThrowIfNull(installed);
 
         // Q308 a, the maintainer's words of 2026-10-03 verbatim: "Q308 a". Automatic
-        // rollback stays, and an older version says so, in the title, where the banner
-        // has two lines and the description keeps its four (built again 2026-10-10).
-        var texts = new List<string>
-        {
-            holds.Older ? $"BrowserAI {version}, older than {installed}, is ready to install" : $"BrowserAI {version} is ready to install",
-            "It installs by itself once BrowserAI has been idle.",
-        };
+        // rollback stays, and an older version says so. ⚠️ On the second line since
+        // 2026-10-10, after that day's on-screen check (previously in the title, "BrowserAI {version},
+        // older than {installed}, is ready to install", where the banner put a line end
+        // inside the installed version at its hyphen): every version starts its line or
+        // follows a short clause that is always the same, so no line can end inside one.
+        var texts = new List<string> { $"BrowserAI {version} is ready to install", holds.Older ? OlderThan(installed) : InstallsWhenIdle };
 
-        if (Reconnects(holds) is { } reconnects)
+        if (Reconnects(holds, ReconnectLines) is { } reconnects)
         {
             texts.Add(reconnects);
         }
@@ -258,9 +257,28 @@ internal static class UpdateToastContent
     /// additional description elements"</i>, read that day in <i>App notification
     /// content</i> on Microsoft Learn, and the failed toast showed all four on the
     /// maintainer's screen on 2026-10-08. The ready toast's second line takes one of them
-    /// (<c>kb/windows/notifications.md</c>).
+    /// (<c>kb/windows/notifications.md</c>), an older version's second line as well
+    /// (<see cref="OlderThan"/>), which <c>UpdateToastContentTests</c> measures.
     /// </remarks>
     public const int ReconnectLines = 3;
+
+    /// <summary>The command the reconnect line tells a Claude Code terminal's person to type.</summary>
+    public const string McpCommand = "/mcp";
+
+    /// <summary>The ready toast's second line, for a version that is not older than the one installed.</summary>
+    public const string InstallsWhenIdle = "It installs by itself once BrowserAI has been idle.";
+
+    /// <summary>The ready toast's second line for a version older than the one installed, Q308 a.</summary>
+    /// <remarks>
+    /// <b>The installed version follows a clause that is always the same and short</b>, so it
+    /// starts at the same place on the first line and no line can end inside it, since the
+    /// on-screen check of 2026-10-10. <b>It takes one line</b>, as the line it stands in
+    /// for does, so the reconnect line keeps its three; that the update installs by itself
+    /// once nothing uses it is the countdown's own line under the bar.
+    /// </remarks>
+    /// <param name="installed">The version installed now.</param>
+    /// <returns>The line.</returns>
+    internal static string OlderThan(string installed) => $"It is older than {installed}.";
 
     /// <summary>How many characters a line of the reconnect line is counted to hold when names are weighed: 50.</summary>
     /// <remarks>
@@ -268,14 +286,19 @@ internal static class UpdateToastContent
     /// <b>Chosen 2026-10-10 against the banner measured on 2026-10-08</b>: the longest
     /// line of a toast's description the banner showed whole held 52 characters, <i>After
     /// the update: 1 Claude Code terminal needs /mcp,</i>, and a line of a path held 49.
-    /// Names are spelled out while the line, broken at spaces into lines of this many
-    /// characters, takes at most <see cref="ReconnectLines"/>; otherwise each kind names
-    /// one, and otherwise none, so a crowded update is counted and not cut.
+    /// Names are spelled out while the line, broken into lines of this many characters
+    /// where the banner breaks one, takes at most <see cref="ReconnectLines"/> and puts no
+    /// line end inside a quoted name; otherwise
+    /// each kind names one, and otherwise none, so a crowded update is counted and not cut.
     /// </para>
     /// <para>
     /// <b>A count of characters stands in for a width only for text like a title</b>, so
     /// <c>UpdateToastContentTests</c> measures every line this lets through, at every
-    /// count and with names of every kind, against the width the banner wraps at.
+    /// count and with names of every kind, against the width the banner wraps at, and
+    /// looks for a line end inside every command, version and quoted name. <i>Added
+    /// 2026-10-10 by addition, after that day's on-screen check</i>: the banner breaks a line
+    /// after a slash or a hyphen that a letter follows as well as at a space, so this
+    /// does too, which it did not until then (<see cref="LineStartsAt"/>).
     /// </para>
     /// </remarks>
     public const int DescriptionLineCharacters = 50;
@@ -296,101 +319,180 @@ internal static class UpdateToastContent
     /// </para>
     /// <para>
     /// <b>And the line shows whole in the banner</b>, since #47 of the texts review of
-    /// 2026-10-10: names are spelled out while the line fits
-    /// <see cref="ReconnectLines"/> lines of <see cref="DescriptionLineCharacters"/>, and
-    /// counted when it would not. Counted, a
-    /// Codex conversation needs <i>a new one</i> and an unplaced client <i>a
-    /// reconnect</i>: <i>After the update: 1 Claude Code terminal needs /mcp, BrowserAI,
-    /// Reconnect; 2 Codex conversations need a new conversation; 1 client may need
-    /// BrowserAI reconnected.</i> counts four lines at the banner's width below the second
-    /// line's one, where the banner has four in all.
+    /// 2026-10-10: names are spelled out while the line fits the lines it is given, at
+    /// <see cref="DescriptionLineCharacters"/> a line, and counted when it would not.
+    /// Counted, a Codex conversation needs <i>a new one</i> and an unplaced client <i>a
+    /// reconnect</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>No line ends inside the command or a quoted name, since 2026-10-10</b>, when
+    /// that day's on-screen check found the banner putting <i>need /</i> on one line and
+    /// <i>mcp, BrowserAI, Reconnect</i> on the next, and broke a title in two. <b>The
+    /// command comes first</b>, <i>After the update: run /mcp, BrowserAI, Reconnect in</i>
+    /// and then who needs it, so it always starts at the same place on the first line;
+    /// <i>corrected that day (previously "After the update: 1 Claude Code terminal needs
+    /// /mcp, BrowserAI, Reconnect", where the command followed a count or names of any
+    /// length)</i>. A form whose names a line would end inside is passed over for the
+    /// next, as a form that takes too many lines is.
     /// </para>
     /// </remarks>
     /// <param name="holds">What holds the update.</param>
-    /// <returns>The sentence.</returns>
-    public static string? Reconnects(UpdateHoldSnapshot holds)
+    /// <returns>The sentence, at the three lines the ready toast's own second line leaves it.</returns>
+    public static string? Reconnects(UpdateHoldSnapshot holds) => Reconnects(holds, ReconnectLines);
+
+    /// <summary>The reconnects the update will cost, in at most so many lines.</summary>
+    /// <param name="holds">What holds the update.</param>
+    /// <param name="lines">How many lines of the banner the sentence may take.</param>
+    /// <returns>The sentence, or <see langword="null"/> when the update costs no reconnect.</returns>
+    internal static string? Reconnects(UpdateHoldSnapshot holds, int lines)
     {
         ArgumentNullException.ThrowIfNull(holds);
 
         for (var spelled = NamesSpelledOut; spelled > 0; spelled--)
         {
-            if (Line(holds, spelled) is { } named && LinesAt(named, DescriptionLineCharacters) <= ReconnectLines)
+            if (Line(holds, spelled) is { } named && Fits(named.Text, named.Whole, lines))
             {
-                return named;
+                return named.Text;
             }
         }
 
-        return Line(holds, 0);
+        return Line(holds, 0)?.Text;
     }
 
-    /// <summary>How many lines a text takes, broken at spaces into lines of so many characters.</summary>
+    /// <summary>How many lines a text takes, broken into lines of so many characters where the banner breaks one.</summary>
     /// <param name="text">The text.</param>
     /// <param name="characters">How many characters a line holds.</param>
-    /// <returns>The lines; a word longer than a line takes as many as it fills.</returns>
-    internal static int LinesAt(string text, int characters)
+    /// <returns>The lines; a piece longer than a line takes as many as it fills.</returns>
+    internal static int LinesAt(string text, int characters) => LineStartsAt(text, characters).Count;
+
+    /// <summary>
+    /// Where each line of a text begins, broken into lines of so many characters where the
+    /// banner breaks one: at a space, which goes, and after a slash or a hyphen that a
+    /// letter follows, which stays at the end of its line.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b>, after that day's on-screen check: until then the line was
+    /// counted broken at spaces only, and the banner of that day broke after the slash of
+    /// <i>/mcp</i> and after the hyphen of a pre-release version.
+    /// </remarks>
+    /// <param name="text">The text.</param>
+    /// <param name="characters">How many characters a line holds.</param>
+    /// <returns>The index in the text each line begins at, the first line's included.</returns>
+    internal static List<int> LineStartsAt(string text, int characters)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentOutOfRangeException.ThrowIfLessThan(characters, 1);
 
-        var lines = 0;
-        var line = 0;
+        var starts = new List<int>();
+        int? line = null;
+        var start = 0;
 
-        foreach (var word in text.Split(' '))
+        for (var index = 0; index <= text.Length; index++)
         {
-            if (line > 0 && line + 1 + word.Length <= characters)
+            int end;
+            int next;
+
+            if (index == text.Length || text[index] is ' ')
             {
-                line += 1 + word.Length;
+                // The space goes with the break.
+                (end, next) = (index, index + 1);
+            }
+            else if (text[index] is '/' or '-' && index + 1 < text.Length && char.IsLetter(text[index + 1]))
+            {
+                // The slash or the hyphen stays at the end of its line.
+                (end, next) = (index + 1, index + 1);
+            }
+            else
+            {
                 continue;
             }
 
-            if (line > 0)
+            if (line is not { } current || end - current > characters)
             {
-                lines++;
+                line = start;
+                starts.Add(start);
             }
 
-            lines += (word.Length - 1) / characters;
-            line = word.Length - ((word.Length - 1) / characters * characters);
+            // A piece longer than a line takes as many as it fills.
+            while (end - line.Value > characters)
+            {
+                line += characters;
+                starts.Add(line.Value);
+            }
+
+            start = next;
         }
 
-        return line > 0 ? lines + 1 : lines;
+        return starts;
+    }
+
+    /// <summary>Whether a text takes at most so many lines and no line of it ends inside a piece that must stay whole.</summary>
+    /// <param name="text">The text.</param>
+    /// <param name="whole">What must show on one line: the command and every quoted name.</param>
+    /// <param name="lines">How many lines it may take.</param>
+    /// <returns>Whether it fits.</returns>
+    private static bool Fits(string text, IReadOnlyList<string> whole, int lines)
+    {
+        var starts = LineStartsAt(text, DescriptionLineCharacters);
+
+        if (starts.Count > lines)
+        {
+            return false;
+        }
+
+        foreach (var piece in whole)
+        {
+            for (var at = text.IndexOf(piece, StringComparison.Ordinal); at >= 0; at = text.IndexOf(piece, at + piece.Length, StringComparison.Ordinal))
+            {
+                if (starts.Exists(start => start > at && start < at + piece.Length))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>The reconnect line with at most so many names of each kind spelled out.</summary>
     /// <param name="holds">What holds the update.</param>
     /// <param name="spelledOut">How many names of each kind it spells out; none counts every kind.</param>
-    /// <returns>The sentence, or <see langword="null"/> when the update costs no reconnect.</returns>
-    private static string? Line(UpdateHoldSnapshot holds, int spelledOut)
+    /// <returns>
+    /// The sentence and what in it must show on one line, or <see langword="null"/> when
+    /// the update costs no reconnect.
+    /// </returns>
+    private static (string Text, List<string> Whole)? Line(UpdateHoldSnapshot holds, int spelledOut)
     {
         var parts = new List<string>();
+        var whole = new List<string>();
 
-        if (Part(holds, RelayReconnect.McpReconnect, "Claude Code terminal", "Claude Code terminals", "/mcp, BrowserAI, Reconnect", "/mcp, BrowserAI, Reconnect", spelledOut) is { } terminals)
+        if (Part(holds, RelayReconnect.McpReconnect, spelledOut, whole) is { } terminals)
         {
-            parts.Add(terminals);
+            // ⚠️ The command first, so it starts at the same place every time (4 a).
+            parts.Add($"run {McpCommand}, BrowserAI, Reconnect in {terminals.Who(one: "1 Claude Code terminal", many: "Claude Code terminals")}");
+            whole.Add(McpCommand);
         }
 
-        if (Part(holds, RelayReconnect.NewConversation, "Codex conversation", "Codex conversations", "a new conversation", "a new one", spelledOut) is { } codex)
+        if (Part(holds, RelayReconnect.NewConversation, spelledOut, whole) is { } codex)
         {
-            parts.Add(codex);
+            parts.Add($"{codex.Who(one: "1 Codex conversation", many: "Codex conversations")} {(codex.Count is 1 ? "needs" : "need")} {(codex.Named ? "a new conversation" : "a new one")}");
         }
 
-        if (Part(holds, RelayReconnect.Unknown, "client", "clients", null, null, spelledOut) is { } unknown)
+        if (Part(holds, RelayReconnect.Unknown, spelledOut, whole) is { } unknown)
         {
-            parts.Add(unknown);
+            parts.Add($"{unknown.Who(one: "1 client", many: "clients")} may need a reconnect");
         }
 
-        return parts.Count is 0 ? null : "After the update: " + string.Join("; ", parts) + ".";
+        return parts.Count is 0 ? null : ("After the update: " + string.Join("; ", parts) + ".", whole);
     }
 
-    /// <summary>One kind's part of the reconnect line: who, and what they need.</summary>
+    /// <summary>One kind's relays as the reconnect line names them: the names it spells out and how many there are.</summary>
     /// <param name="holds">What holds the update.</param>
     /// <param name="reconnect">The kind.</param>
-    /// <param name="one">What one client of the kind is called when it has no name.</param>
-    /// <param name="many">What several are called.</param>
-    /// <param name="named">What the kind needs when the part names it, or <see langword="null"/> for the kind that may need a reconnect.</param>
-    /// <param name="counted">What the kind needs when the part counts it, or <see langword="null"/> for that kind.</param>
     /// <param name="spelledOut">How many names it spells out.</param>
-    /// <returns>The part, or <see langword="null"/> when no relay is of the kind.</returns>
-    private static string? Part(UpdateHoldSnapshot holds, RelayReconnect reconnect, string one, string many, string? named, string? counted, int spelledOut)
+    /// <param name="whole">Where each quoted name it spells out is added, which must show on one line.</param>
+    /// <returns>The kind's part, or <see langword="null"/> when no relay is of the kind.</returns>
+    private static ReconnectPart? Part(UpdateHoldSnapshot holds, RelayReconnect reconnect, int spelledOut, List<string> whole)
     {
         var relays = holds.Relays.Where(relay => relay.Reconnect == reconnect).ToList();
 
@@ -399,29 +501,38 @@ internal static class UpdateToastContent
             return null;
         }
 
-        var spelled = relays.Where(relay => relay.Label is not null).Select(relay => relay.Label!.ShownAsATab()).Take(spelledOut).ToList();
+        var spelled = relays.Where(relay => relay.Label is not null).Select(relay => relay.Label!).Take(spelledOut).ToList();
 
-        string who;
-        string? need;
+        whole.AddRange(spelled.Where(name => name.IsTitle).Select(name => name.ShownAsATab()));
 
-        if (spelled.Count is 0)
+        return new ReconnectPart([.. spelled.Select(name => name.ShownAsATab())], relays.Count);
+    }
+
+    /// <summary>One kind's part of the reconnect line: the names it spells out, and how many relays the kind has.</summary>
+    /// <param name="Spelled">The names spelled out, as the toast shows them.</param>
+    /// <param name="Count">How many relays are of the kind.</param>
+    private sealed record ReconnectPart(IReadOnlyList<string> Spelled, int Count)
+    {
+        /// <summary>Whether the part names any of them.</summary>
+        public bool Named => Spelled.Count > 0;
+
+        /// <summary>Who the part is about: its names and how many more, or its count.</summary>
+        /// <param name="one">What one relay of the kind is called when none is named, with its count.</param>
+        /// <param name="many">What several are called, after their count.</param>
+        /// <returns>The words.</returns>
+        public string Who(string one, string many)
         {
-            who = relays.Count is 1 ? $"1 {one}" : $"{relays.Count} {many}";
-            need = counted;
-        }
-        else
-        {
-            var more = relays.Count - spelled.Count;
+            if (Spelled.Count is 0)
+            {
+                return Count is 1 ? one : $"{Count} {many}";
+            }
 
-            who = more > 0
-                ? $"{string.Join(", ", spelled)} and {more} more"
-                : spelled.Count is 1 ? spelled[0] : $"{spelled[0]} and {spelled[1]}";
-            need = named;
-        }
+            var more = Count - Spelled.Count;
 
-        return need is null
-            ? $"{who} may need a reconnect"
-            : $"{who} {(relays.Count is 1 ? "needs" : "need")} {need}";
+            return more > 0
+                ? $"{string.Join(", ", Spelled)} and {more} more"
+                : Spelled.Count is 1 ? Spelled[0] : $"{Spelled[0]} and {Spelled[1]}";
+        }
     }
 
     /// <summary>The ready toast's bound fields at one moment.</summary>

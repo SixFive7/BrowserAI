@@ -258,7 +258,7 @@ internal sealed class PageServiceTests
                 {
                     301 => server with { Conversation = new ConversationName("Fix the <login> bug", IsTitle: true), Window = window },
                     302 => server with { Conversation = new ConversationName("Claude Code in one", IsTitle: false) },
-                    303 => server with { Conversation = new ConversationName("new conversation in BrowserAI", IsTitle: false), Window = window },
+                    303 => server with { Conversation = new ConversationName("unnamed conversation in BrowserAI", IsTitle: false), Window = window },
                     _ => server,
                 }),
             ],
@@ -270,7 +270,7 @@ internal sealed class PageServiceTests
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
         await Assert.That(body).Contains("<li class=\"server\"><p><strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296, pid 301");
         await Assert.That(body).Contains("<li class=\"server\"><p><strong>Claude Code in one</strong>, claude-code 2.1.296, pid 302");
-        await Assert.That(body).Contains("<li class=\"server\"><p><strong>new conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
+        await Assert.That(body).Contains("<li class=\"server\"><p><strong>unnamed conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
 
         var heading = body.IndexOf("<strong>VS Code window on BrowserAI</strong>", StringComparison.Ordinal);
 

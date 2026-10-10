@@ -9,9 +9,9 @@ namespace BrowserAI.Updates;
 /// <b>The maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept all your
 /// recommendations"</i></b>, which for this type is 1.2 a: the label is the VS Code
 /// extension's own title rule over the conversation's record, and a conversation the
-/// background cannot name gets BrowserAI's own words, <i>new conversation in
-/// &lt;folder&gt;</i>, <i>Claude Code in &lt;folder&gt;</i> or <i>Codex in
-/// &lt;folder&gt;</i>. The measurement behind it, of 2026-10-08, is in
+/// background cannot name gets BrowserAI's own words, <i>unnamed conversation in
+/// &lt;folder&gt;</i> (<i>new conversation in &lt;folder&gt;</i> until the on-screen check
+/// of 2026-10-10), <i>Claude Code in &lt;folder&gt;</i> or <i>Codex in &lt;folder&gt;</i>. The measurement behind it, of 2026-10-08, is in
 /// <see href="../../../kb/mcp/protocol.md">kb/mcp/protocol.md</see>.
 /// </para>
 /// <para>
@@ -172,15 +172,24 @@ internal static class ClientFolder
         return name is { Length: > 0 } ? name : folder;
     }
 
+    /// <summary>What a conversation with no record yet is called, before its folder: <i>unnamed conversation</i>.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously <i>new conversation</i>), after the on-screen
+    /// check the maintainer asked for that day</b>: in the update toast <i>new
+    /// conversation in RegisterAI</i> stood beside <i>needs a new one</i> and read as an
+    /// instruction to start a new conversation, where it names one that has no title yet.
+    /// </remarks>
+    public const string UnnamedConversation = "unnamed conversation";
+
     /// <summary>BrowserAI's words for a conversation it could not name: <i>&lt;what&gt; in &lt;folder&gt;</i>.</summary>
     /// <remarks>
     /// ⚠️ <b>The words with no folder are a guard, which no page or toast meets</b>, said
     /// 2026-10-10 for round 2 of the texts review, #80: every caller passes the relay's
-    /// folder from its greeting, which every relay of this build sends, so <i>new
+    /// folder from its greeting, which every relay of this build sends, so <i>unnamed
     /// conversation</i>, <i>Claude Code</i> and <i>Codex</i> alone are what a greeting
     /// with no folder would get, and the background serves no such relay.
     /// </remarks>
-    /// <param name="what">What it is, such as <i>Claude Code</i> or <i>new conversation</i>.</param>
+    /// <param name="what">What it is, such as <i>Claude Code</i> or <see cref="UnnamedConversation"/>.</param>
     /// <param name="folder">The client's folder, or <see langword="null"/>.</param>
     /// <returns>The name, never a title.</returns>
     public static ConversationName Unnamed(string what, string? folder)

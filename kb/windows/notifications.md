@@ -589,7 +589,10 @@ by digest and leaves them out. What each shows, line by line:
   measures every toast BrowserAI raises, the broken install's included, through the
   test harness's `BannerText`, which reads these lines back first and breaks at spaces
   only, so it can count a line more than the banner takes, as it does for the failed
-  toast of that night. `UpdateToastContent.ReconnectLines` and
+  toast of that night. *Corrected 2026-10-10 (previously "breaks at spaces only"), off
+  that afternoon's crops*: it breaks after a slash or a hyphen that a letter follows as
+  well, which [the entry below](#a-toast-breaks-a-line-after-a-slash-or-a-hyphen-too----read-2026-10-10)
+  measured. `UpdateToastContent.ReconnectLines` and
   `.DescriptionLineCharacters` are what the reconnect line weighs names by
   ([numbers](../numbers.md)).
 - **Not measured**: a description of five lines or more on screen, so what the banner
@@ -601,6 +604,68 @@ by digest and leaves them out. What each shows, line by line:
 1.5 s of the first ready and the first failed show; then measure each line and each
 line with its next word through `GetTextExtentPoint32W` with a Segoe UI of height
 -14 selected into a memory device context.
+
+### A toast breaks a line after a slash or a hyphen too -- read 2026-10-10
+
+`[MACHINE]`. Read on 2026-10-10 off the crops of the on-screen check the maintainer asked
+for that afternoon: seven toasts composed by the product's code at `db50964e`, shown one
+at a time under Windows PowerShell's application id from 12:37:44Z to 12:38:47Z and
+cropped 1.5 s after each show, on the screen and the Windows build of the run above
+([evidence](../../docs/evidence/2026-10-10-toast-screen/README.md), crops left out by
+digest). Five texts, with the lines the banner gave each:
+
+| Toast | Line on screen |
+|---|---|
+| ready, counted, third line | *After the update: 99 Claude Code terminals need /* |
+| | *mcp, BrowserAI, Reconnect; 99 Codex conversations* |
+| | *need a new one; 99 clients may need a reconnect.* |
+| ready, names, third line | *After the update: 1 Codex conversation needs a new* |
+| | *one; new conversation in RegisterAI, "Summarise the* |
+| | *open issues" and 97 more may need a reconnect.* |
+| ready, an older version, title | *BrowserAI 1.1.1-alpha.0.323, older than 1.1.1-* |
+| | *alpha.0.325, is ready to install* |
+| failed, third line | *Velopack's log is in %LocalAppData%\velopack, and* |
+| | *BrowserAI's in %LocalAppData%\BrowserAI\logs.* |
+| broken install, second line | *Part of this install does not match the rest, so no* / *browser session can open. Download BrowserAI.exe* / *from the latest release and run it; your sessions and* / *their files are kept.* |
+
+- **The banner breaks a line after a slash or a hyphen that a letter follows**, as well
+  as at a space, and keeps the slash or the hyphen at the end of its line: *need /* and
+  then *mcp*, *1.1.1-* and then *alpha.0.325*. It broke inside neither *1.1.1* nor
+  *0.325*. So a command, a version or a quoted name can be split across two lines
+  wherever it lands near a line's end, and a title can be split at any of its spaces.
+- **The width agrees with the night of 2026-10-08.** Measured through GDI's
+  `GetTextExtentPoint32W` in Segoe UI at 14 px, every line shown whole is at most 321 px,
+  and every text whose last piece the banner moved on is 338 px or more; 330 px, the
+  width the test harness wraps at, sits between the two. A title measures within 330 px
+  at weight 400 and at weight 600 alike, 327 and 329 px for the two widest, so the
+  harness's one weight is enough for the titles here.
+- **Breaking where the banner does, all five of these texts wrap into exactly the lines
+  the crops show**, which `BannerText.WrappedExactly` holds. Broken at spaces only, the
+  first and the third come out with other lines, ending *need* and *older than*, and the
+  split inside *"/mcp"* and inside the version cannot be seen at all.
+- **And a width read in one process while another thread creates and selects a font of
+  its own can come back wrong.** Measured the same day in the suite's test host: one
+  146-character text wrapped 3,000 times on eight threads gave the same lines 3,000 times
+  alone, and 2,997 times while `UpdateToastContentTests` measured beside it, the other 3
+  ending their second line three words early; with every measuring in the process taken
+  one at a time under one lock, 3,000 of 3,000, twice. Why GDI does this was not found.
+  Before the lock it showed as one to three forms of the toast matrix failing in each run,
+  a different set each time, and once as a text of the harness's own calibration wrapped
+  wrong.
+- **What this is held by.** `UpdateToastContentTests.NoCommandVersionOrQuotedNameIsSplitAcrossTwoLines`
+  looks for a line end inside every command, version and quoted name of every toast the
+  product raises, at every count and with two pre-release versions, after holding
+  `BannerText` to the five texts above and to the three splits they show; and
+  `BannerText` measures under one lock (`BannerText.Measured`).
+- **Not measured**: the toasts as reworded the same day, which have not been on a
+  screen; and the banner's breaks at other characters than these.
+
+**Re-establish it** with the rig of the evidence batch beside the 2026-10-08 batch's
+monitor and event hand, and read the crops at 1.5 s; then measure each line and each line
+with its next piece through `GetTextExtentPoint32W` with a Segoe UI of height -14 selected
+into a memory device context. For the threads, wrap one long text 3,000 times on eight
+threads in a test beside `UpdateToastContentTests`, with `BannerText`'s lock taken out and
+put back.
 
 ### What the hand-written interop met in Windows' own metadata and objects -- read and run 2026-10-08
 

@@ -373,9 +373,10 @@ internal sealed class SessionLock : IDisposable
     /// </remarks>
     /// <param name="id">The row from <see cref="Append"/>.</param>
     /// <param name="outcome">
-    /// <see cref="SessionStore.Successful"/> or <see cref="SessionStore.Failed"/>.
+    /// <see cref="SessionStore.Successful"/>, <see cref="SessionStore.Failed"/>, or
+    /// <see cref="SessionStore.HeldBack"/> for a call the hold-back held, since 2026-10-10.
     /// </param>
-    /// <param name="failure">Why it failed, or <see langword="null"/> when it did not.</param>
+    /// <param name="failure">Why it failed, or what a held call was told, or <see langword="null"/> when it did neither.</param>
     public void Settle(long id, string outcome, byte[]? failure)
     {
         lock (_inProcess)

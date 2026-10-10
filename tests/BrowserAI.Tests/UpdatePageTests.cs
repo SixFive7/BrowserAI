@@ -109,7 +109,7 @@ internal sealed class UpdatePageTests
         [
             new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s1", new ConversationName("Fix the <login> bug", IsTitle: true), window),
             new HoldingRelay("claude-code 2.1.296", @"C:\Source\one", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.McpReconnect, "s2", new ConversationName("Claude Code in one", IsTitle: false)),
-            new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s3", new ConversationName("new conversation in BrowserAI", IsTitle: false), window),
+            new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s3", new ConversationName("unnamed conversation in BrowserAI", IsTitle: false), window),
             new HoldingRelay("claude-code 2.1.296", @"C:\Source\BrowserAI", Now.AddMinutes(8), CallInFlight: false, RelayReconnect.None, "s4", new ConversationName("Second window", IsTitle: true), second),
             new HoldingRelay("someclient 1", null, Now.AddMinutes(8), CallInFlight: false, RelayReconnect.Unknown),
         ]);
@@ -117,7 +117,7 @@ internal sealed class UpdatePageTests
         var agents = Section(Render(holds), "agents");
 
         var first = agents.IndexOf("<strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296 in <code>C:\\Source\\BrowserAI</code>", StringComparison.Ordinal);
-        var unnamedTab = agents.IndexOf("<strong>new conversation in BrowserAI</strong>, claude-code 2.1.296", StringComparison.Ordinal);
+        var unnamedTab = agents.IndexOf("<strong>unnamed conversation in BrowserAI</strong>, claude-code 2.1.296", StringComparison.Ordinal);
         // ⚠️ BrowserAI's words for a conversation it could not name carry the folder's
         // name already, so the whole path is not said after them: round 2 of the texts
         // review, 2026-10-10, #110 (previously "... claude-code 2.1.296 in

@@ -1591,7 +1591,11 @@ internal sealed class SessionManager : IAsyncDisposable
                         !stillLive ? ResumeFinds.NotLive : browserUp ? ResumeFinds.LiveWithItsBrowserUp : ResumeFinds.LiveWithNoBrowserYet,
                         countdownStarted: stillLive && !already.Settings.Idle.IsNever);
 
-                    already.Lock.Settle(heldRow, SessionStore.Failed, Encoding.UTF8.GetBytes(heldBack));
+                    // ⚠️ HELD BACK, NOT FAILED, IN THE SESSION'S OWN RECORD -- the maintainer's
+                    // 23.2 c, 2026-10-10. The client is still told it did not go through,
+                    // and browserai_catch_up lists the call as held back beside what it was
+                    // told. Until that day the row was settled failed.
+                    already.Lock.Settle(heldRow, SessionStore.HeldBack, Encoding.UTF8.GetBytes(heldBack));
 
                     return new ToolOutcome(heldBack, IsError: true);
                 }
@@ -2346,6 +2350,10 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             SessionStore.Successful => text.Append("   ✓").Append(Took(row)),
             SessionStore.Failed => text.Append("   ✗ FAILED").Append(Took(row)),
+
+            // 23.2 c, 2026-10-10: a call the hold-back held is a valid call held once, not a
+            // failure.
+            SessionStore.HeldBack => text.Append("   HELD BACK").Append(Took(row)),
             _ => text.Append("   -- no answer was recorded: the row was written before the call was forwarded and nothing settled it, so the call hung, the child died, or the process ended first"),
         };
 
@@ -2355,7 +2363,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (row.Failure is { Length: > 0 } failure)
         {
-            Indented(text, "      it failed with: ", failure);
+            Indented(text, row.Outcome is SessionStore.HeldBack ? "      it was held back with: " : "      it failed with: ", failure);
         }
     }
 

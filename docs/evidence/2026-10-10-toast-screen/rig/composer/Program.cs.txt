@@ -1,0 +1,131 @@
+// Scratch, 2026-10-10: composes BrowserAI's own toasts with the product's code at db50964e
+// (UpdateToastContent, InstallToastContent, UpdateToasts' path helpers) and writes them as JSON
+// for the rig to show. No string of a toast is typed here; only the inputs are.
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using BrowserAI.Updates;
+
+var output = args[0];
+var now = DateTimeOffset.Now;
+var zone = TimeZoneInfo.Local;
+const string Version = "1.1.1-alpha.0.323";
+const string Newer = "1.1.1-alpha.0.325";
+const string Running = "1.1.1-alpha.0.322";
+
+// The names and states UpdateToastContentTests.EveryToastsTextShowsWholeInItsBanner asks for.
+ConversationName[][] names =
+[
+    [new("Refactor the session index for speed", IsTitle: true), new("Investigate the flaky test in CI", IsTitle: true), new("Claude Code in SixFive7-BrowserAI", IsTitle: false)],
+    [new("Codex in SixFive7-BrowserAI", IsTitle: false), new("Review The Release Notes For 1.2.0", IsTitle: true), new("Write the migration guide", IsTitle: true)],
+    [new("new conversation in RegisterAI", IsTitle: false), new("Summarise the open issues", IsTitle: true), new("Plan the next release", IsTitle: true)],
+];
+RelayReconnect[] kinds = [RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.Unknown];
+(int Count, bool Named)[] states = [(0, false), (1, false), (2, false), (9, false), (99, false), (1, true), (2, true), (9, true), (99, true)];
+
+// Relays that need a reconnect have gone idle, so they appear in the reconnect line and not in the
+// holders count, which the 99 holding relays below fill: every relay counts there, holding or not.
+IEnumerable<HoldingRelay> RelaysOf(RelayReconnect kind, (int Count, bool Named) state, ConversationName[] pool) =>
+    Enumerable.Range(0, state.Count).Select(index => new HoldingRelay(
+        "Claude Code 2.1.296",
+        @"C:\Source\BrowserAI",
+        now.AddMinutes(-1),
+        CallInFlight: false,
+        kind,
+        Label: state.Named && index < pool.Length ? pool[index] : null));
+
+List<HoldingSession> Sessions(string what, int count) =>
+    [.. Enumerable.Range(0, count).Select(index => new HoldingSession($@"C:\work\{what}-{index}", null, now.AddMinutes(10)))];
+
+// The holders line at the tests' longest realistic counts: 99 agents, 99 hidden browsers, 99 windows.
+UpdateHoldSnapshot Holds(List<HoldingRelay> reconnecting, bool older)
+{
+    var filler = 99;
+    List<HoldingRelay> relays =
+    [
+        .. reconnecting,
+        .. Enumerable.Range(0, filler).Select(index => new HoldingRelay("Claude Code 2.1.296", @"C:\Source\BrowserAI", now.AddMinutes(10), CallInFlight: false, RelayReconnect.None)),
+    ];
+
+    return new UpdateHoldSnapshot(now, UpdateHoldState.Held, Version, Sessions("hidden", 99), Sessions("window", 99), relays, Older: older);
+}
+
+var shown = names.SelectMany(pool => pool).Select(name => name.ShownAsATab()).Distinct().ToList();
+int NamesIn(string line) => shown.Count(name => line.Contains(name, StringComparison.Ordinal));
+bool Named(string line) => NamesIn(line) > 0;
+
+// Every combination the test asks for; the longest line the composer still spells names out in,
+// and the longest line it counts.
+string? bestNamed = null, bestCounted = null;
+List<HoldingRelay>? namedRelays = null, countedRelays = null;
+
+foreach (var terminals in states)
+{
+    foreach (var codex in states)
+    {
+        foreach (var others in states)
+        {
+            List<HoldingRelay> relays =
+            [
+                .. RelaysOf(kinds[0], terminals, names[0]),
+                .. RelaysOf(kinds[1], codex, names[1]),
+                .. RelaysOf(kinds[2], others, names[2]),
+            ];
+
+            if (UpdateToastContent.Reconnects(new UpdateHoldSnapshot(now, UpdateHoldState.Held, Version, [], [], relays)) is not { } line)
+            {
+                continue;
+            }
+
+            if (Named(line) && (bestNamed is null || NamesIn(line) > NamesIn(bestNamed) || (NamesIn(line) == NamesIn(bestNamed) && line.Length > bestNamed.Length)))
+            {
+                (bestNamed, namedRelays) = (line, relays);
+            }
+            else if (!Named(line) && (bestCounted is null || line.Length > bestCounted.Length))
+            {
+                (bestCounted, countedRelays) = (line, relays);
+            }
+        }
+    }
+}
+
+var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+var velopack = UpdateToasts.VelopackLogFor("velopack.BrowserAI.app");
+var own = UpdateToasts.Shortened(Path.Combine(local, "BrowserAI", "logs"), local);
+
+var list = new JsonArray();
+
+void Add(string file, string tag, string group, string xml, IReadOnlyDictionary<string, string>? data, bool expiresOnReboot, string note)
+{
+    var entry = new JsonObject { ["file"] = file, ["tag"] = tag, ["productGroup"] = group, ["xml"] = xml, ["expiresOnReboot"] = expiresOnReboot, ["note"] = note };
+
+    if (data is not null)
+    {
+        var values = new JsonObject();
+        foreach (var (key, value) in data)
+        {
+            values[key] = value;
+        }
+
+        entry["data"] = values;
+        entry["seq"] = 1;
+    }
+
+    list.Add(entry);
+}
+
+var longest = Holds(namedRelays!, older: false);
+var counted = Holds(countedRelays!, older: false);
+var olderHolds = Holds(namedRelays!, older: true);
+
+Add("1-ready-longest", UpdateToastContent.ReadyTag, UpdateToastContent.Group, UpdateToastContent.Ready(Version, longest, Running), UpdateToastContent.ReadyData(longest, now, zone, default).Values, true, "reconnect line with names: " + bestNamed);
+Add("1b-ready-counted", UpdateToastContent.ReadyTag, UpdateToastContent.Group, UpdateToastContent.Ready(Version, counted, Running), UpdateToastContent.ReadyData(counted, now, zone, default).Values, true, "reconnect line counted: " + bestCounted);
+Add("2-ready-older", UpdateToastContent.ReadyTag, UpdateToastContent.Group, UpdateToastContent.Ready(Version, olderHolds, Newer), UpdateToastContent.ReadyData(olderHolds, now, zone, default).Values, true, "older than " + Newer);
+Add("3-installing", UpdateToastContent.InstallingTag, UpdateToastContent.Group, UpdateToastContent.Installing(Version), null, true, string.Empty);
+Add("4-installed", UpdateToastContent.InstalledTag, UpdateToastContent.Group, UpdateToastContent.Installed(Version), null, false, string.Empty);
+Add("5-failed", UpdateToastContent.FailedTag, UpdateToastContent.Group, UpdateToastContent.Failed(Version, Running, velopack, own), null, false, $"velopack log {velopack}; own log {own}");
+Add("6-broken", InstallToastContent.Tag, InstallToastContent.Group, InstallToastContent.Broken(), null, false, string.Empty);
+
+File.WriteAllText(output, list.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine($"wrote {list.Count} toasts to {output}");
+Console.WriteLine($"named ({NamesIn(bestNamed!)} names): " + bestNamed);
+Console.WriteLine("counted: " + bestCounted);

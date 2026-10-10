@@ -348,7 +348,9 @@ internal sealed class RelayRoster : IUpdateRelays
         NameSource.CodexIndex => "its name is from Codex's index of named threads",
         NameSource.CodexState => "its name is the thread's first message, from Codex's state database",
         NameSource.CodexRollout => "its name is the thread's first message, from its rollout",
-        NameSource.NoRecordYet => "it has no record yet, so it is called a new conversation in its folder",
+        // The words of the label, since the on-screen check of 2026-10-10 (previously "a new
+        // conversation in its folder").
+        NameSource.NoRecordYet => "it has no record yet, so it is called an unnamed conversation in its folder",
         NameSource.ClientAndFolder => "BrowserAI cannot tell which it is, so it is called by its client and folder",
         _ => "it has no name",
     };

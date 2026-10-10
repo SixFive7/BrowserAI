@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// recommendations"</i></b>: for Claude Code, its file per process when its
 /// <c>procStart</c> is the client's, then <c>CLAUDE_CODE_SESSION_ID</c>, then a session
 /// on the command line, then <i>Claude Code in &lt;folder&gt;</i>; the name by the
-/// extension's title rule, or <i>new conversation in &lt;folder&gt;</i> with no record
+/// extension's title rule, or <i>unnamed conversation in &lt;folder&gt;</i> with no record
 /// yet; for Codex, its first call's thread named from its index, else <i>Codex in
 /// &lt;folder&gt;</i>. Each file read is opened sharing read, write and delete, and a
 /// parse that fails is tried once more. <i>Added later on 2026-10-10</i>: between the
@@ -102,7 +102,7 @@ internal sealed class ConversationReaderTests
         var commandLine = reader.Read(KnownClaudeCode, Facts(config, commandLineSessionId: Resumed), ClientPid, threadId: null, folder, new ConversationMemo());
 
         await Assert.That(commandLine.Conversation).IsEqualTo(Resumed);
-        await Assert.That(commandLine.Name).IsEqualTo(new ConversationName("new conversation in Apples", IsTitle: false));
+        await Assert.That(commandLine.Name).IsEqualTo(new ConversationName("unnamed conversation in Apples", IsTitle: false));
         await Assert.That(commandLine.Source).IsEqualTo(ConversationSource.CommandLine);
         await Assert.That(commandLine.NameSource).IsEqualTo(NameSource.NoRecordYet);
 
@@ -159,7 +159,7 @@ internal sealed class ConversationReaderTests
         var cleared = ConversationReader.Files.Read(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo);
 
         await Assert.That(cleared.Conversation).IsEqualTo(Resumed);
-        await Assert.That(cleared.Name).IsEqualTo(new ConversationName("new conversation in Pears", IsTitle: false));
+        await Assert.That(cleared.Name).IsEqualTo(new ConversationName("unnamed conversation in Pears", IsTitle: false));
     }
 
     /// <summary>
@@ -539,7 +539,7 @@ internal sealed class ConversationReaderTests
 
         var blank = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
 
-        await Assert.That(blank.Name).IsEqualTo(new ConversationName("new conversation in Limes", IsTitle: false));
+        await Assert.That(blank.Name).IsEqualTo(new ConversationName("unnamed conversation in Limes", IsTitle: false));
     }
 
     /// <summary>A value that is not a session id is never taken for one, so it never becomes part of a path.</summary>

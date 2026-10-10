@@ -1,0 +1,108 @@
+# Scratch, 2026-10-10: shows the product's own toasts (composed by composer\ at db50964e into now\toasts.json)
+# one at a time under Windows PowerShell's app id, each about 8 s, removing the previous first, and saves a
+# full-size crop of each banner with an 8 px margin. Windows PowerShell 5.1; the hand is evhand.exe, windowless.
+param([int]$HoldMs = 8000, [int]$Margin = 8)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$dir = Join-Path $here 'now'
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+Add-Type -TypeDefinition (Get-Content -Raw (Join-Path $here 'Rig.cs')) -ReferencedAssemblies System.Drawing, System.Windows.Forms
+Add-Type -TypeDefinition @'
+using System; using System.Drawing; using System.Drawing.Imaging; using System.Runtime.InteropServices;
+public static class Snap
+{
+    public static int[] Grab(Rectangle r, out Bitmap bmp)
+    {
+        bmp = new Bitmap(r.Width, r.Height, PixelFormat.Format32bppArgb);
+        using (var g = Graphics.FromImage(bmp)) g.CopyFromScreen(r.X, r.Y, 0, 0, r.Size);
+        var d = bmp.LockBits(new Rectangle(0, 0, r.Width, r.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        var px = new int[r.Width * r.Height];
+        Marshal.Copy(d.Scan0, px, 0, px.Length);
+        bmp.UnlockBits(d);
+        return px;
+    }
+    static bool Differs(int a, int b)
+    {
+        if (a == b) return false;
+        return Math.Abs(((a >> 16) & 255) - ((b >> 16) & 255)) >= 12 || Math.Abs(((a >> 8) & 255) - ((b >> 8) & 255)) >= 12 || Math.Abs((a & 255) - (b & 255)) >= 12;
+    }
+    // The banner's rows: within columns x0..x1, the rows where at least a fifth of the pixels differ from the baseline.
+    public static string Rows(int[] baseline, int[] now, int width, int height, int x0, int x1, int yMax)
+    {
+        int top = -1, bottom = -1, count = 0;
+        for (int y = 0; y < yMax; y++)
+        {
+            int n = 0;
+            for (int x = x0; x <= x1; x++) if (Differs(baseline[y * width + x], now[y * width + x])) n++;
+            if (n * 5 >= (x1 - x0 + 1)) { if (top < 0) top = y; bottom = y; count++; }
+        }
+        return top + "," + bottom + "," + count;
+    }
+    public static void SaveCrop(Bitmap src, Rectangle r, string path)
+    {
+        using (var c = src.Clone(r, PixelFormat.Format32bppArgb)) c.Save(path, ImageFormat.Png);
+    }
+}
+'@ -ReferencedAssemblies System.Drawing
+[void][TP.Mon]::SetProcessDPIAware()
+[void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+
+$appId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+$group = 'browserai-tp-now'
+$hist = [Windows.UI.Notifications.ToastNotificationManager]::History
+$exe = Join-Path $here 'evhand\bin\Release\net10.0-windows10.0.20348.0\evhand.exe'
+$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$region = New-Object System.Drawing.Rectangle ($b.Right - 900), ($b.Bottom - 700), 900, 700
+$status = Join-Path $dir 'status.txt'
+$toasts = Get-Content -Raw (Join-Path $dir 'toasts.json') | ConvertFrom-Json
+function Now { return [TP.Mon]::Now() }
+function S([string]$s) { $line = ('{0} {1}' -f [DateTime]::UtcNow.ToString('HH:mm:ss.fff'), $s); [IO.File]::AppendAllText($status, $line + "`r`n"); $line }
+
+$h = New-Object TP.Hand $exe, ('--app-id "{0}" --name now' -f $appId)
+$ready = $h.Next(30000)
+S "HAND pid=$($h.Pid) started=$($h.StartUtc.ToString('o')) ready=$ready"
+function Op([hashtable]$o) { $r = $h.Send((ConvertTo-Json -InputObject $o -Compress -Depth 6), 15000); if (-not $r) { throw "no reply to $($o.op)" }; $x = ConvertFrom-Json $r; if ($x.error) { throw "$($o.op): $($x.error)" }; return $x }
+
+$prev = $null
+try
+{
+    foreach ($t in $toasts)
+    {
+        if ($prev) { $x = Op @{ op = 'remove'; tag = $prev; group = $group }; S "REMOVED $prev hist=$($x.hist | ConvertTo-Json -Compress)" }
+        Start-Sleep -Milliseconds 700
+        $bmp0 = $null
+        $base = [Snap]::Grab($region, [ref]$bmp0)
+        $bmp0.Dispose()
+        $o = @{ op = 'show'; tag = $t.tag; group = $group; xml = $t.xml; expiresOnReboot = [bool]$t.expiresOnReboot }
+        if ($t.data) { $o.data = $t.data; $o.seq = 1 }
+        $x = Op $o
+        $shownAt = Now
+        S "SHOWN $($t.file) tag=$($t.tag) hist=$($x.hist | ConvertTo-Json -Compress)"
+        Start-Sleep -Milliseconds 1500
+        $bmp = $null
+        $px = [Snap]::Grab($region, [ref]$bmp)
+        $rows = ([Snap]::Rows($base, $px, $region.Width, $region.Height, 530, 870, 652)).Split(',')
+        $top = [int]$rows[0]; $bottom = [int]$rows[1]
+        if ($top -lt 0) { S "NO BANNER for $($t.file): no rows differ from the baseline"; $bmp.Dispose() }
+        else
+        {
+            $y0 = [Math]::Max(0, $top - $Margin); $y1 = [Math]::Min($region.Height - 1, $bottom + $Margin)
+            $x0 = 520 - $Margin; $x1 = [Math]::Min($region.Width - 1, 883 + $Margin)
+            $rect = New-Object System.Drawing.Rectangle $x0, $y0, ($x1 - $x0 + 1), ($y1 - $y0 + 1)
+            $path = Join-Path $dir ($t.file + '.png')
+            [Snap]::SaveCrop($bmp, $rect, $path)
+            $bmp.Dispose()
+            S ("SAVED {0} banner rows {1}..{2} ({3} px tall) on screen x {4}..{5} y {6}..{7}" -f $path, $top, $bottom, ($bottom - $top + 1), ($region.X + 520), ($region.X + 883), ($region.Y + $top), ($region.Y + $bottom))
+        }
+        while ((Now) - $shownAt -lt $HoldMs) { Start-Sleep -Milliseconds 100 }
+        $prev = $t.tag
+    }
+}
+finally
+{
+    try { $hist.RemoveGroup($group, $appId) } catch { S "REMOVEGROUP threw $($_.Exception.Message)" }
+    $left = @($hist.GetHistory($appId) | Where-Object { $_.Group -eq $group }).Count
+    $all = @($hist.GetHistory($appId)).Count
+    $ok = $h.Close(15000)
+    S "DONE: group removed, $left of ours left, $all under the app id; hand exited=$ok code=$($h.ExitCode)"
+}
