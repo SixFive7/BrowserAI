@@ -421,6 +421,88 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
+    /// The browser's temporary folder is one of the session's folders: catch_up
+    /// names it with what it holds, and destroy removes it with the session.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>4.1 a, the maintainer's words of 2026-10-10, verbatim: "4.1 a - but why
+    /// hidden? Keep it visible. It is a legitimate parts of the session."</b> The
+    /// privacy census of 2026-10-08 found three Chromium temporary files in the
+    /// folder a session's child was given, one of them a 160 by 160 picture a page
+    /// served, in a folder outside every session. The folder is the session's now,
+    /// so the answer that names every file in a session that can hold something
+    /// sensitive names this one too.
+    /// </para>
+    /// <para>
+    /// <b>The fixture is what was found</b>: a Chromium temporary file that is a
+    /// picture, one that is not, and an empty <c>playwright-artifacts-*</c> folder
+    /// beside them, the shape a killed launch leaves. The control is the second
+    /// session, whose temporary folder holds no file and is not named.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBrowsersTemporaryFolderIsNamedWithWhatItHoldsAndGoesWithTheSession()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var used = Path.Combine(sessions.Root, "temporary-files");
+        var clean = Path.Combine(sessions.Root, "no-temporary-files");
+
+        foreach (var directory in new[] { used, clean })
+        {
+            _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = "a session whose browser wrote temporary files",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
+            });
+        }
+
+        var temporary = Path.Combine(used, SessionLayout.TemporaryFolderName);
+
+        // The PNG signature and an IHDR, the 26 header bytes the census read.
+        byte[] picture = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0x0D, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 0xA0, 0, 0, 0, 0xA0, 8, 6];
+
+        _ = Directory.CreateDirectory(Path.Combine(temporary, "playwright-artifacts-x1y2z3"));
+        await File.WriteAllBytesAsync(Path.Combine(temporary, "{6F9619FF-8B86-D011-B42D-00C04FC964FF}.tmp"), picture);
+        await File.WriteAllTextAsync(Path.Combine(temporary, "{0B8A4F21-77E2-4B19-9C55-3A1E6B0D2C44}.tmp"), "chromium");
+
+        async Task<string> catchUp(string directory) => TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["why"] = "the suite reading back a session's temporary folder",
+            ["session"] = directory,
+        }));
+
+        var named = await catchUp(used);
+        var bytes = Directory.EnumerateFiles(temporary, "*", SearchOption.AllDirectories).Sum(path => new FileInfo(path).Length);
+
+        await Assert.That(named).Contains(
+            $"  ⚠️ SENSITIVE: '{SessionLayout.TemporaryFolderName}' is the temporary folder of this session's browser ({Sizes.Describe(bytes)}). "
+            + "It holds the browser's temporary files, images included. "
+            + $"Treat it as a secret; {SessionToolSurface.Destroy} removes it with the session.\n");
+
+        // The control: a temporary folder with no file in it holds nothing to name.
+        await Assert.That(Directory.Exists(Path.Combine(clean, SessionLayout.TemporaryFolderName))).IsTrue();
+        await Assert.That(await catchUp(clean)).DoesNotContain("is the temporary folder");
+
+        // And it goes with the session.
+        var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
+        {
+            ["directory"] = used,
+            ["why"] = "the suite checking that the temporary folder goes with the session",
+        });
+
+        await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true).Because(TextOf(destroyed));
+        await Assert.That(Directory.Exists(temporary)).IsFalse();
+    }
+
+    /// <summary>
     /// What the trace's line says it holds, since 4 a named its action log.
     /// </summary>
     private const string TraceHolds =

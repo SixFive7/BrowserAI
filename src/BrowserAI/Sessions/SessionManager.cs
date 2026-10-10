@@ -2464,6 +2464,20 @@ internal sealed class SessionManager : IAsyncDisposable
                 + $"{SessionToolSurface.Destroy} is what removes it.";
         }
 
+        // ⚠️ THE BROWSER'S TEMPORARY FOLDER IS NAMED WHOLE, since 2026-10-10, 4.1 a,
+        // the maintainer's words verbatim: "4.1 a - but why hidden? Keep it visible.
+        // It is a legitimate parts of the session." The session child's TEMP moved
+        // into the session that day, so the folder is one of the session's own, and
+        // its files are the browser's, under names nobody chose: what to say is the
+        // folder, what it holds, and what removes it. Deleting a file the browser
+        // has open would fail, so this line does not ask for that.
+        if (group.Kind is SensitiveKind.Temporary)
+        {
+            return $"⚠️ SENSITIVE: '{group.Files[0].RelativePath}' is the temporary folder of this session's browser ({size}). "
+                + "It holds the browser's temporary files, images included. "
+                + $"Treat it as a secret; {SessionToolSurface.Destroy} removes it with the session.";
+        }
+
         var one = group.Files.Count is 1;
         var names = Named(group.Files);
 
@@ -3653,12 +3667,20 @@ internal sealed class SessionManager : IAsyncDisposable
                 config,
                 name: $"playwright-mcp[{location.Hash[..8]}]",
 
-                // ⚠️ P5 a, 2026-10-03: the child's temporary folder is inside
-                // this run's own directory, so what a killed browser launch
-                // leaves -- an empty `playwright-artifacts-*` each time, measured
-                // that day -- is removed with the directory and not left in the
-                // user's %TEMP% for ever.
-                temporaryDirectory: Path.Combine(_environment.InstanceDirectory, ChildLaunch.TemporaryFolderName));
+                // ⚠️ P5 a, 2026-10-03: the child's temporary folder is BrowserAI's
+                // own, so what a killed browser launch leaves -- an empty
+                // `playwright-artifacts-*` each time, measured that day -- is not
+                // left in the user's %TEMP% for ever.
+                //
+                // ⚠️ AND IT IS THE SESSION'S SINCE 2026-10-10, 4.1 a, the
+                // maintainer's words verbatim: "4.1 a - but why hidden? Keep it
+                // visible. It is a legitimate parts of the session." Corrected that
+                // day (previously `Path.Combine(_environment.InstanceDirectory,
+                // ChildLaunch.TemporaryFolderName)`, the run's own folder outside
+                // every session, where the 2026-10-08 privacy census found a
+                // picture a page served). In the session's folder, catch_up names
+                // what is in it and destroy removes it with the session.
+                temporaryDirectory: Path.Combine(location.FullPath, SessionLayout.TemporaryFolderName));
 
             // CA2000 is disabled for these two statements and nothing else.
             // Ownership moves into the live session and then into the dictionary

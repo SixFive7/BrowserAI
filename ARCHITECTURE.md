@@ -483,7 +483,12 @@ keeps that measured against a real browser, not assumed. See
 
 **The session directory is the identity.** One directory holds `browserai.lock`
 and `browserai.data` at its root and `profile/`, `output/` and `downloads/`
-beneath it. There is no central registry, no bearer token, no label and no expiry
+beneath it. ⚠️ *Added 2026-10-10 by addition, 4.1 a:* and `temp/`, the session
+child's `TEMP` and `TMP`, which `ChildLaunch.Create` makes when the child starts and
+where the browser and Playwright keep their temporary files. It is a visible folder
+of the session, the maintainer's words verbatim: *"4.1 a - but why hidden? Keep it
+visible. It is a legitimate parts of the session."* Until that day it was the run's
+own folder in the instance directory, outside every session. There is no central registry, no bearer token, no label and no expiry
 timer; all four were designed and then dropped, because the directory already is
 all of those things.
 
@@ -654,7 +659,10 @@ holding a live signed-in profile. It is **read-only and takes no lock it can be
 refused by**: the store is opened read-only, and the walk opens no file inside the
 directory, so a session another BrowserAI is driving answers normally.
 Nothing here reads a cookie database -- the answer a caller acts on is *this may
-hold credentials*, which the file's existence settles.
+hold credentials*, which the file's existence settles. ⚠️ *Added 2026-10-10 by
+addition, 4.1 a:* the browser's temporary folder is one of the kinds the answer
+names, whole and with its size, the way a trace is named as its folder, because a
+picture a page served was found in it (`SessionInventory`, `SensitiveKind.Temporary`).
 
 ⚠️ ***Corrected 2026-08-26 (previously "the record is read the way
 `browserai_list` reads one -- which since 2026-08-24 means under that directory's

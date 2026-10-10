@@ -1100,32 +1100,53 @@ internal sealed class SessionCloseTests
     }
 
     /// <summary>
-    /// A session's child is given a temporary folder inside the run's own
-    /// directory, and never the user's.
+    /// A session's child is given a visible temporary folder inside its own
+    /// session folder, and never the user's or the run's.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>P5 a.</b> Measured 2026-10-03: every browser launch a kill ends leaves
     /// one empty <c>playwright-artifacts-*</c> in the temporary folder its child
     /// was given, and with the user's <c>%TEMP%</c> nothing ever removed one.
-    /// Inside the run's directory it goes when the directory does.
+    /// </para>
+    /// <para>
+    /// <b>4.1 a, the maintainer's words of 2026-10-10, verbatim: "4.1 a - but why
+    /// hidden? Keep it visible. It is a legitimate parts of the session."</b> From
+    /// P5 a until that day the folder was the run's own, inside the instance
+    /// directory and outside every session, and the 2026-10-08 privacy census found
+    /// a picture a page served in it. In the session's folder it is named by
+    /// <c>browserai_catch_up</c> and removed by <c>browserai_destroy</c>.
+    /// <i>Renamed that day (previously
+    /// <c>ASessionChildsTemporaryFolderIsInsideTheRunsOwnDirectory</c>).</i>
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ASessionChildsTemporaryFolderIsInsideTheRunsOwnDirectory()
+    public async Task ASessionChildsTemporaryFolderIsAVisibleFolderOfItsSession()
     {
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var launch = sessions.Launches[^1];
-        var expected = Path.Combine(sessions.Environment.InstanceDirectory, ChildLaunch.TemporaryFolderName);
 
+        // The child is started in the session's output folder, so the session is
+        // the folder above it, spelled as the product spells it.
+        var session = Path.GetDirectoryName(launch.WorkingDirectory)!;
+        var expected = Path.Combine(session, SessionLayout.TemporaryFolderName);
+
+        await Assert.That(string.Equals(session, rig.Session, StringComparison.OrdinalIgnoreCase)).IsTrue().Because($"{session} against {rig.Session}");
         await Assert.That(launch.Environment["TEMP"]).IsEqualTo(expected);
         await Assert.That(launch.Environment["TMP"]).IsEqualTo(expected);
         await Assert.That(Directory.Exists(expected)).IsTrue();
 
-        // The positive control: the user's own TEMP is a different folder, so
-        // the equality above is not satisfied by inheritance.
+        // Visible: no hidden or system attribute on it.
+        await Assert.That(new DirectoryInfo(expected).Attributes & (FileAttributes.Hidden | FileAttributes.System)).IsEqualTo((FileAttributes)0);
+
+        // The positive controls: the user's own TEMP and the run's old folder, which
+        // carried the same name inside the instance directory, are other folders,
+        // so the equality above is not satisfied by inheritance.
         await Assert.That(Environment.GetEnvironmentVariable("TEMP")).IsNotEqualTo(expected);
+        await Assert.That(Directory.Exists(Path.Combine(sessions.Environment.InstanceDirectory, SessionLayout.TemporaryFolderName))).IsFalse();
     }
 
     /// <summary>
@@ -1295,10 +1316,11 @@ internal sealed class SessionCloseTests
         await Assert.That(before).Contains(site.Url("first"));
         await Assert.That(before).Contains(site.Url("second"));
 
-        // P5 a, read off a real launch: the browser's own artifacts folder is in
-        // the temporary folder the child was given, inside the run's directory,
-        // and not in the user's TEMP.
-        var temporary = Path.Combine(sessions.Environment.InstanceDirectory, ChildLaunch.TemporaryFolderName);
+        // P5 a and 4.1 a, read off a real launch: the browser's own artifacts folder
+        // is in the temporary folder the child was given, inside the session's own
+        // folder, and not in the user's TEMP. Corrected 2026-10-10 (previously
+        // "inside the run's directory", the instance directory's own folder).
+        var temporary = Path.Combine(directory, SessionLayout.TemporaryFolderName);
 
         await Assert.That(Directory.EnumerateDirectories(temporary, "playwright-artifacts-*").Any()).IsTrue();
 

@@ -908,6 +908,16 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔒 **A session browser's temporary files stay inside its session.**
+  4.1 a, the maintainer's words verbatim: *"4.1 a - but why hidden? Keep it visible. It is a
+  legitimate parts of the session."* The browser and Playwright keep their temporary files in a
+  visible `temp` folder of the session now, where they were in a shared folder of the running
+  BrowserAI outside every session since 2026-10-03, and the privacy census of 2026-10-08 found a
+  picture a page served there. `browserai_catch_up` names the folder with what it holds, and
+  `browserai_destroy` removes it with the session; both tools' descriptions say so.
+  `SessionCloseTests` and `CatchUpTests` hold it, against real browsers of both families too,
+  each watched red first.
+
 - ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.**
   13 a, from the maintainer's answers of 2026-10-10. sqlite.org released 3.54.0 on 2026-10-09, and the
   amalgamation was downloaded into scratch, checked against the SHA3-256 sqlite.org publishes before

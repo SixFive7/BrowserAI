@@ -77,29 +77,6 @@ internal static class ChildLaunch
     /// </summary>
     public const string BrowsersPathVariable = "PLAYWRIGHT_BROWSERS_PATH";
 
-    /// <summary>
-    /// The folder inside this run's own directory that a session's child is
-    /// given as its <c>TEMP</c> and <c>TMP</c>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>P5 a, the maintainer's words of 2026-10-03, verbatim: "p5 a".</b>
-    /// Measured that day by the hard-kill research: every browser launch a kill
-    /// ends leaves one empty <c>playwright-artifacts-*</c> directory in the
-    /// temporary folder its child was given, which was the user's own
-    /// <c>%TEMP%</c>, and nothing ever removed one -- upstream removes it only on
-    /// a clean close.
-    /// </para>
-    /// <para>
-    /// <b>Inside the run's directory, so its fate is the directory's.</b> A run
-    /// that ends cleanly deletes that directory, and one that is killed has it
-    /// swept at the next start (<see cref="InstanceDirectory"/>). The same move
-    /// <see cref="BrowserProvisioner"/> already makes for the install child's
-    /// download, for a different reason.
-    /// </para>
-    /// </remarks>
-    public const string TemporaryFolderName = "temp";
-
     /// <summary>Builds the options one child is started with.</summary>
     /// <param name="payload">Where <c>node.exe</c> and <c>cli.js</c> live.</param>
     /// <param name="browsersDirectory">
@@ -127,7 +104,20 @@ internal static class ChildLaunch
     /// <param name="temporaryDirectory">
     /// The child's <c>TEMP</c> and <c>TMP</c>, created here, or
     /// <see langword="null"/> to inherit this process's. A session's child gets
-    /// one inside the run's own directory; see <see cref="TemporaryFolderName"/>.
+    /// its session's own; see <see cref="Sessions.SessionLayout.TemporaryFolderName"/>.
+    /// <para>
+    /// <b>P5 a, the maintainer's words of 2026-10-03, verbatim: "p5 a".</b>
+    /// Measured that day by the hard-kill research: every browser launch a kill
+    /// ends leaves one empty <c>playwright-artifacts-*</c> directory in the
+    /// temporary folder its child was given, which was the user's own
+    /// <c>%TEMP%</c>, and nothing ever removed one: upstream removes it only on a
+    /// clean close. ⚠️ <i>Corrected 2026-10-10, 4.1 a (previously "A session's
+    /// child gets one inside the run's own directory; see
+    /// <c>TemporaryFolderName</c>", a constant of this type for a folder of the
+    /// instance directory, swept at the next start).</i> The folder is the
+    /// session's now, so a killed launch's leftovers go when the session is
+    /// destroyed.
+    /// </para>
     /// </param>
     /// <returns>Everything <see cref="DirectStdioClientTransport"/> needs.</returns>
     /// <exception cref="ArgumentException"><paramref name="browsersDirectory"/> is not absolute.</exception>

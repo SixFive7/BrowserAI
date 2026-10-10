@@ -154,6 +154,29 @@ internal static class SessionLayout
     /// <summary>Where the browser puts downloads.</summary>
     public const string DownloadsFolderName = "downloads";
 
+    /// <summary>
+    /// The session child's <c>TEMP</c> and <c>TMP</c>: where the browser and its
+    /// server keep their temporary files.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>4.1 a, the maintainer's words of 2026-10-10, verbatim: "4.1 a - but why
+    /// hidden? Keep it visible. It is a legitimate parts of the session."</b> From
+    /// 2026-10-03 the folder was the run's own, under the shared per-process
+    /// instance directory and outside every session, and the 2026-10-08 privacy
+    /// census found a Chromium session's temporary files there, one of them a
+    /// picture a page served. Inside the session it is one of the session's own
+    /// folders: <c>browserai_catch_up</c> names what is in it and
+    /// <c>browserai_destroy</c> removes it with everything else.
+    /// </para>
+    /// <para>
+    /// <b>It is made when the session's child starts</b>, by
+    /// <c>ChildLaunch.Create</c>, and not with the three folders below: nothing
+    /// else writes into it.
+    /// </para>
+    /// </remarks>
+    public const string TemporaryFolderName = "temp";
+
     /// <summary>Creates the directory and its three subfolders, idempotently.</summary>
     /// <remarks>
     /// <para>

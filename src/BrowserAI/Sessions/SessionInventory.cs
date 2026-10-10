@@ -94,9 +94,12 @@ internal static partial class SessionInventory
             var sensitive = new Dictionary<SensitiveKind, List<SessionFile>>();
             var output = Path.Combine(session.FullPath, SessionLayout.OutputFolderName);
             var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
+            var temporary = Path.Combine(session.FullPath, SessionLayout.TemporaryFolderName);
             long bytes = 0;
             long profileBytes = 0;
             var profileFiles = 0;
+            long temporaryBytes = 0;
+            var temporaryFiles = 0;
             var touched = DateTimeOffset.MinValue;
 
             // A trace is named as the folder that holds it, because that folder is
@@ -134,6 +137,15 @@ internal static partial class SessionInventory
                     continue;
                 }
 
+                // The browser's temporary folder is named whole, as the profile is:
+                // its files are the browser's, under names nobody chose.
+                if (IsUnder(temporary, file))
+                {
+                    temporaryBytes += file.Length;
+                    temporaryFiles++;
+                    continue;
+                }
+
                 if (traceFolders.Any(folder => IsUnder(folder, file)))
                 {
                     continue;
@@ -149,6 +161,11 @@ internal static partial class SessionInventory
 
                     ofKind.Add(new SessionFile(Path.GetRelativePath(session.FullPath, file.FullName), file.Length));
                 }
+            }
+
+            if (temporaryFiles is not 0)
+            {
+                sensitive[SensitiveKind.Temporary] = [new SessionFile(SessionLayout.TemporaryFolderName, temporaryBytes)];
             }
 
             if (traceFolders.Count is not 0)
@@ -529,6 +546,11 @@ internal sealed record SessionContents
 /// (<c>kb/playwright/tools-and-artifacts.md</c>). The browser profile is not a
 /// kind here: it is one folder and is named whole, beside its cookie store.
 /// </para>
+/// <para>
+/// ⚠️ <b>Added 2026-10-10 by addition, 4.1 a:</b> the browser's temporary folder
+/// is a kind, <see cref="Temporary"/>, named whole the way a trace is, because the
+/// session child's <c>TEMP</c> is inside the session since that day.
+/// </para>
 /// </remarks>
 internal enum SensitiveKind
 {
@@ -567,6 +589,18 @@ internal enum SensitiveKind
 
     /// <summary>A file in the session's <c>downloads\</c> folder.</summary>
     Download,
+
+    /// <summary>
+    /// The browser's temporary folder, <c>temp\</c>, named whole with the size of
+    /// everything in it.
+    /// </summary>
+    /// <remarks>
+    /// <b>4.1 a, 2026-10-10</b>: the session child's <c>TEMP</c> moved into the
+    /// session that day. In the folder a session's child had before, the privacy
+    /// census of 2026-10-08 found three Chromium temporary files, one of them a
+    /// 160 by 160 PNG a page served.
+    /// </remarks>
+    Temporary,
 
     /// <summary>BrowserAI's own record of the session, <c>browserai.data</c> and its journal.</summary>
     Record,
