@@ -41,35 +41,6 @@ internal interface IPageHost
     void RunQueuedWork();
 }
 
-/// <summary>What the page asks of the update machinery.</summary>
-internal interface IPageUpdates
-{
-    /// <summary>Why no check can run, or <see langword="null"/> when one can.</summary>
-    UpdateStage? Unavailable { get; }
-
-    /// <summary>
-    /// The release list a local feed is missing, or <see langword="null"/> when the
-    /// feed is not a folder or has one.
-    /// </summary>
-    /// <returns>The path that is not there.</returns>
-    string? MissingReleaseList();
-
-    /// <summary>Asks the feed.</summary>
-    /// <param name="cancellationToken">Ends the wait.</param>
-    /// <returns>What it offers, or <see langword="null"/> for nothing.</returns>
-    Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken);
-
-    /// <summary>The package a server has already downloaded, or <see langword="null"/>.</summary>
-    /// <returns>The candidate.</returns>
-    UpdateCandidate? Staged();
-
-    /// <summary>Downloads the candidate when it is not on disk, and hands it to the updater with a restart.</summary>
-    /// <param name="candidate">What to install.</param>
-    /// <param name="cancellationToken">Ends the download.</param>
-    /// <returns>The work. Once it returns, this process has to exit for the updater to go on.</returns>
-    Task InstallAsync(UpdateCandidate candidate, CancellationToken cancellationToken);
-}
-
 /// <summary>What the page reads of the background's sessions and the clients connected to it.</summary>
 /// <remarks>
 /// <i>Corrected 2026-10-10 (previously "What the page asks of the running servers", with
@@ -113,7 +84,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 {
     private readonly Lock _gate = new();
     private readonly PageFacts _facts;
-    private readonly IPageUpdates _updates;
     private readonly IPageSessions _sessions;
     private readonly IPageRegistration _registrar;
     private readonly IPageHost _host;
@@ -133,12 +103,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private readonly Occasion _firstOccasion;
     private (Served Listener, int Tab)? _occasionTab;
     private bool _stopping;
-    private bool _exitRequested;
-    private UpdateView _update;
-    private UpdateCandidate? _offered;
-    private UpdateCandidate? _staged;
     private SessionsSnapshot _snapshot = SessionsSnapshot.Empty;
-    private CancellationTokenSource? _check;
     private RegistrationSnapshot? _registration;
     private string? _registering;
     private bool _readingRegistration;
@@ -165,7 +130,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// <summary>A page for one coordinator.</summary>
     /// <param name="facts">What does not change.</param>
     /// <param name="firstOccasion">Why the coordinator was started, which the first tab says.</param>
-    /// <param name="updates">The update machinery.</param>
     /// <param name="sessions">The running servers.</param>
     /// <param name="registrar">Every client's registration, read and changed.</param>
     /// <param name="host">The desktop.</param>
@@ -176,7 +140,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     public PageService(
         PageFacts facts,
         Occasion firstOccasion,
-        IPageUpdates updates,
         IPageSessions sessions,
         IPageRegistration registrar,
         IPageHost host,
@@ -186,7 +149,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(facts);
-        ArgumentNullException.ThrowIfNull(updates);
         ArgumentNullException.ThrowIfNull(sessions);
         ArgumentNullException.ThrowIfNull(registrar);
         ArgumentNullException.ThrowIfNull(host);
@@ -196,7 +158,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         _facts = facts;
         _firstOccasion = firstOccasion;
-        _updates = updates;
         _sessions = sessions;
         _registrar = registrar;
         _host = host;
@@ -204,8 +165,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         _clock = clock;
         _linger = linger;
         _logger = logger;
-        _update = new UpdateView(updates.Unavailable ?? UpdateStage.NotChecked);
-        _staged = updates.Staged();
     }
 
     /// <summary>Whether a listener is up.</summary>
@@ -217,16 +176,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             {
                 return _current is not null;
             }
-        }
-    }
-
-    /// <summary>Whether an action asked the coordinator to exit: an install has handed over to the updater.</summary>
-    /// <returns>Whether it did.</returns>
-    public bool IsExitRequested()
-    {
-        lock (_gate)
-        {
-            return _exitRequested;
         }
     }
 
@@ -352,24 +301,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// </summary>
     public void InstallHealthChanged() => Push();
 
-    /// <inheritdoc />
-    public void Staged(UpdateCandidate? pending)
-    {
-        var staged = pending;
-        bool changed;
-
-        lock (_gate)
-        {
-            changed = !string.Equals(staged?.Version, _staged?.Version, StringComparison.Ordinal);
-            _staged = staged;
-        }
-
-        if (changed)
-        {
-            Push();
-        }
-    }
-
     /// <summary>Everything the page would show now.</summary>
     /// <returns>The view.</returns>
     public PageView View(PageKind kind)
@@ -381,7 +312,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         lock (_gate)
         {
-            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering, holds, Changelog, Install?.Difference);
+            return new PageView(_facts, _snapshot, _notes[kind], _registration, _registering, holds, Changelog, Install?.Difference);
         }
     }
 
@@ -397,11 +328,8 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         switch (route)
         {
             case "" when get:
-                // What a server has staged is read again for every page load, so a
-                // tab opened between two of the coordinator's passes is not behind.
-                // The registration is read again too, the way the window read it each
-                // time it opened, and arrives through the stream when it is in.
-                Staged(_updates.Staged());
+                // The registration is read again for every page load, the way the window
+                // read it each time it opened, and arrives through the stream when it is in.
                 StartRegistrationRead();
                 await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Status, query)).ConfigureAwait(false);
                 return true;
@@ -440,27 +368,19 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Served? ending;
-        CancellationTokenSource? check;
 
         lock (_gate)
         {
             ending = _current;
-            check = _check;
             _current = null;
-            _check = null;
             _stopping = true;
         }
 
-        if (check is not null)
-        {
-            await check.CancelAsync().ConfigureAwait(false);
-            check.Dispose();
-        }
-
         ending?.Dispose();
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -597,10 +517,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         var taken = action switch
         {
-            "check-updates" => StartCheck(),
             "install-now" => StartInstallNow(String(request, "version")),
-            "stop-check" => StopCheck(),
-            "install-update" => StartInstall(String(request, "version")),
             "open-folder" => OpenFolder(String(request, "folder")),
             "open-session" => OpenSession(String(request, "session")),
             "open-trace" => OpenTrace(String(request, "trace")),
@@ -732,204 +649,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         }
 
         Push();
-    }
-
-    private bool StartCheck()
-    {
-        CancellationTokenSource cancel;
-
-        lock (_gate)
-        {
-            if (_update.Stage is UpdateStage.Checking or UpdateStage.Installing || _updates.Unavailable is not null)
-            {
-                return true;
-            }
-
-            _check?.Cancel();
-            cancel = _check = new CancellationTokenSource();
-            _update = new UpdateView(UpdateStage.Checking);
-            _offered = null;
-        }
-
-        Push();
-        _ = Task.Run(() => AskTheFeedAsync(cancel), CancellationToken.None);
-        return true;
-    }
-
-    private async Task AskTheFeedAsync(CancellationTokenSource cancel)
-    {
-        UpdateView result;
-        UpdateCandidate? offered = null;
-
-        try
-        {
-            if (_updates.MissingReleaseList() is { } missing)
-            {
-                result = new UpdateView(UpdateStage.NoReleaseList, Details: $"No file at {missing}");
-            }
-            else
-            {
-                // The wait is bounded by the server's own tripwire for the same call and
-                // can be given up from the page; the request itself takes no token.
-                var check = _updates.CheckAsync(cancel.Token);
-                var gaveUp = Task.Delay(Timeout.InfiniteTimeSpan, cancel.Token);
-                var outOfTime = Task.Delay(UpdateBudgets.CrashTripwire, _clock, cancel.Token);
-                var first = await Task.WhenAny(check, gaveUp, outOfTime).ConfigureAwait(false);
-
-                if (first != check)
-                {
-                    result = cancel.IsCancellationRequested
-                        ? new UpdateView(UpdateStage.NotChecked)
-                        : new UpdateView(UpdateStage.Failed, Details: $"The release feed did not answer within {UpdateBudgets.CrashTripwire.TotalMinutes:F0} minutes.");
-                }
-                else
-                {
-                    offered = await check.ConfigureAwait(false);
-                    result = offered is null
-                        ? new UpdateView(UpdateStage.UpToDate)
-                        : new UpdateView(UpdateStage.Available, offered.Version, offered.IsDowngrade);
-                }
-            }
-        }
-#pragma warning disable CA1031 // A failed check is a sentence on the page, never a coordinator that stops.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            result = new UpdateView(UpdateStage.Failed, Details: failure.Message);
-        }
-
-        lock (_gate)
-        {
-            if (!ReferenceEquals(_check, cancel))
-            {
-                // Given up, and perhaps a newer check started: this answer is nobody's.
-                PageServiceLog.CheckDropped(_logger, result.Stage);
-                return;
-            }
-
-            _check = null;
-            _update = result;
-            _offered = offered;
-        }
-
-        cancel.Dispose();
-        Push();
-    }
-
-    private bool StopCheck()
-    {
-        lock (_gate)
-        {
-            if (_update.Stage is not UpdateStage.Checking || _check is null)
-            {
-                return true;
-            }
-
-            _check.Cancel();
-            _check = null;
-            _update = new UpdateView(UpdateStage.NotChecked);
-        }
-
-        Push();
-        return true;
-    }
-
-    private bool StartInstall(string? version)
-    {
-        UpdateCandidate? candidate;
-
-        lock (_gate)
-        {
-            if (_update.Stage is UpdateStage.Installing)
-            {
-                return true;
-            }
-
-            candidate = OnOffer(version);
-
-            if (candidate is null)
-            {
-                _notes[PageKind.Status] = new PageNote("That version is no longer on offer, so nothing was installed. Check for updates again.");
-            }
-            else
-            {
-                _update = new UpdateView(UpdateStage.Installing, candidate.Version);
-                _notes[PageKind.Status] = null;
-            }
-        }
-
-        Push();
-
-        if (candidate is not null)
-        {
-            _ = Task.Run(() => InstallAsync(candidate), CancellationToken.None);
-        }
-
-        return true;
-    }
-
-    /// <summary>The staged or checked candidate of one version, or <see langword="null"/>. Called under the lock.</summary>
-    /// <param name="version">The version the button named.</param>
-    /// <returns>The candidate.</returns>
-    private UpdateCandidate? OnOffer(string? version)
-    {
-        if (_staged is { } staged && string.Equals(staged.Version, version, StringComparison.Ordinal))
-        {
-            return staged;
-        }
-
-        return _offered is { } offered && string.Equals(offered.Version, version, StringComparison.Ordinal) ? offered : null;
-    }
-
-    /// <summary>Installs one candidate: every server asked to stop first, then the hand-over.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Each running server is asked to stop through its pipe before the
-    /// updater is started</b>, so a call it is answering gets Q286 b's sentence and
-    /// its browsers close themselves. The updater's own kill pass ends whatever is
-    /// left once this process has gone, which is what Velopack does on every apply.
-    /// </para>
-    /// <para>
-    /// ⚠️ <i>Corrected 2026-10-08 (previously "The session host is this process's own
-    /// (Q366 b), and it is stopped the way the coordinator's own apply stops it ...
-    /// through ISessionHostHold.StopForUpdate")</i>: the session host went with the
-    /// coordinator when the one resident background took both their places (S a), and
-    /// the background's own install goes through its update core.
-    /// </para>
-    /// </remarks>
-    /// <param name="candidate">What to install.</param>
-    private async Task InstallAsync(UpdateCandidate candidate)
-    {
-        try
-        {
-            // Bounded by the server's own tripwire for the same download, the bound the
-            // window's install ran under.
-            using var bounded = new CancellationTokenSource(UpdateBudgets.CrashTripwire, _clock);
-
-            await _updates.InstallAsync(candidate, bounded.Token).ConfigureAwait(false);
-        }
-#pragma warning disable CA1031 // An install that threw is a sentence on the page; the coordinator keeps running.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            lock (_gate)
-            {
-                _update = new UpdateView(UpdateStage.InstallFailed, candidate.Version, Details: failure.Message);
-            }
-
-            Push();
-            return;
-        }
-
-        Tell($"BrowserAI is installing {candidate.Version}. This tab has stopped, and a new one opens when the install is done.");
-
-        lock (_gate)
-        {
-            _exitRequested = true;
-            _stopping = true;
-        }
-
-        _wake();
     }
 
     private bool OpenFolder(string? folder)
@@ -1246,9 +965,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         [LoggerMessage(EventId = 7012, Level = LogLevel.Information, Message = "The page asked for '{Action}'.")]
         public static partial void Action(ILogger logger, string action);
-
-        [LoggerMessage(EventId = 7013, Level = LogLevel.Information, Message = "An update check that was given up came back ({Stage}), and nobody was waiting for it.")]
-        public static partial void CheckDropped(ILogger logger, UpdateStage stage);
 
         [LoggerMessage(EventId = 7014, Level = LogLevel.Warning, Message = "What holds the update could not be read for the page.")]
         public static partial void HoldsUnread(ILogger logger, Exception failure);

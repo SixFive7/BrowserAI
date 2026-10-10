@@ -23,13 +23,9 @@ internal sealed class PageRig : IDisposable
         Occasion occasion = Occasion.Ordinary,
         IUpdateHolds? holds = null,
         ChangelogSection? changelog = null,
-        UpdateStage? unavailable = null,
         BrokenInstallNotice? install = null)
     {
         Registration = registration ?? new FakeRegistration();
-
-        // Read once, when the page is built, as the product's own update machinery is.
-        Updates.Unavailable = unavailable;
 
         Facts = new PageFacts
         {
@@ -44,7 +40,6 @@ internal sealed class PageRig : IDisposable
         Page = new PageService(
             Facts,
             occasion,
-            Updates,
             Sessions,
             Registration,
             Host,
@@ -64,8 +59,6 @@ internal sealed class PageRig : IDisposable
     public PageFacts Facts { get; }
 
     public ManualClock Clock { get; } = new();
-
-    public FakeUpdates Updates { get; } = new();
 
     public FakeSessions Sessions { get; } = new();
 
@@ -124,48 +117,6 @@ internal sealed class NothingHolds : IUpdateHolds
 
     public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
         Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
-}
-
-/// <summary>The update machinery, scripted.</summary>
-internal sealed class FakeUpdates : IPageUpdates
-{
-    public UpdateStage? Unavailable { get; set; }
-
-    public string? Missing { get; set; }
-
-    public Func<CancellationToken, Task<UpdateCandidate?>> Check { get; set; } = _ => Task.FromResult<UpdateCandidate?>(null);
-
-    public UpdateCandidate? StagedCandidate { get; set; }
-
-    public ConcurrentQueue<UpdateCandidate> Installed { get; } = new();
-
-    public string? MissingReleaseList() => Missing;
-
-    public int Checks => Volatile.Read(ref _checks);
-
-    private int _checks;
-
-    public Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken)
-    {
-        _ = Interlocked.Increment(ref _checks);
-        return Check(cancellationToken);
-    }
-
-    public UpdateCandidate? Staged() => StagedCandidate;
-
-    /// <summary>When set, an install fails with this sentence and hands nothing over.</summary>
-    public string? FailInstall { get; set; }
-
-    public Task InstallAsync(UpdateCandidate candidate, CancellationToken cancellationToken)
-    {
-        if (FailInstall is { } why)
-        {
-            return Task.FromException(new InvalidOperationException(why));
-        }
-
-        Installed.Enqueue(candidate);
-        return Task.CompletedTask;
-    }
 }
 
 /// <summary>The running servers, scripted.</summary>

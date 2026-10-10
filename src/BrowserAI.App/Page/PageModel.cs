@@ -39,47 +39,6 @@ internal sealed record PageFacts
     public required string? ServerRefusal { get; init; }
 }
 
-/// <summary>Where the update section stands.</summary>
-internal enum UpdateStage
-{
-    /// <summary>Nothing has been asked in this coordinator's life.</summary>
-    NotChecked,
-
-    /// <summary>The release feed is being asked.</summary>
-    Checking,
-
-    /// <summary>The feed offers nothing newer and nothing older.</summary>
-    UpToDate,
-
-    /// <summary>The feed is a folder with no release list in it.</summary>
-    NoReleaseList,
-
-    /// <summary>The feed offers a version, newer or older.</summary>
-    Available,
-
-    /// <summary>The check threw, or ran out of time.</summary>
-    Failed,
-
-    /// <summary>No feed is configured for this build.</summary>
-    NoFeed,
-
-    /// <summary>This is not an installed BrowserAI.</summary>
-    NotInstalled,
-
-    /// <summary>A version is being downloaded and installed.</summary>
-    Installing,
-
-    /// <summary>The install threw before it could hand over to the updater.</summary>
-    InstallFailed,
-}
-
-/// <summary>What the update section shows.</summary>
-/// <param name="Stage">Where it stands.</param>
-/// <param name="Version">The version on offer or being installed, when there is one.</param>
-/// <param name="Older">Whether that version is older than the installed one, Q308 a.</param>
-/// <param name="Details">The raw text behind a failure, shown under <i>Show details</i>, Q309 b.</param>
-internal sealed record UpdateView(UpdateStage Stage, string? Version = null, bool Older = false, string? Details = null);
-
 /// <summary>One trace a session holds.</summary>
 /// <param name="Id">An opaque name for it, which is all the page ever sends back.</param>
 /// <param name="Name">The trace's file name.</param>
@@ -223,22 +182,24 @@ internal enum Occasion
 
 /// <summary>Everything the page shows at one moment, which is what one render reads.</summary>
 /// <param name="Facts">What does not change.</param>
-/// <param name="Update">The update section.</param>
-/// <param name="Staged">The version a server has already downloaded and staged, or <see langword="null"/>.</param>
 /// <param name="Sessions">The last read of the sessions.</param>
 /// <param name="Note">The last action's sentence, or <see langword="null"/>.</param>
 /// <param name="Registration">The last read of the registration, or <see langword="null"/> before the first.</param>
 /// <param name="Registering">A sentence while a registration action runs, or <see langword="null"/>.</param>
-/// <param name="Holds">What holds a downloaded update, or <see langword="null"/> where nothing reports it.</param>
+/// <param name="Holds">What holds a downloaded update, or <see langword="null"/> where the read failed or the page does not show it.</param>
 /// <param name="Changelog">The installed version's section of the shipped changelog, or <see langword="null"/>.</param>
 /// <param name="InstallBroken">
 /// The first difference the latest session refused as a broken install met, while the
 /// condition stands, or <see langword="null"/> (10 b, 2026-10-10).
 /// </param>
+/// <remarks>
+/// <i>Corrected 2026-10-10 (previously with the update section's own stage and the
+/// version a server had staged)</i>: the page's own update check, its offer of a
+/// downloaded package and its install are deleted under the maintainer's "9 a",
+/// because the background builds the page with no feed of its own.
+/// </remarks>
 internal sealed record PageView(
     PageFacts Facts,
-    UpdateView Update,
-    string? Staged,
     SessionsSnapshot Sessions,
     PageNote? Note,
     RegistrationSnapshot? Registration = null,

@@ -76,198 +76,48 @@ internal sealed class PageServiceTests
         await Assert.That(style.Header("Content-Type")).IsEqualTo("text/css; charset=utf-8");
     }
 
+    // RETIRED 2026-10-10, with the page's own update machinery, under the maintainer's
+    // "9 a": ACheckSaysWhenTheOfferedVersionIsOlderAndAFailureIsOneSentenceWithTheRawTextUnderDetails
+    // (Q308 a and Q309 b), ACheckTheFeedNeverAnswersEndsAtTheServersOwnTripwire,
+    // AFolderFeedWithNoReleaseListIsNotUpToDateAndAHungCheckCanBeGivenUp and
+    // AStagedUpdateIsInstalledFromItsLinkAfterEveryServerIsAskedToStop (Q310 a). Each
+    // held a check, an offer or an install of the page's own, which nothing could run
+    // since the background built the page with no feed of its own (2026-10-08); the
+    // background checks, and the update page's Install now installs through its update
+    // core. TheOldUpdateActionsAreActionsThePageDoesNotHave holds that they are gone.
+
     /// <summary>
-    /// A check whose answer is an older version says so (Q308 a), one whose answer
-    /// is newer offers it, and one that fails is one plain sentence with the raw text
-    /// under <i>Show details</i> (Q309 b).
+    /// The page has no update check, no offer of a downloaded package and no install of
+    /// its own, so a request for any of them is refused the way an action the page does
+    /// not have is, and nothing runs.
     /// </summary>
     /// <remarks>
-    /// <b>Q308 a and Q309 b, the maintainer's words verbatim: <i>"Q308 a"</i> and
-    /// <i>"Q309 b"</i>.</b> The window showed an older version exactly like an
-    /// upgrade and printed a failure's raw text as its whole sentence; the page does
-    /// neither.
+    /// <b>The maintainer's "9 a", relayed 2026-10-10</b>: code nothing uses goes before
+    /// the build is installed. The background has built this page with no feed of its
+    /// own since 2026-10-08, so its check, its staged offer and its install could not
+    /// run; the background checks, and the update page's Install now installs, through
+    /// the update core.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ACheckSaysWhenTheOfferedVersionIsOlderAndAFailureIsOneSentenceWithTheRawTextUnderDetails()
+    public async Task TheOldUpdateActionsAreActionsThePageDoesNotHave()
     {
         using var rig = new PageRig();
 
-        rig.Updates.Check = _ => Task.FromResult<UpdateCandidate?>(Candidate("8.5.0", older: true));
+        _ = rig.HandOut();
 
-        using var stream = await rig.StreamAsync(rig.HandOut(), 1);
+        foreach (var body in new[]
+        {
+            """{"action":"check-updates"}""",
+            """{"action":"stop-check"}""",
+            """{"action":"install-update","version":"9.2.0"}""",
+        })
+        {
+            var answer = await rig.ActAsync(body);
 
-        await rig.ActAsync("""{"action":"check-updates"}""");
-
-        var older = await StateContainingAsync(stream, "8.5.0 is on offer, and it is older than the installed 9.0.0");
-
-        await Assert.That(older).IsNotNull();
-        await Assert.That(older!).Contains("Install BrowserAI 8.5.0 now");
-
-        rig.Updates.Check = _ => Task.FromResult<UpdateCandidate?>(Candidate("9.1.0"));
-
-        await rig.ActAsync("""{"action":"check-updates"}""");
-
-        var newer = await StateContainingAsync(stream, "BrowserAI 9.1.0 is available.");
-
-        await Assert.That(newer).IsNotNull();
-        await Assert.That(newer!).DoesNotContain("older than the installed");
-
-        rig.Updates.Check = _ => Task.FromException<UpdateCandidate?>(new HttpRequestException("Response status code does not indicate success: 503 (Service Unavailable)."));
-
-        await rig.ActAsync("""{"action":"check-updates"}""");
-
-        var failed = await StateContainingAsync(stream, "The update check did not finish.");
-
-        await Assert.That(failed).IsNotNull();
-        await Assert.That(failed!).Contains("<details><summary>Show details</summary><pre>Response status code does not indicate success: 503 (Service Unavailable).</pre></details>");
-    }
-
-    /// <summary>
-    /// A check the feed never answers ends at the server's own tripwire for the same
-    /// call, on the page's clock, as one sentence with the reason under Show details.
-    /// </summary>
-    /// <remarks>
-    /// <b>What the window's
-    /// <c>ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline</c>
-    /// held, moved with the window's deletion on 2026-10-03</b>: the bound on a check is
-    /// <see cref="BrowserAI.Updates.UpdateBudgets.CrashTripwire"/> and no number of the
-    /// page's own. The arm moves the clock to the newest timer, which is the check's,
-    /// and not by a guess at how long the bound is.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ACheckTheFeedNeverAnswersEndsAtTheServersOwnTripwire()
-    {
-        using var rig = new PageRig();
-
-        var hung = new TaskCompletionSource<UpdateCandidate?>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        rig.Updates.Check = _ => hung.Task;
-
-        using var stream = await rig.StreamAsync(rig.HandOut(), 1);
-
-        await rig.ActAsync("""{"action":"check-updates"}""");
-        await Assert.That(await StateContainingAsync(stream, "Asking the release feed")).IsNotNull();
-
-        // The check's own deadline is the newest timer once the check has started.
-        await Assert.That(await WaitForAsync(() => rig.Clock.UntilTheNewestTimerFires() == UpdateBudgets.CrashTripwire)).IsTrue();
-
-        rig.Clock.Advance(UpdateBudgets.CrashTripwire);
-
-        var failed = await StateContainingAsync(stream, "The update check did not finish.");
-
-        await Assert.That(failed).IsNotNull();
-        await Assert.That(failed!).Contains($"<details><summary>Show details</summary><pre>The release feed did not answer within {UpdateBudgets.CrashTripwire.TotalMinutes:F0} minutes.</pre></details>");
-        await Assert.That(failed).Contains("data-action=\"check-updates\"");
-    }
-
-    /// <summary>
-    /// A feed that is a folder with no release list in it is not read as up to date,
-    /// and a check that does not come back can be given up, its late answer dropped.
-    /// </summary>
-    /// <remarks>
-    /// <b>Two of the three states the 2026-09-24 rendering of the window found</b>:
-    /// a feed folder with no manifest read as up to date, and a hung check showed
-    /// <i>Checking</i> with no way out.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AFolderFeedWithNoReleaseListIsNotUpToDateAndAHungCheckCanBeGivenUp()
-    {
-        using var logs = new CapturingLoggerProvider();
-        using var rig = new PageRig(logs);
-
-        rig.Updates.Missing = @"C:\feed\releases.win.json";
-
-        using var stream = await rig.StreamAsync(rig.HandOut(), 1);
-
-        await rig.ActAsync("""{"action":"check-updates"}""");
-
-        var missing = await StateContainingAsync(stream, "no list of releases in it");
-
-        await Assert.That(missing).IsNotNull();
-        await Assert.That(missing!).Contains("No file at C:\\feed\\releases.win.json");
-        await Assert.That(missing!).DoesNotContain("9.0.0 is up to date");
-
-        // A check that never comes back on its own.
-        var hung = new TaskCompletionSource<UpdateCandidate?>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        rig.Updates.Missing = null;
-        rig.Updates.Check = _ => hung.Task;
-
-        await rig.ActAsync("""{"action":"check-updates"}""");
-
-        var checking = await StateContainingAsync(stream, "Asking the release feed");
-
-        await Assert.That(checking).IsNotNull();
-        await Assert.That(checking!).Contains("data-action=\"stop-check\"");
-
-        await rig.ActAsync("""{"action":"stop-check"}""");
-
-        var stopped = await StateContainingAsync(stream, "has not asked the release feed");
-
-        await Assert.That(stopped).IsNotNull();
-        await Assert.That(stopped!).Contains("data-action=\"check-updates\"");
-
-        // The answer arrives after all, and nobody is waiting for it.
-        hung.SetResult(Candidate("9.9.9"));
-
-        await Assert.That(await WaitForAsync(() => logs.Records.Any(record => record.EventId.Id is 7013))).IsTrue();
-
-        var page = await PageRig.GetAsync(rig.Root + "?tab=1");
-
-        await Assert.That(page.Body).DoesNotContain("9.9.9");
-    }
-
-    /// <summary>
-    /// A package a server has staged is offered with a link that installs it; the
-    /// install asks every running server to stop first, hands over, tells the tab,
-    /// and asks the coordinator to exit; a version no longer on offer installs
-    /// nothing.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q310 a, the maintainer's words verbatim: <i>"Q310 a - the install link
-    /// triggering the (download and) install. Not navigating to the release page I
-    /// assume?"</i></b> The tab is told before the coordinator exits, and after the
-    /// restart there is always a new tab (Q338 b), which is the restart's own start.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AStagedUpdateIsInstalledFromItsLinkAfterEveryServerIsAskedToStop()
-    {
-        using var rig = new PageRig();
-
-        rig.Updates.StagedCandidate = Candidate("9.2.0");
-        rig.Sessions.Snapshot = new SessionsSnapshot(Now, [Server(101, "claude-code", Now.AddMinutes(-30)), Server(102, "codex-mcp-client", null)], []);
-
-        var page = await PageRig.GetAsync(rig.HandOut());
-
-        await Assert.That(page.Body).Contains("BrowserAI 9.2.0 is downloaded and ready to install.");
-        await Assert.That(page.Body).Contains("data-action=\"install-update\" data-version=\"9.2.0\"");
-        await Assert.That(page.Body).Contains(PageContent.Text(PageContent.InstallWarning));
-
-        using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
-
-        // A version that is not on offer installs nothing and says so.
-        await rig.ActAsync("""{"action":"install-update","version":"9.3.0"}""");
-
-        await Assert.That(await StateContainingAsync(stream, "That version is no longer on offer")).IsNotNull();
-        await Assert.That(rig.Updates.Installed.IsEmpty).IsTrue();
-
-        await rig.ActAsync("""{"action":"install-update","version":"9.2.0"}""");
-
-        var closing = await stream.NextNamedAsync(PageEvents.Closing);
-
-        await Assert.That(closing).IsNotNull();
-        await Assert.That(closing!.Member("sentence")).Contains("BrowserAI is installing 9.2.0");
-        await Assert.That(await stream.EndAsync()).IsTrue();
-
-        await Assert.That(rig.Updates.Installed.Select(candidate => candidate.Version).ToArray()).IsEquivalentTo(["9.2.0"]);
-        // Corrected 2026-10-10 (previously the two servers asked to close first): the
-        // page asks nothing to close since 17 a; an update's closing is the update core's.
-        await Assert.That(rig.Page.IsExitRequested()).IsTrue();
-        await Assert.That(rig.Page.HandOut(PageKind.Status)).IsNull();
+            await Assert.That(answer.Status).IsEqualTo(404).Because(body);
+            await Assert.That(answer.Body).IsEmpty();
+        }
     }
 
     // RETIRED 2026-10-10: TheSessionsPageListsEveryServerWithItsWarningsAndClosesOnlyTheSelected,
@@ -685,14 +535,6 @@ internal sealed class PageServiceTests
 
         return true;
     }
-
-    private static UpdateCandidate Candidate(string version, bool older = false) => new()
-    {
-        Version = version,
-        IsDowngrade = older,
-        DeltaCount = 0,
-        FullPackageSize = 1,
-    };
 
     /// <summary>A description from a server of the given role, holding the given sessions.</summary>
     /// <summary>A relay's client, as its greeting names Claude Code.</summary>

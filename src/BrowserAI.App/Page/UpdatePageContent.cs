@@ -99,7 +99,7 @@ internal static class UpdatePageContent
             // so as the status page does. The installed sentence ends at what is
             // installed: since 2026-10-08 the status page checks for nothing itself, and
             // whether the background checks is not something a snapshot says.
-            case { } when view.Update.Stage is UpdateStage.NotInstalled:
+            case { } when view.Facts.InstallRoot is null:
                 _ = html.Append("<p>").Append(PageContent.Text(PageContent.NotInstalledSentence)).Append("</p>\n");
                 break;
 
@@ -168,12 +168,10 @@ internal static class UpdatePageContent
     /// the background reports what holds an update: what waits, and the way to this page.
     /// </summary>
     /// <remarks>
-    /// The background builds its page with no feed of its own since 2026-10-08, so the
-    /// stage reads <see cref="UpdateStage.NoFeed"/> on every installed BrowserAI, and
-    /// that stage's sentence, written for a build with no feed at all, would tell a
-    /// person no feed is set while the background checks one. The section says what
-    /// the background holds; it claims nothing about checks, which a snapshot does not
-    /// carry.
+    /// The background builds its page with no feed of its own since 2026-10-08, and the
+    /// page's own check is deleted (2026-10-10, the maintainer's "9 a"). The section says
+    /// what the background holds; it claims nothing about checks, which a snapshot does
+    /// not carry.
     /// </remarks>
     /// <param name="html">Where to write.</param>
     /// <param name="holds">What the background reports.</param>

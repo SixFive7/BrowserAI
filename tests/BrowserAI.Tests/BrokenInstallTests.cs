@@ -189,10 +189,13 @@ internal sealed class BrokenInstallTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The barrier is a push about something else</b>, a downloaded version staged
-    /// after the refusal: the first state after the refusal must be the one the refusal
-    /// sent, which does not yet name that version. A page told nothing would send the
-    /// barrier's state first.
+    /// <b>The barrier is a push about something else</b>, a downloaded version the
+    /// background holds after the refusal, read by the page's once-a-second watch: the
+    /// first state after the refusal must be the one the refusal sent, which does not
+    /// yet name that version. A page told nothing would send the barrier's state first.
+    /// <i>Corrected 2026-10-10 (previously a version staged through the page's own
+    /// staged setter, deleted with the page's own update machinery under the
+    /// maintainer's "9 a").</i>
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-10</b> against a page whose install change sent no tab
@@ -206,7 +209,10 @@ internal sealed class BrokenInstallTests
         const string Barrier = "9.9.9-barrier";
 
         using var notice = new BrokenInstallNotice(new RecordingSurface(), NullLogger.Instance);
-        using var rig = new PageRig(install: notice);
+
+        var holds = new BarrierHolds();
+
+        using var rig = new PageRig(holds: holds, install: notice);
 
         notice.Changed = rig.Page.InstallHealthChanged;
 
@@ -221,7 +227,8 @@ internal sealed class BrokenInstallTests
         await Assert.That(opened!.Member("html")).DoesNotContain("BrowserAI needs reinstalling.");
 
         notice.Broken(Difference);
-        rig.Page.Staged(new UpdateCandidate { Version = Barrier, IsDowngrade = false, DeltaCount = 0, FullPackageSize = 1 });
+        holds.Snapshot = new UpdateHoldSnapshot(rig.Clock.GetUtcNow(), UpdateHoldState.Held, Barrier, [], [], []);
+        rig.Clock.Advance(PageService.HoldsWatchPeriod);
 
         var first = await stream.NextNamedAsync(PageEvents.State);
 
@@ -279,6 +286,17 @@ internal sealed class BrokenInstallTests
         }
 
         public void Remove(string tag, string group) => _lines.Add($"remove {tag} {group}");
+    }
+
+    /// <summary>What holds an update, as the arm sets it.</summary>
+    private sealed class BarrierHolds : IUpdateHolds
+    {
+        public UpdateHoldSnapshot Snapshot { get; set; } = UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
+
+        public UpdateHoldSnapshot Read() => Snapshot;
+
+        public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
+            Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
     }
 
     /// <summary>A memory of a person's wait that keeps nothing.</summary>

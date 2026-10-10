@@ -138,41 +138,8 @@ internal static class PageContent
         return occasion is Occasion.AfterUpdate ? $"Updated to BrowserAI {facts.Version}" : $"BrowserAI {facts.Version}";
     }
 
-    /// <summary>The update section's sentence for one view, in plain text.</summary>
-    /// <param name="facts">What does not change.</param>
-    /// <param name="update">The section's state.</param>
-    /// <returns>The sentence.</returns>
-    public static string UpdateSentence(PageFacts facts, UpdateView update)
-    {
-        ArgumentNullException.ThrowIfNull(facts);
-        ArgumentNullException.ThrowIfNull(update);
-
-        return update.Stage switch
-        {
-            UpdateStage.NotChecked => "BrowserAI has not asked the release feed for a newer version since this page opened.",
-            UpdateStage.Checking => "Asking the release feed for a newer BrowserAI.",
-            UpdateStage.UpToDate => $"BrowserAI {facts.Version} is up to date.",
-            UpdateStage.NoReleaseList =>
-                "The release feed is a folder with no list of releases in it, so BrowserAI cannot tell whether it is up to date.",
-            UpdateStage.Available when update.Older =>
-                $"BrowserAI {update.Version} is on offer, and it is older than the installed {facts.Version}. Installing it goes back to the earlier version.",
-            UpdateStage.Available => $"BrowserAI {update.Version} is available.",
-            UpdateStage.Failed => "The update check did not finish.",
-            UpdateStage.NotInstalled => NotInstalledSentence,
-            UpdateStage.Installing =>
-                $"Installing BrowserAI {update.Version}. This tab stops working while it installs, and a new tab opens when it is done.",
-            UpdateStage.InstallFailed => $"BrowserAI {update.Version} was not installed.",
-            _ => string.Empty,
-        };
-    }
-
     /// <summary>What a BrowserAI that is not installed says about updates, on the status page and the update page alike.</summary>
     public const string NotInstalledSentence = "This BrowserAI is not installed, so there is nothing to update.";
-
-    /// <summary>What installing closes, said beside every install button.</summary>
-    public const string InstallWarning =
-        "Installing closes BrowserAI and every BrowserAI server running from this install, and their browsers with them. "
-        + "Claude Code starts its server again on its next call. A Codex thread gets BrowserAI back only in a new thread.";
 
     private static string Navigation(PageKind kind, int tab)
     {
@@ -245,78 +212,42 @@ internal static class PageContent
         }
     }
 
+    /// <summary>The status page's update section: what the background holds, or that this BrowserAI is not installed.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The page checks for nothing and installs nothing itself.</b> The background
+    /// checks, on a timer, and the update page's <i>Install now</i> installs through its
+    /// update core, so this section says whether a downloaded update waits and leads to
+    /// the update page, or, where reading that failed, says so (#66 of the texts review).
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-10 (previously the page's own check, with its buttons, a
+    /// version on offer said to be older (Q308 a), and a package a server had staged
+    /// with a button that installed it (Q310 a))</i>: the background has built this page
+    /// with no feed of its own since 2026-10-08, so none of that could run, and it is
+    /// deleted under the maintainer's "9 a".
+    /// </para>
+    /// </remarks>
+    /// <param name="html">Where to write.</param>
+    /// <param name="view">What is true now.</param>
+    /// <param name="tab">The tab the update page's link keeps.</param>
     private static void AppendUpdate(StringBuilder html, PageView view, int tab)
     {
         var facts = view.Facts;
-        var update = view.Update;
 
         _ = html.Append("<section id=\"update\"><h2>Updates</h2>\n");
 
-        // The resident background builds this page with no feed of its own and
-        // reports what holds an update, so where the page checks for nothing itself
-        // the section says what the background holds and leads to the update page, or,
-        // where reading that failed, says so (#66, 2026-10-10: "No release feed is set
-        // for this build" was false there, because the background has one).
-        if (update.Stage is UpdateStage.NoFeed)
+        if (facts.InstallRoot is null)
         {
-            if (view.Holds is { } holds)
-            {
-                UpdatePageContent.AppendStatusSection(html, holds, tab);
-            }
-            else
-            {
-                UpdatePageContent.AppendUnread(html, facts);
-            }
-
-            _ = html.Append("</section>\n");
-            return;
+            _ = html.Append("<p>").Append(Text(NotInstalledSentence)).Append("</p>\n");
         }
-
-        // Q310 a: a package a server has already downloaded is offered first, with a
-        // link that installs it, whatever the last check said.
-        if (view.Staged is { Length: > 0 } staged && update.Stage is not UpdateStage.Installing)
+        else if (view.Holds is { } holds)
         {
-            _ = html.Append("<p>BrowserAI ").Append(Text(staged)).Append(" is downloaded and ready to install.</p>\n")
-                .Append("<p><button type=\"button\" data-action=\"install-update\" data-version=\"").Append(Text(staged)).Append("\">Install BrowserAI ")
-                .Append(Text(staged)).Append(" now</button></p>\n")
-                .Append("<p class=\"warning\">").Append(Text(InstallWarning)).Append("</p>\n");
+            UpdatePageContent.AppendStatusSection(html, holds, tab);
         }
-
-        _ = html.Append("<p>").Append(Text(UpdateSentence(facts, update))).Append("</p>\n");
-
-        if (update.Stage is UpdateStage.Failed or UpdateStage.InstallFailed or UpdateStage.NoReleaseList)
+        else
         {
-            AppendDetails(html, update.Details);
-        }
-
-        switch (update.Stage)
-        {
-            case UpdateStage.NotChecked:
-                _ = html.Append(Button("check-updates", "Check for updates"));
-                break;
-
-            case UpdateStage.Checking:
-                // The 2026-09-24 rendering found a check that hung showed Checking with
-                // no way out. The wait can always be given up.
-                _ = html.Append(Button("stop-check", "Stop checking"));
-                break;
-
-            case UpdateStage.UpToDate or UpdateStage.NoReleaseList:
-                _ = html.Append(Button("check-updates", "Check again"));
-                break;
-
-            case UpdateStage.Failed or UpdateStage.InstallFailed:
-                _ = html.Append(Button("check-updates", "Try again"));
-                break;
-
-            case UpdateStage.Available when !string.Equals(update.Version, view.Staged, StringComparison.Ordinal):
-                _ = html.Append("<p><button type=\"button\" data-action=\"install-update\" data-version=\"").Append(Text(update.Version))
-                    .Append("\">Install BrowserAI ").Append(Text(update.Version)).Append(" now</button></p>\n")
-                    .Append("<p class=\"warning\">").Append(Text(InstallWarning)).Append("</p>\n");
-                break;
-
-            default:
-                break;
+            UpdatePageContent.AppendUnread(html, facts);
         }
 
         _ = html.Append("</section>\n");

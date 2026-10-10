@@ -555,8 +555,6 @@ internal sealed class PageRegistrationTests
                     ServerArguments = arguments,
                     ServerRefusal = null,
                 },
-                new UpdateView(UpdateStage.NoFeed),
-                null,
                 SessionsSnapshot.Empty,
                 null),
             PageKind.Status,

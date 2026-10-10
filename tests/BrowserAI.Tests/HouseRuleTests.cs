@@ -2318,9 +2318,13 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>What it cannot see:</b> whether the token is bounded by anything
     /// sensible. That half is
-    /// <see cref="BrowserAI.Tests.PageServiceTests.AFolderFeedWithNoReleaseListIsNotUpToDateAndAHungCheckCanBeGivenUp"/>,
-    /// which holds the page's check to the server's own tripwire on the clock it
-    /// moves. <i>Corrected 2026-10-03 (previously
+    /// <see cref="BrowserAI.Tests.BackgroundUpdatesTests.ACheckThatNeverAnswersEndsAtItsBudgetAndTheNextCheckRuns"/>,
+    /// which holds the background's check to its budget on the clock it moves.
+    /// <i>Corrected 2026-10-10 (previously
+    /// <c>PageServiceTests.AFolderFeedWithNoReleaseListIsNotUpToDateAndAHungCheckCanBeGivenUp</c>,
+    /// which held the page's check to the server's own tripwire): the page's own check
+    /// is deleted under the maintainer's "9 a", and the background makes these calls.
+    /// Corrected 2026-10-03 (previously
     /// <c>ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline</c>,
     /// which held the window's budget against the same constant): the window and its
     /// background work are deleted, and the browser tab makes these calls.</i>

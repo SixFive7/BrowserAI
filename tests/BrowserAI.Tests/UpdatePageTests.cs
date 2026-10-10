@@ -255,7 +255,7 @@ internal sealed class UpdatePageTests
         await Assert.That(none).Contains("<p>No downloaded update is waiting. BrowserAI 9.0.0 is installed.</p>");
         await Assert.That(none).DoesNotContain("data-action=\"install-now\"");
 
-        var uninstalled = Render(UpdateHoldSnapshot.Nothing(Now), UpdateStage.NotInstalled);
+        var uninstalled = Render(UpdateHoldSnapshot.Nothing(Now), installed: false);
 
         await Assert.That(uninstalled).Contains("<p>This BrowserAI is not installed, so there is nothing to update.</p>");
         await Assert.That(uninstalled).DoesNotContain("is installed.</p>");
@@ -404,9 +404,9 @@ internal sealed class UpdatePageTests
     /// has one; where the read failed, it says that, and where the log is.
     /// </summary>
     /// <remarks>
-    /// The background builds its page with no feed of its own since 2026-10-08, so
-    /// the page's own check and install are off and the stage reads
-    /// <see cref="UpdateStage.NoFeed"/> on every installed BrowserAI. Its sentence was
+    /// The background builds its page with no feed of its own since 2026-10-08, and the
+    /// page's own check, offer and install are deleted (2026-10-10, the maintainer's
+    /// "9 a"). The sentence it showed, "No release feed is set for this build", was
     /// written for a build with no feed at all.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -450,7 +450,7 @@ internal sealed class UpdatePageTests
     {
         var holds = new ScriptedHolds(UpdateHoldSnapshot.Nothing(Now));
 
-        using var rig = new PageRig(holds: holds, unavailable: UpdateStage.NoFeed);
+        using var rig = new PageRig(holds: holds);
 
         _ = rig.HandOut(PageKind.Status);
 
@@ -477,8 +477,6 @@ internal sealed class UpdatePageTests
                     ServerCommand = null,
                     ServerRefusal = null,
                 },
-                new UpdateView(UpdateStage.NoFeed),
-                null,
                 SessionsSnapshot.Empty,
                 null,
                 Holds: holds),
@@ -487,20 +485,18 @@ internal sealed class UpdatePageTests
             Occasion.Ordinary,
             Now);
 
-    private static string Render(UpdateHoldSnapshot? holds, UpdateStage stage = UpdateStage.NotChecked) =>
+    private static string Render(UpdateHoldSnapshot? holds, bool installed = true) =>
         UpdatePageContent.Render(
             new PageView(
                 new PageFacts
                 {
                     Version = "9.0.0",
-                    InstallRoot = null,
+                    InstallRoot = installed ? @"C:\install" : null,
                     DataRoot = @"C:\data",
                     LogDirectory = @"C:\data\logs",
                     ServerCommand = null,
                     ServerRefusal = null,
                 },
-                new UpdateView(stage),
-                null,
                 SessionsSnapshot.Empty,
                 null,
                 Holds: holds),

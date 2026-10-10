@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
+using BrowserAI.App;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
-using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
 
@@ -74,14 +74,6 @@ internal sealed class PageBrowserTests
         using var rig = new PageRig();
         using var scratch = ScratchDirectory.Create($"page-browser-{browser}");
 
-        rig.Updates.Check = _ => Task.FromResult<UpdateCandidate?>(new UpdateCandidate
-        {
-            Version = "9.1.0",
-            IsDowngrade = false,
-            DeltaCount = 0,
-            FullPackageSize = 1,
-        });
-
         var first = rig.HandOut();
         var session = Path.Combine(scratch.Path, "page-session");
 
@@ -121,20 +113,40 @@ internal sealed class PageBrowserTests
             await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 1)).IsTrue();
             await Assert.That(await evaluateAsync("() => document.querySelector('h1').textContent")).Contains("BrowserAI 9.0.0");
 
-            // A button, clicked in the page, posts through the gate.
-            _ = await evaluateAsync("() => { document.querySelector('button[data-action=\"check-updates\"]').click(); return 'clicked'; }");
+            // A button, clicked in the page, posts through the gate: the registration,
+            // which the rig's first read refused, is read again, and this time it reads.
+            // Corrected 2026-10-10 (previously the update check's button, deleted with
+            // the page's own update machinery under the maintainer's "9 a").
+            var registration = (FakeRegistration)rig.Registration;
 
-            // Until the check arrives, or the page says the gate refused its request,
+            await Assert.That(await WaitForAsync(async () =>
+                (await evaluateAsync("() => document.querySelector('button[data-action=\"read-registration\"]') ? 'there' : ''")).Contains("there", StringComparison.Ordinal))).IsTrue();
+
+            var reads = registration.Reads;
+
+            registration.State = new AppState
+            {
+                Version = "9.0.0",
+                InstallRoot = null,
+                DataRoot = scratch.Path,
+                ServerCommand = null,
+                ServerRefusal = null,
+                Clients = [],
+            };
+
+            _ = await evaluateAsync("() => { document.querySelector('button[data-action=\"read-registration\"]').click(); return 'clicked'; }");
+
+            // Until the read arrives, or the page says the gate refused its request,
             // so a refusal fails here at once and not when the hang detector runs out.
             await Assert.That(await WaitForAsync(async () =>
-                rig.Updates.Checks is 1
+                registration.Reads > reads
                 || (await evaluateAsync("() => document.getElementById('banner').hidden ? '' : document.getElementById('banner').textContent"))
                     .Contains("did not take", StringComparison.Ordinal))).IsTrue();
-            await Assert.That(rig.Updates.Checks).IsEqualTo(1);
+            await Assert.That(registration.Reads).IsGreaterThan(reads);
 
             // And the answer came back into the page through its stream.
             await Assert.That(await WaitForAsync(async () =>
-                (await evaluateAsync("() => document.querySelector('main').textContent")).Contains("BrowserAI 9.1.0 is available.", StringComparison.Ordinal))).IsTrue();
+                (await evaluateAsync("() => document.querySelector('main').textContent")).Contains("Read at", StringComparison.Ordinal))).IsTrue();
 
             // The old tab's close is wrapped, so that a call to it can be seen in an
             // engine that keeps the tab (see the remarks).

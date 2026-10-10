@@ -324,7 +324,6 @@ internal static partial class Program
                 PersonStart.StartedAfterAnUpdate => Occasion.AfterUpdate,
                 _ => Occasion.Ordinary,
             },
-            new VelopackPageUpdates(null, InstallLocation.IsInstalled),
             new BackgroundPageSessions(host, roster, clock),
             new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), backgroundLogger),
             new DesktopPageHost(inbox, backgroundLogger),

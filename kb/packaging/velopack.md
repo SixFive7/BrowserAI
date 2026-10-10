@@ -565,7 +565,12 @@ chain's own post-publish polls. *Corrected 2026-10-03 (previously "the
 configuration app's own *Check for updates* button
 (`ConfigurationDialog.Command.CheckForUpdates`, one request per click)"): the
 window is deleted, and the tab's button asks through the same update client the
-window's did, read in `VelopackPageUpdates.CheckAsync`, not measured.*
+window's did, read in `VelopackPageUpdates.CheckAsync`, not measured.* *Corrected
+2026-10-10 by addition (previously the tab's *Check for updates* button and a
+server's start among the things that ask): the button and the page's own check are
+deleted under the maintainer's "9 a", and since 2026-10-08 what asks is the one
+background, on its timer, at most once every ten minutes
+(`BackgroundUpdates.CheckInterval`), read from the code and not measured.*
 
 **The monitor is the asset's own download counter, and it discriminates.** Read
 from `gh release view v1.0.0` on 2026-09-22: `releases.win.json` **48**, against
