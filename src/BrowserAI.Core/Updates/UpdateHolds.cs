@@ -121,13 +121,18 @@ internal sealed record HoldingRelay(
 /// <param name="HiddenSessions">Every open session with no window.</param>
 /// <param name="VisibleWindows">Every open session with a window, which waits for the person to close it or for its countdown.</param>
 /// <param name="Relays">Every connected relay, holding or not.</param>
+/// <param name="Older">
+/// Whether the version waiting is older than the one installed: a rollback, which the
+/// update page and the ready toast say (Q308 a, built again 2026-10-10).
+/// </param>
 internal sealed record UpdateHoldSnapshot(
     DateTimeOffset ReadAt,
     UpdateHoldState State,
     string? Version,
     IReadOnlyList<HoldingSession> HiddenSessions,
     IReadOnlyList<HoldingSession> VisibleWindows,
-    IReadOnlyList<HoldingRelay> Relays)
+    IReadOnlyList<HoldingRelay> Relays,
+    bool Older = false)
 {
     /// <summary>The version downloaded and waiting, or <see langword="null"/> when nothing is.</summary>
     /// <remarks>

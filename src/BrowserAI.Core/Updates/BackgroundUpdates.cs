@@ -344,11 +344,16 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         var now = _clock.GetUtcNow();
         Phase phase;
         string? version;
+        bool older;
 
         lock (_gate)
         {
             phase = _phase;
             version = _held?.Version;
+
+            // Q308 a: a rollback the feed offers is said to be older, by the update page
+            // and the ready toast (built again 2026-10-10; Found logged it before).
+            older = _held?.IsDowngrade ?? false;
         }
 
         if (version is null || phase is Phase.Idle)
@@ -377,7 +382,8 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             version,
             hidden,
             visible,
-            relays);
+            relays,
+            older);
     }
 
     /// <inheritdoc />

@@ -49,7 +49,7 @@ internal sealed partial class UpdateToastContentTests
     [Test]
     public async Task TheReadyToastIsAReminderWithInstallNowAndWaitForInactivity()
     {
-        var toast = Load(UpdateToastContent.Ready("1.2.0", Holds()));
+        var toast = Load(UpdateToastContent.Ready("1.2.0", Holds(), "1.1.0"));
 
         await AssertReminder(toast);
         await Assert.That(Joined(Texts(toast))).IsEqualTo(Joined(
@@ -75,9 +75,33 @@ internal sealed partial class UpdateToastContentTests
 
         // With no relay that will need a reconnect, the toast makes no claim about
         // reconnects at all: a later client could make any such sentence false.
-        var quiet = Load(UpdateToastContent.Ready("1.2.0", new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.2.0", [], [], [])));
+        var quiet = Load(UpdateToastContent.Ready("1.2.0", new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.2.0", [], [], []), "1.1.0"));
 
         await Assert.That(Joined(Texts(quiet))).IsEqualTo(Joined(["BrowserAI 1.2.0 is ready to install", "It installs by itself once BrowserAI has been idle."]));
+    }
+
+    /// <summary>
+    /// A version older than the one installed says so in the ready toast's title, and
+    /// a newer one's title says nothing of the kind.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q308 a, the maintainer's words of 2026-10-03 verbatim: <i>"Q308 a"</i></b>:
+    /// automatic rollback stays, and the interface says when the offered version is
+    /// older. Built again 2026-10-10, after the page's own check, which said it, was
+    /// deleted under his "9 a".
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnOlderVersionsReadyToastSaysItIsOlderThanTheInstalledOne()
+    {
+        var older = Texts(Load(UpdateToastContent.Ready("1.1.0", Holds() with { Version = "1.1.0", Older = true }, "1.2.0")));
+
+        await Assert.That(older[0]).IsEqualTo("BrowserAI 1.1.0, older than 1.2.0, is ready to install");
+        await Assert.That(older[1]).IsEqualTo("It installs by itself once BrowserAI has been idle.");
+
+        var newer = Texts(Load(UpdateToastContent.Ready("1.2.0", Holds(), "1.1.0")));
+
+        await Assert.That(newer[0]).IsEqualTo("BrowserAI 1.2.0 is ready to install");
     }
 
     /// <summary>
@@ -90,7 +114,7 @@ internal sealed partial class UpdateToastContentTests
     [Test]
     public async Task EveryFieldTheReadyToastBindsIsAProgressFieldItsDataSupplies()
     {
-        var xml = UpdateToastContent.Ready("1.2.0", Holds());
+        var xml = UpdateToastContent.Ready("1.2.0", Holds(), "1.1.0");
         var bound = Placeholder().Matches(xml).Select(match => match.Groups[1].Value).Order(StringComparer.Ordinal).ToList();
         var (values, _) = UpdateToastContent.ReadyData(Holds(), T0, TimeZoneInfo.Utc, default);
 
@@ -150,7 +174,7 @@ internal sealed partial class UpdateToastContentTests
     {
         const string Odd = "1.2.0-a&b<c>\"d'e f=g%h";
 
-        var ready = Load(UpdateToastContent.Ready(Odd, Holds()));
+        var ready = Load(UpdateToastContent.Ready(Odd, Holds(), "1.1.0"));
 
         await Assert.That(Texts(ready)[0]).IsEqualTo($"BrowserAI {Odd} is ready to install");
         await Assert.That(Clicks(ready)[0]).IsEqualTo(new ToastClick(ToastAction.UpdatePage, Odd));
@@ -362,7 +386,7 @@ internal sealed partial class UpdateToastContentTests
         await Assert.That(UpdateToastContent.Reconnects(one)).IsEqualTo("After the update: \"Fix the login bug\" needs /mcp, BrowserAI, Reconnect.");
 
         // The ready toast carries the line as its third.
-        await Assert.That(Texts(Load(UpdateToastContent.Ready("1.2.0", one)))[2]).IsEqualTo("After the update: \"Fix the login bug\" needs /mcp, BrowserAI, Reconnect.");
+        await Assert.That(Texts(Load(UpdateToastContent.Ready("1.2.0", one, "1.1.0")))[2]).IsEqualTo("After the update: \"Fix the login bug\" needs /mcp, BrowserAI, Reconnect.");
 
         // A cut never leaves half a surrogate pair.
         await Assert.That(ConversationName.Cut(new string('a', 23) + "\U0001F600" + "bbb")).IsEqualTo(new string('a', 23) + "...");
@@ -439,7 +463,8 @@ internal sealed partial class UpdateToastContentTests
     /// reconnect, counted or carrying names, a title a tab cuts or BrowserAI's own words
     /// with a folder in them; the installing, installed and failed toasts of a
     /// seven-character version with the default install's two log folders; and the broken
-    /// install's toast.
+    /// install's toast. <i>Added 2026-10-10</i>: an older version's ready toast (Q308 a),
+    /// whose title names both versions, beside the longest reconnect line.
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-10</b> against the wording before it, which counted five
@@ -497,7 +522,7 @@ internal sealed partial class UpdateToastContentTests
 
                     var holds = new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.10.10", [], [], relays);
 
-                    toasts.Add(($"ready, {terminals}, {codex}, {others}", UpdateToastContent.Ready("1.10.10", holds)));
+                    toasts.Add(($"ready, {terminals}, {codex}, {others}", UpdateToastContent.Ready("1.10.10", holds, "1.10.9")));
                 }
             }
         }
@@ -505,6 +530,15 @@ internal sealed partial class UpdateToastContentTests
         var velopack = UpdateToasts.VelopackLogFor("velopack.BrowserAI.app");
         var own = UpdateToasts.Shortened(@"C:\Users\someone\AppData\Local\BrowserAI\logs", @"C:\Users\someone\AppData\Local");
 
+        // Q308 a: an older version's title, with the longest reconnect line beside it.
+        List<HoldingRelay> crowded =
+        [
+            .. RelaysOf(kinds[0], states[^1], names[0]),
+            .. RelaysOf(kinds[1], states[^1], names[1]),
+            .. RelaysOf(kinds[2], states[^1], names[2]),
+        ];
+
+        toasts.Add(("ready, older", UpdateToastContent.Ready("1.10.10", new UpdateHoldSnapshot(T0, UpdateHoldState.Held, "1.10.10", [], [], crowded, Older: true), "1.10.11")));
         toasts.Add(("installing", UpdateToastContent.Installing("1.10.10")));
         toasts.Add(("installed", UpdateToastContent.Installed("1.10.10")));
         toasts.Add(("failed", UpdateToastContent.Failed("1.10.10", "1.10.9", velopack, own)));
@@ -531,7 +565,7 @@ internal sealed partial class UpdateToastContentTests
             }
         }
 
-        await Assert.That(toasts.Count).IsEqualTo((states.Length * states.Length * states.Length) + 4);
+        await Assert.That(toasts.Count).IsEqualTo((states.Length * states.Length * states.Length) + 5);
         await Assert.That(named).IsGreaterThan(0).Because("a line with room for names spells them out");
         await Assert.That(string.Join(Environment.NewLine, over)).IsEmpty();
     }

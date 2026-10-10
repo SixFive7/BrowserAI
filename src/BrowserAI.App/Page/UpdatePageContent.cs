@@ -92,7 +92,7 @@ internal static class UpdatePageContent
                 break;
 
             case { State: UpdateHoldState.Held, Version: { } version } holds:
-                AppendHeld(html, holds, version, now);
+                AppendHeld(html, holds, version, view.Facts.Version, now);
                 break;
 
             // #71, 2026-10-10: a background that is not installed holds nothing and says
@@ -129,7 +129,7 @@ internal static class UpdatePageContent
         }
 
         var text = new StringBuilder()
-            .Append(holds.State).Append('|').Append(holds.Version).Append('|').Append(holds.WaitAt(now).Wait).Append('|').Append(holds.WaitAt(now).Ends?.ToUnixTimeMilliseconds());
+            .Append(holds.State).Append('|').Append(holds.Version).Append('|').Append(holds.Older).Append('|').Append(holds.WaitAt(now).Wait).Append('|').Append(holds.WaitAt(now).Ends?.ToUnixTimeMilliseconds());
 
         foreach (var session in holds.HiddenSessions.Concat(holds.VisibleWindows))
         {
@@ -175,15 +175,17 @@ internal static class UpdatePageContent
     /// </remarks>
     /// <param name="html">Where to write.</param>
     /// <param name="holds">What the background reports.</param>
+    /// <param name="installed">The version installed now, which an older one is said to be older than.</param>
     /// <param name="tab">The tab the link keeps.</param>
-    internal static void AppendStatusSection(StringBuilder html, UpdateHoldSnapshot holds, int tab)
+    internal static void AppendStatusSection(StringBuilder html, UpdateHoldSnapshot holds, string installed, int tab)
     {
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(holds);
+        ArgumentNullException.ThrowIfNull(installed);
 
         _ = holds switch
         {
-            { State: UpdateHoldState.Held, Version: { } version } => html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n")
+            { State: UpdateHoldState.Held, Version: { } version } => AppendOlder(html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n"), holds, installed)
                 .Append("<p><a href=\"").Append(PageNames.RouteOf(PageKind.Update)).Append("?tab=").Append(tab.ToString(CultureInfo.InvariantCulture))
                 .Append("\">See what holds it, or install it now</a></p>\n"),
             { State: UpdateHoldState.Installing, Version: { } installing } => html.Append("<p>").Append(PageContent.Text($"BrowserAI {installing} is installing now.")).Append("</p>\n"),
@@ -191,12 +193,30 @@ internal static class UpdatePageContent
         };
     }
 
-    private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, string version, DateTimeOffset now)
+    /// <summary>What the page says of a version older than the one installed, Q308 a.</summary>
+    /// <param name="installed">The version installed now.</param>
+    /// <returns>The sentences.</returns>
+    public static string OlderSentence(string installed) =>
+        $"It is older than the installed {installed}. Installing it goes back to the earlier version.";
+
+    /// <summary>
+    /// Says that the version waiting is older than the one installed, where it is: Q308 a,
+    /// the maintainer's words of 2026-10-03 verbatim, <i>"Q308 a"</i>, built again
+    /// 2026-10-10 from what the update core reads.
+    /// </summary>
+    /// <param name="html">Where to write.</param>
+    /// <param name="holds">What the background reports.</param>
+    /// <param name="installed">The version installed now.</param>
+    /// <returns>The builder, for the next append.</returns>
+    private static StringBuilder AppendOlder(StringBuilder html, UpdateHoldSnapshot holds, string installed) =>
+        holds.Older ? html.Append("<p class=\"warning\">").Append(PageContent.Text(OlderSentence(installed))).Append("</p>\n") : html;
+
+    private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, string version, string installed, DateTimeOffset now)
     {
         var wait = holds.WaitAt(now);
 
-        _ = html.Append("<p>").Append(PageContent.Text(HeldSentence(version)))
-            .Append("</p>\n<p class=\"wait\">");
+        _ = AppendOlder(html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n"), holds, installed)
+            .Append("<p class=\"wait\">");
 
         _ = wait switch
         {

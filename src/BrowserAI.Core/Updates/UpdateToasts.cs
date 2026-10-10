@@ -276,7 +276,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
 
             if (!Raise(
                 UpdateToastContent.ReadyTag,
-                new ToastRequest(UpdateToastContent.Ready(version, holds), values, SuppressPopup: waited, ExpiresOnReboot: true),
+                new ToastRequest(UpdateToastContent.Ready(version, holds, _facts.RunningVersion), values, SuppressPopup: waited, ExpiresOnReboot: true),
                 _sequence))
             {
                 return;

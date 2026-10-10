@@ -294,6 +294,35 @@ internal sealed class UpdatePageTests
     }
 
     /// <summary>
+    /// A version older than the one installed is said to be older, and what installing
+    /// it does, on the update page and on the status page alike; a newer one is not.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q308 a, the maintainer's words of 2026-10-03 verbatim: <i>"Q308 a"</i></b>:
+    /// automatic rollback stays, and the interface says when the offered version is
+    /// older. Built again 2026-10-10 from what the update core reads, after the page's
+    /// own check, which said it, was deleted under his "9 a".
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnOlderVersionIsSaidToBeOlderOnTheUpdatePageAndTheStatusPage()
+    {
+        const string Said = "<p class=\"warning\">It is older than the installed 9.0.0. Installing it goes back to the earlier version.</p>";
+
+        var older = Held() with { Version = "8.5.0", Older = true };
+
+        await Assert.That(Render(older)).Contains("BrowserAI 8.5.0 is downloaded and ready to install.");
+        await Assert.That(Render(older)).Contains(Said);
+        await Assert.That(Status(older)).Contains(Said);
+
+        await Assert.That(Render(Held())).DoesNotContain("older than");
+        await Assert.That(Status(Held())).DoesNotContain("older than");
+
+        // An open tab hears of it: the watch's signature tells the two apart.
+        await Assert.That(UpdatePageContent.Signature(older, Now)).IsNotEqualTo(UpdatePageContent.Signature(older with { Older = false }, Now));
+    }
+
+    /// <summary>
     /// The update page is served at its own route, the navigation marks it, and its
     /// button asks the background to install now: a refusal is a sentence on the page,
     /// and an install that started is said to every tab once, by the background's own

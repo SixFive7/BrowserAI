@@ -150,7 +150,8 @@ release body; nothing else depends on it.
   T, the maintainer's words verbatim: *"t I like the live countdown of the toast. I'd opt for two
   buttons. Install now and wait for inactivity."* and then *"Make sure the toasts have no timeout."*
   The ready toast is a reminder, which stays on screen until the person acts. It names the version,
-  says it installs by itself once BrowserAI has been idle, counts down to the moment it would if
+  and in its title whether that version is older than the one installed (Q308 a), says it installs
+  by itself once BrowserAI has been idle, counts down to the moment it would if
   nothing uses BrowserAI, says what still uses it, and names the clients that will need a reconnect
   afterwards. **Install now** opens the dashboard's update page and **Wait for inactivity** closes
   it; a version the person chose to wait for is raised again after a restart into the Notification
@@ -180,8 +181,9 @@ release body; nothing else depends on it.
   itself; what installing now does is said beside the button, which asks the background to close
   everything cleanly and install at once. The toast's **Install now** opens it the way a Start Menu
   click opens the dashboard, with `--update`, and the status page's update section says whether an
-  update waits and leads to it. `UpdatePageTests` and `ToastPageStartTests` hold it, planted red
-  first.
+  update waits and leads to it. Both pages say when the version waiting is older than the one
+  installed, and that installing it goes back to the earlier version (Q308 a). `UpdatePageTests`
+  and `ToastPageStartTests` hold it, planted red first.
 
 - ✨ **The dashboard and the toast name each conversation as you see it, and group tabs by window.**
   The maintainer's answer of 2026-10-10, verbatim: *"1.1-2.3 I accept all your recommendations"*,

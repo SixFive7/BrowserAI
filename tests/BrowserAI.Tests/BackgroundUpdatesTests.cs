@@ -285,6 +285,50 @@ internal sealed class BackgroundUpdatesTests
     }
 
     /// <summary>
+    /// A version the feed offers below the installed one is read as older, so the update
+    /// page and the ready toast can say so; a newer one is not.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q308 a, the maintainer's words of 2026-10-03 verbatim: <i>"Q308 a"</i></b>:
+    /// automatic rollback stays, and the interface says when the offered version is
+    /// older. The update core knew it and only logged it until 2026-10-10.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARollbackOnOfferIsReadAsOlder()
+    {
+        using var rollback = new BackgroundUpdateRig();
+
+        // A hidden session holds each update, so it stays held and is read as such.
+        rollback.Sessions.Open(new ListedSession(@"C:\work\hidden", "reads the docs", Visible: false, rollback.Clock.GetUtcNow() + TimeSpan.FromMinutes(7)));
+
+        var back = rollback.Build();
+
+        rollback.Client.Offer = BackgroundUpdateRig.Candidate("1.0.0") with { IsDowngrade = true };
+        back.Start();
+        rollback.Settle();
+
+        var held = back.Read();
+
+        await Assert.That(held.State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That(held.Version).IsEqualTo("1.0.0");
+        await Assert.That(held.Older).IsTrue();
+
+        using var forward = new BackgroundUpdateRig();
+
+        forward.Sessions.Open(new ListedSession(@"C:\work\hidden", "reads the docs", Visible: false, forward.Clock.GetUtcNow() + TimeSpan.FromMinutes(7)));
+
+        var ahead = forward.Build();
+
+        forward.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
+        ahead.Start();
+        forward.Settle();
+
+        await Assert.That(ahead.Read().State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That(ahead.Read().Older).IsFalse();
+    }
+
+    /// <summary>
     /// A feed that throws costs that pass and nothing else: the log says so, the next
     /// check runs at its time, and a check with nothing on offer is quiet.
     /// </summary>

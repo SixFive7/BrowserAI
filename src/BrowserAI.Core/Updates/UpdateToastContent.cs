@@ -150,15 +150,20 @@ internal static class UpdateToastContent
     /// <summary>The ready toast.</summary>
     /// <param name="version">The version that waits.</param>
     /// <param name="holds">What holds it when the toast is raised, which the reconnect line is written from.</param>
+    /// <param name="installed">The version installed now, which an older one is said to be older than.</param>
     /// <returns>Its XML.</returns>
-    public static string Ready(string version, UpdateHoldSnapshot holds)
+    public static string Ready(string version, UpdateHoldSnapshot holds, string installed)
     {
         ArgumentNullException.ThrowIfNull(version);
         ArgumentNullException.ThrowIfNull(holds);
+        ArgumentNullException.ThrowIfNull(installed);
 
+        // Q308 a, the maintainer's words of 2026-10-03 verbatim: "Q308 a". Automatic
+        // rollback stays, and an older version says so, in the title, where the banner
+        // has two lines and the description keeps its four (built again 2026-10-10).
         var texts = new List<string>
         {
-            $"BrowserAI {version} is ready to install",
+            holds.Older ? $"BrowserAI {version}, older than {installed}, is ready to install" : $"BrowserAI {version} is ready to install",
             "It installs by itself once BrowserAI has been idle.",
         };
 

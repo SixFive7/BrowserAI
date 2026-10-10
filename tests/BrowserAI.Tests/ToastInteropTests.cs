@@ -137,7 +137,7 @@ internal sealed class ToastInteropTests
         var at = DateTimeOffset.UnixEpoch;
         var holds = new UpdateHoldSnapshot(at, UpdateHoldState.Held, "1.2.0", [], [new HoldingSession(@"C:\w", null, at.AddMinutes(50))], []);
         var (values, _) = UpdateToastContent.ReadyData(holds, at, TimeZoneInfo.Utc, default);
-        var request = new ToastRequest(UpdateToastContent.Ready("1.2.0", holds), values, SuppressPopup: true, ExpiresOnReboot: true);
+        var request = new ToastRequest(UpdateToastContent.Ready("1.2.0", holds, "1.1.0"), values, SuppressPopup: true, ExpiresOnReboot: true);
 
         var (tag, group, silent, reboot, sequence, status, count) = OnComThread(() =>
         {

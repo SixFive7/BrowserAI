@@ -243,7 +243,7 @@ internal static class PageContent
         }
         else if (view.Holds is { } holds)
         {
-            UpdatePageContent.AppendStatusSection(html, holds, tab);
+            UpdatePageContent.AppendStatusSection(html, holds, facts.Version, tab);
         }
         else
         {
