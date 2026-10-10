@@ -1287,6 +1287,39 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       it changes what the 2026-10-08 decision costs a Codex user, and close
       this item. If #11489 and #16899 both close without a fix, record the
       reason in the kb section and close this item.
+- [ ] **WATCH [velopack/velopack#1086](https://github.com/velopack/velopack/issues/1086)
+      and [PR #1087](https://github.com/velopack/velopack/pull/1087), an update that leaves
+      no program when its last rename fails.** Both were filed on 2026-10-10
+      under `SixFive7`, on the maintainer's "6 your recommendation" of that day:
+      measure the failure, then report it upstream with a fix. With the stock
+      Velopack 1.2.161 and one file of the new version held open by another
+      process, an apply with a restart, the one BrowserAI makes, left no
+      `current\` in 4 of 4 runs of lane VELO's rig, logged *"Apply error: Unable
+      to find executable to start"*, could not be uninstalled, and came back only
+      when the installer was run again, which kept the data outside the install
+      folder ([hazard row](HAZARDS.md#hazard-index),
+      [kb](kb/packaging/velopack.md#a-failed-apply-restarts-the-old-version-as-though-it-had-been-updated)).
+      The pull request, from `SixFive7:fix-windows-apply-rollback`, does on
+      Windows what [PR #972](https://github.com/velopack/velopack/pull/972) did
+      on macOS: when the new version cannot be renamed into `current`, the backup
+      is renamed back, and the cleanup keeps the backup while `current` is
+      missing. A build of it put the old version back 7 of 7 times in the same
+      rig. **Nothing has shipped, read 2026-10-10**: both are open, and 1.2.161,
+      of 2026-09-29, is still the newest Velopack release on GitHub and NuGet.
+      **What to do:** check the two at least once a week, and read the notes of
+      every Velopack release the daily drift check finds. **When either is
+      answered, merged or released**, read what changed and write it into this
+      item with its date. **When a Velopack release carries the fix**, adopt it
+      through [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), the tool and the
+      library together, and re-run the held-file case of the rig in
+      `.work\velopack-fix\rig-myapp` against the released `Update.exe`, a file of
+      the new version held open with no sharing and with read, write and delete
+      sharing, measured and never inferred from the pull request's state. When
+      the old version is back in `current\` each time, close the row in
+      `HAZARDS.md` that begins *"An apply whose last rename fails leaves no
+      BrowserAI at all"*, correct its kb section with dated previously clauses,
+      and close this item. If #1086 closes without a fix, record the reason in
+      the kb section and close this item.
 
 ---
 
