@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Security.AccessControl;
@@ -1265,11 +1266,51 @@ internal sealed partial class ErrorCatalogueTests
 
         Match(response.Error!["message"]!.GetValue<string>(), nameof(SessionErrors.BrowserServerEndedDuringTheCall), expected);
 
-        // And the record says the same, and not the exception.
-        var row = RecordedSession.LogOf(rig.Session!).Last(entry => entry.Tool == "browser_navigate");
+        // And the record says the same, and not the exception. Read once it has
+        // settled: BrowserProxy settles a forwarded call's row in a finally that runs
+        // after the answer has gone back, and the PowerShell half of lane TEXTS2's gate
+        // at c29aa932 read this row in flight (previously it was read at once).
+        var row = await SettledRowAsync(rig.Session!, "browser_navigate");
 
         await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
         await Assert.That(row.Failure).IsEqualTo(expected);
+    }
+
+    /// <summary>The last row a session logged for one tool, once it has settled.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10</b>, after a full run read
+    /// <see cref="TheBrowserServerEndedDuringTheCallRowIsEmittedByAChildThatDiesUnderACall"/>'s
+    /// row <c>in-flight</c> on a call whose answer the client already held:
+    /// <c>SessionLogTests.SettledLogOf</c>'s remarks say why the settle comes after the
+    /// answer, and that nothing in the product promises otherwise.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a settle delayed by three seconds, which the
+    /// arm as it read the row at once failed with the gate's own words, <i>"Expected to
+    /// be equal to "failed" but received "in-flight""</i>, and passed reading it through
+    /// this. Bounded by the suite's hang detector and by nothing this file invented.
+    /// </para>
+    /// </remarks>
+    /// <param name="session">The session directory.</param>
+    /// <param name="tool">The tool whose last row is read.</param>
+    /// <returns>The row, settled.</returns>
+    private static async Task<SessionLogRow> SettledRowAsync(string session, string tool)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            if (RecordedSession.LogOf(session).LastOrDefault(entry => entry.Tool == tool) is { Outcome: not SessionStore.InFlight } row)
+            {
+                return row;
+            }
+
+            await Assert.That(waited.Elapsed).IsLessThan(TestDefaults.InProcessHang)
+                .Because($"the row for '{tool}' never settled, so its outcome would be about a call that never came back");
+
+            await Task.Delay(10);
+        }
     }
 
     /// <summary>
