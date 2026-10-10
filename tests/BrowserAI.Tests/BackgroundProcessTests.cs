@@ -254,7 +254,12 @@ internal sealed class BackgroundProcessTests
         await Assert.That((bool?)crash["isError"]).IsTrue();
         await Assert.That(TextOf(crash)).Contains("crashed")
             .Because("a background that ended with no clean end recorded is a crash every relay names (R)");
-        await Assert.That(TextOf(crash)).Contains("Only that person can restart it");
+        // The published background is a build that is not installed, so since round 2
+        // of the texts review, 2026-10-10, #136, its crash names the command that starts
+        // it again and not the Start Menu (previously this held "Only that person can
+        // restart it", the installed build's form).
+        await Assert.That(TextOf(crash)).Contains("This BrowserAI is not installed, so nothing starts its background process again");
+        await Assert.That(TextOf(crash)).DoesNotContain("Start Menu");
         await Assert.That(answered.Elapsed).IsLessThan(RelayConstants.HoldBound)
             .Because("a recorded crash is answered at once; holding cannot change it");
 

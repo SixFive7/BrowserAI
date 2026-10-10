@@ -278,6 +278,39 @@ internal sealed partial class RelayTests
     }
 
     /// <summary>
+    /// An installed build whose task has no name is told that BrowserAI needs installing
+    /// again, and is not sent to the Start Menu.
+    /// </summary>
+    /// <remarks>
+    /// <b>Round 2 of the texts review, 2026-10-10, #140.</b> With no pack id the task has
+    /// no name, a person's Start Menu start writes 6112 and starts nothing, and installing
+    /// BrowserAI again registers the task; the answer told the person to start BrowserAI
+    /// from the Start Menu. Planted red 2026-10-10 against that answer.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInstallWhoseTaskHasNoNameIsToldToInstallAgainAndNotSentToTheStartMenu()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null);
+
+        _ = await rig.InitializeAsync(KnownClients.Codex);
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        await rig.StepAsync(RelayConstants.HoldBound);
+        var answered = await rig.NextAsync();
+
+        await Assert.That(answered.IdText).IsEqualTo("1");
+        await Assert.That(answered.ToolText).DoesNotContain("Start Menu");
+        await Assert.That(answered.ToolText).Contains("needs to install BrowserAI again");
+        Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Unnamed, string.Empty, null));
+    }
+
+    /// <summary>
     /// A recorded crash is answered at once, with R's sentence word for word, and so is
     /// every call that was already held when the crash became known.
     /// </summary>
@@ -414,6 +447,116 @@ internal sealed partial class RelayTests
         await Assert.That(answered.IdText).IsEqualTo("1");
         await Assert.That(answered.ToolText).Contains($"\"{Executable}\" --background --data-root \"{RelayRig.Facts.DataRoot}\"");
         Match(answered.ToolText, nameof(RelayErrors.NotInstalled), RelayErrors.NotInstalled("browser_navigate", Executable, RelayRig.Facts.DataRoot));
+    }
+
+    /// <summary>
+    /// A build that is not installed is never sent to the Start Menu, after a crash, a
+    /// background that never opened its pipe, a hang or a stop: each answer says what
+    /// happened and names the command that starts its background.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, #136 to #139.</b> The Start Menu starts
+    /// the installed build, whose pipe and record are keyed on its install root, so a
+    /// developer's background that crashed or hung was answered with an errand that
+    /// starts another build, while the not-installed answer of D11 a gives the command.
+    /// The relay knows which it is from its own facts; the stop's answer had the same
+    /// errand, for a background nothing starts again.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the answers as they were, each of which named
+    /// the Start Menu.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABuildThatIsNotInstalledIsNeverSentToTheStartMenu()
+    {
+        var facts = RelayRig.NotInstalledFacts;
+        var start = facts.DeveloperStart!;
+        var at = new DateTimeOffset(2026, 10, 10, 6, 0, 0, TimeSpan.Zero);
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log";
+        var said = new List<(string What, string Text)>();
+
+        // A recorded crash, answered at once.
+        await using (var rig = RelayRig.Start(facts: facts))
+        {
+            rig.Finder.Absence = new BackgroundAbsence.Crashed(at, 3, Log);
+
+            _ = await rig.InitializeAsync();
+            _ = await rig.ListAsync();
+
+            await rig.SendAsync(RelayRig.CallFrame("1"));
+            said.Add(("a recorded crash", (await rig.NextAsync()).ToolText));
+        }
+
+        // A background that never opened its pipe, at the deadline.
+        await using (var rig = RelayRig.Start(facts: facts))
+        {
+            rig.Finder.Absence = new BackgroundAbsence.Starting(4321);
+
+            _ = await rig.InitializeAsync();
+            _ = await rig.ListAsync();
+            await rig.SettledAsync();
+
+            await rig.SendAsync(RelayRig.CallFrame("1"));
+            await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+            await rig.StepAsync(RelayConstants.HoldBound);
+            said.Add(("no pipe", (await rig.NextAsync()).ToolText));
+        }
+
+        // A crash and a clean stop under a call in flight.
+        said.Add(("a crash during the call", await passedOnAsync(facts, new BackgroundAbsence.Crashed(at, 3, Log))));
+        said.Add(("a stop during the call", await passedOnAsync(facts, new BackgroundAbsence.CleanEnd())));
+
+        // A hang, under a call in flight and for the call after it.
+        await using (var rig = RelayRig.Start(facts: facts))
+        {
+            var (background, _) = await rig.ConnectedAsync();
+            _ = await rig.ListAsync();
+
+            await rig.SendAsync(RelayRig.CallFrame("1"));
+            await Assert.That((await background.NextAsync()).IdText).IsEqualTo("1");
+
+            var probes = (int)(RelayConstants.HangBound / RelayConstants.ProbeInterval);
+
+            for (var probe = 1; probe < probes; probe++)
+            {
+                await rig.StepAsync(RelayConstants.ProbeInterval);
+                _ = await background.NextAsync();
+            }
+
+            await rig.StepAsync(RelayConstants.ProbeInterval);
+            said.Add(("a hang during the call", (await rig.NextAsync()).ToolText));
+
+            await rig.SendAsync(RelayRig.CallFrame("2"));
+            said.Add(("a hang before the call", (await rig.NextAsync()).ToolText));
+        }
+
+        foreach (var (what, text) in said)
+        {
+            await Assert.That(text).DoesNotContain("Start Menu").Because($"{what}: {text}");
+            await Assert.That(text).Contains(start).Because($"{what}: {text}");
+        }
+
+        await Assert.That(said.Count).IsEqualTo(6);
+
+        // A local function, so each case has a rig of its own and disposes it.
+        static async Task<string> passedOnAsync(RelayFacts facts, BackgroundAbsence absence)
+        {
+            await using var rig = RelayRig.Start(facts: facts);
+            var (background, _) = await rig.ConnectedAsync();
+            _ = await rig.ListAsync();
+
+            await rig.SendAsync(RelayRig.CallFrame("1"));
+            await Assert.That((await background.NextAsync()).IdText).IsEqualTo("1");
+
+            rig.Finder.Absence = absence;
+            background.GoAway();
+
+            return (await rig.NextAsync()).ToolText;
+        }
     }
 
     /// <summary>

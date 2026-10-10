@@ -581,7 +581,7 @@ internal sealed partial class RelayEngine
             // Kept, so the answer that may still come is dropped and the call keeps
             // the one answer it has had.
             _ = _answeredByRelay.Add(call.Id);
-            await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: true, _facts.LogPath), "the background stopped answering").ConfigureAwait(false);
+            await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: true, _facts.LogPath, _facts.DeveloperStart), "the background stopped answering").ConfigureAwait(false);
         }
 
         var held = _phase is LinkPhase.Greeting or LinkPhase.Replaying ? _held.ToList() : [];
@@ -589,7 +589,7 @@ internal sealed partial class RelayEngine
         foreach (var call in held)
         {
             _ = _held.Remove(call);
-            await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: false, _facts.LogPath), "the background stopped answering").ConfigureAwait(false);
+            await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: false, _facts.LogPath, _facts.DeveloperStart), "the background stopped answering").ConfigureAwait(false);
         }
 
         ArmHoldTimer();

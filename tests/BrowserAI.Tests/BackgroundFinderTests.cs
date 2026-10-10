@@ -87,7 +87,9 @@ internal sealed class BackgroundFinderTests
         BackgroundRecord.Clear(settings.RecordPath);
 
         await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Missing, TaskName, null));
-        await Assert.That(logs.Records.Count(record => record.EventId.Id is 1 && record.Level is LogLevel.Warning)).IsEqualTo(1);
+        // 23 since 2026-10-10, round 2 of the texts review, #195 (previously 1, which the
+        // relay's own Connected line has too).
+        await Assert.That(logs.Records.Count(record => record.EventId.Id is 23 && record.Level is LogLevel.Warning)).IsEqualTo(1);
     }
 
     /// <summary>
@@ -420,12 +422,15 @@ internal sealed class BackgroundFinderTests
         await Assert.That(seams.TasksRead).IsEmpty();
         await Assert.That(seams.UpdatersLookedFor).IsEmpty();
 
-        // Installed, with no task name to read.
+        // Installed, with no task name to read: named as such, since round 2 of the texts
+        // review (#140, 2026-10-10; previously TaskState.Unknown), because the Start Menu
+        // start the Unknown answer asks for runs nothing here. Planted red against the
+        // finder that answered Unknown.
         var unnamed = Settings(data.Path, install.Path, taskName: null, seams, new ManualClock());
 
         using (var finder = new BackgroundFinder(unnamed, NullLogger.Instance))
         {
-            await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Unknown, string.Empty, null));
+            await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null));
         }
 
         await Assert.That(seams.TasksRead).IsEmpty();

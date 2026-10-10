@@ -22,10 +22,17 @@ namespace BrowserAI.Relay;
 /// <param name="Folder">The relay's working directory, which is the folder the client runs in.</param>
 /// <param name="DataRoot">The data root the relay was registered for, and the background has to serve.</param>
 /// <param name="LogPath">The log a person reads when the background stops answering, named in the hang sentence.</param>
+/// <param name="DeveloperStart">
+/// For a build that is not installed, the command that starts its background, which
+/// every sentence that would send the person to the Start Menu names instead, since the
+/// Start Menu starts the installed build (D11 a); <see langword="null"/> for an installed
+/// one. Added 2026-10-10 for round 2 of the texts review, #136 to #139.
+/// </param>
 internal sealed record RelayFacts(
     string Build,
     int RelayPid,
     int? ClientPid,
     string Folder,
     string DataRoot,
-    string LogPath);
+    string LogPath,
+    string? DeveloperStart = null);

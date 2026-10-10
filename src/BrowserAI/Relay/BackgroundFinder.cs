@@ -113,9 +113,13 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return new BackgroundAbsence.NotInstalled(_settings.Executable, _settings.DataRoot);
         }
 
+        // Installed, with no pack id to name its task by: a Start Menu start runs nothing
+        // here (PersonStart's 6112), and a reinstall registers the task. Corrected
+        // 2026-10-10, round 2 of the texts review, #140 (previously TaskState.Unknown,
+        // whose answer sent the person to the Start Menu).
         if (_settings.TaskName is not { Length: > 0 } taskName)
         {
-            return new BackgroundAbsence.NotRunning(TaskState.Unknown, string.Empty, null);
+            return new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null);
         }
 
         var reading = _settings.ReadTask(taskName);
@@ -308,11 +312,18 @@ internal sealed record BackgroundFinderSettings
 }
 
 /// <summary>Source-generated log messages for <see cref="BackgroundFinder"/>.</summary>
+/// <remarks>
+/// <b>From 23, after <c>RelayLog</c>'s 22, since 2026-10-10</b>, round 2 of the texts
+/// review, #195 (previously 1 and 2): a finder writes under the relay's logger, so it
+/// shares <c>RelayLog</c>'s category, and <c>Relay[1]</c> and <c>Relay[2]</c> each named
+/// two lines. <c>ProcessLogTests.EveryLineOfTheBackgroundsAndTheRelaysCategoriesHasAnEventIdOfItsOwn</c>
+/// holds the category to one line per id.
+/// </remarks>
 internal static partial class FinderLog
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Whether this install's updater runs could not be read, so the relay goes on as if it does not.")]
+    [LoggerMessage(EventId = 23, Level = LogLevel.Warning, Message = "Whether this install's updater runs could not be read, so the relay goes on as if it does not.")]
     public static partial void UpdaterNotChecked(ILogger logger, Exception failure);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "The background's record at {Path} could not be written, so another relay may name another time for the same crash.")]
+    [LoggerMessage(EventId = 24, Level = LogLevel.Warning, Message = "The background's record at {Path} could not be written, so another relay may name another time for the same crash.")]
     public static partial void RecordNotWritten(ILogger logger, string path, Exception failure);
 }

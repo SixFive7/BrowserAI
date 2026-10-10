@@ -41,7 +41,7 @@ internal sealed class RelayRig : IAsyncDisposable
     private int _barriers;
     private int _lists;
 
-    private RelayRig(Func<string?, ClientReading>? readClient, bool gated)
+    private RelayRig(Func<string?, ClientReading>? readClient, bool gated, RelayFacts? facts)
     {
         Client = new FrameChannel(_clientHop.ClientReads, _clientHop.ClientWrites);
         Gate = gated ? new GatedStream(_clientHop.ServerWrites) : null;
@@ -53,7 +53,7 @@ internal sealed class RelayRig : IAsyncDisposable
             _handshake,
             ToolList,
             readClient ?? Classify,
-            Facts,
+            facts ?? Facts,
             Clock,
             _logs.CreateLogger(nameof(RelayEngine)));
 
@@ -70,7 +70,7 @@ internal sealed class RelayRig : IAsyncDisposable
             TaskScheduler.Default);
     }
 
-    /// <summary>The facts every rig's relay is built with.</summary>
+    /// <summary>The facts every rig's relay is built with, an installed build's.</summary>
     public static RelayFacts Facts { get; } = new(
         Build: "9.9.9-relay-tests",
         RelayPid: 4242,
@@ -78,6 +78,15 @@ internal sealed class RelayRig : IAsyncDisposable
         Folder: @"C:\Projects\RelayTests",
         DataRoot: @"C:\Data\BrowserAI-relay-tests",
         LogPath: @"C:\Data\BrowserAI-relay-tests\logs");
+
+    /// <summary>The executable of a build that is not installed, as a developer's checkout has it.</summary>
+    public const string CheckoutExecutable = @"C:\Source\BrowserAI\src\BrowserAI\bin\Debug\BrowserAI.exe";
+
+    /// <summary>The same facts for a build that is not installed, which names the command that starts its background.</summary>
+    public static RelayFacts NotInstalledFacts { get; } = Facts with
+    {
+        DeveloperStart = $"\"{CheckoutExecutable}\" --background --data-root \"{Facts.DataRoot}\"",
+    };
 
     /// <summary>What the default classifier answers for any client: a terminal Claude Code.</summary>
     public static RelayReconnect Classification => RelayReconnect.McpReconnect;
@@ -177,8 +186,9 @@ internal sealed class RelayRig : IAsyncDisposable
     /// <summary>Starts a rig.</summary>
     /// <param name="readClient">The classifier, when an arm needs its own; otherwise one that records and answers <see cref="Classification"/>.</param>
     /// <param name="gated">Whether the relay's output passes through <see cref="Gate"/>.</param>
+    /// <param name="facts">What the relay knows of itself, or <see langword="null"/> for <see cref="Facts"/>.</param>
     /// <returns>The rig, running.</returns>
-    public static RelayRig Start(Func<string?, ClientReading>? readClient = null, bool gated = false) => new(readClient, gated);
+    public static RelayRig Start(Func<string?, ClientReading>? readClient = null, bool gated = false, RelayFacts? facts = null) => new(readClient, gated, facts);
 
     /// <summary>Writes one frame as the client.</summary>
     /// <param name="json">The frame.</param>

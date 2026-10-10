@@ -25,4 +25,18 @@ internal enum RelayEnding
 /// The version being installed, when <paramref name="Reason"/> is
 /// <see cref="RelayEnding.ForAnUpdate"/> and the background named one.
 /// </param>
-internal sealed record RelayEnd(RelayEnding Reason, string? UpdateVersion);
+internal sealed record RelayEnd(RelayEnding Reason, string? UpdateVersion)
+{
+    /// <summary>Why the relay stopped, as its log line says it.</summary>
+    /// <remarks>Added 2026-10-10 for round 2 of the texts review, #194: the line printed the member's name.</remarks>
+    /// <returns>A clause.</returns>
+    public string InWords() => Reason switch
+    {
+        RelayEnding.ClientWentAway => "its client went away, closing its input or no longer reading its output",
+        RelayEnding.Cancelled => "its client's process ended",
+        RelayEnding.ForAnUpdate => UpdateVersion is { Length: > 0 } version
+            ? $"the background ended it to install update {version}"
+            : "the background ended it to install an update",
+        _ => "for a reason this build does not name",
+    };
+}

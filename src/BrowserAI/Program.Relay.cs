@@ -84,21 +84,34 @@ internal static partial class Program
                 ProcessLiveness.ParentProcessId() is var parent and > 0 ? parent : null,
                 Environment.CurrentDirectory,
                 paths.RootAppDir,
-                log.CurrentFile ?? paths.LogDirectory),
+                log.CurrentFile ?? paths.LogDirectory,
+
+                // A build that is not installed names the command that starts its own
+                // background wherever an installed one names the Start Menu (round 2 of
+                // the texts review, 2026-10-10, #136 to #139).
+                installRoot is null ? RelayErrors.DeveloperStart(Environment.ProcessPath ?? string.Empty, paths.RootAppDir) : null),
             TimeProvider.System,
             relayLogger);
 
         var end = await engine.RunAsync(stopping.Token).ConfigureAwait(false);
 
-        RelayModeLog.Ended(relayLogger, end.Reason);
+        var why = end.InWords();
+
+        RelayModeLog.Ended(relayLogger, why);
 
         return 0;
     }
 }
 
 /// <summary>Source-generated log messages for the relay mode.</summary>
+/// <remarks>
+/// <b>25 since 2026-10-10</b>, round 2 of the texts review, #194 (previously 1): this
+/// writes under the relay's logger, so it shares <c>RelayLog</c>'s category, whose 1 is
+/// <c>Connected</c>. And the reason is in words since the same day (previously the
+/// <c>RelayEnding</c> member's name, such as <c>ClientWentAway</c>).
+/// </remarks>
 internal static partial class RelayModeLog
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "The relay ended: {Why}.")]
-    public static partial void Ended(ILogger logger, RelayEnding why);
+    [LoggerMessage(EventId = 25, Level = LogLevel.Information, Message = "The relay ended: {Why}.")]
+    public static partial void Ended(ILogger logger, string why);
 }

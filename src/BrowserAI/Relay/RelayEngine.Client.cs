@@ -275,7 +275,7 @@ internal sealed partial class RelayEngine
 
         if (_hung)
         {
-            await AnswerInPlaceAsync(id, RelayErrors.Hung(tool, wasPassedOn: false, _facts.LogPath), "the background is not answering").ConfigureAwait(false);
+            await AnswerInPlaceAsync(id, RelayErrors.Hung(tool, wasPassedOn: false, _facts.LogPath, _facts.DeveloperStart), "the background is not answering").ConfigureAwait(false);
             return;
         }
 

@@ -61,11 +61,18 @@ internal static class RelayErrors
     /// <param name="at">When the background ended.</param>
     /// <param name="exitCode">Its exit code, or <see langword="null"/>.</param>
     /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">
+    /// For a build that is not installed, the command that starts its background, named
+    /// in place of the Start Menu (<see cref="RelayFacts.DeveloperStart"/>); otherwise
+    /// <see langword="null"/>. Added 2026-10-10 for round 2 of the texts review, #136.
+    /// </param>
     /// <returns>The sentence.</returns>
-    public static string Crashed(DateTimeOffset at, int? exitCode, string logPath) =>
+    public static string Crashed(DateTimeOffset at, int? exitCode, string logPath, string? developerStart = null) =>
         $"BrowserAI's background process crashed at {When(at)} (exit code {Code(exitCode)}). Nothing was run. "
-        + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
-        + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.";
+        + (developerStart is { Length: > 0 } command
+            ? $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. " + NothingStartsItAgain(command)
+            : $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
+                + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
 
     /// <summary>
     /// The background crashed while a call it had been given was running.
@@ -79,12 +86,15 @@ internal static class RelayErrors
     /// <param name="at">When the background ended.</param>
     /// <param name="exitCode">Its exit code, or <see langword="null"/>.</param>
     /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">As for <see cref="Crashed"/>: the command a build that is not installed is started with, or <see langword="null"/> (#137).</param>
     /// <returns>The sentence.</returns>
-    public static string CrashedDuringTheCall(string tool, DateTimeOffset at, int? exitCode, string logPath) =>
+    public static string CrashedDuringTheCall(string tool, DateTimeOffset at, int? exitCode, string logPath, string? developerStart = null) =>
         $"BrowserAI's background process crashed at {When(at)} (exit code {Code(exitCode)}) while '{tool}' was running. "
         + PassedOn
-        + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
-        + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.";
+        + (developerStart is { Length: > 0 } command
+            ? $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. " + NothingStartsItAgain(command)
+            : $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
+                + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
 
     /// <summary>
     /// The background will not serve out of its data root or its install root: what it
@@ -99,6 +109,12 @@ internal static class RelayErrors
     /// into its record in the parts this sentence is made of
     /// (<see cref="Hosting.RootRefusal"/>), and a record that carries no parts, which
     /// nothing of this build writes, is answered with the log instead.
+    /// ⚠️ <i>That form is a guard, said 2026-10-10 for round 2 of the texts review, #148</i>:
+    /// <c>BackgroundRecord.Refused</c> writes all four parts every time, so only a record
+    /// another build wrote, or one edited by hand, reaches it; it stays so that such a
+    /// record is still answered with the log, and not with the crash.
+    /// <c>RelayTests.ARefusedRootIsAnsweredAtOnceWithWhatWasRefusedAndItsRemedy</c> provokes
+    /// it with a record written that way.
     /// </para>
     /// <para>
     /// <b>Said at once</b> (D8 a): nothing that happens in the next 150 s changes a
@@ -141,14 +157,23 @@ internal static class RelayErrors
     /// <param name="tool">The tool the call named.</param>
     /// <param name="wasPassedOn">Whether the call had already been passed on to the background.</param>
     /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">
+    /// As for <see cref="Crashed"/>: the command a build that is not installed is started
+    /// with, or <see langword="null"/>. A Start Menu start ends no stuck background of such
+    /// a build, which has no install root to verify it against (#138).
+    /// </param>
     /// <returns>The sentence.</returns>
-    public static string Hung(string tool, bool wasPassedOn, string logPath) =>
+    public static string Hung(string tool, bool wasPassedOn, string logPath, string? developerStart = null) =>
         (wasPassedOn
             ? $"BrowserAI's background process stopped answering while '{tool}' was running: for {Seconds(RelayConstants.HangBound)} seconds it answered none of BrowserAI's checks that it is still working. " + PassedOn
             : $"BrowserAI's background process is running but is not answering, so '{tool}' was NOT run: nothing reached a browser. ")
         + "Nothing was stopped and nothing was restarted. "
-        + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu, which ends the stuck process and starts a new one. "
-        + "Only that person can do that: do not start BrowserAI yourself. If the background process answers again first, the next call goes through.";
+        + (developerStart is { Length: > 0 } command
+            ? $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. "
+                + $"This BrowserAI is not installed, so nothing ends the stuck process or starts another for it: a developer ends it and starts one with {command}. "
+            : $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu, which ends the stuck process and starts a new one. "
+                + "Only that person can do that: do not start BrowserAI yourself. ")
+        + "If the background process answers again first, the next call goes through.";
 
     /// <summary>
     /// The recorded background process is alive and never opened its pipe in the whole
@@ -165,15 +190,21 @@ internal static class RelayErrors
     /// <param name="tool">The tool the call named.</param>
     /// <param name="processId">The process the record names, or <see langword="null"/>.</param>
     /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">As for <see cref="Crashed"/>: the command a build that is not installed is started with, or <see langword="null"/> (#139).</param>
     /// <returns>The sentence.</returns>
-    public static string NoPipe(string tool, int? processId, string logPath)
+    public static string NoPipe(string tool, int? processId, string logPath, string? developerStart = null)
     {
         var process = processId is { } pid ? $" (pid {pid.ToString(CultureInfo.InvariantCulture)})" : string.Empty;
 
         return $"BrowserAI's background process{process} is running but never opened its pipe in the {Seconds(RelayConstants.HoldBound)} seconds this call was held, so '{tool}' was NOT run: nothing reached a browser. "
-            + "Nothing was stopped and nothing was restarted, and a Start Menu start does not end it. "
-            + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, end that process{process} in Task Manager or sign out of Windows and in again, and then start BrowserAI from the Start Menu. "
-            + "Only that person can do that: do not start BrowserAI yourself. If the background process opens its pipe first, the next call goes through.";
+            + (developerStart is { Length: > 0 } command
+                ? "Nothing was stopped and nothing was restarted. "
+                    + $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. "
+                    + $"This BrowserAI is not installed, so nothing ends that process or starts another for it: a developer ends it{process} and starts one with {command}. "
+                : "Nothing was stopped and nothing was restarted, and a Start Menu start does not end it. "
+                    + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, end that process{process} in Task Manager or sign out of Windows and in again, and then start BrowserAI from the Start Menu. "
+                    + "Only that person can do that: do not start BrowserAI yourself. ")
+            + "If the background process opens its pipe first, the next call goes through.";
     }
 
     /// <summary>
@@ -218,6 +249,12 @@ internal static class RelayErrors
                 $"Its scheduled task, '{taskName}', is missing, so nothing starts BrowserAI at sign-in. "
                 + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again from the copy the install saved and starts BrowserAI. "
                 + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to install BrowserAI again. ",
+
+            // Added 2026-10-10, round 2 of the texts review, #140: with no pack id the task
+            // has no name, and a Start Menu start runs nothing (PersonStart's 6112).
+            TaskState.Unnamed =>
+                "This BrowserAI is installed, but its pack id is unknown, so its scheduled task has no name and nothing starts its background process, a person's own start included. "
+                + "The person at this computer needs to install BrowserAI again, which registers the task. ",
             _ => "The person at this computer needs to start BrowserAI from the Start Menu. ",
         }
         + (detail is { Length: > 0 } said ? $"The Task Scheduler reported: {said.TrimEnd('.', ' ')}. " : string.Empty)
@@ -239,7 +276,26 @@ internal static class RelayErrors
     public static string NotInstalled(string tool, string executable, string dataRoot) =>
         $"No BrowserAI background process is running for this build, so '{tool}' was NOT run: nothing reached a browser. "
         + $"This BrowserAI, {executable}, is not installed, so nothing starts a background process for it, and waiting cannot help. "
-        + $"A developer starts one with \"{executable}\" --background --data-root \"{dataRoot}\", and the next call goes through.";
+        + $"A developer starts one with {DeveloperStart(executable, dataRoot)}, and the next call goes through.";
+
+    /// <summary>The command that starts the background of a build that is not installed.</summary>
+    /// <remarks>
+    /// Split out of <see cref="NotInstalled"/> on 2026-10-10, unchanged, so the relay's
+    /// facts carry the same command into every answer that would otherwise send the
+    /// person to the Start Menu (round 2 of the texts review, #136 to #139).
+    /// </remarks>
+    /// <param name="executable">This binary's path.</param>
+    /// <param name="dataRoot">The data root the relay serves.</param>
+    /// <returns>The command, quoted as a person types it.</returns>
+    /// <remarks>Internal, because it is a clause and not a row: the census counts the public ones.</remarks>
+    internal static string DeveloperStart(string executable, string dataRoot) =>
+        $"\"{executable}\" --background --data-root \"{dataRoot}\"";
+
+    /// <summary>What a build that is not installed needs once its background has gone: a developer's start.</summary>
+    /// <param name="command">The command that starts its background.</param>
+    /// <returns>The sentence.</returns>
+    private static string NothingStartsItAgain(string command) =>
+        $"This BrowserAI is not installed, so nothing starts its background process again and waiting cannot help: a developer starts one with {command}, and the next call goes through.";
 
     /// <summary>
     /// The background stopped, with no crash recorded, while a call it had been given
@@ -251,12 +307,19 @@ internal static class RelayErrors
     /// said so the model knows the next call is held and not lost.
     /// </remarks>
     /// <param name="tool">The tool the call named.</param>
+    /// <param name="developerStart">
+    /// As for <see cref="Crashed"/>: the command a build that is not installed is started
+    /// with, or <see langword="null"/>. Nothing starts such a build's background again, so
+    /// its next call is answered at once. Added 2026-10-10 with the texts review's #136.
+    /// </param>
     /// <returns>The sentence.</returns>
-    public static string StoppedDuringTheCall(string tool) =>
+    public static string StoppedDuringTheCall(string tool, string? developerStart = null) =>
         $"BrowserAI's background process stopped while '{tool}' was running. "
         + PassedOn
-        + $"BrowserAI holds the next call for up to {Seconds(RelayConstants.HoldBound)} seconds while the background process starts again; if it does not start, the person at this computer needs to start BrowserAI from the Start Menu. "
-        + "Do not start BrowserAI yourself.";
+        + (developerStart is { Length: > 0 } command
+            ? NothingStartsItAgain(command)
+            : $"BrowserAI holds the next call for up to {Seconds(RelayConstants.HoldBound)} seconds while the background process starts again; if it does not start, the person at this computer needs to start BrowserAI from the Start Menu. "
+                + "Do not start BrowserAI yourself.");
 
     /// <summary>The background refused this relay's greeting, and said why.</summary>
     /// <remarks>
@@ -321,7 +384,7 @@ internal static class RelayErrors
     public static string UpdateInstallingDuringTheCall(string tool, string? version, string? clientName) =>
         $"BrowserAI is installing an update{To(version)} and ended while '{tool}' was running. "
         + PassedOn
-        + UpdateRemedy(clientName)
+        + UpdateRemedy(clientName, passedOn: true)
         + SessionsAfterAnUpdate;
 
     /// <summary>A client frame that is not a JSON-RPC message.</summary>
@@ -349,13 +412,24 @@ internal static class RelayErrors
     /// <see cref="KnownClients"/>' and were read off the wire.
     /// </remarks>
     /// <param name="clientName">What the client called itself.</param>
+    /// <param name="passedOn">
+    /// Whether the call had already been passed on, so that part of it may have happened.
+    /// <i>Added 2026-10-10, round 2 of the texts review, #145</i>: the answer then says to
+    /// check before repeating the call, so its remedy says when BrowserAI answers again and
+    /// asks for no call (previously both rows were told to call again in a few seconds).
+    /// </param>
     /// <returns>One or two sentences.</returns>
-    private static string UpdateRemedy(string? clientName) =>
+    private static string UpdateRemedy(string? clientName, bool passedOn = false) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "When your client runs with -p or in VS Code, call again in a few seconds: it starts the updated BrowserAI by itself on that call. In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
+            ? (passedOn
+                ? "When your client runs with -p or in VS Code, it starts the updated BrowserAI by itself on its next call, a few seconds from now."
+                : "When your client runs with -p or in VS Code, call again in a few seconds: it starts the updated BrowserAI by itself on that call.")
+                + " In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Your client does not start BrowserAI again once this one has ended, so BrowserAI answers again in a new conversation."
-                : "If your client starts BrowserAI again by itself, call again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
+                : passedOn
+                    ? "If your client starts BrowserAI again by itself, BrowserAI answers again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation."
+                    : "If your client starts BrowserAI again by itself, call again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
 
     private static string When(DateTimeOffset at) => SessionErrors.When(at);
 

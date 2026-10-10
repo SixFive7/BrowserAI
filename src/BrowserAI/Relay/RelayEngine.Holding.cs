@@ -83,7 +83,7 @@ internal sealed partial class RelayEngine
                 foreach (var call in due)
                 {
                     _ = _held.Remove(call);
-                    await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: false, _facts.LogPath), "the background did not finish its greeting in time").ConfigureAwait(false);
+                    await AnswerInPlaceAsync(call.Id, RelayErrors.Hung(call.Tool, wasPassedOn: false, _facts.LogPath, _facts.DeveloperStart), "the background did not finish its greeting in time").ConfigureAwait(false);
                 }
             }
             else
@@ -183,8 +183,8 @@ internal sealed partial class RelayEngine
             await AnswerInPlaceAsync(
                 call.Id,
                 absence is BackgroundAbsence.Crashed crashed
-                    ? RelayErrors.CrashedDuringTheCall(call.Tool, crashed.At, crashed.ExitCode, crashed.LogPath)
-                    : RelayErrors.StoppedDuringTheCall(call.Tool),
+                    ? RelayErrors.CrashedDuringTheCall(call.Tool, crashed.At, crashed.ExitCode, crashed.LogPath, _facts.DeveloperStart)
+                    : RelayErrors.StoppedDuringTheCall(call.Tool, _facts.DeveloperStart),
                 "the background's pipe closed while the call was running").ConfigureAwait(false);
         }
 
@@ -250,7 +250,7 @@ internal sealed partial class RelayEngine
     /// <returns>The sentence.</returns>
     private string AtOnce(BackgroundAbsence absence, string tool) => absence switch
     {
-        BackgroundAbsence.Crashed crashed => RelayErrors.Crashed(crashed.At, crashed.ExitCode, crashed.LogPath),
+        BackgroundAbsence.Crashed crashed => RelayErrors.Crashed(crashed.At, crashed.ExitCode, crashed.LogPath, _facts.DeveloperStart),
         BackgroundAbsence.RootRefused refused => RelayErrors.RootRefused(tool, refused.Refusal, refused.LogPath),
         BackgroundAbsence.NotInstalled build => RelayErrors.NotInstalled(tool, build.Executable, build.DataRoot),
         _ => RelayErrors.UpdateInstalling(tool, null, _clientName),
@@ -271,7 +271,7 @@ internal sealed partial class RelayEngine
     private string AtTheDeadline(BackgroundAbsence absence, string tool) => absence switch
     {
         BackgroundAbsence.NotRunning notRunning => RelayErrors.NotRunning(tool, notRunning.Task, notRunning.TaskName, notRunning.Detail),
-        BackgroundAbsence.Starting starting => RelayErrors.NoPipe(tool, starting.ProcessId, _facts.LogPath),
+        BackgroundAbsence.Starting starting => RelayErrors.NoPipe(tool, starting.ProcessId, _facts.LogPath, _facts.DeveloperStart),
         _ => RelayErrors.NotRunning(tool, TaskState.Unknown, string.Empty, null),
     };
 

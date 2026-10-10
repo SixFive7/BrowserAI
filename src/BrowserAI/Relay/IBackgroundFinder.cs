@@ -62,6 +62,14 @@ internal enum TaskState
 
     /// <summary>The Task Scheduler could not be asked, or did not say.</summary>
     Unknown,
+
+    /// <summary>
+    /// This build is installed, but its pack id is unknown, so its task has no name: a
+    /// Start Menu start runs nothing (6112), and a reinstall registers the task. Added
+    /// 2026-10-10 for round 2 of the texts review, #140, where this was
+    /// <see cref="Unknown"/> and the answer sent the person to the Start Menu.
+    /// </summary>
+    Unnamed,
 }
 
 /// <summary>
