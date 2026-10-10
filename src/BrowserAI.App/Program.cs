@@ -255,6 +255,7 @@ internal static class Program
                 RecordPath = BackgroundRecord.PathFor(paths.RootAppDir, pipe),
                 InstallRoot = installRoot,
                 DataRoot = paths.RootAppDir,
+                Executable = Environment.ProcessPath ?? RegistrationTarget.AppFileName,
                 TaskName = TaskNameForThisInstall(),
                 Definition = () => installRoot is null ? null : SignInTask.SavedDefinition(installRoot),
                 Tasks = ScheduledTasks.Instance,

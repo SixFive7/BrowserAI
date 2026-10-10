@@ -131,6 +131,14 @@ internal static partial class SignInTask
     /// the token the hook runs with; the scheduler stores the trigger's as
     /// <c>DOMAIN\user</c>, measured 2026-09-25.
     /// </para>
+    /// <para>
+    /// <b>The description says what deleting the task costs, and on what condition a
+    /// Start Menu start undoes it.</b> ⚠️ <i>Corrected 2026-10-10 (previously "deleting it
+    /// stops BrowserAI until BrowserAI is started from the Start Menu, which registers it
+    /// again.")</i>: a person's start registers a missing task only from
+    /// <see cref="SavedDefinitionFileName"/>, and only when it can read that copy and the
+    /// scheduler takes it, the texts review's #135.
+    /// </para>
     /// </remarks>
     /// <param name="appImage">The configuration app the task starts: <c>&lt;install root&gt;\current\BrowserAI.exe</c>.</param>
     /// <param name="userSid">The installing user's SID.</param>
@@ -153,7 +161,7 @@ internal static partial class SignInTask
             <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
               <RegistrationInfo>
                 <Author>BrowserAI</Author>
-                <Description>Starts BrowserAI, installed in {root}, when you sign in, when you start it from the Start Menu and after an update. BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, which registers it again.</Description>
+                <Description>Starts BrowserAI, installed in {root}, when you sign in, when you start it from the Start Menu and after an update. BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, which registers it again from the copy the install saved as {SavedDefinitionFileName}. If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs installing again.</Description>
               </RegistrationInfo>
               <Triggers>
                 <LogonTrigger>
@@ -359,50 +367,100 @@ internal static partial class SignInTask
         }
         else
         {
-            var name = NameFor(appId, target.InstallRoot);
-            var saved = Path.Combine(target.InstallRoot, SavedDefinitionFileName);
-
-            try
-            {
-                TaskReport outcome;
-
-                if (intent is RegistrationIntent.Uninstall)
-                {
-                    outcome = tasks.Remove(name);
-                    File.Delete(saved);
-                }
-                else
-                {
-                    var definition = DefinitionFor(
-                        Path.Combine(target.InstallRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName),
-                        NamedPipes.CurrentUserSid(),
-                        target.InstallRoot,
-                        arguments);
-
-                    outcome = tasks.Register(name, definition);
-
-                    // ⚠️ SAVED WHATEVER THE SCHEDULER SAID -- 2026-10-09. Corrected
-                    // (previously written only once the scheduler had registered the
-                    // task): a person's start registers a missing task from this file,
-                    // and a task the hook could not register is the one that will be
-                    // missing, so the file was absent in exactly the case it is for
-                    // (hazard row 331).
-                    File.WriteAllText(saved, definition);
-                }
-
-                report = new SignInTaskReport(name, outcome.Change, outcome.Detail);
-            }
-#pragma warning disable CA1031 // A hook must not fail on the task: a sentence in the installer's log, and the install goes on.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                report = new SignInTaskReport(name, TaskChange.Failed, $"The task '{name}' was not changed: {failure.Message}");
-            }
+            report = ChangeTheTaskAndItsCopy(intent, target, NameFor(appId, target.InstallRoot), tasks, arguments);
         }
 
         SignInTaskLog.Changed(logger, report.Change, report.Detail);
 
         return report;
+    }
+
+    /// <summary>
+    /// The task first, then the copy saved beside the install, each with a failure of its
+    /// own.
+    /// </summary>
+    /// <remarks>
+    /// <b>The sentence says which part failed.</b> The real scheduler's calls never throw,
+    /// so a failure in the first step came before the scheduler was asked, in composing the
+    /// definition, and the task was not changed; one in the second came after it, and the
+    /// task was changed while its copy was not. ⚠️ <i>Corrected 2026-10-10 (previously one
+    /// catch around both steps, whose "The task '...' was not changed" was also written when
+    /// the task had been registered or removed and only writing or deleting the copy had
+    /// failed)</i>, the texts review's #144. A failure of either is still
+    /// <see cref="TaskChange.Failed"/>, a warning in the installer's log, because a task
+    /// with no copy is one a person's start cannot register again once it goes missing.
+    /// </remarks>
+    /// <param name="intent">Which hook is running.</param>
+    /// <param name="target">The install the hook runs in.</param>
+    /// <param name="name">The task's name.</param>
+    /// <param name="tasks">The scheduler.</param>
+    /// <param name="arguments">The action's arguments.</param>
+    /// <returns>What happened.</returns>
+    private static SignInTaskReport ChangeTheTaskAndItsCopy(
+        RegistrationIntent intent,
+        RegistrationTarget target,
+        string name,
+        ILogonTasks tasks,
+        string arguments)
+    {
+        var saved = Path.Combine(target.InstallRoot, SavedDefinitionFileName);
+        var removing = intent is RegistrationIntent.Uninstall;
+        string? definition = null;
+        TaskReport outcome;
+
+        try
+        {
+            if (removing)
+            {
+                outcome = tasks.Remove(name);
+            }
+            else
+            {
+                definition = DefinitionFor(
+                    Path.Combine(target.InstallRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName),
+                    NamedPipes.CurrentUserSid(),
+                    target.InstallRoot,
+                    arguments);
+
+                outcome = tasks.Register(name, definition);
+            }
+        }
+#pragma warning disable CA1031 // A hook must not fail on the task: a sentence in the installer's log, and the install goes on.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            return new SignInTaskReport(name, TaskChange.Failed, $"The task '{name}' was not changed: {failure.Message}");
+        }
+
+        try
+        {
+            if (definition is { } written)
+            {
+                // ⚠️ SAVED WHATEVER THE SCHEDULER SAID -- 2026-10-09. Corrected
+                // (previously written only once the scheduler had registered the
+                // task): a person's start registers a missing task from this file,
+                // and a task the hook could not register is the one that will be
+                // missing, so the file was absent in exactly the case it is for
+                // (hazard row 331).
+                File.WriteAllText(saved, written);
+            }
+            else
+            {
+                // The uninstall hook's: the copy goes with the task.
+                File.Delete(saved);
+            }
+        }
+#pragma warning disable CA1031 // As above: the copy's failure is a sentence too, and the install goes on.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            return new SignInTaskReport(
+                name,
+                TaskChange.Failed,
+                $"{outcome.Detail} Its saved copy, {SavedDefinitionFileName}, could not be {(removing ? "deleted" : "written")}: {failure.Message}");
+        }
+
+        return new SignInTaskReport(name, outcome.Change, outcome.Detail);
     }
 }
 

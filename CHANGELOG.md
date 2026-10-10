@@ -2266,6 +2266,32 @@ release body; nothing else depends on it.
   the switch missing, and a resume after the suite killed a real Chromium's whole job opened the
   new tab page and restored nothing.
 
+- 🐛 **A missing task's answer and the task's description say when a Start Menu start cannot register it.**
+  The maintainer's texts review of 2026-10-10, items 116 and 135. A Start Menu start registers a
+  missing task again only from the copy the install saved, `background-task.xml`, and only when it
+  can read that copy and the Task Scheduler takes it; otherwise it says why in BrowserAI's log.
+  The relay's answer to a call held for a missing task, and the description the task carries in
+  Task Scheduler, both promised the registration with no condition. Both now say what it depends
+  on, and that installing BrowserAI again is what is left when it fails. `RelayTests` and
+  `SignInTaskTests` hold both texts word for word, planted red against the old ones.
+
+- 🐛 **A person's start and the sign-in task step write what happened, in words and with one full stop.**
+  The maintainer's texts review of 2026-10-10, items 144 and 166 to 173. A build that is not
+  installed is given the command that starts its own background with this build's full path,
+  quoted, where it gave a bare `BrowserAI.exe`, which a terminal finds on the PATH the hooks point
+  at the installed build; an installed build whose pack id is unknown has a line of its own, 6112,
+  where it was told it is not installed. A missing task the Task Scheduler will not register again
+  has a line of its own too, 6113, where 6104 called it registered again with the outcome
+  `Failed`. The hooks' line for a copy beside the install that could not be written or deleted
+  says the task itself was registered or removed, where it said the task was not changed. 6106
+  gives its bound in seconds, where it printed `00:00:30`, and 6107 calls a code nothing recorded
+  unknown, where it printed `(null)`. 6108, 6109 and every failure the Task Scheduler reports end
+  in one full stop, where a reason that ended in one gave two. `PersonStartTests` and
+  `SignInTaskTests` hold each line word for word, up to any reason Windows supplies, each planted
+  red against the line as it was. A person's start ends a hung background through
+  `PersonStartSettings.EndProcess` now, a seam beside the scheduler's, because what Windows says
+  about a process it will not open or end cannot be provoked in the suite's own process.
+
 ## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be

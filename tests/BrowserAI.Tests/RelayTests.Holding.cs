@@ -224,6 +224,51 @@ internal sealed partial class RelayTests
     }
 
     /// <summary>
+    /// A missing task is answered with what a Start Menu start registers it again from,
+    /// and with what is left when it cannot: a reinstall.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #116, 2026-10-10</b>: a person's start registers a missing
+    /// task only from the copy the install saved, <c>background-task.xml</c>, and only when
+    /// it can read it and the Task Scheduler takes it; otherwise it says why in its log
+    /// (6103, 6113). The answer promised the registration with no condition. Written out
+    /// here and not taken from the catalogue, as R's crash sentence is.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the answer as it was, "..., which registers
+    /// the task again and starts BrowserAI.", with nothing after it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMissingTaskIsAnsweredWithWhatAStartRegistersItFromAndWhatIsLeftWhenItCannot()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.NotRunning(TaskState.Missing, FakeBackgroundFinder.TaskName, null);
+
+        _ = await rig.InitializeAsync(KnownClients.Codex);
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        await rig.StepAsync(RelayConstants.HoldBound);
+        var answered = await rig.NextAsync();
+
+        await Assert.That(answered.IdText).IsEqualTo("1");
+        await Assert.That(answered.ToolText).IsEqualTo(
+            "BrowserAI's background process is not running, and none started in the 150 seconds this call was held, so 'browser_navigate' was NOT run: nothing reached a browser. "
+            + $"Its scheduled task, '{FakeBackgroundFinder.TaskName}', is missing, so nothing starts BrowserAI at sign-in. "
+            + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again from the copy the install saved and starts BrowserAI. "
+            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to install BrowserAI again. "
+            + "Only that person can do this: do not start BrowserAI or change its task yourself, and do not retry this call until they have.");
+
+        Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Missing, FakeBackgroundFinder.TaskName, null));
+    }
+
+    /// <summary>
     /// A recorded crash is answered at once, with R's sentence word for word, and so is
     /// every call that was already held when the crash became known.
     /// </summary>

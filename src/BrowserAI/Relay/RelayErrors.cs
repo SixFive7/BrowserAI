@@ -164,6 +164,14 @@ internal static class RelayErrors
     /// ask for, since relays never start anything themselves (S).
     /// </para>
     /// <para>
+    /// <b>A Start Menu start registers a missing task only from the copy the install
+    /// saved</b>, <c>background-task.xml</c>, and only when it can read that copy and the
+    /// Task Scheduler takes it; otherwise it registers nothing, says why in its log
+    /// (6103, 6113) and a reinstall is what is left. <i>Corrected 2026-10-10 (previously
+    /// "which registers the task again and starts BrowserAI", a promise with no
+    /// condition)</i>, the texts review's #116.
+    /// </para>
+    /// <para>
     /// <b>Said only after the hold bound</b>, because the background appears by itself
     /// at sign-in and after an update, and a call held through either is served.
     /// </para>
@@ -182,7 +190,8 @@ internal static class RelayErrors
                 + $"The person at this computer needs to enable it, in Task Scheduler (Task Scheduler Library, '{taskName}', Enable) or with schtasks /Change /TN \"{taskName}\" /ENABLE, and then start BrowserAI from the Start Menu. ",
             TaskState.Missing =>
                 $"Its scheduled task, '{taskName}', is missing, so nothing starts BrowserAI at sign-in. "
-                + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again and starts BrowserAI. ",
+                + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again from the copy the install saved and starts BrowserAI. "
+                + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to install BrowserAI again. ",
             _ => "The person at this computer needs to start BrowserAI from the Start Menu. ",
         }
         + (detail is { Length: > 0 } said ? $"The Task Scheduler reported: {said.TrimEnd('.', ' ')}. " : string.Empty)

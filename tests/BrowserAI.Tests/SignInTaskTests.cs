@@ -58,6 +58,15 @@ internal sealed class SignInTaskTests
     /// installer's settings, escaped like the rest. Planted red that day against a
     /// definition that ran a second instance in parallel, the setting before S a.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously three phrases of the description were held,
+    /// the last "deleting it stops BrowserAI until BrowserAI is started from the Start
+    /// Menu, which registers it again")</b>, the texts review's #135: a Start Menu start
+    /// registers a missing task only from the copy the install saved, and only when it
+    /// can read it and the scheduler takes it, so the description says so. It is held
+    /// whole, because the three phrases matched the new description as well as the old.
+    /// <b>Planted red 2026-10-10</b> against the description as it was.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -94,11 +103,12 @@ internal sealed class SignInTaskTests
         await Assert.That(one("AllowStartOnDemand").Value).IsEqualTo("true");
         await Assert.That(one("Priority").Value).IsEqualTo("5");
 
-        var description = one("Description").Value;
-
-        await Assert.That(description).Contains($"installed in {Root}");
-        await Assert.That(description).Contains("Disabling this task stops BrowserAI until it is enabled again");
-        await Assert.That(description).Contains("deleting it stops BrowserAI until BrowserAI is started from the Start Menu, which registers it again");
+        await Assert.That(one("Description").Value).IsEqualTo(
+            $"Starts BrowserAI, installed in {Root}, when you sign in, when you start it from the Start Menu and after an update. "
+            + "BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. "
+            + "Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, "
+            + "which registers it again from the copy the install saved as background-task.xml. "
+            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs installing again.");
 
         // The installer's settings travel in the same action, escaped like the rest.
         var named = XDocument.Parse(SignInTask.DefinitionFor(Image, sid, Root, SignInTask.ArgumentsFor(Root + @"\data", @"D:\feeds\BrowserAI")));
@@ -491,6 +501,106 @@ internal sealed class SignInTaskTests
     }
 
     /// <summary>
+    /// A copy beside the install that cannot be written or deleted is said to be the part
+    /// that failed, after the task itself was registered or removed; a failure before the
+    /// scheduler is asked still says the task was not changed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #144, 2026-10-10</b>: one catch held both steps, so a copy
+    /// that could not be written after the scheduler had registered the task read "The
+    /// task '...' was not changed", in the hooks' log and the installer's. Each step now
+    /// fails with a sentence of its own, still <see cref="TaskChange.Failed"/>, so the
+    /// installer's log keeps it as a warning: a task with no copy cannot be registered
+    /// again by a person's start once it goes missing.
+    /// </para>
+    /// <para>
+    /// <b>A directory where the copy goes</b> is what makes both writing and deleting it
+    /// fail, with no access rule changed anywhere; the reason after the colon is Windows'
+    /// own, so the arm holds the sentence up to it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 twice</b>, against the copy's failure written as it was,
+    /// "The task '...' was not changed: Access to the path ... is denied.": from the
+    /// install hook with the task registered, and, with the install hook's sentence fixed,
+    /// from the uninstall hook with the task removed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACopyThatCannotBeSavedIsThePartThatFailedAndTheTaskIsSaidToBeChanged()
+    {
+        using var install = ScratchDirectory.Create("sign-in-copy");
+        using var data = ScratchDirectory.Create("sign-in-copy-data");
+
+        var image = InstalledLayout.Create(install.Path);
+        var name = SignInTask.NameFor(ScratchLogonTasks.AppId, install.Path);
+
+        // The scheduler's own sentences, which the copy's failure is said after.
+        var tasks = new ScriptedLogonTasks();
+
+        _ = Directory.CreateDirectory(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName));
+
+        var installed = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+
+        await Assert.That(tasks.Registered.ContainsKey(name)).IsTrue().Because("the scheduler was not asked to register the task");
+        await Assert.That(installed.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
+        await Assert.That(installed.SignInTask.Detail)
+            .StartsWith($"The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
+
+        var removed = Hook(RegistrationIntent.Uninstall, image, data.Path, tasks);
+
+        await Assert.That(tasks.Registered.IsEmpty).IsTrue().Because("the scheduler was not asked to remove the task");
+        await Assert.That(removed.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
+        await Assert.That(removed.SignInTask.Detail)
+            .StartsWith($"The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
+
+        // The hooks' own log carries the same sentences.
+        var log = HookLog(data.Path);
+
+        await Assert.That(log).Contains($"Sign-in task: {TaskChange.Failed}. The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
+        await Assert.That(log).Contains($"Sign-in task: {TaskChange.Failed}. The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
+
+        // A failure before the scheduler is asked leaves the task as it was, and says so.
+        Directory.Delete(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName));
+
+        var thrown = Hook(RegistrationIntent.Install, image, data.Path, new ThrowingScheduler());
+
+        await Assert.That(thrown.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
+        await Assert.That(thrown.SignInTask.Detail).IsEqualTo($"The task '{name}' was not changed: {ThrowingScheduler.Message}");
+        await Assert.That(File.Exists(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName))).IsFalse();
+    }
+
+    /// <summary>
+    /// A scheduler call's failure ends in one full stop, whatever the reason it carries
+    /// ends in.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #168 and #169, 2026-10-10</b>: the reason is often an
+    /// exception's message, which ends in a full stop of its own, and the sentence put
+    /// another after it, so a person's start's 6105, its 6113 and the hooks' line ended
+    /// in two. The real scheduler's failures are not the suite's to choose, so the arm
+    /// gives <c>ScheduledTasks.Failed</c> each ending a reason can have.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the sentence as it was, which read "Access is
+    /// denied.." for the first reason.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASchedulerFailureEndsInOneFullStopWhateverItsReasonEndsIn()
+    {
+        static string sentence(string why) => ScheduledTasks.Failed("register 'the task'", why).Detail;
+
+        await Assert.That(sentence("0x80070005, Access is denied.")).IsEqualTo("The task scheduler could not register 'the task': 0x80070005, Access is denied.");
+        await Assert.That(sentence("0x80070005, Access is denied.\r\n")).IsEqualTo("The task scheduler could not register 'the task': 0x80070005, Access is denied.");
+        await Assert.That(sentence("the scheduler did not answer inside 5 s")).IsEqualTo("The task scheduler could not register 'the task': the scheduler did not answer inside 5 s.");
+        await Assert.That(ScheduledTasks.Failed("register 'the task'", "it ended.").Change).IsEqualTo(TaskChange.Failed);
+    }
+
+    /// <summary>
     /// The real task scheduler registers the definition, keeps a logon trigger with
     /// no delay and the sign-in arguments, removes it, and says a second removal
     /// found nothing.
@@ -546,6 +656,25 @@ internal sealed class SignInTaskTests
         await Assert.That(ScheduledTasks.DefinitionOf(name)).IsNull();
         await Assert.That(ScheduledTasks.Instance.Remove(name).Change).IsEqualTo(TaskChange.Absent);
         await Assert.That(ScheduledTasks.Instance.Run(name, Coordination.CoordinatorProtocol.CoordinateArgument).Change).IsEqualTo(TaskChange.NotRegistered);
+    }
+
+    /// <summary>
+    /// A scheduler whose every call throws: the first step failing, which the real one
+    /// never does, standing in for the definition failing to compose before it is asked.
+    /// </summary>
+    private sealed class ThrowingScheduler : ILogonTasks
+    {
+        /// <summary>What every call throws with.</summary>
+        public const string Message = "The suite's scheduler throws before it is asked anything.";
+
+        /// <inheritdoc />
+        public TaskReport Register(string name, string definition) => throw new InvalidOperationException(Message);
+
+        /// <inheritdoc />
+        public TaskReport Remove(string name) => throw new InvalidOperationException(Message);
+
+        /// <inheritdoc />
+        public TaskReport Run(string name, string argument) => throw new InvalidOperationException(Message);
     }
 
     /// <summary>Runs one hook against a scratch install, a scratch data root and a scratch PATH.</summary>

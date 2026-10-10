@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Text.Json;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
@@ -34,6 +35,15 @@ internal sealed record PersonStartSettings
     /// <summary>The data root.</summary>
     public required string DataRoot { get; init; }
 
+    /// <summary>This build's own full path, which the line for a build that is not installed names.</summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10</i>, the texts review's #166: a bare <c>BrowserAI.exe</c> is found
+    /// through the PATH, where the hooks put the installed build, whose background serves a
+    /// pipe this build's relays do not use. The relay's own sentence names the same path
+    /// (<c>RelayErrors.NotInstalled</c>).
+    /// </remarks>
+    public required string Executable { get; init; }
+
     /// <summary>The task the background runs as, or <see langword="null"/> when its name cannot be told.</summary>
     public required string? TaskName { get; init; }
 
@@ -51,6 +61,19 @@ internal sealed record PersonStartSettings
 
     /// <summary>What the task's <c>$(Arg0)</c> carries for this start, which the background's first tab reads as its occasion.</summary>
     public string StartedBy { get; init; } = PersonStart.StartedByPerson;
+
+    /// <summary>
+    /// Ends a hung background by its pid, given the creation time its record names and the
+    /// install root its image must lie under, and answers why not when it did not end it:
+    /// the suite's seam, as <see cref="Tasks"/> is.
+    /// </summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10</i>, the texts review's #173: what Windows says about a process it
+    /// would not open or end cannot be provoked in the suite's own process, whose own pid
+    /// always opens, so an arm hands that reason in. The default is the one that ends
+    /// anything, <see cref="PersonStart.EndByItsVerifiedIdentity"/>.
+    /// </remarks>
+    public Func<int, long, string, string?> EndProcess { get; init; } = PersonStart.EndByItsVerifiedIdentity;
 }
 
 /// <summary>
@@ -135,10 +158,19 @@ internal static partial class PersonStart
 
     private static (PersonStartOutcome Outcome, string? Address) StartThroughTheTask(PersonStartSettings settings, string? parameters, ILogger logger)
     {
-        if (settings.InstallRoot is null || settings.TaskName is not { Length: > 0 } taskName)
+        if (settings.InstallRoot is not { } installRoot)
         {
             // D11 a: nothing starts a background for a build that is not installed.
-            PersonStartLog.NotInstalled(logger, settings.DataRoot);
+            PersonStartLog.NotInstalled(logger, settings.Executable, settings.DataRoot);
+            return (PersonStartOutcome.NotShown, null);
+        }
+
+        if (settings.TaskName is not { Length: > 0 } taskName)
+        {
+            // Installed, with no pack id to name its task by. Corrected 2026-10-10
+            // (previously this took the not-installed line above, which told the person
+            // the build is not installed), the texts review's #166.
+            PersonStartLog.NoTaskName(logger, installRoot);
             return (PersonStartOutcome.NotShown, null);
         }
 
@@ -157,13 +189,17 @@ internal static partial class PersonStart
             }
 
             var registered = settings.Tasks.Register(taskName, definition);
-            PersonStartLog.Registered(logger, registered.Change, registered.Detail);
 
+            // Said once the outcome is known. Corrected 2026-10-10 (previously 6104 was
+            // written first, whatever the scheduler answered, so a refusal read "is
+            // registered again: Failed"), the texts review's #168.
             if (registered.Change is not TaskChange.Registered)
             {
+                PersonStartLog.NotRegisteredAgain(logger, taskName, registered.Detail);
                 return (PersonStartOutcome.NotShown, null);
             }
 
+            PersonStartLog.Registered(logger, taskName);
             run = settings.Tasks.Run(taskName, settings.StartedBy);
         }
 
@@ -201,7 +237,9 @@ internal static partial class PersonStart
             Thread.Sleep(LookInterval);
         }
 
-        PersonStartLog.NoPipeInTime(logger, taskName, settings.StartBound);
+        // In seconds, as a person reads a bound. Corrected 2026-10-10 (previously the
+        // TimeSpan itself, which a log line prints as 00:00:30), the texts review's #170.
+        PersonStartLog.NoPipeInTime(logger, taskName, settings.StartBound.TotalSeconds);
         return (PersonStartOutcome.NotShown, null);
     }
 
@@ -213,14 +251,32 @@ internal static partial class PersonStart
             return;
         }
 
-        // R: the person's start is what clears a recorded crash, and this is it.
-        PersonStartLog.CrashCleared(logger, record.ProcessId, record.ExitCode);
+        // R: the person's start is what clears a recorded crash, and this is it. A code
+        // nothing recorded reads "unknown", as the relay's crash sentence has it.
+        // Corrected 2026-10-10 (previously the code itself, which a log line prints as
+        // "(null)" when there is none), the texts review's #171.
+        PersonStartLog.CrashCleared(
+            logger,
+            record.ProcessId,
+            record.ExitCode is { } code ? code.ToString(CultureInfo.InvariantCulture) : "unknown");
         BackgroundRecord.Clear(settings.RecordPath);
     }
 
+    /// <summary>A reason to put before a full stop of the line's own: its own full stop taken off.</summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10</i>, the texts review's #172 and #173: 6108 and 6109 write a full
+    /// stop after the reason, and most reasons already end in one, so those lines ended in
+    /// two. Every reason <see cref="BackgroundClient"/> gives for a background that did not
+    /// answer ends in one, and so do three of those <see cref="BrowserProcesses"/> gives for
+    /// a process it would not open or end.
+    /// </remarks>
+    /// <param name="why">The reason.</param>
+    /// <returns>The reason, ending in no full stop.</returns>
+    private static string Clause(string why) => why.TrimEnd().TrimEnd('.');
+
     private static bool EndTheHungBackground(PersonStartSettings settings, int? processId, string? why, ILogger logger)
     {
-        PersonStartLog.Hung(logger, processId ?? 0, why ?? "no reason given");
+        PersonStartLog.Hung(logger, processId ?? 0, Clause(why ?? "no reason given"));
 
         if (processId is not { } pid
             || BackgroundRecord.Read(settings.RecordPath) is not { } record
@@ -236,21 +292,33 @@ internal static partial class PersonStart
             return false;
         }
 
-        // The person's action, and only on a pid whose creation time and image were
-        // both verified just now against the record and the install root (the
-        // repository's rule: never by image name).
-        using (var target = BrowserProcesses.OpenToEnd(pid, record.CreatedFileTime, root, out var refusal))
+        if (settings.EndProcess(pid, record.CreatedFileTime, root) is { } refusal)
         {
-            if (target is null || !target.TryTerminate(out refusal))
-            {
-                PersonStartLog.HungNotEnded(logger, pid, refusal ?? "it could not be opened");
-                return false;
-            }
+            PersonStartLog.HungNotEnded(logger, pid, Clause(refusal));
+            return false;
         }
 
         BackgroundRecord.Clear(settings.RecordPath);
         PersonStartLog.HungEnded(logger, pid);
         return true;
+    }
+
+    /// <summary>
+    /// Ends a process by its pid once its creation time and its image under the install
+    /// root are verified: <see cref="PersonStartSettings.EndProcess"/>'s default.
+    /// </summary>
+    /// <param name="processId">The pid the record names.</param>
+    /// <param name="createdFileTime">The creation time the record names.</param>
+    /// <param name="installRoot">The install root its image must lie under.</param>
+    /// <returns><see langword="null"/> when it was ended; otherwise why not.</returns>
+    internal static string? EndByItsVerifiedIdentity(int processId, long createdFileTime, string installRoot)
+    {
+        // The person's action, and only on a pid whose creation time and image were
+        // both verified just now against the record and the install root (the
+        // repository's rule: never by image name).
+        using var target = BrowserProcesses.OpenToEnd(processId, createdFileTime, installRoot, out var refusal);
+
+        return target is not null && target.TryTerminate(out refusal) ? null : refusal ?? "it could not be opened";
     }
 }
 
@@ -260,27 +328,43 @@ internal static partial class PersonStartLog
     [LoggerMessage(EventId = 6101, Level = LogLevel.Warning, Message = "The background refused to open a page: {Why}")]
     public static partial void Refused(ILogger logger, string why);
 
-    [LoggerMessage(EventId = 6102, Level = LogLevel.Warning, Message = "No background runs for this build, and a build that is not installed has nothing that starts one. Start one with: BrowserAI.exe --background --data-root \"{DataRoot}\"")]
-    public static partial void NotInstalled(ILogger logger, string dataRoot);
+    // Corrected 2026-10-10 (previously "Start one with: BrowserAI.exe --background
+    // --data-root ...", and written for an installed build with no task name too), the
+    // texts review's #166: this build's own full path, quoted, as the relay's sentence
+    // names it, and only for a build with no install root. The other build is 6112.
+    [LoggerMessage(EventId = 6102, Level = LogLevel.Warning, Message = "No background runs for this build, and a build that is not installed has nothing that starts one. Start one with: \"{Executable}\" --background --data-root \"{DataRoot}\"")]
+    public static partial void NotInstalled(ILogger logger, string executable, string dataRoot);
 
     [LoggerMessage(EventId = 6103, Level = LogLevel.Error, Message = "The task '{Task}' is missing and the definition the install wrote could not be read, so it was not registered again. Reinstalling BrowserAI registers it.")]
     public static partial void NoDefinition(ILogger logger, string task);
 
-    [LoggerMessage(EventId = 6104, Level = LogLevel.Information, Message = "The task was missing and is registered again: {Change}. {Detail}")]
-    public static partial void Registered(ILogger logger, TaskChange change, string detail);
+    // Corrected 2026-10-10 (previously "The task was missing and is registered again:
+    // {Change}. {Detail}", written whatever the scheduler answered), the texts review's
+    // #168: written only once the task is registered. A refusal is 6113.
+    [LoggerMessage(EventId = 6104, Level = LogLevel.Information, Message = "The task '{Task}' was missing and is registered again, from the definition the install saved.")]
+    public static partial void Registered(ILogger logger, string task);
 
     [LoggerMessage(EventId = 6105, Level = LogLevel.Error, Message = "The Task Scheduler did not start BrowserAI's background: {Change}. {Detail}")]
     public static partial void TaskNotRun(ILogger logger, TaskChange change, string detail);
 
-    [LoggerMessage(EventId = 6106, Level = LogLevel.Error, Message = "The task '{Task}' was started, and no background opened its pipe within {Bound}. The log of the background, and the task's last run result, say why.")]
-    public static partial void NoPipeInTime(ILogger logger, string task, TimeSpan bound);
+    // Corrected 2026-10-10 (previously "within {Bound}", a TimeSpan, which prints as
+    // 00:00:30), the texts review's #170.
+    [LoggerMessage(EventId = 6106, Level = LogLevel.Error, Message = "The task '{Task}' was started, and no background opened its pipe within {Seconds} seconds. The log of the background, and the task's last run result, say why.")]
+    public static partial void NoPipeInTime(ILogger logger, string task, double seconds);
 
+    // Corrected 2026-10-10 (previously an int?, which prints as "(null)" when the record
+    // carries no code), the texts review's #171: "unknown" then.
     [LoggerMessage(EventId = 6107, Level = LogLevel.Warning, Message = "The background's record says pid {ProcessId} crashed (exit code {ExitCode}); this start clears the record and starts a new background.")]
-    public static partial void CrashCleared(ILogger logger, int processId, int? exitCode);
+    public static partial void CrashCleared(ILogger logger, int processId, string exitCode);
 
+    // The reason arrives without a full stop of its own since 2026-10-10 (PersonStart.Clause),
+    // the texts review's #172: every reason the client gives ended in one, so the line
+    // ended in two.
     [LoggerMessage(EventId = 6108, Level = LogLevel.Warning, Message = "The background (pid {ProcessId}) took the connection and did not answer: {Why}. This start judges it hung.")]
     public static partial void Hung(ILogger logger, int processId, string why);
 
+    // As 6108, the texts review's #173: three of the reasons BrowserProcesses gives for a
+    // process it would not open or end ended in a full stop.
     [LoggerMessage(EventId = 6109, Level = LogLevel.Error, Message = "The hung background (pid {ProcessId}) was not ended: {Why}.")]
     public static partial void HungNotEnded(ILogger logger, int processId, string why);
 
@@ -289,4 +373,15 @@ internal static partial class PersonStartLog
 
     [LoggerMessage(EventId = 6111, Level = LogLevel.Error, Message = "The background the task started took the connection and did not answer either: {Why}")]
     public static partial void NewBackgroundHung(ILogger logger, string why);
+
+    // Added 2026-10-10, the texts review's #166: an installed build whose pack id is
+    // unknown, which took 6102's line until then. The hooks' own sentence for the same
+    // case is SignInTask.Apply's.
+    [LoggerMessage(EventId = 6112, Level = LogLevel.Error, Message = "No background runs for this build, which is installed in '{InstallRoot}'. The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Installing BrowserAI again registers the task.")]
+    public static partial void NoTaskName(ILogger logger, string installRoot);
+
+    // Added 2026-10-10, the texts review's #168: the Task Scheduler refused the missing
+    // task, or did not answer, and the detail is its own sentence.
+    [LoggerMessage(EventId = 6113, Level = LogLevel.Error, Message = "The task '{Task}' was missing and was not registered again, so no background was started. {Detail}")]
+    public static partial void NotRegisteredAgain(ILogger logger, string task, string detail);
 }

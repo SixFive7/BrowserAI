@@ -357,6 +357,19 @@ internal sealed class ScheduledTasks : ILogonTasks
             : report ?? Failed(what, "the call ended without saying what it did");
     }
 
-    private static TaskReport Failed(string what, string why) =>
-        new(TaskChange.Failed, $"The task scheduler could not {what}: {why}.");
+    /// <summary>A call's failure, as the one sentence its report carries.</summary>
+    /// <remarks>
+    /// <b>One full stop at the end, whatever the reason ends in.</b> The reason is often
+    /// an exception's own message, which usually ends in a full stop of its own, so the
+    /// sentence used to end in two: in the hooks' line, and in a person's start's 6105
+    /// and its line for a task it could not register again. <i>Corrected 2026-10-10
+    /// (previously the reason was written with a full stop after it, unchanged).</i>
+    /// <c>internal</c> so the suite can give it a reason that ends in one: the real
+    /// scheduler's failures are not the suite's to choose.
+    /// </remarks>
+    /// <param name="what">What the call does.</param>
+    /// <param name="why">Why it failed.</param>
+    /// <returns>The report.</returns>
+    internal static TaskReport Failed(string what, string why) =>
+        new(TaskChange.Failed, $"The task scheduler could not {what}: {why.TrimEnd().TrimEnd('.')}.");
 }

@@ -882,6 +882,22 @@ the measurement of 2026-10-08 read
 | When the names are read | `BackgroundUpdatesTests` and `UpdateToastsTests` count the reads that name the conversations: a draw reads them once, and the update core's passes and the toast's countdown never | Nothing new |
 | The pages and the toast | `UpdatePageTests`, `PageServiceTests` and `UpdateToastContentTests` | How Windows and a browser draw them |
 
+## A person's start and the sign-in task step: how their lines are held
+
+*Added 2026-10-10 with the texts review's fixes, by lane FIX's helper T.* The lines that
+review corrected, a person's start's 6102, 6104, 6106 to 6109, 6112 and 6113 and the
+sentence the hooks' sign-in task step reports when it fails, are held word for word up to
+any reason Windows supplies, in `PersonStartTests` and `SignInTaskTests`. They are read
+through the formatter the product's own log uses, which is what printed a `TimeSpan` as
+`00:00:30` and a missing code as `(null)`. Three cases cannot be provoked the way a
+person's start or a hook meets them:
+
+| What | How the suite reaches it |
+|---|---|
+| What Windows says about a hung background it would not open or end (6109) | `PersonStartSettings.EndProcess`, a seam beside the scheduler's: the arm hands in Windows' sentence, because this process's own pid always opens and nothing here may end it. Its default, `PersonStart.EndByItsVerifiedIdentity`, is the one that ends anything |
+| A Task Scheduler failure whose reason ends in a full stop | `ScheduledTasks.Failed`, `internal` for the purpose: the real scheduler's failures are not the suite's to choose |
+| A copy beside the install that cannot be written or deleted | a directory where `background-task.xml` goes, so both fail with no access rule changed anywhere |
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

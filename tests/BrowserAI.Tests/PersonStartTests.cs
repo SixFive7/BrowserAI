@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using BrowserAI.App;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
@@ -37,6 +38,9 @@ internal sealed class PersonStartTests
 {
     /// <summary>The task every arm's start names.</summary>
     private const string TaskName = "BrowserAI.app.scratch sign-in person-start-tests";
+
+    /// <summary>The path every arm's start gives as its own: a checkout's, with a space in it, so the quoting shows.</summary>
+    private const string Executable = @"C:\Users\someone\source\Browser AI\src\BrowserAI\bin\Debug\BrowserAI.exe";
 
     /// <summary>
     /// A running background's <c>show</c> answers the address of the page asked for,
@@ -92,7 +96,9 @@ internal sealed class PersonStartTests
 
     /// <summary>
     /// With no background, a build that is not installed is not shown and no task is
-    /// touched, whether it has no install root or no task name.
+    /// touched, whether it has no install root or no task name; the first is told the
+    /// command that starts this build's own background, and the second that its pack id
+    /// is unknown and a reinstall registers the task.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -103,6 +109,16 @@ internal sealed class PersonStartTests
     /// <b>Planted red 2026-10-09</b> against a start that asked the task whenever it
     /// had a task name, install root or not.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously both starts were held to write 6102 naming
+    /// the data root)</b>, the texts review's #166: 6102 gave a bare <c>BrowserAI.exe</c>,
+    /// which a terminal finds on the PATH the hooks point at the installed build, and an
+    /// installed build whose pack id is unknown took it too and was told it is not
+    /// installed. Each line is now held word for word. <b>Planted red 2026-10-10 twice</b>:
+    /// against 6102 as it was, whose line named <c>BrowserAI.exe</c> bare, and against the
+    /// branch as it was with 6102 fixed, under which the installed build wrote 6102 and no
+    /// 6112.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -111,15 +127,25 @@ internal sealed class PersonStartTests
         using var scratch = new StartScratch("person-start-not-installed");
 
         var tasks = new ScriptedLogonTasks();
-        using var logs = new CapturingLoggerProvider();
+        using var notInstalled = new CapturingLoggerProvider();
+        using var unnamed = new CapturingLoggerProvider();
 
-        var noRoot = await ShowAsync(scratch.Settings(tasks) with { InstallRoot = null }, page: null, logs);
-        var noTask = await ShowAsync(scratch.Settings(tasks) with { TaskName = null }, page: null, logs);
+        var noRoot = await ShowAsync(scratch.Settings(tasks) with { InstallRoot = null }, page: null, notInstalled);
+        var noTask = await ShowAsync(scratch.Settings(tasks) with { TaskName = null }, page: null, unnamed);
 
         await Assert.That(noRoot).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
         await Assert.That(noTask).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
         await Assert.That(tasks.Events).IsEmpty();
-        await Assert.That(logs.Records.Count(record => record.EventId.Id is 6102 && record.Message.Contains(scratch.DataRoot, StringComparison.Ordinal))).IsEqualTo(2);
+
+        await Assert.That(Lines(notInstalled, 6102)).IsEqualTo(
+            "No background runs for this build, and a build that is not installed has nothing that starts one. "
+            + $"Start one with: \"{Executable}\" --background --data-root \"{scratch.DataRoot}\"");
+        await Assert.That(Lines(notInstalled, 6112)).IsEmpty();
+
+        await Assert.That(Lines(unnamed, 6112)).IsEqualTo(
+            $"No background runs for this build, which is installed in '{scratch.InstallRoot}'. "
+            + "The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Installing BrowserAI again registers the task.");
+        await Assert.That(Lines(unnamed, 6102)).IsEmpty().Because("an installed build was told it is not installed");
     }
 
     /// <summary>
@@ -142,6 +168,13 @@ internal sealed class PersonStartTests
     /// <para>
     /// <b>Planted red 2026-10-09</b> against a start that ran a missing task again
     /// without registering it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Extended 2026-10-10 by addition</b>, the texts review's #168: 6104 is held word
+    /// for word, since it is written only once the task is registered and no longer
+    /// carries the scheduler's outcome. <b>Planted red 2026-10-10</b> against the line as
+    /// it was, "The task was missing and is registered again: Registered. The task '...'
+    /// is registered."
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -169,7 +202,9 @@ internal sealed class PersonStartTests
             var background = await started.Single();
 
             await Assert.That(string.Join(" | ", background.Verbs.Pages)).IsEqualTo("update");
-            await Assert.That(logs.Records.Count(record => record.EventId.Id is 6104)).IsEqualTo(1).Because("the start did not say it registered the task again");
+            await Assert.That(Lines(logs, 6104))
+                .IsEqualTo($"The task '{TaskName}' was missing and is registered again, from the definition the install saved.")
+                .Because("the start did not say it registered the task again, in these words");
         }
         finally
         {
@@ -211,6 +246,168 @@ internal sealed class PersonStartTests
         await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"run {TaskName} {PersonStart.StartedByPerson}");
         await Assert.That(tasks.Registered).IsEmpty();
         await Assert.That(logs.Records.Count(record => record.EventId.Id is 6105 && record.Message.Contains(Disabled, StringComparison.Ordinal))).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// A missing task the Task Scheduler will not register again is not shown and is never
+    /// said to be registered again: its own line carries the scheduler's sentence.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #168, 2026-10-10</b>: 6104 was written before the outcome was
+    /// looked at, so a refusal read "The task was missing and is registered again:
+    /// Failed. ...", at Information. It is written once the task is registered, and a
+    /// refusal is 6113, at Error.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10 twice</b>: against the start as it was, which wrote 6104
+    /// first whatever the scheduler answered, "The task was missing and is registered
+    /// again: Failed. ..."; and against one that wrote neither, which left 6113 empty.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMissingTaskTheSchedulerWillNotRegisterAgainIsNeverSaidToBeRegisteredAgain()
+    {
+        using var scratch = new StartScratch("person-start-not-registered-again");
+
+        const string Refused = "The task scheduler could not register 'BrowserAI.app.scratch sign-in person-start-tests': 0x80070005, Access is denied.";
+
+        var tasks = new RefusingScheduler(Refused);
+        using var logs = new CapturingLoggerProvider();
+
+        var refused = await ShowAsync(scratch.Settings(tasks) with { Definition = static () => "the definition the install saved" }, page: null, logs);
+
+        await Assert.That(refused).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
+        await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"run {TaskName} {PersonStart.StartedByPerson} | register {TaskName}");
+        await Assert.That(Lines(logs, 6104)).IsEmpty().Because("a task the scheduler refused was said to be registered again");
+        await Assert.That(Lines(logs, 6113)).IsEqualTo($"The task '{TaskName}' was missing and was not registered again, so no background was started. {Refused}");
+    }
+
+    /// <summary>
+    /// A task that starts and no background that opens its pipe is said with its bound in
+    /// seconds, as a person reads it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #170, 2026-10-10</b>: the bound went into 6106 as a
+    /// <see cref="TimeSpan"/>, which a log line prints as <c>00:00:30</c>. The bound here is
+    /// the start's own look interval, a product constant, so the arm waits one look and
+    /// not a person's thirty seconds.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against 6106 as it was, which printed this bound as
+    /// <c>00:00:00.1000000</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATaskThatStartsNoBackgroundIsSaidWithItsBoundInSeconds()
+    {
+        using var scratch = new StartScratch("person-start-no-pipe");
+
+        // Registered, so the run "starts" the task, and nothing ever serves the pipe.
+        var tasks = new ScriptedLogonTasks();
+        tasks.Registered[TaskName] = "the suite's task";
+
+        using var logs = new CapturingLoggerProvider();
+
+        var shown = await ShowAsync(scratch.Settings(tasks) with { StartBound = PersonStart.LookInterval }, page: null, logs);
+
+        await Assert.That(shown).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
+        await Assert.That(Lines(logs, 6106)).IsEqualTo(
+            $"The task '{TaskName}' was started, and no background opened its pipe within {PersonStart.LookInterval.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. "
+            + "The log of the background, and the task's last run result, say why.");
+    }
+
+    /// <summary>
+    /// A recorded crash with no exit code is cleared with its code said to be unknown, as
+    /// the relay's crash sentence says it, and one with a code is cleared with that code.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #171, 2026-10-10</b>: a code nothing recorded went into 6107
+    /// as a null <c>int?</c>, which a log line prints as <c>(null)</c>.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against 6107 as it was, which read "(exit code
+    /// (null))" for the first crash.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARecordedCrashWithNoExitCodeIsClearedWithItsCodeSaidToBeUnknown()
+    {
+        using var scratch = new StartScratch("person-start-crash-code");
+
+        var tasks = new ScriptedLogonTasks { RunAnswer = (_, _) => new TaskReport(TaskChange.Failed, "The suite's task does not start anything.") };
+        using var logs = new CapturingLoggerProvider();
+
+        HandWrittenRecord.Gone(scratch.RecordPath);
+        _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
+
+        HandWrittenRecord.Gone(scratch.RecordPath, exitCode: -1073741819);
+        _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
+
+        await Assert.That(Lines(logs, 6107)).IsEqualTo(
+            $"The background's record says pid {Environment.ProcessId} crashed (exit code unknown); this start clears the record and starts a new background."
+            + $" | The background's record says pid {Environment.ProcessId} crashed (exit code -1073741819); this start clears the record and starts a new background.");
+    }
+
+    /// <summary>
+    /// The lines about a hung background end in one full stop, whatever the reasons they
+    /// carry end in: the client's for the silence, and Windows' for a process it would not
+    /// end.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The texts review's #172 and #173, 2026-10-10</b>: 6108 and 6109 put a full stop
+    /// after the reason, and the client's every reason for a background that did not
+    /// answer ends in one, as do the three from a process that could not be opened or
+    /// ended. The record names this process, as a background's names its own, so the start
+    /// goes on to end it, and <see cref="PersonStartSettings.EndProcess"/> answers with
+    /// Windows' sentence for a process it would not open: this process's own pid always
+    /// opens, and nothing here may end it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against each line as it was, one at a time, which put
+    /// its own full stop after the reason's: 6108 read "within 0 s.. This start judges it
+    /// hung.", and with 6108 fixed, 6109 read "Access is denied..".
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheLinesAboutAHungBackgroundEndInOneFullStopWhateverTheirReasonsEndIn()
+    {
+        using var scratch = new StartScratch("person-start-hung-full-stops");
+        await using var background = BackgroundServerRig.Start(scratch.PipeName, verbs: new FakeBackgroundVerbs { HoldsShow = true });
+
+        var pid = Environment.ProcessId;
+        var created = ProcessLiveness.CreationTimeOfThisProcess();
+
+        HandWrittenRecord.Write(scratch.RecordPath, pid, created);
+
+        var asked = new List<string>();
+        var tasks = new ScriptedLogonTasks();
+        using var logs = new CapturingLoggerProvider();
+
+        var settings = scratch.Settings(tasks) with
+        {
+            HandOutBound = PersonStart.LookInterval,
+            EndProcess = (processId, createdFileTime, installRoot) =>
+            {
+                asked.Add(string.Create(CultureInfo.InvariantCulture, $"{processId} {createdFileTime} {installRoot}"));
+                return $"pid {processId} could not be opened: Access is denied.";
+            },
+        };
+
+        var hung = await ShowAsync(settings, page: null, logs);
+
+        await Assert.That(hung).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
+        await Assert.That(Lines(logs, 6108)).IsEqualTo($"The background (pid {pid}) took the connection and did not answer: The background did not answer within 0 s. This start judges it hung.");
+        await Assert.That(Lines(logs, 6109)).IsEqualTo($"The hung background (pid {pid}) was not ended: pid {pid} could not be opened: Access is denied.");
+        await Assert.That(string.Join(" | ", asked)).IsEqualTo(string.Create(CultureInfo.InvariantCulture, $"{pid} {created} {scratch.InstallRoot}"));
+        await Assert.That(tasks.Events).IsEmpty();
     }
 
     /// <summary>
@@ -402,6 +599,13 @@ internal sealed class PersonStartTests
     private static async Task<(PersonStartOutcome Outcome, string? Address)> ShowAsync(PersonStartSettings settings, string? page, CapturingLoggerProvider logs) =>
         await Task.Run(() => PersonStart.Show(settings, page, logs.CreateLogger("BrowserAI.App"))).WaitAsync(TestDefaults.InProcessHang);
 
+    /// <summary>Every line one event wrote, in order, joined.</summary>
+    /// <param name="logs">What the start wrote.</param>
+    /// <param name="eventId">The event.</param>
+    /// <returns>The lines, joined with <c> | </c>; empty when it wrote none.</returns>
+    private static string Lines(CapturingLoggerProvider logs, int eventId) =>
+        string.Join(" | ", logs.Records.Where(record => record.EventId.Id == eventId).Select(record => record.Message));
+
     /// <summary>Writes the definition the install hook saves, through the hook's own step, and reads it back.</summary>
     /// <param name="scratch">The start's scratch install.</param>
     /// <returns>The definition as saved.</returns>
@@ -462,6 +666,7 @@ internal sealed class PersonStartTests
             RecordPath = RecordPath,
             InstallRoot = InstallRoot,
             DataRoot = DataRoot,
+            Executable = Executable,
             TaskName = TaskName,
             Definition = static () => throw new InvalidOperationException("The suite's start asked for a definition it was not given."),
             Tasks = tasks,
@@ -472,6 +677,31 @@ internal sealed class PersonStartTests
         {
             _install.Dispose();
             _data.Dispose();
+        }
+    }
+
+    /// <summary>A Task Scheduler with no task, which refuses to register one: a refusal the real one gives to a definition it will not take.</summary>
+    /// <param name="refusal">What it says to a registration.</param>
+    private sealed class RefusingScheduler(string refusal) : ILogonTasks
+    {
+        /// <summary>Every call, as <c>verb name [argument]</c>, in the order asked.</summary>
+        public ConcurrentQueue<string> Events { get; } = new();
+
+        /// <inheritdoc />
+        public TaskReport Register(string name, string definition)
+        {
+            Events.Enqueue($"register {name}");
+            return new TaskReport(TaskChange.Failed, refusal);
+        }
+
+        /// <inheritdoc />
+        public TaskReport Remove(string name) => throw new InvalidOperationException("A person's start removes no task.");
+
+        /// <inheritdoc />
+        public TaskReport Run(string name, string argument)
+        {
+            Events.Enqueue($"run {name} {argument}");
+            return new TaskReport(TaskChange.NotRegistered, $"There is no task '{name}' to start.");
         }
     }
 }
