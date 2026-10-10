@@ -344,7 +344,7 @@ handshake and its tool list at once and starts a child only for a session.
 | The list, compiled in from `upstream-snapshots/tools-list.json`, and the bytes a correctly installed child writes | `src/BrowserAI/Sessions/UpstreamToolList.cs`, embedded by `src/BrowserAI/BrowserAI.csproj` |
 | Answering `tools/list` from it, through the rewrite | `BrowserProxy.AnswerToolsListAsync`, `SessionToolSurface.Rewrite` |
 | Holding each session's child to it byte for byte, right after its handshake | `UpstreamToolList.CheckSessionChildAsync`, called from `SessionManager.OpenAsync` |
-| What a difference answers: a broken install, naming the first tool that differs | `SessionErrors.InstallIsBroken` |
+| What a difference answers: a broken install, naming the first tool that differs. ⚠️ *Added 2026-10-10 by addition, 10 b:* and what the person is told, through `IInstallHealth.Broken`; a child that matches again calls `IInstallHealth.Intact` | `SessionErrors.InstallIsBroken`, `InstallIsBrokenException.Difference` |
 | The verdicts beside it | `ToolVerdicts.Compiled`, embedded the same way |
 
 **Byte for byte, and measured to hold**: the child writes its list with
@@ -1414,6 +1414,7 @@ MCP client ──stdio──> BrowserAI.exe --mcp ──pipe──> BrowserAI.ex
 | The hooks' one read of the installer's environment, written as arguments into the task's action and the registrations. *Since step 5, 2026-10-08,* nothing else reads a `BROWSERAI_` variable; a hook that has no installer's environment, the update hook under `Update.exe` and the uninstall hook, reads what the install saved, and so does a start handed no `--data-root` | `src/BrowserAI.Core/Registration/InstallerSettings.cs`, `HookRegistration.Run`, `SignInTask.DataRootIn` and `SignInTask.UpdateSourceIn`; held by `HouseRuleTests.NoRunningBrowserAiReadsABrowserAiVariable` and `InstallerSettingsTests` |
 | An uninstall stopping the background through its pipe and waiting, never through the task's End | `src/BrowserAI.Core/Coordination/BackgroundStop.cs`, called by `HookRegistration.Run` |
 | The toasts' activator registered and removed by the hooks. ⚠️ *Added 2026-10-10 by addition, 9 a:* an uninstall takes the class back only when it starts this install's program | `src/BrowserAI.Core/Registration/ToastActivatorStep.cs`, `ToastActivatorRegistration.Unregister` |
+| A broken install told to the person: one toast per background run, and every page of the dashboard saying first how to reinstall while it stands -- *added 2026-10-10, 10 b* | `src/BrowserAI.Core/Updates/InstallToasts.cs` (`IInstallHealth`, `InstallToastContent`, `BrokenInstallNotice`), told by `SessionManager.OpenAsync` through `SessionEnvironment.InstallHealth`, shown by `PageContent.InstallNotice` through `PageService.Install`, wired in `Program.Background.RunTheBackground` and `Serve` |
 | The update core, the toasts and the update page wired into the background | `Program.Background.Serve`: `BackgroundUpdates`, `UpdateToasts.ForThisProcess` through `DeferredUpdateHolds`, `PageService.Holds` and `Changelog` |
 
 **Deleted with it, 2026-10-08:** the in-process server in `Program.cs`, the front and

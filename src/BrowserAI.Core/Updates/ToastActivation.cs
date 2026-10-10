@@ -208,6 +208,12 @@ internal static partial class ToastActivation
     public const string ChangelogPage = "changelog";
 
     /// <summary>
+    /// The dashboard page a click on the broken install's toast opens: the status page,
+    /// which says how to reinstall while the install is broken (10 b, 2026-10-10).
+    /// </summary>
+    public const string StatusPage = "status";
+
+    /// <summary>
     /// How long the activator waits for COM to hand it the click: <b>10 s</b>, a hang
     /// detector. COM hands it over as soon as the class is registered; measured
     /// 2026-09-24, COM started the activator 21 to 40 ms after the click.
@@ -321,6 +327,9 @@ internal static partial class ToastActivation
 
             case { Action: ToastAction.Changelog }:
                 return openPage(ChangelogPage);
+
+            case { Action: ToastAction.StatusPage }:
+                return openPage(StatusPage);
 
             case { Action: ToastAction.Wait, Version: { Length: > 0 } version }:
                 memory.Waited(version);

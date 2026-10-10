@@ -24,6 +24,12 @@ internal enum ToastAction
 
     /// <summary><i>Dismiss</i>: the toast closes and nothing else happens.</summary>
     Dismiss,
+
+    /// <summary>
+    /// Open the dashboard's status page, which says how to reinstall a broken install:
+    /// the broken install's toast and its button (10 b, 2026-10-10).
+    /// </summary>
+    StatusPage,
 }
 
 /// <summary>One click on an update toast, read back from the arguments it carried.</summary>
@@ -405,6 +411,7 @@ internal static class UpdateToastContent
             "wait" => ToastAction.Wait,
             "changelog" => ToastAction.Changelog,
             "dismiss" => ToastAction.Dismiss,
+            "status-page" => ToastAction.StatusPage,
             _ => ToastAction.None,
         };
 
@@ -456,6 +463,7 @@ internal static class UpdateToastContent
             ToastAction.Wait => "wait",
             ToastAction.Changelog => "changelog",
             ToastAction.Dismiss => "dismiss",
+            ToastAction.StatusPage => "status-page",
             _ => "none",
         };
 
@@ -465,12 +473,16 @@ internal static class UpdateToastContent
     }
 
     /// <summary>One toast's XML: a reminder, its lines, an optional progress element, and its buttons.</summary>
+    /// <remarks>
+    /// <b>Internal since 2026-10-10</b> (previously private), so the broken install's
+    /// toast (<see cref="InstallToastContent"/>) is a reminder of the same shape.
+    /// </remarks>
     /// <param name="launch">What a click on the toast itself carries.</param>
     /// <param name="texts">Its top-level lines, the first being its title.</param>
     /// <param name="progress">The progress element, or <see langword="null"/>.</param>
     /// <param name="buttons">Each button's label and arguments.</param>
     /// <returns>The XML.</returns>
-    private static string Toast(string launch, IReadOnlyList<string> texts, string? progress, params (string Label, string Arguments)[] buttons)
+    internal static string Toast(string launch, IReadOnlyList<string> texts, string? progress, params (string Label, string Arguments)[] buttons)
     {
         var xml = new StringBuilder();
 

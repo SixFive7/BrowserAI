@@ -185,6 +185,18 @@ internal sealed record SessionEnvironment
     public VisibleInputWatch? InputWatch { get; init; }
 
     /// <summary>
+    /// What each session's open tells the background about the install: its browser
+    /// server listed the tools this binary was built with, or it did not.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 10 b, 2026-10-10.</b> A difference refuses that session as a
+    /// broken install whatever this is; with it set, the person is told as well, by one
+    /// toast per background run and a notice on the dashboard while the condition stands.
+    /// <see langword="null"/> tells nobody, which is a process with no dashboard.
+    /// </remarks>
+    public Updates.IInstallHealth? InstallHealth { get; init; }
+
+    /// <summary>
     /// Whether a session's child has a browser up: anything in its job beyond the
     /// processes the child had of its own when it connected.
     /// </summary>

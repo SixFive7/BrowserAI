@@ -112,6 +112,12 @@ internal static partial class Program
             var payload = new PayloadLayout();
             using var provisioner = new BrowserProvisioner(payload, paths.BrowsersDirectory, log.Factory);
 
+            // 10 b, 2026-10-10: a session refused as a broken install tells the person
+            // too, by one toast per background run and a notice on the dashboard. A
+            // process under no application id raises no toast, and the notice stays.
+            var installSurface = WindowsToastSurface.ForThisProcess();
+            using var install = new BrokenInstallNotice(installSurface, backgroundLogger, owned: installSurface);
+
             var environment = new SessionEnvironment
             {
                 Paths = paths,
@@ -121,6 +127,7 @@ internal static partial class Program
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = ProcessLog.OpenSessionLog,
+                InstallHealth = install,
             };
 
             var host = SessionHost.Create(log.Factory, environment);
@@ -146,7 +153,7 @@ internal static partial class Program
                     return 0;
                 }
 
-                return Serve(args, paths, log, logger, backgroundLogger, host, server, roster, verbs, recordPath, startedBy, installRoot, clock);
+                return Serve(args, paths, log, logger, backgroundLogger, host, server, roster, verbs, install, recordPath, startedBy, installRoot, clock);
             }
             finally
             {
@@ -224,6 +231,7 @@ internal static partial class Program
     /// <param name="server">The pipe, taken and not yet accepting.</param>
     /// <param name="roster">The relays.</param>
     /// <param name="verbs">What a person's start and a stop are answered with.</param>
+    /// <param name="install">Whether the install is broken, which the page shows while it stands.</param>
     /// <param name="recordPath">The background's record.</param>
     /// <param name="startedBy">Who asked the task for this start, as <c>$(Arg0)</c> carried it.</param>
     /// <param name="installRoot">The install root, or <see langword="null"/>.</param>
@@ -239,6 +247,7 @@ internal static partial class Program
         BackgroundServer server,
         RelayRoster roster,
         BackgroundVerbs verbs,
+        BrokenInstallNotice install,
         string recordPath,
         string? startedBy,
         string? installRoot,
@@ -326,7 +335,10 @@ internal static partial class Program
         {
             Holds = updates,
             Changelog = ShippedChangelog.ForThisBuild(),
+            Install = install,
         };
+
+        install.Changed = page.InstallHealthChanged;
 
         verbs.Page = page;
         roster.TellUpdatesThrough(updates.Changed, updates.RelayWithdrew);

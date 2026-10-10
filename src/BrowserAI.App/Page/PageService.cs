@@ -156,6 +156,12 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
 
+    /// <summary>
+    /// Whether the install is broken, which every page says first while it stands, or
+    /// <see langword="null"/> where nothing reports it (10 b, 2026-10-10).
+    /// </summary>
+    internal BrokenInstallNotice? Install { get; init; }
+
     /// <summary>A page for one coordinator.</summary>
     /// <param name="facts">What does not change.</param>
     /// <param name="firstOccasion">Why the coordinator was started, which the first tab says.</param>
@@ -340,6 +346,12 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// <inheritdoc />
     public void RunQueuedWork() => _host.RunQueuedWork();
 
+    /// <summary>
+    /// The install's state changed: a session was refused as a broken install, or one
+    /// matched again, so every open tab is sent its new state (10 b, 2026-10-10).
+    /// </summary>
+    public void InstallHealthChanged() => Push();
+
     /// <inheritdoc />
     public void Staged(UpdateCandidate? pending)
     {
@@ -369,7 +381,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
         lock (_gate)
         {
-            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering, holds, Changelog);
+            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering, holds, Changelog, Install?.Difference);
         }
     }
 

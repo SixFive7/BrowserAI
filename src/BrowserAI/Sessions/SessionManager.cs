@@ -3694,6 +3694,10 @@ internal sealed class SessionManager : IAsyncDisposable
             // none of a page's own tools can be in the answer.
             await _environment.UpstreamTools.CheckSessionChildAsync(child, location.FullPath, cancellationToken).ConfigureAwait(false);
 
+            // 10 b, 2026-10-10: the install is told it matches, which ends a broken
+            // install's notice once a later session's child lists the tools again.
+            _environment.InstallHealth?.Intact();
+
             session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap, BrowserExecutableFor(request.Browser))
             {
                 NoticeGiven = noticeGiven,
@@ -3763,6 +3767,11 @@ internal sealed class SessionManager : IAsyncDisposable
             // message, and it names the first tool that differs.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, broken);
             Failed(acquired, broken);
+
+            // ⚠️ 10 b, 2026-10-10: the person is told too, by one toast per background
+            // run and a notice on the dashboard, and the model reads the refusal below
+            // either way, since the notice never throws.
+            _environment.InstallHealth?.Broken(broken.Difference ?? "a difference the check did not name");
 
             return new ToolOutcome(broken.Message, IsError: true);
         }

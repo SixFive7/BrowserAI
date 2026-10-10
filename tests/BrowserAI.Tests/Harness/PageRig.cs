@@ -23,7 +23,8 @@ internal sealed class PageRig : IDisposable
         Occasion occasion = Occasion.Ordinary,
         IUpdateHolds? holds = null,
         ChangelogSection? changelog = null,
-        UpdateStage? unavailable = null)
+        UpdateStage? unavailable = null,
+        BrokenInstallNotice? install = null)
     {
         Registration = registration ?? new FakeRegistration();
 
@@ -56,6 +57,7 @@ internal sealed class PageRig : IDisposable
             // so an arm that sets no holds gets one where nothing waits.
             Holds = holds ?? new NothingHolds(),
             Changelog = changelog,
+            Install = install,
         };
     }
 

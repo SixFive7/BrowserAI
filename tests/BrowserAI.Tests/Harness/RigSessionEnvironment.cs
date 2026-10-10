@@ -72,7 +72,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         bool realSessionChildren,
         ToolVerdicts? verdicts,
         string? holdBrowserCloseUntil = null,
-        string? toolsList = null)
+        string? toolsList = null,
+        BrowserAI.Updates.IInstallHealth? installHealth = null)
     {
         Root = root;
         Clock = clock;
@@ -185,6 +186,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
             // F4, 2026-10-08: the rig's own desktop, never the developer's. See RigDesktop.
             InputWatch = Desktop.Watch,
+
+            // 10 b, 2026-10-10: what each open tells the background about the install,
+            // when an arm asks to hear it.
+            InstallHealth = installHealth,
         };
 
         if (browserIdlePeriod is { } period)
@@ -487,6 +492,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// double's own two tools. A rig of real children answers the compiled list
     /// and ignores this.
     /// </param>
+    /// <param name="installHealth">
+    /// What each session's open tells about the install, as the background hears it
+    /// (10 b, 2026-10-10); or <see langword="null"/> for nobody.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
@@ -497,8 +506,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         bool realSessionChildren = false,
         ToolVerdicts? verdicts = null,
         string? holdBrowserCloseUntil = null,
-        string? toolsList = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList)
+        string? toolsList = null,
+        BrowserAI.Updates.IInstallHealth? installHealth = null) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth)
         {
             OpensDefaultSession = opensDefaultSession,
         };

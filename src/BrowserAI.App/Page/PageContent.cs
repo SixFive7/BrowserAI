@@ -33,6 +33,9 @@ internal static class PageContent
     /// <summary>Where the footer link goes.</summary>
     public const string GuideUrl = "https://github.com/SixFive7/BrowserAI#readme";
 
+    /// <summary>Where the installer of the newest release is: the broken install's notice links it.</summary>
+    public const string ReleasesUrl = "https://github.com/SixFive7/BrowserAI/releases/latest";
+
     /// <summary>The whole document for one request.</summary>
     /// <param name="view">What is true now.</param>
     /// <param name="kind">Which page.</param>
@@ -88,14 +91,36 @@ internal static class PageContent
     {
         ArgumentNullException.ThrowIfNull(view);
 
-        return kind switch
+        var main = kind switch
         {
             PageKind.Sessions => SessionsMain(view),
             PageKind.Update => UpdatePageContent.Render(view, now),
             PageKind.Changelog => ChangelogPageContent.Render(view),
             _ => StatusMain(view, occasion, tab),
         };
+
+        // 10 b, 2026-10-10: while the install is broken, every page says so first.
+        return view.InstallBroken is { } difference ? InstallNotice(difference) + main : main;
     }
+
+    /// <summary>The broken install's notice: what is wrong, what to run, and what is kept.</summary>
+    /// <remarks>
+    /// <b>The maintainer's 10 b, 2026-10-10.</b> The session that met a browser server
+    /// listing different tools was refused, and every session will be until BrowserAI is
+    /// reinstalled; the model was told so in the refusal, and the person is told here and
+    /// by one toast, whose button opens the status page.
+    /// </remarks>
+    /// <param name="difference">The first difference, as the refusal words it.</param>
+    /// <returns>The HTML.</returns>
+    public static string InstallNotice(string difference) =>
+        "<div class=\"note broken\" role=\"alert\">"
+        + "<p><strong>BrowserAI needs reinstalling.</strong> Part of this install does not match the rest: the browser server it starts for every session lists different tools from the ones this BrowserAI was built with, and the first difference is "
+        + Text(difference)
+        + ". Every session is refused until BrowserAI is reinstalled.</p>"
+        + "<p>To reinstall, run BrowserAI-win-Setup.exe again, the installer from <a href=\""
+        + ReleasesUrl
+        + "\" target=\"_blank\" rel=\"noopener noreferrer\">the latest release</a>. It installs over this install, and every session, with its profile and its files, is kept.</p>"
+        + "</div>\n";
 
     /// <summary>Encodes text for HTML, attribute values included.</summary>
     /// <param name="text">Anything.</param>

@@ -191,7 +191,7 @@ internal sealed class UpstreamToolList
 
         if (FirstDifference(payload.Json) is { } difference)
         {
-            throw new InstallIsBrokenException(SessionErrors.InstallIsBroken(session, difference));
+            throw new InstallIsBrokenException(SessionErrors.InstallIsBroken(session, difference)) { Difference = difference };
         }
     }
 
@@ -348,6 +348,13 @@ internal sealed class UpstreamToolList
 /// </remarks>
 internal sealed class InstallIsBrokenException : Exception
 {
+    /// <summary>
+    /// The first difference, as <see cref="UpstreamToolList.FirstDifference"/> words it,
+    /// for the background's notice (10 b, 2026-10-10); <see langword="null"/> when the
+    /// thrower named none.
+    /// </summary>
+    public string? Difference { get; init; }
+
     /// <summary>Creates one carrying the refusal.</summary>
     /// <param name="message">The refusal.</param>
     public InstallIsBrokenException(string message)

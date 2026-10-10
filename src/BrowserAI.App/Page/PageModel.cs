@@ -231,6 +231,10 @@ internal enum Occasion
 /// <param name="Registering">A sentence while a registration action runs, or <see langword="null"/>.</param>
 /// <param name="Holds">What holds a downloaded update, or <see langword="null"/> where nothing reports it.</param>
 /// <param name="Changelog">The installed version's section of the shipped changelog, or <see langword="null"/>.</param>
+/// <param name="InstallBroken">
+/// The first difference the latest session refused as a broken install met, while the
+/// condition stands, or <see langword="null"/> (10 b, 2026-10-10).
+/// </param>
 internal sealed record PageView(
     PageFacts Facts,
     UpdateView Update,
@@ -240,4 +244,5 @@ internal sealed record PageView(
     RegistrationSnapshot? Registration = null,
     string? Registering = null,
     UpdateHoldSnapshot? Holds = null,
-    ChangelogSection? Changelog = null);
+    ChangelogSection? Changelog = null,
+    string? InstallBroken = null);
