@@ -311,7 +311,10 @@ internal sealed class RelayRoster : IUpdateRelays
             // Where it was found, each time that moves; never what it is.
             if (reading.Name is not null && memo.Moved(reading.Source, reading.NameSource))
             {
-                RelayRosterLog.ConversationFound(_logger, greeting.Id, reading.Source, reading.NameSource);
+                var found = FoundIn(reading.Source);
+                var by = NamedBy(reading.NameSource);
+
+                RelayRosterLog.ConversationFound(_logger, greeting.Id, found, by);
             }
 
             named.Add(new NamedRelay(greeting, idleAt, callInFlight, reading));
@@ -319,6 +322,36 @@ internal sealed class RelayRoster : IUpdateRelays
 
         return named;
     }
+
+    /// <summary>Where a conversation was found, as the log line says it.</summary>
+    /// <param name="source">Where it was found.</param>
+    /// <returns>A clause that follows "was".</returns>
+    internal static string FoundIn(ConversationSource source) => source switch
+    {
+        ConversationSource.ProcessFile => "found in the file Claude Code keeps for its process",
+        ConversationSource.Environment => "found in CLAUDE_CODE_SESSION_ID, as the relay read it",
+        ConversationSource.CommandLine => "found in --resume or --session-id on the client's command line",
+        ConversationSource.CodexCall => "found in the thread id of Codex's first call that carried one",
+        _ => "not found",
+    };
+
+    /// <summary>Where a conversation's name was found, as the log line says it.</summary>
+    /// <param name="name">Where it was found.</param>
+    /// <returns>A clause.</returns>
+    internal static string NamedBy(NameSource name) => name switch
+    {
+        NameSource.CustomTitle => "its name is the title the person gave it",
+        NameSource.AiTitle => "its name is the title the model gave it",
+        NameSource.LastPrompt => "its name is the last prompt Claude Code recorded",
+        NameSource.Summary => "its name is a summary Claude Code wrote",
+        NameSource.FirstPrompt => "its name is its first real prompt",
+        NameSource.CodexIndex => "its name is from Codex's index of named threads",
+        NameSource.CodexState => "its name is the thread's first message, from Codex's state database",
+        NameSource.CodexRollout => "its name is the thread's first message, from its rollout",
+        NameSource.NoRecordYet => "it has no record yet, so it is called a new conversation in its folder",
+        NameSource.ClientAndFolder => "BrowserAI cannot tell which it is, so it is called by its client and folder",
+        _ => "it has no name",
+    };
 
     /// <inheritdoc />
     public async Task<RelayReadiness> AskReadyToEndAsync(string relay, string version, CancellationToken cancellationToken)
@@ -482,15 +515,25 @@ internal sealed class RelayRoster : IUpdateRelays
 }
 
 /// <summary>Source-generated log messages for <see cref="RelayRoster"/>.</summary>
+/// <remarks>
+/// <b>From 30 since 2026-10-10</b>, round 2 of the texts review, #191 (previously
+/// <c>ConversationFound</c> was 1): the roster writes under the background's logger, so it
+/// shares <c>BackgroundLog</c>'s category, whose 1 is <c>Started</c>.
+/// </remarks>
 internal static partial class RelayRosterLog
 {
     /// <summary>Where a relay's conversation and its name were found, never what they are.</summary>
+    /// <remarks>
+    /// <b>In words since 2026-10-10</b>, round 2 of the texts review, #191 (previously
+    /// "Relay {Relay}'s conversation was found by {Source} and named by {Name}.", with the
+    /// two enums' member names, such as <i>found by None and named by ClientAndFolder</i>).
+    /// </remarks>
     /// <param name="logger">Where the record goes.</param>
     /// <param name="relay">The relay.</param>
-    /// <param name="source">Where the conversation was found.</param>
-    /// <param name="name">Where its name was found.</param>
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Relay {Relay}'s conversation was found by {Source} and named by {Name}.")]
-    public static partial void ConversationFound(ILogger logger, string relay, ConversationSource source, NameSource name);
+    /// <param name="found">Where the conversation was found, as a clause.</param>
+    /// <param name="named">Where its name was found, as a clause.</param>
+    [LoggerMessage(EventId = 30, Level = LogLevel.Information, Message = "Relay {Relay}'s conversation was {Found}, and {Named}.")]
+    public static partial void ConversationFound(ILogger logger, string relay, string found, string named);
 
     [LoggerMessage(EventId = 31, Level = LogLevel.Warning, Message = "Relay {Relay} could not be told '{Method}'; every other relay is still told.")]
     public static partial void NotTold(ILogger logger, string relay, string method, Exception failure);

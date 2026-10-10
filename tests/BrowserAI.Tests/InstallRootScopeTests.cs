@@ -90,7 +90,11 @@ internal sealed class InstallRootScopeTests
         // Planted red against the sentence as it was.
         await Assert.That(refusal).Contains("the background's pipe is named for its roots and open only to the user who made it");
         await Assert.That(refusal).DoesNotContain("live-instance set");
-        await Assert.That(refusal).EndsWith($"Nothing was started, and no session or browser was created under '{verdict.Detail!.Root}'.");
+        // And it says what a refused start leaves, round 2 of the texts review,
+        // 2026-10-10, first page 147 (previously it ended at "created under '<root>'.").
+        await Assert.That(refusal).EndsWith(
+            $"Nothing was started, and no session or browser was created under '{verdict.Detail!.Root}'. "
+            + "What a refused start leaves is this line in the log and, when the start was the background's, the refusal in its record under the data root, which every relay reads to answer each call.");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
         // used to end "if the root was set by the installer's install-to flag,
@@ -525,6 +529,13 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).Contains("it moves the data root and never the install root");
         await Assert.That(refusal).Contains("applying an update terminates every process under the install root");
         await Assert.That(refusal.Contains(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
+
+        // ⚠️ And the installer by the name the release ships it under, round 2 of the
+        // texts review, 2026-10-10, #147 and #175 (previously "Setup.exe --installto"):
+        // the release renames vpk's Setup.exe to BrowserAI.exe, whose parser reads
+        // --installto from its arguments and not from its name (kb, packaging).
+        await Assert.That(refusal).Contains("'BrowserAI.exe --installto <a directory under that profile>'");
+        await Assert.That(refusal).DoesNotContain("Setup.exe");
     }
 
     /// <summary>

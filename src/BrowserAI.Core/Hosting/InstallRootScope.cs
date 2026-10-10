@@ -267,7 +267,7 @@ internal static class InstallRootScope
         if (Canonical(rootFinal) is not { } resolvedAncestor)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside this user's profile at '{profile}'. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside this user's profile at '{profile}'. It is serving anyway. {UnseenAtRunTime}");
         }
 
         var (profileFinal, profileExisting) = VolumeIdentity.DeepestExistingFinalName(profile, AncestorWalkLimit);
@@ -275,7 +275,7 @@ internal static class InstallRootScope
         if (Canonical(profileFinal) is not { } resolvedProfile)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside it. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside it. It is serving anyway. {UnseenAtRunTime}");
         }
 
         // Whatever was trimmed off to find an existing ancestor goes back on, so
@@ -340,6 +340,17 @@ internal static class InstallRootScope
     private static string Noun(JudgedRoot which) =>
         which is JudgedRoot.Install ? "install root" : "data root";
 
+    /// <summary>What a root two users share costs, said where BrowserAI could not tell whether it is shared.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for round 2 of the texts review, #175</b> (previously both lines
+    /// ended "a root that two users share loses the live-instance census silently, and this
+    /// is the one line that would say so."): no process joins a census since the one
+    /// background of 2026-10-08, and the census was deleted on 2026-10-10. The cost is the
+    /// refusal's own, said shorter.
+    /// </remarks>
+    private const string UnseenAtRunTime =
+        "If two Windows users share this root, nothing reports it at run time: the second user's background finds its pipe's name taken and exits, and applying an update ends every process under the install root, the other user's browsers included. This is the one line that would say so.";
+
     /// <summary>
     /// The refusal, which has to carry the remedy and not only the verdict.
     /// </summary>
@@ -349,18 +360,24 @@ internal static class InstallRootScope
     /// -- 2026-09-15.</b> There are two roots since the layout split, they are
     /// moved by two different levers, and <b>neither lever can move the other's
     /// root</b>: <c>BROWSERAI_ROOT</c> moves the data root and cannot touch the
-    /// install root, <c>Setup.exe --installto</c> moves the install root and
+    /// install root, the installer's <c>--installto</c> moves the install root and
     /// cannot touch the data root. A refusal that named one root would be read
     /// against whichever the reader had in mind, and a refusal that offered the
     /// wrong lever would send them to change a setting that cannot help.
+    /// <i>Corrected 2026-10-10, round 2 of the texts review, #175 (previously
+    /// "<c>Setup.exe --installto</c>")</i>: the release ships the installer as
+    /// <c>BrowserAI.exe</c>.
     /// </para>
     /// <para>
-    /// <b>The consequence clause differs because the consequences differ.</b>
-    /// A shared <i>data</i> root loses the live-instance census through the
-    /// mutex DACL; a shared <i>install</i> root loses the same census for the
-    /// same reason and costs less, because each user's browsers, session index
-    /// and log are their own now -- what an apply destroys there is the other
-    /// user's processes and the browsers they were driving.
+    /// <b>The consequence clause is one for both roots since 2026-10-10.</b>
+    /// <i>Corrected that day, round 2 of the texts review, #175 (previously "A shared
+    /// <i>data</i> root loses the live-instance census through the mutex DACL; a shared
+    /// <i>install</i> root loses the same census for the same reason and costs less,
+    /// because each user's browsers, session index and log are their own now -- what an
+    /// apply destroys there is the other user's processes and the browsers they were
+    /// driving.")</i>: no process joins a census since the one background, and what two
+    /// users would meet on is the background's pipe, named for both roots, and the
+    /// apply, which ends every process under the install root.
     /// </para>
     /// </remarks>
     /// <param name="which">Which root is at fault.</param>
@@ -394,8 +411,12 @@ internal static class InstallRootScope
 
         // Corrected the same day (previously "Nothing was started, nothing was changed, and
         // no session, marker or browser was created under"): the log is written there, and
-        // a background's start writes the record of its refusal.
-        + $"Nothing was started, and no session or browser was created under '{root}'.";
+        // a background's start writes the record of its refusal. Corrected again the same
+        // day, round 2 of the texts review, first page 147, which asked the sentence to
+        // say what is written (previously it ended at "created under '{root}'."): a
+        // person reading the log then knows what every relay answers from.
+        + $"Nothing was started, and no session or browser was created under '{root}'. "
+        + "What a refused start leaves is this line in the log and, when the start was the background's, the refusal in its record under the data root, which every relay reads to answer each call.";
 
     /// <summary>What puts a refused root right, as a clause that starts with what to do.</summary>
     /// <remarks>
@@ -409,7 +430,7 @@ internal static class InstallRootScope
     /// <returns>The remedy, ending with a space.</returns>
     private static string Remedy(JudgedRoot which, string profile) =>
         which is JudgedRoot.Install
-            ? $"install BrowserAI inside '{profile}' -- the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
+            ? $"install BrowserAI inside '{profile}' -- the default location, or with the installer the release ships, 'BrowserAI.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
             : $"give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so install it again with that variable cleared or naming a directory under that profile; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ";
 
     /// <summary>The refusing verdict: the whole sentence for the log, and its parts for a relay.</summary>
@@ -461,7 +482,11 @@ internal enum JudgedRoot
     /// <summary>The data root: browsers, session index, log.</summary>
     Data,
 
-    /// <summary>The install root: the binary, and what the live-instance census is keyed to.</summary>
+    /// <summary>
+    /// The install root: the binary, and what the background's pipe is named for with the
+    /// data root. <i>Corrected 2026-10-10 (previously "and what the live-instance census
+    /// is keyed to")</i>: the census was deleted that day.
+    /// </summary>
     Install,
 }
 

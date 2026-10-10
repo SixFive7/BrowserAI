@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Reflection;
 using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
@@ -518,6 +519,90 @@ internal sealed partial class ProcessLogTests
         await Assert.That(read).Contains("ours");
         await Assert.That(read).DoesNotContain("a stranger's");
         await Assert.That(read).DoesNotContain("a stranger sharing our prefix");
+    }
+
+    /// <summary>
+    /// Within the background's category and within the relay's, every line has an event
+    /// id of its own, so <c>Background[n]</c> and <c>Relay[n]</c> each name one line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, #177, #191, #194 and #195.</b> Each log
+    /// class numbers its own lines, and a category is the logger a class is handed, so
+    /// classes that share a logger share its ids: <c>BackgroundLog.Started</c> and
+    /// <c>RelayRosterLog.ConversationFound</c> were both <c>Background[1]</c>, and
+    /// <c>RelayLog.Connected</c>, <c>RelayModeLog.Ended</c> and
+    /// <c>FinderLog.UpdaterNotChecked</c> all <c>Relay[1]</c>. The registrar's lines,
+    /// written under the background's logger by the dashboard's Register, were
+    /// <c>Background[1]</c> to <c>Background[11]</c> as well; they are written under
+    /// <c>BrowserAI.Registration</c> since, the category the hooks write them under.
+    /// </para>
+    /// <para>
+    /// <b>The writers of each category are listed by hand</b>, because which logger a class
+    /// is handed is decided where the process is put together, and no reflection over a
+    /// type can see that. A class that starts writing under one of these loggers has to be
+    /// added here; nothing else would notice.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the ids as they were: Background[1], Relay[1]
+    /// and Relay[2] each named two or three lines.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryLineOfTheBackgroundsAndTheRelaysCategoriesHasAnEventIdOfItsOwn()
+    {
+        const BindingFlags Nested = BindingFlags.NonPublic | BindingFlags.Public;
+
+        var categories = new (string Category, Type[] Writers)[]
+        {
+            (
+                "BrowserAI.Background",
+                [
+                    typeof(BrowserAI.BackgroundLog),
+                    typeof(BrowserAI.Background.RelayRosterLog),
+                    typeof(BrowserAI.Background.BackgroundVerbs).GetNestedType("VerbsLog", Nested)!,
+                    typeof(BrowserAI.Updates.UpdateToastsLog),
+                    typeof(BrowserAI.Updates.BrokenInstallNotice).GetNestedType("InstallToastsLog", Nested)!,
+                    typeof(BrowserAI.App.Page.PageService).GetNestedType("PageServiceLog", Nested)!,
+                    typeof(BrowserAI.App.Page.PageListener).GetNestedType("PageListenerLog", Nested)!,
+
+                    // By name: no test may use the page's real desktop, and reading the
+                    // attributes of its log lines opens nothing on the screen.
+                    typeof(BrowserAI.App.Page.PageService).Assembly.GetType("BrowserAI.App.Page.DesktopPageHost")!.GetNestedType("DesktopLog", Nested)!,
+                ]),
+            (
+                "BrowserAI.Relay",
+                [
+                    typeof(BrowserAI.Relay.RelayLog),
+                    typeof(BrowserAI.Relay.FinderLog),
+                    typeof(BrowserAI.RelayModeLog),
+                ]),
+        };
+
+        var clashes = new List<string>();
+        var lines = 0;
+
+        foreach (var (category, writers) in categories)
+        {
+            var records = writers
+                .SelectMany(writer => writer.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                    .Select(method => (Writer: writer, Method: method, Attribute: method.GetCustomAttribute<LoggerMessageAttribute>()))
+                    .Where(record => record.Attribute is not null))
+                .ToList();
+
+            lines += records.Count;
+
+            foreach (var shared in records.GroupBy(record => record.Attribute!.EventId).Where(group => group.Count() > 1))
+            {
+                clashes.Add($"{category}[{shared.Key}] is {string.Join(", ", shared.Select(record => $"{record.Writer.Name}.{record.Method.Name}"))}");
+            }
+        }
+
+        // Not vacuous: every writer listed has lines, so a nested class renamed away is
+        // a null above and not a quiet pass.
+        await Assert.That(lines).IsGreaterThan(categories.Sum(category => category.Writers.Length));
+        await Assert.That(string.Join(Environment.NewLine, clashes)).IsEmpty();
     }
 
     /// <summary>

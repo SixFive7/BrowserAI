@@ -798,6 +798,55 @@ internal sealed class BackgroundServerTests
     }
 
     /// <summary>
+    /// The stop's wait counts only the connections still open, and with none open it
+    /// writes no line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, #190.</b> The line was written on every
+    /// stop, so a stop with no connection read <i>it waits for the 0 connection(s) on its
+    /// list</i>; and the list drops a connection that has ended only when the next one is
+    /// accepted, so a relay that had come and gone was counted as one still waited for.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the stop that counted its whole list: the first
+    /// rig wrote the 0, and the second wrote the 1 for a connection that had ended. The
+    /// second was watched red on its own, against a stop that kept the guard on none and
+    /// counted the whole list, since an arm stops at its first failed assertion.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStopsWaitCountsOnlyConnectionsStillOpenAndWithNoneWritesNoLine()
+    {
+        // No connection at all.
+        await using (var quiet = BackgroundServerRig.Start())
+        {
+            await quiet.Server.DisposeAsync();
+
+            var waited = quiet.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
+
+            await Assert.That(string.Join(" | ", waited)).IsEmpty();
+        }
+
+        // A relay that came and went before the stop.
+        await using var rig = BackgroundServerRig.Start();
+
+        using (var gone = await rig.ConnectARelayAsync())
+        {
+            await Assert.That(rig.Server.OpenConnections).IsEqualTo(1);
+        }
+
+        await BackgroundServerRig.WaitUntilAsync(() => rig.Server.OpenConnections is 0, "the relay's connection never ended after its client closed it");
+
+        await rig.Server.DisposeAsync();
+
+        var counted = rig.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
+
+        await Assert.That(string.Join(" | ", counted)).IsEmpty();
+    }
+
+    /// <summary>
     /// A <c>tools/call</c> is in flight from the moment the link reads it until its answer
     /// goes out, or until the client cancels it, whichever comes first.
     /// </summary>
@@ -1020,8 +1069,11 @@ internal sealed class BackgroundServerTests
         // The log says where each was found, each time that moved, and never what.
         var found = rig.Logs.Records.Where(log => log.Category.EndsWith(nameof(RelayRoster), StringComparison.Ordinal)).Select(log => log.Message).ToList();
 
+        // In words since 2026-10-10, round 2 of the texts review, #191 (previously "found
+        // by ProcessFile and named by AiTitle", the enums' member names).
         await Assert.That(string.Join(" | ", found)).IsEqualTo(
-            $"Relay {drawn.Id}'s conversation was found by ProcessFile and named by AiTitle. | Relay {drawn.Id}'s conversation was found by ProcessFile and named by CustomTitle.");
+            $"Relay {drawn.Id}'s conversation was found in the file Claude Code keeps for its process, and its name is the title the model gave it. "
+            + $"| Relay {drawn.Id}'s conversation was found in the file Claude Code keeps for its process, and its name is the title the person gave it.");
 
         foreach (var secret in new[] { Session, "Apple scales", "Apples, renamed", "weigh the apples" })
         {
@@ -1139,7 +1191,7 @@ internal sealed class BackgroundServerTests
 
         var found = rig.Logs.Records.Where(log => log.Category.EndsWith(nameof(RelayRoster), StringComparison.Ordinal)).Select(log => log.Message).ToList();
 
-        await Assert.That(found).Contains($"Relay {drawn.Id}'s conversation was found by CodexCall and named by CodexRollout.");
+        await Assert.That(found).Contains($"Relay {drawn.Id}'s conversation was found in the thread id of Codex's first call that carried one, and its name is the thread's first message, from its rollout.");
 
         foreach (var secret in new[] { Thread, FirstMessage })
         {

@@ -210,7 +210,7 @@ internal static partial class PersonStart
             // enable the task is the relay's (RelayErrors.NotRunning), which every call
             // meets. Corrected 2026-10-09 (previously "the sentence says how to enable
             // it"), found by lane ARCH's helper T1.
-            PersonStartLog.TaskNotRun(logger, run.Change, run.Detail);
+            PersonStartLog.TaskNotRun(logger, run.Detail);
             return (PersonStartOutcome.NotShown, null);
         }
 
@@ -318,7 +318,12 @@ internal static partial class PersonStart
         // repository's rule: never by image name).
         using var target = BrowserProcesses.OpenToEnd(processId, createdFileTime, installRoot, out var refusal);
 
-        return target is not null && target.TryTerminate(out refusal) ? null : refusal ?? "it could not be opened";
+        // Both say why on every failure, so there is no reason to make up. Corrected
+        // 2026-10-10, round 2 of the texts review, #205 (previously a fallback reason,
+        // "it could not be opened", which no failure gave).
+        return target is not null && target.TryTerminate(out refusal)
+            ? null
+            : refusal ?? throw new System.Diagnostics.UnreachableException("BrowserProcesses.OpenToEnd and TryTerminate gave no reason for a failure, which each gives on every one.");
     }
 }
 
@@ -344,8 +349,12 @@ internal static partial class PersonStartLog
     [LoggerMessage(EventId = 6104, Level = LogLevel.Information, Message = "The task '{Task}' was missing and is registered again, from the definition the install saved.")]
     public static partial void Registered(ILogger logger, string task);
 
-    [LoggerMessage(EventId = 6105, Level = LogLevel.Error, Message = "The Task Scheduler did not start BrowserAI's background: {Change}. {Detail}")]
-    public static partial void TaskNotRun(ILogger logger, TaskChange change, string detail);
+    // Corrected 2026-10-10, round 2 of the texts review, #201 (previously "The Task
+    // Scheduler did not start BrowserAI's background: {Change}. {Detail}", with the
+    // TaskChange member's name, NotRegistered or Failed): the detail is the Task
+    // Scheduler's answer in words, and it is all the line needs.
+    [LoggerMessage(EventId = 6105, Level = LogLevel.Error, Message = "The Task Scheduler did not start BrowserAI's background. {Detail}")]
+    public static partial void TaskNotRun(ILogger logger, string detail);
 
     // Corrected 2026-10-10 (previously "within {Bound}", a TimeSpan, which prints as
     // 00:00:30), the texts review's #170.

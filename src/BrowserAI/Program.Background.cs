@@ -307,7 +307,14 @@ internal static partial class Program
             // a second after its End.
             var how = notice is SessionEndNotice.SessionEnding ? BackgroundEnd.SessionEnding : BackgroundEnd.EndCommand;
             _ = BackgroundRecord.EndedCleanly(recordPath, how, clock.GetUtcNow());
-            BackgroundLog.EndingBecause(backgroundLogger, how);
+
+            // In words, since 2026-10-10, round 2 of the texts review, #180 (previously
+            // the BackgroundEnd member's name, SessionEnding or EndCommand).
+            BackgroundLog.EndingBecause(
+                backgroundLogger,
+                how is BackgroundEnd.SessionEnding
+                    ? "the session is ending, for a sign-out or a shutdown"
+                    : "the Task Scheduler's End command, or schtasks /end, closed its window");
         });
 
         // The only stray sweep in the product, once, before this process holds a
@@ -354,7 +361,11 @@ internal static partial class Program
                 _ => Occasion.Ordinary,
             },
             new BackgroundPageSessions(host, roster, clock),
-            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), backgroundLogger),
+            // Under the registrar's own category, the hooks' too, since 2026-10-10, round 2
+            // of the texts review, #177 (previously the background's logger): its records
+            // are numbered from 1, as BackgroundLog's are, so under the background's
+            // category Background[1] named two lines and more.
+            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory, paths.RootAppDir), log.Factory.CreateLogger("BrowserAI.Registration")),
             new DesktopPageHost(inbox, backgroundLogger),
             inbox.Wake,
             clock,
@@ -418,7 +429,7 @@ internal static partial class BackgroundLog
     public static partial void Ending(ILogger logger, int sessions, int relays);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Windows is ending the background: {How}. It is recorded as a clean end.")]
-    public static partial void EndingBecause(ILogger logger, BackgroundEnd how);
+    public static partial void EndingBecause(ILogger logger, string how);
 
     [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "The background's record at {Record} could not be written ({Why}), so it serves without one: if it crashes, relays will name the task's state and not the crash.")]
     public static partial void RecordNotWritten(ILogger logger, string record, string why);

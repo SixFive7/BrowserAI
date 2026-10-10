@@ -148,6 +148,24 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// </remarks>
     internal Action? Accepted { get; init; }
 
+    /// <summary>How many connections are still open, which is what a stop waits for.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for round 2 of the texts review, #190</b>, so the suite can
+    /// tell a connection that has ended from one that is still served before it stops
+    /// the background. The list itself drops an ended connection only when the next one
+    /// is accepted.
+    /// </remarks>
+    internal int OpenConnections
+    {
+        get
+        {
+            lock (_serving)
+            {
+                return _serving.Count(static task => !task.IsCompleted);
+            }
+        }
+    }
+
     /// <summary>Starts accepting.</summary>
     public void Start()
     {
@@ -201,12 +219,20 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         Task[] serving;
 
+        // Only the connections still open: the list drops an ended one only when the
+        // next is accepted. And with none, no line. Corrected 2026-10-10, round 2 of the
+        // texts review, #190 (previously the whole list, counted on every stop, so a stop
+        // with no connection read "it waits for the 0 connection(s) on its list").
         lock (_serving)
         {
+            _ = _serving.RemoveAll(static task => task.IsCompleted);
             serving = [.. _serving];
         }
 
-        BackgroundServerLog.WaitingForConnections(_logger, serving.Length);
+        if (serving.Length > 0)
+        {
+            BackgroundServerLog.WaitingForConnections(_logger, serving.Length);
+        }
 
         try
         {
@@ -360,7 +386,9 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         if (Judge(build, dataRoot) is { } refused)
         {
-            BackgroundServerLog.RelayRefused(_logger, relayPid ?? 0, refused.Kind);
+            var inWords = RefusalInWords(refused.Kind);
+
+            BackgroundServerLog.RelayRefused(_logger, relayPid ?? 0, inWords);
             await WriteAsync(stream, Refusal(hello.Id, (int)McpErrorCode.InvalidRequest, refused.Sentence, refused.Kind)).ConfigureAwait(false);
             return;
         }
@@ -436,6 +464,22 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
             BackgroundServerLog.RelayDisconnected(_logger, greeting.Id, _roster.Count, _host.Sessions.HeldCount);
         }
     }
+
+    /// <summary>A refusal's kind as the log line says it.</summary>
+    /// <remarks>
+    /// Added 2026-10-10 for round 2 of the texts review, #184: the line printed the
+    /// wire's identifier, such as <c>dataRoot</c>, inside its sentence.
+    /// </remarks>
+    /// <param name="kind">One of <see cref="RelayProtocol"/>'s refusal kinds.</param>
+    /// <returns>A clause.</returns>
+    internal static string RefusalInWords(string kind) => kind switch
+    {
+        RelayProtocol.RefusedForTheBuild => "it is another build of BrowserAI",
+        RelayProtocol.RefusedForTheDataRoot => "it was registered for another data root",
+        RelayProtocol.RefusedForAnUpdate => "an update is installing",
+        RelayProtocol.RefusedWhileStopping => "the background is stopping",
+        _ => $"for a reason this build does not name ({kind})",
+    };
 
     /// <summary>Whether a relay's greeting is refused, and the sentence that says why.</summary>
     /// <param name="build">The relay's build.</param>
