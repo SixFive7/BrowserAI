@@ -59,28 +59,20 @@ internal sealed record ServerDescription(
     string Role = ServerDescription.Roles.Server)
 {
     /// <summary>The words <c>state</c> can carry.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously four words: also
+    /// <c>Starting</c>, "Started, and not yet answering its client.", <c>Updating</c>,
+    /// for a server started while its own install's updater was running, and
+    /// <c>Stopping</c>, "Asked to stop, and on its way out.")</b>. <c>ServerActivity</c>
+    /// was the only code that wrote those three, and it was deleted that day by the
+    /// maintainer's decision <i>"9 a"</i>, so the three went under the same decision.
+    /// The background writes <see cref="Serving"/> for itself and for each relay, in
+    /// <c>BackgroundPageSessions</c>, and the page reads no state.
+    /// </remarks>
     public static class States
     {
-        /// <summary>Started, and not yet answering its client.</summary>
-        public const string Starting = "starting";
-
         /// <summary>Answering its client.</summary>
         public const string Serving = "serving";
-
-        /// <summary>
-        /// Started while its own install's updater was running, so it refuses
-        /// every tool call until the updater has gone, and then says
-        /// <see cref="Serving"/>.
-        /// </summary>
-        /// <remarks>
-        /// ⚠️ <b>Corrected 2026-10-03, Q296 c</b> (previously "so it refuses every
-        /// tool call and starts no browser server"): such a server starts its own
-        /// child for the real tool list, and serves once the updater has gone.
-        /// </remarks>
-        public const string Updating = "updating";
-
-        /// <summary>Asked to stop, and on its way out.</summary>
-        public const string Stopping = "stopping";
     }
 
     /// <summary>The words <c>role</c> can carry.</summary>

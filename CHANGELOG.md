@@ -1992,10 +1992,12 @@ release body; nothing else depends on it.
   went on filling for a server's pipe that no longer exists, with the proxy's `Activity`
   and `HeldSessions`; twelve records of the update log that the server's own update pass
   wrote, ids 1 to 11 and 21, which the background's update core writes under ids of its
-  own, so the ids are retired and never taken again; and the two creations of the
-  parallel pipe the servers and the coordinator served. The pass had counted six of
-  the update log's records, because a search for each name also met the background's
-  record of the same name. Nothing a running BrowserAI does changes.
+  own, so the ids are retired and never taken again; the two creations of the parallel
+  pipe the servers and the coordinator served; and the three words of a server's state
+  that only `ServerActivity` wrote, `starting`, `updating` and `stopping`, which leaves
+  `serving`, the one the background writes for itself and each relay. The pass had
+  counted six of the update log's records, because a search for each name also met the
+  background's record of the same name. Nothing a running BrowserAI does changes.
 
 - 🗑️ **The payload's copy of `tool-verdicts.json` is gone, with the child that answered the tool list.**
   The verdicts are compiled into the server beside the tool list they judge, so nothing reads the
