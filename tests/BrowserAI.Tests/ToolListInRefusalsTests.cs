@@ -64,8 +64,10 @@ internal sealed class ToolListInRefusalsTests
         await Assert.That((bool?)answer["isError"]).IsTrue();
 
         // The approved sentences come first and are unchanged, the reconnect
-        // sentence included.
-        await Assert.That(text).StartsWith(SessionErrors.ToolDoesNotExist("browser_frobnicate"));
+        // sentence included, and the list the client was given follows them. Since
+        // 2026-10-10 the refusal is only ever built with its list, round 2 of the texts
+        // review, #49 (previously this held a prefix built with none).
+        await Assert.That(text).IsEqualTo(SessionErrors.ToolDoesNotExist("browser_frobnicate", ToolSignatures.From(listed)));
 
         await Assert.That(string.Join(Environment.NewLine, Disagreements(text, listed))).IsEmpty();
         await Assert.That(text.Length).IsLessThanOrEqualTo(ClientTruncationBudget.ErrorResultCharacters);

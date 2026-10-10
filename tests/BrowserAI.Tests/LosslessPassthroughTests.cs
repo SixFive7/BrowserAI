@@ -545,12 +545,21 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(response.Error).IsNotNull();
         await Assert.That(response.Error!["code"]!.GetValue<int>()).IsEqualTo((int)McpErrorCode.InternalError);
 
-        // And the cause is named, instead of living only in the log. The
-        // wording is transport-level on purpose: §H.4's model-facing catalogue
-        // is step 13's, and inventing its text here would be writing a
-        // catalogue entry nobody reviewed.
-        await Assert.That(response.Error["message"]!.GetValue<string>()).Contains("tools/call");
-        await Assert.That(response.Error["message"]!.GetValue<string>()).Contains("IOException");
+        // ⚠️ AND IT IS SAID IN WORDS A MODEL CAN ACT ON, round 2 of the texts review,
+        // 2026-10-10, found by lane FINAL: the message was "The browser child did not
+        // answer 'tools/call': IOException: ...", and a browser that ended under a
+        // full-page screenshot reached a model as "TaskCanceledException". It names the
+        // tool and the session, says part of the call may have happened, and names the
+        // call that brings the session back; the exception is the log's. Planted red
+        // against the message with the .NET name in it. (Previously this asserted the
+        // message carried "tools/call" and "IOException": "The wording is
+        // transport-level on purpose: §H.4's model-facing catalogue is step 13's".)
+        var message = response.Error["message"]!.GetValue<string>();
+
+        await Assert.That(message).DoesNotContain("Exception").Because(message);
+        await Assert.That(message).Contains("'browser_navigate'").Because(message);
+        await Assert.That(message).Contains(SessionPath.For(rig.Session!).FullPath).Because(message);
+        await Assert.That(message).Contains(SessionToolSurface.Resume).Because(message);
         await Assert.That(rig.Child.HasStopped).IsTrue();
     }
 

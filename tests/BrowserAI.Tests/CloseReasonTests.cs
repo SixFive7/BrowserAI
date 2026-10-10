@@ -339,7 +339,7 @@ internal sealed class CloseReasonTests
                 });
 
                 await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
-                await Assert.That(TextOf(resumed)).Contains("why this session was last closed: BrowserAI closed this session's browser at");
+                await Assert.That(TextOf(resumed)).Contains("why this session was last closed: BrowserAI closed this session");
                 await Assert.That(TextOf(resumed)).Contains(said).Because($"a shutdown told {declared?.ToString() ?? "nothing"} says so");
             }
         }
@@ -380,7 +380,7 @@ internal sealed class CloseReasonTests
         var close = SessionLock.ReadRecord(SessionPath.For(directory))!.LastClose!;
 
         await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Updating);
-        await Assert.That(CloseReasons.Of(close)).IsEqualTo($"BrowserAI closed this session's browser at {SessionErrors.When(close.At)} to install an update.");
+        await Assert.That(CloseReasons.Of(close)).IsEqualTo($"BrowserAI closed this session at {SessionErrors.When(close.At)} to install an update.");
     }
 
     /// <summary>

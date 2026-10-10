@@ -130,8 +130,13 @@ internal static class SettingsHoldBack
     /// 2026-10-10 (previously "... keeps everything.")</i>, from the texts review: the
     /// switch keeps what the headed descriptions name, and its own answer says that refs
     /// from earlier snapshots and a page that answered a form POST do not come back.
+    /// ⚠️ <i>Corrected 2026-10-10 a second time, round 2 of the texts review, #58
+    /// (previously "When the part that needs the person is done, resuming with headed:
+    /// false keeps its logins, cookies, storage, tabs and history.")</i>: what keeps them is
+    /// a clean close, as the resume description and the hold-back say, and a switch whose
+    /// close runs out of its minute says what it may have lost.
     /// </remarks>
-    public const string HeadedHint = "When the part that needs the person is done, resuming with headed: false keeps its logins, cookies, storage, tabs and history.";
+    public const string HeadedHint = "When the part that needs the person is done, resume with headed: false: the browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.";
 
     /// <summary>The words every hold-back opens with.</summary>
     /// <remarks>

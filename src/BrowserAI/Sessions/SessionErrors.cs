@@ -577,9 +577,14 @@ internal static class SessionErrors
     /// </para>
     /// </remarks>
     /// <param name="tool">The name the call carried.</param>
-    /// <param name="tools">The tool list this server answers now, for the block that names every tool in it.</param>
+    /// <param name="tools">
+    /// The tool list this server answers now, for the block that names every tool in it.
+    /// <i>Required since 2026-10-10, round 2 of the texts review, #49 (previously
+    /// optional)</i>: the sentence says the tools are listed below, so a list always
+    /// follows it.
+    /// </param>
     /// <returns>The refusal.</returns>
-    public static string ToolDoesNotExist(string tool, ToolSignatures? tools = null) =>
+    public static string ToolDoesNotExist(string tool, ToolSignatures tools) =>
         $"BrowserAI has no tool '{RecordText.Escape(tool)}', so nothing ran. Use one of the tools this BrowserAI has now, listed below. "
         + "If BrowserAI was updated during this conversation, a tool your list does not show cannot be called until the person you are working with reconnects BrowserAI or starts a new conversation: your client keeps the list it fetched when the conversation started."
         + ToolsNow(tools);
@@ -1302,7 +1307,39 @@ internal static class SessionErrors
     public static string BrowserServerHasGone(string tool, string path) =>
         $"The browser server for '{path}' has ended, so '{tool}' was not forwarded and nothing in the browser changed. "
         + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
-        + "The session's profile, files and log are on disk, but a browser that ends without a clean close keeps only what it had already flushed: "
+        + AfterAnUncleanEnd;
+
+    /// <summary>
+    /// Row 7's fourth companion -- the session's browser server ended while a call it had
+    /// been given was running, so the call got no answer.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 for round 2 of the texts review, found by lane FINAL</b>: a
+    /// Chromium full-page screenshot whose browser ended under it reached a model as
+    /// <i>The browser child did not answer 'tools/call': TaskCanceledException</i>, the
+    /// SDK's own ending of a request whose client was disposed. It is said the way
+    /// <see cref="BrowserServerHasGone"/> says the call after it, with the one difference a
+    /// call already passed on has: part of it may have happened, so it is checked before
+    /// it is repeated.
+    /// </para>
+    /// <para>
+    /// <b>Still a JSON-RPC error and not a tool result</b>, as it has been since step 9:
+    /// the browser server never answered the call, which is a transport failure; only the
+    /// words changed, and the exception is the log's.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was running.</param>
+    /// <param name="path">The session directory.</param>
+    /// <returns>The answer.</returns>
+    public static string BrowserServerEndedDuringTheCall(string tool, string path) =>
+        $"The browser server for '{path}' ended while '{tool}' was running, so the call got no answer, and part of it may have happened: check what it was doing before you repeat it. "
+        + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
+        + AfterAnUncleanEnd;
+
+    /// <summary>What a browser that ended without a clean close may have lost, said by both rows about an ended browser server.</summary>
+    private const string AfterAnUncleanEnd =
+        "The session's profile, files and log are on disk, but a browser that ends without a clean close keeps only what it had already flushed: "
         + "recent cookie and localStorage writes may be gone, so read any stored value back before you rely on it.";
 
     /// <summary>
@@ -1409,7 +1446,9 @@ internal static class SessionErrors
     /// <b>F2, decided 2026-10-08 by the maintainer</b>, from his words of 2026-10-07,
     /// verbatim: <i>"What if we make all the init and resume parameters mandetory and
     /// then go withpattern b."</i> The proposal he took narrowed "all" to the four a
-    /// person notices; the other five keep this machine's defaults.
+    /// person notices; the other five have the defaults their descriptions name.
+    /// <i>Corrected 2026-10-10 (previously "the other five keep this machine's
+    /// defaults")</i>: only the locale and the time zone are this machine's.
     /// </para>
     /// <para>
     /// <b>Every missing one is named at once</b>, so the next call can succeed, and
@@ -1423,8 +1462,14 @@ internal static class SessionErrors
     {
         ArgumentNullException.ThrowIfNull(missing);
 
+        // ⚠️ Corrected 2026-10-10, round 2 of the texts review, #32 (previously "Each is
+        // something a person notices: a window on their screen, what is written to disk in
+        // plain text, and how long the browser stays open and holds BrowserAI's updates
+        // back, so BrowserAI does not choose them for you."): what an open browser holds
+        // back is the automatic install, and the person's Install now closes it, as the
+        // idle description and the warning say.
         return $"{tool} takes {listed(RunSettingNames.Stated)} on every call, and this one left out {listed(missing)}. Nothing was created and nothing was changed. "
-            + "Each is something a person notices: a window on their screen, what is written to disk in plain text, and how long the browser stays open and holds BrowserAI's updates back, so BrowserAI does not choose them for you. "
+            + "Each is something a person notices, so BrowserAI does not choose them for you: a window on their screen, what is written to disk in plain text, and how long the browser stays open and holds BrowserAI's automatic updates back, unless the person chooses Install now, which closes it. "
             + $"Send the call again with all four: true or false for the first three, and for {IdleSetting.ParameterName} a whole number of minutes or \"{IdleSetting.NeverWord}\", "
             + $"where {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one are the defaults.";
 

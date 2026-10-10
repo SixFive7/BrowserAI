@@ -481,7 +481,7 @@ internal sealed class SettingsHoldBackTests
         var openedHidden = TextOf(await CallAsync(harness, SessionToolSurface.Init, InitArguments(hidden, Settings(headed: false))));
         var alreadyLive = TextOf(await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(visible, Settings(headed: true, idle: 60))));
 
-        await Assert.That(opened.TrimEnd('\n')).EndsWith("\nWhen the part that needs the person is done, resuming with headed: false keeps its logins, cookies, storage, tabs and history.");
+        await Assert.That(opened.TrimEnd('\n')).EndsWith("\nWhen the part that needs the person is done, resume with headed: false: the browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.");
         await Assert.That(openedHidden).DoesNotContain(SettingsHoldBack.HeadedHint);
         await Assert.That(alreadyLive).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
         await Assert.That(alreadyLive).DoesNotContain(SettingsHoldBack.HeadedHint)
@@ -517,8 +517,8 @@ internal sealed class SettingsHoldBackTests
 
             var headed = (string)schema["properties"]![RunSettingNames.Headed]!["description"]!;
 
-            await Assert.That(headed).Contains("A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes.");
-            await Assert.That(headed).Contains("Switching between visible and hidden keeps logins, cookies, storage, tabs and history");
+            await Assert.That(headed).Contains("A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes or the person chooses Install now, which closes it.");
+            await Assert.That(headed).Contains("Switching between visible and hidden closes the browser and opens it again, and a clean close keeps logins, cookies, storage, tabs and history");
 
             var idle = (string)schema["properties"]![IdleSetting.ParameterName]!["description"]!;
 

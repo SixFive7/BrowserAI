@@ -1228,6 +1228,51 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
+    /// Row 7's fourth companion -- a browser server that ends under a call it had been
+    /// given, provoked by a double that dies without answering.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for round 2 of the texts review, found by lane FINAL</b>: the
+    /// answer was the transport's own words with the exception's type in them. It is a
+    /// JSON-RPC error, as it was, and the session's record holds the same words. The arm
+    /// that planted the answer red is
+    /// <c>LosslessPassthroughTests.AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess</c>;
+    /// the record's half was planted red here the same day, against a forwarding path
+    /// that kept the exception as the row's payload, and the row read
+    /// <i>System.IO.IOException: The server shut down unexpectedly.</i>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBrowserServerEndedDuringTheCallRowIsEmittedByAChildThatDiesUnderACall()
+    {
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour { DieWithoutAnswering = true });
+
+        var response = await rig.Client.SendAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = rig.Session!,
+                [SessionToolSurface.WhyParameter] = "the suite meeting a browser server that ends under a call",
+                ["url"] = "data:text/html,x",
+            },
+        });
+
+        var expected = SessionErrors.BrowserServerEndedDuringTheCall("browser_navigate", SessionPath.For(rig.Session!).FullPath);
+
+        await Assert.That(response.Error).IsNotNull();
+
+        Match(response.Error!["message"]!.GetValue<string>(), nameof(SessionErrors.BrowserServerEndedDuringTheCall), expected);
+
+        // And the record says the same, and not the exception.
+        var row = RecordedSession.LogOf(rig.Session!).Last(entry => entry.Tool == "browser_navigate");
+
+        await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(row.Failure).IsEqualTo(expected);
+    }
+
+    /// <summary>
     /// Q380's row -- a Chromium screenshot whose image is taller than Chromium
     /// captures faithfully, refused with what happened, the bug and what to do.
     /// </summary>
@@ -1944,6 +1989,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheBrowserRuntimeFailureRowIsEmittedByAChildThatCannotStart))]
     [DependsOn(nameof(ARuntimeThatWillNotStartForAResumeGetsRowSevenAndLeavesTheDirectoryFree))]
     [DependsOn(nameof(TheDeadBrowserServerRowIsEmittedByACallForwardedAfterTheChildDied))]
+    [DependsOn(nameof(TheBrowserServerEndedDuringTheCallRowIsEmittedByAChildThatDiesUnderACall))]
     [DependsOn(nameof(TheClosedSessionRowIsEmittedByACallAfterTheCallersOwnClose))]
     [DependsOn(nameof(TheSettingsNotStatedRowIsEmittedByAnInitThatLeavesTwoOut))]
     [DependsOn(nameof(TheSettingsHeldBackRowIsEmittedByAResumeThatAsksForAWindow))]
@@ -2209,7 +2255,13 @@ internal sealed partial class ErrorCatalogueTests
         // counted them as reachable when no running BrowserAI could say either.
         // That is the gap this census cannot see on its own: it asks whether a
         // row was produced, never whether the code that produced it can still run.
-        await Assert.That(rows.Count).IsEqualTo(41);
+        //
+        // ⚠️ **Corrected 2026-10-10 a second time, to 42 (previously 41)**, round 2 of
+        // the texts review, found by lane FINAL. `BrowserServerEndedDuringTheCall`
+        // arrived: a browser server that ended under a call it had been given was
+        // answered in the transport's own words, the exception's type among them,
+        // which a model met as "TaskCanceledException".
+        await Assert.That(rows.Count).IsEqualTo(42);
     }
 
     /// <summary>

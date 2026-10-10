@@ -375,9 +375,15 @@ internal sealed class ToolVerdicts
             // the row's own `why` behind "is deliberately NOT in this server's
             // tools/list"): a tool BrowserAI does not offer should look to a model
             // like any other it does not have. The `why` stays in the file as the
-            // human record. BrowserProxy answers a denied name before it reaches
-            // here; this arm says the same thing if anything else asks.
-            { Kind: ToolVerdictKind.Deny } denied => ToolDecision.Refused(SessionErrors.ToolDoesNotExist(denied.Name)),
+            // human record.
+            //
+            // ⚠️ AND THE WORDS ARE THE PROXY'S, since 2026-10-10, round 2 of the
+            // texts review, #49 (previously
+            // "ToolDecision.Refused(SessionErrors.ToolDoesNotExist(denied.Name))",
+            // which said "listed below" with no list after it): BrowserProxy answers
+            // a denied name at its door, with the tool list, before it asks anything
+            // here, and only the suite reached this arm.
+            { Kind: ToolVerdictKind.Deny } => ToolDecision.Withheld,
             _ => ToolDecision.Refused(SessionErrors.ToolHasNoVerdict()),
         };
 
@@ -570,24 +576,46 @@ internal sealed class ToolVerdicts
 
 /// <summary>Whether one call may proceed, and why not if it may not.</summary>
 /// <remarks>
+/// <para>
 /// A refusal carries its text and not a code, because the audience is a model
 /// deciding what to do next and every text in the catalogue names a fix.
+/// </para>
+/// <para>
+/// ⚠️ <b>A withheld tool carries none, since 2026-10-10</b>, round 2 of the texts
+/// review, #49: the answer a denied name gets is the one any name BrowserAI does not
+/// have gets, with the tool list, and only the proxy holds the list. The judgement
+/// built that answer with no list until then, so it said <i>listed below</i> over
+/// nothing.
+/// </para>
 /// </remarks>
 internal readonly record struct ToolDecision
 {
-    private ToolDecision(string? refusal) => Refusal = refusal;
+    private ToolDecision(bool allowed, string? refusal)
+    {
+        IsAllowed = allowed;
+        Refusal = refusal;
+    }
 
     /// <summary>The call may proceed.</summary>
-    public static ToolDecision Allowed { get; } = new(null);
+    public static ToolDecision Allowed { get; } = new(allowed: true, refusal: null);
 
-    /// <summary>Why the call was refused, or <see langword="null"/> when it was not.</summary>
+    /// <summary>
+    /// The tool is withheld from the surface: the call may not proceed, and it is
+    /// answered as a tool BrowserAI does not have, by the one that holds the tool list.
+    /// </summary>
+    public static ToolDecision Withheld { get; } = new(allowed: false, refusal: null);
+
+    /// <summary>
+    /// Why the call was refused, or <see langword="null"/> when it was not, or when it
+    /// is <see cref="Withheld"/> and the caller answers it.
+    /// </summary>
     public string? Refusal { get; }
 
     /// <summary>Whether the call may proceed.</summary>
-    public bool IsAllowed => Refusal is null;
+    public bool IsAllowed { get; }
 
     /// <summary>Builds a refusal.</summary>
     /// <param name="refusal">The text the caller reads.</param>
     /// <returns>The decision.</returns>
-    public static ToolDecision Refused(string refusal) => new(refusal);
+    public static ToolDecision Refused(string refusal) => new(allowed: false, refusal);
 }

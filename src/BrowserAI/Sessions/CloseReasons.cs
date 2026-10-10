@@ -136,15 +136,22 @@ internal static class CloseReasons
             // page."): nothing recorded it until then, an update records its own reason
             // since, and the page asks no stop. Said so that it stays true of a record
             // an earlier build wrote for either of those.
+            //
+            // ⚠️ AND OF A SESSION, NOT ITS BROWSER, for these three: corrected 2026-10-10
+            // a second time, round 2 of the texts review, #29 (previously "BrowserAI
+            // closed this session's browser at ..."). The background's end records the
+            // reason for every session it closes, whether or not a browser is up
+            // (LiveSession.CloseTheBrowserForShutdownAsync, RecordTheBackgroundsEnd), so
+            // the sentence says what is true of both.
             SessionCloseCause.Stopped =>
-                $"BrowserAI closed this session's browser at {when} because BrowserAI was asked to stop.",
+                $"BrowserAI closed this session at {when} because BrowserAI was asked to stop.",
 
             // Added 2026-10-10, the texts review's #24: the background's own ends.
             SessionCloseCause.Updating =>
-                $"BrowserAI closed this session's browser at {when} to install an update.",
+                $"BrowserAI closed this session at {when} to install an update.",
 
             SessionCloseCause.Failed =>
-                $"BrowserAI closed this session's browser at {when} because BrowserAI's background ended on a failure, which its log names.",
+                $"BrowserAI closed this session at {when} because BrowserAI's background ended on a failure, which its log names.",
 
             // Since 2026-10-08 only a host a client's own server owns records this, and
             // the product starts no such server: the suite's in-process rig does.

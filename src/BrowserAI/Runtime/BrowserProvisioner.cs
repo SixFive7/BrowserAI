@@ -1595,8 +1595,12 @@ internal sealed partial class BrowserProvisioner : IDisposable
         catch (Exception failure)
 #pragma warning restore CA1031
         {
+            // The failure's own words, and its type in the log record above only:
+            // corrected 2026-10-10, round 2 of the texts review, #53 (previously
+            // "Provisioning {browser} failed: {type}: {message}"). A session call hands
+            // this detail to the refusal a model reads, which names no .NET type.
             ProvisioningLog.Failed(_logger, browser, failure);
-            return new ProvisioningResult(false, $"Provisioning {browser} failed: {failure.GetType().Name}: {failure.Message}");
+            return new ProvisioningResult(false, $"Provisioning {browser} failed: {failure.Message}");
         }
     }
 
@@ -1938,9 +1942,13 @@ internal sealed partial class BrowserProvisioner : IDisposable
             .Select(line => line.Trim())
             .LastOrDefault(line => ErrorLine().IsMatch(line));
 
+        // A line break between the error line and what follows, since 2026-10-10, round 2
+        // of the texts review, #54 and #225 (previously a space): Node's error line ends
+        // with no full stop, so with a space it read as one sentence with what followed.
+        // The line is quoted as it was written, and nothing is added to it.
         return error is null || tail.Contains(error, StringComparison.Ordinal)
             ? "The installer said: " + tail
-            : $"The installer's error line: {error} The end of what it said: {tail}";
+            : $"The installer's error line: {error}\nThe end of what it said: {tail}";
     }
 
     /// <summary>A line that names an error the way Node and commander print one.</summary>

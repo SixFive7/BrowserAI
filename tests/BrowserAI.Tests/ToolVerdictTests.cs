@@ -378,6 +378,41 @@ internal sealed class ToolVerdictTests
     }
 
     /// <summary>
+    /// A denied tool is judged not allowed here, and the words it is answered with are
+    /// the proxy's, which carry the tool list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Round 2 of the texts review, 2026-10-10, #49.</b> The judgement built its own
+    /// answer, <c>SessionErrors.ToolDoesNotExist</c> with no tool list, which says
+    /// <i>listed below</i> over nothing. No product path reached it, because
+    /// <c>BrowserProxy</c> answers every denied name at its door, with the list, before it
+    /// asks the judgement anything; the suite was its only caller. So a denial is now a
+    /// judgement with no words of its own, and the one sentence a denied name gets is the
+    /// proxy's.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the judgement that carried the answer.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADenialIsAJudgementWithNoWordsOfItsOwn()
+    {
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            var decision = RepositoryVerdicts.Committed.Decide(denial.Name);
+
+            await Assert.That(decision.IsAllowed).IsFalse().Because(denial.Name);
+            await Assert.That(decision.Refusal).IsNull().Because($"{denial.Name} is answered by the proxy, with the tool list, and the judgement said: {decision.Refusal}");
+        }
+
+        // And the other two answers are unchanged: an allowed tool, and a name with no row.
+        await Assert.That(RepositoryVerdicts.Committed.Decide("browser_navigate").IsAllowed).IsTrue();
+        await Assert.That(RepositoryVerdicts.Committed.Decide(NeverATool).Refusal).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+    }
+
+    /// <summary>
     /// Every BrowserAI note in the shipped file sits on an <c>allow</c> row of a
     /// tool the snapshot carries, and the notes are the ones the instructions
     /// rewrite moved onto tools.

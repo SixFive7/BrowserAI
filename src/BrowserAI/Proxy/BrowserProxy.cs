@@ -997,9 +997,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         if (!decision.IsAllowed)
         {
+            // A withheld tool is answered at the door above, with the tool list, and
+            // never reaches here; should one, it gets the same answer, and not the
+            // judgement's, which has no list (round 2 of the texts review, #49).
+            var refusal = decision.Refusal ?? SessionErrors.ToolDoesNotExist(tool, Signatures());
+
             ProxyLog.ToolRefused(live.Logger, tool, live.Location.FullPath);
-            Refused(live, tool, why, decision.Refusal!);
-            await RefuseAsync(caller, request.Id, decision.Refusal!, cancellationToken).ConfigureAwait(false);
+            Refused(live, tool, why, refusal);
+            await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1345,7 +1350,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 return;
             }
 
-            await AnswerFailureAsync(live.Logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
+            // ⚠️ A CALL THE BROWSER SERVER NEVER ANSWERED is said in words, and the record
+            // carries the same words: round 2 of the texts review, 2026-10-10, found by
+            // lane FINAL (previously "The browser child did not answer 'tools/call':
+            // <exception type>: <message>" to the caller, and the exception's whole text
+            // in the session's record). The exception is the log's.
+            var ended = SessionErrors.BrowserServerEndedDuringTheCall(tool, live.Location.FullPath);
+
+            if (answer.ProtocolFailure is null)
+            {
+                payload = Encoding.UTF8.GetBytes(ended);
+            }
+
+            await AnswerFailureAsync(live.Logger, caller, request, answer, ended, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -1474,6 +1491,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// frame goes in as the exception; a transport failure goes in with its
     /// stack trace, because <i>the pipe closed</i> without a stack is a fact
     /// nobody can act on.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by lane FINAL
+    /// (previously this was the row's payload whenever the child never answered)</i>:
+    /// the forwarding path replaces it with
+    /// <see cref="SessionErrors.BrowserServerEndedDuringTheCall"/>, the words the caller
+    /// was answered with, because <c>browserai_catch_up</c> shows a model the row's
+    /// payload. The stack trace is the session's log's, through
+    /// <c>ProxyLog.ChildDidNotAnswer</c>, so it is still kept.
     /// </para>
     /// <para>
     /// ⚠️ <b>An <c>isError</c> result is a FAILED call, not a successful one.</b>
@@ -1615,6 +1641,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         McpServer caller,
         JsonRpcRequest request,
         ChildAnswer answer,
+        string ended,
         CancellationToken cancellationToken)
     {
         if (answer.ProtocolFailure is { } protocolFailure)
@@ -1629,6 +1656,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             request.Id,
             request.Method,
             answer.TransportFailure ?? new InvalidOperationException("The child answered with neither a result nor an error."),
+            ended,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -1750,6 +1778,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// died and for an unknown content type, naming neither. It is answered as a
     /// JSON-RPC <b>error</b> here because it is a transport failure and not a
     /// tool outcome, and the cause is named.
+    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by lane FINAL
+    /// (previously the message was "The browser child did not answer '{method}':
+    /// {type}: {message}", which a model met as "TaskCanceledException")</i>: the message
+    /// is <see cref="SessionErrors.BrowserServerEndedDuringTheCall"/>, which says what
+    /// happened and the call that brings the session back, and the exception is the
+    /// log's, below.
     /// </remarks>
     private static async Task AnswerTransportFailureAsync(
         ILogger log,
@@ -1757,6 +1791,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         RequestId callerId,
         string method,
         Exception cause,
+        string ended,
         CancellationToken cancellationToken)
     {
         ProxyLog.ChildDidNotAnswer(log, method, callerId.ToString(), cause);
@@ -1767,7 +1802,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             Error = new JsonRpcErrorDetail
             {
                 Code = (int)McpErrorCode.InternalError,
-                Message = $"The browser child did not answer '{method}': {cause.GetType().Name}: {cause.Message}",
+                Message = ended,
             },
         };
 

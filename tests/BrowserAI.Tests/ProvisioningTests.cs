@@ -309,6 +309,48 @@ internal sealed partial class ProvisioningTests
 
         // And the end of what it said is still there: the frames and the runtime.
         await Assert.That(refused[0].Message).Contains("Node.js v24.21.0");
+
+        // ⚠️ AND THE LINE STANDS APART FROM WHAT FOLLOWS IT, round 2 of the texts
+        // review, #54 and #225: Node's line ends with no full stop, so with nothing
+        // between them it read as one sentence with "The end of what it said". Planted
+        // red 2026-10-10 against the line run straight into it.
+        await Assert.That(status.Detail).Contains($"{error}\nThe end of what it said: ").Because(status.Detail);
+        await Assert.That(refused[0].Message).Contains($"{error}\nThe end of what it said: ").Because(refused[0].Message);
+    }
+
+    /// <summary>
+    /// A provisioning that throws is told in the failure's own words, and names no .NET
+    /// type.
+    /// </summary>
+    /// <remarks>
+    /// <b>Round 2 of the texts review, 2026-10-10, #53.</b> The detail read
+    /// <i>Provisioning chromium failed: InvalidOperationException: ...</i>, and a session
+    /// call hands that detail to the refusal a model reads
+    /// (<see cref="SessionErrors.BrowserRuntimeDidNotStart"/>), whose own cause stopped
+    /// carrying a type name on 2026-10-10. The installer that cannot be started is the
+    /// failure the suite can provoke: the provisioner's seam throws, as a launch that
+    /// Windows refuses does. Planted red 2026-10-10 against the detail with the type in it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProvisioningThatThrowsIsToldInItsOwnWordsWithNoTypeName()
+    {
+        const string Said = "the suite's installer would not start";
+
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-throws");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log)
+        {
+            StartInstaller = (_, _) => throw new InvalidOperationException(Said),
+        };
+
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
+        await Assert.That(status.Detail).IsEqualTo($"Provisioning {SessionManager.DefaultBrowser} failed: {Said}").Because(status.Detail);
     }
 
     [Test]

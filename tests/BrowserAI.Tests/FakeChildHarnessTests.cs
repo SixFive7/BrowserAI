@@ -496,7 +496,7 @@ internal sealed class FakeChildHarnessTests
         // saying nothing about the other.
         foreach (var denial in RepositoryVerdicts.TheDenials)
         {
-            await Assert.That(RepositoryVerdicts.Committed.Decide(denial.Name).Refusal).IsNotNull();
+            await Assert.That(RepositoryVerdicts.Committed.Decide(denial.Name).IsAllowed).IsFalse();
             await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(denial.Name)).IsTrue();
         }
 

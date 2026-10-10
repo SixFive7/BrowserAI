@@ -1945,7 +1945,15 @@ internal sealed class SessionManager : IAsyncDisposable
                     AgentClose.Closed => ClosedByTheAgent,
                     AgentClose.NothingWasOpen => ClosedWithNoBrowserUp,
                     AgentClose.CapRanOut => ClosedWhenTheCapRanOut,
-                    _ => AlreadyClosed(live.Closed is { } other ? CloseReasons.Of(other, connection) : string.Empty),
+
+                    // Another close got there first, and its closure is the one recorded:
+                    // AgentClose.AlreadyClosed is returned only when the session's close
+                    // was already set, and nothing sets it back. ⚠️ Corrected 2026-10-10,
+                    // round 2 of the texts review, #24 (previously "live.Closed is { }
+                    // other ? CloseReasons.Of(other, connection) : string.Empty", whose
+                    // empty reason could never be reached and would have put two spaces in
+                    // the answer).
+                    _ => AlreadyClosed(CloseReasons.Of(live.Closed!, connection)),
                 };
             }
 

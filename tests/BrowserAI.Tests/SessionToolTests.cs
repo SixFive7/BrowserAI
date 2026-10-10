@@ -303,7 +303,10 @@ internal sealed class SessionToolTests
 
         await Assert.That(run.IsError("resumeWithBrowser")).IsTrue();
         await Assert.That(run.Text("resumeWithBrowser")).StartsWith("Syntax error: 'browserai_resume' has no argument named 'browser'");
-        await Assert.That(run.Text("resumeWithBrowser")).Contains("a profile on disk belongs to its browser");
+        // "because a profile belongs to its browser" since 2026-10-10, round 2 of the
+        // texts review, which shortened the description (previously "a profile on disk
+        // belongs to its browser").
+        await Assert.That(run.Text("resumeWithBrowser")).Contains("because a profile belongs to its browser");
 
         await Assert.That(run.IsError("resumeNotASession")).IsTrue();
         await Assert.That(run.Text("resumeNotASession")).Contains(SessionLayout.LockFileName);
