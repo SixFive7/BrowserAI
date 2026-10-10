@@ -40,2508 +40,281 @@ release body; nothing else depends on it.
 
 ### Added
 
-- ✨ **A broken install tells the person: one toast, and a notice on every page of the dashboard.**
-  The maintainer's decision of 2026-10-10, verbatim: *"10 b"*. Since 2026-10-08 a session whose
-  browser server lists different tools from the list compiled into BrowserAI is refused as a
-  broken install, and the model is told to stop and say that BrowserAI needs reinstalling. Now
-  the person is told as well, once per run of the background: a toast that stays until it is
-  acted on, under a tag of its own, whose button opens the dashboard, and a notice first on
-  every page of the dashboard, for as long as the condition stands, saying what is wrong, to
-  download `BrowserAI.exe` from the latest release and run it, and that the sessions are kept. A
-  later session whose server matches again takes both away. `BrokenInstallTests` holds it
-  through the product's own session host, planted red first.
-
-- ✅ **The four paths the one-binary build left untested are held.**
-  A relay reading the exit code of the background it held, the uninstall hook's stop when the
-  background answers and does not end or when nothing answers, a person's start ending a
-  background that took the connection and never answered, and a relay's first call made with no
-  tool list and no background. The first and third need the background to be a process of its
-  own, so the suite's probe gained a stand-in that takes the background's pipe and writes its
-  record through the product's code. Each arm was planted red first.
-
-- ✅ **The gate's clearance reads the toasts' activator.**
-  The maintainer's 9 a. An installer arm that failed between its install and its uninstall could
-  leave the test pack's activator class registered under the person's own classes, and nothing
-  read it. The snapshot now reads the real application id's activator and the test pack's, the
-  class derived as the product derives it, so a test pack's left behind stops the gate.
-  `SuiteCoverageTests` runs the reading over a scratch key.
-
-- 📦 **A release is refused unless every dependency was checked that day and none has moved.**
-  The maintainer's rule of 2026-10-10, verbatim: *"Before we cut any realease all dependencies should
-  always be checked if they are on the latest version. Part of the upstream checks we already do."*
-  `build/New-Release.ps1` now runs `build/Test-DriftCheck.ps1` before anything else, and stops a
-  release, though never the suite's test pack, while `drift-check.json` was not taken that day by the
-  local clock or any of its rows, the vendored SQLite row included, records a drift. A drift is adopted
-  through `UPSTREAM-REVIEW.md` or the vendored row's own steps, and the check taken again.
-  `ReleaseScriptTests` drives the rule over copies of the real file and runs the release script into
-  it, both watched red first.
-
-- 📝 **The README says what to do when an update leaves no BrowserAI.**
-  Velopack 1.2.161 deletes the old version when another program, usually antivirus or backup
-  software, holds a file of the new one open for more than about 30 seconds during the swap, and
-  then starts nothing. Measured with a stand-in on 2026-10-10, 4 of 4: the installer run again
-  with `--silent` put the program back and kept everything in `%LocalAppData%\BrowserAI`, while
-  deleting anything else inside the install folder; uninstalling from Windows Settings fails until
-  then. The hazard row says what was measured, and the report and a fix are upstream as
-  velopack/velopack#1086 and #1087.
-
-- ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
-  F3, after the maintainer's question of 2026-10-07, verbatim: *"Maybe we should start tracking all
-  magical numbers used in this project in an index of sorts so that we can at a later date re-check
-  the data by using the provenance of these records to re-determine if the number is still
-  accurate?"* `kb/numbers.md` gives each number the member the code reads, its value, what it
-  governs, whether it was measured, derived, chosen or set by an upstream, the evidence, when, and
-  how to check it again. Every duration the product waits on now lives in one of six named classes,
-  and the code that reads it takes its value from there, unchanged. `NumbersIndexTests` holds the
-  index and the code against each other in both directions, refuses a duration written as a number
-  anywhere else in the product's source, and answers the maintainer's question of R as a test: every
-  wait a tool call can meet ends inside the stricter client's limit on one call. Planted red four
-  ways first.
-
-- ✨ **Every answer that opens a visible window says going back to hidden keeps the session.**
-  F5 a, the maintainer's words verbatim: *"f5 a"*, realising E1, which asked to *"teach the model
-  that it can then immediately after make it a headless session"*. Such an answer from
-  `browserai_init` or `browserai_resume` ends with *"When the part that needs the person is done,
-  resuming with headed: false keeps its logins, cookies, storage, tabs and history."*, and
-  `headed`'s description now says what a window costs: Chromium's comes to the front and takes the
-  keyboard focus when it opens, Firefox's may, and like any open browser it holds BrowserAI's
-  automatic updates back until it closes. It also says that switching between visible and hidden
-  keeps logins, cookies, storage, tabs and history. `SettingsHoldBackTests` holds both, planted red
-  first.
-
-- ✨ **A person typing or clicking in a visible window keeps that window open.**
-  F4, the maintainer's words verbatim: *"f4 a - but only if this is easy."* and *"Make sure the
-  keyboard and mouse input check does not lag the system."* One check for the whole BrowserAI,
-  on a timer Windows may fold into its own every two seconds, reads the window in front and the
-  time of the last input, four reads whatever the number of windows, with no input hook, and runs
-  only while a visible window is open. Input in a visible session's window starts its idle
-  countdown again, as a call that names the session does, and the countdown reads it once more
-  before it closes the window. Measured: about 30 microseconds a check, 53 ms an hour.
-  `VisibleInputWatchTests` and `IdleCountdownTests` hold it, planted red first.
-
-- ✨ **Every session's browser closes after its own idle time, and a visible window after an hour.**
-  E2, the maintainer's words verbatim: *"What if we change the never to 1 hour and then allow the
-  calling agent to change this default behaviour with a parameter?"* `browserai_init` and
-  `browserai_resume` take `idleMinutes`, a whole number of minutes or `never`, which every call
-  states since F2, and ten minutes without a window and sixty with one are the defaults a longer
-  time is held back against. A visible window was never closed for being idle until now. Every call that names a live session starts its countdown again,
-  whatever the answer, a refused call and BrowserAI's own tools included, where only a forwarded
-  call did; a resume of a live session says so and names no time. Upstream's own one-hour idle
-  timeout is off for every launch, so BrowserAI's countdown is the only one, and the update and
-  the dashboard read every open session's deadline from it. `IdleCountdownTests` holds it, planted
-  red first.
-
-- ✨ **`browserai_close` ends a session's browser and keeps the session.**
-  D1 and F1 a, the maintainer's words verbatim: *"1 b - but think through if browserai_stop and
-  browserai_close could then not just become a single thing."* and *"f1 a"*. The ninth tool of
-  BrowserAI's own asks the browser to close itself, gives it up to a minute to write what it holds
-  to disk, ends its browser server and answers; the profile with its logins and cookies, the site
-  storage and the tabs with their history are kept, and every later browser call naming the
-  session is refused, quoting who closed it and why, until `browserai_resume`; `browserai_catch_up`,
-  `browserai_change_purpose`, `browserai_destroy` and `browserai_close` itself still answer it. A
-  session with no browser up is closed without starting one. `browser_close` describes itself as closing the page, while in
-  BrowserAI it ends the whole browser, so it is a `deny` row now: out of the tool list, and a call
-  naming it gets the answer any tool BrowserAI does not have gets, with no text of its own, in his
-  words *"do not make an exception"*. BrowserAI still sends `browser_close` to a session's own
-  child for every clean close it makes. Playwright's own `browser_close` is no longer offered.
-  `SessionCloseTests`, `CloseOrderingTests`, `CloseReasonTests` and `SessionPolicyTests` hold it,
-  planted red first.
+- ✨ **A Start Menu click opens BrowserAI's page in your own browser.**
+  The status page shows the installed version, the install, data and log folders, the command a
+  client starts, whether an update is waiting, and how BrowserAI is registered with Claude Code
+  and with Codex, with buttons to register or unregister for all your projects, register in a
+  project or remove BrowserAI from one. A second page lists the sessions BrowserAI holds and the
+  clients connected to it. Nothing changes until you click something, and the page lives at an
+  address on your own machine that is made for each run and handed to nobody else.
+  [The decision](DECISIONS.md#the-management-interface-is-a-tab-in-the-system-browser).
 
 - ✨ **A downloaded update that has to wait says so in a toast that counts down to its install.**
-  T, the maintainer's words verbatim: *"t I like the live countdown of the toast. I'd opt for two
-  buttons. Install now and wait for inactivity."* and then *"Make sure the toasts have no timeout."*
-  The ready toast is a reminder, which stays on screen until the person acts. It names the version,
-  and in its title whether that version is older than the one installed (Q308 a), says it installs
-  by itself once BrowserAI has been idle, counts down to the moment it would if
-  nothing uses BrowserAI, says what still uses it, and names the clients that will need a reconnect
-  afterwards. **Install now** opens the dashboard's update page and **Wait for inactivity** closes
-  it; a version the person chose to wait for is raised again after a restart into the Notification
-  Centre with no banner. Three more follow it: installing, with **Dismiss**; installed, with
-  **Changelog** and **Dismiss**; and failed, naming the folders Velopack's log and BrowserAI's are
-  in. The countdown is the progress element's bound fields, which the screen measurement of
-  2026-10-08 saw update in place with no new banner and no sound, and each toast has a tag of its
-  own with the others removed first, because a replacement under one tag popped up again in only 4
-  of 6. Measured on his screen the same night and kept by his 2.1 a of 2026-10-10: a removal
-  followed by a show under the toast's own tag popped up 85 times of 86 while the old banner showed,
-  against 58 of 77 for one tag shared. Every toast's text is held to its banner, a title in two
-  lines and the rest in four at the width the banner wraps at, read off that night's screen crops,
-  so the reconnect line spells out names while they fit and counts the clients when they would
-  not. A click reaches a COM activator that the install hooks register for a class derived from
-  the application id, so the suite's test pack never takes over a real install's. The background
-  raises the ready and installing toasts, and the failed one when handing the update to the
-  installer throws; the start Velopack makes after an update raises the installed or the failed
-  one. `UpdateToastContentTests`, `UpdateToastsTests`, `ToastInteropTests` and
-  `ToastActivationTests` hold it, planted red first, and no test shows a toast.
+  BrowserAI downloads an update by itself and installs it once nothing uses it. Until then the
+  toast stays on screen, says what still uses BrowserAI and which conversations will need a
+  reconnect afterwards, and offers **Install now** and **Wait for inactivity**. Install now opens
+  the update page, which lists what holds the update, each with its countdown, and installs at
+  once when asked. Toasts follow for installing, for installed, with a button that opens the
+  release's changelog, and for an update that failed.
 
-- ✨ **The dashboard has an update page: what holds the update, each with a countdown, and Install now.**
-  T and H1, the maintainer's words verbatim: *"the install now button takes you to the browser
-  interface gui of the coordinator where it can better explain what the risks of forcing the update
-  now are together with an overview of who is still using it"*. Hidden browser sessions, visible
-  windows, each marked *Close this to let the update proceed*, and the agents' connections, each
-  with the reconnect its client will need, are listed with a countdown the page counts down by
-  itself; what installing now does is said beside the button, which asks the background to close
-  everything cleanly and install at once. The toast's **Install now** opens it the way a Start Menu
-  click opens the dashboard, with `--update`, and the status page's update section says whether an
-  update waits and leads to it. Both pages say when the version waiting is older than the one
-  installed, and that installing it goes back to the earlier version (Q308 a). `UpdatePageTests`
-  and `ToastPageStartTests` hold it, planted red first.
+- ✨ **`browserai_close` closes a session's browser and keeps the session.**
+  The browser gets up to a minute to write what it holds to disk, and the profile with its logins
+  and cookies, the site storage and the tabs with their history stay. Every browser call that
+  names the session is then refused, saying who closed it and why, until `browserai_resume` opens
+  it again. Playwright's own `browser_close` is no longer offered.
 
-- ✨ **The dashboard and the toast name each conversation as you see it, and group tabs by window.**
-  The maintainer's answer of 2026-10-10, verbatim: *"1.1-2.3 I accept all your recommendations"*,
-  to his ask of 2026-10-08 to tell several Claude Code tabs of one VS Code window apart. For Claude
-  Code, the conversation is read from the file Claude Code keeps for each running process, accepted
-  only when it is the client's own; then from the session the client handed BrowserAI in its
-  environment, which goes stale at `/clear`; then from `--resume` or `--session-id` on its command
-  line. Its name is the one its VS Code tab shows, by the extension's own rule over the first and the
-  last 64 KB of the session's record, and a conversation with no record yet is *new conversation in
-  `<folder>`*. A Codex conversation is the thread its first call names, called by the name Codex
-  gave it; else by its first message, from Codex's state database or the thread's own record, on
-  one line and cut past 200 characters; or *Codex in `<folder>`*. The files are read when the
-  dashboard or the toast is drawn and never held open, and a VS Code window's tabs are listed
-  together under *VS Code window on `<folder>`*. The toast's reconnect line spells out two
-  conversations of each kind while the line fits three lines of 50 characters, then one of each
-  kind, then none, each cut as its tab cuts it, and counts the rest. These are another
-  product's undocumented files, so every read that fails falls back to the next source, and
-  nothing writes a title, a prompt or a session id to a log. `ConversationReaderTests`,
-  `CodexStateTests`, `ClaudeCodeTitleTests`, `ClientRecognitionTests`,
-  `BackgroundServerTests`, `RelayTests`, `ProcessLivenessTests`, `BackgroundUpdatesTests`,
-  `UpdateToastsTests`, `UpdateToastContentTests`, `UpdatePageTests`, `PageServiceTests` and
-  `InheritedEnvironmentTests` hold it, planted red first, over records the suite writes in scratch.
+- ✨ **Each session's browser closes after its own idle time, which `idleMinutes` sets.**
+  Ten minutes without a window and sixty with one are the defaults, and `never` is allowed. Every
+  call that names the session starts the countdown again, whatever its answer, and so does a
+  person typing or clicking in its visible window. The close keeps the session, and its next
+  browser call is refused until `browserai_resume`, where 1.1.0 started a new blank browser
+  without a word. A longer time keeps automatic updates waiting while the browser is open, so a
+  call that sets one is held back once with that warning.
 
-- ✅ **The seventeen rows of the client classifier's table that nobody had watched fail are planted red.**
-  The maintainer's 8 a of 2026-10-10: `ClientRecognitionTests` held 22 rows, and only five had ever
-  been seen red. Ten plants of the rule, one at a time, turned every one of the other seventeen
-  red, and each test's remarks say which plant turned which row.
-
-- ✨ **The dashboard has a changelog page, read from the changelog the build carries.**
-  The installed toast's **Changelog** opens it. `CHANGELOG.md` is embedded in the executable, and
-  the page shows the installed version's section, or for a development build, which no heading
-  names, what is listed as not yet released; each entry is folded under its headline, and a link to
-  a file in the repository is shown as its text. `ChangelogPageTests` holds it, planted red first.
+- ✨ **A session outlives the client that drove it, until its own idle close.**
+  Restarting VS Code or a Claude Code session no longer takes a session's browser with it.
+  BrowserAI keeps the browser with its pages as they were, until its idle time runs out or its
+  window is closed, and the next call or `browserai_resume` that names the session takes it over.
 
 - ✨ **Every close of a session's browser is recorded with its reason, and the agent is told it.**
-  8 b, the maintainer's words verbatim: *"8 b - log in our catchup resume that it was the user who
-  closed it. Also whe ntelling the agent it needs to resume first give it the reason for the last
-  close. Was it a user? Was it a timeout? Was it a close call from the agent or another agent?"*
-  `browserai.data` gains a `closed` statement for each close, with its cause and time: a person
-  closing the window, the idle timeout, a `browser_close` from this client or from another one,
-  named, with the reason its call gave, the last tab closed, the browser's own exit, a crash or a
-  kill with its exit code, the browser server ending, BrowserAI stopped for an update or from its
-  own page, a server shutting down when its client went, and the session host letting a session
-  go. An `opened` statement beside each start of a browser server lets a reader tell a holder that
-  was killed, which leaves an opening with no close after it. The refusal that sends an agent to
-  `browserai_resume` names the last close, and so do the resume's own answer and
-  `browserai_catch_up`'s header. `CloseReasonTests` holds each cause, planted red first.
-
-- ✨ **A Start Menu click opens BrowserAI's page in your own browser.**
-  Q315 a, the maintainer's words verbatim: *"Q315 a"*. A start a person makes now opens a tab
-  in the default browser, at an address on `127.0.0.1` that BrowserAI makes for it, and opens
-  no window of its own. The page shows the installed version, the install, data and log folders
-  with a button that opens each, the whole command a client starts, and whether a downloaded
-  update is waiting, with a link to the update page.
-
-  **A second page lists BrowserAI's background, every session it holds and each client connected
-  to it.** Each session shows its purpose, whether a browser is open, a button for its folder and
-  the traces it has written; one a client drives names that client, and one whose client has gone
-  is marked kept, with the time its idle close ends it, or that it ends when its window is closed.
-  Each client is listed by its conversation, with the folder it started in. The page offers no
-  close, the maintainer's *"17 a"*: a client's connection ends with the client.
-  `BrowserAI.exe --sessions` opens a tab on that page.
-
-  **Registration lives on the status page, and the configuration window is gone (Q319 b).** Each
-  client has its own section: what it has, for all your projects and in the project the page was
-  started in, and buttons that each name their client, to register or unregister for all your
-  projects, register in a project, or remove BrowserAI from a project. A register or a repair keeps
-  the data root the install was made with, read from the definition its hooks saved. A project
-  folder is chosen in Windows' own folder picker, which BrowserAI opens (Q311) and which may come up
-  behind the browser. A registration that was not done is one sentence with the full text under
-  *Show details* (Q309 b), and the Codex section says that a Codex already running when BrowserAI
-  was installed finds it in a project only after a restart (Q314 b). The first tab after an install
-  says BrowserAI is installed and shows what each client has; it no longer claims every client was
-  registered. The window, its task dialog and the link handler that could run what a project file
-  planted are deleted.
-
-  **The page proves itself by its address, and nothing else gets in (Q334 a, Q335 a).** The
-  listener is Kestrel from ASP.NET Core's empty builder (Q340 b), on `127.0.0.1` alone and a
-  port Windows picks. Its address carries 256 random bits made for each listener and handed out
-  only through the background's own pipe, which admits the current user alone. One gate runs before
-  any route: the token, exactly one `Host` of `127.0.0.1` and the port, a browser's
-  `Sec-Fetch-Site` from the page itself or from outside the browser, and on a write our own
-  `Origin`, a JSON body and at most 64 KB. Everything it does not admit gets a 404 with nothing
-  in it, and no cookie is ever set. Another Windows user on the machine can reach the port and
-  is kept out by the token alone, which is a hazard row of its own. The page's listener stays
-  while a tab is connected and stops a minute after the last one closes, so a reload keeps
-  working (Q336 a), and the background itself stays; a newer tab tells an older one to close
-  itself (Q337 a).
-
-- ✨ **Every server answers on a named pipe of its own: who it is, what it holds, and a stop.**
-  Q284 a, the maintainer's words verbatim: *"Q284 a"*. A server opens
-  `\\.\pipe\BrowserAI-<its live marker's name>` right after it joins the census, through raw
-  `CreateNamedPipeW`: a first-instance flag, so a name somebody else created first is refused and
-  never joined; a flag that turns remote clients away; and a DACL whose one entry is the current
-  user, where the default would also let `Everyone` and anonymous logons read. One request per
-  connection, answered with a length-prefixed reply. `describe` comes from the server's own
-  memory: its pid, creation time, version and image, the client's name, title and version, the
-  working directory, when it began serving, its last tool call and the calls in flight, and each
-  session it holds with its directory, its purpose and whether its browser is open. `stop`
-  acknowledges, then takes the path a client leaving takes.
-
-  **Nothing in the product asks a server anything yet**: the coordinator that will is the next
-  phase, and the only caller today is the suite. `ServerPipeClient` reads the census first, so a
-  server that has gone costs microseconds and never a timeout, checks that the pipe is served by
-  the marker's own pid, and bounds every call at 500 ms, derived from the slowest pipe percentile
-  the review measured. **Why a pipe and not a file**: a record rewritten in place was read torn 22
-  times in 3,000,000 reads, and every torn read parsed as valid JSON; a pipe answering from memory
-  has nothing to tear. It costs the server 43,520 bytes. `ServerPipeTests`, eight tests, each
-  watched red against a planted defect, and two open hazard rows name what it does not handle yet:
-  a caller that connects and never closes holds the one thread that serves the pipe, and a server
-  from 1.1.0 or earlier has no pipe to be stopped through.
-  [kb](kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24), [evidence](docs/evidence/2026-09-24-ipc-review/README.md).
-
-- ✨ **A tool call that meets an update is refused with a sentence that says whether it ran.**
-  Q286 b, the maintainer's words verbatim: *"Q286 b"*. No MCP message reaches a model when a
-  server shuts down, measured on both clients, so a tool result is the only channel there is.
-  **A server that starts while its own install's `Update.exe` is running**, found by the full
-  image path under its install root and never by a name, answers `initialize`, refuses every tool
-  call with that sentence, answers `tools/list` with an error that carries it, starts no browser
-  server, skips its feed check and its stray sweep, and ends its conversation when the updater
-  exits, so Claude Code starts the new version on its next call. **A server stopped through its
-  pipe** answers every call still in flight before it exits, and refuses at the door any call
-  that arrives after the stop began: no call goes unanswered, and none is answered twice. The
-  first of the two is live in this release; the second waits for the coordinator, the only thing
-  that will ask a server to stop.
-
-  The sentence differs because a call cut off in flight had already been forwarded: *"The call was
-  already being carried out, so part of it may have happened: check what it was doing before you
-  repeat it."* against *"was NOT run: nothing reached a browser and nothing changed."* Both go on
-  to the remedy for the client at the other end, and to `browserai_resume` for a session the update
-  closed, whose files stay on disk. **The gap accepted with it**: a server the updater ends before
-  its handshake finishes is lost to that session, and an installed server takes 0.39 s at the median
-  to finish it. `UpdateInProgressTests`, three tests against the published binary, one of them with
-  a stand-in `Update.exe` that is a copy of `cmd.exe` in a scratch install root, ended through its
-  own job; and the error catalogue's census, now 35. Each was watched red against a planted defect.
-
-  ⚠️ ***Corrected 2026-10-03 by Q296 c, before any release carried it (previously the first
-  paragraph said such a server "answers `tools/list` with an error that carries it, starts no
-  browser server, skips its feed check and its stray sweep, and ends its conversation when the
-  updater exits, so Claude Code starts the new version on its next call").*** That error left
-  Claude Code with zero BrowserAI tools for the whole session. Such a server now lists its real
-  tools, refuses calls with its own sentence while the updater runs, and serves once it has gone;
-  see the entry under *Changed*. The server stopped through its pipe is unchanged.
-
-- ✅ **Two installer facts that were manual rows are suite arms under the test pack's id.**
-  Q275. `RealInstallerTests.TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt`
-  installs the test pack silently into two scratch roots and shows the second install rewriting
-  the one Add/Remove key, then uninstalls in both orders: either uninstall deletes the key while
-  the other root still holds a complete install, which is re-verification row 123.
-  `RealInstallerTests.AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes`
-  starts the installed server through the orphan-console rig with `VELOPACK_FIRSTRUN=true` and
-  requires the general exit, `Startup[9]`, because Velopack clears the variable in an installed
-  process; a byte-identical copy outside any install takes whichever exit its build carries, read
-  out of the binary, so the arm stays true across the release that drops the installer exit. That
-  is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
-  each was watched red against a planted wrong expectation.
-- ✨ **The configuration window removes BrowserAI from a project you pick, for each client.**
-  Q289, the maintainer's words verbatim: *"Q289 b"*. *Remove from a project...* asks for the
-  folder and removes BrowserAI's entry from its `.mcp.json` or `.codex\config.toml`, for Claude
-  Code and Codex each. Until now the only removal link was the one for a registration found at
-  or above the folder the window started in, which appears only when the window is started
-  inside such a project; it stays. An entry another install wrote is refused and reported, and a
-  folder with none is told so. The picker opens only on that click and is owned by the window.
-  Each change was watched red first.
-- ✨ **A Codex project entry names `BrowserAI.Server.exe`, and the installer puts its folder on your PATH.**
-  Q294, the maintainer's words verbatim: *"Q294 b"*. Codex expands no variable in a server's command,
-  measured in 48 attempts across four spellings of `LOCALAPPDATA` and read in its launcher, so the
-  portable spelling Claude Code's `.mcp.json` uses cannot work in `.codex\config.toml`, and the
-  entry used to carry one machine's absolute path. It names the server alone now, and Codex resolves
-  the name on the PATH it hands the server, as its launcher reads: the install and update hooks put
-  this install's own `current` folder on the user's PATH, keeping the value's kind and announcing the
-  change, and the uninstall hook takes exactly that entry off, never another install's. The window's
-  sentence after a Codex project registration says which file the name finds today, and the Codex
-  ownership check judges the file it finds first. ⚠️ A Codex that was running before BrowserAI was
-  installed needs restarting to see the PATH, which follows from how it builds a server's environment
-  and was not measured. Claude Code's project entry and every user-scope entry are unchanged. The
-  gate's clearance reads the real user PATH before and after every run. Each change was watched red
-  first.
-- ✅ **The real-installer arms install this tree's build, packed before every gate run.**
-  Q287, the maintainer's words verbatim: *"Q287 a"*. They installed whatever test pack the last
-  release cut had left, so no real `Setup.exe` had run a hook the tree changed since 1.1.0.
-  `build/New-Release.ps1 -TestPackOnly` packs the suite's installer, `BrowserAI.app.test`, from the
-  two publishes the run tests, and a shipping-id twin beside it for the one arm that compares
-  two packs of one publish; it never reads or writes the shipping feed and archives nothing. The
-  four gate drivers run it under the installer lock before their first run, and the release
-  installer capability refuses a pack that is not the published bytes. So the installer arm now
-  asserts the per-client registration record a real install writes, and the copy of an installed
-  server outside any install is expected to take the general exit, typed and no longer read out
-  of the binary. Each change was watched red against a 1.1.0 test pack packed for the purpose, and
-  the mode against the script without it. A pack takes about forty seconds. A release gate packs it
-  from the release publish instead, with `-FromReleasePublish`, so at a cut the arms install the
-  bytes the release ships (Q305, the maintainer's words: *"Q305 a"*); an ordinary gate still packs
-  from the dev publishes, and the driver scan holds both.
-- ✅ **The suite takes `.work\installer.lock` itself, and a gate driver says it already holds it.**
-  Q291, the maintainer's words verbatim: *"Q291 a"*. The lock was a convention nothing in the
-  tree read, and a run with the installer arms in it was safe only if somebody had taken the
-  file by hand. A session hook now takes it for the test host, waits for a live holder up to
-  thirty minutes, takes over from one that is gone and lets it go at the end. The four gate
-  drivers take it first through `build/InstallerLock.ps1` and name themselves in
-  `BROWSERAI_INSTALLER_LOCK_HELD`, so the test host they start is covered and waits for no
-  one. A run that cannot take it skips the installer arms, or fails them as a release, and the
-  coverage block gains an `installer lock` row. `InstallerLockTests` and
-  `SuiteCoverageTests.EveryGateDriverHoldsTheInstallerLockForItsWholeRun`, each watched red
-  against the tree before the hook and the drivers changed.
-- ✅ **The gate's clearance reads the client registration out of its file and never starts the client.**
-  Q281, the maintainer's words verbatim: *"Q281 a"*. The snapshot compared either side of every
-  gate run read the real `browserai` registration with `claude mcp get`, which starts the client,
-  health-checks the server and can write `~/.claude.json` -- the file the comparison is there to
-  prove untouched. It parses that file's `browserai` entry read-only now, key by key, and
-  `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` refuses a
-  call to the client's MCP verbs in the script; planted red against the script as it stood.
-  **Each client's reading is its BrowserAI entry and nothing else of its file**: Q292, the
-  maintainer's words verbatim, *"Q292 a - Same for claude code"*. The Codex reading hashed the
-  whole `config.toml`, which the Codex desktop app rewrites when it starts; it is the
-  `[mcp_servers.browserai]` entry now, and
-  `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` drives the script against
-  a scratch profile to hold it, planted red against the whole-file hash.
-- ✅ **The installed app's dialog arm runs on a desktop of its own, so a full run leaves the screen alone.**
-  Q279. `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow` creates
-  a desktop nobody is looking at, starts the installed app there through `JobLauncher` with
-  `STARTUPINFO.lpDesktop` naming it, finds the dialog with `EnumDesktopWindows` and closes it
-  from a thread attached to that desktop. Every assertion is the one it was: one `#32770`, no
-  console window, the live marker held while the dialog is open, exit 0, and the marker released
-  after. Red under the new window watch before the move, green three times after it with the
-  run's own `windows` row reading `CLEAN`. One thing the move showed, measured and named in the
-  arm: on a desktop with no taskbar the input framework shows its indicator from inside the
-  focused process, two windows of the app's own pid that are not the app's user interface.
-- ✅ **A suite run that shows a window or takes the foreground now fails, and names the window.**
-  The maintainer, 2026-09-24, verbatim: *"make sure this focus stealing is not something that
-  ends up in the testbed."* The test host watches its own desktop for the whole session from the
-  session hooks, so no filter can deselect it: a baseline of the visible windows, then two
-  WinEvent hooks for windows created, shown and brought forward. A window is the suite's when
-  it is the host's own, when its process descends from the host by a live parent chain, or when
-  its image sits under the repository or either scratch root, and never by the machine's own
-  browsers root. The coverage block gains a `windows` row naming each such window with its pid,
-  image, rectangle and time, and the run then exits 10. A run the watch could not cover fails
-  too, in every mode: Q290, the maintainer's answer verbatim, *"Q290 a"*. Until that answer
-  only a release failed for it.
-
-  **Watched red against the real offender before it moved.**
-  `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`, unmodified and
-  run in a child test host on a private desktop so that nothing reached the screen, exited 10
-  naming `#32770 'BrowserAI'` from the installed app and two input-indicator windows of the same
-  process. It had put that dialog on the interactive desktop in every full run with the release
-  installer since 2026-09-15. The standing positive control is a child test host on a private
-  desktop that shows one window through a new `window-show` probe mode and must exit 10 naming
-  its class while the parent's own watch never sees it; with the watch's show events planted
-  out, that arm went red.
-
-  **Four source rules came with it.** A launch of a Windows-subsystem binary is no longer
-  credited with `CreateNoWindow`, which does nothing for a GUI child, and goes through a private
-  desktop instead; the configuration app's `--report` arm moved onto one, and
-  `JobLauncher.Start` takes the desktop, which the product itself never passes. The same scan
-  reads `.js`, `.cjs` and `.mjs` launches for `windowsHide: true` and `Start-Process` for
-  `-WindowStyle Hidden` or `-NoNewWindow`; the gate drivers' own hidden launch was measured to
-  show no window and hand nothing to Windows Terminal. No ordinary test raises a real toast: the
-  suite has a banned-symbols file of its own, and a scan refuses the runtime class name a raw
-  activation would hand to Windows. And the `STARTUPINFO` pairing scan refuses a field it does
-  not know, so `lpDesktop`, which has no flag, is named in its table.
-- ✨ **A reconnected session is told, once, that its tool list came from a BrowserAI that is
-  gone.** Q261. A per-connection flag records whether a `tools/list` has
-  arrived since the handshake; the first `tools/call` that precedes one is **refused once**,
-  with a message naming the running version and the remedy for the client at the other end,
-  and `notifications/tools/list_changed` goes out ahead of it on the same pipe. **A first
-  connect lists before it calls, so an ordinary session never meets this**, and a second call
-  with no list behind it is forwarded normally -- it is one sentence, not a wall.
-
-  ⚠️ **Why it is needed at all:** a client whose stdio server exits re-launches it
-  transparently and sends `initialize` and `tools/call` and **no** `tools/list`, so after an
-  update the model goes on calling the surface of a server that no longer exists, and a tool
-  that was renamed or removed answers it with an error it reads as its own mistake. Measured
-  3/3 at Claude Code 2.1.281.
-
-  **The remedy is per client because the recovery genuinely differs, and both names are read
-  values**: `claude-code` is told to retry, because its client re-dialled and the connection is
-  live; `codex-mcp-client` is told to start a new thread, because Codex never re-dials on the
-  failure path and a retry has nothing to reach; anything else is told to ask for the tool
-  list. The identifiers came off the wire out of the 2026-09-23 captures -- Codex calls itself
-  `codex-mcp-client` and not `codex`, which is the thing a reader guesses wrong.
-
-  ⚠️ **THE NOTIFICATION IS NOT WHAT RECOVERS THE TURN, and the wording was corrected
-  before it shipped.** With 5.1 s of idle connection deliberately left between the refusal and
-  the retry, **no `tools/list` reached the re-dialled server in any of three runs**; the
-  client's debug log carried `Cleared connection cache for reconnection` and no refresh line.
-  The 3/3 refetch measured on 2026-09-23 was on a connection the client had established and
-  listed from, which is a different connection. So the notification is kept -- it is one frame
-  and a client that honours it is helped -- and the refusal no longer tells a model its list
-  has been refreshed. **On the one path this exists for, the sentence is the only thing that
-  reaches the model.**
-
-  **Driven against the published binary, end to end**: the refusal arrives at the model as an
-  `is_error` `tool_result`, byte for byte, and the call after it is answered -- 3/3. A Codex
-  thread lists before it calls, 3/3, so it never meets the refusal and no notification is ever
-  sent to it. [kb](kb/mcp/protocol.md#what-q261s-refusal-does-at-the-other-end----measured-2026-09-24),
-  [evidence](docs/evidence/2026-09-24-q261/README.md),
-  [rig](docs/probes/2026-09-24-q261/README.md), re-verification row 153. **This closes the
-  frozen-tool-list hazard row on the condition that row set for itself**, and the two things it
-  does not close are named there.
-
-- ✨ **`browserai_resume` and `browserai_catch_up` say when another BrowserAI wrote the session
-  last.** The second half of Q261, and it is a courtesy line and never a
-  refusal: nothing about such a session is wrong, the directory and the profile and the log are
-  the same files, and it resumes and answers normally. What the line adds is the one thing a
-  model cannot see -- that the tool list it is holding may have been read from the older build.
-  Resume compares the record **as it is on disk**, because re-acquiring the directory stamps
-  this build and a comparison made after that can never differ; catch-up carries it on page 1
-  only and **writes nothing**, which is what keeps that tool read-only against a session
-  somebody else is driving.
-
-- ✨ **BrowserAI registers itself with Codex as well as Claude Code, from the installer and the window.**
-  The install, update and uninstall hooks now run one pass per client, each with its own
-  ownership check -- an entry is ours by its command path, and another install's is refused and
-  left alone -- and each with its own entry in `mcp-registration.json`. A machine with no Codex
-  gets Codex's own refusal in that entry, naming every place that was looked and the command to
-  run by hand, and an install that still succeeds. **User scope is `codex mcp add`, and project
-  scope is the same command with `CODEX_HOME` pointed at `<repo>\.codex`**, which makes Codex
-  write the project's own `config.toml` itself; Codex reads that file only in a project it has
-  been told to trust. A Codex project entry carries this machine's absolute path, because the
-  portable `${LOCALAPPDATA}` spelling works through Claude Code's expansion and Codex documents
-  none.
-
-  The library landed first, the same morning, when nothing yet asked it to register anything.
-  A second client sits beside Claude Code in the registration library: `CodexRegistration`
-  builds the `codex mcp add` and `codex mcp remove` command lines, `CodexRegistryView` reads
-  `codex mcp list --json` -- a bare array whose entries carry `transport.command` and
-  `startup_timeout_sec` -- and a `RegistrationClient` record carries which client a
-  registration is about. **Discovery is four places in order**: `PATH`, `~/.local/bin`, the
-  desktop manifest at `%LOCALAPPDATA%\OpenAI\Codex\chrome-native-hosts-v2.json`, and
-  `%APPDATA%\npm`. ⚠️ **The manifest is not a nicety**: on this machine `command -v codex`
-  finds nothing at all, because the desktop install puts the CLI at
-  `~\.codex\plugins\.plugin-appserver\codex.exe`, and a product that looked only at `PATH`
-  would report no client on a machine that has one. When all four miss, the refusal names all
-  four and the command to run by hand.
-
-  ⚠️ **Two defects the real client found before this shipped, each planted red before its
-  fix.** An uninstall ran the client's remove whatever the ownership read had said, and Codex
-  exits 0 on removing a server that is not there -- so every machine with no Codex entry would
-  have been told *Removed 'browserai' from Codex*; an uninstall over nothing now runs nothing and
-  says so, for both clients. And the first project registration asked Codex about a repository
-  before creating its `.codex`: with `CODEX_HOME` at a missing directory every `codex mcp` verb
-  exits 1 and creates nothing, so the reading came back unreadable and the registration was
-  refused. A repository with no `.codex` now reads as having nothing registered. **A third was
-  found by reading the code once Q288 had measured that Codex expands nothing in a server's
-  command (0 of 48)**: the Codex ownership check borrowed Claude Code's `${VAR}` expansion, so
-  an entry spelled the Claude Code way read as ours and working while Codex could not start it.
-  The check expands nothing now, and such an entry reads as another install's.
-
-  **Measured first-hand at codex-cli 0.155.0-alpha.9.2**, every call with `CODEX_HOME` forced
-  at a scratch directory: the handshake against the published server is **332-342 ms** and
-  `tools/list` lands 7-8 ms later with 79 tools, against a **10 s** default, so nothing about
-  BrowserAI's startup is near Codex's budget. **And `codex mcp add` accepts nothing that
-  persists a startup timeout** -- its whole option set is `-c`, `--env`, `--enable`, `--url`
-  and `--bearer-token-env-var`, and `-c mcp_servers.<id>.startup_timeout_sec=30` fails with
-  *invalid transport* and writes nothing, because the override creates a partial server table
-  the loader rejects. A product that does not write the TOML cannot set that key, and this one
-  does not. Re-verification row 148 carries all of it, keyed on the codex-cli version.
-
-  *Corrected 2026-10-03, by addition, before this version shipped:* `CodexRegistration` and
-  `CodexRegistryView` went to RegisterAI with the rest of BrowserAI's registration code, and what
-  a person gets is unchanged: the same `codex mcp add` at both scopes, found in the same four
-  places, with a refusal that still names them and the command to run by hand. The entry under
-  *Changed* says how.
-
-- ✨ **The configuration window gives each client its own state line and its own controls.**
-  In the maintainer's words, *"I easy I want separate control over system level registration
-  between codex and claude."* The heading carries both clients in a few words each --
-  `Claude Code: registered   Codex: not registered` -- the body gives each its full sentence,
-  and every link names the client it acts on and no other. **Three affordances are new.** The
-  one register link changes its label with the state -- register, repair, or *register again*,
-  which rewrites an entry that is already correct, the way back after editing your own copy of
-  it. **Remove BrowserAI from this project** appears for a client when a registration of ours is
-  found at or above the folder the window was started in, with no folder picker, because the
-  folder is the one it found. And **Register in a project** exists for Codex as well.
-  `BrowserAI.exe --report` writes one entry per client, schema 3.
-
-- ✨ **A session close now prunes Playwright's own browser registry, and never waits for it.**
-  T7, and the reaper it starts is Playwright's own. `playwright-core` writes one JSON descriptor per browser bind
-  into `%LOCALAPPDATA%\ms-playwright\b` -- a directory `PLAYWRIGHT_BROWSERS_PATH` does not move -- and
-  never deletes one for a **persistent** profile, which is every browser this product opens. The only
-  code upstream has that unlinks a dead descriptor is inside `serverRegistry.list()`, whose own call
-  site carries the comment *List early to GC*, and **nothing called it**: 4,059 descriptors stood on
-  the maintainer's machine the morning this landed, growing at about 499 a day from the suite and 3.5
-  a day from the installed product. **Nothing in BrowserAI reads that directory and disk was never
-  the problem** -- what degrades is Playwright's own dashboard, `list` and attach, because reading
-  the registry is quadratic.
-
-  **Four close paths start it and each starts exactly one**: a `browserai_destroy`, an idle close, a
-  client going away or the process shutting down, and the stray sweep's own kill of a crashed
-  session's browser, which is the one close no session is left to reap after. Each fires **only when
-  the session's job held more than the node child**, because a descriptor is written at a browser
-  *bind* and a session that never bound one made nothing dead. **The call is never awaited**, so no
-  caller's answer waits behind it: measured on this machine, one reap over 1,000 dead descriptors
-  takes 10.19 s and over 4,000 takes 309.5 s, and the close answers in about one.
-
-  ⚠️ **What is accepted, in the decision's own words: no throttle and no concurrency arm.** A
-  detached call that never runs, fails or hangs is one nobody hears -- the record naming its pid and
-  creation time at event id 90 is all there is. Eight concurrent callers reaped nothing live, 8 of 8,
-  and past eight the pipe-busy false positive is **unmeasured**: what it would cost is a live
-  browser missing from a list, and never a browser.
-
-  **It is the one-line `serverRegistry.list()` and not the CLI client's `list` command**, which
-  reaches the same reaper but also resolves a workspace from its working directory and then prunes
-  that workspace's dead daemon session configs -- a second registry this product never writes.
-  `PWTEST_SERVER_REGISTRY` is forwarded to every child as a documented test hook and nothing in the
-  product ever sets it; without it a test could not isolate a reap from the developer's own
-  registry. [kb](kb/playwright/tools-and-artifacts.md#a-session-close-now-starts-upstreams-own-reaper----measured-2026-09-24),
-  [evidence](docs/evidence/2026-09-23-server-registry/README.md), re-verification row 154. **This
-  closes the descriptor-registry hazard row on the condition that row set for itself in
-  2026-09-16**, and the two residues it does not close are named there.
-
-- ✅ **The five gate drivers live in the repository, and a test holds what each one declares.**
-  [The two halves of the gate](TESTING.md#continuous-integration) force opposite drive-letter
-  spellings and each declares what it forced, which is what makes a six-run gate cover two
-  spellings instead of running one instrument twice. The scripts that do the forcing lived
-  outside the tree and were lost on 2026-09-23 at 19:26. They are
-  [`build/Invoke-OrdinaryGate.ps1`](build/Invoke-OrdinaryGate.ps1),
-  [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh),
-  [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1),
-  [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) and
-  [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1), which the four share
-  and which reads and never repairs. Each derives the repository root from its own location,
-  so none is machine-specific the way the wiped copies were.
-
-  ⚠️ **This is not the shared wrapper [`AGENTS.md`](AGENTS.md) forbids**, and
-  [`TESTING.md`](TESTING.md) and [`RELEASING.md`](RELEASING.md) say so in place: the
-  prohibition is against one script both shells call, which would erase the difference that
-  makes two shells worth running. These are five scripts, one per shell per level plus the
-  shared read-only snapshot, and the difference is the whole point of each.
-
-  **`SuiteCoverageTests.EveryGateDriverDeclaresTheDriveLetterSpellingItForces` found a defect
-  on its first run** -- the bash ordinary half declared `upper` while forcing lower -- and in
-  the same breath reported one of its own: every driver *explains* in prose whether it is a
-  release half, and a `Contains` read an explanation as a setting. It keys on an assignment
-  now. ⚠️ **`.sh` joined `RepositoryLayout`'s source list and link predicate** in the same
-  change; two new shell scripts would otherwise have been the first files in this tree outside
-  the SPDX rule, the link scan and the fragment count.
-
-- ✅ **All 27 assumed justifications are settled, and the arm that holds the number at zero is green.**
-  Three readers measured or cited every one of them. **19 measured, 8 cited, 0 left
-  unestablishable** -- and the striking part is the direction: **eleven came back against the
-  sentence that carried them.** Concurrent profile writers cause silent LOSS and not
-  corruption; screenshots ARE byte-stable when the page and the binary are; `spawn EFTYPE` is
-  not always `EFTYPE`; the flat MCP namespace does not exist; *Use testing platform server
-  mode* does not exist in Visual Studio 2026; the rename the tool-naming rule rests on
-  understated itself by eight tools; the SDK refuses every protocol version and not only a lower
-  one; `CreateProcessW` on a `.cmd` succeeds; an unhandled exception DOES unwind; `win` is
-  Velopack's fallback and not its first answer; and Google never said what this repository has
-  been quoting it as saying.
-
-  **Two claims were withdrawn and not confirmed, and both because the reason was the
-  denial restated.** *"The 156 denials do not matter, they are protected and SYSTEM
-  processes"* cannot be checked from a non-elevated process at all -- WMI answers *access
-  denied* for 165 of 166 -- so what stands is narrower and sufficient: 157 of the 166 are
-  session 0, and a browser this user launched was in the OPENED set in the same sweep. And
-  *"the price of Azure Artifact Signing"* closes in `kb/not-established.md` against $9.99/month
-  from Microsoft's own page, which refutes in the same sentence the property the figure was
-  carried for.
-
-  ⚠️ **Two of them are worse than they were written.** `PLAYWRIGHT_SKIP_BROWSER_GC=1` guards
-  the `install` call site only, so an `uninstall` in a root BrowserAI owns deletes every
-  unreferenced browser directory **with the variable set** -- 8 of 9 entries, 2,446,370,634 B in
-  1,119 files against the real root. That is a new hazard row. And the crash tripwire's *nothing
-  that is working can reach it* is false twice over: a stalled manifest fetch is bounded by
-  nothing BrowserAI controls, and a network timeout is already logged as a tripwire firing.
-  **The comment is corrected and no code is changed** -- the fix is a decision the maintainer
-  has not taken.
-
-  **Eight measurements became kb entries and eight facts became re-verification rows**, because
-  a measurement in a comment is a measurement nobody re-checks: what bounds a stalled Velopack
-  download and a stalled check, the unwind ordering against `FailFast` and a stack overflow, the
-  `CreateProcessW`-on-`.cmd` interposition, the SDK's version equality check, the GC's two
-  sides, the `EFTYPE`/`UNKNOWN` split, screenshot stability and the client's per-tool schema
-  deferral. One kb entry was re-filed out of the desktop-heap section, where two `src/` comments
-  had been citing a heading it was not under, and three stale version stamps were refreshed.
-
-  `RecordedCountTests.NoClaimInTheTreeIsStillMarkedAssumed` **reports 0**, and `TODO.md`'s count
-  is re-derived from that same scan at every step: 27, 19, 9, 0.
-
-- ✅ **Every assumed justification carries a marker, and a test holds the number at zero.**
-  The maintainer's instruction, 2026-09-23, verbatim: *"tag everything ASSUMED now and then
-  start measuring and researching to get the number to 0. I want the rule to be that this
-  number needs to remain zero. Add a test to check if it is zero."*
-
-  The 2026-08-18 justification sweep examined 598 load-bearing justifications and left **27**
-  that are stated as fact, load-bearing, undated and uncited. They have been a list in
-  [`TODO.md`](TODO.md) since; they are now bracketed `ASSUMED` markers standing beside the claims
-  themselves, each naming what is assumed, why it is load-bearing and what would settle it.
-  The shape is `kb/`'s `[STALE]`: a stamp at the claim and never a separate file, because a
-  claim and its status kept in two places is how one of them goes stale.
-
-  `RecordedCountTests.NoClaimInTheTreeIsStillMarkedAssumed` reads every tracked file and
-  requires the count to be **zero**. ⚠️ **It is red right now and that is the design** -- it was
-  planted red by the twenty-seven themselves, and a red there is the backlog made unignorable,
-  not a regression. The marker comes off three ways only: the claim is **measured**, it is
-  **cited** to a source, or it is **deleted**. Rewriting the sentence so the marker looks
-  unnecessary is none of them.
-
-  **The count `TODO.md` publishes is re-derived from that same scan and is asserted against
-  it**, so a stale figure is a red build. The predicate changed with it -- it used to be one
-  per italicised or named claim in three hand-counted lists, and it is now one per marker --
-  and **the number was 27 before and after**, which is the check that the tagging matched the
-  lists. Three files are exempt because their job is to DISCUSS the marker: `TODO.md`,
-  `AGENTS.md` and the test itself, with both directions asserted so a fourth cannot quietly
-  join them.
-
-  **Where they are:** 10 in the top-level documents, 9 under `src/`, 8 in `kb/`. Nine of the
-  Markdown ones sit inside a table row or a numbered list, so the marker joins the cell rather
-  than following the table -- a marker after the last row is a marker beside nothing.
-
-- ✅ **A review entry now adjudicates every golden snapshot by name, and a test holds the list.**
-  [The marker gate](TESTING.md) has specified two fields since 2026-08-16 and built neither,
-  for a reason that has quietly expired: at a baseline there was nothing to adjudicate, so the
-  fields could only be satisfied by typing a review that did not happen. **Three real bumps
-  have landed since 2026-09-15** -- `@playwright/mcp` twice, `playwright-core` three times,
-  `Velopack` 1.2.0 to 1.2.158 -- and each adjudicated what moved, in prose, in `notes`. The
-  `snapshots` block is **reduced from those notes**, not written to make a suite green: one
-  line per golden snapshot per entry, `unchanged` or `changed` and the adjudication.
-
-  `UpstreamReviewTests.EveryEntryAdjudicatesEveryGoldenSnapshotByName` holds the block's names
-  against `upstream-snapshots/` **in both directions**, so a fifth snapshot forces every entry
-  to answer for it and a deleted one cannot linger as a line nobody re-reads. **Planted red**
-  by deleting one line from one entry and watched naming the entry and the missing file.
-  A snapshot an entry says is NOT IN PLAY is still answered, because *this upstream cannot move
-  that file* is a claim worth reading and worth being wrong about in public.
-
-  ⚠️ **What it cannot do is say whether an adjudication is TRUE.** `unchanged` on a snapshot
-  that moved is a false sentence in a JSON string and no scan reaches it. What is held is that
-  every snapshot was ANSWERED, which is the failure that actually happens: a review that
-  adjudicates what it noticed and is silent about the rest.
-
-  **The `reverification` half stays unbuilt and the `TODO.md` item now says so and nothing
-  else.** Its premise has not expired: an outcome for every manual row is around forty answers
-  per entry, and the reviews that have happened answer a named handful each. **The gap is not
-  the field; it is that a full manual pass has never been run**, and the field is what would
-  make that visible.
-
-- ✅ **Generated code may ship, and a shipping reference to the generator needs its metadata's notice.**
-  The maintainer withdrew his 2026-08-20 rule that no generated code would ever ship, on
-  2026-09-24, in his words: *"q274 c be liberal with the license interpretation. I really
-  believe it is ok."* CsWin32 output generated from Microsoft's Windows metadata and C#/WinRT
-  projections may both ship now, and the licence contradiction `QUESTIONS.md` section 12
-  documents is resolved by his liberal reading of it. The decision of record is the
-  `Generated code` row of [`DECISIONS.md`](DECISIONS.md), where the rule had been moved the day
-  before so that it could be found; nothing under the old heading is deleted.
-
-  **What stays is one obligation, and it has a mechanism.**
-  `ForbiddenDependencyTests.AProjectUnderSrcThatReferencesTheCodeGeneratorShipsTheMetadatasNotice`
-  reads every build file for an `Include="Microsoft.Windows.CsWin32"` and, for one under `src/`,
-  requires `THIRD-PARTY-NOTICES.txt` to name every package the generator reads, as the test
-  project's lock file resolves them. **Planted red** by adding that reference to
-  `src/BrowserAI/BrowserAI.csproj` and watched naming the line and all three metadata packages;
-  the doctored project was reverted before anything built it. The layout oracle's two
-  references are still required, so losing the only independent check of the seven hand-written
-  interop structs is a red build. The C#/WinRT half has no mechanism and needs a reader. It
-  replaces the arm that refused any `src/` reference, which had landed the day before.
-
-  **The toast interop will use `[GeneratedComInterface]` and `[GeneratedComClass]`**, Q273,
-  decided the same day: .NET's own generators, reading this repository's declarations.
-- ✅ **The prose scan reads what the product says, and no longer only what its maintainer wrote.**
-  `HouseRuleTests.NoMaintainedProseCarriesATell` gained a second corpus.
-  `Harness.Commentary.LiteralsOf` is the comment lexer walked the other way, and
-  `IsProductVoice` is the file list it reads: every `.cs` and every project file under `src/`,
-  then `build/` and `.claude/hooks/` by extension, plus both `BannedSymbols.txt`. **Planted red
-  once per shape it reads**, by doctoring a real sentence in each -- a refusal in
-  `SessionErrors`, a `Write-Error` in `New-Release.ps1`, a banner in `invoke-release-gate.sh`,
-  an `<Error Text>` in `Sqlite.targets`, a thrown message in `upstream-snapshots.mjs` and the
-  review hook's here-string. **An eighth plant proved the two corpora do not overlap**: a
-  doctored line in `build/BannedSymbols.txt` was caught by the comment pass instead, because a
-  file with no code in it is all prose to one reader and one whole literal to the other.
-
-  **The `.mjs` shape was the one that stayed green**, until the lexer learned that a script's
-  single quotes and backticks are strings. That is the silent half of a reader like this: one
-  that returns too little stays synchronised, reports a clean tree, and looks exactly like one
-  that found nothing to report.
-
-- 📦 **The resolved set a release was cut from is committed to the repository, one per release.**
-  `build/New-Release.ps1` has emitted a resolved-set manifest beside every archived package
-  since 2026-08-16 -- the three `packages.lock.json` files, the payload's lock and its
-  `package.json`, `payload.json`, `browsers.json`, `tool-verdicts.json`, and a `manifest.json`
-  stating the version, the tag and the package's SHA-256. It writes it into `Releases/archive/`,
-  which is gitignored, so the only copy anybody could reach was a `BrowserAI-<version>-manifest.zip`
-  uploaded beside the installer. **A clone of this repository could not answer what a release was
-  built from**, and a release whose assets were ever trimmed would have taken the answer with it.
-
-  The directory is now committed under `docs/evidence/<date>-release-manifest/` per release, and
-  the zip leaves the upload set. The maintainer's decision, verbatim: *"7 move it"*.
-  `docs/evidence/2026-09-23-release-manifest/` is `1.1.0`'s, added after the release and not
-  before it -- a commit before the tag is a commit the tag would have to ride, and the manifest
-  cannot exist until the pack that produces it has run. `RELEASING.md` item 11 says all of that
-  now, including that `git rev-list -n1 <tag>` must name the same commit afterwards as it did
-  before. It does: `d3aabf1`.
-
-  **Two things about the copy are not the bytes as emitted, and both are recorded with their
-  digests.** The release body inside it is stored `.txt` and was emitted `.md`, because every
-  `.md` in this tree carries a two-line SPDX header that a test enforces, and those two lines
-  would falsify the digest the file exists for. And five files a `dotnet restore` wrote with CRLF
-  are stored with LF, because `.gitattributes` normalises what this repository tracks. **Three of
-  those five come out byte-identical to the committed lock files they were copied from**, which
-  was measured and not assumed.
-
-- ✅ **Every batch under `docs/evidence/` must be a row in that directory's own index.**
-  Nothing builds `docs/evidence/` and nothing in the suite reads it, so a directory that never
-  goes wrong loudly is exactly the kind that needs a scan. The index in its `README.md` is how a
-  kb entry, a hazard row or a review points a reader at a record, and a batch nobody listed is a
-  record nobody will find.
-
-  Planted red before the rule went in, and **it named three batches that were already missing** --
-  `2026-09-21-provisioning-1246`, `2026-09-21-webmcp` and `2026-09-23-release-body`, the oldest
-  of them two days old. Each had its own `README.md` and each was cited from elsewhere in the
-  tree; the one thing missing was the row that makes the collection enumerable. All three rows
-  are in, beside the fourth this batch adds.
-
-  Both of the scan's controls had to be built from halves. Written whole, the synthetic table row
-  and the running-prose counter-example were two real Markdown links in a `.cs` file, and
-  `DocumentationLinkTests` reported both -- which is that scan working, and is why this one now
-  uses the arrangement that file already keeps for its own controls.
-
-- ✅ **A comment that carries the source of the script that wrote it is refused, and eight are fixed.**
-  Five XML doc paragraphs opened with `""" + W + """` -- a triple quote, a plus, a one-letter
-  variable, a plus and a triple quote -- and three comments with a bare `%s`, each where the
-  paragraphs the same commit wrote beside it open with the warning sign; one of the five had
-  replaced a paragraph that opened with it. The compiler takes a doc comment as text, and every
-  scan in the suite passed all eight, because none of them is a phrase or a character this tree
-  refuses. All eight open with the sign again.
-
-  `HouseRuleTests.NoCommentCarriesTheResidueOfTheScriptThatWroteIt` reads the comments of every
-  code file, through the lexer the prose scan uses and never the code, for two shapes: a quote, a
-  plus, a name, a plus and a quote, and a printf placeholder that no letter, digit or percent sign
-  follows, which keeps `%LocalAppData%` out of it. **Watched red against the tree as it stood**, it
-  named all eight at their lines, and one of them was a comment the reader who found the rest had
-  not listed.
-
-- 📝 **The feed and the package stay release assets, and the four alternatives are written down.**
-  The asset trim raised the obvious next question -- if a release carries three files, does it
-  need to carry them at all? -- and it was researched before it was answered and not after.
-  The answer is that every alternative costs something real and buys nothing this product needs.
-
-  **One fact governs all of them: a published release asset cannot be redirected.** There is no
-  GitHub facility that makes `releases/latest/download/releases.win.json` serve from somewhere
-  else, so any move strands every installed build that has not first updated through the old URL.
-  The only runtime lever is `BROWSERAI_UPDATE_FEED`, which a person sets by hand on one machine.
-  A hosting move is a one-way door for the installed base.
-
-  `DECISIONS.md` carries the five directions not taken with the fact each rests on: GitHub Pages
-  for both, where 1 GB of published site is about **18 packages** and 100 GB a month is about
-  **1,860 downloads** of a 55 MB package, against release assets GitHub documents as having no
-  size or bandwidth limit at all; Pages for the feed alone, where Velopack's code accepts an
-  absolute package URL and its documentation requires the package beside the feed, and `vpk pack`
-  regenerates the feed with bare names on every pack; a second repository's releases, which is
-  the only arrangement that keeps 55 MB per release out of a contributor's clone; a pinned
-  pre-release, which would make the base URL tag-specific; and an external host.
-
-  **And one thing the current arrangement gives for free turned out never to have been measured.**
-  The release alias answers `Cache-Control: no-cache`, so a new release is visible immediately;
-  GitHub Pages answers `max-age=600` from an edge cache. Immediate against up to ten minutes.
-  Harmless for correctness, real all the same, and it would have been spent without anybody
-  noticing.
-
-  The three investigations behind this are committed under `docs/evidence/`, with the digest of
-  each as it was written, so no decision here rests on a scratch directory. The 479 MB clone they
-  were read from is **not** committed: the tag and sha that re-create it are cited instead,
-  because a copy of somebody else's repository is not evidence. The third investigation answers a
-  question nobody can act on -- GitHub's automatic *Source code* links cannot be removed, hidden
-  or deleted, by three independent readings ending in GitHub's own reply that they may not be
-  funding it.
-
-- ✨ **The configuration app becomes the update coordinator, started at sign-in or by a blocked server.**
-  Q280 b and Q282 a to Q285 a, each settled in the maintainer's own words on 2026-09-24 and built on
-  2026-09-25 as phase 2. `BrowserAI.exe` settles who coordinates before it does anything else:
-  holding `\\.\pipe\BrowserAI-Coordinator-<the install root's key>` is being the coordinator, and a
-  second start hands over and exits, a person's start asking for the window and granting it the
-  foreground, a hidden start asking it to look again. The install and update hooks register a
-  per-user logon task, `<pack id> sign-in <root key>`, through the scheduler's COM interface, and
-  the uninstall hook removes it; a registration that fails is a warning in the installer's log and
-  never fails the hook. At sign-in the task runs the sign-in step: a staged package and nothing
-  else running from the install is handed to `Update.exe`, silent and with no restart. A server
-  whose update pass stages a package it may not apply wakes the coordinator, with a `recheck` when
-  one serves and otherwise by starting the same task with `--coordinate`, so the coordinator is the
-  task scheduler's child and outlives the client. The coordinator then holds a handle on every
-  process under the install root and applies when the last of them exits, with no timer.
-
-  **What it does not do yet**: there is no toast and no sessions page, so nothing tells a person
-  that an update is waiting, and the hazard index carries that open. Every step was watched red
-  against planted defects first, and one plant that stayed green is what prompted measuring an
-  exited process. The four test classes are
-  `CoordinatorTests`, `SignInTaskTests`, `SignInStepTests` and `CoordinatorWakeTests`. What the
-  scheduler does and costs, measured for it, is
-  [in the kb](kb/windows/processes.md#the-task-scheduler-from-a-nativeaot-process-through-com----measured-2026-09-24):
-  only `IRegisteredTask::Run` passes a value into the action, the stored definition is not the one
-  written, and the interop adds 160,768 bytes to the app and 189,440 to the server.
-
-- ✨ **A session outlives the client that drove it, kept by a session host the coordinator starts.**
-  Q366 b and Q364, the maintainer's words verbatim: *"Q366 b - lets go with a fully build option
-  c. If the server crashes and the coordinator loses the pipe, keep the browser around with the
-  already running activity timeout timer active. This allows restarting vscode, the claude code
-  plugin or soemthing without losing the state. And the timer logic for cleaning up inactive
-  sessions already exsits. Of course if a close or destroy is called explicitly then do clean it
-  up."* and *"Q364 Lets add option c"*. Measured before any code, with stand-ins: a process the
-  Task Scheduler starts kept everything in a kill-on-close job of its own through every way Claude
-  Code 2.1.287 and 2.1.288 and codex-cli 0.155 and 0.160 end a server, 21 runs of 21 over seven
-  exits, and terminating it ended both browsers left in that job as the kill landed.
-
-  **How it works.** The coordinator starts `BrowserAI.Server.exe --host` inside a kill-on-close job
-  only it holds. The server a client starts is a front that copies its stdio, byte for byte, to the
-  host's pipe, `\\.\pipe\BrowserAI-Host-<the install root's key>`, which takes any number of
-  connections and holds no thread for an idle one; a front that finds no host asks the coordinator
-  for one, and when no coordinator runs it starts one through the logon task with `--start-host`.
-  A build that is not installed, or a front with no host after 15 s, half the 30 s both clients give a
-  server to start, serves its client itself as before. **When a client goes**, each session it
-  drove is let go at once when there is nothing to
-  keep, and kept otherwise: a headless one until its idle close, a headed one until its window is
-  closed. The next call or `browserai_resume` that names a kept session takes it over with its pages
-  as they were left; a second client is refused while the first is still connected, with a new
-  sentence in the catalogue; and `browser_close` and `browserai_destroy` clean up at once. The
-  coordinator stays for as long as its host runs, and before an update has the host close every
-  browser with its own `browser_close`, capped at 30 s; the sign-in step applies nothing while the
-  host runs.
-
-  **Every bound is derived and pinned**, after the maintainer's words of the same day about the idle
-  close's cap: *"I need a motivation. Also, I do not like magic numbers."* The front waits for a host
-  half of the 30 s both clients give a server to start, measured that day for codex-cli 0.155 and
-  0.160 and read in Claude Code 2.1.288's binary; the host's close before an update is the idle close's own
-  cap, and the coordinator waits twice that for the host to end; the host lingers a minute after its
-  last session and connection, as the coordinator does after its last tab, and looks every quarter
-  of that. A client that re-dials the host and calls before it lists is refused once, as before,
-  in words that no longer claim the host started after the client's list was read.
-
-  **The arms**: `SessionHostTests` in process over a fake child, `SessionHostAccessTests` for the
-  front's search with a scheduler that starts nothing, `SessionHostCoordinatorTests` with a scripted
-  host and windowless stand-ins in a real job, `SessionHostProcessTests` with the published host and
-  front against Chromium, the front ended the way Codex ends a server, and `SessionHostBoundsTests`,
-  which holds each bound to what it is derived from. Five open hazard rows name what it costs: one
-  host for every session, the coordinator's end killing every kept browser, a headed session kept
-  until its window closes, an update closing kept browsers, and a Codex thread's first turn missing
-  BrowserAI's tools behind a host that starts cold, since `codex exec` sends that turn about a second
-  after a server starts.
-  [Design](docs/design/coordinator-owned-browsers/README.md),
-  [kb](kb/windows/processes.md#a-process-the-task-scheduler-starts-keeps-its-jobs-processes-through-every-clients-exit----measured-2026-10-03),
-  [evidence](docs/evidence/2026-10-03-coordinator-survival/README.md).
+  A person closing the window, the idle close, a close call with the reason it gave, a crash, an
+  update or a stop: the refusal that sends an agent to `browserai_resume`, the resume's own answer
+  and `browserai_catch_up` all name the last close. A person closing a visible window now closes
+  the session, where the next call used to start a new browser on its own.
+
+- ✨ **A resumed session gets its tabs back.**
+  Every launch asks Chromium or Firefox to restore its last session: tabs, history,
+  `sessionStorage`, typed text, scroll position and session cookies came back in 24 of 24
+  measured runs, and Chromium also restores after its browser was killed. References from
+  snapshots taken before the close do not come back, so the resume's answer says to take a new
+  snapshot first.
+
+- ✨ **A resume that changes a session's settings is held back once, then switches the browser itself.**
+  The answer names each setting that differs with its last and its new value. The same call sent
+  again goes through: a live browser is closed cleanly and opened with the new settings, keeping
+  logins, cookies, storage, tabs and history. A resume that changes nothing on a live session says
+  the session is already live. An answer that opens a visible window ends by saying that resuming
+  with `headed: false` afterwards keeps all of that too.
+
+- ✨ **After an update, a client still holding the old tool list is told so once, with what to do.**
+  A client that starts the new BrowserAI by itself sends its next call without asking for the
+  tool list again, so a tool that was renamed or removed would fail as though the agent were
+  wrong. The first such call is refused once, naming the running version and what that client
+  needs, and the next goes through. `browserai_resume` and `browserai_catch_up` also say when
+  another BrowserAI build last wrote the session.
+
+- ✨ **`browserai_catch_up` names every file in a session that can hold something sensitive.**
+  The profile, HTTP Archives, saved logins, traces, transcripts, what the network tools saved,
+  logs, page snapshots, screenshots, PDFs, videos, downloads, files saved by name, the browser's
+  temporary files and BrowserAI's own record, each kind with what it holds. It takes a `why` now,
+  like the other tools that name a session.
+
+- ✨ **BrowserAI registers itself with Codex as well as Claude Code.**
+  The installer registers it with each client for all your projects and the uninstaller removes it
+  again, through [RegisterAI](https://github.com/SixFive7/RegisterAI), a small program the
+  installer carries that reads every entry back after writing it. The dashboard does the same one
+  client at a time, and in a project. A Codex project entry names `BrowserAI.exe`, and the
+  installer puts BrowserAI's own folder on your user PATH so Codex finds it: restart Codex after
+  installing. Registering in a project checks whose entry is already there, an entry another
+  install wrote is left alone, and an update leaves an entry you edited by hand as it is.
+
+- ✨ **A broken install is told to the person, in a toast and on every page of the dashboard.**
+  A session whose browser server lists different tools from the ones the build carries is refused
+  as a broken install, and the agent is told to stop and say that BrowserAI needs reinstalling.
+  The person now sees the same, with what is wrong and that the sessions are kept, until a later
+  session's browser server matches again.
+
+- ✨ **The dashboard and the toast name each conversation the way its client shows it.**
+  A Claude Code conversation is called what its VS Code tab says, a Codex one by its thread's name
+  or its first message, and the tabs of one VS Code window are listed together. The names are read
+  from the clients' own files when a page or a toast is drawn, and nothing writes a title, a
+  prompt or a session id to a log.
+  [The decision](DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10).
+
+- 📝 **The README says what to do when an update leaves no BrowserAI.**
+  Velopack 1.2.161 can delete the old version and start nothing when another program, usually
+  antivirus or backup software, holds a file of the new one open during the swap. Running the
+  installer again puts the program back and keeps your data. The report and a fix are upstream as
+  velopack/velopack#1086 and #1087.
+
+- 📝 **Why BrowserAI does not expose Playwright's own dashboard is written down.**
+  Opening that dashboard connects to every browser it lists and runs script in its pages before
+  anybody clicks. The risks that decided it are in
+  [`DECISIONS.md`](DECISIONS.md#processes-browsers-and-session-modes).
+
+- ✅ **A run of the suite fails when it shows a window, takes the focus or starts Firefox in safe mode.**
+  Each such run names what it saw. The real-installer arms install a pack built from the tree
+  before every gate run, under a lock the suite takes itself.
+
+- ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
+  [`kb/numbers.md`](kb/numbers.md) gives each number its value, what it governs, where it came
+  from and how to check it again.
+
+- ✅ **The wording scans read the product's own strings as well as its comments.**
+  The rules of [`AGENTS.md`](AGENTS.md) hold the server instructions, every tool and parameter
+  description, every refusal and log message, and what the release scripts say when they stop.
+  They also refuse the working names a build gives its own parts.
 
 ### Changed
 
-- 🔒 **A session browser's temporary files stay inside its session.**
-  4.1 a, the maintainer's words verbatim: *"4.1 a - but why hidden? Keep it visible. It is a
-  legitimate parts of the session."* The browser and Playwright keep their temporary files in a
-  visible `temp` folder of the session now, where they were in a shared folder of the running
-  BrowserAI outside every session since 2026-10-03, and the privacy census of 2026-10-08 found a
-  picture a page served there. `browserai_catch_up` names the folder with what it holds, and
-  `browserai_destroy` removes it with the session; both tools' descriptions say so.
-  `SessionCloseTests` and `CatchUpTests` hold it, against real browsers of both families too,
-  each watched red first.
-
-- ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.**
-  13 a, from the maintainer's answers of 2026-10-10. sqlite.org released 3.54.0 on 2026-10-09, and the
-  amalgamation was downloaded into scratch, checked against the SHA3-256 sqlite.org publishes before
-  it was unzipped, and vendored in place of 3.53.4. `drift-check.json` records the new pin, archive
-  and file hashes, and `SqliteTests` read the linked version off the published binary.
-
-- ✅ **The hundred-relay arm's shared-log checks read each writer's pid and creation time.**
-  Planted red on 2026-10-10 with the background's records kept out of the shared log, the arm
-  passed: its every-process-wrote check, its record count and its torn-record scope matched the
-  pid alone over thirty days of every BrowserAI's log, and the background was pid 70276, which a
-  BrowserAI of 2026-09-17 had worn for 36 records still in those files. They now read the pair each
-  record's header carries, which `ProcessLogRecords` has matched on since 2026-08-29; the synthetic
-  arm beside it holds a recycled pid as a stranger's at either end of a tear, red against a scope cut
-  back to the pid; and the same plant turned the arm red, naming the background.
-
-- 🔧 **A running BrowserAI takes its data root and update source from its arguments, never a variable.**
-  Step 5 of the one-binary build, which the maintainer approved on 2026-10-08 with the rest of it. The
-  installer's `BROWSERAI_ROOT` and `BROWSERAI_UPDATE_FEED` are read once, by the install hook, and
-  written into the scheduled task and the client registrations as `--data-root` and `--update-source`.
-  An update and an uninstall run their hooks with neither variable, so they read what the install
-  wrote into its task, and a folder chosen for updates at install time (H2 a) stays the source after
-  the first update; a Start Menu start finds its install's data root the same way. A variable set
-  later in a user's environment moves nothing. `HouseRuleTests.NoRunningBrowserAiReadsABrowserAiVariable`
-  and `InstallerSettingsTests` hold it, each watched red first.
-
-- 💥 **One BrowserAI runs in the background, and a client's `--mcp` start passes its calls to it.**
-  S a and p a, the maintainer's words verbatim: *"s a"* and *"p a"*. The Task Scheduler starts
-  `BrowserAI.exe --background` at sign-in, and nothing else starts it: a Start Menu click asks the
-  task to, and so does the start Velopack makes after an update. That one process holds every
-  session, the dashboard and the update, and ends at sign-out, at an uninstall or for an update,
-  never because it is idle. A client's `--mcp` start is a relay: it answers the handshake, the
-  tool list and `ping` itself, passes every other message to the background byte for byte, and
-  holds a call for up to 150 s while no background is there. A background that ended without a
-  clean exit is recorded as a crash, in his words *"R I like option 1 and the call response"*:
-  every call is then answered at once with when it happened and which log to read, and only a
-  Start Menu start clears it. With no crash recorded, a call held for 150 s is answered with why
-  there is no background, read from the task, which BrowserAI never changes (D12 b). A build that
-  is not installed starts no background (D11 a), and its relay says so at once, with the command
-  that starts one. The coordinator, the session host's own process, the per-server pipes and each
-  server's own update check are gone: an update waits for the sessions' and the relays' own
-  countdowns, asks every relay before it installs, installs with no window and starts BrowserAI
-  again afterwards. `RelayTests`, `BackgroundUpdatesTests`, `AfterUpdateTests` and
-  `UpdateSourceTests` hold it, each arm watched red against a defect planted for it;
-  `BackgroundProcessTests` drives the published background and its relays against a real
-  Chromium, and was not watched red. `RealInstallerTests` installs the suite's own pack with its
-  real `Setup.exe` and runs it through the real Task Scheduler (D14 b): a Start Menu start
-  whose background is the scheduler's process, serves the dashboard and keeps a session across
-  a killed relay; a relay started during an update; a deleted task, named after the hold and
-  registered again by a Start Menu start; a disabled one, left disabled; and a data root
-  BrowserAI refuses, whose start is recorded as a refusal of its own, which every call is told at
-  once with the root, why and how to put it right. The install hook now keeps
-  the task's definition beside the install even when the Task Scheduler refused the task,
-  which is the case a Start Menu start registers it from. A relay started before its
-  background now reaches it once it starts: the relay's look timer, which fires a little early
-  more often than not, stopped looking at its first early fire. Each was watched red against a
-  defect planted for it.
-
-- 🔧 **The tool list comes from the binary, and no Playwright starts until a session opens.**
-  The maintainer's words of 2026-10-04 verbatim: *"I'd argue that the relay always answers the
-  tool list from the binary. I see no reason why it would ever defer to Playwright, as the
-  Playwright version is bound to that binary version is it not?"* Every server, and the session
-  host, started a Playwright of its own before it answered its handshake, for one purpose: to be
-  asked `tools/list`. The snapshot the build already takes from the payload's own Playwright,
-  `upstream-snapshots/tools-list.json`, is now compiled into the server with `tool-verdicts.json`
-  beside it, and `tools/list` is answered from it through the same rewrite, so a server answers
-  at once and starts a Playwright only for a session. Each session's own Playwright is asked for
-  its list right after its handshake, before any page exists, and held to the compiled list byte
-  for byte; a difference refuses the session as a broken install and names the first tool that
-  differs. Measured first: the payload's Playwright answers the same 45,612 bytes as the snapshot
-  under five session configurations, Chromium and Firefox, hidden and headed. The schema rule
-  reads: schemas come from the child's `tools/list` at build time, from the same pinned payload,
-  and are checked against the live child at run time. `BuiltInToolListTests` holds the published
-  server answering with no Playwright server running, a session opening in each family, and
-  the binary carrying the snapshot; `ErrorCatalogueTests` holds the refusal. Both were watched red
-  first. The catalogue's census is 41.
-
-- 💥 **`browserai_init` and `browserai_resume` state four settings on every call.**
-  D2 b and F2, the maintainer's words verbatim: *"What if we make all the init and resume
-  parameters mandetory and then go withpattern b."* They are `headed`, `transcript`,
-  `captureNetwork` and `idleMinutes`, and a call that leaves any of them out is
-  refused, naming every one it left out, and nothing is created or changed. Each is something a
-  person notices: a window on their screen, what is written to disk in plain text, and how long the
-  browser stays open and holds BrowserAI's automatic updates back. `viewport`, `locale`,
-  `timezone`, `ignoreHTTPSErrors` and `debug` keep their defaults when a call leaves them out:
-  1920x1080, this machine's locale and time zone, and false.
-- 🔧 **A resume that changes a session's settings is held back once, then switches the browser itself.**
-  F2 d and F1 a, the maintainer's words verbatim: *"explain in the hold text what parameter is
-  different, what the previous values was and what the newly requested value was."* Every opening
-  now records the settings its run uses in `browserai.data`, and a resume is compared with the last
-  run on every setting, one the call left out counting as its default. A difference is answered once
-  with *"Held back once, and the call is valid:"*, each setting with both values, and the
-  two ways on: the same call again, or the last run's settings written as a call. The same call
-  sent again on the same connection goes through, and on a session whose browser is up it closes
-  that browser cleanly and opens it with the new settings, keeping its logins, cookies, storage,
-  tabs and history, where until now it was refused and the caller told to close the session first.
-  At `browserai_init` only an idle time longer than the default is held back, with a warning that
-  BrowserAI's updates wait while the browser is open. `SettingsHoldBackTests` holds each branch,
-  planted red first.
-- 💥 **BrowserAI is one program again, `BrowserAI.exe`, and a client starts it with `--mcp`.**
-  D7 a, the maintainer's words verbatim: *"d7 a"*. Release 1.1.0 carried two programs:
-  `BrowserAI.Server.exe`, which a client started, and `BrowserAI.exe`, which a person started and
-  which ran the installer's hooks. They are one windowless file now, and its argument says which
-  job a start does: `--mcp` for a client, no argument for a person, the hooks as Velopack names
-  them. The install and update hooks register `current\BrowserAI.exe --mcp` with Claude Code and
-  Codex, and the first update replaces an entry that names the old file. A project's `.mcp.json`
-  or `.codex\config.toml` that names `BrowserAI.Server.exe` stops working once and has to be
-  registered again from BrowserAI's page, and so does a client that kept the old command across
-  the update. A start with `--mcp` and no pipe on standard input exits at once and says why.
-
-- 🔧 **A person closing a visible session's window closes the session, as `browser_close` does.**
-  Also 8 b. Until now nothing noticed: the next call met `@playwright/mcp` starting a new browser
-  on its own, and `browserai_resume` answered that the session was already live, measured
-  2026-10-04 at `chromium-1247` and `firefox-1553`. BrowserAI now waits on the browser's main
-  process and reads its exit code, so the session is marked closed when its browser ends with
-  nobody asking, and every later call is refused until `browserai_resume`, with *"A person closed
-  this session's browser window at ..."* and what came back when that was measured: Chromium's
-  tabs with their typed text and without the session cookies or `sessionStorage`, and Firefox's
-  first tab only, 4 of 4 each. A kill or a crash, a browser that ends after its last tab, and a
-  headless browser that exits are told apart by the exit code. A kept session whose window a
-  person closes is recorded the same way and let go, as the session host did before.
-- 🔧 **A hidden Chromium session sends the user agent a visible one sends.**
-  6 b, the maintainer's words verbatim: *"6 b"*. A hidden Chromium sent `HeadlessChrome/155.0.0.0`
-  in its `User-Agent` and `navigator.userAgent`, where a visible one sends `Chrome/155.0.0.0`.
-  BrowserAI now asks the provisioned `chrome.exe` once per build for the user agent it sends
-  hidden, writes `Chrome/` for `HeadlessChrome/`, keeps the answer beside the browser, and gives
-  it to every hidden launch through Chromium's own `--user-agent` switch, so no version is written
-  anywhere in the tree. Pages, workers, a service worker's script fetch and a restored tab's first
-  request all carry it, measured before and after through the published server. **What it costs**:
-  under the switch, Chromium answers the high-entropy client hints with empty values where a
-  visible session fills them, and a session opened while Chromium is still downloading keeps the
-  browser's own user agent until its next launch. Both are open rows in `HAZARDS.md`.
-
-- 🔧 **Claude Code and Codex registrations run through RegisterAI, a program the installer carries.**
-  Q332, the maintainer's words verbatim: *"Go for only the small command line program."* BrowserAI
-  no longer starts `claude.exe` or `codex.exe` itself. The install, update and uninstall hooks, the
-  window's clicks and the state the window and `--report` show all run
-  `payload\registerai\RegisterAI.exe`: one run for every client's user scope and one per project,
-  each answered with one JSON document. RegisterAI runs the same client commands at the same
-  scopes, reads each entry before it writes and reads it back after, and refuses an entry this
-  install did not write, given this install's root. BrowserAI turns each answer into the sentence
-  and the `mcp-registration.json` entry it always wrote, with the line to run by hand on every
-  refusal and failure. A RegisterAI that is missing, hangs or writes something else fails the
-  registration of every client and never the install, and the window then shows each client's
-  state as unknown and offers nothing.
-
-  **One change a person can see**, Q347 a: an install or an update over an entry of ours that
-  already names this install's server leaves it exactly as it is, arguments added by hand
-  included, where it used to write it again. The window's *Register again* writes it back. What
-  stays BrowserAI's is what Q348 and RegisterAI's plan keep: the installer's PATH edit,
-  `RegistrationTarget`, the hooks, `mcp-registration.json` and every sentence. Its own client
-  search, both clients' readers and the client-by-client registrar are deleted, after a two-shell
-  gate with the old code and the new side by side.
-
-  **The build takes the newest release and checks it** (Q349 a): `build/Get-RegisterAi.ps1`
-  reads the newest release of [RegisterAI](https://github.com/SixFive7/RegisterAI), public since
-  2026-10-04 (Q379 b, the maintainer's words verbatim: *"Q379 b"*), and downloads `RegisterAI.exe`
-  and `SHA256SUMS` from it with no sign-in and no `gh`, so a clone builds its payload with no
-  GitHub account. It refuses the file unless it matches its line, requires `--version` to print
-  the release's tag, and records the release in `payload.json` and in the committed
-  `build/payload/registerai.json`. `-RegisterAiFrom` takes the same two files from a folder, for
-  an offline build or a RegisterAI build not yet released, and checks them against the same list.
-  RegisterAI is a sixth row in `drift-check.json` and `upstream-review.json` (Q350 a), the release
-  manifest states it under `resolved.registerai` and refuses a payload without it, and
-  `THIRD-PARTY-NOTICES.txt` names its licence.
-  `RegisterAiTests.ThePayloadsRegisterAiWritesTheSchemaThisReaderReads` runs the payload's own
-  RegisterAI and fails when it writes a schema other than 1. Watched red: 14 arms against stubs
-  that never ran the program and a script that was not there, 8 of them new and 6 re-pointed; the
-  arm for an image with no folder against the fallback the gate found; the manifest's two arms
-  against the script without the block; the review row against a test that could not resolve it;
-  and the notices' two arms against a publish and a package without the program. The schema,
-  stamp, published-slice, real-client and agreement arms were watched red only after the gate,
-  each against a plant, and the README says which.
-  `RegisterAiPayloadTests.ThePayloadTakesTheNewestRegisterAiReleaseWithNoGitHubSignIn` runs the
-  script with `gh` signed in to nothing and was watched red against the script that used `gh`.
-
-- ⬆️ **The payload carries RegisterAI 0.3.0, and only ever a stable RegisterAI release.**
-  The maintainer, 2026-10-04, verbatim: *"Whenever there needs changing. Create a new stable
-  RegisterAI release and reference that."* Every change BrowserAI needs from RegisterAI now
-  arrives as a new stable release of it, and BrowserAI references that release: the payload
-  build takes it, and `build/payload/registerai.json`, `upstream-review.json` and
-  `drift-check.json` name it. RegisterAI 0.3.0, released 2026-10-04, works as 0.2.0 did, with
-  the same help, `describe`, licence and usage errors apart from the version; what changed is
-  its README, its release notes, which take this repository's markup, and its documents, which
-  no longer name BrowserAI. Its `RegisterAI.exe` is 2,765,824 bytes with SHA-256
-  `4200388652296856edb94c81f25c92a4cf8502ac202803248b754bdb5400431d`, taken from the release
-  with no sign-in and checked against its `SHA256SUMS`.
-  `RegisterAiPayloadTests.TheCommittedStampNamesAStableRegisterAiRelease` refuses a committed
-  stamp written from a folder with `-RegisterAiFrom`, a pre-release, or a tag or release page
-  that is not the version's own, so a build taken to try something out cannot be committed.
-  Watched red against the stamp `build/Get-RegisterAi.ps1 -From` wrote over RegisterAI's
-  release folder, and `UpstreamReviewTests.EveryReviewedVersionEqualsTheVersionTheBuildResolved`
-  read red at reviewed 0.2.0 and resolved 0.3.0 until the review row moved. The decision is in
-  `DECISIONS.md`, beside the other RegisterAI rows.
-
-- 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
-  Q322 a, the maintainer's words verbatim: *"Q322 a"*. The generated config writes
-  `snapshot.boxes: false`, upstream's own default, where it wrote `true` for every session.
-  `browser_snapshot` returns its snapshot inline, so every snapshot paid for the boxes: over nine
-  pages they cost 175,611 tokens on against 105,804 off, measured 2026-09-25 at `@playwright/mcp`
-  0.0.82 and Chrome for Testing 154.0.8037.0, with `o200k_base` as a proxy tokenizer.
-  `browser_snapshot`'s per-call `boxes` parameter stays, and the server instructions gained one
-  sentence, `Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.` Two
-  clauses that restated a rule beside them were cut from the instructions to pay for it, and
-  nothing that tells a model what to do moved: 2,037 characters of the 2,048 the client reads.
-  The README, ARCHITECTURE, the kb row and the remark in `BrowserConfiguration` that called the
-  cost deferred are corrected, each with what it said before. Watched red first: the config arm
-  read `true` for all four sessions it builds, and the instructions arm named the phrases it
-  could not find.
-
-  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "the server instructions
-  gained one sentence, `Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy
-  tool.`").*** The sentence is a BrowserAI note on the three coordinate tools now, with the
-  instructions rewrite below.
-
-- 🔧 **A server that starts during an update lists its real tools, and serves once the updater has gone.**
-  Q296 c, the maintainer's words verbatim: *"Q296 c"*. Until now such a server answered
-  `tools/list` with a JSON-RPC error carrying the update sentence, started no child, and ended
-  its conversation when the updater went. Measured 2026-09-25 at Claude Code 2.1.282, 3 of 3:
-  that error left Claude Code connected with zero BrowserAI tools for the whole session, and
-  neither client ever showed the model the sentence. Now the server takes the ordinary path: it
-  starts its child and answers `tools/list` from it, refuses every tool call while
-  `<install root>\Update.exe` runs, and when the updater goes, says `serving` on its pipe, serves
-  the same calls in the same process, and starts the stray sweep and the update check it held
-  back. The refusal is a new catalogue row, `UpdateIsStillInstalling`, because its server is the
-  one likely to answer the next call: it tells the model to wait and call again, and what to do if
-  the update ends this server after all, which it does to one started before the swap. The
-  catalogue's census is 36. `UpdateInProgressServer` is deleted. **The cost the decision took**:
-  the child now starts during an apply, and an apply's kill pass ends it with its server, as it
-  ended eight servers and their eight `node.exe` children in the 2026-09-24 measurement. Watched
-  red first against a binary published without the change: the tool list came back as `-32603`
-  carrying the update sentence.
-
-- 🔧 **A server's pipe serves its connections in parallel, so a caller that never finishes holds nobody up.**
-  Q297 b, the maintainer's words verbatim: *"Q297 b"*. One thread served one instance, reading
-  each request to its newline and each answer until the client closed, so a caller that connected
-  and stopped there held the pipe, and every other caller met a busy pipe until its own bound ran
-  out. The listener now hands each connected instance to a thread of its own and listens on a
-  fresh one, made before the hand-over so the name never stands without an instance of ours; up to
-  255 at once, Windows' own ceiling. `FILE_FLAG_FIRST_PIPE_INSTANCE` still refuses a second
-  server on the name, now with `0x80070005` where one instance per name answered `0x800700E7`.
-  The coordinator's pipe was not part of the decision and keeps one instance. Watched red first:
-  with one caller silent, a describe from another waited out the suite's whole five-minute hang
-  detector and came back with no answer. The hazard row for it closes.
-
-  ⚠️ ***Corrected 2026-10-03, before any release carried it (previously "up to 255 at once,
-  Windows' own ceiling" and "The coordinator's pipe was not part of the decision and keeps one
-  instance").*** 255 is `PIPE_UNLIMITED_INSTANCES`, which sets no ceiling, measured to 2,000
-  callers held at once; and the coordinator's pipe serves in parallel too since Q368 a. See the
-  entry for it below.
-
-- ⬆️ **The payload rolled to `@playwright/mcp` 0.0.83, Chromium moved to 155, and Velopack to 1.2.161.**
-  `playwright-core` and `playwright` resolve to `1.64.0-alpha-1790635538000`, the version 0.0.83
-  pins for both. Chromium **1246 -> 1247** with `browserVersion` **154.0.8037.0 -> 155.0.8059.12**,
-  firefox **1549 -> 1553** at the same 156.0, webkit 2365 -> 2368, and `ffmpeg` 1011 and `winldd`
-  1007 unmoved. Upstream added, removed and renamed no tool: `browser_find` can write its results
-  to a file through a new `filename`, and `browser_wait_for` says so when it caps a wait at 30 s.
-
-  EVERY MACHINE RE-PROVISIONS CHROMIUM, AND THIS TIME IT IS A NEW ARCHIVE. The first-run download
-  was re-measured at **208.8 MB** (208,824,056 B, previously 207.3 MB) and 440.61 MiB on disk;
-  Firefox is 130.9 MB as before. `BrowserProvisioner.FirstRunDownloadBytes` quotes the new figure to
-  every caller refused while provisioning runs, and its anchor test was watched red against the old
-  one first.
-
-  Upstream fixes that reach a session with nothing to configure: a dialog that opens while a page
-  loads is reported to the caller and no longer costs the navigation timeout; closing a browser
-  while a download runs no longer crashes the child; a page's WebMCP tools are read afresh on every
-  call, which is the path `browserai_page_tool` takes, and they work with Chromium 155;
-  `browser_run_code_unsafe` can use `setTimeout`, `URL`, `fetch` and other ordinary globals; and
-  Chromium makes two fewer background requests to Google.
-
-  Velopack 1.2.161 changes one Rust file, the operating-system architecture check on a Windows
-  without `IsWow64Process2`; nothing on the update, apply or downgrade paths moved, and no file of
-  the C# library changed. ⚠️ **Packing now needs `vpk` 1.2.161**: `New-Release.ps1` refuses a tool
-  that does not match the library, and the global tool on the build machine is still 1.2.158.
-  [Review](upstream-review.json), [evidence](docs/evidence/2026-10-03-provisioning-1247/README.md).
-
-- 🔧 **`mcp-registration.json` records one entry per client, and no single outcome for both.**
-  Schema 2. The per-client fields -- `outcome`, `isWhatWasAskedFor`, `client`, `command` and
-  `detail` -- moved into a `clients` array keyed `claude-code` and `codex`, and the top level
-  keeps only what is true of the pass as a whole: when it ran, which intent, which version, and
-  whether everything asked for happened. **There is no top-level `outcome` any more**, because
-  one word for two clients would have to decide which of two different results counts more.
-  Nothing in the product reads the file back; a script that did reads a schema number that says
-  it moved.
-
-- ✅ **The Codex half is held against the real Codex, including what an update needs from it.**
-  Four arms mirror the Claude Code ones under a scratch `CODEX_HOME`: its dialect (a duplicate
-  add and a remove of nothing both exit 0), the whole user-scope round trip through the product's
-  own registrar, a project registration written into the repository and nowhere else, and how the
-  CLI is found. **One arm is the update effect the maintainer asked for** -- *"I want the same
-  update effects to be tested on coded"* -- a BrowserAI registered in Codex the product's way,
-  started by a real `codex app-server`, serving one call, and then gone when the app-server goes,
-  leaving a live marker that is not held, so it does not hold an update. ⚠️ **It was briefed as
-  "exits on stdin EOF" and measurement said otherwise**, 3/3: Codex TERMINATES the server about
-  100 ms after its own stdin EOF, with no end-of-stream line in the server's log. And Codex hands a
-  stdio server an allowlist of exactly 20 environment variables and never `BROWSERAI_ROOT`, which
-  is why that arm passes the variable through Codex's own `--env`
-  ([kb](kb/mcp/protocol.md#what-codex-hands-a-stdio-server-and-how-it-ends-one----measured-2026-09-24),
-  re-verification row 155). The clearance snapshot gained a sixth reading,
-  `~\.codex\config.toml` by length and SHA-256, and HAZARDS gained the row the frozen-tool-list
-  row had named as owed: a Codex thread whose server has gone loses MCP for the rest of that
-  thread.
-
-- ✅ **A published binary built at another commit is refused by name.** The version is derived
-  from the git height, so a commit that touches no input moves it and leaves every file time
-  where it was -- which is how a gate once drove a server one version behind the tree and went
-  red over a refusal sentence that was right. The freshness reading now carries the version
-  baked into the binary and the one the tree derives, a disagreement is `STALE` with both named,
-  and the reconnect arm composes the refusal it expects from the version the server itself
-  announced. It fired on its first live run: *built as 1.1.1-alpha.0.77 and this tree derives
-  1.1.1-alpha.0.78*.
-
-- ✅ **The suite starts both real clients against the published binary, and the rig lists
-  first.** Two arms in `ClientReconnectTests` drive the real Claude Code and
-  the real Codex CLI, each skipping loudly through its own `SuiteCapability` when the binary is
-  absent and failing under `BROWSERAI_RELEASE_RUN=1` -- which is the right way round, because
-  BrowserAI registers itself with both clients and a release that has never seen one connect is
-  one whose founding promise is untested. **Both point every client override at a scratch
-  directory and every server's app root at `ScratchRoot.ProfileScratch`**, the last of those
-  because the stray sweep is machine-wide by design and would otherwise hunt the developer's own
-  browsers. The Claude Code arm was **planted red** by forcing the connection flag set at the
-  handshake: it went red on the notification count, against the product and not against the rig.
-
-  ⚠️ **The defect that made the arm pass an hour of not working is worth the sentence.**
-  The suite may itself be running underneath one of these clients, and the variables that say so
-  are inherited by every child; a nested client that reads them takes a different path entirely --
-  it connected to BrowserAI, asked the API stub nothing but `HEAD /api/hello`, and exited. Nine
-  variables are removed from the child's environment before anything is added, and both children's
-  streams are now drained **into files** so a run that did nothing can say why.
-
-  **And the in-process rig asks for the tool list before its first call**, because a real client
-  does. Without it every arm in that layer would meet Q261's refusal on the harness's own
-  `browserai_init`. The arms that assert the refusal pass `listsBeforeCalling: false`, which is
-  the whole condition.
-
-- 📝 **No trace of AI is a repository directive, and two scans keep the half a machine can see.**
-  The maintainer's instruction, 2026-09-23, verbatim: *"Ensure there is no trace of AI both in
-  wording and character use. Both as a directive and as part of the sweep."* It is a rule in
-  [`AGENTS.md`](AGENTS.md) with both halves named and with the second one honest about needing
-  a reader.
-
-  **The character half: 12,518 characters in two passes.** Em dash to `--`, en dash to `-`,
-  ellipsis to three full stops, curly quotes to straight ones, and the single non-breaking
-  space in the tree left alone because it was a positive control. **398 heading anchors moved
-  and 223 links followed them**, computed by porting `MarkdownAnchor`'s own slug rule and not
-  by pattern, because that rule DROPS an em dash and KEEPS a hyphen. The scan that keeps it
-  reads five classes over every non-binary tracked file, excluding exactly the verbatim
-  captures.
-
-  **The wording half: 72 edits from four readers, then 4,880 more from five.** The comparison
-  frame, the stock lead-ins, the decorative stars in front of already-bold sentences, and 31
-  stock phrases. `HouseRuleTests.NoMaintainedProseCarriesATell` refuses them in commentary and
-  in the product's own strings, reading through a lexer and never a pattern -- ⚠️ **a URL in a
-  string literal starts with two slashes, and reading those as comments reported 114 offences
-  where the real number was 2.** `ChangelogTests.NoEntrysDetailOpensByRestatingItsHeadline`
-  refuses a detail that opens by repeating its own headline, on a budget of four shared words;
-  103 entries were rewritten to clear it. Both were planted red and watched.
-
-  ⚠️ **Sealed records were edited for this and nothing else, under a grant in the maintainer's
-  own words**: *"When it comes to no semantic differences and only removing traces of AI (both
-  in wording and character use) then I hereby grant and instruct you the right and instruction
-  to edit sealed documents."* Eleven seals were re-recorded in the commit that moved them, and
-  the grant is quoted where the seal rule lives. **No fact, number, date, name, claim or
-  maintainer-verbatim line moved.**
-
-  ⚠️ **Three things the sweep broke, all caught by mechanisms and all worth keeping.** An XML
-  comment may not contain `--`, so a `.csproj` stopped loading and MSBuild refused the project
-  -- a red no test reaches, because nothing compiles. Two `ChangelogTests` controls went quiet
-  when a literal ellipsis inside them became three full stops, so an `IsNotEmpty` half started
-  asserting nothing. And the scan went red on its own file twice, because **the write path
-  turns a `\uXXXX` escape into the real character**, so a test about a character cannot spell
-  it that way; it is built from code points now.
-
-- 📝 **The first documents a reader meets name the standing release, and the tagline names the features.**
-  [`README.md`](README.md) and [`AGENTS.md`](AGENTS.md) said *tagged `v1.0.0` and published* on
-  the day `1.1.0` was published, and `1.1.0` appeared nowhere in the README at all. Both say
-  `v1.1.0` now; the *no install is known* half is untouched, because nothing measured it.
-
-  **And the tagline is the maintainer's choice, approved verbatim** -- *"Look good use that."*
-  It names automatic updates and session management instead of the runtime pin, on his
-  reasoning: *"The pinning feature is a minor feature that can easily be misunderstood."* That
-  closed a two-sense use of one word across the three documents a reader meets first, where
-  the README called the runtime **pinned** while the charter heads a section *The pin is an
-  output, not an input*.
-
-  ⚠️ **One kb sentence was narrowed in the same pass, and the re-measurement is the useful
-  half.** *Every one of them is the SUITE's*, about the descriptor cache, is now **3,749 files
-  and 26 of them name the installed product**, re-measured on the day. The re-establishment
-  procedure names the shape that defeated the first attempt: the descriptors are JSON, so a
-  grep for the single-backslash Windows path returns zero on a directory holding 26.
-
-- 📝 **Six decisions leave a session ledger for the charter, in the maintainer's own words.**
-  A ledger is not a decision of record: if something is written only there, it has not been
-  written down. **Q254 is no relay** -- a staged update never ends a session's server to let
-  itself in, and a blocked one raises a toast that opens a page listing the live sessions,
-  warning for the Codex-hosted and the recently active, and closing only what a person
-  selects. **The relay is recorded as the direction not taken, with its measurements**,
-  because it works and what it costs is the reason it is not built. **Q261 is one informed
-  refusal** of the first tool call that precedes a `tools/list` on a connection, plus the
-  list-changed notification and a version stamp in the session record that is never a refusal.
-  **Q258 registers with Codex through Codex's own command** at user scope, reaches project
-  scope through the `CODEX_HOME` lever, names the app-server protocol as the migration target,
-  skips the plugin route and keeps TOML writing rejected -- recorded as a closer call for
-  Codex than it was for Claude Code. **T7 starts Playwright's own `list` at session close**,
-  detached and never awaited, with three accepted risks named. **And Q260 is the gate
-  arrangement itself**: a version's editing runs on a pushed branch, filtered runs are
-  iteration, the two-shell gate runs once at the end, and unfinished work becomes the next
-  version's instead of crossing the boundary half-built.
-
-  [`RELEASING.md`](RELEASING.md) gains the rule those measurements imply -- **a model-facing
-  tool name may not be renamed or removed in a release a live session can cross**, because a
-  re-launched server is never re-listed -- and [`HAZARDS.md`](HAZARDS.md) gains the row behind
-  it, open, with the tally corrected from 56 to 57 and the predicate quoted.
-
-- 📝 **A day of research leaves scratch for the repository: seven batches, a probe and a design.**
-  Everything measured on 2026-09-23 lived in a gitignored directory that is wiped at the close
-  of a session. What a record points at is under
-  [`docs/evidence/`](docs/evidence/README.md) now -- the client-reconnect rounds with every API
-  request body the model was sent, the six server-registry probes, the password-prompt
-  reproduction and the fingerprint diff, what each Codex registration path wrote, the
-  enumerated `@playwright/mcp` surface, the 22-server census, and the rigs that settled all 27
-  assumed justifications. The dashboard demo is a probe record and the three toast renderings
-  are a design, beside the decision they were chosen for.
-
-  **And six measurements are in the kb**, in the articles that own them: what each client does
-  when a stdio server exits and what the pipe decides; the descriptor registry's growth, reap
-  semantics and quadratic read cost; the catalogue of the child's surface this product does not
-  use; what `--enable-automation` changes that a page can see; reading the process log by pid
-  alone; and the session index healing itself on the read path. A new article,
-  [`kb/windows/notifications.md`](kb/windows/notifications.md), holds the Windows toast
-  properties the design turned on.
-
-  ⚠️ **Two earlier claims are corrected by addition, each quoting what it replaces.** A harness
-  **can** point the descriptor directory at scratch -- the lever is `PWTEST_SERVER_REGISTRY`,
-  and the sentence it replaces was true of the `PLAYWRIGHT_` prefix and false of the one that
-  matters. And `navigator.webdriver` is **false** at chromium 1246 through the product funnel:
-  re-verification row 109 was correct and the staleness mark it briefly carried came from a raw
-  `playwright-core` launch missing the blink switch.
-
-  **Five departures from the bytes as taken are named in the batches they belong to**: the
-  request captures are trimmed of a third-party client's own system prompt, this repository's
-  `AGENTS.md` and the tool schemas, with the SHA-256 of all 69 originals kept; the full-desktop
-  screenshots and every browser profile tree are dropped; a cookie jar is deleted and one public
-  address is redacted; ANSI escapes are stripped from five terminal captures; and eighteen
-  fetched documents and rigs are renamed so a scan does not try to resolve somebody else's links
-  or a PowerShell cast. The re-verification index gains four rows and is re-stamped through its
-  own scan: 148 rows to 152, 259 markers to 265.
-
-- 📝 **The next version's work is a list, and every item on it names the decision it came from.**
-  [`TODO.md`](TODO.md) gains a section for the work this session settled in intent and did not
-  build: Codex registration steps 2 to 6, the update toast and its sessions page, Q261's
-  refusal and version stamp with the acceptance the maintainer asked for -- *"MAke sure to test
-  Q261 from a subagent once implemented and make sure to have test coverage."* -- and T7's
-  detached call. **Five candidates from the feature catalogue are listed as candidates**, and
-  the item is done when each has been picked or declined, not when any is built. **And four
-  re-verification rows were owed a re-measurement** at the Velopack that ships -- 123, 124, 126
-  and 130, all taken at 1.2.0 while the build has resolved 1.2.158 since 2026-09-22 -- and were
-  re-run at 1.2.158 on 2026-09-24, which the entry on them records.
-
-- 🔧 **The browser no longer asks a caller to save a password, because a caller cannot answer.**
-  A sign-in POST makes Chromium offer to remember the credential, and the offer is a top-level
-  window over the page -- not in the accessibility snapshot the agent reads, so the page
-  underneath stays covered and the next tool call answers about something nobody can see. Q255.
-  **It happens in HEADLESS Chromium**, which is what makes it testable without putting a window
-  on anybody's screen.
-
-  Chromium: `browser.launchOptions.args` carries **`--enable-automation`**, which is what
-  suppresses it -- measured 2026-09-23 @ chromium 1246 (154.0.8037.0) both ways, through a real
-  generated config against a local form that posts to itself: **two new top-level windows
-  without it, zero with it.** Firefox: **`signon.rememberSignons: false`** through
-  `firefoxUserPrefs`, beside the restart-registration preference and delivered the same way.
-  Both paths are named in `RequiredSessionOpinions`, so a generator that dropped either is red.
-
-  ⚠️ **The args list is a PAIR, and the second entry is there to avoid deleting upstream's
-  own switch.** `@playwright/mcp` appends `--disable-blink-features=AutomationControlled`
-  **unless the caller already passes an argument containing that substring** -- whatever its
-  value. So writing `args` at all, for any reason, silently removes a switch upstream chose.
-  Writing it explicitly is what makes the launch come out identical either way.
-
-  ⚠️ **One finding that is an absence, recorded because the next person will reach for it.**
-  `profile.password_manager_enabled` is a **dead key** at Chromium 154: seeded into the profile it
-  survives the launch unread and the prompt appears anyway.
-
-  ⚠️ ***Corrected 2026-09-24 (previously "**`navigator.webdriver` already reads `true`** at
-  chromium 1246 with or without the switch, so this is not a fingerprint change -- which also
-  makes re-verification row 109 stale, and it is marked").*** That reading came from a raw
-  `playwright-core` probe launched **without** `--disable-blink-features=AutomationControlled`,
-  and it is not what the product does. Playwright's own `--remote-debugging-pipe` turns
-  Chromium's `EnableAutomationControlled` feature on, and `@playwright/mcp` appends the blink
-  switch, which is applied later and wins -- so **through the product's config the flag reads
-  `false`**, headed and headless, with and without `--enable-automation`.
-  `kb/chromium/fingerprinting.md` and re-verification row 109 were right the whole time and the
-  stale mark is reverted. **The conclusion this was offered in support of survives on better
-  evidence**: 43 of 43 page-visible properties are identical between the two arms, so adopting
-  `--enable-automation` changes nothing a page can see.
-
-  **Planted red by removing `--enable-automation`**: the arm named `Chrome_WidgetWin_1`, title
-  *"Save password?"* -- which it reports in the failure and does not assert, because which window
-  Chromium opens is upstream's choice. **The control arm is the test**: a second child launched
-  with the switches stripped out MUST show a window, and it is also the clock, so nothing here
-  bounds the wait with a number somebody invented. The Firefox arm asserts only that the
-  preference reached the child, because the behaviour was NOT established -- no prompt appeared
-  in the Firefox control either, and the kb entry says so.
-
-- 📝 **Four Velopack re-checks owed since 1.2.158 are run, and they correct what the kb said about Setup.**
-  Rows 123, 124, 126 and 130 of the re-verification index had been taken at Velopack 1.2.0, and
-  each is re-established at 1.2.158 against the suite's test pack in scratch roots, with the real
-  install's Add/Remove entry, its Start Menu shortcut and Velopack's temp directories read before
-  and after every step: 19 readings, all identical. All four behave as they did at 1.2.0, and
-  the re-run corrects what the record said about two of them.
-
-  **A non-silent `Setup.exe` over an existing install does not wait for an answer forever**: its
-  prompt cancels itself after 300 s, exits 0 and installs nothing, and 1.2.0 armed the same
-  timeout, so an unattended run of the installer over an install is an exit-0 no-op. **Its wording
-  follows the version as well as its button**: an older install is asked *Version 1.0.0 is
-  currently installed. Would you like to update to version 1.1.0?* over **Update**, and a newer
-  one is told *A newer version of BrowserAI (suite) is already installed* over **Downgrade**.
-  A real mouse click on that prompt's **Cancel** exits 0 and leaves the install as it was, which
-  is what closing it does. **The console window a non-silent install gives a console main
-  executable is still there too**: through a probe pack whose main executable is the server, the
-  start put a Windows Terminal window on the screen titled with the server's path. The shipping
-  pack's main executable is the configuration app, so no release shows it.
-
-  **`VELOPACK_FIRSTRUN` is cleared by `VelopackApp.Run()` on an installed process**, which
-  answers a question the kb had held open since 2026-09-15, and it has a consequence here: the
-  server's own installer exit reads the variable after that call, so it cannot fire on an
-  installed start. The maintainer took Q276 a the same day and the exit is deleted; see its own entry under Removed. And the live
-  install's Add/Remove entry now carries its size as a `REG_DWORD`, which 1.2.158's registry code
-  writes and 1.2.0's could not: the 1.1.0 update rewrote it on 2026-09-24. The runs, the dialog
-  reads and the readings are `docs/evidence/2026-09-24-velopack-rows/`.
-
-- 📝 **What an update toast from BrowserAI would take is measured, ahead of deciding how it looks.**
-  The design is not decided and none of this is product code. **The app id is already there**:
-  Velopack writes `velopack.BrowserAI.app` on the Start Menu shortcut and sets it on every
-  installed process, so a toast needs no id of its own and no edit to the shortcut. **A NativeAOT
-  binary can raise one through hand-written WinRT calls**, with no CsWinRT and no ILC warning.
-  **Only a COM activator hears which snooze a person picked**: a protocol launch drops the
-  dropdown's value, and with no activator a click on a toast whose raiser has exited starts
-  nothing and the choice is lost.
-
-  The X is heard only by a raiser that is still running, a scheduled toast is delivered with no
-  process alive, and a toast with its popup suppressed shows nothing and moves no foreground
-  window, which is what a test of a real toast would stand on. Beside them, what the sessions
-  page could read from a live marker -- 5 torn reads in 20,000, and 915 empty ones when the
-  holder truncates -- and a named stop event that ends a process about 60 ms after it is
-  signalled. All of it is in `kb/windows/notifications.md` with re-verification rows 156 to 158,
-  from `docs/evidence/2026-09-24-toast-design/`. **The toast renderings the design directory
-  holds were raised from Windows PowerShell 5.1**, not PowerShell 7, which cannot load the toast
-  type at all; two documents said otherwise and are corrected.
-
-  A second window on the screen, later the same day, measured what needed a real click. **A
-  window opened by clicking a toast's button through the activator comes to the front**, where
-  one started in the background is refused; a click in the Notification Centre after the X still
-  reaches the activator with the dropdown's value; a registry display name and icon win over the
-  shortcut's; and a click on the body through a protocol launch drops the dropdown, as a
-  button's does. Whether a suppressed toast lights the taskbar's badge stays open, because no
-  toast shows one on this machine, and another display scale was not tried.
-
-- 📝 **What a Velopack apply ends is measured, and three claims it contradicts are corrected.**
-  The maintainer asked it in as many words: *"I have a hard time believing it only monitors the
-  process calling update. That would mean it kills all instances of a multi instance app!?"* It
-  does. Read at Velopack's tag `1.2.158` and measured the same day against servers from the suite's
-  test pack: `Update.exe` waits up to 60 s for the one process that asked, then ends every process
-  whose image is under the install root with `TerminateProcess`, exit code 1, after each hook and
-  once more before the swap. Of twenty-one servers, every one still running before the swap was
-  ended, and the eleven started after it ran the new version. Of two applies started together, the
-  kill pass decided which one won, not Velopack's lock. And its log reads the wait backwards: a wait
-  that worked logs *Access is denied*, and one that ran out logs nothing.
-
-  **Corrected by addition, each where it was written.** Velopack's `start` kills only on its legacy
-  `app-` branch, where the kb and `LiveInstances` said every start does. The 2026-08-16 finding
-  that a non-elevated token may not register a scheduled task holds only for a trigger that fires
-  for any user; a trigger scoped to the user registers, re-measured, and the kb and DECISIONS say
-  so. And the 2026-08-20 reading of the DACL on a `Global\` mutex is stamped for re-measurement,
-  because a `Global\` event read on 2026-09-24 disagrees with it in two entries. Beside them, this
-  machine's order of starts after sign-in, where a logon task's process came at +1.249 s, before
-  Explorer, and the editor at +274.5 s, and the fact that a process a task starts holds no right to
-  the foreground. [kb](kb/packaging/velopack.md#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24), [kb](kb/windows/processes.md#what-starts-first-after-sign-in-and-what-a-task-started-process-may-do----measured-2026-09-24),
-  re-verification rows 159 and 160, `docs/evidence/2026-09-24-coordinator-lifecycle/`.
-
-- 📝 **The coordinator's design is a decision of record, with the four answers that settled it.**
-  Q280 b and Q282 a to Q285 a, each in the maintainer's own words, as five rows of DECISIONS'
-  update lane: a hidden coordinator, one per user and single instance through its own pipe,
-  started by a per-user logon task at sign-in or by a blocked server through that task, applying
-  only when a path scan under the install root finds nothing else, and talking to servers over
-  raw named pipes with nothing written to disk for another process to read. The rows name the four
-  directions set aside and where each was measured, and say what exists: the servers' pipe and the
-  refusal above are this batch, and the coordinator, its toast and its sessions page are the next
-  phases.
-
-- 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
-  The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
-  image has been open since 2026-09-14, and a watch whose last reading is nine days old reads
-  the same as one nobody has looked at. Read 2026-09-23 and written down with their date:
-  [#42717](https://github.com/microsoft/playwright/issues/42717) is open, labelled `v1.64` and
-  assigned to `dcrousso`; [PR #42721](https://github.com/microsoft/playwright/pull/42721) is
-  still closed and unmerged with nothing replacing it; **Chromium CL 8416650** is status **NEW**
-  with **Code-Owners unsatisfied** as of 2026-09-21; no `playwright`-side change has appeared;
-  and `@playwright/mcp` 0.0.82 is what the payload runs, with today's `playwright-core` next
-  alpha carrying the same **chromium 1246**. Nothing has moved on either side, and that is the
-  finding.
-
-  **The trigger moved and the instrument now follows it.** Because the fix is expected in
-  Chromium, what settles this arrives on a browser revision and not on a wrapper bump --
-  re-verification row 122 was keyed on the wrapper. **Row 138 is the browser-revision half**,
-  and its re-check is row 122's measurement re-run at the new revision, with the 16,383 px arm
-  as the positive control that is not optional. Both rows stay: either route would settle the
-  fact, and deleting the one that now looks unlikely is how a route nobody is watching gets
-  taken. The daily drift check reads the resolved revision, so a revision move is now the prompt
-  to re-take the measurement -- which is the one thing this item did not have, having been a
-  watch on a tracker nobody here controls with nothing scheduled to make anybody look.
-
-- 📝 **The network-service sandbox watch moves out of the backlog and into the re-check table.**
-  [`TODO.md`](TODO.md) carried an item watching two upstream moves that would make the browser's
-  network service ask for a sandbox the provisioned tree cannot give it. Its whole content was a
-  re-check procedure, and re-verification [row 121](kb/re-verification.md) already carried the
-  same fact from the other end -- two places, one of which was always going to go stale. The row
-  now carries all of it: the second trigger spelled out as **Chromium enabling the
-  network-service sandbox by default at a new revision**, why that one is behaviour and not a
-  diff (the `sandbox_win.cc:804` refusal and the `network_service_instance_impl.cc:650` restart
-  appear in stderr with nothing in the bundle to show for it, so the `playwright-core` bump
-  carrying a new revision is when to look), and what fires when either lands -- the ACL grant
-  with its two already-measured ACEs, the regression test becoming writable, and the third
-  upstream ask going to `microsoft/playwright` and not the MCP tracker.
-
-  **The 2026-08-29 decision travels with it**: nothing was changed and nothing was filed,
-  because an ACL grant today changes nothing observable and an ask about a path upstream never
-  takes would be closed as by-design. The two documents that pointed at the item --
-  [`HAZARDS.md`](HAZARDS.md) and the kb entry -- point at the row now, each with a *previously*
-  clause.
-
-- 📝 **Who pulls the release trigger is a decision of record, in the maintainer's own words.**
-  [`RELEASING.md`](RELEASING.md) item 14 said that a human decides, which leaves open which
-  human and on whose initiative. The maintainer settled both on 2026-09-23, verbatim:
-  *"Only I drive when there is a release. You can only suggest to me when it is a good
-  moment."* An agent may observe that the moment looks good and say why -- the gate is green,
-  the drift check is clean, `[Unreleased]` has something in it -- and an agent may not start a
-  release. Items 1 to 13 are preparation; item 14 is a decision nothing in the preparation
-  converts into. Written into item 14 and into `DECISIONS.md`'s automated-checks row **by
-  addition**, so what both said before still stands above it.
-
-  **The `TODO.md` item asking for that review is deleted, and its whole remainder is that
-  paragraph.** The review was to be taken against a real cadence instead of a predicted one,
-  and what it was for was the arrangement the row describes: a gate nothing makes fire,
-  accepted because the release trigger is manual. The trigger is now manual **by decision and
-  not by default**, which is a stronger footing than the one the review was meant to test.
-  Automation is a different question and keeps its own item: running the gate and cutting a
-  release are different acts.
-
-- 🔧 **Every sentence BrowserAI says to a person is written the way a person writes.**
-  The maintainer's directive of 2026-09-23 covers wording and character use, and until now the
-  wording half reached commentary only: `Harness.Commentary` lexes the comments out of code, so
-  a string literal was invisible to it. The `X rather than Y` frame therefore survived in
-  precisely the text a user, a model and a compiler read. **84 lines across 30 files** are
-  rewritten, 74 of them carrying that frame, with no change to any meaning, fact, number, name
-  or log event id: the server `instructions`, the `browserai_*` tool and parameter descriptions,
-  the `SessionErrors` and `SessionManager` refusals, the proxy and liveness log lines, both
-  `BannedSymbols.txt` reasons, the `<Error Text>` in all three project files, the release
-  scripts' `Write-Error` text, `Sqlite.targets`, `upstream-snapshots.mjs` and the review hook's
-  here-string. The maintainer's decision, verbatim: *"Q253 b"*.
-
-  **Three assertions were the planted red** and are updated in the same commit --
-  `ErrorCatalogueTests`, `SessionListTests` and `SessionToolTests` each pinned a sentence that
-  moved, and each went red before it was touched. The error catalogue's census counts rows by
-  method name, so it did not move; no golden text records any of these sentences.
-
-  **Three records quote the old wording and are left as they stand**: a released `CHANGELOG`
-  section, a ledger snapshot and a review's evidence block, each a dated capture of what the
-  product said on the day it was run. **Three files were refused and are named here** --
-  `upstream-review.json`, `drift-check.json` and `tool-verdicts.json` carry a reviewer's
-  reasoning and a dated check's own notes, so rewriting one would edit the account and not the
-  product. The suite's own harness messages are outside it for the same reason: a test
-  explaining a missing capability to whoever is running it is not the product speaking.
-
-- 🔧 **The sessions page calls a client that gave no name *unnamed client*, as the update page does.**
-  Item 85 of the texts review of 2026-10-10 found the two pages naming one client two ways: the
-  sessions page wrote *A client that has not said what it is*, with its version after it, and the
-  update page *unnamed client*, with none. Both pages now write a client as its name and version,
-  its name alone, or *unnamed client*, and a version with no name beside it is left out, because it
-  tells a person nothing. `UpdatePageTests.AClientIsCalledTheSameOnTheUpdatePageAndTheSessionsPage`
-  holds both pages to the one wording, watched red first.
-
-- 📦 **A release publishes three assets, and the release script declares which three.**
-  `build/New-Release.ps1` does not upload and never has: the publish is a hand-run
-  `gh release create` at `RELEASING.md` item 14. Nothing named an upload set, so the assets were
-  whatever the person running it picked out of `Releases/`, and `v1.1.0` carried seven because
-  `v1.0.0` had carried seven. **That is a judgement wearing the appearance of a procedure**, and
-  it was the only step of a release with no record of what it decided.
-
-  The script now declares `$uploadSet` in one place -- the installer, the full package and
-  `releases.<channel>.json` -- refuses on a declared file that is not on disk, prints the
-  `gh release create` line ready to paste, and returns the paths as `Upload`.
-  `ReleaseScriptTests` holds what is in the set and that every other file a pack leaves behind is
-  classified, so a new artifact is a red build until somebody decides about it. Both were planted
-  red: a doctored declaration that published the portable zip again came back naming
-  `BrowserAI.zip`, and dropping `RELEASES` from the classified list came back naming it against
-  the real directory.
-
-  **Two files left the set on a measurement, not on a preference.** The maintainer asked
-  for it in as many words: *"5+6 execute the test but also double check the velopack
-  documentation and code to double check we are not removing load bearing parts for scenarios we
-  forgot about."* Velopack's source at tag `1.2.158` says every client source reads
-  `releases.{channel}.json` and only that, nothing in its client library ever composes the name
-  `RELEASES`, and `Update.exe` and `Setup.exe` never fetch a feed at all. Then it was run: a real
-  Velopack client pointed at a feed holding **only** `RELEASES` and `assets.win.json` -- with
-  `RELEASES` naming the package, its SHA-1 and its exact size -- reported *"No full / applicable
-  release was found to download"*. The suite's three real-installer arms ran green against a
-  scratch feed with both files deleted, and red against one with `releases.win.json` deleted
-  instead, which is the control that says the arms were the ones that would have failed.
-
-  ⚠️ **`RELEASES` and `assets.<channel>.json` stay in `Releases/` on disk.** Not publishing a
-  file and not producing one are different changes, and only the first was decided: `vpk upload`
-  reads the local `assets.<channel>.json` to learn what to upload.
-
-  **And `v1.1.0` was trimmed to the same three after the fact**, which was its own
-  decision and has its own entry below.
-
-- 📝 **The status paragraph no longer names the portable archive's file.**
-  One mention of the file name survived the README sweep -- not as a download, but inside the
-  status paragraph's account of a planted red, where it was a true sentence about a test. It says
-  the declaration "came back naming it" now. A reader who wants the name can read the test.
-
-- 📝 **The instruction files are `AGENTS.md` now: the root file and the four beside the code.**
-  Claude Code reads them through its built-in agents-md plugin since 2.1.277, and in its default mode
-  only while no `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md` stands on the path from the
-  drive root to the working directory, so all five moved in one commit, and every link, test, hook
-  and remark that named them moved with them. The root file now says to read any `AGENTS.md` from
-  a subfolder up to the root that has not been read yet before working there, because a folder's
-  file is attached only when a file in that folder is read. `.claude/settings.json` keeps any stray
-  `CLAUDE.md` or `CLAUDE.local.md` out of Claude's context and denies edits to them, and keeps
-  `.work` out; `.gitignore` lists both names. The three links inside the 1.0.0 section were
-  re-pointed under the maintainer's grant and the section's seal re-recorded: the same length, two
-  new digests. Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277; extended in
-  2.1.281: https://code.claude.com/docs/en/changelog#2-1-281; remaining differences:
-  https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
-
-- 📝 **Playwright's dashboard is not exposed, and the measurements behind that are written down.**
-  The maintainer decided it on 2026-10-01, verbatim: *"C Ok, lets not provide access to the
-  dashboard and document in the repo why we took that decission (the risks associated)."* BrowserAI
-  does not expose, host or proxy upstream's dashboard, and
-  [`DECISIONS.md`](DECISIONS.md#processes-browsers-and-session-modes) carries the row: the five
-  risks that decided it, what containing it was estimated to cost, the one thing given up, and
-  three things the row does not decide. Nothing in the product changes.
-
-  **What was measured on 2026-09-25, against browsers the dashboard did not launch**, is in
-  [the kb](kb/playwright/tools-and-artifacts.md#what-playwrights-dashboard-does-to-a-browser-it-did-not-launch----measured-2026-09-25),
-  each number against a file. Opening the page connects to every listed browser and runs script in
-  its pages before anybody clicks. One call later it types, navigates and closes, and none of that
-  is an action in the browser's own trace. A pause left behind parks the next tool call, and
-  `browser_resume` then waits itself. A close leaves the session on `about:blank` with no error.
-  The port hands out its own key, and the dashboard is one per Windows user even on a port. The
-  four rigs are a probe record, and what they printed is an evidence batch with the research
-  report beside it. The re-verification index gains four rows, one per rig, and is re-stamped
-  through its own scan: 162 rows to 166, 276 markers to 287.
-
-  ⚠️ **One earlier claim is corrected by addition.** The kb said the dashboard cannot be reloaded.
-  A lone tab, reloaded, listed its sessions 20 times out of 20, and what stops updating is a
-  viewer that stays while another leaves. The evidence that claim pointed at shows no reload either: its two
-  screenshots are one file, its rig never reloads, and two logs its README lists were never
-  committed. Both READMEs say so now.
-
-  Track C leaves [`TODO.md`](TODO.md)'s zoom-out tree, and phases 3 and 4 wait on track B.
-
-- 📝 **The zoom-out's answers are decisions of record, and what they found is in the hazard index.**
-  Between 2026-10-01 and 2026-10-03 the maintainer answered the zoom-out of 2026-09-25 and every
-  question it raised, and [`DECISIONS.md`](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it)
-  carries each answer in his words, in four new sections: what the zoom-out settled for sessions,
-  idle closes and a client's exit; RegisterAI, a command-line program of its own that takes over
-  registering BrowserAI with its clients; a management interface in a tab of the person's own
-  browser, which replaces the configuration window; and how the work is decided and what was posted
-  upstream. ⚠️ **No release is cut until that tab has replaced the window**, because the window can
-  run a link a repository planted in its project file, and it is not fixed in place. Nothing in the
-  product changes with this entry; the work the answers set is in [`TODO.md`](TODO.md), and
-  twenty-one failure modes they name or the night's research measured are open rows in
-  [the hazard index](HAZARDS.md#hazard-index), beside the wedge the upstream review wrote.
-
-- 🔧 **An idle session's browser server is ended, and its calls are refused until `browserai_resume`.**
-  P4 b, P2 a and P3 b, the maintainer's words verbatim: *"p2 a / p3 b / p4 b"*. After ten minutes
-  with no call, BrowserAI used to send upstream's `browser_close`, keep the `node` child, and let the
-  next call start a new browser on `about:blank` without a word, which a field report met as a
-  script failing on the wrong page. Now the whole child is ended, through its stdin and then its
-  job: that frees the `node` child's 124 MB as well, and it cannot be wedged by an armed debugger
-  pause the way a `browser_close` is. The next browser call is refused with a sentence that says
-  nothing was run, names `browserai_resume` and the period, and says what was kept and what was
-  lost. The caller's own `browser_close` closes the session the same way, and one sent with no
-  browser up is answered at once and not forwarded, because forwarding it starts a browser in order
-  to close it. The row the idle close writes no longer says *"Nothing was lost"*.
-
-  **The resume brings the tabs back through the browsers' own session restore.** P1, the
-  maintainer's words verbatim: *"Restore as much as possible without adding lot's of complexity. So
-  basically, use whatever playwright offers in capabilities."* Every session launch carries
-  Chromium's `--restore-last-session` or Firefox's three session-store preferences, with Playwright's
-  default blank page dropped so tabs do not pile up. Measured on 2026-10-03 at `@playwright/mcp`
-  0.0.82 and 0.0.83: tabs, history, `sessionStorage`, typed text, scroll and session cookies came
-  back, 24 of 24. Refs from earlier snapshots do not, and the resume's answer says to call
-  `browser_tabs` and `browser_snapshot` before acting. **A headed session is never idle-closed**,
-  Q326 a, and its config sets upstream's own idle timeout to zero, which upstream reads as none. **A
-  session whose close never answers is recovered by `browserai_resume`**, which ends that child
-  through its stdin, and the parked call is answered with the failure instead of being left
-  outstanding.
-
-  ⚠️ ***Corrected 2026-10-03, before any release carried it (previously "and it cannot be wedged
-  by an armed debugger pause the way a `browser_close` is").*** The idle close sends the
-  browser its own `browser_close` first again, Q367 a, and a pause can hold that close for
-  thirty seconds before the child is ended. See the entry for it below.
-  [kb](kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03),
-  [the wedge](kb/playwright/tools-and-artifacts.md#a-pause-met-first-by-a-close-wedges-the-session-and-nothing-in-browserais-surface-releases-it----measured-2026-10-03).
-
-- 🔧 **A resume applies per-run settings with no browser up, and refuses those it cannot apply with one.**
-  Q324, the maintainer's words verbatim: *"Q324 your recommendation"*. A resume of a session this
-  server held used to drop every per-run argument, `headed` included, and answer *"nothing was
-  changed"*; the field report met two such answers and a session that stayed headless. While the
-  session's browser is up, a resume applies nothing and refuses by name each argument it was passed
-  that differs from what the browser was launched with, giving both values and the way to apply
-  them; a bare resume is never refused. With no browser up, after a close, after a child died or
-  before one started, it opens the session again at the settings it was asked for, and its answer
-  gains a `headed:` line. `SessionErrors.BrowserServerCouldNotBeRelaunched` goes with the in-place
-  relaunch it belonged to: a new child that will not start leaves the directory free, and row 7's
-  own sentence says so. The catalogue gains `SessionWasClosed` and
-  `ResumeCannotApplyWhileTheBrowserIsUp` and loses the relaunch row, so its census is 37.
-
-  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "a bare resume is never
-  refused" and "With no browser up, after a close, after a child died or before one started, it
-  opens the session again at the settings it was asked for").*** A resume of a session this
-  server holds is now the maintainer's no-op unless a setting conflicts, and a bare one with no
-  browser up is the no-op too; the refusal is his draft. See the entry for it below.
-
-- 🔧 **A shutdown asks every open browser to close itself, all at once, before it ends the children.**
-  e1 and e2 of P7, decided by the root session on 2026-10-03 for the maintainer's review, against
-  his words *"b + e and if e is impossible or difficult c. But it all needs to be done in a super
-  safe way so we don't permanently leak stuff."* Claude Code kills a server's tree 0.53 to 1.15 s
-  after closing its input, measured that day, while BrowserAI ended its sessions one after another
-  with up to 5 s each, so a second session was never reached and every browser was killed with
-  whatever it had not flushed. Each open browser now gets its own `browser_close` first, in
-  parallel, bounded at one second so a close that meets an armed pause cannot hold the shutdown,
-  and the teardown after it is unchanged. Chromium also launches with
-  `--enable-aggressive-domstorage-flushing`, which measured `localStorage` safe from a kill one
-  second after a write instead of five. Neither shortens the 30 s a Chromium cookie needs, and a
-  client that kills without warning, as Codex always does, still takes what was not flushed.
-  [kb](kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03).
-
-- 🔧 **The idle close asks the browser to close itself first, and waits up to thirty seconds for it.**
-  Q367 a, the maintainer's words verbatim: *"Q367 a - but why just 1 sec.? Why not be very
-  gracefull here?"* After ten idle minutes BrowserAI ended a session's whole child through its
-  stdin with no close first, and in the research of 2026-10-03 an end like that lost a store in 1
-  of 16 Chromium and 1 of 19 Firefox runs, where a `browser_close` first kept everything, 6 of 6.
-  Now the session is marked closed, the browser is sent its own `browser_close`, and the child is
-  ended once the browser has answered or thirty seconds have passed. Thirty because nobody is
-  waiting: a call that arrives meanwhile is refused at once with the sentence naming
-  `browserai_resume`, a resume, a destroy or a shutdown ends the wait at once, and the slowest close
-  timed that night answered in 1,163 ms. The cap is there for the armed debugger pause alone, whose
-  close never answers: such a session is held thirty seconds past its ten idle minutes and then
-  ended through its stdin, which a paused child obeys, with a warning in its log, event 65.
-  Watched red first against the close as it stood: the four arms that hold it found no
-  `browser_close` asked for. Then each half on its own: with the close sent and not waited for,
-  the cap was gone before the close reached the child; with the cap armed and wired to nothing,
-  the child was never ended and the arm waited out the five-minute hang detector; and with the
-  wait deaf to a teardown, a resume took the idle timer's whole 20 s teardown bound and the child
-  was never told its close was cancelled.
-
-- 🔧 **The coordinator's pipe serves its connections in parallel too, and no pipe of ours stops at 255.**
-  Q368 a, the maintainer's words verbatim: *"Q368 a"*. A caller that connected to the coordinator's
-  pipe and never finished held its one thread, so every other start of the app met a busy pipe until
-  its bound ran out and then settled on neither. The coordinator's pipe now shares the server pipe's
-  loop, an instance and a thread per connection, and `FILE_FLAG_FIRST_PIPE_INSTANCE` alone keeps a
-  second coordinator off the name, refused with `0x80070005` where one instance per name answered
-  `0x800700E7`. **There is no ceiling at 255.** That number is `PIPE_UNLIMITED_INSTANCES`, which
-  Microsoft documents as limited only by system resources, and a probe creating pipes the way
-  BrowserAI does held 2,000 callers on one name at once, where a cap of 254 had its 255th instance
-  refused. The server pipe's wait for a free instance and its warning, event 7, could never be
-  reached and are removed; what a caller costs is the thread its connection is served on.
-  [kb](kb/windows/processes.md#a-pipe-created-with-pipe_unlimited_instances-holds-more-than-255-callers----measured-2026-10-03).
-  Watched red first against the one-instance pipe: with one caller silent, a start's hand-over
-  waited out the suite's whole five-minute hang detector and came back with no answer, and a second
-  coordinator was refused with `0x800700E7` where `0x80070005` was expected. The arm that holds
-  300 callers on one server pipe was green against the tree as it stood, whose server pipe already
-  created its instances this way, and went red with the instance count planted at 254, when the
-  255th caller waited out the hang detector.
-
-- 🔧 **`tracing` says it writes `session.md`, a log of the calls, and names the tools that record a trace.**
-  Q371 a, the maintainer's words verbatim: *"Q371 a"*. The argument switches on upstream's
-  `saveSession`, which writes a Markdown log of each tool call, with its arguments and what it
-  returned, into a folder of the session's output directory; the trace viewer cannot open it. Its two
-  descriptions said *"Record this session into its output directory"* and the instructions
-  *"'tracing: true' records the run"*, so a model that wanted a trace turned it on and got the log.
-  Both descriptions and the instructions now say what it writes and that it is not a trace, and name
-  `browser_start_tracing` and `browser_stop_tracing`; the name stays. Two clauses of the instructions
-  were tightened to make the room, and the string is 2,041 characters of the 2,048 the client reads.
-  Watched red first: against the texts as they stood, the arm named ten missing phrases, four in
-  each tool's description and two in the instructions.
-
-  ⚠️ ***Superseded 2026-10-04, before any release carried it.*** The argument is `transcript`
-  and the instructions say nothing about it; see the entry for it below.
-
-- 🔧 **Every clean close BrowserAI makes now gives the browser a minute.**
-  D4.1 and D4.2, the maintainer's words verbatim: *"Make it a roomy 1 min. We want everything
-  nicely saved to disk even on a slow system."* and *"Same 1 min. under option d (lane c)"*. The
-  idle close waited thirty seconds for the browser to answer its own `browser_close`, the shutdown
-  of a server a client started one second, and the session host's shutdown before an update thirty;
-  all three now take one cap, `SessionTimes.BrowserCloseCap`, and so does anything that waits on a
-  close in flight. It is twice Chromium's 30 s cookie commit interval, the longest commit window
-  measured on 2026-10-03: past the cap the child is ended and the browser killed, a write older
-  than its commit interval is on disk by then, and at twice the interval every write made before
-  the close began is, with room for a slow machine. The coordinator now waits twice the cap, two
-  minutes, for the session host to end before an update; a teardown waits for an idle close in
-  flight the cap and a child's five seconds; and those five seconds, and the wait after a child's
-  job closes, are named where one was a literal. Chromium's 30 s itself is left as it is (Q378) and
-  so are Firefox's session-store intervals (Q377 e), because a clean close writes both and every
-  close now has its minute. A client that kills the server it started still lands its kill first,
-  about a second after the end of input for Claude Code and at once for Codex. Watched red first:
-  held to the tick on the session's clock, the idle close found thirty seconds and the shutdown
-  one second; the session host's close read thirty seconds, the coordinator's wait for the host
-  sixty, and a teardown's wait for a close in flight twenty.
-
-- 💥 **`tracing` is `transcript`, and one short text says what the file holds.**
-  Q371 c, the maintainer's words verbatim: *"I like option c and the rename to transcript."*
-  `browserai_init` and `browserai_resume` take `transcript`, described the same way on both:
-  *"Write session.md, a Markdown transcript of this run: every browser tool call with its arguments
-  and its result, page snapshots and screenshots included; a call that fails can be missing. It goes
-  in a new folder per run, output\session-&lt;time in milliseconds&gt;, inside the session folder. Text
-  typed into the page, passwords included, is stored in it as plain text. Defaults to false. Lasts
-  until this browser closes; a later browserai_resume starts without it unless it is passed
-  again."* **A caller that still sends `tracing` is refused**, as an argument the tool does not
-  have, and nothing names the old argument. The text was checked against a real run before it was
-  final: a screenshot is in the file as base64, and a call that failed is not in it.
-  [kb](kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like),
-  [evidence](docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md). Watched red first:
-  both tools advertised no `transcript`, the instructions still carried the clause, and the arm
-  that holds each authored tool's argument set named `tracing` where `transcript` was specified.
-
-- 💥 **An argument a tool does not have is refused, naming it and giving the tool's whole definition.**
-  The maintainer's words verbatim: *"I'd expect that any call carrying any parameter or argument
-  that we do not recognize would be refused actively with a syntax error. This would teach the LLM
-  it has somethign wrong. Also, I do not like us keeping history and translating certen arguments
-  for historical sake. The product is what it is and the llm needs to learn to use it."*, then Q371.5
-  b for the definition. Measured first, through the published binary at `d8a0101a`: an unknown
-  argument on `browserai_list` and on `browser_navigate` was dropped without a word and the call
-  ran. Now every argument name a call carries is checked against the tool's schema as this
-  BrowserAI's own `tools/list` serves it, before anything runs, and the answer is an error result
-  that opens *"Syntax error:"*, names each unknown argument, and gives the tool's description and
-  every argument with its own, generated from the live list. Every authored schema now says
-  `additionalProperties: false`, as upstream's 72 already did. **`browser` on `browserai_resume`
-  is answered by it too**, so `ArgumentNotAcceptedOnResume` is deleted and the error catalogue's
-  census is 38: `ToolDoesNotExist` and `UnrecognisedArguments` arrived, `ToolIsDenied` and that
-  row went. What a call leaves out is not checked, because upstream marks some arguments with a
-  default as required. [kb](kb/mcp/protocol.md#an-argument-a-tools-schema-does-not-have----measured-2026-10-03).
-  Watched red first: an unknown argument on an authored tool and on a forwarded one both ran, a
-  misspelled `session` met the missing-session refusal, and every authored schema left
-  `additionalProperties` open.
-
-- 🔧 **A call to a tool BrowserAI does not have is told so plainly, and so is a call to a denied one.**
-  The maintainer's words verbatim: *"Calls to a tool BrowserAI doesn't have: a) Yes, in the same
-  lane."* Such a call met the refusal written for a listed tool with no verdict, which called it a
-  gap a human must adjudicate and said not to retry. It now gets *"BrowserAI has no tool '<name>',
-  so nothing ran. Use one of the tools this BrowserAI has now, listed below."* and one sentence saying that after an update a
-  tool the client's own list does not show cannot be called until the person reconnects BrowserAI
-  or starts a new conversation. `browserai_set_purpose`, an invented name and a denied tool all get
-  it. **A denied tool's answer is a proposal put to the maintainer**: it no longer quotes the deny's
-  `why`, which stays in `tool-verdicts.json` as the record of the judgement. A listed tool with no
-  verdict keeps a shortened refusal of its own, because it can only be a defect in the build.
-  Watched red first: an unknown name met the old gap text, with and without a session, and each
-  denied tool met *"is deliberately NOT in this server's tools/list"*.
-
-  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "A denied tool's answer
-  is a proposal put to the maintainer").*** He approved it with the other texts, 1 a.
-
-- 🔧 **`browserai_catch_up` names every file in a session that can hold something sensitive.**
-  4 a, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
-  other logs? Name everythign sensitive."* Until then it named the cookie store, HTTP Archives,
-  saved logins, traces and transcripts. It now names the profile whole, with its cookie store or
-  without one, for its history, cache, storage and tabs to restore, and one line per kind for everything under the session that can hold what a person typed, signed in
-  with or read: HTTP Archives, saved logins, traces, transcripts, what the network tools saved,
-  logs, page snapshots, screenshots, PDFs, videos, files saved by name, downloads in flight and
-  BrowserAI's own record. Each line says what that kind holds, measured that day in one headless
-  session per family: a page snapshot taken after typing held the typed password in Chromium and
-  Firefox alike, and the trace's line now names its action log, which held it too. Ten files of a
-  kind are named by path and the rest counted. Watched red first: the arm that lays out one file of
-  every kind found ten of its lines missing, eight of them for kinds the answer named nowhere, the
-  arm on the four older kinds read the old trace line, and the arm on a profile with no cookie
-  store found it answered with the line that says nothing has signed in.
-  [kb](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials),
-  [evidence](docs/evidence/2026-10-04-q371-sensitive-files/README.md).
-
-- 🔧 **The answer for a tool BrowserAI does not have names every tool it does, with what each does.**
-  2 b, the maintainer's words verbatim: *"1 a / 2 b / 3 a / 4 a - is there not also sessions.md or
-  other logs? Name everythign sensitive."* So does Q261 b's answer for a connection that called
-  before it asked for a tool list. Both keep their sentences, the reconnect sentence included, and
-  end with *"The tools this BrowserAI has now:"* and one line per tool: its name, and BrowserAI's
-  own tool's title or the first sentence of an upstream tool's description. The block is generated
-  from the list this server answers. He had first chosen the whole list with every definition,
-  which no client hands a model whole; measured through the published binary with 72 tools, the
-  first refusal is 5,454 characters and the second, in Claude Code's wording, 6,002, against the
-  10,000 a client passes whole. Watched red first: against both refusals as they were, every arm
-  found no block of tools.
-
-- 🔧 **A resume of a live session changes nothing unless a setting conflicts, and then names the setting.**
-  The maintainer's words verbatim: *"Ok, lets stick with these rules: A resume on an active
-  session is fine and a noop and returns "the session is already live" if and only if there are no
-  conflicting settings. So the same settings or no settings given or a mix. If any of the settings
-  are different the resume is refused with an explicit message that the models needs to call close
-  and then resume with the different settings. Name the parameters that triggered this refusal.
-  Also explain in the response that this will close and re-open the playwright browser."* The
-  answer opens *"The session is already live, so nothing changed"* and says what that means for its
-  browser. A setting that differs is refused in his words, naming each with its running and asked
-  values, and the refusal no longer tells a model to resume again without the settings. A session
-  the host kept after its client went is answered the same way. With no browser started yet, a
-  differing setting still reopens the session at the settings asked for, which is for his review.
-  Watched red first: the browser-up refusal read as the old sentence, and both no-browser arms got
-  a reopen where the no-op was expected.
-
-- 🔧 **`browserai_catch_up` takes a `why`, and names every file that holds login data in clear text.**
-  The maintainer's words verbatim: *"browserai_catch_up should take a why. All other tool calls
-  are fine like they are now when it comes to the why argument."*, and Q365.4: *"Now about Q365.4.
-  Let's mention all files."* The `why` is required, and the read's own row goes in the session's
-  log once the answer is read; on a session another BrowserAI holds it goes to this BrowserAI's own
-  log. Beside the HTTP Archive it already named, catch_up names a saved login written by
-  `browser_storage_state`, a Playwright trace's folder and a transcript's `session.md`, each in the
-  line he approved. [kb](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials).
-  Watched red first: none of the three files was named, and a call with a `why` was refused as an
-  argument catch_up did not have.
+- 💥 **BrowserAI is one program, `BrowserAI.exe`, and a client starts it with `--mcp`.**
+  1.1.0 had `BrowserAI.Server.exe` for the clients and `BrowserAI.exe` for a person. The first
+  update registers the new command with Claude Code and Codex for all your projects, but a
+  project's `.mcp.json` or `.codex\config.toml` that names `BrowserAI.Server.exe` stops working
+  and has to be registered again from the dashboard, and so does a client session that kept the
+  old command across the update. [The hazard row](HAZARDS.md#hazard-index).
+
+- 💥 **One BrowserAI runs in the background from sign-in, and a client's start hands its calls to it.**
+  The Task Scheduler starts it when you sign in. It holds every session, the dashboard and the
+  update, and it ends at sign-out, at an uninstall or for an update, never for being idle. What a
+  client starts answers the handshake itself and holds a call for up to 150 s while no background
+  is there. A call an update meets is answered with whether it ran and what the client needs to
+  reconnect. If the background crashed, every call says when and which log to read until it is
+  started again. A build that is not installed starts no background, and says so with the command
+  that starts one. [How it fits together](ARCHITECTURE.md#the-background-and-its-relays-s-a).
+
+- 💥 **`browserai_init` and `browserai_resume` require the four settings a person notices.**
+  `headed`, `transcript`, `captureNetwork` and `idleMinutes` decide a window on the screen, what is
+  written to disk in plain text, and how long a browser stays open and keeps updates waiting. A
+  call that leaves one out is refused, naming every one it left out, and nothing is created or
+  changed. The other settings keep their defaults.
+
+- 💥 **`tracing` is `transcript` now, and a call that sends `tracing` is refused.**
+  It writes `session.md`, a Markdown transcript of the run: every browser call with its arguments
+  and its result, page snapshots and screenshots included. Text typed into a page, passwords
+  included, is in it as plain text.
+
+- 💥 **An argument a tool does not have is refused, with the tool's whole definition.**
+  Until now an unknown argument was dropped without a word and the call ran. The answer opens
+  with *Syntax error:*, names each unknown argument and gives the tool's description and every
+  argument it does have.
+
+- 💥 **`browserai_set_purpose` is `browserai_change_purpose` now, with no alias.**
+  A call that names the old tool is answered as a call to a tool BrowserAI does not have.
+
+- 🔧 **A running BrowserAI takes its data root and update source from the install, never a variable.**
+  `BROWSERAI_ROOT` and `BROWSERAI_UPDATE_FEED` are read once, when BrowserAI is installed, and
+  written into its scheduled task and its client registrations. An install that took its updates
+  from a folder keeps taking them from there, and a variable set later moves nothing.
+
+- 🔧 **A call to a tool BrowserAI does not have is told so, with a line for every tool it does have.**
+  The answer also says that after an update a tool the client's own list does not show needs a
+  reconnect or a new conversation. A call that names a withheld tool gets the same answer.
 
 - 🔧 **The server instructions keep only what spans tools, and six tools carry a BrowserAI note.**
-  The maintainer's words verbatim: *"About the server instructions. Rewrite the instructions
-  according to b. Then on the why, keep the server instruction simple. The tool arguments will
-  teach the model the exceptions anyway."* The instructions are his draft b, 833 characters in four
-  paragraphs where they were 2,041 in nine. The directory and purpose advice is on `browserai_init`'s
-  `directory` and `purpose` and resume's `purpose`. The full-page screenshot cost, the boxes advice
-  and the route and offline warnings are notes appended after upstream's own description of
-  `browser_take_screenshot`, the three `browser_mouse_*_xy` tools, `browser_route` and
-  `browser_network_state_set`, marked `BrowserAI note:`. A note is a new optional field beside an
-  `allow` verdict in `tool-verdicts.json`, and a note anywhere else stops the server at startup
-  naming the file. Watched red first: the instructions arm read the old text, no tool carried a
-  note, and the loader accepted a note on a denied tool, on an authored one and one that was not a
-  string.
+  Advice about one tool is appended after upstream's own description of it, marked *BrowserAI
+  note:*: the cost of a full-page screenshot, when to ask a snapshot for bounding boxes, and the
+  warnings on `browser_route` and `browser_network_state_set`.
 
-- 💥 **`browserai_set_purpose` is `browserai_change_purpose`.**
-  The maintainer's words verbatim: *"rename browserai_set_purpose to browserai_change_purpose"*.
-  There is no alias, and the old name is answered as a tool BrowserAI does not have. Watched red
-  first: the list carried no `browserai_change_purpose`.
+- 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
+  Over nine pages boxes cost 175,611 tokens against 105,804 without them, measured 2026-09-25.
+  `browser_snapshot` still takes `boxes: true` for the call that needs coordinates.
+
+- ⚡ **The tool list is answered at once, and no Playwright starts until a session opens.**
+  The tool list is compiled into BrowserAI, and each session's own Playwright is checked against
+  it before any page exists; one that differs refuses the session as a broken install and names
+  the first tool that differs.
+
+- 🔒 **A session's browser keeps its temporary files inside the session.**
+  They go in the session's own `temp` folder, which `browserai_catch_up` names and
+  `browserai_destroy` deletes with the rest, and a killed launch no longer leaves anything in your
+  own `%TEMP%`.
+
+- 🔧 **A hidden Chromium sends the user agent a visible one sends.**
+  It sent `HeadlessChrome` where a window sends `Chrome`. What it costs is in
+  [the hazard index](HAZARDS.md#hazard-index): under the switch, Chromium answers the
+  high-entropy client hints with empty values.
+
+- 🔧 **The browser no longer offers to save a password, because nobody can answer the offer.**
+  Chromium's offer is a window over the page that is not in the snapshot an agent reads, so the
+  next call answered about a page nobody could see. Firefox's password saving is off as well.
+
+- 🔧 **Every clean close gives the browser up to a minute to write what it holds.**
+  `browserai_close`, the idle close, a shutdown and an update each ask the browser to close itself
+  first and wait up to a minute for it, twice Chromium's 30 s cookie interval, and a shutdown asks
+  every open browser at once.
+
+- 🔧 **`mcp-registration.json` records one entry per client.**
+  Each entry has its own outcome, and every entry that did not register carries the line to run
+  by hand, with the install's data root when it has one of its own.
+
+- ⬆️ **`@playwright/mcp` moves to 0.0.83 with Chromium 155, and Velopack to 1.2.161.**
+  Chromium is 155.0.8059.12 and Firefox is Playwright's build 1553, still 156.0. Every machine
+  downloads Chromium once more, 208.8 MB. Among upstream's fixes: a dialog that opens while a page
+  loads no longer costs the navigation timeout, closing a browser while a download runs no longer
+  crashes the browser server, and a page's own tools work with Chromium 155.
+
+- ⬆️ **SQLite 3.54.0 is compiled into BrowserAI, up from 3.53.4.**
+  The amalgamation was checked against the hash sqlite.org publishes before it was vendored.
+
+- 📦 **A release publishes three files: the installer, the full package and the update feed.**
+  The portable `BrowserAI.zip` is no longer published, and `v1.1.0` was trimmed to the same three
+  files after the fact.
+
+- 📦 **A release is refused unless every dependency was checked that day and none has moved.**
+  The resolved set each release was built from is committed to the repository as well, under
+  [`docs/evidence/`](docs/evidence/README.md).
 
 ### Removed
 
-- ♻️ **Code that nothing has called since the one-binary build is deleted.**
-  The maintainer's decision of 2026-10-10, verbatim: *"9 a"*, after a final pass over the
-  build found it. What went answered a server's own pipe, a census of every running
-  BrowserAI, the coordinator's verbs and its apply gate, and a server that refused calls
-  while an update installed: `ServerPipeProtocol` whole, the census half of
-  `LiveInstances`, `BrowserProcesses.HeldUnder`, `IStagedUpdates`, most of
-  `CoordinatorProtocol`, and `BrowserProxy`'s update refusals. Nothing a running BrowserAI
-  does changes: a call an update meets is answered by the relay, as it has been since
-  2026-10-08, and the stray sweep still removes the live markers older builds left. Two
-  rows of the error catalogue went with the refusals, because only the suite could still
-  produce them, and the arms that drove the deleted code are retired with a remark where
-  each stood.
+- 🗑️ **Eight more of Playwright's tools are no longer offered.**
+  `browser_close`, in favour of `browserai_close`; `browser_resume`, Playwright's debugger control,
+  whose name is two letters from `browserai_resume`; `browser_set_storage_state`, which wipes a
+  profile's cookies and site storage before it loads a saved file; and `browser_generate_locator`
+  with the four `browser_verify_*` tools, because BrowserAI drives a browser for tasks and does not
+  write tests. A call that names one is answered like a call to a tool BrowserAI does not have.
+  BrowserAI offers 63 of the 72 tools upstream exposes, beside nine of its own.
 
-- ♻️ **The rest of what nothing reads or calls since the one-binary build is deleted too.**
-  The same *"9 a"*, on what that pass found and left: `ServerActivity`, which every proxy
-  went on filling for a server's pipe that no longer exists, with the proxy's `Activity`
-  and `HeldSessions`; twelve records of the update log that the server's own update pass
-  wrote, ids 1 to 11 and 21, which the background's update core writes under ids of its
-  own, so the ids are retired and never taken again; the two creations of the parallel
-  pipe the servers and the coordinator served; and the three words of a server's state
-  that only `ServerActivity` wrote, `starting`, `updating` and `stopping`, which leaves
-  `serving`, the one the background writes for itself and each relay. The pass had
-  counted six of the update log's records, because a search for each name also met the
-  background's record of the same name. Nothing a running BrowserAI does changes.
-
-- 🗑️ **The payload's copy of `tool-verdicts.json` is gone, with the child that answered the tool list.**
-  The verdicts are compiled into the server beside the tool list they judge, so nothing reads the
-  copy a build target used to put in the payload; the build removes one a payload assembled earlier
-  still holds, and the payload is complete with `node.exe` and `cli.js`. The run's own Playwright,
-  its configuration and its folders in the run's directory went the same day.
-
-- 🗑️ **Playwright's `browser_resume` is no longer offered, and a call naming it is refused.**
-  The maintainer's decision, in his words: *"I am leaning to remove playwrights own browser_resume
-  and pause and similar from the tool list (and not pass them through). I do not see the utility
-  and I do see a lot of possible confusion with our own resumtion tech."*, and then *"P6 a"*. It is
-  Playwright's debugger control: it releases a paused page and then waits for the next pause or for
-  the browser to close, which in a headless session can be an hour. A `deny` row in
-  `tool-verdicts.json` takes it out of `tools/list` and refuses it at the door with that reason,
-  measured on 0.0.83, so BrowserAI advertises 70 of the 72 tools upstream exposes.
-  `browserai_resume`, BrowserAI's own, is unaffected.
-
-  ⚠️ ***Corrected 2026-10-04, before any release carried it (previously "refuses it at the door
-  with that reason" and "advertises 70 of the 72").*** A call naming it is answered the way a
-  call naming a tool BrowserAI does not have is answered, and BrowserAI advertises 64 of the 72;
-  see the two entries below.
-
-- 🗑️ **The five test-writing helpers are no longer offered.**
-  Q365.2 a, the maintainer's words verbatim: *"Drop browser_verify_element_visible,
-  browser_verify_text_visiblem, browser_verify_list_visible, browser_verify_value and
-  browser_generate_locator per your recommendation."* Each is a `deny` row whose reason is that
-  BrowserAI drives a browser for tasks and does not write Playwright tests, so they leave
-  `tools/list`, and a call naming one is answered like a tool BrowserAI does not have. Watched red
-  first: the verdict file held two denials where seven were expected, and the five were still in
-  the advertised surface.
-
-- 🗑️ **`browser_set_storage_state` is no longer offered.**
-  Q365.1 a, the maintainer's words verbatim: *"Q365.1 a"*, and Q365.3: *"no further changes
-  besides what I already told you"*. It wipes the profile's cookies and site storage before it
-  loads a saved file, so an old file replaces a newer login, and BrowserAI's profile already keeps
-  logins. BrowserAI now offers 64 of the 72 tools upstream exposes. `browser_storage_state`, which
-  saves a login, stays. Watched red first: the verdict file held seven denials where eight were
-  expected, and the surface counted 65 where 64 were.
-
-  ⚠️ **One consequence is an open hazard**: a debugger pause that a close meets first leaves the
-  session unable to load a page, and since this change no tool a caller can reach releases it.
-  Nothing in an ordinary session arms a pause; `browser_run_code_unsafe` can.
-  [Evidence](docs/evidence/2026-10-03-debugger-0.0.83/README.md).
-
-- 🗑️ **The server's own installer exit is deleted, because it could never fire on a real install.**
-  Q276, the maintainer's words verbatim: *"Q276 a"*. `Main` exited 0 as `Startup[8]` when
-  `VELOPACK_FIRSTRUN=true`, but `VelopackApp.Run()` clears that variable in an installed process
-  before the server read it, and `Setup.exe` has started the configuration app and not the server
-  since 2026-09-15, so the branch answered nothing on any real install. The general exit -- a
-  launcher that is gone and a console on standard input, `Startup[9]` -- was already what ended
-  the installer's shape, and it now does so alone. `Startup[8]` is retired and may not be reused,
-  which `ProxyLogTests` holds.
-
-  **The variable is no longer a reason to stop serving**: a client that hands it on is served,
-  and a server whose launcher is gone takes `Startup[9]` with the variable set or not. Both
-  `InstallerHandoffTests` arms were watched red against a published build that still carried the
-  branch, and the arm that required the old exit is inverted to require serving. The
-  configuration app still reads the variable, before `Run()` clears it, to know a first run.
-- 🗑️ **The portable `BrowserAI.zip` is no longer published beside the installer.**
-  The maintainer's decision, verbatim: *"2 drop and update the readme to not mention it."* So
-  `README.md` does not mention it, with no *previously* clause in its place -- a correction
-  clause mentions the file, which is the thing he asked for the README not to do. This entry is
-  the record instead. What it said, in full: *"A `BrowserAI.zip` is published beside the
-  installer, by the same packaging run, for anyone who would rather unpack than install. (Named
-  `BrowserAI-win-Portable.zip` until 2026-09-15.) There is no installer in it to run the
-  registration hook, so registering it is the command above against wherever it was unpacked."*
-
-  **Nothing about the pack changes, and that is deliberate.** `vpk pack` still emits the portable
-  archive, the release script still renames it to `BrowserAI.zip` and still requires it, and it
-  is still rewritten into `assets.win.json`. Only the upload set changed. Keeping the local
-  artifact is what keeps the rename step exercised on every cut, not only on the cuts
-  somebody remembers.
-
-- 🗑️ **`v1.1.0` carries three assets instead of the seven it was published with.**
-  Dropping an asset from a release that is already standing is a separate decision from
-  deciding what the next one publishes: people may already have links. It was put on its own
-  and taken on its own.
-
-  Deleted, one at a time: the portable archive, `RELEASES`, `assets.win.json` and
-  `BrowserAI-1.1.0-manifest.zip`. **Each had a download counter of `0`.** What remains is
-  exactly what the release script now declares -- the installer, the full package and
-  `releases.win.json`.
-
-  **Verified immediately afterwards, because a feed that stops answering is the one way this
-  could have gone wrong**: `releases/latest` still resolves to `v1.1.0`, the feed URL still
-  answers 200 with the one row naming 55,022,716 bytes, and the installer link still answers.
-
-  **`v1.0.0` was deliberately left alone** and still carries all seven, so the two releases
-  differ on purpose, not by accident. The resolved-set manifest that was deleted here
-  is not lost: it was committed to the repository first, which is now its only surviving
-  copy, not its second.
+- 🗑️ **The configuration window is gone, with the link handler a project file could reach.**
+  Everything it did is on the dashboard page, and the link handler could have run what a project
+  file planted.
 
 ### Fixed
 
-- 🐛 **A call whose browser server ends under it is answered with what happened and how to go on.**
-  Found by lane FINAL, in the one red of `ScreenshotLimitTests` nobody could explain. The call was
-  answered with the transport's own words and the .NET exception's name, which reached a model as
-  *TaskCanceledException*, and `browserai_catch_up` showed the exception's stack trace. Both say
-  now that the browser server for that directory ended during the call, that part of the call may
-  have happened, and that `browserai_resume` starts a replacement; the stack trace is the session
-  log's. `LosslessPassthroughTests` holds the answer and `ErrorCatalogueTests` the record, each
-  planted red first.
-
-- 🐛 **When Unregister cannot remove BrowserAI from a client, the line it offers removes it.**
-  Lane TEXTS2, from round 2 of the texts review. A removal that failed, from the page's
-  Unregister or from the uninstall hook, was answered with the `claude mcp add` or `codex mcp add`
-  line, which registers BrowserAI again. It offers `claude mcp remove browserai --scope user` or
-  `codex mcp remove browserai` now, an uninstall whose pass throws says the same, and with no
-  client to remove BrowserAI from the answer says that nothing was changed. A removal from a
-  project is unchanged and waits on the maintainer's answer about project registrations. Over
-  another install's entry in a project, the advice names that file and the page's *Register in
-  a project*, since the user-scope line it gave changes nothing there. `RegisterAiTests` holds
-  both, planted red first.
-
-- 🐛 **A BrowserAI the Start Menu cannot start is no longer told to start from it.**
-  Lane TEXTS2, from round 2 of the texts review. A build started from a checkout or a publish
-  folder whose background crashed, hung, never opened its pipe or stopped under a call told the
-  person to start BrowserAI from the Start Menu, which starts the installed BrowserAI and never
-  this one. Each of those answers names the command that starts this build's background now, with
-  its data root, as the answer for a background that is not running already did. An installed
-  BrowserAI whose pack id is unknown has a scheduled task with no name, so no start of it starts
-  the background, and it is told to install BrowserAI again. `RelayTests` and
-  `BackgroundFinderTests` hold both, planted red first, and `BackgroundProcessTests` holds the
-  crash's form through the published background.
-
-- 📦 **A release the drift check refuses prints the reasons and that no release was cut.**
-  Lane TEXTS2, from round 2 of the texts review. `Test-DriftCheck.ps1` refuses with an error that
-  `$ErrorActionPreference = 'Stop'` makes terminating, which ended `New-Release.ps1` before its own
-  sentence, so *No release was cut* was never printed. The script prints it now beneath the drift
-  check's reasons, which name the file they read, and a drifted row that names neither version
-  says so where the sentence used to end at its colon. `ReleaseScriptTests` holds both, planted
-  red first.
-
-- ✅ **The arm that classifies a release directory's files skips where no release was cut.**
-  Found by lane FINAL. In a fresh worktree `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished`
-  failed, because the capability it asked for was met by the test pack's twin under
-  `test-pack\twin\`, and no shipping release was there to classify. It asks for a capability of its
-  own now, `shipping release`, which reads ABSENT there and skips the arm loudly, naming how to
-  cut or copy one in; a release run fails on it. Watched red against a fresh worktree's
-  `Releases\` first, and watched skip against the same.
-
-- 🐛 **Tool descriptions and refusals say what a window, a close and an update do.**
-  Lane TEXTS2, from round 2 of the texts review, for the maintainer's wording on the page.
-  `headed` says the person's Install now closes a visible window too, and that switching between
-  visible and hidden closes the browser and opens it again, keeping what a clean close keeps; the
-  line every answer that opens a window ends with says the same. `browserai_close` names all four
-  tools that still answer a closed session, itself included. A refusal for a setting left unstated
-  says the updates it holds back are BrowserAI's automatic ones, the background's three close
-  reasons say it closed the session, which may have had no browser up, and a failed browser
-  install is told without a .NET type name, with the installer's error line on a line of its own.
-  An update that ends a call already passed on no longer has the client told to call again. The
-  init, resume and catch-up descriptions are shorter, at 1,769, 1,747 and 1,757 of the 2,048
-  characters a client hands a model whole. `ProvisioningTests` holds the install's two, planted
-  red first; the rest is wording, and every test that holds a text passes.
-
-- 🐛 **The pages and the process log say in words what happened, with one event id per line.**
-  Lane TEXTS2, from round 2 of the texts review. The sessions page says a client's connection
-  ends when the client closes it or exits, and when an update installs; the update page names a
-  conversation's folder once, names the version that starts after Install now, a rollback's
-  included, and answers a button for a version no longer waiting with the one the page shows now;
-  and the command a client starts quotes its data root whenever it carries one. In the process
-  log a relay's refusal, its conversation, its end, the background's end, the uninstall hook's
-  stop and the Task Scheduler's refusal are sentences in place of enum names; the background's
-  stop waits only for connections still open, and writes nothing when there are none; a root the
-  start could not judge names what a shared root costs; and `BrowserAI.Background` and
-  `BrowserAI.Relay` give each line an event id of its own. `ProcessLogTests` holds the ids,
-  `BackgroundServerTests` the stop's wait, and `UpdatePageTests` and `PageRegistrationTests` the
-  pages' lines, each planted red first; the rest is wording, and every test that holds a text
-  passes.
-
-- 🐛 **A data root BrowserAI refuses is answered with what is wrong and how to fix it.**
-  The maintainer's 9 a. A background that would not serve out of a data root or an install root
-  outside the person's profile was recorded as a crash, so every call met the crash sentence,
-  which sends the person to a bug report and to the Start Menu, where the start is refused the
-  same way. The refusal is now a record of its own, and every call is told at once which root
-  was refused, why, and how to put it right. `RelayTests`, `BackgroundFinderTests` and
-  `InstallRootScopeTests` hold it, planted red against the crash.
-
-- 🐛 **After a downgrade, an end the newer build recorded no longer reads as a crash.**
-  The maintainer's 9 a, and a decision lane FIX took for his review: an end this build does not
-  know is a clean end, since every end a build writes is a clean one, so a relay names the
-  task's state as after any clean end. `BackgroundRecordTests` and `BackgroundFinderTests` hold
-  it, planted red first.
-
-- 🐛 **The background's stop waits for a late connection, and one relay that fails costs only itself.**
-  The maintainer's 9 a. The stop took its list of connections before it joined its listener,
-  so one the listener had just accepted ran on past the stop; and ending the relays for an
-  update stopped at the first relay whose connection failed with anything but a broken pipe,
-  while a call-off never looked at what it sent. `BackgroundServerTests` holds both, planted red
-  first.
-
-- 🐛 **Uninstalling one of two installs of one pack id leaves the other's toast clicks working.**
-  The maintainer's 9 a. Both installs share one application id and so one activator class, and
-  every uninstall took the class back. Now an uninstall takes it back only when it starts that
-  install's own program. `ToastActivationTests` holds it over two roots, planted red first.
-
-- ✅ **`AppBinaryTests` and `SandboxFlagTests` no longer go red over a file or process not theirs.**
-  The first read a stale `BrowserAI.exe` that a build before 2026-10-08 left in the
-  configuration app's output and no later build removes, which cost four lanes a red each; it
-  now reads whether the app's assembly, as the current build produced it, has an entry point. The
-  second read every payload `node.exe` in the job, a registry reap's included, and now reads the
-  server that started the run's browser. Both were planted red first.
-
-- 🐛 **The ready toast's line of what uses BrowserAI fits its banner.**
-  2.3 a, from the maintainer's answers of 2026-10-10. *In use by 3 agents, 2 hidden browsers and 1
-  visible window* was cut in the 362 px banner after *1 visible wi*, measured on his screen on
-  2026-10-08. The line reads *3 agents, 2 hidden browsers, 1 window* now, and
-  `UpdateToastContentTests` holds every count up to 99 of each kind to the 54 characters the banner
-  showed whole, watched red at 62 first.
-
-- 🐛 **A failed browser install records the installer's error line whole.**
-  5 a, the maintainer's words verbatim: *"5 a"*. On 2026-10-08 Playwright's installer exited 1 with a
-  stack whose frames carried two long paths each, and BrowserAI kept the last 800 characters of its
-  output, which began inside the first frame: the line naming the error, *ENOENT* on the install's
-  own lock folder, was not in the record. The record and the answer quote that line in full beside
-  the tail now. `ProvisioningTests` holds it on that output's shape, watched red first.
-
-- ✅ **The suite deletes a folder of its shared scratch root only when the run that made it is gone.**
-  5 a. `%LocalAppData%\BrowserAI-test-scratch` serves every checkout of the repository, and each run
-  deleted everything in it, so a run in one worktree deleted a live gate's app roots in another, as
-  happened on 2026-10-08. Each folder there now has an owner record naming the process that made it,
-  the cleanup takes only a folder whose owner has exited or one with no owner record made more than
-  a day ago, and every folder it deletes is a line in the machine's process log with the time and
-  the deleting process. `ScratchReclaimTests` drives the
-  cleanup from a second test host, watched red first against the old one.
-
-- ✅ **The hundred-relay arm's cleanup takes only the instance folder its own background made.**
-  Found by lane FIX's helper P on 2026-10-10. The arm removed every instance folder and live
-  marker whose name began with one of its pids, read after its processes had died, so a
-  process that had since been given one of those numbers, the person's own background among
-  them, could lose its folder. It takes a folder now only when the name begins with the
-  background's pid and the folder was created while that process lived; a relay makes no
-  instance folder and nothing makes a live marker since the one background.
-  `SaturationTests.TheBookkeepingReclaimTakesOnlyWhatThisRunsBackgroundMadeWhileItLived` holds
-  the rule, planted red first.
-
-- 🐛 **Every session the background closes when it ends says why: an update, a stop or a failure.**
-  The texts review's #24. Each was recorded as shut down when its client went away, and one
-  with no browser up as let go because its client went away, which every later refusal,
-  `browserai_resume` and `browserai_catch_up` then quoted after an update. Now an update
-  records *to install an update*, a stop through the pipe *because BrowserAI was asked to
-  stop*, and a serve that failed *because BrowserAI's background ended on a failure, which
-  its log names*; the background says why before its pipe closes, and a relay the update
-  ended leaves what it drove recording the update too. `CloseReasonTests`,
-  `BackgroundServerTests` and a published arm in `BackgroundProcessTests` hold it, planted
-  red first.
-
-- 🐛 **The installer's log carries what each install, update and uninstall hook did.**
-  Found by the texts review of 2026-10-10. The hooks' lines for that log went into a list
-  that a hook process exits before reading, so none reached a log: on this machine
-  Velopack's logs held 332 hooks served and not one of those lines. They go through
-  Velopack's own logger now, into `%LOCALAPPDATA%\velopack\velopack_<pack id>.log`, the
-  file `Update.exe` writes. `RealInstallerTests` reads the install's line there, planted
-  red first.
-
-- 🐛 **A line to register BrowserAI by hand carries the data root the install was made with.**
-  The texts review's #138 and #139. The line ended in `--mcp`, so a client set up from it
-  for an install made with a data root started a relay that no background serves; it
-  carries the arguments the registration itself was given now, as the dashboard's Register
-  and Repair do. The line offered over another install's entry was spelled with that
-  install's command and is this install's now. `RegisterAiTests` holds both, planted red
-  first.
-
-- 🐛 **Five texts say what is true of the one background.**
-  The texts review's #115, #120, #141, #147 and #180. A held call whose background never
-  opened its pipe gets an answer of its own, since a Start Menu start ends nothing there;
-  *call again in a few seconds* is said only to a client that starts BrowserAI again by
-  itself; an uninstall whose background's record named no process logs `NotWaitedFor`
-  and not `Ended`; the refusal of a root two users can reach names the pipe and the
-  update, and no longer a live-instance census; and the idle close's row stands under
-  `(browser closed)` and not under a tool no model can call. Each is held by the class
-  it belongs to, planted red first.
-
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
-  From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision
-  `2026-07-28`. BrowserAI offered every revision its SDK implements, so it accepted that one,
-  and then answered `tools/list` without the `resultType` the revision requires: of 153
-  connections to the installed 1.1.0 counted in the client's own logs, 145 listed no tool, and
-  the session had BrowserAI's instructions and nothing to call. BrowserAI now offers revision
-  `2025-11-25` alone, so the new opening is refused with `-32022` naming it, and Claude Code
-  falls back to the `initialize` handshake, as its own code reads at 2.1.288 and 2.1.294. A
-  client that offers an older revision is answered `2025-11-25`; Codex offers `2025-06-18` and
-  keeps whatever revision a server names. The suite's own Claude Code runs never open the new
-  way, so `ProtocolSplitTests` sends both openings to the published binary, watched red against
-  the old setting. Implementing `2026-07-28` is in `TODO.md`.
-
-- 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.**
-  9 d, the maintainer's words verbatim: *"9 d - and add a todo to the repo to track the progress of
-  the bug for when to remove our checks. Also, the refusal should mention the chromium bug link."*
-  Chromium captures at most 16,384 px in either direction and repeats the image past that line,
-  while Playwright reports success: measured 2026-10-04 at `chromium-1247`, exactly at the line,
-  for a page's height and width and an element, as PNG and as JPEG. BrowserAI now reads the size
-  from the header of every Chromium screenshot, inline or in the file the answer links, and
-  refuses one past the line with what happened, Chromium's issue
-  [41347676](https://issues.chromium.org/issues/41347676), and what to do instead: screenshots of
-  the viewport while scrolling, or a Firefox session, which takes up to 32,767 px whole. The file
-  stays where it was written and the refusal names it. This reverses, for this one tool, the rule
-  of 2026-08-26 that nothing reads the child's answer, and `TODO.md` watches the Chromium issue and
-  [microsoft/playwright#32373](https://github.com/microsoft/playwright/issues/32373) so the check
-  goes when a fixed Chromium ships. `ScreenshotLimitTests` holds the header reading and takes a
-  real Chromium screenshot one pixel past the line and one at it.
+  From 2026-09-30 Claude Code opened its servers at MCP revision `2026-07-28`, which BrowserAI
+  accepted and did not implement, so most sessions had no BrowserAI tool to call. BrowserAI offers
+  revision `2025-11-25` alone now, and Claude Code falls back to the handshake it used before.
 
 - 🐛 **A Claude Code terminal session is told to reconnect through `/mcp` when an update ends its server.**
-  Measured 2026-10-03 at Claude Code 2.1.288 against a stand-in server: `claude -p` and the VS
-  Code extension start a stdio server that has gone again on the next call, and the terminal UI
-  never does, 9 of 9; it shows the server as failed until the user reconnects it. The two update
-  refusals told every Claude Code session that its client starts the updated BrowserAI by itself,
-  which left a model in a terminal session waiting for something that does not happen. The three
-  surfaces send the same `clientInfo`, so the Claude Code remedy now says both: what `-p` and VS
-  Code do on their own, and that a terminal session reports the server as disconnected and only
-  the user can reconnect it, so the model should ask them to. `ErrorCatalogueTests` holds both
-  rows, watched red against the old sentences.
-- 🐛 **A Firefox started with Shift held no longer stalls in safe mode, and a run that starts one fails.**
-  Q312 b, the maintainer's words verbatim: *"Q312 b"*. On Windows a Firefox browser process that
-  starts while Shift is held enters safe mode, opens a modal window before any browser window,
-  headless or not, and never answers Playwright, so the launch waits out its 180 s timeout: the
-  stuck Firefox launch the gates of 2026-09-22 and 2026-09-24 met and read as contention. Measured
-  2026-09-25 at firefox 1549: 4 stuck in 133 serial launches without the fix, 0 in 155 with it.
-  Every child is now started with `MOZ_DISABLE_SAFE_MODE_KEY=1` in `ChildEnvironment.Forced`, which
-  reaches Firefox through node. **The suite fails any run in which a Firefox of its own starts in
-  safe mode**: a session-long watch reads the command line of every process under the browsers
-  root and the scratch roots for the `-safeMode` a safe-mode Firefox gives its content processes,
-  and a new `firefox safe mode` row in the coverage block says what it saw. **The fix line cannot
-  be planted red** without holding a key down, which makes it the second named exception to the
-  plant-it-red rule, made by the rule's owner and written into `AGENTS.md`; the watch is the half
-  that can, and was: with `MOZ_SAFE_MODE_RESTART=1` planted, a route the variable does not cover,
-  one Firefox arm waited out three minutes and the run failed with exit 10, naming the safe-mode
-  content process.
+  `claude -p` and the VS Code extension start the updated BrowserAI by themselves, and the
+  terminal never does, so the agent there is told to ask you to reconnect it.
 
-- 🐛 **Registering in a project checks whose entry is already there, and rewrites a stale one of ours.**
-  The window's **Register in a project** had no ownership check at all, so it would write over
-  another BrowserAI's entry in somebody's `.mcp.json`; and over an entry of our own it ran
-  `claude mcp add --scope project`, which exits 1 with *already exists*, and reported the file as
-  written while the stale path stayed where it was. Both project verbs now go through the same
-  registrar the installer uses: another install's entry is refused and left alone, and an entry of
-  ours is removed before it is written again.
+- 🐛 **A Chromium screenshot past 16,384 px on a side is refused, where it came back repeated.**
+  Chromium repeats the image past that line and still reports success. The refusal names
+  [Chromium's issue](https://issues.chromium.org/issues/41347676) and what to do instead:
+  screenshots of the viewport while scrolling, or a Firefox session, which takes up to 32,767 px.
 
-- 🐛 **The update check has its own timer, so the crash tripwire means what it says again.**
-  The maintainer's decision, 2026-09-24, verbatim: *"Wrap the check in its own timer. So all
-  three timers sit in the tripwire's time."* Q256. `UpdateService.CheckBudget` is **15 minutes**,
-  derived and not chosen: the tripwire's arithmetic needs `check + absolute < tripwire`, and at
-  30 and 45 that leaves 15 as the ceiling. `TheOuterDeadlineIsATripwireRatherThanASecondBudget`
-  asserts it, so the relationship cannot drift.
+- 🐛 **A Firefox started while Shift is held no longer stalls in safe mode.**
+  Such a launch waited out Playwright's 180 s timeout, measured 4 times in 133 launches without
+  the fix and 0 in 155 with it.
 
-  **What was broken was the attribution as much as the bound.** Velopack's
-  `CheckForUpdatesAsync()` takes no `CancellationToken`, so a stalled manifest fetch ended only
-  on its own 30-minute `HttpClient.Timeout` -- and it ends it by throwing
-  `TaskCanceledException`, which is an `OperationCanceledException`. So the one log line that
-  means *our own timers failed* was also the line an ordinary slow feed produced. A check that
-  outruns its budget now logs **event 21**, its own; event 11 is the tripwire's and nothing else
-  reaches it. **No event id changed.**
+- 🐛 **A call whose browser server ends under it is answered with what happened and how to go on.**
+  It used to reach the agent as the name of a .NET exception. It says now that part of the call
+  may have happened, and that `browserai_resume` starts a new browser server.
 
-  ⚠️ **The budget is applied by AWAITING the call through its token, not by passing the token
-  on, because passing it on does not work.** Past the point where `CheckAsync` reaches Velopack
-  a token is inert. The pass ends on time and Velopack's own call finishes into nothing; that
-  cost is accepted because the alternative is a pass that cannot be ended at all.
+- 🐛 **A resume or a shutdown that meets a close in flight waits for it, and what the close saves is kept.**
+  The browser used to be killed about a millisecond into its own close. A destroy still cuts the
+  close short, because it deletes what the close would save.
 
-  **Planted red twice, and the first plant is the stronger finding.** With the fix removed and
-  the probe ignoring its token -- which is Velopack's actual shape -- the pass **never ended at
-  all**: the run had to be killed, which is the defect the sentence above describes and not
-  the mis-attribution the brief predicted. With the fix removed and the probe honouring its
-  token, the arm saw `TripwireFired` and no event 21, which is the mis-attribution. Both
-  watched; both green after.
+- 🐛 **Playwright's own registry of browsers no longer grows without end.**
+  Playwright writes one file per browser and removed none for a profile like BrowserAI's: 4,059
+  stood on one machine, which slows Playwright's own listing. A session close and every start
+  now prune it, without waiting for it.
 
-  The four durations are now a record the service takes, defaulting to the product's own and
-  never anything else in the product. What that buys is a test that can ask **which** timer
-  fired without waiting three quarters of an hour: `UpdateBudgets.Scaled` divides all four by
-  one factor, so the arm runs against the product's own ordering instead of four numbers
-  somebody typed.
+- 🐛 **A data root BrowserAI refuses is answered with what is wrong and how to fix it.**
+  Every call used to meet the crash sentence, which sent the person to a bug report and to a
+  start that was refused the same way.
 
-- 🐛 **The character scan stops mistaking a comment for a character literal.**
-  `HouseRuleTests.NoTextFileCarriesACharacterAPersonDoesNotType` admits a forbidden character
-  inside `'x'` in a test or a probe rig, because that is a C# character literal and the literal
-  is the point -- a control that contains the character, not an occurrence of it. It
-  decided that by reading **the two adjacent characters and nothing else**, so an ordinary
-  comment quoting `'x'` had the same shape and was admitted too. **It hid three elisions
-  written with a real ellipsis**, in `ErrorCatalogueTests`, `ProvisioningTests` and
-  `SessionListTests`, and the scan reported the tree clean for as long as they stood.
+- 🐛 **The installer's log carries what each install, update and uninstall hook did.**
+  None of those lines ever reached a log. They go into the log Velopack's `Update.exe` writes now.
 
-  A code shape must now be in CODE, asked of `Harness.Commentary` -- the same lexer the wording
-  scan reads with, so there is one answer to *is this a comment* and not two. The lexer gained
-  `SpansOf` and `IsCommentary`, and `Of` is rebuilt on them, because a reader that needs to
-  know whether a given CHARACTER is inside a comment cannot use the concatenated string: the
-  offsets are gone, and a second walk written for the purpose would be a second answer.
-  **Planted red** with a doctored comment in a real file and watched naming the file, the line
-  and the character.
-
-  **The one occurrence that branch was legitimately carrying is now a named quotation.**
-  `ModelSurfaceTests` has a dated *previously* clause quoting a comment about what an em dash
-  costs IN BYTES, so the character is the subject of the sentence and re-spelling it would make
-  the quotation false. It is admitted for that reason now, and not because the quotation
-  happens to put the dash between two apostrophes.
-
-- 🐛 **Notifications relayed from the child leave in the order the child wrote them.**
-  The SDK's message loop starts each inbound message's handling without awaiting it -- its own
-  comment says *"Fire and forget the message handling to avoid blocking the transport"* -- so a
-  burst of `notifications/progress` written in order could reach the caller in any order at
-  all. The `progressToken` and the params always survived; only the sequence did not. It cannot
-  be fixed from a notification handler, because by the time one runs the race has happened.
-
-  **It is fixed at the transport, which is the one place the child's own order still exists.**
-  `JsonLinesTransport.DispatchAsync` is a single sequential loop over framed bytes, so an
-  arrival number taken there is wire order **by construction and not by timing**;
-  `RelayInArrivalOrderAsync` makes each relay wait for its turn, and `ChildLink.Session` is the
-  route to it -- the `IClientTransport` seam [deviation 7](STACK.md) always described.
-  ⚠️ **Only a notification that WILL be relayed takes a number**, or a ticket nobody returns
-  would park every later one behind it forever. There is no timeout: a bound would be a
-  promptness assertion on a relay, and the two things that really end a wait both do -- the
-  caller's token, and disposal, which releases every waiter.
-
-  **Planted red at 12 rounds of 16**, because one burst comes out right most of the time on a
-  quiet machine and this is a race. Unsequenced, **11 of 12 rounds came out wrong** -- the
-  first read `1,8,4,14,3,16,6,5,10,11,9,12,7,2,13,15`. Sequenced, all 12 read 1 to 16.
-
-  ⚠️ **The child that ships emits no progress notifications at all**, so nothing in
-  production exercises this today. That is why it was a decision and not a defect: build ahead
-  of the bump that makes it reachable, or let re-verification row 104 re-open it. The
-  maintainer chose to build. The row's trigger now means something narrower and better -- the
-  day an upstream tool reports progress, the ORDER is already handled.
-
-- 🐛 **The packer's own asset list no longer disagrees with what a release publishes.**
-  `vpk pack` writes `assets.<channel>.json` naming everything it produced, and `vpk upload github`
-  uploads **every file listed in it**. So the portable archive would have been published by the
-  one command nobody here runs, contradicting the set the release script declares -- and nothing
-  would have said so, because the two mechanisms never meet. It was found by asking what else
-  reads the files that were being dropped.
-
-  `build/Set-UploadAssets.ps1` rewrites the list to the declared set and **re-reads it from disk**
-  to refuse anything else, because what an upload reads is the file, not the variable that
-  wrote it. It runs from `New-Release.ps1` after the rename and is its own script so the suite can
-  drive it, which it does: the portable archive is planted and both refusals are exercised.
-
-  **One refusal is not obvious and is the reason this is not a one-line filter.** A list with no
-  `Full` entry is a feed with no rows, because `vpk` builds the release manifest out of exactly
-  those -- so a rewrite that dropped the package would publish a manifest advertising nothing,
-  which a client reports as *no update available* and never as an error.
-
-  **Two things the step cannot do, said and not assumed.** It cannot stop `vpk upload github`
-  adding a legacy `RELEASES` on the default Windows channel, which reads no list at all, and it
-  cannot remove the feed upload, which is wanted. The file itself stays on disk; what changed is
-  what it names.
-
-- 🐛 **A killed launch leaves nothing in the user's `%TEMP%`, and the registry is reaped at startup.**
-  P5 a, the maintainer's words verbatim: *"p5 a"*. Every browser launch a kill ended left an empty
-  `playwright-artifacts-*` behind in the temporary folder its child was given, which was the user's
-  own, measured on 2026-10-03. A session's child is given a `temp` folder inside the run's own
-  directory now, which a clean exit deletes and the next start sweeps. A client that kills BrowserAI
-  runs no close path either, so the browsers it took down kept their descriptors in Playwright's
-  registry until a later close reaped them; the startup sweep now starts that reap on every pass
-  that has the machine-wide gate, so one process reaps while the others starting beside it do not.
-
-- 🐛 **A session with no browser up no longer reads as having one.**
-  Found on 2026-10-03 while the shutdown's reap arm was being planted red. Every reader of *is a
-  browser up* counted the processes in the session child's job against one, and Windows puts a
-  console host in that job beside `node`, so the job holds two processes before any browser starts
-  and two again after a close. Every real session therefore read as having a browser: a
-  `browser_close` with nothing open was forwarded and started a browser in order to close it, a
-  resume refused per-run settings it could have applied, every teardown started a registry reap,
-  and a server's pipe described every session it held as having a browser up. The count is now
-  taken against what the job held at the child's handshake. The in-process arms ask a double and
-  could not see it; a new arm asks a real child, and was watched red against the old count.
-
-- 🐛 **A resume, a release or a shutdown that meets a close in flight now waits for it.**
-  The maintainer's warning of 2026-10-04, verbatim: *"Just thinking about it, if we were to resume
-  within that close window we will need to handle atomicity and orderign correctly. Beware when
-  building lane c."* A resume that met the idle close still waiting for the browser ended the wait
-  at once and ended the child through its stdin, on which `@playwright/mcp` force-kills its browser
-  about 1 ms into its graceful close; a client that went during the close, or a shutdown, did the
-  same. Each now waits for the browser's answer, up to the minute the close is given, and then opens
-  or lets go of the session, and the session's log says so. A call that arrives meanwhile is refused
-  at once, as before, with the sentence naming `browserai_resume`. A destroy still cuts the close
-  short, and says so: it deletes what the close would save. The caller's own `browser_close` now
-  finishes even when its caller stops waiting for it, and a resume that takes over a kept session
-  whose close was in flight no longer says its browser was kept. Watched red first in process,
-  through the session host with kept sessions, and against a real Chromium whose close the suite's
-  probe held back, in process and in the session host: there the resume answered while the close
-  was still held, and with the fix the cookie written just before the close is there after the
-  reopen and both tabs come back.
-
-- 🐛 **A Chromium session reopens its tabs after its browser was killed.**
-  Q376 a, the maintainer's words verbatim: *"Q376 a"*. A browser killed and not closed leaves its
-  profile marked as crashed, and Chromium does not restore on the launch after an unclean exit, so
-  the session restore every launch asks for brought nothing back: 0 of 27 runs on 2026-10-03, 21
-  of them with the tabs on disk. Every Chromium launch now carries `--hide-crash-restore-bubble`,
-  with which 11 of 11 runs that had the tabs on disk restored them. A client's kill, the
-  coordinator or the session host ending, and a close cut off at its cap all leave a browser that
-  way. It turns off Chromium's guard against a page that crashes the browser at every launch, with
-  no guard of BrowserAI's in its place, as decided. A browser killed in the first seconds of a new
-  profile's first launch, before Chromium has written the profile's Preferences, still comes back
-  with nothing: Chromium takes that profile for a new one. Watched red first: the generator's arm found
-  the switch missing, and a resume after the suite killed a real Chromium's whole job opened the
-  new tab page and restored nothing.
-
-- 🐛 **A missing task's answer and the task's description say when a Start Menu start cannot register it.**
-  The maintainer's texts review of 2026-10-10, items 116 and 135. A Start Menu start registers a
-  missing task again only from the copy the install saved, `background-task.xml`, and only when it
-  can read that copy and the Task Scheduler takes it; otherwise it says why in BrowserAI's log.
-  The relay's answer to a call held for a missing task, and the description the task carries in
-  Task Scheduler, both promised the registration with no condition. Both now say what it depends
-  on, and that installing BrowserAI again is what is left when it fails. `RelayTests` and
-  `SignInTaskTests` hold both texts word for word, planted red against the old ones.
-
-- 🐛 **A person's start and the sign-in task step write what happened, in words and with one full stop.**
-  The maintainer's texts review of 2026-10-10, items 144 and 166 to 173. A build that is not
-  installed is given the command that starts its own background with this build's full path,
-  quoted, where it gave a bare `BrowserAI.exe`, which a terminal finds on the PATH the hooks point
-  at the installed build; an installed build whose pack id is unknown has a line of its own, 6112,
-  where it was told it is not installed. A missing task the Task Scheduler will not register again
-  has a line of its own too, 6113, where 6104 called it registered again with the outcome
-  `Failed`. The hooks' line for a copy beside the install that could not be written or deleted
-  says the task itself was registered or removed, where it said the task was not changed. 6106
-  gives its bound in seconds, where it printed `00:00:30`, and 6107 calls a code nothing recorded
-  unknown, where it printed `(null)`. 6108, 6109 and every failure the Task Scheduler reports end
-  in one full stop, where a reason that ended in one gave two. `PersonStartTests` and
-  `SignInTaskTests` hold each line word for word, up to any reason Windows supplies, each planted
-  red against the line as it was. A person's start ends a hung background through
-  `PersonStartSettings.EndProcess` now, a seam beside the scheduler's, because what Windows says
-  about a process it will not open or end cannot be provoked in the suite's own process.
-
-- ✅ **Two arms read what the night's changes made true, and four wait for a double to stop.**
-  The first two-shell gate on `1296bab5` found them on 2026-10-10. `FlatOutputTests` still held
-  a session to three folders, where the maintainer's 4.1 a gives it a fourth, `temp`, once its
-  child starts, and `SessionToolTests` still looked for the .NET name of a wrong kind, `String`,
-  where the texts review's #26 names it in words. Neither arm was in the filtered runs those
-  changes were checked with. Four `CloseOrderingTests` arms asserted that a session's double had
-  stopped the moment the call that ended it returned, while the double's read loop sees its
-  pipe close on a thread of its own, and the gate's Git Bash half caught one of them; each now
-  waits for the stop. Nothing a running BrowserAI does changes.
-
-- 🐛 **A release or a dev pack over a current drift check gets past its first step.**
-  Found on 2026-10-10 by a dry run of the deploy's pack, the first run of `build/New-Release.ps1`
-  past that step since the rule arrived the same day. `build/Test-DriftCheck.ps1` ended with no
-  exit code, and the release script reads `$LASTEXITCODE` under strict mode before any program
-  has set one, so every release and every dev pack over a current check stopped with *"The
-  variable '$LASTEXITCODE' cannot be retrieved because it has not been set."* The check exits 0
-  now, as the version check does, and the release script takes the check's date as
-  `-DriftCheckToday` for the suite. `ReleaseScriptTests`' drift arm runs the script over a current
-  copy as far as the version refusal, planted red against the check as it was. A test pack never
-  reads the check, so no gate had met it.
+- 🐛 **The texts a model, a person and the logs read say what is true of the one background.**
+  When Unregister cannot remove BrowserAI from a client, the line it offers removes it, where it
+  offered the line that adds it again. A line to register by hand carries the install's data
+  root. A build that is not installed is told the command that starts its own background, not
+  the Start Menu. A failed browser download quotes the installer's own error line whole. And the
+  process log says in words what happened, with one event id per line.
 
 ## [1.1.0] - 2026-09-23
 

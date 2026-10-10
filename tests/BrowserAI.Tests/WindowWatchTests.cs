@@ -27,8 +27,12 @@ namespace BrowserAI.Tests;
 /// looking at, which shows a window and must exit 10 naming its class -- the
 /// positive control a watch that stopped seeing would fail. And the real offender,
 /// <c>RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow</c>,
-/// was watched red against the unmodified tree on 2026-09-24 before Q279 moved it,
-/// which the CHANGELOG entry records with the run's own numbers.
+/// was watched red against the unmodified tree on 2026-09-24 before Q279 moved it:
+/// run in a child test host on a private desktop, it exited 10 naming
+/// <c>#32770 'BrowserAI'</c> from the installed app and two input-indicator windows of
+/// the same process. <i>Corrected 2026-10-10 (previously "which the CHANGELOG entry
+/// records with the run's own numbers"), when the unreleased changelog was cut to
+/// what a user needs and that run's account moved here.</i>
 /// </para>
 /// </remarks>
 internal sealed class WindowWatchTests
