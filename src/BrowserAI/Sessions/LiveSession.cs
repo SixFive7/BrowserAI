@@ -152,6 +152,12 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// took both their places, and the background never ends on its own (S a), so
     /// there is no linger to keep in step with. The period stays the 15 s it was.
     /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-10 by addition: since 2026-10-08, E2, a headed session is
+    /// not out of the idle timer. It has a countdown of an hour unless the agent set
+    /// another time, and only a session set to never has none. This look still lets a
+    /// session go once the person has closed its window, whatever its countdown.</i>
+    /// </para>
     /// </remarks>
     public static TimeSpan DetachedWindowLook { get; } = SessionTimes.DetachedWindowLook;
 

@@ -580,7 +580,9 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 of the ten drawn that day").** [`assets/BrowserAI.ico`](assets/BrowserAI.ico) is
 **candidate 3** -- a globe with a reading eye -- chosen by the maintainer on
 2026-09-16 (Q196), and it is wired into both executables, the Setup stub, the
-Add/Remove entry and the Start Menu shortcut. **Before a release is cut, confirm
+Add/Remove entry and the Start Menu shortcut. *Corrected 2026-10-10 by addition:
+into the one executable since 2026-10-08, D7 a, as `src/BrowserAI/BrowserAI.csproj`'s
+`ApplicationIcon`.* **Before a release is cut, confirm
 that the two files still agree**: `assets/BrowserAI.ico` and
 [`assets/icon.svg`](assets/icon.svg), which is the master the raster was rendered
 from. `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` holds the
@@ -627,6 +629,9 @@ zero -- **plus the two things an exit code does not establish**:
   both with `-o` pointed at one directory left the server and deleted the app,
   leaving the app's `.pdb` behind so the directory looked populated. Each
   publish stages into `artifacts\publish-<exe stem>` and is copied in.
+  *Corrected 2026-10-10 by addition: since 2026-10-08, D7 a, the one executable
+  is what the script looks for by name, and a pack directory without it is
+  refused.*
 - **`UseSystemResourceKeys` unset**, quoted from `Directory.Build.props`.
 
 ⚠️ **EVERY RELEASE PUBLISH GOES THROUGH `build/New-Release.ps1`, AND IT LEAVES
