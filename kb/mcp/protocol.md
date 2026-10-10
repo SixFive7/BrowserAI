@@ -728,7 +728,8 @@ two failures above are a Codex started before the install, which does not find t
 until it is started again, and another `BrowserAI.exe` earlier on the PATH, which starts
 silently. The entry with its own PATH started in every condition measured; its costs are a
 server whose PATH is that one entry, and a reliance on `which` expanding `~`, which Codex
-neither documents nor tests. Which entry BrowserAI writes is the maintainer's to decide.
+neither documents nor tests. Which entry BrowserAI writes is the maintainer's to decide. ⚠️ *Decided later that day,
+by addition: his 30 took the bare name for both clients, which the section below measures for Claude Code.*
 
 ## Claude Code finds a bare name in a project entry on the PATH it was started with -- measured 2026-10-10
 
