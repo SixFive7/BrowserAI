@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Lane ID, 2026-10-10: the first message of each Codex thread in the 2026-10-08 scratch homes.
+
+For each home under the measurement's scratch folder, copies state_5.sqlite and its -wal
+into this folder (never opening the measurement's own files with SQLite, which would
+write their -shm), reads the threads table from the copy, and reads each rollout as
+text. Prints one row per rollout: the thread, where its first UserMessage record starts,
+whether that text equals the thread's title, and what else the rollout holds.
+
+usage: python -I measure.py <client-tabs folder> <scratch folder>
+"""
+import json
+import os
+import shutil
+import sqlite3
+import sys
+
+source, scratch = sys.argv[1], sys.argv[2]
+homes = []
+for root, dirs, files in os.walk(source):
+    if 'state_5.sqlite' in files and 'sessions' in dirs:
+        homes.append(root)
+homes.sort()
+
+rows = []
+for number, home in enumerate(homes, 1):
+    copy = os.path.join(scratch, f'home{number}')
+    os.makedirs(copy, exist_ok=True)
+    for name in ('state_5.sqlite', 'state_5.sqlite-wal'):
+        if os.path.exists(os.path.join(home, name)):
+            shutil.copyfile(os.path.join(home, name), os.path.join(copy, name))
+    connection = sqlite3.connect('file:' + os.path.join(copy, 'state_5.sqlite').replace('\\', '/') + '?mode=ro', uri=True)
+    titles = {row[0]: row[1] for row in connection.execute('select id, title from threads')}
+    names = {row[0]: row[1] for row in connection.execute('select id, name from threads')}
+    connection.close()
+    for root, _, files in os.walk(os.path.join(home, 'sessions')):
+        for file in sorted(files):
+            if not file.startswith('rollout-'):
+                continue
+            path = os.path.join(root, file)
+            data = open(path, 'rb').read()
+            offset = 0
+            first = None
+            user_messages = 0
+            injected_user_roles = 0
+            meta = {}
+            for raw in data.split(b'\n'):
+                if raw:
+                    record = json.loads(raw)
+                    payload = record.get('payload') or {}
+                    if record.get('type') == 'session_meta':
+                        meta = {key: payload.get(key) for key in ('id', 'cli_version', 'originator', 'source')}
+                    if record.get('type') == 'response_item' and payload.get('type') == 'message' and payload.get('role') == 'user':
+                        kinds = (payload.get('internal_chat_message_metadata_passthrough') or {}).get('content_item_kinds')
+                        if kinds != ['user.text']:
+                            injected_user_roles += 1
+                    if record.get('type') == 'event_msg' and payload.get('type') == 'item_completed' and (payload.get('item') or {}).get('type') == 'UserMessage':
+                        user_messages += 1
+                        if first is None:
+                            texts = [part.get('text', '') for part in payload['item'].get('content') or [] if part.get('type') == 'text']
+                            first = (offset, '\n'.join(texts))
+                offset += len(raw) + 1
+            thread = meta.get('id')
+            rows.append({
+                'home': number,
+                'thread': thread,
+                'cli_version': meta.get('cli_version'),
+                'originator': meta.get('originator'),
+                'source': meta.get('source'),
+                'bytes': len(data),
+                'first_user_message_at': first[0] if first else None,
+                'first_equals_title': (first[1] == titles.get(thread)) if first else None,
+                'title_in_db': thread in titles,
+                'named_in_db': names.get(thread) is not None,
+                'user_messages': user_messages,
+                'injected_user_role_records': injected_user_roles,
+            })
+
+for row in rows:
+    print(json.dumps(row))
+equal = sum(1 for row in rows if row['first_equals_title'])
+offsets = [row['first_user_message_at'] for row in rows if row['first_user_message_at'] is not None]
+print(f'{len(rows)} rollouts in {len(homes)} homes; first UserMessage equals the title in {equal}; '
+      f'first UserMessage starts between {min(offsets)} and {max(offsets)} bytes; '
+      f'versions {sorted({row["cli_version"] for row in rows})}')

@@ -1023,6 +1023,63 @@ internal sealed class BackgroundServerTests
         await Assert.That(rig.Roster.ConnectedWithNames().Single().Label?.Text).IsEqualTo("Lemon list");
     }
 
+    /// <summary>
+    /// A Codex relay whose thread Codex's index does not name is called by the thread's
+    /// first message, and the log says only where the name was found.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.4 a as the maintainer approved it on 2026-10-10</b>: the index's name, else the
+    /// first message, else <i>Codex in &lt;folder&gt;</i>. And from the brief: no log
+    /// record carries a title, a prompt or an id, and a first message is a prompt.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a log record that carried the name.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACodexRelayWhoseThreadHasNoNameIsCalledByItsFirstMessageAndTheLogSaysOnlyWhere()
+    {
+        const string Thread = "dddddddd-4444-7444-8444-444444444444";
+        const string FirstMessage = "Count the lemons in the crate";
+
+        using var scratch = ScratchDirectory.Create("background-codex-first");
+        var home = Path.Combine(scratch.Path, "codex-home");
+        var day = Path.Combine(home, "sessions", "2026", "10", "09");
+
+        _ = Directory.CreateDirectory(day);
+        await File.WriteAllTextAsync(Path.Combine(day, $"rollout-2026-10-09T00-50-42-{Thread}.jsonl"), """
+            {"type":"session_meta","payload":{"id":"THREAD","cli_version":"0.162.0"}}
+            {"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"MESSAGE"}]}}
+            {"type":"event_msg","payload":{"type":"item_completed","thread_id":"THREAD","item":{"type":"UserMessage","content":[{"type":"text","text":"MESSAGE","text_elements":[]}]}}}
+
+            """.Replace("THREAD", Thread, StringComparison.Ordinal).Replace("MESSAGE", FirstMessage, StringComparison.Ordinal));
+
+        await using var rig = BackgroundServerRig.Start();
+        using var relay = rig.Connect();
+
+        await relay.SendAsync(Hello(rig, "codex-mcp-client", new ConversationFacts(null, null, null, null, home), window: null));
+        await Assert.That((await relay.NextAsync()).Result).IsNotNull();
+        _ = await relay.InitializeAsync();
+        _ = await relay.ListAsync();
+        _ = await relay.RequestAsync("tools/call", CodexCall(Thread));
+
+        var drawn = rig.Roster.ConnectedWithNames().Single();
+
+        await Assert.That(drawn.Label).IsEqualTo(new ConversationName(FirstMessage, IsTitle: true));
+
+        var found = rig.Logs.Records.Where(log => log.Category.EndsWith(nameof(RelayRoster), StringComparison.Ordinal)).Select(log => log.Message).ToList();
+
+        await Assert.That(found).Contains($"Relay {drawn.Id}'s conversation was found by CodexCall and named by CodexRollout.");
+
+        foreach (var secret in new[] { Thread, FirstMessage })
+        {
+            await Assert.That(rig.Logs.Records.Any(log => (log.Message + log.Exception).Contains(secret, StringComparison.Ordinal)))
+                .IsFalse().Because($"a log record carries '{secret}'");
+        }
+    }
+
     /// <summary>A relay's greeting from the rig, for another client and with the conversation's facts and a window.</summary>
     /// <param name="rig">The background.</param>
     /// <param name="clientName">What the client calls itself.</param>

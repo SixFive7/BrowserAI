@@ -1728,6 +1728,50 @@ scores each source against what the person saw; every client under a scratch
 configuration, with the project servers refused in its scratch user settings, and against
 the local model stubs. Compare against `runs/score.txt` and the four tables.
 
+### A Codex thread's first message -- measured 2026-10-10
+
+`[FLOATS]` on Codex's own files, which it documents nowhere: codex-cli **0.162.0**, the
+version every rollout of the measurement above records, read on 2026-10-10 from its six
+scratch Codex homes, three under `h` and three under `runs/cx`. The databases were read
+from copies of each `state_5.sqlite` and its `-wal`, never from the files themselves,
+which a SQLite open would have written to. For 1.4 a's middle step, a thread Codex's
+index does not name called by its first message
+([decision](../../DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10)).
+
+- **The `threads` table's `title` is the thread's first message, 18 of 18.** The table
+  also carries `rollout_path`, `first_user_message`, `preview` and `name`, the last set
+  for the 3 threads the rig named and for no other.
+- **In a rollout, the person's first message is the first `event_msg` record whose
+  `item_completed` payload carries an item of type `UserMessage`**, its `text` parts
+  equal to the `title` in 18 of 18. Before it, every rollout holds exactly one
+  `user`-role `response_item` that Codex wrote itself, with the project's instructions and
+  its environment, whose `content_item_kinds` is not `["user.text"]` and which no
+  `UserMessage` item follows.
+- **That record starts 97,241 to 100,061 bytes in, past the first 64 KB in 18 of 18**,
+  behind a `session_meta` record of 22,411 to 22,432 bytes carrying Codex's own
+  instructions, the project's instructions in 33,906 to 33,907, and a `world_state`
+  record of 36,129 to 36,140.
+- **Every rollout lies under `sessions\<year>\<month>\<day>\`**, named
+  `rollout-<local time>-<thread>.jsonl`, 18 of 18.
+- **In the three homes under `h` the database file is 4,096 bytes and every row is
+  still in its log**: an `immutable=1` open, which does not read the log, finds no
+  `threads` table. In the three under `runs/cx` the file is 262,144 bytes and holds the
+  five threads of each.
+
+**What a read leaves beside a database in write-ahead-log mode**, measured the same day
+with Python's SQLite 3.50.4 in an empty scratch folder: with a writer holding every row in
+its log, an `immutable=1` open finds no table and a `mode=ro` open reads the row; with
+the writer closed, so that only the database is left, a `mode=ro` open reads the row and
+leaves a `-wal` and a `-shm` behind it; and with only the database, an `immutable=1` open
+reads the row and leaves nothing. The suite holds the product's three-way open against
+SQLite 3.53.4, the version this build vendors, in `CodexStateTests`, and the arm planted
+with the plain read-only open left `-wal` and `-shm` behind.
+
+**Re-establish it** with [the batch](../../docs/evidence/2026-10-10-codex-first-message/README.md):
+`measure.py.txt` over the folder that holds the Codex homes and an empty folder for the
+copies, and `sqlite-files.py.txt` over an empty folder, each run with `python -I`, then
+compare against `measure.out.txt` and `sqlite-files.out.txt`.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

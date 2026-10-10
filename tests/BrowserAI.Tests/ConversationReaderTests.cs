@@ -25,7 +25,9 @@ namespace BrowserAI.Tests;
 /// extension's title rule, or <i>new conversation in &lt;folder&gt;</i> with no record
 /// yet; for Codex, its first call's thread named from its index, else <i>Codex in
 /// &lt;folder&gt;</i>. Each file read is opened sharing read, write and delete, and a
-/// parse that fails is tried once more.
+/// parse that fails is tried once more. <i>Added later on 2026-10-10</i>: between the
+/// index and the folder, a Codex thread's first message, from Codex's state database or
+/// else its rollout, which is 1.4 a as the maintainer approved it.
 /// </para>
 /// <para>
 /// ⚠️ <b>No arm reads the maintainer's real <c>~\.claude</c> or <c>~\.codex</c></b>: every
@@ -349,7 +351,10 @@ internal sealed class ConversationReaderTests
         var access = new ClientRecordAccess(
             path => path == index && reads++ is 0 ? halfAppended : ClientRecordFile.ReadAll(path),
             ClientRecordFile.ReadEnds,
-            ClientRecordFile.FoldersIn);
+            ClientRecordFile.FoldersIn,
+            ClientRecordFile.ReadHead,
+            ClientRecordFile.FilesUnder,
+            CodexState.TitleOf);
 
         await File.AppendAllTextAsync(index, Indexed(Thread, "Lemon list, renamed again") + "\n");
 
@@ -357,6 +362,146 @@ internal sealed class ConversationReaderTests
 
         await Assert.That(again.Name?.Text).IsEqualTo("Lemon list, renamed again");
         await Assert.That(reads).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// A Codex thread the index does not name is called by its first message: from the
+    /// <c>threads</c> table of Codex's state database, and for a thread that table does
+    /// not have, from the start of the thread's rollout; on one line and cut as a Claude
+    /// Code first prompt is; and a name the index gives still comes first.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.4 a as the maintainer approved it on 2026-10-10</b>: the index's name, else the
+    /// first message, and only then <i>Codex in &lt;folder&gt;</i>. The rollout here is laid
+    /// out the way Codex 0.162.0 lays one out, measured over 18 of them: its own
+    /// instructions, a <c>user</c>-role message carrying the project's instructions, the
+    /// world state, and only then the person's message, whose <c>UserMessage</c> record
+    /// starts past the first 64 KB. The client holds the rollout open to write and to
+    /// delete while it is read, and the read leaves no handle on it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a reader with no first message at all,
+    /// against one that put the first message before the index's name, against one that
+    /// read the rollout before the state database, against a head of 64 KB, against one
+    /// that took the first <c>user</c>-role message for the person's, and against a first
+    /// message kept whole and kept on several lines.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACodexThreadTheIndexDoesNotNameIsCalledByItsFirstMessageFromCodexsStateAndElseItsRollout()
+    {
+        const string Stated = Thread;
+        const string Rolled = "eeeeeeee-5555-7555-8555-555555555555";
+        const string Neither = "99999999-9999-7999-8999-999999999999";
+
+        using var scratch = ScratchDirectory.Create("conversation-codex-first");
+        var home = Path.Combine(scratch.Path, "codex-home");
+        var folder = Path.Combine(scratch.Path, "projects", "Lemons");
+        var index = Path.Combine(home, "session_index.jsonl");
+        var facts = new ConversationFacts(null, null, null, null, home);
+
+        _ = Directory.CreateDirectory(home);
+        await File.WriteAllTextAsync(index, Lines(Indexed("ffffffff-6666-7666-8666-666666666666", "Another thread")));
+
+        var picks = string.Join(" ", Enumerable.Repeat("pick", 60));
+
+        WriteState(home, (Stated, "Plan the lemon\r\n\tharvest,   then " + picks + " "));
+        _ = WriteRollout(home, Stated, "what the rollout says first");
+        var rollout = WriteRollout(home, Rolled, "Weigh the lemons\nand sort them");
+
+        // In the state database: on one line, then cut past 200 characters.
+        var stated = ConversationReader.Files.Read(KnownCodex, facts, clientPid: null, Stated, folder, new ConversationMemo());
+        var oneLine = "Plan the lemon harvest, then " + picks;
+
+        await Assert.That(stated.Conversation).IsEqualTo(Stated);
+        await Assert.That(stated.Name).IsEqualTo(new ConversationName(oneLine[..ClaudeCodeTitle.PromptWidth].Trim() + "...", IsTitle: true));
+        await Assert.That(stated.NameSource).IsEqualTo(NameSource.CodexState);
+
+        // Not in it: the rollout, held by the client as it is read.
+        ConversationReading rolled;
+
+        using (HeldLikeTheClient(rollout))
+        {
+            rolled = ConversationReader.Files.Read(KnownCodex, facts, null, Rolled, folder, new ConversationMemo());
+        }
+
+        await Assert.That(rolled.Name).IsEqualTo(new ConversationName("Weigh the lemons and sort them", IsTitle: true));
+        await Assert.That(rolled.NameSource).IsEqualTo(NameSource.CodexRollout);
+
+        // The client's handle deleted the rollout as it closed, and the name is free only
+        // once every handle on it has gone: none of the reader's was left open.
+        await File.WriteAllTextAsync(rollout, "{}");
+
+        // Neither: the client and its folder.
+        var neither = ConversationReader.Files.Read(KnownCodex, facts, null, Neither, folder, new ConversationMemo());
+
+        await Assert.That(neither.Name).IsEqualTo(new ConversationName("Codex in Lemons", IsTitle: false));
+        await Assert.That(neither.NameSource).IsEqualTo(NameSource.ClientAndFolder);
+
+        // A name the index gives comes before the first message.
+        await File.AppendAllTextAsync(index, Indexed(Stated, "Lemon harvest") + "\n");
+
+        var named = ConversationReader.Files.Read(KnownCodex, facts, null, Stated, folder, new ConversationMemo());
+
+        await Assert.That(named.Name).IsEqualTo(new ConversationName("Lemon harvest", IsTitle: true));
+        await Assert.That(named.NameSource).IsEqualTo(NameSource.CodexIndex);
+    }
+
+    /// <summary>
+    /// A rollout read while its first message is half written is read once more; and the
+    /// rollout is looked for once per relay, then read again at every draw.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>1.3 c, for the rollout</b>: never held, and a parse that fails is tried once
+    /// more. The last record of the text read is the one a write in progress can leave
+    /// half there. Finding the rollout means walking every day Codex keeps, so the memo
+    /// keeps where it is, and nothing of what it says.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a reader that did not read again, and against
+    /// one that walked the days at every draw.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARolloutHalfWrittenAtItsFirstMessageIsReadOnceMoreAndIsLookedForOnce()
+    {
+        using var scratch = ScratchDirectory.Create("conversation-codex-torn");
+        var home = Path.Combine(scratch.Path, "codex-home");
+        var folder = Path.Combine(scratch.Path, "projects", "Limes");
+        var facts = new ConversationFacts(null, null, null, null, home);
+        var rollout = WriteRollout(home, Thread, "Squeeze the limes");
+        var whole = await File.ReadAllTextAsync(rollout);
+        var cut = whole.IndexOf("\"UserMessage\"", StringComparison.Ordinal) + 20;
+        var heads = 0;
+        var walks = 0;
+        var access = new ClientRecordAccess(
+            ClientRecordFile.ReadAll,
+            ClientRecordFile.ReadEnds,
+            ClientRecordFile.FoldersIn,
+            (path, bytes) => heads++ is 0 ? whole[..cut] : ClientRecordFile.ReadHead(path, bytes),
+            (path, pattern) =>
+            {
+                walks++;
+                return ClientRecordFile.FilesUnder(path, pattern);
+            },
+            CodexState.TitleOf);
+        var reader = new ConversationReader(access);
+        var memo = new ConversationMemo();
+
+        var first = reader.Read(KnownCodex, facts, null, Thread, folder, memo);
+
+        await Assert.That(first.Name?.Text).IsEqualTo("Squeeze the limes");
+        await Assert.That(heads).IsEqualTo(2);
+
+        var second = reader.Read(KnownCodex, facts, null, Thread, folder, memo);
+
+        await Assert.That(second.Name?.Text).IsEqualTo("Squeeze the limes");
+        await Assert.That(heads).IsEqualTo(3);
+        await Assert.That(walks).IsEqualTo(1);
     }
 
     /// <summary>
@@ -503,6 +648,73 @@ internal sealed class ConversationReaderTests
     private static string Indexed(string id, string name) =>
         Line(new JsonObject { ["id"] = id, ["thread_name"] = name, ["updated_at"] = "2026-10-08T22:49:45.7084484Z" });
 
+    /// <summary>Writes Codex's state database with a <c>threads</c> table, in the columns this reads of 0.162.0's.</summary>
+    private static void WriteState(string home, params (string Id, string Title)[] threads)
+    {
+        using var database = BrowserAI.Storage.SqliteDatabase.OpenForWriting(Path.Combine(home, CodexState.FileName));
+
+        database.Execute("CREATE TABLE threads (id TEXT PRIMARY KEY, rollout_path TEXT NOT NULL DEFAULT '', title TEXT NOT NULL, name TEXT)");
+
+        foreach (var (id, title) in threads)
+        {
+            using var insert = database.Prepare("INSERT INTO threads (id, title) VALUES (?1, ?2)");
+
+            insert.BindText(1, id).BindText(2, title).Run();
+        }
+    }
+
+    /// <summary>
+    /// Writes a thread's rollout laid out as Codex 0.162.0 lays one out: its session record
+    /// with Codex's own instructions, a <c>user</c>-role message Codex writes with the
+    /// project's instructions, the world state, the person's message, its
+    /// <c>UserMessage</c> record, and a later turn's.
+    /// </summary>
+    private static string WriteRollout(string home, string thread, string firstMessage)
+    {
+        var day = Path.Combine(home, "sessions", "2026", "10", "09");
+        _ = Directory.CreateDirectory(day);
+
+        var path = Path.Combine(day, $"rollout-2026-10-09T00-50-42-{thread}.jsonl");
+
+        File.WriteAllText(path, Lines(
+            Line(new JsonObject { ["type"] = "session_meta", ["payload"] = new JsonObject { ["id"] = thread, ["cli_version"] = "0.162.0", ["base_instructions"] = new string('i', 22_000) } }),
+            message("user", "# AGENTS.md instructions for the project\n\n" + new string('a', 34_000)),
+            Line(new JsonObject { ["type"] = "world_state", ["payload"] = new JsonObject { ["state"] = new string('w', 36_000) } }),
+            message("user", firstMessage),
+            said(thread, firstMessage),
+            message("assistant", "Done."),
+            message("user", "and a later message"),
+            said(thread, "and a later message")));
+
+        return path;
+
+        static string message(string role, string text) => Line(new JsonObject
+        {
+            ["type"] = "response_item",
+            ["payload"] = new JsonObject
+            {
+                ["type"] = "message",
+                ["role"] = role,
+                ["content"] = new JsonArray(new JsonObject { ["type"] = role is "user" ? "input_text" : "output_text", ["text"] = text }),
+            },
+        });
+
+        static string said(string thread, string text) => Line(new JsonObject
+        {
+            ["type"] = "event_msg",
+            ["payload"] = new JsonObject
+            {
+                ["type"] = "item_completed",
+                ["thread_id"] = thread,
+                ["item"] = new JsonObject
+                {
+                    ["type"] = "UserMessage",
+                    ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = text, ["text_elements"] = new JsonArray() }),
+                },
+            },
+        });
+    }
+
     /// <summary>The product's reads, except that the per-process file reads half written a given number of times.</summary>
     /// <param name="tears">How many reads of the per-process file come back torn.</param>
     private sealed class TornReads(int tears)
@@ -522,6 +734,9 @@ internal sealed class ConversationReaderTests
                 return ++ProcessFileReads <= tears ? whole[..(whole.Length / 2)] : whole;
             },
             ClientRecordFile.ReadEnds,
-            ClientRecordFile.FoldersIn);
+            ClientRecordFile.FoldersIn,
+            ClientRecordFile.ReadHead,
+            ClientRecordFile.FilesUnder,
+            CodexState.TitleOf);
     }
 }

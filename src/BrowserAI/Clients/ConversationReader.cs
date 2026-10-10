@@ -50,6 +50,12 @@ internal enum NameSource
     /// <summary>Codex's index of named threads.</summary>
     CodexIndex,
 
+    /// <summary>The thread's first message, from the <c>threads</c> table of Codex's state database.</summary>
+    CodexState,
+
+    /// <summary>The thread's first message, from the start of its rollout.</summary>
+    CodexRollout,
+
     /// <summary>BrowserAI's words for a conversation with no record yet: <i>new conversation in &lt;folder&gt;</i>.</summary>
     NoRecordYet,
 
@@ -73,7 +79,8 @@ internal sealed record ConversationReading(string? Conversation, ConversationNam
 /// <b>Where the session's record was found, and nothing of what it says</b>: finding it
 /// can mean looking under every project folder, and the place does not move while the
 /// session is the same. The title is read again at every draw, which is the point of
-/// 1.3 c.
+/// 1.3 c. <i>Added later on 2026-10-10</i>: for a Codex relay it keeps, the same way,
+/// where the thread's rollout is, which can mean looking under every day Codex has kept.
 /// </remarks>
 internal sealed class ConversationMemo
 {
@@ -149,7 +156,11 @@ internal sealed class ConversationMemo
 /// (<see cref="ClientRecordFile"/>).</item>
 /// <item><b>1.4 a, Codex</b>: the thread of its first tool call named from Codex's index
 /// (<see cref="CodexThreads"/>), else <i>Codex in &lt;folder&gt;</i>, which is also what a
-/// Codex relay is called before its first call.</item>
+/// Codex relay is called before its first call. <i>Corrected later on 2026-10-10
+/// (previously "else <i>Codex in &lt;folder&gt;</i>")</i>: 1.4 a as the maintainer
+/// approved it reads the thread's first message between the two, from Codex's state
+/// database (<see cref="CodexState"/>) or else its rollout, on one line and cut as a
+/// Claude Code first prompt is.</item>
 /// </list>
 /// <para>
 /// <b>It never throws, and it never stops anything</b>: every file it reads is another
@@ -176,7 +187,7 @@ internal sealed class ConversationReader(ClientRecordAccess access)
 
         try
         {
-            return KnownClients.Matches(clientName, KnownClients.Codex) ? Codex(facts, threadId, folder)
+            return KnownClients.Matches(clientName, KnownClients.Codex) ? Codex(facts, threadId, folder, memo)
                 : KnownClients.Matches(clientName, KnownClients.ClaudeCode) ? ClaudeCode(facts, clientPid, folder, memo)
                 : ConversationReading.Unread;
         }
@@ -190,17 +201,69 @@ internal sealed class ConversationReader(ClientRecordAccess access)
         }
     }
 
-    private ConversationReading Codex(ConversationFacts? facts, string? threadId, string? folder)
+    private ConversationReading Codex(ConversationFacts? facts, string? threadId, string? folder, ConversationMemo memo)
     {
         if (SessionIds.Valid(threadId) is not { } thread)
         {
             return new(null, ClientFolder.Unnamed("Codex", folder), ConversationSource.None, NameSource.ClientAndFolder);
         }
 
-        return facts?.CodexHome is { Length: > 0 } home && CodexThreads.NameOf(home, thread, access.ReadAll) is { } name && ConversationName.Titled(name) is { } titled
-            ? new(thread, titled, ConversationSource.CodexCall, NameSource.CodexIndex)
-            : new(thread, ClientFolder.Unnamed("Codex", folder), ConversationSource.CodexCall, NameSource.ClientAndFolder);
+        if (facts?.CodexHome is { Length: > 0 } home)
+        {
+            if (CodexThreads.NameOf(home, thread, access.ReadAll) is { } name && ConversationName.Titled(name) is { } titled)
+            {
+                return new(thread, titled, ConversationSource.CodexCall, NameSource.CodexIndex);
+            }
+
+            // 1.4 a's middle step: the thread's first message, from Codex's state
+            // database where there is one, and else from the thread's rollout.
+            if (access.StateTitle(Path.Combine(home, CodexState.FileName), thread) is { } title && AsFirstMessage(title) is { } stated)
+            {
+                return new(thread, stated, ConversationSource.CodexCall, NameSource.CodexState);
+            }
+
+            if (FirstMessageOf(home, thread, memo) is { } message && AsFirstMessage(message) is { } rolled)
+            {
+                return new(thread, rolled, ConversationSource.CodexCall, NameSource.CodexRollout);
+            }
+        }
+
+        return new(thread, ClientFolder.Unnamed("Codex", folder), ConversationSource.CodexCall, NameSource.ClientAndFolder);
     }
+
+    /// <summary>A thread's first message from its rollout, which is looked for once and read at every draw.</summary>
+    private string? FirstMessageOf(string home, string thread, ConversationMemo memo)
+    {
+        var rollout = memo.RecordOf(thread) ?? CodexThreads.RolloutOf(home, thread, access.FilesUnder);
+
+        if (rollout is null)
+        {
+            return null;
+        }
+
+        memo.Remember(thread, rollout);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            if (access.ReadHead(rollout, CodexThreads.RolloutHead) is not { } head)
+            {
+                return null;
+            }
+
+            var (message, torn) = CodexThreads.FirstMessage(head);
+
+            if (message is not null || !torn)
+            {
+                return message;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>A first message as a title: on one line, and cut as the extension cuts a first prompt.</summary>
+    private static ConversationName? AsFirstMessage(string text) =>
+        ConversationName.Titled(text) is { } line ? line with { Text = ClaudeCodeTitle.CutPrompt(line.Text) } : null;
 
     private ConversationReading ClaudeCode(ConversationFacts? facts, int? clientPid, string? folder, ConversationMemo memo)
     {

@@ -165,6 +165,9 @@ internal static partial class Sqlite
     /// <summary><c>SQLITE_OPEN_CREATE</c>.</summary>
     public const int OpenCreate = 0x00000004;
 
+    /// <summary><c>SQLITE_OPEN_URI</c>: the name is read as a <c>file:</c> URI, so its query can carry <c>immutable=1</c>.</summary>
+    public const int OpenUri = 0x00000040;
+
     /// <summary><c>SQLITE_INTEGER</c>, the type of a column value.</summary>
     public const int TypeInteger = 1;
 

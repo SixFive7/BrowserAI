@@ -192,12 +192,14 @@ release body; nothing else depends on it.
   line. Its name is the one its VS Code tab shows, by the extension's own rule over the first and the
   last 64 KB of the session's record, and a conversation with no record yet is *new conversation in
   &lt;folder&gt;*. A Codex conversation is the thread its first call names, called by the name Codex
-  gave it, or *Codex in &lt;folder&gt;*. The files are read when the dashboard or the toast is
-  drawn and never held open, and a VS Code window's tabs are listed together under *VS Code window
-  on &lt;folder&gt;*. The toast's reconnect line names two conversations of each kind, each cut as
-  its tab cuts it, and counts the rest. These are another product's undocumented files, so every
-  read that fails falls back to the next source, and nothing writes a title, a prompt or a session
-  id to a log. `ConversationReaderTests`, `ClaudeCodeTitleTests`, `ClientRecognitionTests`,
+  gave it; else by its first message, from Codex's state database or the thread's own record, on
+  one line and cut past 200 characters; or *Codex in &lt;folder&gt;*. The files are read when the
+  dashboard or the toast is drawn and never held open, and a VS Code window's tabs are listed
+  together under *VS Code window on &lt;folder&gt;*. The toast's reconnect line names two
+  conversations of each kind, each cut as its tab cuts it, and counts the rest. These are another
+  product's undocumented files, so every read that fails falls back to the next source, and
+  nothing writes a title, a prompt or a session id to a log. `ConversationReaderTests`,
+  `CodexStateTests`, `ClaudeCodeTitleTests`, `ClientRecognitionTests`,
   `BackgroundServerTests`, `RelayTests`, `ProcessLivenessTests`, `BackgroundUpdatesTests`,
   `UpdateToastsTests`, `UpdateToastContentTests`, `UpdatePageTests`, `PageServiceTests` and
   `InheritedEnvironmentTests` hold it, planted red first, over records the suite writes in scratch.

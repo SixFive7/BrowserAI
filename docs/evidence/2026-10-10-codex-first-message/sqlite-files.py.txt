@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""Lane ID, 2026-10-10: which files an open of a write-ahead-log database leaves beside it.
+
+Builds one database in WAL mode in the given empty folder and reads it four ways, listing
+the folder's files after each: with a writer holding every row in its log, immutable=1
+and then mode=ro; with the writer closed, so its log is checkpointed away, mode=ro; and
+again with only the database left, immutable=1.
+
+usage: python -I sqlite_files.py <empty folder>
+"""
+import os
+import pathlib
+import sqlite3
+import sys
+
+folder = sys.argv[1]
+os.chdir(folder)
+assert not os.listdir('.'), 'the folder must be empty'
+
+
+def files():
+    return sorted(os.listdir('.'))
+
+
+def read(uri):
+    connection = sqlite3.connect(uri, uri=True)
+    try:
+        return connection.execute("select title from threads where id = 'a'").fetchall(), files()
+    except sqlite3.Error as failure:
+        return f'error: {failure}', files()
+    finally:
+        connection.close()
+
+
+print('sqlite', sqlite3.sqlite_version)
+writer = sqlite3.connect('s.sqlite')
+writer.execute('pragma journal_mode=wal')
+writer.execute('create table threads(id text primary key, title text not null)')
+writer.execute("insert into threads values('a', 'first')")
+writer.commit()
+print('a writer holds it, uncheckpointed:', files())
+uri = pathlib.Path(os.path.abspath('s.sqlite')).as_uri()
+print('  immutable=1 reads', *read(uri + '?immutable=1'))
+print('  mode=ro reads', *read(uri + '?mode=ro'))
+writer.close()
+print('the writer closed:', files())
+print('  mode=ro reads', *read(uri + '?mode=ro'), '(the files while it was open and after it closed are the same)')
+print('  after that read closed:', files())
+for name in files():
+    if name != 's.sqlite':
+        os.remove(name)
+print('only the database left:', files())
+print('  immutable=1 reads', *read(uri + '?immutable=1'))
+print('  after that read closed:', files())

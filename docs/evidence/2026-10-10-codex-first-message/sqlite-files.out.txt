@@ -1,0 +1,10 @@
+sqlite 3.50.4
+a writer holds it, uncheckpointed: ['s.sqlite', 's.sqlite-shm', 's.sqlite-wal']
+  immutable=1 reads error: no such table: threads ['s.sqlite', 's.sqlite-shm', 's.sqlite-wal']
+  mode=ro reads [('first',)] ['s.sqlite', 's.sqlite-shm', 's.sqlite-wal']
+the writer closed: ['s.sqlite']
+  mode=ro reads [('first',)] ['s.sqlite', 's.sqlite-shm', 's.sqlite-wal'] (the files while it was open and after it closed are the same)
+  after that read closed: ['s.sqlite', 's.sqlite-shm', 's.sqlite-wal']
+only the database left: ['s.sqlite']
+  immutable=1 reads [('first',)] ['s.sqlite']
+  after that read closed: ['s.sqlite']

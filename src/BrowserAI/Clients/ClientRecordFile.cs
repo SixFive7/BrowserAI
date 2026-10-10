@@ -27,7 +27,68 @@ namespace BrowserAI.Clients;
 internal static class ClientRecordFile
 {
     /// <summary>Every source of names the background reads, as the product reads them.</summary>
-    public static ClientRecordAccess Files { get; } = new(ReadAll, ReadEnds, FoldersIn);
+    public static ClientRecordAccess Files { get; } = new(ReadAll, ReadEnds, FoldersIn, ReadHead, FilesUnder, CodexState.TitleOf);
+
+    /// <summary>The first bytes of a file, as UTF-8 text, for a record whose start is all that names anything.</summary>
+    /// <param name="path">The file.</param>
+    /// <param name="bytes">How many bytes of its start.</param>
+    /// <returns>The text, or <see langword="null"/> when the file is empty or cannot be read.</returns>
+    public static string? ReadHead(string path, int bytes)
+    {
+        try
+        {
+            using var stream = Open(path);
+            var buffer = new byte[(int)Math.Min(bytes, stream.Length)];
+
+            if (buffer.Length is 0)
+            {
+                return null;
+            }
+
+            var read = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+
+            return read is 0 ? null : Encoding.UTF8.GetString(buffer, 0, read);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The files a folder holds, itself and three folders deep, whose names match a pattern; none when it cannot be read.</summary>
+    /// <remarks>
+    /// <b>Three deep, and no deeper</b>, because Codex keeps a rollout under a year, a
+    /// month and a day, and a junction under the folder then cannot send the walk on
+    /// without end.
+    /// </remarks>
+    /// <param name="folder">The folder.</param>
+    /// <param name="pattern">A file name pattern, <c>*</c> its only wildcard.</param>
+    /// <returns>Their full paths, in ordinal order.</returns>
+    public static IReadOnlyList<string> FilesUnder(string folder, string pattern)
+    {
+        try
+        {
+            if (!Directory.Exists(folder))
+            {
+                return [];
+            }
+
+            var found = Directory.EnumerateFiles(folder, pattern, new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                MaxRecursionDepth = 3,
+                IgnoreInaccessible = true,
+                MatchCasing = MatchCasing.CaseInsensitive,
+            }).ToList();
+
+            found.Sort(StringComparer.Ordinal);
+            return found;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return [];
+        }
+    }
 
     /// <summary>The whole of a small file, as UTF-8 text.</summary>
     /// <param name="path">The file.</param>
@@ -130,7 +191,13 @@ internal static class ClientRecordFile
 /// <param name="ReadAll">The whole of a small file, or <see langword="null"/>.</param>
 /// <param name="ReadEnds">The first and the last bytes of a file, or <see langword="null"/>.</param>
 /// <param name="FoldersIn">The folders directly inside a folder.</param>
+/// <param name="ReadHead">The first bytes of a file, or <see langword="null"/>.</param>
+/// <param name="FilesUnder">The files under a folder whose names match a pattern.</param>
+/// <param name="StateTitle">A Codex thread's first message from Codex's state database, or <see langword="null"/>.</param>
 internal sealed record ClientRecordAccess(
     Func<string, string?> ReadAll,
     Func<string, int, (string Head, string Tail)?> ReadEnds,
-    Func<string, IReadOnlyList<string>> FoldersIn);
+    Func<string, IReadOnlyList<string>> FoldersIn,
+    Func<string, int, string?> ReadHead,
+    Func<string, string, IReadOnlyList<string>> FilesUnder,
+    Func<string, string, string?> StateTitle);

@@ -1,0 +1,4 @@
+ab557fcd1c162c766d4d70a67f775ffc7f0aff69a892030069d8036f819ad1af  measure.py -> measure.py.txt  (stored with .txt appended, as a record and not a source file)
+87eabdae1d67c21c61f95db609c5a8c131af6ee8fe07c7641e60d8e8ccb6a955  sqlite_files.py -> sqlite-files.py.txt  (stored with .txt appended, as a record and not a source file)
+ca019fad09ba62db0636df94e81ac12f13817e701ff27e98c2a29f94b158ba66  measure.out.txt -> measure.out.txt  (its line ends made LF, as the repository stores text)
+b9a35c10026d1cc071f65470718458d14d0008301cf0c0f874cd37151dd4b0a6  sqlite_files.out.txt -> sqlite-files.out.txt  (its line ends made LF, as the repository stores text)
