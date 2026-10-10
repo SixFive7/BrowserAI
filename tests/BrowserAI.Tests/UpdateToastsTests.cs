@@ -42,7 +42,7 @@ internal sealed class UpdateToastsTests
             "remove installing",
             "remove installed",
             "remove failed",
-            "show ready seq=1 banner=yes reboot=yes status='Installs in 50:00 if nothing uses it' title='In use by 1 visible window'"));
+            "show ready seq=1 banner=yes reboot=yes status='Installs in 50:00 if nothing uses it' title='1 window'"));
         await Assert.That(rig.Surface.Shown.Single().Xml).Contains("BrowserAI 1.2.0 is ready to install");
         await Assert.That(rig.Toasts.Counting).IsTrue();
 
@@ -54,8 +54,8 @@ internal sealed class UpdateToastsTests
         rig.Clock.Advance(UpdateToasts.Tick);
 
         await Assert.That(rig.Surface.Lines()).IsEqualTo(Lines(
-            "update ready seq=2 status='Installs in 49:59 if nothing uses it' title='In use by 1 visible window'",
-            "update ready seq=3 status='Installs in 49:58 if nothing uses it' title='In use by 1 visible window'"));
+            "update ready seq=2 status='Installs in 49:59 if nothing uses it' title='1 window'",
+            "update ready seq=3 status='Installs in 49:58 if nothing uses it' title='1 window'"));
     }
 
     /// <summary>

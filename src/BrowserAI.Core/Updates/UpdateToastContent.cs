@@ -115,6 +115,26 @@ internal static class UpdateToastContent
     /// <summary>The bound field the holders are in: the progress element's title.</summary>
     public const string HoldersField = "progressTitle";
 
+    /// <summary>
+    /// The most characters the holders line may take and still show whole in the
+    /// banner, which <c>UpdateToastContentTests</c> holds every realistic count to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Measured 2026-10-08 on the maintainer's screen</b>: in the 362 px banner
+    /// the line <i>In use by 3 agents, 2 hidden browsers and 1 visible window</i>
+    /// showed its first 54 characters whole and was cut inside the 55th, at about
+    /// 331 px of text (<c>kb/numbers.md</c>, and
+    /// <c>kb/windows/notifications.md</c> for the measurement).
+    /// </para>
+    /// <para>
+    /// <b>A count of characters stands in for a width</b>, and it holds only for
+    /// text like the line it was measured on: digits, lower-case words, commas and
+    /// spaces, which is all a holders line is. Fifty-four capital Ws would not fit.
+    /// </para>
+    /// </remarks>
+    public const int HoldersLineCharacters = 54;
+
     /// <summary>The bound field the bar's fill is in.</summary>
     public const string ValueField = "progressValue";
 
@@ -432,6 +452,16 @@ internal static class UpdateToastContent
     }
 
     /// <summary>What uses BrowserAI now, as the progress element's title.</summary>
+    /// <remarks>
+    /// <b>The counts alone, joined by commas: 2.3 a</b>, the maintainer's answer of
+    /// 2026-10-10, verbatim: <i>"1.1-2.3 I accept all your recommendations"</i>, which
+    /// took the direction to shorten the wording, <i>"for example '3 agents, 2 hidden
+    /// browsers, 1 window'"</i>. The line was
+    /// <i>In use by 3 agents, 2 hidden browsers and 1 visible window</i> until that
+    /// day, and the 2026-10-08 measurement found it cut in the 362 px banner after
+    /// <i>1 visible wi</i>. <see cref="HoldersLineCharacters"/> is what the shorter
+    /// line is held to.
+    /// </remarks>
     /// <param name="holds">What holds the update.</param>
     /// <param name="now">The moment.</param>
     /// <returns>The words.</returns>
@@ -452,15 +482,10 @@ internal static class UpdateToastContent
 
         if (holds.VisibleWindows.Count > 0)
         {
-            parts.Add(holds.VisibleWindows.Count is 1 ? "1 visible window" : $"{holds.VisibleWindows.Count} visible windows");
+            parts.Add(holds.VisibleWindows.Count is 1 ? "1 window" : $"{holds.VisibleWindows.Count} windows");
         }
 
-        return parts.Count switch
-        {
-            0 => "Nothing uses BrowserAI now",
-            1 => "In use by " + parts[0],
-            _ => "In use by " + string.Join(", ", parts.Take(parts.Count - 1)) + " and " + parts[^1],
-        };
+        return parts.Count is 0 ? "Nothing uses BrowserAI now" : string.Join(", ", parts);
     }
 
     /// <summary>The arguments a click carries, with the word it is spelled as.</summary>

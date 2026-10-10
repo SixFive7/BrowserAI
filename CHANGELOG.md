@@ -2065,6 +2065,13 @@ release body; nothing else depends on it.
   second read every payload `node.exe` in the job, a registry reap's included, and now reads the
   server that started the run's browser. Both were planted red first.
 
+- 🐛 **The ready toast's line of what uses BrowserAI fits its banner.**
+  2.3 a, from the maintainer's answers of 2026-10-10. *In use by 3 agents, 2 hidden browsers and 1
+  visible window* was cut in the 362 px banner after *1 visible wi*, measured on his screen on
+  2026-10-08. The line reads *3 agents, 2 hidden browsers, 1 window* now, and
+  `UpdateToastContentTests` holds every count up to 99 of each kind to the 54 characters the banner
+  showed whole, watched red at 62 first.
+
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision
   `2026-07-28`. BrowserAI offered every revision its SDK implements, so it accepted that one,

@@ -182,7 +182,7 @@ internal sealed partial class UpdateToastContentTests
 
         var (first, track) = UpdateToastContent.ReadyData(holds, T0, TimeZoneInfo.Utc, default);
 
-        await Assert.That(first["progressTitle"]).IsEqualTo("In use by 2 agents, 1 hidden browser and 1 visible window");
+        await Assert.That(first["progressTitle"]).IsEqualTo("2 agents, 1 hidden browser, 1 window");
         await Assert.That(first["progressStatus"]).IsEqualTo("Installs in 50:00 if nothing uses it");
         await Assert.That(first["progressValueString"]).IsEqualTo("at 12:50");
         await Assert.That(first["progressValue"]).IsEqualTo("0.0000");
@@ -198,7 +198,7 @@ internal sealed partial class UpdateToastContentTests
         // listed, which is while it closes.
         var (eightMinutes, _) = UpdateToastContent.ReadyData(holds, T0.AddMinutes(8), TimeZoneInfo.Utc, track);
 
-        await Assert.That(eightMinutes["progressTitle"]).IsEqualTo("In use by 1 hidden browser and 1 visible window");
+        await Assert.That(eightMinutes["progressTitle"]).IsEqualTo("1 hidden browser, 1 window");
         await Assert.That(eightMinutes["progressStatus"]).IsEqualTo("Installs in 42:00 if nothing uses it");
     }
 
@@ -254,7 +254,7 @@ internal sealed partial class UpdateToastContentTests
 
         var call = empty with { Relays = [new HoldingRelay("Codex 0.161.0", @"C:\p", T0.AddMinutes(-2), CallInFlight: true, RelayReconnect.NewConversation)] };
         await AssertWait(call, UpdateWait.CallRunning, "Waits for a running call to finish", "no countdown", "1.0000");
-        await Assert.That(UpdateToastContent.ReadyData(call, T0, TimeZoneInfo.Utc, default).Values["progressTitle"]).IsEqualTo("In use by 1 agent");
+        await Assert.That(UpdateToastContent.ReadyData(call, T0, TimeZoneInfo.Utc, default).Values["progressTitle"]).IsEqualTo("1 agent");
 
         var closing = empty with { HiddenSessions = [new HoldingSession(@"C:\h", null, T0.AddSeconds(-5))] };
         await AssertWait(closing, UpdateWait.Closing, "Installs once the last browser has closed", "soon", "1.0000");
@@ -291,7 +291,7 @@ internal sealed partial class UpdateToastContentTests
 
         var (values, _) = UpdateToastContent.ReadyData(holds, T0, TimeZoneInfo.Utc, default);
 
-        await Assert.That(values["progressTitle"]).IsEqualTo("In use by 5 agents, 2 hidden browsers and 2 visible windows");
+        await Assert.That(values["progressTitle"]).IsEqualTo("5 agents, 2 hidden browsers, 2 windows");
         await Assert.That(UpdateToastContent.Reconnects(holds)).IsEqualTo(
             "After the update: 2 Claude Code terminals need /mcp, BrowserAI, Reconnect; 2 Codex conversations need a new conversation; 1 client may need BrowserAI reconnected.");
     }
@@ -347,6 +347,57 @@ internal sealed partial class UpdateToastContentTests
         // A cut never leaves half a surrogate pair.
         await Assert.That(ConversationName.Cut(new string('a', 23) + "\U0001F600" + "bbb")).IsEqualTo(new string('a', 23) + "...");
         await Assert.That(ConversationName.Cut("Exactly twenty-five chars")).IsEqualTo("Exactly twenty-five chars");
+    }
+
+    /// <summary>
+    /// The holders line fits the banner at the longest counts a machine realistically
+    /// reaches: up to two digits of each kind, with all three kinds at once.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>2.3 a, the maintainer's answer of 2026-10-10, verbatim: <i>"1.1-2.3 I accept
+    /// all your recommendations"</i></b>, which took the direction to shorten the
+    /// wording, <i>"for example '3 agents, 2 hidden browsers, 1 window'"</i>. Measured on his screen on 2026-10-08: the line <i>In use by 3
+    /// agents, 2 hidden browsers and 1 visible window</i> showed in the 362 px banner
+    /// as far as <i>1 visible wi</i>.
+    /// </para>
+    /// <para>
+    /// <b>Every combination of 0, 1, 9 and 99 of each kind is asked for</b>, so the
+    /// singular, the plural, one digit and two are each met beside every other. The
+    /// measured line is the positive control: it is over the budget, so a budget
+    /// that let anything through would fail here first.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHoldersLineFitsTheBannerAtTheLongestRealisticCounts()
+    {
+        const string Measured = "In use by 3 agents, 2 hidden browsers and 1 visible window";
+
+        await Assert.That(Measured.Length).IsGreaterThan(UpdateToastContent.HoldersLineCharacters);
+
+        int[] counts = [0, 1, 9, 99];
+        var lines = new List<string>();
+
+        foreach (var agents in counts)
+        {
+            foreach (var hidden in counts)
+            {
+                foreach (var visible in counts)
+                {
+                    var (values, _) = UpdateToastContent.ReadyData(Counted(agents, hidden, visible), T0, TimeZoneInfo.Utc, default);
+
+                    lines.Add(values[UpdateToastContent.HoldersField]);
+                }
+            }
+        }
+
+        var longest = lines.MaxBy(line => line.Length)!;
+
+        await Assert.That(lines.Count).IsEqualTo(64);
+        await Assert.That(longest.Length)
+            .IsLessThanOrEqualTo(UpdateToastContent.HoldersLineCharacters)
+            .Because($"'{longest}' is {longest.Length} characters, and the banner showed {UpdateToastContent.HoldersLineCharacters} of the measured line whole");
     }
 
     /// <summary>What is left is whole seconds rounded up, in minutes and seconds, and in hours from an hour on.</summary>
@@ -439,6 +490,22 @@ internal sealed partial class UpdateToastContentTests
             new HoldingRelay("Codex 0.161.0", @"C:\Source\two", T0.AddMinutes(-1), CallInFlight: false, RelayReconnect.NewConversation),
             new HoldingRelay("Claude Code 2.1.290 (VS Code)", @"C:\Source\three", T0.AddMinutes(3), CallInFlight: false, RelayReconnect.None),
         ]);
+
+    /// <summary>
+    /// A held update with so many agents holding it, hidden browsers and visible
+    /// windows, every one of them counting down from ten minutes on.
+    /// </summary>
+    /// <param name="agents">How many relays hold it.</param>
+    /// <param name="hidden">How many hidden browsers.</param>
+    /// <param name="visible">How many visible windows.</param>
+    /// <returns>The snapshot.</returns>
+    private static UpdateHoldSnapshot Counted(int agents, int hidden, int visible) => new(
+        T0,
+        UpdateHoldState.Held,
+        "1.2.0",
+        [.. Enumerable.Range(0, hidden).Select(index => new HoldingSession($@"C:\work\hidden-{index}", null, T0.AddMinutes(10)))],
+        [.. Enumerable.Range(0, visible).Select(index => new HoldingSession($@"C:\work\window-{index}", null, T0.AddMinutes(10)))],
+        [.. Enumerable.Range(0, agents).Select(index => new HoldingRelay("Claude Code", null, T0.AddMinutes(10), CallInFlight: false, RelayReconnect.None))]);
 
     private static XDocument Load(string xml) => XDocument.Parse(xml);
 
