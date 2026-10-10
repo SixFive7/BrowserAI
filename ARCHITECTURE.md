@@ -210,6 +210,8 @@ the one background, `Program.RunTheBackground` in `Program.Background.cs`, and s
 `--host <pipe>` went with the session host; and everything else, no argument
 included, is a person's start, a toast's click, `--after-update` or `--report`
 (`App.Program.Run`). The whole table is in [the background and its relays](#the-background-and-its-relays-s-a).
+`src/BrowserAI.App` holds the person's start, the tab and the report since then, and the
+coordinator it held went to the background.
 
 `Program.ServesStdio` is the decision, and
 `AppBinaryTests.TheArgumentChoosesTheModeAndNoArgumentIsAPersonsStart` holds it.
@@ -258,6 +260,10 @@ costs. *Added 2026-09-25:* the coordinator's apply loop is a member too, from th
 first pass that finds a package staged until it stops, so a server finishing its
 own update pass counts it and wakes it instead of applying. *Added 2026-10-03:* and so is a coordinator
 whose page is serving a tab, for the same reason and for as long as the page serves.
+*Corrected 2026-10-10 by addition:* since 2026-10-08 no process joins the census.
+`LiveInstances.Join` and `LiveInstances.Census` have no caller in the product, the
+background's update core decides when an update installs, and the stray sweep only
+reclaims the markers a crash left behind (`LiveInstances.ReclaimStaleMarkers`).
 
 | Concern | Implemented by |
 |---|---|
@@ -1628,6 +1634,10 @@ stream open, replaces the page's main part with each state it is sent, and posts
 button names as JSON. A button names what it acts on by a name the page was given, a folder's
 role or a digest of a session's directory, and never by a path. What it rests on:
 [kb](kb/windows/loopback-page.md#the-products-listener-under-attack----measured-2026-10-03).
+*Corrected 2026-10-10 by addition:* since 2026-10-08 (S a) the background owns the
+`PageService`, the address is handed out only through the background's pipe, in its
+answer to a person's `browserai/show`, and the minute after the last tab ends the
+listener and not the process.
 
 *Added 2026-10-08 by addition (T):* **two more pages.** The update page shows what holds a downloaded
 update, split into hidden browser sessions, visible windows and the agents' connections, each with a
