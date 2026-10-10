@@ -77,13 +77,15 @@ internal enum TaskState
 /// reads it.
 /// </summary>
 /// <remarks>
-/// <b>Closed: the seven cases below are every case</b>, and the engine decides from
+/// <b>Closed: the eight cases below are every case</b>, and the engine decides from
 /// each whether waiting can help. Four answer a call at once, because nothing that
 /// happens in the next 150 s changes them (D8 a, R, U2, 9 a): a recorded crash, a root
 /// the background refused, a build that is not installed, and an update that is
-/// installing. The other three hold it. <i>Corrected 2026-10-10 (previously "the six
+/// installing; and so does an end the background's own version wrote and cannot read,
+/// which is a bug (23.3 b). The others hold it. <i>Corrected 2026-10-10 (previously "the six
 /// cases" and "Three answer a call at once"), when a refused root became a case of its
-/// own.</i>
+/// own; and again later that day (previously "the seven cases" and "The other three
+/// hold it"), when an end this build cannot read became one.</i>
 /// </remarks>
 internal abstract record BackgroundAbsence
 {
@@ -128,6 +130,28 @@ internal abstract record BackgroundAbsence
 
     /// <summary>This install's updater runs: answer at once with the update sentence (U2).</summary>
     internal sealed record UpdateInstalling : BackgroundAbsence;
+
+    /// <summary>
+    /// The background's record names an end this build cannot read, and who wrote the
+    /// record decides what that is.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10, in his words verbatim: <i>"23.3 b"</i></b>, of
+    /// the directions put to him once it was explained that only a record written by
+    /// another version can name an end a build has no name for. Written by this same
+    /// version, it is a bug: answered at once, as a crash is, sending the person to the log
+    /// and a bug report. Written by another version, which a relay meets only across an
+    /// update or a downgrade, since a relay and its background are one binary and an update
+    /// ends every relay: held, as a clean end is, and at the deadline answered with that
+    /// version's name. <i>Previously, from earlier that day, an end of any name read as the
+    /// clean end it is (<see cref="Coordination.BackgroundEnd.Unrecognised"/>), and the relay named the
+    /// task's state.</i>
+    /// </remarks>
+    /// <param name="Build">The version that wrote the record.</param>
+    /// <param name="ThisBuild">Whether that is this relay's own version.</param>
+    /// <param name="At">When the record says the background ended, or when the relay found it so.</param>
+    /// <param name="LogPath">The log the person reads.</param>
+    internal sealed record UnreadableEnd(string Build, bool ThisBuild, DateTimeOffset At, string LogPath) : BackgroundAbsence;
 
     /// <summary>The background ended cleanly, for example at a stop or a sign-out: hold.</summary>
     internal sealed record CleanEnd : BackgroundAbsence;

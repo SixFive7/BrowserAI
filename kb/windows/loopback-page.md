@@ -113,7 +113,9 @@ Kestrel's own parsing was not attacked.
   stream's retry interval, about 3.0 s after the old process exited in Chromium
   and 5.0 to 5.3 s in Firefox, also when the new listener was up only 2.5 s
   later, and its next write worked. Q338 took a new tab after an update, so
-  nothing relies on this.
+  nothing relies on this. *Corrected 2026-10-10 by addition: the update toasts of
+  2026-10-08 superseded that tab, and since the maintainer's "20 nothing except for the
+  toast" no tab opens after an update at all; nothing relies on this either way.*
 - ⚠️ In 9 of 31 Firefox runs Playwright's `goto` never resolved on a later tab;
   the two with a diagnostic showed the page loaded and connected. Read as a fault
   of the harness, and not explained.

@@ -93,6 +93,19 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return new BackgroundAbsence.RootRefused(record.Refusal, _settings.LogPath);
         }
 
+        if (record is { Ended: BackgroundEnd.Unrecognised })
+        {
+            // 23.3 b, 2026-10-10: an end this build cannot read is judged by who wrote the
+            // record. This same version writing it is a bug; another version is an update
+            // or a downgrade. Corrected that day (previously such an end read as a clean
+            // one and fell through to the task below).
+            return new BackgroundAbsence.UnreadableEnd(
+                record.Build,
+                string.Equals(record.Build, _settings.Build, StringComparison.Ordinal),
+                record.EndedAt ?? _settings.Clock.GetUtcNow(),
+                _settings.LogPath);
+        }
+
         if (record is { Ended: null })
         {
             if (ProcessLiveness.IsAlive(record.ProcessId, record.CreatedFileTime))
@@ -296,6 +309,9 @@ internal sealed record BackgroundFinderSettings
 
     /// <summary>This binary's own path, for the sentence a build that is not installed gets.</summary>
     public required string Executable { get; init; }
+
+    /// <summary>This build's version, which a record's writer is compared with (23.3 b).</summary>
+    public required string Build { get; init; }
 
     /// <summary>The process log a person reads.</summary>
     public required string LogPath { get; init; }

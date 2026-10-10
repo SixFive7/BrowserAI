@@ -314,14 +314,16 @@ internal static class McpRegistrar
                 Arguments(verb, [who], "project", project, target!.InstallRoot, replace: false, pathFolder, command, target.Arguments),
                 ToolBudget);
 
+            // ⚠️ A project's own advice when nothing could be read back, since 2026-10-10
+            // (previously ToolFailed, which offers the user-scope lines).
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                return ToolFailed(who, tool, problem, verb, command, target.Arguments, logger);
+                return ProjectNotDone(who, register, project, who.ProjectFileIn(project), $"RegisterAI at '{tool.Executable}' gave no answer: {problem}.", command, target.Arguments, logger);
             }
 
             return document!.For(who.ToolId) is { } result
                 ? ProjectReport(who, register, project, result, command, target.Arguments, logger)
-                : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, target.Arguments, logger);
+                : ProjectNotDone(who, register, project, who.ProjectFileIn(project), $"RegisterAI at '{tool.Executable}' gave no answer: its answer carried nothing about {who.DisplayName}.", command, target.Arguments, logger);
         }
 #pragma warning disable CA1031 // Same boundary as Apply: a registration failure is a report, never an exception into a click handler.
         catch (Exception failure)
@@ -502,9 +504,78 @@ internal static class McpRegistrar
                     result.Before.Command,
                     result.Before.ResolvesTo);
 
-            default:
+            case "refused-foreign" or "refused-unreadable":
                 return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, arguments, logger, Foreign(who, result, command, arguments, !register, inProject: file));
+
+            case "client-not-found":
+                return ProjectNotDone(who, register, project, file, $"{result.Error ?? $"{who.Executable} was not found."}", command, arguments, logger, RegistrationStatus.ClientNotFound);
+
+            default:
+                return ProjectNotDone(
+                    who,
+                    register,
+                    project,
+                    file,
+                    $"{result.Error ?? "RegisterAI reported the change as not done."}{(result.Said is { Length: > 0 } words ? $" What {who.Executable} printed: {words}" : string.Empty)}",
+                    command,
+                    arguments,
+                    logger);
         }
+    }
+
+    /// <summary>A project registration or removal that was not done, with what fixes that project's own file by hand.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The project's own advice, since 2026-10-10</b>, of the maintainer's 21 that day,
+    /// verbatim: <i>"21 refusing installing into a non-standard folder so the project
+    /// specific setups always resolve on every dev's pc."</i> <i>Previously</i> a removal
+    /// that was not done was told the line that adds BrowserAI, and a registration the
+    /// user-scope <c>claude mcp add</c> line, with <c>${LOCALAPPDATA}</c> left for the shell to
+    /// expand, which registers BrowserAI for every repository and leaves the project as it
+    /// was. A registration is told the entry to put into the project's file, written as the
+    /// registration would have written it; a removal, to delete the <c>browserai</c> entry
+    /// from it.
+    /// </remarks>
+    /// <param name="who">The client.</param>
+    /// <param name="register">Whether it was a registration.</param>
+    /// <param name="project">The project folder.</param>
+    /// <param name="file">The project's file for the client.</param>
+    /// <param name="said">What happened, in RegisterAI's or the client's own words where there are any.</param>
+    /// <param name="command">The command the entry names.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <param name="logger">Where the pass reports.</param>
+    /// <param name="status">What the pass concluded: a failure, or no client found.</param>
+    /// <returns>The report.</returns>
+    private static RegistrationReport ProjectNotDone(
+        RegistrationClient who,
+        bool register,
+        string project,
+        string file,
+        string said,
+        string command,
+        IReadOnlyList<string> arguments,
+        ILogger logger,
+        RegistrationStatus status = RegistrationStatus.Failed)
+    {
+        if (register)
+        {
+            var entry = who.ProjectEntryFor(command, arguments);
+
+            RegistrationLog.ProjectNotRegistered(logger, project, who.Executable, said, file, entry);
+
+            return new RegistrationReport(
+                status,
+                $"BrowserAI could not register itself in '{project}' for {who.DisplayName}. {said} To add it by hand, put this entry into '{file}': {entry}",
+                null,
+                command);
+        }
+
+        RegistrationLog.ProjectNotUnregistered(logger, file, who.Executable, said);
+
+        return new RegistrationReport(
+            status,
+            $"BrowserAI could not remove itself from '{file}' for {who.DisplayName}. {said} To remove it by hand, delete the '{ServerName}' entry from that file.",
+            null,
+            command);
     }
 
     /// <summary>The refusals, the missing client and the failure, which read the same at either scope.</summary>
@@ -513,7 +584,10 @@ internal static class McpRegistrar
     /// 2026-10-10</b>, round 2 of the texts review: the dashboard's Unregister and the
     /// uninstall hook were given the line that registers BrowserAI, so following it put
     /// back what they had asked to remove. A project's removal keeps its line, which waits
-    /// with the maintainer's answer on project registrations.
+    /// with the maintainer's answer on project registrations. ⚠️ <i>Answered 2026-10-10 by
+    /// his 21, later that day</i>: a project's own failures and its missing client go to
+    /// <see cref="ProjectNotDone"/>, which names the project's file, and only its refusals
+    /// still come here.
     /// </remarks>
     private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger, string foreign, bool removing = false)
     {
@@ -590,6 +664,9 @@ internal static class McpRegistrar
     /// after a refusal in a project registered this install for every repository and left
     /// the project as it was). The project's own line, and its data root, wait with the
     /// maintainer's answer on project registrations; the page's button is the fix there now.
+    /// <i>Answered later that day by his 21</i>: a project's entry carries no data root, so
+    /// that it resolves on every developer's PC, and a project's failures name the
+    /// entry to put into its file (<see cref="ProjectNotDone"/>).
     /// </remarks>
     private static string Foreign(RegistrationClient who, ToolResult result, string command, IReadOnlyList<string> arguments, bool removing, string? inProject = null)
     {
@@ -744,6 +821,32 @@ internal static partial class RegistrationLog
         Level = LogLevel.Error,
         Message = "BrowserAI could not unregister itself from the MCP client. {Client} {Said} The client may still point at BrowserAI. Remove it by hand: {Manual}")]
     public static partial void RemovalFailed(ILogger logger, string client, string said, string manual);
+
+    /// <summary>A registration in a project that was not done, with the entry that adds it by hand.</summary>
+    /// <remarks><b>Added 2026-10-10</b>, when a project's failure was given the user-scope add line.</remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="project">The project folder.</param>
+    /// <param name="client">The client's executable.</param>
+    /// <param name="said">What happened, in its own words where it had any.</param>
+    /// <param name="file">The project's file.</param>
+    /// <param name="entry">The entry to put into it.</param>
+    [LoggerMessage(
+        EventId = 14,
+        Level = LogLevel.Error,
+        Message = "BrowserAI could not register itself in '{Project}' through {Client}. {Said} To add it by hand, put this entry into '{File}': {Entry}")]
+    public static partial void ProjectNotRegistered(ILogger logger, string project, string client, string said, string file, string entry);
+
+    /// <summary>A removal from a project that was not done.</summary>
+    /// <remarks><b>Added 2026-10-10</b>, when a project's failed removal was given the line that adds BrowserAI.</remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="file">The project's file.</param>
+    /// <param name="client">The client's executable.</param>
+    /// <param name="said">What happened, in its own words where it had any.</param>
+    [LoggerMessage(
+        EventId = 15,
+        Level = LogLevel.Error,
+        Message = "BrowserAI could not remove itself from '{File}' through {Client}. {Said} To remove it by hand, delete the 'browserai' entry from that file.")]
+    public static partial void ProjectNotUnregistered(ILogger logger, string file, string client, string said);
 
     /// <summary>BrowserAI refused to register the path it was given.</summary>
     /// <param name="logger">Where to write.</param>

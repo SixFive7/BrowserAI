@@ -74,6 +74,36 @@ internal static class AfterUpdate
         return null;
     }
 
+    /// <summary>
+    /// The version a start is an after-update start for: the one its argument names, or,
+    /// for a restart Velopack made with no such argument, this build's own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The maintainer's 20, 2026-10-10, in his words verbatim: <i>"20 nothing except
+    /// for the toast"</i></b>: after an update no dashboard tab opens, and the installed
+    /// toast, with its <i>Changelog</i> button, is what the person gets. A restart Velopack
+    /// makes after an apply carries <c>VELOPACK_RESTART</c>, and the background puts
+    /// <see cref="Argument"/> into its own; a restart with none came from an apply that
+    /// another build made, such as 1.1.0 applying this one. The process it starts is the
+    /// new version, since a failed apply starts the old one and its code is not this, so
+    /// it is this build's install. <i>Until that day such a start went on as a person's
+    /// start and opened a tab, the tab Q338 of 2026-10-01 had asked for after every
+    /// update.</i>
+    /// </para>
+    /// </remarks>
+    /// <param name="arguments">The process's arguments.</param>
+    /// <param name="restarted">Whether Velopack's restart started this process, as <c>VELOPACK_RESTART</c> said before it was cleared.</param>
+    /// <param name="thisBuild">This build's version.</param>
+    /// <returns>The version, or <see langword="null"/> for a start that is not an after-update start.</returns>
+    public static string? TargetOf(IReadOnlyList<string> arguments, bool restarted, string thisBuild)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(thisBuild);
+
+        return TargetIn(arguments) ?? (restarted ? thisBuild : null);
+    }
+
     /// <summary>Tells an install from a failure.</summary>
     /// <remarks>
     /// <b>Compared the way Velopack compares versions</b>, through its own

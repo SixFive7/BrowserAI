@@ -141,7 +141,7 @@ internal static class Program
     /// </remarks>
     /// <param name="args">The command line.</param>
     /// <param name="firstRun">Whether the installer started this process, read before Velopack's <c>Run()</c> cleared it.</param>
-    /// <param name="restarted">Whether Velopack's restart after an update started it, read the same way.</param>
+    /// <param name="restarted">Whether Velopack's restart after an update started it, read the same way: such a start raises a toast and opens no tab.</param>
     /// <param name="buffered">What Velopack said before the log existed.</param>
     /// <returns>Zero when what was asked for happened.</returns>
     public static int Run(
@@ -220,7 +220,11 @@ internal static class Program
         // old one after a failure, with the same arguments either way. The two are told
         // apart by comparing that version with this build's, and the background is
         // asked for through the task in both cases: every BrowserAI process has gone.
-        if (AfterUpdate.TargetIn(args) is { } target)
+        // ⚠️ And a restart with no version of ours, from an apply another build made, is
+        // this build's install, since the maintainer's 20 of 2026-10-10, verbatim: "20
+        // nothing except for the toast". No tab opens after an update; until that day
+        // such a restart went on below as a person's start, which opens one.
+        if (AfterUpdate.TargetOf(args, restarted, BuildVersion.Current) is { } target)
         {
             AfterUpdate.Report(
                 target,
@@ -259,7 +263,7 @@ internal static class Program
                 TaskName = TaskNameForThisInstall(),
                 Definition = () => installRoot is null ? null : SignInTask.SavedDefinition(installRoot),
                 Tasks = ScheduledTasks.Instance,
-                StartedBy = firstRun ? PersonStart.StartedByTheInstaller : restarted ? PersonStart.StartedAfterAnUpdate : PersonStart.StartedByPerson,
+                StartedBy = firstRun ? PersonStart.StartedByTheInstaller : PersonStart.StartedByPerson,
             },
             page,
             logger);

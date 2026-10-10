@@ -97,6 +97,71 @@ internal static class RelayErrors
                 + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
 
     /// <summary>
+    /// The background's record names an end that this same version wrote and cannot read,
+    /// and the call was never passed on: a bug, said as a crash is.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10, in his words verbatim: <i>"23.3 b"</i></b>: a
+    /// relay and its background are one binary, so a version that cannot read its own end
+    /// is a defect, and the person is sent to the log and a bug report, as for
+    /// <see cref="Crashed"/>. Said at once, because a start of the same version writes the
+    /// same end.
+    /// </remarks>
+    /// <param name="at">When the record says the background ended.</param>
+    /// <param name="version">This version, which wrote the record.</param>
+    /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">As for <see cref="Crashed"/>: the command a build that is not installed is started with, or <see langword="null"/>.</param>
+    /// <returns>The sentence.</returns>
+    public static string UnreadableEnd(DateTimeOffset at, string version, string logPath, string? developerStart = null) =>
+        $"BrowserAI's background process ended at {When(at)} and recorded a way of ending that its own version, {version}, cannot read, which is a bug in BrowserAI. Nothing was run. "
+        + (developerStart is { Length: > 0 } command
+            ? $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. " + NothingStartsItAgain(command)
+            : $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
+                + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
+
+    /// <summary>
+    /// The background ended while a call it had been given was running, and recorded an
+    /// end that this same version cannot read: a bug, said as a crash during a call is.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10.</b> The call had reached a browser server, so
+    /// this row says to check before repeating, as <see cref="CrashedDuringTheCall"/> does.
+    /// </remarks>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="at">When the record says the background ended.</param>
+    /// <param name="version">This version, which wrote the record.</param>
+    /// <param name="logPath">The log the person reads.</param>
+    /// <param name="developerStart">As for <see cref="Crashed"/>.</param>
+    /// <returns>The sentence.</returns>
+    public static string UnreadableEndDuringTheCall(string tool, DateTimeOffset at, string version, string logPath, string? developerStart = null) =>
+        $"BrowserAI's background process ended at {When(at)} while '{tool}' was running, and recorded a way of ending that its own version, {version}, cannot read, which is a bug in BrowserAI. "
+        + PassedOn
+        + (developerStart is { Length: > 0 } command
+            ? $"The person at this computer needs to read {logPath} and report the bug at {IssuesUrl}. " + NothingStartsItAgain(command)
+            : $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, and then start BrowserAI from the Start Menu. "
+                + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
+
+    /// <summary>
+    /// The background's record names an end that another version wrote, and no background
+    /// came back while the call was held: said neutrally, naming that version.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10</b>, whose words the first two sentences are,
+    /// with the log's path after <i>check its log</i>: <i>"BrowserAI's background was ended
+    /// by version X, which this version cannot read. If it does not come back, check its
+    /// log."</i> Only an update or a downgrade puts another version's record before a relay,
+    /// and the background starts again by itself after either, so the call is held first,
+    /// as for a clean end.
+    /// </remarks>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="version">The version that wrote the record.</param>
+    /// <param name="logPath">The log the person reads.</param>
+    /// <returns>The sentence.</returns>
+    public static string EndedByAnotherVersion(string tool, string version, string logPath) =>
+        $"BrowserAI's background was ended by version {version}, which this version cannot read. If it does not come back, check its log at {logPath}. "
+        + $"No background process answered in the {Seconds(RelayConstants.HoldBound)} seconds this call was held, so '{tool}' was NOT run: nothing reached a browser.";
+
+    /// <summary>
     /// The background will not serve out of its data root or its install root: what it
     /// refused, why, and what puts it right, said at once to every call.
     /// </summary>

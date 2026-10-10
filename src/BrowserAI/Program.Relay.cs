@@ -55,6 +55,7 @@ internal static partial class Program
                 DataRoot = paths.RootAppDir,
                 TaskName = installRoot is { } root && InstallLocation.AppId is { Length: > 0 } appId ? SignInTask.NameFor(appId, root) : null,
                 Executable = Environment.ProcessPath ?? string.Empty,
+                Build = BuildVersion.Current,
                 LogPath = log.CurrentFile ?? paths.LogDirectory,
             },
             relayLogger);

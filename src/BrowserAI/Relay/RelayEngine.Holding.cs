@@ -182,9 +182,14 @@ internal sealed partial class RelayEngine
 
             await AnswerInPlaceAsync(
                 call.Id,
-                absence is BackgroundAbsence.Crashed crashed
-                    ? RelayErrors.CrashedDuringTheCall(call.Tool, crashed.At, crashed.ExitCode, crashed.LogPath, _facts.DeveloperStart)
-                    : RelayErrors.StoppedDuringTheCall(call.Tool, _facts.DeveloperStart),
+                absence switch
+                {
+                    BackgroundAbsence.Crashed crashed => RelayErrors.CrashedDuringTheCall(call.Tool, crashed.At, crashed.ExitCode, crashed.LogPath, _facts.DeveloperStart),
+
+                    // 23.3 b: an end this same version wrote and cannot read is a bug, said as a crash is.
+                    BackgroundAbsence.UnreadableEnd { ThisBuild: true } bug => RelayErrors.UnreadableEndDuringTheCall(call.Tool, bug.At, bug.Build, bug.LogPath, _facts.DeveloperStart),
+                    _ => RelayErrors.StoppedDuringTheCall(call.Tool, _facts.DeveloperStart),
+                },
                 "the background's pipe closed while the call was running").ConfigureAwait(false);
         }
 
@@ -237,12 +242,14 @@ internal sealed partial class RelayEngine
 
     /// <summary>
     /// Whether waiting cannot change the reason: a recorded crash, a refused root, a
-    /// build that is not installed, an update installing (D8 a, R, 9 a, D11, U2).
+    /// build that is not installed, an update installing (D8 a, R, 9 a, D11, U2), and an
+    /// end this same version wrote and cannot read (23.3 b).
     /// </summary>
     /// <param name="absence">The reason.</param>
     /// <returns><see langword="true"/> when every held call is answered now.</returns>
     private static bool AnswersAtOnce(BackgroundAbsence absence) =>
-        absence is BackgroundAbsence.Crashed or BackgroundAbsence.RootRefused or BackgroundAbsence.NotInstalled or BackgroundAbsence.UpdateInstalling;
+        absence is BackgroundAbsence.Crashed or BackgroundAbsence.RootRefused or BackgroundAbsence.NotInstalled or BackgroundAbsence.UpdateInstalling
+            or BackgroundAbsence.UnreadableEnd { ThisBuild: true };
 
     /// <summary>The sentence for a reason that is answered at once.</summary>
     /// <param name="absence">The reason.</param>
@@ -253,6 +260,7 @@ internal sealed partial class RelayEngine
         BackgroundAbsence.Crashed crashed => RelayErrors.Crashed(crashed.At, crashed.ExitCode, crashed.LogPath, _facts.DeveloperStart),
         BackgroundAbsence.RootRefused refused => RelayErrors.RootRefused(tool, refused.Refusal, refused.LogPath),
         BackgroundAbsence.NotInstalled build => RelayErrors.NotInstalled(tool, build.Executable, build.DataRoot),
+        BackgroundAbsence.UnreadableEnd { ThisBuild: true } bug => RelayErrors.UnreadableEnd(bug.At, bug.Build, bug.LogPath, _facts.DeveloperStart),
         _ => RelayErrors.UpdateInstalling(tool, null, _clientName),
     };
 
@@ -272,6 +280,9 @@ internal sealed partial class RelayEngine
     {
         BackgroundAbsence.NotRunning notRunning => RelayErrors.NotRunning(tool, notRunning.Task, notRunning.TaskName, notRunning.Detail),
         BackgroundAbsence.Starting starting => RelayErrors.NoPipe(tool, starting.ProcessId, _facts.LogPath, _facts.DeveloperStart),
+
+        // 23.3 b: another version's end, met across an update or a downgrade, named by that version.
+        BackgroundAbsence.UnreadableEnd { ThisBuild: false } other => RelayErrors.EndedByAnotherVersion(tool, other.Build, other.LogPath),
         _ => RelayErrors.NotRunning(tool, TaskState.Unknown, string.Empty, null),
     };
 

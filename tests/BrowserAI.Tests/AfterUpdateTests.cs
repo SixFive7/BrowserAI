@@ -60,6 +60,34 @@ internal sealed class AfterUpdateTests
     }
 
     /// <summary>
+    /// A restart Velopack made with no version of ours in its arguments is this build's
+    /// install, so it raises the installed toast and asks for the background, and is
+    /// never a person's start, which opens a tab.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 20, 2026-10-10, in his words verbatim: <i>"20 nothing except for
+    /// the toast"</i></b>: after an update, the installed toast and no dashboard tab. An
+    /// apply another build made, such as 1.1.0 applying this one, restarts the new version
+    /// with no <c>--after-update</c>, and until that day the start went on as a person's
+    /// start, which opens a tab. <b>Planted red 2026-10-10</b> against the argument alone,
+    /// which read that restart as no after-update start at all.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARestartWithNoVersionOfOursIsThisBuildsInstallAndNoPersonsStart()
+    {
+        await Assert.That(AfterUpdate.TargetOf([], restarted: true, "1.2.0")).IsEqualTo("1.2.0");
+        await Assert.That(AfterUpdate.Judge(AfterUpdate.TargetOf([], restarted: true, "1.2.0")!, "1.2.0")).IsEqualTo(AfterUpdateOutcome.Installed);
+
+        // The background's own restart names the version it installed, which decides.
+        await Assert.That(AfterUpdate.TargetOf(["--after-update", "1.3.0"], restarted: true, "1.2.0")).IsEqualTo("1.3.0");
+
+        // And a start that Velopack's restart did not make is no after-update start.
+        await Assert.That(AfterUpdate.TargetOf([], restarted: false, "1.2.0")).IsNull();
+        await Assert.That(AfterUpdate.TargetOf(["--sessions"], restarted: false, "1.2.0")).IsNull();
+    }
+
+    /// <summary>
     /// Versions are compared the way Velopack compares them: pre-release labels
     /// without regard to case, and a pre-release is not its release.
     /// </summary>

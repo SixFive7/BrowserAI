@@ -283,8 +283,8 @@ internal sealed class BackgroundFinderTests
     /// <summary>
     /// A root the background refused is named as the refusal, with what was refused and
     /// the remedy, whether or not the refusing process is still there and before the task
-    /// is read; and a record a later build marked with an end this build does not know is
-    /// no crash.
+    /// is read; and a record marked with an end this build does not know is no crash, and
+    /// is judged by who wrote it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -298,6 +298,12 @@ internal sealed class BackgroundFinderTests
     /// <b>Planted red 2026-10-10</b> twice: against a finder with no refusal of its own,
     /// which named the task, and against a record reader that read an unknown end as no
     /// end, which named a crash.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Judged by who wrote it since later that day, the maintainer's 23.3 b</b>
+    /// (previously such an end read as clean and the task said the rest): written by this
+    /// same version, a bug; by another, an update or a downgrade, named by that version.
+    /// Planted red against the finder as it was, which named the task's state for both.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -328,11 +334,20 @@ internal sealed class BackgroundFinderTests
         await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(null, settings.LogPath));
         await Assert.That(seams.TasksRead).IsEmpty().Because("a refusal is answered from the record alone");
 
-        // A later build's end, gone: a clean end, and the task says the rest.
+        // An end another version wrote, gone: an update or a downgrade, named by that
+        // version, and never a crash.
+        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites", build: "9.9.10-a-later-build");
+
+        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(
+            new BackgroundAbsence.UnreadableEnd("9.9.10-a-later-build", ThisBuild: false, HandWrittenRecord.StartedAt.AddHours(1), settings.LogPath));
+        await Assert.That(BackgroundRecord.Read(settings.RecordPath)!.ExitedAt).IsNull().Because("an end was timed as a crash");
+
+        // The same end written by this same version: a bug, and still no crash.
         HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites");
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
-        await Assert.That(BackgroundRecord.Read(settings.RecordPath)!.ExitedAt).IsNull().Because("a clean end was timed as a crash");
+        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(
+            new BackgroundAbsence.UnreadableEnd(BackgroundServerRig.Build, ThisBuild: true, HandWrittenRecord.StartedAt.AddHours(1), settings.LogPath));
+        await Assert.That(seams.TasksRead).IsEmpty().Because("an end the record names is answered from the record alone");
     }
 
     /// <summary>
@@ -497,6 +512,7 @@ internal sealed class BackgroundFinderTests
             DataRoot = dataRoot,
             TaskName = taskName,
             Executable = Executable,
+            Build = BackgroundServerRig.Build,
             LogPath = Path.Combine(dataRoot, "logs", "browserai.log"),
             Clock = clock,
             ReadTask = seams.ReadTask,

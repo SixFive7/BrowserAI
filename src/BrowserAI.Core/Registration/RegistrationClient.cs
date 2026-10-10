@@ -126,6 +126,20 @@ internal sealed record RegistrationClient
     /// </remarks>
     public required Func<string, IReadOnlyList<string>, string> ManualCommandFor { get; init; }
 
+    /// <summary>
+    /// The entry a person puts into a project's file by hand, from the command a project
+    /// entry names and its arguments, written the way that file is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b>, when a project registration that was not done was found to
+    /// offer the user-scope line, <c>claude mcp add browserai --scope user</c> with
+    /// <c>${LOCALAPPDATA}</c> left for a shell to expand, which registers BrowserAI for every
+    /// repository and leaves the project as it was. A project's file is the project's, and
+    /// no client's command line writes it the same way from every shell, so the advice is
+    /// the entry itself.
+    /// </remarks>
+    public required Func<string, IReadOnlyList<string>, string> ProjectEntryFor { get; init; }
+
     /// <summary>The line a person runs to remove BrowserAI's entry for this user by hand.</summary>
     /// <remarks>
     /// <b>Added 2026-10-10, round 2 of the texts review</b>: an unregister that was not
@@ -134,6 +148,12 @@ internal sealed record RegistrationClient
     /// own removal, at the scope the hooks and the page register at.
     /// </remarks>
     public required string ManualRemoveCommand { get; init; }
+
+    /// <summary>A value in double quotes, its backslashes and quotes escaped, the way a JSON string and a TOML basic string both write it.</summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The quoted value.</returns>
+    internal static string Quoted(string value) =>
+        "\"" + (value ?? string.Empty).Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
 
     /// <summary>Arguments as a person types them after the command: a flag as it is, anything else in quotes.</summary>
     /// <param name="arguments">The arguments.</param>
@@ -156,6 +176,8 @@ internal sealed record RegistrationClient
         ProjectCommandFor = ClaudeProjectCommandFor,
         ProjectNoteAfter = (_, _) => null,
         ManualCommandFor = static (command, arguments) => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {Typed(arguments)}",
+        ProjectEntryFor = static (command, arguments) =>
+            $"\"{McpRegistrar.ServerName}\": {{ \"command\": {Quoted(command)}, \"args\": [{string.Join(", ", arguments.Select(Quoted))}] }}, inside \"mcpServers\"",
         ManualRemoveCommand = $"claude mcp remove {McpRegistrar.ServerName} --scope user",
     };
 
@@ -174,6 +196,8 @@ internal sealed record RegistrationClient
         ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.AppFileName, null),
         ProjectNoteAfter = CodexProjectNote,
         ManualCommandFor = static (command, arguments) => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\" {Typed(arguments)}",
+        ProjectEntryFor = static (command, arguments) =>
+            $"mcp_servers.{McpRegistrar.ServerName} = {{ command = {Quoted(command)}, args = [{string.Join(", ", arguments.Select(Quoted))}] }}",
         ManualRemoveCommand = $"codex mcp remove {McpRegistrar.ServerName}",
     };
 

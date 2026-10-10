@@ -638,14 +638,15 @@ internal static class HandWrittenRecord
     /// <param name="ended">How it ended cleanly, or <see langword="null"/>.</param>
     /// <param name="exitCode">The exit code a relay saw, or <see langword="null"/>.</param>
     /// <param name="exitedAt">When a relay saw it go, or <see langword="null"/>.</param>
-    public static void Write(string path, int processId, long createdFileTime, string? ended = null, int? exitCode = null, DateTimeOffset? exitedAt = null)
+    /// <param name="build">The version that wrote it, or <see langword="null"/> for the rig's own.</param>
+    public static void Write(string path, int processId, long createdFileTime, string? ended = null, int? exitCode = null, DateTimeOffset? exitedAt = null, string? build = null)
     {
         var record = new JsonObject
         {
             ["pid"] = processId,
             ["created"] = createdFileTime,
             ["startedAt"] = StartedAt.ToString("O", CultureInfo.InvariantCulture),
-            ["build"] = BackgroundServerRig.Build,
+            ["build"] = build ?? BackgroundServerRig.Build,
             ["image"] = @"C:\Users\someone\BrowserAI\current\BrowserAI.exe",
         };
 

@@ -37,15 +37,16 @@ internal enum BackgroundEnd
     Refused,
 
     /// <summary>
-    /// An end a later build recorded that this build does not know, read as the clean
-    /// end it is.
+    /// An end this build has no name for, which the relay judges by who wrote the record.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-10.</b> Only a later build writes an end this build has no name
-    /// for, and every end a build writes is a clean one, so after a downgrade such a
-    /// record says that background ended cleanly. Until that day it read as no end at
-    /// all, which is a crash, and every relay answered the crash sentence until a person
-    /// started BrowserAI from the Start Menu. Never written by this build.
+    /// <b>Added 2026-10-10.</b> Until that day it read as no end at all, which is a crash,
+    /// and every relay answered the crash sentence until a person started BrowserAI from
+    /// the Start Menu. Never written by this build. ⚠️ <i>Corrected later that day by the
+    /// maintainer's 23.3 b (previously "An end a later build recorded that this build does
+    /// not know, read as the clean end it is")</i>: the record names the version that wrote
+    /// it, and the relay reads this same version's unreadable end as a bug and another
+    /// version's as an update or a downgrade (<c>BackgroundAbsence.UnreadableEnd</c>).
     /// </remarks>
     Unrecognised,
 }

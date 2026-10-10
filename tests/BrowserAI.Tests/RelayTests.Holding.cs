@@ -428,6 +428,94 @@ internal sealed partial class RelayTests
         Match(third.ToolText, nameof(RelayErrors.RootRefused), RelayErrors.RootRefused("browser_navigate", null, Log));
     }
 
+    /// <summary>
+    /// An end the background's own version wrote and cannot read is a bug: answered at
+    /// once, as a crash is, and so is every call held before it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10, in his words verbatim: <i>"23.3 b"</i></b>. A
+    /// relay and its background are one binary, so this same version meeting an end it
+    /// cannot read is a defect. Written out here and not taken from the catalogue, as R's
+    /// crash sentence is. <b>Planted red 2026-10-10</b> against the engine as it was,
+    /// which held the call as it holds a clean end.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnEndItsOwnVersionCannotReadIsABugAnsweredAtOnce()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.Starting();
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        var at = new DateTimeOffset(2026, 10, 10, 14, 5, 0, TimeSpan.Zero);
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log";
+        rig.Finder.Absence = new BackgroundAbsence.UnreadableEnd(RelayRig.Facts.Build, ThisBuild: true, at, Log);
+
+        await rig.SendAsync(RelayRig.CallFrame("2"));
+
+        var first = await rig.NextAsync();
+        var second = await rig.NextAsync();
+
+        await Assert.That(first.IdText).IsEqualTo("1");
+        await Assert.That(second.IdText).IsEqualTo("2");
+        await Assert.That(first.IsToolError).IsTrue();
+        await Assert.That(first.ToolText).IsEqualTo(
+            "BrowserAI's background process ended at 2026-10-10T14:05:00.0000000+00:00 and recorded a way of ending that its own version, 9.9.9-relay-tests, cannot read, which is a bug in BrowserAI. Nothing was run. "
+            + @"The person at this computer needs to read C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log, report the bug at https://github.com/SixFive7/BrowserAI/issues, and then start BrowserAI from the Start Menu. "
+            + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.");
+
+        Match(second.ToolText, nameof(RelayErrors.UnreadableEnd), RelayErrors.UnreadableEnd(at, RelayRig.Facts.Build, Log));
+    }
+
+    /// <summary>
+    /// An end another version wrote is held, as a clean end is, and at the deadline
+    /// answered with that version's name and not a tick before.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 23.3 b, 2026-10-10</b>: only an update or a downgrade puts another
+    /// version's record before a relay, and the background starts again by itself after
+    /// either, so a call held through it is served. The first two sentences are his words,
+    /// with the log's path after <i>check its log</i>. <b>Planted red 2026-10-10</b> against
+    /// the engine as it was, which answered the task's state at the deadline.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnEndAnotherVersionWroteIsHeldAndNamedByThatVersionAtTheDeadline()
+    {
+        await using var rig = RelayRig.Start();
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log";
+        rig.Finder.Absence = new BackgroundAbsence.UnreadableEnd("9.9.10-a-later-build", ThisBuild: false, new DateTimeOffset(2026, 10, 10, 14, 5, 0, TimeSpan.Zero), Log);
+
+        _ = await rig.InitializeAsync(KnownClients.Codex);
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        await rig.StepAsync(RelayConstants.HoldBound - OneTick);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        await rig.StepAsync(OneTick);
+        var answered = await rig.NextAsync();
+
+        await Assert.That(answered.IdText).IsEqualTo("1");
+        await Assert.That(answered.IsToolError).IsTrue();
+        await Assert.That(answered.ToolText).IsEqualTo(
+            "BrowserAI's background was ended by version 9.9.10-a-later-build, which this version cannot read. "
+            + @"If it does not come back, check its log at C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log. "
+            + "No background process answered in the 150 seconds this call was held, so 'browser_navigate' was NOT run: nothing reached a browser.");
+        await Assert.That(answered.ToolText).DoesNotContain(RelayErrors.IssuesUrl);
+
+        Match(answered.ToolText, nameof(RelayErrors.EndedByAnotherVersion), RelayErrors.EndedByAnotherVersion("browser_navigate", "9.9.10-a-later-build", Log));
+    }
+
     /// <summary>A build that is not installed is answered at once, with the command a developer runs.</summary>
     /// <remarks>D11 a, decided 2026-10-08: nothing will ever start a background for it.</remarks>
     /// <returns>The assertion task.</returns>
@@ -868,6 +956,28 @@ internal sealed partial class RelayTests
             // Not connected any more, and the crash stands: the next call is answered at once.
             await rig.SendAsync(RelayRig.CallFrame("2"));
             Match((await rig.NextAsync()).ToolText, nameof(RelayErrors.Crashed), RelayErrors.Crashed(at, 3, Log));
+        }
+
+        // An end this same version cannot read: a bug, said as a crash during a call is
+        // (23.3 b, 2026-10-10), and the next call is answered at once.
+        await using (var rig = RelayRig.Start())
+        {
+            var (background, _) = await rig.ConnectedAsync();
+            _ = await rig.ListAsync();
+
+            await rig.SendAsync(RelayRig.CallFrame("1"));
+            await Assert.That((await background.NextAsync()).IdText).IsEqualTo("1");
+
+            rig.Finder.Absence = new BackgroundAbsence.UnreadableEnd(RelayRig.Facts.Build, ThisBuild: true, at, Log);
+            background.GoAway();
+
+            var answered = await rig.NextAsync();
+
+            await Assert.That(answered.IdText).IsEqualTo("1");
+            Match(answered.ToolText, nameof(RelayErrors.UnreadableEndDuringTheCall), RelayErrors.UnreadableEndDuringTheCall("browser_navigate", at, RelayRig.Facts.Build, Log));
+
+            await rig.SendAsync(RelayRig.CallFrame("2"));
+            Match((await rig.NextAsync()).ToolText, nameof(RelayErrors.UnreadableEnd), RelayErrors.UnreadableEnd(at, RelayRig.Facts.Build, Log));
         }
 
         // A clean end: the call may have run in part, and the next call is held.

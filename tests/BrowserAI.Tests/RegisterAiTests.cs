@@ -534,6 +534,93 @@ internal sealed class RegisterAiTests
     }
 
     /// <summary>
+    /// A project registration or removal that is not done is told what fixes that project's
+    /// own file, and never a line that registers or removes BrowserAI for every repository.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 21, 2026-10-10, in his words verbatim: <i>"21 refusing installing
+    /// into a non-standard folder so the project specific setups always resolve on every
+    /// dev's pc."</i></b> The texts review had found two wrong suggestions in the project
+    /// path: a removal that was not done offered the line that adds BrowserAI, and a Claude
+    /// Code registration offered <c>claude mcp add browserai --scope user</c> with
+    /// <c>${LOCALAPPDATA}</c> left for the shell to expand, which changes nothing in the
+    /// project. A registration is told the entry to put into the project's file, and a
+    /// removal to delete the <c>browserai</c> entry from it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the registrar as it was, whose answers carried
+    /// the user-scope add line in every one of the eight below.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProjectRegistrationOrRemovalThatIsNotDoneIsToldWhatFixesThatProjectsFile()
+    {
+        using var install = ScratchDirectory.Create("registerai-project-lines");
+        using var project = ScratchDirectory.Create("registerai-project-lines-repo");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var (logger, _) = Capture();
+        var said = new List<(string What, string Detail)>();
+
+        foreach (var who in RegistrationClient.All)
+        {
+            var file = who.ProjectFileIn(project.Path);
+            var command = who.ProjectCommandFor(server, install.Path).Command;
+            var entry = who.ProjectEntryFor(command, [Program.McpArgument]);
+
+            // A client whose write fails, then a RegisterAI that gives no answer.
+            var failing = new FakeRegisterAi { Failing = { who.ToolId } };
+            var notWritten = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, failing, logger);
+
+            failing.RegisterIn(who.ToolId, project.Path, command);
+            var notRemoved = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, failing, logger);
+
+            var silent = new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) };
+            var silentlyNotWritten = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, silent, logger);
+            var silentlyNotRemoved = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, silent, logger);
+
+            foreach (var (what, report) in new[] { ("not written", notWritten), ("no answer to a registration", silentlyNotWritten) })
+            {
+                await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed).Because($"{who.DisplayName}, {what}");
+                await Assert.That(report.Detail).Contains($"put this entry into '{file}': {entry}").Because(report.Detail);
+                said.Add(($"{who.DisplayName}, {what}", report.Detail));
+            }
+
+            foreach (var (what, report) in new[] { ("not removed", notRemoved), ("no answer to a removal", silentlyNotRemoved) })
+            {
+                await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed).Because($"{who.DisplayName}, {what}");
+                await Assert.That(report.Detail).Contains($"from '{file}'").Because(report.Detail);
+                await Assert.That(report.Detail).Contains("delete the 'browserai' entry from that file").Because(report.Detail);
+                said.Add(($"{who.DisplayName}, {what}", report.Detail));
+            }
+        }
+
+        foreach (var (what, detail) in said)
+        {
+            await Assert.That(detail).DoesNotContain("mcp add").Because($"{what}: {detail}");
+            await Assert.That(detail).DoesNotContain("--scope user").Because($"{what}: {detail}");
+            await Assert.That(detail).DoesNotContain("mcp remove").Because($"{what}: {detail}");
+        }
+
+        await Assert.That(said.Count).IsEqualTo(8);
+
+        // The entries themselves, as each file writes them, and a path with a backslash in
+        // it read back from the JSON whole.
+        await Assert.That(RegistrationClient.ClaudeCode.ProjectEntryFor("${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe", [Program.McpArgument]))
+            .IsEqualTo("\"browserai\": { \"command\": \"${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe\", \"args\": [\"--mcp\"] }, inside \"mcpServers\"");
+        await Assert.That(RegistrationClient.Codex.ProjectEntryFor("BrowserAI.exe", [Program.McpArgument]))
+            .IsEqualTo("mcp_servers.browserai = { command = \"BrowserAI.exe\", args = [\"--mcp\"] }");
+
+        var json = RegistrationClient.ClaudeCode.ProjectEntryFor(@"C:\Tools\Browser""AI.exe", [Program.McpArgument]);
+        var read = System.Text.Json.Nodes.JsonNode.Parse("{" + json[..json.IndexOf(", inside", StringComparison.Ordinal)] + "}")!;
+
+        await Assert.That((string?)read["browserai"]!["command"]).IsEqualTo(@"C:\Tools\Browser""AI.exe");
+    }
+
+    /// <summary>
     /// The state the window and the report show: one status run for every client's user
     /// scope, one per client that has a project file at or above the working folder, and
     /// each answer read as BrowserAI names its states.
