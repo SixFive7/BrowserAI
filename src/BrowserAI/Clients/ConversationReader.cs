@@ -197,8 +197,8 @@ internal sealed class ConversationReader(ClientRecordAccess access)
             return new(null, ClientFolder.Unnamed("Codex", folder), ConversationSource.None, NameSource.ClientAndFolder);
         }
 
-        return facts?.CodexHome is { Length: > 0 } home && CodexThreads.NameOf(home, thread, access.ReadAll) is { } name
-            ? new(thread, new ConversationName(name, IsTitle: true), ConversationSource.CodexCall, NameSource.CodexIndex)
+        return facts?.CodexHome is { Length: > 0 } home && CodexThreads.NameOf(home, thread, access.ReadAll) is { } name && ConversationName.Titled(name) is { } titled
+            ? new(thread, titled, ConversationSource.CodexCall, NameSource.CodexIndex)
             : new(thread, ClientFolder.Unnamed("Codex", folder), ConversationSource.CodexCall, NameSource.ClientAndFolder);
     }
 
@@ -242,7 +242,8 @@ internal sealed class ConversationReader(ClientRecordAccess access)
         return record is not null
             && access.ReadEnds(record, ClaudeCodeTitle.Window) is { } ends
             && ClaudeCodeTitle.Of(ends.Head, ends.Tail) is { } title
-                ? new(sessionId, new ConversationName(title.Title, IsTitle: true), source, NameSourceOf(title.Source))
+            && ConversationName.Titled(title.Title) is { } titled
+                ? new(sessionId, titled, source, NameSourceOf(title.Source))
                 : new(sessionId, ClientFolder.Unnamed("new conversation", folder), source, NameSource.NoRecordYet);
     }
 

@@ -457,15 +457,13 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     }
 
     /// <summary>What the dashboard shows for a relay's client.</summary>
+    /// <remarks>
+    /// <b>The sessions page's own wording since 2026-10-10</b>, through
+    /// <see cref="ClientNames"/>, so the two pages call one client one thing.
+    /// </remarks>
     /// <param name="relay">The relay.</param>
-    /// <returns>Its name and version, its name alone, or a plain statement that it gave none.</returns>
-    internal static string ClientOf(RelayState relay) =>
-        (relay.ClientName, relay.ClientVersion) switch
-        {
-            ({ Length: > 0 } name, { Length: > 0 } version) => $"{name} {version}",
-            ({ Length: > 0 } name, _) => name,
-            _ => "unnamed client",
-        };
+    /// <returns>Its name and version, its name alone, or <see cref="ClientNames.Unnamed"/>.</returns>
+    internal static string ClientOf(RelayState relay) => ClientNames.Of(relay.ClientName, relay.ClientVersion);
 
     /// <summary>What a client needs once an update has ended its relay, as far as its name tells.</summary>
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>.</param>

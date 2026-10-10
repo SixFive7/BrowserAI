@@ -37,6 +37,41 @@ internal sealed record ConversationName(string Text, bool IsTitle)
     /// </remarks>
     public const int TabWidth = 25;
 
+    /// <summary>A title as one line: every run of white space or control characters one space, and none at either end.</summary>
+    /// <remarks>
+    /// <b>A title can be a prompt</b>, the last one or the first, and a prompt can hold line
+    /// breaks and tabs, which a toast would show as breaks in its line; the extension
+    /// itself turns a first prompt's line breaks into spaces.
+    /// </remarks>
+    /// <param name="text">The title as the client's records give it.</param>
+    /// <returns>The name, or <see langword="null"/> when nothing is left of it.</returns>
+    public static ConversationName? Titled(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        var line = new System.Text.StringBuilder(text.Length);
+        var gap = false;
+
+        foreach (var character in text)
+        {
+            if (char.IsWhiteSpace(character) || char.IsControl(character))
+            {
+                gap = true;
+                continue;
+            }
+
+            if (gap && line.Length > 0)
+            {
+                _ = line.Append(' ');
+            }
+
+            gap = false;
+            _ = line.Append(character);
+        }
+
+        return line.Length > 0 ? new ConversationName(line.ToString(), IsTitle: true) : null;
+    }
+
     /// <summary>The name as a page shows it: a title in quotes, BrowserAI's own words as they are.</summary>
     /// <returns>The words.</returns>
     public string Shown() => IsTitle ? $"\"{Text}\"" : Text;
@@ -83,6 +118,31 @@ internal sealed record ClientWindow(string Key, string? Folder)
     /// <summary>What a page calls the window.</summary>
     /// <returns><i>VS Code window on &lt;folder&gt;</i>, or <i>VS Code window</i> when the folder is not known.</returns>
     public string Label() => ClientFolder.NameOf(Folder) is { } name ? $"VS Code window on {name}" : "VS Code window";
+}
+
+/// <summary>What BrowserAI's pages call a client: one wording on every page.</summary>
+/// <remarks>
+/// <b>Added 2026-10-10</b>, when the texts review found the update page calling a client
+/// that gave no name <i>unnamed client</i> and the sessions page calling the same client
+/// <i>A client that has not said what it is</i> with its version after it (item 85). A
+/// version with no name tells a person nothing, so it is left out.
+/// </remarks>
+internal static class ClientNames
+{
+    /// <summary>What a client that gave no name is called.</summary>
+    public const string Unnamed = "unnamed client";
+
+    /// <summary>A client as the pages name it: its name and its version, its name alone, or <see cref="Unnamed"/>.</summary>
+    /// <param name="name">What it calls itself, or <see langword="null"/>.</param>
+    /// <param name="version">Its version, or <see langword="null"/>.</param>
+    /// <returns>The words.</returns>
+    public static string Of(string? name, string? version) =>
+        (name, version) switch
+        {
+            ({ Length: > 0 }, { Length: > 0 }) => $"{name} {version}",
+            ({ Length: > 0 }, _) => name,
+            _ => Unnamed,
+        };
 }
 
 /// <summary>What BrowserAI calls a client's folder in a label.</summary>

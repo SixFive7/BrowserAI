@@ -359,6 +359,44 @@ internal sealed class ConversationReaderTests
         await Assert.That(reads).IsEqualTo(2);
     }
 
+    /// <summary>
+    /// A title is shown on one line: a prompt's line breaks and tabs become single spaces,
+    /// and a title of nothing but white space names nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The last prompt can be a title</b>, by the extension's rule, and a prompt can hold
+    /// line breaks that a toast's line would break on.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a name that kept the title as it came.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATitleIsShownOnOneLine()
+    {
+        using var scratch = ScratchDirectory.Create("conversation-line");
+        var config = Path.Combine(scratch.Path, "config");
+        var folder = Path.Combine(scratch.Path, "projects", "Limes");
+
+        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
+        _ = WriteRecord(config, folder, Live, padding: 0, Line(new JsonObject { ["type"] = "last-prompt", ["lastPrompt"] = "check the\nlogin\t\tpage  " }));
+
+        var read = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+
+        await Assert.That(read.Name).IsEqualTo(new ConversationName("check the login page", IsTitle: true));
+        await Assert.That(read.NameSource).IsEqualTo(NameSource.LastPrompt);
+
+        // A custom title of white space alone names nothing.
+        WriteProcessFile(config, ClientPid, ClientStarted, Stale, folder);
+        _ = WriteRecord(config, folder, Stale, padding: 0, Custom(" \t "));
+
+        var blank = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+
+        await Assert.That(blank.Name).IsEqualTo(new ConversationName("new conversation in Limes", IsTitle: false));
+    }
+
     /// <summary>A value that is not a session id is never taken for one, so it never becomes part of a path.</summary>
     /// <remarks>
     /// <b>Planted red 2026-10-10</b> against a reader that took the environment's value as

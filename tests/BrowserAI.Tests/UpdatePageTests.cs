@@ -136,6 +136,59 @@ internal sealed class UpdatePageTests
     }
 
     /// <summary>
+    /// A client is called the same thing on the update page and on the sessions page:
+    /// its name and its version, its name alone, or <i>unnamed client</i>, which no
+    /// version follows.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Item 85 of the texts review of 2026-10-10</b>: the update page said <i>unnamed
+    /// client</i> and the sessions page <i>A client that has not said what it is</i> with
+    /// the version after it, for one relay. A version with no name tells a person
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the sessions page's old wording.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">What the client called itself, or <see langword="null"/>.</param>
+    /// <param name="version">Its version, or <see langword="null"/>.</param>
+    /// <param name="expected">What both pages call it.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments("claude-code", "2.1.296", "claude-code 2.1.296")]
+    [Arguments("claude-code", null, "claude-code")]
+    [Arguments(null, "2.1.296", ClientNames.Unnamed)]
+    [Arguments(null, null, ClientNames.Unnamed)]
+    public async Task AClientIsCalledTheSameOnTheUpdatePageAndTheSessionsPage(string? name, string? version, string expected)
+    {
+        var relay = new RelayState("1", name, version, @"C:\project", Now, CallInFlight: false);
+        var entry = new ServerEntry(
+            "301-1",
+            "relay:1",
+            new Coordination.ServerDescription(
+                Coordination.ServerPipeProtocol.Version,
+                301,
+                1,
+                "9.0.0",
+                @"C:\install\current\BrowserAI.exe",
+                Coordination.ServerDescription.States.Serving,
+                new Coordination.ClientIdentity(name, Title: null, version),
+                @"C:\project",
+                Started: null,
+                LastToolCall: null,
+                CallsInFlight: 0,
+                [],
+                Coordination.ServerDescription.Roles.Relay),
+            ClientKind.Other,
+            RecentlyActive: false,
+            []);
+
+        await Assert.That(BackgroundUpdates.ClientOf(relay)).IsEqualTo(expected);
+        await Assert.That(PageContent.ClientOf(entry)).IsEqualTo(expected);
+    }
+
+    /// <summary>
     /// A wait no countdown leads says what it waits for, and a session or a window set
     /// never to close says so where its countdown would be.
     /// </summary>

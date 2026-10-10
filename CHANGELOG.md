@@ -1535,6 +1535,14 @@ release body; nothing else depends on it.
   product. The suite's own harness messages are outside it for the same reason: a test
   explaining a missing capability to whoever is running it is not the product speaking.
 
+- 🔧 **The sessions page calls a client that gave no name *unnamed client*, as the update page does.**
+  Item 85 of the texts review of 2026-10-10 found the two pages naming one client two ways: the
+  sessions page wrote *A client that has not said what it is*, with its version after it, and the
+  update page *unnamed client*, with none. Both pages now write a client as its name and version,
+  its name alone, or *unnamed client*, and a version with no name beside it is left out, because it
+  tells a person nothing. `UpdatePageTests.AClientIsCalledTheSameOnTheUpdatePageAndTheSessionsPage`
+  holds both pages to the one wording, watched red first.
+
 - 📦 **A release publishes three assets, and the release script declares which three.**
   `build/New-Release.ps1` does not upload and never has: the publish is a hand-run
   `gh release create` at `RELEASING.md` item 14. Nothing named an upload set, so the assets were

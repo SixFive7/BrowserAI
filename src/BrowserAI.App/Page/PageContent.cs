@@ -547,8 +547,14 @@ internal static class PageContent
     }
 
     /// <summary>What a client calls itself on the page.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "A client that has not said what it is", with
+    /// the version after it)</i>: the update page called the same client <i>unnamed
+    /// client</i> with no version, and the texts review found the two (item 85), so both
+    /// pages now say it through <see cref="ClientNames"/>.
+    /// </remarks>
     /// <param name="server">The server.</param>
-    /// <returns>The client's name and version, or a sentence fragment when it has not said.</returns>
+    /// <returns>The client's name and version, its name alone, or <see cref="ClientNames.Unnamed"/>.</returns>
     public static string ClientOf(ServerEntry server)
     {
         ArgumentNullException.ThrowIfNull(server);
@@ -557,9 +563,9 @@ internal static class PageContent
         var name = client?.Title is { Length: > 0 } title ? title
             : client?.Name is { Length: > 0 } named ? named
             : server.KnownAs is { Length: > 0 } known ? known
-            : "A client that has not said what it is";
+            : null;
 
-        return client?.Version is { Length: > 0 } version ? $"{name} {version}" : name;
+        return ClientNames.Of(name, client?.Version);
     }
 
     /// <summary>How long ago, in words.</summary>

@@ -300,7 +300,7 @@ internal sealed class PageServiceTests
         await Assert.That(page.Body).Contains("value=\"202-1\"");
         await Assert.That(page.Body).Contains("value=\"203-1\"");
         await Assert.That(page.Body).Contains("Claude Code 2.1.288, pid 201");
-        await Assert.That(page.Body).Contains("A client that has not said what it is, pid 203");
+        await Assert.That(page.Body).Contains("unnamed client, pid 203");
         await Assert.That(page.Body).Contains("Last call 3 minutes ago.");
         await Assert.That(page.Body).Contains("One call is running now.");
         await Assert.That(page.Body).Contains("One more server is running and did not answer");
