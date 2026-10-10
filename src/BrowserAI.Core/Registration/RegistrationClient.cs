@@ -116,8 +116,21 @@ internal sealed record RegistrationClient
     /// </remarks>
     public required Func<string, string?, string?> ProjectNoteAfter { get; init; }
 
-    /// <summary>The line a person can run by hand, from the command to register.</summary>
-    public required Func<string, string> ManualCommandFor { get; init; }
+    /// <summary>The line a person can run by hand, from the command to register and its arguments.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The arguments are the ones the registration itself was given, since
+    /// 2026-10-10</b>, the texts review's #138 and #139: the line carried <c>--mcp</c>
+    /// alone, so for an install made with a data root it set up a relay that no
+    /// background serves. The dashboard's Register and Repair keep the data root the
+    /// same way (lane UI, the same day).
+    /// </remarks>
+    public required Func<string, IReadOnlyList<string>, string> ManualCommandFor { get; init; }
+
+    /// <summary>Arguments as a person types them after the command: a flag as it is, anything else in quotes.</summary>
+    /// <param name="arguments">The arguments.</param>
+    /// <returns>The arguments, separated by spaces.</returns>
+    internal static string Typed(IReadOnlyList<string> arguments) =>
+        string.Join(' ', arguments.Select(static argument => argument.StartsWith("--", StringComparison.Ordinal) ? argument : $"\"{argument}\""));
 
     /// <summary>Claude Code, the client this product was written against first.</summary>
     public static RegistrationClient ClaudeCode { get; } = new()
@@ -133,7 +146,7 @@ internal sealed record RegistrationClient
         ProjectFileName = ".mcp.json",
         ProjectCommandFor = ClaudeProjectCommandFor,
         ProjectNoteAfter = (_, _) => null,
-        ManualCommandFor = command => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {RegistrationTarget.McpArgument}",
+        ManualCommandFor = static (command, arguments) => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {Typed(arguments)}",
     };
 
     /// <summary>Codex, added 2026-09-24.</summary>
@@ -150,7 +163,7 @@ internal sealed record RegistrationClient
         ProjectFileName = Path.Combine(".codex", "config.toml"),
         ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.AppFileName, null),
         ProjectNoteAfter = CodexProjectNote,
-        ManualCommandFor = command => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\" {RegistrationTarget.McpArgument}",
+        ManualCommandFor = static (command, arguments) => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\" {Typed(arguments)}",
     };
 
     /// <summary>Both clients, in the order a report lists them.</summary>

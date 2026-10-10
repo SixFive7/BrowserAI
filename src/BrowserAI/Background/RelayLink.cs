@@ -215,6 +215,11 @@ internal sealed class RelayLink : TransportBase, IRelayLink
                 // Nothing else of the relay's is a notification the background reads.
                 return true;
 
+            // No relay sends this: after its greeting a relay sends the replayed handshake,
+            // calls, pings and its own notifications, and a client's own browserai/
+            // request is answered by the relay itself. A request still gets an answer, so
+            // the branch stays for a relay of another build (the texts review's #129,
+            // 2026-10-10).
             case JsonRpcRequest { Method: var method } request when BackgroundPipe.IsOurs(method):
                 _ = _inner.SendMessageAsync(
                     new JsonRpcError

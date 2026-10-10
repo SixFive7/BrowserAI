@@ -130,7 +130,7 @@ internal sealed class CloseOrderingTests
 
         // The close's row is settled as answered, ahead of the resume's own row.
         var log = RecordedSession.LogOf(harness.Session!);
-        var close = log.Single(row => row.Tool == LiveSession.BrowserCloseTool);
+        var close = log.Single(row => row.Tool == CloseReasons.LogRowTool);
 
         await Assert.That(close.Outcome).IsEqualTo(SessionStore.Successful);
         await Assert.That(log.Last(row => row.Tool == SessionToolSurface.Resume).Id).IsGreaterThan(close.Id);

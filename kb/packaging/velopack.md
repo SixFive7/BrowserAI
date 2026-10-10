@@ -1282,6 +1282,29 @@ suite lock and the installer lock; compare against `velopack/tables.md` and each
 logs. The failure needs a process outside the root holding a file in `current\` open
 with no sharing; the source lines are at the tag named above.
 
+## Where a hook's own lines go -- read and measured at 1.2.161, 2026-10-10
+
+**Velopack's C# logger writes `%LOCALAPPDATA%\velopack\velopack_<app id>.log`**
+(`velopack.log` when there is no app id), the file `Update.exe` writes its own
+`[update:<pid>]` lines into, each line of the library's marked `[lib-csharp:<pid>]`
+(`WindowsVelopackLocator.cs:154-163` at the tag `1.2.161`), and it hands every line to
+the logger `VelopackApp.SetLogger` registered as well. `Setup.exe --log <file>` writes
+its own lines to that file and none of the hook's: the setup logs of three suite
+installs, of 2026-09-24, 2026-09-25 and 2026-10-04, go from *Running --veloapp-install
+hook...* to *Hook executed successfully* with nothing between. **So a hook's line
+reaches an installer's log only through that logger.** Until 2026-10-10
+`VelopackStartup.Mirror` wrote through a delegate of BrowserAI's own, a list that a
+hook process exits before reading: read on this machine that day, the shipping pack
+id's `velopack_BrowserAI.app.log` recorded 60 hooks served and the suite's
+`velopack_BrowserAI.app.test.log` with its `.old` recorded 272, and none of the 332
+carried one of those lines. `[FLOATS]`
+
+**Re-establish it** by reading `WindowsVelopackLocator.cs` at the tag the build
+resolves, and by installing the test pack:
+`RealInstallerTests.InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical` reads the
+sign-in task's line out of `velopack_<test pack id>.log` on every run that has the
+release installer.
+
 ## Channel -- the charter's reason was wrong
 
 Measured 2026-08-15. `[FLOATS]`

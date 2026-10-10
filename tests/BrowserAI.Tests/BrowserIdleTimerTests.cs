@@ -348,11 +348,11 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(harness.Client.FramesReceived.Count).IsEqualTo(framesBefore + 1);
 
         await WaitUntilAsync(
-            () => RecordedSession.LogOf(session).Any(row => row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+            () => RecordedSession.LogOf(session).Any(row => row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
 
-        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == CloseReasons.LogRowTool)).IsEqualTo(1);
 
         // ⚠️ AND IT ASKED THE BROWSER TO CLOSE ITSELF, ONCE, Q367 a. Corrected
         // 2026-10-03 (previously "AND IT NEVER ASKED THE CHILD TO CLOSE ANYTHING,
@@ -389,6 +389,12 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>The <c>why</c> is BrowserAI's own and it says so.</b> Every other row
     /// carries a caller's sentence; this one has no caller, so it names the timer
     /// and the period instead of borrowing a voice it does not have.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The row stands under <see cref="CloseReasons.LogRowTool"/> since
+    /// 2026-10-10</b>, the texts review's #180 (previously <c>browser_close</c>, which no
+    /// model can call since F1 a, so <c>browserai_catch_up</c> printed beside the timer's
+    /// sentence a tool its reader could not use). Planted red against the close as it was.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -448,12 +454,12 @@ internal sealed partial class BrowserIdleTimerTests
         // and by no number written here.
         await WaitUntilAsync(
             () => RecordedSession.LogOf(session).Any(row =>
-                row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+                row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
 
         var closes = RecordedSession.LogOf(session)
-            .Where(row => row.Tool == LiveSession.BrowserCloseTool)
+            .Where(row => row.Tool == CloseReasons.LogRowTool)
             .ToList();
 
         await Assert.That(closes.Count).IsEqualTo(1);
@@ -479,7 +485,7 @@ internal sealed partial class BrowserIdleTimerTests
             ["arguments"] = new JsonObject { ["session"] = session, ["why"] = "the suite reading back what the idle close wrote" },
         }));
 
-        await Assert.That(text).Contains(LiveSession.BrowserCloseTool);
+        await Assert.That(text).Contains(CloseReasons.LogRowTool);
 
         // ⚠️ THE POSITIVE CONTROL, and it is what stops this passing against a
         // row written on every session: the caller's own navigation is still
@@ -669,7 +675,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         await WaitUntilAsync(
             () => RecordedSession.LogOf(harness.Session!).Any(row =>
-                row.Tool == LiveSession.BrowserCloseTool && row.Outcome == SessionStore.Successful),
+                row.Tool == CloseReasons.LogRowTool && row.Outcome == SessionStore.Successful),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
     }
@@ -762,7 +768,7 @@ internal sealed partial class BrowserIdleTimerTests
         // settled, and the next call is refused with the way back.
         await WaitUntilAsync(
             () => RecordedSession.LogOf(harness.Session!).Any(row =>
-                row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+                row.Tool == CloseReasons.LogRowTool && row.Outcome != SessionStore.InFlight),
             TestDefaults.InProcessHang,
             "the idle close never settled its row");
 
@@ -1030,7 +1036,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         await Assert.That(child.HasStopped).IsFalse();
         await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
-        await Assert.That(RecordedSession.LogOf(session).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsFalse();
+        await Assert.That(RecordedSession.LogOf(session).Any(row => row.Tool == CloseReasons.LogRowTool)).IsFalse();
 
         // And the session was not closed: the next call reaches the same child.
         var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject

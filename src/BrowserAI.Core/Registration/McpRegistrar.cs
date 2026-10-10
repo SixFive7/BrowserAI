@@ -221,14 +221,15 @@ internal static class McpRegistrar
             }
 
             var command = target!.Command;
+            var arguments = commandArguments ?? target.Arguments;
             var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
             var run = tool.Run(
-                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, commandArguments ?? target.Arguments),
+                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command, arguments),
                 ToolBudget);
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, ToolFailed(who, tool, problem, verb, command, logger)))];
+                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, ToolFailed(who, tool, problem, verb, command, arguments, logger)))];
             }
 
             return
@@ -237,8 +238,8 @@ internal static class McpRegistrar
                     who.Key,
                     who.DisplayName,
                     document!.For(who.ToolId) is { } result
-                        ? UserReport(who, intent, result, command, logger)
-                        : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, logger))),
+                        ? UserReport(who, intent, result, command, arguments, logger)
+                        : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, arguments, logger))),
             ];
         }
 #pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds, never an exception into the installer.
@@ -254,7 +255,7 @@ internal static class McpRegistrar
                     who.DisplayName,
                     new RegistrationReport(
                         RegistrationStatus.Failed,
-                        $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
+                        $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>", commandArguments ?? [RegistrationTarget.McpArgument])}",
                         null,
                         imagePath))),
             ];
@@ -309,12 +310,12 @@ internal static class McpRegistrar
 
             if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                return ToolFailed(who, tool, problem, verb, command, logger);
+                return ToolFailed(who, tool, problem, verb, command, target.Arguments, logger);
             }
 
             return document!.For(who.ToolId) is { } result
-                ? ProjectReport(who, register, project, result, command, logger)
-                : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, logger);
+                ? ProjectReport(who, register, project, result, command, target.Arguments, logger)
+                : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, target.Arguments, logger);
         }
 #pragma warning disable CA1031 // Same boundary as Apply: a registration failure is a report, never an exception into a click handler.
         catch (Exception failure)
@@ -410,7 +411,7 @@ internal static class McpRegistrar
         command.Length > 0 && command.IndexOfAny(['\\', '/', ':']) < 0;
 
     /// <summary>What one client's user-scope result amounts to, in BrowserAI's words.</summary>
-    private static RegistrationReport UserReport(RegistrationClient who, RegistrationIntent intent, ToolResult result, string command, ILogger logger)
+    private static RegistrationReport UserReport(RegistrationClient who, RegistrationIntent intent, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger)
     {
         var client = result.ClientPath;
 
@@ -454,12 +455,12 @@ internal static class McpRegistrar
                     result.Before.Command);
 
             default:
-                return NotDone(who, intent is RegistrationIntent.Uninstall ? "unregister" : "register", result, command, logger, Foreign(who, result, intent is RegistrationIntent.Uninstall));
+                return NotDone(who, intent is RegistrationIntent.Uninstall ? "unregister" : "register", result, command, arguments, logger, Foreign(who, result, command, arguments, intent is RegistrationIntent.Uninstall));
         }
     }
 
     /// <summary>What one client's project-scope result amounts to, in BrowserAI's words.</summary>
-    private static RegistrationReport ProjectReport(RegistrationClient who, bool register, string project, ToolResult result, string command, ILogger logger)
+    private static RegistrationReport ProjectReport(RegistrationClient who, bool register, string project, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger)
     {
         var client = result.ClientPath;
         var file = result.Config ?? who.ProjectFileIn(project);
@@ -496,15 +497,15 @@ internal static class McpRegistrar
                     result.Before.ResolvesTo);
 
             default:
-                return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, logger, Foreign(who, result, !register));
+                return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, arguments, logger, Foreign(who, result, command, arguments, !register));
         }
     }
 
     /// <summary>The refusals, the missing client and the failure, which read the same at either scope.</summary>
-    private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, ILogger logger, string foreign)
+    private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, IReadOnlyList<string> arguments, ILogger logger, string foreign)
     {
         var client = result.ClientPath;
-        var manual = who.ManualCommandFor(command);
+        var manual = who.ManualCommandFor(command, arguments);
 
         if (result.Action is "refused-foreign")
         {
@@ -543,11 +544,16 @@ internal static class McpRegistrar
     }
 
     /// <summary>The sentence for an entry another install wrote.</summary>
-    private static string Foreign(RegistrationClient who, ToolResult result, bool removing)
+    /// <remarks>
+    /// ⚠️ <b>The line registers this install, since 2026-10-10</b> (previously it was
+    /// spelled with the other install's command, so following it put the other entry
+    /// back). Found while the texts review's #138 and #139 were fixed.
+    /// </remarks>
+    private static string Foreign(RegistrationClient who, ToolResult result, string command, IReadOnlyList<string> arguments, bool removing)
     {
         var advice = removing
             ? "That entry belongs to the other install, and removing it is for that install to do."
-            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(result.Before.Command ?? "<this install's server>")}";
+            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command, arguments)}";
 
         return $"Another BrowserAI is registered at '{result.Before.Command ?? "<an entry with no local command>"}', which is not under this install root. "
             + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{ServerName}' entry it did not write. "
@@ -555,15 +561,16 @@ internal static class McpRegistrar
     }
 
     /// <summary>A run of RegisterAI that gave no answer BrowserAI can read.</summary>
-    private static RegistrationReport ToolFailed(RegistrationClient who, IRegisterAi tool, string problem, string verb, string command, ILogger logger)
+    private static RegistrationReport ToolFailed(RegistrationClient who, IRegisterAi tool, string problem, string verb, string command, IReadOnlyList<string> arguments, ILogger logger)
     {
         var said = $"RegisterAI at '{tool.Executable}' gave no answer: {problem}.";
+        var manual = who.ManualCommandFor(command, arguments);
 
-        RegistrationLog.Failed(logger, verb, tool.Executable, said, who.ManualCommandFor(command));
+        RegistrationLog.Failed(logger, verb, tool.Executable, said, manual);
 
         return new RegistrationReport(
             RegistrationStatus.Failed,
-            $"BrowserAI could not {verb} itself with {who.DisplayName}. {said} BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {who.ManualCommandFor(command)}",
+            $"BrowserAI could not {verb} itself with {who.DisplayName}. {said} BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {manual}",
             null,
             command);
     }

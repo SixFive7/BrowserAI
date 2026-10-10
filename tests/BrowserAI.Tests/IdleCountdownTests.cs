@@ -121,7 +121,7 @@ internal sealed class IdleCountdownTests
         clock.AdvanceTicks(ManualClock.OneTick);
         await WaitUntilAsync(() => visibleChild.HasStopped, "the visible window was not idle-closed at its hour");
 
-        await Assert.That(RecordedSession.LogOf(visible).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsTrue();
+        await Assert.That(RecordedSession.LogOf(visible).Any(row => row.Tool == CloseReasons.LogRowTool)).IsTrue();
 
         // The refusal after it says nobody had used the window either.
         var refused = await NavigateAsync(harness, visible, "the call after the visible window's idle close");
@@ -192,7 +192,7 @@ internal sealed class IdleCountdownTests
         _ = await harness.Client.RoundTripAsync("tools/list");
 
         await Assert.That(neverChild.HasStopped).IsFalse();
-        await Assert.That(RecordedSession.LogOf(never).Any(row => row.Tool == LiveSession.BrowserCloseTool)).IsFalse();
+        await Assert.That(RecordedSession.LogOf(never).Any(row => row.Tool == CloseReasons.LogRowTool)).IsFalse();
     }
 
     /// <summary>

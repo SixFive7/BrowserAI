@@ -262,6 +262,76 @@ internal sealed class BackgroundProcessTests
         await Assert.That(background.JobProcessIds().Count).IsEqualTo(0);
     }
 
+    /// <summary>
+    /// A background stopped through its pipe, the uninstall's stop, closes every session
+    /// it holds and each one records the stop: one with a browser up and one with none,
+    /// while the relay that opened them is still connected.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>: the background gave its
+    /// sessions no reason when it ended, so the one with a browser was recorded as shut
+    /// down when its client went away, and the one without as let go because its client
+    /// went away. Neither client had gone. The background says why it ends before its
+    /// pipe closes, so the relay's connection ending with it changes neither record.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a background whose end gave no reason: the
+    /// session with a browser recorded <see cref="SessionCloseCause.ServerShutDown"/> and
+    /// the one without recorded <see cref="SessionCloseCause.Released"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABackgroundStoppedThroughItsPipeRecordsTheStopForEverySessionItHeld()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireProvisionedChromium();
+        PublishedSlice.EnsureFresh();
+
+        using var scratch = ScratchDirectory.Create("background-stopped");
+        await using var background = BackgroundRun.Start(scratch.Path);
+
+        var browsing = Path.Combine(scratch.Path, "stopped-with-a-browser");
+        var waiting = Path.Combine(scratch.Path, "stopped-with-no-browser");
+
+        await using var relay = background.StartRelay(scratch.Path);
+
+        _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        foreach (var session in new[] { browsing, waiting })
+        {
+            await CallOkAsync(relay, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "the background arm's session, which a stop through the pipe closes",
+                ["headed"] = false,
+                ["transcript"] = false,
+                ["captureNetwork"] = false,
+                ["idleMinutes"] = 10,
+            });
+        }
+
+        await CallOkAsync(relay, "browser_navigate", new JsonObject
+        {
+            ["url"] = SliceRun.TargetUrl,
+            ["session"] = browsing,
+            ["why"] = "the suite bringing a browser up for the stop to close",
+        });
+
+        // The uninstall hook's own stop, with its own bound.
+        var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(background.Pipe, background.Record, BackgroundStop.Bound));
+
+        await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
+
+        foreach (var session in new[] { browsing, waiting })
+        {
+            var close = SessionLock.ReadRecord(SessionPath.For(session))!.LastClose!;
+
+            await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Stopped).Because($"{session}: {CloseReasons.Of(close)}");
+        }
+    }
+
     private static async Task DestroyAsync(RawStdioClient client, string session) =>
         _ = await client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -304,19 +374,21 @@ internal sealed class BackgroundProcessTests
         private readonly JobObject _job;
         private readonly LaunchedProcess _process;
         private readonly long _created;
-        private readonly string _record;
 
         private BackgroundRun(JobObject job, LaunchedProcess process, string pipe, string record)
         {
             _job = job;
             _process = process;
             _created = ProcessIdentity.CreationTimeOf(process.Id);
-            _record = record;
+            Record = record;
             Pipe = pipe;
         }
 
         /// <summary>The pipe it serves.</summary>
         public string Pipe { get; }
+
+        /// <summary>Its record, which a stop through the pipe reads to wait for it.</summary>
+        public string Record { get; }
 
         /// <summary>Starts one and waits for its pipe.</summary>
         /// <param name="workingDirectory">Its working directory.</param>
@@ -365,7 +437,7 @@ internal sealed class BackgroundProcessTests
 
             try
             {
-                File.Delete(_record);
+                File.Delete(Record);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {

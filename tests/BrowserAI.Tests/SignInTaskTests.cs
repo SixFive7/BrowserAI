@@ -460,7 +460,9 @@ internal sealed class SignInTaskTests
         await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"register {name} | register {name} | remove {name}");
 
         var log = HookLog(data.Path);
-        var stopped = log.IndexOf($"Background stop: {BackgroundStopOutcome.Ended}.", StringComparison.Ordinal);
+        // NotWaitedFor since 2026-10-10, the texts review's #141 (previously Ended): this
+        // background's record names no process, so nothing waited for it to end.
+        var stopped = log.IndexOf($"Background stop: {BackgroundStopOutcome.NotWaitedFor}.", StringComparison.Ordinal);
         var taskGone = log.IndexOf($"Sign-in task: {TaskChange.Removed}.", StringComparison.Ordinal);
 
         await Assert.That(stopped).IsGreaterThanOrEqualTo(0).Because(log);

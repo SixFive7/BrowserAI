@@ -4,6 +4,7 @@
 using BrowserAI.Registration;
 using Microsoft.Extensions.Logging;
 using Velopack;
+using Velopack.Locators;
 using Velopack.Logging;
 
 namespace BrowserAI.Updates;
@@ -129,14 +130,53 @@ internal static class VelopackStartup
             // ⚠️ THE THREE THAT DO WORK. Their records are written inside the
             // callback and not buffered, because VelopackApp.Run() exits the
             // process once it has served a hook and anything buffered dies with
-            // it.
-            .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), log))
-            .OnAfterUpdateFastCallback(version => Register(RegistrationIntent.Update, Describe(version), log))
-            .OnBeforeUninstallFastCallback(version => Register(RegistrationIntent.Uninstall, Describe(version), log))
+            // it. ⚠️ And so is what they say to the installer's log, since
+            // 2026-10-10: it goes through Velopack's own logger, which writes the
+            // file, and no longer only into the caller's delegate, which in the
+            // product is a list nothing reads before the process exits.
+            .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), ThroughVelopacksLog(log)))
+            .OnAfterUpdateFastCallback(version => Register(RegistrationIntent.Update, Describe(version), ThroughVelopacksLog(log)))
+            .OnBeforeUninstallFastCallback(version => Register(RegistrationIntent.Uninstall, Describe(version), ThroughVelopacksLog(log)))
 
             .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null))
             .Run();
     }
+
+    /// <summary>
+    /// Where a hook's lines for the installer's log go: Velopack's own logger, which
+    /// writes the installer's log file and hands each line to the caller's delegate too.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-10-10, the texts review's "installer's-log Mirror".</b> Until that
+    /// day <see cref="Mirror"/> wrote through the delegate it was given, and the product's
+    /// is an in-memory list that only a serving process replays, into its own log; a hook
+    /// process exits inside <c>Run()</c>, so not one line reached any log. Read that day
+    /// on this machine: Velopack's logs held 60 hooks served for the shipping pack id and
+    /// 272 for the suite's, and none of the lines <see cref="Mirror"/> writes.
+    /// </para>
+    /// <para>
+    /// <b>Velopack's logger writes <c>%LOCALAPPDATA%\velopack\velopack_&lt;pack id&gt;.log</c></b>
+    /// (<c>WindowsVelopackLocator</c> at 1.2.161, read in its source), the file
+    /// <c>Update.exe</c> writes its own lines into, and it hands every line to the logger
+    /// <see cref="VelopackApp.SetLogger"/> registered as well. With no locator set, which
+    /// is a process Velopack did not start, the line goes to the delegate alone.
+    /// </para>
+    /// </remarks>
+    /// <param name="fallback">The caller's delegate.</param>
+    /// <returns>The writer the hook's lines go through.</returns>
+    private static Action<VelopackLogLevel, string, Exception?> ThroughVelopacksLog(Action<VelopackLogLevel, string, Exception?> fallback) =>
+        (level, message, failure) =>
+        {
+            if (VelopackLocator.IsCurrentSet)
+            {
+                VelopackLocator.Current.Log.Log(level, message, failure);
+            }
+            else
+            {
+                fallback(level, message, failure);
+            }
+        };
 
     /// <summary>
     /// Everything the one entry point configures before its callbacks, which is everything except the
@@ -282,7 +322,7 @@ internal static class VelopackStartup
     /// </summary>
     /// <param name="intent">Which hook is running.</param>
     /// <param name="version">The version Velopack passed the callback.</param>
-    /// <param name="log">Velopack's logger, which reaches the installer's log file.</param>
+    /// <param name="log">Where the installer's log lines go: in a served hook, Velopack's own logger, which writes the installer's log file.</param>
     /// <remarks>
     /// <b>The answer goes to two places on purpose.</b>
     /// <see cref="Registration.HookRegistration"/> writes BrowserAI's process log

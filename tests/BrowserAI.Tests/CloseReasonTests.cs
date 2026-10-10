@@ -265,32 +265,64 @@ internal sealed class CloseReasonTests
 
     /// <summary>
     /// A shutdown records why it closed every session, and the next BrowserAI to open
-    /// one says so: a client that went away, or a stop through the pipe.
+    /// one says so: an update, a stop through the pipe, a failure, or, told nothing, a
+    /// client that went away.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously two causes, the second marked through the
+    /// proxy's <c>StoppingThroughThePipe</c>)</b>, for the texts review's #24: nothing in
+    /// the product called that mark, so every session an update or a stop closed was
+    /// recorded as shut down when its client went away. The background now says why it
+    /// ends through <see cref="SessionManager.ShuttingDownBecause"/>, and this arm holds
+    /// each cause's record and its sentence.
+    /// </para>
+    /// <para>
+    /// <b>Through the session host's rig</b>, whose host the arm ends itself while the
+    /// client is still connected, so the session is closed by the shutdown and never
+    /// judged by a detach.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a <c>ShuttingDownBecause</c> that kept
+    /// nothing: the three declared causes were each recorded as
+    /// <see cref="SessionCloseCause.ServerShutDown"/>.
+    /// </para>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task AShutdownRecordsItsCauseAndTheNextResumeSaysIt()
     {
-        foreach (var throughThePipe in new[] { false, true })
+        var causes = new (SessionCloseCause? Declared, SessionCloseCause Recorded, string Said)[]
+        {
+            (null, SessionCloseCause.ServerShutDown, "because the BrowserAI holding it shut down when its client, client 'agent-one'"),
+            (SessionCloseCause.Updating, SessionCloseCause.Updating, "to install an update."),
+            (SessionCloseCause.Stopped, SessionCloseCause.Stopped, "because BrowserAI was asked to stop."),
+            (SessionCloseCause.Failed, SessionCloseCause.Failed, "because BrowserAI's background ended on a failure, which its log names."),
+        };
+
+        foreach (var (declared, recorded, said) in causes)
         {
             var directory = Path.Combine(ScratchRoot.Path, $"shut-down-{Guid.NewGuid():N}");
 
             await using (var sessions = Sessions())
             {
-                await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+                await using var rig = await SessionHostRig.StartAsync(sessions);
 
-                await InitAsync(rig, directory, headed: false);
-                await NavigateAsync(rig, directory, "the call that brings the browser up");
+                var client = await rig.ConnectAsync(clientName: "agent-one");
 
-                if (throughThePipe)
+                await OpenWithABrowserAsync(client, directory);
+
+                if (declared is { } cause)
                 {
-                    rig.Proxy.StoppingThroughThePipe();
+                    rig.Host.Sessions.ShuttingDownBecause(cause);
                 }
+
+                await rig.Host.DisposeAsync();
             }
 
             var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
 
-            await Assert.That(close.Cause).IsEqualTo(throughThePipe ? SessionCloseCause.Stopped : SessionCloseCause.ServerShutDown);
+            await Assert.That(close.Cause).IsEqualTo(recorded);
 
             await using (var sessions = Sessions())
             {
@@ -307,14 +339,67 @@ internal sealed class CloseReasonTests
                 });
 
                 await Assert.That((bool?)resumed["isError"]).IsNotEqualTo(true).Because(TextOf(resumed));
-                await Assert.That(TextOf(resumed)).Contains(throughThePipe
-                    ? "why this session was last closed: BrowserAI closed this session's browser at"
-                    : "why this session was last closed: BrowserAI closed this session's browser at");
-                await Assert.That(TextOf(resumed)).Contains(throughThePipe
-                    ? "because BrowserAI was stopped, which it is to install an update"
-                    : "because the BrowserAI holding it shut down when its client");
+                await Assert.That(TextOf(resumed)).Contains("why this session was last closed: BrowserAI closed this session's browser at");
+                await Assert.That(TextOf(resumed)).Contains(said).Because($"a shutdown told {declared?.ToString() ?? "nothing"} says so");
             }
         }
+    }
+
+    /// <summary>
+    /// The update's close of every session, the person's <i>Install now</i>, records the
+    /// update as each session's reason, and the sentence every later answer quotes says
+    /// so.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>: the update core closes the
+    /// sessions through <see cref="Background.BackgroundSessions"/>, which disposed the
+    /// host with no reason given, so each read as shut down when its client went away.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against <c>BackgroundSessions.CloseAllAsync</c>
+    /// without its <c>ShuttingDownBecause</c>: the record held
+    /// <see cref="SessionCloseCause.ServerShutDown"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheUpdatesCloseOfEverySessionRecordsTheUpdateAsItsReason()
+    {
+        await using var sessions = Sessions();
+        await using var rig = await SessionHostRig.StartAsync(sessions);
+
+        var client = await rig.ConnectAsync(clientName: "agent-one");
+        var directory = Path.Combine(sessions.Root, "closed-for-an-update");
+
+        await OpenWithABrowserAsync(client, directory);
+
+        using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
+        await new Background.BackgroundSessions(rig.Host).CloseAllAsync(hang.Token);
+
+        var close = SessionLock.ReadRecord(SessionPath.For(directory))!.LastClose!;
+
+        await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Updating);
+        await Assert.That(CloseReasons.Of(close)).IsEqualTo($"BrowserAI closed this session's browser at {SessionErrors.When(close.At)} to install an update.");
+    }
+
+    /// <summary>
+    /// The background's own end closes every session for the state it ends in: an
+    /// update's hand-over, a stop through the pipe, and anything else, which is a serve
+    /// that threw.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for the texts review's #24, and planted red</b> against a
+    /// mapping that answered <see cref="SessionCloseCause.ServerShutDown"/> for every
+    /// state, the reason the background gave by giving none.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBackgroundsEndClosesEverySessionForTheStateItEndsIn()
+    {
+        await Assert.That(Program.WhySessionsClose(Background.BackgroundState.Updating)).IsEqualTo(SessionCloseCause.Updating);
+        await Assert.That(Program.WhySessionsClose(Background.BackgroundState.Stopping)).IsEqualTo(SessionCloseCause.Stopped);
+        await Assert.That(Program.WhySessionsClose(Background.BackgroundState.Serving)).IsEqualTo(SessionCloseCause.Failed);
     }
 
     /// <summary>
@@ -555,6 +640,35 @@ internal sealed class CloseReasonTests
         {
             throw new InvalidOperationException($"The arm could not open '{directory}': {TextOf(answer)}");
         }
+    }
+
+    /// <summary>Opens a session through a host connection and brings its browser up.</summary>
+    /// <param name="client">The connection.</param>
+    /// <param name="directory">The session.</param>
+    /// <returns>A task that completes once the browser is up.</returns>
+    private static async Task OpenWithABrowserAsync(HostConnection client, string directory)
+    {
+        var opened = await client.CallAsync(SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "a session whose closes the suite reads",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        if ((bool?)opened["isError"] is true)
+        {
+            throw new InvalidOperationException($"The arm could not open '{directory}': {HostConnection.TextOf(opened)}");
+        }
+
+        _ = await client.CallAsync("browser_navigate", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the call that brings the browser up",
+            ["url"] = "data:text/html,<h1>ok</h1>",
+        });
     }
 
     private static Task<JsonObject> NavigateAsync(McpTestHarness rig, string directory, string why) =>

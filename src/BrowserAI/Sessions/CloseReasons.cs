@@ -35,9 +35,12 @@ internal static class CloseReasons
     /// <summary>The tool name a close BrowserAI recorded itself carries in the session's log.</summary>
     /// <remarks>
     /// <b>Not a tool</b>, and spelled so it cannot be read as one: a person closing a
-    /// window, a crash or a stop is no call anybody made. The idle close and a caller's
-    /// own <c>browser_close</c> keep the row they always had, because each of those is a
-    /// call.
+    /// window, a crash, a stop or the idle close is no call anybody made. ⚠️ <i>Corrected
+    /// 2026-10-10 (previously "The idle close and a caller's own <c>browser_close</c> keep
+    /// the row they always had, because each of those is a call."), the texts review's
+    /// #180: since F1 a no model can call <c>browser_close</c>, so the idle close's row
+    /// stood under a name a reader could not act on.</i> A caller's own
+    /// <c>browserai_close</c> keeps the row its call writes.
     /// </remarks>
     public const string LogRowTool = "(browser closed)";
 
@@ -82,7 +85,8 @@ internal static class CloseReasons
     /// <param name="cause">The cause.</param>
     /// <returns>Whether it was clean.</returns>
     public static bool WasACleanClose(SessionCloseCause cause) =>
-        cause is SessionCloseCause.Idle or SessionCloseCause.Caller or SessionCloseCause.SettingsChanged or SessionCloseCause.Stopped or SessionCloseCause.ServerShutDown;
+        cause is SessionCloseCause.Idle or SessionCloseCause.Caller or SessionCloseCause.SettingsChanged
+            or SessionCloseCause.Stopped or SessionCloseCause.Updating or SessionCloseCause.Failed or SessionCloseCause.ServerShutDown;
 
     private static string Of(RecordedClose close, DateTimeOffset at, TimeSpan? idlePeriod, string? client)
     {
@@ -127,9 +131,23 @@ internal static class CloseReasons
             SessionCloseCause.ServerEnded =>
                 $"This session's browser server was found ended at {when}, and its browser with it; BrowserAI had not ended it.",
 
+            // ⚠️ Corrected 2026-10-10 (previously "because BrowserAI was stopped, which it
+            // is to install an update or when a person closes it from BrowserAI's own
+            // page."): nothing recorded it until then, an update records its own reason
+            // since, and the page asks no stop. Said so that it stays true of a record
+            // an earlier build wrote for either of those.
             SessionCloseCause.Stopped =>
-                $"BrowserAI closed this session's browser at {when} because BrowserAI was stopped, which it is to install an update or when a person closes it from BrowserAI's own page.",
+                $"BrowserAI closed this session's browser at {when} because BrowserAI was asked to stop.",
 
+            // Added 2026-10-10, the texts review's #24: the background's own ends.
+            SessionCloseCause.Updating =>
+                $"BrowserAI closed this session's browser at {when} to install an update.",
+
+            SessionCloseCause.Failed =>
+                $"BrowserAI closed this session's browser at {when} because BrowserAI's background ended on a failure, which its log names.",
+
+            // Since 2026-10-08 only a host a client's own server owns records this, and
+            // the product starts no such server: the suite's in-process rig does.
             SessionCloseCause.ServerShutDown =>
                 $"BrowserAI closed this session's browser at {when} because the BrowserAI holding it shut down when its client{(close.By is { } gone ? $", {gone}," : string.Empty)} went away.",
 

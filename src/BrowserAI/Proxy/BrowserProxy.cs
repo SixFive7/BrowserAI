@@ -667,12 +667,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
     // updater runs or the background refuses a relay for an update, and
     // RelayErrors.UpdateInstallingDuringTheCall for a call an update ends.
 
-    /// <summary>
-    /// Says that this server is being stopped through its pipe, so the sessions its
-    /// shutdown closes record that. See <see cref="SessionManager.StoppingThroughThePipe"/>.
-    /// </summary>
-    public void StoppingThroughThePipe() => _sessions.StoppingThroughThePipe();
-
     /// <summary>The tool a <c>tools/call</c> names, read leniently: a name that is not a string is <c>&lt;none&gt;</c>.</summary>
     /// <param name="request">The call.</param>
     /// <returns>The name, or <c>&lt;none&gt;</c>.</returns>

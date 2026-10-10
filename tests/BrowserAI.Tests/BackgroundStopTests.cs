@@ -38,7 +38,9 @@ internal sealed class BackgroundStopTests
     /// <summary>
     /// A background that answers the stop and is still running when the bound runs out
     /// is <see cref="BackgroundStopOutcome.StillRunning"/>, named by the pid its record
-    /// gave; with no pipe served at all it is <see cref="BackgroundStopOutcome.NoneRunning"/>.
+    /// gave; one whose record names no process is
+    /// <see cref="BackgroundStopOutcome.NotWaitedFor"/>; with no pipe served at all it is
+    /// <see cref="BackgroundStopOutcome.NoneRunning"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -48,6 +50,12 @@ internal sealed class BackgroundStopTests
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-10</b> against a stop that called every answered stop ended.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The answered stop with no record to wait on was added the same day</b>, for
+    /// the texts review's #141: it was reported as <see cref="BackgroundStopOutcome.Ended"/>,
+    /// so the hook's log said a background ended that nothing had waited for. Planted red
+    /// against the stop as it was, which answered that outcome.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -66,13 +74,19 @@ internal sealed class BackgroundStopTests
 
         await using var background = BackgroundServerRig.Start(pipe);
 
+        // Answered, with no record to name the process: asked, and waited for by nobody.
+        var (unwaited, unwaitedSaid) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
+
+        await Assert.That(unwaited).IsEqualTo(BackgroundStopOutcome.NotWaitedFor).Because(unwaitedSaid);
+        await Assert.That(unwaitedSaid).IsEqualTo("BrowserAI's background was asked to stop; its record named no process to wait for.");
+
         _ = BackgroundRecord.Started(record, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
 
         var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
 
         await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.StillRunning).Because(detail);
         await Assert.That(detail).IsEqualTo($"BrowserAI's background, pid {Environment.ProcessId}, was asked to stop and was still closing its sessions when the hook moved on.");
-        await Assert.That(background.Verbs.Stops).IsEqualTo(1).Because("the background was never asked");
+        await Assert.That(background.Verbs.Stops).IsEqualTo(2).Because("the background was not asked both times");
     }
 
     /// <summary>

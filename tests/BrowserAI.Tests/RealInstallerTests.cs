@@ -834,6 +834,38 @@ internal sealed partial class RealInstallerTests
         File.Exists(Path.Combine(root, "Update.exe"))
         && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
 
+    /// <summary>Velopack's own log for one pack id, the file it rotated out included, as text.</summary>
+    /// <remarks>
+    /// <b>Where Velopack's logger writes on Windows</b> at 1.2.161:
+    /// <c>%LOCALAPPDATA%\velopack\velopack_&lt;pack id&gt;.log</c>, read in
+    /// <c>WindowsVelopackLocator</c>'s source, and rotated to <c>.old</c> past a size.
+    /// Read with every share, because another run's <c>Update.exe</c> may be writing it.
+    /// </remarks>
+    /// <param name="packId">The pack id.</param>
+    /// <returns>The text, the rotated file's first.</returns>
+    private static string VelopackLogOf(string packId)
+    {
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "velopack");
+        var text = new StringBuilder();
+
+        foreach (var name in new[] { $"velopack_{packId}.log.old", $"velopack_{packId}.log" })
+        {
+            var path = Path.Combine(folder, name);
+
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+
+            _ = text.Append(reader.ReadToEnd());
+        }
+
+        return text.ToString();
+    }
+
     /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
     /// <param name="setup">The test-id installer.</param>
     /// <param name="installRoot">The scratch install root.</param>
@@ -987,6 +1019,15 @@ internal sealed partial class RealInstallerTests
 
             await Assert.That(ToastActivatorOf(aumid)).IsEqualTo(ExpectedToastActivator(aumid, app));
         }
+
+        // ⚠️ THE HOOK'S OWN LINES ARE IN THE INSTALLER'S LOG -- 2026-10-10, the texts
+        // review's "installer's-log Mirror". VelopackStartup.Mirror wrote them into a
+        // list that a hook process exits before anything reads, so none reached a log:
+        // 0 of the 332 hooks this machine's Velopack logs recorded carried one, read the
+        // same day. The task's name holds this install root's key, so the line found is
+        // this arm's and no other run's. Planted red against the hooks as they were.
+        await Assert.That(VelopackLogOf(ReleaseLayout.TestPackId))
+            .Contains($"-- sign-in task ({RegistrationIntent.Install}): {TaskChange.Registered}. The task '{taskName}' is registered.");
 
         // ---- And uninstall, in the same sandbox --------------------------------
         var update = Path.Combine(installRoot.Path, "Update.exe");

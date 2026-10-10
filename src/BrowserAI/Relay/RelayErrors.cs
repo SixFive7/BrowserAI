@@ -151,6 +151,32 @@ internal static class RelayErrors
         + "Only that person can do that: do not start BrowserAI yourself. If the background process answers again first, the next call goes through.";
 
     /// <summary>
+    /// The recorded background process is alive and never opened its pipe in the whole
+    /// of the call's hold.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for the texts review's #115</b>: this case was answered with
+    /// <see cref="Hung"/>, whose Start Menu start ends a background that takes the page's
+    /// connection and does not answer. A background with no pipe takes no connection, and
+    /// the task starts no second one while it runs, so a Start Menu start ends nothing
+    /// here; the person ends the process, and the sentence names its pid when the record
+    /// does.
+    /// </remarks>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="processId">The process the record names, or <see langword="null"/>.</param>
+    /// <param name="logPath">The log the person reads.</param>
+    /// <returns>The sentence.</returns>
+    public static string NoPipe(string tool, int? processId, string logPath)
+    {
+        var process = processId is { } pid ? $" (pid {pid.ToString(CultureInfo.InvariantCulture)})" : string.Empty;
+
+        return $"BrowserAI's background process{process} is running but never opened its pipe in the {Seconds(RelayConstants.HoldBound)} seconds this call was held, so '{tool}' was NOT run: nothing reached a browser. "
+            + "Nothing was stopped and nothing was restarted, and a Start Menu start does not end it. "
+            + $"The person at this computer needs to read {logPath}, report the bug at {IssuesUrl}, end that process{process} in Task Manager or sign out of Windows and in again, and then start BrowserAI from the Start Menu. "
+            + "Only that person can do that: do not start BrowserAI yourself. If the background process opens its pipe first, the next call goes through.";
+    }
+
+    /// <summary>
     /// No background process appeared while the call was held, and the task says
     /// why, or says nothing.
     /// </summary>
@@ -252,8 +278,17 @@ internal static class RelayErrors
     /// <b>Kept for one short window only</b> (U2, "u2 looks good", 2026-10-08): a
     /// message that reaches a relay after it agreed to end and before the new version
     /// is in place, and a relay a client starts while the installer still runs. In
-    /// the maintainer's approved words, <i>"BrowserAI is installing an update; nothing
-    /// was run; call again in a few seconds"</i>.
+    /// the words the design proposed for him to approve, <i>"BrowserAI is installing an
+    /// update; nothing was run; call again in a few seconds"</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>"Call again in a few seconds" moved into the remedy, 2026-10-10</b>, for the
+    /// texts review's #120: it opened the sentence for every client, while the remedy
+    /// says that Codex gets BrowserAI back only in a new conversation and Claude Code in a
+    /// terminal only after a reconnect. It is said now only where the client starts
+    /// BrowserAI again by itself. <i>Corrected 2026-10-10 (previously "BrowserAI is
+    /// installing an update{to version}; nothing was run; call again in a few
+    /// seconds.")</i>; the wording is the maintainer's to approve on the review page.
     /// </para>
     /// <para>
     /// <b>Then what each client needs</b> (H1-T a, RESOLUTIONS 12): Claude Code run with
@@ -266,7 +301,7 @@ internal static class RelayErrors
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
     /// <returns>The sentence.</returns>
     public static string UpdateInstalling(string tool, string? version, string? clientName) =>
-        $"BrowserAI is installing an update{To(version)}; nothing was run; call again in a few seconds. "
+        $"BrowserAI is installing an update{To(version)}; nothing was run. "
         + $"'{tool}' did not reach a browser, and nothing changed. "
         + UpdateRemedy(clientName)
         + SessionsAfterAnUpdate;
@@ -317,10 +352,10 @@ internal static class RelayErrors
     /// <returns>One or two sentences.</returns>
     private static string UpdateRemedy(string? clientName) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "When your client runs with -p or in VS Code, it starts the updated BrowserAI by itself on your next call. In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
+            ? "When your client runs with -p or in VS Code, call again in a few seconds: it starts the updated BrowserAI by itself on that call. In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Your client does not start BrowserAI again once this one has ended, so BrowserAI answers again in a new conversation."
-                : "If your client then shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
+                : "If your client starts BrowserAI again by itself, call again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
 
     private static string When(DateTimeOffset at) => SessionErrors.When(at);
 

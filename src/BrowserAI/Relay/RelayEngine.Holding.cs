@@ -258,9 +258,12 @@ internal sealed partial class RelayEngine
 
     /// <summary>The sentence for a call whose deadline came with no background.</summary>
     /// <remarks>
-    /// A background process that exists and never opened its pipe is answered as a
-    /// hang, since it is running and not answering; a clean end with nothing started
-    /// since reads as not running, with nothing said about the task.
+    /// A background process that exists and never opened its pipe is answered with
+    /// <see cref="RelayErrors.NoPipe"/>, which names the process for the person to end.
+    /// <i>Corrected 2026-10-10 (previously "answered as a hang, since it is running and
+    /// not answering"), the texts review's #115: the hang's Start Menu start ends nothing
+    /// for a process with no pipe.</i> A clean end with nothing started since reads as
+    /// not running, with nothing said about the task.
     /// </remarks>
     /// <param name="absence">The reason.</param>
     /// <param name="tool">The tool the call named.</param>
@@ -268,7 +271,7 @@ internal sealed partial class RelayEngine
     private string AtTheDeadline(BackgroundAbsence absence, string tool) => absence switch
     {
         BackgroundAbsence.NotRunning notRunning => RelayErrors.NotRunning(tool, notRunning.Task, notRunning.TaskName, notRunning.Detail),
-        BackgroundAbsence.Starting => RelayErrors.Hung(tool, wasPassedOn: false, _facts.LogPath),
+        BackgroundAbsence.Starting starting => RelayErrors.NoPipe(tool, starting.ProcessId, _facts.LogPath),
         _ => RelayErrors.NotRunning(tool, TaskState.Unknown, string.Empty, null),
     };
 

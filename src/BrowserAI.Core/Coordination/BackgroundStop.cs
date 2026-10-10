@@ -14,6 +14,14 @@ internal enum BackgroundStopOutcome
     /// <summary>It was asked, and it ended within the bound.</summary>
     Ended,
 
+    /// <summary>
+    /// It was asked, and its record named no process to wait for, so nothing says
+    /// whether it ended. <i>Added 2026-10-10 for the texts review's #141 (previously
+    /// this was <see cref="Ended"/>, so the hook's log said a background ended that
+    /// nothing had waited for).</i>
+    /// </summary>
+    NotWaitedFor,
+
     /// <summary>It was asked, and it had not ended when the bound ran out.</summary>
     StillRunning,
 
@@ -71,7 +79,7 @@ internal static class BackgroundStop
                 (BackgroundStopOutcome.NoneRunning, "No BrowserAI background was running, so none was stopped."),
 
             BackgroundAnswerOutcome.Answered when held is null =>
-                (BackgroundStopOutcome.Ended, "BrowserAI's background was asked to stop; its record named no process to wait for."),
+                (BackgroundStopOutcome.NotWaitedFor, "BrowserAI's background was asked to stop; its record named no process to wait for."),
 
             BackgroundAnswerOutcome.Answered when held!.WaitOne(bound) =>
                 (BackgroundStopOutcome.Ended, $"BrowserAI's background, pid {held.ProcessId}, closed its sessions and ended."),

@@ -97,7 +97,7 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
         {
             if (ProcessLiveness.IsAlive(record.ProcessId, record.CreatedFileTime))
             {
-                return new BackgroundAbsence.Starting();
+                return new BackgroundAbsence.Starting(record.ProcessId);
             }
 
             // Gone, with no clean end recorded: a crash under R. A relay that held it

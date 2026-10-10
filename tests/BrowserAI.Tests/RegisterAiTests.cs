@@ -183,6 +183,77 @@ internal sealed class RegisterAiTests
     }
 
     /// <summary>
+    /// Every line a person is told to run by hand carries the arguments the registration
+    /// itself was given, the data root included, and the line offered over another
+    /// install's entry registers this install.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 for the texts review's #138 and #139</b>: the line carried
+    /// <c>--mcp</c> alone, so a client set up from it for an install made with a data
+    /// root started a relay that no background serves. The hooks register
+    /// <c>--mcp --data-root &lt;root&gt;</c> for such an install, and the dashboard's
+    /// Register and Repair do too since lane UI's fix of the same day.
+    /// </para>
+    /// <para>
+    /// <b>And the foreign entry's line, found on the way</b>: it was spelled with the
+    /// other install's command, so following it registered the other install again.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the lines as they were: each ended in
+    /// <c>--mcp</c>, and the foreign entry's named the other install's server.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryLineAPersonRunsByHandCarriesTheArgumentsTheRegistrationWasGiven()
+    {
+        using var install = ScratchDirectory.Create("registerai-manual-lines");
+        using var elsewhere = ScratchDirectory.Create("registerai-manual-lines-other");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
+        var (logger, _) = Capture();
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        const string DataRoot = @"C:\Users\someone\a data root";
+        string[] arguments = [RegistrationTarget.McpArgument, "--data-root", DataRoot];
+        var typed = $"-- \"{server}\" --mcp --data-root \"{DataRoot}\"";
+
+        // No client, and a client whose write did not hold.
+        var missing = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code", "codex" } }, logger, commandArguments: arguments);
+
+        await Assert.That(missing[0].Report.Detail).Contains($"claude mcp add browserai --scope user {typed}");
+        await Assert.That(missing[1].Report.Detail).Contains($"codex mcp add browserai {typed}");
+
+        var failed = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Failing = { "claude-code" } }, logger, commandArguments: arguments);
+
+        await Assert.That(failed.Detail).Contains($"claude mcp add browserai --scope user {typed}");
+
+        // A RegisterAI that gives no answer.
+        var silent = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger, commandArguments: arguments);
+
+        await Assert.That(silent.Detail).Contains($"codex mcp add browserai {typed}");
+
+        // Another install's entry: the line registers this one.
+        var foreign = new FakeRegisterAi();
+        foreign.Register("claude-code", theirs);
+
+        var refused = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, foreign, logger, commandArguments: arguments);
+
+        await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(refused.Detail).Contains($"register this one: claude mcp add browserai --scope user {typed}");
+        await Assert.That(refused.Detail).DoesNotContain($"-- \"{theirs}\"");
+
+        // With no data root, the line carries --mcp and nothing after it.
+        var plain = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code" } }, logger);
+
+        await Assert.That(plain.Detail).EndsWith($"claude mcp add browserai --scope user -- \"{server}\" --mcp");
+    }
+
+    /// <summary>
     /// A RegisterAI that is missing, hangs, prints something else, speaks another schema
     /// or does not understand its command line fails every client, with the line a
     /// person can run, and never the install.

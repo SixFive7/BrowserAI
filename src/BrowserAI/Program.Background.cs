@@ -157,6 +157,11 @@ internal static partial class Program
             }
             finally
             {
+                // Why the background ends, said before its pipe closes, so a relay
+                // whose connection ends with it leaves what it drove recording the same
+                // reason: the texts review's #24, 2026-10-10.
+                host.Sessions.ShuttingDownBecause(WhySessionsClose(verbs.State));
+
                 server?.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
                 // Every session is closed cleanly, each within the minute's cap.
@@ -181,6 +186,30 @@ internal static partial class Program
             InstanceDirectory.Delete(instance, logger);
         }
     }
+
+    /// <summary>
+    /// Why the background's own end closes every session, by the state it ends in.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10</b> for the texts review's #24: until then the background
+    /// gave no reason, and every session an update or a stop closed was recorded as
+    /// shut down when its client went away, which the background never does.
+    /// </para>
+    /// <para>
+    /// <b>Updating</b> is set by the update's hand-over, <b>Stopping</b> by a stop through
+    /// the pipe; the serve loop ends on nothing else, so a background still
+    /// <b>Serving</b> here is one whose serve threw.
+    /// </para>
+    /// </remarks>
+    /// <param name="state">The state the background ends in.</param>
+    /// <returns>The cause each session records.</returns>
+    internal static SessionCloseCause WhySessionsClose(BackgroundState state) => state switch
+    {
+        BackgroundState.Updating => SessionCloseCause.Updating,
+        BackgroundState.Stopping => SessionCloseCause.Stopped,
+        _ => SessionCloseCause.Failed,
+    };
 
     /// <summary>
     /// Writes the record of a start whose root was refused: what was refused, why, and

@@ -83,7 +83,14 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).Contains(outside.Path);
         await Assert.That(refusal).Contains(Program.AppRootVariable);
         await Assert.That(refusal).Contains(Program.DataRootArgument);
-        await Assert.That(refusal).Contains("live-instance set");
+
+        // ⚠️ The danger as the one background meets it, since 2026-10-10, the texts
+        // review's #147: no process joins a live-instance set any more, and the start
+        // writes its record, so neither the census nor "nothing was changed" is true.
+        // Planted red against the sentence as it was.
+        await Assert.That(refusal).Contains("the background's pipe is named for its roots and open only to the user who made it");
+        await Assert.That(refusal).DoesNotContain("live-instance set");
+        await Assert.That(refusal).EndsWith($"Nothing was started, and no session or browser was created under '{verdict.Detail!.Root}'.");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
         // used to end "if the root was set by the installer's install-to flag,
@@ -516,7 +523,7 @@ internal sealed class InstallRootScopeTests
         // no effect on the thing being refused.
         await Assert.That(refusal).Contains("--installto");
         await Assert.That(refusal).Contains("it moves the data root and never the install root");
-        await Assert.That(refusal).Contains("live-instance set");
+        await Assert.That(refusal).Contains("applying an update terminates every process under the install root");
         await Assert.That(refusal.Contains(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
     }
 

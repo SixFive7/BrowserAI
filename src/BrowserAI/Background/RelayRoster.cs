@@ -175,6 +175,21 @@ internal sealed class RelayRoster : IUpdateRelays
         _changed();
     }
 
+    /// <summary>Whether the update told this relay to end, so that its connection's end is the update's.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>: what the relay drove records the
+    /// update as its reason, and not a client that went away.
+    /// </remarks>
+    /// <param name="id">The relay.</param>
+    /// <returns>Whether <see cref="EndAllAsync"/> told it to end.</returns>
+    public bool WasToldToEnd(string id)
+    {
+        lock (_gate)
+        {
+            return _entries.TryGetValue(id, out var entry) && entry.ToldToEnd;
+        }
+    }
+
     /// <summary>Removes a relay whose connection has closed.</summary>
     /// <param name="id">Its id.</param>
     public void Remove(string id)
@@ -365,6 +380,16 @@ internal sealed class RelayRoster : IUpdateRelays
     {
         var entries = Snapshot();
 
+        // Marked before any is told, so a connection that closes on the notice is always
+        // read as the update's end.
+        lock (_gate)
+        {
+            foreach (var entry in entries)
+            {
+                entry.ToldToEnd = true;
+            }
+        }
+
         foreach (var entry in entries)
         {
             await TellAsync(entry, RelayProtocol.End, new JsonObject { ["now"] = now, ["version"] = version }, cancellationToken).ConfigureAwait(false);
@@ -447,6 +472,9 @@ internal sealed class RelayRoster : IUpdateRelays
 
         /// <summary>The thread of Codex's first call that named one, or <see langword="null"/>.</summary>
         public string? ThreadId { get; set; }
+
+        /// <summary>Whether the update told this relay to end. Under the roster's gate.</summary>
+        public bool ToldToEnd { get; set; }
 
         /// <summary>What the reader keeps of this relay between two draws.</summary>
         public ConversationMemo Memo { get; } = new();

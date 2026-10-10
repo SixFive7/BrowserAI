@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Proxy;
+using BrowserAI.Sessions;
 using BrowserAI.Updates;
 
 namespace BrowserAI.Background;
@@ -25,6 +26,15 @@ internal sealed class BackgroundSessions(SessionHost host) : IUpdateSessions
         [.. host.Sessions.Countdowns().Select(static countdown => new ListedSession(countdown.Directory, countdown.Purpose, countdown.Visible, countdown.ClosesAt))];
 
     /// <inheritdoc />
-    public async Task CloseAllAsync(CancellationToken cancellationToken) =>
+    /// <remarks>
+    /// ⚠️ <b>Every session records the update as its reason</b>, which every later
+    /// refusal, resume and <c>browserai_catch_up</c> quotes. <i>Corrected 2026-10-10
+    /// (previously the host was disposed with no reason given, so each session read as
+    /// shut down when its client went away)</i>, the texts review's #24.
+    /// </remarks>
+    public async Task CloseAllAsync(CancellationToken cancellationToken)
+    {
+        host.Sessions.ShuttingDownBecause(SessionCloseCause.Updating);
         await host.DisposeAsync().AsTask().WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

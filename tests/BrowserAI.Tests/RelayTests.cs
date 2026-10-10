@@ -402,8 +402,9 @@ internal sealed partial class RelayTests
 
         // And the count, so a row deleted instead of provoked does not pass by
         // shrinking the question. Eleven since 2026-10-10 (previously ten), when a
-        // refused root got its own row, RootRefused.
-        await Assert.That(rows.Count).IsEqualTo(11);
+        // refused root got its own row, RootRefused; twelve the same day, when a
+        // background that never opened its pipe got NoPipe (the texts review's #115).
+        await Assert.That(rows.Count).IsEqualTo(12);
     }
 
     /// <summary>Holds that a row came out as the catalogue writes it, and counts it for the census.</summary>

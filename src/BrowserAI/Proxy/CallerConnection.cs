@@ -75,6 +75,21 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     /// <returns>Whether this call ended it.</returns>
     public bool End() => Interlocked.Exchange(ref _ended, 1) is 0;
 
+    /// <summary>
+    /// Why the background ended this connection itself, or <see langword="null"/> when its
+    /// client went.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>: a relay an update tells to end
+    /// closes its connection, and what it drove was recorded as let go because its client
+    /// went away, which it had not. Set before the connection's sessions are judged.
+    /// </remarks>
+    public Sessions.SessionCloseCause? EndedFor { get; private set; }
+
+    /// <summary>Says that the background ended this connection itself, and why.</summary>
+    /// <param name="cause">Why: <see cref="Sessions.SessionCloseCause.Updating"/> for an update's end.</param>
+    public void EndsFor(Sessions.SessionCloseCause cause) => EndedFor = cause;
+
     /// <summary>The connection as a person reads it in a log or a refusal.</summary>
     /// <returns>For example <c>client 'claude-code' (its BrowserAI server is pid 1234)</c>.</returns>
     public string Describe()

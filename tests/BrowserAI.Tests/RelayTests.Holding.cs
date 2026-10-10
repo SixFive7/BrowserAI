@@ -168,9 +168,18 @@ internal sealed partial class RelayTests
     /// process that never opened its pipe.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// RESOLUTIONS 9: relays hold up to 150 s and then answer, naming a disabled task
     /// with how to enable it and leaving it disabled (D12 b), or a missing task, and
     /// telling the person to start BrowserAI from the Start Menu.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A process that never opened its pipe is answered with
+    /// <see cref="RelayErrors.NoPipe"/> since 2026-10-10</b> (previously
+    /// <see cref="RelayErrors.Hung"/>), for the texts review's #115: the hang's Start Menu
+    /// start ends a background that takes a connection, and this one takes none. Planted
+    /// red against the engine as it was, which answered the hang's sentence.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -187,7 +196,7 @@ internal sealed partial class RelayTests
             (new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, Detail), nameof(RelayErrors.NotRunning), RelayErrors.NotRunning(Tool, TaskState.Ready, TaskName, Detail)),
             (new BackgroundAbsence.NotRunning(TaskState.Unknown, TaskName, null), nameof(RelayErrors.NotRunning), RelayErrors.NotRunning(Tool, TaskState.Unknown, TaskName, null)),
             (new BackgroundAbsence.CleanEnd(), nameof(RelayErrors.NotRunning), RelayErrors.NotRunning(Tool, TaskState.Unknown, string.Empty, null)),
-            (new BackgroundAbsence.Starting(), nameof(RelayErrors.Hung), RelayErrors.Hung(Tool, wasPassedOn: false, RelayRig.Facts.LogPath)),
+            (new BackgroundAbsence.Starting(4321), nameof(RelayErrors.NoPipe), RelayErrors.NoPipe(Tool, 4321, RelayRig.Facts.LogPath)),
         ];
 
         foreach (var (absence, row, expected) in cases)
@@ -411,6 +420,12 @@ internal sealed partial class RelayTests
     /// An update that is installing is answered at once, with U2's sentence and the
     /// recovery each client needs.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>"Call again in a few seconds" is said only to a client that starts BrowserAI
+    /// again by itself, since 2026-10-10</b>, for the texts review's #120 (previously it
+    /// opened the sentence for every client, Codex's included). Planted red against the
+    /// sentence as it was.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task AnInstallingUpdateIsAnsweredAtOnceInEachClientsWords()
@@ -431,7 +446,21 @@ internal sealed partial class RelayTests
             await rig.SendAsync(RelayRig.CallFrame("1"));
             var answered = await rig.NextAsync();
 
-            await Assert.That(answered.ToolText).StartsWith("BrowserAI is installing an update; nothing was run; call again in a few seconds.");
+            await Assert.That(answered.ToolText).StartsWith("BrowserAI is installing an update; nothing was run. 'browser_navigate' did not reach a browser, and nothing changed.");
+
+            // One instruction per client: calling again helps only where the client
+            // starts BrowserAI again by itself.
+            if (client == KnownClients.Codex)
+            {
+                await Assert.That(answered.ToolText).DoesNotContain("call again").Because("Codex starts BrowserAI again only in a new conversation");
+            }
+            else
+            {
+                await Assert.That(answered.ToolText).Contains(client == KnownClients.ClaudeCode
+                    ? "When your client runs with -p or in VS Code, call again in a few seconds"
+                    : "If your client starts BrowserAI again by itself, call again in a few seconds");
+            }
+
             Match(answered.ToolText, nameof(RelayErrors.UpdateInstalling), RelayErrors.UpdateInstalling("browser_navigate", null, client));
         }
     }

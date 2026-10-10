@@ -10,6 +10,7 @@ using BrowserAI.Interop;
 using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Relay;
+using BrowserAI.Sessions;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32.SafeHandles;
@@ -340,6 +341,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         var page = request.Params?["page"] is JsonValue value && value.TryGetValue<string>(out var named) ? named : null;
         var (address, refusal) = _verbs.Show(page);
 
+        // The fallback is for a verbs that gives neither, which the product's never does:
+        // BackgroundVerbs.Show says why with every address it does not give. Kept because
+        // IBackgroundVerbs is a seam a double fills, and an error needs a message (the
+        // texts review's #134, 2026-10-10).
         await WriteAsync(
             stream,
             address is { } handed
@@ -414,6 +419,14 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         }
         finally
         {
+            // ⚠️ AN UPDATE THAT TOLD THE RELAY TO END IS WHY ITS CONNECTION ENDED, and
+            // what it drove records that and not a client that went away: the texts
+            // review's #24, 2026-10-10.
+            if (_roster.WasToldToEnd(greeting.Id))
+            {
+                connection.EndsFor(SessionCloseCause.Updating);
+            }
+
             _roster.Remove(greeting.Id);
 
             // ⚠️ THE DETACH: what this connection drove is judged, kept or let go,
@@ -432,6 +445,10 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     {
         switch (_verbs.State)
         {
+            // No model reads this sentence: a relay reads the kind and answers its own
+            // update text (RelayErrors.UpdateInstalling), and both logs name the kind
+            // alone. It stays as the error's message, which a JSON-RPC error must carry,
+            // for whoever reads the wire (the texts review's #124, 2026-10-10).
             case BackgroundState.Updating:
                 return (RelayProtocol.RefusedForAnUpdate, "BrowserAI is installing an update, so this background takes no new client.");
 

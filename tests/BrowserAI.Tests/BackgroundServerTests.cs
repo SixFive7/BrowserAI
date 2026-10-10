@@ -598,6 +598,74 @@ internal sealed class BackgroundServerTests
     }
 
     /// <summary>
+    /// What a relay the update tells to end drove records the update as its reason when
+    /// its connection closes, and a relay that goes on its own still lets its session go
+    /// as its client's going.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>, the reader's refinement: an
+    /// update ends every relay before it closes the sessions, and a session with no
+    /// browser up is let go the moment its relay's connection closes, which recorded
+    /// <i>because the client driving it went away</i> about a client that had not gone.
+    /// The positive control is a relay that does go on its own, whose session still says
+    /// so.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the background's relay connection without
+    /// its <c>EndsFor</c>: the session the update's end let go recorded
+    /// <see cref="SessionCloseCause.Released"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARelayTheUpdateEndsLeavesWhatItDroveRecordingTheUpdate()
+    {
+        await using var rig = BackgroundServerRig.Start();
+
+        // ---- The control: a relay that goes on its own.
+        var gone = Path.Combine(rig.Sessions.Root, "let-go-when-its-relay-went");
+
+        using (var leaving = await rig.ConnectARelayAsync())
+        {
+            var opened = await leaving.RequestAsync("tools/call", Init(gone));
+
+            await Assert.That(opened.IsToolError).IsFalse().Because(opened.ToolText);
+        }
+
+        await BackgroundServerRig.WaitUntilAsync(() => rig.Host.Sessions.Find(gone) is null, "the session of a relay that went was never let go");
+
+        await Assert.That(SessionLock.ReadRecord(SessionPath.For(gone))!.LastClose!.Value.Cause).IsEqualTo(SessionCloseCause.Released);
+
+        // ---- The relay the update ends.
+        var ended = Path.Combine(rig.Sessions.Root, "let-go-when-the-update-ended-its-relay");
+
+        using var relay = await rig.ConnectARelayAsync();
+
+        var init = await relay.RequestAsync("tools/call", Init(ended));
+
+        await Assert.That(init.IsToolError).IsFalse().Because(init.ToolText);
+
+        using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
+        var ending = rig.Roster.EndAllAsync(NextVersion, now: true, hang.Token);
+
+        var end = await relay.NextAsync();
+
+        await Assert.That(end.Method).IsEqualTo(RelayProtocol.End);
+
+        // The relay answers what it holds and closes its end, as the end asks.
+        relay.Dispose();
+
+        await ending.WaitAsync(TestDefaults.InProcessHang);
+        await BackgroundServerRig.WaitUntilAsync(() => rig.Host.Sessions.Find(ended) is null, "the session of the relay the update ended was never let go");
+
+        var close = SessionLock.ReadRecord(SessionPath.For(ended))!.LastClose!;
+
+        await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Updating);
+        await Assert.That(CloseReasons.Of(close)).EndsWith("to install an update.");
+    }
+
+    /// <summary>
     /// A relay whose connection fails in a way other than a broken pipe keeps no relay
     /// after it from being told to end, and a call-off that cannot reach it is recorded.
     /// </summary>
@@ -1255,25 +1323,41 @@ internal sealed class BackgroundServerTests
         },
     };
 
-    /// <summary>A client's call naming a session.</summary>
-    /// <param name="id">The call's id.</param>
+    /// <summary>A client's call naming a session, with a <c>url</c> only for the tool that takes one.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously every call carried a <c>url</c>)</b>: a
+    /// <c>browser_snapshot</c> with one is refused for an argument its schema does not
+    /// have before it reaches the child, so the arm that holds a snapshot in the child
+    /// raced that refusal against its own in-flight check, and lost it on a run of lane
+    /// FIX's that day.
+    /// </remarks>
+    /// <param name="id">The request id.</param>
     /// <param name="directory">The session.</param>
     /// <param name="tool">The tool.</param>
     /// <returns>The frame.</returns>
-    private static string Call(string id, string directory, string tool) => new JsonObject
+    private static string Call(string id, string directory, string tool)
     {
-        ["jsonrpc"] = "2.0",
-        ["id"] = id,
-        ["method"] = "tools/call",
-        ["params"] = new JsonObject
+        var arguments = new JsonObject
         {
-            ["name"] = tool,
-            ["arguments"] = new JsonObject
+            ["session"] = directory,
+            ["why"] = "the suite holding a call in flight",
+        };
+
+        if (tool is "browser_navigate")
+        {
+            arguments["url"] = "data:text/html,<h1>ok</h1>";
+        }
+
+        return new JsonObject
+        {
+            ["jsonrpc"] = "2.0",
+            ["id"] = id,
+            ["method"] = "tools/call",
+            ["params"] = new JsonObject
             {
-                ["url"] = "data:text/html,<h1>ok</h1>",
-                ["session"] = directory,
-                ["why"] = "the suite holding a call in flight",
+                ["name"] = tool,
+                ["arguments"] = arguments,
             },
-        },
-    }.ToJsonString();
+        }.ToJsonString();
+    }
 }

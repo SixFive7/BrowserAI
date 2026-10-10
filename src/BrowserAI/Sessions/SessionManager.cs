@@ -559,7 +559,10 @@ internal sealed class SessionManager : IAsyncDisposable
     private readonly ILogger _logger;
     private readonly ServerRegistryReap _reap;
     private int _disposed;
-    private int _stoppedThroughThePipe;
+    /// <summary>What <see cref="_shutdownCause"/> holds before anything was declared.</summary>
+    private const int Undeclared = -1;
+
+    private int _shutdownCause = Undeclared;
 
     /// <summary>Whether this manager made the input check, and disposes it.</summary>
     private readonly bool _ownsTheInputWatch;
@@ -1047,7 +1050,7 @@ internal sealed class SessionManager : IAsyncDisposable
             }
         }
 
-        var cause = Volatile.Read(ref _stoppedThroughThePipe) is 1 ? SessionCloseCause.Stopped : SessionCloseCause.ServerShutDown;
+        var cause = Declared ?? SessionCloseCause.ServerShutDown;
 
         await Task.WhenAll(sessions.Select(session => shutDownAsync(session, cause))).ConfigureAwait(false);
 
@@ -1065,15 +1068,40 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// Says that this process is being stopped through its pipe, so the sessions its
-    /// shutdown closes record that and not a client that went away.
+    /// Says why this process's shutdown closes every session, which each session records
+    /// and every later answer about it quotes.
     /// </summary>
     /// <remarks>
-    /// <b>8 b, 2026-10-04.</b> A stop through the pipe is what an update's install
-    /// sends every server it must end, and what BrowserAI's page sends when a person
-    /// closes a server there; the stop carries no reason, so the sentence names both.
+    /// <para>
+    /// ⚠️ <b>The background says it before every end that closes its sessions, since
+    /// 2026-10-10</b>: <see cref="SessionCloseCause.Updating"/> for an update,
+    /// <see cref="SessionCloseCause.Stopped"/> for a stop through its pipe and
+    /// <see cref="SessionCloseCause.Failed"/> for a failure. <i>Corrected 2026-10-10
+    /// (previously <c>StoppingThroughThePipe</c>, which nothing in the product called,
+    /// so every session an update or a stop closed was recorded as shut down when its
+    /// client went away)</i>, found by the texts review's #24.
+    /// </para>
+    /// <para>
+    /// <b>Unsaid, it is <see cref="SessionCloseCause.ServerShutDown"/></b>, the end of a
+    /// host a client's own server owns, which since 2026-10-08 is only the suite's
+    /// in-process rig.
+    /// </para>
     /// </remarks>
-    public void StoppingThroughThePipe() => Volatile.Write(ref _stoppedThroughThePipe, 1);
+    /// <param name="cause">The cause: one of the four above.</param>
+    /// <exception cref="ArgumentOutOfRangeException">A cause that is not a shutdown's.</exception>
+    public void ShuttingDownBecause(SessionCloseCause cause)
+    {
+        if (cause is not (SessionCloseCause.Updating or SessionCloseCause.Stopped or SessionCloseCause.Failed or SessionCloseCause.ServerShutDown))
+        {
+            throw new ArgumentOutOfRangeException(nameof(cause), cause, "A shutdown closes its sessions for an update, a stop, a failure or a client that went away.");
+        }
+
+        Volatile.Write(ref _shutdownCause, (int)cause);
+    }
+
+    /// <summary>The cause <see cref="ShuttingDownBecause"/> was told, or <see langword="null"/> before it was.</summary>
+    private SessionCloseCause? Declared =>
+        Volatile.Read(ref _shutdownCause) is var declared and not Undeclared ? (SessionCloseCause)declared : null;
 
     /// <summary>How many sessions this process holds right now.</summary>
     public int HeldCount => _live.Count;
@@ -1158,6 +1186,15 @@ internal sealed class SessionManager : IAsyncDisposable
             if (live.Child.ChildHasGone)
             {
                 live.RecordTheServerEnded();
+            }
+            else if ((connection.EndedFor ?? Declared) is { } ending)
+            {
+                // ⚠️ THE BACKGROUND'S OWN END, AND NOT A CLIENT THAT WENT, since
+                // 2026-10-10 for the texts review's #24: an update told the relay to end,
+                // or the background had already said why it is ending when its pipe
+                // closed. (Previously every such session read as let go because its
+                // client went away.)
+                live.RecordTheBackgroundsEnd(ending, connection.Describe());
             }
             else
             {

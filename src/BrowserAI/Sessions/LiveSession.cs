@@ -1088,9 +1088,11 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </para>
     /// </remarks>
     /// <param name="cause">
-    /// Why this process is shutting down: <see cref="SessionCloseCause.Stopped"/> when
-    /// it was stopped through its pipe, <see cref="SessionCloseCause.ServerShutDown"/>
-    /// when its client went away.
+    /// Why this process is shutting down, as <see cref="SessionManager.ShuttingDownBecause"/>
+    /// was told: <see cref="SessionCloseCause.Updating"/>,
+    /// <see cref="SessionCloseCause.Stopped"/> or <see cref="SessionCloseCause.Failed"/>
+    /// for the background, and <see cref="SessionCloseCause.ServerShutDown"/> for a host a
+    /// client's own server owns.
     /// </param>
     /// <returns>A task that completes once the close has answered or the cap has run out.</returns>
     public async Task CloseTheBrowserForShutdownAsync(SessionCloseCause cause = SessionCloseCause.ServerShutDown)
@@ -1486,6 +1488,32 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     }
 
     /// <summary>
+    /// Records that the background's own end let this session go with nothing to keep,
+    /// and why it ended, unless a close was already recorded for it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 for the texts review's #24</b>: the reason is the one the
+    /// shutdown records for every session it closes, so a session with no browser up
+    /// says the same as one with a browser.
+    /// </remarks>
+    /// <param name="cause">Why the background ended: an update, a stop or a failure.</param>
+    /// <param name="by">The client whose connection the end closed.</param>
+    public void RecordTheBackgroundsEnd(SessionCloseCause cause, string? by)
+    {
+        if (Closed is not null || Volatile.Read(ref _serverEndRecorded) is not 0)
+        {
+            return;
+        }
+
+        var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period) { By = by };
+
+        if (Interlocked.CompareExchange(ref _closed, closure, null) is null)
+        {
+            Record(closure, writeRow: true);
+        }
+    }
+
+    /// <summary>
     /// Records that the session host let this session go with nothing to keep, unless
     /// a close was already recorded for it.
     /// </summary>
@@ -1650,7 +1678,10 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
 
             try
             {
-                row = Lock.Append(BrowserCloseTool, IdleCloseWhy);
+                // ⚠️ Under CloseReasons.LogRowTool since 2026-10-10, the texts review's
+                // #180 (previously browser_close, which no model can call since F1 a):
+                // the row is the one close nobody asked for, and its name says so.
+                row = Lock.Append(CloseReasons.LogRowTool, IdleCloseWhy);
             }
             catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
             {
@@ -1973,10 +2004,19 @@ internal enum SessionCloseCause
     /// <summary>The browser server, the node child, ended with nobody ending it.</summary>
     ServerEnded,
 
-    /// <summary>BrowserAI was stopped through its pipe: for an update, or from its own page.</summary>
+    /// <summary>
+    /// BrowserAI was asked to stop through its pipe, which the uninstall hook does since
+    /// 2026-10-08. <i>Corrected 2026-10-10 (previously "for an update, or from its own
+    /// page"): an update records <see cref="Updating"/> since that day, and the page asks
+    /// no stop.</i> A record written before it holds this for those two as well.
+    /// </summary>
     Stopped,
 
-    /// <summary>The BrowserAI a client started shut down because that client went away.</summary>
+    /// <summary>
+    /// The BrowserAI a client started shut down because that client went away. Since
+    /// 2026-10-08 the product starts no such server, so only the suite's in-process rig,
+    /// whose one proxy owns its host, records it.
+    /// </summary>
     ServerShutDown,
 
     /// <summary>The session host let a session go whose client went away, with nothing to keep.</summary>
@@ -1987,6 +2027,20 @@ internal enum SessionCloseCause
     /// to open it with them: F1 a and F2 d, 2026-10-08.
     /// </summary>
     SettingsChanged,
+
+    /// <summary>
+    /// The background closed every session to install an update: the person's
+    /// <i>Install now</i>, or the update it installs once nothing holds it. Added
+    /// 2026-10-10 for the texts review's #24.
+    /// </summary>
+    Updating,
+
+    /// <summary>
+    /// The background ended on a failure and closed its sessions on the way out. Added
+    /// 2026-10-10 with <see cref="Updating"/>, so that no end of the background is
+    /// recorded as a client that went away.
+    /// </summary>
+    Failed,
 
     /// <summary>Read back, never recorded: an opening no close followed.</summary>
     Unrecorded,

@@ -43,6 +43,9 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
                 : "BrowserAI's background is stopping, so it opens no page now.");
         }
 
+        // Not reached by the background: the page is set before the pipe serves. The page
+        // is a property set after construction, so the answer stays for a verbs whose page
+        // was never set (the texts review's #132, 2026-10-10).
         if (Page is not { } served)
         {
             return (null, "BrowserAI's background is still starting, so it has no page to open yet. Start it again in a few seconds.");

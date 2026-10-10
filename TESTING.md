@@ -885,6 +885,8 @@ something serves the pipe and does not end or does not answer.
 | A hung background ended by a person's start | `PersonStartTests.AHungBackgroundTheRecordNamesIsEndedItsRecordClearedAndANewOneStarted` copies the probe under a scratch install's `current\` with everything its manifest names (`ProbeImage`), so the image the start verifies lies under the install root |
 | The uninstall hook's stop | `BackgroundStopTests`: still running when the bound ran out, nothing serving the pipe, and a pipe held by the arm that never answers or answers a refusal |
 | A relay's first call with no list and no background | `RelayTests.AFirstCallWithNoToolListAndNoBackgroundIsRefusedAtOnceAndTheNextIsHeld` |
+| Why each session closed when the background ended (*added later on 2026-10-10, the texts review's #24*) | `CloseReasonTests` declares each shutdown's cause on a session host's own manager and reads the record and the resume back; `BackgroundServerTests.ARelayTheUpdateEndsLeavesWhatItDroveRecordingTheUpdate` ends a relay through the roster; `BackgroundProcessTests.ABackgroundStoppedThroughItsPipeRecordsTheStopForEverySessionItHeld` stops a published background with the uninstall hook's own stop and reads both sessions' records |
+| The installer's log (*added later on 2026-10-10*) | `RealInstallerTests.InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical` reads `%LOCALAPPDATA%\velopack\velopack_<test pack id>.log` after its installs for the sign-in task's line, which names this install root's task |
 
 ## The update toasts and the update pages: what the suite can and cannot see
 

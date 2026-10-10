@@ -101,7 +101,8 @@ internal abstract record BackgroundAbsence
     internal sealed record RootRefused(Hosting.RootRefusal? Refusal, string LogPath) : BackgroundAbsence;
 
     /// <summary>A background process exists but its pipe is not up yet: hold.</summary>
-    internal sealed record Starting : BackgroundAbsence;
+    /// <param name="ProcessId">The process the record names, for the answer at a held call's deadline (2026-10-10, the texts review's #115).</param>
+    internal sealed record Starting(int? ProcessId = null) : BackgroundAbsence;
 
     /// <summary>No background process runs: hold, and if none appears say what the task says.</summary>
     /// <param name="Task">Where the task stands.</param>

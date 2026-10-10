@@ -2135,6 +2135,43 @@ release body; nothing else depends on it.
   machine's process log with the time and the deleting process. `ScratchReclaimTests` drives the
   cleanup from a second test host, watched red first against the old one.
 
+- 🐛 **Every session the background closes when it ends says why: an update, a stop or a failure.**
+  The texts review's #24. Each was recorded as shut down when its client went away, and one
+  with no browser up as let go because its client went away, which every later refusal,
+  `browserai_resume` and `browserai_catch_up` then quoted after an update. Now an update
+  records *to install an update*, a stop through the pipe *because BrowserAI was asked to
+  stop*, and a serve that failed *because BrowserAI's background ended on a failure, which
+  its log names*; the background says why before its pipe closes, and a relay the update
+  ended leaves what it drove recording the update too. `CloseReasonTests`,
+  `BackgroundServerTests` and a published arm in `BackgroundProcessTests` hold it, planted
+  red first.
+
+- 🐛 **The installer's log carries what each install, update and uninstall hook did.**
+  Found by the texts review of 2026-10-10. The hooks' lines for that log went into a list
+  that a hook process exits before reading, so none reached a log: on this machine
+  Velopack's logs held 332 hooks served and not one of those lines. They go through
+  Velopack's own logger now, into `%LOCALAPPDATA%\velopack\velopack_<pack id>.log`, the
+  file `Update.exe` writes. `RealInstallerTests` reads the install's line there, planted
+  red first.
+
+- 🐛 **A line to register BrowserAI by hand carries the data root the install was made with.**
+  The texts review's #138 and #139. The line ended in `--mcp`, so a client set up from it
+  for an install made with a data root started a relay that no background serves; it
+  carries the arguments the registration itself was given now, as the dashboard's Register
+  and Repair do. The line offered over another install's entry was spelled with that
+  install's command and is this install's now. `RegisterAiTests` holds both, planted red
+  first.
+
+- 🐛 **Five texts say what is true of the one background.**
+  The texts review's #115, #120, #141, #147 and #180. A held call whose background never
+  opened its pipe gets an answer of its own, since a Start Menu start ends nothing there;
+  *call again in a few seconds* is said only to a client that starts BrowserAI again by
+  itself; an uninstall whose background's record named no process logs `NotWaitedFor`
+  and not `Ended`; the refusal of a root two users can reach names the pipe and the
+  update, and no longer a live-instance census; and the idle close's row stands under
+  `(browser closed)` and not under a tool no model can call. Each is held by the class
+  it belongs to, planted red first.
+
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision
   `2026-07-28`. BrowserAI offered every revision its SDK implements, so it accepted that one,

@@ -378,11 +378,24 @@ internal static class InstallRootScope
         string? installRoot,
         string why) =>
         $"BrowserAI will not serve out of the {Noun(which)} '{root}': {why}. "
-        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not -- the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
-        + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
+
+        // ⚠️ Corrected 2026-10-10 for the texts review's #147 (previously "the file locks
+        // span users, but the machine-wide mutexes do not -- the kernel gives one no group
+        // ACE at all, so whichever user creates a name first owns it and the other cannot
+        // join the live-instance set. A process that never joined creates no marker, so it
+        // is invisible to the other user's census; that census answers 'nothing else is
+        // running', and applying an update then terminates every process under the install
+        // root, including the other user's browsers and whatever they were driving."): no
+        // process joins a live-instance set since the one background, and the pipe is
+        // what two users would meet on.
+        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the background's pipe is named for its roots and open only to the user who made it, so the second user's background finds the name taken and exits, leaving that user's clients with no background; and applying an update terminates every process under the install root, the other user's browsers included. "
         + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
         + "Recovery: " + Remedy(which, profile)
-        + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
+
+        // Corrected the same day (previously "Nothing was started, nothing was changed, and
+        // no session, marker or browser was created under"): the log is written there, and
+        // a background's start writes the record of its refusal.
+        + $"Nothing was started, and no session or browser was created under '{root}'.";
 
     /// <summary>What puts a refused root right, as a clause that starts with what to do.</summary>
     /// <remarks>
