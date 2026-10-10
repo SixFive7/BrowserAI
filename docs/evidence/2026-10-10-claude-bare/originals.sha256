@@ -1,0 +1,6 @@
+# SHA-256, byte count and name of every file as taken, before the .txt name
+f0bc6217cd59d21993e27a70ed4d03bd85b8d6e4db188f3e542ae5f6f1a10869  8050  rig/claude-bare.js
+2e6e1f77e4eb1e41f598196f221c2bf326d5c5d26be4bd1bb1876d1df7dcb40c  8405  rig/lib.js
+74a8ec3ae1897f411b958c6055164c2709404a150ffc60458fa9d280cfcf450d  538  rig/matrix.sh
+237a98f764ca9acf62ad54dcf2dce6b71bdc5dc6cfec08df57086b1b4f0ed36a  3224  rig/WinProbe.cs
+adb147db748e5662c896e4f5c1fc3482f813c6ff25a209d859e90b99288f6bd4  7855  stub/ProbeStub.cs

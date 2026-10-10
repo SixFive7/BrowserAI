@@ -1,0 +1,146 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Whether Claude Code starts a bare BrowserAI.exe from a project .mcp.json through
+// the PATH it was started with, the way it would find the folder the installer puts
+// on the user PATH. `claude mcp list` health-checks each approved project server,
+// and the stand-in records how it was started. Everything Claude Code could write
+// goes to scratch: CLAUDE_CONFIG_DIR, CODEX_HOME, USERPROFILE and LOCALAPPDATA are
+// scratch folders, the auto-updater and non-essential traffic are off, and the
+// repository's own four project servers, which a claude started inside the
+// repository finds by walking up, are refused in the scratch user settings.
+// usage: node claude-bare.js <kind> <round>
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const L = require('./lib.js');
+
+const CLAUDE = 'C:\\Users\\jori\\.local\\bin\\claude.exe';
+const KINDS = {
+  // The install's folder on this claude's PATH, three profile spellings.
+  ns: { profile: L.PROFILES.ns, pathHasInstall: true },
+  sp: { profile: L.PROFILES.sp, pathHasInstall: true },
+  spx: { profile: L.PROFILES.spx, pathHasInstall: true },
+  // A claude whose PATH was taken before the install wrote the folder there.
+  before: { profile: L.PROFILES.nsb, pathHasInstall: false },
+  // Another BrowserAI.exe earlier on the PATH than the install's folder.
+  shadow: { profile: L.PROFILES.ns, pathHasInstall: true, otherFirst: true },
+};
+const [kind, round] = process.argv.slice(2);
+const k = KINDS[kind];
+if (!k) throw new Error('unknown kind ' + kind);
+const runId = `${kind}-r${round}`;
+const runDir = path.join(L.RUNS, runId);
+if (fs.existsSync(runDir)) throw new Error('exists: ' + runDir);
+
+// The stand-in, a Windows-subsystem build named BrowserAI.exe, at the install's
+// place in the scratch profile and, for the shadow kind, in another folder.
+for (const exe of [L.installExeOf(k.profile), path.join(L.OTHER_DIR, 'BrowserAI.exe')]) {
+  fs.mkdirSync(path.dirname(exe), { recursive: true });
+  if (!fs.existsSync(exe)) fs.copyFileSync(L.STUB_GUI, exe);
+}
+
+const configDir = path.join(runDir, 'claude-config');
+const proj = path.join(runDir, 'proj');
+const stublogs = path.join(runDir, 'stublogs');
+fs.mkdirSync(configDir, { recursive: true });
+fs.mkdirSync(proj, { recursive: true });
+fs.mkdirSync(stublogs, { recursive: true });
+fs.writeFileSync(path.join(configDir, 'settings.json'), JSON.stringify({
+  enabledMcpjsonServers: ['browserai', 'abs'],
+  disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'],
+}, null, 1));
+const mcp = {
+  mcpServers: {
+    browserai: { type: 'stdio', command: 'BrowserAI.exe', args: ['--mcp', '--tag', 'bare'] },
+    abs: { type: 'stdio', command: L.installExeOf(k.profile), args: ['--mcp', '--tag', 'abs'] },
+  },
+};
+fs.writeFileSync(path.join(proj, '.mcp.json'), JSON.stringify(mcp, null, 1));
+fs.mkdirSync(path.join(proj, '.claude'), { recursive: true });
+fs.writeFileSync(path.join(proj, '.claude', 'settings.local.json'), JSON.stringify({ disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'] }, null, 1));
+
+const { kept } = L.sanitizedPathEntries();
+const pathEntries = [...kept];
+if (k.otherFirst) pathEntries.unshift(L.OTHER_DIR);
+if (k.pathHasInstall) pathEntries.push(L.installDirOf(k.profile));
+const env = L.baseEnv({
+  PATH: pathEntries.join(';'),
+  CLAUDE_CONFIG_DIR: configDir,
+  CODEX_HOME: path.join(runDir, 'codex-home'),
+  LOCALAPPDATA: L.ladOf(k.profile),
+  USERPROFILE: k.profile,
+  DISABLE_AUTOUPDATER: '1',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+  PROBE_LOG_DIR: stublogs,
+});
+fs.mkdirSync(env.CODEX_HOME, { recursive: true });
+
+const launchDirs = [stublogs, path.join(L.installDirOf(k.profile), 'launches'), path.join(L.OTHER_DIR, 'launches')];
+const seen = new Set();
+for (const d of launchDirs) if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) seen.add(path.join(d, f));
+function newLaunchFiles() {
+  const out = [];
+  for (const d of launchDirs) {
+    if (!fs.existsSync(d)) continue;
+    for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (!seen.has(p)) out.push(p); }
+  }
+  return out;
+}
+
+function runAsync(file, args, opts) {
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    const child = spawn(file, args, { env: opts.env, cwd: opts.cwd, windowsHide: true });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => { stdout += d; });
+    child.stderr.on('data', (d) => { stderr += d; });
+    const censuses = [];
+    let censusDone = false;
+    // One census when the first stand-in of this command has written its launch
+    // record: the process table reduced to claude's own tree, and the windows each
+    // process of that tree owns.
+    const poll = setInterval(() => {
+      if (censusDone) return;
+      if (newLaunchFiles().length === 0) return;
+      censusDone = true;
+      const all = L.allProcs();
+      const tree = L.treeOf(child.pid, all);
+      const pids = [child.pid, ...((tree.tree || []).map((p) => p.pid))];
+      censuses.push({ tree: (tree.tree || []).map((p) => ({ depth: p.depth, pid: p.pid, ppid: p.ppid, path: p.path && p.path.split(L.SCR).join('<SCR>') })), windows: L.windowsOf(pids) });
+    }, 100);
+    const timer = setTimeout(() => { try { child.kill(); } catch (e) { /* gone */ } }, opts.timeoutMs || 120000);
+    child.on('close', (status) => {
+      clearInterval(poll);
+      clearTimeout(timer);
+      resolve({ file, args, status, stdout: L.stripAnsi(stdout), stderr: L.stripAnsi(stderr), ms: Date.now() - t0, pid: child.pid, censuses });
+    });
+  });
+}
+
+(async () => {
+  const result = { runId, kind, claude: CLAUDE, profile: k.profile.split(L.SCR).join('<SCR>'), startedAt: new Date().toISOString(), mcpJson: mcp, pathTail: pathEntries.filter((e) => e.startsWith(L.SCR)).map((e) => e.split(L.SCR).join('<SCR>')) };
+  result.version = L.run(CLAUDE, ['--version'], { env, cwd: proj, timeoutMs: 60000 });
+  result.list = await runAsync(CLAUDE, ['mcp', 'list'], { env, cwd: proj, timeoutMs: 120000 });
+  result.get = await runAsync(CLAUDE, ['mcp', 'get', 'browserai'], { env, cwd: proj, timeoutMs: 120000 });
+  const all = L.allProcs() || [];
+  const ours = [L.installExeOf(k.profile), path.join(L.OTHER_DIR, 'BrowserAI.exe')];
+  result.probesLeft = L.probesByPath(ours, all).list;
+  for (const p of result.probesLeft || []) { try { process.kill(p.pid); } catch (e) { /* gone */ } }
+  result.launches = [];
+  for (const f of newLaunchFiles()) {
+    const target = path.join(stublogs, path.basename(f));
+    if (path.dirname(f) !== stublogs) fs.renameSync(f, target);
+    const ev = fs.readFileSync(target, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch (e) { return { unparsed: true }; } });
+    const l = ev.find((e) => e.event === 'launch');
+    if (l) result.launches.push({ file: path.basename(f), image: l.image && l.image.split(L.SCR).join('<SCR>'), commandLine: l.commandLine && l.commandLine.split(L.SCR).join('<SCR>'), argv: l.argv, ppid: l.ppid, consoleWindow: l.consoleWindow, consoleWindowVisible: l.consoleWindowVisible });
+  }
+  result.finishedAt = new Date().toISOString();
+  fs.writeFileSync(path.join(runDir, 'result.json'), JSON.stringify(result, null, 1));
+  const line = (name) => (result.list.stdout.split('\n').find((x) => x.startsWith(name + ':')) || '').split(L.SCR).join('<SCR>').trim();
+  console.log(`${runId}: ${result.version.stdout.trim()} | list=${result.list.status} | ${line('browserai')} || ${line('abs')}`);
+  console.log('  launches:', JSON.stringify(result.launches.map((x) => [x.argv && x.argv[x.argv.length - 1], x.image, x.consoleWindowVisible])));
+  console.log('  census:', JSON.stringify(result.list.censuses.map((c) => ({ tree: c.tree.map((p) => p.path && path.basename(p.path)), windows: c.windows && c.windows.windows }))));
+  console.log('  probes left and ended:', (result.probesLeft || []).length);
+})();

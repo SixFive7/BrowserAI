@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+# 2026-10-10 Claude Code bare-name check: every kind, three rounds.
+set -u
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+cd /c/Source/SixFive7/BrowserAI/.work/next-scratch/claude-bare/rig
+echo "MATRIX START $(date -u +%FT%TZ)"
+for r in 1 2 3; do
+  for kind in ns sp spx before shadow; do
+    timeout 300 node claude-bare.js "$kind" "$r" 2>&1; echo "rc=$?"
+  done
+done
+echo "MATRIX END $(date -u +%FT%TZ)"

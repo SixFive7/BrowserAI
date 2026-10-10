@@ -101,7 +101,7 @@ internal static partial class PageOpener
             DataRoot = paths.RootAppDir,
             LogDirectory = paths.LogDirectory,
             ServerCommand = resolved ? target!.Command : null,
-            ServerArguments = resolved ? InstallerSettings.SavedFor(target!.InstallRoot).RelayArguments : InstallerSettings.None.RelayArguments,
+            ServerArguments = resolved ? InstallerSettings.SavedFor(target!.InstallRoot, InstallLocation.AppId).RelayArguments : InstallerSettings.None.RelayArguments,
             ServerRefusal = resolved ? null : refusal,
         };
     }

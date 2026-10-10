@@ -90,10 +90,16 @@ internal sealed record RegistrationClient
     /// install root.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Per client because only one of them expands a variable in a server
-    /// command.</b> Claude Code expands <c>${VAR}</c> inside <c>.mcp.json</c>, which
-    /// is the only reason <see cref="PortableCommandFor"/> is usable, and it is
-    /// written when it expands to this install. <b>Codex expands nothing</b>:
+    /// ⚠️ <b>The same bare name for both clients since 2026-10-10</b>, the maintainer's 30
+    /// that day, verbatim in part: <i>"So I'd like to go for BrowserAI.exe as a bare name in
+    /// both Codex and Claude code for cleanliness an beautiy sakes. This makes a nice entry
+    /// and resolves on every dev machine correctly on the path."</i> It is still per client,
+    /// because each client's file is written its own way. <i>Corrected that day (previously
+    /// "Per client because only one of them expands a variable in a server command. Claude
+    /// Code expands <c>${VAR}</c> inside <c>.mcp.json</c>, which is the only reason
+    /// <c>PortableCommandFor</c> is usable, and it is written when it expands to this
+    /// install"), when the portable spelling and its method were deleted.</i>
+    /// <b>Codex expands nothing</b>:
     /// <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>, <c>%LOCALAPPDATA%</c> and
     /// <c>~</c> started nothing in 48 attempts (measured and read 2026-09-24,
     /// <c>docs/evidence/2026-09-24-codex-expansion</c>), so by Q294, the maintainer's
@@ -112,7 +118,8 @@ internal sealed record RegistrationClient
     /// <remarks>
     /// <b>Added 2026-10-03.</b> Codex's sentence names what its bare name finds on the
     /// PATH, which BrowserAI used to look up itself and RegisterAI now reports as
-    /// <c>resolvesTo</c>.
+    /// <c>resolvesTo</c>. <i>Claude Code's does the same since 2026-10-10</i>, the
+    /// maintainer's 30, when its entry took the bare name too.
     /// </remarks>
     public required Func<string, string?, string?> ProjectNoteAfter { get; init; }
 
@@ -173,8 +180,17 @@ internal sealed record RegistrationClient
         ProjectHint =
             "Claude Code will ask you to approve this server the first time you open a session in that folder.",
         ProjectFileName = ".mcp.json",
-        ProjectCommandFor = ClaudeProjectCommandFor,
-        ProjectNoteAfter = (_, _) => null,
+
+        // ⚠️ THE BARE NAME, AS CODEX'S IS, since 2026-10-10: the maintainer's 30 that day,
+        // verbatim in part, "I'd like to go for BrowserAI.exe as a bare name in both Codex
+        // and Claude code for cleanliness an beautiy sakes. This makes a nice entry and
+        // resolves on every dev machine correctly on the path." Corrected that day
+        // (previously ClaudeProjectCommandFor: ${LOCALAPPDATA}/BrowserAI.app/current/
+        // BrowserAI.exe at the default location, and the absolute path elsewhere): a copy
+        // outside the standard folder sets nothing up since the same day's 21, so no other
+        // BrowserAI.exe is on a normal machine's PATH.
+        ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.AppFileName, null),
+        ProjectNoteAfter = ClaudeProjectNote,
         ManualCommandFor = static (command, arguments) => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\" {Typed(arguments)}",
         ProjectEntryFor = static (command, arguments) =>
             $"\"{McpRegistrar.ServerName}\": {{ \"command\": {Quoted(command)}, \"args\": [{string.Join(", ", arguments.Select(Quoted))}] }}, inside \"mcpServers\"",
@@ -221,63 +237,6 @@ internal sealed record RegistrationClient
     }
 
     /// <summary>
-    /// The portable form of an installed server's path, for a committed
-    /// <c>.mcp.json</c>.
-    /// </summary>
-    /// <param name="packId">The Velopack pack id, which is the install folder.</param>
-    /// <returns>The command, with the environment reference unexpanded.</returns>
-    /// <remarks>
-    /// <para>
-    /// <b>Claude Code expands <c>${VAR}</c> inside <c>.mcp.json</c> and this is the
-    /// only reason the form is usable.</b> A committed absolute path under one
-    /// person's user profile is wrong on every teammate's machine and right on exactly
-    /// one, which makes committing it worse than committing nothing.
-    /// </para>
-    /// <para>
-    /// <b>Forward slashes</b>, because JSON is where this lands and a backslash is an
-    /// escape there; the client and Windows both accept them. <i>Moved here 2026-10-03
-    /// from <c>McpClientRegistration</c>, unchanged.</i>
-    /// </para>
-    /// </remarks>
-    public static string PortableCommandFor(string packId) =>
-        $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.AppFileName}";
-
-    /// <summary>
-    /// What a Claude Code project file is given: the portable spelling when it
-    /// expands to this install, and the absolute path with the reason otherwise.
-    /// </summary>
-    /// <param name="server">This install's server, absolute.</param>
-    /// <param name="installRoot">This install's root, or <see langword="null"/>.</param>
-    /// <returns>The command and the sentence.</returns>
-    /// <remarks>
-    /// ⚠️ <b>The portable form is only written when it expands to the install this
-    /// process is running out of.</b> A non-default install root -- <c>Setup.exe</c>
-    /// with an install-to argument -- does not sit under <c>%LOCALAPPDATA%</c>, and
-    /// writing this form there would commit a path that resolves to nothing on the
-    /// very machine that wrote it.
-    /// </remarks>
-    public static ProjectCommand ClaudeProjectCommandFor(string server, string? installRoot)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(server);
-
-        var folder = installRoot is { Length: > 0 } root
-            ? Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
-            : "BrowserAI.app";
-
-        var expanded = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-            folder,
-            RegistrationTarget.CurrentDirectoryName,
-            RegistrationTarget.AppFileName);
-
-        return string.Equals(Path.GetFullPath(expanded), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
-            ? new ProjectCommand(PortableCommandFor(folder), null)
-            : new ProjectCommand(
-                server,
-                "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine.");
-    }
-
-    /// <summary>
     /// What a person is told after a Codex project registration: that the entry names
     /// the server alone, and which file that name finds on the PATH.
     /// </summary>
@@ -299,20 +258,53 @@ internal sealed record RegistrationClient
     /// section, <c>PageContent.CodexStartedBeforeTheInstall</c>, without the hedge the
     /// measurement above took away.
     /// </remarks>
-    public static string CodexProjectNote(string server, string? found)
+    public static string CodexProjectNote(string server, string? found) =>
+        BareNameNote(
+            "The entry names BrowserAI.exe with --mcp and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.",
+            "Codex",
+            server,
+            found);
+
+    /// <summary>
+    /// What a person is told after a Claude Code project registration: that the entry names
+    /// the server alone, and which file that name finds on the PATH.
+    /// </summary>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="found">The file the bare name resolves to, as RegisterAI reported it, or <see langword="null"/>.</param>
+    /// <returns>The sentence.</returns>
+    /// <remarks>
+    /// <b>Added 2026-10-10 with the bare name</b>, the maintainer's 30 that day: Claude Code
+    /// 2.1.296 started a bare <c>BrowserAI.exe</c> from a project's <c>.mcp.json</c> through
+    /// the PATH it was started with, 9 of 9, a space and <c>&amp; ! ^ % ( )</c> in the profile
+    /// path included, and none when that PATH lacked the install's folder, 0 of 3
+    /// (<c>kb/mcp/protocol.md</c>). <i>Until that day Claude Code had no sentence here: its
+    /// entry carried <c>${LOCALAPPDATA}</c>, which it expands.</i>
+    /// </remarks>
+    public static string ClaudeProjectNote(string server, string? found) =>
+        BareNameNote(
+            "The entry names BrowserAI.exe with --mcp and no folder, so the same file is right on every developer's PC; Claude Code finds it on the PATH it was started with.",
+            "Claude Code",
+            server,
+            found);
+
+    /// <summary>The sentence after a project registration of the bare name, in one client's words.</summary>
+    /// <param name="how">What the entry names and how the client finds it.</param>
+    /// <param name="client">The client, as a sentence names it.</param>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="found">The file the bare name resolves to, or <see langword="null"/>.</param>
+    /// <returns>The sentence.</returns>
+    private static string BareNameNote(string how, string client, string server, string? found)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(server);
 
-        const string How = "The entry names BrowserAI.exe with --mcp and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.";
-
         return found is null
-            ? $"{How} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."
+            ? $"{how} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."
             : string.Equals(Path.GetFullPath(found), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
                 // The texts polish, 2026-10-10, page #90 (previously "It finds this install.
                 // A Codex that was already running ... may need to be restarted to see it." and
-                // "..., which is not this install."): the page's Codex section says the restart,
-                // and the other ending says what follows.
-                ? $"{How} It finds this install."
-                : $"{How} The first one on your PATH is '{found}', which is not this install, so Codex starts that one.";
+                // "..., which is not this install."): the page's section for each client says
+                // the restart, and the other ending says what follows.
+                ? $"{how} It finds this install."
+                : $"{how} The first one on your PATH is '{found}', which is not this install, so {client} starts that one.";
     }
 }

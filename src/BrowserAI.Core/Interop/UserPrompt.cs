@@ -6,17 +6,19 @@ using System.Runtime.InteropServices;
 namespace BrowserAI.Interop;
 
 /// <summary>
-/// The one question BrowserAI ever asks a human, and the only channel it has to
-/// ask it on.
+/// The one question BrowserAI ever asks a human, the one notice it ever shows, and the
+/// only channel it has for either.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>There is exactly one caller and it is the uninstall hook</b>
-/// (<c>Registration.DataRootDisposal</c>), which asks whether the data root
-/// should go with the program. Nothing on the serving path may reach this: a
-/// dialog from a background MCP server is an invisible hang, which is the whole
-/// reason <c>Runtime.BrowserConfiguration</c> refuses the browser features that
-/// prompt.
+/// <b>There are exactly two callers.</b> The uninstall hook
+/// (<c>Registration.DataRootDisposal</c>) asks whether the data root should go with the
+/// program; and since 2026-10-10 a person's start of a shipping copy outside the
+/// standard folder says why nothing was set up (<see cref="Tell"/>, the maintainer's 21).
+/// Nothing on the serving path may reach this: a dialog from a background MCP server is
+/// an invisible hang, which is the whole reason <c>Runtime.BrowserConfiguration</c>
+/// refuses the browser features that prompt. <i>Corrected 2026-10-10 (previously "There
+/// is exactly one caller and it is the uninstall hook").</i>
 /// </para>
 /// <para>
 /// <b>Why a message box at all.</b> The hook has no console -- Velopack starts it
@@ -42,6 +44,7 @@ internal static partial class UserPrompt
 {
     private const uint YesNo = 0x00000004;
     private const uint IconQuestion = 0x00000020;
+    private const uint IconWarning = 0x00000030;
 
     /// <summary>The second button is the default one, so Enter keeps.</summary>
     private const uint DefaultButtonTwo = 0x00000100;
@@ -69,6 +72,18 @@ internal static partial class UserPrompt
             message,
             title,
             YesNo | IconQuestion | DefaultButtonTwo | TaskModal | SetForeground | TopMost) == IdYes;
+
+    /// <summary>Shows a notice with one button, and returns when it is closed.</summary>
+    /// <param name="title">The window title.</param>
+    /// <param name="message">The notice, already composed.</param>
+    /// <remarks>
+    /// <b>Only a person's start reaches it</b>, and never a start nobody is watching:
+    /// <c>App.Program.TellsThePersonItWasNotSetUp</c> decides that before this is called.
+    /// A call that fails shows nothing and returns, because the line in the log says the
+    /// same.
+    /// </remarks>
+    public static void Tell(string title, string message) =>
+        _ = MessageBoxW(IntPtr.Zero, message, title, IconWarning | TaskModal | SetForeground | TopMost);
 
     // System32 only, on every P/Invoke in this repository (CA5392). user32 is a
     // KnownDLL, so the attribute cannot change this one's outcome; the rule is

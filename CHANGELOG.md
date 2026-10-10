@@ -113,9 +113,9 @@ release body; nothing else depends on it.
   The installer registers it with each client for all your projects and the uninstaller removes it
   again, through [RegisterAI](https://github.com/SixFive7/RegisterAI), a small program the
   installer carries that reads every entry back after writing it. The dashboard does the same one
-  client at a time, and in a project. A Codex project entry names `BrowserAI.exe`, and the
-  installer puts BrowserAI's own folder on your user PATH so Codex finds it: restart Codex after
-  installing. Registering in a project checks whose entry is already there, an entry another
+  client at a time, and in a project. A project entry names `BrowserAI.exe` for Claude Code
+  and Codex alike, and the installer puts BrowserAI's own folder on your user PATH so each
+  finds it: restart a client that was running before the install. Registering in a project checks whose entry is already there, an entry another
   install wrote is left alone, and an update leaves an entry you edited by hand as it is.
 
 - ✨ **A broken install is told to the person, in a toast and on every page of the dashboard.**
@@ -262,6 +262,12 @@ release body; nothing else depends on it.
 - 📦 **A release is refused unless every dependency was checked that day and none has moved.**
   The resolved set each release was built from is committed to the repository as well, under
   [`docs/evidence/`](docs/evidence/README.md).
+
+- 💥 **The installer installs into `%LocalAppData%\BrowserAI.app` and nowhere else.**
+  A copy installed into another folder with `--installto` sets nothing up and says so at every
+  start: uninstall that copy, then run `BrowserAI.exe` again without `--installto`. BrowserAI
+  keeps its data in `%LocalAppData%\BrowserAI` and no longer reads `BROWSERAI_ROOT`, so that a
+  project's registration finds it on every developer's PC.
 
 ### Removed
 

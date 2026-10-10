@@ -187,12 +187,19 @@ internal sealed class UserPathTests
     }
 
     /// <summary>
-    /// A Codex project entry names the server alone, whatever the PATH finds, and the
-    /// sentence after it says what the name finds; Claude Code's is unchanged.
+    /// A project entry names the server alone for both clients, whatever the PATH finds,
+    /// and the sentence after it says what the name finds.
     /// </summary>
+    /// <remarks>
+    /// <b>Claude Code too since 2026-10-10</b>, the maintainer's 30 that day: its entry took
+    /// the bare name, and its sentence is Codex's in its own words. <b>Planted red
+    /// 2026-10-10</b> against Claude Code's <c>${LOCALAPPDATA}</c> spelling and its missing
+    /// sentence. <i>Previously <c>ACodexProjectEntryNamesTheServerAloneAndSaysWhatItFinds</c>,
+    /// which held Claude Code's spelling unchanged.</i>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ACodexProjectEntryNamesTheServerAloneAndSaysWhatItFinds()
+    public async Task AProjectEntryNamesTheServerAloneForBothClientsAndSaysWhatItFinds()
     {
         const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.exe";
         const string Other = @"D:\elsewhere\current\BrowserAI.exe";
@@ -219,23 +226,21 @@ internal sealed class UserPathTests
         await Assert.That(elsewhere!).EndsWith("which is not this install, so Codex starts that one.");
         await Assert.That(nowhere!).Contains("No folder on your PATH holds one yet");
 
-        // Claude Code has no sentence to add after the run.
-        await Assert.That(RegistrationClient.ClaudeCode.ProjectNoteAfter(Server, Server)).IsNull();
+        // Claude Code: the same name, and the same three endings in its own words.
+        await Assert.That(RegistrationClient.ClaudeCode.ProjectCommandFor(Server, Path.GetDirectoryName(Path.GetDirectoryName(Server))).Command)
+            .IsEqualTo(RegistrationTarget.AppFileName);
+        await Assert.That(RegistrationClient.ClaudeCode.ProjectCommandFor(Other, @"D:\elsewhere").Command)
+            .IsEqualTo(RegistrationTarget.AppFileName);
 
-        // Claude Code: the portable spelling at the default location, the absolute
-        // path and the reason anywhere else.
-        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
-        var defaultServer = Path.Combine(local, "BrowserAI.app", RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+        var claudeHere = RegistrationClient.ClaudeCode.ProjectNoteAfter(Server, Server);
+        var claudeElsewhere = RegistrationClient.ClaudeCode.ProjectNoteAfter(Server, Other);
+        var claudeNowhere = RegistrationClient.ClaudeCode.ProjectNoteAfter(Server, null);
 
-        var portable = RegistrationClient.ClaudeCode.ProjectCommandFor(defaultServer, Path.Combine(local, "BrowserAI.app"));
-
-        await Assert.That(portable.Command).StartsWith("${LOCALAPPDATA}/");
-        await Assert.That(portable.Note).IsNull();
-
-        var moved = RegistrationClient.ClaudeCode.ProjectCommandFor(Other, @"D:\elsewhere");
-
-        await Assert.That(moved.Command).IsEqualTo(Other);
-        await Assert.That(moved.Note!).Contains("not at its default location");
+        await Assert.That(claudeHere!).StartsWith("The entry names BrowserAI.exe with --mcp and no folder, so the same file is right on every developer's PC; Claude Code finds it on the PATH it was started with.");
+        await Assert.That(claudeHere!).EndsWith("It finds this install.");
+        await Assert.That(claudeElsewhere!).EndsWith($"The first one on your PATH is '{Other}', which is not this install, so Claude Code starts that one.");
+        await Assert.That(claudeNowhere!).Contains("No folder on your PATH holds one yet");
+        await Assert.That(claudeHere!).DoesNotContain("Codex");
     }
 
     /// <summary>One hook pass, the way the hook runs it, against a scratch PATH.</summary>

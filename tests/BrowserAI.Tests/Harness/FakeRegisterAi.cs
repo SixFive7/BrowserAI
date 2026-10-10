@@ -190,7 +190,7 @@ internal sealed class FakeRegisterAi : IRegisterAi
             : Entries.TryGetValue(key, out var entry) ? Classify(client, entry, command, roots)
             : "absent";
 
-        var before = Entry(state, Entries.GetValueOrDefault(key), client);
+        var before = Entry(state, Entries.GetValueOrDefault(key), client, roots);
 
         if (verb is "status")
         {
@@ -272,7 +272,7 @@ internal sealed class FakeRegisterAi : IRegisterAi
             ["config"] = config,
             ["before"] = before,
             ["action"] = action,
-            ["after"] = action is "failed" ? before.DeepClone() : Entry(afterState, Entries.GetValueOrDefault(key), client),
+            ["after"] = action is "failed" ? before.DeepClone() : Entry(afterState, Entries.GetValueOrDefault(key), client, roots),
             ["ran"] = new JsonArray(),
             ["said"] = said,
             ["advice"] = new JsonArray(),
@@ -281,18 +281,18 @@ internal sealed class FakeRegisterAi : IRegisterAi
         };
     }
 
-    private static JsonObject Entry(string state, string? command, string client) => new()
+    private static JsonObject Entry(string state, string? command, string client, IReadOnlyList<string>? roots = null) => new()
     {
         ["state"] = state,
         ["command"] = command,
         ["args"] = new JsonArray(),
         ["env"] = new JsonArray(),
-        ["resolvesTo"] = command is null ? null : Resolve(command, client),
+        ["resolvesTo"] = command is null ? null : Resolve(command, client, roots),
     };
 
     private static string Classify(string client, string entry, string? command, List<string> roots)
     {
-        var resolved = Resolve(entry, client);
+        var resolved = Resolve(entry, client, roots);
         var namesCommand = command is not null && string.Equals(entry, command, StringComparison.OrdinalIgnoreCase);
         var underRoot = resolved is not null && roots.Any(root =>
             resolved.StartsWith(Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
@@ -305,9 +305,24 @@ internal sealed class FakeRegisterAi : IRegisterAi
         return resolved is null || !File.Exists(resolved) || (command is not null && !namesCommand) ? "ours-stale" : "ours";
     }
 
-    private static string? Resolve(string command, string client)
+    /// <summary>What a command names, the way RegisterAI resolves it.</summary>
+    /// <remarks>
+    /// <b>A bare name resolves into an owned root's <c>current\</c> since 2026-10-10</b>, which
+    /// stands in for the folder the installer puts on the user's PATH (Q294 b): RegisterAI
+    /// finds a bare name on the PATH a new program gets, and the fake has no PATH of its own.
+    /// It mattered once Claude Code's project entry took the bare name too, the maintainer's
+    /// 30 that day; before, a bare entry read as stale here and no arm read one back.
+    /// </remarks>
+    private static string? Resolve(string command, string client, IReadOnlyList<string>? roots = null)
     {
         var text = command;
+
+        if (roots is { Count: > 0 } && text.Length > 0 && text.IndexOfAny(['\\', '/', ':']) < 0)
+        {
+            return roots
+                .Select(root => Path.Combine(root, RegistrationTarget.CurrentDirectoryName, text))
+                .FirstOrDefault(File.Exists);
+        }
 
         if (client is "claude-code" && text.Contains("${", StringComparison.Ordinal))
         {

@@ -156,9 +156,13 @@ internal static class Program
         // The override, as the one-binary build carries it (step 5, 2026-10-08): the
         // --data-root a start was handed, and for a start that was handed none, a
         // person's or Velopack's, the one the hooks wrote into this install's task.
-        // Never a variable, and never anything derived from the install root.
-        var overridden = DataRootFrom(args)
-            ?? (InstallLocation.RootAppDir is { } installed ? SignInTask.DataRootIn(SignInTask.SavedDefinition(installed)) : null);
+        // Never a variable, and never anything derived from the install root. ⚠️ And none
+        // for the shipping install since 2026-10-10, the maintainer's 21 and the way to do
+        // it he took that day, relayed in his words verbatim, "that proposal sounds go": it
+        // keeps its data in %LOCALAPPDATA%\BrowserAI.
+        var overridden = StandardLocation.DataRootFor(
+            InstallLocation.AppId,
+            DataRootFrom(args) ?? (InstallLocation.RootAppDir is { } installed ? SignInTask.DataRootIn(SignInTask.SavedDefinition(installed)) : null));
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -175,6 +179,21 @@ internal static class Program
             {
                 AppLog.Velopack(logger, message);
             }
+        }
+
+        // ⚠️ A SHIPPING COPY OUTSIDE THE STANDARD FOLDER DOES NOT START -- 21, 2026-10-10. Its
+        // install hook set nothing up, and a person's start says why in a box, the one after
+        // a non-silent install included; a start nobody is watching only writes the line.
+        if (StandardLocation.Judge(InstallLocation.AppId, InstallLocation.RootAppDir) is { } notSetUp)
+        {
+            AppLog.NotSetUp(logger, notSetUp.Sentence);
+
+            if (TellsThePersonItWasNotSetUp(args, restarted))
+            {
+                UserPrompt.Tell(StandardLocation.NoticeTitle, notSetUp.Sentence);
+            }
+
+            return 1;
         }
 
         // ⚠️ A CLICK ON ONE OF BROWSERAI'S TOASTS -- T, decided 2026-10-08. COM starts this
@@ -275,6 +294,29 @@ internal static class Program
 
         _ = PageOpener.Deliver(address, writeAddress, ShellInterop.OpenUrl, logger);
         return 0;
+    }
+
+    /// <summary>Whether a refused copy's start is a person's, who is told in a box why nothing was set up.</summary>
+    /// <param name="args">The command line.</param>
+    /// <param name="restarted">Whether Velopack's restart after an update started it.</param>
+    /// <returns>
+    /// Whether a person is there: a Start Menu start, a page's start or the installer's own
+    /// start after a non-silent install; never a report, a toast's activation or a restart
+    /// after an update, which nobody is watching.
+    /// </returns>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b> with the maintainer's 21 and the way to do it he took that day,
+    /// relayed in his words verbatim, <i>"that proposal sounds go"</i>: the box after a
+    /// non-silent install, and every later start of that copy refusing with the same reason.
+    /// </remarks>
+    internal static bool TellsThePersonItWasNotSetUp(IReadOnlyList<string> args, bool restarted)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        return !restarted
+            && ReportPathFrom([.. args]) is null
+            && !ToastActivation.IsActivation(args)
+            && AfterUpdate.TargetIn(args) is null;
     }
 
     /// <summary>The page a person's start asks for, by the names the background's <c>show</c> takes.</summary>
@@ -410,6 +452,16 @@ internal static partial class AppLog
         Level = LogLevel.Information,
         Message = "Asked the Task Scheduler for BrowserAI's background. {Detail}")]
     public static partial void TaskAsked(ILogger logger, string detail);
+
+    /// <summary>A shipping copy outside the standard folder was started, and does not start.</summary>
+    /// <param name="logger">Where the record goes.</param>
+    /// <param name="sentence">Why nothing was set up, and what puts it right.</param>
+    /// <remarks><b>Added 2026-10-10</b>, the maintainer's 21.</remarks>
+    [LoggerMessage(
+        EventId = 6007,
+        Level = LogLevel.Warning,
+        Message = "{Sentence}")]
+    public static partial void NotSetUp(ILogger logger, string sentence);
 
     // Ids 6001 (the window opening) and 6005 (a click in the window threw) went with
     // the configuration window on 2026-10-03, which the browser tab replaced. A log

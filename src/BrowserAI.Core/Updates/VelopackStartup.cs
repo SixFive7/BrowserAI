@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Hosting;
 using BrowserAI.Registration;
 using Microsoft.Extensions.Logging;
 using Velopack;
@@ -134,9 +135,13 @@ internal static class VelopackStartup
             // 2026-10-10: it goes through Velopack's own logger, which writes the
             // file, and no longer only into the caller's delegate, which in the
             // product is a list nothing reads before the process exits.
-            .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), ThroughVelopacksLog(log)))
-            .OnAfterUpdateFastCallback(version => Register(RegistrationIntent.Update, Describe(version), ThroughVelopacksLog(log)))
-            .OnBeforeUninstallFastCallback(version => Register(RegistrationIntent.Uninstall, Describe(version), ThroughVelopacksLog(log)))
+            //
+            // ⚠️ And an install that set nothing up exits with a code of its own, since
+            // 2026-10-10 (the maintainer's 21): Setup records it as the hook's failure, which
+            // is the one thing of a hook's that reaches Setup's own log.
+            .OnAfterInstallFastCallback(version => ExitAsConcluded(RegistrationIntent.Install, Register(RegistrationIntent.Install, Describe(version), ThroughVelopacksLog(log))))
+            .OnAfterUpdateFastCallback(version => ExitAsConcluded(RegistrationIntent.Update, Register(RegistrationIntent.Update, Describe(version), ThroughVelopacksLog(log))))
+            .OnBeforeUninstallFastCallback(version => ExitAsConcluded(RegistrationIntent.Uninstall, Register(RegistrationIntent.Uninstall, Describe(version), ThroughVelopacksLog(log))))
 
             .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null))
             .Run();
@@ -330,8 +335,46 @@ internal static class VelopackStartup
     /// installer's own log, which is the file somebody debugging a failed install
     /// opens first and the only one that exists before BrowserAI has ever run.
     /// </remarks>
-    public static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log) =>
-        Mirror(HookRegistration.Run(intent, version), intent, version, log);
+    /// <returns>What the hook did.</returns>
+    public static HookOutcome Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
+    {
+        var outcome = HookRegistration.Run(intent, version);
+        Mirror(outcome, intent, version, log);
+        return outcome;
+    }
+
+    /// <summary>The exit code a hook ends with, when it is not Velopack's own zero.</summary>
+    /// <param name="intent">Which hook it was.</param>
+    /// <param name="outcome">What it did.</param>
+    /// <returns>
+    /// <see cref="StandardLocation.RefusedExitCode"/> for an install that set nothing up, and
+    /// <see langword="null"/> for everything else.
+    /// </returns>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the maintainer's 21, and the install hook alone.</b> Setup logs a
+    /// non-zero code, shows its own box after a non-silent install and exits 0 either way,
+    /// measured at 1.2.161. An update or an uninstall of such a copy ends as Velopack expects,
+    /// so its apply and its removal go on as they do for any copy.
+    /// </remarks>
+    internal static int? ExitCodeFor(RegistrationIntent intent, HookOutcome outcome)
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+
+        return intent is RegistrationIntent.Install && outcome.NotSetUp is not null ? StandardLocation.RefusedExitCode : null;
+    }
+
+    /// <summary>Ends the hook's process with its own code, when it has one.</summary>
+    /// <param name="intent">Which hook it was.</param>
+    /// <param name="outcome">What it did.</param>
+    private static void ExitAsConcluded(RegistrationIntent intent, HookOutcome outcome)
+    {
+        if (ExitCodeFor(intent, outcome) is { } code)
+        {
+            // Environment.Exit inside the callback is what Velopack's own handler does, with
+            // 0, once the callback returns; measured on 2026-10-10 with 5, which Setup read.
+            Environment.Exit(code);
+        }
+    }
 
     /// <summary>
     /// Writes what one hook did into the installer's own log, one line per thing it
@@ -351,6 +394,13 @@ internal static class VelopackStartup
     {
         ArgumentNullException.ThrowIfNull(outcome);
         ArgumentNullException.ThrowIfNull(log);
+
+        // ⚠️ A COPY THAT SET NOTHING UP SAYS SO FIRST -- 21, 2026-10-10. The line is the
+        // record of why, in the one log a refused copy writes.
+        if (outcome.NotSetUp is { } notSetUp)
+        {
+            log(VelopackLogLevel.Warning, $"BrowserAI {version} -- not set up ({intent}): {notSetUp.Sentence}", null);
+        }
 
         // ⚠️ ONE LINE PER CLIENT SINCE 2026-09-24, and the client is NAMED in
         // each. A hook registers with every client now, and a single line

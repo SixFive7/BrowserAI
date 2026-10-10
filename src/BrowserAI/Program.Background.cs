@@ -70,7 +70,9 @@ internal static partial class Program
         var clock = TimeProvider.System;
         var backgroundLogger = log.Factory.CreateLogger("BrowserAI.Background");
 
-        var scope = InstallRootScope.Judge(paths.RootAppDir, installRoot);
+        // 21, 2026-10-10: the pack id too, so a shipping copy outside the standard folder
+        // records why it was not set up, and every relay answers with it.
+        var scope = InstallRootScope.Judge(paths.RootAppDir, installRoot, InstallLocation.AppId);
 
         if (scope.Unestablished is { } unestablished)
         {

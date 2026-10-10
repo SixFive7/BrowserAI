@@ -97,7 +97,10 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).EndsWith(
             $"Nothing was started, and no session or browser was created under '{verdict.Detail!.Root}'. "
             + "A refused start leaves this line in the log and, for a background, the refusal in its record under the data root, which every relay answers each call from.");
-        await Assert.That(refusal).Contains("so reinstall it with that variable cleared;");
+        // ⚠️ The shipping install's data root since 2026-10-10, the maintainer's 21 and the
+        // way to do it he took that day (previously "so reinstall it with that variable
+        // cleared;"): it reads no BROWSERAI_ROOT. Planted red against the remedy as it was.
+        await Assert.That(refusal).Contains("The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile;");
         await Assert.That(refusal).DoesNotContain("naming a directory under that profile");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
@@ -539,10 +542,13 @@ internal sealed class InstallRootScopeTests
         // --installto <a directory under that profile>'"): the maintainer's 21 of the same
         // day refuses an install in a non-standard folder, so that a project's entry
         // resolves on every developer's PC.
-        await Assert.That(refusal).Contains("reinstall BrowserAI inside '");
-        await Assert.That(refusal).Contains("': its default location is there.");
-        await Assert.That(refusal).DoesNotContain("--installto");
-        await Assert.That(refusal).Contains("it moves the data root and never the install root");
+        // ⚠️ And since later that day, with the way 21 is done (previously "reinstall
+        // BrowserAI inside '...': its default location is there. BROWSERAI_ROOT cannot help
+        // here: it moves the data root and never the install root."): the one remedy for a
+        // copy in another folder is the standard location's, and the shipping install
+        // reads no BROWSERAI_ROOT to be offered. Planted red against the remedy as it was.
+        await Assert.That(refusal).Contains("uninstall this copy, then run BrowserAI.exe again without --installto, which installs it into this user's LocalAppData folder; that folder has to be inside '");
+        await Assert.That(refusal).DoesNotContain(Program.AppRootVariable);
         await Assert.That(refusal).Contains("applying an update ends every process under the install root");
         await Assert.That(refusal.Contains(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
         await Assert.That(refusal).DoesNotContain("Setup.exe");

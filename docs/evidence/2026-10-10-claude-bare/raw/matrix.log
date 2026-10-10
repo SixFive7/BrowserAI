@@ -1,0 +1,77 @@
+MATRIX START 2026-10-10T16:45:45Z
+ns-r1: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+sp-r1: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+spx-r1: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+before-r1: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✘ Failed to connect — CONNECTION_CLOSED: Connection closed || abs: <SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+shadow-r1: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false]]
+  census: []
+  probes left and ended: 0
+rc=0
+ns-r2: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+sp-r2: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+spx-r2: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+before-r2: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✘ Failed to connect — CONNECTION_CLOSED: Connection closed || abs: <SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+shadow-r2: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+ns-r3: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+sp-r3: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+spx-r3: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["abs","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+before-r3: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✘ Failed to connect — CONNECTION_CLOSED: Connection closed || abs: <SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+shadow-r3: 2.1.296 (Claude Code) | list=0 | browserai: BrowserAI.exe --mcp --tag bare - ✔ Connected || abs: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe --mcp --tag abs - ✔ Connected
+  launches: [["abs","<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false],["bare","<SCR>\\other\\BrowserAI.exe",false]]
+  census: [{"tree":[],"windows":[]}]
+  probes left and ended: 0
+rc=0
+MATRIX END 2026-10-10T16:46:26Z

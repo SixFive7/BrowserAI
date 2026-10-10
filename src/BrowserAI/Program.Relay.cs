@@ -57,6 +57,10 @@ internal static partial class Program
                 Executable = Environment.ProcessPath ?? string.Empty,
                 Build = BuildVersion.Current,
                 LogPath = log.CurrentFile ?? paths.LogDirectory,
+
+                // 21, 2026-10-10: a shipping copy outside the standard folder answers every
+                // call with why it was not set up and what puts it right.
+                NotSetUp = StandardLocation.Judge(InstallLocation.AppId, installRoot)?.AsRootRefusal(),
             },
             relayLogger);
 

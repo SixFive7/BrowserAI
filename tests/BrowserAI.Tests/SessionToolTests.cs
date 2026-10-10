@@ -189,7 +189,13 @@ internal sealed class SessionToolTests
         var copied = run.Text("resumeCopy");
 
         await Assert.That(run.IsError("resumeCopy")).IsFalse();
-        await Assert.That(copied).Contains("COPY");
+        // In plain case and with no double hyphen since 2026-10-10 (previously "a COPY of
+        // the session at '...', which still exists -- the two ..." and "describe the
+        // ORIGINAL"), at the maintainer's ask relayed that day. Planted red against the
+        // capitals.
+        await Assert.That(copied).Contains("This directory is a copy of the session at '");
+        await Assert.That(copied).DoesNotContain("COPY");
+        await Assert.That(copied).DoesNotContain("ORIGINAL");
         await Assert.That(copied).Contains(moved);
 
         // And nothing anywhere asks for the flag that used to gate this.
@@ -202,7 +208,7 @@ internal sealed class SessionToolTests
         // other work. Without it this would be a refusal quietly replaced by
         // silence.
         await Assert.That(copied).Contains("how this session got here");
-        await Assert.That(copied).Contains("recorded purpose and history describe the ORIGINAL");
+        await Assert.That(copied).Contains("recorded purpose and history describe the original, not this copy");
 
         // The history is in the record too, ordered, and it is the WHOLE lineage:
         // this directory was created as gamma, moved to gamma-moved and copied to

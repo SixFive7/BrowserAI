@@ -79,6 +79,13 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
     {
         RecordWhatTheLastBackgroundLeft(lastBackgroundPid);
 
+        // 21, 2026-10-10: a shipping copy outside the standard folder set nothing up, and
+        // nothing that happens later changes where it is, so it is said before anything.
+        if (_settings.NotSetUp is { } notSetUp)
+        {
+            return new BackgroundAbsence.RootRefused(notSetUp, _settings.LogPath);
+        }
+
         if (_settings.InstallRoot is { } installRoot && UpdaterRuns(installRoot))
         {
             return new BackgroundAbsence.UpdateInstalling();
@@ -318,6 +325,18 @@ internal sealed record BackgroundFinderSettings
 
     /// <summary>The clock a record's times are read from.</summary>
     public TimeProvider Clock { get; init; } = TimeProvider.System;
+
+    /// <summary>
+    /// Why this copy was not set up, when it is a shipping copy outside the standard
+    /// folder, or <see langword="null"/>: every call is then answered with it at once.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the maintainer's 21 and the way to do it he took that day</b>,
+    /// relayed in his words verbatim, <i>"that proposal sounds go"</i>: such a copy has no
+    /// task, so no background ever writes a record a relay could read the refusal from,
+    /// and without this every call would meet the sentence for a task that is missing.
+    /// </remarks>
+    public Hosting.RootRefusal? NotSetUp { get; init; }
 
     /// <summary>Reads the task without changing it: the suite's seam.</summary>
     public Func<string, ScheduledTaskReading> ReadTask { get; init; } = ScheduledTasks.StateOf;

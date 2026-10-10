@@ -1,0 +1,168 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+// Scratch probe for the 2026-10-10 Codex project-registration re-run, not part
+// of the product. Adapted from docs/evidence/2026-09-24-codex-expansion/stub.
+// A stdio MCP server that records how it was started (its own image path as
+// the OS reports it, the raw command line, argv, cwd, parent pid, console
+// state and a few environment values), then answers initialize, tools/list and
+// tools/call. stdout carries JSON-RPC only.
+// Built twice: /define:GUI /target:winexe (the Windows subsystem, as the real
+// BrowserAI.exe declares) and /target:exe (the console subsystem, a control).
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Web.Script.Serialization;
+
+static class ProbeStub
+{
+    static string logFile;
+    static readonly JavaScriptSerializer Json = new JavaScriptSerializer();
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct ProcessBasicInformation
+    {
+        public IntPtr Reserved1;
+        public IntPtr PebBaseAddress;
+        public IntPtr Reserved2a;
+        public IntPtr Reserved2b;
+        public IntPtr UniqueProcessId;
+        public IntPtr InheritedFromUniqueProcessId;
+    }
+
+    [DllImport("ntdll.dll")]
+    static extern int NtQueryInformationProcess(IntPtr process, int infoClass, ref ProcessBasicInformation info, int size, out int returned);
+
+    [DllImport("kernel32.dll")]
+    static extern IntPtr GetConsoleWindow();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern uint GetConsoleProcessList(uint[] list, uint count);
+
+    [DllImport("user32.dll")]
+    static extern bool IsWindowVisible(IntPtr hwnd);
+
+    static void Log(string line)
+    {
+        for (int attempt = 0; attempt < 20; attempt++)
+        {
+            try { File.AppendAllText(logFile, line + "\n", new UTF8Encoding(false)); return; }
+            catch (IOException) { System.Threading.Thread.Sleep(25); }
+        }
+    }
+
+    static int ParentPid()
+    {
+        try
+        {
+            var info = new ProcessBasicInformation();
+            int returned;
+            int status = NtQueryInformationProcess(Process.GetCurrentProcess().Handle, 0, ref info, Marshal.SizeOf(info), out returned);
+            return status == 0 ? info.InheritedFromUniqueProcessId.ToInt32() : -1;
+        }
+        catch (Exception) { return -2; }
+    }
+
+    static int Main(string[] args)
+    {
+        Process me = Process.GetCurrentProcess();
+        string image = me.MainModule.FileName;
+        string dir = Environment.GetEnvironmentVariable("PROBE_LOG_DIR");
+        if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Path.GetDirectoryName(image), "launches");
+        Directory.CreateDirectory(dir);
+        logFile = Path.Combine(dir, "stub-" + me.Id + "-" + DateTime.UtcNow.Ticks + ".jsonl");
+
+        var env = new SortedDictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
+        {
+            string k = (string)e.Key;
+            if (k.StartsWith("PROBE_", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("LOCALAPPDATA", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("USERPROFILE", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("HOME", StringComparison.OrdinalIgnoreCase)
+                || k.Equals("PATH", StringComparison.OrdinalIgnoreCase))
+                env[k] = (string)e.Value;
+        }
+        IntPtr hwnd = GetConsoleWindow();
+        uint[] pids = new uint[64];
+        uint consoleCount = GetConsoleProcessList(pids, (uint)pids.Length);
+        var consolePids = new List<object>();
+        for (int i = 0; i < Math.Min((int)consoleCount, pids.Length); i++) consolePids.Add((long)pids[i]);
+
+        var launch = new Dictionary<string, object>();
+        launch["event"] = "launch";
+        launch["at"] = DateTime.UtcNow.ToString("o");
+        launch["pid"] = me.Id;
+        launch["ppid"] = ParentPid();
+#if GUI
+        launch["builtAs"] = "windows-subsystem";
+#else
+        launch["builtAs"] = "console-subsystem";
+#endif
+        launch["image"] = image;
+        launch["commandLine"] = Environment.CommandLine;
+        launch["argv"] = args;
+        launch["cwd"] = Environment.CurrentDirectory;
+        launch["consoleWindow"] = hwnd.ToInt64();
+        launch["consoleWindowVisible"] = hwnd != IntPtr.Zero && IsWindowVisible(hwnd);
+        launch["consoleProcessCount"] = (long)consoleCount;
+        launch["consoleProcessIds"] = consolePids;
+        launch["env"] = env;
+        string launchJson = Json.Serialize(launch);
+        Log(launchJson);
+
+        var stdin = new StreamReader(Console.OpenStandardInput(), new UTF8Encoding(false));
+        var stdout = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false));
+        stdout.NewLine = "\n";
+        stdout.AutoFlush = true;
+
+        string line;
+        while ((line = stdin.ReadLine()) != null)
+        {
+            line = line.Trim();
+            if (line.Length == 0) continue;
+            Dictionary<string, object> msg;
+            try { msg = Json.DeserializeObject(line) as Dictionary<string, object>; }
+            catch (Exception) { Log("{\"event\":\"nonjson\"}"); continue; }
+            if (msg == null) continue;
+            object method; msg.TryGetValue("method", out method);
+            object id; bool hasId = msg.TryGetValue("id", out id);
+            Log(Json.Serialize(new Dictionary<string, object> { { "event", "recv" }, { "at", DateTime.UtcNow.ToString("o") }, { "method", method }, { "id", id } }));
+            if (!hasId || method == null) continue;
+            object result;
+            string m = (string)method;
+            if (m == "initialize")
+            {
+                object pv = "2025-06-18";
+                object p; if (msg.TryGetValue("params", out p) && p is Dictionary<string, object>) { object v; if (((Dictionary<string, object>)p).TryGetValue("protocolVersion", out v)) pv = v; }
+                result = new Dictionary<string, object> {
+                    { "protocolVersion", pv },
+                    { "capabilities", new Dictionary<string, object> { { "tools", new Dictionary<string, object>() } } },
+                    { "serverInfo", new Dictionary<string, object> { { "name", "codex-project-probe-stub" }, { "version", "pid-" + me.Id } } } };
+            }
+            else if (m == "tools/list")
+            {
+                result = new Dictionary<string, object> { { "tools", new object[] { new Dictionary<string, object> {
+                    { "name", "probe_whoami" },
+                    { "description", "Returns how this probe process was started." },
+                    { "inputSchema", new Dictionary<string, object> { { "type", "object" }, { "properties", new Dictionary<string, object>() } } } } } } };
+            }
+            else if (m == "tools/call")
+            {
+                result = new Dictionary<string, object> { { "content", new object[] { new Dictionary<string, object> { { "type", "text" }, { "text", launchJson } } } } };
+            }
+            else
+            {
+                result = new Dictionary<string, object>();
+            }
+            string reply = Json.Serialize(new Dictionary<string, object> { { "jsonrpc", "2.0" }, { "id", id }, { "result", result } });
+            stdout.WriteLine(reply);
+            Log(Json.Serialize(new Dictionary<string, object> { { "event", "sent" }, { "at", DateTime.UtcNow.ToString("o") }, { "method", m }, { "id", id } }));
+        }
+        Log(Json.Serialize(new Dictionary<string, object> { { "event", "stdin-eof" }, { "at", DateTime.UtcNow.ToString("o") } }));
+        return 0;
+    }
+}

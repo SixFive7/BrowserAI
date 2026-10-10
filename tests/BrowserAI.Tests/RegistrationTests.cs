@@ -252,49 +252,40 @@ internal sealed class RegistrationTests
     // ---- What a project file is given -----------------------------------------
 
     /// <summary>
-    /// The portable form is what a project file gets, and it expands to the
-    /// install it was written for.
+    /// A project file gets the bare <c>BrowserAI.exe</c> for both clients, wherever the
+    /// install that writes it is, and no sentence of its own about where that is.
     /// </summary>
     /// <remarks>
-    /// <b>An absolute path under one person's profile is wrong on every
-    /// teammate's machine</b>, which makes committing one worse than committing
-    /// nothing. The expansion is asserted against this machine's own
-    /// <c>%LOCALAPPDATA%</c> so that the form cannot drift from what the client
-    /// would resolve.
+    /// <b>The maintainer's 30 of 2026-10-10, verbatim in part: <i>"So I'd like to go for
+    /// BrowserAI.exe as a bare name in both Codex and Claude code for cleanliness an beautiy
+    /// sakes. This makes a nice entry and resolves on every dev machine correctly on the
+    /// path."</i></b> A copy outside the standard folder sets nothing up since the same
+    /// day's 21, so the name finds the standard install on every developer's PC. Until that
+    /// day this arm held Claude Code's <c>${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe</c>
+    /// at the default location and the absolute path, with a sentence, anywhere else.
+    /// <b>Planted red 2026-10-10</b> against those two spellings.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheProjectScopeCommandIsPortableAndExpandsToTheDefaultInstall()
+    public async Task TheProjectScopeCommandIsTheBareNameForBothClientsWhereverTheInstallIs()
     {
-        const string PackId = "BrowserAI.app";
-
-        var portable = RegistrationClient.PortableCommandFor(PackId);
-
-        await Assert.That(portable).StartsWith("${LOCALAPPDATA}/");
-        await Assert.That(portable).EndsWith(RegistrationTarget.AppFileName);
-        await Assert.That(portable).DoesNotContain(BackslashText);
-
         var expected = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-            PackId,
+            StandardLocation.InstallFolderName,
             RegistrationTarget.CurrentDirectoryName,
             RegistrationTarget.AppFileName);
 
-        // Claude Code's project file gets the portable spelling for the install at
-        // its default place, and the absolute path, with the reason, anywhere else.
-        var atHome = RegistrationClient.ClaudeProjectCommandFor(expected, Path.GetDirectoryName(Path.GetDirectoryName(expected)));
+        foreach (var who in RegistrationClient.All)
+        {
+            var atHome = who.ProjectCommandFor(expected, Path.GetDirectoryName(Path.GetDirectoryName(expected)));
+            var moved = who.ProjectCommandFor(@"D:\elsewhere\current\BrowserAI.exe", @"D:\elsewhere");
 
-        await Assert.That(atHome.Command).IsEqualTo(portable);
-        await Assert.That(atHome.Note).IsNull();
-
-        var moved = RegistrationClient.ClaudeProjectCommandFor(@"D:\elsewhere\current\BrowserAI.exe", @"D:\elsewhere");
-
-        await Assert.That(moved.Command).IsEqualTo(@"D:\elsewhere\current\BrowserAI.exe");
-        await Assert.That(moved.Note!).Contains("not at its default location");
+            await Assert.That(atHome.Command).IsEqualTo(RegistrationTarget.AppFileName).Because(who.DisplayName);
+            await Assert.That(atHome.Note).IsNull().Because(who.DisplayName);
+            await Assert.That(moved.Command).IsEqualTo(RegistrationTarget.AppFileName).Because(who.DisplayName);
+            await Assert.That(moved.Note).IsNull().Because(who.DisplayName);
+        }
     }
-
-    /// <summary>A single backslash, spelled once.</summary>
-    private const string BackslashText = "\\";
 
     // ---- The state a person can find ---------------------------------------
 

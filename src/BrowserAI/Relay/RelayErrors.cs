@@ -196,7 +196,10 @@ internal static class RelayErrors
             // start: it will not serve out of ..."), which said "will not" twice.
             ? $"BrowserAI's background process does not start, because it will not serve out of its {refused.Noun} '{refused.Root}': {refused.Why}. "
             : $"BrowserAI's background process does not start, because it will not serve out of its data root or its install root; its log, {logPath}, says which and why. ")
-        + $"'{tool}' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until the setting is changed. "
+        // Corrected 2026-10-10, with the standard location of the maintainer's 21 (previously
+        // "until the setting is changed"): a copy in another folder is put right by
+        // uninstalling it, which changes no setting.
+        + $"'{tool}' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until it is put right. "
         + (refusal is { } fix
             ? $"The person at this computer needs to {fix.Remedy} "
             : $"The person at this computer needs to read {logPath} and do what it says. ")

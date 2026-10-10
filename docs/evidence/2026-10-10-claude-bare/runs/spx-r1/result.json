@@ -1,0 +1,139 @@
+{
+ "runId": "spx-r1",
+ "kind": "spx",
+ "claude": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+ "profile": "<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)",
+ "startedAt": "2026-10-10T16:45:51.771Z",
+ "mcpJson": {
+  "mcpServers": {
+   "browserai": {
+    "type": "stdio",
+    "command": "BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "bare"
+    ]
+   },
+   "abs": {
+    "type": "stdio",
+    "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "abs"
+    ]
+   }
+  }
+ },
+ "pathTail": [
+  "<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current"
+ ],
+ "version": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "--version"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\runs\\spx-r1\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "2.1.296 (Claude Code)\n",
+  "stderr": "",
+  "ms": 48
+ },
+ "list": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "list"
+  ],
+  "status": 0,
+  "stdout": "Checking MCP server health…\n\nbrowserai: BrowserAI.exe --mcp --tag bare - ✔ Connected\nabs: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp --tag abs - ✔ Connected\n",
+  "stderr": "",
+  "ms": 1236,
+  "pid": 75900,
+  "censuses": [
+   {
+    "tree": [],
+    "windows": {
+     "at": "2026-10-10T16:45:53.055Z",
+     "pids": [
+      75900
+     ],
+     "windows": [],
+     "status": 0
+    }
+   }
+  ]
+ },
+ "get": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "get",
+   "browserai"
+  ],
+  "status": 0,
+  "stdout": "browserai:\n  Scope: Project config (shared via .mcp.json)\n  Status: ✔ Connected\n  Type: stdio\n  Command: BrowserAI.exe\n  Args: --mcp --tag bare\n\nTo remove this server, run: claude mcp remove browserai -s project\n",
+  "stderr": "",
+  "ms": 821,
+  "pid": 73036,
+  "censuses": [
+   {
+    "tree": [],
+    "windows": {
+     "at": "2026-10-10T16:45:53.877Z",
+     "pids": [
+      73036
+     ],
+     "windows": [],
+     "status": 0
+    }
+   }
+  ]
+ },
+ "probesLeft": [],
+ "launches": [
+  {
+   "file": "stub-60068-639272475522702931.jsonl",
+   "image": "<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+   "commandLine": "BrowserAI.exe --mcp --tag bare",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "bare"
+   ],
+   "ppid": 75900,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  },
+  {
+   "file": "stub-64700-639272475522748726.jsonl",
+   "image": "<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+   "commandLine": "\"<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe\" --mcp --tag abs",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "abs"
+   ],
+   "ppid": 75900,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  },
+  {
+   "file": "stub-66328-639272475533636262.jsonl",
+   "image": "<SCR>\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+   "commandLine": "BrowserAI.exe --mcp --tag bare",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "bare"
+   ],
+   "ppid": 73036,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  }
+ ],
+ "finishedAt": "2026-10-10T16:45:54.470Z"
+}

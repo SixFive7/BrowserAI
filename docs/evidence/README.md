@@ -120,7 +120,9 @@ in those named ways, and each one's own README says how**:
 accounts that named the part of the build that did the work, and cut what their records
 listed of the software on this machine, which in `codex-project` is one other
 application's folder; every original's digest is in the batch's `originals.sha256`, and
-every file left out one at a time is in its `left-out.sha256`.
+every file left out one at a time is in its `left-out.sha256`. *Added later that day by
+addition:* and [`2026-10-10-claude-bare`](2026-10-10-claude-bare/README.md) departs the same
+way, its rig and stand-in stored with `.txt` appended.
 
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
@@ -211,3 +213,4 @@ negation silently drops evidence from the tree.
 | [`2026-10-10-install-refusal`](2026-10-10-install-refusal/README.md) | The maintainer's 21 of 2026-10-10: the suite's test pack with an install hook that exits 5, installed twice with `--silent` into scratch folders and uninstalled twice, every child windowless: Setup's own logs, what the hook could see, the Add/Remove entry and the shortcut moving to the refused folder, and the source readings at Velopack 1.2.161 | [kb](../../kb/packaging/velopack.md#a-hook-that-refuses-does-not-stop-an-install-and-a-refused-folder-takes-the-shared-entry----measured-2026-10-10), [`DECISIONS.md`](../../DECISIONS.md#the-answers-of-the-afternoon-of-2026-10-10) |
 | [`2026-10-10-codex-project`](2026-10-10-codex-project/README.md) | The maintainer's 21 of 2026-10-10: which spelling of a committed Codex project entry starts the server on every PC, 48 app-server sessions at codex-cli 0.162.0-alpha.2 and 9 at 0.159.0-alpha.12.1 with a stand-in named `BrowserAI.exe` under scratch profiles, the trust a project's entries need, and Claude Code 2.1.296 expanding a project entry's `${LOCALAPPDATA}` | [kb](../../kb/mcp/protocol.md#codex-expands-nothing-in-a-servers-command-and-finds-a-bare-name-on-the-servers-path----measured-2026-09-24), [re-verification](../../kb/re-verification.md) row 161, [`2026-09-24-codex-expansion`](2026-09-24-codex-expansion/README.md) |
 | [`2026-10-10-registerai-eof`](2026-10-10-registerai-eof/README.md) | A red of the gate at `a557aa0f`: thirty registrations with Codex through the payload's RegisterAI 0.3.0, each pipe's end timed against RegisterAI's exit, outside any test host | [`HAZARDS.md`](../../HAZARDS.md#hazard-index) |
+| [`2026-10-10-claude-bare`](2026-10-10-claude-bare/README.md) | The maintainer's 30 of 2026-10-10: fifteen runs of Claude Code 2.1.296 checking a project `.mcp.json` that names the bare `BrowserAI.exe`, with the install's folder on its PATH under three profile spellings, without it, and with another copy first, against an absolute control | [kb](../../kb/mcp/protocol.md#claude-code-finds-a-bare-name-in-a-project-entry-on-the-path-it-was-started-with----measured-2026-10-10), [re-verification](../../kb/re-verification.md) row 211, [`DECISIONS.md`](../../DECISIONS.md#the-answers-of-the-afternoon-of-2026-10-10) |

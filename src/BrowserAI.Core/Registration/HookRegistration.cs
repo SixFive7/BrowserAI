@@ -7,6 +7,7 @@ using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Registration;
 
@@ -58,11 +59,16 @@ internal sealed record ClientRegistration(string Key, string DisplayName, Regist
 /// What became of the per-user logon task (Q282 a), or <see langword="null"/> when
 /// the hook could not get far enough to know which install it runs in.
 /// </param>
+/// <param name="NotSetUp">
+/// Why nothing was set up, when the hook ran in a shipping copy outside the standard
+/// folder (21, 2026-10-10), or <see langword="null"/>.
+/// </param>
 internal sealed record HookOutcome(
     IReadOnlyList<ClientRegistration> Registrations,
     DataRootDisposalReport? Disposal,
     UserPathReport? PathEntry = null,
-    SignInTaskReport? SignInTask = null)
+    SignInTaskReport? SignInTask = null,
+    StandardLocationRefusal? NotSetUp = null)
 {
     /// <summary>
     /// Whether every client's pass did what was asked of it.
@@ -138,7 +144,7 @@ internal static class HookRegistration
         Run(
             intent,
             version,
-            InstallerSettings.Read(RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out _) ? target!.InstallRoot : null));
+            InstallerSettings.Read(RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out _) ? target!.InstallRoot : null, InstallLocation.AppId));
 
     /// <summary>Runs one pass with what the installer's environment named, read once.</summary>
     /// <param name="intent">Which hook is asking.</param>
@@ -210,6 +216,11 @@ internal static class HookRegistration
     /// did, or <see langword="null"/> to leave it alone: the suite's in-process hooks
     /// write no class into the user's registry.
     /// </param>
+    /// <param name="standardRoot">
+    /// The folder a shipping install has to be in, or <see langword="null"/> for this user's
+    /// <see cref="StandardLocation.InstallRoot"/>: the suite's seam, so that an arm can stand
+    /// a scratch folder in for the one under the real LocalAppData.
+    /// </param>
     /// <returns>What happened.</returns>
     /// <remarks>
     /// <para>
@@ -237,7 +248,8 @@ internal static class HookRegistration
         Func<string, bool>? ask = null,
         IReadOnlyList<RegistrationClient>? clients = null,
         InstallerSettings? settings = null,
-        Func<RegistrationIntent, string, string>? toastActivator = null)
+        Func<RegistrationIntent, string, string>? toastActivator = null,
+        string? standardRoot = null)
     {
         ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(paths);
@@ -245,6 +257,19 @@ internal static class HookRegistration
         ArgumentNullException.ThrowIfNull(tasks);
 
         var who = clients ?? RegistrationClient.All;
+
+        // ⚠️ A SHIPPING COPY OUTSIDE THE STANDARD FOLDER SETS NOTHING UP -- 21, 2026-10-10,
+        // the maintainer's words verbatim: "21 refusing installing into a non-standard folder
+        // so the project specific setups always resolve on every dev's pc.", and of the way to
+        // do it the same day, "that proposal sounds go". Velopack's Setup takes --installto and
+        // a failing hook undoes nothing, so this is where the refusal is: no client entry, no
+        // task, no PATH entry, no toast activator, and on an uninstall nothing of the standard
+        // install's, its data root and the clients above all.
+        if (RegistrationTarget.TryResolve(imagePath, out var located, out _)
+            && StandardLocation.Judge(appId, located!.InstallRoot, standardRoot ?? StandardLocation.InstallRoot) is { } notSetUp)
+        {
+            return NotSetUp(intent, notSetUp, imagePath, located, paths, userPath, tasks, appId);
+        }
 
         try
         {
@@ -368,6 +393,70 @@ internal static class HookRegistration
             // deleted, and an unreportable deletion of somebody's browsers is the
             // one outcome that must not be reachable.
             return new HookOutcome(failed, null);
+        }
+    }
+
+    /// <summary>
+    /// A hook in a shipping copy outside the standard folder: nothing is set up, and what an
+    /// older build of the same copy set up of its own is taken off.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Nothing is written into the data root</b>, neither this hook's log nor the
+    /// registration record: the shipping install's data root is the standard install's
+    /// (<see cref="StandardLocation.DataRootFor"/>), and an uninstall of a copy that never
+    /// held it must not touch it. The installer's own log carries what happened, through
+    /// <c>VelopackStartup.Mirror</c>.
+    /// </para>
+    /// <para>
+    /// <b>No client is asked, and the toasts' activator is left alone</b>: an entry named
+    /// <c>browserai</c> is the standard install's as much as this copy's, and the activator is
+    /// registered for the pack id, which the two share. What is this copy's alone is taken
+    /// off on every hook: its own folder on the user's PATH and its own task, which only a
+    /// build of before 2026-10-10 installed into the same folder can have put there, so that
+    /// the bare <c>BrowserAI.exe</c> a project's entry names never finds this copy. An
+    /// uninstall asks this copy's own background to stop first, for the same reason.
+    /// </para>
+    /// </remarks>
+    /// <param name="intent">Which hook is running.</param>
+    /// <param name="notSetUp">Why nothing is set up.</param>
+    /// <param name="imagePath">The running image.</param>
+    /// <param name="target">The copy.</param>
+    /// <param name="paths">The data root, read and never written: the background's record is under it.</param>
+    /// <param name="userPath">Where the user's PATH is.</param>
+    /// <param name="tasks">The task scheduler.</param>
+    /// <param name="appId">The pack id the task is named for.</param>
+    /// <returns>What happened.</returns>
+    private static HookOutcome NotSetUp(
+        RegistrationIntent intent,
+        StandardLocationRefusal notSetUp,
+        string? imagePath,
+        RegistrationTarget target,
+        IAppPaths paths,
+        IUserPathStore userPath,
+        ILogonTasks tasks,
+        string? appId)
+    {
+        var logger = NullLogger.Instance;
+
+        try
+        {
+            if (intent is RegistrationIntent.Uninstall)
+            {
+                var pipe = BackgroundPipe.NameFor(target.InstallRoot, paths.RootAppDir);
+                _ = BackgroundStop.AskAndWait(pipe, BackgroundRecord.PathFor(paths.RootAppDir, pipe), BackgroundStop.Bound);
+            }
+
+            var pathEntry = ChangeThePath(RegistrationIntent.Uninstall, imagePath, userPath, logger);
+            var signIn = SignInTask.Apply(RegistrationIntent.Uninstall, target, appId, tasks, logger);
+
+            return new HookOutcome([], null, pathEntry, signIn, notSetUp);
+        }
+#pragma warning disable CA1031 // The same boundary as the hook's own: nothing escapes into the installer.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return new HookOutcome([], null, NotSetUp: notSetUp);
         }
     }
 

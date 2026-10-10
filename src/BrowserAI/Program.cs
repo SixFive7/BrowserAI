@@ -278,7 +278,14 @@ internal static partial class Program
         // build: the hooks write --data-root from the installer's environment into the
         // task's action and every registration, and no running BrowserAI reads a
         // BROWSERAI_ variable (previously the variable, read when no argument named one).
-        var overridden = ValueOf(args, DataRootArgument) is { Length: > 0 } named ? named : null;
+        //
+        // ⚠️ AND NOT FOR THE SHIPPING INSTALL, since 2026-10-10: the maintainer's 21 and the
+        // way to do it he took that day, relayed in his words verbatim, "that proposal
+        // sounds go". The shipping install keeps its data in %LOCALAPPDATA%\BrowserAI
+        // whatever a start is handed; the suite's test pack and a build that is not
+        // installed still take --data-root.
+        var handed = ValueOf(args, DataRootArgument) is { Length: > 0 } named ? named : null;
+        var overridden = StandardLocation.DataRootFor(InstallLocation.AppId, handed);
         var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
@@ -348,6 +355,10 @@ internal static partial class Program
         {
             StartupLog.AppRootOverridden(logger, DataRootArgument, overridden);
         }
+        else if (handed is not null)
+        {
+            StartupLog.DataRootNotUsed(logger, DataRootArgument, handed, paths.RootAppDir);
+        }
 
         // ⚠️ THE BACKGROUND -- S a, the maintainer's words of 2026-10-08, verbatim:
         // "s a". One resident process per user, install root and data root holds
@@ -367,7 +378,7 @@ internal static partial class Program
         // does and prints nothing to a client.
         if (args.Contains(SweepArgument, StringComparer.Ordinal))
         {
-            var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir);
+            var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir, InstallLocation.AppId);
 
             if (scope.Unestablished is { } unestablished)
             {
@@ -564,6 +575,22 @@ internal static partial class StartupLog
         Level = LogLevel.Warning,
         Message = "This BrowserAI was started with {Argument}, so its data root is {Root}, not the one under %LocalAppData%. Its browsers, session index and log are there.")]
     public static partial void AppRootOverridden(ILogger logger, string argument, string root);
+
+    /// <summary>The shipping install was handed a data root, and keeps its own.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="argument">The argument that named it.</param>
+    /// <param name="handed">What it named.</param>
+    /// <param name="root">The data root this process uses.</param>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b>, with the maintainer's 21 and the way to do it he took that
+    /// day: the shipping install keeps its data in <c>%LOCALAPPDATA%\BrowserAI</c>, and a
+    /// root it is handed is said and not used, never dropped without a word.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 15,
+        Level = LogLevel.Warning,
+        Message = "This BrowserAI is the shipping install, which keeps its data in {Root}, so the {Argument} it was started with, {Handed}, is not used.")]
+    public static partial void DataRootNotUsed(ILogger logger, string argument, string handed, string root);
 
     /// <summary>
     /// The app root is one more than this user can reach, so this process is not

@@ -107,6 +107,13 @@ internal sealed class PageRegistrationTests
         await Assert.That(html).DoesNotContain("<script>alert(1)</script>");
         await Assert.That(html.Split(PageContent.Text(PageContent.CodexStartedBeforeTheInstall)).Length - 1).IsEqualTo(1);
 
+        // And Claude Code's, since its project entry names the bare name too (the
+        // maintainer's 30, 2026-10-10), once and in its own section. Planted red against
+        // the page without it.
+        await Assert.That(html.Split(PageContent.Text(PageContent.ClaudeStartedBeforeTheInstall)).Length - 1).IsEqualTo(1);
+        await Assert.That(html.IndexOf(PageContent.Text(PageContent.ClaudeStartedBeforeTheInstall), StringComparison.Ordinal))
+            .IsLessThan(html.IndexOf(PageContent.Text(PageContent.CodexStartedBeforeTheInstall), StringComparison.Ordinal));
+
         // Every registration button carries exactly one client's key, and its label names that client.
         foreach (var (action, client, label) in Buttons(html))
         {

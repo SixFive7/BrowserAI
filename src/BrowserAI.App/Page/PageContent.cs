@@ -213,6 +213,13 @@ internal static class PageContent
     public const string CodexStartedBeforeTheInstall =
         "A Codex that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.";
 
+    /// <summary>
+    /// The maintainer's 30, 2026-10-10: what the Claude Code section says about a Claude Code
+    /// that predates the install, now that its project entry names the bare name too.
+    /// </summary>
+    public const string ClaudeStartedBeforeTheInstall =
+        "A Claude Code that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.";
+
     /// <summary>The last action's sentence, with its raw text under <i>Show details</i>.</summary>
     /// <param name="html">Where to write.</param>
     /// <param name="note">The note, or <see langword="null"/> for none.</param>
@@ -444,6 +451,13 @@ internal static class PageContent
         if (string.Equals(who.Key, RegistrationClient.Codex.Key, StringComparison.Ordinal) && client.ClientFound)
         {
             _ = html.Append("<p class=\"muted\">").Append(Text(CodexStartedBeforeTheInstall)).Append("</p>\n");
+        }
+
+        // The same for Claude Code since 2026-10-10, the maintainer's 30: its project entry
+        // names the bare name, which a Claude Code started before the install cannot find.
+        if (string.Equals(who.Key, RegistrationClient.ClaudeCode.Key, StringComparison.Ordinal) && client.ClientFound)
+        {
+            _ = html.Append("<p class=\"muted\">").Append(Text(ClaudeStartedBeforeTheInstall)).Append("</p>\n");
         }
 
         _ = html.Append("</div>\n");

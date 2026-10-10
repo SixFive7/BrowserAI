@@ -50,12 +50,13 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
     /// as <see cref="Read"/> falls back to them.
     /// </remarks>
     /// <param name="installRoot">The install whose saved definition is read; <see langword="null"/> when there is none.</param>
+    /// <param name="packId">The pack id the install came from: the shipping install's saved data root is never read.</param>
     /// <returns>What the install saved, or <see cref="None"/>.</returns>
-    public static InstallerSettings SavedFor(string? installRoot)
+    public static InstallerSettings SavedFor(string? installRoot, string? packId)
     {
         var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
 
-        return new(SignInTask.DataRootIn(saved), SignInTask.UpdateSourceIn(saved));
+        return new(StandardLocation.DataRootFor(packId, SignInTask.DataRootIn(saved)), SignInTask.UpdateSourceIn(saved));
     }
 
     /// <summary>
@@ -85,16 +86,26 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
     /// </para>
     /// </remarks>
     /// <param name="installRoot">The install the hook runs in, whose saved definition is read; <see langword="null"/> when there is none.</param>
+    /// <param name="packId">
+    /// The pack id the install came from. ⚠️ <b>The shipping install reads no data root at
+    /// all since 2026-10-10</b>, neither the installer's <c>BROWSERAI_ROOT</c> nor one its task
+    /// saved: the maintainer's 21 and the way to do it he took that day, relayed in his
+    /// words verbatim, <i>"that proposal sounds go"</i>. Its data is in
+    /// <c>%LOCALAPPDATA%\BrowserAI</c>, and the suite's test pack keeps the variable. The
+    /// update source stays read for both (H2 a).
+    /// </param>
     /// <param name="environment">The environment, a seam for the suite; the process's own when <see langword="null"/>.</param>
     /// <returns>What the installer named, or the install saved.</returns>
-    public static InstallerSettings Read(string? installRoot, Func<string, string?>? environment = null)
+    public static InstallerSettings Read(string? installRoot, string? packId, Func<string, string?>? environment = null)
     {
         environment ??= Environment.GetEnvironmentVariable;
 
         var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
 
         return new(
-            environment(LocalAppDataPaths.RootVariable) is { Length: > 0 } named && Path.IsPathFullyQualified(named) ? named : SignInTask.DataRootIn(saved),
+            StandardLocation.DataRootFor(
+                packId,
+                environment(LocalAppDataPaths.RootVariable) is { Length: > 0 } named && Path.IsPathFullyQualified(named) ? named : SignInTask.DataRootIn(saved)),
             environment(UpdateConfiguration.FeedVariable) is { Length: > 0 } source ? source : SignInTask.UpdateSourceIn(saved));
     }
 }

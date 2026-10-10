@@ -1,0 +1,71 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+// Scratch helper for the 2026-10-10 Codex project-registration re-run, not part
+// of the product. Read-only: lists every top-level window owned by one of the
+// pids given on the command line, with whether it is visible, its class and
+// its title, as one JSON array on stdout. It selects windows by owning pid and
+// never by image name, and it changes nothing.
+// usage: winprobe.exe <pid> [<pid> ...]
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Web.Script.Serialization;
+
+static class WinProbe
+{
+    delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+
+    [DllImport("user32.dll")]
+    static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    static extern int GetClassName(IntPtr hwnd, StringBuilder name, int max);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern IntPtr CreateWindowEx(uint exStyle, string cls, string title, uint style, int x, int y, int w, int h, IntPtr parent, IntPtr menu, IntPtr instance, IntPtr param);
+
+    [DllImport("user32.dll")]
+    static extern bool DestroyWindow(IntPtr hwnd);
+
+    static int Main(string[] args)
+    {
+        var wanted = new HashSet<uint>();
+        IntPtr control = IntPtr.Zero;
+        if (args.Length == 1 && args[0] == "--selftest")
+        {
+            // Positive control: a top-level window of this process that is never
+            // shown (no WS_VISIBLE, no ShowWindow), so it cannot reach the screen.
+            control = CreateWindowEx(0, "STATIC", "winprobe-selftest", 0, 0, 0, 1, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            wanted.Add((uint)System.Diagnostics.Process.GetCurrentProcess().Id);
+        }
+        foreach (string a in args) { uint p; if (uint.TryParse(a, out p)) wanted.Add(p); }
+        var found = new List<object>();
+        EnumWindows(delegate (IntPtr hwnd, IntPtr l)
+        {
+            uint pid;
+            GetWindowThreadProcessId(hwnd, out pid);
+            if (wanted.Contains(pid))
+            {
+                var cls = new StringBuilder(256); GetClassName(hwnd, cls, cls.Capacity);
+                var title = new StringBuilder(512); GetWindowText(hwnd, title, title.Capacity);
+                found.Add(new Dictionary<string, object> {
+                    { "pid", (long)pid }, { "hwnd", hwnd.ToInt64() }, { "visible", IsWindowVisible(hwnd) },
+                    { "class", cls.ToString() }, { "title", title.ToString() } });
+            }
+            return true;
+        }, IntPtr.Zero);
+        if (control != IntPtr.Zero) DestroyWindow(control);
+        Console.Out.Write(new JavaScriptSerializer().Serialize(found));
+        return 0;
+    }
+}

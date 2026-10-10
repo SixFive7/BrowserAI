@@ -154,6 +154,33 @@ internal static class InstallRootScope
     /// The install root -- the directory containing <c>current\</c> -- or
     /// <see langword="null"/> when this process is not an installed one.
     /// </param>
+    /// <param name="packId">
+    /// The pack id this process was installed from, or <see langword="null"/>: a shipping
+    /// copy outside <see cref="StandardLocation.InstallRoot"/> is refused before either
+    /// root is judged against the profile.
+    /// </param>
+    /// <returns>The verdict.</returns>
+    /// <remarks>
+    /// ⚠️ <b>The standard folder first, since 2026-10-10</b>, the maintainer's 21 that day,
+    /// verbatim: <i>"21 refusing installing into a non-standard folder so the project
+    /// specific setups always resolve on every dev's pc."</i> A shipping copy anywhere but
+    /// <c>%LOCALAPPDATA%\BrowserAI.app</c> sets nothing up and does not start, and the
+    /// verdict says so in <see cref="StandardLocationRefusal"/>'s words, with its remedy,
+    /// whatever the profile would have said. The background writes it into its record like
+    /// any refusal, and the sweep refuses with it.
+    /// </remarks>
+    public static InstallRootVerdict Judge(string dataRoot, string? installRoot, string? packId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
+
+        return StandardLocation.Judge(packId, installRoot) is { } refused
+            ? InstallRootVerdict.Refused(refused.Sentence, refused.AsRootRefusal())
+            : Judge(dataRoot, installRoot);
+    }
+
+    /// <summary>Judges both roots against the profile alone, for a process whose pack id does not matter.</summary>
+    /// <param name="dataRoot">The data root this process resolved, absolute.</param>
+    /// <param name="installRoot">The install root, or <see langword="null"/>.</param>
     /// <returns>The verdict.</returns>
     public static InstallRootVerdict Judge(string dataRoot, string? installRoot)
     {
@@ -476,10 +503,19 @@ internal static class InstallRootScope
     // broken-install text uses, and under the maintainer's 21 of the same day, "refusing
     // installing into a non-standard folder so the project specific setups always resolve
     // on every dev's pc", a shipping install is told its default location and no other.
+    // ⚠️ Corrected again later that day, with the way 21 is done, relayed in his words
+    // "that proposal sounds go" (previously "reinstall BrowserAI inside '{profile}': its
+    // default location is there. BROWSERAI_ROOT cannot help here: ..." and "An install takes
+    // its data root from the installer's BROWSERAI_ROOT, ... so reinstall it with that
+    // variable cleared; a background a developer starts takes --data-root, which has to
+    // name one there too. With neither, the data root is the per-user one under
+    // '{profile}', which Windows keeps separate for every account."): the shipping install
+    // reads no BROWSERAI_ROOT, and the one remedy for a copy in another folder is the
+    // standard location's own.
     private static string Remedy(JudgedRoot which, string profile) =>
         which is JudgedRoot.Install
-            ? $"reinstall BrowserAI inside '{profile}': its default location is there. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so reinstall it with that variable cleared; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ";
+            ? $"uninstall this copy, then run BrowserAI.exe again without --installto, which installs it into this user's LocalAppData folder; that folder has to be inside '{profile}'. "
+            : $"give BrowserAI a data root under '{profile}'. The shipping install keeps its data in this user's LocalAppData folder, which has to be inside the profile; a build started with --data-root, a developer's background or the suite's test install, whose installer's {LocalAppDataPaths.RootVariable} becomes --data-root, has to be handed a folder there. The installer's --installto cannot help here: it moves the install root and never the data root. ";
 
     /// <summary>The refusing verdict: the whole sentence for the log, and its parts for a relay.</summary>
     /// <param name="which">Which root is at fault.</param>

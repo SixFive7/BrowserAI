@@ -334,6 +334,47 @@ internal sealed class RegisterAiTests
     }
 
     /// <summary>
+    /// A document RegisterAI wrote whole before it exited is read whole while a process it
+    /// left behind still holds its output open.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The red of the gate at <c>a557aa0f</c> on 2026-10-10</b> (the hazard index):
+    /// RegisterAI exited 0, its entry was written, and BrowserAI read no document, because
+    /// both pipes were read to their end and kept only if they ended within
+    /// <see cref="ProcessBounds.RegisterAiOutputDrain"/>. Each pipe is read on a thread of
+    /// its own since that day, and what it read is kept. The stand-in is the suite's probe,
+    /// which writes a document, starts a copy of itself that inherits the pipe and holds it
+    /// for twice the drain bound, and exits.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the reads as they were: <i>"it exited 0 and
+    /// printed no document BrowserAI could read"</i>. The other way a document was lost, a
+    /// test host too busy to run the reads' continuations, is held by construction and not
+    /// by this arm: a thread of its own needs nothing from the thread pool.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADocumentRegisterAiWroteBeforeItExitedIsReadWhileAProcessItLeftHoldsItsOutput()
+    {
+        using var scratch = ScratchDirectory.Create("registerai-lingering");
+
+        var documentPath = Path.Combine(scratch.Path, "document.json");
+        await File.WriteAllTextAsync(documentPath, """{"tool":"registerai","schema":1,"verb":"status","exitCode":0,"error":null,"results":[]}""");
+
+        var probe = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+        var hold = (ProcessBounds.RegisterAiOutputDrain * 2).TotalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        var run = new RegisterAiTool(probe).Run(["registerai-lingering", documentPath, hold], McpRegistrar.ToolBudget);
+
+        await Assert.That(run.TimedOut).IsFalse();
+        await Assert.That(run.ExitCode).IsEqualTo(0);
+        await Assert.That(ToolDocuments.TryRead(run, out var document, out var problem)).IsTrue().Because(problem);
+        await Assert.That(document!.Verb).IsEqualTo("status");
+    }
+
+    /// <summary>
     /// A RegisterAI that is missing, hangs, prints something else, speaks another schema
     /// or does not understand its command line fails every client, with the line a
     /// person can run, and never the install.
@@ -446,12 +487,18 @@ internal sealed class RegisterAiTests
     }
 
     /// <summary>
-    /// A project registration gives each client its own spelling of the server, and a
-    /// bare name goes out with the folder it has to be found in.
+    /// A project registration gives both clients the bare name, and it goes out with the
+    /// folder it has to be found in.
     /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 30, 2026-10-10</b>: Claude Code's project entry names the bare
+    /// <c>BrowserAI.exe</c> as Codex's does. <b>Planted red 2026-10-10</b> against Claude
+    /// Code's <c>${LOCALAPPDATA}</c> spelling, which went out with no folder. <i>Previously
+    /// <c>AProjectRegistrationGivesEachClientItsOwnSpelling</c>.</i>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AProjectRegistrationGivesEachClientItsOwnSpelling()
+    public async Task AProjectRegistrationGivesBothClientsTheBareNameAndTheFolderItIsFoundIn()
     {
         using var install = ScratchDirectory.Create("registerai-project");
         using var project = ScratchDirectory.Create("registerai-project-repo");
@@ -476,8 +523,9 @@ internal sealed class RegisterAiTests
         var claudeCall = tool.Calls.Single();
 
         await Assert.That(claude.Status).IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(FakeRegisterAi.Command(claudeCall)).IsEqualTo(RegistrationClient.ClaudeCode.ProjectCommandFor(server, install.Path).Command);
-        await Assert.That(FakeRegisterAi.Option(claudeCall, "--path-folder")).IsNull();
+        await Assert.That(FakeRegisterAi.Command(claudeCall)).IsEqualTo(RegistrationTarget.AppFileName);
+        await Assert.That(claudeCall[^1]).IsEqualTo(Program.McpArgument);
+        await Assert.That(FakeRegisterAi.Option(claudeCall, "--path-folder")).IsEqualTo(Path.GetDirectoryName(server));
         await Assert.That(claude.Detail).Contains(".mcp.json");
     }
 
@@ -609,8 +657,8 @@ internal sealed class RegisterAiTests
 
         // The entries themselves, as each file writes them, and a path with a backslash in
         // it read back from the JSON whole.
-        await Assert.That(RegistrationClient.ClaudeCode.ProjectEntryFor("${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe", [Program.McpArgument]))
-            .IsEqualTo("\"browserai\": { \"command\": \"${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe\", \"args\": [\"--mcp\"] }, inside \"mcpServers\"");
+        await Assert.That(RegistrationClient.ClaudeCode.ProjectEntryFor("BrowserAI.exe", [Program.McpArgument]))
+            .IsEqualTo("\"browserai\": { \"command\": \"BrowserAI.exe\", \"args\": [\"--mcp\"] }, inside \"mcpServers\"");
         await Assert.That(RegistrationClient.Codex.ProjectEntryFor("BrowserAI.exe", [Program.McpArgument]))
             .IsEqualTo("mcp_servers.browserai = { command = \"BrowserAI.exe\", args = [\"--mcp\"] }");
 
@@ -641,7 +689,11 @@ internal sealed class RegisterAiTests
         await File.WriteAllTextAsync(RegistrationClient.ClaudeCode.ProjectFileIn(repo.Path), "{}");
 
         tool.Register("claude-code", server);
-        tool.RegisterIn("claude-code", repo.Path, server);
+
+        // The project's entry as a registration writes it since 2026-10-10, the maintainer's
+        // 30: the bare name, which the fake finds in the install's own current folder, where
+        // the installer's PATH entry points (previously the server's absolute path).
+        tool.RegisterIn("claude-code", repo.Path, RegistrationTarget.AppFileName);
 
         var readings = RegistrationReader.Read(tool, RegistrationClient.All, install.Path, server, deep);
 

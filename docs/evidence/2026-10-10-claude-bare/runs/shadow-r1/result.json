@@ -1,0 +1,128 @@
+{
+ "runId": "shadow-r1",
+ "kind": "shadow",
+ "claude": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+ "profile": "<SCR>\\profiles\\user",
+ "startedAt": "2026-10-10T16:45:57.523Z",
+ "mcpJson": {
+  "mcpServers": {
+   "browserai": {
+    "type": "stdio",
+    "command": "BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "bare"
+    ]
+   },
+   "abs": {
+    "type": "stdio",
+    "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "abs"
+    ]
+   }
+  }
+ },
+ "pathTail": [
+  "<SCR>\\other",
+  "<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current"
+ ],
+ "version": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "--version"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\runs\\shadow-r1\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "2.1.296 (Claude Code)\n",
+  "stderr": "",
+  "ms": 48
+ },
+ "list": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "list"
+  ],
+  "status": 0,
+  "stdout": "Checking MCP server health…\n\nbrowserai: BrowserAI.exe --mcp --tag bare - ✔ Connected\nabs: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp --tag abs - ✔ Connected\n",
+  "stderr": "",
+  "ms": 496,
+  "pid": 52516,
+  "censuses": []
+ },
+ "get": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "get",
+   "browserai"
+  ],
+  "status": 0,
+  "stdout": "browserai:\n  Scope: Project config (shared via .mcp.json)\n  Status: ✔ Connected\n  Type: stdio\n  Command: BrowserAI.exe\n  Args: --mcp --tag bare\n\nTo remove this server, run: claude mcp remove browserai -s project\n",
+  "stderr": "",
+  "ms": 832,
+  "pid": 72476,
+  "censuses": [
+   {
+    "tree": [],
+    "windows": {
+     "at": "2026-10-10T16:45:58.900Z",
+     "pids": [
+      72476
+     ],
+     "windows": [],
+     "status": 0
+    }
+   }
+  ]
+ },
+ "probesLeft": [],
+ "launches": [
+  {
+   "file": "stub-71192-639272475579838411.jsonl",
+   "image": "<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+   "commandLine": "<SCR>\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp --tag abs",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "abs"
+   ],
+   "ppid": 52516,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  },
+  {
+   "file": "stub-73592-639272475583460331.jsonl",
+   "image": "<SCR>\\other\\BrowserAI.exe",
+   "commandLine": "BrowserAI.exe --mcp --tag bare",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "bare"
+   ],
+   "ppid": 72476,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  },
+  {
+   "file": "stub-84712-639272475579772764.jsonl",
+   "image": "<SCR>\\other\\BrowserAI.exe",
+   "commandLine": "BrowserAI.exe --mcp --tag bare",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "bare"
+   ],
+   "ppid": 52516,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  }
+ ],
+ "finishedAt": "2026-10-10T16:45:59.501Z"
+}

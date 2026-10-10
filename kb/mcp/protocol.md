@@ -730,6 +730,38 @@ silently. The entry with its own PATH started in every condition measured; its c
 server whose PATH is that one entry, and a reliance on `which` expanding `~`, which Codex
 neither documents nor tests. Which entry BrowserAI writes is the maintainer's to decide.
 
+## Claude Code finds a bare name in a project entry on the PATH it was started with -- measured 2026-10-10
+
+`[FLOATS]` **Measured 2026-10-10 @ Claude Code 2.1.296**, Windows 11 Pro 10.0.26300, with the
+stand-in of the 2026-10-10 Codex measurement above, named `BrowserAI.exe` and built as a
+Windows-subsystem binary, under a scratch `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `LOCALAPPDATA`
+and `USERPROFILE` per run ([evidence](../../docs/evidence/2026-10-10-claude-bare/README.md)),
+for the maintainer's 30 of that day: a project's `.mcp.json` names the bare `BrowserAI.exe`,
+as a Codex project entry has since Q294 b. Each run checked a project entry
+`{"type": "stdio", "command": "BrowserAI.exe", "args": ["--mcp", ...]}` beside an absolute
+control with `claude mcp list`, which starts every server to check it, and
+`claude mcp get`, three rounds of five kinds:
+
+| Claude Code's own PATH | The bare name |
+|---|---|
+| ends with the install's `current\` folder, the profile spelled `user`, `Jo Smith` and `Jo Smith & Co (!x^ 100%)` | connected 9 of 9, the install's copy each time, the arguments as configured |
+| does not hold the folder, as for a Claude Code started before the install | *Failed to connect* and *CONNECTION_CLOSED: Connection closed*, 3 of 3, and nothing started |
+| holds another `BrowserAI.exe` first | connected 3 of 3, **the other copy** each time |
+
+The absolute control connected 15 of 15, and no stand-in had a console window, 39 of 39
+launches by its own reading; the process-tree census the rig took came after each stand-in
+had gone, so it says nothing about windows. **So the bare name behaves in Claude Code as it
+does in Codex**, with the same two failures: a Claude Code whose PATH predates the install,
+and another `BrowserAI.exe` earlier on that PATH, which a shipping copy outside the standard
+folder can no longer be since the same day's 21. RegisterAI 0.3.0 wrote the entry through
+`claude mcp add --scope project` as `{"type": "stdio", "command": "BrowserAI.exe", "args":
+["--mcp"], "env": {}}`, and with the folder off its own PATH it read it back as
+*ours-stale* and gave the *path-missing* advice (read the same day, in a scratch project).
+
+**Re-establish it** with the batch's rig: `rig/matrix.sh` runs every kind three times under
+scratch profiles, and each run's `result.json` holds what `claude mcp list` said and every
+launch the stand-in recorded. Never against the real `~/.claude`.
+
 ## Every status list starts one more copy of each Codex server -- measured 2026-09-24
 
 `[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, from the same Q288 runs

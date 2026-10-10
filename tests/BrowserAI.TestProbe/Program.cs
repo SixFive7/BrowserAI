@@ -90,6 +90,10 @@ internal static class Program
             // its pipe and writes its record and answers nothing; see BackgroundStandIn.
             "background-standin" when args.Length is 5 =>
                 BackgroundStandIn.Run(args[1], args[2], args[3], int.Parse(args[4], CultureInfo.InvariantCulture)),
+            // <documentPath> <holdSeconds>. A RegisterAI that writes its document and leaves a
+            // process holding its output; see LingeringOutputProbe (2026-10-10).
+            "registerai-lingering" when args.Length is 3 => LingeringOutputProbe.Write(args[1], args[2]),
+            "registerai-holder" when args.Length is 2 => LingeringOutputProbe.Hold(args[1]),
             _ => Usage(),
         };
     }

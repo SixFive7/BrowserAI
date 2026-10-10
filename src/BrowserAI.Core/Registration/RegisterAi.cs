@@ -106,10 +106,10 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             return new ToolRun(null, string.Empty, string.Empty, TimedOut: false, $"'{Executable}' is not there");
         }
 
-        return RunAsync(arguments, budget).GetAwaiter().GetResult();
+        return RunAndRead(arguments, budget);
     }
 
-    private async Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget)
+    private ToolRun RunAndRead(IReadOnlyList<string> arguments, TimeSpan budget)
     {
         var start = new ProcessStartInfo(Executable)
         {
@@ -146,15 +146,23 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
 
         process.StandardInput.Close();
 
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
+        // ⚠️ EACH PIPE IS READ ON A THREAD OF ITS OWN, AND WHAT IT READ IS KEPT -- since
+        // 2026-10-10, after the gate at a557aa0f read no document from a RegisterAI that had
+        // written its entry (the hazard index). Until that day both pipes were read with
+        // ReadToEndAsync and kept only if they ended within the drain bound, so a process
+        // that inherited a pipe and outlived RegisterAI, or a test host too busy to run the
+        // reads' continuations, threw the whole document away. A thread of its own needs
+        // nothing from the thread pool, and the text it has read when the bound runs out is
+        // the text RegisterAI wrote.
+        var output = PipeText.Read(process.StandardOutput);
+        var error = PipeText.Read(process.StandardError);
         var timedOut = false;
 
         using (var limit = new CancellationTokenSource(budget))
         {
             try
             {
-                await process.WaitForExitAsync(limit.Token).ConfigureAwait(false);
+                process.WaitForExitAsync(limit.Token).GetAwaiter().GetResult();
             }
             catch (OperationCanceledException)
             {
@@ -163,30 +171,80 @@ internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<stri
             }
         }
 
-        var (said, complained) = await CollectAsync(output, error).ConfigureAwait(false);
+        // A child that kept the pipes open would hold them for ever, so the wait is bounded,
+        // and shared by the two.
+        var deadline = Environment.TickCount64 + (long)ProcessBounds.RegisterAiOutputDrain.TotalMilliseconds;
+        var said = output.Within(deadline);
+        var complained = error.Within(deadline);
 
         return timedOut
             ? new ToolRun(null, said, complained, TimedOut: true, null)
             : new ToolRun(process.ExitCode, said, complained, TimedOut: false, null);
     }
 
-    /// <summary>
-    /// What the two pipes held. A child that kept them open would hold them for ever,
-    /// so the wait is bounded.
-    /// </summary>
-    private static async Task<(string Output, string Error)> CollectAsync(Task<string> output, Task<string> error)
+    /// <summary>One pipe, read to its end on a thread of its own, its text kept as it arrives.</summary>
+    private sealed class PipeText
     {
-        try
-        {
-            var both = await Task.WhenAll(output, error).WaitAsync(ProcessBounds.RegisterAiOutputDrain).ConfigureAwait(false);
+        private readonly StringBuilder _text = new();
+        private readonly Lock _gate = new();
+        private readonly Thread _reader;
+        private readonly StreamReader _pipe;
 
-            return (both[0], both[1]);
-        }
-        catch (TimeoutException)
+        private PipeText(StreamReader pipe)
         {
-            return (
-                output.IsCompletedSuccessfully ? await output.ConfigureAwait(false) : string.Empty,
-                error.IsCompletedSuccessfully ? await error.ConfigureAwait(false) : string.Empty);
+            _pipe = pipe;
+            _reader = new Thread(Drain) { IsBackground = true, Name = "RegisterAI output" };
+        }
+
+        /// <summary>Starts reading a pipe.</summary>
+        /// <param name="pipe">The pipe.</param>
+        /// <returns>What is read from it.</returns>
+        public static PipeText Read(StreamReader pipe)
+        {
+            var reading = new PipeText(pipe);
+            reading._reader.Start();
+            return reading;
+        }
+
+        /// <summary>The text read by the deadline: all of it when the pipe ended in time.</summary>
+        /// <remarks>
+        /// A pipe that has not ended by then leaves its thread reading: a background thread
+        /// holds no process open, and it ends with the pipe.
+        /// </remarks>
+        /// <param name="deadline">The tick count to wait until.</param>
+        /// <returns>The text.</returns>
+        public string Within(long deadline)
+        {
+            _ = _reader.Join(TimeSpan.FromMilliseconds(Math.Max(0, deadline - Environment.TickCount64)));
+
+            lock (_gate)
+            {
+                return _text.ToString();
+            }
+        }
+
+        private void Drain()
+        {
+            var buffer = new char[4096];
+
+            try
+            {
+                int read;
+
+                while ((read = _pipe.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    lock (_gate)
+                    {
+                        _ = _text.Append(buffer, 0, read);
+                    }
+                }
+            }
+#pragma warning disable CA1031 // A pipe disposed under its reader ends the read; nothing may escape a thread.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+                // What was read is kept.
+            }
         }
     }
 

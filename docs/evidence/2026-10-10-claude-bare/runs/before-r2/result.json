@@ -1,0 +1,111 @@
+{
+ "runId": "before-r2",
+ "kind": "before",
+ "claude": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+ "profile": "<SCR>\\profiles\\user-before",
+ "startedAt": "2026-10-10T16:46:08.054Z",
+ "mcpJson": {
+  "mcpServers": {
+   "browserai": {
+    "type": "stdio",
+    "command": "BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "bare"
+    ]
+   },
+   "abs": {
+    "type": "stdio",
+    "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "args": [
+     "--mcp",
+     "--tag",
+     "abs"
+    ]
+   }
+  }
+ },
+ "pathTail": [],
+ "version": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "--version"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\runs\\before-r2\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "2.1.296 (Claude Code)\n",
+  "stderr": "",
+  "ms": 47
+ },
+ "list": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "list"
+  ],
+  "status": 0,
+  "stdout": "Checking MCP server health…\n\nbrowserai: BrowserAI.exe --mcp --tag bare - ✘ Failed to connect — CONNECTION_CLOSED: Connection closed\nabs: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\claude-bare\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp --tag abs - ✔ Connected\n",
+  "stderr": "",
+  "ms": 1151,
+  "pid": 76508,
+  "censuses": [
+   {
+    "tree": [],
+    "windows": {
+     "at": "2026-10-10T16:46:09.251Z",
+     "pids": [
+      76508
+     ],
+     "windows": [],
+     "status": 0
+    }
+   }
+  ]
+ },
+ "get": {
+  "file": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "args": [
+   "mcp",
+   "get",
+   "browserai"
+  ],
+  "status": 0,
+  "stdout": "browserai:\n  Scope: Project config (shared via .mcp.json)\n  Status: ✘ Failed to connect\n  Issue: CONNECTION_CLOSED: Connection closed\n  Type: stdio\n  Command: BrowserAI.exe\n  Args: --mcp --tag bare\n\nTo remove this server, run: claude mcp remove browserai -s project\n",
+  "stderr": "",
+  "ms": 796,
+  "pid": 63316,
+  "censuses": [
+   {
+    "tree": [],
+    "windows": {
+     "at": "2026-10-10T16:46:10.048Z",
+     "pids": [
+      63316
+     ],
+     "windows": [],
+     "status": 0
+    }
+   }
+  ]
+ },
+ "probesLeft": [],
+ "launches": [
+  {
+   "file": "stub-66000-639272475684990125.jsonl",
+   "image": "<SCR>\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+   "commandLine": "<SCR>\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe --mcp --tag abs",
+   "argv": [
+    "--mcp",
+    "--tag",
+    "abs"
+   ],
+   "ppid": 76508,
+   "consoleWindow": 0,
+   "consoleWindowVisible": false
+  }
+ ],
+ "finishedAt": "2026-10-10T16:46:10.679Z"
+}

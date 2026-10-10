@@ -54,7 +54,7 @@ internal sealed class InstallerSettingsTests
 
         Save(install.Path, SignInTask.ArgumentsFor(dataRoot, Folder));
 
-        var read = InstallerSettings.Read(install.Path, NoVariables);
+        var read = InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(read.DataRoot).IsEqualTo(dataRoot);
         await Assert.That(read.UpdateSource).IsEqualTo(Folder);
@@ -91,6 +91,7 @@ internal sealed class InstallerSettingsTests
 
         var read = InstallerSettings.Read(
             install.Path,
+            ReleaseLayout.TestPackId,
             name => name switch
             {
                 LocalAppDataPaths.RootVariable => named,
@@ -103,7 +104,7 @@ internal sealed class InstallerSettingsTests
 
         // A fresh install has no saved definition: nothing named, nothing saved.
         using var fresh = ScratchDirectory.Create("installer-settings-fresh");
-        var nothing = InstallerSettings.Read(fresh.Path, NoVariables);
+        var nothing = InstallerSettings.Read(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(nothing.DataRoot).IsNull();
         await Assert.That(nothing.UpdateSource).IsNull();
@@ -111,7 +112,7 @@ internal sealed class InstallerSettingsTests
         // And a task written with neither setting names neither.
         Save(fresh.Path, SignInTask.ArgumentsFor(null, null));
 
-        var plain = InstallerSettings.Read(fresh.Path, NoVariables);
+        var plain = InstallerSettings.Read(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(plain.DataRoot).IsNull();
         await Assert.That(plain.UpdateSource).IsNull();
@@ -140,7 +141,7 @@ internal sealed class InstallerSettingsTests
 
         Save(install.Path, SignInTask.ArgumentsFor("relative\\root", null));
 
-        var read = InstallerSettings.Read(install.Path, name => name == LocalAppDataPaths.RootVariable ? "also\\relative" : null);
+        var read = InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, name => name == LocalAppDataPaths.RootVariable ? "also\\relative" : null);
 
         await Assert.That(read.DataRoot).IsNull();
 
@@ -148,6 +149,51 @@ internal sealed class InstallerSettingsTests
 
         await Assert.That(SignInTask.DataRootIn(SignInTask.SavedDefinition(install.Path))).IsNull();
         await Assert.That(SignInTask.UpdateSourceIn(SignInTask.SavedDefinition(install.Path))).IsNull();
+    }
+
+    /// <summary>
+    /// The shipping install reads no data root at all: not the installer's
+    /// <c>BROWSERAI_ROOT</c>, and not one a task of an older build saved. The update source
+    /// it still reads, and the suite's test pack keeps both.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer's 21 of 2026-10-10, verbatim: <i>"21 refusing installing into a
+    /// non-standard folder so the project specific setups always resolve on every dev's
+    /// pc."</i></b>, and of the way to do it the same day, relayed in his words verbatim,
+    /// <i>"that proposal sounds go"</i>: the shipping install always uses
+    /// <c>%LOCALAPPDATA%\BrowserAI</c>. <b>Planted red 2026-10-10</b> against a read that
+    /// took the pack id and did nothing with it: the installer's root came back.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheShippingInstallReadsNoDataRootFromTheInstallerOrFromItsTask()
+    {
+        using var install = ScratchDirectory.Create("installer-settings-shipping");
+        var saved = Path.Combine(install.Path, "saved");
+        var named = Path.Combine(install.Path, "named");
+
+        Save(install.Path, SignInTask.ArgumentsFor(saved, Folder));
+
+        string? installers(string name) => name switch
+        {
+            LocalAppDataPaths.RootVariable => named,
+            _ => null,
+        };
+
+        await Assert.That(StandardLocation.ShippingPackId).IsEqualTo(ReleaseLayout.PackId);
+
+        var shipping = InstallerSettings.Read(install.Path, ReleaseLayout.PackId, installers);
+
+        await Assert.That(shipping.DataRoot).IsNull();
+        await Assert.That(shipping.UpdateSource).IsEqualTo(Folder);
+        await Assert.That(shipping.RelayArguments).IsEquivalentTo([RegistrationTarget.McpArgument]);
+
+        // What a page's Register reads for the shipping install names none either.
+        await Assert.That(InstallerSettings.SavedFor(install.Path, ReleaseLayout.PackId).DataRoot).IsNull();
+
+        // And the test pack keeps both, which is the positive control.
+        await Assert.That(InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, installers).DataRoot).IsEqualTo(named);
+        await Assert.That(InstallerSettings.SavedFor(install.Path, ReleaseLayout.TestPackId).DataRoot).IsEqualTo(saved);
     }
 
     /// <summary>An environment that names no variable.</summary>

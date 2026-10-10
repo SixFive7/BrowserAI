@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Registration;
+using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.App.Page;
@@ -107,7 +108,7 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
     /// <returns>The arguments.</returns>
     private IReadOnlyList<string> RelayArguments() =>
         RegistrationTarget.TryResolve(imagePath, out var target, out _)
-            ? InstallerSettings.SavedFor(target!.InstallRoot).RelayArguments
+            ? InstallerSettings.SavedFor(target!.InstallRoot, InstallLocation.AppId).RelayArguments
             : InstallerSettings.None.RelayArguments;
 }
 
