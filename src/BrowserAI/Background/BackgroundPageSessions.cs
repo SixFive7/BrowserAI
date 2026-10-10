@@ -53,7 +53,6 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
     public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken)
     {
         var background = new ServerDescription(
-            ServerPipeProtocol.Version,
             Environment.ProcessId,
             ProcessLiveness.CreationTimeOfThisProcess(),
             BuildVersion.Current,
@@ -78,7 +77,6 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
             var greeting = relay.Greeting;
 
             answered.Add((RelayMarkerPrefix + greeting.Id, new ServerDescription(
-                ServerPipeProtocol.Version,
                 greeting.RelayPid,
                 CreatedFileTime: 0,
                 BuildVersion.Current,

@@ -77,7 +77,9 @@ internal static class InstallLocation
     /// <b>Two readers, and neither writes into it.</b> <c>Program</c> hands it to
     /// <see cref="LiveInstances"/> as the root the census is about, falling back
     /// to the data root when this process is not an install and there is no such
-    /// root to ask about; and the startup log records it. ⚠️ <b>It must never
+    /// root to ask about; and the startup log records it. <i>Corrected 2026-10-10 by
+    /// addition: the census was deleted that day, and <c>Program</c> hands the root to
+    /// the stray sweep, whose pass reclaims the markers under it.</i> ⚠️ <b>It must never
     /// reach <see cref="Hosting.LocalAppDataPaths"/> again</b> -- that is the
     /// wiring the layout change of 2026-09-15 removed, and
     /// <c>UpdateTests.NoDataPathResolvesUnderAnyInstallRoot</c> is the scan that

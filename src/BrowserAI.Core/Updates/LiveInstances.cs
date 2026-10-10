@@ -8,88 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Updates;
 
-/// <summary>
-/// What a census of the live set established. <b>Three-valued, because the
-/// third value is a different fact from the second.</b>
-/// </summary>
-/// <remarks>
-/// ⚠️ <b>Widened 2026-08-20 (previously a <see langword="bool"/>, whose
-/// <see langword="false"/> meant <i>not alone</i> and <i>could not tell</i> at
-/// once).</b> That conflation was written for the updater, where both answers
-/// mean <i>do not apply</i> and the safe direction is the same one -- see
-/// <see cref="LiveInstances.AmIAlone"/>, which still collapses them and is the
-/// guarantee that the updater did not move. For anything that <i>repairs</i>
-/// instead of refraining, the two are opposites: a refusal built on
-/// <see cref="Undetermined"/> is permanent and has nothing to act on, and it
-/// reads on a log line exactly like a refusal built on a peer that is genuinely
-/// there.
-/// </remarks>
-internal enum Liveness
-{
-    /// <summary>Nothing else is running out of this install root.</summary>
-    Alone,
-
-    /// <summary>
-    /// At least <see cref="LivenessAnswer.Others"/> other processes are, each
-    /// proven by a marker file the kernel refused to hand over.
-    /// </summary>
-    /// <remarks>
-    /// <b>At least, never exactly.</b> A marker whose held-ness could not be
-    /// established does not reduce a count that is already positive -- it is
-    /// reported in <see cref="LivenessAnswer.Why"/> instead -- because a definite
-    /// <i>somebody is there</i> is more use to every caller than an uncertainty
-    /// that would erase it.
-    /// </remarks>
-    NotAlone,
-
-    /// <summary>
-    /// The question was not settled. <see cref="LivenessAnswer.Why"/> says what
-    /// stopped it, and saying so is the whole point of this value existing.
-    /// </summary>
-    Undetermined,
-}
-
-/// <summary>The census answer, and the reason when there is not one.</summary>
-internal sealed record LivenessAnswer
-{
-    /// <summary>Nothing else is alive, and that was established, not assumed.</summary>
-    public static readonly LivenessAnswer IsAlone = new() { State = Liveness.Alone };
-
-    /// <summary>Which of the three.</summary>
-    public required Liveness State { get; init; }
-
-    /// <summary>
-    /// How many other live instances were counted. Meaningful only for
-    /// <see cref="Liveness.NotAlone"/>, and a lower bound even then.
-    /// </summary>
-    public int Others { get; init; }
-
-    /// <summary>
-    /// Why the answer could not be settled -- a path, a mutex name, an
-    /// exception's own message. Never <see langword="null"/> for
-    /// <see cref="Liveness.Undetermined"/>.
-    /// </summary>
-    /// <remarks>
-    /// <b>This is the load-bearing half of the widening.</b> A tool that refuses
-    /// on <see cref="Liveness.Undetermined"/> can only be diagnosed if the
-    /// refusal names the thing that could not be read; without it the caller is
-    /// left with a permanent no and nowhere to look.
-    /// </remarks>
-    public string? Why { get; init; }
-
-    /// <summary>Somebody else is there, and this many were counted.</summary>
-    /// <param name="others">How many markers were proven held by another process.</param>
-    /// <returns>The answer.</returns>
-    public static LivenessAnswer NotAlone(int others) =>
-        new() { State = Liveness.NotAlone, Others = others };
-
-    /// <summary>The question could not be settled, and this is what stopped it.</summary>
-    /// <param name="why">The path, name or message a diagnosis starts from.</param>
-    /// <returns>The answer.</returns>
-    public static LivenessAnswer Undetermined(string why) =>
-        new() { State = Liveness.Undetermined, Why = why };
-}
-
 /// <summary>How a reclaim pass over the live-marker directory ended.</summary>
 internal enum LiveMarkerReclaimOutcome
 {
@@ -163,10 +81,26 @@ internal sealed record LiveMarkerReclaim
 }
 
 /// <summary>
-/// Every BrowserAI running out of one install root, counted by the only signal
-/// that cannot lie: an open file handle the OS releases on death.
+/// The live-marker directory under one install root, and the one pass that removes
+/// the markers whose holders have gone.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-10 (previously "Every BrowserAI running out of one
+/// install root, counted by the only signal that cannot lie: an open file handle the
+/// OS releases on death.")</b>. The census is deleted. Since the one-binary build of
+/// 2026-10-08 no process joins the live set: the resident background's update core
+/// decides when an update installs, by what holds it. <c>Join</c>, <c>Census</c> and
+/// <c>AmIAlone</c>, which nothing called after that day, were deleted on 2026-10-10 by
+/// the maintainer's decision <i>"9 a"</i>, with <c>Liveness</c>,
+/// <c>LivenessAnswer</c>, the instance this class was and its <c>OwnFile</c>,
+/// <c>StartReclaimInBackground</c>, <c>IsMarkerHeld</c>, <c>RootKeyFor</c>, and
+/// <c>LockScopes.LiveInstanceGate</c>, the wait the join and the census took. What is
+/// left is <see cref="ReclaimStaleMarkers"/>, which the stray sweep runs: a build
+/// from before 2026-10-08 that an update's kill pass, a crash or a kill ended left its
+/// marker behind, and the pass removes it once nothing holds it. The paragraphs below
+/// are the record of the census.
+/// </para>
 /// <para>
 /// <b>This exists to gate the update apply, and the thing it prevents is
 /// measured.</b> Velopack's <c>force_stop_package</c> kills every process whose
@@ -219,33 +153,19 @@ internal sealed record LiveMarkerReclaim
 /// <para>
 /// ⚠️ <b>Reclaim used to happen only here, and that was measured to be nowhere.</b>
 /// Until 2026-08-20 the only code that removed a marker whose holder had died
-/// was <see cref="Census"/>, which <c>UpdateService</c> reaches
+/// was <c>Census</c>, which <c>UpdateService</c> reaches
 /// <i>after</i> an update has been found <b>and</b> downloaded. That had never
 /// once happened on the machine this product is developed on, and
 /// <b>755 unheld markers</b> had accumulated in two days. Reclaim is now a
 /// routine of its own -- <see cref="ReclaimStaleMarkers"/> -- run from the stray
-/// sweep and from startup, and <see cref="Census"/> keeps doing it as well
+/// sweep and from startup, and <c>Census</c> keeps doing it as well
 /// because a census that walked past a dead marker would count it.
 /// </para>
 /// </remarks>
-internal sealed class LiveInstances : IDisposable
+internal static class LiveInstances
 {
     private const int ErrorSharingViolation = 32;
     private const int ErrorLockViolation = 33;
-
-    private readonly string _directory;
-    private readonly string _mutexName;
-    private readonly ILogger _logger;
-    private FileStream? _held;
-
-    private LiveInstances(string directory, string ownFile, string mutexName, FileStream held, ILogger logger)
-    {
-        _directory = directory;
-        OwnFile = ownFile;
-        _mutexName = mutexName;
-        _held = held;
-        _logger = logger;
-    }
 
     /// <summary>Whether a marker file is held, free, or neither answer.</summary>
     private enum MarkerState
@@ -260,196 +180,6 @@ internal sealed class LiveInstances : IDisposable
         Unknown,
     }
 
-    /// <summary>This process's own marker file.</summary>
-    public string OwnFile { get; }
-
-    /// <summary>
-    /// Announces this process, and keeps announcing it until disposal or death.
-    /// </summary>
-    /// <param name="installRoot">
-    /// The install root this process runs out of -- the directory containing
-    /// <c>current\</c>. <b>Never the data root</b>: see the remarks on
-    /// <see cref="DirectoryUnder"/>.
-    /// </param>
-    /// <param name="logger">Where a failure is reported.</param>
-    /// <returns>The registration, or <see langword="null"/> if one could not be made.</returns>
-    /// <remarks>
-    /// <b>A failure to join is not a failure to start.</b> BrowserAI's job is to
-    /// serve stdio; the only thing lost is the ability to update, and an update
-    /// that cannot prove it is alone must not happen anyway. So this returns
-    /// null and logs instead of throwing.
-    /// </remarks>
-    public static LiveInstances? Join(string installRoot, ILogger logger)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        var directory = DirectoryUnder(installRoot);
-        var mutexName = MutexNameFor(installRoot);
-
-        try
-        {
-            _ = Directory.CreateDirectory(directory);
-
-            using var gate = MachineMutex.Create(mutexName);
-            var acquired = gate.Acquire(LockScopes.LiveInstanceGate);
-
-            if (acquired is MutexAcquisition.NotAcquired)
-            {
-                UpdateLog.CouldNotJoinLiveSet(logger, directory, null);
-                return null;
-            }
-
-            try
-            {
-                var file = Path.Combine(
-                    directory,
-                    string.Create(CultureInfo.InvariantCulture, $"{Environment.ProcessId}-{Guid.NewGuid():N}.live"));
-
-                // Same open as SessionLock's: deny write to everyone else, allow
-                // read, so a census can see the name and cannot take it.
-                //
-                // ⚠️ NOTHING IS RECLAIMED HERE, AND THAT IS A DECISION. This
-                // hold is on the startup path and every process on the machine
-                // queues behind it; walking 755 markers inside it would put the
-                // enumeration into a five-second-gated critical section that a
-                // hundred starting processes contend for, and a join that times
-                // out makes this process INVISIBLE to a peer's census -- which
-                // is the one failure this whole file exists to prevent. The
-                // startup reclaim is a separate, zero-timeout, background pass:
-                // see ReclaimStaleMarkers and StartReclaimInBackground.
-                var held = new FileStream(file, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
-
-                return new LiveInstances(directory, file, mutexName, held, logger);
-            }
-            finally
-            {
-                gate.Release();
-            }
-        }
-#pragma warning disable CA1031 // Joining is best-effort by design: the consequence of failing is that this process never updates, which is the safe direction.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            UpdateLog.CouldNotJoinLiveSet(logger, directory, failure);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Whether this process is the only BrowserAI running out of this install
-    /// root -- <b>or that the question could not be settled, and why</b>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Three answers, and the third one carries a sentence.</b> A marker that
-    /// cannot be opened for a reason other than sharing, a directory that cannot
-    /// be enumerated, a gate that expired, a process that has already left the
-    /// live set -- none of those is <i>somebody else is running</i>, and none of
-    /// them is <i>nobody is</i>. They are <see cref="Liveness.Undetermined"/>,
-    /// and <see cref="LivenessAnswer.Why"/> names the path or the failure so that
-    /// a refusal built on one can be diagnosed instead of merely repeated.
-    /// </para>
-    /// <para>
-    /// <b>A positive count wins over an uncertainty.</b> Two markers proven held
-    /// and one unreadable is <see cref="Liveness.NotAlone"/> with
-    /// <c>Others = 2</c> -- <i>at least two</i> -- and not
-    /// <see cref="Liveness.Undetermined"/>. Erasing a fact that was established
-    /// because a different one was not is a strictly worse answer for every
-    /// caller.
-    /// </para>
-    /// <para>
-    /// <b>It reclaims as it counts, under the gate it is already holding.</b> A
-    /// marker proven free is removed here as well as by
-    /// <see cref="ReclaimStaleMarkers"/>, because a census that walked past one
-    /// would have to count it as something, and there is no honest value for it.
-    /// A free marker that will not delete is <b>not</b> counted as another
-    /// instance and does not make the answer undetermined -- it never was one --
-    /// which is what keeps this reclaim from changing the verdict.
-    /// </para>
-    /// </remarks>
-    /// <returns>Alone, not alone with a lower bound, or undetermined with a reason.</returns>
-    public LivenessAnswer Census()
-    {
-        if (_held is null)
-        {
-            // Not "alone" and not "not alone": this process is no longer a
-            // member of the set it is asking about, so it cannot speak for it.
-            return LivenessAnswer.Undetermined(
-                $"this process has left the live set under '{_directory}' -- its own marker '{OwnFile}' was released -- so a census taken now would not include it.");
-        }
-
-        try
-        {
-            using var gate = MachineMutex.Create(_mutexName);
-
-            if (gate.Acquire(LockScopes.LiveInstanceGate) is MutexAcquisition.NotAcquired)
-            {
-                return LivenessAnswer.Undetermined(
-                    string.Create(
-                        CultureInfo.InvariantCulture,
-                        $"the live-instance gate '{_mutexName}' was still held after {LockScopes.LiveInstanceGate.TotalSeconds:F0}s, so the set under '{_directory}' was never read."));
-            }
-
-            try
-            {
-                var pass = Walk(_directory, OwnFile);
-
-                if (pass.Held is not 0)
-                {
-                    UpdateLog.NotAlone(_logger, pass.Held);
-                    return LivenessAnswer.NotAlone(pass.Held);
-                }
-
-                return pass.Undetermined is 0
-                    ? LivenessAnswer.IsAlone
-                    : LivenessAnswer.Undetermined(
-                        pass.Why ?? $"a marker under '{_directory}' could not be read, and no reason was recorded.");
-            }
-            finally
-            {
-                gate.Release();
-            }
-        }
-#pragma warning disable CA1031 // Any failure to establish solitude is answered "undetermined", which AmIAlone collapses to the same safe direction it always had.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            UpdateLog.CouldNotCensusLiveSet(_logger, _directory, failure);
-
-            return LivenessAnswer.Undetermined(
-                $"the live set under '{_directory}' could not be read ({failure.Message}).");
-        }
-    }
-
-    /// <summary>
-    /// Whether this process is the only BrowserAI running out of this install
-    /// root, with every uncertainty answered <see langword="false"/>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>This method is the guarantee that the updater did not move on
-    /// 2026-08-20.</b> It is one expression over <see cref="Census"/> and it has
-    /// exactly one <see langword="true"/> arm, so
-    /// <see cref="Liveness.Undetermined"/> is treated precisely as
-    /// <see cref="Liveness.NotAlone"/> was and is: <i>do not apply</i>. The cost
-    /// of being wrong in that direction is a delayed update; the cost of being
-    /// wrong in the other is every other agent's session.
-    /// <c>UpdateTests.EveryCensusAnswerOtherThanAloneStillReadsAsNotAloneToTheUpdater</c>
-    /// asserts the mapping over all three values, and
-    /// <c>UpdateTests.AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes</c>
-    /// asserts it through <c>UpdateService</c> itself and not through
-    /// this signature.
-    /// </para>
-    /// <para>
-    /// <b>Widening a return type is where a consumer silently changes</b>, so the
-    /// widening deliberately did not touch this one. <c>UpdateService</c>
-    /// still calls this and nothing else.
-    /// </para>
-    /// </remarks>
-    /// <returns><see langword="true"/> only when nothing else is alive.</returns>
-    public bool AmIAlone() => Census().State is Liveness.Alone;
-
     /// <summary>
     /// Removes every marker under an install root whose holder is gone, and
     /// touches nothing else.
@@ -457,11 +187,15 @@ internal sealed class LiveInstances : IDisposable
     /// <remarks>
     /// <para>
     /// <b>Both call sites take the same gate as a join and a census, and both
-    /// skip instantly when it is held.</b> One process reclaims and the rest
+    /// skip instantly when it is held.</b> <i>Corrected 2026-10-10 by addition: one
+    /// call site is left, the stray sweep, since the startup run
+    /// (<c>StartReclaimInBackground</c>), the join and the census were deleted; the
+    /// gate is the one a build from before 2026-10-08 joins under.</i> One process
+    /// reclaims and the rest
     /// move on -- the same discipline <c>Sessions.StraySweep</c> already
     /// applies machine-wide, reused and not reinvented. The timeout is
     /// <see cref="LockScopes.NeverWaits"/> and not
-    /// <see cref="LockScopes.LiveInstanceGate"/> precisely because this may run
+    /// <c>LockScopes.LiveInstanceGate</c>, deleted 2026-10-10, precisely because this may run
     /// while a process is starting: a reclaim is never worth a millisecond of
     /// startup, and a skipped reclaim is not a missed one, because whoever holds
     /// the gate is walking the same directory.
@@ -473,8 +207,8 @@ internal sealed class LiveInstances : IDisposable
     /// the same reason: a crashed holder leaves the file behind, so existence
     /// means <i>somebody died here once</i> and never <i>somebody is working
     /// now</i>. Held-ness is a sharing violation on an open this file's own
-    /// <see cref="Join"/> would be refused by, and nothing else in the answer is
-    /// acted on.
+    /// <c>Join</c>, deleted 2026-10-10, would be refused by, and nothing else in the
+    /// answer is acted on.
     /// </para>
     /// <para>
     /// <b>Reclaiming another process's live marker would be a serious bug</b> --
@@ -555,11 +289,11 @@ internal sealed class LiveInstances : IDisposable
 
                 try
                 {
-                    // own: null. This is a static pass with no marker of its
-                    // own, and the caller's marker needs no name-based exemption
-                    // because it is HELD -- which is the property the pass reads
-                    // and the only one it is allowed to act on.
-                    var pass = Walk(directory, own: null);
+                    // No marker is skipped by name. A marker a live process
+                    // holds needs no exemption because it is HELD -- which is
+                    // the property the pass reads and the only one it is
+                    // allowed to act on.
+                    var pass = Walk(directory);
 
                     result = new LiveMarkerReclaim
                     {
@@ -600,79 +334,6 @@ internal sealed class LiveInstances : IDisposable
     }
 
     /// <summary>
-    /// Runs one reclaim pass on a background thread and returns immediately.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Startup must never wait for this.</b> The pass takes a machine-wide
-    /// mutex at zero timeout and walks one directory; both are fast and neither
-    /// is on the request path, so it runs on its own background thread with a
-    /// catch-all at the boundary. An exception escaping a background thread
-    /// tears the process down, and this process is an MCP server whose caller
-    /// would see a transport that simply stopped.
-    /// </para>
-    /// <para>
-    /// <b>Why this exists beside the copy inside
-    /// <c>Sessions.StraySweep</c>, which also runs at startup.</b> The
-    /// sweep can decline to run for reasons that have nothing to do with
-    /// markers: another process holds <see cref="LockScopes.Sweep"/>, or the
-    /// payload manifest its factory reads is broken. Neither of those should
-    /// cost a machine its marker reclaim, and this path shares none of it.
-    /// </para>
-    /// </remarks>
-    /// <param name="installRoot">The install root the markers are kept under.</param>
-    /// <param name="logger">Where a failure is reported.</param>
-    public static void StartReclaimInBackground(string installRoot, ILogger logger)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                // ReclaimStaleMarkers logs its own census, so nothing is logged
-                // here: a second line would be the same fact twice.
-                _ = ReclaimStaleMarkers(installRoot, logger);
-            }
-#pragma warning disable CA1031 // The whole purpose of this method: nothing a reclaim can do may end the process.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                try
-                {
-                    UpdateLog.CouldNotReclaimLiveMarkers(logger, DirectoryUnder(installRoot), failure);
-                }
-#pragma warning disable CA1031 // A logger that throws must not defeat the catch-all that was reporting through it.
-                catch (Exception)
-#pragma warning restore CA1031
-                {
-                }
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "BrowserAI live-marker reclaim",
-        };
-
-        thread.Start();
-    }
-
-    /// <summary>Leaves the live set.</summary>
-    public void Dispose()
-    {
-        var held = Interlocked.Exchange(ref _held, null);
-
-        if (held is null)
-        {
-            return;
-        }
-
-        held.Dispose();
-        _ = TryDelete(OwnFile, out _);
-    }
-
-    /// <summary>
     /// The live set's own machine-wide gate: the same canonicalisation every
     /// other directory-keyed name in this product uses, in a namespace of its
     /// own.
@@ -696,11 +357,11 @@ internal sealed class LiveInstances : IDisposable
     /// </para>
     /// <para>
     /// <b>What the collision cost was silent and lasted the process's life.</b>
-    /// <see cref="Join"/> waits <see cref="LockScopes.LiveInstanceGate"/>, five
+    /// <c>Join</c> waits <c>LockScopes.LiveInstanceGate</c>, five
     /// seconds. Queued behind a hold of the 120-second
     /// <see cref="LockScopes.PerDirectoryGate"/> it expires, and a failed join
     /// costs this process its ability to update <b>for good</b> -- one log line,
-    /// no refusal, nothing a caller could see. <see cref="AmIAlone"/>'s census
+    /// no refusal, nothing a caller could see. <c>AmIAlone</c>'s census
     /// held the same object from the other side, blocking that directory's
     /// <c>TryAcquire</c>. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
@@ -717,7 +378,7 @@ internal sealed class LiveInstances : IDisposable
     /// ⚠️ <b>The name changed, so a BrowserAI from before this and one from
     /// after do not serialise against each other on the live set.</b> That
     /// window is one upgrade wide and what is inside it is safe by
-    /// construction: <see cref="Join"/> creates a file whose name carries a
+    /// construction: <c>Join</c> creates a file whose name carries a
     /// GUID, and <see cref="Walk"/> only removes a marker it has itself proven
     /// unheld, so two passes running together reach the same answer more slowly
     /// and not a different one.
@@ -736,64 +397,20 @@ internal sealed class LiveInstances : IDisposable
     /// per census for an answer already established, and it would make the live
     /// set's gate refusable -- which is a startup failure wearing an update
     /// check's name.
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 by addition: the key is
+    /// <see cref="RootKey.For"/>'s</b> (previously <c>RootKeyFor</c>, a copy of the
+    /// same derivation kept here, deleted with the census). Neither the derivation
+    /// nor the name changed, so a build from before 2026-10-08 and this one still meet
+    /// at one gate. <c>Join</c>, <c>AmIAlone</c> and <c>LockScopes.LiveInstanceGate</c>
+    /// in the remarks above were deleted that day.
+    /// </para>
     /// </remarks>
     public static string MutexNameFor(string installRoot) =>
-        MutexPrefix + RootKeyFor(installRoot);
-
-    /// <summary>
-    /// The install root's key: the 32 hex characters every name keyed to one
-    /// install root ends in.
-    /// </summary>
-    /// <remarks>
-    /// <b>One derivation, three names since 2026-09-25</b>: the census gate above,
-    /// the coordinator's pipe (<c>Coordination.CoordinatorProtocol.NameFor</c>) and
-    /// the per-user logon task (<c>Registration.SignInTask.NameFor</c>). A second
-    /// spelling of the key is how two of them would come to name different roots
-    /// while each reported success, which is the defect
-    /// <see cref="MutexNameFor"/>'s own remarks record for the gate.
-    /// </remarks>
-    /// <param name="installRoot">The install root, never the data root.</param>
-    /// <returns>The upper-case hex key.</returns>
-    public static string RootKeyFor(string installRoot) =>
-        SessionPath.For(installRoot).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+        MutexPrefix + RootKey.For(installRoot);
 
     /// <summary>The folder the markers live in, directly under an install root.</summary>
     public const string DirectoryName = "live";
-
-    /// <summary>
-    /// Whether one marker is held right now: the census of a single entry.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The same probe <see cref="Census"/> and <see cref="ReclaimStaleMarkers"/>
-    /// act on, and nothing else</b>, so a caller asking about one marker cannot
-    /// reach a different verdict from a pass over all of them. It touches
-    /// nothing: a marker proven free is left where it is, because removing
-    /// markers is the gated passes' job and this runs outside the gate.
-    /// </para>
-    /// <para>
-    /// <b>It is what a caller reads before it connects to a server's pipe.</b>
-    /// Measured 2026-09-24: 85 µs to say a marker's holder had gone, and 240 µs
-    /// to say a hung one was still there.
-    /// </para>
-    /// </remarks>
-    /// <param name="path">The marker file.</param>
-    /// <returns>
-    /// <see langword="true"/> when a live process holds it,
-    /// <see langword="false"/> when nothing does, and <see langword="null"/>
-    /// when neither could be established.
-    /// </returns>
-    public static bool? IsMarkerHeld(string path)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-        return Probe(path).State switch
-        {
-            MarkerState.Held => true,
-            MarkerState.Free => false,
-            _ => null,
-        };
-    }
 
     /// <summary>
     /// Where the markers for one install root are, and the one place that folder
@@ -842,15 +459,14 @@ internal sealed class LiveInstances : IDisposable
     /// one routine that decides a marker's fate, so a census and a reclaim
     /// cannot come to different conclusions about the same file -- which is what
     /// a second copy of the sharing-violation rule would eventually produce.
+    /// <i>Corrected 2026-10-10 by addition: one caller is left,
+    /// <see cref="ReclaimStaleMarkers"/>, since the census was deleted, and the
+    /// census's parameter <c>own</c>, the marker it skipped by name so that it did
+    /// not count itself, went with it.</i>
     /// </remarks>
     /// <param name="directory">The marker directory, which must exist.</param>
-    /// <param name="own">
-    /// A marker to skip by name, or <see langword="null"/>. Belt to the braces:
-    /// a caller's own marker is held and would be counted and not removed
-    /// anyway, but a census must not count itself.
-    /// </param>
     /// <returns>The tallies.</returns>
-    private static MarkerWalk Walk(string directory, string? own)
+    private static MarkerWalk Walk(string directory)
     {
         var held = 0;
         var reclaimed = 0;
@@ -860,11 +476,6 @@ internal sealed class LiveInstances : IDisposable
 
         foreach (var candidate in Directory.EnumerateFiles(directory, "*.live"))
         {
-            if (own is not null && string.Equals(candidate, own, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             var (state, reason) = Probe(candidate);
 
             if (state is MarkerState.Held)
@@ -916,9 +527,11 @@ internal sealed class LiveInstances : IDisposable
     /// the updater on the safe side, which is why it was written that way; what
     /// it cost was the ability to say <i>this is a permissions problem on this
     /// path</i> and not <i>somebody else is running</i>. The safe side is now
-    /// preserved by <see cref="Census"/>, which lets an uncertainty decide the
-    /// verdict when nothing definite did, and by <see cref="AmIAlone"/>, which
-    /// collapses both to <see langword="false"/>.
+    /// preserved by <c>Census</c>, which lets an uncertainty decide the
+    /// verdict when nothing definite did, and by <c>AmIAlone</c>, which
+    /// collapses both to <see langword="false"/>. <i>Corrected 2026-10-10 by
+    /// addition: both were deleted that day. The reclaim leaves an unknown marker
+    /// where it is, which is the safe side for a pass that deletes.</i>
     /// </remarks>
     /// <param name="path">The marker file.</param>
     /// <returns>Its state, and a reason when there is not one.</returns>

@@ -37,7 +37,10 @@ internal sealed record SignInTaskReport(string? Name, TaskChange Change, string 
 /// <para>
 /// <b>Named for the pack id and the install root</b>: <c>BrowserAI.app sign-in</c>
 /// and the root's key, the same key the census gate and the coordinator's pipe
-/// end in. The suite's test pack therefore registers <c>BrowserAI.app.test sign-in
+/// end in. <i>Corrected 2026-10-10 by addition: the coordinator's pipe went with S a
+/// on 2026-10-08 and its name, <c>CoordinatorProtocol.NameFor</c>, on 2026-10-10;
+/// the key is <c>RootKey.For</c>'s, which the live-marker gate and the background's
+/// pipe end in too.</i> The suite's test pack therefore registers <c>BrowserAI.app.test sign-in
 /// ...</c> under a scratch root's key and can never touch the real install's task,
 /// and two roots of one pack id have two tasks.
 /// </para>

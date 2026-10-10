@@ -119,14 +119,22 @@ duration may stay where it is, and still gets a row when it is tunable.
 | `SessionTimes.ProvisioningPoll` | `1 s` | How often provisioning's phase watcher looks, `ProvisioningTimers.Poll` | **Chosen**, nothing measured | The code says nothing about why | Line written 2026-08-16, build step 15 | A judgement, nothing to re-run |
 | `SessionTimes.UpstreamDownloadStallTimeout` | `30 s` | Playwright's per-socket stall timeout on a browser download, which BrowserAI never sets and records so that its own caps can be weighed against it, `BrowserProvisioner.UpstreamStallTimeout` | **Upstream** | `NET_DEFAULT_TIMEOUT = 3e4`, read once in the bundle, as the socket timeout of a browser download | Read 2026-08-16, and again 2026-09-23 at `playwright-core` 1.64.0-alpha-1789764292000 | Search the resolved `coreBundle.js` for `NET_DEFAULT_TIMEOUT`; [re-verification](re-verification.md) row 75 |
 | `SessionTimes.PerDirectoryGate` | `120 s` | The bounded wait on a session directory's own gate, `LockScopes.PerDirectoryGate`, which the session's store also takes as its busy timeout | **Chosen**, a hang detector sized against measurements | One hold of the gate contains three rename waits in series, 90 s, and the gate has to outlast that sum; a hundred processes contending for one directory queued 3,349 ms at the slowest on an idle machine, each spending about 25 ms inside | Corrected 2026-08-18, twice (previously sixty seconds, and five before that); the sum was found by [the adversarial review](../docs/reviews/2026-08-18-adversarial-locking.md), B1 | [kb](windows/detection.md#named-mutexes-and-lock-files); `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt` holds the sum |
-| `SessionTimes.LiveInstanceGate` | `5 s` | The bounded wait on the live-instance set's own gate, `LockScopes.LiveInstanceGate`; *corrected 2026-10-10: taken by no code the product runs since 2026-10-08, because `LiveInstances.Join` and `LiveInstances.Census`, which take it, have no caller* | **Chosen** | Held across creating one `.live` file or one directory listing; a hundred processes starting at once queue about 200 ms here, and running out means no update this run, which is the safe direction | Split out 2026-08-18 at the value it already had | A judgement, nothing to re-run |
+
+**One row was deleted on 2026-10-10, with the number it described**, by the maintainer's
+decision *"9 a"* on code nothing calls since the one-binary build: `LiveInstanceGate`, `5 s`,
+the bounded wait on the live-instance set's own gate, `LockScopes.LiveInstanceGate`. Its
+row read **Chosen**, held across creating one `.live` file or one directory listing, a
+hundred processes starting at once queuing about 200 ms there, and running out meaning no
+update that run, which is the safe direction; split out 2026-08-18 at the value it already
+had. `LiveInstances.Join` and `LiveInstances.Census` took it, nothing called either after
+2026-10-08, and the three went together. The reclaim that is left takes the same gate at
+zero, `LockScopes.NeverWaits`.
 
 ## Waits between processes -- `ProcessBounds`
 
 | Symbol | Value | Governs | Kind | Evidence | Established | Re-check |
 |---|---|---|---|---|---|---|
 | `ProcessBounds.HandOutBound` | `10 s` | How long a start waits for a verb that asks the background for a tab, `CoordinatorProtocol.HandOutBound`; a person's start from the Start Menu judges the background hung by it | **Chosen**, a hang detector | Such a verb may start the page's listener, which is Kestrel starting and not a pipe answering from memory | Line written 2026-10-03; its use for a hang settled by the root on 2026-10-08 | A judgement, nothing to re-run |
-| `ProcessBounds.ServerPipeCallBound` | `500 ms` | How long a client gave one call on a server's own pipe, from connect to the last byte of the answer, `ServerPipeProtocol.CallBound`; *corrected 2026-10-10: read by no code since 2026-10-08, when the per-server pipes and the client that asked them went with S a* | **Chosen** against a measurement | Over 100 stand-in servers a raw-pipe describe cost 208.7 µs at p50 and 387.2 µs at p99 one after another, and 1,989.9 µs at p99 with eight in flight; 500 ms is more than 250 times the slowest | Measured and chosen 2026-09-24 | [kb](windows/processes.md#the-pipe-has-nothing-to-tear-and-a-page-of-100-servers-costs-22-ms) |
 | `ProcessBounds.BackgroundFirstFrameBound` | `10 s` | How long a connection to the background may take to send its first message, `BackgroundServer.FirstFrameBound` | **Chosen**, a hang detector | Every caller of the background writes its first message at once | Line written 2026-10-08 | A judgement, nothing to re-run |
 | `ProcessBounds.BackgroundBusyBound` | `2 s` | How long one look for the background waits while every instance of its pipe is busy, `BackgroundFinder.BusyBound` | **Chosen**, a hang detector | The relay repeats the look anyway | Line written 2026-10-08 | A judgement, nothing to re-run |
 | `ProcessBounds.BackgroundExitBound` | `2 s` | How long a relay waits for a background whose pipe has closed to finish exiting, so that its exit code can be read, `BackgroundFinder.ExitBound` | **Chosen**, a hang detector | A pipe closes as its process ends | Line written 2026-10-08 | A judgement, nothing to re-run |
@@ -145,6 +153,16 @@ duration may stay where it is, and still gets a row when it is tunable.
 | `ProcessBounds.PageTabsLinger` | `1 min` | How long the page's listener stays once the last tab has left, `PageTabs.ProductLinger` | **Chosen** by the maintainer, Q336 a | *"Q336 a - also make sure that an exist only happens after 1 min. of a tab closed so a reload keeps working (because that does not take 1 min.)"*; a reload left no page connected for 5 to 135 ms in the 2026-10-01 measurements | Decided 2026-10-03; since 2026-10-08, S a, it ends the listener and not the process | The reload: [kb](windows/loopback-page.md#a-listener-with-one-gate-against-two-browsers----measured-2026-10-01) |
 | `ProcessBounds.ShortestTimerPeriod` | `1 ms` | The shortest period `CoalescableTimer.Start` accepts | **Upstream**, Windows | `SetWaitableTimerEx` takes its period as a whole number of milliseconds and reads zero as a timer that is signalled once | Read 2026-10-09 in Microsoft's documentation | [`SetWaitableTimerEx`](https://learn.microsoft.com/windows/win32/api/synchapi/nf-synchapi-setwaitabletimerex), the `lPeriod` parameter |
 | `ProcessBounds.ProcessLogRetentionDays` | `30` | How many days a rolled file of the process log is kept, `RollingFileWriter.RetentionDays` | **Chosen**, nothing measured: *"The number is ours, not measured"*, as its remarks say | What matters is that it is enforced somewhere that outlives an update | Line written 2026-08-16, build order step 2 | A judgement, nothing to re-run |
+
+**One row was deleted on 2026-10-10, with the number it described**, by the maintainer's
+decision *"9 a"*: `ServerPipeCallBound`, `500 ms`, how long a client gave one call on a
+server's own pipe, the value of `ServerPipeProtocol.CallBound`. Its row read **Chosen**
+against a measurement: over 100 stand-in servers a raw-pipe describe cost 208.7 µs at p50
+and 387.2 µs at p99 one after another, and 1,989.9 µs at p99 with eight in flight, measured
+and chosen 2026-09-24
+([kb](windows/processes.md#the-pipe-has-nothing-to-tear-and-a-page-of-100-servers-costs-22-ms)).
+The pipe per server and the client that asked it went with S a on 2026-10-08, nothing read
+the bound after that day, and it went with the rest of `ServerPipeProtocol`.
 
 ## The update -- `UpdateBudgets`
 
@@ -220,8 +238,6 @@ duration may stay where it is, and still gets a row when it is tunable.
 | `PageGate.TokenCharacters` | `43` | How many characters a page token is spelled with | **Derived** from `PageGate.TokenBytes` | 32 bytes in base64url with no padding is 43 characters | Line written 2026-10-03 | Arithmetic: 32 bytes are 256 bits, and 256 bits in 6-bit characters round up to 43 |
 | `PageListener.MaximumConnections` | `64` | How many connections the page's listener holds at once, every open tab's event stream included | **Chosen**, nothing measured | The code says nothing about why | Line written 2026-10-03 | A judgement, nothing to re-run |
 | `PageListener.MaximumHeaderBytes` | `8 KiB` | How large a request's header block to the page may be | **Chosen**, nothing measured | The code says nothing about why | Line written 2026-10-03 | A judgement, nothing to re-run |
-| `ServerPipeProtocol.MaximumRequestBytes` | `64` | How many bytes a request on a server's own pipe may take, newline included | **Chosen** | A request is one short line | Line written 2026-09-24 | A judgement, nothing to re-run |
-| `ServerPipeProtocol.MaximumReplyBytes` | `1 MiB` | The largest answer a client reads from a server's own pipe | **Chosen** against a measurement | A description with twenty sessions is 4,858 bytes, and a length prefix above this is a broken server | Measured and chosen 2026-09-24 | [kb](windows/processes.md#the-pipe-has-nothing-to-tear-and-a-page-of-100-servers-costs-22-ms) |
 | `NamedPipes.OutBufferBytes` | `64 KiB` | How much of a reply a pipe buffers before a server's write waits for its client to read | **Chosen** against a measurement | A description with twenty sessions is 4,858 bytes, so a reply fits many times over | Measured and chosen 2026-09-24 | The same kb entry |
 | `NamedPipes.InBufferBytes` | `4 KiB` | How much of a request a pipe buffers | **Chosen** | A request is one short line | Line written 2026-09-24 | A judgement, nothing to re-run |
 | `RollingFileWriter.MaxBytesPerFile` | `8 MiB` | When the process log rolls to its next file | **Chosen** | Small enough to open in an editor, large enough that a busy day is a handful of files | Line written 2026-08-16, build order step 2 | A judgement, nothing to re-run |
@@ -239,3 +255,13 @@ duration may stay where it is, and still gets a row when it is tunable.
 | `UpdateToastContent.ReconnectLines` | `3` | How many lines of the banner the ready toast's reconnect line may take, which its names are weighed against | **Upstream**, read and seen on screen, less the second line's one | Microsoft's page gives a toast's second and third text elements four lines between them, the failed toast showed four whole on 2026-10-08, and the ready toast's second line takes one | Read 2026-10-10, beside the crops of 2026-10-08 | [kb](windows/notifications.md#a-toasts-text-wraps-at-the-banners-width-in-four-lines-of-description-at-most----read-2026-10-10): `UpdateToastContentTests` measures the second line and holds the sum to four |
 | `UpdateToastContent.DescriptionLineCharacters` | `50` | How many characters a line of the reconnect line is counted to hold when its names are weighed | **Chosen** against a measurement | The longest line of a toast's description the banner showed whole held 52 characters and a line of a path 49; every line this lets through is measured against the banner's width by `UpdateToastContentTests` | Chosen 2026-10-10 | The same kb entry; the test measures every line again on every run |
 | `BrowserProvisioner.InstallerTailCharacters` | `800` | How much of what a failed installer wrote its record, `BrowserProvisioner[64]`, and its answer quote, counted back from the end, beside the error line `BrowserProvisioner.Said` quotes whole | **Chosen** | A failure is read for how it ended, and an installer that downloads for minutes writes a great deal. On 2026-10-08 this tail began inside the stack's first frame and cut the error line, which is why the line is quoted beside it since 2026-10-10 | Line written 2026-08-16, build step 15; the error line beside it 2026-10-10, 5 a | A judgement, nothing to re-run |
+
+**Two rows were deleted on 2026-10-10, with the numbers they described**, by the
+maintainer's decision *"9 a"*, when `ServerPipeProtocol` was deleted: nothing read it after
+the pipe per server went with S a on 2026-10-08. `ServerPipeProtocol.MaximumRequestBytes`,
+`64`, how many bytes a request on a server's own pipe could take, newline included, read
+**Chosen**: a request is one short line, line written 2026-09-24.
+`ServerPipeProtocol.MaximumReplyBytes`, `1 MiB`, the largest answer a client read from a
+server's own pipe, read **Chosen** against a measurement: a description with twenty
+sessions is 4,858 bytes, and a length prefix above it is a broken server, measured and chosen
+2026-09-24. The two `NamedPipes` rows above are not part of this deletion.

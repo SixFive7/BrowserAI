@@ -326,9 +326,10 @@ internal static class SessionTimes
     /// </summary>
     public static TimeSpan PerDirectoryGate { get; } = TimeSpan.FromSeconds(120);
 
-    /// <summary>
-    /// The bounded wait on the live-instance set's own gate: 5 s. The value of
-    /// <c>LockScopes.LiveInstanceGate</c>.
-    /// </summary>
-    public static TimeSpan LiveInstanceGate { get; } = TimeSpan.FromSeconds(5);
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": LiveInstanceGate,
+    // 5 s, the value of LockScopes.LiveInstanceGate, the bounded wait on the
+    // live-instance set's own gate. LiveInstances.Join and LiveInstances.Census took
+    // it, nothing called either after the one-binary build of 2026-10-08, and the
+    // three went together. The reclaim that is left takes that gate at
+    // LockScopes.NeverWaits. Its row left kb/numbers.md the same day.
 }

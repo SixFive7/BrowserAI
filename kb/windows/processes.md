@@ -1427,7 +1427,9 @@ NativeAOT win-x64, Defender real-time protection on. Measured by the IPC review
 with a prototype published NativeAOT, whose stand-in servers held their live
 marker exactly as `LiveInstances.Join` does (`CreateNew`, `ReadWrite`,
 `FileShare.Read`, buffer size 1); sizes were measured on copies of the real
-server at `245edac`. Everything it was read from:
+server at `245edac`. *(`LiveInstances.Join` was deleted on 2026-10-10 with the
+census, by the maintainer's decision "9 a"; the open is the one a build from before
+2026-10-08 holds its marker with, and the measurement is unchanged by the deletion.)* Everything it was read from:
 [`docs/evidence/2026-09-24-ipc-review`](../../docs/evidence/2026-09-24-ipc-review/README.md).
 It settled Q268 and, with the lifecycle research, Q284 -- the maintainer's words
 verbatim, *"Q284 a"*: one raw named pipe per server, answering `describe` from
@@ -1483,6 +1485,9 @@ half done. What asking costs, over stand-in servers each asked once per round:
 With eight in flight the raw pipe's per-server p99 was **1,989.9 µs**, the
 slowest pipe percentile measured in the batch, and it is what
 `ServerPipeProtocol.CallBound`, 500 ms, is derived from: more than 250 times it.
+*(`ServerPipeProtocol` was deleted on 2026-10-10, with the pipe per server it framed and
+bounded, which S a removed on 2026-10-08; the measurement stands as the record of that
+pipe.)*
 A description is small: **419 bytes** of JSON with no sessions, 1,082 with three,
 4,858 with twenty, built in 1.51, 2.60 and 10.23 µs.
 
@@ -2313,6 +2318,9 @@ it with a zero timeout was already signalled. So a scan that lists processes and
 reads each one's image cannot find a process that has exited, whoever still holds it,
 and `BrowserProcesses.HeldUnder` carries no filter of its own for one. It was measured
 because a planted defect that counted exited processes stayed green.
+*(`BrowserProcesses.HeldUnder` was deleted on 2026-10-10 with the coordinator's apply
+gate it served, by the maintainer's decision "9 a"; the Windows behaviour above does not
+depend on it.)*
 
 **Re-establish it** with the same four calls against any child you start and keep a
 handle to: list, open, query the image, wait with a zero timeout.

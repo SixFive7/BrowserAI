@@ -1961,6 +1961,19 @@ release body; nothing else depends on it.
 
 ### Removed
 
+- ♻️ **Code that nothing has called since the one-binary build is deleted.**
+  The maintainer's decision of 2026-10-10, verbatim: *"9 a"*, after a final pass over the
+  build found it. What went answered a server's own pipe, a census of every running
+  BrowserAI, the coordinator's verbs and its apply gate, and a server that refused calls
+  while an update installed: `ServerPipeProtocol` whole, the census half of
+  `LiveInstances`, `BrowserProcesses.HeldUnder`, `IStagedUpdates`, most of
+  `CoordinatorProtocol`, and `BrowserProxy`'s update refusals. Nothing a running BrowserAI
+  does changes: a call an update meets is answered by the relay, as it has been since
+  2026-10-08, and the stray sweep still removes the live markers older builds left. Two
+  rows of the error catalogue went with the refusals, because only the suite could still
+  produce them, and the arms that drove the deleted code are retired with a remark where
+  each stood.
+
 - 🗑️ **The payload's copy of `tool-verdicts.json` is gone, with the child that answered the tool list.**
   The verdicts are compiled into the server beside the tool list they judge, so nothing reads the
   copy a build target used to put in the payload; the build removes one a payload assembled earlier

@@ -35,6 +35,10 @@ namespace BrowserAI.Hosting;
 /// answers <i>alone</i> -- and an update apply then runs
 /// <c>force_stop_package</c>, which terminates every process under the install
 /// root, the other user's BrowserAI and its browsers included.
+/// <i>Corrected 2026-10-10 by addition: no process joins the census since
+/// 2026-10-08, and <c>LiveInstances.Join</c> and the census were deleted on
+/// 2026-10-10. The paragraph is the record of why the refusal below exists; the
+/// mutex and the file locks still behave as it says.</i>
 /// </para>
 /// <para>
 /// <b>The maintainer took direction (a) on 2026-08-20 -- refuse at startup</b>
@@ -451,7 +455,8 @@ internal enum JudgedRoot
 /// <summary>What <see cref="InstallRootScope.Judge(string, string?)"/> concluded.</summary>
 /// <remarks>
 /// <b>Three states instead of a boolean</b>, for the reason
-/// <c>Updates.Liveness</c> has three: <i>could not establish</i> is neither of
+/// <c>Updates.Liveness</c> had three until it was deleted with the census on
+/// 2026-10-10: <i>could not establish</i> is neither of
 /// the other two, and collapsing it into either loses the only thing that would
 /// let somebody diagnose it. Here it collapses to <i>serve</i> -- see
 /// <see cref="InstallRootScope"/>'s remarks for why that direction and not the

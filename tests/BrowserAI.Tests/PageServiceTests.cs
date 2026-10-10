@@ -542,7 +542,6 @@ internal sealed class PageServiceTests
 
     private static ServerDescription Description(int pid, string role, IReadOnlyList<HeldSession> sessions) =>
         new(
-            ServerPipeProtocol.Version,
             pid,
             1,
             "9.0.0",
@@ -560,7 +559,6 @@ internal sealed class PageServiceTests
     {
         var directory = $@"C:\sessions\s{pid.ToString(CultureInfo.InvariantCulture)}";
         var description = new ServerDescription(
-            ServerPipeProtocol.Version,
             pid,
             1,
             "9.0.0",

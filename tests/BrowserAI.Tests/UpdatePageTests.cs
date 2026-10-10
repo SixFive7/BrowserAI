@@ -171,7 +171,6 @@ internal sealed class UpdatePageTests
             "301-1",
             "relay:1",
             new Coordination.ServerDescription(
-                Coordination.ServerPipeProtocol.Version,
                 301,
                 1,
                 "9.0.0",

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -167,27 +166,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private int _staleListRefused;
 
-    /// <summary>
-    /// Every tool call this server is answering right now, by the caller's own
-    /// request id, for the refusal a stop sends to each of them.
-    /// </summary>
-    /// <remarks>
-    /// <b>An entry is kept once a stop has begun</b>, so that an answer arriving
-    /// after that call's refusal -- the child finishing a moment too late, or the
-    /// SDK answering a handler the stop cancelled -- still meets it at the door
-    /// out and is dropped. The process is ending, so nothing is lost by keeping
-    /// them.
-    /// </remarks>
-    private readonly ConcurrentDictionary<RequestId, CallInFlight> _calls = new();
-
-    /// <summary>Whether a stop for an update has begun: every call from here on is refused.</summary>
-    private int _stoppingForAnUpdate;
-
-    /// <summary>
-    /// Whether this install's updater was running when this server started and has
-    /// not gone yet: every call is refused until it has, and served after.
-    /// </summary>
-    private int _updateInstalling;
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": the table of
+    // tool calls in flight, kept so that a stop for an update could refuse each of
+    // them (Q286 b), and the two flags that refused every call at the door, one
+    // once a stop for an update had begun and one while this install's updater ran
+    // (Q296 c). The stop through a server's own pipe and the updater watch that set
+    // them went with S a on 2026-10-08, and since that day the relay answers a call
+    // an update meets (`RelayErrors.UpdateInstalling`,
+    // `RelayErrors.UpdateInstallingDuringTheCall`).
 
     private BrowserProxy(SessionHost host, CallerConnection connection, ServerActivity activity, bool ownsHost, ILogger logger)
     {
@@ -313,15 +299,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
         options.Filters.Message.IncomingFilters.Add(next => (context, cancellationToken) =>
             OnIncomingAsync(next, context, cancellationToken));
 
-        // ⚠️ ONE ANSWER PER CALL, and this is where it is held -- Q286 b. A stop
-        // refuses every call still in flight, and the call's own answer can still
-        // arrive afterwards: the child finishing a moment too late, or the SDK
-        // answering a handler the stop cancelled. Every message this server sends
-        // passes through here (the SDK routes SendMessageAsync through the
-        // outgoing filters, read out of McpSessionHandler at v2.2.0), so the first
-        // answer for an id claims it and a second is dropped.
-        options.Filters.Message.OutgoingFilters.Add(next => (context, cancellationToken) =>
-            IsASecondAnswer(context) ? Task.CompletedTask : next(context, cancellationToken));
+        // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": the outgoing
+        // filter that held ONE ANSWER PER CALL (Q286 b). A stop refused every call
+        // still in flight, and the call's own answer could still arrive afterwards,
+        // so the first answer for an id claimed it and a second was dropped. Only
+        // that refusal ever made a second answer, it went with the stop through a
+        // server's own pipe on 2026-10-08 (S a), and each path here that answers a
+        // call sends one answer and returns.
 
         return options;
     }
@@ -338,8 +322,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// itself exactly as the full server would -- a second copy of these lines would
     /// be a second place for the instructions to drift")</i>: that server is gone,
     /// and a server that starts during an update is this one, refusing its calls
-    /// through <see cref="RefuseCallsWhileAnUpdateInstalls"/>. The reason it was
-    /// shared is why it stays one method.
+    /// through <c>RefuseCallsWhileAnUpdateInstalls</c>. The reason it was
+    /// shared is why it stays one method. <i>Corrected 2026-10-10 by addition: that
+    /// refusal went with the server on 2026-10-08 (S a) and was deleted on
+    /// 2026-10-10; a call an update meets is the relay's to answer.</i>
     /// </remarks>
     /// <returns>Options with no incoming filter yet.</returns>
     internal static McpServerOptions CallerFacingOptions()
@@ -533,45 +519,17 @@ internal sealed class BrowserProxy : IAsyncDisposable
                     // refused call is as much a model at work as a forwarded one.
                     using (Activity.ToolCall())
                     {
-                        // ⚠️ A STOP FOR AN UPDATE HAS BEGUN, so this call is
-                        // refused at the door and nothing is forwarded -- Q286 b.
-                        // The conversation ends a moment later; a client that
-                        // calls in that moment is told why and what to do.
-                        if (Volatile.Read(ref _stoppingForAnUpdate) is not 0)
+                        // ⚠️ THE TWO UPDATE DOORS WERE DELETED 2026-10-10, by the
+                        // maintainer's decision "9 a": a stop for an update that
+                        // had begun (Q286 b) and this install's updater still
+                        // running (Q296 c) each refused the call here. Nothing set
+                        // either after S a on 2026-10-08.
+                        if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
                         {
-                            await RefuseForAnUpdateAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                             return;
                         }
 
-                        // ⚠️ THIS INSTALL'S UPDATER IS STILL RUNNING -- Q296 c. The
-                        // call is refused at the door and nothing is forwarded; the
-                        // refusal says this server answers once the update is done,
-                        // because it does. See RefuseCallsWhileAnUpdateInstalls.
-                        if (Volatile.Read(ref _updateInstalling) is not 0)
-                        {
-                            await RefuseWhileAnUpdateInstallsAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
-                            return;
-                        }
-
-                        var call = new CallInFlight(context.Server, ToolNameOf(request));
-                        _calls[request.Id] = call;
-
-                        try
-                        {
-                            if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
-                            {
-                                return;
-                            }
-
-                            await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            if (Volatile.Read(ref _stoppingForAnUpdate) is 0)
-                            {
-                                _ = _calls.TryRemove(new KeyValuePair<RequestId, CallInFlight>(request.Id, call));
-                            }
-                        }
+                        await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     }
 
                     return;
@@ -695,121 +653,25 @@ internal sealed class BrowserProxy : IAsyncDisposable
         return true;
     }
 
-    /// <summary>
-    /// Refuses every tool call still being answered, because this server is
-    /// about to stop so that an update can be installed -- and refuses every call
-    /// that arrives from here on.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q286 b, the maintainer's words verbatim: <i>"Q286 b"</i>.</b> A call in
-    /// flight when a server is stopped through its pipe is answered with
-    /// <see cref="SessionErrors.UpdateIsBeingInstalled"/> before the conversation
-    /// ends, and not with a connection that simply closed under it. A dropped
-    /// connection tells a model nothing; a refusal tells it to wait and call
-    /// again, and to check what the cut-off call had done first.
-    /// </para>
-    /// <para>
-    /// <b>Each call is claimed before its refusal is sent</b>, so a call whose own
-    /// answer went out first is left alone, and an answer arriving after its
-    /// refusal is dropped by <see cref="IsASecondAnswer"/>. A write that cannot
-    /// finish inside the caller's bound is abandoned: the stop goes ahead either
-    /// way, and the caller's token says how long it may take.
-    /// </para>
-    /// </remarks>
-    /// <param name="cancellationToken">Bounds the refusals.</param>
-    /// <returns>A task that completes once every refusal has been sent or abandoned.</returns>
-    public async Task RefuseCallsInFlightForAnUpdateAsync(CancellationToken cancellationToken)
-    {
-        _ = Interlocked.Exchange(ref _stoppingForAnUpdate, 1);
-
-        foreach (var (id, call) in _calls)
-        {
-            if (Interlocked.CompareExchange(ref call.Answered, 1, 0) is not 0)
-            {
-                continue;
-            }
-
-            var refusal = new JsonRpcResponse
-            {
-                Id = id,
-                Result = TextResult(SessionErrors.UpdateIsBeingInstalled(call.Tool, wasRunning: true, call.Caller.ClientInfo?.Name), isError: true),
-            };
-
-            // Published before the send, so the door out knows it for this
-            // call's one answer.
-            Volatile.Write(ref call.Refusal, refusal);
-            ProxyLog.CutOffForAnUpdate(_logger, call.Tool);
-
-            try
-            {
-                await call.Caller.SendMessageAsync(refusal, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception failure) when (failure is IOException or ObjectDisposedException or OperationCanceledException or InvalidOperationException)
-            {
-                ProxyLog.RefusalNotSent(_logger, call.Tool, failure);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Refuses every tool call from here on, until <see cref="TheUpdateHasGone"/>,
-    /// because this install's updater is running.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
-    /// c"</i>.</b> A server that starts while its own install's <c>Update.exe</c> is
-    /// running answers <c>tools/list</c> with the real list, refuses calls while the
-    /// update runs, and keeps serving once the updater has exited. This is the
-    /// middle third; the list is the ordinary answer, and the last third is
-    /// <see cref="TheUpdateHasGone"/>. <i>Corrected 2026-10-08 (previously "the
-    /// list is the ordinary answer, from the run's own child"): it comes from the
-    /// binary since that day.</i>
-    /// </para>
-    /// <para>
-    /// ⚠️ <i>Previously, under Q286 b, such a server was a different server
-    /// altogether</i>: <c>UpdateInProgressServer</c> answered the handshake, refused
-    /// every call, answered <c>tools/list</c> with a JSON-RPC error carrying the same
-    /// sentence, started no child and ended its conversation when the updater went.
-    /// Measured 2026-09-25 at Claude Code 2.1.282, 3 of 3: that error left Claude Code
-    /// connected with ZERO BrowserAI tools for the whole session, and neither client
-    /// ever showed the model the sentence. With the real list and calls refused, both
-    /// clients showed it, and both were served by the same process once it went on
-    /// serving.
-    /// </para>
-    /// <para>
-    /// <b>Called before the conversation opens</b>, so no call can arrive before it.
-    /// </para>
-    /// </remarks>
-    public void RefuseCallsWhileAnUpdateInstalls() => Volatile.Write(ref _updateInstalling, 1);
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a":
+    // RefuseCallsInFlightForAnUpdateAsync, which answered every call still in
+    // flight with SessionErrors.UpdateIsBeingInstalled when a server was stopped
+    // through its pipe for an update (Q286 b); RefuseCallsWhileAnUpdateInstalls and
+    // TheUpdateHasGone, which refused every call with
+    // SessionErrors.UpdateIsStillInstalling while this install's updater ran, and
+    // served again once it had gone (Q296 c); and the two door refusals they
+    // turned on. Program.Main's stop through the pipe and its watch on the updater
+    // called them, both went with S a on 2026-10-08, and after that day only
+    // ErrorCatalogueTests did. The two catalogue rows went with them, and a call an
+    // update meets is answered by the relay: RelayErrors.UpdateInstalling while the
+    // updater runs or the background refuses a relay for an update, and
+    // RelayErrors.UpdateInstallingDuringTheCall for a call an update ends.
 
     /// <summary>
     /// Says that this server is being stopped through its pipe, so the sessions its
     /// shutdown closes record that. See <see cref="SessionManager.StoppingThroughThePipe"/>.
     /// </summary>
     public void StoppingThroughThePipe() => _sessions.StoppingThroughThePipe();
-
-    /// <summary>The updater has gone: every call from here on is served.</summary>
-    public void TheUpdateHasGone() => Volatile.Write(ref _updateInstalling, 0);
-
-    /// <summary>Refuses one call at the door, because this install's updater is running.</summary>
-    /// <param name="caller">The connection to answer.</param>
-    /// <param name="request">The call.</param>
-    /// <param name="cancellationToken">The caller's token.</param>
-    /// <returns>The send.</returns>
-    private async Task RefuseWhileAnUpdateInstallsAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
-    {
-        var tool = ToolNameOf(request);
-
-        ProxyLog.RefusedForAnUpdate(_logger, tool);
-
-        await RefuseAsync(
-            caller,
-            request.Id,
-            SessionErrors.UpdateIsStillInstalling(tool, caller.ClientInfo?.Name),
-            cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>The tool a <c>tools/call</c> names, read leniently: a name that is not a string is <c>&lt;none&gt;</c>.</summary>
     /// <param name="request">The call.</param>
@@ -819,49 +681,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
             && value.GetValueKind() is JsonValueKind.String
                 ? value.GetValue<string>()
                 : "<none>";
-
-    /// <summary>Refuses one call at the door, because a stop for an update has begun.</summary>
-    /// <param name="caller">The connection to answer.</param>
-    /// <param name="request">The call.</param>
-    /// <param name="cancellationToken">The caller's token.</param>
-    /// <returns>The send.</returns>
-    private async Task RefuseForAnUpdateAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
-    {
-        var tool = ToolNameOf(request);
-
-        ProxyLog.RefusedForAnUpdate(_logger, tool);
-
-        await RefuseAsync(
-            caller,
-            request.Id,
-            SessionErrors.UpdateIsBeingInstalled(tool, wasRunning: false, caller.ClientInfo?.Name),
-            cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Whether an outgoing message is a second answer to a call that already
-    /// has one, which must not reach the client.
-    /// </summary>
-    /// <param name="context">The outgoing message.</param>
-    /// <returns><see langword="true"/> when the message must be dropped.</returns>
-    private bool IsASecondAnswer(MessageContext context)
-    {
-        if (context.JsonRpcMessage is not (JsonRpcResponse or JsonRpcError)
-            || context.JsonRpcMessage is not JsonRpcMessageWithId { Id: var id }
-            || !_calls.TryGetValue(id, out var call))
-        {
-            return false;
-        }
-
-        // The stop's own refusal for this call is the one answer it gets.
-        if (ReferenceEquals(Volatile.Read(ref call.Refusal), context.JsonRpcMessage))
-        {
-            return false;
-        }
-
-        // Otherwise the first answer claims the call, and any later one is a second.
-        return Interlocked.Exchange(ref call.Answered, 1) is not 0;
-    }
 
     /// <summary>
     /// Answers <c>tools/list</c> from the list compiled into this binary, rewritten.
@@ -1982,24 +1801,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
     }
-
-    /// <summary>One tool call this server is answering, and whether it has been answered.</summary>
-    /// <param name="caller">The connection it arrived on.</param>
-    /// <param name="tool">The tool it named.</param>
-    private sealed class CallInFlight(McpServer caller, string tool)
-    {
-        /// <summary>Set to 1 by whichever answer claims the call first.</summary>
-        public int Answered;
-
-        /// <summary>The stop's refusal for this call, once it has claimed it.</summary>
-        public JsonRpcMessage? Refusal;
-
-        /// <summary>The connection it arrived on.</summary>
-        public McpServer Caller { get; } = caller;
-
-        /// <summary>The tool it named.</summary>
-        public string Tool { get; } = tool;
-    }
 }
 
 /// <summary>Source-generated log messages for the proxy.</summary>
@@ -2280,27 +2081,6 @@ internal static partial class ProxyLog
         Message = "'{Tool}' arrived from client '{Client}' before any tools/list on this connection, so its tool list predates BrowserAI {Version}. Refused once, and notifications/tools/list_changed was sent with the refusal.")]
     public static partial void ToolListPredatesThisServer(ILogger logger, string tool, string client, string version);
 
-    /// <summary>
-    /// A call still in flight when a stop for an update began was answered with
-    /// the update refusal.
-    /// </summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool the call named.</param>
-    [LoggerMessage(
-        EventId = 19,
-        Level = LogLevel.Information,
-        Message = "'{Tool}' was still running when this server was stopped for an update; it was answered with the update refusal before the conversation ended.")]
-    public static partial void CutOffForAnUpdate(ILogger logger, string tool);
-
-    /// <summary>A call arrived after a stop for an update had begun, or while an update is being installed, and was refused.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool the call named.</param>
-    [LoggerMessage(
-        EventId = 20,
-        Level = LogLevel.Information,
-        Message = "'{Tool}' arrived while an update is being installed and was refused; nothing was forwarded.")]
-    public static partial void RefusedForAnUpdate(ILogger logger, string tool);
-
     /// <summary>A call named a tool this BrowserAI does not have.</summary>
     /// <remarks>
     /// <b>Information, like <see cref="ToolRefused"/>:</b> the refusal is the
@@ -2329,16 +2109,6 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' arrived with arguments its schema does not have ({Arguments}); the call was refused and nothing ran.")]
     public static partial void UnrecognisedArguments(ILogger logger, string tool, string arguments);
-
-    /// <summary>A refusal for a call cut off by a stop could not be written.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool the call named.</param>
-    /// <param name="failure">Why.</param>
-    [LoggerMessage(
-        EventId = 21,
-        Level = LogLevel.Warning,
-        Message = "The update refusal for '{Tool}' could not be sent; the stop goes ahead and the client sees its connection close instead.")]
-    public static partial void RefusalNotSent(ILogger logger, string tool, Exception failure);
 
     // ⚠️ EVENT IDS 10, 11 AND 12 ARE RETIRED AND ARE NOT TO BE REUSED,
     // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused` and
@@ -2386,7 +2156,18 @@ internal static partial class ProxyLog
     // prose above is where the reason goes. 16 is deliberately NOT on it: it is
     // in use, which is what the correction two paragraphs up is about.
     //
-    // RETIRED-EVENT-IDS: 10, 11, 12
+    // ⚠️ AND 19, 20 AND 21 ARE RETIRED TOO -- 2026-10-10, added by addition. They
+    // were the update refusals' three records, deleted with the refusals by the
+    // maintainer's decision "9 a": `CutOffForAnUpdate`, "'{Tool}' was still running
+    // when this server was stopped for an update; it was answered with the update
+    // refusal before the conversation ended."; `RefusedForAnUpdate`, "'{Tool}'
+    // arrived while an update is being installed and was refused; nothing was
+    // forwarded."; and `RefusalNotSent`, "The update refusal for '{Tool}' could not
+    // be sent; the stop goes ahead and the client sees its connection close
+    // instead." Builds up to 1.1.0 write them, so a saved query may still meet them
+    // in an old log, and the marker below carries them.
+    //
+    // RETIRED-EVENT-IDS: 10, 11, 12, 19, 20, 21
     //
     // WHAT THE REUSE ACTUALLY COSTS, measured, not assumed, because the
     // sentence above is about somebody's old query. `ReservationReleased` held

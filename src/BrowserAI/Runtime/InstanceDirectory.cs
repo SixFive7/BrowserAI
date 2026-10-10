@@ -172,9 +172,10 @@ internal static class InstanceDirectory
             // The same open LiveInstances and SessionLock use: deny write to
             // everybody else, allow read, and let the kernel release it however
             // this process dies. Opened inline into the hold's constructor for
-            // the reason LiveInstances.Join does the same -- ownership of a
-            // FileStream passing through a helper's return value is exactly what
-            // CA2000 cannot follow.
+            // the reason LiveInstances.Join did the same until it was deleted on
+            // 2026-10-10 (corrected that day, previously "does the same") --
+            // ownership of a FileStream passing through a helper's return value is
+            // exactly what CA2000 cannot follow.
             return new InstanceDirectoryHold(
                 directory,
                 new FileStream(marker, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1));
@@ -182,8 +183,9 @@ internal static class InstanceDirectory
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
             // ⚠️ A failure to mark is not a failure to start, which is the same
-            // posture Updates.LiveInstances.Join takes for the same kind of
-            // claim. What is lost is the proof that this directory is live,
+            // posture Updates.LiveInstances.Join took for the same kind of claim
+            // until it was deleted on 2026-10-10 (corrected that day, previously
+            // "takes"). What is lost is the proof that this directory is live,
             // which puts the run back on the working-directory lock and the age
             // guard it had before -- degraded, and said out loud, instead of
             // refusing to serve over a bookkeeping file.
@@ -299,6 +301,9 @@ internal static class InstanceDirectory
     /// here for a third value to decide: the updater has to weigh <i>could not
     /// tell</i> against <i>alone</i> before an apply that kills processes, and
     /// this only chooses whether to attempt a rename that is itself the guard.
+    /// <i>Corrected 2026-10-10 by addition: no updater weighs the census since
+    /// 2026-10-08, and the census was deleted on 2026-10-10; <c>Probe</c> answers
+    /// the marker reclaim, which leaves a marker it could not settle alone.</i>
     /// </para>
     /// </remarks>
     /// <param name="directory">The candidate.</param>

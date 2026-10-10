@@ -677,11 +677,14 @@ internal sealed class SessionLockTests
 
         // ⚠️ THE CONTROL. A different value, on the same object: the record moved
         // with the argument, so it is not a constant wearing a property's name.
-        await Assert.That(gate.Acquire(LockScopes.LiveInstanceGate)).IsEqualTo(MutexAcquisition.Acquired);
-        await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.LiveInstanceGate);
+        // Corrected 2026-10-10 (previously "LockScopes.LiveInstanceGate", five
+        // seconds, deleted that day with the live-instance census): the other value
+        // is the per-directory gate's, the one bounded wait LockScopes has left.
+        await Assert.That(gate.Acquire(LockScopes.PerDirectoryGate)).IsEqualTo(MutexAcquisition.Acquired);
+        await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.PerDirectoryGate);
         gate.Release();
 
-        await Assert.That(LockScopes.NeverWaits).IsNotEqualTo(LockScopes.LiveInstanceGate);
+        await Assert.That(LockScopes.NeverWaits).IsNotEqualTo(LockScopes.PerDirectoryGate);
     }
 
     [Test]

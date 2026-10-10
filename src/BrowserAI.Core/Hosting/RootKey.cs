@@ -14,6 +14,9 @@ namespace BrowserAI.Hosting;
 /// task's, the background's pipe and, until 2026-10-08, the census gate and the
 /// coordinator's pipe. A second spelling of the key is how two of them would come to
 /// name different roots while each reported success.
+/// <i>Corrected 2026-10-10 by addition: the census gate's name is still built
+/// (<c>LiveInstances.MutexNameFor</c>), because the stray sweep's reclaim of old
+/// markers takes that gate, and it takes this key since that day.</i>
 /// </para>
 /// <para>
 /// <b>It is the session lock's own identity chain</b>, the part of
@@ -21,6 +24,9 @@ namespace BrowserAI.Hosting;
 /// already resolves a path's spelling, its case, its volume and its aliases to one
 /// answer. <i>Moved here 2026-10-08 from <c>LiveInstances.RootKeyFor</c>, unchanged,
 /// when the live-instance census was deleted with the per-server pipes.</i>
+/// <i>Corrected 2026-10-10 by addition: that day it was copied here, and
+/// <c>LiveInstances.RootKeyFor</c> and the census went on 2026-10-10, by the
+/// maintainer's decision "9 a".</i>
 /// </para>
 /// </remarks>
 internal static class RootKey

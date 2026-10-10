@@ -9,6 +9,10 @@ namespace BrowserAI.Updates;
 // update lane went with the in-process server (S a). The census and every mode's
 // startup still write these records under the category they always had, and their
 // event ids are a log query's subject, so none moves and none is reused.
+//
+// ⚠️ CORRECTED 2026-10-10 BY ADDITION: the census writes nothing since that day,
+// because it was deleted, by the maintainer's decision "9 a". Its three records
+// went with it, and their ids are retired at the end of this class.
 
 /// <summary>Source-generated log messages for the update path.</summary>
 internal static partial class UpdateLog
@@ -163,35 +167,6 @@ internal static partial class UpdateLog
         Message = "The update pass hit its outer deadline of {TripwireMinutes} minutes after {ElapsedMinutes:F1} minutes. That deadline is a crash tripwire, not a budget, so reaching it means the absolute and stall timers did not fire when they should have. Nothing was applied.")]
     public static partial void TripwireFired(ILogger logger, double tripwireMinutes, double elapsedMinutes);
 
-    /// <summary>This process could not announce itself in the live set.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="directory">The live-instance directory.</param>
-    /// <param name="failure">Why, when there is a reason to give.</param>
-    [LoggerMessage(
-        EventId = 12,
-        Level = LogLevel.Warning,
-        Message = "Could not join the live-instance set under {Directory}. BrowserAI serves normally; it simply will not apply an update, because it cannot prove no other instance would be terminated by one.")]
-    public static partial void CouldNotJoinLiveSet(ILogger logger, string directory, Exception? failure);
-
-    /// <summary>The census failed, so solitude could not be established.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="directory">The live-instance directory.</param>
-    /// <param name="failure">Why.</param>
-    [LoggerMessage(
-        EventId = 13,
-        Level = LogLevel.Warning,
-        Message = "Could not count live BrowserAI instances under {Directory}, so this one is treated as not alone and no update is applied.")]
-    public static partial void CouldNotCensusLiveSet(ILogger logger, string directory, Exception failure);
-
-    /// <summary>How many other instances the census found.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="others">How many.</param>
-    [LoggerMessage(
-        EventId = 14,
-        Level = LogLevel.Debug,
-        Message = "{Others} other BrowserAI instance(s) are running out of this install.")]
-    public static partial void NotAlone(ILogger logger, int others);
-
     /// <summary>Velopack said something.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="message">What Velopack said.</param>
@@ -269,4 +244,23 @@ internal static partial class UpdateLog
         Level = LogLevel.Warning,
         Message = "Could not reclaim stale live-instance markers under {Directory}. Nothing was removed; BrowserAI is unaffected and the next pass tries again.")]
     public static partial void CouldNotReclaimLiveMarkers(ILogger logger, string directory, Exception failure);
+
+    // ⚠️ EVENT IDS 12, 13 AND 14 ARE RETIRED -- 2026-10-10, the maintainer's
+    // decision "9 a". They were the census's own records: `CouldNotJoinLiveSet`,
+    // "Could not join the live-instance set under {Directory}. BrowserAI serves
+    // normally; it simply will not apply an update, because it cannot prove no
+    // other instance would be terminated by one."; `CouldNotCensusLiveSet`, "Could
+    // not count live BrowserAI instances under {Directory}, so this one is treated
+    // as not alone and no update is applied."; and `NotAlone`, "{Others} other
+    // BrowserAI instance(s) are running out of this install." Nothing joined the
+    // live set or took its census after the one-binary build of 2026-10-08, and
+    // LiveInstances.Join and LiveInstances.Census were deleted with these. Every
+    // build up to 1.1.0 writes them, so a saved query may still meet them in an old
+    // log, and none of the three ids may be taken again.
+    //
+    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
+    // machine-readable half of the paragraph above, beside it and not in place of
+    // it.
+    //
+    // RETIRED-EVENT-IDS: 12, 13, 14
 }

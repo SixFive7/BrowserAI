@@ -1338,6 +1338,15 @@ Line counts are `wc -l` on `master` at `5bf02f48`, comments included.
 own start path replaces it", and for `LiveInstances.cs`, "The apply's gate is the path
 scan, which is Velopack's own kill set").*
 
+⚠️ *Added 2026-10-10 by addition:* what the build left of these rows and nothing called
+was deleted that day, by the maintainer's decision *"9 a"*: `ServerPipeProtocol.cs`
+whole; the JSON a description was written as, on `ServerDescription.cs`, whose record
+stays as the page's model; the census half of `LiveInstances.cs`, whose reclaim of the
+markers older builds left stays, run by the stray sweep; and the verbs left in
+`CoordinatorInbox.cs` and `CoordinatorProtocol.cs`, which keep the wake, the hand-out
+bound and the three page arguments. [DECISIONS](../../../DECISIONS.md#the-next-build-decided-2026-10-07-and-2026-10-08)
+has the row.
+
 **The tests that go or are rewritten with them:** `SessionHostAccessTests`;
 `CoordinatorWakeTests`, with the arm that went red six times on the 500 ms;
 `ServerPipeTests` and the census arms; `UpdateInProgressTests` and

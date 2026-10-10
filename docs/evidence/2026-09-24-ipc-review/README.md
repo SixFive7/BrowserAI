@@ -22,7 +22,7 @@ screen.
 | Record | What it takes from here |
 |---|---|
 | [kb: the per-server pipe](../../../kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24) | Every number in that section and its six sub-sections |
-| [`ServerPipeProtocol.cs`](../../../src/BrowserAI.Core/Coordination/ServerPipeProtocol.cs) | `CallBound`'s derivation: the walk-100 percentiles, and the no-checksum argument from the torn reads |
+| `ServerPipeProtocol.cs`, deleted 2026-10-10 with what the per-server pipe left behind, by the maintainer's decision *"9 a"* | `CallBound`'s derivation: the walk-100 percentiles, and the no-checksum argument from the torn reads |
 | [`NamedPipes.cs`](../../../src/BrowserAI.Core/Interop/NamedPipes.cs) | The size of the raw call against the framework's, and the default DACL |
 | `ServerPipeClient.cs`, deleted 2026-10-08 with the per-server pipe (S a) | The census against a gone server and a hung one |
 | `ServerPipeTests`, deleted 2026-10-08 with it | The DACL, flag and first-instance readings its arms assert, and the failure shapes it plants |

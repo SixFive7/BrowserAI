@@ -475,7 +475,9 @@ internal sealed class StraySweep
             // the live set's OWN gate as well -- at zero timeout -- because the
             // two scopes protect different things: this one stops ninety-six
             // BrowserAIs sweeping the machine at once, that one stops a walk
-            // racing a peer's join. Neither substitutes for the other.
+            // racing a peer's join. Neither substitutes for the other. Corrected
+            // 2026-10-10 by addition: the only join left to race is a build's from
+            // before 2026-10-08, since this build's was deleted that day.
             LiveMarkers = _liveInstallRoot is null ? null : LiveInstances.ReclaimStaleMarkers(_liveInstallRoot, _logger),
         };
     }

@@ -3,16 +3,23 @@
 
 namespace BrowserAI.Coordination;
 
-/// <summary>One verb that reached the coordinator, and who sent it.</summary>
-/// <param name="Verb">What was asked.</param>
-/// <param name="From">The pid on the other end of the pipe, when Windows said.</param>
-internal sealed record CoordinatorArrival(CoordinatorVerb Verb, int? From);
-
 /// <summary>
-/// The verbs the coordinator's pipe has taken and the coordinator has not yet
-/// acted on, and the one handle that is set when another arrives.
+/// The one handle the background's own thread waits on beside its stop, set when the
+/// page has work for that thread.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-10 (previously "The verbs the coordinator's pipe has
+/// taken and the coordinator has not yet acted on, and the one handle that is set
+/// when another arrives.")</b>. The coordinator's pipe went with S a on 2026-10-08,
+/// and nothing posted a verb after that day. What was there for the verbs was
+/// deleted on 2026-10-10 by the maintainer's decision <i>"9 a"</i>:
+/// <c>CoordinatorArrival</c>, <c>Post</c>, <c>TryTake</c>, <c>IsEmpty</c> and
+/// <c>StartTheHost</c> with the delegate that started the session host. What is left
+/// is <see cref="Arrived"/> and <see cref="Wake"/>, which the background's loop in
+/// <c>Program.Background.cs</c> and <c>DesktopPageHost</c> use. The paragraph below
+/// is the record of the inbox.
+/// </para>
 /// <para>
 /// <b>Two threads meet here and nowhere else.</b> The pipe's thread posts a verb
 /// once its client has read the acknowledgement; the coordinator's own thread
@@ -24,57 +31,16 @@ internal sealed record CoordinatorArrival(CoordinatorVerb Verb, int? From);
 /// turn.</i>
 /// </para>
 /// </remarks>
-/// <param name="startTheHost">
-/// Starts the session host when none runs and says whether one runs now, or
-/// <see langword="null"/> for a coordinator that has none to start (Q366 b).
-/// </param>
-internal sealed class CoordinatorInbox(Func<bool>? startTheHost = null) : IDisposable
+internal sealed class CoordinatorInbox : IDisposable
 {
-    private readonly Lock _gate = new();
-    private readonly List<CoordinatorArrival> _pending = [];
     private readonly EventWaitHandle _arrived = new(initialState: false, EventResetMode.AutoReset);
 
-    /// <summary>
-    /// Starts the session host when none runs, on the pipe's own thread, before the
-    /// <c>host</c> verb is answered.
-    /// </summary>
+    /// <summary>Set each time the page wakes the thread; reset by the wait that sees it.</summary>
     /// <remarks>
-    /// <b>Not queued like the other verbs, and that is the point of it.</b> A server
-    /// waits a few seconds for the host's pipe and then serves its client itself, and
-    /// the coordinator's own thread may be inside the window the whole time, where a
-    /// queued verb waits for the window to close. Starting it here answers the server
-    /// with a host that runs, or with a refusal it can act on at once.
+    /// <i>Corrected 2026-10-10 (previously "Set each time a verb arrives; reset by the
+    /// wait that sees it."), when the verbs were deleted.</i>
     /// </remarks>
-    /// <returns>Whether a host runs now.</returns>
-    public bool StartTheHost() => startTheHost?.Invoke() ?? false;
-
-    /// <summary>Set each time a verb arrives; reset by the wait that sees it.</summary>
     public WaitHandle Arrived => _arrived;
-
-    /// <summary>Whether no verb is waiting.</summary>
-    public bool IsEmpty
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _pending.Count is 0;
-            }
-        }
-    }
-
-    /// <summary>Posts a verb and wakes whoever waits.</summary>
-    /// <param name="verb">What was asked.</param>
-    /// <param name="from">Who asked, when known.</param>
-    public void Post(CoordinatorVerb verb, int? from)
-    {
-        lock (_gate)
-        {
-            _pending.Add(new CoordinatorArrival(verb, from));
-        }
-
-        _ = _arrived.Set();
-    }
 
     /// <summary>Wakes whoever waits, with no verb: something else the coordinator watches changed.</summary>
     /// <remarks>
@@ -82,27 +48,10 @@ internal sealed class CoordinatorInbox(Func<bool>? startTheHost = null) : IDispo
     /// arriving and leaving, its linger running out and its work for the
     /// coordinator's own thread all wake the loop through this, so the loop's wait
     /// keeps the pipe's handle and 63 processes' and nothing more.
+    /// <i>Corrected 2026-10-10 by addition: the loop is the background's since
+    /// 2026-10-08, and its wait holds its stop and this handle.</i>
     /// </remarks>
     public void Wake() => _ = _arrived.Set();
-
-    /// <summary>Takes the oldest verb.</summary>
-    /// <param name="arrival">The verb, when there was one.</param>
-    /// <returns>Whether there was one.</returns>
-    public bool TryTake(out CoordinatorArrival? arrival)
-    {
-        lock (_gate)
-        {
-            if (_pending.Count is 0)
-            {
-                arrival = null;
-                return false;
-            }
-
-            arrival = _pending[0];
-            _pending.RemoveAt(0);
-            return true;
-        }
-    }
 
     /// <inheritdoc />
     public void Dispose() => _arrived.Dispose();

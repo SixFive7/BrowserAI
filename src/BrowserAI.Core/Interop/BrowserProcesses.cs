@@ -275,7 +275,8 @@ internal static partial class BrowserProcesses
     /// <b>Added 2026-10-08 for a person's start that finds the background hung</b>
     /// (R, RESOLUTIONS 10): the background's record names its pid and creation time,
     /// and its image must lie under the install root, every spelling of it, the way
-    /// <see cref="HeldUnder"/> matches a root. Anything else is refused and nothing
+    /// <c>HeldUnder</c> matched a root until it was deleted on 2026-10-10, and the way
+    /// <see cref="RunningFrom"/> still does. Anything else is refused and nothing
     /// is opened with <c>PROCESS_TERMINATE</c> beyond this call. The candidate's
     /// <see cref="StrayCandidate.TryTerminate"/> checks the creation time once more
     /// before it ends anything.
@@ -351,90 +352,15 @@ internal static partial class BrowserProcesses
         return new HeldProcess(processId, created, ImagePathOf(handle) ?? string.Empty, handle);
     }
 
-    /// <summary>
-    /// Every live process whose image lies under a root, except one, each held open
-    /// to be waited on: the set an apply's kill pass would end.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>The coordinator's apply gate -- Q285 a, decided 2026-09-24 by the
-    /// maintainer, in his words: <i>"Q285 a"</i>.</b> Velopack's
-    /// <c>force_stop_package</c> ends every process whose image path is under the
-    /// install root except its own, matching case-insensitively against the root
-    /// with a separator appended, read at 1.2.158
-    /// ([kb](../../../kb/packaging/velopack.md#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24)).
-    /// This is the same set, found the way <see cref="RunningFrom"/> finds a
-    /// browser: full image path, every spelling of the root, never a name. The pid
-    /// left out is the caller's own, which is the one Velopack leaves out too.
-    /// </para>
-    /// <para>
-    /// <b>Held with <c>SYNCHRONIZE</c> and the query right and nothing else</b>, as
-    /// <see cref="HeldProcess"/> objects the caller can wait on; the handle is what
-    /// stops a pid being reused while it is held. <b>A process that has exited is not
-    /// found, even while another process still holds its handle</b>: measured
-    /// 2026-09-25, such a process is not in <c>EnumProcesses</c>' list, and although
-    /// its pid still opens, <c>QueryFullProcessImageNameW</c> refuses it, so a pass
-    /// that raced its exit drops it too. A wait on a handle already signalled would
-    /// wake for nothing, again and again, and that is what this rules out.
-    /// </para>
-    /// </remarks>
-    /// <param name="root">The install root, absolute.</param>
-    /// <param name="exceptProcessId">The pid to leave out: the caller's own.</param>
-    /// <returns>The scan. <b>The caller owns it and must dispose it.</b></returns>
-    /// <exception cref="Win32Exception">The process list could not be read at all.</exception>
-    public static RootScan HeldUnder(string root, int exceptProcessId)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(root);
-
-        var spellings = ImageSpellings.OfDirectory(root);
-        var prefixes = spellings.Matched
-            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
-            .ToArray();
-
-        var held = new List<HeldProcess>();
-
-        try
-        {
-            foreach (var processId in ProcessIds())
-            {
-                if (processId == exceptProcessId)
-                {
-                    continue;
-                }
-
-                var handle = OpenProcessToWaitOn(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
-
-                if (handle.IsInvalid)
-                {
-                    handle.Dispose();
-                    continue;
-                }
-
-                var path = ImagePathOf(handle);
-
-                if (path is null
-                    || !Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    || !GetProcessTimes(handle, out var created, out _, out _, out _))
-                {
-                    handle.Dispose();
-                    continue;
-                }
-
-                held.Add(new HeldProcess(processId, created, path, handle));
-            }
-        }
-        catch
-        {
-            foreach (var process in held)
-            {
-                process.Dispose();
-            }
-
-            throw;
-        }
-
-        return new RootScan(held, spellings.Unresolved);
-    }
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": HeldUnder, every
+    // live process whose image lay under a root except the caller, each held open to
+    // be waited on, and its RootScan. It was the coordinator's apply gate (Q285 a):
+    // the set Velopack's force_stop_package would end, found by full image path and
+    // every spelling of the root. The coordinator's apply loop went with S a on
+    // 2026-10-08, the background's update core decides when an update installs, and
+    // nothing called this after that day. Its one measured fact stays in the kb: a
+    // process that has exited is not in EnumProcesses' list even while another
+    // process holds its handle, measured 2026-09-25.
 
     /// <summary>
     /// Of the given processes, the one that started first among those running
@@ -1000,13 +926,20 @@ internal sealed partial class StrayCandidate : IDisposable
 /// <see cref="Dispose"/> during the wait cannot close it underneath the waiter.
 /// One thread for the seconds an update takes is the whole cost.
 /// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-10 by addition: nothing waits on it any more.</b>
+/// The server that refused its calls while the updater ran went with S a on
+/// 2026-10-08, and the wait, <c>WhenExited</c>, which ended those refusals through
+/// <c>BrowserProxy.TheUpdateHasGone</c>, was deleted on 2026-10-10 with them, by the
+/// maintainer's decision <i>"9 a"</i>, with the <c>WaitForSingleObject</c>
+/// declaration only it used. What is left is detection: a relay's finder asks
+/// <see cref="BrowserProcesses.FirstRunning"/> whether this install's updater runs,
+/// and answers a call with the update sentence while it does.
+/// </para>
 /// </remarks>
-internal sealed partial class WatchedProcess : IDisposable
+internal sealed class WatchedProcess : IDisposable
 {
-    private const uint Infinite = 0xFFFFFFFF;
-
     private readonly SafeProcessHandle _handle;
-    private int _watching;
 
     internal WatchedProcess(int processId, long createdFileTime, string imagePath, SafeProcessHandle handle)
     {
@@ -1025,50 +958,8 @@ internal sealed partial class WatchedProcess : IDisposable
     /// <summary>The full path of the executable it is running.</summary>
     public string ImagePath { get; }
 
-    /// <summary>Runs <paramref name="onExit"/> once, on a thread of its own, when the process has gone.</summary>
-    /// <param name="onExit">What to do. It must not throw; a failure is swallowed there, since nothing waits for it.</param>
-    public void WhenExited(Action onExit)
-    {
-        ArgumentNullException.ThrowIfNull(onExit);
-
-        if (Interlocked.Exchange(ref _watching, 1) is not 0)
-        {
-            return;
-        }
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                // An answer other than signalled means the wait itself failed;
-                // the process may still be there, and a stop built on that would
-                // end a conversation for nothing. Only a signalled handle is a
-                // departure.
-                if (WaitForSingleObject(_handle, Infinite) is 0)
-                {
-                    onExit();
-                }
-            }
-#pragma warning disable CA1031 // A background watch must not take the process down; the conversation it ends has its own paths.
-            catch (Exception)
-#pragma warning restore CA1031
-            {
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "BrowserAI updater watch",
-        };
-
-        thread.Start();
-    }
-
     /// <inheritdoc />
     public void Dispose() => _handle.Dispose();
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    private static partial uint WaitForSingleObject(SafeProcessHandle hHandle, uint dwMilliseconds);
 }
 
 /// <summary>
@@ -1113,29 +1004,4 @@ internal sealed class HeldProcess : WaitHandle
     /// <returns>The code, or <see langword="null"/> when it cannot be read. Ask only once the handle is signalled.</returns>
     public int? ExitCodeOnceEnded() =>
         BrowserProcesses.GetExitCodeProcess(SafeWaitHandle, out var code) ? unchecked((int)code) : null;
-}
-
-/// <summary>One pass over the processes running out of a root, each held open.</summary>
-/// <param name="held">Every process found, each held.</param>
-/// <param name="unresolved">
-/// A sentence for each spelling of the root that could not be established, from
-/// <see cref="ImageSpellings.Unresolved"/>: a scan that could not tell what the
-/// root is called finds nothing and must not read as an empty root.
-/// </param>
-internal sealed class RootScan(IReadOnlyList<HeldProcess> held, IReadOnlyList<string> unresolved) : IDisposable
-{
-    /// <summary>Every process found.</summary>
-    public IReadOnlyList<HeldProcess> Held { get; } = held;
-
-    /// <summary>Why a spelling of the root could not be established, one sentence each.</summary>
-    public IReadOnlyList<string> Unresolved { get; } = unresolved;
-
-    /// <summary>Lets go of every handle.</summary>
-    public void Dispose()
-    {
-        foreach (var process in Held)
-        {
-            process.Dispose();
-        }
-    }
 }

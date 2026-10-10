@@ -67,7 +67,7 @@ namespace BrowserAI.Sessions;
 /// </item>
 /// <item>
 /// <term><b>Not entitled</b> -- <c>InstanceDirectory</c>'s claim,
-/// <c>LiveInstances</c>' registration, <c>FirefoxProfile</c>'s probe,
+/// <c>LiveInstances</c>' registration (deleted 2026-10-10), <c>FirefoxProfile</c>'s probe,
 /// <c>SessionLock.ProbeForHolder</c></term>
 /// <description>
 /// The refusal <b>is the answer</b>. Each of those opens exists precisely to

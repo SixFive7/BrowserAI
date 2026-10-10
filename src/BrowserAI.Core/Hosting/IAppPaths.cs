@@ -69,7 +69,9 @@ namespace BrowserAI.Hosting;
 /// process running out of this install?</i>, which is a question about the
 /// directory Velopack's <c>force_stop_package</c> matches image paths against.
 /// A census keyed to the data root would answer about the wrong set of
-/// processes.
+/// processes. <i>Corrected 2026-10-10 by addition: the census was deleted that
+/// day; the markers builds before 2026-10-08 left are still reclaimed under the
+/// install root, by the stray sweep.</i>
 /// </para>
 /// </remarks>
 internal interface IAppPaths

@@ -39,7 +39,7 @@ namespace BrowserAI.Updates;
 /// that owns the locator.
 /// </para>
 /// </remarks>
-internal sealed class VelopackUpdateClient : IBackgroundUpdateClient, IStagedUpdates
+internal sealed class VelopackUpdateClient : IBackgroundUpdateClient
 {
     private readonly UpdateManager _manager;
     private readonly UpdateFeed _feed;
@@ -99,12 +99,20 @@ internal sealed class VelopackUpdateClient : IBackgroundUpdateClient, IStagedUpd
 
     /// <inheritdoc />
     /// <remarks>
+    /// <para>
     /// <b>No request is made.</b> <c>UpdatePendingRestart</c> reads the packages
     /// directory through the locator and compares versions, read at Velopack
     /// 1.2.158 (<c>UpdateManager.cs</c>); in a process that is not installed the
     /// installed version is unknown and the answer is always none.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-10 by addition: this was <c>Pending</c>, the
+    /// coordinator's name for the reading, and <c>Staged</c> answered through it.
+    /// <c>Pending</c> was deleted with <c>IStagedUpdates</c>, by the maintainer's
+    /// decision "9 a", and the background's update core asks this one.</i>
+    /// </para>
     /// </remarks>
-    public UpdateCandidate? Pending() =>
+    public UpdateCandidate? Staged() =>
         _manager.UpdatePendingRestart is { } asset
             ? new UpdateCandidate
             {
@@ -117,81 +125,19 @@ internal sealed class VelopackUpdateClient : IBackgroundUpdateClient, IStagedUpd
             }
             : null;
 
-    /// <inheritdoc />
-    /// <remarks>
-    /// The same reading as <see cref="Pending"/>, which is the coordinator's name
-    /// for it; the background's seam names it for what it is.
-    /// </remarks>
-    public UpdateCandidate? Staged() => Pending();
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a":
+    // ApplyAfterThisProcessExits, WaitExitThenApplyUpdates with silent: true and
+    // restart: false, which took a candidate from a feed check (UpdateInfo) or from
+    // the packages directory (VelopackAsset). A server's own update lane and the
+    // coordinator called it, both went with S a on 2026-10-08, and nothing called it
+    // after that day. The background applies with a restart, below.
 
-    /// <inheritdoc cref="IUpdateClient.ApplyAfterThisProcessExits" />
-    public void ApplyAfterThisProcessExits(UpdateCandidate candidate)
-    {
-        ArgumentNullException.ThrowIfNull(candidate);
-
-        // ⚠️ TWO KINDS OF CANDIDATE SINCE 2026-09-25: the server's, which came
-        // from a feed check and carries Velopack's UpdateInfo, and the
-        // coordinator's, which came from the packages directory and carries the
-        // asset itself. Both reach Update.exe the same way.
-        var asset = candidate.Native switch
-        {
-            UpdateInfo info => info.TargetFullRelease,
-            VelopackAsset staged => staged,
-            _ => throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it."),
-        };
-
-        // silent: no dialogs -- there is no user at a background MCP server to
-        // answer one. restart: false -- a relaunched process does not inherit
-        // the caller's stdio, so restarting would produce a server with no
-        // client. waitPid is this process, supplied by Velopack itself, which is
-        // what guarantees the session locks are released before the swap.
-        _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: false);
-    }
-
-    /// <summary>
-    /// Applies a downloaded update and starts the application again afterwards.
-    /// </summary>
-    /// <param name="candidate">What was downloaded.</param>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>The opposite of <see cref="ApplyAfterThisProcessExits"/>, and the
-    /// two must never be confused.</b> The SERVER never restarts: a restart
-    /// there would start a process no client is speaking to, and with the
-    /// configuration app as the main executable it would put a window on the
-    /// screen in the middle of somebody's session. The configuration APP always
-    /// restarts, because a window that vanished mid-click with nothing to say it
-    /// had succeeded is the same defect from the other side.
-    /// </para>
-    /// <para>
-    /// <b>It is Velopack's own pattern for a foreground application</b>, and the
-    /// restarted process is started with <c>VELOPACK_RESTART</c> in its
-    /// environment, which is how the window that comes back knows to say
-    /// <i>Updated to ...</i>.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Whatever is under the install root is killed either way.</b>
-    /// Velopack's apply ends in <c>force_stop_package</c>, which matches image
-    /// path and not name, so a server serving a session goes with it. That is
-    /// what the warning beside the button says out loud instead of leaving it to
-    /// be discovered.
-    /// </para>
-    /// </remarks>
-    public void ApplyAndRestart(UpdateCandidate candidate)
-    {
-        ArgumentNullException.ThrowIfNull(candidate);
-
-        // ⚠️ A STAGED PACKAGE TOO SINCE 2026-10-03: the browser tab offers a package
-        // a server already downloaded with a link that installs it (Q310 a), and that
-        // candidate carries the asset itself, the way the coordinator's does.
-        var asset = candidate.Native switch
-        {
-            UpdateInfo info => info.TargetFullRelease,
-            VelopackAsset staged => staged,
-            _ => throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it."),
-        };
-
-        _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: true);
-    }
+    // ⚠️ DELETED 2026-10-10 too, by the same decision: ApplyAndRestart,
+    // WaitExitThenApplyUpdates with silent: true and restart: true and no arguments,
+    // the configuration app's own install and then the browser tab's (Q310 a), which
+    // took a candidate from a feed check or a package already on disk. Its one
+    // caller, the page's VelopackPageUpdates, was deleted the same day in c79af928,
+    // so nothing called it after that commit.
 
     /// <inheritdoc />
     public void ApplyAndRestartAfterThisProcessExits(UpdateCandidate candidate, IReadOnlyList<string> restartArguments)

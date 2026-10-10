@@ -34,11 +34,11 @@ internal static class ProcessBounds
     /// </summary>
     public static TimeSpan HandOutBound { get; } = TimeSpan.FromSeconds(10);
 
-    /// <summary>
-    /// How long a client gives one call on a server's own pipe, from connect to the
-    /// answer: 500 ms. The value of <c>ServerPipeProtocol.CallBound</c>.
-    /// </summary>
-    public static TimeSpan ServerPipeCallBound { get; } = TimeSpan.FromMilliseconds(500);
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": ServerPipeCallBound,
+    // 500 ms, the value of ServerPipeProtocol.CallBound, how long a client gave one
+    // call on a server's own pipe. The pipe per server and its client went with S a
+    // on 2026-10-08, nothing read the bound after that, and it went with
+    // ServerPipeProtocol. Its row left kb/numbers.md the same day.
 
     /// <summary>
     /// How long a connection to the background may take to send its first message:

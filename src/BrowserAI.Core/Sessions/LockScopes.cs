@@ -26,7 +26,7 @@ namespace BrowserAI.Sessions;
 ///   </item>
 ///   <item>
 ///     <term>Per-root, guarding the live-instance set</term>
-///     <description><c>Global\BrowserAI-Live-{sha256(root)[..32]}</c>, held for one join or one census</description>
+///     <description><c>Global\BrowserAI-Live-{sha256(root)[..32]}</c>, held for one reclaim of the markers builds before 2026-10-08 left -- <i>corrected 2026-10-10 (previously "held for one join or one census"), when the join and the census were deleted, by the maintainer's "9 a"</i></description>
 ///   </item>
 /// </list>
 /// <para>
@@ -233,32 +233,16 @@ internal static class LockScopes
     /// </summary>
     public static TimeSpan NeverWaits => TimeSpan.Zero;
 
-    /// <summary>
-    /// The bounded wait on the live-instance set's own gate, which
-    /// <c>Updates.LiveInstances</c> takes around joining and around the census.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Split out on 2026-08-18, at the value it already had.</b> That code
-    /// used <see cref="PerDirectoryGate"/>, and raising the gate to sixty seconds
-    /// would have silently taken this with it -- putting a <b>sixty-second stall
-    /// on the startup path</b>, because <c>Join</c> runs while BrowserAI is
-    /// starting and blocks until this expires. Nothing about this scope asked for
-    /// that; it inherited it from a constant that was re-sized for a different
-    /// problem, which is exactly the coupling that produced the defect the gate
-    /// was re-sized for in the first place.
-    /// </para>
-    /// <para>
-    /// <b>Five seconds is right HERE and was wrong there, and the difference is
-    /// the section, not the taste.</b> The per-directory gate is held across a
-    /// durable write, a rename, a re-open and a <c>RenameWindow</c> wait;
-    /// this one is held across creating one <c>.live</c> file, or one directory
-    /// enumeration. A hundred processes starting at once queue about 200 ms here
-    /// against 3.3 s there. And the consequences differ: expiring here means
-    /// <i>no update is applied this run</i>, which
-    /// <c>LiveInstances.Join</c> documents as the safe direction and logs; there
-    /// it means a caller is told the wrong thing about who owns a session.
-    /// </para>
-    /// </remarks>
-    public static TimeSpan LiveInstanceGate => SessionTimes.LiveInstanceGate;
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": LiveInstanceGate,
+    // the five-second wait on the live-instance set's own gate that
+    // Updates.LiveInstances took around joining and around the census. Nothing
+    // joined or took a census after the one-binary build of 2026-10-08, and Join,
+    // Census and this wait went together. Split out of PerDirectoryGate on
+    // 2026-08-18 at the value it already had, so that raising the per-directory
+    // gate to sixty seconds did not put a sixty-second stall on the startup path:
+    // the per-directory gate is held across a durable write, a rename, a re-open and
+    // a RenameWindow wait, and this one across creating one .live file or one
+    // directory listing, about 200 ms for a hundred processes starting at once
+    // against 3.3 s there. The reclaim that is left takes the same gate at
+    // NeverWaits.
 }

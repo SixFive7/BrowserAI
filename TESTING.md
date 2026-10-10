@@ -754,6 +754,17 @@ toast. Deleted with what they drove: `SessionHostCoordinatorTests`,
 `UpdateInProgressTests` as whole files, and arms of `UpdateTests` and
 `PageServiceTests`, which keep a `RETIRED` remark where each stood.
 
+⚠️ **Retired 2026-10-10 with code nothing called after that build**, *added by
+addition*, the maintainer's decision *"9 a"*. Four `UpdateTests` arms drove the
+live-instance census, deleted that day: the reclaim half of one of them is carried over
+as `UpdateTests.AMarkerThatCannotBeOpenedIsLeftAloneByTheReclaimAndNamedInItsReason`, and
+the reclaim's other arms stay. Three `ErrorCatalogueTests` arms drove `BrowserProxy`'s
+update refusals, which no product path called after 2026-10-08, so the catalogue's census
+counted two rows nothing real could say; the rows went with the members, the catalogue's
+own count reads 41, and what a model meets during an update is held by `RelayTests` over
+`RelayErrors`.
+Each keeps a `RETIRED` remark where it stood.
+
 ⚠️ **A published binary is given its data root as `--data-root` since 2026-10-08, step 5
 of the one-binary build.** *Added by addition.* No running BrowserAI reads
 `BROWSERAI_ROOT` any more, so an arm that wants a scratch data root for a relay passes

@@ -1664,6 +1664,11 @@ degraded path:
 | `StraySweep.Run` | `NoLock`, nothing swept | no, a log line |
 | `SessionLock.TryAcquire` | `Refused`, carrying `SessionErrors.NoMachineWideLock` | **yes** |
 
+*Added 2026-10-10 by addition:* the first consumer, `LiveInstances.Join`, was deleted
+that day with the census, by the maintainer's decision *"9 a"*, after nothing had called
+it since the one-binary build of 2026-10-08. The other three rows and the measurement
+are unchanged.
+
 **The first row is the dangerous one and it is the whole finding.** A process
 that cannot join creates no marker, so it is invisible to the other user's
 census; that census answers *Alone*, and an apply runs `force_stop_package`,

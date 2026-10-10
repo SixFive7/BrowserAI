@@ -270,10 +270,6 @@ internal sealed class ScriptedBackgroundClient(ConcurrentQueue<string> events) :
     }
 
     /// <inheritdoc />
-    public void ApplyAfterThisProcessExits(UpdateCandidate candidate) =>
-        throw new InvalidOperationException("The background applies only with a restart.");
-
-    /// <inheritdoc />
     public UpdateCandidate? Staged() => StagedCandidate;
 
     /// <inheritdoc />

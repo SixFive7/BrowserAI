@@ -21,6 +21,14 @@ namespace BrowserAI.Updates;
 /// timers, the gate, the channel and the decision to apply are all on this side
 /// of the seam, in <c>UpdateService</c>, where they are ordinary code.
 /// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-10-10 by addition: three members since that day.</b>
+/// <c>ApplyAfterThisProcessExits</c>, the silent apply with no restart that a
+/// server's own update lane and the coordinator called, was deleted by the
+/// maintainer's decision <i>"9 a"</i>: <c>UpdateService</c> and the coordinator went
+/// with S a on 2026-10-08, and the background applies only with a restart, through
+/// <see cref="IBackgroundUpdateClient.ApplyAndRestartAfterThisProcessExits"/>.
+/// </para>
 /// </remarks>
 internal interface IUpdateClient
 {
@@ -42,27 +50,21 @@ internal interface IUpdateClient
     /// <returns>The download.</returns>
     Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Spawns <c>Update.exe apply --silent --norestart --waitPid &lt;ownPid&gt;</c>
-    /// and returns.
-    /// </summary>
-    /// <remarks>
-    /// <b>It does not restart and it does not exit.</b> <c>--norestart</c> is
-    /// deliberate: a relaunched BrowserAI does not inherit the caller's stdio
-    /// ([kb](../../../kb/packaging/velopack.md#rollback)), so a restarted process
-    /// would be a server with no client. The next session starts the new version
-    /// from the identical path, which is why there is no *restart to apply*
-    /// prompt in normal use. Exiting is the caller's job, so that the ordinary
-    /// shutdown path runs and the lock, the job objects and the log all close.
-    /// </remarks>
-    /// <param name="candidate">The staged candidate to apply.</param>
-    void ApplyAfterThisProcessExits(UpdateCandidate candidate);
+    // ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a":
+    // ApplyAfterThisProcessExits, which spawned `Update.exe apply --silent
+    // --norestart --waitPid <ownPid>` and returned. It did not restart, on purpose: a
+    // relaunched BrowserAI does not inherit the caller's stdio, so a restarted server
+    // would have had no client (kb/packaging/velopack.md, "Rollback"). The server's
+    // own update lane and the coordinator called it, both went with S a on
+    // 2026-10-08, and nothing called it after that day.
 }
 
 /// <summary>
 /// What the one resident background asks of Velopack: the four members of
 /// <see cref="IUpdateClient"/>, the package already staged, and an apply that
 /// starts BrowserAI again with arguments of its own.
+/// <i>Corrected 2026-10-10 by addition: three members of <see cref="IUpdateClient"/>
+/// since that day.</i>
 /// </summary>
 /// <remarks>
 /// <para>
@@ -73,8 +75,14 @@ internal interface IUpdateClient
 /// interface goes.
 /// </para>
 /// <para>
+/// ⚠️ <i>Added 2026-10-10 by addition:</i> the lane was deleted with S a on
+/// 2026-10-08, and on 2026-10-10 the member only it and the coordinator called,
+/// <c>IUpdateClient.ApplyAfterThisProcessExits</c>, went too. The two interfaces are
+/// not merged yet: that is a rename across the update core, and not a deletion.
+/// </para>
+/// <para>
 /// <b>The apply restarts, and that is the opposite of
-/// <see cref="IUpdateClient.ApplyAfterThisProcessExits"/>.</b> A server a client
+/// <c>IUpdateClient.ApplyAfterThisProcessExits</c>, deleted 2026-10-10.</b> A server a client
 /// started had no reason to come back after an update, because no client would
 /// be speaking to the process Velopack started. The background has one: Velopack
 /// starts the main executable again after a successful apply and after a failed
@@ -128,37 +136,12 @@ internal interface IBackgroundUpdateClient : IUpdateClient
     void ApplyAndRestartAfterThisProcessExits(UpdateCandidate candidate, IReadOnlyList<string> restartArguments);
 }
 
-/// <summary>
-/// What the coordinator asks of Velopack: whether a newer package is already on
-/// disk, and to apply it once this process has gone.
-/// </summary>
-/// <remarks>
-/// <para>
-/// <b>A second seam and not a fifth member of <see cref="IUpdateClient"/></b>, and
-/// the difference is who asks. The server's update lane checks a feed and
-/// downloads; the coordinator never touches the network, and asks only what
-/// <c>UpdateManager.UpdatePendingRestart</c> answers from the packages directory
-/// (the newest full package whose version is above the installed one, read at
-/// Velopack 1.2.158) and then hands the same apply to <c>Update.exe</c>. Added
-/// 2026-09-25 with the coordinator, Q280 b and Q285 a.
-/// </para>
-/// <para>
-/// <b>The apply is the one <see cref="IUpdateClient.ApplyAfterThisProcessExits"/>
-/// already is</b>: silent, no restart, waiting on this pid. The coordinator has no
-/// client and no window it must bring back, so a restart would only start a
-/// configuration window nobody asked for.
-/// </para>
-/// </remarks>
-internal interface IStagedUpdates
-{
-    /// <summary>The package already on disk that is newer than what is installed, or <see langword="null"/>.</summary>
-    /// <returns>The candidate. Its <see cref="UpdateCandidate.Native"/> is Velopack's own asset.</returns>
-    UpdateCandidate? Pending();
-
-    /// <summary>Hands the package to <c>Update.exe</c>, which applies it once this process has exited.</summary>
-    /// <param name="candidate">What <see cref="Pending"/> returned.</param>
-    void ApplyAfterThisProcessExits(UpdateCandidate candidate);
-}
+// ⚠️ DELETED 2026-10-10, by the maintainer's decision "9 a": IStagedUpdates, what
+// the coordinator asked of Velopack, with Pending, the package already on disk that
+// is newer than the install, and ApplyAfterThisProcessExits, the silent apply with no
+// restart. The coordinator's apply loop went with S a on 2026-10-08 and nothing asked
+// either after that day. The background's seam names the same reading Staged, on
+// IBackgroundUpdateClient above, and VelopackUpdateClient keeps it under that name.
 
 /// <summary>What the feed is offering, in terms this side of the seam can read.</summary>
 /// <remarks>

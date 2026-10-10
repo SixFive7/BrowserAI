@@ -99,244 +99,41 @@ internal sealed partial class ErrorCatalogueTests
         }
     }
 
-    /// <summary>
-    /// The still-installing row, provoked by a call to a proxy whose install's
-    /// updater is running -- and the same call served once the updater has gone.
-    /// </summary>
-    /// <remarks>
-    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
-    /// c"</i>.</b> The published binary's own arm is <c>UpdateInProgressTests</c>,
-    /// which drives a real updater going away; this one is the census's, and it
-    /// also holds the door itself: the refused call never reaches the child, and
-    /// the call after <c>TheUpdateHasGone</c> does, once.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheStillInstallingRowIsEmittedWhileTheUpdaterRunsAndTheCallIsServedAfter()
-    {
-        await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools["browser_snapshot"] = new FakeToolBehaviour
-            {
-                RawResult = """{"content":[{"type":"text","text":"a snapshot"}]}""",
-            });
+    // RETIRED 2026-10-10: TheStillInstallingRowIsEmittedWhileTheUpdaterRunsAndTheCallIsServedAfter,
+    // which turned on BrowserProxy.RefuseCallsWhileAnUpdateInstalls, held that a call
+    // was refused with SessionErrors.UpdateIsStillInstalling and never reached the
+    // child, and that the same call was served once TheUpdateHasGone had been
+    // called. Only this arm called either member after the one-binary build of
+    // 2026-10-08, when the server that watched its install's updater went (S a), so
+    // the row was reachable from no real path. Both members and the row were deleted
+    // that day by the maintainer's decision "9 a". A call made while this install's
+    // updater runs is answered by the relay, with RelayErrors.UpdateInstalling in
+    // its client's words, which RelayTests.AnInstallingUpdateIsAnsweredAtOnceInEachClientsWords
+    // holds and RelayTests.EveryRelayErrorsRowWasProvokedByAnArmAbove counts.
 
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+    // RETIRED 2026-10-10: TheUpdateRowIsEmittedByACallCutOffByAStopAndByACallMadeAfterIt,
+    // which called BrowserProxy.RefuseCallsInFlightForAnUpdateAsync on a held call,
+    // held that the call cut off and a call made after the stop were both refused
+    // with SessionErrors.UpdateIsBeingInstalled, and that the held call's own late
+    // answer was dropped at the door out. Only this arm and the next called that
+    // member after 2026-10-08, when the stop through a server's own pipe went (S a),
+    // so the row was reachable from no real path; the member, the row and the door
+    // out were deleted that day by the maintainer's decision "9 a". The relay
+    // answers both moments now: RelayErrors.UpdateInstallingDuringTheCall for a call
+    // an update ends (RelayTests.ACommitWithNowCutsOffACallInFlight) and
+    // RelayErrors.UpdateInstalling for one that arrives after
+    // (RelayTests.ACallQueuedBehindTheCommitGetsTheUpdateSentence), and the
+    // background refuses a relay for an update with its own sentence
+    // (BackgroundServerTests.EachRefusalCarriesItsSentenceAndItsKindAndNoRefusedRelayIsAdmitted).
 
-        rig.Proxy.RefuseCallsWhileAnUpdateInstalls();
-
-        var refused = await CallAsync(rig, "browser_snapshot", new JsonObject
-        {
-            ["session"] = rig.Session!,
-            ["why"] = "the suite calling while an update installs",
-        });
-
-        await Assert.That((bool?)refused["isError"]).IsTrue();
-
-        Match(
-            TextOf(refused),
-            nameof(SessionErrors.UpdateIsStillInstalling),
-            SessionErrors.UpdateIsStillInstalling("browser_snapshot", "BrowserAI.RawPipeClient"));
-
-        await Assert.That(rig.Child.ToolCallsReceived).DoesNotContain("browser_snapshot");
-
-        // ---- The updater has gone: the same call is served.
-        rig.Proxy.TheUpdateHasGone();
-
-        var served = await CallAsync(rig, "browser_snapshot", new JsonObject
-        {
-            ["session"] = rig.Session!,
-            ["why"] = "the suite calling once the update is done",
-        });
-
-        await Assert.That((bool?)served["isError"]).IsNotEqualTo(true).Because(TextOf(served));
-        await Assert.That(rig.Child.ToolCallsReceived.Count(name => name == "browser_snapshot")).IsEqualTo(1);
-    }
-
-    /// <summary>
-    /// The update row, provoked both ways it happens: a call cut off in flight
-    /// by a stop, and a call made once the stop has begun -- and the cut-off call
-    /// gets that one answer and no other.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Q286 b, the maintainer's words verbatim: <i>"Q286 b"</i>.</b> The
-    /// published binary's own arm is <c>UpdateInProgressTests</c>; this one is
-    /// the census's, and it can hold the call open for as long as it likes,
-    /// because the double answers only when the arm releases it.
-    /// </para>
-    /// <para>
-    /// <b>The late answer is the part a stop could get wrong without anybody
-    /// seeing it.</b> Released after its refusal, the double answers the held
-    /// call; the proxy tries to pass that answer on, and the door out must drop
-    /// it. The arm waits for the call to finish inside the proxy and then makes
-    /// one more round trip, which reads every frame written before its own
-    /// answer -- so a second answer, had one been written, is among them.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheUpdateRowIsEmittedByACallCutOffByAStopAndByACallMadeAfterIt()
-    {
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools["browser_navigate"] = new FakeToolBehaviour
-            {
-                HoldUntil = release.Task,
-                RawResult = """{"content":[{"type":"text","text":"navigated, too late"}]}""",
-            });
-
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
-
-        var held = await rig.Client.BeginAsync("tools/call", new JsonObject
-        {
-            ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject
-            {
-                ["url"] = "data:text/html,x",
-                ["session"] = rig.Session!,
-                ["why"] = "the suite holding a call open across a stop",
-            },
-        });
-
-        await waitForAsync(() => rig.Proxy.Activity.Read().CallsInFlight is 1);
-
-        using (var bound = new CancellationTokenSource(TestDefaults.InProcessHang))
-        {
-            await rig.Proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token);
-        }
-
-        // ---- The call cut off in flight.
-        var cutOff = (await rig.Client.AwaitAsync(held, "tools/call")).Result!;
-
-        await Assert.That((bool?)cutOff["isError"]).IsTrue();
-
-        Match(
-            TextOf(cutOff),
-            nameof(SessionErrors.UpdateIsBeingInstalled),
-            SessionErrors.UpdateIsBeingInstalled("browser_navigate", wasRunning: true, "BrowserAI.RawPipeClient"));
-
-        // ---- A call made once the stop has begun: refused at the door.
-        var afterwards = await CallAsync(rig, "browser_snapshot", new JsonObject
-        {
-            ["session"] = rig.Session!,
-            ["why"] = "the suite calling after the stop began",
-        });
-
-        Match(
-            TextOf(afterwards),
-            nameof(SessionErrors.UpdateIsBeingInstalled),
-            SessionErrors.UpdateIsBeingInstalled("browser_snapshot", wasRunning: false, "BrowserAI.RawPipeClient"));
-
-        // ---- The late answer. Released, answered by the double, finished inside
-        // the proxy -- and then one more round trip reads everything before it.
-        release.SetResult();
-
-        await waitForAsync(() => rig.Proxy.Activity.Read().CallsInFlight is 0);
-
-        _ = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
-
-        var answersToTheHeldCall = rig.Client.FramesReceived
-            .Select(frame => System.Text.Json.Nodes.JsonNode.Parse(FrameChannel.TextOf(frame))?["id"])
-            .Count(id => id is not null && (int?)id == held);
-
-        await Assert.That(answersToTheHeldCall).IsEqualTo(1);
-
-        static async Task waitForAsync(Func<bool> condition)
-        {
-            var waited = System.Diagnostics.Stopwatch.StartNew();
-
-            while (!condition())
-            {
-                if (waited.Elapsed > TestDefaults.InProcessHang)
-                {
-                    throw new TimeoutException("The proxy's own count of calls in flight never reached what the arm waited for. That is a hang detector.");
-                }
-
-                await Task.Delay(10);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Both update rows, provoked for a client that calls itself Claude Code,
-    /// say what a terminal session needs as well as what the other two surfaces
-    /// do on their own.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Measured 2026-10-03 at Claude Code 2.1.288 against a stand-in
-    /// server</b>, <c>docs/evidence/2026-10-03-q369-tool-list-refresh</c>:
-    /// <c>claude -p</c> and the stream-json transport the VS Code extension
-    /// drives start a stdio server that has gone again on the next call, and the
-    /// terminal UI never does, 9 of 9. It shows the server as failed, refuses the
-    /// call itself, and needs the user to reconnect the server through
-    /// <c>/mcp</c>. All three send the same <c>clientInfo</c> and the same
-    /// capabilities, so a server cannot tell them apart and one sentence has to
-    /// be right for all three.
-    /// </para>
-    /// <para>
-    /// <b>Planted red against the sentences as they stood</b>, which promised
-    /// every Claude Code session the restart and named no reconnect.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AClaudeCodeSessionIsToldWhatATerminalNeedsWhenAnUpdateEndsTheServer()
-    {
-        // ---- The still-installing row: a server that started during the apply.
-        await using (var sessions = RigSessionEnvironment.Create())
-        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions, clientName: KnownClients.ClaudeCode))
-        {
-            rig.Proxy.RefuseCallsWhileAnUpdateInstalls();
-
-            var refused = TextOf(await CallAsync(rig, "browser_snapshot", new JsonObject
-            {
-                ["session"] = rig.Session!,
-                ["why"] = "the suite calling while an update installs",
-            }));
-
-            Match(
-                refused,
-                nameof(SessionErrors.UpdateIsStillInstalling),
-                SessionErrors.UpdateIsStillInstalling("browser_snapshot", KnownClients.ClaudeCode));
-
-            await tellsBothSurfacesAsync(refused);
-        }
-
-        // ---- The update row: a server the update is stopping, met at the door.
-        await using (var sessions = RigSessionEnvironment.Create())
-        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions, clientName: KnownClients.ClaudeCode))
-        {
-            using (var bound = new CancellationTokenSource(TestDefaults.InProcessHang))
-            {
-                await rig.Proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token);
-            }
-
-            var refused = TextOf(await CallAsync(rig, "browser_snapshot", new JsonObject
-            {
-                ["session"] = rig.Session!,
-                ["why"] = "the suite calling after the stop began",
-            }));
-
-            Match(
-                refused,
-                nameof(SessionErrors.UpdateIsBeingInstalled),
-                SessionErrors.UpdateIsBeingInstalled("browser_snapshot", wasRunning: false, KnownClients.ClaudeCode));
-
-            await tellsBothSurfacesAsync(refused);
-        }
-
-        static async Task tellsBothSurfacesAsync(string refusal)
-        {
-            // What -p and the VS Code transport do on the next call by themselves.
-            await Assert.That(refusal).Contains("by itself");
-
-            // What the terminal UI needs instead: it never starts the server again.
-            await Assert.That(refusal).Contains("disconnected");
-            await Assert.That(refusal).Contains("/mcp");
-        }
-    }
+    // RETIRED 2026-10-10: AClaudeCodeSessionIsToldWhatATerminalNeedsWhenAnUpdateEndsTheServer,
+    // which held that both update rows, provoked for a client calling itself Claude
+    // Code, said what -p and the VS Code transport do by themselves and that a
+    // terminal session shows BrowserAI as disconnected and needs /mcp. It drove the
+    // same two BrowserProxy members as the two arms above, and went with them and the
+    // rows. The relay's rows carry the same remedy, through RelayErrors' own update
+    // remedy, and RelayTests.AnInstallingUpdateIsAnsweredAtOnceInEachClientsWords
+    // provokes it for Claude Code.
 
     [Test]
     public async Task TheProxyRefusesACallWithNoSessionAndOneNamingNothing()
@@ -2139,7 +1936,6 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
     [DependsOn(nameof(TheStaleToolListRowIsEmittedByAConnectionThatCallsBeforeItLists))]
-    [DependsOn(nameof(TheUpdateRowIsEmittedByACallCutOffByAStopAndByACallMadeAfterIt))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnUnusablePath))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
@@ -2401,7 +2197,19 @@ internal sealed partial class ErrorCatalogueTests
         // nothing to compare it with, with E2's warning that updates wait.
         // `ResumeCannotApplyWhileTheBrowserIsUp`, Q324 a's row, went: the same resume
         // is held back now, and sent again it switches the browser itself (F1 a).
-        await Assert.That(rows.Count).IsEqualTo(43);
+        //
+        // ⚠️ **Corrected 2026-10-10, to 41 (previously 43)**, by the maintainer's
+        // decision "9 a". `UpdateIsBeingInstalled` and `UpdateIsStillInstalling`
+        // went, and they are the first rows deleted here because the PATH went
+        // and not the condition: an update still meets calls, and the relay
+        // answers them out of its own catalogue, `RelayErrors`, whose census is
+        // `RelayTests.EveryRelayErrorsRowWasProvokedByAnArmAbove`. From the
+        // one-binary build of 2026-10-08 to this day the two rows were triggered
+        // here through `BrowserProxy` members only the arms called, so this census
+        // counted them as reachable when no running BrowserAI could say either.
+        // That is the gap this census cannot see on its own: it asks whether a
+        // row was produced, never whether the code that produced it can still run.
+        await Assert.That(rows.Count).IsEqualTo(41);
     }
 
     /// <summary>

@@ -171,20 +171,29 @@ internal sealed class SignInTaskTests
 
     /// <summary>
     /// The task is named for the pack id and the install root's key, the same key
-    /// the census gate and the coordinator's pipe end in.
+    /// the live-marker gate ends in.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "the same key the census gate and the
+    /// coordinator's pipe end in", with the key read from
+    /// <c>LiveInstances.RootKeyFor</c> and a last assertion on
+    /// <c>CoordinatorProtocol.NameFor</c>)</i>: the coordinator's pipe went with S a
+    /// on 2026-10-08, and its name and the census's copy of the key were deleted on
+    /// 2026-10-10, by the maintainer's decision "9 a". The key is
+    /// <see cref="RootKey.For"/>'s, and the live-marker gate's name still ends in it.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheTaskIsNamedForThePackIdAndTheInstallRootsKey()
     {
         using var root = ScratchDirectory.Create("sign-in-name");
 
-        var key = LiveInstances.RootKeyFor(root.Path);
+        var key = RootKey.For(root.Path);
 
         await Assert.That(SignInTask.NameFor("BrowserAI.app", root.Path)).IsEqualTo($"BrowserAI.app sign-in {key}");
         await Assert.That(SignInTask.NameFor(ReleaseLayout.TestPackId, root.Path)).IsEqualTo($"{ReleaseLayout.TestPackId} sign-in {key}");
         await Assert.That(SignInTask.NameFor("BrowserAI.app", root.Path.ToUpperInvariant())).IsEqualTo(SignInTask.NameFor("BrowserAI.app", root.Path));
-        await Assert.That(Coordination.CoordinatorProtocol.NameFor(root.Path).EndsWith(key, StringComparison.Ordinal)).IsTrue();
+        await Assert.That(LiveInstances.MutexNameFor(root.Path).EndsWith(key, StringComparison.Ordinal)).IsTrue();
     }
 
     /// <summary>
@@ -655,7 +664,7 @@ internal sealed class SignInTaskTests
 
         await Assert.That(ScheduledTasks.DefinitionOf(name)).IsNull();
         await Assert.That(ScheduledTasks.Instance.Remove(name).Change).IsEqualTo(TaskChange.Absent);
-        await Assert.That(ScheduledTasks.Instance.Run(name, Coordination.CoordinatorProtocol.CoordinateArgument).Change).IsEqualTo(TaskChange.NotRegistered);
+        await Assert.That(ScheduledTasks.Instance.Run(name, App.PersonStart.StartedByPerson).Change).IsEqualTo(TaskChange.NotRegistered);
     }
 
     /// <summary>
