@@ -26,8 +26,8 @@ internal interface IInstallHealth
 /// <summary>The broken install's toast: its words, its tag and what a click on it asks for.</summary>
 /// <remarks>
 /// <para>
-/// <b>The maintainer's 10 b, 2026-10-10, as the root briefed it</b>: one toast per
-/// background run, through lane UI's toast machinery, under a tag of its own, with no
+/// <b>The maintainer's 10 b, 2026-10-10, as it was asked for</b>: one toast per
+/// background run, through the update toasts' machinery, under a tag of its own, with no
 /// timeout like the update toasts, and a button that opens the dashboard's explanation of
 /// how to reinstall: download <c>BrowserAI.exe</c> from the latest release and run it, and the
 /// data is kept. <i>Corrected 2026-10-10 (previously "run <c>BrowserAI-win-Setup.exe</c>

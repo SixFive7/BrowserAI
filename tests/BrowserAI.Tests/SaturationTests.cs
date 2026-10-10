@@ -731,7 +731,7 @@ internal sealed partial class SaturationTests
     /// The pids were read after every relay and the background had died, and Windows
     /// gives a dead process's number to the next one, so a BrowserAI started since,
     /// the person's own background among them, could have its live instance
-    /// directory removed under it. Found by lane FIX's helper P that day. The reclaim
+    /// directory removed under it. Found by a review of the suite that day. The reclaim
     /// takes only what this run's background made: a directory whose name begins with
     /// its pid and which was created while that process lived, between its own
     /// creation time and the moment its job was closed (<see cref="MadeBy"/>). The
@@ -782,7 +782,7 @@ internal sealed partial class SaturationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Added 2026-10-10, from lane FIX's helper P</b>: the reclaim picked every
+    /// <b>Added 2026-10-10, from a review of the suite</b>: the reclaim picked every
     /// directory whose name began with one of this run's pids, read after the
     /// processes had died, so a process that reused a number lost its directory. The
     /// directories here are made in a scratch folder with their creation times set,

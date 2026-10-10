@@ -1233,7 +1233,7 @@ internal sealed partial class ErrorCatalogueTests
     /// given, provoked by a double that dies without answering.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-10 for round 2 of the texts review, found by lane FINAL</b>: the
+    /// <b>Added 2026-10-10 for round 2 of the texts review, found by the final gate</b>: the
     /// answer was the transport's own words with the exception's type in them. It is a
     /// JSON-RPC error, as it was, and the session's record holds the same words. The arm
     /// that planted the answer red is
@@ -1268,7 +1268,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // And the record says the same, and not the exception. Read once it has
         // settled: BrowserProxy settles a forwarded call's row in a finally that runs
-        // after the answer has gone back, and the PowerShell half of lane TEXTS2's gate
+        // after the answer has gone back, and the PowerShell half of the gate
         // at c29aa932 read this row in flight (previously it was read at once).
         var row = await SettledRowAsync(rig.Session!, "browser_navigate");
 
@@ -2298,7 +2298,7 @@ internal sealed partial class ErrorCatalogueTests
         // row was produced, never whether the code that produced it can still run.
         //
         // ⚠️ **Corrected 2026-10-10 a second time, to 42 (previously 41)**, round 2 of
-        // the texts review, found by lane FINAL. `BrowserServerEndedDuringTheCall`
+        // the texts review, found by the final gate. `BrowserServerEndedDuringTheCall`
         // arrived: a browser server that ended under a call it had been given was
         // answered in the transport's own words, the exception's type among them,
         // which a model met as "TaskCanceledException".

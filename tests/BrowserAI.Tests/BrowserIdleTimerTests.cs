@@ -1098,7 +1098,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// relay exits would pass for a session the background was still closing.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-10 for the relay's own record</b>, which helper T2's plants of
+    /// <b>Planted red 2026-10-10 for the relay's own record</b>, which the plants of
     /// 2026-10-09 did not reach separately, against a relay that ended on the end of its
     /// input and wrote nothing about it: <i>"Expected to contain "Relay: the client closed
     /// its input, so the relay ends.""</i> over the relay's records, the last two of which
@@ -1199,7 +1199,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// alone, so nothing done to the client can reach the session through a job.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-10 for the relay's two records</b>, which helper T2's plant of
+    /// <b>Planted red 2026-10-10 for the relay's two records</b>, which the plant of
     /// 2026-10-09 did not reach separately. Against a watch that ended the relay and wrote
     /// nothing: <i>"Expected to contain "The MCP client, pid 54472, has exited""</i>, the
     /// relay's records ending in <c>Relay: ended (Cancelled)</c>. And against a relay that

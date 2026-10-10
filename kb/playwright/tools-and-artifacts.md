@@ -862,8 +862,8 @@ one proves nothing until it has been shown to find rows that differ.
 
 ### The exact line, the other direction, an element, a JPEG, and BrowserAI's refusal -- measured 2026-10-04
 
-`[FLOATS]` *Added 2026-10-04 by addition, by lane behave.* The same versions as
-the entry above, through `BrowserAI.Server.exe` published from the lane's tree
+`[FLOATS]` *Added 2026-10-04 by addition, by the behaviour measurements.* The same versions as
+the entry above, through `BrowserAI.Server.exe` published from that work's tree
 (`1.1.1-alpha.0.206`), with pages of exactly the height asked for: 100 px bands
 coloured by their index, with a 200 px key block at the left whose neighbouring
 bands differ by at least 67 in red, and a wide page of 100 px columns striped the

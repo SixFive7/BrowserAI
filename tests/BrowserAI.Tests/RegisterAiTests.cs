@@ -193,7 +193,7 @@ internal sealed class RegisterAiTests
     /// <c>--mcp</c> alone, so a client set up from it for an install made with a data
     /// root started a relay that no background serves. The hooks register
     /// <c>--mcp --data-root &lt;root&gt;</c> for such an install, and the dashboard's
-    /// Register and Repair do too since lane UI's fix of the same day.
+    /// Register and Repair do too since the dashboard's fix of the same day.
     /// </para>
     /// <para>
     /// <b>And the foreign entry's line, found on the way</b>: it was spelled with the

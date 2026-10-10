@@ -46,7 +46,7 @@ internal sealed class BuiltInToolListTests
     /// the server's own stray sweep starts the registry reap when it ends a stray
     /// browser, which is the payload's <c>node.exe</c> running
     /// <c>playwright-core</c>'s registry, in this job because the server is. The Git
-    /// Bash half of lane S1's gate at <c>079e3d1c</c> met one. What this arm is about
+    /// Bash half of the gate at <c>079e3d1c</c> met one. What this arm is about
     /// is the child that answered <c>tools/list</c>, a <c>node.exe</c> from the
     /// payload running <c>@playwright/mcp</c>'s <c>cli.js</c>, so that is what it
     /// looks for, by the command line.
@@ -105,7 +105,7 @@ internal sealed class BuiltInToolListTests
     /// list produces.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-10, one row at a time</b>, after lane S1's build of
+    /// <b>Planted red 2026-10-10, one row at a time</b>, after step 1's build of
     /// 2026-10-08 had left both rows unwatched, with the session child of one family
     /// started without the <c>testing</c> capability and the other family's left as it
     /// was. The <c>firefox</c> row was refused as a broken install, <i>"the first
@@ -183,7 +183,7 @@ internal sealed class BuiltInToolListTests
 
     /// <summary>The list compiled into the binary is the committed snapshot's tools, with the indentation taken out.</summary>
     /// <remarks>
-    /// <b>Planted red 2026-10-10, twice, in <c>UpstreamToolList</c></b>, after lane S1's
+    /// <b>Planted red 2026-10-10, twice, in <c>UpstreamToolList</c></b>, after step 1's
     /// build of 2026-10-08 had left it unwatched. With the compaction keeping a newline
     /// outside a string, it read <i>"Expected to not contain "\n""</i> over the compiled
     /// list's text, which began <c>{"tools":[</c> and a newline; and with the list read
@@ -227,7 +227,7 @@ internal sealed class BuiltInToolListTests
 
     /// <summary>The comparison, every shape of difference it names, and the bytes it takes as the same.</summary>
     /// <remarks>
-    /// <b>Planted red 2026-10-10, once for each of its nine assertions</b>, after lane S1's
+    /// <b>Planted red 2026-10-10, once for each of its nine assertions</b>, after step 1's
     /// build of 2026-10-08 had left it unwatched, each plant a defect in
     /// <c>UpstreamToolList</c> and each red at its own line. With the same bytes no longer
     /// taken as the same list, the first read <i>"Expected to be null but found the list

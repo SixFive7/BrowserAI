@@ -190,7 +190,7 @@ internal sealed record ProvisioningTimers
     /// exactly once, at line 34415, as <c>downloadSocketTimeout</c> for a
     /// <i>browser download in Node</i> -- which is this download and nothing
     /// else. <c>UpdateBudgets.StallBudget</c>
-    /// carries the correction for the lane it does not govern.
+    /// carries the correction for the update lane it does not govern.
     /// </para>
     /// </remarks>
     public TimeSpan StallCap { get; init; } = SessionTimes.ProvisioningStallCap;

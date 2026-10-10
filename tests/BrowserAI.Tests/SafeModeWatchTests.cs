@@ -85,7 +85,7 @@ internal sealed class SafeModeWatchTests
         await Assert.That(SafeModeWatch.Classify(Sighting(3100, 5500, Firefox, chain), Context)).IsEqualTo(SafeModeOwnership.BeforeTheRun);
 
         // A chain that ends before the host, from the machine's own browsers root:
-        // the maintainer's BrowserAI, or another lane's run.
+        // the maintainer's BrowserAI, or another worktree's run.
         await Assert.That(SafeModeWatch.Classify(Sighting(3100, 7000, Firefox, [new(3000, 6600), new(1, 100)]), Context)).IsEqualTo(SafeModeOwnership.NotOurs);
 
         // A "parent" created after its child is a stranger holding a reused pid.

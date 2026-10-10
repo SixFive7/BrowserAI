@@ -2302,7 +2302,7 @@ internal sealed partial class HouseRuleTests
     /// bound at all.</b> <c>VelopackUpdateClient</c> builds its
     /// <c>UpdateManager</c> from a bare URL, so Velopack's own
     /// <c>SimpleWebSource</c> supplies the default <c>HttpClient</c> timeout --
-    /// <b>thirty minutes</b>. The server's lane wrapped the identical calls in
+    /// <b>thirty minutes</b>. The server's update lane wrapped the identical calls in
     /// <c>UpdateService.CrashTripwire</c> from the day it was written; the
     /// configuration app called them on the UI thread with
     /// <c>.GetAwaiter().GetResult()</c> and <c>CancellationToken.None</c>, which
@@ -3088,6 +3088,17 @@ internal sealed partial class HouseRuleTests
     /// backticks are strings, which is the silent half of this: a reader that
     /// returns too little stays synchronised and reports a clean tree.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A third class since 2026-10-10: the words of the build's own workflow</b>,
+    /// <see cref="BuildWorkflow"/>, in both corpora and outside the dated records. A
+    /// sweep that day reworded about six hundred of them across 109 files, keeping every
+    /// fact, date, number, name of code and quotation. <b>Planted red against the tree
+    /// itself</b>: run while ten files still carried them in eleven remarks, it named
+    /// all sixteen words there, and seven more that the sweep had missed because a line
+    /// break fell inside them. It also flagged one compound of the allowed kind whose two
+    /// words sat on two comment lines, which is why a compound may span a comment's line
+    /// marker. It went green once the rest were reworded.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -3184,6 +3195,33 @@ internal sealed partial class HouseRuleTests
         await Assert.That(TellOffences("kb/mcp/sdk.md", QuotedLive[0].Phrase)).IsEmpty();
         await Assert.That(TellOffences("kb/mcp/protocol.md", QuotedLive[0].Phrase)).IsNotEmpty();
 
+        // ⚠️ THE BUILD'S OWN WORKFLOW, one control per shape and each built from
+        // halves, in commentary and in a literal the product says.
+        await Assert.That(TellOffences("HAZARDS.md", $"found by {WorkUnit} SESS on the day")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"the {WorkUnit}'s own run went red")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"read by {Reviewer} T1 on 2026-10-09")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"settled by the {Coordinator} on 2026-10-08")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"measured inside a {Delegate}'s shell")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"a conversation's {DelegateJoined}s share it")).IsNotEmpty();
+        await Assert.That(TellOffences("X.cs", $"// found by {WorkUnit} FINAL")).IsNotEmpty();
+        await Assert.That(Voiced("X.cs", $"var s = \"found by {WorkUnit} FINAL\";")).IsNotEmpty();
+
+        // And the shapes that are this tree's own terms or ordinary English.
+        await Assert.That(TellOffences("HAZARDS.md", $"the update {WorkUnit} defers, the server's {WorkUnit} too, and the delta {WorkUnit} works")).IsEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"the update\n{WorkUnit} wrapped, and the pre-release {WorkUnit} spends")).IsEmpty();
+        await Assert.That(TellOffences("X.cs", $"/// it opened the update\n/// {WorkUnit} as well")).IsEmpty();
+        await Assert.That(TellOffences("X.cs", $"/// found by the {Reviewer}\n/// T1 reading the code")).IsNotEmpty();
+        await Assert.That(TellOffences("X.cs", $"/// settled by the root\n/// session that day")).IsNotEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"a {Reviewer} method reads the record and the {Reviewer} returns")).IsEmpty();
+        await Assert.That(TellOffences("HAZARDS.md", $"the maintainer said \"under option d ({WorkUnit} c)\" and meant it")).IsEmpty();
+
+        // A dated record keeps the words it had on its day, and the index beside
+        // it is maintained prose like any other.
+        await Assert.That(TellOffences("docs/ledger/2026-09-15-release-session.md", $"found by {WorkUnit} SESS")).IsEmpty();
+        await Assert.That(TellOffences("docs/reviews/2026-08-18-adversarial-processes.md", $"found by {WorkUnit} SESS")).IsEmpty();
+        await Assert.That(TellOffences("docs/ledger/README.md", $"found by {WorkUnit} SESS")).IsNotEmpty();
+        await Assert.That(TellOffences("docs/reviews/README.md", $"found by {WorkUnit} SESS")).IsNotEmpty();
+
         // The second corpus's file list, in both directions: the product speaks
         // and the suite does not.
         await Assert.That(IsProductVoice("src/BrowserAI/Proxy/ServerInstructions.cs")).IsTrue();
@@ -3272,6 +3310,21 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>One stock intensifier, in halves.</summary>
     private const string Stock = "essent" + "ially";
+
+    /// <summary>The noun a part of a parallel build was called by, in halves.</summary>
+    private const string WorkUnit = "la" + "ne";
+
+    /// <summary>The noun a numbered reviewer was called by, in halves.</summary>
+    private const string Reviewer = "hel" + "per";
+
+    /// <summary>The session that coordinated a parallel build, in halves.</summary>
+    private const string Coordinator = "root" + " session";
+
+    /// <summary>An agent another agent started, hyphenated, in halves.</summary>
+    private const string Delegate = "sub" + "-agent";
+
+    /// <summary>The same, in one word, in halves.</summary>
+    private const string DelegateJoined = "sub" + "agent";
 
     /// <summary>
     /// Every phrase this repository does not write, each built from halves.
@@ -3372,6 +3425,17 @@ internal sealed partial class HouseRuleTests
         foreach (Match imperative in ImperativeNote().Matches(body))
         {
             offences.Add($"{name}: an imperative '{imperative.Value}' lead-in -- {Excerpt(body, imperative.Index)}");
+        }
+
+        // ⚠️ THE WORDS OF THE BUILD'S OWN WORKFLOW, added 2026-10-10: a record says
+        // what happened and when, never which part of a parallel build did it. A
+        // dated record keeps the words it had on its day.
+        if (!IsDatedRecord(name))
+        {
+            foreach (Match workflow in BuildWorkflow().Matches(body))
+            {
+                offences.Add($"{name}: '{workflow.Value}' names the build's own workflow; say what happened and when -- {Excerpt(body, workflow.Index)}");
+            }
         }
 
         return [.. offences.Where(offence => !IsAllowed(name, body, offence))];
@@ -3475,6 +3539,43 @@ internal sealed partial class HouseRuleTests
     /// <summary>An imperative lead-in that adds nothing the sentence does not say.</summary>
     [GeneratedRegex(@"(?<![A-Za-z])Note (that|also|how|the)\b")]
     private static partial Regex ImperativeNote();
+
+    /// <summary>
+    /// A word of the build's own workflow: the name a part of a parallel build went by, a
+    /// numbered reviewer, the session that coordinated them, or an agent one of them
+    /// started.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's directive of 2026-09-23, verbatim, applied to the records on
+    /// 2026-10-10:</b> <i>"Ensure there is no trace of AI both in wording and character
+    /// use."</i> A hazard row that says which part of a build found it tells a reader
+    /// nothing the date and the commit do not, and it is the trace.
+    /// </para>
+    /// <para>
+    /// <b>The first noun is also this tree's own word for a path an update or a release
+    /// takes</b>, so it is allowed in exactly those compounds: <c>update lane</c>, a
+    /// <c>server's lane</c>, the <c>delta lane</c>, the <c>pre-release lane</c>, a
+    /// <c>replay lane</c> and a kb heading's <c>whole lane</c>, a line break between the
+    /// two words included. A reviewer's number is a capital after the noun, so an
+    /// ordinary helper method stays ordinary English.
+    /// </para>
+    /// </remarks>
+    [GeneratedRegex(@"(?i:(?<!\b(?:update|server's|delta|pre-release|replay|whole)[\s/#*>-]+)\blanes?\b)|\b[Hh]elpers? [A-Z][0-9]*\b|\b[Hh]elpers?[\s/#*>]+[A-Z][0-9]+\b|(?i:\broot[\s/#*>]+session\b)|(?i:\bsub-?agents?\b)")]
+    private static partial Regex BuildWorkflow();
+
+    /// <summary>Whether a file is a dated record whose words are the record.</summary>
+    /// <remarks>
+    /// A ledger snapshot and a review's body: each says what it said on its day, as
+    /// <c>AppendOnlyRecordTests</c> holds for the reviews. Each directory's own index is
+    /// maintained prose.
+    /// </remarks>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <returns>Whether the workflow's words may stand in it.</returns>
+    private static bool IsDatedRecord(string name) =>
+        (name.StartsWith("docs/ledger/", StringComparison.Ordinal)
+            || name.StartsWith("docs/reviews/", StringComparison.Ordinal))
+        && !name.EndsWith("/README.md", StringComparison.Ordinal);
 
     /// <summary>
     /// No text file in the tree carries a character a person does not type.

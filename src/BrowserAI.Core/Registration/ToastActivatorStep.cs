@@ -8,7 +8,7 @@ namespace BrowserAI.Registration;
 
 /// <summary>The hooks' step for the toasts' activator: registered at an install or an update, removed at an uninstall.</summary>
 /// <remarks>
-/// <b>T, decided 2026-10-08</b>, built by lane UI as
+/// <b>T, decided 2026-10-08</b>, built with the update toasts as
 /// <see cref="ToastActivatorRegistration"/>: the class lives under the user's own
 /// classes and is derived from the application id, so the suite's test pack and a real
 /// install never share one. This step only calls it, with the install's own

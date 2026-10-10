@@ -297,8 +297,8 @@ internal sealed class BackgroundRecordTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The maintainer's 9 a, 2026-10-10.</b> Two hazard rows of lane ARCH's helper T1
-    /// and T2 close here: a refused root was recorded as a crash, and an <c>ended</c>
+    /// <b>The maintainer's 9 a, 2026-10-10.</b> Two hazard rows from the readings of the
+    /// code and the arms close here: a refused root was recorded as a crash, and an <c>ended</c>
     /// this build could not parse read as absent, which is a crash, so after a downgrade
     /// every relay told every call to report a bug. A name is read exactly: a number or
     /// a list of names, which <see cref="Enum.TryParse{TEnum}(string?, out TEnum)"/>
@@ -377,7 +377,7 @@ internal sealed class BackgroundRecordTests
     /// what this arm holds; that the write is lost, and that
     /// <see cref="BackgroundRecord.Started"/> and
     /// <see cref="BackgroundRecord.EndedCleanly"/> let the failure escape, is reported
-    /// to lane ARCH and not held here either way. <i>Fixed 2026-10-09 by lane ARCH:</i>
+    /// to the background's build and not held here either way. <i>Fixed 2026-10-09 in the background's build:</i>
     /// a write now waits out a reader for <see cref="BackgroundRecord.WriteBound"/>,
     /// <see cref="BackgroundRecord.EndedCleanly"/> never throws, the background serves
     /// on when its start cannot be recorded, and the arm below holds the write's side.

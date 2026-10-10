@@ -70,12 +70,12 @@ internal interface IUpdateClient
 /// <para>
 /// <b>An extension of <see cref="IUpdateClient"/> by derivation, added
 /// 2026-10-08 for the one-binary build</b>, so that the per-server update lane
-/// and its test doubles compile unchanged until that lane is deleted. When it
+/// and its test doubles compile unchanged until that update lane is deleted. When it
 /// is, these two members belong on <see cref="IUpdateClient"/> itself and this
 /// interface goes.
 /// </para>
 /// <para>
-/// ⚠️ <i>Added 2026-10-10 by addition:</i> the lane was deleted with S a on
+/// ⚠️ <i>Added 2026-10-10 by addition:</i> the per-server update lane was deleted with S a on
 /// 2026-10-08, and on 2026-10-10 the member only it and the coordinator called,
 /// <c>IUpdateClient.ApplyAfterThisProcessExits</c>, went too. The two interfaces are
 /// not merged yet: that is a rename across the update core, and not a deletion.
@@ -199,7 +199,7 @@ internal sealed record UpdateCandidate
     /// second pack can offer it. The background downloads and applies only a
     /// candidate whose pack id is the installed one, and one that carries none is
     /// refused with the rest. Optional and not <c>required</c>, so the candidates
-    /// the per-server lane and its doubles build stay valid until that lane goes.
+    /// the per-server update lane and its doubles build stay valid until that update lane goes.
     /// </remarks>
     public string? PackId { get; init; }
 

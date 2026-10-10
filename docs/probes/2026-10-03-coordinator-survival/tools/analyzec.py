@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Lane c survival probe, 2026-10-03: one row per run, and a per-scenario summary.
+# Option c survival probe, 2026-10-03: one row per run, and a per-scenario summary.
 # usage: python analyzec.py <runs\batch dir>
 import json, os, sys, collections
 

@@ -27,24 +27,24 @@ have simply been missed. Read a missing row as a gap in this table, never as
 permission to skip the fact.
 
 > `Corrected 2026-10-10 a third time (previously "**331** ... against the **208** numbered
-> rows below (218 lines")` -- **one new marker and one new row**, from lane FIX's reading
+> rows below (218 lines")` -- **one new marker and one new row**, from a reading
 > of where a hook's own lines go, in [`packaging/velopack.md`](packaging/velopack.md)
 > (row 209). Re-counted through the scan, never adjusted.
 
 > `Corrected 2026-10-10 a second time (previously "**330** ... against the **208**
-> numbered rows below (218 lines")` -- **one new marker and no new row**, from lane ID's
+> numbered rows below (218 lines")` -- **one new marker and no new row**, from the
 > measurement of a Codex thread's first message, in [`mcp/protocol.md`](mcp/protocol.md),
 > which row 208 carries beside the conversations it already did. Re-counted through the
 > scan, never adjusted.
 
 > `Corrected 2026-10-10 (previously "**329** ... against the **207** numbered rows
-> below (217 lines")` -- **one new marker and one new row**, from lane ID's cut of
+> below (217 lines")` -- **one new marker and one new row**, from a cut of
 > the measurement of 2026-10-08 of which conversation of a client started a server, in
 > [`mcp/protocol.md`](mcp/protocol.md) (row 208). Re-counted through the scan, never
 > adjusted.
 
 > `Corrected 2026-10-08, a third time that day (previously "**328** ... against the **206**
-> numbered rows below (216 lines")` -- **one new marker and one new row**, from lane S1's
+> numbered rows below (216 lines")` -- **one new marker and one new row**, from step 1's
 > measurement of the payload's own child listing the snapshot's tools byte for byte
 > under every session configuration, in
 > [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) (row 207).
@@ -63,20 +63,20 @@ permission to skip the fact.
 > 205). Re-counted through the scan, never adjusted.
 
 > `Corrected 2026-10-08 (previously "**319** ... against the **197** numbered rows
-> below (207 lines")` -- **one new marker and one new row**, from lane S1's
+> below (207 lines")` -- **one new marker and one new row**, from step 1's
 > measurement of the opening Claude Code sends and the one revision BrowserAI
 > offers since, in [`mcp/protocol.md`](mcp/protocol.md) (row 198). Re-counted
 > through the scan, never adjusted.
 
 > `Corrected 2026-10-04, a fifth time that day (previously "**318** ... against the
 > **197** numbered rows below (207 lines")` -- **one new marker and no new row**, from
-> lane q371's measurement of every file in a session that can hold something sensitive,
+> the Q371 work's measurement of every file in a session that can hold something sensitive,
 > in [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md), which
 > row 193 carries by addition. Re-counted through the scan, never adjusted.
 >
 > `Corrected 2026-10-04, a fourth time that day (previously "**315** ... against the
 > **193** numbered rows below (203 lines")` -- **three new markers and four new rows**,
-> from lane behave's measurements of 2026-10-04 and the lifetime lane's that it kept on
+> from the behaviour measurements of 2026-10-04 and the lifetime ones that it kept on
 > the maintainer's 10 a: a switch between a window and none (row 194) and how a browser
 > ends and what comes back after a person closes its window (row 195), both in
 > [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md); a hidden
@@ -88,7 +88,7 @@ permission to skip the fact.
 >
 > `Corrected 2026-10-04, a third time that day (previously "**312** ... against the
 > **190** numbered rows below (200 lines")` -- **three new markers and three new rows**,
-> from lane q371's measurements of 2026-10-03: what a transcript's `session.md` holds
+> from the Q371 measurements of 2026-10-03: what a transcript's `session.md` holds
 > (row 191, in [`playwright/configuration.md`](playwright/configuration.md)), how much of a
 > long tool result each client hands its model (row 192, in [`mcp/protocol.md`](mcp/protocol.md)),
 > and which files in a session's output hold login data in clear text (row 193, in
@@ -372,20 +372,20 @@ articles are thin is the difference between an admission and a usable one.
 **Two predicates, quoted before their numbers.** **Markers** is occurrences of
 the token `[FLOATS]` in that article file -- the same count, the same corpus and
 the same token-not-meaning caveat as the anchor sentence above, so the column
-sums to the **332** that sentence publishes -- *corrected 2026-10-10 (previously "**329**", two behind the anchor since lane ID's two markers of the same day), when lane FIX's marker for where a hook's own lines go arrived in `packaging/velopack.md`; re-counted through the scan*, *corrected 2026-10-08 a third time (previously
-"**328**"), when lane S1's marker for the compiled tool list arrived in
+sums to the **332** that sentence publishes -- *corrected 2026-10-10 (previously "**329**", two behind the anchor since the two markers of the naming work that day), when the marker for where a hook's own lines go arrived in `packaging/velopack.md`; re-counted through the scan*, *corrected 2026-10-08 a third time (previously
+"**328**"), when step 1's marker for the compiled tool list arrived in
 `playwright/tools-and-artifacts.md`; re-counted through the scan*, *corrected 2026-10-08 a second time (previously
 "**320**"), when the records of the one-binary build brought eight markers, three in `mcp/protocol.md`
 and one each in `windows/processes.md`, `playwright/provisioning-and-timings.md` and
 `playwright/tools-and-artifacts.md`, and two in `packaging/velopack.md`; re-counted through the
 scan*, *corrected 2026-10-08 (previously "**318**",
-already one behind the anchor before this change), when lane S1's marker arrived in
+already one behind the anchor before this change), when step 1's marker arrived in
 `mcp/protocol.md`; re-counted through the scan*, *corrected 2026-10-04 a third time (previously
-"**315**"), when lane behave's three markers arrived, one each in `playwright/provisioning-and-timings.md`,
+"**315**"), when the behaviour work's three markers arrived, one each in `playwright/provisioning-and-timings.md`,
 `playwright/tools-and-artifacts.md` and `chromium/fingerprinting.md`; re-counted through the scan*,
 *corrected 2026-10-04 a second time (previously
 "**311**"), when the lifetime review's marker arrived in `playwright/tools-and-artifacts.md`
-and lane q371's three, one each in `playwright/configuration.md`, `mcp/protocol.md` and
+and the Q371 work's three, one each in `playwright/configuration.md`, `mcp/protocol.md` and
 `playwright/tools-and-artifacts.md`; re-counted through the scan*, *corrected 2026-10-04 (previously
 "**310**"), re-counted through the scan when the look's marker arrived in
 `playwright/tools-and-artifacts.md`*, *corrected 2026-10-03 a fourth time (previously
@@ -393,7 +393,7 @@ and lane q371's three, one each in `playwright/configuration.md`, `mcp/protocol.
 `playwright/provisioning-and-timings.md` and the marker option c was built on in
 `windows/processes.md`; re-counted through the scan*, *corrected 2026-10-03 a third time (previously
 "**289**"), re-counted through the scan when the browser tab's two markers arrived in
-`windows/loopback-page.md`; the sentence had not moved with the rows the evidence lane and
+`windows/loopback-page.md`; the sentence had not moved with the rows the evidence work and
 the upstream review added the same night, and the check that reads the column read 303
 before the two arrived*, *corrected 2026-10-03 a second time (previously
 "**288**"), when the wedge a pause leaves behind arrived in
@@ -490,7 +490,7 @@ new one cannot escape the map by being forgotten.
 
 | Article | Markers | Rows | Read this as |
 |---|--:|--:|---|
-| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 74 | 34 | **Thin, and the thinnest here.** **The seventy-fourth marker and row 207 arrived 2026-10-08** with the payload's own child listing the snapshot's tools byte for byte under every session configuration, which BrowserAI holds each session's child to. **The seventy-third marker arrived 2026-10-08** with the live list a child answers measured against the upstream snapshot, 70 of 70, which the one-binary design compiles the list on, and it has row 203 of its own. **The seventy-second marker arrived 2026-10-04** with lane q371's measurement of every file in a session that can hold something sensitive, and row 193 carries it by addition beside the seventieth. **The seventy-first marker arrived 2026-10-04** with lane behave's measurement of the exact line of Chromium's screenshot limit, in both directions and for an element, and BrowserAI's refusal of an image past it, and it has row 197 of its own. **The seventieth marker arrived 2026-10-04** with lane q371's measurement of which output files hold login data in clear text, and it has row 193 of its own. **The sixty-ninth marker arrived 2026-10-04** with Q380 a's full-page screenshot past 16,384 px, repeated in Chromium and refused in Firefox, and it has **row 190** of its own. **The sixty-eighth marker arrived 2026-10-03 at night** with Q317 c's three measurements of a picture taken beside an agent's call, and it has **row 189** of its own. **The sixty-fifth to sixty-seventh markers arrived 2026-10-03** with the research persisted that night, and each has a row of its own: a pause armed from inside a session (row 172), content in a closed shadow root missing from the snapshot (row 174), and what a snapshot and a click cost through BrowserAI's configuration (row 175). **The sixty-fourth marker arrived 2026-10-03** with the review of `@playwright/mcp` 0.0.83, and it has **row 167** of its own: a debugger pause met first by a close wedges a session, and since `browser_resume` was denied that day nothing in the tool surface releases it. **The fifty-third to sixty-third markers arrived 2026-10-01** with the dashboard measurements of 2026-09-25, one to each of the eleven things measured, and **rows 163 to 166** carry them as four clusters, one row per rig, because a rig is what re-establishes them and each takes a minute or less. **The fifty-first and fifty-second markers arrived 2026-09-24** with T7's reap -- the internal `playwright-core` module the product now requires by absolute path, and what one reap costs on this machine -- and **row 154** carries both, beside row 150, which is the registry's growth and cost curve. **The forty-third marker arrived 2026-09-21** with the WebMCP measurement taken on the `@playwright/mcp` 0.0.82 review, and it has **row 133** of its own instead of joining the tool-count cluster: what floats there is not a COUNT but whether `tools/list` is a static surface at all, and the row exists because two of its three halves are covered by nothing and say so. The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each. **The forty-second marker arrived 2026-09-17** with the pointer measurement that closed upstream ask #1 -- every artifact pointer a tool result carries is absolute -- and it has **no row of its own**, deliberately: what floats there is upstream's `Response._printablePath`, which is the same subject as the artifact cluster row 19 already covers, and the fact is held on every build by `ConfigRoundTripTests` and `FileAccessRootTests` and not by a re-measurement. **The forty-first arrived 2026-09-15** with the zero-byte WebP measurement, and it has row 122 of its own -- a fact already known to be about to change, which is the shape row 102 was for |
+| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 74 | 34 | **Thin, and the thinnest here.** **The seventy-fourth marker and row 207 arrived 2026-10-08** with the payload's own child listing the snapshot's tools byte for byte under every session configuration, which BrowserAI holds each session's child to. **The seventy-third marker arrived 2026-10-08** with the live list a child answers measured against the upstream snapshot, 70 of 70, which the one-binary design compiles the list on, and it has row 203 of its own. **The seventy-second marker arrived 2026-10-04** with the Q371 work's measurement of every file in a session that can hold something sensitive, and row 193 carries it by addition beside the seventieth. **The seventy-first marker arrived 2026-10-04** with the behaviour work's measurement of the exact line of Chromium's screenshot limit, in both directions and for an element, and BrowserAI's refusal of an image past it, and it has row 197 of its own. **The seventieth marker arrived 2026-10-04** with the Q371 work's measurement of which output files hold login data in clear text, and it has row 193 of its own. **The sixty-ninth marker arrived 2026-10-04** with Q380 a's full-page screenshot past 16,384 px, repeated in Chromium and refused in Firefox, and it has **row 190** of its own. **The sixty-eighth marker arrived 2026-10-03 at night** with Q317 c's three measurements of a picture taken beside an agent's call, and it has **row 189** of its own. **The sixty-fifth to sixty-seventh markers arrived 2026-10-03** with the research persisted that night, and each has a row of its own: a pause armed from inside a session (row 172), content in a closed shadow root missing from the snapshot (row 174), and what a snapshot and a click cost through BrowserAI's configuration (row 175). **The sixty-fourth marker arrived 2026-10-03** with the review of `@playwright/mcp` 0.0.83, and it has **row 167** of its own: a debugger pause met first by a close wedges a session, and since `browser_resume` was denied that day nothing in the tool surface releases it. **The fifty-third to sixty-third markers arrived 2026-10-01** with the dashboard measurements of 2026-09-25, one to each of the eleven things measured, and **rows 163 to 166** carry them as four clusters, one row per rig, because a rig is what re-establishes them and each takes a minute or less. **The fifty-first and fifty-second markers arrived 2026-09-24** with T7's reap -- the internal `playwright-core` module the product now requires by absolute path, and what one reap costs on this machine -- and **row 154** carries both, beside row 150, which is the registry's growth and cost curve. **The forty-third marker arrived 2026-09-21** with the WebMCP measurement taken on the `@playwright/mcp` 0.0.82 review, and it has **row 133** of its own instead of joining the tool-count cluster: what floats there is not a COUNT but whether `tools/list` is a static surface at all, and the row exists because two of its three halves are covered by nothing and say so. The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each. **The forty-second marker arrived 2026-09-17** with the pointer measurement that closed upstream ask #1 -- every artifact pointer a tool result carries is absolute -- and it has **no row of its own**, deliberately: what floats there is upstream's `Response._printablePath`, which is the same subject as the artifact cluster row 19 already covers, and the fact is held on every build by `ConfigRoundTripTests` and `FileAccessRootTests` and not by a re-measurement. **The forty-first arrived 2026-09-15** with the zero-byte WebP measurement, and it has row 122 of its own -- a fact already known to be about to change, which is the shape row 102 was for |
 | [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 38 | 24 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run. **The thirty-eighth marker arrived 2026-10-08** with what a server's start costs before its first answer, measured on 2026-10-04, and it has row 202 of its own. **The thirty-seventh marker arrived 2026-10-04** with a switch between a window and none, a window a person closes and the last tab, and it has two rows: what a switch keeps (row 194), and how a browser ends and what comes back after a person's close (row 195). **The thirty-third to thirty-sixth markers arrived 2026-10-03** with the durability research, each with a row of its own: what a hard kill does to Chromium's session restore (row 182), Chromium's commit timings (row 183), Firefox's (row 184) and what the levers cost (row 185) |
 | [`mcp/sdk.md`](mcp/sdk.md) | 25 | 18 | Covered. Two entries carry **no row deliberately** -- see the rule below. **The twenty-fifth marker arrived 2026-09-17** with the pending-request reading, and it has row 132 of its own: what floats there is how `McpSessionHandler` treats a request registered *after* the transport's channel completed, and a change in either direction is silent -- the product refuses at the door before the SDK is reached, so nothing in the suite would go red if the SDK started faulting later requests too |
 | [`windows/detection.md`](windows/detection.md) | 26 | 19 | Partly. The lock-file and Restart Manager entries have rows; the enumeration hazards and the canonicalisation table ride inside row 4's cluster. **The twenty-fifth and twenty-sixth arrived 2026-08-26** with the one path function, and each has a row of its own: 119 for `GetDriveTypeW` blocking through a `subst`, 120 for the three name shapes `Path.GetFullPath` rewrites and does not reject. **Rows 110 and 111 arrived 2026-08-20 carrying no `[FLOATS]` marker at all**, which is why the marker column did not move with them: both are Windows and BCL properties, stamped `[MACHINE]` and `[STABLE]`. **Row 115 did the same on 2026-08-24** for a third reason: the fact it re-establishes lives in `windows/processes.md` and the *condition* it can only be re-established under lives here, so the row cites two articles and stamps a marker in one of them |

@@ -10,7 +10,7 @@ and the exit codes and the closes in
 [Switching between a window and none, closing the window, and closing the last tab](../../../kb/playwright/provisioning-and-timings.md#switching-between-a-window-and-none-closing-the-window-and-closing-the-last-tab----measured-2026-10-04).
 Evidence: [`docs/evidence/2026-10-04-behave/`](../../evidence/2026-10-04-behave/README.md).
 
-**Why it exists.** Lane behave built the maintainer's decisions 6 b, 8 b and 9 d,
+**Why it exists.** The behaviour work built the maintainer's decisions 6 b, 8 b and 9 d,
 each measured before and after through a published `BrowserAI.Server.exe`: what a
 server and a page see of a hidden Chromium's user agent, the exact size at which
 a Chromium screenshot starts to repeat, and the exit code a browser leaves for
@@ -25,7 +25,7 @@ each way it can end, with what the next calls say about it.
 | `mcp.mjs` | The MCP client, with a census of the server's process tree read by parent pid |
 | `exit-watch.ps1` | Opens the browser's main process by the pid and creation time the census read, refuses a pid whose creation time is more than 5 microseconds off, writes `.armed` once it holds the handle, optionally ends it with `TerminateProcess`, and writes the exit code |
 | `close-windows.ps1` | Posts `WM_CLOSE` to every visible top-level window on the desktop it runs on, and refuses a desktop whose name does not start with `BrowserAI-behave-` |
-| `HiddenDesktop.ps1` | The lifetime lane's [`HiddenDesktop.ps1`](../2026-10-04-lifetime/README.md) with this lane's desktop prefix |
+| `HiddenDesktop.ps1` | The lifetime work's [`HiddenDesktop.ps1`](../2026-10-04-lifetime/README.md) with this rig's desktop prefix |
 | `raw.mjs`, `raw2.mjs` | The payload's own `cli.js` over stdio with a config per arm, no BrowserAI on the path: nothing set, `--user-agent`, `contextOptions.userAgent`, headless and headed; `raw2.mjs` adds a service worker, a relaunch with a restored tab, and both mechanisms at once. Both first ask `chrome.exe --headless --dump-dom` for the user agent three times and time it |
 | `batch.ps1` | Runs a plan under the suite lock, each run through `HiddenDesktop.ps1`, with `HKCU\Software\Mozilla\Firefox\Launcher` exported before and after |
 | `plan-before.json`, `plan-before2.json` | Before the change, against `BrowserAI.Server.exe` published from `5bf02f48`. `before2` repeats `before` with the site's heights made exact and the exit watch's arming race closed |
@@ -46,14 +46,14 @@ python analyze_behave.py <runs> <batch>
 python analyze_tall.py <run>\rig\*.png <run>\rig\*.jpeg
 ```
 
-`batch.ps1`'s `$S` and `$node` name this lane's scratch directory and payload;
+`batch.ps1`'s `$S` and `$node` name this rig's scratch directory and payload;
 point them at your own.
 
 ## What keeps it off the rest of the machine
 
 - **Nothing reaches the screen**: the desktop is never switched to, and the
   window census runs once a second over both desktops by the pids the job reports.
-  Each batch starts with the lifetime lane's `desk-probe.ps1` as the positive
+  Each batch starts with the lifetime work's `desk-probe.ps1` as the positive
   control.
 - **It selects no process by image name.** The census reads the server's own
   descendants by parent pid, and `exit-watch.ps1` acts only on the pid and

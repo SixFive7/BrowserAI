@@ -76,8 +76,8 @@ internal sealed partial class RelayTests
     /// <para>
     /// <b>Q261 b, moved to the relay with the one-binary build.</b> The connected case is
     /// <see cref="TheFirstCallOfAConnectionThatNeverListedIsRefusedOnce"/>; this one, a
-    /// relay's first call with no list and no background, was left untested by lane
-    /// ARCH's helper T1 on 2026-10-09. The refusal comes before the hold, because the
+    /// relay's first call with no list and no background, was left untested by a
+    /// reading of the code on 2026-10-09. The refusal comes before the hold, because the
     /// call was made from a list another BrowserAI gave, and holding it for a background
     /// would only run it later from the same list.
     /// </para>
@@ -368,8 +368,8 @@ internal sealed partial class RelayTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The maintainer's 9 a, 2026-10-10</b>, closing the hazard row lane ARCH's helper
-    /// T2 opened on 2026-10-09: the crash sentence sent the person to a bug report for a
+    /// <b>The maintainer's 9 a, 2026-10-10</b>, closing the hazard row a reading of the
+    /// arms opened on 2026-10-09: the crash sentence sent the person to a bug report for a
     /// setting, and to the Start Menu for a start that is refused the same way.
     /// </para>
     /// <para>

@@ -405,7 +405,7 @@ internal sealed class PageServiceTests
     /// loop asks it, and the next hand-out starts a listener again.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-08</b>, at the root session's word, with every stop
+    /// <b>Planted red 2026-10-08</b>, on request, with every stop
     /// final, the coordinator's shape, whose process ended with its listener: red at
     /// the person's start after the minute, whose hand-out came back with no tab.
     /// </para>

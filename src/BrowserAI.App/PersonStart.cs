@@ -209,7 +209,7 @@ internal static partial class PersonStart
             // Task Scheduler said, its HRESULT included; the sentence that says how to
             // enable the task is the relay's (RelayErrors.NotRunning), which every call
             // meets. Corrected 2026-10-09 (previously "the sentence says how to enable
-            // it"), found by lane ARCH's helper T1.
+            // it"), found by a reading of the code on 2026-10-09.
             PersonStartLog.TaskNotRun(logger, run.Detail);
             return (PersonStartOutcome.NotShown, null);
         }

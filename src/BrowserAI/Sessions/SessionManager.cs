@@ -680,7 +680,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// update holds and the dashboard read.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-08 for lanes ARCH and UI.</b> A closed session is not listed: it
+    /// <b>Added 2026-10-08 for the background and the toasts.</b> A closed session is not listed: it
     /// holds no browser until a resume opens it again. The read takes no lock a session
     /// holds and opens no store, so it can be asked once a second.
     /// </remarks>

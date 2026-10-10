@@ -124,7 +124,7 @@ internal sealed record SliceRun(
     /// started a browser of the run, and no other node.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-10</b>, closing the hazard row lane ARCH's helper T2 opened on
+    /// <b>Added 2026-10-10</b>, closing the hazard row a reading of the arm opened on
     /// 2026-10-09: the sandbox arm read every payload node in the job, so a node the
     /// stray sweep's registry reap starts, alive at the moment the job was read, would
     /// have failed the flag check it has no part in. A session's server is the one node

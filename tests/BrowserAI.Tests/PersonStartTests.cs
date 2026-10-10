@@ -518,7 +518,7 @@ internal sealed class PersonStartTests
     /// <para>
     /// <b>RESOLUTIONS 10 and R</b>: a person's start is the one thing that ends a stuck
     /// background, and only by a pid whose creation time the record names and whose image
-    /// is verified to lie under the install root. Left untested by lane ARCH's helper T1
+    /// is verified to lie under the install root. Left untested by a reading of the code
     /// on 2026-10-09, because the background has to be a process of its own with its
     /// image there: here it is the suite's probe, copied under the scratch install's
     /// <c>current\</c> with everything it loads (<see cref="ProbeImage"/>), standing in

@@ -572,7 +572,7 @@ internal static class SessionErrors
     /// keeps the list it fetched when the conversation started, whatever the
     /// server it now talks to offers -- measured, Claude Code re-listed 0 of 18
     /// servers it had launched again, and Codex ignored a list-changed
-    /// notification 30 of 30 (lane q369, 2026-10-03). So a model is told not to
+    /// notification 30 of 30 (the Q369 measurements, 2026-10-03). So a model is told not to
     /// try, and who can change it.
     /// </para>
     /// </remarks>
@@ -1315,7 +1315,7 @@ internal static class SessionErrors
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Added 2026-10-10 for round 2 of the texts review, found by lane FINAL</b>: a
+    /// <b>Added 2026-10-10 for round 2 of the texts review, found by the final gate</b>: a
     /// Chromium full-page screenshot whose browser ended under it reached a model as
     /// <i>The browser child did not answer 'tools/call': TaskCanceledException</i>, the
     /// SDK's own ending of a request whose client was disposed. It is said the way

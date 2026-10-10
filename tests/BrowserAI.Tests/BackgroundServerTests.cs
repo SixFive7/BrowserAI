@@ -671,7 +671,7 @@ internal sealed class BackgroundServerTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found by lane ARCH's helper T1 reading the code on 2026-10-09</b>, and closed
+    /// <b>Found by a reading of the code on 2026-10-09</b>, and closed
     /// 2026-10-10 with the maintainer's 9 a: the end caught only an
     /// <see cref="IOException"/> for each relay, so a link already disposed stopped the
     /// loop, and the call-off discarded what it started, so a failure was never seen.
@@ -732,7 +732,7 @@ internal sealed class BackgroundServerTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found by lane ARCH's helper T1 reading the code on 2026-10-09</b>, and closed
+    /// <b>Found by a reading of the code on 2026-10-09</b>, and closed
     /// 2026-10-10 with the maintainer's 9 a: the stop took its list of connections and
     /// only then joined the listener, so a connection the listener had accepted in
     /// between was not on the list and ran on past the stop's own events.
@@ -1356,8 +1356,8 @@ internal sealed class BackgroundServerTests
 
     /// <summary>The arguments of a <c>browserai_init</c> call opening one session.</summary>
     /// <remarks>
-    /// <b>All four of the session's settings are named</b>, at today's defaults: lane
-    /// SESS's batch C refuses an init that leaves one out.
+    /// <b>All four of the session's settings are named</b>, at today's defaults: since
+    /// F2 d an init that leaves one out is refused.
     /// </remarks>
     /// <param name="directory">The session directory.</param>
     /// <returns>The call's parameters.</returns>
@@ -1380,8 +1380,8 @@ internal sealed class BackgroundServerTests
     /// ⚠️ <b>Corrected 2026-10-10 (previously every call carried a <c>url</c>)</b>: a
     /// <c>browser_snapshot</c> with one is refused for an argument its schema does not
     /// have before it reaches the child, so the arm that holds a snapshot in the child
-    /// raced that refusal against its own in-flight check, and lost it on a run of lane
-    /// FIX's that day.
+    /// raced that refusal against its own in-flight check, and lost it on one run of
+    /// that day.
     /// </remarks>
     /// <param name="id">The request id.</param>
     /// <param name="directory">The session.</param>

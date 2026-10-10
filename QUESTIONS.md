@@ -343,7 +343,7 @@ diagnosis.
 **Directions.** (a) Leave it. (b) **Demote "not installed" to `Debug` and keep
 `Warning` for genuine locator failures.** (c) Suppress it once per process.
 
-**Recommendation: (b), and the agent independently reached the same view.** A
+**Recommendation: (b), and a second, independent reading reached the same view.** A
 supported configuration should not warn. Not taken alone because what severity a
 message carries is the product's voice, and that is yours.
 

@@ -12,7 +12,7 @@ and re-verification row 190. Evidence:
 [`docs/evidence/2026-10-04-lifetime/`](../../evidence/2026-10-04-lifetime/README.md).
 
 **Why it exists.** Q382 b: the headed half of row 152 needs a headed browser,
-and nothing a lane runs may put a window on the maintainer's screen, so it runs
+and nothing run here may put a window on the maintainer's screen, so it runs
 on a desktop of the rig's own. Q380 a: a full-page screenshot of a very tall
 page was seen to repeat every 16,384 px outside BrowserAI, and this takes it
 through the published `BrowserAI.Server.exe`.
@@ -54,9 +54,9 @@ pwsh -NoProfile -File HiddenDesktop.ps1 -Purpose <id> -App <node.exe> `
 
 ## `switch/`: a switch between a window and none, and the corners around it
 
-*Added 2026-10-04 by addition, by lane behave, on the maintainer's decision 10 a,
-in his words verbatim: "10 a".* Until then the runs below were in the lane's
-scratch directory only. Establishes
+*Added 2026-10-04 by addition, by the behaviour work, on the maintainer's decision 10 a,
+in his words verbatim: "10 a".* Until then the runs below were in a scratch
+directory only. Establishes
 [Switching between a window and none, closing the window, and closing the last tab](../../../kb/playwright/provisioning-and-timings.md#switching-between-a-window-and-none-closing-the-window-and-closing-the-last-tab----measured-2026-10-04)
 and re-verification rows 194 and 195. Evidence:
 [`docs/evidence/2026-10-04-lifetime-switch/`](../../evidence/2026-10-04-lifetime-switch/README.md).

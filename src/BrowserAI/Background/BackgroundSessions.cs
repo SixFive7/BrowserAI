@@ -12,7 +12,7 @@ namespace BrowserAI.Background;
 /// countdown, and a way to close them all.
 /// </summary>
 /// <remarks>
-/// <b>Lane SESS's seam, read as it is</b>: <c>SessionManager.Countdowns</c> lists every
+/// <b>The session code's seam, read as it is</b>: <c>SessionManager.Countdowns</c> lists every
 /// open session with the moment its countdown closes its browser, <see langword="null"/>
 /// exactly when the agent set it to never (H1). Closing them all is the host's own
 /// shutdown, which closes each cleanly within the minute's cap; the background exits

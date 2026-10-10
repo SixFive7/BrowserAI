@@ -24,8 +24,8 @@ namespace BrowserAI.Sessions;
 /// <b>Who closed it, when a call did, is said relative to the reader when that is
 /// known</b>: a close made by the connection that is now asking reads as this
 /// client's own, and one made by another reads as another client's, named. Read back
-/// from the record, the client is named and the reader decides. A Claude Code
-/// conversation's subagents share one connection, so <i>this client</i> is as far as
+/// from the record, the client is named and the reader decides. The agents one Claude
+/// Code conversation starts share its one connection, so <i>this client</i> is as far as
 /// BrowserAI can tell them apart; the call's own <c>why</c> is quoted so an agent can
 /// recognise its own.
 /// </para>

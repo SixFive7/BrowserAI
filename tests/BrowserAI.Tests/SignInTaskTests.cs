@@ -267,8 +267,8 @@ internal sealed class SignInTaskTests
     /// ⚠️ <b>Corrected 2026-10-09</b> (previously "and no definition is saved for a task
     /// that is not there", with the remark "The saved definition is extended 2026-10-09,
     /// and planted red that day against a hook that saved the definition whatever the
-    /// scheduler answered"). Lane ARCH's helper T1 held that no definition is saved and
-    /// watched it red against a hook that saved one anyway; lane ARCH chose the saved
+    /// scheduler answered"). A first reading of the code held that no definition is saved and
+    /// watched it red against a hook that saved one anyway; the build chose the saved
     /// file the same day. A person's start registers a missing task only from that file
     /// (RESOLUTIONS 9), and a task the hook could not register is the one that will be
     /// missing (hazard row 331). The assertion now holds the file there, and

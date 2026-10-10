@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Added 2026-10-10</b> for the two outcomes lane ARCH's helper T1 left untested on
+/// <b>Added 2026-10-10</b> for the two outcomes a reading of the code left untested on
 /// 2026-10-09, <see cref="BackgroundStopOutcome.StillRunning"/> and
 /// <see cref="BackgroundStopOutcome.NotAsked"/>; the ended outcome is the real
 /// installer's arms', through a background the Task Scheduler started. The hook goes on

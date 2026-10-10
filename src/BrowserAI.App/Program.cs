@@ -214,8 +214,8 @@ internal static class Program
             return 0;
         }
 
-        // ⚠️ AFTER AN UPDATE -- T and the step-0 research, settled by the root session
-        // on 2026-10-08. Velopack's restart starts this program with the version the
+        // ⚠️ AFTER AN UPDATE -- T and the step-0 research, settled in the plan of the
+        // one-binary build on 2026-10-08. Velopack's restart starts this program with the version the
         // apply was meant to install, in the new version after a success and in the
         // old one after a failure, with the same arguments either way. The two are told
         // apart by comparing that version with this build's, and the background is

@@ -308,7 +308,7 @@ internal static partial class ClaudeCodeTitle
     /// <summary>A prompt cut the way the extension cuts a first prompt: past <see cref="PromptWidth"/> characters, to that many and three full stops.</summary>
     /// <remarks>
     /// <i>Added 2026-10-10</i>, when a Codex thread's first message became a name too and
-    /// the root asked for it cut like the Claude Code titles.
+    /// it was asked for cut like the Claude Code titles.
     /// </remarks>
     /// <param name="prompt">The prompt, on one line.</param>
     /// <returns>It, or its cut form.</returns>

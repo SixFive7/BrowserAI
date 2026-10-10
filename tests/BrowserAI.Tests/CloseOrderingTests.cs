@@ -1052,7 +1052,7 @@ internal sealed class CloseOrderingTests
 
     /// <summary>What a wait for a double's stop says when it never comes.</summary>
     /// <remarks>
-    /// ⚠️ <b>Added 2026-10-10, lane FINAL.</b> The product ends a session child by
+    /// ⚠️ <b>Added 2026-10-10, from the final gate.</b> The product ends a session child by
     /// closing its pipes, and the double's read loop sees that on a thread of its own,
     /// so <see cref="FakePlaywrightChild.HasStopped"/> can read false for a moment after
     /// the call that ended the child has returned. Four arms asserted it at once, and the

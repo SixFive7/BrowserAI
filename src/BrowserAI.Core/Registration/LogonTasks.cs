@@ -123,7 +123,7 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// and the bound is more than 200 times the slowest of them; it sits inside the 15 s
     /// Velopack gives the update hook, which also registers with every client.
     /// <i>Corrected 2026-10-10 (previously "Registering took 19.8 to 21.9 ms, a run 1.0
-    /// to 1.2 ms and a delete 2.4 to 2.5 ms, measured 2026-09-25"), when lane REC found
+    /// to 1.2 ms and a delete 2.4 to 2.5 ms, measured 2026-09-25"), when a records pass found
     /// that the kb entry gives a run 1.0 to 1.3 ms: this remark cites the measurement and
     /// restates none of it, so the two cannot disagree again.</i>
     /// </remarks>

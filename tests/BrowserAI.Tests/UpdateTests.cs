@@ -685,35 +685,35 @@ internal sealed class UpdateTests
     // ---- The service ---------------------------------------------------------
 
     // RETIRED 2026-10-08: AnUpdateIsStagedButNotAppliedWhileAnotherInstanceIsLive, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: TheStagedLineSaysHowManyItIsWaitingOnAndWhatWasAlreadyFetched, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: AloneTheSamePassAppliesAndAsksForShutdownRatherThanExiting, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: AStagedUpdateThatIsBlockedWakesTheCoordinatorAndNoOtherOutcomeDoes, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: NothingOnOfferIsAQuietPass, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: AFeedThatThrowsDoesNotTakeTheProcessWithIt, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // RETIRED 2026-10-08: ProgressResetsTheStallTimerSoASlowButMovingDownloadSurvives, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     /// <summary>
@@ -817,7 +817,7 @@ internal sealed class UpdateTests
     }
 
     // RETIRED 2026-10-08: ShutdownAbandonsThePassQuietly, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
     // ---- The single lines, each of which survived its own deletion green -----
@@ -1199,7 +1199,7 @@ internal sealed class UpdateTests
     private const string Composition = "new LocalAppDataPaths(";
 
     // RETIRED 2026-10-08: ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo, which drove UpdateService, a server's own
-    // update lane. The lane went with the in-process server when the one resident
+    // update lane. That update lane went with the in-process server when the one resident
     // background took its place (S a); BackgroundUpdates is the only update core.
 
 }

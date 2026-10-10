@@ -127,7 +127,7 @@ internal static class ToastActivatorRegistration
     /// one class: the install that registered last owns it, and the toasts of both
     /// start its program. <i>Corrected 2026-10-10 (previously every uninstall took the
     /// class back, so uninstalling either of two installs of one pack id left the other's
-    /// toasts starting nothing)</i>, found by lane ARCH's helper T3 reading the hooks on
+    /// toasts starting nothing)</i>, found by a reading of the hooks on
     /// 2026-10-09; the maintainer's 9 a. What is left stands: the install that owns the
     /// class takes it back when it is uninstalled, and an older install of the same pack
     /// id gets it again at its next update.

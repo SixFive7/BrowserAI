@@ -451,7 +451,7 @@ internal sealed partial class RealInstallerTests
     /// </para>
     /// <para>
     /// ⚠️ <b>This holds the sentence the product gives today, and a decision is open on
-    /// it.</b> The hazard row lane ARCH's helper T2 opened on 2026-10-09 says the crash
+    /// it.</b> The hazard row a reading of the arms opened on 2026-10-09 says the crash
     /// sentence sends the person to a bug report for what is a configuration problem,
     /// and asks whether a refusal gets a kind of its own in the record. If it does, this
     /// arm's expected answer changes with it.

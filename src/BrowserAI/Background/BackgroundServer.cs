@@ -67,7 +67,7 @@ internal interface IBackgroundVerbs
 /// That is the one-background rule, beside the task's own <c>IgnoreNew</c> (S a).
 /// </para>
 /// <para>
-/// <b>It never ends on its own</b> (S a, decided 2026-10-08, reversing lane c's
+/// <b>It never ends on its own</b> (S a, decided 2026-10-08, reversing option c's
 /// minute-long linger): a relay, a session, a tab or nothing at all, the background
 /// stays until sign-out, an update, a stop or a crash.
 /// </para>
@@ -199,7 +199,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// connection it accepted while the stop was under way is in the list and is waited
     /// for, and none runs on past the stop's own events. <i>Corrected 2026-10-10
     /// (previously the list was taken first and the listener joined after it), found by
-    /// lane ARCH's helper T1 reading the code on 2026-10-09 and held by
+    /// a reading of the code on 2026-10-09 and held by
     /// <c>BackgroundServerTests.AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor</c>.</i>
     /// </remarks>
     public async ValueTask DisposeAsync()

@@ -1200,7 +1200,7 @@ and only running the installer again recovers.
 ### An apply whose last rename fails leaves no program, and the installer puts it back -- measured 2026-10-10
 
 Under the marker of the section above, on Velopack **1.2.161**: the stock `Update.exe`
-that vpk 1.2.161 packs, Windows 11 Pro 10.0.26300.9550. Measured by lane VELO on
+that vpk 1.2.161 packs, Windows 11 Pro 10.0.26300.9550. Measured on
 2026-10-10 between 00:47Z and 01:03Z, under the suite and installer locks, with the
 step-0 stand-in under its own pack id, `BrowserAI.Measure`, installed with its
 `Setup.exe --silent` into `%LOCALAPPDATA%\BrowserAI.Measure`; nothing of
@@ -1239,8 +1239,8 @@ one file in it open for 60 s. Everything it was read from:
   data survives a repair** -- it lives in `%LOCALAPPDATA%\BrowserAI`, outside the
   install folder `%LOCALAPPDATA%\BrowserAI.app` -- and anything else kept inside the
   install folder does not.
-- **A fix restores the old version.** An `Update.exe` built from the fix lane VELO
-  wrote for upstream, `84af7e5` on the maintainer's fork, put the old version back in
+- **A fix restores the old version.** An `Update.exe` built from the fix
+  written for upstream, `84af7e5` on the maintainer's fork, put the old version back in
   `current\` and restarted it in 7 of 7 rounds with the file held, 4 of them with a
   build of that commit itself, and applied normally without it. It was posted on
   2026-10-10 as pull request [#1087](https://github.com/velopack/velopack/pull/1087), with the report,

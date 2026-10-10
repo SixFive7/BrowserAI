@@ -216,7 +216,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
     /// <summary>Every open session's idle countdown, for the update and the dashboard.</summary>
     /// <remarks>
-    /// <b>Added 2026-10-08</b>, the seam lane SESS exposes for lanes ARCH and UI; see
+    /// <b>Added 2026-10-08</b>, the seam the session code exposes for the background and the toasts; see
     /// <see cref="SessionManager.Countdowns"/>.
     /// </remarks>
     /// <returns>One countdown per open session.</returns>
@@ -1352,7 +1352,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             // ⚠️ A CALL THE BROWSER SERVER NEVER ANSWERED is said in words, and the record
             // carries the same words: round 2 of the texts review, 2026-10-10, found by
-            // lane FINAL (previously "The browser child did not answer 'tools/call':
+            // the final gate of that day (previously "The browser child did not answer 'tools/call':
             // <exception type>: <message>" to the caller, and the exception's whole text
             // in the session's record). The exception is the log's.
             var ended = SessionErrors.BrowserServerEndedDuringTheCall(tool, live.Location.FullPath);
@@ -1493,7 +1493,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// nobody can act on.
     /// </para>
     /// <para>
-    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by lane FINAL
+    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by the final gate
     /// (previously this was the row's payload whenever the child never answered)</i>:
     /// the forwarding path replaces it with
     /// <see cref="SessionErrors.BrowserServerEndedDuringTheCall"/>, the words the caller
@@ -1778,7 +1778,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// died and for an unknown content type, naming neither. It is answered as a
     /// JSON-RPC <b>error</b> here because it is a transport failure and not a
     /// tool outcome, and the cause is named.
-    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by lane FINAL
+    /// ⚠️ <i>Corrected 2026-10-10, round 2 of the texts review, found by the final gate
     /// (previously the message was "The browser child did not answer '{method}':
     /// {type}: {message}", which a model met as "TaskCanceledException")</i>: the message
     /// is <see cref="SessionErrors.BrowserServerEndedDuringTheCall"/>, which says what

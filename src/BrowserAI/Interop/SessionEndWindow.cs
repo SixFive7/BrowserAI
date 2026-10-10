@@ -26,7 +26,7 @@ internal enum SessionEndNotice
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Settled by the root session on 2026-10-08, from the step-0 research</b>: the
+/// <b>Settled in the plan on 2026-10-08, from the step-0 research</b>: the
 /// background needs a hidden top-level window to receive <c>WM_QUERYENDSESSION</c>
 /// and <c>WM_ENDSESSION</c>, so a sign-out or a shutdown is recorded as a clean end
 /// and not as a crash under R. Microsoft's own advice, read for that research:

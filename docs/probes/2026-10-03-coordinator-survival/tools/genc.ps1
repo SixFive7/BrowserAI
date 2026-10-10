@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Lane c survival probe, 2026-10-03. Every run's dummy server asks a coordinator-owned host
+# Option c survival probe, 2026-10-03. Every run's dummy server asks a coordinator-owned host
 # (started through the Task Scheduler, outside every client's tree and job) for a browser
 # stand-in, beside the stand-in it starts in its own job as today's BrowserAI does. After the
 # client has gone the harness asks the host whether that browser is still alive, then releases it.

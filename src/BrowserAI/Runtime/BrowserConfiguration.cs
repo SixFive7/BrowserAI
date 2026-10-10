@@ -336,7 +336,7 @@ internal static class BrowserConfiguration
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>e1 of P7, decided by the root session 2026-10-03 for the maintainer's
+    /// <b>e1 of P7, decided 2026-10-03 for the maintainer's
     /// review</b>, against his words: <i>"b + e and if e is impossible or
     /// difficult c. But it all needs to be done in a super safe way so we don't
     /// permanently leak stuff."</i> A client that ends BrowserAI kills its

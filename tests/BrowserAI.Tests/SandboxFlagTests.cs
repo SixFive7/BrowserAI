@@ -121,7 +121,7 @@ internal sealed class SandboxFlagTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found by lane ARCH's helper T2 reading the arm on 2026-10-09</b>, closed
+    /// <b>Found by a reading of the arm on 2026-10-09</b>, closed
     /// 2026-10-10 with the maintainer's 9 a. No run had met it: a reap's node lives for
     /// the moment its prune takes, and the arm above reads the job once.
     /// </para>

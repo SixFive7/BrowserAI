@@ -1892,7 +1892,7 @@ scratch configuration against a local stub.
 `[MACHINE]` for every time. How the clients end a server floats with their releases, as
 the 2026-10-03 entry above says, and that entry's row carries it.
 Windows 11 Pro 10.0.26300; BrowserAI **1.1.1-alpha.0.197**, both programs published
-from `e30380ac`, lane c's option c as built, with `@playwright/mcp` 0.0.83 and
+from `e30380ac`, option c as built, with `@playwright/mcp` 0.0.83 and
 RegisterAI 0.2.0, packed as the suite's test pack with vpk **1.2.161** and installed
 the way `RealInstallerTests` installs it, `--silent --installto` a root under
 `%LOCALAPPDATA%\BrowserAI-test-scratch`; the clients Claude Code **2.1.288** and
@@ -2339,8 +2339,8 @@ two handles, its stop and the tab's inbox; the limit stands as measured.
 
 ## A timer armed through TimeProvider.System fires before its moment by that clock, most of the time -- measured 2026-10-09
 
-`[MACHINE]`. Windows 11 Pro 10.0.26300, .NET 10.0.12, measured by lane ARCH's helper T3
-while it ran the real-scheduler arms. A one-shot timer armed the way
+`[MACHINE]`. Windows 11 Pro 10.0.26300, .NET 10.0.12, measured while the real-scheduler arms
+ran. A one-shot timer armed the way
 `RelayEngine.Arm` arms one, its delay the moment less `TimeProvider.System.GetUtcNow()`,
 ran its callback while that same clock still read before the moment **146 times in
 200** at a two-second delay and **136 in 200** at half a second, early by 0.001 to

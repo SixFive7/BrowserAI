@@ -122,7 +122,7 @@ internal sealed record RegistrationClient
     /// 2026-10-10</b>, the texts review's #138 and #139: the line carried <c>--mcp</c>
     /// alone, so for an install made with a data root it set up a relay that no
     /// background serves. The dashboard's Register and Repair keep the data root the
-    /// same way (lane UI, the same day).
+    /// same way (the dashboard's fix of the same day).
     /// </remarks>
     public required Func<string, IReadOnlyList<string>, string> ManualCommandFor { get; init; }
 

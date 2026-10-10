@@ -35,7 +35,7 @@ internal enum BackgroundStopOutcome
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Never the task's End command</b> (settled by the root session, 2026-10-08, from
+/// <b>Never the task's End command</b> (settled in the plan, 2026-10-08, from
 /// the step-0 research): End closes the process's top-level windows and terminates it
 /// about a second later, exit code <c>0x42B</c>, which ends every browser through the
 /// jobs without a clean close. The pipe's <c>stop</c> closes each session within the

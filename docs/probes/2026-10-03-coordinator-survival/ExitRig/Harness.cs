@@ -511,7 +511,7 @@ static class Harness
         result["procs"] = procs;
         if (spec.HostPipe is { } hp && spec.HostId is { } hid)
         {
-            // Lane c: the browser stand-in the coordinator-owned host started for this run.
+            // Option c: the browser stand-in the coordinator-owned host started for this run.
             var host = new JsonObject();
             try
             {

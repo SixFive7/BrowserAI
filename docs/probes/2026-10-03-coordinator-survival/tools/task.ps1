@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Lane c survival probe, 2026-10-03: a scratch per-user scheduled task that starts the probe's
+# Option c survival probe, 2026-10-03: a scratch per-user scheduled task that starts the probe's
 # coordinator stand-in on demand, with the settings of BrowserAI's own sign-in task
 # (SignInTask.DefinitionFor) and NO trigger, so nothing ever starts it again by itself.
 # Usage: task.ps1 -Do register|run|remove|show -Name <name> [-Exe <path> -Arguments <args>]

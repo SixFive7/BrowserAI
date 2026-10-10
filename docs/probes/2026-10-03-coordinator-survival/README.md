@@ -16,7 +16,7 @@ Codex's job, which allows no breakaway, reaches it.
 
 ## What is here
 
-**This is lane c's copy of [the client-exit rig](../2026-10-03-client-exit/README.md)**,
+**This is option c's copy of [the client-exit rig](../2026-10-03-client-exit/README.md)**,
 and only what was added or changed is kept here. The rest of that rig, its stubs,
 `vscodehost.js` and its `Native.cs`, were used as they are recorded there.
 

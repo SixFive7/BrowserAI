@@ -386,8 +386,8 @@ internal sealed class RelayRoster : IUpdateRelays
     /// <remarks>
     /// ⚠️ <b>Every relay's notice is watched to its end</b>, and one that fails is a
     /// record naming the relay. <i>Corrected 2026-10-10 (previously each task was
-    /// discarded, so a failure was never seen by anybody), found by lane ARCH's helper
-    /// T1 reading the code on 2026-10-09.</i>
+    /// discarded, so a failure was never seen by anybody), found by a reading of the
+    /// code on 2026-10-09.</i>
     /// </remarks>
     public void CallOff(string version)
     {
@@ -403,7 +403,7 @@ internal sealed class RelayRoster : IUpdateRelays
     /// still told, and a connection that faults as it goes is waited for as gone.
     /// <i>Corrected 2026-10-10 (previously only an <see cref="IOException"/> was caught,
     /// so a link already disposed stopped the loop and every relay after it ended only
-    /// with the background), found by lane ARCH's helper T1 reading the code on
+    /// with the background), found by a reading of the code on
     /// 2026-10-09 and held by
     /// <c>BackgroundServerTests.ARelayWhoseLinkFailsKeepsNoOtherFromBeingToldToEnd</c>.</i>
     /// The caller's own token is the one thing that ends the loop early: its bound has

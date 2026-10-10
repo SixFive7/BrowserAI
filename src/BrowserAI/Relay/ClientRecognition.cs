@@ -60,7 +60,7 @@ internal enum ClientKind
 /// </para>
 /// <para>
 /// ⚠️ <b>PROVISIONAL: the measurement's option d, pending the maintainer's
-/// confirmation</b> (the root session, 2026-10-08): the parent's arguments, then the
+/// confirmation</b> (the plan, 2026-10-08): the parent's arguments, then the
 /// entrypoint when the parent cannot be read, then unknown. His other option, c, is
 /// to never guess and name both remedies for every Claude Code session; it is
 /// <see cref="ReadsTheParent"/> set to <see langword="false"/>, and nothing else

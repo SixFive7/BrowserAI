@@ -144,7 +144,7 @@ internal sealed class VerticalSliceTests
         // say so. *(Corrected 2026-10-08, previously 64 of 72: F1 a denied
         // browser_close, which BrowserAI's own browserai_close replaces, so the
         // denominator held still and this number lost one while Names gained
-        // one. Found by lane REC's gate at 6694dda8, because lane SESS's gate on
+        // one. Found by the gate at 6694dda8, because the gate on
         // the commit that made the change never finished.)* *(Corrected 2026-10-04 a second time, previously 65 of 72: the
         // maintainer's Q365.1 a denied browser_set_storage_state.)* *(Corrected
         // 2026-10-04, previously 70 of 72: the maintainer

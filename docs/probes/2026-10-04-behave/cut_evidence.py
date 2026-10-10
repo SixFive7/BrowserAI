@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Cuts the behave lane's run folders into an evidence batch the way
+# Cuts the behaviour rig's run folders into an evidence batch the way
 # docs/evidence/README.md asks: text kept as written, the user profile path and
 # terminal colour escapes cut from a copy stored under a .trimmed. name with the
 # original's SHA-256 in originals.sha256, and images, profiles and anything over

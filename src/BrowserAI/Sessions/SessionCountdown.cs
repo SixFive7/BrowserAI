@@ -9,7 +9,7 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The seam lane SESS exposes for lanes ARCH and UI, 2026-10-08.</b> H1, decided
+/// <b>The seam the session code exposes for the background and the toasts, 2026-10-08.</b> H1, decided
 /// that day: hidden browser sessions and visible windows hold a downloaded update
 /// until their countdown runs out or they are closed, and the toast and the dashboard
 /// show each one with its deadline. The background maps this onto

@@ -274,7 +274,7 @@ internal sealed class SessionHostTests
     /// <remarks>
     /// <para>
     /// <b>What the sessions page reads to show a kept session for what it is</b>, asked
-    /// by the root session on 2026-10-03 when option c arrived. The time is the idle
+    /// for on 2026-10-03 when option c arrived. The time is the idle
     /// timer's own deadline, read under its lock on the rig's clock.
     /// </para>
     /// <para>

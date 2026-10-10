@@ -18,7 +18,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The maintainer's decision of 2026-10-10, verbatim: <i>"10 b"</i></b>, on the check
-/// lane S1 built on 2026-10-08: a session whose browser server lists different tools
+/// step 1 of the one-binary build made on 2026-10-08: a session whose browser server lists different tools
 /// from the list compiled into the binary is refused, the refusal names the first tool
 /// that differs and tells the model the install is broken, and everything else goes on.
 /// Option b keeps all of that and tells the person as well that BrowserAI needs

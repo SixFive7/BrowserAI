@@ -63,7 +63,7 @@ internal sealed class IdleCountdownTests
     /// more). A close is a round trip to the child on the thread pool, so under load
     /// the stepping ran on past the visible window's hour before the hidden close had
     /// finished, and the arm went red with "a visible window closed before its hour had
-    /// passed" in the PowerShell half of lane REC's gate at <c>6694dda8</c>. Planted
+    /// passed" in the PowerShell half of the gate at <c>6694dda8</c>. Planted
     /// red the same day by slowing the hidden child's close by 300 ms, which the old
     /// arm failed and this one passes.
     /// </para>
@@ -386,7 +386,7 @@ internal sealed class IdleCountdownTests
     /// listed.
     /// </summary>
     /// <remarks>
-    /// <b>The contract is lane UI's <c>UpdateHolds.HoldingSession</c> of 2026-10-08</b>:
+    /// <b>The contract is the update toasts' <c>UpdateHolds.HoldingSession</c> of 2026-10-08</b>:
     /// a deadline and never a remaining time, and <see langword="null"/> exactly when
     /// the agent set the session to never.
     /// </remarks>

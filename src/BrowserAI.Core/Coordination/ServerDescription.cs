@@ -27,8 +27,8 @@ namespace BrowserAI.Coordination;
 /// does the arithmetic against the period it knows.
 /// </para>
 /// <para>
-/// ⚠️ <b>Four fields went on 2026-10-10, round 2 of the texts review, found by lane
-/// FINAL</b>: <c>Version</c>, the BrowserAI version it ran; <c>ImagePath</c>, the
+/// ⚠️ <b>Four fields went on 2026-10-10, round 2 of the texts review, found by the
+/// final gate of that day</b>: <c>Version</c>, the BrowserAI version it ran; <c>ImagePath</c>, the
 /// executable; <c>State</c>, one of the words of <c>States</c>, by then only
 /// <c>serving</c>, which went with it; and <c>Started</c>, when it began answering. The
 /// background wrote each for itself and for every relay, and nothing read any of them.

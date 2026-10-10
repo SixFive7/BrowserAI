@@ -217,7 +217,7 @@ internal sealed class BackgroundFinderTests
     /// <para>
     /// <b>The design's "Where the reason can be found"</b>: a crash that wrote nothing
     /// still leaves its exit code, and only a process holding a handle on the background
-    /// can read it. Left untested by lane ARCH's helper T1 on 2026-10-09, because the
+    /// can read it. Left untested by a reading of the code on 2026-10-09, because the
     /// background has to be a process of its own that really exits: here the suite's
     /// probe stands in for it (<c>background-standin</c>), taking the pipe and writing
     /// the record through the product's own code, and ends with the code the arm gives it

@@ -416,7 +416,7 @@ internal sealed class ClientReconnectTests
     /// added beside the variable Codex would otherwise drop.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-10-10 for the positive control</b>, which helper T2's plant of
+    /// <b>Planted red 2026-10-10 for the positive control</b>, which the plant of
     /// 2026-10-09 did not reach separately, against a relay that ended once it had passed
     /// on its first answer: Codex got the call's answer, and the relay the background had
     /// recorded as connected was already gone, <i>"Expected to be true, because the

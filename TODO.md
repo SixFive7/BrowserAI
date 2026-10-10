@@ -38,7 +38,7 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       bounded at 1 s, before the rest of the shutdown (*a minute since
       2026-10-04, D4.2, which the client's own kill still cuts short*). Not built: an arm that
       kills the server the way Claude Code does and reads the profile back,
-      which the building lane judged a timing test. **What to do:** decide
+      which the build judged a timing test. **What to do:** decide
       whether a kill-and-read-back arm can be written as a hang detector, and
       build it if it can; the process outside the client's tree, direction (c),
       is not built by decision. *Corrected 2026-10-03 by addition (previously
@@ -47,7 +47,7 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       kill reaches no browser now, so the arm is owed for a server that serves
       its client itself, which is every build that is not installed.*
 - [ ] **Option c, Q366 b and Q364: what the build of 2026-10-03 leaves.** Built
-      by lane c: the coordinator starts a session host in a kill-on-close job of
+      by option c: the coordinator starts a session host in a kill-on-close job of
       its own, and the server a client starts relays its stdio to it, so a
       session outlives its client; see
       [the design](docs/design/coordinator-owned-browsers/README.md). **What to
@@ -88,7 +88,7 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 
 ### Still open, and the maintainer's to choose
 
-- [ ] **Lane q371's choices inside his rules, for his review.** A bare resume
+- [ ] **The Q371 work's choices inside his rules, for his review.** A bare resume
       with no browser up is now the no-op; a `purpose` passed with a no-op resume
       is still appended; a catch_up `why` on a session another BrowserAI holds
       goes to this BrowserAI's own log; catch_up names ten files of a kind by
@@ -116,7 +116,7 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       choices are the next item.*
 - [ ] **Option c's decisions taken for review.** The ones
       [the design](docs/design/coordinator-owned-browsers/README.md#decisions-taken-for-review)
-      numbers, and one question the build put to the root session: whether a
+      numbers, and one question the build left open: whether a
       session the host kept for a client that went should hold an update the way
       a connected client's does, where today the update closes its browser.
       **What to do:** walk him through them and record each answer.
@@ -1294,7 +1294,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       measure the failure, then report it upstream with a fix. With the stock
       Velopack 1.2.161 and one file of the new version held open by another
       process, an apply with a restart, the one BrowserAI makes, left no
-      `current\` in 4 of 4 runs of lane VELO's rig, logged *"Apply error: Unable
+      `current\` in 4 of 4 runs of the Velopack rig, logged *"Apply error: Unable
       to find executable to start"*, could not be uninstalled, and came back only
       when the installer was run again, which kept the data outside the install
       folder ([hazard row](HAZARDS.md#hazard-index),

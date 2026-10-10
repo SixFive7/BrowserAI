@@ -30,18 +30,17 @@ answered by number.")*
   2026-10-07 and 2026-10-08.
 - **His words are quoted verbatim**, typos included, with the time of the message
   in UTC. Where a quotation leaves text out, it says "[...]".
-- **Where an answer could be read two ways, the root session chose a reading and
-  stated it to him**, and he did not object. Those are marked *settled by the root
-  session, 2026-10-08*; a code lane that finds one wrong reports it and does not
+- **Where an answer could be read two ways, the planning chose a reading and
+  stated it to him**, and he did not object. Those are marked *settled in planning, 2026-10-08*; a part of the build that finds one wrong reports it and does not
   guess.
 - **Texts still to be approved.** The hold-back text of F2, the warning of E2, the
   errors for a background that is not running, a hang, a disabled or missing task
   and a build that is not installed, and the final toast texts are drafted by the
-  code lanes and collected into one file for his approval before the deploy, as the
+  build and collected into one file for his approval before the deploy, as the
   q371 texts were. Two texts are already his: the crash error (R) and the "already
   live" answer (F2).
 - **This file holds what was chosen, and what it was chosen from.** What the build
-  implements is recorded where the code lanes record it, in
+  implements is recorded where the build records it, in
   [`DECISIONS.md`](../../../DECISIONS.md), [`ARCHITECTURE.md`](../../../ARCHITECTURE.md)
   and the [kb](../../../kb/README.md).
 
@@ -232,10 +231,10 @@ hang error, and "having trouble starting the background process" became S's
 7. **What an idle client costs** (P a). With 1.1.0 installed, each Claude Code or
    Codex process with BrowserAI loaded holds a server of about 25 MiB private bytes
    and its own Playwright `node` of about 97 MiB, used or not: about 1.2 GiB private
-   for the ten servers read on 2026-10-04, and about 3.0 GiB for the 25 the root
-   session read on 2026-10-08. Under the decided design an idle client costs one
+   for the ten servers read on 2026-10-04, and about 3.0 GiB for the 25 read in
+   planning on 2026-10-08. Under the decided design an idle client costs one
    relay: a stand-in that held the parsed tool list and waited on its input used
-   3.5 MiB, 5 of 5, read by the root session on 2026-10-08. The build measures the
+   3.5 MiB, 5 of 5, read in planning on 2026-10-08. The build measures the
    real relay and a test holds it under a limit; the background's idle memory and
    CPU from sign-in are measured before release and shown to him.
    *Changed 2026-10-08 by P (previously "Under the plan an idle client costs one
@@ -296,13 +295,13 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    Chromium keeps a cookie only once it is about 30 s old and `localStorage` about
    5 s; a Chromium profile killed before its first Preferences write restores
    nothing; and with `--hide-crash-restore-bubble` the tabs come back, 11 of 11 that
-   had them on disk. Lane c's session host on `master` already holds every session
+   had them on disk. Option c's session host on `master` already holds every session
    in one process. The plan adds the tab, the update and the apply loop to that
    process, which reverses the 2026-09-15 cut that kept SQLite, the MCP SDK and the
    sessions out of the window process. Not established: whether anything in the
    tab's listener or the update lane can bring the process down; no fault has been
    injected into either.
-   **Now:** accepted. The root session listed it on 2026-10-08T00:21:41Z among the
+   **Now:** accepted. The planning listed it on 2026-10-08T00:21:41Z among the
    risks to accept unless he objected, and he did not; that list said "the relay
    restarts the background", which R then removed, so a fault now also stops
    BrowserAI until the person starts it from the Start Menu.
@@ -328,7 +327,7 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    should run in that session and an SSH-started relay should reach it; that is not
    measured either.
    **Now:** accepted by no objection ("BrowserAI won't run for agents started over
-   SSH or CI without a signed-in desktop", the root session, 2026-10-08T00:21:41Z).
+   SSH or CI without a signed-in desktop", the planning note of 2026-10-08T00:21:41Z).
    A disabled task is named and left disabled (D12 b), a missing one is named and
    registered again only by the hooks and a person's start, and no relay runs it
    (S a). Measured in step 0 on 2026-10-08, with stand-ins: twenty run requests at
@@ -347,12 +346,12 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    [`2026-10-04-onebinary-measure`](../../evidence/2026-10-04-onebinary-measure/README.md)
    and [`2026-10-04-startup-measure`](../../evidence/2026-10-04-startup-measure/README.md);
    "Where the facts come from" below names each entry.
-5. **The relay has to understand the protocol.** Lane c's front copies bytes and
+5. **The relay has to understand the protocol.** Option c's front copies bytes and
    parses nothing. This relay reads the method and the id of every frame the client
    sends: it answers `initialize`, `ping` and `tools/list` itself, holds a
    `tools/call` while it has no background, answers held calls when the start
    fails, and replays the client's `initialize` to every new background. That is new
-   code on the path every call takes, which is one of the reasons lane c turned its
+   code on the path every call takes, which is one of the reasons option c turned its
    direction a down ([the coordinator-owned design](../coordinator-owned-browsers/README.md)).
    Once connected, frames still pass byte for byte.
    **Now:** stands, and the relay also keeps its activity countdown and takes part in
@@ -379,7 +378,7 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    or a Codex project entry, which names `BrowserAI.Server.exe` bare
    (`RegistrationClient`). D7; keeping two files with their roles moved would avoid
    it, at the price of the one file.
-   **Now:** D7 a. A read-only search by the root session on 2026-10-08 found no
+   **Now:** D7 a. A read-only search in planning on 2026-10-08 found no
    `.mcp.json` under `C:\Source`, three levels deep, that names the old file; the only
    two registrations naming it are the user-scope ones, which the update hook
    rewrites.
@@ -398,17 +397,17 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
    on disk.
 10. **The design point has never run through one process.** The charter's design
     point, about 100 concurrent BrowserAI processes, runs in `SaturationTests` as 100
-    server processes, 8 of them with browsers. Under lane c and under this plan the
+    server processes, 8 of them with browsers. Under option c and under this plan the
     same load is up to 100 sessions in one process, and nobody has run that.
     **Now:** accepted by no objection, and it becomes a test ("100 sessions in one
-    process have never been tried; that becomes a test", the root session,
+    process have never been tried; that becomes a test", the planning note of
     2026-10-08T00:21:41Z).
 11. **A headed window opened by a task-started process is not measured.** The
     Task Scheduler's process holds no right to the foreground (measured three times
     on 2026-09-24, in [DECISIONS](../../../DECISIONS.md)), and every headed run in the
     reports of 2026-10-03 and 2026-10-04 was in-process or on a hidden desktop.
     Whether such a window
-    shows in front, behind, or takes the focus is not known; lane c's host on
+    shows in front, behind, or takes the focus is not known; option c's host on
     `master` already has the same gap.
     **Now:** measured in step 0 on his own screen, with his leave: "do the things
     that disturb me now" (2026-10-08T13:46:28Z). A launcher started through a
@@ -426,9 +425,9 @@ Each point is as written on 2026-10-04, with what the decisions made of it.
     Task Scheduler builds for the user. A proxy set only in one terminal no longer
     reaches a browser download. Whether anyone relies on that is not known.
     **Now:** accepted by no objection ("Proxy settings come from your account's
-    environment, not from one terminal's", the root session, 2026-10-08T00:21:41Z).
+    environment, not from one terminal's", the planning note of 2026-10-08T00:21:41Z).
 13. **The Claude Code first-turn figures may describe tool search switched off.**
-    Lane stale recorded on 2026-10-03 that tool search was off in every stand-in run
+    The stale-claims pass recorded on 2026-10-03 that tool search was off in every stand-in run
     from 2026-09-23 on, and the startup measurement does not say how it ran. With
     tool search on, Claude Code defers every server's tools by default, in its own
     words quoted in point 6, and what a slow server costs the first turn then is not
@@ -459,8 +458,8 @@ last relay, session and tab have gone; or an update, an uninstall, a crash, the
 task's End command, sign-out"; for Playwright, "Ends: the session's close, idle
 close, release or destroy; an update; the background's end").*
 
-**The task's End command is never how BrowserAI stops its background** (settled by
-the root session, 2026-10-08, from the step-0 research): Microsoft documents that
+**The task's End command is never how BrowserAI stops its background** (settled in
+planning, 2026-10-08, from the step-0 research): Microsoft documents that
 End sends `WM_CLOSE` and then calls `TerminateProcess`, and step 0 measured it, 31 of
 31 with stand-ins: End and `IRunningTask::Stop` send the task process's top-level
 windows two `WM_COMMAND` messages and a `WM_CLOSE`, and terminate the process about
@@ -477,8 +476,8 @@ measured three levels deep ([the coordinator-owned design](../coordinator-owned-
 
 | Alternative to one background process | What it costs |
 |---|---|
-| Lane c as built: the coordinator, and a session host it starts | Two processes, two pipes and a bounded call between them; the tab and the update are kept apart from the sessions, which is the isolation he set aside |
-| A host per client, kept when its client goes (lane c's direction d) | A relaunched client has no link to the host it had, so a kept session can only be reached by handing its lock and its child across processes |
+| Option c as built: the coordinator, and a session host it starts | Two processes, two pipes and a bounded call between them; the tab and the update are kept apart from the sessions, which is the isolation he set aside |
+| A host per client, kept when its client goes (option c's direction d) | A relaunched client has no link to the host it had, so a kept session can only be reached by handing its lock and its child across processes |
 | Sessions in the background and the tab in a process of its own | One more process to start, and the sessions page still asks the background for everything it shows |
 
 **Decided 2026-10-08: P a, one relay per client and one background.** His question
@@ -492,10 +491,9 @@ answer (2026-10-08T13:02:04Z):
 > meassurement of how much idle RAM and CPU option a is consuming on the background
 > from windows start to be reviewed by me."
 
-The clause is a release task, not a condition on the choice (settled by the root
-session, 2026-10-08): when the build is release-worthy, the background's idle memory
+The clause is a release task, not a condition on the choice (settled in planning, 2026-10-08): when the build is release-worthy, the background's idle memory
 and CPU from Windows sign-in are measured and shown to him before any release. The
-figures the choice was made on, read by the root session on 2026-10-08 with nothing
+figures the choice was made on, read in planning on 2026-10-08 with nothing
 started or stopped: 25 BrowserAI 1.1.0 servers were running, one per open Claude Code
 session with BrowserAI loaded, the oldest five days old, each about 25 MiB plus its
 own Playwright at about 97 MiB, about 3.0 GiB together, and 0.1 to 1.5 s of CPU each
@@ -538,7 +536,7 @@ names the session's profile and output folders. A standby process would have to 
 ended and replaced by the session's own, so the only thing it could ever warm is the
 disk cache.
 
-| | 1.1.0, installed today | Lane c, on `master`, not released | This design |
+| | 1.1.0, installed today | Option c, on `master`, not released | This design |
 |---|---|---|---|
 | For the tool list | one per client process, started before the handshake is answered | one, in the session host | none |
 | Per open session | one | one, in the host | one, in the background |
@@ -563,7 +561,7 @@ runs. So the relay can never be what a start with no argument does.
 |---|---|---|---|
 | Relay | `BrowserAI.exe --mcp` | a client, from its registration | the argument, and stdin must be a pipe; with no pipe it writes one log record and exits |
 | Background | `BrowserAI.exe --background`, its settings as further arguments | the scheduled task only | the argument |
-| After an update | an argument carrying the version the apply was meant to install, passed after Velopack's `--` | Velopack's restart at the end of an apply, which runs after a failed apply too | the argument; it compares the version it carries with its own, raises the installed or the failed toast, and asks the Task Scheduler for the background (T, settled by the root session) |
+| After an update | an argument carrying the version the apply was meant to install, passed after Velopack's `--` | Velopack's restart at the end of an apply, which runs after a failed apply too | the argument; it compares the version it carries with its own, raises the installed or the failed toast, and asks the Task Scheduler for the background (T, settled in planning) |
 | Installer hooks | `--veloapp-install`, `--veloapp-updated`, `--veloapp-obsolete`, `--veloapp-uninstall` | Velopack | served first, by Velopack's own `Run()`, as the app serves them today; none of them starts anything |
 | A person's start | no argument, or `--sessions` for the sessions page; the suite adds `--write-address` so that nothing opens | the Start Menu, `Setup.exe` after a non-silent install, `Update.exe start`, a double-click, a toast's button | no argument, or only those two |
 | Report | `--report <path>` | a person, or a support request | the argument |
@@ -622,15 +620,15 @@ once had its tools in every first turn, 78 of 78 runs (startup measurement). Wha
 person sees in `/mcp` is BrowserAI connected, even while its background is not
 running. That was accepted with A: the failure shows on the first call, in words.
 
-**The client's start limit does not depend on the background at all** (the root
-session, 2026-10-08T13:05:55Z, answering his "do we need to account for the mcp init
+**The client's start limit does not depend on the background at all** (the
+planning, 2026-10-08T13:05:55Z, answering his "do we need to account for the mcp init
 timeout as well?"): the relay answers the handshake from its own binary before it
 looks for the background, so only the relay's own start counts, and nothing slow may
 run before that answer.
 
 | Alternative to a relay that answers by itself | Why not |
 |---|---|
-| The relay copies bytes, as lane c's front does, and the background answers the handshake from the binary | Every handshake waits for the background to be reached, about half a second through the task when none runs; and when none can start, the client sees a server that failed to start, so no sentence can ever reach the model, because only a tool result does |
+| The relay copies bytes, as option c's front does, and the background answers the handshake from the binary | Every handshake waits for the background to be reached, about half a second through the task when none runs; and when none can start, the client sees a server that failed to start, so no sentence can ever reach the model, because only a tool result does |
 | The relay answers `initialize` and forwards `tools/list` | The first turn still waits for the background |
 | The relay also answers what it can judge alone: unknown tools, argument syntax | Two doors to keep in step; the door stays in one place, the background |
 
@@ -655,7 +653,7 @@ U2 says what a relay started during an install answers.
    BrowserAI from the Start Menu, and if it keeps happening, read the log and report
    the bug (S a). The error names a disabled task with how to enable it (D12 b) and a
    missing one, which the relay learns from a read-only query and never repairs
-   (settled by the root session, 2026-10-08). A build that is not installed says
+   (settled in planning, 2026-10-08). A build that is not installed says
    that no background runs for that build (D11 a).
 5. **Connected, but no answer:** while a call waits, the relay asks the background a
    liveness question that it answers apart from its other work. With no answer within
@@ -672,7 +670,7 @@ Measured with a stand-in: Claude Code 2.1.288 and Codex 0.155 and 0.160 waited 1
 sends a `tool_progress` heartbeat every 30 s while it waits; and a failure sentence
 returned as an `isError` result reaches the model in both (startup measurement).
 
-**Every wait fits inside both clients' limits** (the root session's table of
+**Every wait fits inside both clients' limits** (the planning table of
 2026-10-08T13:05:55Z, answered "r ok"). One set for both, derived from the stricter
 client, Codex, so nothing differs per client:
 
@@ -716,7 +714,7 @@ changes with it.
 **Checked against the live child, once per session.** Each session's Playwright is
 asked `tools/list` right after its handshake, before it has opened a page, and the
 answer is compared byte for byte with the built-in list. On 0.0.83 the two were equal
-for 70 of 70 tools (startup measurement, before lane q371 denied six more). A
+for 70 of 70 tools (startup measurement, before the Q371 work denied six more). A
 difference means a broken install: the session does not open, and the answer says so
 and names the first tool that differs. A page's own tools never take part, because no
 page exists when the question is asked.
@@ -739,13 +737,12 @@ with it.
 2025-11-25, as the installed stopgap does, so Claude Code falls back to the handshake
 the relay is built on, and a test sends Claude Code's new opening request and requires
 the refusal, since the suite's own client runs never see the new method. Revision
-2026-07-28 is implemented in a later build, and `TODO.md` carries it (settled by the
-root session, 2026-10-08). The stopgap it copies is v1.1.0 rebuilt with
+2026-07-28 is implemented in a later build, and `TODO.md` carries it (settled in planning, 2026-10-08). The stopgap it copies is v1.1.0 rebuilt with
 `ProtocolVersion` set to "2025-11-25", which a probe on 2026-10-04 answered with
 `-32022` and the supported list `[2025-11-25]` for `server/discover` at 2026-07-28,
 then `initialize` at 2025-11-25 and 79 tools.
 
-The root session stated it three times and he never answered it with a letter: "The
+The plan stated it three times and he never answered it with a letter: "The
 new version must still offer only the older protocol version (2025-11-25)"
 (2026-10-07T15:01:31Z); "**Protocol:** offers only MCP 2025-11-25, like the stopgap. A
 test sends Claude Code's new opening request and requires the refusal. The new
@@ -762,14 +759,14 @@ build list (2026-10-08T13:34:04Z). The nearest he came (2026-10-07T14:53:32Z):
 | Alternative | What it costs |
 |---|---|
 | **Offer only 2025-11-25 in this build, 2026-07-28 later** | *Chosen.* The relay's own answers to `initialize` and `ping`, which 2026-07-28 drops, stay valid |
-| Implement 2026-07-28 as part of this build (the root's recommendation of 2026-10-04, "e as part of the one-binary build") | A second protocol on the relay's path in the same build that introduces the relay |
+| Implement 2026-07-28 as part of this build (the recommendation of 2026-10-04, "e as part of the one-binary build") | A second protocol on the relay's path in the same build that introduces the relay |
 | `null` upward, whatever the caller asks for, as `ARCHITECTURE.md` had it | Claude Code's new opening request then reaches a relay that does not implement it |
 
 ### Session open, close, idle, resume and takeover
 
-**Lane c's behaviour as built and amended on 2026-10-04, now inside the background,
+**Option c's behaviour as built and amended on 2026-10-04, now inside the background,
 with the session decisions of 2026-10-07 and 2026-10-08** (D1, D2, E1, E2, F1, F2,
-F4, F5). *Changed 2026-10-08 (previously "Lane c's behaviour as built and amended on
+F4, F5). *Changed 2026-10-08 (previously "Option c's behaviour as built and amended on
 2026-10-04, now inside the background.").*
 
 - **Open** (`browserai_init`): `headed`, `transcript`, `captureNetwork` and the idle
@@ -788,8 +785,7 @@ F4, F5). *Changed 2026-10-08 (previously "Lane c's behaviour as built and amende
   "**Close** (`browser_close`, or `browserai_stop` if D1 takes it)").*
 - **Idle**: every session has an idle countdown, 10 minutes for a hidden browser and
   1 hour for a visible one by default, set per session by the mandatory idle setting
-  as a whole number of minutes or `never`, for both kinds (E2; settled by the root
-  session, 2026-10-08). It restarts on every call that names the live session,
+  as a whole number of minutes or `never`, for both kinds (E2; settled in planning, 2026-10-08). It restarts on every call that names the live session,
   whatever the answer, a held call, any other refusal and a resume included (F2), and
   for a visible window on the person's own keyboard or mouse input in it while it is
   in front (F4). When it runs out, the browser gets the same clean close, with the
@@ -817,16 +813,15 @@ F4, F5). *Changed 2026-10-08 (previously "Lane c's behaviour as built and amende
   run's: `headed`, `transcript`, `captureNetwork`, the idle setting, `viewport`,
   `locale`, `timezone`, `ignoreHTTPSErrors` and `debug`; an optional setting the call
   leaves out counts as its default, and the text says so: "(the default, because the
-  call left it out)" (settled by the root session, 2026-10-08). A call that differs
+  call left it out)" (settled in planning, 2026-10-08). A call that differs
   is held back once. The text names each differing setting with the last run's value
   and the asked value, says that nothing in the call is wrong, and names the three
   ways on: the last run's set goes through at once; the same changed set as the call
   held back just before, on the same connection and for the same session, goes
   through at once; any other set is held once again. Another connection meets its
-  own hold-back (settled by the root session). An idle value above the mode's default
+  own hold-back (settled in planning). An idle value above the mode's default
   carries the strong warning about updates when it is set at init or differs from the
-  last run; one identical to the last run passes with no warning (settled by the
-  root session). The text is drafted by the session lane and is his to approve.
+  last run; one identical to the last run passes with no warning (settled in planning). The text is drafted by the session part and is his to approve.
 - **The hint** (E1, F5 a): the `headed` description says "A visible window takes the
   person's screen and focus and holds updates back. Switching between visible and
   hidden keeps logins, cookies, storage, tabs and history.", and every answer that
@@ -855,7 +850,7 @@ up, it is **kept** for as long as its window is open, looked at every 15 s. A ke
 session is a browser still running with nobody driving it, waiting for any client to
 name it again.").*
 
-This is lane c's design, measured with the real programs: after each of four client
+This is option c's design, measured with the real programs: after each of four client
 exits, the coordinator, the host and the browser were alive 6 s later, and the next
 client took the session over with the page still loaded, 12 of 12 (the one-binary
 measurement).
@@ -863,8 +858,7 @@ measurement).
 ### Update
 
 **Decided 2026-10-08: H1 a with his changes, U1, U2, D9, T, H1-T a and H2 a**, with
-the step-0 research's reading of Velopack 1.2.161's restart (settled by the root
-session, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
+the step-0 research's reading of Velopack 1.2.161's restart (settled in planning, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
 
 1. **The check** (D9). The background alone asks the feed, on a timer, at most once
    per 10 minutes, with the time of the last check kept on disk so that a crash or a
@@ -872,7 +866,7 @@ session, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
    stored check time of its own (read in its source at 1.2.161 in step 0). His
    install reads a folder on this machine (H2 a) and every other install GitHub; the
    source is fixed at install time by an argument the hooks write, never by an
-   environment variable at run time (settled by the root session, 2026-10-08).
+   environment variable at run time (settled in planning, 2026-10-08).
 2. **The download and the stage**: in the background, as the coordinator does today.
    No package whose pack id is not the installed one is ever applied (the downgrade,
    below).
@@ -884,19 +878,19 @@ session, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
      last input in it, unless the agent set another time;
    - a relay: 10 minutes after the last message its client sent other than `ping`,
      fixed (U1). Requests and notifications alike count: `initialize`, `tools/list`,
-     `tools/call` and cancellations (settled by the root session, 2026-10-08).
+     `tools/call` and cancellations (settled in planning, 2026-10-08).
 
    When a browser's countdown ends, the browser closes, which frees its memory and
    stops it holding the update. When a relay's countdown ends, nothing happens to the
    relay; it only stops holding the update.
-4. **The two-phase agreement** (H1, the root session's text of 2026-10-08T13:23:37Z,
+4. **The two-phase agreement** (H1, the planning text of 2026-10-08T13:23:37Z,
    accepted by no objection). With no browser open and every relay's countdown run
    out, the background asks every relay "ready to end?". A relay says yes only with
    its countdown run out and no call in flight, and from then on holds what its
    client sends. Any no or silence calls the update off: every relay passes on what
    it held, and nothing has ended. A message that reaches a relay after its yes and
    before every relay has said yes is activity, and calls the update off for everyone
-   (settled by the root session). Only when every relay has said yes is the end sent:
+   (settled in planning). Only when every relay has said yes is the end sent:
    each relay ends, then the background, then the install runs.
 5. **The update sentence, in one short window** (U2). A message that reaches a relay
    after the end was sent, and every message to a relay a client starts while the
@@ -917,8 +911,7 @@ session, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
 
    "No timeout" means Windows' reminder kind, which stays on screen until the person
    acts on it and needs a button that activates in the background, so every toast
-   carries one, and the installing toast gets **Dismiss** (settled by the root
-   session, 2026-10-08). Measured in step 0 on his screen: a reminder stayed on
+   carries one, and the installing toast gets **Dismiss** (settled in planning, 2026-10-08). Measured in step 0 on his screen: a reminder stayed on
    screen for the 62 s until it was replaced; its countdown, updated in place once a
    second, moved 60 of 60 times with no new popup and no sound; "Install now" and
    "Wait for inactivity" both showed whole; and a replacement with the same tag kept
@@ -947,7 +940,7 @@ session, 2026-10-08). *Changed 2026-10-08 (previously six steps, kept below).*
    compares the version it was handed with its own: the same is "installed" and
    raises toast 3, another is "failed" and raises toast 4, naming
    `%LOCALAPPDATA%\velopack\velopack_<pack id>.log`. Then it asks the Task Scheduler
-   for the background, and exits (settled by the root session, 2026-10-08, from the
+   for the background, and exits (settled in planning, 2026-10-08, from the
    step-0 research).
 10. **What the clients see after it.** Claude Code's VS Code extension and
     `claude -p` start BrowserAI again at their next call, from the new version. A
@@ -1003,7 +996,7 @@ the named failure").*
 3. **It is recorded as crashed**, unless it ended cleanly: for an update after the
    agreement, for an uninstall, or at a sign-out or a shutdown, which Windows
    announces to the hidden top-level window the background keeps for the purpose
-   (settled by the root session, 2026-10-08, from the step-0 research, which read
+   (settled in planning, 2026-10-08, from the step-0 research, which read
    about 5 seconds for that in Microsoft's documentation).
 4. **From then on every call is answered at once**, with the text he accepted on
    2026-10-08 ("r ok", 13:21:17Z):
@@ -1015,7 +1008,7 @@ the named failure").*
    > they have."
 
    Nothing technically stops an agent from running the program from a shell; the text
-   is the guard (the root session, 2026-10-08T13:05:55Z).
+   is the guard (the planning, 2026-10-08T13:05:55Z).
 5. **Only the person's Start Menu start** clears the record and starts a new
    background through the task (D13 a, R). A later call naming an old session is then
    refused with "call browserai_resume" and the reason the new background reads in
@@ -1023,7 +1016,7 @@ the named failure").*
    process ended without closing this browser (a crash, a sign-out or a kill), so the
    newest changes may be missing".
 6. **No toast for a crash in this build**: the agent's error carries it, addressed to
-   the person at the computer (settled by the root session, 2026-10-08).
+   the person at the computer (settled in planning, 2026-10-08).
 
 **The plan's steps 3 to 5, as written on 2026-10-04 and replaced on 2026-10-08 by R**,
 kept here:
@@ -1073,8 +1066,7 @@ at.
 
 ### The background will not start: the task missing, disabled or refused
 
-**Decided 2026-10-08 by S a and D12 b; how a relay learns of it was settled by the
-root session the same day.**
+**Decided 2026-10-08 by S a and D12 b; how a relay learns of it was settled in planning the same day.**
 
 1. **No relay runs or registers the task** (S a). A relay with no background holds
    calls for up to 150 s and then answers ("The first call").
@@ -1152,7 +1144,7 @@ BrowserAI until a relay registers it again or a person enables it.").*
 | A COM out-of-process server, registered under the user's own classes and started by activation | A registration to install and remove, and a start path of its own; COM's launcher would start it outside the client's job | not measured |
 | WMI's `Win32_Process.Create` | A process created by WMI's provider host, outside the client, by a route security tools watch | not measured |
 | A Windows service | Elevation to install, and one per machine | ruled out by the per-user install |
-| The relay starts it as a child that breaks away from the job | Codex's job allows no breakaway and Claude Code kills the whole tree | measured not to work (lane c) |
+| The relay starts it as a child that breaks away from the job | Codex's job allows no breakaway and Claude Code kills the whole tree | measured not to work (option c) |
 | The first relay serves every other client as the background | It ends with its own client, by the same tree kill or job, and takes every other client's sessions with it | follows from the same measurement |
 | A resident started from the `Run` key | Starts only at sign-in and late, from +20.8 s on the morning measured, and a background that dies cannot be started again from outside a client's tree | the start order is measured |
 
@@ -1171,13 +1163,13 @@ BrowserAI until a relay registers it again or a person enables it.").*
    resident.").*
 5. It keeps a hidden top-level window for `WM_QUERYENDSESSION` and `WM_ENDSESSION`,
    so that a sign-out or a shutdown is recorded as a clean end and not as a crash
-   under R (settled by the root session, 2026-10-08, from the step-0 research: a
+   under R (settled in planning, 2026-10-08, from the step-0 research: a
    message-only window receives no broadcasts, and console control events do not
    reach an interactive process at sign-out). *Added 2026-10-08.*
 
 ### A person's start, the tab and the hooks
 
-- **A person's start** (D13 a, with R; the details settled by the root session,
+- **A person's start** (D13 a, with R; the details settled in planning,
   2026-10-08), with no argument, finds the background's pipe, hands over `show` with
   its existing bound, `HandOutBound` (10 s), opens the address of a new tab and
   exits. With no background it asks the Task Scheduler to run the task, registering
@@ -1195,8 +1187,7 @@ BrowserAI until a relay registers it again or a person enables it.").*
   Install and update register with both clients through RegisterAI, now as
   `current\BrowserAI.exe --mcp`, the update hook rewriting the user-scope
   registrations that name the old file (D7 a); project files that name
-  `BrowserAI.Server.exe` break once, and nothing lists them (settled by the root
-  session, 2026-10-08). Both register the task and put `current\` on the user's PATH,
+  `BrowserAI.Server.exe` break once, and nothing lists them (settled in planning, 2026-10-08). Both register the task and put `current\` on the user's PATH,
   and neither starts anything. Uninstall asks a running background through its pipe
   to close its sessions and exit, never through the task's End, then removes the
   task, the registrations and the PATH entry. Velopack gives the uninstall hook 60 s
@@ -1285,7 +1276,7 @@ Line counts are `wc -l` on `master` at `5bf02f48`, comments included.
 - The session machinery of `src/BrowserAI`: `Sessions/`, `Storage/`, `Runtime/`, the
   door in `Proxy/BrowserProxy.cs`, `Proxy/ChildConnection.cs`, and the child's
   transports in `Protocol/`.
-- Lane c's host core: `Proxy/SessionHost.cs`, `SessionHostServer.cs`,
+- Option c's host core: `Proxy/SessionHost.cs`, `SessionHostServer.cs`,
   `CallerConnection.cs` and `Protocol/PipeServerTransport.cs` become the background's
   connections. The attachment, detach, keep and takeover in `LiveSession` and
   `SessionManager` stay as built, and so do the close cap and the ordering rule.
@@ -1359,22 +1350,22 @@ the one binary and the background.
 
 ## The steps
 
-**Decided 2026-10-08**: the root session's order of 2026-10-08T13:34:04Z, started by
+**Decided 2026-10-08**: the planning order of 2026-10-08T13:34:04Z, started by
 his "go with everything" (13:46:28Z). Each step is pushed to `master` as it lands and
 checked by both shells' runs; steps 6 and 7 run partly beside steps 2 to 5.
 
 | Step | What it does | Who builds it |
 |---|---|---|
-| 0 | No product code. Persist the two measurements of 2026-10-04 to `kb/` and `docs/evidence/`. Read Velopack's restart and failure paths, toasts and the Task Scheduler (the step-0 research). Measure the Task Scheduler's cases and the cost of the input reads; Velopack's local source, its restart after a success and after a failed apply, and the update hook; and, on his screen with his leave, a toast with a live countdown and a visible window opened by a task-started process | the root session's measurement agents, and lane REC for the records |
-| 1 | The built-in tool list, and offering only the protocol revision the stopgap uses, 2025-11-25, with a test | lane S1 |
-| 2 | One file, `BrowserAI.exe`, with a mode per argument, and the registrations updated | lane ARCH |
-| 3 | One background, running from sign-in, with the Task Scheduler never starting a second copy | lane ARCH |
-| 4 | The relay: the handshake and the tool list at once; calls held while the background comes up; the crash error and no restarts; a hung background detected after 150 s; the activity countdown; the two-phase update agreement | lane ARCH |
-| 5 | Settings as arguments, his local update folder, the 10-minute update timer, and the check that refuses another product's package | lane ARCH |
-| 6 | Sessions: `browserai_close`; the mandatory settings and the hold-back; the idle countdowns and their override; a person's input in a visible window as activity; the "already live" answer and every call restarting the countdown; the hint about visible windows | lane SESS |
-| 7 | Updates: the dashboard's update page and the four toasts | lane UI |
-| 8 | The records: the decisions log, the architecture, the hazards, the testing guide, the kb, the README, the changelog, `TODO.md`, the numbers index, and `AGENTS.md` without the upstream count | each lane for what it builds; lane REC for this document, the measurements, the numbers index and the last pass |
-| Deploy | His local update folder, and the new build installed over the stopgap | the root session |
+| 0 | No product code. Persist the two measurements of 2026-10-04 to `kb/` and `docs/evidence/`. Read Velopack's restart and failure paths, toasts and the Task Scheduler (the step-0 research). Measure the Task Scheduler's cases and the cost of the input reads; Velopack's local source, its restart after a success and after a failed apply, and the update hook; and, on his screen with his leave, a toast with a live countdown and a visible window opened by a task-started process | the planning's measurements, and the records part for the records |
+| 1 | The built-in tool list, and offering only the protocol revision the stopgap uses, 2025-11-25, with a test | the first part |
+| 2 | One file, `BrowserAI.exe`, with a mode per argument, and the registrations updated | the architecture part |
+| 3 | One background, running from sign-in, with the Task Scheduler never starting a second copy | the architecture part |
+| 4 | The relay: the handshake and the tool list at once; calls held while the background comes up; the crash error and no restarts; a hung background detected after 150 s; the activity countdown; the two-phase update agreement | the architecture part |
+| 5 | Settings as arguments, his local update folder, the 10-minute update timer, and the check that refuses another product's package | the architecture part |
+| 6 | Sessions: `browserai_close`; the mandatory settings and the hold-back; the idle countdowns and their override; a person's input in a visible window as activity; the "already live" answer and every call restarting the countdown; the hint about visible windows | the session part |
+| 7 | Updates: the dashboard's update page and the four toasts | the toasts and pages part |
+| 8 | The records: the decisions log, the architecture, the hazards, the testing guide, the kb, the README, the changelog, `TODO.md`, the numbers index, and `AGENTS.md` without the upstream count | each part for what it builds; the records part for this document, the measurements, the numbers index and the last pass |
+| Deploy | His local update folder, and the new build installed over the stopgap | the planning |
 
 **How a step lands.** The branch model is one branch, `master`, which takes every
 commit as soon as it exists; only a release is gated and has to be stable. So each
@@ -1402,7 +1393,7 @@ missing", and step 6's "a stop of BrowserAI's own", were overtaken by R, S and F
 **Every behaviour change is planted red first**, and the exceptions the house rules
 name stay the only ones.
 
-- **In process.** The background's core, as lane c's `SessionHostTests` and
+- **In process.** The background's core, as option c's `SessionHostTests` and
   `CloseOrderingTests` drive it today. The relay against a scripted background: the
   handshake and the list from the binary with no background; held calls in order; a
   cancelled held call; the 150 s hold; each named failure, the crash answered at
@@ -1430,7 +1421,7 @@ name stay the only ones.
   the E2 warning; `browser_close` answered as a tool BrowserAI does not have.
 - **Settings.** The scan for `BROWSERAI_` reads; a first message carrying another data
   root, refused; a test's background and the real install's never meeting.
-- **The real scheduler, end to end** (lane c's open question 2, D14 b). Install the
+- **The real scheduler, end to end** (option c's open question 2, D14 b). Install the
   suite's pack with the real `Setup.exe`, as `RealInstallerTests` does, and drive its
   relay over stdio as a client would. The background's parent is the Task Scheduler's
   service and it runs inside the scheduler's job; a session outlives its relay's kill
@@ -1481,7 +1472,7 @@ page"; in Playwright's own server the next call opens a new browser by itself. I
 BrowserAI the same call ends the browser and its Playwright, and every later call is
 refused until a resume. An upstream name has come to mean something upstream does not
 do, and a model learns that only from the refusal afterwards. BrowserAI may not
-rename or reword an upstream tool; since lane q371 it may append a note. A tool of its
+rename or reword an upstream tool; since the Q371 work it may append a note. A tool of its
 own carries BrowserAI's meaning under BrowserAI's name: what it keeps, what a resume
 does next, and the reason the log records.
 
@@ -1506,7 +1497,7 @@ settings itself after one hold-back, and gives `browser_close` the generic answe
 a tool BrowserAI does not have ("F1" below). `tool-verdicts.json` gains a `deny` row
 for `browser_close`. It contradicts the older row of `DECISIONS.md`, "Instance
 teardown" ("**There is no close tool, and that is the decision.**"), which the session
-lane records as replaced.
+part records as replaced.
 
 ### D2. How a model acknowledges remembered settings before a window opens
 
@@ -1585,20 +1576,20 @@ this table's a (2026-10-07T14:53:32Z):
 > index of sorts so that we can at a later date re-check the data by using the
 > provenance of these records to re-determine if the number is still accurate?"
 
-The second half became F3, the numbers index. The values that survive are the root
-session's table of 2026-10-08, answered "r ok" ("The first call", above). In the table
+The second half became F3, the numbers index. The values that survive are the planning
+table of 2026-10-08, answered "r ok" ("The first call", above). In the table
 here the liveness row is 150 s, not 10 s, by D10 and R, and the "15 s for a host" of
-the 2026-10-04 list went with lane c's front; the person's start (`show`, 10 s) and
+the 2026-10-04 list went with option c's front; the person's start (`show`, 10 s) and
 the uninstall hook are unchanged.
 
 ### D4. Kept sessions and updates: what holds an update
 
 **Primer.** Plain words for "kept" are in "A client goes, and kept sessions" above.
-**His question, answered:** under lane c and under this plan, an update does not apply
+**His question, answered:** under option c and under this plan, an update does not apply
 after "ten minutes of inactivity plus a minute of closing". An update can apply only
 when no process runs from the install root except the one applying it, because
 Velopack ends every such process (measured, 2026-09-24). Every client with BrowserAI
-loaded keeps its relay, or under lane c its front, running from the root for as long as
+loaded keeps its relay, or under option c its front, running from the root for as long as
 the client is open, used or not: on 2026-09-23 there were 22 live on this machine, 14
 of them never used. Inactivity closes idle headless browsers; it ends no relay. So
 the bound is the time until the last such client exits, plus at most a minute for the
@@ -1624,7 +1615,7 @@ words (2026-10-07T14:53:32Z):
 > Clearly signalling to the user that interactive windows should be closed manually
 > before the update can proceed."
 
-The root session then showed the clash (2026-10-08T00:21:41Z): "Your 5 a says every
+The planning then showed the clash (2026-10-08T00:21:41Z): "Your 5 a says every
 connected client's relay holds an update, and the update closes leftover sessions
 cleanly, visible ones included. Your dashboard countdowns and the 1-hour visible close
 assume something else: that sessions hold the update until they close, and that
@@ -1663,7 +1654,7 @@ binary within its own start, so the first turn has the tools. B is weakest point
 Codex's `required` cannot be written through `codex mcp add`, and Claude Code's
 `alwaysLoad` puts every tool definition in every prompt. By the Q365 page's count, the
 72 upstream definitions came to 8,213 tokens and `session` and `why` added 9,380
-across the 70 forwarded ones, about 17,600 in all, before lane q371 denied six more
+across the 70 forwarded ones, about 17,600 in all, before the Q371 work denied six more
 tools; that count has not been taken again since. C,
 keeping the background up from sign-in, saves at most the background's own start on
 the first call after a cold start: the whole task path, a Playwright start included,
@@ -1707,8 +1698,7 @@ committed to repositories.
 "d7 a". He answered the short form he was given on 2026-10-08T00:21:41Z: "One
 `BrowserAI.exe`; the update hook rewrites your user-level registrations, and project
 files naming the old file break once (recommended)." That short form is the whole
-decision, so nothing lists the project entries that name the old file (settled by the
-root session, 2026-10-08). The update hook rewrites the user-scope registrations to
+decision, so nothing lists the project entries that name the old file (settled in planning, 2026-10-08). The update hook rewrites the user-scope registrations to
 `current\BrowserAI.exe --mcp`; this repository's own `.mcp.json` changes in the build;
 and a read-only search of `C:\Source`, three levels deep, found no project file naming
 `BrowserAI.Server.exe` on 2026-10-08. It reverses `DECISIONS.md`'s "How many
@@ -1733,7 +1723,7 @@ measured to complete); Claude Code's is 30 minutes (read), with a heartbeat ever
 
 **Decided 2026-10-08: a, then narrowed by R and S the same day.** His words
 (2026-10-08T11:54:58Z): "d8 a - What do you mean with "Retry pauses double from
-0.5 s"?" The root session's answer (12:00:28Z):
+0.5 s"?" The answer (12:00:28Z):
 
 > "**What the retry pauses meant:** when a relay can't reach the background, it asks
 > the Task Scheduler to start one. If that one doesn't come up, or dies, the relay
@@ -1747,8 +1737,8 @@ error: not running, start it from the Start Menu, and if it keeps happening, rea
 log and report the bug." (13:05:55Z, accepted "s a" 13:21:17Z). What stands of a is
 the hold of up to 150 s, half of Codex's 300 s. The retry pauses are gone, and with
 them the "about nine starts". Under S the relay holds 150 s for every absence and
-names a disabled or missing task in its answer from a read-only query (settled by
-the root session, 2026-10-08); a recorded crash is answered at once (R).
+names a disabled or missing task in its answer from a read-only query (settled in
+planning, 2026-10-08); a recorded crash is answered at once (R).
 
 ### D9. When the background asks the update feed
 
@@ -1772,8 +1762,8 @@ declined. The background lives far longer than one client's server.
 > across crashes and restarts. But does velopack not already handle this? Relays should
 > not be concerned with update checking."
 
-and (2026-10-08T13:02:04Z): "d9 Does velopack not do the debounce for us?" The root
-session's answer (13:05:55Z): "No. Velopack has no rate limit and keeps no stored time
+and (2026-10-08T13:02:04Z): "d9 Does velopack not do the debounce for us?" The
+answer (13:05:55Z): "No. Velopack has no rate limit and keeps no stored time
 for checks, at least none that I could find in its documentation; every check reads
 the update source. With a resident background, the 10-minute timer is the debounce,
 and the time kept on disk covers restarts." The step-0 research confirmed it in
@@ -1796,7 +1786,7 @@ restarts it.
 **Recommendation: b now; c or d once something has been seen to hang.**
 
 **Decided 2026-10-08, in his own words: b's report, a forgiving timeout, and no
-restarts.** His words are under "The direction" above. The root session had
+restarts.** His words are under "The direction" above. The planning had
 recommended b with 10 s on 2026-10-08T00:21:41Z; his answer kept b's report and its
 "kills nothing", asked for a forgiving timeout, and forbade restarts. R made the
 timeout 150 s, the same half of Codex's limit as the hold, so the model hears
@@ -1860,7 +1850,7 @@ may switch off on its own, which is c.
 
 **Decided 2026-10-08: b, after he asked what the schedule was.** His words
 (2026-10-08T11:54:58Z): "d12 What schedule? The schedule I want to review? Let's get
-back to this question after we answer that." The root session's answer (12:00:28Z):
+back to this question after we answer that." The answer (12:00:28Z):
 
 > "**There's no schedule in it.** A "scheduled task" is Windows' name for any entry in
 > its Task Scheduler. BrowserAI registers one per user at install, called "BrowserAI
@@ -1868,8 +1858,7 @@ back to this question after we answer that." The root session's answer (12:00:28
 > Windows, and when BrowserAI itself asks for a run. Nothing runs on a clock."
 
 His answer (13:02:04Z): "d12 b". Under S no relay runs the task, so a relay learns of
-a disabled task by a read-only query and names it after its hold (settled by the root
-session, 2026-10-08).
+a disabled task by a read-only query and names it after its hold (settled in planning, 2026-10-08).
 
 ### D13. A person's start: through the task, or the background itself
 
@@ -1901,14 +1890,14 @@ task?" Explain the question better." The question again (12:00:28Z):
 
 His answer (13:02:04Z): "d13 a". "The way relays do" was overtaken by S: relays no
 longer ask. R adds that this start is the only thing that ends a hung background,
-clears the crash record and starts a new one. The root session settled how it judges
+clears the crash record and starts a new one. The planning settled how it judges
 a hang: `show` with no answer within `HandOutBound` (10 s), then the background ended
 by its process id after verifying that id's image path under the install root
 ("A person's start, the tab and the hooks", above).
 
 ### D14. The real-scheduler test: inside the suite, or a rig
 
-**Primer.** Lane c asked whether an arm may start a coordinator through the real logon
+**Primer.** Option c asked whether an arm may start a coordinator through the real logon
 task, and recommended a probe rig first. Under the plan the task is the only way an
 installed BrowserAI runs.
 
@@ -1943,7 +1932,7 @@ at run time" and the protocol pin under "The protocol revision", above.
 > to keep the interactive mode. How could we hint towards that without steering the
 > (for us completely unknown) use cases to much?"
 
-**F5, the options** (the root session, 2026-10-07T15:01:31Z):
+**F5, the options** (the planning, 2026-10-07T15:01:31Z):
 
 | | Option | Cost |
 |---|---|---|
@@ -1953,8 +1942,7 @@ at run time" and the protocol pin under "The protocol revision", above.
 | d | No text; rely on the 1-hour close | Nothing teaches it |
 
 **Decided 2026-10-08: a.** His words (2026-10-08T00:16:18Z): "f5 a". The same message
-ends with a line "f5" alone, a leftover with no further meaning (settled by the root
-session, 2026-10-08). Our client-behaviour runs can then measure whether models
+ends with a line "f5" alone, a leftover with no further meaning (settled in planning, 2026-10-08). Our client-behaviour runs can then measure whether models
 switch.
 
 ### E2 and F4. An idle hour for visible windows, and the person's own input
@@ -1972,7 +1960,7 @@ switch.
 > the same parameters will work if the agent is really sure. This warning should be
 > strong about blockign updates."
 
-The root session agreed (2026-10-07T15:01:31Z) and found one hole: "idle" means no
+The planning agreed (2026-10-07T15:01:31Z) and found one hole: "idle" means no
 tool call, and someone working in the window, during a long sign-in, a two-factor wait
 or while reading, makes none, so the window could close under their hands at the
 hour.
@@ -1993,7 +1981,7 @@ hour.
 > there? Again: if this requires much complexity or code drop this feature and report
 > back to me."
 
-The root session's report (00:21:41Z): the input check is kept, "It's two standard
+The planning report (00:21:41Z): the input check is kept, "It's two standard
 Windows calls, with no hooks into your input"; the **title-bar countdown is dropped**,
 because Chromium and Firefox both draw their tabs where the title bar would be, so a
 window title shows only in the taskbar and in Alt+Tab, and the only way to change what
@@ -2020,7 +2008,7 @@ as no activity.
 **The kinds, in his words** (2026-10-08T13:21:17Z): "From the three kinds both the
 hidden and visible browser sessions have timeouts that can be overriden (with a
 warning) by the agent. The timeout from the relay is fixed." **The idle setting**
-(settled by the root session, 2026-10-08) is mandatory on init and resume, a whole
+(settled in planning, 2026-10-08) is mandatory on init and resume, a whole
 number of minutes or `never`, and both modes may take `never`; the description names
 the defaults, 10 minutes hidden and 60 minutes visible; a value above the mode's
 default is held back once with the strong warning that updates wait for this
@@ -2107,7 +2095,7 @@ and (11:58:28Z, mid-turn):
 that names a live session restarts its countdown, whatever the answer, which reverses
 the code's rule that only a forwarded browser call restarts it ("The one timer, reset
 here and nowhere else", in `BrowserProxy`). The "already live" text names no time; the
-draft of 11:15:29Z that named "10 minutes" and "1 hour" is replaced. The root session
+draft of 11:15:29Z that named "10 minutes" and "1 hour" is replaced. The planning
 settled four readings on 2026-10-08: every per-run setting is compared, not only the
 four mandatory ones; an optional setting left out counts as its default; "the same
 changed set as the last call" means the call held back just before on the same
@@ -2119,7 +2107,7 @@ The draft text of the hold-back that carried his intent, written before d
 call is wrong. BrowserAI holds back the first call that opens a window on the user's
 screen, so that it is a choice and not an accident. If that is what you want, send
 exactly the same call again and it will go through. Nothing else needs to change."
-The text for d is drafted by the session lane and is his to approve.
+The text for d is drafted by the session part and is his to approve.
 
 ### F3. The numbers index
 
@@ -2144,8 +2132,8 @@ build; the client limits go in it, and so does every number the decisions named:
 the update check at most every 10 minutes, the input check's interval, the 150 s
 hold, the 150 s hang, the 60 s close, the 60 s page tool, and the clients' limits of
 30 s and 10 s to start and 30 minutes and 300 s per call. `AGENTS.md` cannot take a
-new top-level file, so the index is a kb article; lane REC builds it once the code
-lanes have landed their numbers.
+new top-level file, so the index is a kb article; the records part builds it once the code
+parts have landed their numbers.
 
 **Built 2026-10-09**, *added by addition*: [`kb/numbers.md`](../../../kb/numbers.md),
 the six named classes it names, and `NumbersIndexTests`, which holds the index and the
@@ -2218,8 +2206,8 @@ and his adjustments (13:21:17Z):
 > I do not want relays killed only for an update that cannot pass because another
 > thing is holding back the update."
 
-**So:** the update flow above, steps 3 and 4. The two-phase agreement is the root
-session's answer to "no relay is terminated unless the update will actually pass"
+**So:** the update flow above, steps 3 and 4. The two-phase agreement is the planning
+answer to "no relay is terminated unless the update will actually pass"
 (13:23:37Z), and he raised nothing against it. The dashboard shows what holds the
 update split into hidden browsers, visible windows and relays, each with its
 countdown; relays are labelled with their client and project folder, and visible
@@ -2227,7 +2215,7 @@ windows are marked "close this to let the update proceed". The Codex side projec
 back on 2026-10-08: no released or in-progress Codex restarts a stdio server whose
 process has ended, and the watch item is in `TODO.md` (`890f499b`). H1 reverses
 `DECISIONS.md`'s "Nothing exits itself to let an update in" (2026-09-24), and the
-root session records the new entry beside the old one.
+planning records the new entry beside the old one.
 
 ### H1-T. Terminal Claude Code sessions after an update
 
@@ -2273,7 +2261,7 @@ updates, and a pre-release build never checks at all.
 **Decided 2026-10-08: a.** His words (11:54:58Z): "h2 a". His install takes updates
 from that folder only, and other installs keep GitHub; the source is fixed at install
 time by an argument the hooks write, never by an environment variable at run time
-(settled by the root session, 2026-10-08). The first deploy replaces the stopgap,
+(settled in planning, 2026-10-08). The first deploy replaces the stopgap,
 which is v1.1.0 rebuilt with the protocol pin. Velopack reads a local folder through
 its `SimpleFileSource`, which has no pre-release switch: the highest full version above
 the installed one is offered (the step-0 research, Velopack 1.2.161). It changes, for
@@ -2303,8 +2291,8 @@ and (13:21:17Z): "r ok". **So:** the crash text with his addition, in "The backg
 dies", above; the timeout table, in "The first call", above, one set for both clients;
 and the client's start limit, which depends on the relay's own start alone. Option 1's
 line "A background that ended cleanly (idle, or for an update) is started by the next
-call that needs it. That's a start, not a restart." was then replaced by S. The root
-session settled two details on 2026-10-08: how the Start Menu start judges a hang
+call that needs it. That's a start, not a restart." was then replaced by S. The planning
+settled two details on 2026-10-08: how the Start Menu start judges a hang
 (`show` unanswered within `HandOutBound`, 10 s), and that a crash or a hang is told to
 the person through the agent's error, with no toast in this build.
 
@@ -2343,7 +2331,7 @@ that installs by itself, asking later has no job left.
 
 | | Option | Cost |
 |---|---|---|
-| a | **Install now** and **Details**, with no dropdown | The root's recommendation |
+| a | **Install now** and **Details**, with no dropdown | The recommendation |
 | b | The same, plus a "Not for this version" choice | One more button in the one row |
 | c | The 2026-09-24 toast with Install now added as a third button | Windows lays buttons in one row and shortens labels to fit, so they may be cut off |
 
@@ -2363,13 +2351,12 @@ wait for it and force the update instantly." Then (13:21:17Z):
 > dismiss)."
 
 and (13:31:14Z): "u2 looks good. Make sure the toasts have no timeout." **So:** the
-four toasts of the update flow, above, as the root session built them on his answer
+four toasts of the update flow, above, as they were built on his answer
 (13:23:37Z), with the after-update mode raising the installed and failed toasts. The
 whole set is approved: after it he said "do the things that disturb me now then go
-with everything" (settled by the root session, 2026-10-08). "No timeout" is the
+with everything" (settled in planning, 2026-10-08). "No timeout" is the
 reminder kind, on screen until the person acts, which needs a button that activates in
-the background, so the installing toast gets **Dismiss** (settled by the root
-session). His 13:02 wish to "force the update instantly" from the toast is replaced by
+the background, so the installing toast gets **Dismiss** (settled in planning). His 13:02 wish to "force the update instantly" from the toast is replaced by
 his own 13:21 answer: **Install now** goes to the dashboard's update page first. It
 replaces `DECISIONS.md`'s "A blocked update asks once, from the tray, and the X means
 the dropdown" (2026-09-24), and changes "The toast's Review opens a new tab the way a
@@ -2380,7 +2367,7 @@ for dev builds later if that gets noisy.
 
 ### U1. What counts as relay activity
 
-**The root session's first proposal** (2026-10-08T13:05:55Z): a tool call through the
+**The first proposal** (2026-10-08T13:05:55Z): a tool call through the
 relay, refused ones included; opening the connection, tool-list requests and pings
 would not count, since clients send those on their own. His words (13:21:17Z):
 
@@ -2389,7 +2376,7 @@ would not count, since clients send those on their own. His words (13:21:17Z):
 > unsure about. Does an idle session that has long since finished work keep sending
 > pings?"
 
-The root session's answer (13:23:37Z): everything the client sends counts, except
+The answer (13:23:37Z): everything the client sends counts, except
 pings; BrowserAI's own process log for 2026-10-05 to 2026-10-08 shows 58 new
 connections and not one ping, so clients do not ping an idle server today, and pings
 stay out so that a client that one day pings idle servers to keep them alive cannot
@@ -2402,11 +2389,11 @@ hold every update forever.
 > the countdown."
 
 It narrows his 13:21 "reset on any mcp activity in the relay" by the one exception.
-Requests and notifications alike count (settled by the root session, 2026-10-08).
+Requests and notifications alike count (settled in planning, 2026-10-08).
 
 ### U2. "An update is installing", in one window
 
-**The root session's first U2** (2026-10-08T13:05:55Z): a call that arrives during the
+**The first U2** (2026-10-08T13:05:55Z): a call that arrives during the
 swap reconnects, finds no background, and its relay holds the call until the new
 background is up, which replaces today's "an update is installing" refusal. His words
 (13:21:17Z): "u2 unsure. How could the "an update is installing" fit in everything
@@ -2419,7 +2406,7 @@ seconds.
 
 **Decided 2026-10-08: the second U2.** His words (13:31:14Z): "u2 looks good. Make
 sure the toasts have no timeout." A message between a relay's own yes and the last
-relay's yes is activity, and calls the update off (settled by the root session,
+relay's yes is activity, and calls the update off (settled in planning,
 2026-10-08). It narrows `DECISIONS.md`'s "A call an update meets is refused with a
 sentence, never dropped" (Q286 b, 2026-09-24) to that window.
 
@@ -2459,7 +2446,7 @@ Each line: the earlier position, the later one, and which stands.
 [TESTING](../../../TESTING.md), [HAZARDS](../../../HAZARDS.md) and the code on
 `master` at `5bf02f48`.
 
-**The decisions of 2026-10-07 and 2026-10-08** were read from the root session's
+**The decisions of 2026-10-07 and 2026-10-08** were read from the planning conversation\'s
 transcript of those days and its running record, `.work\STATE.md`, gathered into
 `.work\onebinary\DECISIONS-2026-10-08.md` (35 labelled decisions and 18 readings left
 open) and settled in `.work\onebinary\RESOLUTIONS-2026-10-08.md`, all under
@@ -2494,7 +2481,7 @@ batch in `docs/evidence`:
 | A browser window started by a task-started process, 2026-10-08 | [processes](../../../kb/windows/processes.md), under "A process a task starts may not take the foreground" | the same |
 | What a stdio server can see of its client, 2026-10-08 | [protocol](../../../kb/mcp/protocol.md), "What a stdio server can see of the client that started it" | [`2026-10-08-client-id`](../../evidence/2026-10-08-client-id/README.md) |
 
-The relay stand-in's 3.5 MiB (P) was read by the root session on 2026-10-08 and is not
+The relay stand-in's 3.5 MiB (P) was read in planning on 2026-10-08 and is not
 in the kb; the build measures the real relay. *Added 2026-10-08.*
 
 **In scratch on 2026-10-04, and persisted in step 0** (weakest point 4), under

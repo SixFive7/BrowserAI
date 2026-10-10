@@ -41,7 +41,7 @@ internal sealed class BackgroundProcessTests
     /// next relay finds its page exactly as it was left: no restore, no new browser.
     /// </summary>
     /// <remarks>
-    /// <b>Planted red 2026-10-08</b>, at the root session's word, with the background
+    /// <b>Planted red 2026-10-08</b>, on request, with the background
     /// stopping itself once its last relay had gone, the shape S a reversed: the second
     /// relay's <c>browser_snapshot</c> was refused at once, no background running for
     /// this build, and the session had gone with the background.

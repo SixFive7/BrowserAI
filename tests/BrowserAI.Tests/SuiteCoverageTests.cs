@@ -1999,7 +1999,7 @@ internal sealed partial class SuiteCoverageTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found by lane ARCH's helper T3 on 2026-10-09</b>, and closed 2026-10-10 with the
+    /// <b>Found by a reading of the hooks on 2026-10-09</b>, and closed 2026-10-10 with the
     /// maintainer's 9 a: the activator arrived after the snapshot was written, so an
     /// installer arm that failed between its install and its uninstall could leave a
     /// test pack's class registered with nothing reporting it, and the suite may not

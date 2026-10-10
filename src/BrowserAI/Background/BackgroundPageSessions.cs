@@ -20,7 +20,7 @@ namespace BrowserAI.Background;
 /// background stands where the session host stood, holding every session, and each
 /// relay stands where a front stood, with its client's name and folder and no
 /// session of its own (<see cref="ServerDescription.Roles.Relay"/>). So the page
-/// draws them the way it drew lane c's host and fronts.
+/// draws them the way it drew option c's host and fronts.
 /// </para>
 /// <para>
 /// <b>The page closes nothing</b>: a relay ends with its client, or for an update

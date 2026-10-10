@@ -15,7 +15,7 @@ namespace BrowserAI.TestProbe;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Added 2026-10-10 for two paths lane ARCH's helper T1 left untested on
+/// <b>Added 2026-10-10 for two paths a reading of the code left untested on
 /// 2026-10-09</b>: a relay that held the background it reached reads that background's
 /// exit code when it goes and writes it into the record, and a person's start ends a
 /// background that took the connection and never answered. Both need the background to

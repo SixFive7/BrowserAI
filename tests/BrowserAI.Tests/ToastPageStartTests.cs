@@ -34,7 +34,7 @@ internal sealed class ToastPageStartTests
     /// names are the arguments that make them.
     /// </summary>
     /// <remarks>
-    /// <b>Planted red 2026-10-08</b>, at the root session's word, with
+    /// <b>Planted red 2026-10-08</b>, on request, with
     /// <c>PageNameOf</c> naming no page for <c>--changelog</c>, so the Changelog
     /// button would open the status page: red at the changelog row, with no name where
     /// <c>changelog</c> was expected.

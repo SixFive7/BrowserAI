@@ -193,7 +193,7 @@ internal sealed class ReleaseScriptTests
 
         // ⚠️ AND A CURRENT CHECK LETS THE RELEASE GO ON, the positive control the
         // refusal needs: a script that refused every check would pass the half above.
-        // Added 2026-10-10 by lane FINAL, when the deploy runbook's pack died at this
+        // Added 2026-10-10 from the final gate, when the deploy runbook's pack died at this
         // step over the real, current check with "The variable '$LASTEXITCODE' cannot
         // be retrieved because it has not been set": Test-DriftCheck.ps1 ended with no
         // exit code, before any native command had set one. The version 0.0.0 is refused
@@ -2518,7 +2518,7 @@ internal sealed class ReleaseScriptTests
     /// </para>
     /// <para>
     /// ⚠️ <b>A shipping pack, since 2026-10-10</b>, round 2 of the texts review, found by
-    /// lane FINAL (previously <c>RequirePackagedRelease</c>): the test pack's twin
+    /// the final gate (previously <c>RequirePackagedRelease</c>): the test pack's twin
     /// satisfied that one from under <c>test-pack\</c>, so in a fresh worktree whose only
     /// pack was the gate's this arm failed on an empty top instead of skipping. Planted
     /// red against a copy of such a directory.

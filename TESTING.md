@@ -533,8 +533,8 @@ the dev publishes, so a release gate needs both publishes. The driver scan above
 both halves, and was watched red against the two release drivers as they stood.
 
 ⚠️ **The arm that classifies the release directory's files asks for a shipping release of
-its own** -- *added 2026-10-10 by addition, round 2 of the texts review, found by lane
-FINAL.* `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished` reads every file a
+its own** -- *added 2026-10-10 by addition, round 2 of the texts review, found by the
+final gate.* `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished` reads every file a
 pack leaves at the top of `Releases\`, and it asked for the `packed release` capability,
 which the test pack's twin under `test-pack\twin\` satisfies, so in a fresh worktree, where
 the gate's test pack is the only pack there is, it failed on a directory with nothing at its
@@ -894,7 +894,7 @@ takes is read in the client's own logs, with
 
 ## The background's stop, its record and a background that is a process of its own
 
-*Added 2026-10-10 with the maintainer's 9 a, by lane FIX.* Most of the background's
+*Added 2026-10-10 with the maintainer's 9 a.* Most of the background's
 arms run its server in this process (`BackgroundServerRig`), and three paths cannot:
 a relay reading the exit code of the background it held, a person's start ending a
 background that took the connection and never answered, and the stop's outcomes when
@@ -954,7 +954,7 @@ the measurement of 2026-10-08 read
 
 ## A person's start and the sign-in task step: how their lines are held
 
-*Added 2026-10-10 with the texts review's fixes, by lane FIX's helper T.* The lines that
+*Added 2026-10-10 with the texts review's fixes.* The lines that
 review corrected, a person's start's 6102, 6104, 6106 to 6109, 6112 and 6113 and the
 sentence the hooks' sign-in task step reports when it fails, are held word for word up to
 any reason Windows supplies, in `PersonStartTests` and `SignInTaskTests`. They are read
@@ -1780,7 +1780,7 @@ that asked a human to approve every edit. It was abandoned for two reasons, and
 the second is the one that matters.
 
 It did not work. Measured 2026-08-15: under `permission_mode: bypassPermissions` a
-hook's `permissionDecision: "ask"` returned to a **sub-agent** is silently
+hook's `permissionDecision: "ask"` returned to a **delegated agent** is silently
 downgraded to allow. The edit lands unprompted. The gate was inert against
 precisely the caller most likely to trip it, and nothing reported that.
 
@@ -1920,7 +1920,7 @@ marker is touched, so whoever is editing knows what is required -- but it decide
 nothing, blocks nothing, and prompts nobody.
 
 > **The general lesson, recorded because it outlives this file.** A hook returning
-> `ask` is **not** an enforcement mechanism: it is inert against sub-agents under
+> `ask` is **not** an enforcement mechanism: it is inert against delegated agents under
 > bypass, and against a human it only proves a click. Enforcement belongs in the
 > suite, where it is evidence, not assent. If a rule can be a failing test,
 > it must be one -- and this is the case that proves the rule applies to our own

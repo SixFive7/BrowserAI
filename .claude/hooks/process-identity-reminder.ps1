@@ -65,7 +65,7 @@ native declaration. This directory has its own AGENTS.md, beside the code. Read 
 # No permissionDecision. This hook decides nothing, blocks nothing, prompts nobody,
 # and that is not a softening -- it is what an EDIT-time channel can honestly be
 # here. Measured 2026-08-15: under permission_mode 'bypassPermissions' an 'ask'
-# returned to a SUB-AGENT is silently downgraded to allow, so a gate would be inert
+# returned to a DELEGATED AGENT is silently downgraded to allow, so a gate would be inert
 # against precisely the caller most likely to trip it, and against a human it would
 # only ever prove a click. Enforcement lives in the suite, where it is evidence.
 # What is left here does one job: whoever edits these files gets the two rules

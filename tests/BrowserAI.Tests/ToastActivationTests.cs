@@ -113,7 +113,7 @@ internal sealed class ToastActivationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found by lane ARCH's helper T3 reading the hooks on 2026-10-09</b>, and closed
+    /// <b>Found by a reading of the hooks on 2026-10-09</b>, and closed
     /// 2026-10-10 with the maintainer's 9 a: the class is keyed to the application id,
     /// which an install root does not change, and every uninstall took it back, so
     /// uninstalling either of two installs left the other's toasts starting nothing.

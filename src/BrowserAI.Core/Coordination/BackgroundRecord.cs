@@ -434,8 +434,8 @@ internal static class BackgroundRecord
         File.WriteAllBytes(temporary, buffer.ToArray());
 
         // ⚠️ A READER HOLDS THE RENAME OFF. Windows renames a file over another only
-        // when nobody has the target open, sharing it for deletion or not, measured by
-        // lane ARCH's helper T1 on 2026-10-09 (BackgroundRecordTests). A relay or a
+        // when nobody has the target open, sharing it for deletion or not, measured
+        // on 2026-10-09 (BackgroundRecordTests). A relay or a
         // person's start reads the record whole in one call, so the rename is tried
         // again until WriteBound has gone by, and the file beside it never outlives a
         // write that gave up.

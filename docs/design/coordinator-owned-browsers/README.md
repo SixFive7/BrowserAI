@@ -48,7 +48,7 @@ each.** Evidence:
 rig: [`docs/probes/2026-10-03-coordinator-survival`](../../probes/2026-10-03-coordinator-survival/README.md);
 [kb](../../../kb/windows/processes.md#a-process-the-task-scheduler-starts-keeps-its-jobs-processes-through-every-clients-exit----measured-2026-10-03).
 
-The rig is lane c's copy of the client-exit rig with three stand-ins added: a
+The rig is option c's copy of the client-exit rig with three stand-ins added: a
 *coordinator*, started by a scratch per-user task carrying the sign-in task's own
 settings and run on demand the way a blocked server runs it; a *host*, which that
 coordinator starts inside a kill-on-close job of its own; and a *browser*, which
@@ -237,7 +237,7 @@ out because the loop stops it before an apply, so a host a server asked for duri
 the sign-in pass would read as nothing running; the step reports that it is not
 alone, and the loop, which closes every browser first, applies.
 
-⚠️ *Added 2026-10-04, by the browser tab's lane.* **The page's install
+⚠️ *Added 2026-10-04, by the browser tab's build.* **The page's install
 link is a second way an apply starts in the coordinator, and it stops the host the
 same way**: every server a client started is asked to stop through its pipe, then
 the coordinator's hold has the host close every browser and end, and only then is
@@ -328,6 +328,6 @@ list with what each one cost.
    clients went; a session a connected client drives still holds the update,
    because its client's server runs from the install. The alternative is that a
    kept session holds the update too, which keeps its state across the restart at
-   the price of an update that waits for every idle close. Put to the root session
-   as a question, because it narrows the recorded rule that nothing exits itself to
+   the price of an update that waits for every idle close. Left open as a
+   question, because it narrows the recorded rule that nothing exits itself to
    let an update in.

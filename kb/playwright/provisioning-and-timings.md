@@ -1691,10 +1691,10 @@ sections are the findings above.
 **1.64.0-alpha-1790635538000**, Chrome for Testing **155.0.8059.12**
 (`chromium-1247`) and Firefox **156.0** (`firefox-1553`), node **v24.21.0**,
 through a published `BrowserAI.Server.exe`, every run on a desktop of its own
-that was never put on the screen. Two batches: the lifetime review lane's two
+that was never put on the screen. Two batches: the lifetime review's two
 holds of the suite lock at `1.1.1-alpha.0.197`
 ([evidence](../../docs/evidence/2026-10-04-lifetime-switch/README.md),
-[rig](../../docs/probes/2026-10-04-lifetime/README.md)), and lane behave's
+[rig](../../docs/probes/2026-10-04-lifetime/README.md)), and the behaviour work's
 runs at `1.1.1-alpha.0.206`, before its change and through it
 ([evidence](../../docs/evidence/2026-10-04-behave/README.md),
 [rig](../../docs/probes/2026-10-04-behave/README.md)). Persisted on the
@@ -2086,7 +2086,7 @@ session file they wrote was about 1 KB. **What the Firefox setting costs on disk
 is the session file times how often it is written**: under constant change,
 about once every 2 s at 1000 or 0 and about every 15 s at the default. The
 spread inside each Firefox form setting is wider than any difference between
-them; another lane's suite runs held the machine at a median 77% CPU during
+them; another worktree's suite runs held the machine at a median 77% CPU during
 them. A stall of 1.21 to 1.23 s showed up in 5 of the 6 Firefox storage runs at
 the default interval and in none at 1000 or 0, and its cause is not
 established. `[FLOATS]`

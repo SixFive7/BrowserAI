@@ -40,7 +40,7 @@ internal enum SuiteCapability
     /// leaves.
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-10, round 2 of the texts review, found by lane FINAL</b>: the arm
+    /// <b>Added 2026-10-10, round 2 of the texts review, found by the final gate</b>: the arm
     /// that classifies every file a pack leaves at the top of the release directory took
     /// <see cref="PackagedRelease"/>, which the suite's own test pack satisfies through its
     /// twin under <c>test-pack\twin\</c>. In a fresh worktree, where the gate's test pack is

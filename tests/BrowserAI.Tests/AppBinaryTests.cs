@@ -73,10 +73,10 @@ internal sealed class AppBinaryTests
         // executable that could be packed or started by mistake: its assembly, as the
         // current build produced it and this test host loads it, has no entry point.
         // ⚠️ Corrected 2026-10-10 (previously "no BrowserAI.exe under
-        // src\BrowserAI.App\bin\Debug\net10.0-windows"), found by lane REC: a worktree
+        // src\BrowserAI.App\bin\Debug\net10.0-windows"), found on 2026-10-10: a worktree
         // that built the app as an executable before f68ae4cf kept that file, which no
         // later build removes, and went red over a file the current build did not
-        // write, which cost four lanes a red each. Planted red with that stale file
+        // write, which cost four separate gates a red each. Planted red with that stale file
         // under the old assertion, and green with the same file under this one.
         await Assert.That(EntryPointOf(typeof(BrowserAI.App.StartModes).Assembly.Location)).IsEqualTo(0)
             .Because("the configuration app's assembly has an entry point, so its project builds an executable");
@@ -119,7 +119,7 @@ internal sealed class AppBinaryTests
     /// while it was its own file; and again with <c>IsTheTasksStart</c> answering
     /// <see langword="false"/> for <c>--sign-in</c>, which would make the sign-in start
     /// of a task registered before the update a person's start, opening a tab. The
-    /// second was watched again the same night at the root session's word, red at the
+    /// second was watched again the same night on request, red at the
     /// <c>--sign-in</c> line, in an in-process run only: a published binary with that
     /// defect would itself be the incident it guards against.
     /// </para>

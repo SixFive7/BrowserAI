@@ -11,7 +11,7 @@ using Microsoft.Win32.SafeHandles;
 namespace ExitRig;
 
 /// <summary>
-/// Lane c's survival probe, 2026-10-03. Stand-ins for the coordinator-owned design:
+/// Option c's survival probe, 2026-10-03. Stand-ins for the coordinator-owned design:
 ///   coord     started by the Task Scheduler; makes a kill-on-close job J_c, starts the host stand-in in it,
 ///             serves its own control pipe (coord-quit closes J_c while the host still runs), and exits
 ///             when the host exits or after --max-minutes, closing J_c either way.

@@ -35,7 +35,7 @@ helper.
 | `run-in-job.ps1`, `smoke-cr.js`, `smoke-cr2.js` | The first smoke tests of the launch, kept because they ran |
 | `mozlz4-ref.js` | A `mozLz4` reader copied from the state-across-close rig as a reference for `inspect.js` |
 | `snap-registry.ps1`, `registry-cleanup.ps1` | A read-only snapshot of the three Firefox keys, the Chrome for Testing keys and the Mozilla folders; and the removal of only the values absent from that snapshot that name the rig's own Firefox |
-| `pre-supp/` | `orchestrate.ps1`, `driver.js` and `server.js` as they ran the first agent's plans, before the second agent's additions |
+| `pre-supp/` | `orchestrate.ps1`, `driver.js` and `server.js` as they ran the first set of plans, before the second set's additions |
 
 ## What keeps it off the rest of the machine
 

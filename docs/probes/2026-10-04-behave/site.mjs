@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-// A local test site on 127.0.0.1 for the behave lane's rigs. No real site and
+// A local test site on 127.0.0.1 for the behaviour rigs. No real site and
 // no real credential: the one account is "tester" with the password
 // "not-a-secret", and the server forgets it when it exits.
 //

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-// The behave lane's measurements, end to end through a published
+// The behaviour measurements, end to end through a published
 // BrowserAI.Server.exe. A headed run goes through HiddenDesktop.ps1, so its
 // window is on a desktop nobody is looking at.
 //

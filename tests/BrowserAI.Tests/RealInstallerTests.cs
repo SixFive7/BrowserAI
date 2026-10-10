@@ -1448,7 +1448,7 @@ internal sealed partial class RealInstallerTests
     /// shipping package, <c>FullPackage(test: false)</c>)</b>: the shipping package
     /// under <c>Releases\</c> is the last release's, 1.1.0 with two binaries, until a
     /// release is cut from a tree that has one, so the arm read the past and went red
-    /// on every gate after D7 a, first in lane REC's gate on <c>6694dda8</c>. It reads
+    /// on every gate after D7 a, first in the gate on <c>6694dda8</c>. It reads
     /// the test pack, which every gate packs from the tree it tests with the same
     /// <c>--mainExe</c> and <c>--shortcuts</c> the shipping pack takes
     /// (<c>build/New-Release.ps1</c>).

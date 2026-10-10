@@ -1178,7 +1178,7 @@ answered with a text of a chosen length, made from BrowserAI's real tools array
 between a start marker and an end marker, either as an error result
 (`isError: true`, the form a refusal takes) or as an ordinary one. Every client
 ran with its configuration in a scratch folder against a local API stub that
-recorded what the model was sent, so no model was called. Lane q371, for the
+recorded what the model was sent, so no model was called. The Q371 work, for the
 maintainer's Q369.3 c and Q371.6 c.
 [Evidence](../../docs/evidence/2026-10-03-q371-refusals-and-transcript/README.md).
 

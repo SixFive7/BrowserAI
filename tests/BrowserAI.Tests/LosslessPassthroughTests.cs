@@ -546,7 +546,7 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(response.Error!["code"]!.GetValue<int>()).IsEqualTo((int)McpErrorCode.InternalError);
 
         // ⚠️ AND IT IS SAID IN WORDS A MODEL CAN ACT ON, round 2 of the texts review,
-        // 2026-10-10, found by lane FINAL: the message was "The browser child did not
+        // 2026-10-10, found by the final gate: the message was "The browser child did not
         // answer 'tools/call': IOException: ...", and a browser that ended under a
         // full-page screenshot reached a model as "TaskCanceledException". It names the
         // tool and the session, says part of the call may have happened, and names the

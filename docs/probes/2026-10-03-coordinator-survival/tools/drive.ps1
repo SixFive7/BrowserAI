@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Lane c survival probe driver, 2026-10-03. Registers the scratch task, starts the coordinator
+# Option c survival probe driver, 2026-10-03. Registers the scratch task, starts the coordinator
 # stand-in through it, runs the batch, then kills the coordinator stand-in by its recorded
 # pid@creation and watches every browser stand-in the host still holds go with it.
 # The task is removed at the end, whatever happened.

@@ -185,7 +185,7 @@ internal sealed class SafeModeScan(SafeModeWatchContext context, IReadOnlyList<s
 /// process is the suite's</b> by <see cref="WindowWatch"/>'s rules: created after
 /// the session began, and either descending from the host by a live parent chain or
 /// running an image under a scratch root. A Firefox in safe mode that is not the
-/// suite's -- the maintainer's own BrowserAI, another lane's run -- is printed in
+/// suite's -- the maintainer's own BrowserAI, another worktree's run -- is printed in
 /// the row and does not fail this run.
 /// </para>
 /// </remarks>

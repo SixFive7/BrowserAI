@@ -39,12 +39,12 @@ try {
     if ((Split-Path -Path $path -Leaf) -ne 'upstream-review.json') { exit 0 }
 
     # The caller, measured 2026-08-15 by capturing real payloads from both:
-    # a sub-agent's differs from the main session's by exactly two added keys,
+    # a delegated agent's differs from the main session's by exactly two added keys,
     # `agent_id` and `agent_type`. session_id, transcript_path and prompt_id are
     # inherited verbatim from the spawning session and are useless here.
     #
-    # This matters because `ask` does NOT gate a sub-agent. Measured the same day:
-    # under permission_mode `bypassPermissions`, an `ask` returned to a sub-agent
+    # This matters because `ask` does NOT gate a delegated agent. Measured the same day:
+    # under permission_mode `bypassPermissions`, an `ask` returned to a delegated agent
     # is silently downgraded to allow, and the edit lands unprompted. The gate was
     # inert against precisely the caller most likely to trip it. `deny` is honoured,
     # and reaches the agent as a readable tool error it can report upward.
@@ -83,7 +83,7 @@ file does not adjudicate what moved. See TESTING.md, "The upstream-review gate".
 # No permissionDecision. This hook decides nothing, blocks nothing, prompts nobody.
 #
 # It used to return 'ask'. That was abandoned on 2026-08-15 after measurement:
-# under permission_mode 'bypassPermissions', an 'ask' returned to a SUB-AGENT is
+# under permission_mode 'bypassPermissions', an 'ask' returned to a DELEGATED AGENT is
 # silently downgraded to allow, so the gate was inert against precisely the caller
 # most likely to trip it -- and against a human it only ever proved a click, not a
 # review. Enforcement moved to the suite, where it is evidence and not assent:
@@ -96,7 +96,7 @@ file does not adjudicate what moved. See TESTING.md, "The upstream-review gate".
 #
 # ($isSubAgent is computed above and deliberately unused. It is the discriminator
 # that would be needed if this ever became a gate again -- agent_id is present for
-# a sub-agent and absent for the main session -- and the measurement is cheaper to
+# a delegated agent and absent for the main session -- and the measurement is cheaper to
 # keep than to rediscover.)
 
 @{
