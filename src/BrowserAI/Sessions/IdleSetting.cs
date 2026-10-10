@@ -131,7 +131,7 @@ internal sealed record IdleSetting
 
         throw new SessionToolException(
             $"'{ParameterName}' must be a whole number of minutes from 1 to {int.MaxValue.ToString(CultureInfo.InvariantCulture)}, or \"{NeverWord}\", "
-            + $"and it arrived as {ArgumentKind.Of(value)}. Nothing was created and nothing was changed.");
+            + $"and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
     }
 
     // ⚠️ MOVED 2026-10-10: `Shown`, which named a string and a number in words and

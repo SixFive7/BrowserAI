@@ -928,7 +928,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         {
             case SessionClaim.HeldElsewhere:
             {
-                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(tool, live.Location.FullPath, holder!.Describe());
+                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(tool, live.Location.FullPath, holder!.Conversation());
 
                 ProxyLog.SessionDrivenElsewhere(live.Logger, tool, live.Location.FullPath);
                 Refused(live, tool, why, elsewhere);
@@ -1433,7 +1433,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         return value.GetValueKind() is JsonValueKind.String
             ? value.GetValue<string>()
             : throw new SessionToolException(
-                $"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}. Nothing was forwarded and nothing was changed.");
+                $"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
     }
 
     /// <summary>

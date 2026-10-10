@@ -238,8 +238,7 @@ internal sealed class IdleCountdownTests
 
             await Assert.That((bool?)answer["isError"]).IsTrue().Because(label);
             await Assert.That(TextOf(answer)).StartsWith($"'{IdleSetting.ParameterName}' must be a whole number of minutes from 1 to {int.MaxValue.ToString(CultureInfo.InvariantCulture)}, or \"never\"").Because(label);
-            await Assert.That(TextOf(answer)).Contains("Nothing was created and nothing was changed.").Because(label);
-            await Assert.That(TextOf(answer)).Contains($"and it arrived as {arrived}. Nothing was created").Because(label);
+            await Assert.That(TextOf(answer)).Contains($"and it arrived as {arrived}. Nothing was done.").Because(label);
             await Assert.That(File.Exists(Path.Combine(directory, SessionLayout.DataFileName))).IsFalse().Because(label);
         }
 

@@ -68,7 +68,7 @@ internal sealed class SettingsHoldBackTests
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.SettingsNotStated(SessionToolSurface.Init, [RunSettingNames.Transcript, IdleSetting.ParameterName]));
         await Assert.That(TextOf(refused)).StartsWith(
-            "browserai_init takes 'headed', 'transcript', 'captureNetwork' and 'idleMinutes' on every call, and this one left out 'transcript' and 'idleMinutes'. Nothing was created and nothing was changed.");
+            "browserai_init requires 'headed', 'transcript', 'captureNetwork' and 'idleMinutes' on every call, and this one left out 'transcript' and 'idleMinutes'. Nothing was done.");
         await Assert.That(Directory.Exists(directory)).IsFalse()
             .Because("a refused init created the directory");
 
@@ -109,8 +109,8 @@ internal sealed class SettingsHoldBackTests
         await Assert.That(TextOf(held)).IsEqualTo(SessionErrors.LongerIdleHeldBack(Run(asked)));
         await Assert.That(TextOf(held)).StartsWith("Held back once, and the call is valid: it sets a longer idle time than the default");
         await Assert.That(TextOf(held)).Contains(
-            "UPDATES WAIT WHILE THIS BROWSER IS OPEN. idleMinutes: 240 is longer than the default: a browser with no window closes after 10 minutes. "
-            + "BrowserAI installs an update on its own only once every session's browser has closed, so updates wait until this one closes: after 240 minutes in which no call names the session, or when browserai_close closes it. "
+            "Updates wait while this browser is open. "
+            + "BrowserAI installs an update on its own only once every session's browser has closed; a browser with no window closes after 10 minutes by default, and this one after 240 minutes in which no call names the session, or when browserai_close closes it. "
             + "The person can still choose Install now, which closes this browser and installs at once.");
         await Assert.That(TextOf(held)).EndsWith("If you meant it, send exactly the same call again and it will go through. Otherwise send it with idleMinutes: 10 or less.");
         await Assert.That(Directory.Exists(longer)).IsFalse()
@@ -120,7 +120,7 @@ internal sealed class SettingsHoldBackTests
         var other = await CallAsync(harness, SessionToolSurface.Init, InitArguments(longer, Settings(headed: false, idle: IdleSetting.NeverWord)));
 
         await Assert.That((bool?)other["isError"]).IsTrue();
-        await Assert.That(TextOf(other)).Contains("idleMinutes: \"never\" means BrowserAI never closes it for being idle, where a browser with no window closes after 10 minutes by default.");
+        await Assert.That(TextOf(other)).Contains("a browser with no window closes after 10 minutes by default, and with \"never\" this one stays open until browserai_close closes it.");
 
         // The same call as the one held just before goes through.
         _ = await CallAsync(harness, SessionToolSurface.Init, InitArguments(longer, Settings(headed: false, idle: IdleSetting.NeverWord)));
@@ -169,26 +169,25 @@ internal sealed class SettingsHoldBackTests
             ],
             Run(first),
             Run(asked),
-            ResumeFinds.NotLive,
-            countdownStarted: false));
+            ResumeFinds.NotLive));
 
         // And the sentences themselves, because a text compared only with the method that
         // writes it cannot tell a true sentence from a false one.
         var text = TextOf(held);
 
-        await Assert.That(text).StartsWith("Held back once, and the call is valid: its settings differ from the ones this session's last run used, and BrowserAI holds back a change once so that it is a choice and not an accident.\nWhat differs:\n");
+        await Assert.That(text).StartsWith("Held back once, and the call is valid: its settings differ from those of the session's last run, and BrowserAI holds a change back so that it is a choice and not an accident.\nWhat differs:\n");
         await Assert.That(text).Contains("- headed: the last run had false, this call asks for true\n");
         await Assert.That(text).Contains($"- viewport: the last run had '{OtherViewport}', this call asks for '{BrowserConfiguration.DefaultViewport}' (the default, because the call left it out)\n");
         await Assert.That(text).Contains("If you meant it, send exactly the same call again and it will go through, and the session opens with these settings.\n");
         await Assert.That(text).EndsWith($"To keep the last run's settings, send them instead: headed: false, transcript: false, captureNetwork: false, idleMinutes: 10, viewport: '{OtherViewport}', locale: '{OtherLocale}'.");
-        await Assert.That(text).DoesNotContain("UPDATES WAIT")
+        await Assert.That(text).DoesNotContain("Updates wait")
             .Because("an hour for a visible window is its default, and the warning is for a longer time");
 
         // The same call goes through, with a window.
         var opened = await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(directory, asked));
 
         await Assert.That((bool?)opened["isError"]).IsFalse();
-        await Assert.That(TextOf(opened)).Contains("  headed: true -- a window is open for this run\n");
+        await Assert.That(TextOf(opened)).Contains("  headed: true -- this run's browser has a visible window\n");
 
         // A new set is held once again.
         var again = await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(directory, Settings(headed: false)));
@@ -227,7 +226,12 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That((bool?)held["isError"]).IsTrue();
         await Assert.That(TextOf(held)).Contains("If you meant it, send exactly the same call again and it will go through: the session's browser then closes and opens again with these settings, and a clean close keeps its logins, cookies, storage, tabs and history.\n");
-        await Assert.That(TextOf(held)).EndsWith("\nThis call started the session's idle countdown again, as every call that names it does.");
+
+        // ⚠️ Since 2026-10-10, the texts polish, page #47 (previously it ended "This call
+        // started the session's idle countdown again, as every call that names it does."):
+        // the countdown still starts again, and the already-live answer is the one that
+        // says so.
+        await Assert.That(TextOf(held)).DoesNotContain("idle countdown again");
 
         // Nothing changed: the same browser, no close sent, and the countdown moved.
         await Assert.That(before.HasStopped).IsFalse();
@@ -254,7 +258,7 @@ internal sealed class SettingsHoldBackTests
 
         var text = TextOf(switched);
 
-        await Assert.That(text).Contains("to open again with the settings a browserai_resume call from this client asked for, which gave the reason \"the suite resuming with other settings\".");
+        await Assert.That(text).Contains("to open again with new settings, for a browserai_resume call from this conversation, which gave the reason \"the suite resuming with other settings\".");
         await Assert.That(text.TrimEnd('\n')).EndsWith(SettingsHoldBack.HeadedHint);
     }
 
@@ -278,7 +282,7 @@ internal sealed class SettingsHoldBackTests
 
         var held = await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(directory, Settings(headed: false)));
 
-        await Assert.That(TextOf(held)).EndsWith($"To keep the last run's settings, send them instead: headed: false, transcript: false, captureNetwork: false, idleMinutes: 10, viewport: '{OtherViewport}'.\nThis call started the session's idle countdown again, as every call that names it does.");
+        await Assert.That(TextOf(held)).EndsWith($"To keep the last run's settings, send them instead: headed: false, transcript: false, captureNetwork: false, idleMinutes: 10, viewport: '{OtherViewport}'.");
 
         // Exactly that list, as a call.
         var kept = await CallAsync(harness, SessionToolSurface.Resume, new JsonObject
@@ -332,7 +336,7 @@ internal sealed class SettingsHoldBackTests
         var through = await second.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, asked));
 
         await Assert.That((bool?)through["isError"]).IsFalse();
-        await Assert.That(HostConnection.TextOf(through)).Contains("  headed: true -- a window is open for this run\n");
+        await Assert.That(HostConnection.TextOf(through)).Contains("  headed: true -- this run's browser has a visible window\n");
     }
 
     /// <summary>
@@ -371,8 +375,7 @@ internal sealed class SettingsHoldBackTests
             [new SettingDifference(RunSettingNames.Viewport, $"'{OtherViewport}'", $"'{BrowserConfiguration.DefaultViewport}'", LeftOut: true)],
             Run(made),
             Run(asked),
-            ResumeFinds.NotLive,
-            countdownStarted: false));
+            ResumeFinds.NotLive));
 
         _ = await second.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, asked));
 
@@ -385,6 +388,48 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That(after.SettingsHistory.Count).IsEqualTo(2);
         await Assert.That(after.SettingsHistory[^1].Value).IsEqualTo(Run(asked).Write());
+    }
+
+    /// <summary>
+    /// A resume of a session another BrowserAI process holds is refused for that at once,
+    /// and is not held back for its settings first.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, page #45.</b> A hold-back's last ending says
+    /// the same call sent again opens the session, and for a session another BrowserAI
+    /// process holds that call is refused instead, so the hold-back promised what could
+    /// not happen. The guard is asked before the settings are compared. Planted red against
+    /// the resume as it stood, which held the call back first.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AResumeOfASessionAnotherBrowserAiHoldsIsRefusedAtOnceAndNotHeldBack()
+    {
+        await using var sessions = Sessions(new ManualClock());
+        await using var host = await SessionHostRig.StartAsync(sessions);
+
+        var first = await host.ConnectAsync("the client that made the session");
+        var directory = Path.Combine(sessions.Root, "held-by-another-browserai");
+
+        await OpenAsync(first, directory, Settings(headed: false, viewport: OtherViewport));
+
+        // No browser was up, so the session is let go when its client goes.
+        await first.EndAsync();
+        await WaitUntilAsync(() => host.Host.Sessions.Find(directory) is null, "the session was never let go");
+
+        // Another BrowserAI takes the session's guard, as a second install would.
+        using var held = SessionLock.TryAcquire(
+            SessionPath.For(directory),
+            new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
+            NullLogger.Instance).Acquired!;
+
+        var second = await host.ConnectAsync("a client that did not make it");
+        var refused = await second.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, Settings(headed: false)));
+        var text = HostConnection.TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(text).DoesNotContain(SettingsHoldBack.HeldBackOnce).Because(text);
+        await Assert.That(text).Contains("is in use by").Because(text);
     }
 
     /// <summary>
@@ -441,7 +486,7 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That((bool?)repeated["isError"]).IsFalse()
             .Because("a longer time identical to the last run was held back again");
-        await Assert.That(TextOf(repeated)).DoesNotContain("UPDATES WAIT");
+        await Assert.That(TextOf(repeated)).DoesNotContain("Updates wait");
 
         var never = Settings(headed: false, idle: IdleSetting.NeverWord);
         var held = await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(directory, never));
@@ -459,7 +504,7 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That((bool?)switched["isError"]).IsTrue();
         await Assert.That(TextOf(switched)).Contains(
-            "UPDATES WAIT WHILE THIS BROWSER IS OPEN. idleMinutes: 60 is longer than the default: a browser with no window closes after 10 minutes.");
+            "Updates wait while this browser is open. BrowserAI installs an update on its own only once every session's browser has closed; a browser with no window closes after 10 minutes by default, and this one after 60 minutes in which no call names the session");
     }
 
     /// <summary>
@@ -481,7 +526,7 @@ internal sealed class SettingsHoldBackTests
         var openedHidden = TextOf(await CallAsync(harness, SessionToolSurface.Init, InitArguments(hidden, Settings(headed: false))));
         var alreadyLive = TextOf(await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(visible, Settings(headed: true, idle: 60))));
 
-        await Assert.That(opened.TrimEnd('\n')).EndsWith("\nWhen the part that needs the person is done, resume with headed: false: the browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.");
+        await Assert.That(opened.TrimEnd('\n')).EndsWith("\nWhen the part that needs the person is done, resume with headed: false. The browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.");
         await Assert.That(openedHidden).DoesNotContain(SettingsHoldBack.HeadedHint);
         await Assert.That(alreadyLive).StartsWith(SessionManager.AlreadyLive(browserUp: false, purposeChanged: false));
         await Assert.That(alreadyLive).DoesNotContain(SettingsHoldBack.HeadedHint)
@@ -517,14 +562,14 @@ internal sealed class SettingsHoldBackTests
 
             var headed = (string)schema["properties"]![RunSettingNames.Headed]!["description"]!;
 
-            await Assert.That(headed).Contains("A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes or the person chooses Install now, which closes it.");
+            await Assert.That(headed).Contains("A visible window takes the person's screen and focus: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes or the person chooses Install now, which closes it.");
             await Assert.That(headed).Contains("Switching between visible and hidden closes the browser and opens it again, and a clean close keeps logins, cookies, storage, tabs and history");
 
             var idle = (string)schema["properties"]![IdleSetting.ParameterName]!["description"]!;
 
             await Assert.That(idle).Contains("The defaults are 10 minutes without a window and 60 with one.");
             await Assert.That(idle).Contains("unless the person chooses Install now, which closes it.");
-            await Assert.That(idle).Contains("A call that sets a longer time is held back once with that warning, unless it is a resume that repeats its last run's time and mode.");
+            await Assert.That(idle).Contains("A call that sets a longer time is held back once with a warning, unless it is a resume that repeats its last run's time and mode.");
 
             // And every description the two tools carry fits what a client hands a
             // model whole, which the published binary's own arm asserts off the wire.

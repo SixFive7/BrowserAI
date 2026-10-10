@@ -350,7 +350,7 @@ internal sealed partial class ProvisioningTests
         var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
-        await Assert.That(status.Detail).IsEqualTo($"Provisioning {SessionManager.DefaultBrowser} failed: {Said}").Because(status.Detail);
+        await Assert.That(status.Detail).IsEqualTo($"Installing {SessionManager.DefaultBrowser} failed: {Said}").Because(status.Detail);
     }
 
     [Test]

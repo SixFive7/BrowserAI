@@ -297,13 +297,18 @@ internal static class SessionErrors
     /// </remarks>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The session directory.</param>
-    /// <param name="client">The client driving it, as <see cref="Proxy.CallerConnection.Describe"/> spells it.</param>
+    /// <param name="conversation">The conversation driving it, as <see cref="Proxy.CallerConnection.Conversation"/> names it.</param>
     /// <returns>The refusal.</returns>
-    public static string SessionDrivenByAnotherClient(string tool, string path, string client) =>
-        $"'{path}' is open in BrowserAI and another {client} is driving it right now, so '{tool}' was not run and nothing was changed. "
-        + "One client drives a session at a time. Use a session of your own: "
+    public static string SessionDrivenByAnotherClient(string tool, string path, string conversation) =>
+        // ⚠️ Corrected 2026-10-10, the texts polish (previously "another {client} is
+        // driving it", where the client read "client 'claude-code' (its BrowserAI server
+        // is pid 1234)", "One client drives a session at a time." and "If that client goes
+        // away"): a model reads another conversation by its client and folder, never by its
+        // title and never by a process id.
+        $"'{path}' is open in BrowserAI and another conversation ({conversation}) is driving it right now, so '{tool}' was not run and nothing was changed. "
+        + "One conversation drives a session at a time. Use a session of your own: "
         + $"{SessionToolSurface.Init} creates one, and {SessionToolSurface.List} shows the sessions under a directory and which are in use. "
-        + "If that client goes away, the next call that names this session takes it over.";
+        + "If that conversation ends, the next call that names this session takes it over.";
 
     /// <summary>
     /// Row 2's third companion -- the session is open in another BrowserAI process,
@@ -325,12 +330,16 @@ internal static class SessionErrors
     /// still has it.
     /// </para>
     /// </remarks>
-    /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The session directory.</param>
     /// <returns>The refusal.</returns>
-    public static string SessionHeldByAnotherBrowserAi(string tool, string path) =>
-        $"'{path}' is open in another BrowserAI process, so '{tool}' was not run and nothing was changed: only the BrowserAI that holds a session can act on its browser. "
-        + $"Make the call through the client that is driving that session, or use a session of your own: {SessionToolSurface.Init} creates one.";
+    public static string SessionHeldByAnotherBrowserAi(string path) =>
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #48 (previously "so '{tool}' was
+        // not run and nothing was changed: only the BrowserAI that holds a session can act
+        // on its browser. Make the call through the client that is driving that session, or
+        // use a session of your own"): a model has no way into another BrowserAI's
+        // conversation, and the one caller is browserai_close.
+        $"'{path}' is open in another BrowserAI process, so nothing was done: only the BrowserAI that holds a session can close its browser. "
+        + $"Use a session of your own: {SessionToolSurface.Init} creates one.";
 
     /// <summary>Row 3 -- the directory is empty, relative or malformed.</summary>
     /// <param name="argument">Which argument was wrong.</param>
@@ -1231,9 +1240,39 @@ internal static class SessionErrors
     /// <param name="path">The session directory.</param>
     /// <param name="why">What failed.</param>
     /// <returns>The refusal.</returns>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10, the texts polish, page #53 (previously "The browser
+    /// runtime for '{path}' did not start: {why} The directory is left as it is, nothing is
+    /// running, and the lock has been released. If this persists, delete that directory and
+    /// call browserai_init again to re-provision. Otherwise fix the cause and call
+    /// browserai_resume on the same directory.")</i>: deleting a session directory by hand
+    /// is what every tool says not to do, a session's directory holds no browser to
+    /// provision, and <c>browserai_resume</c> on the same directory is the retry. A live
+    /// session whose browser could not be installed has its own answer,
+    /// <see cref="BrowserNotInstalled"/>, because there the session stays open.
+    /// </remarks>
     public static string BrowserRuntimeDidNotStart(string path, string why) =>
-        $"The browser runtime for '{path}' did not start: {Sentence(why)} The directory is left as it is, nothing is running, and the lock has been released. "
-        + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
+        $"BrowserAI did not open '{path}'. {Sentence(why)} Nothing is running, and the directory is left as it is. "
+        + $"Call {SessionToolSurface.Resume} on it to try again; if it fails the same way, tell the person.";
+
+    /// <summary>
+    /// Row 7's companion for a session that is open: its browser call was not run,
+    /// because the browser the session needs could not be installed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, page #56.</b> Until then a live session's
+    /// browser call met <see cref="BrowserRuntimeDidNotStart"/>, which says nothing is
+    /// running, while the session stays open and its browser server runs. The next
+    /// browser call starts a fresh attempt, since <c>BrowserProvisioner.Ensure</c> starts
+    /// one after a failed one.
+    /// </remarks>
+    /// <param name="tool">The tool that was not run.</param>
+    /// <param name="path">The session directory.</param>
+    /// <param name="why">What the install said, from <c>ProvisioningStatus.Detail</c>.</param>
+    /// <returns>The refusal.</returns>
+    public static string BrowserNotInstalled(string tool, string path, string why) =>
+        $"'{tool}' was not run: the browser for '{path}' is not installed. {Sentence(why)} "
+        + "The next browser call starts the download again; if it fails the same way, tell the person.";
 
     /// <summary>
     /// The session's browser server lists tools that differ from the list this
@@ -1260,9 +1299,15 @@ internal static class SessionErrors
     /// <param name="difference">The first difference, as <see cref="UpstreamToolList.FirstDifference"/> words it.</param>
     /// <returns>The refusal.</returns>
     public static string InstallIsBroken(string path, string difference) =>
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #51 (previously "Nothing was
+        // opened and nothing is running. The directory and its record are left on disk:
+        // once BrowserAI is reinstalled, call browserai_resume on it. Every session will be
+        // refused the same way until then, and browserai_reinstall_browser does not repair
+        // this, so stop and tell the person that BrowserAI needs reinstalling."): what
+        // happened, what is left, then what to do and when.
         $"BrowserAI did not open '{path}': this BrowserAI install is broken. The browser server it starts for every session lists different tools from the list this BrowserAI was built with, and the first difference is {difference}. "
-        + $"Nothing was opened and nothing is running. The directory and its record are left on disk: once BrowserAI is reinstalled, call {SessionToolSurface.Resume} on it. "
-        + $"Every session will be refused the same way until then, and {SessionToolSurface.ReinstallBrowser} does not repair this, so stop and tell the person that BrowserAI needs reinstalling.";
+        + "Nothing is running, and the directory and its record are left on disk. "
+        + $"Every session is refused the same way until BrowserAI is reinstalled, and {SessionToolSurface.ReinstallBrowser} does not repair this: stop and tell the person that BrowserAI needs reinstalling. Once it is, call {SessionToolSurface.Resume} on this directory.";
 
     /// <summary>
     /// Row 7's other companion -- the session's browser server has gone, so the
@@ -1306,7 +1351,7 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string BrowserServerHasGone(string tool, string path) =>
         $"The browser server for '{path}' has ended, so '{tool}' was not forwarded and nothing in the browser changed. "
-        + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
+        + $"Call {SessionToolSurface.Resume} on that directory to start a new browser server. "
         + AfterAnUncleanEnd;
 
     /// <summary>
@@ -1333,14 +1378,20 @@ internal static class SessionErrors
     /// <param name="path">The session directory.</param>
     /// <returns>The answer.</returns>
     public static string BrowserServerEndedDuringTheCall(string tool, string path) =>
-        $"The browser server for '{path}' ended while '{tool}' was running, so the call got no answer, and part of it may have happened: check what it was doing before you repeat it. "
-        + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #54 (previously "so the call got
+        // no answer, and part of it may have happened: check what it was doing before you
+        // repeat it. Call browserai_resume on that directory: it starts a replacement and
+        // tells you it did.", and in the shared last sentence "what it had already flushed"
+        // and "read any stored value back"): the thing to check is whether the call took
+        // effect, and the resume's own note says it started a new browser server.
+        $"The browser server for '{path}' ended while '{tool}' was running, so the call got no answer and part of it may have happened: check whether it took effect before you repeat it. "
+        + $"Call {SessionToolSurface.Resume} on that directory to start a new browser server. "
         + AfterAnUncleanEnd;
 
     /// <summary>What a browser that ended without a clean close may have lost, said by both rows about an ended browser server.</summary>
     private const string AfterAnUncleanEnd =
-        "The session's profile, files and log are on disk, but a browser that ends without a clean close keeps only what it had already flushed: "
-        + "recent cookie and localStorage writes may be gone, so read any stored value back before you rely on it.";
+        "The session's profile, files and log are on disk, but a browser that ends without a clean close keeps only what it had already written to disk: "
+        + "recent cookie and localStorage writes may be gone, so read a stored value back before you rely on it.";
 
     /// <summary>
     /// Row 7's third companion -- the session's browser was closed, by the idle
@@ -1468,9 +1519,15 @@ internal static class SessionErrors
         // back, so BrowserAI does not choose them for you."): what an open browser holds
         // back is the automatic install, and the person's Install now closes it, as the
         // idle description and the warning say.
-        return $"{tool} takes {listed(RunSettingNames.Stated)} on every call, and this one left out {listed(missing)}. Nothing was created and nothing was changed. "
-            + "Each is something a person notices, so BrowserAI does not choose them for you: a window on their screen, what is written to disk in plain text, and how long the browser stays open and holds BrowserAI's automatic updates back, unless the person chooses Install now, which closes it. "
-            + $"Send the call again with all four: true or false for the first three, and for {IdleSetting.ParameterName} a whole number of minutes or \"{IdleSetting.NeverWord}\", "
+        //
+        // ⚠️ Corrected 2026-10-10 a second time, the texts polish, page #32 (previously
+        // "{tool} takes ... on every call", "Nothing was created and nothing was changed.",
+        // the sentence "Each is something a person notices, so BrowserAI does not choose
+        // them for you: ..., unless the person chooses Install now, which closes it." and
+        // "Send the call again"): what happened, then what to do; the reason and the update
+        // rule are the descriptions'.
+        return $"{tool} requires {listed(RunSettingNames.Stated)} on every call, and this one left out {listed(missing)}. Nothing was done. "
+            + $"Send it again with all four: true or false for the first three, and for {IdleSetting.ParameterName} a whole number of minutes or \"{IdleSetting.NeverWord}\", "
             + $"where {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one are the defaults.";
 
         static string listed(IReadOnlyList<string> names)
@@ -1525,22 +1582,26 @@ internal static class SessionErrors
     /// <param name="lastRun">What the session's last run used.</param>
     /// <param name="asked">What this call asks for.</param>
     /// <param name="session">Where the session is, which says what the same call sent again does.</param>
-    /// <param name="countdownStarted">Whether this call started a live session's idle countdown again.</param>
     /// <returns>The answer.</returns>
     public static string SettingsHeldBack(
         IReadOnlyList<SettingDifference> differences,
         SessionRunSettings lastRun,
         SessionRunSettings asked,
-        ResumeFinds session,
-        bool countdownStarted)
+        ResumeFinds session)
     {
         ArgumentNullException.ThrowIfNull(differences);
         ArgumentNullException.ThrowIfNull(lastRun);
         ArgumentNullException.ThrowIfNull(asked);
 
+        // ⚠️ Corrected 2026-10-10, the texts polish, pages #42, #43 and #47 (previously
+        // "its settings differ from the ones this session's last run used, and BrowserAI
+        // holds back a change once", and a last line, "This call started the session's idle
+        // countdown again, as every call that names it does."): the countdown still starts
+        // again on every call that names the session, and the already-live answer is the
+        // one that says so.
         var text = new System.Text.StringBuilder()
             .Append(SettingsHoldBack.HeldBackOnce)
-            .Append(" its settings differ from the ones this session's last run used, and BrowserAI holds back a change once so that it is a choice and not an accident.\n")
+            .Append(" its settings differ from those of the session's last run, and BrowserAI holds a change back so that it is a choice and not an accident.\n")
             .Append("What differs:\n");
 
         foreach (var difference in differences)
@@ -1571,11 +1632,6 @@ internal static class SessionErrors
             })
             .Append("To keep the last run's settings, send them instead: ").Append(SettingsHoldBack.LastRunAsACall(lastRun)).Append('.');
 
-        if (countdownStarted)
-        {
-            _ = text.Append("\nThis call started the session's idle countdown again, as every call that names it does.");
-        }
-
         return text.ToString();
     }
 
@@ -1595,7 +1651,9 @@ internal static class SessionErrors
     {
         ArgumentNullException.ThrowIfNull(asked);
 
-        return $"{SettingsHoldBack.HeldBackOnce} it sets a longer idle time than the default, and BrowserAI holds that back once so that it is a choice and not an accident.\n"
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #40 (previously "holds that back
+        // once so that", which said "once" twice in one sentence).
+        return $"{SettingsHoldBack.HeldBackOnce} it sets a longer idle time than the default, and BrowserAI holds that back so that it is a choice and not an accident.\n"
             + $"{SettingsHoldBack.UpdatesWait(asked)}\n"
             + $"If you meant it, send exactly the same call again and it will go through. Otherwise send it with {IdleSetting.ParameterName}: {IdleSetting.DefaultFor(asked.Headed)} or less.";
     }
@@ -1636,7 +1694,9 @@ internal static class SessionErrors
     /// <returns>Whole minutes when it is whole minutes, seconds otherwise.</returns>
     internal static string Duration(TimeSpan? period) => period switch
     {
-        null => "the idle period",
+        // ⚠️ Corrected 2026-10-10, the texts polish (previously "the idle period"): idle
+        // time is the setting's word in every text a model reads.
+        null => "its idle time",
         { TotalMinutes: 1 } => "1 minute",
         { } whole when whole.Ticks % TimeSpan.TicksPerMinute is 0 => $"{whole.TotalMinutes.ToString(CultureInfo.InvariantCulture)} minutes",
         { } other => $"{other.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds",

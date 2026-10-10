@@ -447,7 +447,7 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That((bool?)withBrowser["isError"]).IsTrue();
         await Assert.That(TextOf(withBrowser)).StartsWith("Syntax error: 'browserai_resume' has no argument named 'browser'");
-        await Assert.That(TextOf(withBrowser)).Contains("'browser' is NOT an argument");
+        await Assert.That(TextOf(withBrowser)).Contains("'browser' is not an argument");
         await Assert.That(TextOf(withBrowser)).DoesNotContain("cannot be set on");
         Record(nameof(SessionErrors.UnrecognisedArguments));
 
@@ -734,7 +734,11 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
-        await Assert.That(TextOf(answer)).Contains("did not start");
+
+        // ⚠️ Since 2026-10-10, the texts polish, page #53 (previously "The browser
+        // runtime for '...' did not start: ..."): the frame every refusal of an opening
+        // takes.
+        await Assert.That(TextOf(answer)).Contains("BrowserAI did not open '");
         await Assert.That(TextOf(answer)).Contains("spawn EFTYPE");
         Record(nameof(SessionErrors.BrowserRuntimeDidNotStart));
 
@@ -791,7 +795,12 @@ internal sealed partial class ErrorCatalogueTests
         // record by the time the check runs, a retried init would be told the directory
         // is already a session, and browserai_reinstall_browser replaces the browsers and
         // not the browser server whose list differs.
-        await Assert.That(TextOf(answer)).Contains("The directory and its record are left on disk: once BrowserAI is reinstalled, call browserai_resume on it.");
+        //
+        // ⚠️ And since the texts polish of the same day, page #51 (previously "The
+        // directory and its record are left on disk: once BrowserAI is reinstalled, call
+        // browserai_resume on it."): the same facts, the resume last.
+        await Assert.That(TextOf(answer)).Contains("Nothing is running, and the directory and its record are left on disk.");
+        await Assert.That(TextOf(answer)).EndsWith("Once it is, call browserai_resume on this directory.");
         await Assert.That(TextOf(answer)).Contains("browserai_reinstall_browser does not repair this");
         await Assert.That(TextOf(answer)).DoesNotContain("the directory is as it was");
         await Assert.That(File.Exists(Path.Combine(directory, SessionLayout.DataFileName))).IsTrue()
@@ -868,8 +877,11 @@ internal sealed partial class ErrorCatalogueTests
         // ⚠️ Since 2026-10-10, from the texts review (previously "did not start:
         // IOException: spawn EFTYPE The directory is left ..."): the cause carries no
         // .NET type name, and a reason that does not end a sentence is given its full stop.
-        await Assert.That(TextOf(answer)).Contains("did not start: spawn EFTYPE. The directory is left as it is");
+        // And since the texts polish of the same day, page #53, the session's directory is
+        // never to be deleted by hand and browserai_resume is the retry.
+        await Assert.That(TextOf(answer)).Contains("'. spawn EFTYPE. Nothing is running, and the directory is left as it is.");
         await Assert.That(TextOf(answer)).DoesNotContain("IOException");
+        await Assert.That(TextOf(answer)).DoesNotContain("delete");
 
         // Recoverable in one turn, which is what the sentence promises: the
         // directory was released, so the same resume succeeds once a child can
@@ -1015,7 +1027,63 @@ internal sealed partial class ErrorCatalogueTests
         Match(
             TextOf(answer),
             nameof(SessionErrors.SessionHeldByAnotherBrowserAi),
-            SessionErrors.SessionHeldByAnotherBrowserAi(SessionToolSurface.Close, location.FullPath));
+            SessionErrors.SessionHeldByAnotherBrowserAi(location.FullPath));
+    }
+
+    /// <summary>
+    /// The texts polish's row -- a live session's browser call whose family's browser
+    /// could not be installed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, page #56.</b> Such a call met the row of a
+    /// session that did not open, which says nothing is running and once advised deleting
+    /// the directory, while the session stays open and its browser server runs. The failed
+    /// status is handed in, because the provisioner reports one to a live session's call
+    /// only when the fresh attempt that call starts fails before it returns. Planted red
+    /// against the refusal as it stood, which named the frame of a session that did not
+    /// open.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBrowserNotInstalledRowIsEmittedByABrowserCallWhoseInstallFailed()
+    {
+        const string Said = "Installing chromium failed: the suite's installer would not start";
+
+        await using var sessions = RigSessionEnvironment.Create(
+            opensDefaultSession: false,
+            provisioningProbe: browser => new ProvisioningStatus(browser, ProvisioningState.Failed, string.Empty, Said));
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "install-failed");
+
+        var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a browser whose install failed",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true);
+
+        var answer = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "about:blank",
+            ["session"] = directory,
+            ["why"] = "the suite meeting a browser whose install failed",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.BrowserNotInstalled),
+            SessionErrors.BrowserNotInstalled("browser_navigate", SessionPath.For(directory).FullPath, Said));
+
+        await Assert.That(TextOf(answer)).DoesNotContain("Nothing is running");
+        await Assert.That(TextOf(answer)).DoesNotContain("delete");
     }
 
     // ⚠️ DELETED 2026-10-08: `TheUnappliedSettingsRowIsEmittedByAResumeWhileTheBrowserIsUp`,
@@ -1102,8 +1170,7 @@ internal sealed partial class ErrorCatalogueTests
                 [new SettingDifference(RunSettingNames.Headed, "false", "true", LeftOut: false)],
                 defaults,
                 defaults with { Headed = true },
-                ResumeFinds.LiveWithItsBrowserUp,
-                countdownStarted: true));
+                ResumeFinds.LiveWithItsBrowserUp));
     }
 
     /// <summary>
@@ -1175,8 +1242,8 @@ internal sealed partial class ErrorCatalogueTests
         // row is held by its parts and not by one string.
         var text = TextOf(answer);
 
-        await Assert.That(text).StartsWith($"The browser runtime for '{SessionPath.For(directory).FullPath}' did not start: The browser server did not answer tools/list after its handshake: ");
-        await Assert.That(text).Contains("the list is not ready. The directory is left as it is");
+        await Assert.That(text).StartsWith($"BrowserAI did not open '{SessionPath.For(directory).FullPath}'. The browser server did not answer tools/list after its handshake: ");
+        await Assert.That(text).Contains("the list is not ready. Nothing is running, and the directory is left as it is.");
         await Assert.That(text).DoesNotContain("Exception");
 
         Record(nameof(SessionErrors.BrowserRuntimeDidNotStart));
@@ -2012,7 +2079,11 @@ internal sealed partial class ErrorCatalogueTests
         Match(
             HostConnection.TextOf(refused),
             nameof(SessionErrors.SessionDrivenByAnotherClient),
-            SessionErrors.SessionDrivenByAnotherClient("browser_snapshot", directory, driving.Proxy.Connection.Describe()));
+            SessionErrors.SessionDrivenByAnotherClient("browser_snapshot", directory, driving.Proxy.Connection.Conversation()));
+
+        // ⚠️ Since 2026-10-10, the texts polish, page #19: the other side is a
+        // conversation, by its client and folder, and never a pid.
+        await Assert.That(HostConnection.TextOf(refused)).DoesNotContain("pid");
     }
 
     [Test]
@@ -2302,7 +2373,13 @@ internal sealed partial class ErrorCatalogueTests
         // arrived: a browser server that ended under a call it had been given was
         // answered in the transport's own words, the exception's type among them,
         // which a model met as "TaskCanceledException".
-        await Assert.That(rows.Count).IsEqualTo(42);
+        //
+        // ⚠️ **Corrected 2026-10-10 a third time, to 43 (previously 42)**, the texts
+        // polish, page #56. `BrowserNotInstalled` arrived: a browser call on a live
+        // session whose browser download had failed was answered as a browser
+        // runtime that did not start, with advice to delete the directory, when the
+        // session was open and only the browser was missing.
+        await Assert.That(rows.Count).IsEqualTo(43);
     }
 
     /// <summary>

@@ -184,13 +184,17 @@ internal sealed class CloseReasonTests
 
         var refused = await NavigateAsync(rig, directory, "the call after the caller's own close");
 
-        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"done with the checkout page\".");
+        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this conversation, which gave the reason \"done with the checkout page\".");
 
         var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
 
         await Assert.That(close.Cause).IsEqualTo(SessionCloseCause.Caller);
         await Assert.That(close.Why).IsEqualTo("done with the checkout page");
-        await Assert.That(close.By).StartsWith("client ");
+
+        // ⚠️ Since 2026-10-10, the texts polish, page #27 (previously the record held
+        // "client 'name' (its BrowserAI server is pid N)"): what a model reads back is
+        // the conversation's client and folder, and the rig's client names no folder.
+        await Assert.That(close.By).IsEqualTo("BrowserAI.RawPipeClient");
     }
 
     /// <summary>
@@ -258,8 +262,9 @@ internal sealed class CloseReasonTests
         var text = HostConnection.TextOf(refused);
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(text).Contains("Its last close: This session's browser was closed at");
-        await Assert.That(text).Contains($"by a {SessionToolSurface.Close} call from client 'agent-one'");
+        await Assert.That(text).Contains("Its last close: This session was closed at");
+        await Assert.That(text).Contains($"by a {SessionToolSurface.Close} call from a conversation (agent-one)");
+        await Assert.That(text).DoesNotContain("pid");
         await Assert.That(text).Contains("which gave the reason \"the first client is finished with it\"");
     }
 
@@ -294,10 +299,10 @@ internal sealed class CloseReasonTests
     {
         var causes = new (SessionCloseCause? Declared, SessionCloseCause Recorded, string Said)[]
         {
-            (null, SessionCloseCause.ServerShutDown, "because the BrowserAI holding it shut down when its client, client 'agent-one'"),
+            (null, SessionCloseCause.ServerShutDown, "because the BrowserAI holding it shut down when its client, agent-one, went away"),
             (SessionCloseCause.Updating, SessionCloseCause.Updating, "to install an update."),
-            (SessionCloseCause.Stopped, SessionCloseCause.Stopped, "because BrowserAI was asked to stop."),
-            (SessionCloseCause.Failed, SessionCloseCause.Failed, "because BrowserAI's background ended on a failure, which its log names."),
+            (SessionCloseCause.Stopped, SessionCloseCause.Stopped, "because it was asked to stop."),
+            (SessionCloseCause.Failed, SessionCloseCause.Failed, "because it ended on a failure, which its log names."),
         };
 
         foreach (var (declared, recorded, said) in causes)
@@ -520,41 +525,53 @@ internal sealed class CloseReasonTests
     }
 
     /// <summary>
-    /// A close made by another client is said with that client named once: "another
-    /// client 'name' (...)", never "another client, client 'name' (...)", for
-    /// <c>browserai_close</c> and for a resume's switch alike; to the client that closed
-    /// it, it is "this client".
+    /// A close made by another conversation is said with that conversation named by its
+    /// client and its folder, never by a title and never by a process id, for
+    /// <c>browserai_close</c> and for a resume's switch alike; to the conversation that
+    /// closed it, it is "this conversation", and read back from the record "a
+    /// conversation".
     /// </summary>
     /// <remarks>
-    /// <b>Added 2026-10-10, from the texts review</b>, which read "from another client,
-    /// client 'claude-code' (its BrowserAI server is pid ...)". Planted red against the
-    /// tree before the fix.
+    /// <b>Rewritten 2026-10-10, the texts polish, pages #19 and #27</b> (previously
+    /// <c>AnotherClientsCloseNamesThatClientOnce</c>, added the same day from the texts
+    /// review, which read "from another client, client 'claude-code' (its BrowserAI server
+    /// is pid ...)", and held "from another client 'claude-code' (its BrowserAI server is
+    /// pid 4242)"). The record keeps the same words, so a close read back later carries no
+    /// pid either. Planted red against <see cref="CallerConnection.Conversation"/> standing
+    /// in for <see cref="CallerConnection.Describe"/> and the old sentences.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnotherClientsCloseNamesThatClientOnce()
+    public async Task AnotherConversationsCloseNamesItsClientAndFolderAndNeverAPid()
     {
-        var closer = new CallerConnection(clientProcessId: 4242);
-        var reader = new CallerConnection(clientProcessId: 4343);
+        var closer = new CallerConnection(clientProcessId: 4242) { Folder = @"C:\Source\BrowserAI" };
+        var reader = new CallerConnection(clientProcessId: 4343) { Folder = @"C:\Source\Elsewhere" };
 
         closer.Introduced("claude-code");
-        reader.Introduced("codex");
+        reader.Introduced("codex-mcp-client");
 
         foreach (var cause in new[] { SessionCloseCause.Caller, SessionCloseCause.SettingsChanged })
         {
             var closure = new SessionClosure(cause, DateTimeOffset.UnixEpoch, IdlePeriod: null)
             {
                 ClosedBy = closer,
-                By = closer.Describe(),
+                By = closer.Conversation(),
                 Why = "the suite closing it",
             };
 
             var toAnother = CloseReasons.Of(closure, reader);
             var toItsOwn = CloseReasons.Of(closure, closer);
+            var forTheRecord = CloseReasons.Of(closure, asking: null);
 
-            await Assert.That(toAnother).Contains("from another client 'claude-code' (its BrowserAI server is pid 4242)").Because(cause.ToString());
-            await Assert.That(toAnother).DoesNotContain("another client, client").Because(cause.ToString());
-            await Assert.That(toItsOwn).Contains("from this client").Because(cause.ToString());
+            await Assert.That(toAnother).Contains("call from another conversation (Claude Code in BrowserAI), which gave the reason \"the suite closing it\".").Because(toAnother);
+            await Assert.That(toItsOwn).Contains("call from this conversation, which gave the reason \"the suite closing it\".").Because(toItsOwn);
+            await Assert.That(forTheRecord).Contains("call from a conversation (Claude Code in BrowserAI), which gave the reason \"the suite closing it\".").Because(forTheRecord);
+
+            foreach (var said in new[] { toAnother, toItsOwn, forTheRecord })
+            {
+                await Assert.That(said).DoesNotContain("pid").Because(said);
+                await Assert.That(said).DoesNotContain("4242").Because(said);
+            }
         }
     }
 

@@ -977,7 +977,10 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)
         {
             ClosedBy = by,
-            By = by.Describe(),
+
+            // The texts polish, 2026-10-10: what a model reads back, so the conversation's
+            // client and folder and never a pid.
+            By = by.Conversation(),
             Why = why,
         };
 
@@ -1105,7 +1108,7 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
         {
             var closure = new SessionClosure(cause, _clock.GetUtcNow(), Idle?.Period)
             {
-                By = AttachedTo?.Describe(),
+                By = AttachedTo?.Conversation(),
             };
 
             if (Interlocked.CompareExchange(ref _closed, closure, null) is null)

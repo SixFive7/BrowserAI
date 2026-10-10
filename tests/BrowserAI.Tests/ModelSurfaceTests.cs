@@ -206,14 +206,18 @@ internal sealed class ModelSurfaceTests
         // this list warns about. This is the rewording the remark above
         // anticipated, and the phrase moved WITH the fact instead of the fact
         // being trimmed to keep the phrase.
-        "nothing else about it is validated",
+        //
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #1 (previously "nothing else
+        // about it is validated" and "nothing here expires"): the same facts, in the
+        // description's words since that day.
+        "nothing else about it is checked",
         "live cookies and logins",
 
         // The retention policy, stated where the session is created and not
         // only where one is resumed or listed. The tool name is part of the
         // requirement: a retention policy with no way to act on it is a fact
         // and not guidance.
-        "nothing here expires",
+        "Nothing here expires",
         "never deletes a session directory",
         SessionToolSurface.Destroy,
     ];
@@ -566,9 +570,9 @@ internal sealed class ModelSurfaceTests
     public async Task TheInstructionsAreTheLeanTextThatKeepsOnlyRulesSpanningTools()
     {
         const string Expected =
-            "BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. "
-            + "Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.\n\n"
-            + "Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the folder holds now: "
+            "BrowserAI drives a real browser through sessions. A session is a directory holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. "
+            + "Start with browserai_init for a new session or browserai_resume for an existing one; both answer with the session's directory path, which you pass as 'session' to every other tool.\n\n"
+            + "Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and browserai_catch_up reads it back beside what the directory holds now: "
             + "call it when you arrive at a session you did not create, and before you destroy one.\n\n"
             + "BrowserAI manages its own browsers. If a browser is missing or broken, call browserai_reinstall_browser.\n\n"
             + "Nothing but browserai_destroy deletes a session: destroy yours when the work is done, and promptly if it held a login.";
@@ -1043,7 +1047,7 @@ internal sealed class ModelSurfaceTests
         "session.md",
         "passwords included",
         "plain text",
-        "True or false, stated on every call",
+        "True or false, required on every call",
     ];
 
     /// <summary>
@@ -1333,10 +1337,17 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>What must go on saying what a destroy actually removes.</summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10, the texts polish, page #14 (previously the destroy
+    /// description's own "screenshots and downloads included" and "MOVE OUT WHAT MUST BE
+    /// KEPT")</i>: its first sentence lists what goes, output and downloads among it, and
+    /// the next says what to do first. <c>browserai_init</c>'s description still names
+    /// the screenshots and downloads destroy takes, and is held here beside it.
+    /// </remarks>
     private static readonly (string Surface, string Phrase)[] RequiredDestroyScopePhrases =
     [
-        (SessionToolSurface.Destroy, "screenshots and downloads included"),
-        (SessionToolSurface.Destroy, "MOVE OUT WHAT MUST BE KEPT"),
+        (SessionToolSurface.Destroy, "deletes the whole directory: profile, output, downloads"),
+        (SessionToolSurface.Destroy, "Move out what you want to keep first"),
 
         // Unchanged and asserted here so a rewrite of the paragraph around it
         // cannot quietly drop it: reading the sizes before deleting them was
@@ -1383,7 +1394,7 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Resume, "no move tool and no copy tool"),
         (SessionToolSurface.Resume, "while no browser is open on it"),
         (SessionToolSurface.Resume, "resume it at its new path"),
-        (SessionToolSurface.Resume, "duplicates every login it holds"),
+        (SessionToolSurface.Resume, "duplicates every login the session holds"),
     ];
 
     /// <summary>

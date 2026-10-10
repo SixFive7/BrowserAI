@@ -158,7 +158,10 @@ internal sealed class UpstreamToolList
                 : $"'{_names[index]}', where the browser server lists '{name}'";
         }
 
-        return "the list around the tools, which hold the same bytes";
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #52 (previously "the list around
+        // the tools, which hold the same bytes"): where the difference is, and that the
+        // tools are the same.
+        return "in the answer outside the tools, which are the same";
     }
 
     /// <summary>

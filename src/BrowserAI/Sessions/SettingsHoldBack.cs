@@ -135,8 +135,11 @@ internal static class SettingsHoldBack
     /// false keeps its logins, cookies, storage, tabs and history.")</i>: what keeps them is
     /// a clean close, as the resume description and the hold-back say, and a switch whose
     /// close runs out of its minute says what it may have lost.
+    /// ⚠️ <i>Corrected 2026-10-10 a third time, the texts polish, page #60 (previously
+    /// "resume with headed: false: the browser closes"), for the two colons one word
+    /// apart.</i>
     /// </remarks>
-    public const string HeadedHint = "When the part that needs the person is done, resume with headed: false: the browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.";
+    public const string HeadedHint = "When the part that needs the person is done, resume with headed: false. The browser closes and opens again without a window, and a clean close keeps its logins, cookies, storage, tabs and history.";
 
     /// <summary>The words every hold-back opens with.</summary>
     /// <remarks>
@@ -216,7 +219,7 @@ internal static class SettingsHoldBack
         ArgumentNullException.ThrowIfNull(asked);
 
         var usual = IdleSetting.DefaultFor(asked.Headed).InWords();
-        var mode = asked.Headed ? $"a visible window closes after {usual}" : $"a browser with no window closes after {usual}";
+        var mode = asked.Headed ? $"a visible window closes after {usual} by default" : $"a browser with no window closes after {usual} by default";
 
         // ⚠️ Corrected 2026-10-10 (previously "BrowserAI cannot install an update while a
         // session's browser is open, so every update waits until ..."), from the texts
@@ -224,11 +227,18 @@ internal static class SettingsHoldBack
         // closes it and installs at once.
         const string InstallNow = " The person can still choose Install now, which closes this browser and installs at once.";
 
+        // ⚠️ Corrected 2026-10-10 a second time, the texts polish, page #41 (previously
+        // "UPDATES WAIT WHILE THIS BROWSER IS OPEN. idleMinutes: <n> is longer than the
+        // default: <the mode's default>. BrowserAI installs an update on its own only once
+        // every session's browser has closed, so updates wait until this one closes: ...",
+        // and for never "... means BrowserAI never closes it for being idle, where ... by
+        // default. ... so updates wait until browserai_close closes this one"): the strong
+        // warning stays the first sentence, in plain case, and the default and this
+        // browser's own close are one clause; the hold-back's opening already says the time
+        // is longer than the default.
         return asked.Idle.IsNever
-            ? $"UPDATES WAIT WHILE THIS BROWSER IS OPEN. {IdleSetting.ParameterName}: \"{IdleSetting.NeverWord}\" means BrowserAI never closes it for being idle, where {mode} by default. "
-                + $"BrowserAI installs an update on its own only once every session's browser has closed, so updates wait until {SessionToolSurface.Close} closes this one{(asked.Headed ? " or the person closes its window" : string.Empty)}.{InstallNow}"
-            : $"UPDATES WAIT WHILE THIS BROWSER IS OPEN. {IdleSetting.ParameterName}: {asked.Idle} is longer than the default: {mode}. "
-                + $"BrowserAI installs an update on its own only once every session's browser has closed, so updates wait until this one closes: after {asked.Idle.InWords()} in which no call names the session{(asked.Headed ? " and nobody uses its window" : string.Empty)}, or when {SessionToolSurface.Close} closes it.{InstallNow}";
+            ? $"Updates wait while this browser is open. BrowserAI installs an update on its own only once every session's browser has closed; {mode}, and with \"{IdleSetting.NeverWord}\" this one stays open until {SessionToolSurface.Close} closes it{(asked.Headed ? " or the person closes its window" : string.Empty)}.{InstallNow}"
+            : $"Updates wait while this browser is open. BrowserAI installs an update on its own only once every session's browser has closed; {mode}, and this one after {asked.Idle.InWords()} in which no call names the session{(asked.Headed ? " and nobody uses its window" : string.Empty)}, or when {SessionToolSurface.Close} closes it.{InstallNow}";
     }
 
     /// <summary>

@@ -73,7 +73,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ToolVerdicts? verdicts,
         string? holdBrowserCloseUntil = null,
         string? toolsList = null,
-        BrowserAI.Updates.IInstallHealth? installHealth = null)
+        BrowserAI.Updates.IInstallHealth? installHealth = null,
+        Func<string, ProvisioningStatus>? provisioningProbe = null)
     {
         Root = root;
         Clock = clock;
@@ -190,6 +191,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             // 10 b, 2026-10-10: what each open tells the background about the install,
             // when an arm asks to hear it.
             InstallHealth = installHealth,
+
+            // The texts polish, 2026-10-10: what a live session's browser call is told
+            // about its family's install, when an arm hands that in.
+            ProvisioningProbe = provisioningProbe,
         };
 
         if (browserIdlePeriod is { } period)
@@ -496,6 +501,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// What each session's open tells about the install, as the background hears it
     /// (10 b, 2026-10-10); or <see langword="null"/> for nobody.
     /// </param>
+    /// <param name="provisioningProbe">
+    /// What a live session's browser call is told about its family's install, or
+    /// <see langword="null"/> for the rig's own provisioner.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
@@ -507,8 +516,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ToolVerdicts? verdicts = null,
         string? holdBrowserCloseUntil = null,
         string? toolsList = null,
-        BrowserAI.Updates.IInstallHealth? installHealth = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth)
+        BrowserAI.Updates.IInstallHealth? installHealth = null,
+        Func<string, ProvisioningStatus>? provisioningProbe = null) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth, provisioningProbe)
         {
             OpensDefaultSession = opensDefaultSession,
         };

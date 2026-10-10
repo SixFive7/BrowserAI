@@ -256,11 +256,17 @@ internal static class ServerInstructions
     public const int MaximumCharacters = ClientTruncationBudget.Characters;
 
     /// <summary>The instructions sent on <c>initialize</c>.</summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10, the texts polish (previously "A session is a folder
+    /// holding", "the session's folder path" and "beside what the folder holds now")</i>:
+    /// a session is a directory in every text a model reads, as every tool description
+    /// says it.
+    /// </remarks>
     public static string Text { get; } =
         $"""
-        BrowserAI drives a real browser through sessions. A session is a folder holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with {SessionToolSurface.Init} for a new session or {SessionToolSurface.Resume} for an existing one; both answer with the session's folder path, which you pass as 'session' to every other tool.
+        BrowserAI drives a real browser through sessions. A session is a directory holding the browser profile (logins, cookies), downloads, screenshots and a log of every call. Start with {SessionToolSurface.Init} for a new session or {SessionToolSurface.Resume} for an existing one; both answer with the session's directory path, which you pass as 'session' to every other tool.
 
-        Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the folder holds now: call it when you arrive at a session you did not create, and before you destroy one.
+        Every call takes a 'why': write why you are making it, not what it does. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
 
         BrowserAI manages its own browsers. If a browser is missing or broken, call {SessionToolSurface.ReinstallBrowser}.
 

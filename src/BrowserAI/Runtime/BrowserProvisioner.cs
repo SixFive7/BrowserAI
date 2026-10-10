@@ -1600,7 +1600,11 @@ internal sealed partial class BrowserProvisioner : IDisposable
             // "Provisioning {browser} failed: {type}: {message}"). A session call hands
             // this detail to the refusal a model reads, which names no .NET type.
             ProvisioningLog.Failed(_logger, browser, failure);
-            return new ProvisioningResult(false, $"Provisioning {browser} failed: {failure.Message}");
+            //
+            // ⚠️ Corrected 2026-10-10 a second time, the texts polish, page #56 (previously
+            // "Provisioning {browser} failed"): provisioning is the code's word, and the
+            // tool list says a browser is downloaded and installed.
+            return new ProvisioningResult(false, $"Installing {browser} failed: {failure.Message}");
         }
     }
 

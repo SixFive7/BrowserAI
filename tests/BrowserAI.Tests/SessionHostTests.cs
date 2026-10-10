@@ -157,7 +157,7 @@ internal sealed class SessionHostTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(HostConnection.TextOf(refused)).IsEqualTo(
-            SessionErrors.SessionDrivenByAnotherClient("browser_snapshot", directory, driving.Proxy.Connection.Describe()));
+            SessionErrors.SessionDrivenByAnotherClient("browser_snapshot", directory, driving.Proxy.Connection.Conversation()));
         await Assert.That(sessions.SessionChildren.Single().ToolCallsReceived).DoesNotContain("browser_snapshot");
 
         // And the session goes on serving the client that drives it.
@@ -474,8 +474,7 @@ internal sealed class SessionHostTests
             [new SettingDifference(RunSettingNames.Headed, "false", "true", LeftOut: false)],
             lastRun,
             lastRun with { Headed = true },
-            ResumeFinds.LiveWithItsBrowserUp,
-            countdownStarted: true));
+            ResumeFinds.LiveWithItsBrowserUp));
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1).Because("a held-back resume starts no child");
 
         var same = await second.CallAsync("browserai_resume", new JsonObject
@@ -518,7 +517,7 @@ internal sealed class SessionHostTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(HostConnection.TextOf(refused)).IsEqualTo(
-            SessionErrors.SessionDrivenByAnotherClient("browserai_destroy", directory, driving.Proxy.Connection.Describe()));
+            SessionErrors.SessionDrivenByAnotherClient("browserai_destroy", directory, driving.Proxy.Connection.Conversation()));
         await Assert.That(Directory.Exists(directory)).IsTrue();
         await Assert.That(rig.Host.Sessions.Find(directory)).IsNotNull();
     }

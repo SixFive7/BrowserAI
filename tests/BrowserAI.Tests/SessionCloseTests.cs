@@ -213,7 +213,7 @@ internal sealed class SessionCloseTests
         var refused = await NavigateAsync(rig, directory, "the call after the agent's own close");
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"the suite closing the browser it opened\"");
+        await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this conversation, which gave the reason \"the suite closing the browser it opened\"");
         await Assert.That(TextOf(refused)).Contains(SessionToolSurface.Resume);
 
         // The timer's sentence belongs to the timer's close and to nothing else.
@@ -376,8 +376,8 @@ internal sealed class SessionCloseTests
         });
 
         await Assert.That((bool?)again["isError"]).IsNotEqualTo(true).Because(TextOf(again));
-        await Assert.That(TextOf(again)).StartsWith("Nothing was done: this session's browser was already closed.");
-        await Assert.That(TextOf(again)).Contains($"by a {SessionToolSurface.Close} call from this client, which gave the reason \"the first close\"");
+        await Assert.That(TextOf(again)).StartsWith("Nothing was done: this session was already closed.");
+        await Assert.That(TextOf(again)).Contains($"by a {SessionToolSurface.Close} call from this conversation, which gave the reason \"the first close\"");
         await Assert.That(TextOf(again)).EndsWith($"{SessionToolSurface.Resume} opens it again.");
         await Assert.That(sessions.SessionChildren[0].ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
 
@@ -691,8 +691,7 @@ internal sealed class SessionCloseTests
             ],
             lastRun,
             lastRun with { Headed = true, Transcript = true, Run = RunOptions.Default with { Viewport = new ViewportSize(1280, 720) } },
-            ResumeFinds.LiveWithItsBrowserUp,
-            countdownStarted: true));
+            ResumeFinds.LiveWithItsBrowserUp));
 
         // What the maintainer asked the text to say, each half on its own: that the
         // call did not go through and nothing in it is wrong, every setting that

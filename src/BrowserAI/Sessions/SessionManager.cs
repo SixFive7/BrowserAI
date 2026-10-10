@@ -211,7 +211,7 @@ internal sealed class SessionManager : IAsyncDisposable
     public const string ChildWasRelaunched =
         "the browser server for this session had died, and this resume started a new one with the per-run settings it asked for. The session's directory, profile and log are on disk and "
         + "unchanged -- but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance "
-        + "to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
+        + "to write it to disk, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
         + "Read any stored value back before you rely on it. Nothing that lived only in the old process survived it: anything a previous call left on a page is gone.";
 
     /// <summary>
@@ -322,8 +322,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// same, a decision taken 2026-10-08 for the maintainer's review, so that after
     /// this tool a session is closed whatever it held.
     /// </remarks>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10, the texts polish, page #22 (previously "so none was
+    /// started in order to close it and nothing was lost")</i>: why no close is sent is
+    /// this remark's; a model needs that nothing was lost.
+    /// </remarks>
     public const string ClosedWithNoBrowserUp =
-        "Closed. No browser had started in this session, so none was started in order to close it and nothing was lost. "
+        "Closed. No browser had started in this session, so nothing was lost. "
         + "Every browser call that names this session is refused until browserai_resume opens it again.";
 
     /// <summary>
@@ -347,8 +352,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <param name="reason">Why it was closed, from <see cref="CloseReasons"/>.</param>
     /// <returns>The answer.</returns>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10, the texts polish, page #24 (previously "this
+    /// session's browser was already closed")</i>: a <c>browserai_close</c> that found no
+    /// browser started records its close too, and the session is what is closed in every
+    /// case.
+    /// </remarks>
     public static string AlreadyClosed(string reason) =>
-        $"Nothing was done: this session's browser was already closed. {reason} {SessionToolSurface.Resume} opens it again.";
+        $"Nothing was done: this session was already closed. {reason} {SessionToolSurface.Resume} opens it again.";
 
     /// <summary>
     /// What <c>browserai_close</c> answers when the session's browser server had ended
@@ -502,8 +513,8 @@ internal sealed class SessionManager : IAsyncDisposable
     public static string ServedByADifferentVersion(string recorded) =>
         $"this session's record was last written by BrowserAI {recorded} and the BrowserAI serving you now is {BuildVersion.Current}. "
         + "Nothing is wrong and nothing needs repairing -- the directory, the profile and the log are unchanged and this session works normally. "
-        + "What may be stale is the TOOL LIST you are calling from: if you have not asked this server for its tools since it started, ask now, "
-        + "because a tool name can have been added, removed or renamed between those two versions and a call to a name that has gone reads as your mistake and not as a moved surface.";
+        + "What may be stale is the tool list you are calling from, because a tool name can have been added, removed or renamed between those two versions, and a call to a name that has gone reads as your mistake and not as a moved surface. "
+        + "Your client keeps the list it fetched, so only a reconnect of BrowserAI or a new conversation brings the new one.";
 
     /// <summary>
     /// One line per item up to <see cref="SurvivorsNamed"/>, and a sentence
@@ -814,7 +825,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            status = _environment.Provisioner.Ensure(browser);
+            status = _environment.ProvisioningProbe?.Invoke(browser) ?? _environment.Provisioner.Ensure(browser);
         }
 #pragma warning disable CA1031 // A probe that throws must not refuse the call: the browser may well be there, and the launch failure below names its own cause.
         catch (Exception failure)
@@ -833,7 +844,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return status.State is ProvisioningState.Provisioning
             ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.DownloadSizeFor(browser), status.Progress)
-            : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
+            : SessionErrors.BrowserNotInstalled(tool, session.Location.FullPath, status.Detail);
     }
 
     /// <summary>
@@ -1194,11 +1205,11 @@ internal sealed class SessionManager : IAsyncDisposable
                 // or the background had already said why it is ending when its pipe
                 // closed. (Previously every such session read as let go because its
                 // client went away.)
-                live.RecordTheBackgroundsEnd(ending, connection.Describe());
+                live.RecordTheBackgroundsEnd(ending, connection.Conversation());
             }
             else
             {
-                live.RecordTheRelease(connection.Describe(), "no browser was open");
+                live.RecordTheRelease(connection.Conversation(), "no browser was open");
             }
 
             await ReleaseDetachedAsync(live, nothingToKeep).ConfigureAwait(false);
@@ -1486,7 +1497,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 if (driving is SessionClaim.HeldElsewhere)
                 {
                     return new ToolOutcome(
-                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Resume, location.FullPath, holder!.Describe()),
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Resume, location.FullPath, holder!.Conversation()),
                         IsError: true);
                 }
 
@@ -1588,8 +1599,7 @@ internal sealed class SessionManager : IAsyncDisposable
                         differences,
                         already.Settings,
                         requested,
-                        !stillLive ? ResumeFinds.NotLive : browserUp ? ResumeFinds.LiveWithItsBrowserUp : ResumeFinds.LiveWithNoBrowserYet,
-                        countdownStarted: stillLive && !already.Settings.Idle.IsNever);
+                        !stillLive ? ResumeFinds.NotLive : browserUp ? ResumeFinds.LiveWithItsBrowserUp : ResumeFinds.LiveWithNoBrowserYet);
 
                     // ⚠️ HELD BACK, NOT FAILED, IN THE SESSION'S OWN RECORD -- the maintainer's
                     // 23.2 c, 2026-10-10. The client is still told it did not go through,
@@ -1701,7 +1711,11 @@ internal sealed class SessionManager : IAsyncDisposable
             // with the settings its record says the last run used. A record with none was
             // written before that day, and is treated as an init: only an idle time longer
             // than the default is held back (RESOLUTIONS 6 and 7).
-            if (already is null)
+            //
+            // ⚠️ AND THE GUARD FIRST, the texts polish of 2026-10-10, page #45: a session
+            // another BrowserAI process holds is refused below by its guard, so holding the
+            // call back for its settings would promise that the same call opens it.
+            if (already is null && SessionLock.ProbeLiveness(location).State is not SessionLiveness.Held)
             {
                 if (record.LastRunSettings is { } lastRun)
                 {
@@ -1714,7 +1728,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     else if (!connection.HeldBack.GoesThrough(SessionToolSurface.Resume, location.Key, requested))
                     {
                         return new ToolOutcome(
-                            SessionErrors.SettingsHeldBack(differences, lastRun, requested, ResumeFinds.NotLive, countdownStarted: false),
+                            SessionErrors.SettingsHeldBack(differences, lastRun, requested, ResumeFinds.NotLive),
                             IsError: true);
                     }
                 }
@@ -1889,7 +1903,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
             if (driving is SessionClaim.HeldElsewhere)
             {
-                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Close, location.FullPath, holder!.Describe());
+                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Close, location.FullPath, holder!.Conversation());
 
                 RecordTheRefusal(found, SessionToolSurface.Close, why, elsewhere);
                 return new ToolOutcome(elsewhere, IsError: true);
@@ -2004,7 +2018,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (liveness is SessionLiveness.Held)
         {
-            return new ToolOutcome(SessionErrors.SessionHeldByAnotherBrowserAi(SessionToolSurface.Close, location.FullPath), IsError: true);
+            return new ToolOutcome(SessionErrors.SessionHeldByAnotherBrowserAi(location.FullPath), IsError: true);
         }
 
         SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.Close, location.FullPath, why);
@@ -2295,7 +2309,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// a different set of entries each time it was fetched.
     /// </para>
     /// </remarks>
-    private const int PageSize = 100;
+    internal const int PageSize = 100;
 
     /// <summary>The two JSON-RPC methods a page-tool resolution sends the child.</summary>
     private const string ToolsListMethod = "tools/list";
@@ -2892,7 +2906,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 case SessionClaim.HeldElsewhere:
                     return new ToolOutcome(
-                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Destroy, location.FullPath, holder!.Describe()),
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Destroy, location.FullPath, holder!.Conversation()),
                         IsError: true);
 
                 case SessionClaim.Releasing:
@@ -3046,7 +3060,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 case SessionClaim.HeldElsewhere:
                     return new ToolOutcome(
-                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.ChangePurpose, location.FullPath, holder!.Describe()),
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.ChangePurpose, location.FullPath, holder!.Conversation()),
                         IsError: true);
 
                 case SessionClaim.Releasing:
@@ -4087,7 +4101,10 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // ⚠️ ADDED 2026-10-03. The field report of 2026-10-01 had nothing
             // in this answer to tell it the session had come back headless.
-            .Append("  headed: ").Append(session.Settings.Headed ? "true -- a window is open for this run" : "false")
+            // ⚠️ Corrected 2026-10-10, the texts polish, page #58 (previously "true -- a
+            // window is open for this run"): no browser has started when init or resume
+            // answers, so the line says the parameter's own words.
+            .Append("  headed: ").Append(session.Settings.Headed ? "true -- this run's browser has a visible window" : "false")
             .Append('\n')
 
             // ⚠️ ADDED 2026-10-08, E2: the idle setting the countdown runs on, which
@@ -4565,7 +4582,7 @@ internal sealed class SessionManager : IAsyncDisposable
         return value.GetValueKind() is JsonValueKind.Object
             ? value.DeepClone()
             : throw new SessionToolException(
-                $"'{SessionToolSurface.ArgumentsParameter}' must be an object, and it arrived as {ArgumentKind.Of(value)}. It is what the page's own tool receives, so there is no reading of another shape that would be safe to guess at. Nothing was called.");
+                $"'{SessionToolSurface.ArgumentsParameter}' must be an object, and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
     }
 
     /// <summary>Every text block of a child's answer, joined.</summary>
@@ -4593,7 +4610,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (value.GetValueKind() is not JsonValueKind.String)
         {
-            throw new SessionToolException($"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}.");
+            throw new SessionToolException($"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
         }
 
         var text = value.GetValue<string>();
@@ -4627,13 +4644,16 @@ internal sealed class SessionManager : IAsyncDisposable
         if (value.GetValueKind() is not JsonValueKind.Number)
         {
             throw new SessionToolException(
-                $"'{name}' must be a whole number, and it arrived as {ArgumentKind.Of(value)}. Nothing was changed.");
+                $"'{name}' must be a whole number, and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
         }
 
+        // ⚠️ Corrected 2026-10-10, the texts polish, page #37 (previously "it arrived as
+        // '<the raw text>'. Nothing was changed."): a number BrowserAI cannot read as a
+        // whole one is named the way every other refusal names a number.
         return value.GetValue<JsonElement>().TryGetInt64(out var number)
             ? number
             : throw new SessionToolException(
-                $"'{name}' must be a whole number, and it arrived as '{value.GetValue<JsonElement>().GetRawText()}'. Nothing was changed.");
+                $"'{name}' must be a whole number, and it arrived as {ArgumentKind.Of(value)}. Nothing was done.");
     }
 
     private static bool? Flag(JsonObject? arguments, string name)
@@ -4647,7 +4667,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            _ => throw new SessionToolException($"'{name}' must be true or false, and it arrived as {ArgumentKind.Of(value)}."),
+            _ => throw new SessionToolException($"'{name}' must be true or false, and it arrived as {ArgumentKind.Of(value)}. Nothing was done."),
         };
     }
 

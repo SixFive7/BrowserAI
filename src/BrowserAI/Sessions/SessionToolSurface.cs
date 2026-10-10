@@ -658,11 +658,14 @@ internal static class SessionToolSurface
     /// unless it is passed again."</i> for the last two sentences.
     /// </para>
     /// </remarks>
+    // ⚠️ 2026-10-10, the texts polish, page #3 (previously "inside the session folder",
+    // "True or false, stated on every call." and a last sentence, "Lasts until this
+    // browser closes, and every browserai_resume states it again.", which said the same
+    // rule twice): a session is a directory in every text a model reads.
     private const string TranscriptDescription =
         "Write session.md, a Markdown transcript of this run: every browser tool call with its arguments and its result, page snapshots and screenshots included; a call that fails can be missing. "
-        + "It goes in a new folder per run, output\\session-<time in milliseconds>, inside the session folder. "
-        + "Text typed into the page, passwords included, is stored in it as plain text. True or false, stated on every call. "
-        + "Lasts until this browser closes, and every browserai_resume states it again.";
+        + "It goes in a new folder per run, output\\session-<time in milliseconds>, inside the session directory. "
+        + "Text typed into the page, passwords included, is stored in it as plain text. True or false, required on every call.";
 
     /// <summary>
     /// What <c>captureNetwork</c> writes and costs, said once and given to both tools
@@ -674,11 +677,17 @@ internal static class SessionToolSurface
     /// stated on every call.", and (2) ended "and a session whose browser is already up
     /// must be closed with browserai_close and resumed with it first."</i>
     /// </remarks>
+    // ⚠️ 2026-10-10, the texts polish, page #4 (previously "in the session's output
+    // directory, one file per launch with the launch's timestamp in its name", "stated
+    // on every call", "THREE THINGS BEFORE YOU TURN IT ON." with three numbered facts in
+    // capitals, "so without blocking them the capture is silently incomplete in exactly
+    // the direction you are looking" and "a PLAINTEXT CREDENTIAL DUMP"): the three facts
+    // stay, one sentence each, and the name is fixed per run.
     private const string CaptureNetworkDescription =
-        "Record every request and response this run makes into an HTTP Archive in the session's output directory, one file per launch with the launch's timestamp in its name. True or false, stated on every call. "
-        + "THREE THINGS BEFORE YOU TURN IT ON. (1) It CHANGES WHAT THE SITE DOES: service workers are blocked while it is on, because a request served from a worker's cache never reaches the network layer the archive is written from, so without blocking them the capture is silently incomplete in exactly the direction you are looking -- a site that works offline, or that caches its API, behaves differently. "
-        + "(2) It takes effect at the NEXT BROWSER LAUNCH and is never retroactive: turning it on mid-session captures nothing that has already happened, and a resume that turns it on for a session whose browser is up closes that browser and opens it again, after holding the call back once. "
-        + "(3) The file is a PLAINTEXT CREDENTIAL DUMP -- every header of every request, so every bearer token and session cookie that crossed the wire, in clear text, in a file anything that can read the directory can read. Delete it when you are done; browserai_catch_up names any archive it finds.";
+        "Record every request and response this run makes into an HTTP Archive in the session's 'output' folder, one file per run with the time it started in its name. True or false, required on every call. "
+        + "While it is on, service workers are blocked, because what a worker serves from its cache never reaches the network layer the archive is written from; a site that works offline or caches its API behaves differently. "
+        + "It starts at the next browser launch and captures nothing from before: a resume that turns it on while the browser is up is held back once, and the same call sent again closes the browser and opens it with capture on. "
+        + "The file holds every header of every request and response in plain text, every bearer token and session cookie that crossed the wire among them, and anything that can read the directory can read it. Delete it when you are done; browserai_catch_up names any archive it finds.";
 
     /// <summary>
     /// What a visible window costs the person and what switching keeps, said once and
@@ -710,8 +719,10 @@ internal static class SessionToolSurface
     /// now closes the window as well, as the idle description says.
     /// </para>
     /// </remarks>
+    // ⚠️ 2026-10-10, the texts polish, pages #2 and #7 (previously "A VISIBLE WINDOW
+    // TAKES THE PERSON'S SCREEN AND FOCUS:"): F5 a's sentence without its capitals.
     private const string VisibleWindowCost =
-        "A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes or the person chooses Install now, which closes it. "
+        "A visible window takes the person's screen and focus: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes or the person chooses Install now, which closes it. "
         + "Switching between visible and hidden closes the browser and opens it again, and a clean close keeps logins, cookies, storage, tabs and history";
 
     /// <summary>
@@ -736,12 +747,17 @@ internal static class SessionToolSurface
     /// open."</i> RESOLUTIONS 6 of the same day: the description still names the defaults.
     /// </para>
     /// </remarks>
+    // ⚠️ 2026-10-10, the texts polish, page #5 (previously "stated on every call",
+    // "Unused means no call names this session and, in a visible window, nobody types or
+    // clicks in it; every call that names the session starts the countdown again,
+    // whatever its answer, and so does the person's input in its window.", "A LONGER TIME
+    // IS NOT FREE:", "for as long as this browser stays open" and "with that warning").
     private static string IdleDescription { get; } =
-        "How long this session's browser may go unused before BrowserAI closes it: a whole number of minutes, or \"never\", stated on every call. "
-        + "Unused means no call names this session and, in a visible window, nobody types or clicks in it; every call that names the session starts the countdown again, whatever its answer, and so does the person's input in its window. "
+        "How long this session's browser may go unused before BrowserAI closes it: a whole number of minutes, or \"never\", required on every call. "
+        + "Every call that names the session starts the countdown again, whatever its answer, and in a visible window so does the person's input in it. "
         + $"The defaults are {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} minutes without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one. The close keeps the session, and browserai_resume opens it again. "
-        + "A LONGER TIME IS NOT FREE: BrowserAI installs an update on its own only once every session's browser has closed, so a longer time, or never, keeps updates waiting for as long as this browser stays open, unless the person chooses Install now, which closes it. "
-        + "A call that sets a longer time is held back once with that warning, unless it is a resume that repeats its last run's time and mode.";
+        + "BrowserAI installs an update on its own only once every session's browser has closed, so a longer time, or never, keeps updates waiting while this browser is open, unless the person chooses Install now, which closes it. "
+        + "A call that sets a longer time is held back once with a warning, unless it is a resume that repeats its last run's time and mode.";
 
     /// <summary>
     /// What <c>why</c> asks for, on an upstream browser tool.
@@ -882,8 +898,18 @@ internal static class SessionToolSurface
         yield return Tool(
             Init,
             "Create a BrowserAI browser session in a directory that is not already one.",
-            "Creates a browser session whose home is the directory you name. The directory IS the session: everything this session stores -- its browser profile, its screenshots and downloads, its log -- lives there, and you name it again on every browser call. "
-            + "Its 'output' folder is the only place a tool may read a file from or write one to: for browser_file_upload to send a file, copy it in there first -- and the copy goes when the session does. "
+            // ⚠️ 2026-10-10, the texts polish, page #1 (previously "The directory IS the
+            // session: everything this session stores -- its browser profile, its
+            // screenshots and downloads, its log -- lives there", "copy it in there first
+            // -- and the copy goes", "Every session gets every capability, so there is
+            // none to choose and none bound.", "A resume that changes them is held back
+            // once, then goes through.", "SECURITY: name a NEW directory. ... nothing else
+            // about it is validated: one that already holds", "RETENTION: nothing here
+            // expires and BrowserAI never deletes a session directory," and "move out
+            // anything worth keeping first"): no capitals for emphasis, and a change to any
+            // setting is held back, not only to the four.
+            "Creates a browser session whose home is the directory you name. The directory is the session: its browser profile, screenshots, downloads and log live there, and you name it again on every browser call. "
+            + "Its 'output' folder is the only place a tool may read a file from or write one to: for browser_file_upload to send a file, copy it in there first, and the copy goes when the session does. "
             // ⚠️ 2026-10-10, round 2 of the texts review, for the 2,048 a client hands a
             // model whole (1,939 before, 95% of it): previously "There is no default
             // directory and no fallback; an empty, relative or unusable path is refused,
@@ -893,16 +919,15 @@ internal static class SessionToolSurface
             // every session, so there is no capability to choose and none bound that a
             // later call has to live with."
             + $"There is no default directory: an empty, relative or unusable path is refused. If the directory is already a session, this refuses and tells you to call {Resume}. "
-            + "Every session gets every capability, so there is none to choose and none bound. "
             // ⚠️ 2026-10-08, F2: previously "Nothing about the browser is bound either:
             // 'headed', 'transcript', 'debug', 'viewport', 'locale', 'timezone',
             // 'ignoreHTTPSErrors', 'captureNetwork' and 'idleMinutes' are all per-run, none
             // is recorded, and the same arguments are accepted again on browserai_resume."
             + $"Every setting below but 'browser' is per-run, and {Resume} takes them again. "
             + "'headed', 'transcript', 'captureNetwork' and 'idleMinutes' are required, because a person notices each; the rest have the defaults their descriptions name. "
-            + "A resume that changes them is held back once, then goes through. "
-            + "SECURITY: name a NEW directory. A path on a network drive is refused and nothing else about it is validated: one that already holds a browser profile -- the user's real Chrome profile, or a copy -- becomes this session's, and that session then drives its live cookies and logins, as can any agent given the path. "
-            + $"RETENTION: nothing here expires and BrowserAI never deletes a session directory, so destroying it is your job: the agent that made a session destroys it when the work is done, and promptly when it held a login, because the cookies and logins are in the profile on disk until then. {Destroy} takes the whole directory, screenshots and downloads included, so move out anything worth keeping first; {List} shows what has accumulated, and its size.",
+            + "A resume that changes a setting is held back once, and the same call sent again goes through. "
+            + "Name a new directory: a path on a network drive is refused and nothing else about it is checked, so a directory that already holds a browser profile -- the user's real Chrome profile, or a copy -- becomes this session's, and the session then drives its live cookies and logins, as can any agent given the path. "
+            + $"Nothing here expires and BrowserAI never deletes a session directory on its own, so destroying it is your job: the agent that made a session destroys it when the work is done, and promptly when it held a login, because the cookies and logins are in the profile on disk until then. {Destroy} takes the whole directory, screenshots and downloads included, so move out what you want to keep first; {List} shows what has accumulated, and its size.",
             new JsonObject
             {
                 // ⚠️ 2026-10-04: the directory half of the instructions' old paragraph
@@ -927,7 +952,11 @@ internal static class SessionToolSurface
                 // the day after, and nothing on disk changes either way. Turn it on when a
                 // human is going to watch, sign in, or clear something the agent cannot.
                 // A window is not a security control ..." -- the last sentence is kept.
-                ["headed"] = Property("boolean", $"Whether this run's browser has a visible window: true or false, stated on every call. {VisibleWindowCost}, so a session can show a window only for the part that needs the person, to watch, sign in, or clear something the agent cannot, and be resumed with headed: false straight after. A window is not a security control and this server makes no claim that it is -- every session gets every tool, headed or not."),
+                // ⚠️ 2026-10-10, the texts polish, page #2 (previously "stated on every call"
+                // and a last sentence, "A window is not a security control and this server
+                // makes no claim that it is -- every session gets every tool, headed or not.",
+                // which answered a question from the days of the capability modes).
+                ["headed"] = Property("boolean", $"Whether this run's browser has a visible window: true or false, required on every call. {VisibleWindowCost}, so a session can show a window only for the part that needs the person, to watch, sign in, or clear something the agent cannot, and be resumed with headed: false straight after."),
                 ["browser"] = Enumerated($"The browser family, permanent for the directory's life -- a profile belongs to the browser that made it, so this cannot be changed on resume. Defaults to '{SessionManager.DefaultBrowser}'. Each family is downloaded once per machine on first use ({string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}), so naming the other one for the first time starts a download and the first browser call is refused until it lands.", ProvisionedBrowsers.Families),
                 // ⚠️ Q371 c, 2026-10-04: `tracing` is `transcript`. See
                 // TranscriptDescription for what both descriptions said before.
@@ -956,11 +985,20 @@ internal static class SessionToolSurface
             // whole: previously "Once no call has named the session for its idle time
             // ('idleMinutes'), and in a visible window nobody has used it, BrowserAI closes
             // its browser, and every browser call is then refused until this is called."
-            "Reopens a session that exists, and replays what it was: its recorded browser, purpose and history. "
-            + "It takes init's per-run arguments, 'headed', 'transcript', 'captureNetwork' and 'idleMinutes' required, and compares them with the last run's settings, a left-out optional one counting as its default. "
+            // ⚠️ 2026-10-10, the texts polish, page #6 (previously "and replays what it
+            // was:", "init's per-run arguments", "DIFFERENT SETTINGS ARE HELD BACK ONCE",
+            // "'browser' is NOT an argument: it was bound at init", a sentence that a
+            // different build last writing the session means "your tool list may come
+            // from the older build, so ask for it again", which no model can do because
+            // its client keeps the list it fetched, and "This never refuses a directory
+            // for what its session has BEEN -- only for where the path is: a network path
+            // is refused here exactly as it is at init.", which the directory argument
+            // says).
+            "Reopens a session that exists, with its recorded browser, purpose and history. "
+            + "It takes init's per-run settings, 'headed', 'transcript', 'captureNetwork' and 'idleMinutes' required, and compares them with the last run's, an optional one left out counting as its default. "
             + "The same settings go through. "
-            + "DIFFERENT SETTINGS ARE HELD BACK ONCE, naming each difference, and the same call sent again goes through: a live browser is closed and opened with them, and a clean close keeps logins, cookies, storage, tabs and history. "
-            + $"After its idle time ('{IdleSetting.ParameterName}') BrowserAI closes its browser, and every browser call is refused until this is called. "
+            + "Different settings are held back once, naming each difference, and the same call sent again goes through: a live browser is closed and opened with them, and a clean close keeps logins, cookies, storage, tabs and history. "
+            + $"After its idle time ('{IdleSetting.ParameterName}') BrowserAI closes the session's browser, and every browser call is refused until this is called. "
             // ⚠️ 2026-10-10, round 2 of the texts review, for the 2,048 a client hands a
             // model whole (1,970 before, 96% of it): previously "'browser' is NOT an
             // argument -- it was bound when the session was created and a profile on disk
@@ -972,10 +1010,9 @@ internal static class SessionToolSurface
             // ask for the tool list again." and, in the last sentence but one, "-- every
             // field of the record is an ordered list of timestamped statements, so the
             // answer shows you where the directory has been".
-            + "'browser' is NOT an argument: it was bound at init, because a profile belongs to its browser, and passing it is refused. "
+            + "'browser' is not an argument: it was fixed at init, because a profile belongs to its browser, and passing it is refused. "
             + "A session never expires. "
-            + "IF THE BROWSERAI SERVING YOU IS NOT THE ONE THAT LAST WROTE THE SESSION, this says so and resumes anyway: nothing needs repairing, but your tool list may come from the older build, so ask for it again. "
-            + "This never refuses a directory for what its session has BEEN -- only for where the path is: a network path is refused here exactly as it is at init. There is no move tool and no copy tool: move the directory yourself, with ordinary file tools, while no browser is open on it, and resume it at its new path -- its record is repaired and you are told. Copying one instead duplicates every login it holds into a second directory nothing is tracking, and if what you resume is a COPY of a session that still exists somewhere else, it resumes and tells you that too -- the answer shows you where the directory has been and that the recorded purpose describes the original. Read that before acting on the purpose, and set a new one.",
+            + $"There is no move tool and no copy tool: move the directory yourself, with ordinary file tools, while no browser is open on it, and resume it at its new path; its record is repaired and the answer says so. A copy duplicates every login the session holds into a directory nothing tracks, and if you resume a copy of a session that still exists elsewhere, it resumes and the answer says so, with where the directory has been and that the recorded purpose describes the original: set a new one with {ChangePurpose} before you act on it.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of an existing session directory, on a LOCAL drive -- the same refusal as init, and any other spelling of it is taken as the directory it names."),
@@ -987,7 +1024,11 @@ internal static class SessionToolSurface
                 // well as on init because the case that matters is a session created
                 // headless that now needs a human to sign in: if its browser is up, call
                 // browserai_close first, and the window opens on the tabs it had."
-                ["headed"] = Property("boolean", $"Whether this run's browser has a visible window: true or false, stated on every call and compared with the last run's like every setting here. {VisibleWindowCost}: the case that matters is a session that needs the person for one part, resumed with headed: true for it and with headed: false straight after."),
+                // ⚠️ 2026-10-10, the texts polish, page #7 (previously "stated on every
+                // call" and "...: the case that matters is a session that needs the person
+                // for one part, resumed with headed: true for it and with headed: false
+                // straight after.").
+                ["headed"] = Property("boolean", $"Whether this run's browser has a visible window: true or false, required on every call and compared with the last run's like every setting here. {VisibleWindowCost}, so a session that needs the person for one part can be resumed with headed: true for it and with headed: false straight after."),
 
                 // ⚠️ F1 a, 2026-10-08: previously "... Defaults to false. Like every
                 // per-run argument it takes effect when a browser starts, so on a session
@@ -1010,7 +1051,9 @@ internal static class SessionToolSurface
         yield return Tool(
             Close,
             "Close a session's browser and keep the session.",
-            "Closes the session's browser cleanly and keeps the session: its profile with the logins and cookies, its site storage, its tabs with their history, and its folder and log. "
+            // ⚠️ 2026-10-10, the texts polish, page #10 (previously "and its folder and
+            // log"): a session is a directory in every text a model reads.
+            "Closes the session's browser cleanly and keeps the session: its profile with the logins and cookies, its site storage, its tabs with their history, and its directory and log. "
             + "The browser is asked to close itself and given up to a minute to write what it holds to disk. "
             // ⚠️ 2026-10-10, round 2 of the texts review, first page 10: the tools that
             // still answer a closed session are all four, this one included (previously
@@ -1043,12 +1086,19 @@ internal static class SessionToolSurface
             // DIFFERENT BROWSERAI BUILD than the one answering you: that is not a fault and
             // needs no repair, but it means the tool list you are calling from may predate
             // this server, so ask for it again."
-            $"Answers two questions: WHAT WAS DONE HERE, from the session's own ordered log -- every call, with what the caller said it was for and whether it worked -- and WHAT IS HERE NOW, from walking the directory: its age, its size, the size of its output, and a breakdown by kind. "
-            + $"CALL IT when you arrive at a session you did not create or another agent was driving, and after {Resume}: the recorded 'purpose' says what it was FOR, and this says what was DONE. And BEFORE {Destroy}: the sizes say what you are about to delete. "
-            + "THE TWO ROUTINELY DISAGREE. Cookies arrive from NAVIGATION, not from tools, so a session whose log shows no cookie call can hold a live signed-in profile -- this names the profile and its cookie store, and every file in the session that can hold something sensitive, kind by kind, with what each holds: saved logins, HTTP Archives, traces, transcripts, network captures, logs, page snapshots, screenshots, PDFs, videos, downloads, files saved by name, the browser's temporary files, and BrowserAI's own record. "
-            + "THE LOG IS PAGED AND NOTHING IS ELIDED: ~100 entries a page, numbered from the OLDEST entry, each page saying which it is, how many there are and the call that fetches the next. Page 1 also carries the walk, the in-use line and the ages. "
-            + "PAGE 1 ALSO SAYS WHEN A DIFFERENT BROWSERAI BUILD LAST WROTE THE SESSION: that needs no repair, but your tool list may predate this server, so ask for it again. "
-            + "It takes no lock it can be refused by, so it works on a session another BrowserAI is driving; its 'why' is written to the session's log when this BrowserAI holds the session. One caveat: reading a session whose holder died recovers its write-ahead log, which can leave a small '-shm' file beside the record.",
+            // ⚠️ 2026-10-10, the texts polish, page #13 (previously "Answers two
+            // questions: WHAT WAS DONE HERE, ... and WHAT IS HERE NOW", "CALL IT", "THE TWO
+            // ROUTINELY DISAGREE", a list of fourteen kinds the answer names, "THE LOG IS
+            // PAGED AND NOTHING IS ELIDED: ~100 entries a page", "PAGE 1 ALSO SAYS WHEN A
+            // DIFFERENT BROWSERAI BUILD LAST WROTE THE SESSION: ... so ask for it again",
+            // which no model can do, and "One caveat: reading a session whose holder died
+            // recovers its write-ahead log, which can leave a small '-shm' file beside the
+            // record.").
+            $"Reads back what was done in a session and what is in its directory now. What was done comes from the session's own ordered log: every call, with what the caller said it was for and whether it worked. What is there now comes from walking the directory: its age, its size, the size of its output, and a breakdown by kind. "
+            + $"Call it when you arrive at a session you did not create or another agent was driving, and after {Resume}: the recorded 'purpose' says what the session was for, and this says what was done. Call it before {Destroy} too, for the sizes of what you are about to delete. "
+            + "The two routinely disagree: cookies arrive by navigation, not by a tool, so a session whose log shows no cookie call can hold a signed-in profile. This names the profile and its cookie store, and every file in the session that can hold something sensitive, with what each holds, the browser's temporary files and BrowserAI's own record included. "
+            + $"The log is paged and nothing is left out: {SessionManager.PageSize.ToString(CultureInfo.InvariantCulture)} entries a page, numbered from the oldest, each page saying which it is, how many there are and the call that fetches the next; page 1 also carries what is there now. "
+            + "It takes no lock it can be refused by, so it works on a session another BrowserAI is driving; its 'why' is written to the session's log when this BrowserAI holds the session.",
             new JsonObject
             {
                 [SessionParameter] = Property("string", "Absolute path of the session directory to read. It need not be a session this BrowserAI opened, and it need not be closed."),
@@ -1074,10 +1124,18 @@ internal static class SessionToolSurface
         yield return Tool(
             Destroy,
             "Delete a BrowserAI session directory and everything in it.",
-            "Closes the session's browser and deletes the whole directory -- profile, output, downloads, temporary files and record. EVERYTHING IN IT GOES, screenshots and downloads included, so MOVE OUT WHAT MUST BE KEPT before you call this -- browserai_catch_up first, because the sizes are the only thing that says what you are about to delete. "
-            + "It is the ONLY thing that ever deletes an artifact: BrowserAI removes nothing on a schedule and nothing at a size, so whatever browserai_list and browserai_catch_up report as the output size stays there until this is called. That is what makes calling it yours: the agent that created a session destroys it when the work is done, and promptly when the session held a login, because cookies and logins live in the profile and stay on disk until this runs. "
-            + "It REFUSES any directory that does not hold a valid BrowserAI session record, which is what makes it safe: it cannot be aimed at Documents. "
-            + "If another process holds the session, this reports who instead of waiting. If a file is held open, the rest is still deleted and the report names what survived.",
+            // ⚠️ 2026-10-10, the texts polish, page #14 (previously "deletes the whole
+            // directory -- profile, ...", "EVERYTHING IN IT GOES, screenshots and downloads
+            // included, so MOVE OUT WHAT MUST BE KEPT before you call this -- browserai_catch_up
+            // first, because the sizes are the only thing that says what you are about to
+            // delete.", "It is the ONLY thing that ever deletes an artifact", "It REFUSES",
+            // "If another process holds the session, this reports who" and "the report names
+            // what survived"): since the one background the usual holder is another
+            // conversation in the same BrowserAI.
+            "Closes the session's browser and deletes the whole directory: profile, output, downloads, temporary files and record. Move out what you want to keep first, and call browserai_catch_up to see what you are about to delete. "
+            + "Nothing else in BrowserAI deletes an artifact: it removes nothing on a schedule or at a size, so what browserai_list and browserai_catch_up report stays on disk until this is called. So the agent that created a session destroys it when the work is done, and promptly when the session held a login, because cookies and logins live in the profile and stay on disk until this runs. "
+            + "It refuses a directory that holds no valid BrowserAI session record, so it cannot be aimed at Documents. "
+            + "If another conversation or process holds the session, this says who instead of waiting. If a file is held open, the rest is still deleted and the answer names what was left.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of the session directory to delete."),

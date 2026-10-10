@@ -270,7 +270,7 @@ internal sealed class BuiltInToolListTests
 
         // And a list with the same tools and something else beside them.
         await Assert.That(list.FirstDifference(Encoding.UTF8.GetBytes(Two[..^1] + ",\"nextCursor\":\"x\"}")))
-            .IsEqualTo("the list around the tools, which hold the same bytes");
+            .IsEqualTo("in the answer outside the tools, which are the same");
 
         // An answer that is no list at all.
         await Assert.That(list.FirstDifference("{\"content\":[]}"u8)).IsEqualTo("its answer, which holds no list of tools");

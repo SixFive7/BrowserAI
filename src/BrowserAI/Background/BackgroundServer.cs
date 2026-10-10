@@ -393,7 +393,8 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
             return;
         }
 
-        var connection = new CallerConnection(relayPid);
+        // The client's folder, for the words a model reads about this conversation.
+        var connection = new CallerConnection(relayPid) { Folder = Text(parameters, "folder") };
         var greeting = new RelayGreeting(
             Id: string.Create(CultureInfo.InvariantCulture, $"{relayPid ?? 0}-{connection.Number}"),
             RelayPid: relayPid ?? 0,

@@ -45,6 +45,12 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     /// <summary>What the client called itself at <c>initialize</c>, or <see langword="null"/> before then.</summary>
     public string? ClientName { get; private set; }
 
+    /// <summary>
+    /// The folder the client runs in, from the relay's greeting, or <see langword="null"/>
+    /// when nothing said.
+    /// </summary>
+    public string? Folder { get; init; }
+
     /// <summary>Whether the conversation is still open.</summary>
     public bool IsOpen => Volatile.Read(ref _ended) is 0;
 
@@ -89,6 +95,24 @@ internal sealed class CallerConnection(int? clientProcessId = null)
     /// <summary>Says that the background ended this connection itself, and why.</summary>
     /// <param name="cause">Why: <see cref="Sessions.SessionCloseCause.Updating"/> for an update's end.</param>
     public void EndsFor(Sessions.SessionCloseCause cause) => EndedFor = cause;
+
+    /// <summary>The conversation as a model reads it about another holder or a close: its client and its folder.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, pages #19 and #27.</b> Never a title, which
+    /// would copy another conversation's own words into this model's context, and never a
+    /// process id, which no model can use; <see cref="Describe"/> keeps the pid for the
+    /// log. The words are the ones the dashboard gives a conversation it has no name for.
+    /// </remarks>
+    /// <returns>For example <c>Claude Code in BrowserAI</c>.</returns>
+    public string Conversation()
+    {
+        var client = KnownClients.Matches(ClientName, KnownClients.ClaudeCode) ? "Claude Code"
+            : KnownClients.Matches(ClientName, KnownClients.Codex) ? "Codex"
+            : ClientName is { Length: > 0 } named ? named
+            : Updates.ClientNames.Unnamed;
+
+        return Updates.ClientFolder.Unnamed(client, Folder).Text;
+    }
 
     /// <summary>The connection as a person reads it in a log or a refusal.</summary>
     /// <returns>For example <c>client 'claude-code' (its BrowserAI server is pid 1234)</c>.</returns>

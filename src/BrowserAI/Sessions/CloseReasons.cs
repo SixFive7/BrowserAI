@@ -64,8 +64,11 @@ internal static class CloseReasons
     {
         ArgumentNullException.ThrowIfNull(closure);
 
+        // ⚠️ Corrected 2026-10-10, the texts polish (previously "this client" and
+        // "another client 'name' (its BrowserAI server is pid N)"): a model reads a
+        // conversation, by its client and folder, never by a pid.
         var client = closure.Cause is SessionCloseCause.Caller or SessionCloseCause.SettingsChanged && asking is not null && closure.ClosedBy is { } by
-            ? ReferenceEquals(by, asking) ? "this client" : $"another {by.Describe()}"
+            ? ReferenceEquals(by, asking) ? "this conversation" : $"another conversation ({by.Conversation()})"
             : null;
 
         return Of(closure.Recorded, closure.At, closure.IdlePeriod, client);
@@ -93,6 +96,10 @@ internal static class CloseReasons
         var when = SessionErrors.When(at);
         var why = close.Why is { Length: > 0 } said ? $", which gave the reason \"{said}\"" : string.Empty;
 
+        // Who made the call: the conversation the sentence is said to, another one, or
+        // read back from the record, a conversation; nothing when the record names nobody.
+        var from = client is not null ? $" from {client}" : close.By is { Length: > 0 } recorded ? $" from a conversation ({recorded})" : string.Empty;
+
         return close.Cause switch
         {
             // ⚠️ Corrected 2026-10-08 (previously "because no browser call had reached
@@ -100,21 +107,36 @@ internal static class CloseReasons
             // does not hold memory"): since E2 and F2 every call that names the session
             // restarts its countdown, a visible window has one too, and in a visible
             // window the person's input counts (F4).
+            //
+            // ⚠️ Corrected 2026-10-10 a second time, the texts polish, page #28 (previously
+            // "...; it closes an idle browser so that one nobody is using does not hold
+            // memory or hold back an update."): every refusal of a closed session quotes this
+            // reason, and the maintainer asked for the reason, not for the why of the idle
+            // close.
             SessionCloseCause.Idle =>
-                $"BrowserAI closed this session's browser at {when} because no call had named the session for {SessionErrors.Duration(idlePeriod)}{(close.Detail is { } nobody ? $", and {nobody}" : string.Empty)}; it closes an idle browser so that one nobody is using does not hold memory or hold back an update.",
+                $"BrowserAI closed this session's browser at {when} because no call had named the session for {SessionErrors.Duration(idlePeriod)}{(close.Detail is { } nobody ? $", and {nobody}" : string.Empty)}.",
 
             // ⚠️ browserai_close since 2026-10-08, F1 a (previously "by a browser_close
             // call from"). A record written before that day holds the same cause for a
             // browser_close call, and is read back with this tool's name: the cause is
             // the stored spelling and the tool's name was never stored.
+            //
+            // ⚠️ Corrected 2026-10-10, the texts polish, page #27 (previously "This
+            // session's browser was closed at ... from {client}"): browserai_close records
+            // this before it asks whether a browser is open, so the session is what was
+            // closed in every case.
             SessionCloseCause.Caller =>
-                $"This session's browser was closed at {when} by a {SessionToolSurface.Close} call from {client ?? close.By ?? "a client"}{why}.",
+                $"This session was closed at {when} by a {SessionToolSurface.Close} call{from}{why}.",
 
             // ⚠️ Added 2026-10-08, F1 a and F2 d: a resume that asked for other settings
             // and was sent again unchanged closes the browser itself, cleanly, to open it
             // with them.
+            //
+            // ⚠️ Corrected 2026-10-10, the texts polish, page #19 (previously "to open
+            // again with the settings a browserai_resume call from {client} asked for"),
+            // which put the asker between the call and its verb.
             SessionCloseCause.SettingsChanged =>
-                $"This session's browser was closed at {when} to open again with the settings a {SessionToolSurface.Resume} call from {client ?? close.By ?? "a client"} asked for{why}.",
+                $"This session's browser was closed at {when} to open again with new settings, for a {SessionToolSurface.Resume} call{from}{why}.",
 
             SessionCloseCause.WindowClosed =>
                 $"A person closed this session's browser window at {when}: the browser exited cleanly, and BrowserAI had not asked it to close.",
@@ -143,15 +165,20 @@ internal static class CloseReasons
             // reason for every session it closes, whether or not a browser is up
             // (LiveSession.CloseTheBrowserForShutdownAsync, RecordTheBackgroundsEnd), so
             // the sentence says what is true of both.
+            //
+            // ⚠️ Corrected 2026-10-10 a second time, the texts polish, pages #30 and #31
+            // (previously "because BrowserAI was asked to stop" and "because BrowserAI's
+            // background ended on a failure"): BrowserAI is named once, and no model is told
+            // about a background.
             SessionCloseCause.Stopped =>
-                $"BrowserAI closed this session at {when} because BrowserAI was asked to stop.",
+                $"BrowserAI closed this session at {when} because it was asked to stop.",
 
             // Added 2026-10-10, the texts review's #24: the background's own ends.
             SessionCloseCause.Updating =>
                 $"BrowserAI closed this session at {when} to install an update.",
 
             SessionCloseCause.Failed =>
-                $"BrowserAI closed this session at {when} because BrowserAI's background ended on a failure, which its log names.",
+                $"BrowserAI closed this session at {when} because it ended on a failure, which its log names.",
 
             // Since 2026-10-08 only a host a client's own server owns records this, and
             // the product starts no such server: the suite's in-process rig does.
