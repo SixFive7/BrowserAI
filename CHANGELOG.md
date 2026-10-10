@@ -2440,6 +2440,16 @@ release body; nothing else depends on it.
   `PersonStartSettings.EndProcess` now, a seam beside the scheduler's, because what Windows says
   about a process it will not open or end cannot be provoked in the suite's own process.
 
+- ✅ **Two arms read what the night's changes made true, and four wait for a double to stop.**
+  The first two-shell gate on `1296bab5` found them on 2026-10-10. `FlatOutputTests` still held
+  a session to three folders, where the maintainer's 4.1 a gives it a fourth, `temp`, once its
+  child starts, and `SessionToolTests` still looked for the .NET name of a wrong kind, `String`,
+  where the texts review's #26 names it in words. Neither arm was in the filtered runs those
+  changes were checked with. Four `CloseOrderingTests` arms asserted that a session's double had
+  stopped the moment the call that ended it returned, while the double's read loop sees its
+  pipe close on a thread of its own, and the gate's Git Bash half caught one of them; each now
+  waits for the stop. Nothing a running BrowserAI does changes.
+
 ## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be

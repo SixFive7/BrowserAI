@@ -124,7 +124,7 @@ internal sealed class CloseOrderingTests
 
         await Assert.That((bool?)response.Result?["isError"]).IsNotEqualTo(true).Because(TextOf(response.Result));
         await Assert.That(rig.SessionChildren.Count).IsEqualTo(2);
-        await Assert.That(first.HasStopped).IsTrue();
+        await WaitUntilAsync(() => first.HasStopped, StoppedLate);
         await Assert.That(first.MethodsReceived).DoesNotContain("notifications/cancelled");
         await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
 
@@ -360,7 +360,7 @@ internal sealed class CloseOrderingTests
 
             await shuttingDown.WaitAsync(TestDefaults.InProcessHang);
 
-            await Assert.That(first.HasStopped).IsTrue();
+            await WaitUntilAsync(() => first.HasStopped, StoppedLate);
             await Assert.That(first.MethodsReceived).DoesNotContain("notifications/cancelled");
             await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
         }
@@ -411,7 +411,7 @@ internal sealed class CloseOrderingTests
         }));
 
         await Assert.That(TextOf(destroyed)).Contains("Destroyed the session");
-        await Assert.That(first.HasStopped).IsTrue();
+        await WaitUntilAsync(() => first.HasStopped, StoppedLate);
         await Assert.That(first.MethodsReceived).Contains("notifications/cancelled");
         await Assert.That(harness.Logs.Logged(CutShort)).IsTrue();
         await Assert.That(harness.Logs.Logged(UnansweredIdleClose)).IsFalse();
@@ -490,7 +490,7 @@ internal sealed class CloseOrderingTests
 
         await Assert.That((bool?)response.Result?["isError"]).IsNotEqualTo(true).Because(TextOf(response.Result));
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(2);
-        await Assert.That(child.HasStopped).IsTrue();
+        await WaitUntilAsync(() => child.HasStopped, StoppedLate);
         await Assert.That(child.MethodsReceived).DoesNotContain("notifications/cancelled");
         await Assert.That(rig.Host.Sessions.Find(directory)!.AttachedTo).IsEqualTo(next.Proxy.Connection);
     }
@@ -1049,6 +1049,20 @@ internal sealed class CloseOrderingTests
     private static string TextOf(JsonObject? result) =>
         string.Concat((result?["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
+
+    /// <summary>What a wait for a double's stop says when it never comes.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-10-10, lane FINAL.</b> The product ends a session child by
+    /// closing its pipes, and the double's read loop sees that on a thread of its own,
+    /// so <see cref="FakePlaywrightChild.HasStopped"/> can read false for a moment after
+    /// the call that ended the child has returned. Four arms asserted it at once, and the
+    /// Git Bash half of the gate at <c>1296bab5</c> caught one of them,
+    /// <see cref="AShutdownThatMeetsAnIdleCloseStillWaitingLetsItFinish"/>, with
+    /// <i>"Expected to be true but found False"</i>; each now waits for the stop, as
+    /// <see cref="ACallerThatStopsWaitingForItsOwnCloseLeavesTheCloseToFinish"/> already
+    /// did. The hazard index has the row.
+    /// </remarks>
+    private const string StoppedLate = "the call that ended the session's child returned, and the child never stopped";
 
     /// <summary>Waits for an event, bounded by a hang detector and by no number written here.</summary>
     /// <param name="condition">The event.</param>

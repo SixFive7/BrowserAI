@@ -46,10 +46,20 @@ namespace BrowserAI.Tests;
 internal sealed class FlatOutputTests
 {
     /// <summary>
-    /// The three directories a session is created with are the only ones
-    /// BrowserAI ever makes, whatever a call writes.
+    /// The four directories a session holds once its child has started are the
+    /// only ones BrowserAI ever makes, whatever a call writes.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-10-10 (previously "The three directories a session is
+    /// created with are the only ones BrowserAI ever makes, whatever a call
+    /// writes.")</b>, when the maintainer's 4.1 a moved the session child's
+    /// temporary folder into the session as <c>temp</c>, made when the child
+    /// starts (<see cref="SessionLayout.TemporaryFolderName"/>). The arm was not
+    /// in the filtered runs that change was checked with, and the first gate after
+    /// it read <i>"downloads, output, profile, temp"</i> against the three.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>Inverted 2026-08-26 (previously
     /// <c>ArtifactRoutingTests.ATypedFolderAppearsWhenItIsUsedAndNotBefore</c>,
     /// which asserted <c>output\page\</c> appeared after a screenshot and
@@ -57,6 +67,7 @@ internal sealed class FlatOutputTests
     /// because there are none: a <c>filename</c> reaches the child as the caller
     /// spelled it and upstream resolves it against its own working directory,
     /// which is <c>output\</c> itself.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -69,14 +80,19 @@ internal sealed class FlatOutputTests
 
         var expected = string.Join(
             ", ",
-            new[] { SessionLayout.DownloadsFolderName, SessionLayout.OutputFolderName, SessionLayout.ProfileFolderName }
-                .Order(StringComparer.Ordinal));
+            new[]
+            {
+                SessionLayout.DownloadsFolderName,
+                SessionLayout.OutputFolderName,
+                SessionLayout.ProfileFolderName,
+                SessionLayout.TemporaryFolderName,
+            }.Order(StringComparer.Ordinal));
 
         await Assert.That(DirectoriesUnder(rig.Session!)).IsEqualTo(expected);
 
         _ = await ScreenshotAsync(rig, "login.png");
 
-        // Still three. The file landed at the output root under the name the
+        // Still four. The file landed at the output root under the name the
         // caller chose, and nothing was created above it.
         await Assert.That(DirectoriesUnder(rig.Session!)).IsEqualTo(expected);
 

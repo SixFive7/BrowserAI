@@ -258,12 +258,18 @@ internal sealed class SessionToolTests
 
         // Nothing was created by any of them, the wrongly-typed `headed`
         // included. ⚠️ Was `init-badMode` until 2026-08-20; the refusal names
-        // the type it got and not a list of accepted values, because there
+        // the kind it got and not a list of accepted values, because there
         // is no list -- `headed` is a boolean.
+        //
+        // ⚠️ Corrected 2026-10-10 (previously `Contains("String")`, the .NET
+        // name of the kind): since the texts review's #26 of that day the six
+        // refusals that name a kind name it in words, here "the string 'yes'".
+        // The first gate after that change read the new sentence against the old
+        // word, because this arm was not in the filtered runs it was checked with.
         await Assert.That(Directory.Exists(Path.Combine(run.Root, "bad-headed"))).IsFalse();
         await Assert.That(run.IsError("init-badHeaded")).IsTrue();
         await Assert.That(run.Text("init-badHeaded")).Contains("'headed' must be true or false");
-        await Assert.That(run.Text("init-badHeaded")).Contains("String");
+        await Assert.That(run.Text("init-badHeaded")).Contains("it arrived as the string 'yes'");
     }
 
     /// <summary>
