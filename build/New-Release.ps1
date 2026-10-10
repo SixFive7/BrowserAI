@@ -159,6 +159,11 @@
     The drift check a release is held to. Defaults to drift-check.json at the
     repository root; the suite hands it a copy to watch the refusal.
 
+.PARAMETER DriftCheckToday
+    The date the drift check must be stamped with, as yyyy-MM-dd. Defaults to
+    today by the local clock. The suite passes one, so that an arm handing over a
+    current copy does not depend on the day it runs.
+
 .PARAMETER FromReleasePublish
     With -TestPackOnly only: pack the suite's installer from the release publish,
     `artifacts\publish-release`, and not from the two dev publishes. Q305, decided
@@ -190,7 +195,8 @@ param(
     [string] $PackVersion,
     [switch] $TestPackOnly,
     [switch] $FromReleasePublish,
-    [string] $DriftCheckFile
+    [string] $DriftCheckFile,
+    [string] $DriftCheckToday
 )
 
 Set-StrictMode -Version Latest
@@ -213,7 +219,10 @@ if ($TestPackOnly) {
 else {
     if (-not $DriftCheckFile) { $DriftCheckFile = Join-Path $root 'drift-check.json' }
 
-    $null = & (Join-Path $PSScriptRoot 'Test-DriftCheck.ps1') -DriftCheck $DriftCheckFile
+    $driftArguments = @{ DriftCheck = $DriftCheckFile }
+    if ($DriftCheckToday) { $driftArguments.Today = $DriftCheckToday }
+
+    $null = & (Join-Path $PSScriptRoot 'Test-DriftCheck.ps1') @driftArguments
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."

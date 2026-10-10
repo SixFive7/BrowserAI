@@ -115,3 +115,11 @@ if ($reasons.Count -gt 0) {
 }
 
 'current'
+
+# ⚠️ AND AN EXIT CODE, ADDED 2026-10-10 BY LANE FINAL. New-Release.ps1 calls this
+# before any native command has run, then reads $LASTEXITCODE under StrictMode
+# Latest. A script that ends without `exit` sets no exit code, so every release
+# and every dev pack over a CURRENT check died at that line with "The variable
+# '$LASTEXITCODE' cannot be retrieved because it has not been set." Only the
+# refusal had been run end to end. Test-ReleaseVersion.ps1 ends the same way.
+exit 0

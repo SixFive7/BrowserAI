@@ -127,6 +127,12 @@ internal sealed class ReleaseScriptTests
     /// so by not carrying the <c>vpk</c> line that would follow.
     /// </para>
     /// <para>
+    /// ⚠️ <b>And a current copy as far as the version, since 2026-10-10.</b> That half
+    /// is the refusal's positive control, and it was missing: a current check killed
+    /// the script at this step, which nothing had run until the deploy runbook's pack
+    /// did. Planted red against <c>Test-DriftCheck.ps1</c> without its <c>exit 0</c>.
+    /// </para>
+    /// <para>
     /// <b>The test pack's half is read off the script</b>, because running
     /// <c>-TestPackOnly</c> to its end is a publish and a pack: the call sits inside
     /// the branch that a test pack skips, and the branch says so out loud.
@@ -145,6 +151,27 @@ internal sealed class ReleaseScriptTests
         await Assert.That(said).Contains("A release takes only the latest of every dependency").Because(said);
         await Assert.That(said).Contains("was last taken on 2000-01-01");
         await Assert.That(said).DoesNotContain("matches Velopack").Because(said);
+
+        // ⚠️ AND A CURRENT CHECK LETS THE RELEASE GO ON, the positive control the
+        // refusal needs: a script that refused every check would pass the half above.
+        // Added 2026-10-10 by lane FINAL, when the deploy runbook's pack died at this
+        // step over the real, current check with "The variable '$LASTEXITCODE' cannot
+        // be retrieved because it has not been set": Test-DriftCheck.ps1 ended with no
+        // exit code, before any native command had set one. The version 0.0.0 is refused
+        // at the step after the tool check, so nothing is published or packed.
+        const string Today = "2026-10-10";
+
+        var current = await WriteDriftCheckAsync(scratch.Path, "current", Today, _ => { });
+        var (currentExit, _, currentSaid) = await RunAsync(
+            ReleaseScript,
+            "-DriftCheckFile", current,
+            "-DriftCheckToday", Today,
+            "-PackVersion", "0.0.0",
+            "-OutputDir", Path.Combine(scratch.Path, "Releases"));
+
+        await Assert.That(currentSaid).Contains("Drift check: every dependency is the latest").Because(currentSaid);
+        await Assert.That(currentSaid).DoesNotContain("LASTEXITCODE").Because(currentSaid);
+        await Assert.That(currentExit).IsNotEqualTo(0).Because("0.0.0 is refused after the tool check, so the run ends before a publish");
 
         var script = await File.ReadAllTextAsync(ReleaseScript);
         var check = script.IndexOf("(Join-Path $PSScriptRoot 'Test-DriftCheck.ps1')", StringComparison.Ordinal);

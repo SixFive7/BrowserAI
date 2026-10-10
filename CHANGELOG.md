@@ -2450,6 +2450,17 @@ release body; nothing else depends on it.
   pipe close on a thread of its own, and the gate's Git Bash half caught one of them; each now
   waits for the stop. Nothing a running BrowserAI does changes.
 
+- 🐛 **A release or a dev pack over a current drift check gets past its first step.**
+  Found on 2026-10-10 by a dry run of the deploy's pack, the first run of `build/New-Release.ps1`
+  past that step since the rule arrived the same day. `build/Test-DriftCheck.ps1` ended with no
+  exit code, and the release script reads `$LASTEXITCODE` under strict mode before any program
+  has set one, so every release and every dev pack over a current check stopped with *"The
+  variable '$LASTEXITCODE' cannot be retrieved because it has not been set."* The check exits 0
+  now, as the version check does, and the release script takes the check's date as
+  `-DriftCheckToday` for the suite. `ReleaseScriptTests`' drift arm runs the script over a current
+  copy as far as the version refusal, planted red against the check as it was. A test pack never
+  reads the check, so no gate had met it.
+
 ## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be
