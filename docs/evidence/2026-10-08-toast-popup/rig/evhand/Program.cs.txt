@@ -1,0 +1,209 @@
+// Scratch rig, 2026-10-09: the same JSON-line protocol as hand.ps1, in a .NET process that keeps every toast
+// it shows and records the Dismissed, Failed and Activated events Windows raises on it, with QPC timestamps.
+// Started by rig.ps1 with CreateNoWindow; it ends on 'exit' or when its stdin closes.
+using System.Diagnostics;
+using System.Text.Json.Nodes;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
+
+var appId = Arg("--app-id");
+var name = Arg("--name");
+var noShow = args.Contains("--no-show");
+var notifier = ToastNotificationManager.CreateToastNotifier(appId);
+var history = ToastNotificationManager.History;
+var keep = new List<ToastNotification>();
+var events = new List<JsonObject>();
+var gate = new object();
+
+Reply(new JsonObject { ["op"] = "ready", ["name"] = name, ["pid"] = Environment.ProcessId, ["qpc"] = Stopwatch.GetTimestamp(), ["setting"] = notifier.Setting.ToString() });
+
+string? line;
+while ((line = Console.In.ReadLine()) is not null)
+{
+    var brace = line.IndexOf('{');
+    if (brace > 0)
+    {
+        line = line[brace..];
+    }
+    else if (brace < 0)
+    {
+        if (line.EndsWith("exit", StringComparison.Ordinal))
+        {
+            break;
+        }
+
+        continue;
+    }
+
+    string op = "parse";
+    try
+    {
+        var c = JsonNode.Parse(line)!.AsObject();
+        op = (string)c["op"]!;
+        switch (op)
+        {
+            case "remove":
+            {
+                string? err = null;
+                var a = Stopwatch.GetTimestamp();
+                try
+                {
+                    history.Remove((string)c["tag"]!, (string)c["group"]!, appId);
+                }
+                catch (Exception e)
+                {
+                    err = $"0x{e.HResult:X8} {e.Message}";
+                }
+
+                var z = Stopwatch.GetTimestamp();
+                Reply(new JsonObject { ["op"] = op, ["tag"] = (string)c["tag"]!, ["a"] = a, ["z"] = z, ["err"] = err, ["hist"] = Hist((string)c["group"]!) });
+                break;
+            }
+
+            case "removeGroup":
+            {
+                var a = Stopwatch.GetTimestamp();
+                history.RemoveGroup((string)c["group"]!, appId);
+                var z = Stopwatch.GetTimestamp();
+                Reply(new JsonObject { ["op"] = op, ["a"] = a, ["z"] = z, ["hist"] = Hist((string)c["group"]!) });
+                break;
+            }
+
+            case "show":
+            {
+                var doc = new XmlDocument();
+                doc.LoadXml((string)c["xml"]!);
+                var t = new ToastNotification(doc) { Tag = (string)c["tag"]!, Group = (string)c["group"]! };
+                if (c["suppress"] is JsonNode s && (bool)s)
+                {
+                    t.SuppressPopup = true;
+                }
+
+                if (c["expiresOnReboot"] is JsonNode e && (bool)e)
+                {
+                    t.ExpiresOnReboot = true;
+                }
+
+                if (c["data"] is JsonObject d)
+                {
+                    t.Data = Data(d, (uint)c["seq"]!);
+                }
+
+                var tag = t.Tag;
+                var serial = keep.Count;
+                t.Dismissed += (_, x) => Ev(tag, serial, "Dismissed", x.Reason.ToString());
+                t.Failed += (_, x) => Ev(tag, serial, "Failed", $"0x{x.ErrorCode.HResult:X8} {x.ErrorCode.Message}");
+                t.Activated += (_, _) => Ev(tag, serial, "Activated", string.Empty);
+                keep.Add(t);
+                var before = Hist(t.Group);
+                var a = Stopwatch.GetTimestamp();
+                if (!noShow)
+                {
+                    notifier.Show(t);
+                }
+
+                var z = Stopwatch.GetTimestamp();
+                Reply(new JsonObject
+                {
+                    ["op"] = op,
+                    ["tag"] = tag,
+                    ["serial"] = serial,
+                    ["a"] = a,
+                    ["z"] = z,
+                    ["composed"] = new JsonObject { ["tag"] = t.Tag, ["group"] = t.Group, ["suppress"] = t.SuppressPopup, ["expiresOnReboot"] = t.ExpiresOnReboot, ["seq"] = t.Data?.SequenceNumber },
+                    ["histBefore"] = before,
+                    ["hist"] = Hist(t.Group),
+                    ["shown"] = !noShow,
+                });
+                break;
+            }
+
+            case "update":
+            {
+                var data = Data(c["data"]!.AsObject(), (uint)c["seq"]!);
+                var a = Stopwatch.GetTimestamp();
+                var r = notifier.Update(data, (string)c["tag"]!, (string)c["group"]!);
+                var z = Stopwatch.GetTimestamp();
+                Reply(new JsonObject { ["op"] = op, ["tag"] = (string)c["tag"]!, ["seq"] = (int)c["seq"]!, ["result"] = r.ToString(), ["a"] = a, ["z"] = z });
+                break;
+            }
+
+            case "hist":
+                Reply(new JsonObject { ["op"] = op, ["qpc"] = Stopwatch.GetTimestamp(), ["hist"] = Hist((string)c["group"]!) });
+                break;
+
+            case "events":
+            {
+                var list = new JsonArray();
+                lock (gate)
+                {
+                    foreach (var ev in events)
+                    {
+                        list.Add(ev.DeepClone());
+                    }
+
+                    events.Clear();
+                }
+
+                Reply(new JsonObject { ["op"] = op, ["qpc"] = Stopwatch.GetTimestamp(), ["events"] = list });
+                break;
+            }
+
+            default:
+                Reply(new JsonObject { ["op"] = op, ["error"] = "unknown op" });
+                break;
+        }
+    }
+    catch (Exception ex)
+    {
+        Reply(new JsonObject { ["op"] = op, ["error"] = ex.Message });
+    }
+}
+
+return 0;
+
+string Arg(string key)
+{
+    var i = Array.IndexOf(args, key);
+    return i >= 0 && i + 1 < args.Length ? args[i + 1] : throw new ArgumentException($"{key} is required");
+}
+
+void Reply(JsonObject o)
+{
+    Console.Out.WriteLine(o.ToJsonString());
+    Console.Out.Flush();
+}
+
+void Ev(string tag, int serial, string kind, string detail)
+{
+    lock (gate)
+    {
+        events.Add(new JsonObject { ["tag"] = tag, ["serial"] = serial, ["kind"] = kind, ["detail"] = detail, ["qpc"] = Stopwatch.GetTimestamp() });
+    }
+}
+
+JsonObject Hist(string group)
+{
+    var all = history.GetHistory(appId);
+    var mine = new JsonArray();
+    foreach (var t in all)
+    {
+        if (t.Group == group)
+        {
+            mine.Add(t.Tag);
+        }
+    }
+
+    return new JsonObject { ["total"] = all.Count, ["mine"] = mine };
+}
+
+static NotificationData Data(JsonObject values, uint sequence)
+{
+    var data = new NotificationData { SequenceNumber = sequence };
+    foreach (var (key, value) in values)
+    {
+        data.Values[key] = (string)value!;
+    }
+
+    return data;
+}

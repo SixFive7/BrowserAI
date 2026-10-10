@@ -1,0 +1,114 @@
+# Scratch rig, 2026-10-09: a windowless process that raises, updates and removes toasts on command,
+# under Windows PowerShell's app id. One JSON line in on stdin, one JSON line out on stdout.
+# Started by rig.ps1 with CreateNoWindow; it ends on 'exit' or when its stdin closes.
+param([string]$AppId, [string]$Name, [switch]$NoShow)
+$ErrorActionPreference = 'Stop'
+[void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.UI.Notifications.NotificationData, Windows.UI.Notifications, ContentType = WindowsRuntime]
+[void][Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
+$hist = [Windows.UI.Notifications.ToastNotificationManager]::History
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppId)
+$sw = [Diagnostics.Stopwatch]
+
+function Reply($o)
+{
+    [Console]::Out.WriteLine((ConvertTo-Json -InputObject $o -Compress -Depth 6))
+    [Console]::Out.Flush()
+}
+
+function Hist([string]$group)
+{
+    $all = @($hist.GetHistory($AppId))
+    $mine = @($all | Where-Object { $_.Group -eq $group } | ForEach-Object {
+        $s = $_.Tag
+        if ($_.SuppressPopup) { $s += '(quiet)' }
+        $s
+    })
+    return @{ total = $all.Count; mine = $mine }
+}
+
+function New-Data($values, [uint32]$seq)
+{
+    $d = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    foreach ($p in $values.PSObject.Properties) { $d[$p.Name] = [string]$p.Value }
+    return (New-Object Windows.UI.Notifications.NotificationData -ArgumentList $d, $seq)
+}
+
+function New-Toast($c)
+{
+    $doc = New-Object Windows.Data.Xml.Dom.XmlDocument
+    $doc.LoadXml([string]$c.xml)
+    $t = New-Object Windows.UI.Notifications.ToastNotification $doc
+    $t.Tag = [string]$c.tag
+    $t.Group = [string]$c.group
+    if ($c.suppress) { $t.SuppressPopup = $true }
+    if ($c.expiresOnReboot) { $t.ExpiresOnReboot = $true }
+    if ($null -ne $c.data) { $t.Data = New-Data $c.data ([uint32]$c.seq) }
+    return $t
+}
+
+Reply @{ op = 'ready'; name = $Name; pid = $PID; qpc = $sw::GetTimestamp(); setting = [string]$notifier.Setting }
+while ($true)
+{
+    $line = [Console]::In.ReadLine()
+    if ($null -eq $line) { break }
+    # The parent's writer starts the stream with a UTF-8 byte order mark, read here in a single-byte code page.
+    $brace = $line.IndexOf('{')
+    if ($brace -gt 0) { $line = $line.Substring($brace) }
+    elseif ($brace -lt 0) { if ($line.EndsWith('exit')) { break } }
+    $c = $null
+    try
+    {
+        $c = ConvertFrom-Json $line
+        switch ([string]$c.op)
+        {
+            'remove'
+            {
+                $err = $null
+                $a = $sw::GetTimestamp()
+                try { $hist.Remove([string]$c.tag, [string]$c.group, $AppId) } catch { $err = ('0x{0:X8} {1}' -f $_.Exception.HResult, $_.Exception.Message) }
+                $z = $sw::GetTimestamp()
+                Reply @{ op = 'remove'; tag = [string]$c.tag; a = $a; z = $z; err = $err; hist = (Hist ([string]$c.group)) }
+            }
+            'removeGroup'
+            {
+                $err = $null
+                $a = $sw::GetTimestamp()
+                try { $hist.RemoveGroup([string]$c.group, $AppId) } catch { $err = ('0x{0:X8} {1}' -f $_.Exception.HResult, $_.Exception.Message) }
+                $z = $sw::GetTimestamp()
+                Reply @{ op = 'removeGroup'; a = $a; z = $z; err = $err; hist = (Hist ([string]$c.group)) }
+            }
+            'show'
+            {
+                $t = New-Toast $c
+                $read = @{ tag = $t.Tag; group = $t.Group; suppress = $t.SuppressPopup; expiresOnReboot = $t.ExpiresOnReboot; seq = $(if ($t.Data) { $t.Data.SequenceNumber } else { $null }) }
+                $before = Hist ([string]$c.group)
+                $a = $sw::GetTimestamp()
+                if (-not $NoShow) { $notifier.Show($t) }
+                $z = $sw::GetTimestamp()
+                Reply @{ op = 'show'; tag = [string]$c.tag; a = $a; z = $z; composed = $read; histBefore = $before; hist = (Hist ([string]$c.group)); shown = (-not $NoShow) }
+            }
+            'update'
+            {
+                $d = New-Data $c.data ([uint32]$c.seq)
+                $a = $sw::GetTimestamp()
+                $r = $notifier.Update($d, [string]$c.tag, [string]$c.group)
+                $z = $sw::GetTimestamp()
+                Reply @{ op = 'update'; tag = [string]$c.tag; seq = [int]$c.seq; result = [string]$r; a = $a; z = $z }
+            }
+            'hist'
+            {
+                Reply @{ op = 'hist'; qpc = $sw::GetTimestamp(); hist = (Hist ([string]$c.group)) }
+            }
+            default
+            {
+                Reply @{ op = [string]$c.op; error = 'unknown op' }
+            }
+        }
+    }
+    catch
+    {
+        Reply @{ op = $(if ($c) { [string]$c.op } else { 'parse' }); error = $_.Exception.Message; raw = $line.Substring(0, [Math]::Min(400, $line.Length)); rawLength = $line.Length }
+    }
+}

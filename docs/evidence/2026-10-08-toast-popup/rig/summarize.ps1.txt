@@ -1,0 +1,72 @@
+# Scratch: every show of every run of 2026-10-08/09, classified, counted, and written to out\shows.csv.
+param([string]$OutCsv)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$inv = [Globalization.CultureInfo]::InvariantCulture
+function D([object]$v) { if ($null -eq $v -or "$v" -eq '' -or "$v" -eq '-') { return $null }; return [double]::Parse(("$v" -replace ',', '.'), $inv) }
+$rows = @()
+foreach ($f in (Get-ChildItem (Join-Path $here 'out\rounds-run-*.jsonl') | Sort-Object Name))
+{
+    $batch = ($f.BaseName -replace '^rounds-run-\d{8}T\d{6}Z-', '')
+    foreach ($l in (Get-Content $f.FullName))
+    {
+        if (-not $l.Trim()) { continue }
+        $r = ConvertFrom-Json $l
+        $code = [string]$r.code
+        $base = $code.Substring(0, 2)
+        $i = 0
+        $prevBannerAt = $null
+        foreach ($s in @($r.shows))
+        {
+            $i++
+            $snd = ([string]$s.sound).Split('|')
+            $cat = if ($s.suppress) { 'quiet re-raise' } elseif ($i -eq 1) { 'first show' } elseif ($base -eq 'S5') { 'same tag, in place' } else { 'own tag, others removed first' }
+            $on = ([int]$s.presenceBeforeOps -ge 3000)
+            $onFor = if ($on -and $null -ne $prevBannerAt) { [math]::Round(((D $s.showMs) - $prevBannerAt) / 1000.0, 1) } else { $null }
+            $rows += [pscustomobject]@{
+                batch = $batch; round = $r.n; code = $code; show = $i; tag = $s.tag; process = $s.process; category = $cat
+                oldBannerOnScreen = $on; oldBannerOnScreenS = $onFor
+                banner = [bool]$s.banner; px1500 = $s.at1500.px; box1500 = $s.at1500.box
+                soundPeak = (D $snd[0]); soundAfterMs = $(if ($snd.Count -gt 1 -and (D $snd[1])) { [math]::Round((D $snd[1]) - (D $s.showMs), 0) } else { $null })
+                showCallMs = (D $s.showCallMs); sinceLastShowMs = (D $s.sinceLastShowMs)
+                ncAfter = (@($s.histAfter.mine) -join '+'); ncTotalAfter = $s.histAfter.total
+                idleS = (D $r.cond.idleS); lock = $r.cond.lock; desktop = $r.cond.desktop; quns = $r.cond.quns; quietHours = ([string]$r.cond.quietHours).Split(' ')[0]; focus = $r.cond.focusSession
+                cursor = $r.cond.cursor; utc = $r.cond.utc; aborted = $r.aborted; leftInHistory = $r.leftInHistory; shot = $s.at1500.file
+            }
+            if ($s.banner) { $prevBannerAt = (D $s.showMs) } elseif (-not $s.banner) { $prevBannerAt = $null }
+        }
+    }
+}
+if ($OutCsv) { $rows | Export-Csv -LiteralPath $OutCsv -NoTypeInformation -Encoding UTF8 }
+"shows: $($rows.Count) in $(@($rows | Select-Object batch, round -Unique).Count) rounds; aborted rounds: $(@($rows | Where-Object { $_.aborted } | Select-Object batch, round -Unique).Count)"
+'--- by category and whether our previous banner was on screen at the call ---'
+$rows | Group-Object category, oldBannerOnScreen | Sort-Object Name | ForEach-Object {
+    $g = $_.Group; $y = @($g | Where-Object { $_.banner }).Count; $snd = @($g | Where-Object { $_.soundPeak -ge 0.01 }).Count
+    '{0,-48} banner {1,3} of {2,3}; sound {3,3} of {2,3}' -f $_.Name, $y, $g.Count, $snd
+}
+'--- replacements with our banner on screen, by how long it had been up ---'
+$rows | Where-Object { $_.oldBannerOnScreen -and $_.category -ne 'first show' } | ForEach-Object { $_ | Add-Member -NotePropertyName upBucket -NotePropertyValue $(if ($_.oldBannerOnScreenS -ge 50) { '~60 s' } else { '3 to 9 s' }) -PassThru } | Group-Object category, upBucket | Sort-Object Name | ForEach-Object {
+    $g = $_.Group; $y = @($g | Where-Object { $_.banner }).Count
+    '{0,-48} banner {1,3} of {2,3}' -f $_.Name, $y, $g.Count
+}
+'--- by scenario code and show position ---'
+$rows | Group-Object code, show, tag | Sort-Object Name | ForEach-Object { $g = $_.Group; '{0,-28} banner {1,3} of {2,3}' -f $_.Name, @($g | Where-Object { $_.banner }).Count, $g.Count }
+'--- shows with no banner ---'
+$rows | Where-Object { -not $_.banner } | Format-Table batch, round, code, show, tag, process, category, oldBannerOnScreen, oldBannerOnScreenS, px1500, soundPeak, showCallMs, sinceLastShowMs, ncAfter, utc -AutoSize | Out-String -Width 300
+'--- conditions across all rounds ---'
+$u = $rows | Select-Object batch, round, idleS, lock, desktop, quns, quietHours, focus, cursor -Unique
+'idle seconds at round start: min {0}, max {1}' -f ($u | Measure-Object idleS -Minimum).Minimum, ($u | Measure-Object idleS -Maximum).Maximum
+'lock: ' + (($u | Group-Object lock | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'desktop: ' + (($u | Group-Object desktop | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'quns: ' + (($u | Group-Object quns | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'quiet hours profile: ' + (($u | Group-Object quietHours | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'focus session active: ' + (($u | Group-Object focus | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'cursor: ' + (($u | Group-Object cursor | ForEach-Object { "$($_.Name) x$($_.Count)" }) -join ', ')
+'--- banner geometry at 1.5 s (px, box) ---'
+$rows | Group-Object tag, px1500, box1500 | Sort-Object Count -Descending | ForEach-Object { '{0,4} x {1}' -f $_.Count, $_.Name }
+'--- sound after show (ms), banners only ---'
+$b = @($rows | Where-Object { $_.banner -and $_.soundAfterMs -ne $null })
+'n={0} min={1} median={2} max={3}' -f $b.Count, ($b | Measure-Object soundAfterMs -Minimum).Minimum, (($b | Sort-Object soundAfterMs)[[int]($b.Count / 2)].soundAfterMs), ($b | Measure-Object soundAfterMs -Maximum).Maximum
+'--- show call duration (ms) ---'
+$c = @($rows | Where-Object { $_.showCallMs -ne $null })
+'n={0} median={1} over 100 ms: {2}' -f $c.Count, (($c | Sort-Object showCallMs)[[int]($c.Count / 2)].showCallMs), (($c | Where-Object { $_.showCallMs -gt 100 } | ForEach-Object { "$($_.batch) r$($_.round) $($_.tag) $($_.showCallMs) ms banner=$($_.banner)" }) -join '; ')

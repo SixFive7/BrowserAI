@@ -437,6 +437,10 @@ session, the window in front and the history count.
   old popup was gone within one frame; and **4 of 6 replacements slid a new popup in,
   with the same sound as the first toast, while 2 of 6 went to the Notification
   Centre only**, with neither the order nor the content explaining the split.
+  ⚠️ *Added 2026-10-10 by addition:* the same night 77 replacements under one tag
+  were measured against 86 removals followed by a show under a tag of its own, and
+  the split held: 58 of 77 against 85 of 86, in
+  [the entry below](#a-banner-for-every-update-toast-its-own-tag-against-one-tag-shared----measured-2026-10-08).
 
 | Run | Replacement | Old popup gone | New popup | Sound |
 |---|---|---|---|---|
@@ -457,6 +461,89 @@ also allows, was not measured.
 `part1b.ps1.txt`, run with `powershell` under its own app id, and
 `Monitor.cs.txt` beside them; the crops are in the batch as PNG. It clears the
 calling shell's own toast history at the end and nothing else.
+
+### A banner for every update toast: its own tag against one tag shared -- measured 2026-10-08
+
+`[MACHINE]` for every count. Windows 11 Pro **10.0.26300.9550** (26H2) at
+3840x2160, raised from Windows PowerShell 5.1 (`powershell.exe` 10.0.26100.8972)
+under that shell's own application id, as the daytime entry above was. The rig did
+not record the build; it was read from the registry on 2026-10-10, and the newest
+update the machine has installed is dated 2026-10-01, so the night of 2026-10-08
+ran on it. Taken on the maintainer's screen with his leave, 2026-10-08 from 22:45Z
+to 23:48Z, while he was away: **112 rounds and 300 shows**, every toast composed the
+way `UpdateToastContent` composed it at `25acb977` and raised the way `UpdateToasts`
+raises one, each round in a group of its own. Everything it was read from, the rig
+included and the screen crops left out:
+[`docs/evidence/2026-10-08-toast-popup`](../../docs/evidence/2026-10-08-toast-popup/README.md).
+
+**How a banner was told from none.** The screen's bottom-right corner was sampled
+every 40 ms against a baseline taken after 2 s of stillness: a banner changed
+50,165 to 99,316 pixels and a show with none changed 0 or 1. A crop of the corner
+1.5 s after each show was checked by eye, and the peak meter of the system sounds'
+audio session heard every one of the 271 banners, a median of 124 ms after `Show`
+returned (64 to 1,135 ms), and none of the 29 shows without one.
+
+| What was raised | Banners |
+|---|---|
+| ⭐ **Each toast under a tag of its own, the others removed first**, as the product raises them, while the old banner was still on screen | **85 of 86** |
+| The same, with no banner of ours on screen | 2 of 2 |
+| A first show, nothing of ours in the Notification Centre | 111 of 112 |
+| **The same tag and group replaced in place**, the old banner on screen | **58 of 77** |
+| The same, with no banner of ours on screen | 15 of 15 |
+| The quiet raise again, `SuppressPopup`, from a new process after a ready banner and an emulated *Wait for inactivity* | **0 of 8**, and 0 sounds |
+
+- **The design holds.** A removal followed by a show under its own tag is as good
+  as a first show, and a replacement under one tag is worse: 85 of 86 against 58
+  of 77, p = 3.0e-6 by Fisher's exact test. The difference is what 2.1 a kept the
+  design for.
+- **"A banner every time" is close and not exact.** One removal-and-show of 86
+  popped nothing, 3.1 s after its ready banner, with removals of about 30 ms and a
+  9 ms show; and one first show of 112 popped nothing, its `Show` taking 6,016 ms
+  against a median of 5.5 ms. Both came before the event hand existed, so whether
+  either raised an event is not measured.
+- **Nothing reports a missed banner.** Across 7 silent replacements under one tag
+  and 83 other shows the event hand saw no `Dismissed`, `Failed` or `Activated`,
+  while the quiet raise's `Dismissed(TimedOut)` arrived 27 to 28 ms after its show,
+  2 of 2. A missed banner cannot be caught and raised again from the events.
+- **What the silent replacements under one tag go with.** A banner on screen: 19 of
+  77 were silent, against 15 of 15 popped when the replacement before had been
+  silent and nothing showed. How long it had been up: 5 of 10 silent after about
+  60 s, against 14 of 67 after 3 s, p = 0.11, suggestive only. Not input, which
+  there was none of; not the cursor, which never moved; not the timing, 3.0 to
+  3.04 s for both; and not a slow call, 2 to 11 ms.
+- **Up to 60 s and not 10 minutes.** Removal and show after a banner had been up
+  about 60 s popped 10 of 10. The product's own case, a ready banner up for minutes
+  before *installing* replaces it, is longer than anything measured.
+- **The quiet raise reaches the Notification Centre and nothing else**: 8 of 8 in
+  the history, 40 of 40 countdown updates on it succeeded, and no banner. A toast
+  read back from the history reports `SuppressPopup` false even for the quiet one.
+- ⭐ **The holders line is cut in the 362 px banner.** *In use by 3 agents, 2 hidden
+  browsers and 1 visible window* showed as far as *1 visible wi*: 54 characters
+  whole, the 55th cut, in the crop at 1.5 s of the first round's ready toast. Read
+  again from that crop on 2026-10-10: the text runs from about 56 to 387 px of the
+  420 px crop, about 331 px, and `TextRenderer.MeasureText` gives the 54 characters
+  330 px in Segoe UI at 14 px on this machine. That count is
+  `UpdateToastContent.HoldersLineCharacters`, which the shorter line of 2.3 a is
+  held to ([numbers](../numbers.md)).
+
+**The conditions, read before every round, 112 of 112:** no input for 1,021 to
+4,777 s; the session unlocked and the input desktop `Default`;
+`SHQueryUserNotificationState` 5, the quiet-hours profile 0, no focus session, the
+notifier `Enabled`, and no value under the application's notification key that turns
+banners off; every process of the rig started with no window. The Notification
+Centre held exactly the round's own toast after every show, and every round's
+cleanup removed its own group and left 0.
+
+**Re-establish it** with the batch's `rig/rig.ps1.txt` saved as `rig.ps1` beside
+`Rig.cs` and `hand.ps1`, run by Windows PowerShell 5.1:
+`powershell -NoProfile -ExecutionPolicy Bypass -File rig.ps1 -Mode run -Plan core`.
+The six batches' logs name their plans, in order `core`, `long`, `pair`, `long2`,
+`pair` and `S4,S4`, and the findings say the last two ran with the event hand built
+from `rig/evhand` and passed as `-HandExe`; `-Mode dry` raises nothing, and
+`summarize.ps1` turns the logs into the summary. Every banner chimes, so run it with the person away and the
+screen unlocked. It removes its own groups and nothing else; what it leaves is
+Windows' own count of the shell's notifications, which went from 40 to 392 that
+night.
 
 ### What the hand-written interop met in Windows' own metadata and objects -- read and run 2026-10-08
 

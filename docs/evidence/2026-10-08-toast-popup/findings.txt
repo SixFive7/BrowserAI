@@ -1,0 +1,116 @@
+## Toast popup measurement, 2026-10-08 22:45Z to 23:48Z: results
+
+**Answer:** lane UI's design holds up. Removing the old toast and showing the new one under its own tag put a banner on screen **85 of 86 times** while the old banner was still showing. A first show managed 111 of 112, so that is as good as Windows gets. Replacing a toast under the same tag managed only **58 of 77** (p = 3.0e-6, Fisher exact). "A banner every time" is close but not exact: there was one miss in 86, and the toast events don't report it.
+
+I ran 112 rounds with 300 shows. No round was aborted, no input arrived, and the screen never locked. I could not write `FINDINGS.md`, because sub-agents are told not to write findings `.md` files. Everything is below so you can save it there.
+
+### Results by scenario
+
+| # | Scenario | Banners | Sound |
+|---|---|---|---|
+| 1 | Remove ready, show installing under its own tag, same process | 6/6 after a 5 s countdown; 10/10 after 60 s | same |
+| 2 | Installing raised by process A, installed raised by a new process B (removes the others first) | installed 6/6; installing 6/6 | same |
+| 3 | The same, with failed raised by process B | failed 6/6 | same |
+| 4 | Quiet re-raise (`SuppressPopup`) from a new process, after a normal ready banner and an emulated "Wait for inactivity" click | **0/8**; the normal ready banner before it 8/8 | 0/8 |
+| 5 | Control: same tag replaced in place, 3 s apart | 1st replacement 26/36; 2nd 32/36 | same |
+| 5L | The same after 60 s on screen | 1st replacement 5/10; 2nd 10/10 | same |
+| 6 (added) | Scenario 5's exact timeline, raised the product's way | ready 29/30; installing 29/30; installed 30/30 | same |
+
+**How a banner was detected:**
+- **Pixels:** the bottom-right corner of the screen above the taskbar was sampled every 40 ms and compared with a baseline frame taken after 2 s of stillness. A banner changed 50,165 to 99,316 pixels; a miss changed 0 or 1.
+- **Image:** a crop of that corner was saved 1.5 s after each show. I checked the contact sheets by eye.
+- **Sound:** the peak meter of the system-sounds audio session. Every one of the 271 banners sounded (median 124 ms after `Show` returned, range 64 to 1135 ms), and none of the 29 misses did.
+
+**Scenario 4 in detail:**
+- The quiet toast was in the Notification Centre all 8 times. That comes from the History API only; I did not open the Notification Centre.
+- 40 of 40 countdown updates on the quiet toast succeeded, and no banner appeared.
+- The event hand recorded `Dismissed(TimedOut)` 27 to 28 ms after the quiet show, 2 of 2.
+
+**Notification Centre state:** after every show the history held exactly that round's one toast, and 0 other toasts under the app id. Every round's cleanup left 0 behind.
+
+### Why same-tag replacements go silent
+
+What it correlates with:
+- **The replaced banner was on screen:** 19 of 77 silent. When the previous replacement had already been silent, so nothing was showing, 15 of 15 popped.
+- **How long that banner had been up:** 5 of 10 silent after 60 s, against 14 of 67 after 3 s. That difference (p = 0.11) is suggestive only.
+
+What does not explain it:
+- **Input:** there was none all night. The 2026-10-08 daytime run, with him at the machine, had 2 of 5 silent.
+- **Mouse position:** the cursor never moved from (1837,2017), far from the banner.
+- **Timing:** silent and popped replacements came at the same 3.0 to 3.04 s.
+- **A slow call:** silent calls took 2 to 11 ms.
+- **The Notification Centre:** it always held one toast, replaced in place.
+
+**No event reports a silent replacement.** The event hand saw zero Dismissed, Failed or Activated events across 7 silent same-tag replacements (and 83 other shows), while the quiet positive control fired as expected. So a missed banner cannot be caught and raised again from those events.
+
+The two misses with separate tags:
+- **The first-show miss:** its `Show` call took 6016 ms, against a median of 5.5 ms, and the removals just before it were slow too (184 and 82 ms).
+- **The installing miss:** 3.1 s after its ready banner appeared, with removals of about 30 ms each and a 9 ms show.
+
+Both happened before the event hand existed, so whether they raise an event is not measured.
+
+### Conditions, checked before every round (112 of 112)
+- **Away:** no input for 1021 to 4777 s at round start, and 5051 s at 23:52Z. The idle counter never reset during the run.
+- **Unlocked:** WTS session flags read unlocked and the input desktop was `Default`.
+- **Nothing suppressing banners:**
+  - `SHQueryUserNotificationState` read 5 (accepts notifications).
+  - The quiet-hours profile read 0 (unrestricted).
+  - No focus session was active and the notifier setting was `Enabled`.
+  - The per-app registry key held no banner-off values.
+- **Nothing of the rig on screen:** every process was started windowless.
+
+### What it means for lane UI, and what I'd change
+1. **Keep the design and record the measurement (recommended).** Replace the remark in `UpdateToastContent.cs` that says "pops up every time is the reading, not a measurement" with 85 of 86 (plus 2 of 2 with no banner showing), and the first-show rate of 111 of 112. Add it to `kb/windows/notifications.md` beside the old 4-of-6 entry.
+2. **Same tag for all toasts:** rejected; measured at 58 of 77.
+3. **Detect a missed banner and raise again:** there is no event to detect it with, so not recommended.
+4. **Always raise twice:** that would double the banner and the chime about 99% of the time. Rejected.
+
+The product's real case, a ready banner up for about 10 minutes before Installing replaces it, is measured only up to 60 s (10 of 10).
+
+### Other things found
+- **The holders line is clipped.** "In use by 3 agents, 2 hidden browsers and 1 visible window" shows as "…1 visible wi" in the 362 px banner (see `out\shots\r01-S1-ready-1500.png`).
+- **A firewall prompt is on his screen.** A Windows Defender Firewall dialog (`PickerHost.exe FirewallNotificationDialogServer`, pid 63060) appeared at 23:19:41Z and has the foreground. The rig did not start it and I left it alone. I couldn't tell which program triggered it. Banners kept popping the same after it appeared.
+- **Quiet flag not kept in history:** a toast read back from history reports `SuppressPopup` as false even for the quiet one.
+
+### Cleanup proof
+- **Toasts:** each round removed its own group, never `Clear(appId)`. The history for Windows PowerShell's app id read 0 at 23:49:01Z, as it did before the run.
+- **Processes:** I checked all 140 processes I recorded, plus 4 from the dry runs: none is still running. Four of those pids now belong to later processes (chrome, conhost twice, sleep), confirmed by start time; I didn't touch them.
+- **Registry:** the Notifications key was exported before and after. The only differences are Windows' own counters for the PowerShell app:
+  - `PeriodicNotificationCount` went from 40 to 392.
+  - `LastNotificationAddedTime` went from 14:05:32Z to 23:47:51Z.
+  - `IsOptOutCandidate` is still 0.
+
+  `PushNotifications` and `Classes\AppUserModelId` did not change. The rig created no registry value and no shortcut.
+- **Start Menu:** `BrowserAI (suite).lnk` disappeared during the run. The rig didn't touch it. Lane arch holds the suite lock (ordinary gate since 23:42Z), so its suite probably removed it; I did not verify that.
+- **Screen captures:** the one full-corner capture and the dry-run shots were deleted after reading. What's kept is 219 crops of the strip where banners appear (wallpaper plus our toasts only; the banner position matched in every show) and 14 contact sheets. I did not take the suite lock; nothing needed it.
+
+### Decisions and deviations
+- **Many more rounds than "about six":** 112 rounds, which played about 271 chimes on the default speaker (volume 0.50) between 22:45Z and 23:48Z. The brief said "at least 6", and the extra rounds are what settled the comparison. I dropped a prepared 300 s batch to avoid more chimes.
+- **Group names:** each round used its own group, `browserai-tp-<time>-rNN`, with the product's tags, so no other toast under PowerShell's app id could be touched.
+- **Event hand:** I built a small .NET 10 process (`evhand`) to record toast events; the last two batches used it.
+- **Overwritten crops:** crop file names repeated across batches, so later batches overwrote earlier full-size crops. The contact sheets keep every shot at half size.
+- **Countdown timing:** the first countdown update came at about 1.5 s instead of 1 s.
+
+### Questions for the maintainer
+1. **The lane UI change.** Keep the separate-tag design and replace the "reading, not a measurement" remark and the kb entry with tonight's numbers? Options:
+   - (a) Keep and record (recommended).
+   - (b) Switch to one tag (measured worse).
+   - (c) Add a retry (no event exists to trigger it).
+2. **Windows' counter for PowerShell notifications.** It rose from 40 to 392 because of these toasts. Windows uses it to decide whether to suggest turning that app's notifications off; it is not flagging PowerShell yet. Options:
+   - (a) Leave it and watch for a suggestion (recommended, since nothing changes unless he clicks one).
+   - (b) Write back 40 and the old timestamp.
+3. **The clipped holders line.** Options:
+   - (a) Shorten the wording, for example "3 agents, 2 hidden browsers, 1 window" (recommended).
+   - (b) Move it to a bound text line, which would wrap but was not measured.
+   - (c) Leave it.
+
+Everything is in `C:\Source\SixFive7\BrowserAI\.work\toast-popup\`:
+- `out\shows.csv`: all 300 shows
+- `out\summary.txt`
+- `out\tables.txt`
+- `out\rounds-run-*.jsonl`
+- `out\rig-run-*.log`
+- `out\sheets\`
+- `out\shots\`
+- `snap\`: the registry exports
+- the rig scripts: `rig.ps1`, `Rig.cs`, `hand.ps1`, `evhand\`

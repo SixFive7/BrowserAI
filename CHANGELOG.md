@@ -149,7 +149,10 @@ release body; nothing else depends on it.
   **Changelog** and **Dismiss**; and failed, naming Velopack's log and BrowserAI's. The countdown is
   the progress element's bound fields, which the screen measurement of 2026-10-08 saw update in
   place with no new banner and no sound, and each toast has a tag of its own with the others removed
-  first, because a replacement under one tag popped up again in only 4 of 6. A click reaches a COM
+  first, because a replacement under one tag popped up again in only 4 of 6. Measured on his screen
+  the same night and kept by his 2.1 a of 2026-10-10: a removal followed by a show under the
+  toast's own tag popped up 85 times of 86 while the old banner showed, against 58 of 77 for one
+  tag shared. A click reaches a COM
   activator that the install hooks register for a class derived from the application id, so the
   suite's test pack never takes over a real install's. The background raises the ready and
   installing toasts, and the start Velopack makes after an update raises the installed or the

@@ -1,0 +1,535 @@
+# Scratch rig for the toast-popup measurement, 2026-10-09. Run with Windows PowerShell 5.1:
+#   powershell -NoProfile -ExecutionPolicy Bypass -File rig.ps1 -Mode dry|run -Plan core|long|<codes>
+# Toasts are composed as src/BrowserAI.Core/Updates/UpdateToastContent.cs composes them (commit 25acb977)
+# and raised as UpdateToasts.Raise raises them (remove every other tag, then show), under Windows
+# PowerShell's app id. Each process role is a windowless hand.ps1 started with CreateNoWindow.
+param(
+    [ValidateSet('dry', 'run')] [string]$Mode = 'dry',
+    [string]$Plan = 'core',
+    [string]$Deadline = '2026-10-09T07:00:00Z',
+    [int]$QuietSeconds = 300,
+    [string]$Tag = '',
+    [string]$HandExe = ''
+)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$out = Join-Path $here 'out'
+$shots = Join-Path $out 'shots'
+New-Item -ItemType Directory -Force $out, $shots | Out-Null
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+Add-Type -TypeDefinition (Get-Content -Raw (Join-Path $here 'Rig.cs')) -ReferencedAssemblies System.Drawing, System.Windows.Forms
+[void][TP.Mon]::SetProcessDPIAware()
+[void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+
+$appId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+$psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+$handPath = Join-Path $here 'hand.ps1'
+$hist = [Windows.UI.Notifications.ToastNotificationManager]::History
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId)
+$inv = [Globalization.CultureInfo]::InvariantCulture
+$deadlineUtc = [DateTime]::Parse($Deadline, $inv, [Globalization.DateTimeStyles]::AdjustToUniversal)
+$stamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')
+if ($Tag) { $stamp = "$stamp-$Tag" }
+$logPath = Join-Path $out "rig-$Mode-$stamp.log"
+$resultsPath = Join-Path $out "rounds-$Mode-$stamp.jsonl"
+$script:pids = New-Object System.Collections.Generic.List[string]
+$script:groups = New-Object System.Collections.Generic.List[string]
+$script:handEvents = [ordered]@{}
+
+$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+[TP.Mon]::Region = New-Object System.Drawing.Rectangle ($b.Right - 900), ($b.Bottom - 700), 900, 700
+# The zone a banner can occupy: the right 420 px of the region, above the taskbar (work area ends at 2112).
+$work = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+[TP.Mon]::Zone = New-Object System.Drawing.Rectangle 480, 0, 420, ($work.Bottom - ($b.Bottom - 700) - 2)
+
+function L([string]$s) { [TP.Mon]::Log($s) }
+function Flush-Log { $l = [TP.Mon]::TakeLines(); if ($l.Count -gt 0) { [IO.File]::AppendAllLines($logPath, [string[]]$l) } }
+function Now { return [TP.Mon]::Now() }
+function Ms([long]$qpc) { return [math]::Round([TP.Mon]::FromQpc($qpc), 1) }
+
+# ---- the product's toasts, as UpdateToastContent composes them -----------------------------------
+$Version = '1.2.0'
+$Running = '1.1.0'
+function Esc([string]$s) { return [System.Security.SecurityElement]::Escape($s) }
+function Toast([string]$launch, [string[]]$texts, [string]$progress, [object[]]$buttons)
+{
+    $x = '<toast scenario="reminder" launch="' + (Esc $launch) + '"><visual><binding template="ToastGeneric">'
+    foreach ($t in $texts) { $x += '<text>' + (Esc $t) + '</text>' }
+    $x += $progress + '</binding></visual><actions>'
+    foreach ($bt in $buttons) { $x += '<action content="' + (Esc $bt[0]) + '" arguments="' + (Esc $bt[1]) + '" activationType="background"/>' }
+    return $x + '</actions></toast>'
+}
+$XmlReady = Toast "action=update-page&version=$Version" @("BrowserAI $Version is ready to install", 'It installs by itself once BrowserAI has been idle.', 'After the update: 1 Claude Code terminal needs /mcp, BrowserAI, Reconnect.') '<progress title="{progressTitle}" value="{progressValue}" valueStringOverride="{progressValueString}" status="{progressStatus}"/>' @(@('Install now', "action=install-now&version=$Version"), @('Wait for inactivity', "action=wait&version=$Version"))
+$XmlInstalling = Toast 'action=dismiss' @("Installing BrowserAI $Version now", 'BrowserAI starts again by itself when it is done.') '' @(, @('Dismiss', 'action=dismiss'))
+$XmlInstalled = Toast "action=changelog&version=$Version" @("BrowserAI $Version is installed") '' @(@('Changelog', "action=changelog&version=$Version"), @('Dismiss', 'action=dismiss'))
+$XmlFailed = Toast 'action=dismiss' @("The update to $Version failed", "BrowserAI $Running is still installed.", "What happened is in Velopack's log, %LocalAppData%\velopack\velopack_BrowserAI.log, and in BrowserAI's log in %LocalAppData%\BrowserAI\logs.") '' @(, @('Dismiss', 'action=dismiss'))
+$Xml = @{ ready = $XmlReady; installing = $XmlInstalling; installed = $XmlInstalled; failed = $XmlFailed }
+$Expires = @{ ready = $true; installing = $true; installed = $false; failed = $false }
+$Tags = @('ready', 'installing', 'installed', 'failed')
+$script:endsAt = (Get-Date).AddMinutes(10)
+function ReadyData([int]$k)
+{
+    # UpdateToastContent.ReadyData for a ten-minute countdown, k seconds in.
+    $left = 600 - $k
+    return [ordered]@{
+        progressTitle = 'In use by 3 agents, 2 hidden browsers and 1 visible window'
+        progressStatus = ('Installs in {0}:{1:00} if nothing uses it' -f [int][math]::Floor($left / 60), ($left % 60))
+        progressValueString = 'at ' + $script:endsAt.ToString('HH:mm', $inv)
+        progressValue = ($k / 600.0).ToString('0.0000', $inv)
+    }
+}
+
+# ---- hands --------------------------------------------------------------------------------------
+function Start-Hand([string]$name, [switch]$NoShow)
+{
+    if ($HandExe)
+    {
+        $argLine = '--app-id "{0}" --name {1}' -f $appId, $name
+        if ($NoShow) { $argLine += ' --no-show' }
+        $h = New-Object TP.Hand $HandExe, $argLine
+    }
+    else
+    {
+        $argLine = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -AppId "{1}" -Name {2}' -f $handPath, $appId, $name
+        if ($NoShow) { $argLine += ' -NoShow' }
+        $h = New-Object TP.Hand $psExe, $argLine
+    }
+    $script:pids.Add(('{0} {1} {2}' -f $h.Pid, $h.StartUtc.ToString('o'), $name))
+    $r = $h.Next(60000)
+    if (-not $r) { throw "hand $name (pid $($h.Pid)) did not report ready: $($h.Errors)" }
+    L "HAND $name pid=$($h.Pid) started=$($h.StartUtc.ToString('o')) ready=$r"
+    return $h
+}
+
+function Close-Hand($h, [string]$name)
+{
+    if ($null -eq $h) { return }
+    if ($HandExe -and -not $h.HasExited)
+    {
+        try
+        {
+            $r = $h.Send('{"op":"events"}', 5000)
+            if ($r)
+            {
+                $x = ConvertFrom-Json $r
+                $script:handEvents[$name] = @($x.events | ForEach-Object { [ordered]@{ tag = $_.tag; serial = $_.serial; kind = $_.kind; detail = $_.detail; ms = (Ms $_.qpc) } })
+                foreach ($e in $script:handEvents[$name]) { L ("EVENT {0} tag={1} serial={2} {3} {4} at {5}" -f $name, $e.tag, $e.serial, $e.kind, $e.detail, $e.ms) }
+            }
+        }
+        catch { L "EVENTS from $name failed: $($_.Exception.Message)" }
+    }
+    $ok = $h.Close(15000)
+    if (-not $ok) { $h.Kill(); L "HAND $name pid=$($h.Pid) did not exit in 15 s and was killed" }
+    else { L "HAND $name pid=$($h.Pid) exited code=$($h.ExitCode) stderr='$($h.Errors.Trim())'" }
+}
+
+function Op($h, [string]$who, [hashtable]$o, [int]$timeout = 15000)
+{
+    $json = ConvertTo-Json -InputObject $o -Compress -Depth 6
+    $r = $h.Send($json, $timeout)
+    if (-not $r) { throw "no reply from $who to $($o.op): $($h.Errors)" }
+    $x = ConvertFrom-Json $r
+    if ($x.error) { throw "$who $($o.op) failed: $($x.error) raw[$($x.rawLength) of $($json.Length)]='$($x.raw)' sent='$($json.Substring(0, [Math]::Min(400, $json.Length)))'" }
+    return $x
+}
+
+# ---- conditions ---------------------------------------------------------------------------------
+function Get-Focus
+{
+    try
+    {
+        [void][Windows.UI.Shell.FocusSessionManager, Windows.UI.Shell, ContentType = WindowsRuntime]
+        if (-not [Windows.UI.Shell.FocusSessionManager]::IsSupported) { return 'unsupported' }
+        return [string][Windows.UI.Shell.FocusSessionManager]::GetDefault().IsFocusActive
+    }
+    catch { return 'unreadable: ' + $_.Exception.Message }
+}
+
+function Get-Cond
+{
+    return [ordered]@{
+        utc = [DateTime]::UtcNow.ToString('o')
+        idleS = [math]::Round([TP.Cond]::IdleSeconds(), 1)
+        lock = [TP.Cond]::SessionLock()
+        desktop = [TP.Cond]::InputDesktop()
+        quns = [TP.Cond]::NotificationState()
+        quietHours = [TP.Cond]::Wnf([TP.Cond]::QuietHoursProfile)
+        focusSession = (Get-Focus)
+        setting = [string]$notifier.Setting
+        cursor = [TP.Cond]::Cursor()
+        foreground = [TP.Cond]::Foreground()
+    }
+}
+
+function Test-Locked($c) { return ($c.lock -ne 'unlocked') -or ($c.desktop -ne 'Default') }
+function Test-Suppressed($c)
+{
+    $why = @()
+    if ($c.quns -ne 5) { $why += "quns=$($c.quns)" }
+    if (($c.quietHours -match '^\d') -and -not ($c.quietHours -like '0 *')) { $why += "quietHours=$($c.quietHours)" }
+    if ($c.focusSession -eq 'True') { $why += 'focusSession=True' }
+    if ($c.setting -ne 'Enabled') { $why += "setting=$($c.setting)" }
+    return $why
+}
+
+# Waits until the person has been away QuietSeconds, the session is unlocked and nothing suppresses
+# banners. Throws LOCKED on a locked session and DEADLINE past the deadline.
+function Wait-Conditions
+{
+    $logged = ''
+    while ($true)
+    {
+        $c = Get-Cond
+        if (Test-Locked $c) { L ("COND locked: " + ($c | ConvertTo-Json -Compress)); throw 'LOCKED' }
+        $sup = @(Test-Suppressed $c)
+        if ($c.idleS -ge $QuietSeconds -and $sup.Count -eq 0) { return $c }
+        if ([DateTime]::UtcNow -ge $deadlineUtc) { L 'COND deadline reached while waiting'; throw 'DEADLINE' }
+        $state = $(if ($sup.Count -gt 0) { 'suppressed: ' + ($sup -join ', ') } else { 'not idle long enough' })
+        if ($state -ne $logged) { L ("COND waiting, $state; " + ($c | ConvertTo-Json -Compress)); $logged = $state; Flush-Log }
+        Start-Sleep -Seconds 5
+    }
+}
+
+function Wait-Ms([double]$ms)
+{
+    $end = (Now) + $ms
+    $nextLock = 0
+    while ((Now) -lt $end)
+    {
+        if ([TP.Mon]::InputSeen) { throw 'INPUT' }
+        if ((Now) -ge $nextLock)
+        {
+            if ([TP.Cond]::SessionLock() -ne 'unlocked') { throw 'LOCKED' }
+            $nextLock = (Now) + 500
+        }
+        Start-Sleep -Milliseconds 15
+    }
+}
+function Wait-Until([double]$t) { Wait-Ms ($t - (Now)) }
+
+# Waits until nothing in the zone has moved for 2 s, then takes the baseline frame and the audio baseline.
+function Settle
+{
+    $limit = (Now) + 20000
+    $last = [TP.Mon]::MotionFrames
+    $since = Now
+    while ((Now) - $since -lt 2000)
+    {
+        Start-Sleep -Milliseconds 100
+        if ([TP.Mon]::MotionFrames -ne $last) { $last = [TP.Mon]::MotionFrames; $since = Now }
+        if ((Now) -gt $limit) { L 'SETTLE zone kept moving for 20 s; baseline taken anyway'; break }
+    }
+    [TP.Mon]::SetBaseline()
+    [TP.Mon]::AudioBaseline(800)
+    Start-Sleep -Milliseconds 100
+    L "SETTLE baseline taken, presence now $([TP.Mon]::Presence)"
+}
+
+# ---- one show, measured -------------------------------------------------------------------------
+function Shot([string]$label)
+{
+    $p = Join-Path $shots "$label.png"
+    $r = [TP.Mon]::SaveZone($p)
+    $parts = $r.Split('|')
+    return [ordered]@{ px = [int]$parts[0]; box = $parts[1]; file = (Split-Path $p -Leaf); at = [math]::Round((Now), 1) }
+}
+
+# UpdateToasts.Raise: remove every other tag of the group, then show. Measures the banner and sound.
+function Raise($h, [string]$who, [string]$group, [string]$tag, [hashtable]$opts, [string]$label, [object]$round)
+{
+    $rec = [ordered]@{ label = $label; tag = $tag; process = $who; suppress = [bool]$opts.suppress }
+    $rec.presenceBeforeOps = [TP.Mon]::Presence
+    $removed = @()
+    if (-not $opts.sameTag)
+    {
+        foreach ($other in $Tags) { if ($other -ne $tag) { $x = Op $h $who @{ op = 'remove'; tag = $other; group = $group }; $removed += [ordered]@{ tag = $other; ms = (Ms $x.z); err = $x.err } } }
+    }
+    $rec.removed = $removed
+    $rec.presenceBeforeShow = [TP.Mon]::Presence
+    $o = @{ op = 'show'; tag = $tag; group = $group; xml = $Xml[$opts.kind]; expiresOnReboot = $Expires[$opts.kind] }
+    if ($opts.suppress) { $o.suppress = $true }
+    if ($opts.kind -eq 'ready') { $o.data = (ReadyData 0); $o.seq = 1 }
+    $x = Op $h $who $o
+    $t = Ms $x.a
+    $rec.showMs = $t
+    $rec.showCallMs = [math]::Round((Ms $x.z) - $t, 1)
+    $rec.composed = $x.composed
+    $rec.histBefore = $x.histBefore
+    $rec.histAfter = $x.hist
+    if ($round.lastShowMs) { $rec.sinceLastShowMs = [math]::Round($t - $round.lastShowMs, 1) }
+    $round.lastShowMs = $t
+    L ("SHOW {0} tag={1} by {2} at {3} quiet={4} presenceBeforeOps={5} presenceBeforeShow={6} hist={7}" -f $label, $tag, $who, $t, [bool]$opts.suppress, $rec.presenceBeforeOps, $rec.presenceBeforeShow, ($x.hist | ConvertTo-Json -Compress))
+    Wait-Until ($t + 1500)
+    $rec.at1500 = Shot ("{0}-1500" -f $label)
+    return $rec
+}
+
+function Finish-Show($rec)
+{
+    $t = $rec.showMs
+    $rec.sound = [TP.Mon]::Peak(1, $t, $t + 2000, 0.01)
+    $rec.otherAudio = [TP.Mon]::Peak(2, $t, $t + 2000, 0.01)
+    $rec.motion = [TP.Mon]::Peak(3, $t, $t + 1500, 1)
+    $rec.banner = ($rec.at1500.px -ge 3000)
+    L ("RESULT {0}: banner={1} px1500={2} box={3} sound={4} motion={5}" -f $rec.label, $rec.banner, $rec.at1500.px, $rec.at1500.box, $rec.sound, $rec.motion)
+}
+
+function Countdown($h, [string]$who, [string]$group, [string]$tag, [double]$t0, [int]$seconds, [int]$firstK, $round)
+{
+    $res = @{}
+    for ($k = $firstK; $k -lt $firstK + $seconds; $k++)
+    {
+        Wait-Until ($t0 + 1000 * ($k - $firstK + 1))
+        $x = Op $h $who @{ op = 'update'; tag = $tag; group = $group; seq = ($k + 1); data = (ReadyData $k) }
+        $res[$x.result] = 1 + [int]$res[$x.result]
+    }
+    $round.updates = $res
+    L ("COUNTDOWN {0} updates: {1}" -f $seconds, (($res.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', '))
+}
+
+# ---- scenarios ----------------------------------------------------------------------------------
+# S1  ready (countdown N s) then installing, separate tags, one process (the background).
+# S2  installing by process A, then installed by a new process B (the after-update start).
+# S3  installing by process A, then failed by a new process B.
+# S4  ready shown and removed (the click on Wait for inactivity), then the quiet re-raise by a new process.
+# S5  control: ready, installing and installed under ONE tag, replaced in place, 3 s apart (run R of 2026-10-08).
+# S1L and S5L: the same with a 60 s countdown before the first replacement.
+function Run-Round([string]$code, [int]$n, $round)
+{
+    $group = $round.group
+    $suffix = $code.Substring(2)
+    $base = $code.Substring(0, 2)
+    $countdown = $(switch ($suffix) { 'L' { 60 } 'X' { 300 } default { 5 } })
+    $cdSame = $(switch ($suffix) { 'L' { 59 } 'X' { 299 } default { 2 } })
+    $shows = New-Object System.Collections.Generic.List[object]
+    $round.shows = $shows
+    $script:handEvents = [ordered]@{}
+    $round.events = $script:handEvents
+    $A = $null; $B = $null
+    try
+    {
+        $A = Start-Hand "r$n-A"
+        if ($base -in @('S2', 'S3', 'S4')) { $B = Start-Hand "r$n-B" }
+        Settle
+        [TP.Mon]::ArmInput()
+        $round.armedAt = [math]::Round((Now), 1)
+        switch ($base)
+        {
+            'S1'
+            {
+                $s = Raise $A 'A' $group 'ready' @{ kind = 'ready' } ("r{0:00}-{1}-ready" -f $n, $code) $round
+                $shows.Add($s)
+                Countdown $A 'A' $group 'ready' $s.showMs $countdown 1 $round
+                Wait-Until ($s.showMs + 1000 * ($countdown + 1))
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $A 'A' $group 'installing' @{ kind = 'installing' } ("r{0:00}-{1}-installing" -f $n, $code) $round
+                $shows.Add($s2)
+                Wait-Until ($s2.showMs + 4000)
+                $s2.at4000 = Shot ("r{0:00}-{1}-installing-4000" -f $n, $code)
+            }
+            'S2'
+            {
+                $s = Raise $A 'A' $group 'installing' @{ kind = 'installing' } ("r{0:00}-S2-installing" -f $n) $round
+                $shows.Add($s)
+                Wait-Until ($s.showMs + 3000)
+                Close-Hand $A "r$n-A"; $A = $null
+                Wait-Until ($s.showMs + 8000)
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $B 'B' $group 'installed' @{ kind = 'installed' } ("r{0:00}-S2-installed" -f $n) $round
+                $shows.Add($s2)
+                Wait-Until ($s2.showMs + 4000)
+                $s2.at4000 = Shot ("r{0:00}-S2-installed-4000" -f $n)
+            }
+            'S3'
+            {
+                $s = Raise $A 'A' $group 'installing' @{ kind = 'installing' } ("r{0:00}-S3-installing" -f $n) $round
+                $shows.Add($s)
+                Wait-Until ($s.showMs + 3000)
+                Close-Hand $A "r$n-A"; $A = $null
+                Wait-Until ($s.showMs + 8000)
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $B 'B' $group 'failed' @{ kind = 'failed' } ("r{0:00}-S3-failed" -f $n) $round
+                $shows.Add($s2)
+                Wait-Until ($s2.showMs + 4000)
+                $s2.at4000 = Shot ("r{0:00}-S3-failed-4000" -f $n)
+            }
+            'S4'
+            {
+                $s = Raise $A 'A' $group 'ready' @{ kind = 'ready' } ("r{0:00}-S4-ready" -f $n) $round
+                $shows.Add($s)
+                Wait-Until ($s.showMs + 3000)
+                $x = Op $A 'A' @{ op = 'remove'; tag = 'ready'; group = $group }
+                $round.clickRemovedMs = Ms $x.z
+                $round.histAfterClick = $x.hist
+                L ("CLICK emulated: ready removed at {0}, hist={1}" -f (Ms $x.z), ($x.hist | ConvertTo-Json -Compress))
+                Close-Hand $A "r$n-A"; $A = $null
+                Wait-Until ($s.showMs + 6000)
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $B 'B' $group 'ready' @{ kind = 'ready'; suppress = $true } ("r{0:00}-S4-quiet" -f $n) $round
+                $shows.Add($s2)
+                Countdown $B 'B' $group 'ready' $s2.showMs 5 1 $round
+                Wait-Until ($s2.showMs + 5500)
+                $s2.at5500 = Shot ("r{0:00}-S4-quiet-5500" -f $n)
+                $round.histEnd = (Op $B 'B' @{ op = 'hist'; group = $group }).hist
+            }
+            'S5'
+            {
+                $s = Raise $A 'A' $group 'update' @{ kind = 'ready'; sameTag = $true } ("r{0:00}-{1}-ready" -f $n, $code) $round
+                $shows.Add($s)
+                $cd5 = $cdSame
+                Countdown $A 'A' $group 'update' $s.showMs $cd5 1 $round
+                Wait-Until ($s.showMs + 1000 * ($cd5 + 1))
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $A 'A' $group 'update' @{ kind = 'installing'; sameTag = $true } ("r{0:00}-{1}-installing" -f $n, $code) $round
+                $shows.Add($s2)
+                Wait-Until ($s2.showMs + 3000)
+                $round.presenceBeforeReplace2 = [TP.Mon]::Presence
+                $s3 = Raise $A 'A' $group 'update' @{ kind = 'installed'; sameTag = $true } ("r{0:00}-{1}-installed" -f $n, $code) $round
+                $shows.Add($s3)
+                Wait-Until ($s3.showMs + 3000)
+            }
+            'S6'
+            {
+                # S5's timeline exactly, raised the product's way: each toast under its own tag, the others removed first.
+                $s = Raise $A 'A' $group 'ready' @{ kind = 'ready' } ("r{0:00}-{1}-ready" -f $n, $code) $round
+                $shows.Add($s)
+                $cd6 = $cdSame
+                Countdown $A 'A' $group 'ready' $s.showMs $cd6 1 $round
+                Wait-Until ($s.showMs + 1000 * ($cd6 + 1))
+                $round.presenceBeforeReplace = [TP.Mon]::Presence
+                $s2 = Raise $A 'A' $group 'installing' @{ kind = 'installing' } ("r{0:00}-{1}-installing" -f $n, $code) $round
+                $shows.Add($s2)
+                Wait-Until ($s2.showMs + 3000)
+                $round.presenceBeforeReplace2 = [TP.Mon]::Presence
+                $s3 = Raise $A 'A' $group 'installed' @{ kind = 'installed' } ("r{0:00}-{1}-installed" -f $n, $code) $round
+                $shows.Add($s3)
+                Wait-Until ($s3.showMs + 3000)
+            }
+        }
+        $round.endHist = (Op $(if ($A) { $A } else { $B }) 'end' @{ op = 'hist'; group = $group }).hist
+    }
+    finally
+    {
+        [TP.Mon]::Armed = $false
+        $c0 = Now
+        try { $hist.RemoveGroup($group, $appId) } catch { L "CLEANUP RemoveGroup $group threw $($_.Exception.Message)" }
+        $round.cleanupMs = [math]::Round($c0, 1)
+        Close-Hand $A "r$n-A"
+        Close-Hand $B "r$n-B"
+        $left = @($hist.GetHistory($appId) | Where-Object { $_.Group -eq $group }).Count
+        $round.leftInHistory = $left
+        Start-Sleep -Milliseconds 1500
+        $round.presenceAfterCleanup = [TP.Mon]::Presence
+        foreach ($s in $shows) { Finish-Show $s }
+        L ("CLEANUP {0}: removed group, {1} left in history, presence after 1.5 s {2}" -f $group, $left, $round.presenceAfterCleanup)
+    }
+}
+
+# ---- plans --------------------------------------------------------------------------------------
+function Get-Plan([string]$p)
+{
+    switch ($p)
+    {
+        'core' { return @('S1','S2','S3','S4','S5', 'S2','S3','S4','S5','S1', 'S3','S4','S5','S1','S2', 'S4','S5','S1','S2','S3', 'S5','S1','S2','S3','S4', 'S1','S2','S3','S4','S5') }
+        'long' { return @('S1L','S5L','S1L','S5L','S1L','S5L','S1L','S5L') }
+        'long2' { return @('S5L','S1L', 'S1L','S5L', 'S5L','S1L', 'S1L','S5L', 'S5L','S1L', 'S1L','S5L') }
+        'xl' { return @('S1X','S5X','S5X','S1X') }
+        'pair' { return @('S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6', 'S6','S5', 'S5','S6') }
+        default { return @($p.Split(',')) }
+    }
+}
+
+# ---- main ---------------------------------------------------------------------------------------
+L ("clock zero utc=" + [TP.Mon]::ClockZeroUtc.ToString('o') + " mode=$Mode plan=$Plan deadline=$($deadlineUtc.ToString('o'))")
+L "screen=$($b.Width)x$($b.Height) region=$([TP.Mon]::Region) zone=$([TP.Mon]::Zone) work=$work"
+[TP.Mon]::Start()
+Start-Sleep -Milliseconds 1500
+
+if ($Mode -eq 'dry')
+{
+    $c = Get-Cond
+    L ("COND " + ($c | ConvertTo-Json -Compress))
+    $all = @($hist.GetHistory($appId))
+    L ("HISTORY for the app id: {0} toast(s), groups: {1}" -f $all.Count, (($all | ForEach-Object { $_.Group }) -join ','))
+    $h = Start-Hand 'dry' -NoShow
+    $g = 'browserai-tp-dry'
+    foreach ($k in @('ready', 'installing', 'installed', 'failed'))
+    {
+        $o = @{ op = 'show'; tag = $k; group = $g; xml = $Xml[$k]; expiresOnReboot = $Expires[$k] }
+        if ($k -eq 'ready') { $o.data = (ReadyData 0); $o.seq = 1; $o.suppress = $true }
+        $x = Op $h 'dry' $o
+        L ("DRY composed {0}: {1}" -f $k, ($x.composed | ConvertTo-Json -Compress))
+    }
+    $x = Op $h 'dry' @{ op = 'remove'; tag = 'installing'; group = $g }
+    L ("DRY remove of a missing tag: err={0}" -f $x.err)
+    Close-Hand $h 'dry'
+    L ("DRY xml ready: " + $XmlReady)
+    L ("DRY xml failed: " + $XmlFailed)
+    Settle
+    $z = Shot 'dry-zone'
+    L ("DRY zone shot vs baseline: " + ($z | ConvertTo-Json -Compress))
+    Start-Sleep -Milliseconds 500
+    [TP.Mon]::Stop()
+    Flush-Log
+    "dry done: $logPath"
+    "pids: $($script:pids -join '; ')"
+    return
+}
+
+$queue = New-Object System.Collections.Generic.List[string]
+foreach ($p in (Get-Plan $Plan)) { $queue.Add($p) }
+$n = 0
+$i = 0
+$stopReason = 'plan complete'
+try
+{
+    while ($i -lt $queue.Count)
+    {
+        $code = $queue[$i]
+        $c = Wait-Conditions
+        $n++
+        $round = [ordered]@{ n = $n; code = $code; group = ('browserai-tp-{0}-r{1:00}' -f $stamp.Substring(9, 6), $n); cond = $c }
+        $script:groups.Add($round.group)
+        L ("ROUND {0} {1} group={2} cond={3}" -f $n, $code, $round.group, ($c | ConvertTo-Json -Compress))
+        try
+        {
+            Run-Round $code $n $round
+            $round.aborted = $null
+            $i++
+        }
+        catch
+        {
+            $why = $_.Exception.Message
+            $round.aborted = $why
+            L "ROUND $n ABORTED: $why"
+            if ($why -eq 'LOCKED') { $stopReason = 'locked'; break }
+            if ($why -ne 'INPUT') { L ("ROUND $n error detail: " + $_.ScriptStackTrace) }
+            # The round is run again after the next quiet period; the plan does not advance.
+        }
+        finally
+        {
+            $round.condAfter = Get-Cond
+            [IO.File]::AppendAllText($resultsPath, (ConvertTo-Json -InputObject $round -Compress -Depth 8) + "`n")
+            Flush-Log
+        }
+        if ($round.aborted -and $round.aborted -ne 'INPUT') { $stopReason = "error: $($round.aborted)"; break }
+        Start-Sleep -Seconds 8
+    }
+}
+catch
+{
+    $stopReason = $_.Exception.Message
+    L "RUN stopped: $stopReason"
+}
+finally
+{
+    foreach ($g in $script:groups) { try { $hist.RemoveGroup($g, $appId) } catch { } }
+    $mine = @($hist.GetHistory($appId) | Where-Object { $script:groups -contains $_.Group }).Count
+    L ("FINAL cleanup: {0} of the run's toasts left in history; stop reason: {1}" -f $mine, $stopReason)
+    L ("PIDS " + ($script:pids -join '; '))
+    [TP.Mon]::Stop()
+    Flush-Log
+}
+"run done ($stopReason): $logPath"
+"results: $resultsPath"
+"pids: $($script:pids -join '; ')"

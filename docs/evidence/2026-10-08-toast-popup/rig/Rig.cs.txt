@@ -1,0 +1,834 @@
+// Scratch rig for the toast-popup measurement, 2026-10-09. Compiled by Windows PowerShell 5.1's
+// Add-Type, so C# 5. The audio and pixel parts are adapted from .work/step0-screen/part1/Monitor.cs.
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+
+namespace TP
+{
+    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+    public class MMDeviceEnumeratorCo
+    {
+    }
+
+    [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceEnumerator
+    {
+        [PreserveSig] int EnumAudioEndpoints(int dataFlow, int stateMask, out IMMDeviceCollection devices);
+        [PreserveSig] int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice device);
+    }
+
+    [ComImport, Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceCollection
+    {
+        [PreserveSig] int GetCount(out uint count);
+        [PreserveSig] int Item(uint index, out IMMDevice device);
+    }
+
+    [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDevice
+    {
+        [PreserveSig] int Activate(ref Guid iid, int clsCtx, IntPtr activationParams, [MarshalAs(UnmanagedType.IUnknown)] out object iface);
+        [PreserveSig] int OpenPropertyStore(int access, out IntPtr store);
+        [PreserveSig] int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetState(out int state);
+    }
+
+    [ComImport, Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionManager2
+    {
+        [PreserveSig] int GetAudioSessionControl(IntPtr sessionGuid, int streamFlags, out IntPtr control);
+        [PreserveSig] int GetSimpleAudioVolume(IntPtr sessionGuid, int streamFlags, out IntPtr volume);
+        [PreserveSig] int GetSessionEnumerator(out IAudioSessionEnumerator sessionEnum);
+    }
+
+    [ComImport, Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionEnumerator
+    {
+        [PreserveSig] int GetCount(out int count);
+        [PreserveSig] int GetSession(int index, [MarshalAs(UnmanagedType.IUnknown)] out object session);
+    }
+
+    [ComImport, Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioSessionControl2
+    {
+        [PreserveSig] int GetState(out int state);
+        [PreserveSig] int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string name);
+        [PreserveSig] int SetDisplayName(IntPtr name, IntPtr context);
+        [PreserveSig] int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string path);
+        [PreserveSig] int SetIconPath(IntPtr path, IntPtr context);
+        [PreserveSig] int GetGroupingParam(out Guid grouping);
+        [PreserveSig] int SetGroupingParam(ref Guid grouping, IntPtr context);
+        [PreserveSig] int RegisterAudioSessionNotification(IntPtr notifications);
+        [PreserveSig] int UnregisterAudioSessionNotification(IntPtr notifications);
+        [PreserveSig] int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string id);
+        [PreserveSig] int GetProcessId(out uint pid);
+        [PreserveSig] int IsSystemSoundsSession();
+        [PreserveSig] int SetDuckingPreference(bool optOut);
+    }
+
+    [ComImport, Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioMeterInformation
+    {
+        [PreserveSig] int GetPeakValue(out float peak);
+    }
+
+    [ComImport, Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioEndpointVolume
+    {
+        [PreserveSig] int RegisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int UnregisterControlChangeNotify(IntPtr notify);
+        [PreserveSig] int GetChannelCount(out uint count);
+        [PreserveSig] int SetMasterVolumeLevel(float level, IntPtr context);
+        [PreserveSig] int SetMasterVolumeLevelScalar(float level, IntPtr context);
+        [PreserveSig] int GetMasterVolumeLevel(out float level);
+        [PreserveSig] int GetMasterVolumeLevelScalar(out float level);
+        [PreserveSig] int SetChannelVolumeLevel(uint channel, float level, IntPtr context);
+        [PreserveSig] int SetChannelVolumeLevelScalar(uint channel, float level, IntPtr context);
+        [PreserveSig] int GetChannelVolumeLevel(uint channel, out float level);
+        [PreserveSig] int GetChannelVolumeLevelScalar(uint channel, out float level);
+        [PreserveSig] int SetMute(bool mute, IntPtr context);
+        [PreserveSig] int GetMute(out bool mute);
+    }
+
+    /// Read-only checks of the conditions the brief sets before every round.
+    public static class Cond
+    {
+        [StructLayout(LayoutKind.Sequential)]
+        struct LASTINPUTINFO
+        {
+            public uint cbSize;
+            public uint dwTime;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO p);
+        [DllImport("kernel32.dll")] static extern uint GetTickCount();
+        [DllImport("wtsapi32.dll", SetLastError = true)] static extern bool WTSQuerySessionInformationW(IntPtr server, int session, int infoClass, out IntPtr buffer, out int bytes);
+        [DllImport("wtsapi32.dll")] static extern void WTSFreeMemory(IntPtr p);
+        [DllImport("kernel32.dll")] static extern bool ProcessIdToSessionId(uint pid, out uint session);
+        [DllImport("kernel32.dll")] static extern uint GetCurrentProcessId();
+        [DllImport("user32.dll", SetLastError = true)] static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool GetUserObjectInformationW(IntPtr obj, int index, StringBuilder info, int length, out int needed);
+        [DllImport("user32.dll")] static extern bool CloseDesktop(IntPtr h);
+        [DllImport("shell32.dll")] static extern int SHQueryUserNotificationState(out int state);
+        [DllImport("ntdll.dll")] static extern int NtQueryWnfStateData(ref ulong stateName, IntPtr typeId, IntPtr explicitScope, out uint changeStamp, byte[] buffer, ref uint bufferSize);
+        [DllImport("user32.dll")] static extern bool GetCursorPos(out POINT p);
+        [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+
+        /// WNF_SHEL_QUIETHOURS_ACTIVE_PROFILE_CHANGED: 0 unrestricted, 1 priority only, 2 alarms only.
+        public const ulong QuietHoursProfile = 0x0D83063EA3BF1C75UL;
+
+        public static double IdleSeconds()
+        {
+            var l = new LASTINPUTINFO();
+            l.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+            if (!GetLastInputInfo(ref l))
+            {
+                return -1;
+            }
+
+            return unchecked(GetTickCount() - l.dwTime) / 1000.0;
+        }
+
+        public static uint LastInputTick()
+        {
+            var l = new LASTINPUTINFO();
+            l.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+            GetLastInputInfo(ref l);
+            return l.dwTime;
+        }
+
+        /// The WTSINFOEX level-1 session flags: 1 unlocked, 0 locked, -1 unknown. The session id read at the
+        /// same offset arithmetic is checked against this process's own, so a wrong layout cannot pass as a state.
+        public static string SessionLock()
+        {
+            IntPtr buf;
+            int bytes;
+            if (!WTSQuerySessionInformationW(IntPtr.Zero, -1, 25, out buf, out bytes))
+            {
+                return "query-failed:" + Marshal.GetLastWin32Error();
+            }
+
+            try
+            {
+                int level = Marshal.ReadInt32(buf, 0);
+                int sessionId = Marshal.ReadInt32(buf, 8);
+                int flags = Marshal.ReadInt32(buf, 16);
+                uint own;
+                ProcessIdToSessionId(GetCurrentProcessId(), out own);
+                if (level != 1 || sessionId != (int)own)
+                {
+                    return "layout-mismatch level=" + level + " session=" + sessionId + " own=" + own;
+                }
+
+                return flags == 1 ? "unlocked" : flags == 0 ? "locked" : "unknown:" + flags;
+            }
+            finally
+            {
+                WTSFreeMemory(buf);
+            }
+        }
+
+        public static string InputDesktop()
+        {
+            IntPtr h = OpenInputDesktop(0, false, 0x0001);
+            if (h == IntPtr.Zero)
+            {
+                return "open-failed:" + Marshal.GetLastWin32Error();
+            }
+
+            try
+            {
+                var sb = new StringBuilder(256);
+                int n;
+                if (!GetUserObjectInformationW(h, 2, sb, 512, out n))
+                {
+                    return "name-failed:" + Marshal.GetLastWin32Error();
+                }
+
+                return sb.ToString();
+            }
+            finally
+            {
+                CloseDesktop(h);
+            }
+        }
+
+        /// 1 not present (saver, locked, other FUS session), 2 busy, 3 D3D full screen, 4 presentation mode,
+        /// 5 accepts notifications, 6 quiet time, 7 app full screen.
+        public static int NotificationState()
+        {
+            int s;
+            return SHQueryUserNotificationState(out s) == 0 ? s : -1;
+        }
+
+        public static string Wnf(ulong name)
+        {
+            var buf = new byte[64];
+            uint size = (uint)buf.Length;
+            uint stamp;
+            int st = NtQueryWnfStateData(ref name, IntPtr.Zero, IntPtr.Zero, out stamp, buf, ref size);
+            if (st != 0)
+            {
+                return "status=0x" + st.ToString("X8");
+            }
+
+            if (size < 4)
+            {
+                return "size=" + size + " stamp=" + stamp;
+            }
+
+            return BitConverter.ToInt32(buf, 0) + " (size=" + size + " stamp=" + stamp + ")";
+        }
+
+        public static string Cursor()
+        {
+            POINT p;
+            GetCursorPos(out p);
+            return p.X + "," + p.Y;
+        }
+
+        public static string Foreground()
+        {
+            IntPtr h = GetForegroundWindow();
+            uint pid;
+            GetWindowThreadProcessId(h, out pid);
+            var c = new StringBuilder(256);
+            GetClassName(h, c, 256);
+            return String.Format("hwnd=0x{0:X} pid={1} class='{2}'", h.ToInt64(), pid, c);
+        }
+    }
+
+    /// The windowless second process that raises toasts on command, one JSON line in, one out.
+    public sealed class Hand
+    {
+        readonly Process p;
+        readonly BlockingCollection<string> lines = new BlockingCollection<string>();
+        readonly StringBuilder err = new StringBuilder();
+        public readonly int Pid;
+        public readonly DateTime StartUtc;
+
+        public Hand(string exe, string args)
+        {
+            var psi = new ProcessStartInfo(exe, args);
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardInput = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
+            p = Process.Start(psi);
+            Pid = p.Id;
+            StartUtc = p.StartTime.ToUniversalTime();
+            p.ErrorDataReceived += delegate(object s, DataReceivedEventArgs e)
+            {
+                if (e.Data != null)
+                {
+                    lock (err)
+                    {
+                        err.AppendLine(e.Data);
+                    }
+                }
+            };
+            p.BeginErrorReadLine();
+            var t = new Thread(delegate()
+            {
+                try
+                {
+                    string l;
+                    while ((l = p.StandardOutput.ReadLine()) != null)
+                    {
+                        lines.Add(l);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                lines.CompleteAdding();
+            });
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        public string Next(int timeoutMs)
+        {
+            string l;
+            try
+            {
+                return lines.TryTake(out l, timeoutMs) ? l : null;
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
+        }
+
+        public string Send(string json, int timeoutMs)
+        {
+            p.StandardInput.WriteLine(json);
+            p.StandardInput.Flush();
+            return Next(timeoutMs);
+        }
+
+        public bool Close(int timeoutMs)
+        {
+            try
+            {
+                p.StandardInput.WriteLine("exit");
+                p.StandardInput.Close();
+            }
+            catch (Exception)
+            {
+            }
+
+            if (p.WaitForExit(timeoutMs))
+            {
+                p.WaitForExit();
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool HasExited
+        {
+            get { return p.HasExited; }
+        }
+
+        public int ExitCode
+        {
+            get { return p.HasExited ? p.ExitCode : -999; }
+        }
+
+        public string Errors
+        {
+            get
+            {
+                lock (err)
+                {
+                    return err.ToString();
+                }
+            }
+        }
+
+        public void Kill()
+        {
+            try
+            {
+                if (!p.HasExited)
+                {
+                    p.Kill();
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    public struct Ev
+    {
+        public double T;
+        public int Kind; // 1 audio (system sounds session), 2 audio (other session), 3 motion, 4 presence sample
+        public double V;
+        public string Info;
+    }
+
+    public static class Mon
+    {
+        [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+
+        public static readonly long ZeroTicks = Stopwatch.GetTimestamp();
+        public static readonly DateTime ClockZeroUtc = DateTime.UtcNow;
+        public static Rectangle Region;
+        public static Rectangle Zone;
+        public static int PeriodMs = 40;
+        public static int Threshold = 12;
+
+        static readonly List<string> lines = new List<string>();
+        static readonly List<Ev> events = new List<Ev>();
+        static readonly object gate = new object();
+        static readonly object frameGate = new object();
+        static readonly HashSet<string> audioIgnore = new HashSet<string>();
+        static volatile bool audioBaseline;
+        static Thread thread;
+        static volatile bool stop;
+        static int polls;
+        static int audioFailures;
+        static int[] prev;
+        static int[] cur;
+        static int[] baseline;
+        static Bitmap frame;
+        static int lastLoggedPresence = -1;
+
+        public static volatile int Presence;
+        public static Rectangle PresenceBox;
+        public static volatile int MotionFrames;
+        public static uint InputTickAtArm;
+        public static volatile bool InputSeen;
+        public static volatile bool Armed;
+        public static double InputSeenAt;
+
+        public static double Now()
+        {
+            return (Stopwatch.GetTimestamp() - ZeroTicks) * 1000.0 / Stopwatch.Frequency;
+        }
+
+        public static double FromQpc(long qpc)
+        {
+            return (qpc - ZeroTicks) * 1000.0 / Stopwatch.Frequency;
+        }
+
+        public static void Log(string s)
+        {
+            lock (gate)
+            {
+                lines.Add(Now().ToString("000000.0") + " " + s);
+            }
+        }
+
+        public static string[] TakeLines()
+        {
+            lock (gate)
+            {
+                var a = lines.ToArray();
+                lines.Clear();
+                return a;
+            }
+        }
+
+        static void AddEv(int kind, double v, string info)
+        {
+            var e = new Ev();
+            e.T = Now();
+            e.Kind = kind;
+            e.V = v;
+            e.Info = info;
+            lock (gate)
+            {
+                events.Add(e);
+            }
+        }
+
+        /// The highest peak of one kind of event in [from, to], and the time of the first event above min.
+        public static string Peak(int kind, double from, double to, double min)
+        {
+            double best = 0;
+            double first = -1;
+            string info = "";
+            lock (gate)
+            {
+                foreach (var e in events)
+                {
+                    if (e.Kind != kind || e.T < from || e.T > to)
+                    {
+                        continue;
+                    }
+
+                    if (e.V > best)
+                    {
+                        best = e.V;
+                        info = e.Info;
+                    }
+
+                    if (first < 0 && e.V >= min)
+                    {
+                        first = e.T;
+                    }
+                }
+            }
+
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            return best.ToString("0.0000", inv) + "|" + (first < 0 ? "-" : first.ToString("0.0", inv)) + "|" + info;
+        }
+
+        /// Starts watching for input: any input after this call sets InputSeen.
+        public static void ArmInput()
+        {
+            InputTickAtArm = Cond.LastInputTick();
+            InputSeen = false;
+            Armed = true;
+        }
+
+        public static void Start()
+        {
+            stop = false;
+            thread = new Thread(Run);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        public static void Stop()
+        {
+            stop = true;
+            thread.Join(5000);
+        }
+
+        /// The sessions sounding now are ignored until the next call; called when nothing of ours is sounding.
+        public static void AudioBaseline(int ms)
+        {
+            lock (gate)
+            {
+                audioIgnore.Clear();
+            }
+
+            audioBaseline = true;
+            Thread.Sleep(ms);
+            audioBaseline = false;
+        }
+
+        public static void SetBaseline()
+        {
+            lock (frameGate)
+            {
+                if (prev != null)
+                {
+                    baseline = (int[])prev.Clone();
+                }
+            }
+
+            lastLoggedPresence = -1;
+        }
+
+        static void Run()
+        {
+            var devices = new List<object[]>();
+            try
+            {
+                AudioInit(devices);
+            }
+            catch (Exception e)
+            {
+                Log("audio-init-failed " + e.GetType().Name + ": " + e.Message);
+            }
+
+            frame = new Bitmap(Region.Width, Region.Height, PixelFormat.Format32bppArgb);
+            cur = new int[Region.Width * Region.Height];
+            prev = new int[Region.Width * Region.Height];
+            bool havePrev = false;
+            while (!stop)
+            {
+                double t0 = Now();
+                try
+                {
+                    AudioPoll(devices);
+                }
+                catch (Exception e)
+                {
+                    if (audioFailures++ < 5)
+                    {
+                        Log("audio-poll-failed " + e.GetType().Name + ": " + e.Message);
+                    }
+                }
+
+                try
+                {
+                    PixPoll(havePrev);
+                    havePrev = true;
+                }
+                catch (Exception e)
+                {
+                    Log("pix-failed " + e.Message);
+                }
+
+                if (Armed && !InputSeen && Cond.LastInputTick() != InputTickAtArm)
+                {
+                    InputSeen = true;
+                    InputSeenAt = Now();
+                    Log("INPUT seen: last input tick moved from " + InputTickAtArm + " to " + Cond.LastInputTick());
+                }
+
+                polls++;
+                int left = PeriodMs - (int)(Now() - t0);
+                if (left > 0)
+                {
+                    Thread.Sleep(left);
+                }
+            }
+
+            Log("monitor-stopped polls=" + polls);
+        }
+
+        static void AudioInit(List<object[]> devices)
+        {
+            var en = (IMMDeviceEnumerator)(new MMDeviceEnumeratorCo());
+            IMMDeviceCollection col;
+            int hr = en.EnumAudioEndpoints(0, 1, out col);
+            if (hr != 0)
+            {
+                Log("audio-enum hr=0x" + hr.ToString("X8"));
+                return;
+            }
+
+            uint n;
+            col.GetCount(out n);
+            for (uint i = 0; i < n; i++)
+            {
+                IMMDevice dev;
+                col.Item(i, out dev);
+                string id;
+                dev.GetId(out id);
+                object o;
+                Guid g1 = typeof(IAudioMeterInformation).GUID;
+                dev.Activate(ref g1, 23, IntPtr.Zero, out o);
+                var meter = (IAudioMeterInformation)o;
+                Guid g2 = typeof(IAudioSessionManager2).GUID;
+                dev.Activate(ref g2, 23, IntPtr.Zero, out o);
+                var mgr = (IAudioSessionManager2)o;
+                Guid g3 = typeof(IAudioEndpointVolume).GUID;
+                dev.Activate(ref g3, 23, IntPtr.Zero, out o);
+                var vol = (IAudioEndpointVolume)o;
+                float level;
+                bool mute;
+                vol.GetMasterVolumeLevelScalar(out level);
+                vol.GetMute(out mute);
+                Log(String.Format("audio-device dev={0} id={1} volume={2:0.00} mute={3}", i, id, level, mute));
+                devices.Add(new object[] { i, meter, mgr });
+            }
+
+            IMMDevice def;
+            if (en.GetDefaultAudioEndpoint(0, 0, out def) == 0)
+            {
+                string did;
+                def.GetId(out did);
+                Log("audio-default-console id=" + did);
+            }
+        }
+
+        static void AudioPoll(List<object[]> devices)
+        {
+            foreach (var d in devices)
+            {
+                IAudioSessionEnumerator se;
+                if (((IAudioSessionManager2)d[2]).GetSessionEnumerator(out se) != 0)
+                {
+                    continue;
+                }
+
+                int c;
+                se.GetCount(out c);
+                for (int k = 0; k < c; k++)
+                {
+                    object so;
+                    se.GetSession(k, out so);
+                    float sp;
+                    ((IAudioMeterInformation)so).GetPeakValue(out sp);
+                    if (sp > 0.0005f)
+                    {
+                        var ctl = (IAudioSessionControl2)so;
+                        uint pid;
+                        ctl.GetProcessId(out pid);
+                        bool sys = ctl.IsSystemSoundsSession() == 0;
+                        string sid;
+                        ctl.GetSessionIdentifier(out sid);
+                        string key = "session" + d[0] + "|" + sid;
+                        bool ignored;
+                        lock (gate)
+                        {
+                            if (audioBaseline && audioIgnore.Add(key))
+                            {
+                                lines.Add(Now().ToString("000000.0") + String.Format(" audio-baseline dev={0} pid={1} system={2} peak={3:0.0000} (ignored until the next baseline)", d[0], pid, sys, sp));
+                            }
+
+                            ignored = audioIgnore.Contains(key);
+                        }
+
+                        if (!ignored)
+                        {
+                            AddEv(sys ? 1 : 2, sp, "dev=" + d[0] + " pid=" + pid + " system=" + sys);
+                            Log(String.Format("audio dev={0} pid={1} system={2} peak={3:0.0000}", d[0], pid, sys, sp));
+                        }
+                    }
+
+                    Marshal.ReleaseComObject(so);
+                }
+
+                Marshal.ReleaseComObject(se);
+            }
+        }
+
+        static void PixPoll(bool havePrev)
+        {
+            using (var g = Graphics.FromImage(frame))
+            {
+                g.CopyFromScreen(Region.X, Region.Y, 0, 0, Region.Size);
+            }
+
+            var data = frame.LockBits(new Rectangle(0, 0, frame.Width, frame.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(data.Scan0, cur, 0, cur.Length);
+            frame.UnlockBits(data);
+            int w = frame.Width;
+            int motion = 0;
+            int mx0 = int.MaxValue, my0 = int.MaxValue, mx1 = -1, my1 = -1;
+            int pres = 0;
+            int px0 = int.MaxValue, py0 = int.MaxValue, px1 = -1, py1 = -1;
+            int[] bl = baseline;
+            for (int y = Zone.Top; y < Zone.Bottom; y++)
+            {
+                for (int x = Zone.Left; x < Zone.Right; x++)
+                {
+                    int i = y * w + x;
+                    int b = cur[i];
+                    if (havePrev && Differs(prev[i], b))
+                    {
+                        motion++;
+                        if (x < mx0) mx0 = x;
+                        if (y < my0) my0 = y;
+                        if (x > mx1) mx1 = x;
+                        if (y > my1) my1 = y;
+                    }
+
+                    if (bl != null && Differs(bl[i], b))
+                    {
+                        pres++;
+                        if (x < px0) px0 = x;
+                        if (y < py0) py0 = y;
+                        if (x > px1) px1 = x;
+                        if (y > py1) py1 = y;
+                    }
+                }
+            }
+
+            Presence = pres;
+            PresenceBox = pres > 0 ? new Rectangle(px0, py0, px1 - px0 + 1, py1 - py0 + 1) : Rectangle.Empty;
+            if (motion > 0)
+            {
+                MotionFrames++;
+                AddEv(3, motion, String.Format("({0},{1})-({2},{3})", mx0, my0, mx1, my1));
+                Log(String.Format("pix motion={0} mbox=({1},{2})-({3},{4}) presence={5} pbox=({6},{7})-({8},{9})", motion, mx0, my0, mx1, my1, pres, px0, py0, px1, py1));
+                lastLoggedPresence = pres;
+            }
+            else if (bl != null && Math.Abs(pres - lastLoggedPresence) > 200)
+            {
+                Log(String.Format("pix still presence={0} pbox=({1},{2})-({3},{4})", pres, px0, py0, px1, py1));
+                lastLoggedPresence = pres;
+            }
+
+            lock (frameGate)
+            {
+                var t = prev;
+                prev = cur;
+                cur = t;
+            }
+        }
+
+        static bool Differs(int a, int b)
+        {
+            if (a == b)
+            {
+                return false;
+            }
+
+            int dr = Math.Abs(((a >> 16) & 255) - ((b >> 16) & 255));
+            int dg = Math.Abs(((a >> 8) & 255) - ((b >> 8) & 255));
+            int db = Math.Abs((a & 255) - (b & 255));
+            return dr >= Threshold || dg >= Threshold || db >= Threshold;
+        }
+
+        /// A fresh capture of the region, and the zone part of it saved as a PNG (the taskbar excluded).
+        /// Returns "presence|box" measured against the baseline on that capture.
+        public static string SaveZone(string path)
+        {
+            using (var b = new Bitmap(Region.Width, Region.Height, PixelFormat.Format32bppArgb))
+            {
+                using (var g = Graphics.FromImage(b))
+                {
+                    g.CopyFromScreen(Region.X, Region.Y, 0, 0, Region.Size);
+                }
+
+                var data = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                var px = new int[b.Width * b.Height];
+                Marshal.Copy(data.Scan0, px, 0, px.Length);
+                b.UnlockBits(data);
+                int[] bl = baseline;
+                int pres = 0;
+                int x0 = int.MaxValue, y0 = int.MaxValue, x1 = -1, y1 = -1;
+                if (bl != null)
+                {
+                    for (int y = Zone.Top; y < Zone.Bottom; y++)
+                    {
+                        for (int x = Zone.Left; x < Zone.Right; x++)
+                        {
+                            int i = y * b.Width + x;
+                            if (Differs(bl[i], px[i]))
+                            {
+                                pres++;
+                                if (x < x0) x0 = x;
+                                if (y < y0) y0 = y;
+                                if (x > x1) x1 = x;
+                                if (y > y1) y1 = y;
+                            }
+                        }
+                    }
+                }
+
+                if (path != null)
+                {
+                    using (var z = b.Clone(Zone, PixelFormat.Format32bppArgb))
+                    {
+                        z.Save(path, ImageFormat.Png);
+                    }
+                }
+
+                return pres + "|" + (pres > 0 ? String.Format("({0},{1})-({2},{3})", x0, y0, x1, y1) : "-");
+            }
+        }
+    }
+}

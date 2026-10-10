@@ -75,8 +75,21 @@ internal readonly record struct CountdownTrack(DateTimeOffset? Ends, TimeSpan Le
 /// always in place in the Notification Centre, and on screen the old banner goes at
 /// once while the new one popped up in only 4 of 6 replacements, with no pattern by
 /// order or content. A toast under a tag not yet shown is a first show, and a first
-/// show popped up in every run. That removing one tag and showing another pops up
-/// every time is the reading, not a measurement.
+/// show popped up in every run.
+/// </para>
+/// <para>
+/// ⚠️ <b>And the design itself was measured the same night, and kept by 2.1 a:
+/// the maintainer's words of 2026-10-10, verbatim, "1.1-2.3 I accept all your
+/// recommendations."</b> <i>Corrected that day
+/// (previously "That removing one tag and showing another pops up every time is the
+/// reading, not a measurement.").</i> Raised as this class composes the toasts and
+/// <see cref="UpdateToasts"/> raises them, a removal followed by a show under a tag
+/// of its own put a banner on screen 85 times of 86 while the old banner was still
+/// showing, and 2 of 2 with none showing; a first show managed 111 of 112, so that
+/// is as good as Windows gets. A replacement under one tag managed 58 of 77, and the
+/// quiet raise again after <i>Wait for inactivity</i> 0 of 8, as meant. No event
+/// reports the one miss, so nothing here retries
+/// (<c>kb/windows/notifications.md</c>, <c>docs/evidence/2026-10-08-toast-popup</c>).
 /// </para>
 /// </remarks>
 internal static class UpdateToastContent

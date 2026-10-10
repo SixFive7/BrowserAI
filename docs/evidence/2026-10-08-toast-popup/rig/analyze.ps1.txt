@@ -1,0 +1,73 @@
+# Scratch: reads the rig's rounds-*.jsonl and prints one line per show, a per-scenario tally, and
+# writes contact sheets of the 1.5 s shots (half size) for reading. Windows PowerShell 5.1.
+param([string[]]$Files, [string]$SheetDir, [switch]$NoSheets)
+$ErrorActionPreference = 'Stop'
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$shots = Join-Path $here 'out\shots'
+Add-Type -AssemblyName System.Drawing
+$rounds = @()
+foreach ($f in $Files) { foreach ($l in (Get-Content $f)) { if ($l.Trim()) { $rounds += (ConvertFrom-Json $l) } } }
+$rows = @()
+foreach ($r in $rounds)
+{
+    $c = $r.cond
+    $i = 0
+    foreach ($s in @($r.shows))
+    {
+        $i++
+        $snd = ([string]$s.sound).Split('|') | ForEach-Object { $_ -replace ',', '.' }
+        $rows += [pscustomobject]@{
+            n = $r.n; code = $r.code; i = $i; label = $s.label; tag = $s.tag; by = $s.process; quiet = $s.suppress
+            banner = $s.banner; px = $s.at1500.px; box = $s.at1500.box
+            px4 = $(if ($s.at4000) { $s.at4000.px } elseif ($s.at5500) { $s.at5500.px } else { '' })
+            sound = [double]$snd[0]; soundAt = $(if ($snd[1] -ne '-') { [math]::Round([double]$snd[1] - $s.showMs, 0) } else { '' })
+            since = $s.sinceLastShowMs; prevPx = $s.presenceBeforeOps; showCall = $s.showCallMs
+            nc = (@($s.histAfter.mine) -join ',')
+            idle = $c.idleS; lock = $c.lock; quns = $c.quns; qh = ([string]$c.quietHours).Split(' ')[0]; focus = $c.focusSession; cursor = $c.cursor
+            utc = $c.utc; aborted = $r.aborted; left = $r.leftInHistory; after = $r.presenceAfterCleanup; updates = (($r.updates.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" }) -join ' ')
+            file = $s.at1500.file
+        }
+    }
+}
+$rows | Format-Table n, code, i, tag, by, quiet, banner, px, px4, sound, soundAt, since, prevPx, nc, idle, qh, cursor, aborted, left, after, updates -AutoSize | Out-String -Width 400
+'--- tally: banner at 1.5 s, by scenario and show position (n rounds not aborted) ---'
+$rows | Where-Object { -not $_.aborted } | Group-Object code, i, tag | ForEach-Object {
+    $g = $_.Group
+    $yes = @($g | Where-Object { $_.banner }).Count
+    $sound = @($g | Where-Object { $_.sound -ge 0.01 }).Count
+    '{0,-28} banner {1} of {2}; sound {3} of {2}' -f $_.Name, $yes, $g.Count, $sound
+}
+if (-not $NoSheets)
+{
+    if (-not $SheetDir) { $SheetDir = Join-Path $here 'tmp' }
+    New-Item -ItemType Directory -Force $SheetDir | Out-Null
+    foreach ($grp in ($rows | Where-Object { $_.file } | Group-Object code))
+    {
+        $items = @($grp.Group)
+        $cols = 6
+        $tw = 210; $th = 325
+        $rowsN = [math]::Ceiling($items.Count / $cols)
+        $sheet = New-Object System.Drawing.Bitmap ($cols * $tw), ($rowsN * ($th + 14))
+        $g = [System.Drawing.Graphics]::FromImage($sheet)
+        $g.Clear([System.Drawing.Color]::DimGray)
+        $font = New-Object System.Drawing.Font 'Segoe UI', 8
+        $k = 0
+        foreach ($it in $items)
+        {
+            $p = Join-Path $shots $it.file
+            if (Test-Path $p)
+            {
+                $img = [System.Drawing.Image]::FromFile($p)
+                $x = ($k % $cols) * $tw; $y = [math]::Floor($k / $cols) * ($th + 14)
+                $g.DrawImage($img, $x, $y + 14, $tw, $th)
+                $g.DrawString(('r{0} {1} {2}' -f $it.n, $it.tag, $(if ($it.banner) { 'B' } else { '-' })), $font, [System.Drawing.Brushes]::White, $x + 2, $y)
+                $img.Dispose()
+            }
+            $k++
+        }
+        $out = Join-Path $SheetDir ("sheet-{0}.png" -f $grp.Name)
+        $sheet.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
+        $g.Dispose(); $sheet.Dispose()
+        "sheet: $out ($($items.Count) shots)"
+    }
+}

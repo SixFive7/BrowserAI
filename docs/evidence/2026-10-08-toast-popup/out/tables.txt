@@ -1,0 +1,84 @@
+
+ n code i tag        by quiet banner    px px4    sound soundAt since  prevPx nc           idle qh cursor    aborted left after updates    
+ - ---- - ---        -- ----- ------    -- ---    ----- ------- -----  ------ --           ---- -- ------    ------- ---- ----- -------    
+ 1 S1   1 ready      A  False   True 99316       0,3239     316             0 ready      1021,5 0  1837,2017            0     1 Succeeded=5
+ 1 S1   2 installing A  False   True 57092 57092 0,3239      85 6032,7  99316 installing 1021,5 0  1837,2017            0     1 Succeeded=5
+ 2 S2   1 installing A  False   True 57093       0,3239     119             0 installing 1046,8 0  1837,2017            0     0 =          
+ 2 S2   2 installed  B  False   True 50177 50177 0,3239     106 8114,4  57092 installed  1046,8 0  1837,2017            0     0 =          
+ 3 S3   1 installing A  False   True 57093       0,3239     142             0 installing 1072,2 0  1837,2017            0     0 =          
+ 3 S3   2 failed     B  False   True 77475 77475 0,3239     116 8106,9  57092 failed     1072,2 0  1837,2017            0     0 =          
+ 4 S4   1 ready      A  False   True 99315       0,3239     130             0 ready      1097,7 0  1837,2017            0     0 Succeeded=5
+ 4 S4   2 ready      B   True  False     1 1          0         6139,4      0 ready      1097,7 0  1837,2017            0     0 Succeeded=5
+ 5 S5   1 update     A  False   True 99315       0,3239      89             0 update     1122,7 0  1837,2017            0     0 Succeeded=2
+ 5 S5   2 update     A  False   True 57093       0,3239      90 3018    99315 update     1122,7 0  1837,2017            0     0 Succeeded=2
+ 5 S5   3 update     A  False   True 50177       0,3239     123 3014,4  57092 update     1122,7 0  1837,2017            0     0 Succeeded=2
+ 6 S2   1 installing A  False   True 57093       0,3239     134             0 installing 1144,7 0  1837,2017            0     0 =          
+ 6 S2   2 installed  B  False   True 50177 50177 0,3239     112 8118,5  57092 installed  1144,7 0  1837,2017            0     0 =          
+ 7 S3   1 installing A  False   True 57093       0,3239     142             0 installing   1170 0  1837,2017            0     0 =          
+ 7 S3   2 failed     B  False   True 77475 77475 0,3239      94 8128,9  57092 failed       1170 0  1837,2017            0     0 =          
+ 8 S4   1 ready      A  False   True 99315       0,3239     144             0 ready      1195,5 0  1837,2017            0     0 Succeeded=5
+ 8 S4   2 ready      B   True  False     1 1          0         6122,6      0 ready      1195,5 0  1837,2017            0     0 Succeeded=5
+ 9 S5   1 update     A  False   True 99315       0,3239      98             0 update     1220,5 0  1837,2017            0     0 Succeeded=2
+ 9 S5   2 update     A  False   True 57093       0,3239     124 3022,3  99315 update     1220,5 0  1837,2017            0     0 Succeeded=2
+ 9 S5   3 update     A  False   True 50177       0,3239     122 3006,9  57092 update     1220,5 0  1837,2017            0     0 Succeeded=2
+10 S1   1 ready      A  False   True 99315       0,3239     124             0 ready      1242,5 0  1837,2017            0     0 Succeeded=5
+10 S1   2 installing A  False   True 57093 57093 0,3239      66 6047,7  99315 installing 1242,5 0  1837,2017            0     0 Succeeded=5
+11 S3   1 installing A  False   True 57093       0,3239     118             0 installing 1265,5 0  1837,2017            0     0 =          
+11 S3   2 failed     B  False   True 77475 77475 0,3239     116 8104,7  57092 failed     1265,5 0  1837,2017            0     0 =          
+12 S4   1 ready      A  False   True 99315       0,3239     158             0 ready      1290,9 0  1837,2017            0     0 Succeeded=5
+12 S4   2 ready      B   True  False     1 1          0         6130,4      0 ready      1290,9 0  1837,2017            0     0 Succeeded=5
+13 S5   1 update     A  False   True 99315       0,3239      88             0 update     1315,8 0  1837,2017            0     0 Succeeded=2
+13 S5   2 update     A  False   True 57093       0,3239     164 3022,5  99315 update     1315,8 0  1837,2017            0     0 Succeeded=2
+13 S5   3 update     A  False   True 50177       0,3239     290 3033,4  57092 update     1315,8 0  1837,2017            0     0 Succeeded=2
+14 S1   1 ready      A  False   True 99315       0,3239     161             0 ready      1338,2 0  1837,2017            0     0 Succeeded=5
+14 S1   2 installing A  False   True 57093 57093 0,3239      81 6038,7  99315 installing 1338,2 0  1837,2017            0     0 Succeeded=5
+15 S2   1 installing A  False   True 57093       0,3239     124             0 installing 1361,4 0  1837,2017            0     0 =          
+15 S2   2 installed  B  False   True 50177 50177 0,3239     112 8118    57092 installed  1361,4 0  1837,2017            0     0 =          
+16 S4   1 ready      A  False   True 99315       0,3239     148             0 ready      1386,9 0  1837,2017            0     0 Succeeded=5
+16 S4   2 ready      B   True  False     1 1          0         6149,3      0 ready      1386,9 0  1837,2017            0     0 Succeeded=5
+17 S5   1 update     A  False   True 99315       0,3239      91             0 update       1412 0  1837,2017            0     0 Succeeded=2
+17 S5   2 update     A  False   True 57093       0,3239     102 3011,1  99315 update       1412 0  1837,2017            0     0 Succeeded=2
+17 S5   3 update     A  False   True 50177       0,3239     100 3020,9  57092 update       1412 0  1837,2017            0     0 Succeeded=2
+18 S1   1 ready      A  False   True 99315       0,3239     143             0 ready        1434 0  1837,2017            0     0 Succeeded=5
+18 S1   2 installing A  False   True 57093 57093 0,3239      94 6031,6  99315 installing   1434 0  1837,2017            0     0 Succeeded=5
+19 S2   1 installing A  False   True 57093       0,3239     106             0 installing 1457,2 0  1837,2017            0     0 =          
+19 S2   2 installed  B  False   True 50177 50177 0,3239     114 8104    57092 installed  1457,2 0  1837,2017            0     0 =          
+20 S3   1 installing A  False   True 57093       0,3239     267             0 installing 1482,6 0  1837,2017            0     0 =          
+20 S3   2 failed     B  False   True 77475 77475 0,3239     114 8110,7  57092 failed     1482,6 0  1837,2017            0     0 =          
+21 S5   1 update     A  False   True 99315       0,3239     134             0 update       1508 0  1837,2017            0     0 Succeeded=2
+21 S5   2 update     A  False   True 57093       0,3239     101 3021,6  99315 update       1508 0  1837,2017            0     0 Succeeded=2
+21 S5   3 update     A  False   True 50177       0,3239     103 3008,7  57092 update       1508 0  1837,2017            0     0 Succeeded=2
+22 S1   1 ready      A  False   True 99315       0,3239     131             0 ready        1530 0  1837,2017            0     0 Succeeded=5
+22 S1   2 installing A  False   True 57093 57093 0,3239      97 6041,7  99315 installing   1530 0  1837,2017            0     0 Succeeded=5
+23 S2   1 installing A  False   True 57093       0,3239     130             0 installing 1553,1 0  1837,2017            0     0 =          
+23 S2   2 installed  B  False   True 50177 50177 0,3239      96 8097,8  57092 installed  1553,1 0  1837,2017            0     0 =          
+24 S3   1 installing A  False   True 57093       0,3239     118             0 installing 1578,6 0  1837,2017            0     0 =          
+24 S3   2 failed     B  False   True 77475 77475 0,3239     101 8123,2  57092 failed     1578,6 0  1837,2017            0     0 =          
+25 S4   1 ready      A  False   True 99315       0,3239     146             0 ready      1603,9 0  1837,2017            0     0 Succeeded=5
+25 S4   2 ready      B   True  False     1 1          0         6118,5      0 ready      1603,9 0  1837,2017            0     0 Succeeded=5
+26 S1   1 ready      A  False   True 99315       0,3239     100             0 ready      1628,9 0  1837,2017            0     0 Succeeded=5
+26 S1   2 installing A  False   True 57093 57093 0,3239     103 6037,1  99315 installing 1628,9 0  1837,2017            0     0 Succeeded=5
+27 S2   1 installing A  False   True 57093       0,3239     108             0 installing 1651,9 0  1837,2017            0     0 =          
+27 S2   2 installed  B  False   True 50177 50177 0,3239      82 8101,9  57092 installed  1651,9 0  1837,2017            0     0 =          
+28 S3   1 installing A  False   True 57093       0,3239     123             0 installing 1677,3 0  1837,2017            0     0 =          
+28 S3   2 failed     B  False   True 77475 77475 0,3239     121 8114,7  57092 failed     1677,3 0  1837,2017            0     0 =          
+29 S4   1 ready      A  False   True 99315       0,3239     156             0 ready      1702,8 0  1837,2017            0     0 Succeeded=5
+29 S4   2 ready      B   True  False     1 1          0         6132,7      0 ready      1702,8 0  1837,2017            0     0 Succeeded=5
+30 S5   1 update     A  False   True 99315       0,3239      88             0 update     1727,7 0  1837,2017            0     0 Succeeded=2
+30 S5   2 update     A  False   True 57093       0,3239     108 3024,8  99315 update     1727,7 0  1837,2017            0     0 Succeeded=2
+30 S5   3 update     A  False  False     1            0         3018,4  57092 update     1727,7 0  1837,2017            0     0 Succeeded=2
+
+
+
+--- tally: banner at 1.5 s, by scenario and show position (n rounds not aborted) ---
+S1, 1, ready                 banner 6 of 6; sound 6 of 6
+S1, 2, installing            banner 6 of 6; sound 6 of 6
+S2, 1, installing            banner 6 of 6; sound 6 of 6
+S2, 2, installed             banner 6 of 6; sound 6 of 6
+S3, 1, installing            banner 6 of 6; sound 6 of 6
+S3, 2, failed                banner 6 of 6; sound 6 of 6
+S4, 1, ready                 banner 6 of 6; sound 6 of 6
+S4, 2, ready                 banner 0 of 6; sound 0 of 6
+S5, 1, update                banner 6 of 6; sound 6 of 6
+S5, 2, update                banner 6 of 6; sound 6 of 6
+S5, 3, update                banner 5 of 6; sound 5 of 6

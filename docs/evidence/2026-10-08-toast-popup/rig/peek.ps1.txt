@@ -1,0 +1,14 @@
+# Scratch: one capture of the primary screen's bottom-right corner, for orientation. Windows PowerShell 5.1.
+param([string]$Out)
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Drawing
+Add-Type -TypeDefinition @'
+using System; using System.Drawing; using System.Drawing.Imaging; using System.Runtime.InteropServices;
+public static class Peek {
+  [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+  public static void Save(int x, int y, int w, int h, string path) { using (var b = new Bitmap(w, h, PixelFormat.Format32bppArgb)) { using (var g = Graphics.FromImage(b)) g.CopyFromScreen(x, y, 0, 0, new Size(w, h)); b.Save(path, ImageFormat.Png); } }
+}
+'@ -ReferencedAssemblies System.Drawing
+[void][Peek]::SetProcessDPIAware()
+[Peek]::Save(2940, 1460, 900, 700, $Out)
+"saved $Out"

@@ -1,0 +1,107 @@
+shows: 300 in 112 rounds; aborted rounds: 0
+--- by category and whether our previous banner was on screen at the call ---
+first show, False                                banner 111 of 112; sound 111 of 112
+own tag, others removed first, False             banner   2 of   2; sound   2 of   2
+own tag, others removed first, True              banner  85 of  86; sound  85 of  86
+quiet re-raise, False                            banner   0 of   8; sound   0 of   8
+same tag, in place, False                        banner  15 of  15; sound  15 of  15
+same tag, in place, True                         banner  58 of  77; sound  58 of  77
+--- replacements with our banner on screen, by how long it had been up ---
+own tag, others removed first, ~60 s             banner  10 of  10
+own tag, others removed first, 3 to 9 s          banner  75 of  76
+same tag, in place, ~60 s                        banner   5 of  10
+same tag, in place, 3 to 9 s                     banner  53 of  67
+--- by scenario code and show position ---
+S1, 1, ready                 banner   6 of   6
+S1, 2, installing            banner   6 of   6
+S1L, 1, ready                banner  10 of  10
+S1L, 2, installing           banner  10 of  10
+S2, 1, installing            banner   6 of   6
+S2, 2, installed             banner   6 of   6
+S3, 1, installing            banner   6 of   6
+S3, 2, failed                banner   6 of   6
+S4, 1, ready                 banner   8 of   8
+S4, 2, ready                 banner   0 of   8
+S5, 1, update                banner  36 of  36
+S5, 2, update                banner  26 of  36
+S5, 3, update                banner  32 of  36
+S5L, 1, update               banner  10 of  10
+S5L, 2, update               banner   5 of  10
+S5L, 3, update               banner  10 of  10
+S6, 1, ready                 banner  29 of  30
+S6, 2, installing            banner  29 of  30
+S6, 3, installed             banner  30 of  30
+--- shows with no banner ---
+
+batch  round code show tag        process category                      oldBannerOnScreen oldBannerOnScreenS px1500 soundPeak showCallMs sinceLastShowMs ncAfter    utc                         
+-----  ----- ---- ---- ---        ------- --------                      ----------------- ------------------ ------ --------- ---------- --------------- -------    ---                         
+core       4 S4      2 ready      B       quiet re-raise                            False                         1         0        6,7          6139,4 ready      2026-10-08T22:46:22.5031802Z
+core       8 S4      2 ready      B       quiet re-raise                            False                         1         0        7,4          6122,6 ready      2026-10-08T22:48:00.3462412Z
+core      12 S4      2 ready      B       quiet re-raise                            False                         1         0        7,2          6130,4 ready      2026-10-08T22:49:35.7279078Z
+core      16 S4      2 ready      B       quiet re-raise                            False                         1         0          8          6149,3 ready      2026-10-08T22:51:11.7603701Z
+core      25 S4      2 ready      B       quiet re-raise                            False                         1         0        6,7          6118,5 ready      2026-10-08T22:54:48.7655175Z
+core      29 S4      2 ready      B       quiet re-raise                            False                         1         0        6,4          6132,7 ready      2026-10-08T22:56:27.5916747Z
+core      30 S5      3 update     A       same tag, in place                         True 3                       1         0        2,4          3018,4 update     2026-10-08T22:56:52.5378033Z
+long       2 S5L     2 update     A       same tag, in place                         True 60                      1         0          2         60019,5 update     2026-10-08T22:58:42.7403046Z
+long       4 S5L     2 update     A       same tag, in place                         True 60                      1         0        2,1         60020,1 update     2026-10-08T23:01:19.6828934Z
+pair       3 S6      1 ready      A       first show                                False                         1         0     6016,2                 ready      2026-10-08T23:09:02.7860730Z
+pair       4 S5      2 update     A       same tag, in place                         True 3                       1         0        2,1          3010,7 update     2026-10-08T23:09:29.0887951Z
+pair       5 S5      2 update     A       same tag, in place                         True 3                       1         0          3          3028,5 update     2026-10-08T23:09:51.1638904Z
+pair       6 S6      2 installing A       own tag, others removed first              True 3,1                     1         0          9          3130,5 installing 2026-10-08T23:10:13.5226681Z
+pair      12 S5      2 update     A       same tag, in place                         True 3                       1         0       10,5          3042,7 update     2026-10-08T23:12:27.0628357Z
+pair      16 S5      3 update     A       same tag, in place                         True 3                       1         0        2,3          3020,1 update     2026-10-08T23:14:01.2962236Z
+pair      20 S5      2 update     A       same tag, in place                         True 3                       1         0        2,2          3022,1 update     2026-10-08T23:15:29.5811117Z
+pair      28 S5      3 update     A       same tag, in place                         True 3                       1         0        2,5          3019,5 update     2026-10-08T23:18:26.2112097Z
+long2      4 S5L     2 update     A       same tag, in place                         True 60,2                    0         0       10,7         60167,8 update     2026-10-08T23:24:09.0646380Z
+long2      5 S5L     2 update     A       same tag, in place                         True 60                      0         0        2,5         60023,4 update     2026-10-08T23:25:28.7112040Z
+long2      9 S5L     2 update     A       same tag, in place                         True 60                      0         0        2,1           60033 update     2026-10-08T23:30:43.2784038Z
+evpair     1 S5      2 update     A       same tag, in place                         True 3                       0         0          2          3011,6 update     2026-10-08T23:36:06.8626462Z
+evpair     8 S5      2 update     A       same tag, in place                         True 3                       0         0        2,4          3007,4 update     2026-10-08T23:38:40.9831573Z
+evpair     9 S5      2 update     A       same tag, in place                         True 3                       0         0        3,7            3020 update     2026-10-08T23:39:02.8303043Z
+evpair    13 S5      2 update     A       same tag, in place                         True 3                       0         0        2,1          3016,1 update     2026-10-08T23:40:30.7363364Z
+evpair    20 S5      2 update     A       same tag, in place                         True 3                       0         0        3,3          3020,3 update     2026-10-08T23:43:04.7108764Z
+evpair    21 S5      3 update     A       same tag, in place                         True 3                       0         0        2,6          3012,6 update     2026-10-08T23:43:26.5885816Z
+evpair    25 S5      2 update     A       same tag, in place                         True 3                       0         0        2,5          3013,7 update     2026-10-08T23:44:55.6090334Z
+evS4       1 S4      2 ready      B       quiet re-raise                            False                         0         0        4,3          6086,9 ready      2026-10-08T23:47:16.9312110Z
+evS4       2 S4      2 ready      B       quiet re-raise                            False                         0         0          4          6088,9 ready      2026-10-08T23:47:41.5845980Z
+
+
+
+--- conditions across all rounds ---
+idle seconds at round start: min 1021,5, max 4776,7
+lock: unlocked x112
+desktop: Default x112
+quns: 5 x112
+quiet hours profile: 0 x112
+focus session active: False x112
+cursor: 1837,2017 x112
+--- banner geometry at 1.5 s (px, box) ---
+  34 x installing, 57093, (520,456)-(883,638)
+  28 x ready, 99315, (520,366)-(883,638)
+  24 x update, 99315, (520,366)-(883,638)
+  21 x update, 50177, (520,456)-(883,638)
+  20 x installed, 50177, (520,456)-(883,638)
+  20 x ready, 99302, (520,366)-(883,638)
+  19 x installing, 57081, (520,482)-(883,638)
+  19 x update, 99302, (520,366)-(883,638)
+  18 x update, 57093, (520,456)-(883,638)
+  16 x update, 50165, (520,501)-(883,638)
+  14 x installed, 50165, (520,501)-(883,638)
+  10 x update, 0, -
+   9 x update, 1, (631,456)-(631,456)
+   8 x update, 57081, (520,482)-(883,638)
+   7 x ready, 1, (631,456)-(631,456)
+   6 x failed, 77475, (520,426)-(883,638)
+   5 x update, 57092, (520,482)-(883,638)
+   5 x ready, 99316, (520,366)-(883,638)
+   5 x update, 50176, (520,501)-(883,638)
+   4 x installing, 57092, (520,482)-(883,638)
+   3 x update, 99316, (520,366)-(883,638)
+   2 x ready, 0, -
+   1 x installed, 50180, (520,456)-(883,644)
+   1 x installed, 50176, (520,501)-(883,638)
+   1 x installing, 1, (631,456)-(631,456)
+--- sound after show (ms), banners only ---
+n=271 min=64 median=124 max=1135
+--- show call duration (ms) ---
+n=300 median=5,5 over 100 ms: pair r3 ready 6016.2 ms banner=False; pair r11 installing 132.4 ms banner=True; pair r15 ready 100.6 ms banner=True
