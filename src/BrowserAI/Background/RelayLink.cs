@@ -39,7 +39,7 @@ namespace BrowserAI.Background;
 /// names the relay's conversation from it. The call passes on unchanged.
 /// </para>
 /// </remarks>
-internal sealed class RelayLink : TransportBase
+internal sealed class RelayLink : TransportBase, IRelayLink
 {
     /// <summary>What every id of a request the background puts on the pipe begins with.</summary>
     public const string OwnIdPrefix = BackgroundPipe.IdPrefix + "background-";

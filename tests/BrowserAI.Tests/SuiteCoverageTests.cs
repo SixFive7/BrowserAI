@@ -1993,6 +1993,117 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(gone).DoesNotContain(name);
     }
 
+    /// <summary>
+    /// The clearance snapshot names a test pack's toast activator left behind, the class
+    /// it derives as the product derives it, and says it is absent once it has gone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by lane ARCH's helper T3 on 2026-10-09</b>, and closed 2026-10-10 with the
+    /// maintainer's 9 a: the activator arrived after the snapshot was written, so an
+    /// installer arm that failed between its install and its uninstall could leave a
+    /// test pack's class registered with nothing reporting it, and the suite may not
+    /// remove one itself.
+    /// </para>
+    /// <para>
+    /// <b>Driven against a scratch key, through the script's <c>-ClassesKey</c></b>,
+    /// because no test writes the activator where Windows reads it: the product's own
+    /// registration writes the test pack's class there, and the second snapshot, after
+    /// the product's own unregistration, is the positive control for the first. The class
+    /// the script prints is held against <see cref="Updates.ToastActivatorRegistration.ClassFor"/>,
+    /// so a derivation in the script that drifted from the product's would name a class
+    /// nothing registers.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the script as it was, which had no such
+    /// reading.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceNamesATestPacksActivatorLeftBehind()
+    {
+        var key = $@"Software\BrowserAI.Tests\ClearanceClasses-{Guid.NewGuid():N}";
+        var id = "velopack." + ReleaseLayout.TestPackId;
+        const string Program = @"C:\Users\someone\AppData\Local\BrowserAI-test-scratch\left-behind\current\BrowserAI.exe";
+        var expectedClass = Updates.ToastActivatorRegistration.ClassFor(id).ToString("B").ToUpperInvariant();
+
+        string left;
+        string gone;
+
+        try
+        {
+            using (var classes = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                Updates.ToastActivatorRegistration.Register(classes, id, Program);
+            }
+
+            left = await ActivatorReadingAsync(key, id);
+
+            using (var classes = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                _ = Updates.ToastActivatorRegistration.Unregister(classes, id, Program);
+            }
+
+            gone = await ActivatorReadingAsync(key, id);
+        }
+        finally
+        {
+            Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(key, throwOnMissingSubKey: false);
+        }
+
+        await Assert.That(left).IsEqualTo($"  {id} class {expectedClass}: PRESENT <<< MUST BE ABSENT (CustomActivator={expectedClass} starts=\"{Program}\" -ToastActivated)");
+        await Assert.That(gone).IsEqualTo($"  {id} class {expectedClass}: ABSENT");
+    }
+
+    /// <summary>Runs the clearance script over a classes key and returns one id's activator line.</summary>
+    /// <param name="classesKey">The key under HKCU the script reads in place of the user's own classes.</param>
+    /// <param name="id">The application id.</param>
+    /// <returns>The line.</returns>
+    private static async Task<string> ActivatorReadingAsync(string classesKey, string id)
+    {
+        var tag = $"suite-activator-{Guid.NewGuid():N}";
+        var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
+
+        var start = new ProcessStartInfo("pwsh")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-NonInteractive");
+        start.ArgumentList.Add("-File");
+        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
+        start.ArgumentList.Add("-Tag");
+        start.ArgumentList.Add(tag);
+        start.ArgumentList.Add("-ClassesKey");
+        start.ArgumentList.Add(classesKey);
+
+        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
+        {
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+            _ = await output;
+            _ = await error;
+        }
+
+        try
+        {
+            var lines = await File.ReadAllLinesAsync(snapshot);
+
+            return lines.Single(line => line.StartsWith($"  {id} class ", StringComparison.Ordinal));
+        }
+        finally
+        {
+            File.Delete(snapshot);
+        }
+    }
+
     /// <summary>Runs the clearance script and returns its test-pack task line.</summary>
     /// <returns>The line.</returns>
     private static async Task<string> TaskReadingAsync()

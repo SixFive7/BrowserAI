@@ -87,6 +87,39 @@ internal static class RelayErrors
         + "Only that person can restart it: do not start BrowserAI yourself, and do not retry this call until they have.";
 
     /// <summary>
+    /// The background will not serve out of its data root or its install root: what it
+    /// refused, why, and what puts it right, said at once to every call.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 9 a, 2026-10-10.</b> Until that day a refused root was
+    /// recorded as a crash and every call met <see cref="Crashed"/>, which sends the
+    /// person to the log, a bug report and the Start Menu: the wrong errand for a setting,
+    /// and a Start Menu start meets the same refusal. The background writes the refusal
+    /// into its record in the parts this sentence is made of
+    /// (<see cref="Hosting.RootRefusal"/>), and a record that carries no parts, which
+    /// nothing of this build writes, is answered with the log instead.
+    /// </para>
+    /// <para>
+    /// <b>Said at once</b> (D8 a): nothing that happens in the next 150 s changes a
+    /// setting, and every start of BrowserAI meets the same refusal until it is changed.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="refusal">What was refused and how to put it right, or <see langword="null"/>.</param>
+    /// <param name="logPath">The log the person reads.</param>
+    /// <returns>The sentence.</returns>
+    public static string RootRefused(string tool, Hosting.RootRefusal? refusal, string logPath) =>
+        (refusal is { } refused
+            ? $"BrowserAI's background process will not start: it will not serve out of its {refused.Noun} '{refused.Root}', because {refused.Why}. "
+            : $"BrowserAI's background process will not start: it will not serve out of its data root or its install root, and its log, {logPath}, says which and why. ")
+        + $"'{tool}' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until the setting is changed. "
+        + (refusal is { } fix
+            ? $"The person at this computer needs to {fix.Remedy} "
+            : $"The person at this computer needs to read {logPath} and do what it says. ")
+        + "Only that person can do this: do not start BrowserAI or change its settings yourself.";
+
+    /// <summary>
     /// The background stopped answering: no liveness probe was answered for the hang
     /// bound, or it never got as far as running a held call.
     /// </summary>

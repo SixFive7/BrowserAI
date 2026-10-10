@@ -70,9 +70,30 @@ internal sealed class AppBinaryTests
         }
 
         // The configuration app is a library now, so its project builds no
-        // executable that could be packed or started by mistake.
-        await Assert.That(File.Exists(Path.Combine(
-            RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "bin", "Debug", "net10.0-windows", "BrowserAI.exe"))).IsFalse();
+        // executable that could be packed or started by mistake: its assembly, as the
+        // current build produced it and this test host loads it, has no entry point.
+        // ⚠️ Corrected 2026-10-10 (previously "no BrowserAI.exe under
+        // src\BrowserAI.App\bin\Debug\net10.0-windows"), found by lane REC: a worktree
+        // that built the app as an executable before f68ae4cf kept that file, which no
+        // later build removes, and went red over a file the current build did not
+        // write, which cost four lanes a red each. Planted red with that stale file
+        // under the old assertion, and green with the same file under this one.
+        await Assert.That(EntryPointOf(typeof(BrowserAI.App.StartModes).Assembly.Location)).IsEqualTo(0)
+            .Because("the configuration app's assembly has an entry point, so its project builds an executable");
+
+        // The positive control: the suite's probe is an executable, and its assembly has one.
+        await Assert.That(EntryPointOf(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.dll"))).IsNotEqualTo(0);
+    }
+
+    /// <summary>The entry point a managed assembly's CLI header names, or zero for a library.</summary>
+    /// <param name="assembly">The assembly's path.</param>
+    /// <returns>The entry point's token or address.</returns>
+    private static int EntryPointOf(string assembly)
+    {
+        using var stream = File.OpenRead(assembly);
+        using var image = new System.Reflection.PortableExecutable.PEReader(stream);
+
+        return image.PEHeaders.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0;
     }
 
     /// <summary>

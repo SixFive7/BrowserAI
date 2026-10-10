@@ -432,8 +432,8 @@ internal sealed partial class RealInstallerTests
 
     /// <summary>
     /// A background the scheduler starts for a data root <see cref="InstallRootScope"/>
-    /// refuses records its start as a crash, and every call from every relay is told the
-    /// crash at once, with nothing started again.
+    /// refuses records the refusal, and every call from every relay is told what was
+    /// refused and the remedy at once, with nothing started again.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -456,11 +456,18 @@ internal sealed partial class RealInstallerTests
     /// and asks whether a refusal gets a kind of its own in the record. If it does, this
     /// arm's expected answer changes with it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>It did, on 2026-10-10: the maintainer's 9 a</b>, and this arm moved with it
+    /// (<i>previously <c>ABackgroundWhoseDataRootIsRefusedIsARecordedCrashThatEveryCallIsToldAtOnce</c>,
+    /// holding a crash record and R's crash sentence</i>). The record names the refusal
+    /// with what was refused and the remedy, and every call is told those, never a bug
+    /// report.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     [NotInParallel]
-    public async Task ABackgroundWhoseDataRootIsRefusedIsARecordedCrashThatEveryCallIsToldAtOnce()
+    public async Task ABackgroundWhoseDataRootIsRefusedIsARecordedRefusalThatEveryCallIsToldAtOnce()
     {
         var setup = SuiteEnvironment.RequireReleaseInstaller();
 
@@ -476,25 +483,23 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(run.Change).IsEqualTo(TaskChange.Started).Because(run.Detail);
 
-        // The background refuses its data root, writes its record as a crash and exits:
-        // read off the scheduler's own last result, and off the record.
+        // The background refuses its data root, writes its record as the refusal and
+        // exits: read off the scheduler's own last result, and off the record.
         await Assert.That(await WaitForAsync(() => ScheduledTasks.LastRunOf(install.TaskName) is { Result: RefusedExitCode }))
             .IsTrue()
             .Because($"the task's last result should become {RefusedExitCode}. {install.Evidence()}");
 
-        var crash = BackgroundRecord.Read(install.Record);
+        var refusal = BackgroundRecord.Read(install.Record);
 
-        await Assert.That(crash).IsNotNull().Because(install.Evidence());
-        await Assert.That(crash!.Ended).IsNull();
-        await Assert.That(crash.ExitCode).IsEqualTo(RefusedExitCode);
-        await Assert.That(crash.ExitedAt).IsNotNull();
-        await Assert.That(ProcessIdentity.IsAlive(crash.ProcessId, crash.CreatedFileTime)).IsFalse();
+        await Assert.That(refusal).IsNotNull().Because(install.Evidence());
+        await Assert.That(refusal!.Ended).IsEqualTo(BackgroundEnd.Refused);
+        await Assert.That(refusal.Refusal).IsNotNull();
+        await Assert.That(refusal.Refusal!.Which).IsEqualTo(JudgedRoot.Data);
+        await Assert.That(ProcessIdentity.IsAlive(refusal.ProcessId, refusal.CreatedFileTime)).IsFalse();
         await Assert.That(install.BackgroundRuns()).IsFalse();
 
-        // ---- Every call, from every relay, is told the crash at once, and nothing starts.
-        // The sentence is R's, with the relay's own log in it.
-        const string TheRelaysLog = "<the relay's own log>";
-        var shape = RelayErrors.Crashed(crash.ExitedAt!.Value, RefusedExitCode, TheRelaysLog).Split(TheRelaysLog);
+        // ---- Every call, from every relay, is told the refusal at once, and nothing starts.
+        // The sentence names the root, why and the remedy, and the relay's own log.
         var logs = new LocalAppDataPaths(install.DataRoot).LogDirectory;
 
         using var listedDirectory = ScratchDirectory.Create("real-scheduler-refused-list");
@@ -512,21 +517,21 @@ internal sealed partial class RealInstallerTests
                 var text = TextOf(answer);
 
                 await Assert.That((bool?)answer["isError"]).IsTrue();
-                await Assert.That(text).StartsWith(shape[0]).Because(install.Evidence());
-                await Assert.That(text).EndsWith(shape[1]);
-                await Assert.That(text[shape[0].Length..^shape[1].Length]).StartsWith(logs);
+                await Assert.That(text).IsEqualTo(RelayErrors.RootRefused(SessionToolSurface.List, refusal.Refusal, logs)).Because(install.Evidence());
+                await Assert.That(text).Contains(refusal.Refusal.Root);
+                await Assert.That(text).DoesNotContain(RelayErrors.IssuesUrl);
                 await Assert.That(took).IsLessThan(RelayConstants.HoldBound)
-                    .Because("a recorded crash is answered at once; holding cannot change it (R)");
+                    .Because("a recorded refusal is answered at once; holding cannot change it (9 a)");
             }
 
             await Assert.That(relay.JobProcessIds()).IsEquivalentTo([relay.ProcessId]);
         }
 
-        // Nothing started it again: the record still names the same crash.
+        // Nothing started it again: the record still names the same refusal.
         var after = BackgroundRecord.Read(install.Record);
 
-        await Assert.That(after?.ProcessId).IsEqualTo(crash.ProcessId);
-        await Assert.That(after?.ExitCode).IsEqualTo(RefusedExitCode);
+        await Assert.That(after?.ProcessId).IsEqualTo(refusal.ProcessId);
+        await Assert.That(after?.Ended).IsEqualTo(BackgroundEnd.Refused);
         await Assert.That(install.BackgroundRuns()).IsFalse();
     }
 

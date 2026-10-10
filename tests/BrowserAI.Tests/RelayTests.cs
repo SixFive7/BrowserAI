@@ -377,6 +377,7 @@ internal sealed partial class RelayTests
     [DependsOn(nameof(AFrameThatIsNotJsonRpcIsAnsweredWithAParseError))]
     [DependsOn(nameof(AHeldCallIsAnsweredAtItsDeadlineWithWhatTheFinderSaysAndNotATickBefore))]
     [DependsOn(nameof(ACrashIsAnsweredAtOnceAndSoIsEveryCallHeldBeforeIt))]
+    [DependsOn(nameof(ARefusedRootIsAnsweredAtOnceWithWhatWasRefusedAndItsRemedy))]
     [DependsOn(nameof(ABuildThatIsNotInstalledIsAnsweredAtOnce))]
     [DependsOn(nameof(AnInstallingUpdateIsAnsweredAtOnceInEachClientsWords))]
     [DependsOn(nameof(ARefusedGreetingAnswersTheHeldCallsAndTheRelayLooksAgain))]
@@ -401,8 +402,9 @@ internal sealed partial class RelayTests
         await Assert.That(string.Join(Environment.NewLine, unprovoked)).IsEmpty();
 
         // And the count, so a row deleted instead of provoked does not pass by
-        // shrinking the question.
-        await Assert.That(rows.Count).IsEqualTo(10);
+        // shrinking the question. Eleven since 2026-10-10 (previously ten), when a
+        // refused root got its own row, RootRefused.
+        await Assert.That(rows.Count).IsEqualTo(11);
     }
 
     /// <summary>Holds that a row came out as the catalogue writes it, and counts it for the census.</summary>

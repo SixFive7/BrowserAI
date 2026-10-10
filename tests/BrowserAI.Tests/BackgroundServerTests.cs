@@ -598,6 +598,138 @@ internal sealed class BackgroundServerTests
     }
 
     /// <summary>
+    /// A relay whose connection fails in a way other than a broken pipe keeps no relay
+    /// after it from being told to end, and a call-off that cannot reach it is recorded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by lane ARCH's helper T1 reading the code on 2026-10-09</b>, and closed
+    /// 2026-10-10 with the maintainer's 9 a: the end caught only an
+    /// <see cref="IOException"/> for each relay, so a link already disposed stopped the
+    /// loop, and the call-off discarded what it started, so a failure was never seen.
+    /// The failing relay here is a double of the roster's own seam,
+    /// <see cref="IRelayLink"/>, which throws what a link whose lock was disposed under
+    /// it throws; the relay after it is a real one, over the background's pipe.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the roster as it was: the end faulted with
+    /// the double's exception before it reached the real relay, and the call-off wrote
+    /// no record.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARelayWhoseLinkFailsKeepsNoOtherFromBeingToldToEnd()
+    {
+        await using var rig = BackgroundServerRig.Start();
+
+        // First in the roster's order, ahead of the relay the background accepts next.
+        var failing = new FailingRelayLink(new ObjectDisposedException("the failing relay's connection"));
+        var greeting = new RelayGreeting("4343-1", 4343, null, BackgroundPipeClient.ClientName, BackgroundPipeClient.ClientVersion, BackgroundPipeClient.Folder, RelayReconnect.McpReconnect);
+
+        rig.Roster.Add(greeting, failing, rig.Clock.GetUtcNow());
+
+        using var relay = await rig.ConnectARelayAsync();
+
+        // The call-off: the real relay hears it, and the one that could not is recorded.
+        rig.Roster.CallOff(NextVersion);
+
+        var calledOff = await relay.NextAsync();
+
+        await Assert.That(calledOff.Method).IsEqualTo(RelayProtocol.CalledOff);
+        await Assert.That(failing.Told).IsEqualTo(1);
+        await Assert.That(rig.Logs.Records.Count(record => record.EventId.Id is 31 && record.Message.Contains(greeting.Id, StringComparison.Ordinal)))
+            .IsEqualTo(1).Because("a call-off that could not reach a relay was never seen");
+
+        // The end: the failing relay costs itself alone, and the real one is told.
+        using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
+        var ending = rig.Roster.EndAllAsync(NextVersion, now: false, hang.Token);
+
+        await Assert.That(ending.IsFaulted).IsFalse().Because(ending.Exception?.ToString() ?? "faulted");
+
+        var end = await relay.NextAsync();
+
+        await Assert.That(end.Method).IsEqualTo(RelayProtocol.End);
+        await Assert.That(failing.Told).IsEqualTo(2);
+        await Assert.That(rig.Logs.Records.Count(record => record.EventId.Id is 31)).IsEqualTo(2);
+
+        relay.Dispose();
+
+        await ending.WaitAsync(TestDefaults.InProcessHang);
+    }
+
+    /// <summary>
+    /// A connection the background accepts while it stops is waited for before the stop
+    /// is done, and is closed by then.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by lane ARCH's helper T1 reading the code on 2026-10-09</b>, and closed
+    /// 2026-10-10 with the maintainer's 9 a: the stop took its list of connections and
+    /// only then joined the listener, so a connection the listener had accepted in
+    /// between was not on the list and ran on past the stop's own events.
+    /// </para>
+    /// <para>
+    /// <b>The listener is held by the product's seam</b>,
+    /// <see cref="BackgroundServer.Accepted"/>, between taking the connection and serving
+    /// it, until the stop is waiting for the listener: the one moment that ordering is
+    /// about. The stop runs on a thread of its own, because it joins the listener
+    /// thread and blocks there; the stop's own record says how many connections it
+    /// waits for, which is what the order decides.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a stop that took its list before it joined
+    /// the listener, which waited for none.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor()
+    {
+        using var accepted = new SemaphoreSlim(0);
+        using var release = new ManualResetEventSlim(initialState: false);
+
+        await using var rig = BackgroundServerRig.Start(accepted: () =>
+        {
+            _ = accepted.Release();
+            _ = release.Wait(TestDefaults.InProcessHang);
+        });
+
+        using var client = rig.Connect();
+
+        await Assert.That(await accepted.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
+
+        var stopping = new Thread(() => rig.Server.DisposeAsync().AsTask().GetAwaiter().GetResult())
+        {
+            IsBackground = true,
+            Name = "BrowserAI suite stop",
+        };
+
+        try
+        {
+            stopping.Start();
+
+            // The stop has stopped the listener's loop and is waiting for the thread
+            // the seam is holding.
+            await BackgroundServerRig.WaitUntilAsync(
+                () => (stopping.ThreadState & ThreadState.WaitSleepJoin) is not 0,
+                "the stop never came to wait for its listener");
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        await Assert.That(stopping.Join(TestDefaults.InProcessHang)).IsTrue().Because("the stop never finished");
+
+        var waited = rig.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
+
+        await Assert.That(string.Join(" | ", waited))
+            .IsEqualTo("The background's pipe is closed; it waits for the 1 connection(s) on its list to end before it stops.");
+        await Assert.That(await client.ClosedAsync()).IsTrue();
+    }
+
+    /// <summary>
     /// A <c>tools/call</c> is in flight from the moment the link reads it until its answer
     /// goes out, or until the client cancels it, whichever comes first.
     /// </summary>
@@ -984,6 +1116,36 @@ internal sealed class BackgroundServerTests
         {
             refusal = taken;
             return null;
+        }
+    }
+
+    /// <summary>
+    /// A relay's connection that fails every notice it is asked to send, with the
+    /// exception an arm gives it, and has gone already.
+    /// </summary>
+    /// <param name="failure">What every notice throws.</param>
+    private sealed class FailingRelayLink(Exception failure) : IRelayLink
+    {
+        private int _told;
+
+        /// <summary>How many notices it was asked to send.</summary>
+        public int Told => Volatile.Read(ref _told);
+
+        /// <inheritdoc />
+        public bool CallInFlight => false;
+
+        /// <inheritdoc />
+        public Task Closed => Task.CompletedTask;
+
+        /// <inheritdoc />
+        public Task<ModelContextProtocol.Protocol.JsonRpcMessage> AskAsync(string method, JsonNode? parameters, CancellationToken cancellationToken) =>
+            Task.FromException<ModelContextProtocol.Protocol.JsonRpcMessage>(failure);
+
+        /// <inheritdoc />
+        public Task TellAsync(string method, JsonNode? parameters, CancellationToken cancellationToken)
+        {
+            _ = Interlocked.Increment(ref _told);
+            return Task.FromException(failure);
         }
     }
 

@@ -92,9 +92,14 @@ internal sealed class SandboxFlagTests
         // threw the moment a second child appeared, which was the right failure
         // and the wrong assertion, so every child is read, and at least one must
         // be, or the check below would pass with nothing to check.
-        var children = run.Processes
-            .Where(process => process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true)
-            .ToList();
+        //
+        // ⚠️ Corrected 2026-10-10 (previously every payload node in the job was read):
+        // a node the stray sweep's registry reap starts is in the same job, carries no
+        // flag and starts no browser, and one alive at the moment the job was read would
+        // have failed this check. The session's own server is the node that started the
+        // browser above (SliceRun.SessionServersIn), and the arm after this one holds the
+        // selection against a reap's node beside it.
+        var children = SliceRun.SessionServersIn(run.Processes, BrowserAiPaths.BrowsersDirectory);
 
         await Assert.That(children.Count).IsGreaterThanOrEqualTo(1);
 
@@ -108,6 +113,51 @@ internal sealed class SandboxFlagTests
         // And it is there instead of in the config, not as well as: the key
         // reads fine, is discarded, and would make this look configured.
         await Assert.That(BrowserAiConfigOmitsTheSandboxKey()).IsTrue();
+    }
+
+    /// <summary>
+    /// The flag check reads a session's own server, the node that started the browser,
+    /// and never a node of the registry reap or an installer beside it in the job.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by lane ARCH's helper T2 reading the arm on 2026-10-09</b>, closed
+    /// 2026-10-10 with the maintainer's 9 a. No run had met it: a reap's node lives for
+    /// the moment its prune takes, and the arm above reads the job once.
+    /// </para>
+    /// <para>
+    /// <b>The processes are written out</b>, the shapes the arm above reads off a real
+    /// job: a background, a session's node with the flag, the browser it started with a
+    /// renderer, a reap's node and an installer's, neither flagged and neither the
+    /// parent of a browser.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against the selection the arm above made before
+    /// this day, every payload node in the job, which took the reap's and the
+    /// installer's.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OnlyASessionsOwnServerIsReadForTheFlagAndNoReapersNodeBesideIt()
+    {
+        const string Browsers = @"C:\Users\someone\AppData\Local\BrowserAI\browsers";
+        const string Node = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\payload\node\node.exe";
+        const string Chrome = Browsers + @"\chromium-1247\chrome-win64\chrome.exe";
+
+        ObservedProcess[] processes =
+        [
+            new(100, 1, @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.exe", "BrowserAI.exe --background", 50),
+            new(200, 2, Node, $"node.exe cli.js --config session.json {ChildLaunch.SandboxFlag}", 100),
+            new(300, 3, Chrome, "chrome.exe --remote-debugging-pipe --user-data-dir=profile", 200),
+            new(301, 4, Chrome, "chrome.exe --type=renderer", 300),
+            new(400, 5, Node, "node.exe -e \"require('registry').reap()\"", 100),
+            new(500, 6, Node, "node.exe cli.js install-browser chromium --no-shell", 100),
+        ];
+
+        var servers = SliceRun.SessionServersIn(processes, Browsers);
+
+        await Assert.That(string.Join(", ", servers.Select(server => server.ProcessId))).IsEqualTo("200");
     }
 
     [Test]

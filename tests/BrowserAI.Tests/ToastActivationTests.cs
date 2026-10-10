@@ -90,15 +90,82 @@ internal sealed class ToastActivationTests
                 id.SetValue("DisplayName", "Somebody's own");
             }
 
-            ToastActivatorRegistration.Unregister(classes, Real);
-            ToastActivatorRegistration.Unregister(classes, Test);
-            ToastActivatorRegistration.Unregister(classes, Real);
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Real, Executable)).IsTrue();
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Test, @"C:\elsewhere\current\BrowserAI.exe")).IsTrue();
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Real, Executable)).IsTrue();
 
             await Assert.That(Exists(classes, $@"CLSID\{realClass}")).IsFalse();
             await Assert.That(Exists(classes, $@"AppUserModelId\{Real}")).IsFalse();
             await Assert.That(Exists(classes, $@"CLSID\{testClass}")).IsFalse();
             await Assert.That(Value(classes, $@"AppUserModelId\{Test}", "CustomActivator")).IsNull();
             await Assert.That(Value(classes, $@"AppUserModelId\{Test}", "DisplayName")).IsEqualTo("Somebody's own");
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(path, throwOnMissingSubKey: false);
+        }
+    }
+
+    /// <summary>
+    /// Two installs of one pack id share one class, which starts the program of the
+    /// install that registered last; uninstalling the other leaves it whole, and
+    /// uninstalling the one it starts takes it back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by lane ARCH's helper T3 reading the hooks on 2026-10-09</b>, and closed
+    /// 2026-10-10 with the maintainer's 9 a: the class is keyed to the application id,
+    /// which an install root does not change, and every uninstall took it back, so
+    /// uninstalling either of two installs left the other's toasts starting nothing.
+    /// The two installs here are two roots of the test pack's id, the suite's own case,
+    /// registered under a scratch key the way the hooks register them.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against an unregistration that took the class back
+    /// whatever program it started.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task UninstallingOneOfTwoInstallsOfOnePackLeavesTheClassToTheOther()
+    {
+        var path = $@"Software\BrowserAI.Tests\ToastClasses-{Guid.NewGuid():N}";
+
+        try
+        {
+            using var classes = Registry.CurrentUser.CreateSubKey(path, writable: true);
+
+            const string Id = "velopack.BrowserAI.app.test";
+            const string First = @"C:\Users\someone\AppData\Local\BrowserAI-test-scratch\first\current\BrowserAI.exe";
+            const string Second = @"C:\Users\someone\AppData\Local\BrowserAI-test-scratch\second\current\BrowserAI.exe";
+
+            var activator = ToastActivatorRegistration.ClassFor(Id).ToString("B").ToUpperInvariant();
+
+            ToastActivatorRegistration.Register(classes, Id, First);
+            ToastActivatorRegistration.Register(classes, Id, Second);
+
+            await Assert.That(Value(classes, $@"CLSID\{activator}\LocalServer32", string.Empty)).IsEqualTo($"\"{Second}\" -ToastActivated");
+
+            // The first install goes: the class starts the second's program, and stays.
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Id, First)).IsFalse();
+            await Assert.That(Value(classes, $@"CLSID\{activator}\LocalServer32", string.Empty)).IsEqualTo($"\"{Second}\" -ToastActivated");
+            await Assert.That(Value(classes, $@"AppUserModelId\{Id}", "CustomActivator")).IsEqualTo(activator);
+
+            // A spelling of the second's path in another case is the second's.
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Id, Second.ToUpperInvariant())).IsTrue();
+            await Assert.That(Exists(classes, $@"CLSID\{activator}")).IsFalse();
+            await Assert.That(Exists(classes, $@"AppUserModelId\{Id}")).IsFalse();
+
+            // A class with no program named is nobody's and goes with any install.
+            ToastActivatorRegistration.Register(classes, Id, First);
+
+            using (var server = classes.OpenSubKey($@"CLSID\{activator}\LocalServer32", writable: true)!)
+            {
+                server.DeleteValue(string.Empty);
+            }
+
+            await Assert.That(ToastActivatorRegistration.Unregister(classes, Id, Second)).IsTrue();
+            await Assert.That(Exists(classes, $@"CLSID\{activator}")).IsFalse();
         }
         finally
         {

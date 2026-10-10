@@ -69,10 +69,13 @@ internal enum TaskState
 /// reads it.
 /// </summary>
 /// <remarks>
-/// <b>Closed: the six cases below are every case</b>, and the engine decides from
-/// each whether waiting can help. Three answer a call at once, because nothing that
-/// happens in the next 150 s changes them (D8 a, R, U2): a recorded crash, a build that
-/// is not installed, and an update that is installing. The other three hold it.
+/// <b>Closed: the seven cases below are every case</b>, and the engine decides from
+/// each whether waiting can help. Four answer a call at once, because nothing that
+/// happens in the next 150 s changes them (D8 a, R, U2, 9 a): a recorded crash, a root
+/// the background refused, a build that is not installed, and an update that is
+/// installing. The other three hold it. <i>Corrected 2026-10-10 (previously "the six
+/// cases" and "Three answer a call at once"), when a refused root became a case of its
+/// own.</i>
 /// </remarks>
 internal abstract record BackgroundAbsence
 {
@@ -88,6 +91,14 @@ internal abstract record BackgroundAbsence
     /// <param name="ExitCode">Its exit code, or <see langword="null"/> when nothing recorded one.</param>
     /// <param name="LogPath">The log the person reads to find out why.</param>
     internal sealed record Crashed(DateTimeOffset At, int? ExitCode, string LogPath) : BackgroundAbsence;
+
+    /// <summary>
+    /// The background would not serve out of its data root or its install root, and
+    /// recorded what it refused and the remedy: answer at once (9 a, 2026-10-10).
+    /// </summary>
+    /// <param name="Refusal">What was refused and how to put it right, or <see langword="null"/> when the record carries no parts.</param>
+    /// <param name="LogPath">The log the person reads.</param>
+    internal sealed record RootRefused(Hosting.RootRefusal? Refusal, string LogPath) : BackgroundAbsence;
 
     /// <summary>A background process exists but its pipe is not up yet: hold.</summary>
     internal sealed record Starting : BackgroundAbsence;

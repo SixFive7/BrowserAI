@@ -118,10 +118,14 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// How long one call may take before it is abandoned: <b>5 seconds</b>.
     /// </summary>
     /// <remarks>
-    /// <b>A hang detector, not a promptness claim.</b> Registering took 19.8 to
-    /// 21.9 ms, a run 1.0 to 1.2 ms and a delete 2.4 to 2.5 ms, measured 2026-09-25,
-    /// so the bound is more than 200 times the slowest; it sits inside the 15 s
+    /// <b>A hang detector, not a promptness claim.</b> What each call took is measured in
+    /// [kb](../../../kb/windows/processes.md#the-task-scheduler-from-a-nativeaot-process-through-com----measured-2026-09-24),
+    /// and the bound is more than 200 times the slowest of them; it sits inside the 15 s
     /// Velopack gives the update hook, which also registers with every client.
+    /// <i>Corrected 2026-10-10 (previously "Registering took 19.8 to 21.9 ms, a run 1.0
+    /// to 1.2 ms and a delete 2.4 to 2.5 ms, measured 2026-09-25"), when lane REC found
+    /// that the kb entry gives a run 1.0 to 1.3 ms: this remark cites the measurement and
+    /// restates none of it, so the two cannot disagree again.</i>
     /// </remarks>
     public static TimeSpan CallBound { get; } = ProcessBounds.ScheduledTasksCallBound;
 

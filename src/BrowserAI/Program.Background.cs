@@ -79,19 +79,21 @@ internal static partial class Program
 
         if (!scope.MayServe)
         {
-            // R: a background that cannot serve is a crash every relay names, with the
-            // record written before it exits so that it reads as one and not as a
-            // background that never started. ⚠️ Corrected 2026-10-09 (previously this
-            // comment said so and the branch returned without writing anything): a
-            // relay then found no record, held every call for the whole hold bound and
-            // answered that no background was running, which sends the person to the
-            // Start Menu for a start that fails the same way. Held through the real
-            // Task Scheduler by
-            // RealInstallerTests.ABackgroundWhoseDataRootIsRefusedIsARecordedCrashThatEveryCallIsToldAtOnce,
+            // 9 a, 2026-10-10: a background that will not serve out of its root
+            // records the refusal, what it refused and the remedy, before it exits, and
+            // every relay answers each call with that at once. ⚠️ Corrected 2026-10-10
+            // (previously "R: a background that cannot serve is a crash every relay
+            // names"): the crash sentence sent the person to a bug report for a setting,
+            // and to the Start Menu for a start that is refused the same way. Corrected
+            // 2026-10-09 before that (previously the branch returned without writing
+            // anything): a relay then found no record, held every call for the whole
+            // hold bound and answered that no background was running. Held through the
+            // real Task Scheduler by
+            // RealInstallerTests.ABackgroundWhoseDataRootIsRefusedIsARecordedRefusalThatEveryCallIsToldAtOnce,
             // and over the published background by
             // InstallRootScopeTests.ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog.
             StartupLog.AppRootIsShared(logger, scope.Refusal!);
-            RecordTheRefusedStart(recordPath, Refused, clock, backgroundLogger);
+            RecordTheRefusal(recordPath, scope.Detail!, clock, backgroundLogger);
             return Refused;
         }
 
@@ -174,14 +176,15 @@ internal static partial class Program
     }
 
     /// <summary>
-    /// Writes the record of a start the data root's judgement refused, as the crash it
-    /// is under R: started, and gone with the exit code it is about to return.
+    /// Writes the record of a start whose root was refused: what was refused, why, and
+    /// the remedy, so that every relay answers with that and never with the crash.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The exit code is written by the process itself</b>, because no relay holds a
-    /// handle on a background that never opened its pipe, and a record with no code
-    /// would make every relay say "exit code unknown" for a code this process knows.
+    /// <b>Written by the process itself</b>, because no relay holds a handle on a
+    /// background that never opened its pipe. <i>Corrected 2026-10-10 (previously the
+    /// record was a start with this process's exit code and no clean end, which reads
+    /// as a crash under R), the maintainer's 9 a.</i>
     /// </para>
     /// <para>
     /// <b>Never over a background that runs</b>: a record naming another live process
@@ -189,10 +192,10 @@ internal static partial class Program
     /// </para>
     /// </remarks>
     /// <param name="recordPath">The record of the pipe this start was meant to serve.</param>
-    /// <param name="exitCode">The exit code this process returns.</param>
+    /// <param name="refusal">What was refused, in its parts.</param>
     /// <param name="clock">The clock.</param>
     /// <param name="logger">The background's logger.</param>
-    private static void RecordTheRefusedStart(string recordPath, int exitCode, TimeProvider clock, ILogger logger)
+    private static void RecordTheRefusal(string recordPath, RootRefusal refusal, TimeProvider clock, ILogger logger)
     {
         if (BackgroundRecord.Read(recordPath) is { } other
             && other.ProcessId != Environment.ProcessId
@@ -203,8 +206,7 @@ internal static partial class Program
 
         try
         {
-            var started = BackgroundRecord.Started(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, clock.GetUtcNow());
-            _ = BackgroundRecord.Exited(recordPath, started.ProcessId, started.CreatedFileTime, exitCode, clock.GetUtcNow());
+            _ = BackgroundRecord.Refused(recordPath, BuildVersion.Current, Environment.ProcessPath ?? string.Empty, refusal, clock.GetUtcNow());
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {

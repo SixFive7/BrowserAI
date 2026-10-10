@@ -63,6 +63,19 @@
          `BrowserAI.app.test` task, of which there must be none.
          `SuiteCoverageTests.TheClearanceNamesATestPackTaskLeftBehind` holds it.
 
+      9. The toasts' activator under HKCU\Software\Classes -- ADDED 2026-10-10 with
+         the maintainer's 9 a. The install and update hooks register a COM class for
+         the application id the toasts are raised under, derived from that id, and
+         the uninstall hook takes it back; the test pack's hooks do the same for
+         `velopack.BrowserAI.app.test` in every gate. So the real id's class must
+         come out of a run unchanged, and the test pack's must be absent: its
+         `CustomActivator` value and the class it derives, read whether or not the
+         value is still there, since an uninstall stopped half way can leave either.
+         The tests may not write where Windows reads the class, so `-ClassesKey`
+         points the reading at a scratch key for
+         `SuiteCoverageTests.TheClearanceNamesATestPacksActivatorLeftBehind`; the gate
+         never passes it.
+
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
     stops and a human looks; TESTING.md says how to clear a dangling key.
@@ -70,11 +83,18 @@
 .PARAMETER Tag
     Names the snapshot file under `.work/clearance/`.
 
+.PARAMETER ClassesKey
+    The key under HKCU the activator reading reads, `Software\Classes` unless a test
+    names a scratch key of its own.
+
 .EXAMPLE
     pwsh -File build/Get-ClearanceSnapshot.ps1 -Tag ord-ps-1-before
 #>
 [CmdletBinding()]
-param([Parameter(Mandatory)] [string] $Tag)
+param(
+    [Parameter(Mandatory)] [string] $Tag,
+    [string] $ClassesKey = 'Software\Classes'
+)
 
 # Continue and not Stop: a snapshot that throws half way through reports
 # nothing, and every reading below is allowed to be absent.
@@ -269,6 +289,68 @@ try {
     }
     $testTasks = @($all | Where-Object { $_.Name -like 'BrowserAI.app.test *' } | Sort-Object Name)
     $out += '  BrowserAI.app.test tasks: ' + $(if ($testTasks.Count -gt 0) { ($testTasks.Name -join ' | ') + ' <<< MUST BE ABSENT' } else { 'none' })
+}
+catch {
+    $out += "  UNREADABLE: $($_.Exception.Message)"
+}
+
+# 9. The toasts' activator (9 a, 2026-10-10). The class an application id's toasts
+# start for a click is derived from the id the way ToastActivatorRegistration.ClassFor
+# derives it: the SHA-256 of a fixed namespace and the id's UTF-8, cut to 128 bits,
+# with the version and variant bits RFC 9562 gives a version 8. Derived here and not
+# read off the id's CustomActivator value, so a class whose value is gone is still
+# found. The real id's reading must not move; the test pack's must be absent.
+function Get-ActivatorClass([string] $id) {
+    $namespace = [System.Convert]::FromHexString('8C1E1B8D5D864C479F2B6A0F3B1D2E71')
+    $name = [System.Text.Encoding]::UTF8.GetBytes($id)
+    $hash = [System.Security.Cryptography.SHA256]::HashData([byte[]] ($namespace + $name))
+    $hash[6] = ($hash[6] -band 0x0F) -bor 0x80
+    $hash[8] = ($hash[8] -band 0x3F) -bor 0x80
+    $hex = [System.Convert]::ToHexString($hash, 0, 16)
+    '{' + $hex.Substring(0, 8) + '-' + $hex.Substring(8, 4) + '-' + $hex.Substring(12, 4) + '-' + $hex.Substring(16, 4) + '-' + $hex.Substring(20, 12) + '}'
+}
+
+function Get-ActivatorReading([string] $id) {
+    $class = Get-ActivatorClass $id
+    $value = $null
+    $command = $null
+    $idKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$ClassesKey\AppUserModelId\$id")
+    if ($idKey) {
+        $value = $idKey.GetValue('CustomActivator', $null)
+        $idKey.Dispose()
+    }
+    $classKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$ClassesKey\CLSID\$class")
+    $present = $null -ne $classKey
+    if ($classKey) {
+        $server = $classKey.OpenSubKey('LocalServer32')
+        if ($server) {
+            $command = $server.GetValue('', $null)
+            $server.Dispose()
+        }
+        $classKey.Dispose()
+    }
+    [pscustomobject]@{
+        Class = $class
+        Value = $value
+        Present = $present -or ($null -ne $value)
+        Command = $command
+    }
+}
+
+$out += "--- HKCU\$ClassesKey, the toasts' activator ---"
+try {
+    $realActivator = Get-ActivatorReading 'velopack.BrowserAI.app'
+    $out += ('  velopack.BrowserAI.app class {0}: CustomActivator={1} starts={2}' -f $realActivator.Class,
+        $(if ($null -ne $realActivator.Value) { $realActivator.Value } else { 'ABSENT' }),
+        $(if ($null -ne $realActivator.Command) { $realActivator.Command } else { 'ABSENT' }))
+    $testActivator = Get-ActivatorReading 'velopack.BrowserAI.app.test'
+    $out += ('  velopack.BrowserAI.app.test class {0}: {1}' -f $testActivator.Class,
+        $(if ($testActivator.Present) {
+            'PRESENT <<< MUST BE ABSENT (CustomActivator={0} starts={1})' -f $(if ($null -ne $testActivator.Value) { $testActivator.Value } else { 'ABSENT' }), $(if ($null -ne $testActivator.Command) { $testActivator.Command } else { 'ABSENT' })
+        }
+        else {
+            'ABSENT'
+        }))
 }
 catch {
     $out += "  UNREADABLE: $($_.Exception.Message)"

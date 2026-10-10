@@ -291,6 +291,72 @@ internal sealed class BackgroundRecordTests
     }
 
     /// <summary>
+    /// A refused start's record says what was refused and the remedy, read back whole,
+    /// and an end this build does not know reads as the clean end a later build wrote,
+    /// never as no end at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 9 a, 2026-10-10.</b> Two hazard rows of lane ARCH's helper T1
+    /// and T2 close here: a refused root was recorded as a crash, and an <c>ended</c>
+    /// this build could not parse read as absent, which is a crash, so after a downgrade
+    /// every relay told every call to report a bug. A name is read exactly: a number or
+    /// a list of names, which <see cref="Enum.TryParse{TEnum}(string?, out TEnum)"/>
+    /// would take for a known end, is a name this build does not know.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a reader that read an <c>ended</c> it could
+    /// not parse as no end, as the reader before this arm did.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARefusalReadsBackWholeAndAnEndThisBuildDoesNotKnowIsStillAnEnd()
+    {
+        using var data = ScratchDirectory.Create("background-record-refused");
+
+        var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "refused.json");
+        var refusal = new BrowserAI.Hosting.RootRefusal(
+            BrowserAI.Hosting.JudgedRoot.Data,
+            @"D:\Shared\BrowserAI",
+            "it is outside this user's profile, so it is not storage Windows keeps per-user",
+            @"give BrowserAI a data root under 'C:\Users\someone'.");
+
+        var written = BackgroundRecord.Refused(path, "9.9.9-record-tests", "image", refusal, StartedAt);
+        var read = BackgroundRecord.Read(path)!;
+
+        await Assert.That(read).IsEqualTo(written);
+        await Assert.That(read.ProcessId).IsEqualTo(Environment.ProcessId);
+        await Assert.That(read.Ended).IsEqualTo(BackgroundEnd.Refused);
+        await Assert.That(read.EndedAt).IsEqualTo(StartedAt);
+        await Assert.That(read.Refusal).IsEqualTo(refusal);
+
+        // A refusal missing one of its parts is a refusal with no parts, and still a refusal.
+        var partial = (await File.ReadAllTextAsync(path)).Replace("\"remedy\"", "\"remedies\"", StringComparison.Ordinal);
+        await File.WriteAllTextAsync(path, partial, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Refused);
+        await Assert.That(BackgroundRecord.Read(path)!.Refusal).IsNull();
+
+        // A later build's end: a clean end all the same, whatever it is called.
+        foreach (var unknown in new[] { "SomethingALaterBuildWrites", "3", "Stopped, Update", "stopped" })
+        {
+            HandWrittenRecord.Write(path, 7, 1, ended: unknown);
+
+            await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Unrecognised).Because($"'{unknown}' read as something else");
+        }
+
+        // An empty name is no end, and so is no name: the crash R names.
+        HandWrittenRecord.Write(path, 7, 1, ended: string.Empty);
+
+        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsNull();
+
+        HandWrittenRecord.Write(path, 7, 1);
+
+        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsNull();
+    }
+
+    /// <summary>
     /// A reader that opened the record before a write reads the old record entire,
     /// whatever became of the write; once the reader has gone, the write goes through,
     /// the next reader meets the new record whole, and nothing is left beside it.

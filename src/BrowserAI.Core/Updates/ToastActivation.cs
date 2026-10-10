@@ -112,19 +112,47 @@ internal static class ToastActivatorRegistration
         id.SetValue(CustomActivatorValue, activator, RegistryValueKind.String);
     }
 
-    /// <summary>Takes the registration back: the class's key, and the value naming it.</summary>
+    /// <summary>
+    /// Takes the registration back, the class's key and the value naming it, when the
+    /// class still starts this install's program.
+    /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The application id's key goes too when nothing else is left in it</b>; a
     /// key that holds something BrowserAI did not write keeps it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A class that starts another install's program is left to that install</b>,
+    /// both values of it. Two installs of one pack id share one application id, and so
+    /// one class: the install that registered last owns it, and the toasts of both
+    /// start its program. <i>Corrected 2026-10-10 (previously every uninstall took the
+    /// class back, so uninstalling either of two installs of one pack id left the other's
+    /// toasts starting nothing)</i>, found by lane ARCH's helper T3 reading the hooks on
+    /// 2026-10-09; the maintainer's 9 a. What is left stands: the install that owns the
+    /// class takes it back when it is uninstalled, and an older install of the same pack
+    /// id gets it again at its next update.
+    /// </para>
     /// </remarks>
     /// <param name="classes">The classes key.</param>
     /// <param name="appUserModelId">The application id.</param>
-    public static void Unregister(RegistryKey classes, string appUserModelId)
+    /// <param name="executable">This install's program, the one its own registration named.</param>
+    /// <returns>Whether the registration was this install's and is gone; <see langword="false"/> when another install's was left.</returns>
+    public static bool Unregister(RegistryKey classes, string appUserModelId, string executable)
     {
         ArgumentNullException.ThrowIfNull(classes);
         ArgumentException.ThrowIfNullOrWhiteSpace(appUserModelId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(executable);
 
         var activator = ClassFor(appUserModelId).ToString("B").ToUpperInvariant();
+
+        using (var server = classes.OpenSubKey($@"CLSID\{activator}\LocalServer32", writable: false))
+        {
+            if (server?.GetValue(string.Empty) is string command
+                && !string.Equals(command, CommandFor(executable), StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
 
         classes.DeleteSubKeyTree($@"CLSID\{activator}", throwOnMissingSubKey: false);
 
@@ -135,7 +163,7 @@ internal static class ToastActivatorRegistration
         {
             if (id is null)
             {
-                return;
+                return true;
             }
 
             id.DeleteValue(CustomActivatorValue, throwOnMissingValue: false);
@@ -146,6 +174,8 @@ internal static class ToastActivatorRegistration
         {
             classes.DeleteSubKey(path, throwOnMissingSubKey: false);
         }
+
+        return true;
     }
 }
 

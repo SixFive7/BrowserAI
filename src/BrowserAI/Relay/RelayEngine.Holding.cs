@@ -236,13 +236,13 @@ internal sealed partial class RelayEngine
     }
 
     /// <summary>
-    /// Whether waiting cannot change the reason: a recorded crash, a build that is not
-    /// installed, an update installing (D8 a, R, D11, U2).
+    /// Whether waiting cannot change the reason: a recorded crash, a refused root, a
+    /// build that is not installed, an update installing (D8 a, R, 9 a, D11, U2).
     /// </summary>
     /// <param name="absence">The reason.</param>
     /// <returns><see langword="true"/> when every held call is answered now.</returns>
     private static bool AnswersAtOnce(BackgroundAbsence absence) =>
-        absence is BackgroundAbsence.Crashed or BackgroundAbsence.NotInstalled or BackgroundAbsence.UpdateInstalling;
+        absence is BackgroundAbsence.Crashed or BackgroundAbsence.RootRefused or BackgroundAbsence.NotInstalled or BackgroundAbsence.UpdateInstalling;
 
     /// <summary>The sentence for a reason that is answered at once.</summary>
     /// <param name="absence">The reason.</param>
@@ -251,6 +251,7 @@ internal sealed partial class RelayEngine
     private string AtOnce(BackgroundAbsence absence, string tool) => absence switch
     {
         BackgroundAbsence.Crashed crashed => RelayErrors.Crashed(crashed.At, crashed.ExitCode, crashed.LogPath),
+        BackgroundAbsence.RootRefused refused => RelayErrors.RootRefused(tool, refused.Refusal, refused.LogPath),
         BackgroundAbsence.NotInstalled build => RelayErrors.NotInstalled(tool, build.Executable, build.DataRoot),
         _ => RelayErrors.UpdateInstalling(tool, null, _clientName),
     };

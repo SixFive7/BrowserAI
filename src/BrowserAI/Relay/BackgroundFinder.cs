@@ -24,9 +24,10 @@ namespace BrowserAI.Relay;
 /// <b>The order of <see cref="Explain"/> is the order in which a reason outranks
 /// another.</b> An updater running from this install comes first, because a relay
 /// that started during an install is answered with the update sentence whatever else
-/// is true (U2). Then the background's record: a background that is still alive and
-/// has not opened its pipe is starting; one that is gone with no clean end recorded
-/// crashed (R). Then a build that is not installed, which nothing will ever start a
+/// is true (U2). Then the background's record: a root it refused is said as the
+/// refusal (9 a, added 2026-10-10); a background that is still alive and has not
+/// opened its pipe is starting; one that is gone with no clean end recorded crashed
+/// (R). Then a build that is not installed, which nothing will ever start a
 /// background for (D11 a). Last, the task, read and never repaired (D12 b).
 /// </para>
 /// <para>
@@ -83,7 +84,16 @@ internal sealed partial class BackgroundFinder : IBackgroundFinder, IDisposable
             return new BackgroundAbsence.UpdateInstalling();
         }
 
-        if (BackgroundRecord.Read(_settings.RecordPath) is { Ended: null } record)
+        var record = BackgroundRecord.Read(_settings.RecordPath);
+
+        if (record is { Ended: BackgroundEnd.Refused })
+        {
+            // 9 a, 2026-10-10: a refused root is a setting to change, never a crash, and
+            // every start meets it again until it is changed, so it is said at once.
+            return new BackgroundAbsence.RootRefused(record.Refusal, _settings.LogPath);
+        }
+
+        if (record is { Ended: null })
         {
             if (ProcessLiveness.IsAlive(record.ProcessId, record.CreatedFileTime))
             {

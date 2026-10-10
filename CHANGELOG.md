@@ -40,6 +40,21 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **The four paths the one-binary build left untested are held.**
+  A relay reading the exit code of the background it held, the uninstall hook's stop when the
+  background answers and does not end or when nothing answers, a person's start ending a
+  background that took the connection and never answered, and a relay's first call made with no
+  tool list and no background. The first and third need the background to be a process of its
+  own, so the suite's probe gained a stand-in that takes the background's pipe and writes its
+  record through the product's code. Each arm was planted red first.
+
+- ✅ **The gate's clearance reads the toasts' activator.**
+  The maintainer's 9 a. An installer arm that failed between its install and its uninstall could
+  leave the test pack's activator class registered under the person's own classes, and nothing
+  read it. The snapshot now reads the real application id's activator and the test pack's, the
+  class derived as the product derives it, so a test pack's left behind stops the gate.
+  `SuiteCoverageTests` runs the reading over a scratch key.
+
 - ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
   F3, after the maintainer's question of 2026-10-07, verbatim: *"Maybe we should start tracking all
   magical numbers used in this project in an index of sorts so that we can at a later date re-check
@@ -1985,6 +2000,39 @@ release body; nothing else depends on it.
   copy, not its second.
 
 ### Fixed
+
+- 🐛 **A data root BrowserAI refuses is answered with what is wrong and how to fix it.**
+  The maintainer's 9 a. A background that would not serve out of a data root or an install root
+  outside the person's profile was recorded as a crash, so every call met the crash sentence,
+  which sends the person to a bug report and to the Start Menu, where the start is refused the
+  same way. The refusal is now a record of its own, and every call is told at once which root
+  was refused, why, and how to put it right. `RelayTests`, `BackgroundFinderTests` and
+  `InstallRootScopeTests` hold it, planted red against the crash.
+
+- 🐛 **After a downgrade, an end the newer build recorded no longer reads as a crash.**
+  The maintainer's 9 a, and a decision lane FIX took for his review: an end this build does not
+  know is a clean end, since every end a build writes is a clean one, so a relay names the
+  task's state as after any clean end. `BackgroundRecordTests` and `BackgroundFinderTests` hold
+  it, planted red first.
+
+- 🐛 **The background's stop waits for a connection it accepted while stopping, and one relay that cannot be told to end costs only itself.**
+  The maintainer's 9 a. The stop took its list of connections before it joined its listener,
+  so one the listener had just accepted ran on past the stop; and ending the relays for an
+  update stopped at the first relay whose connection failed with anything but a broken pipe,
+  while a call-off never looked at what it sent. `BackgroundServerTests` holds both, planted red
+  first.
+
+- 🐛 **Uninstalling one of two installs of one pack id leaves the other's toast clicks working.**
+  The maintainer's 9 a. Both installs share one application id and so one activator class, and
+  every uninstall took the class back. Now an uninstall takes it back only when it starts that
+  install's own program. `ToastActivationTests` holds it over two roots, planted red first.
+
+- ✅ **`AppBinaryTests` and `SandboxFlagTests` no longer go red over a file or a process that is not theirs.**
+  The first read a stale `BrowserAI.exe` that a build before 2026-10-08 left in the
+  configuration app's output and no later build removes, which cost four lanes a red each; it
+  now reads whether the app's assembly, as the current build produced it, has an entry point. The
+  second read every payload `node.exe` in the job, a registry reap's included, and now reads the
+  server that started the run's browser. Both were planted red first.
 
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision

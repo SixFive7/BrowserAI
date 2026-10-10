@@ -16,7 +16,11 @@ namespace BrowserAI.Tests.Harness;
 /// <param name="CreatedFileTime">Its creation time, which together with the pid is its identity.</param>
 /// <param name="ImagePath">Its full image path, or <see langword="null"/> if it could not be read.</param>
 /// <param name="CommandLine">Its command line, or <see langword="null"/> if it could not be read.</param>
-internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, string? ImagePath, string? CommandLine);
+/// <param name="ParentProcessId">
+/// The pid that started it, or <see langword="null"/> if it could not be read. Added
+/// 2026-10-10, so a session's own server is the node a browser was started by.
+/// </param>
+internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, string? ImagePath, string? CommandLine, int? ParentProcessId = null);
 
 /// <summary>
 /// Everything one run of the vertical slice produced, captured once and asserted
@@ -114,6 +118,41 @@ internal sealed record SliceRun(
         .. Processes.Where(process => process.ImagePath is { } path
             && path.StartsWith(browsersDirectory, StringComparison.OrdinalIgnoreCase)),
     ];
+
+    /// <summary>
+    /// The Playwright servers of this run's sessions: every payload <c>node.exe</c> that
+    /// started a browser of the run, and no other node.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b>, closing the hazard row lane ARCH's helper T2 opened on
+    /// 2026-10-09: the sandbox arm read every payload node in the job, so a node the
+    /// stray sweep's registry reap starts, alive at the moment the job was read, would
+    /// have failed the flag check it has no part in. A session's server is the one node
+    /// that starts a browser, which a reap's node and an installer's never do.
+    /// </remarks>
+    /// <param name="processes">The run's processes.</param>
+    /// <param name="browsersDirectory">The browsers root the browsers come from.</param>
+    /// <returns>The servers.</returns>
+    public static IReadOnlyList<ObservedProcess> SessionServersIn(IReadOnlyList<ObservedProcess> processes, string browsersDirectory)
+    {
+        ArgumentNullException.ThrowIfNull(processes);
+        ArgumentNullException.ThrowIfNull(browsersDirectory);
+
+        var parents = processes
+            .Where(process => process.ImagePath is { } path
+                && path.StartsWith(browsersDirectory, StringComparison.OrdinalIgnoreCase)
+                && process.CommandLine is { } line
+                && line.Contains("--remote-debugging-pipe", StringComparison.Ordinal)
+                && !line.Contains("--type=", StringComparison.Ordinal))
+            .Select(browser => browser.ParentProcessId)
+            .ToHashSet();
+
+        return
+        [
+            .. processes.Where(process => process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true
+                && parents.Contains(process.ProcessId)),
+        ];
+    }
 
     /// <summary>
     /// The browser process itself, as opposed to its renderers and utilities.
@@ -367,11 +406,24 @@ internal sealed record SliceRun(
                 continue;
             }
 
+            int? parent;
+
+            try
+            {
+                parent = ParentProcess.IdOf(processId);
+            }
+            catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                // Exited since, or unreadable: no parent is claimed for it.
+                parent = null;
+            }
+
             observed.Add(new ObservedProcess(
                 processId,
                 created,
                 ProcessCommandLine.ImagePathOf(processId),
-                ProcessCommandLine.Of(processId)));
+                ProcessCommandLine.Of(processId),
+                parent));
         }
 
         return observed;

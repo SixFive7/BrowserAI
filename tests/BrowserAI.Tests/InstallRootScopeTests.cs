@@ -268,7 +268,8 @@ internal sealed class InstallRootScopeTests
     /// <summary>
     /// The published binary's background really refuses: it exits non-zero, it writes the
     /// refusal into the process log, it creates nothing else under the root but the
-    /// record that names it a crash, and a relay over that root says so at once.
+    /// record that names the refusal, and a relay over that root says what was refused
+    /// and the remedy at once.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -281,6 +282,11 @@ internal sealed class InstallRootScopeTests
     /// record are the <b>only</b> things under the root afterwards. <i>Corrected
     /// 2026-10-09 (previously "that <c>logs\</c> is the <b>only</b> thing"): R
     /// records the refusal as a crash, which is what a relay answers with.</i>
+    /// <i>Corrected 2026-10-10 by the maintainer's 9 a (previously the record named a
+    /// crash, and the relay half below required the crash sentence and the log): the
+    /// record names the refusal, what was refused and the remedy, and a relay answers
+    /// with those and never with a bug report.</i> <b>Planted red the same day</b>
+    /// against a background that wrote the crash record, as every build before did.
     /// </para>
     /// <para>
     /// <b>Nothing is written to this process's stdin.</b> A refusing BrowserAI
@@ -370,16 +376,20 @@ internal sealed class InstallRootScopeTests
         await Assert.That(string.Join(", ", Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(record)!).Select(Path.GetFileName)))
             .IsEqualTo(Path.GetFileName(record));
 
-        // The record reads as the crash it is: this background started it, and
-        // nothing ended it cleanly.
+        // The record reads as the refusal it is: this background wrote it, with the
+        // root, why it was refused and the remedy. Corrected 2026-10-10 by the
+        // maintainer's 9 a (previously "The record reads as the crash it is").
         var state = BackgroundRecord.Read(record);
 
         await Assert.That(state).IsNotNull();
         await Assert.That(state!.ProcessId).IsEqualTo(process.Id);
-        await Assert.That(state.Ended).IsNull();
+        await Assert.That(state.Ended).IsEqualTo(BackgroundEnd.Refused);
+        await Assert.That(state.Refusal).IsNotNull();
+        await Assert.That(state.Refusal!.Which).IsEqualTo(JudgedRoot.Data);
+        await Assert.That(state.Refusal.Remedy).StartsWith("give BrowserAI a data root under");
 
-        // So a relay over this root answers its first call at once, with the crash
-        // and the log that says why, and never holds it for a background that cannot
+        // So a relay over this root answers its first call at once, with what was
+        // refused and the remedy, and never holds it for a background that cannot
         // come. The finding of 2026-10-09: with no record it held each call for its
         // whole bound and then said that no background was running.
         List<string> relayArguments = [Program.McpArgument, BackgroundPipe.PipeArgument, pipe, Program.DataRootArgument, outside.Path];
@@ -402,10 +412,10 @@ internal sealed class InstallRootScopeTests
         var text = string.Concat((crash["content"]?.AsArray() ?? []).Select(block => (string?)block?["text"] ?? string.Empty));
 
         await Assert.That((bool?)crash["isError"]).IsTrue();
-        await Assert.That(text).Contains("crashed").Because(text);
-        await Assert.That(text).Contains(logs);
+        await Assert.That(text).IsEqualTo(RelayErrors.RootRefused("browser_snapshot", state.Refusal, logs)).Because(text);
+        await Assert.That(text).DoesNotContain("crashed");
         await Assert.That(answered.Elapsed).IsLessThan(RelayConstants.HoldBound)
-            .Because("a recorded crash is answered at once; holding cannot change it");
+            .Because("a recorded refusal is answered at once; holding cannot change it");
     }
 
     /// <summary>What a background writes once its pipe is taken and it serves.</summary>

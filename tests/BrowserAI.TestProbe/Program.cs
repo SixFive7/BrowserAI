@@ -86,6 +86,10 @@ internal static class Program
             // ParentChainProbe.
             "parent-chain-middle" when args.Length is 2 => ParentChainProbe.Middle(args[1]),
             "parent-chain" when args.Length is 2 => ParentChainProbe.Leaf(args[1]),
+            // <pipeName> <recordPath> <readyPath> <exitCode>. A background that takes
+            // its pipe and writes its record and answers nothing; see BackgroundStandIn.
+            "background-standin" when args.Length is 5 =>
+                BackgroundStandIn.Run(args[1], args[2], args[3], int.Parse(args[4], CultureInfo.InvariantCulture)),
             _ => Usage(),
         };
     }

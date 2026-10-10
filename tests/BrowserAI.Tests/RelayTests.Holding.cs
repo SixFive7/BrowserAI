@@ -4,6 +4,7 @@
 using System.Text.Json.Nodes;
 using BrowserAI.Proxy;
 using BrowserAI.Relay;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 
@@ -64,6 +65,69 @@ internal sealed partial class RelayTests
         await Assert.That((await rig.NextAsync()).IdText).IsEqualTo("1");
         await Assert.That((await rig.NextAsync()).IdText).IsEqualTo("two");
         await Assert.That(await rig.BarrierAsync()).IsEmpty();
+    }
+
+    /// <summary>
+    /// The first call of a connection that never asked for the tool list, made while no
+    /// background is there, is refused at once with the stale-list sentence and is never
+    /// held; the call after it is held, and passed on once a background appears.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q261 b, moved to the relay with the one-binary build.</b> The connected case is
+    /// <see cref="TheFirstCallOfAConnectionThatNeverListedIsRefusedOnce"/>; this one, a
+    /// relay's first call with no list and no background, was left untested by lane
+    /// ARCH's helper T1 on 2026-10-09. The refusal comes before the hold, because the
+    /// call was made from a list another BrowserAI gave, and holding it for a background
+    /// would only run it later from the same list.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against an engine that held a call before it asked
+    /// whether its connection had listed, so the refusal came only once a background had.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirstCallWithNoToolListAndNoBackgroundIsRefusedAtOnceAndTheNextIsHeld()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.Starting();
+
+        _ = await rig.InitializeAsync(KnownClients.ClaudeCode, "2.1.290");
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+
+        var answered = await rig.BarrierAsync();
+
+        await Assert.That(answered.Count).IsEqualTo(2).Because("the first call was held, not refused");
+        await Assert.That(answered[0].Method).IsEqualTo("notifications/tools/list_changed");
+        await Assert.That(answered[1].IdText).IsEqualTo("1");
+        await Assert.That(answered[1].IsToolError).IsTrue();
+        await Assert.That(answered[1].ToolText).IsEqualTo(SessionErrors.ToolListPredatesThisServer(
+            "browser_navigate",
+            RelayRig.Facts.Build,
+            KnownClients.ClaudeCode,
+            throughTheSessionHost: false,
+            ToolSignatures.From(RelayRig.ToolList())));
+
+        // Once: the next is held, and nothing answers it while no background is there.
+        var second = RelayRig.CallFrame("2");
+        await rig.SendAsync(second);
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        // A background appears, and the held call is the first thing it is passed.
+        var background = rig.Finder.Offer();
+        await rig.StepAsync(RelayConstants.LookWhileHolding);
+
+        var hello = await background.NextAsync();
+        await background.SendAsync(Frames.HelloAnswer(hello.IdText!, FakeBackground.Pid));
+
+        var replay = await background.NextAsync();
+        await background.SendAsync(Frames.ReplayAnswer(replay.IdText!));
+
+        await Assert.That((await background.NextAsync()).Method).IsEqualTo("notifications/initialized");
+        await Assert.That((await background.NextAsync()).Text).IsEqualTo(second);
     }
 
     /// <summary>A held call the client cancels is dropped, and is never answered or passed on.</summary>
@@ -209,6 +273,73 @@ internal sealed partial class RelayTests
 
         await Assert.That(third.ToolText).Contains("(exit code unknown)");
         Match(third.ToolText, nameof(RelayErrors.Crashed), RelayErrors.Crashed(at, null, Log));
+    }
+
+    /// <summary>
+    /// A root the background refused is answered at once, with what was refused, why and
+    /// the remedy, and never with the crash; so is every call held before it, and a
+    /// refusal with no parts names the log.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 9 a, 2026-10-10</b>, closing the hazard row lane ARCH's helper
+    /// T2 opened on 2026-10-09: the crash sentence sent the person to a bug report for a
+    /// setting, and to the Start Menu for a start that is refused the same way.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against an engine that answered a refused root with
+    /// the crash sentence, as every relay did before this arm.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARefusedRootIsAnsweredAtOnceWithWhatWasRefusedAndItsRemedy()
+    {
+        await using var rig = RelayRig.Start();
+        rig.Finder.Absence = new BackgroundAbsence.Starting();
+
+        _ = await rig.InitializeAsync();
+        _ = await rig.ListAsync();
+        await rig.SettledAsync();
+
+        await rig.SendAsync(RelayRig.CallFrame("1"));
+        await Assert.That(await rig.BarrierAsync()).IsEmpty();
+
+        const string Log = @"C:\Data\BrowserAI-relay-tests\logs\browserai-20261010.log";
+        var refusal = new BrowserAI.Hosting.RootRefusal(
+            BrowserAI.Hosting.JudgedRoot.Data,
+            @"D:\Shared\BrowserAI",
+            "it is outside this user's profile, so it is not storage Windows keeps per-user",
+            @"give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so install it again with that variable cleared.");
+
+        rig.Finder.Absence = new BackgroundAbsence.RootRefused(refusal, Log);
+
+        await rig.SendAsync(RelayRig.CallFrame("2"));
+
+        var first = await rig.NextAsync();
+        var second = await rig.NextAsync();
+
+        await Assert.That(first.IdText).IsEqualTo("1");
+        await Assert.That(second.IdText).IsEqualTo("2");
+
+        // Written out here and not taken from the catalogue.
+        await Assert.That(first.ToolText).IsEqualTo(
+            @"BrowserAI's background process will not start: it will not serve out of its data root 'D:\Shared\BrowserAI', because it is outside this user's profile, so it is not storage Windows keeps per-user. "
+            + "'browser_navigate' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until the setting is changed. "
+            + @"The person at this computer needs to give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so install it again with that variable cleared. "
+            + "Only that person can do this: do not start BrowserAI or change its settings yourself.");
+        await Assert.That(first.ToolText).DoesNotContain("crashed");
+        await Assert.That(first.ToolText).DoesNotContain(RelayErrors.IssuesUrl);
+
+        Match(second.ToolText, nameof(RelayErrors.RootRefused), RelayErrors.RootRefused("browser_navigate", refusal, Log));
+
+        // A refusal whose parts did not reach the record names the log.
+        rig.Finder.Absence = new BackgroundAbsence.RootRefused(null, Log);
+        await rig.SendAsync(RelayRig.CallFrame("3"));
+        var third = await rig.NextAsync();
+
+        await Assert.That(third.ToolText).Contains($"its log, {Log}, says which and why");
+        Match(third.ToolText, nameof(RelayErrors.RootRefused), RelayErrors.RootRefused("browser_navigate", null, Log));
     }
 
     /// <summary>A build that is not installed is answered at once, with the command a developer runs.</summary>

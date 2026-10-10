@@ -225,13 +225,13 @@ internal static class InstallRootScope
 
             if (afterPrefix is null || afterPrefix.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
             {
-                return InstallRootVerdict.Refused(Sentence(
+                return Refuse(
                     which,
                     root,
                     profile,
                     dataRoot,
                     installRoot,
-                    "it is a UNC path, which is storage every account that can reach the share can reach"));
+                    "it is a UNC path, which is storage every account that can reach the share can reach");
             }
 
             // The prefix is stripped for the volume question only. Everything
@@ -245,13 +245,13 @@ internal static class InstallRootScope
         //    would cost 22 s to discover the slow way.
         if (VolumeIdentity.Of(probe).Kind is VolumeKind.Network)
         {
-            return InstallRootVerdict.Refused(Sentence(
+            return Refuse(
                 which,
                 root,
                 profile,
                 dataRoot,
                 installRoot,
-                $"drive '{probe[..2]}' is a mapped network drive, so the root is a share, not per-user storage"));
+                $"drive '{probe[..2]}' is a mapped network drive, so the root is a share, not per-user storage");
         }
 
         // 3. And only now, one directory open per side. A `subst`ed letter is
@@ -294,7 +294,7 @@ internal static class InstallRootScope
 
         return inside
             ? InstallRootVerdict.MayServeHere
-            : InstallRootVerdict.Refused(Sentence(
+            : Refuse(
                 which,
                 root,
                 resolvedProfile,
@@ -302,7 +302,7 @@ internal static class InstallRootScope
                 installRoot,
                 string.Equals(resolvedRoot, root, StringComparison.OrdinalIgnoreCase)
                     ? "it is outside this user's profile, so it is not storage Windows keeps per-user"
-                    : $"the filesystem calls it '{resolvedRoot}', which is outside this user's profile, so it is not storage Windows keeps per-user"));
+                    : $"the filesystem calls it '{resolvedRoot}', which is outside this user's profile, so it is not storage Windows keeps per-user");
     }
 
     /// <summary>The final name with the extended-length prefix removed.</summary>
@@ -377,10 +377,59 @@ internal static class InstallRootScope
         + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not -- the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
         + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
         + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
-        + (which is JudgedRoot.Install
-            ? $"Recovery: install BrowserAI inside '{profile}' -- the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"Recovery: give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so install it again with that variable cleared or naming a directory under that profile; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
+        + "Recovery: " + Remedy(which, profile)
         + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
+
+    /// <summary>What puts a refused root right, as a clause that starts with what to do.</summary>
+    /// <remarks>
+    /// <b>Split out of <see cref="Sentence"/> on 2026-10-10</b>, unchanged, so a relay can
+    /// say it to every call a refused background leaves unanswered (the maintainer's 9 a):
+    /// the background writes it into its record, and the log's sentence carries it after
+    /// <i>Recovery:</i> as it always did.
+    /// </remarks>
+    /// <param name="which">Which root is at fault.</param>
+    /// <param name="profile">This user's profile directory.</param>
+    /// <returns>The remedy, ending with a space.</returns>
+    private static string Remedy(JudgedRoot which, string profile) =>
+        which is JudgedRoot.Install
+            ? $"install BrowserAI inside '{profile}' -- the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
+            : $"give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so install it again with that variable cleared or naming a directory under that profile; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ";
+
+    /// <summary>The refusing verdict: the whole sentence for the log, and its parts for a relay.</summary>
+    /// <param name="which">Which root is at fault.</param>
+    /// <param name="root">The root as this process resolved it.</param>
+    /// <param name="profile">This user's profile directory.</param>
+    /// <param name="dataRoot">The data root.</param>
+    /// <param name="installRoot">The install root, or <see langword="null"/>.</param>
+    /// <param name="why">What is wrong with the root, as a clause.</param>
+    /// <returns>The verdict.</returns>
+    private static InstallRootVerdict Refuse(
+        JudgedRoot which,
+        string root,
+        string profile,
+        string dataRoot,
+        string? installRoot,
+        string why) =>
+        InstallRootVerdict.Refused(
+            Sentence(which, root, profile, dataRoot, installRoot, why),
+            new RootRefusal(which, root, why, Remedy(which, profile).TrimEnd()));
+}
+
+/// <summary>A refused root in the parts a relay's sentence is made of.</summary>
+/// <remarks>
+/// <b>Added 2026-10-10, the maintainer's 9 a.</b> A background that refuses its root
+/// writes these into its record (<c>Coordination.BackgroundRecord</c>), and every relay
+/// answers each call with them: what was refused, why, and what puts it right. The
+/// log's whole sentence says more, for the person who reads the log.
+/// </remarks>
+/// <param name="Which">Which root was refused.</param>
+/// <param name="Root">The root, as the refusing process resolved it.</param>
+/// <param name="Why">What is wrong with it, as a clause.</param>
+/// <param name="Remedy">What puts it right, as a clause that starts with what to do.</param>
+internal sealed record RootRefusal(JudgedRoot Which, string Root, string Why, string Remedy)
+{
+    /// <summary>What a sentence calls the refused root.</summary>
+    public string Noun => Which is JudgedRoot.Install ? "install root" : "data root";
 }
 
 /// <summary>Which of this process's two roots is under judgement.</summary>
@@ -429,11 +478,18 @@ internal sealed record InstallRootVerdict
     /// </summary>
     public string? Unestablished { get; init; }
 
+    /// <summary>
+    /// The refusal in its parts, for the background's record and the relays that read
+    /// it. <see langword="null"/> unless <see cref="MayServe"/> is <see langword="false"/>.
+    /// </summary>
+    public RootRefusal? Detail { get; init; }
+
     /// <summary>Builds the refusing verdict.</summary>
     /// <param name="refusal">The whole sentence.</param>
+    /// <param name="detail">The same refusal in its parts.</param>
     /// <returns>The verdict.</returns>
-    public static InstallRootVerdict Refused(string refusal) =>
-        new() { MayServe = false, Refusal = refusal };
+    public static InstallRootVerdict Refused(string refusal, RootRefusal detail) =>
+        new() { MayServe = false, Refusal = refusal, Detail = detail };
 
     /// <summary>Builds the undecided verdict, which still serves.</summary>
     /// <param name="why">What could not be established.</param>

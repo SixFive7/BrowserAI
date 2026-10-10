@@ -12,6 +12,35 @@ using ModelContextProtocol.Protocol;
 
 namespace BrowserAI.Background;
 
+/// <summary>What the roster asks of one relay's connection.</summary>
+/// <remarks>
+/// <b>Added 2026-10-10</b> so the roster's ends can be held against a connection that
+/// fails in a way a pipe of the in-process rig never does: <see cref="RelayLink"/> in
+/// the product, a double in the suite.
+/// </remarks>
+internal interface IRelayLink
+{
+    /// <summary>Whether a call of the client's is in flight.</summary>
+    bool CallInFlight { get; }
+
+    /// <summary>The connection's end: the relay has gone.</summary>
+    Task Closed { get; }
+
+    /// <summary>Asks the relay something of BrowserAI's own and waits for its answer.</summary>
+    /// <param name="method">The method.</param>
+    /// <param name="parameters">Its parameters.</param>
+    /// <param name="cancellationToken">Ends the wait.</param>
+    /// <returns>The relay's answer.</returns>
+    Task<JsonRpcMessage> AskAsync(string method, JsonNode? parameters, CancellationToken cancellationToken);
+
+    /// <summary>Tells the relay something of BrowserAI's own, expecting no answer.</summary>
+    /// <param name="method">The method.</param>
+    /// <param name="parameters">Its parameters.</param>
+    /// <param name="cancellationToken">Ends the send.</param>
+    /// <returns>A task that completes once the frame is written.</returns>
+    Task TellAsync(string method, JsonNode? parameters, CancellationToken cancellationToken);
+}
+
 /// <summary>One relay connected to the background, as its greeting introduced it.</summary>
 /// <param name="Id">The background's name for it: the relay's pid and the connection's number.</param>
 /// <param name="RelayPid">The relay's pid.</param>
@@ -133,7 +162,7 @@ internal sealed class RelayRoster : IUpdateRelays
     /// <param name="greeting">What the relay said about itself.</param>
     /// <param name="link">Its connection.</param>
     /// <param name="idleAt">When its countdown runs out, from its greeting.</param>
-    public void Add(RelayGreeting greeting, RelayLink link, DateTimeOffset idleAt)
+    public void Add(RelayGreeting greeting, IRelayLink link, DateTimeOffset idleAt)
     {
         ArgumentNullException.ThrowIfNull(greeting);
         ArgumentNullException.ThrowIfNull(link);
@@ -306,34 +335,90 @@ internal sealed class RelayRoster : IUpdateRelays
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>Every relay's notice is watched to its end</b>, and one that fails is a
+    /// record naming the relay. <i>Corrected 2026-10-10 (previously each task was
+    /// discarded, so a failure was never seen by anybody), found by lane ARCH's helper
+    /// T1 reading the code on 2026-10-09.</i>
+    /// </remarks>
     public void CallOff(string version)
     {
         foreach (var entry in Snapshot())
         {
-            _ = entry.Link.TellAsync(RelayProtocol.CalledOff, new JsonObject { ["version"] = version }, CancellationToken.None);
+            _ = TellAsync(entry, RelayProtocol.CalledOff, new JsonObject { ["version"] = version }, CancellationToken.None);
         }
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>A relay whose end fails costs that relay alone</b>: every relay after it is
+    /// still told, and a connection that faults as it goes is waited for as gone.
+    /// <i>Corrected 2026-10-10 (previously only an <see cref="IOException"/> was caught,
+    /// so a link already disposed stopped the loop and every relay after it ended only
+    /// with the background), found by lane ARCH's helper T1 reading the code on
+    /// 2026-10-09 and held by
+    /// <c>BackgroundServerTests.ARelayWhoseLinkFailsKeepsNoOtherFromBeingToldToEnd</c>.</i>
+    /// The caller's own token is the one thing that ends the loop early: its bound has
+    /// run out, and the install goes ahead without the rest.
+    /// </remarks>
     public async Task EndAllAsync(string version, bool now, CancellationToken cancellationToken)
     {
         var entries = Snapshot();
 
         foreach (var entry in entries)
         {
-            try
-            {
-                await entry.Link.TellAsync(RelayProtocol.End, new JsonObject { ["now"] = now, ["version"] = version }, cancellationToken).ConfigureAwait(false);
-            }
-            catch (IOException)
-            {
-                // That relay has gone already, which is what the end asks of it.
-            }
+            await TellAsync(entry, RelayProtocol.End, new JsonObject { ["now"] = now, ["version"] = version }, cancellationToken).ConfigureAwait(false);
         }
 
         // Each relay answers what it holds and closes its end; the background waits
         // for that, within the caller's bound.
-        await Task.WhenAll(entries.Select(static entry => entry.Link.Closed)).WaitAsync(cancellationToken).ConfigureAwait(false);
+        await Task.WhenAll(entries.Select(Gone)).WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Tells one relay something, and records it when that fails for any reason but its having gone.</summary>
+    /// <param name="entry">The relay.</param>
+    /// <param name="method">The method.</param>
+    /// <param name="parameters">Its parameters.</param>
+    /// <param name="cancellationToken">The caller's bound, which alone ends the call with an exception.</param>
+    /// <returns>A task that completes once the frame is written or the relay could not be told.</returns>
+    private async Task TellAsync(Entry entry, string method, JsonNode parameters, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await entry.Link.TellAsync(method, parameters, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (IOException)
+        {
+            // That relay has gone already, which is what an end asks of it and what a
+            // call-off no longer needs to reach.
+        }
+#pragma warning disable CA1031 // One relay that cannot be told costs that relay alone, never the relays after it.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            RelayRosterLog.NotTold(_logger, entry.Greeting.Id, method, failure);
+        }
+    }
+
+    /// <summary>One relay's connection, waited for as gone whether it closed or faulted.</summary>
+    /// <param name="entry">The relay.</param>
+    /// <returns>A task that completes once its connection has ended, and never faults.</returns>
+    private async Task Gone(Entry entry)
+    {
+        try
+        {
+            await entry.Link.Closed.ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A connection that faulted as it went has gone all the same.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            RelayRosterLog.EndedWithAFault(_logger, entry.Greeting.Id, failure);
+        }
     }
 
     private Entry? Find(string id)
@@ -352,11 +437,11 @@ internal sealed class RelayRoster : IUpdateRelays
         }
     }
 
-    private sealed class Entry(RelayGreeting greeting, RelayLink link)
+    private sealed class Entry(RelayGreeting greeting, IRelayLink link)
     {
         public RelayGreeting Greeting { get; } = greeting;
 
-        public RelayLink Link { get; } = link;
+        public IRelayLink Link { get; } = link;
 
         public DateTimeOffset IdleAt { get; set; }
 
@@ -378,4 +463,10 @@ internal static partial class RelayRosterLog
     /// <param name="name">Where its name was found.</param>
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Relay {Relay}'s conversation was found by {Source} and named by {Name}.")]
     public static partial void ConversationFound(ILogger logger, string relay, ConversationSource source, NameSource name);
+
+    [LoggerMessage(EventId = 31, Level = LogLevel.Warning, Message = "Relay {Relay} could not be told '{Method}'; every other relay is still told.")]
+    public static partial void NotTold(ILogger logger, string relay, string method, Exception failure);
+
+    [LoggerMessage(EventId = 32, Level = LogLevel.Warning, Message = "Relay {Relay}'s connection ended with a fault; it has gone all the same.")]
+    public static partial void EndedWithAFault(ILogger logger, string relay, Exception failure);
 }

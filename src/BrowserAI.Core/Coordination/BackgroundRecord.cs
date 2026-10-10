@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
 
 namespace BrowserAI.Coordination;
@@ -22,6 +23,31 @@ internal enum BackgroundEnd
 
     /// <summary>The Task Scheduler's End command, or <c>schtasks /end</c>, asked its window to close.</summary>
     EndCommand,
+
+    /// <summary>
+    /// It would not serve out of its data root or its install root and ended at once,
+    /// which is a setting a person has to change and never a crash.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10 with the maintainer's 9 a</b>: until then a refused root was
+    /// recorded as a crash, and every relay answered the crash sentence, which sends the
+    /// person to a bug report for what is a configuration problem. The record carries
+    /// what was refused and how to put it right (<see cref="BackgroundRecordState.Refusal"/>).
+    /// </remarks>
+    Refused,
+
+    /// <summary>
+    /// An end a later build recorded that this build does not know, read as the clean
+    /// end it is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10.</b> Only a later build writes an end this build has no name
+    /// for, and every end a build writes is a clean one, so after a downgrade such a
+    /// record says that background ended cleanly. Until that day it read as no end at
+    /// all, which is a crash, and every relay answered the crash sentence until a person
+    /// started BrowserAI from the Start Menu. Never written by this build.
+    /// </remarks>
+    Unrecognised,
 }
 
 /// <summary>What one background's record says.</summary>
@@ -34,6 +60,10 @@ internal enum BackgroundEnd
 /// <param name="EndedAt">When it ended cleanly, or <see langword="null"/>.</param>
 /// <param name="ExitCode">Its exit code, when a relay that held a handle on it saw it go; <see langword="null"/> otherwise.</param>
 /// <param name="ExitedAt">When that relay saw it go, or <see langword="null"/>.</param>
+/// <param name="Refusal">
+/// What it refused to serve out of and how to put that right, when it ended
+/// <see cref="BackgroundEnd.Refused"/>; <see langword="null"/> otherwise.
+/// </param>
 internal sealed record BackgroundRecordState(
     int ProcessId,
     long CreatedFileTime,
@@ -43,7 +73,8 @@ internal sealed record BackgroundRecordState(
     BackgroundEnd? Ended,
     DateTimeOffset? EndedAt,
     int? ExitCode,
-    DateTimeOffset? ExitedAt);
+    DateTimeOffset? ExitedAt,
+    RootRefusal? Refusal = null);
 
 /// <summary>
 /// The file a background writes when it starts and marks when it ends cleanly, so
@@ -59,6 +90,14 @@ internal sealed record BackgroundRecordState(
 /// clears the record. A sign-out, a shutdown and the Task Scheduler's End command are
 /// told to the background's hidden window and recorded as clean ends, so none of them
 /// reads as a crash.
+/// </para>
+/// <para>
+/// ⚠️ <b>A refused root is a record of its own since 2026-10-10</b>, the maintainer's 9
+/// a: a background that will not serve out of its data root or its install root writes
+/// <see cref="BackgroundEnd.Refused"/> with what it refused and the remedy, and every
+/// relay answers with that, never with the crash. <i>Corrected 2026-10-10 (previously
+/// such a start wrote a record with no clean end and its exit code, which every relay
+/// read as a crash).</i>
 /// </para>
 /// <para>
 /// <b>One file per background</b>, under the data root and named for the background's
@@ -164,6 +203,44 @@ internal static class BackgroundRecord
     }
 
     /// <summary>
+    /// Writes this process's record as a background that refused its root: started,
+    /// and ended <see cref="BackgroundEnd.Refused"/> with what it refused and the remedy.
+    /// </summary>
+    /// <remarks>
+    /// <b>Written by the process itself, before it exits</b>, because no relay holds a
+    /// handle on a background that never opened its pipe, and a relay that found no
+    /// record would hold each call for its whole bound and then say that no background
+    /// was running.
+    /// </remarks>
+    /// <param name="path">The record's path.</param>
+    /// <param name="build">This build's version.</param>
+    /// <param name="image">This process's image.</param>
+    /// <param name="refusal">What was refused, and how to put it right.</param>
+    /// <param name="now">The time.</param>
+    /// <returns>What was written.</returns>
+    /// <exception cref="IOException">The record could not be written.</exception>
+    /// <exception cref="UnauthorizedAccessException">The record's folder may not be written.</exception>
+    public static BackgroundRecordState Refused(string path, string build, string image, RootRefusal refusal, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(refusal);
+
+        var state = new BackgroundRecordState(
+            Environment.ProcessId,
+            ProcessLiveness.CreationTimeOfThisProcess(),
+            now,
+            build,
+            image,
+            Ended: BackgroundEnd.Refused,
+            EndedAt: now,
+            ExitCode: null,
+            ExitedAt: null,
+            Refusal: refusal);
+
+        Write(path, state);
+        return state;
+    }
+
+    /// <summary>
     /// Writes what a relay saw when the background it was connected to went: its exit
     /// code and the time, when the record does not already say it ended cleanly.
     /// </summary>
@@ -228,17 +305,75 @@ internal static class BackgroundRecord
                 DateTimeOffset.Parse(root.GetProperty("startedAt").GetString()!, CultureInfo.InvariantCulture),
                 root.GetProperty("build").GetString() ?? string.Empty,
                 root.GetProperty("image").GetString() ?? string.Empty,
-                root.TryGetProperty("ended", out var ended) && ended.ValueKind is JsonValueKind.String
-                    && Enum.TryParse<BackgroundEnd>(ended.GetString(), out var how) ? how : null,
+                EndOf(root),
                 Time(root, "endedAt"),
                 root.TryGetProperty("exitCode", out var code) && code.ValueKind is JsonValueKind.Number ? code.GetInt32() : null,
-                Time(root, "exitedAt"));
+                Time(root, "exitedAt"),
+                RefusalOf(root));
         }
         catch (Exception failure) when (failure is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
         {
             return null;
         }
     }
+
+    /// <summary>The end a record names.</summary>
+    /// <remarks>
+    /// ⚠️ <b>A name this build does not know is <see cref="BackgroundEnd.Unrecognised"/>,
+    /// and no longer no end at all</b> (<i>corrected 2026-10-10, previously an
+    /// <c>ended</c> that did not parse read as absent, which is a crash</i>). Only a
+    /// name this build writes is read as itself, compared exactly: a number or a list
+    /// of names, which a lenient parse would also take, is a name it does not know.
+    /// </remarks>
+    /// <param name="root">The record.</param>
+    /// <returns>The end, or <see langword="null"/> when the record names none.</returns>
+    private static BackgroundEnd? EndOf(JsonElement root)
+    {
+        if (!root.TryGetProperty("ended", out var ended)
+            || ended.ValueKind is not JsonValueKind.String
+            || ended.GetString() is not { Length: > 0 } name)
+        {
+            return null;
+        }
+
+        foreach (var known in Enum.GetValues<BackgroundEnd>())
+        {
+            if (string.Equals(known.ToString(), name, StringComparison.Ordinal))
+            {
+                return known;
+            }
+        }
+
+        return BackgroundEnd.Unrecognised;
+    }
+
+    /// <summary>What a refused root was, when the record carries all of it.</summary>
+    /// <param name="root">The record.</param>
+    /// <returns>The refusal, or <see langword="null"/> when the record carries none or only part of one.</returns>
+    private static RootRefusal? RefusalOf(JsonElement root)
+    {
+        if (!root.TryGetProperty("refused", out var refused) || refused.ValueKind is not JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        JudgedRoot? which = Member(refused, "which") switch
+        {
+            "data" => JudgedRoot.Data,
+            "install" => JudgedRoot.Install,
+            _ => null,
+        };
+
+        return which is { } judged
+            && Member(refused, "root") is { Length: > 0 } path
+            && Member(refused, "why") is { Length: > 0 } why
+            && Member(refused, "remedy") is { Length: > 0 } remedy
+                ? new RootRefusal(judged, path, why, remedy)
+                : null;
+    }
+
+    private static string? Member(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.String ? value.GetString() : null;
 
     private static DateTimeOffset? Time(JsonElement root, string name) =>
         root.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.String
@@ -278,6 +413,16 @@ internal static class BackgroundRecord
             if (state.ExitedAt is { } exitedAt)
             {
                 writer.WriteString("exitedAt", exitedAt.ToString("O", CultureInfo.InvariantCulture));
+            }
+
+            if (state.Refusal is { } refusal)
+            {
+                writer.WriteStartObject("refused");
+                writer.WriteString("which", refusal.Which is JudgedRoot.Install ? "install" : "data");
+                writer.WriteString("root", refusal.Root);
+                writer.WriteString("why", refusal.Why);
+                writer.WriteString("remedy", refusal.Remedy);
+                writer.WriteEndObject();
             }
 
             writer.WriteEndObject();

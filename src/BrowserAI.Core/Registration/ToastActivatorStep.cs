@@ -34,13 +34,17 @@ internal static class ToastActivatorStep
         {
             using var classes = ToastActivatorRegistration.UserClasses();
 
+            var executable = Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+
             if (intent is RegistrationIntent.Uninstall)
             {
-                ToastActivatorRegistration.Unregister(classes, id);
-                return $"Removed for '{id}'.";
+                // Another install of the same pack id owns a class that starts its own
+                // program: it is left to that install (9 a, 2026-10-10).
+                return ToastActivatorRegistration.Unregister(classes, id, executable)
+                    ? $"Removed for '{id}'."
+                    : $"Left for '{id}': it starts another install's program, not '{executable}'.";
             }
 
-            var executable = Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
             ToastActivatorRegistration.Register(classes, id, executable);
             return $"Registered for '{id}', starting '{executable}'.";
         }

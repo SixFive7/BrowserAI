@@ -136,6 +136,17 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// <summary>The pipe it serves.</summary>
     public string Name => _identity.PipeName;
 
+    /// <summary>
+    /// Called on the listener's thread once a connection is accepted and before it is
+    /// served: the suite's seam, which holds the listener there.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10</b> for the arm that connects while a stop is under way
+    /// (<c>BackgroundServerTests</c>): nothing else can hold the listener between taking
+    /// a connection and handing it over. The product sets nothing here.
+    /// </remarks>
+    internal Action? Accepted { get; init; }
+
     /// <summary>Starts accepting.</summary>
     public void Start()
     {
@@ -164,6 +175,14 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>The listener is joined BEFORE the list of connections is taken</b>, so a
+    /// connection it accepted while the stop was under way is in the list and is waited
+    /// for, and none runs on past the stop's own events. <i>Corrected 2026-10-10
+    /// (previously the list was taken first and the listener joined after it), found by
+    /// lane ARCH's helper T1 reading the code on 2026-10-09 and held by
+    /// <c>BackgroundServerTests.AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor</c>.</i>
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) is not 0)
@@ -173,12 +192,20 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         Stop();
 
+        // Nothing adds a connection once the listener has left its loop.
+        if (Volatile.Read(ref _started) is not 0)
+        {
+            _listener.Join();
+        }
+
         Task[] serving;
 
         lock (_serving)
         {
             serving = [.. _serving];
         }
+
+        BackgroundServerLog.WaitingForConnections(_logger, serving.Length);
 
         try
         {
@@ -188,11 +215,6 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         catch (Exception)
 #pragma warning restore CA1031
         {
-        }
-
-        if (Volatile.Read(ref _started) is not 0)
-        {
-            _listener.Join();
         }
 
         _first?.Dispose();
@@ -219,6 +241,7 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                 // name never stands without an instance of ours.
                 var next = NamedPipes.CreateStreamInstance(_identity.PipeName);
 
+                Accepted?.Invoke();
                 Serve(listening, client);
                 listening = next;
             }
@@ -523,4 +546,7 @@ internal static partial class BackgroundServerLog
 
     [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "pid {Client} asked the background to stop.")]
     public static partial void StopAsked(ILogger logger, int client);
+
+    [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "The background's pipe is closed; it waits for the {Connections} connection(s) on its list to end before it stops.")]
+    public static partial void WaitingForConnections(ILogger logger, int connections);
 }

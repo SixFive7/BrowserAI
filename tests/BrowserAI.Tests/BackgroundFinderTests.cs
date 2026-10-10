@@ -207,6 +207,133 @@ internal sealed class BackgroundFinderTests
     }
 
     /// <summary>
+    /// A relay that reached a background holds it, and once that background has gone
+    /// with no clean end its exit code and the moment are written into its record, so
+    /// every relay names the crash with the code it left.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The design's "Where the reason can be found"</b>: a crash that wrote nothing
+    /// still leaves its exit code, and only a process holding a handle on the background
+    /// can read it. Left untested by lane ARCH's helper T1 on 2026-10-09, because the
+    /// background has to be a process of its own that really exits: here the suite's
+    /// probe stands in for it (<c>background-standin</c>), taking the pipe and writing
+    /// the record through the product's own code, and ends with the code the arm gives it
+    /// when its standard input closes.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a finder that never read what the background
+    /// it held left, which named the crash with no exit code.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheExitCodeOfTheBackgroundARelayHeldIsWrittenIntoItsRecord()
+    {
+        using var data = ScratchDirectory.Create("finder-exit-code");
+        using var install = ScratchDirectory.Create("finder-exit-code-install");
+
+        const int ExitCode = 77;
+
+        var clock = new ManualClock();
+        var settings = Settings(data.Path, install.Path, TaskName, new FinderSeams(), clock);
+        var ready = Path.Combine(data.Path, "stand-in.ready");
+
+        using var scope = new JobObjectScope();
+
+        var standIn = scope.Launch(
+            Path.Combine(AppContext.BaseDirectory, ProbeImage.Name + ".exe"),
+            data.Path,
+            "background-standin",
+            settings.PipeName,
+            settings.RecordPath,
+            ready,
+            ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        await BackgroundServerRig.WaitUntilAsync(() => File.Exists(ready) || standIn.HasExited, "the stand-in never took the pipe");
+        await Assert.That(standIn.HasExited).IsFalse().Because(scope.SaidBy(standIn.Id));
+
+        using var finder = new BackgroundFinder(settings, NullLogger.Instance);
+        using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
+
+        await using (var pipe = await finder.TryConnectAsync(hang.Token))
+        {
+            await Assert.That(pipe).IsNotNull();
+        }
+
+        // It goes with the code it was given, and nothing marked its record: a crash.
+        await standIn.StandardInput.DisposeAsync();
+
+        await BackgroundServerRig.WaitUntilAsync(() => standIn.HasExited, "the stand-in did not end when its input closed");
+
+        var absence = finder.Explain(lastBackgroundPid: standIn.Id);
+
+        await Assert.That(absence).IsEqualTo(new BackgroundAbsence.Crashed(clock.GetUtcNow(), ExitCode, settings.LogPath));
+
+        var record = BackgroundRecord.Read(settings.RecordPath)!;
+
+        await Assert.That(record.ProcessId).IsEqualTo(standIn.Id);
+        await Assert.That(record.ExitCode).IsEqualTo(ExitCode);
+        await Assert.That(record.ExitedAt).IsEqualTo(clock.GetUtcNow());
+        await Assert.That(record.Ended).IsNull();
+    }
+
+    /// <summary>
+    /// A root the background refused is named as the refusal, with what was refused and
+    /// the remedy, whether or not the refusing process is still there and before the task
+    /// is read; and a record a later build marked with an end this build does not know is
+    /// no crash.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's 9 a, 2026-10-10</b>, which closed two hazard rows opened on
+    /// 2026-10-09: a refused data root was answered with the crash sentence, and an
+    /// unknown end read as a crash once its background had gone. A refusal is a setting
+    /// to change, so a relay says it at once; an end of any name is a clean end, so the
+    /// task says the rest.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> twice: against a finder with no refusal of its own,
+    /// which named the task, and against a record reader that read an unknown end as no
+    /// end, which named a crash.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARefusedRootIsNamedAsTheRefusalAndALaterBuildsEndIsNoCrash()
+    {
+        using var data = ScratchDirectory.Create("finder-refused");
+        using var install = ScratchDirectory.Create("finder-refused-install");
+
+        var seams = new FinderSeams();
+        var settings = Settings(data.Path, install.Path, TaskName, seams, new ManualClock());
+        var refusal = new BrowserAI.Hosting.RootRefusal(
+            BrowserAI.Hosting.JudgedRoot.Data,
+            @"D:\Shared\BrowserAI",
+            "it is outside this user's profile, so it is not storage Windows keeps per-user",
+            @"give BrowserAI a data root under 'C:\Users\someone'.");
+
+        using var finder = new BackgroundFinder(settings, NullLogger.Instance);
+
+        // Written by this process, which is alive: a refusal all the same, never a start.
+        _ = BackgroundRecord.Refused(settings.RecordPath, BackgroundServerRig.Build, "image", refusal, HandWrittenRecord.StartedAt);
+
+        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(refusal, settings.LogPath));
+
+        // Gone, and nothing about it is a crash.
+        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.Refused));
+
+        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(null, settings.LogPath));
+        await Assert.That(seams.TasksRead).IsEmpty().Because("a refusal is answered from the record alone");
+
+        // A later build's end, gone: a clean end, and the task says the rest.
+        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites");
+
+        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
+        await Assert.That(BackgroundRecord.Read(settings.RecordPath)!.ExitedAt).IsNull().Because("a clean end was timed as a crash");
+    }
+
+    /// <summary>
     /// With no record, the task is read without changing it and each of its states is
     /// named, with what the Task Scheduler said when it could not be asked.
     /// </summary>

@@ -55,7 +55,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     private int _changes;
     private int _disposed;
 
-    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs)
+    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs, Action? accepted)
     {
         Sessions = sessions;
         _ownsSessions = ownsSessions;
@@ -77,7 +77,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
 
         try
         {
-            Server = new BackgroundServer(Host, Identity, Roster, Verbs, _loggerFactory);
+            Server = new BackgroundServer(Host, Identity, Roster, Verbs, _loggerFactory) { Accepted = accepted };
         }
         catch
         {
@@ -124,18 +124,24 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// <param name="dataRoot">The data root it says it serves, or <see langword="null"/> for the rig's.</param>
     /// <param name="sessions">The sessions, which the caller then owns; or <see langword="null"/> for a rig of doubles this rig owns.</param>
     /// <param name="verbs">The verbs, or <see langword="null"/> for ones that hand out <see cref="FakeBackgroundVerbs.DefaultAddress"/>.</param>
+    /// <param name="accepted">
+    /// What the listener does once it has accepted a connection and before it serves it,
+    /// on its own thread: <see cref="BackgroundServer.Accepted"/>, the seam that holds it
+    /// there; or <see langword="null"/>.
+    /// </param>
     /// <returns>The background, accepting.</returns>
     public static BackgroundServerRig Start(
         string? pipeName = null,
         string? dataRoot = null,
         RigSessionEnvironment? sessions = null,
-        FakeBackgroundVerbs? verbs = null)
+        FakeBackgroundVerbs? verbs = null,
+        Action? accepted = null)
     {
         var pipe = pipeName ?? PublishedBackground.NewPipeName();
 
         if (sessions is not null)
         {
-            return new BackgroundServerRig(sessions, ownsSessions: false, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs());
+            return new BackgroundServerRig(sessions, ownsSessions: false, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted);
         }
 
         // The rig owns these and disposes them with itself, or below when it could
@@ -146,7 +152,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
 
         try
         {
-            return new BackgroundServerRig(owned, ownsSessions: true, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs());
+            return new BackgroundServerRig(owned, ownsSessions: true, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted);
         }
         catch
         {

@@ -312,6 +312,88 @@ internal sealed class PersonStartTests
         await Assert.That(tasks.Events).IsEmpty();
     }
 
+    /// <summary>
+    /// A background the record names, whose image lies under the install root, that
+    /// takes the connection and does not answer is ended, its record cleared, and a new
+    /// background started through the task, whose page is the one shown.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>RESOLUTIONS 10 and R</b>: a person's start is the one thing that ends a stuck
+    /// background, and only by a pid whose creation time the record names and whose image
+    /// is verified to lie under the install root. Left untested by lane ARCH's helper T1
+    /// on 2026-10-09, because the background has to be a process of its own with its
+    /// image there: here it is the suite's probe, copied under the scratch install's
+    /// <c>current\</c> with everything it loads (<see cref="ProbeImage"/>), standing in
+    /// for a background that took its pipe, wrote its record and stopped answering.
+    /// </para>
+    /// <para>
+    /// <b>The hand-out bound is a person's own</b>, because one bound governs both the
+    /// question the stuck background never answers and the one the new background must
+    /// answer in; the task's start waits for the stand-in to have gone before it starts
+    /// the new background on the same pipe.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-10-10</b> against a start that verified the image against a
+    /// folder it does not lie under, another install's beside this one, which ended
+    /// nothing and started nothing.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHungBackgroundTheRecordNamesIsEndedItsRecordClearedAndANewOneStarted()
+    {
+        using var scratch = new StartScratch("person-start-hung-ended");
+        using var scope = new JobObjectScope();
+
+        var standInImage = ProbeImage.CopyInto(Path.Combine(scratch.InstallRoot, "current"));
+        var ready = Path.Combine(scratch.DataRoot, "stand-in.ready");
+
+        var standIn = scope.Launch(standInImage, scratch.DataRoot, "background-standin", scratch.PipeName, scratch.RecordPath, ready, "0");
+
+        await BackgroundServerRig.WaitUntilAsync(() => File.Exists(ready) || standIn.HasExited, "the stand-in never took the pipe");
+        await Assert.That(standIn.HasExited).IsFalse().Because(scope.SaidBy(standIn.Id));
+
+        var recordAtTheRun = new List<bool>();
+        var started = new ConcurrentQueue<Task<BackgroundServerRig>>();
+        var tasks = new ScriptedLogonTasks
+        {
+            Asked = (_, _) => recordAtTheRun.Add(File.Exists(scratch.RecordPath)),
+            Started = (_, _) =>
+            {
+                // The new background takes the pipe once the stuck one has let it go.
+                _ = standIn.WaitForExitAsync(TestDefaults.InProcessHang).GetAwaiter().GetResult();
+                started.Enqueue(Task.Run(() => BackgroundServerRig.Start(scratch.PipeName)));
+            },
+        };
+
+        // Registered, so the run starts what the arm says and asks for no definition.
+        tasks.Registered[TaskName] = "the suite's task";
+
+        try
+        {
+            using var logs = new CapturingLoggerProvider();
+            var shown = await ShowAsync(scratch.Settings(tasks), page: null, logs);
+
+            await Assert.That(shown).IsEqualTo((PersonStartOutcome.Shown, (string?)FakeBackgroundVerbs.DefaultAddress))
+                .Because(string.Join(Environment.NewLine, logs.Records.Select(record => record.Message)));
+            await Assert.That(logs.Records.Count(record => record.EventId.Id is 6108)).IsEqualTo(1).Because("the start did not judge the background hung");
+            await Assert.That(logs.Records.Count(record => record.EventId.Id is 6110)).IsEqualTo(1).Because("the start did not say it ended the hung background");
+            await Assert.That(logs.Records.Count(record => record.EventId.Id is 6109)).IsEqualTo(0);
+            await Assert.That(standIn.HasExited).IsTrue();
+            await Assert.That(string.Join(" | ", recordAtTheRun)).IsEqualTo("False").Because("the task was asked while the stuck background's record was still there");
+            await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"run {TaskName} {PersonStart.StartedByPerson}");
+            await Assert.That(started.Count).IsEqualTo(1);
+        }
+        finally
+        {
+            foreach (var starting in started)
+            {
+                await (await starting).DisposeAsync();
+            }
+        }
+    }
+
     /// <summary>Runs a person's start on a thread of its own, as the program's main thread runs it.</summary>
     /// <param name="settings">Where the background is.</param>
     /// <param name="page">The page asked for.</param>
