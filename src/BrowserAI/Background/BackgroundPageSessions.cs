@@ -3,7 +3,6 @@
 
 using BrowserAI.App.Page;
 using BrowserAI.Coordination;
-using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Proxy;
 
@@ -47,20 +46,14 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
     /// <summary>What every relay entry's marker begins with.</summary>
     public const string RelayMarkerPrefix = "relay:";
 
-    private readonly DateTimeOffset _started = clock.GetUtcNow();
-
     /// <inheritdoc />
     public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken)
     {
         var background = new ServerDescription(
             Environment.ProcessId,
             ProcessLiveness.CreationTimeOfThisProcess(),
-            BuildVersion.Current,
-            Environment.ProcessPath ?? string.Empty,
-            ServerDescription.States.Serving,
             Client: null,
             Environment.CurrentDirectory,
-            _started,
             LastToolCall: null,
             CallsInFlight: 0,
             host.Sessions.Held(),
@@ -79,12 +72,8 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
             answered.Add((RelayMarkerPrefix + greeting.Id, new ServerDescription(
                 greeting.RelayPid,
                 CreatedFileTime: 0,
-                BuildVersion.Current,
-                Environment.ProcessPath ?? string.Empty,
-                ServerDescription.States.Serving,
                 new ClientIdentity(greeting.ClientName, Title: null, greeting.ClientVersion),
                 greeting.Folder ?? string.Empty,
-                Started: null,
                 LastToolCall: null,
                 relay.CallInFlight ? 1 : 0,
                 [],

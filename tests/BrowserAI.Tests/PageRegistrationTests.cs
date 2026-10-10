@@ -539,6 +539,13 @@ internal sealed class PageRegistrationTests
 
         await Assert.That(Where(Server, [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, @"C:\Users\someone\BrowserAI data"]))
             .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\BrowserAI data&quot;</code>");
+
+        // ⚠️ AND A DATA ROOT WITH NO SPACE IN IT IS QUOTED TOO, round 2 of the texts
+        // review, 2026-10-10, #89: the line a person runs by hand on the same page quotes
+        // every value (RegistrationClient.Typed), so the page's own line takes that rule.
+        // Planted red against the quoting of a value with a space alone.
+        await Assert.That(Where(Server, [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, @"C:\Users\someone\data"]))
+            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\data&quot;</code>");
     }
 
     /// <summary>The status page's main part for a server command and its arguments.</summary>

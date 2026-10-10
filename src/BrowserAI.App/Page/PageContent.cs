@@ -291,7 +291,13 @@ internal static class PageContent
         _ = html.Append("</section>\n");
     }
 
-    /// <summary>A command and its arguments as one line, each part with a space in it quoted.</summary>
+    /// <summary>A command and its arguments as one line: the command quoted, a flag as it is, and every value in quotes.</summary>
+    /// <remarks>
+    /// <b>The rule of the line a person runs by hand, <c>RegistrationClient.Typed</c>,
+    /// since 2026-10-10</b>, round 2 of the texts review, #89 (previously a value was
+    /// quoted only when it held a space), so the status page and the lines it shows in a
+    /// registration's details quote a data root the same way.
+    /// </remarks>
     /// <param name="command">The executable.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The line.</returns>
@@ -300,7 +306,7 @@ internal static class PageContent
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(arguments);
 
-        return string.Join(' ', [$"\"{command}\"", .. arguments.Select(argument => argument.Contains(' ', StringComparison.Ordinal) ? $"\"{argument}\"" : argument)]);
+        return arguments.Count is 0 ? $"\"{command}\"" : $"\"{command}\" {RegistrationClient.Typed(arguments)}";
     }
 
     private static void AppendRegistration(StringBuilder html, PageView view)
@@ -567,8 +573,13 @@ internal static class PageContent
     /// <i>Corrected 2026-10-10 (previously "The session host holds its sessions. Closing
     /// this server ends its client's connection, and the host keeps them.")</i>: the page
     /// closes nothing since 17 a, and a relay ends with its client.
+    /// ⚠️ <i>Corrected 2026-10-10 a second time, round 2 of the texts review, #93
+    /// (previously "It ends when its client closes or its conversation ends.")</i>: an
+    /// update installing ends every connection too, as the update page says, and a
+    /// conversation's end does not end one in Claude Code, where <c>/clear</c> starts a
+    /// new conversation on the same connection (measured, kb/mcp/protocol.md).
     /// </remarks>
-    public const string RelaySentence = "It ends when its client closes or its conversation ends.";
+    public const string RelaySentence = "It ends when its client closes it or exits, and when an update installs.";
 
     /// <summary>The start of what the page says of a session the host keeps.</summary>
     public const string KeptSentence = "Kept: its client has gone";

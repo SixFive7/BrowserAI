@@ -204,7 +204,7 @@ internal sealed class PageServiceTests
 
         // A client that gave no name is called what the update page calls it (#85).
         await Assert.That(body).Contains("<li class=\"server\"><p>unnamed client, pid 303</p>");
-        await Assert.That(body.Split(PageContent.Text("It ends when its client closes or its conversation ends.")).Length - 1).IsEqualTo(3);
+        await Assert.That(body.Split(PageContent.Text("It ends when its client closes it or exits, and when an update installs.")).Length - 1).IsEqualTo(3);
         await Assert.That(body).DoesNotContain("type=\"checkbox\"");
         await Assert.That(body).DoesNotContain("close-servers");
         await Assert.That(body).DoesNotContain("the host holds");
@@ -544,12 +544,8 @@ internal sealed class PageServiceTests
         new(
             pid,
             1,
-            "9.0.0",
-            @"C:\install\current\BrowserAI.Server.exe",
-            ServerDescription.States.Serving,
             null,
             @"C:\work",
-            Now.AddHours(-3),
             null,
             0,
             sessions,
@@ -561,12 +557,8 @@ internal sealed class PageServiceTests
         var description = new ServerDescription(
             pid,
             1,
-            "9.0.0",
-            @"C:\install\current\BrowserAI.Server.exe",
-            ServerDescription.States.Serving,
             client is null ? null : new ClientIdentity(client, client is "claude-code" ? "Claude Code" : "Codex", client is "claude-code" ? "2.1.288" : "0.155.0"),
             @"C:\work",
-            Now.AddHours(-3),
             lastCall,
             inFlight,
             [new HeldSession(directory, purpose, BrowserOpen: true)]);

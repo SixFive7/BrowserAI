@@ -1401,16 +1401,24 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     /// <returns>The sentence, or <see langword="null"/>.</returns>
     private string? WhyNotNow(string version)
     {
+        // ⚠️ No tab hears this one, said 2026-10-10 for round 2 of the texts review, #125:
+        // only Dispose sets the flag, and the background disposes its page first, after
+        // telling every tab that it stops (Program.Background: the page's using
+        // declaration follows this one's). It stays because a click that raced the stop
+        // must not reach a disposed client, and the refusal is also the log's
+        // InstallNowRefused line.
         if (_disposed)
         {
             return "BrowserAI is shutting down, so it installs nothing now.";
         }
 
+        // The phase is Installing only while a package is held: _held goes back to null
+        // only where the phase goes back to Idle. Corrected 2026-10-10, round 2 of the
+        // texts review, #124 (previously a second form, "BrowserAI is already installing
+        // an update.", for an Installing phase with nothing held, which nothing reaches).
         if (_phase is Phase.Installing)
         {
-            return _held is { } installing
-                ? $"BrowserAI is already installing update {installing.Version}."
-                : "BrowserAI is already installing an update.";
+            return $"BrowserAI is already installing update {_held!.Version}.";
         }
 
         if (_held is not { } held || _client is null)
@@ -1418,9 +1426,13 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             return "No update is downloaded and waiting, so there is nothing to install.";
         }
 
+        // Corrected 2026-10-10, round 2 of the texts review, #122 (previously "..., so
+        // reload the page to see what is waiting now."): every open tab is sent the new
+        // version within a second of its arriving, so the page has already moved on, and
+        // a reload would show this note again.
         if (!string.Equals(held.Version, version, StringComparison.OrdinalIgnoreCase))
         {
-            return $"The update waiting is {held.Version}, not {version}, so reload the page to see what is waiting now.";
+            return $"The update waiting is {held.Version}, not {version}, so nothing was installed. This page shows {held.Version} now, with its own button.";
         }
 
         return _downloading is { } newer
@@ -1455,6 +1467,10 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         }
         catch (OperationCanceledException) when (_ending.IsCancellationRequested)
         {
+            // ⚠️ No tab hears this one either, said 2026-10-10 for round 2 of the texts
+            // review, #126: only Dispose cancels _ending, after the page has gone, so the
+            // sentence goes back to an install-now nobody shows. It stays as the answer a
+            // stop that raced the install owes its caller, beside the log's own line.
             BackgroundUpdateLog.InstallAbandoned(_logger, version);
             return "BrowserAI stopped before the update could be handed to the installer, so nothing was installed.";
         }

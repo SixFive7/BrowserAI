@@ -41,12 +41,20 @@ namespace BrowserAI.App.Page;
 internal static class UpdatePageContent
 {
     /// <summary>What installing now does, said beside the button, one sentence per line.</summary>
-    public static IReadOnlyList<string> InstallNowEffects { get; } =
+    /// <remarks>
+    /// ⚠️ <b>The last line names the version that installs, since 2026-10-10</b>, round 2
+    /// of the texts review, #118 (previously "BrowserAI starts again by itself once the new
+    /// version is installed."): the version waiting can be older than the one installed,
+    /// and the page says so above it (Q308 a).
+    /// </remarks>
+    /// <param name="version">The version the button installs.</param>
+    /// <returns>The lines.</returns>
+    public static IReadOnlyList<string> InstallNowEffects(string version) =>
     [
         "Every browser session is closed cleanly, and each comes back where it was with browserai_resume.",
         "Every visible window closes, with what is open in it.",
         "Every agent's connection to BrowserAI ends. Claude Code in VS Code reconnects by itself. Claude Code in a terminal needs /mcp, then BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
-        "BrowserAI starts again by itself once the new version is installed.",
+        $"BrowserAI starts again by itself once BrowserAI {version} is installed.",
     ];
 
     /// <summary>
@@ -193,6 +201,15 @@ internal static class UpdatePageContent
         };
     }
 
+    /// <summary>Whether BrowserAI's own words for a conversation already name its folder.</summary>
+    /// <param name="label">What the conversation is called, or <see langword="null"/>.</param>
+    /// <param name="folder">The relay's folder.</param>
+    /// <returns><see langword="true"/> for a label that is not a title and ends with the folder's name.</returns>
+    private static bool NamesTheFolder(ConversationName? label, string folder) =>
+        label is { IsTitle: false } words
+        && ClientFolder.NameOf(folder) is { } name
+        && words.Text.EndsWith($" in {name}", StringComparison.Ordinal);
+
     /// <summary>What the page says of a version older than the one installed, Q308 a.</summary>
     /// <param name="installed">The version installed now.</param>
     /// <returns>The sentences.</returns>
@@ -239,7 +256,7 @@ internal static class UpdatePageContent
         _ = html.Append("<section id=\"install-now\"><h2>Install now</h2>\n<p>")
             .Append(PageContent.Text("Installing now does not wait for any of the above:")).Append("</p>\n<ul>\n");
 
-        foreach (var effect in InstallNowEffects)
+        foreach (var effect in InstallNowEffects(version))
         {
             _ = html.Append("<li>").Append(PageContent.Text(effect)).Append("</li>\n");
         }
@@ -333,7 +350,16 @@ internal static class UpdatePageContent
             _ = html.Append("<strong>").Append(PageContent.Text(relay.Client)).Append("</strong>");
         }
 
-        if (relay.ProjectFolder is { Length: > 0 } folder)
+        // ⚠️ THE FOLDER ONCE, round 2 of the texts review, 2026-10-10, #110 (previously the
+        // whole path after every label): BrowserAI's own words for a conversation it could
+        // not name carry the folder's name already, "Claude Code in BrowserAI", so the path
+        // after them said the folder twice. A title, which names no folder, keeps it.
+        //
+        // And a relay with no folder is a guard, which no page meets: every relay of this
+        // build sends its working directory in its greeting (RelayFacts.Folder), and the
+        // background serves a relay of its own build alone. The greeting's folder is read
+        // from the wire as optional, so the page does not assume one.
+        if (relay.ProjectFolder is { Length: > 0 } folder && !NamesTheFolder(relay.Label, folder))
         {
             _ = html.Append(" in <code>").Append(PageContent.Text(folder)).Append("</code>");
         }

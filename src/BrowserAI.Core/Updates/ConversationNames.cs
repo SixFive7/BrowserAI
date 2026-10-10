@@ -116,6 +116,14 @@ internal sealed record ConversationName(string Text, bool IsTitle)
 internal sealed record ClientWindow(string Key, string? Folder)
 {
     /// <summary>What a page calls the window.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The form with no folder is a guard, which no page meets</b>, said 2026-10-10
+    /// for round 2 of the texts review, #81: a window is built from its relay's greeting,
+    /// whose folder is the relay's working directory, and every relay of this build sends
+    /// it (<c>RelayFacts.Folder</c>); the background serves a relay of its own build alone.
+    /// The greeting's folder is read from the wire as optional, so the label does not
+    /// assume one.
+    /// </remarks>
     /// <returns><i>VS Code window on &lt;folder&gt;</i>, or <i>VS Code window</i> when the folder is not known.</returns>
     public string Label() => ClientFolder.NameOf(Folder) is { } name ? $"VS Code window on {name}" : "VS Code window";
 }
@@ -165,6 +173,13 @@ internal static class ClientFolder
     }
 
     /// <summary>BrowserAI's words for a conversation it could not name: <i>&lt;what&gt; in &lt;folder&gt;</i>.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The words with no folder are a guard, which no page or toast meets</b>, said
+    /// 2026-10-10 for round 2 of the texts review, #80: every caller passes the relay's
+    /// folder from its greeting, which every relay of this build sends, so <i>new
+    /// conversation</i>, <i>Claude Code</i> and <i>Codex</i> alone are what a greeting
+    /// with no folder would get, and the background serves no such relay.
+    /// </remarks>
     /// <param name="what">What it is, such as <i>Claude Code</i> or <i>new conversation</i>.</param>
     /// <param name="folder">The client's folder, or <see langword="null"/>.</param>
     /// <returns>The name, never a title.</returns>

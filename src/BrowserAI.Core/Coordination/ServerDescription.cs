@@ -26,15 +26,18 @@ namespace BrowserAI.Coordination;
 /// last call arrived or was answered and how many are in flight, and the reader
 /// does the arithmetic against the period it knows.
 /// </para>
+/// <para>
+/// ⚠️ <b>Four fields went on 2026-10-10, round 2 of the texts review, found by lane
+/// FINAL</b>: <c>Version</c>, the BrowserAI version it ran; <c>ImagePath</c>, the
+/// executable; <c>State</c>, one of the words of <c>States</c>, by then only
+/// <c>serving</c>, which went with it; and <c>Started</c>, when it began answering. The
+/// background wrote each for itself and for every relay, and nothing read any of them.
+/// </para>
 /// </remarks>
 /// <param name="ProcessId">The server's pid.</param>
 /// <param name="CreatedFileTime">Its creation time, which with the pid is its identity.</param>
-/// <param name="Version">The BrowserAI version it is running.</param>
-/// <param name="ImagePath">The executable it is running.</param>
-/// <param name="State">One of <see cref="States"/>.</param>
 /// <param name="Client">What its client said it was at <c>initialize</c>, or <see langword="null"/> before then.</param>
 /// <param name="WorkingDirectory">The directory it was started in, which is its client's.</param>
-/// <param name="Started">When it began answering its client, or <see langword="null"/> while it is still starting.</param>
 /// <param name="LastToolCall">When a tool call last arrived or was answered, or <see langword="null"/> when none has.</param>
 /// <param name="CallsInFlight">How many tool calls it is answering right now.</param>
 /// <param name="Sessions">Every session it holds.</param>
@@ -47,34 +50,13 @@ namespace BrowserAI.Coordination;
 internal sealed record ServerDescription(
     int ProcessId,
     long CreatedFileTime,
-    string Version,
-    string ImagePath,
-    string State,
     ClientIdentity? Client,
     string WorkingDirectory,
-    DateTimeOffset? Started,
     DateTimeOffset? LastToolCall,
     int CallsInFlight,
     IReadOnlyList<HeldSession> Sessions,
     string Role = ServerDescription.Roles.Server)
 {
-    /// <summary>The words <c>state</c> can carry.</summary>
-    /// <remarks>
-    /// ⚠️ <b>Corrected 2026-10-10 (previously four words: also
-    /// <c>Starting</c>, "Started, and not yet answering its client.", <c>Updating</c>,
-    /// for a server started while its own install's updater was running, and
-    /// <c>Stopping</c>, "Asked to stop, and on its way out.")</b>. <c>ServerActivity</c>
-    /// was the only code that wrote those three, and it was deleted that day by the
-    /// maintainer's decision <i>"9 a"</i>, so the three went under the same decision.
-    /// The background writes <see cref="Serving"/> for itself and for each relay, in
-    /// <c>BackgroundPageSessions</c>, and the page reads no state.
-    /// </remarks>
-    public static class States
-    {
-        /// <summary>Answering its client.</summary>
-        public const string Serving = "serving";
-    }
-
     /// <summary>The words <c>role</c> can carry.</summary>
     public static class Roles
     {

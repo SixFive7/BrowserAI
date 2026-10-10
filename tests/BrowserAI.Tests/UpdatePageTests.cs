@@ -72,7 +72,7 @@ internal sealed class UpdatePageTests
 
         var install = Section(html, "install-now");
 
-        foreach (var effect in UpdatePageContent.InstallNowEffects)
+        foreach (var effect in UpdatePageContent.InstallNowEffects("1.2.0"))
         {
             await Assert.That(install).Contains(PageContent.Text(effect));
         }
@@ -118,7 +118,11 @@ internal sealed class UpdatePageTests
 
         var first = agents.IndexOf("<strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296 in <code>C:\\Source\\BrowserAI</code>", StringComparison.Ordinal);
         var unnamedTab = agents.IndexOf("<strong>new conversation in BrowserAI</strong>, claude-code 2.1.296", StringComparison.Ordinal);
-        var terminal = agents.IndexOf("<strong>Claude Code in one</strong>, claude-code 2.1.296 in <code>C:\\Source\\one</code>", StringComparison.Ordinal);
+        // ⚠️ BrowserAI's words for a conversation it could not name carry the folder's
+        // name already, so the whole path is not said after them: round 2 of the texts
+        // review, 2026-10-10, #110 (previously "... claude-code 2.1.296 in
+        // <code>C:\Source\one</code>", the folder twice). Planted red against it.
+        var terminal = agents.IndexOf("<strong>Claude Code in one</strong>, claude-code 2.1.296<br>", StringComparison.Ordinal);
         var secondWindow = agents.IndexOf("<strong>" + PageContent.Text("\"Second window\"") + "</strong>", StringComparison.Ordinal);
         var stranger = agents.IndexOf("<strong>someclient 1</strong>", StringComparison.Ordinal);
 
@@ -173,12 +177,8 @@ internal sealed class UpdatePageTests
             new Coordination.ServerDescription(
                 301,
                 1,
-                "9.0.0",
-                @"C:\install\current\BrowserAI.exe",
-                Coordination.ServerDescription.States.Serving,
                 new Coordination.ClientIdentity(name, Title: null, version),
                 @"C:\project",
-                Started: null,
                 LastToolCall: null,
                 CallsInFlight: 0,
                 [],
@@ -317,6 +317,12 @@ internal sealed class UpdatePageTests
 
         await Assert.That(Render(Held())).DoesNotContain("older than");
         await Assert.That(Status(Held())).DoesNotContain("older than");
+
+        // ⚠️ And what installing now does names the version that installs, round 2 of
+        // the texts review, 2026-10-10, #118 (previously "once the new version is
+        // installed", above an older one). Planted red against "the new version".
+        await Assert.That(Section(Render(older), "install-now")).Contains("BrowserAI starts again by itself once BrowserAI 8.5.0 is installed.");
+        await Assert.That(Section(Render(older), "install-now")).DoesNotContain("new version");
 
         // An open tab hears of it: the watch's signature tells the two apart.
         await Assert.That(UpdatePageContent.Signature(older, Now)).IsNotEqualTo(UpdatePageContent.Signature(older with { Older = false }, Now));
