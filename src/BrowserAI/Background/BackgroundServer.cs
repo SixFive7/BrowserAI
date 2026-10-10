@@ -148,6 +148,18 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
     /// </remarks>
     internal Action? Accepted { get; init; }
 
+    /// <summary>
+    /// The clock <see cref="FirstFrameBound"/> runs on: the suite's seam, which moves it by
+    /// hand.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11</b> for the arms that hold the bound on a connection's first
+    /// message (<c>BackgroundServerTests</c>): on the machine's clock an arm reaches the
+    /// bound only by waiting it out, which measures the machine. The product sets nothing
+    /// here, so the bound runs on <see cref="TimeProvider.System"/>.
+    /// </remarks>
+    internal TimeProvider Clock { get; init; } = TimeProvider.System;
+
     /// <summary>How many connections are still open, which is what a stop waits for.</summary>
     /// <remarks>
     /// <b>Added 2026-10-10 for round 2 of the texts review, #190</b>, so the suite can
@@ -317,8 +329,9 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
         {
             try
             {
-                using var firstFrame = CancellationTokenSource.CreateLinkedTokenSource(_stopping.Token);
-                firstFrame.CancelAfter(FirstFrameBound);
+                // The bound runs on the server's clock, and a stop ends the wait as well.
+                using var bound = new CancellationTokenSource(FirstFrameBound, Clock);
+                using var firstFrame = CancellationTokenSource.CreateLinkedTokenSource(_stopping.Token, bound.Token);
 
                 var first = await ReadFirstFrameAsync(stream, firstFrame.Token).ConfigureAwait(false);
 

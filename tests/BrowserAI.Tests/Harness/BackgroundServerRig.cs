@@ -55,7 +55,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     private int _changes;
     private int _disposed;
 
-    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs, Action? accepted)
+    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs, Action? accepted, bool boundOnTheClock)
     {
         Sessions = sessions;
         _ownsSessions = ownsSessions;
@@ -77,7 +77,11 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
 
         try
         {
-            Server = new BackgroundServer(Host, Identity, Roster, Verbs, _loggerFactory) { Accepted = accepted };
+            Server = new BackgroundServer(Host, Identity, Roster, Verbs, _loggerFactory)
+            {
+                Accepted = accepted,
+                Clock = boundOnTheClock ? Clock : TimeProvider.System,
+            };
         }
         catch
         {
@@ -89,7 +93,10 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
         Server.Start();
     }
 
-    /// <summary>The clock the roster reads a relay that cannot be asked against.</summary>
+    /// <summary>
+    /// The clock the roster reads a relay that cannot be asked against, and the one the
+    /// bound on a connection's first message runs on when the arm asks for it.
+    /// </summary>
     public ManualClock Clock { get; } = new();
 
     /// <summary>The sessions behind the host.</summary>
@@ -129,19 +136,25 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// on its own thread: <see cref="BackgroundServer.Accepted"/>, the seam that holds it
     /// there; or <see langword="null"/>.
     /// </param>
+    /// <param name="boundOnTheClock">
+    /// Whether the bound on a connection's first message runs on <see cref="Clock"/>, which
+    /// only the arm moves, through <see cref="BackgroundServer.Clock"/>; otherwise it runs
+    /// on the machine's clock, as the product's does.
+    /// </param>
     /// <returns>The background, accepting.</returns>
     public static BackgroundServerRig Start(
         string? pipeName = null,
         string? dataRoot = null,
         RigSessionEnvironment? sessions = null,
         FakeBackgroundVerbs? verbs = null,
-        Action? accepted = null)
+        Action? accepted = null,
+        bool boundOnTheClock = false)
     {
         var pipe = pipeName ?? PublishedBackground.NewPipeName();
 
         if (sessions is not null)
         {
-            return new BackgroundServerRig(sessions, ownsSessions: false, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted);
+            return new BackgroundServerRig(sessions, ownsSessions: false, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted, boundOnTheClock);
         }
 
         // The rig owns these and disposes them with itself, or below when it could
@@ -152,7 +165,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
 
         try
         {
-            return new BackgroundServerRig(owned, ownsSessions: true, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted);
+            return new BackgroundServerRig(owned, ownsSessions: true, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted, boundOnTheClock);
         }
         catch
         {
@@ -205,6 +218,23 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
             throw;
         }
     }
+
+    /// <summary>
+    /// Waits until the background has armed the bound on the first message of as many
+    /// connections as are given, on <see cref="Clock"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Armed and not only made</b>: the clock counts a timer when it is made and gives it
+    /// its moment a step later, and a clock moved in between would arm it from the moved
+    /// time. <see cref="ManualClock.UntilTheNewestTimerFires"/> reads the timer made last,
+    /// so an arm opens its connections one at a time and waits after each.
+    /// </remarks>
+    /// <param name="connections">How many connections' bounds are armed by now, counting from this rig's first.</param>
+    /// <returns>A task that completes once they are.</returns>
+    public Task FirstMessageBoundsArmedAsync(int connections) =>
+        WaitUntilAsync(
+            () => Clock.TimersCreated >= connections && Clock.UntilTheNewestTimerFires() is not null,
+            $"the background never armed the bound on the first message of connection {connections.ToString(CultureInfo.InvariantCulture)}");
 
     /// <summary>The one relay the roster holds, as the update core reads it.</summary>
     /// <returns>Its state.</returns>

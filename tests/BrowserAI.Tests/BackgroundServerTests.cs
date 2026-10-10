@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Background;
 using BrowserAI.Clients;
@@ -355,6 +356,125 @@ internal sealed class BackgroundServerTests
         // The one that never wrote anything is closed by the background.
         await Assert.That(await silent.ClosedAsync()).IsTrue();
         await Assert.That(rig.Verbs.Pages.Count).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// The background waits for a connection's first message as long as a relay holds a
+    /// call while no background answers, and a first message that comes one tick before
+    /// that runs out is served as any other.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>34 d, the maintainer's decision, in his words verbatim <i>"24 d"</i>, which he
+    /// meant as 34 d</b>: a connection whose first message is slow is answered with a
+    /// refusal and not with silence, and the background waits for that message as long as
+    /// the relay holds a call, <see cref="RelayConstants.HoldBound"/>. This arm holds the
+    /// wait. Until 2026-10-11 the bound was a number of its own, 10 s, and a connection that
+    /// missed it was closed without a word, which the row of <c>HAZARDS.md</c> that names
+    /// <see cref="EachRefusalCarriesItsSentenceAndItsKindAndNoRefusedRelayIsAdmitted"/>
+    /// reads as the cause of that arm's two reds, not reproduced alone.
+    /// </para>
+    /// <para>
+    /// <b>The bound runs on the rig's clock</b>, which only this arm moves, so nothing here
+    /// waits on the machine: the arm reads the moment the background armed for the
+    /// connection, and moves the clock to one tick short of it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFirstMessageIsWaitedForAsLongAsARelayHoldsACall()
+    {
+        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
+
+        using var late = rig.Connect();
+
+        await rig.FirstMessageBoundsArmedAsync(1);
+
+        // The bound is the relay's hold, to the tick.
+        await Assert.That(rig.Clock.UntilTheNewestTimerFires()).IsEqualTo(RelayConstants.HoldBound);
+
+        // One tick short of it the connection is still open, and its first message is
+        // served.
+        rig.Clock.Advance(RelayConstants.HoldBound - TimeSpan.FromTicks(ManualClock.OneTick));
+
+        await late.SendAsync(new JsonObject
+        {
+            ["jsonrpc"] = "2.0",
+            ["id"] = BackgroundPipe.IdPrefix + "start-late",
+            ["method"] = BackgroundPipe.Show,
+        }.ToJsonString());
+
+        var shown = await late.NextAsync();
+
+        await Assert.That(shown.IdText).IsEqualTo(BackgroundPipe.IdPrefix + "start-late");
+        await Assert.That(Json.Text(shown.Result, "address")).IsEqualTo(FakeBackgroundVerbs.DefaultAddress).Because(shown.Text);
+        await Assert.That(await late.ClosedAsync()).IsTrue();
+    }
+
+    /// <summary>
+    /// A connection whose first message has not come when the bound runs out, whether it
+    /// sent part of one or nothing, is answered with a refusal that carries a kind and a
+    /// sentence and is closed after it, and the background's log says so of each.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>34 d, the refusal</b>: until 2026-10-11 such a connection was closed with no frame
+    /// and no line. Both reds of
+    /// <see cref="EachRefusalCarriesItsSentenceAndItsKindAndNoRefusedRelayIsAdmitted"/> met a
+    /// close of that shape, <i>"The background closed this connection with no further
+    /// frame."</i>, and nothing in either said which side had waited. The refusal answers no
+    /// request, so its id is null, as JSON-RPC answers a request whose id it could not read.
+    /// </para>
+    /// <para>
+    /// <b>The bound runs on the rig's clock</b>, and the arm moves it by the product's own
+    /// bound, <see cref="BackgroundServer.FirstFrameBound"/>, so it holds the refusal
+    /// whatever that bound is.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AConnectionWhoseFirstMessageHasNotComeWhenTheBoundRunsOutIsRefusedAndClosed()
+    {
+        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
+
+        using var silent = rig.Connect();
+
+        await rig.FirstMessageBoundsArmedAsync(1);
+
+        using var halfway = rig.Connect();
+
+        await rig.FirstMessageBoundsArmedAsync(2);
+        await halfway.SendPartAsync("""{"jsonrpc":"2.0","id":"browserai-start-half","method":""");
+
+        rig.Clock.Advance(BackgroundServer.FirstFrameBound);
+
+        var seconds = BackgroundServer.FirstFrameBound.TotalSeconds;
+
+        foreach (var connection in new[] { silent, halfway })
+        {
+            var refused = await connection.NextAsync();
+
+            // An id, and a null one: the refusal answers no request.
+            await Assert.That(refused.Json.ContainsKey("id")).IsTrue().Because(refused.Text);
+            await Assert.That(refused.Json["id"]).IsNull().Because(refused.Text);
+            await Assert.That((int?)refused.Error?["code"]).IsEqualTo(-32600).Because(refused.Text);
+            await Assert.That(Kind(refused)).IsEqualTo("firstMessage").Because(refused.Text);
+            await Assert.That(Sentence(refused)).IsEqualTo(string.Create(
+                CultureInfo.InvariantCulture,
+                $"This connection sent no complete first message in the {seconds:0} s after it opened, so the background closes it."));
+            await Assert.That(await connection.ClosedAsync()).IsTrue().Because("a refused connection was left open");
+        }
+
+        var said = rig.Logs.Records
+            .Where(record => record.Category.EndsWith(nameof(BackgroundServer), StringComparison.Ordinal) && record.EventId.Id is 10)
+            .Select(record => record.Message)
+            .ToList();
+        var line = string.Create(
+            CultureInfo.InvariantCulture,
+            $"A connection from pid {Environment.ProcessId} sent no complete first message in {seconds:0} s, and was refused and closed.");
+
+        await Assert.That(string.Join(" | ", said)).IsEqualTo($"{line} | {line}");
+        await Assert.That(rig.Verbs.Pages.Count).IsEqualTo(0);
     }
 
     /// <summary>
