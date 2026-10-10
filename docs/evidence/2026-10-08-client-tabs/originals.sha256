@@ -34,3 +34,4 @@ a3406c825805a942baca99161919bd6f9aae6e23a68cf135a705a982b044f028  rig/TabRig/Vie
 6c99f18048db0ac1014703a8cbf14afed1a62b01d15f4924e2e5d057a9c3b137  runs/tui/runs.tsv -> runs/terminal-runs.tsv  (moved out of its batch folder)
 9831fdee87b0665089bec6b9ee5ef76ed6c08e9391fddaf58fdbf4cc9800b26d  runs/print/runs.tsv -> runs/print-runs.tsv  (moved out of its batch folder)
 3fef244e9a69460383eb8c6a7526b028083037b13bbc925ee3340dd844984c75  runs/cx/runs.tsv -> runs/codex-runs.tsv  (moved out of its batch folder)
+f36f1c6be4a64e38d716d1521a65de6eb244646a2343bb154e03445949c5c07d  FINDINGS.md -> FINDINGS.md  (2026-10-10, the maintainer's answer "18 b": the first eight hex digits of a Claude Code session id after --resume= on line 171 replaced by <session id>; this digest is of FINDINGS.md as this batch first stored it)

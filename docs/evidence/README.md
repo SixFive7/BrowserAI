@@ -106,6 +106,9 @@ own README says how**: [`2026-10-08-client-tabs`](2026-10-08-client-tabs/README.
 cut on 2026-10-10 by lane ID, stores its rig with `.txt` appended, keeps one script
 under the `.trimmed.` name with the profile path in one line replaced, and prepends the
 SPDX header to its report; every original's digest is in its `originals.sha256`.
+*Added later on 2026-10-10 by addition*: its report also has a session id's first eight
+hex digits replaced by `<session id>`, at the maintainer's answer *"18 b"*, with the
+digest of the report it was cut from in the same file.
 
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for

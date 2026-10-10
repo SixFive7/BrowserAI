@@ -12,7 +12,8 @@ of Codex, against Claude Code 2.1.295 and the extension's own 2.1.292 and codex-
 0.162.0. The client-id stub, extended, recorded everything it was sent and, once a
 second and at every call, what it could read of the client's own records; every client
 ran under a scratch configuration against local model stubs, and no window was shown.
-**38 files beside this README, 256,875 bytes as this repository stores them.** It is
+**38 files beside this README, 257,185 bytes as this repository stores them** (*corrected
+2026-10-10, previously "256,875 bytes", by the cut of a session id below*). It is
 what the maintainer's answer of 2026-10-10 was given on, and what lane ID built from.
 
 ## Cited by
@@ -42,6 +43,15 @@ what the maintainer's answer of 2026-10-10 was given on, and what lane ID built 
   `rig/common.trimmed.js.txt`.
 - **`FINDINGS.md` has the two SPDX header lines prepended.** Every change is in
   `originals.sha256` with the original's digest.
+- ⚠️ *Added 2026-10-10 by addition.* **A session id is cut from `FINDINGS.md`**: line 171
+  gave the first eight hex digits of the `--resume` argument of one of the maintainer's
+  own VS Code tabs, and they are replaced by `<session id>`, at his answer of 2026-10-10,
+  verbatim *"18 b"*. The file it was cut from is `FINDINGS.md` as this batch first stored
+  it, SHA-256 `f36f1c6be4a64e38d716d1521a65de6eb244646a2343bb154e03445949c5c07d`, which
+  `originals.sha256` records in a line of its own beside the original's digest. What the
+  line supports, that the tab's own file and its `--resume` named one session, does not
+  depend on which session it was. The first stored form stays in the history of commit
+  `27e04356`, which a cut in the tree does not reach.
 - **Left out by directory**, with no digest per file: the client binaries, 50 files and
   972,884,507 bytes; every run's captures and the clients' scratch configurations and
   homes, 2,819 files and 109,301,189 bytes, which hold the system prompts each client
@@ -59,3 +69,11 @@ user name, the machine name, the maintainer's e-mail addresses and the names of 
 other projects found nothing in the files beside this README after the one cut above,
 and its positive control found every planted needle. The titles and prompts in the
 tables are the rig's own, written for the measurement.
+
+⚠️ *Added 2026-10-10 by addition.* **That scan had no needle for a session id**, which is
+how the one cut on 2026-10-10 stood through it. The search that followed it read every
+file of every batch under `docs/evidence`, 7,481 files, for the cut id's first eight and
+last twelve hex digits, as ASCII and UTF-8, UTF-16 in both byte orders, either case and
+inside zip archives at any depth; its positive control found all six planted forms and
+nothing in a clean file. It found the one occurrence cut above and no other, and the 987
+other files the repository holds carry neither part.

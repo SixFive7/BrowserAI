@@ -168,7 +168,7 @@ The Codex terminal UI's title is "BrowserAI" (the repository root's folder name)
   - Each had exactly one `BrowserAI.Server.exe` child and a registry file.
   - Restored tabs' `--resume` matched the registry (8 of 8); 4 fresh tabs had no id; every name was derived (15 of 15).
 - **After the pause:**
-  - One VS Code tab, pid 38916 (2.1.292, `--resume=3220505d…`), with its server 38952. Registry and resume id match.
+  - One VS Code tab, pid 38916 (2.1.292, `--resume=<session id>`), with its server 38952. Registry and resume id match.
   - One terminal session, 33736 (2.1.295), gone by 22:44Z; it apparently exited at 22:28Z, not through me.
   - No `codex.exe`.
 
