@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+shopt -s nullglob
+cd /c/Source/SixFive7/BrowserAI/.work
+out=pw-lock/born-before.txt; : > "$out"
+for f in wt/*/.work/suite/*.log wt/*/.work/*.log; do
+  [ -f "$f" ] || continue
+  b=$(stat -c %w "$f" 2>/dev/null | cut -c1-19)
+  case "$b" in
+    2026-10-08\ 17:2[0-9]:*|2026-10-08\ 17:3[0-9]:*|2026-10-08\ 17:4[0-8]:*) : ;;
+    *) continue ;;
+  esac
+  rt=$(grep -c "Running tests from" "$f" 2>/dev/null)
+  [ "${rt:-0}" -gt 0 ] || continue
+  m=$(stat -c %y "$f" 2>/dev/null | cut -c1-19)
+  lastline=$(tail -c 300 "$f" 2>/dev/null | tr '\r\n' '  ' | sed 's/  */ /g')
+  echo "born=$b mod=$m | $f | tail: ${lastline: -160}" >> "$out"
+done
+echo "DONE $(date -u +%FT%TZ)" >> "$out"

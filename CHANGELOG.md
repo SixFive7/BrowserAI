@@ -2082,6 +2082,21 @@ release body; nothing else depends on it.
   `UpdateToastContentTests` holds every count up to 99 of each kind to the 54 characters the banner
   showed whole, watched red at 62 first.
 
+- 🐛 **A failed browser install records the installer's error line whole.**
+  5 a, the maintainer's words verbatim: *"5 a"*. On 2026-10-08 Playwright's installer exited 1 with a
+  stack whose frames carried two long paths each, and BrowserAI kept the last 800 characters of its
+  output, which began inside the first frame: the line naming the error, *ENOENT* on the install's
+  own lock folder, was not in the record. The record and the answer quote that line in full beside
+  the tail now. `ProvisioningTests` holds it on that output's shape, watched red first.
+
+- ✅ **The suite deletes a folder of its shared scratch root only when the run that made it is gone.**
+  5 a. `%LocalAppData%\BrowserAI-test-scratch` serves every checkout of the repository, and each run
+  deleted everything in it, so a run in one worktree deleted a live gate's app roots in another, as
+  happened on 2026-10-08. Each folder there now has an owner record naming the process that made it,
+  the cleanup takes only folders whose owner has exited, and every folder it deletes is a line in the
+  machine's process log with the time and the deleting process. `ScratchReclaimTests` drives the
+  cleanup from a second test host, watched red first against the old one.
+
 - 🐛 **Claude Code's new way of opening a connection gets BrowserAI's tools again.**
   From 2026-09-30 Claude Code opened its servers with `server/discover` at MCP revision
   `2026-07-28`. BrowserAI offered every revision its SDK implements, so it accepted that one,

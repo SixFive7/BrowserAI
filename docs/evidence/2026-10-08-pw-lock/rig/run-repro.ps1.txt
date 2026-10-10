@@ -1,0 +1,101 @@
+# Planted repro of Playwright's installer "lock compromised" exit.
+# Runs BrowserAI's bundled node + @playwright/mcp cli (install-browser) into a
+# scratch browsers root, deletes __dirlock ~1.8s after it appears, records the
+# exit code and stack. 3 delete rounds + 1 control (no delete). Holds the suite
+# lock across all rounds. Everything windowless, started and ended here.
+
+$ErrorActionPreference = 'Stop'
+$base    = 'C:\Source\SixFive7\BrowserAI\.work'
+$payload = Join-Path $base 'wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload'
+$node    = Join-Path $payload 'node\node.exe'
+$cli     = Join-Path $payload 'mcp\node_modules\@playwright\mcp\cli.js'
+$pwl     = Join-Path $base 'pw-lock'
+$repro   = Join-Path $pwl  'repro'
+$lock    = Join-Path $base 'locks\suite'
+$log     = Join-Path $pwl  'repro.log'
+
+function Log($m) { "$([DateTime]::UtcNow.ToString('o'))  $m" | Out-File -Append -Encoding utf8 $log }
+
+if (-not (Test-Path $node)) { Log "no node at $node"; exit 3 }
+if (-not (Test-Path $cli))  { Log "no cli at $cli";  exit 3 }
+New-Item -ItemType Directory -Force -Path $repro | Out-Null
+Log "repro starting; payload=$payload"
+
+# --- wait for the suite lock (mkdir is the take; retry every 60s, cap 180 min) ---
+$acquired = $false
+for ($i = 0; $i -lt 180; $i++) {
+  try { New-Item -ItemType Directory -Path $lock -ErrorAction Stop | Out-Null; $acquired = $true; break }
+  catch { if ($i -eq 0) { Log "suite lock held; waiting" }; Start-Sleep -Seconds 60 }
+}
+if (-not $acquired) { Log "could not take suite lock within 180 min; giving up"; exit 2 }
+"lane pw-lock-repro`nstarted $([DateTime]::UtcNow.ToString('o'))`nthe planted Playwright installer-lock repro" |
+  Out-File -Encoding utf8 (Join-Path $lock 'owner.txt')
+Log "took suite lock"
+
+function Invoke-Round($name, [bool]$delete) {
+  $root = Join-Path $repro $name
+  $dl   = Join-Path $root '.downloads'
+  New-Item -ItemType Directory -Force -Path $dl | Out-Null
+  $out  = Join-Path $pwl "$name.out"
+  $err  = Join-Path $pwl "$name.err"
+
+  $env:PLAYWRIGHT_BROWSERS_PATH = $root
+  $env:TEMP = $dl
+  $env:TMP  = $dl
+
+  $p = Start-Process -FilePath $node `
+        -ArgumentList @($cli, 'install-browser', 'chromium', '--no-shell', '--no-progress') `
+        -WorkingDirectory $root -NoNewWindow -PassThru `
+        -RedirectStandardOutput $out -RedirectStandardError $err
+  $startUtc = $p.StartTime.ToUniversalTime().ToString('o')
+  Log "$name node pid=$($p.Id) start=$startUtc delete=$delete"
+
+  $lf = Join-Path $root '__dirlock'
+  $gc = @()
+  if ($delete) {
+    $seen = $false
+    for ($i = 0; $i -lt 300; $i++) { if (Test-Path $lf) { $seen = $true; break }; Start-Sleep -Milliseconds 100 }
+    if ($seen) {
+      Log "$name __dirlock appeared $([DateTime]::UtcNow.ToString('o'))"
+      Start-Sleep -Milliseconds 1800
+      try { $gc = @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$($p.Id)" -ErrorAction Stop |
+                    ForEach-Object { [pscustomobject]@{ Pid = [int]$_.ProcessId; Start = $_.CreationDate.ToUniversalTime() } }) } catch {}
+      try { [System.IO.Directory]::Delete($lf, $true); Log "$name __dirlock deleted $([DateTime]::UtcNow.ToString('o'))" }
+      catch { Log "$name delete failed: $($_.Exception.Message)" }
+    } else { Log "$name __dirlock never appeared" }
+  }
+
+  if (-not $p.WaitForExit(180000)) { Log "$name did not exit in 180s; killing pid=$($p.Id)"; & taskkill /PID $p.Id /T /F 2>&1 | Out-Null; Start-Sleep 2 }
+  $rc = $p.ExitCode
+  Log "$name node exit=$rc"
+  "$rc" | Out-File -Encoding ascii (Join-Path $pwl "$name.exitcode")
+
+  # End any recorded download grandchild still alive, by pid with a start-time check.
+  foreach ($g in $gc) {
+    try {
+      $q = Get-Process -Id $g.Pid -ErrorAction Stop
+      if ([math]::Abs(($q.StartTime.ToUniversalTime() - $g.Start).TotalSeconds) -lt 2) {
+        & taskkill /PID $g.Pid /T /F 2>&1 | Out-Null
+        Log "$name ended grandchild pid=$($g.Pid)"
+      }
+    } catch {}
+  }
+  Start-Sleep -Seconds 2
+}
+
+try {
+  Invoke-Round 'round-1' $true
+  Invoke-Round 'round-2' $true
+  Invoke-Round 'round-3' $true
+  Invoke-Round 'control' $false
+}
+finally {
+  Remove-Item -Force (Join-Path $lock 'owner.txt') -ErrorAction SilentlyContinue
+  Remove-Item -Force $lock -ErrorAction SilentlyContinue
+  Log "released suite lock"
+}
+
+# Keep the small evidence (.out/.err/.exitcode/repro.log); drop the browser trees.
+try { Remove-Item -Recurse -Force $repro -ErrorAction Stop; Log "cleaned scratch roots" }
+catch { Log "scratch cleanup left: $($_.Exception.Message)" }
+Log "done"

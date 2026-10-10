@@ -1,0 +1,33 @@
+import json, sys
+path, lo, hi, out = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+w = open(out, 'w', encoding='utf-8')
+with open(path, encoding='utf-8') as f:
+    for i, line in enumerate(f, 1):
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        ts = r.get('timestamp') or ''
+        if not (lo <= ts <= hi):
+            continue
+        m = r.get('message') or {}
+        c = m.get('content')
+        if isinstance(c, str):
+            if m.get('role') == 'assistant':
+                w.write('--- %s TEXT: %s\n' % (ts, c[:700]))
+            continue
+        if not isinstance(c, list):
+            continue
+        for b in c:
+            t = b.get('type')
+            if t == 'text' and m.get('role') == 'assistant':
+                w.write('--- %s TEXT: %s\n' % (ts, b.get('text', '')[:700].replace('\n', ' ')))
+            elif t == 'tool_use':
+                w.write('--- %s USE: %s\n' % (ts, json.dumps(b.get('input'))[:500]))
+            elif t == 'tool_result':
+                cc = b.get('content')
+                if isinstance(cc, list):
+                    cc = '\n'.join(x.get('text', '') for x in cc if isinstance(x, dict))
+                w.write('--- %s RESULT: %s\n' % (ts, str(cc)[:400].replace('\n', ' | ')))
+w.write('DONE\n')
+w.close()

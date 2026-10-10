@@ -29,9 +29,12 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal sealed class ScratchDirectory : IDisposable
 {
-    private ScratchDirectory(string path)
+    private readonly bool _owned;
+
+    private ScratchDirectory(string path, bool owned = false)
     {
         Path = path;
+        _owned = owned;
         _ = Directory.CreateDirectory(path);
     }
 
@@ -47,17 +50,25 @@ internal sealed class ScratchDirectory : IDisposable
     /// the one thing the repository's own scratch root cannot hold.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// See <see cref="ScratchRoot.ProfileScratch"/>: a published BrowserAI
     /// refuses to serve out of an app root outside the current user's profile,
     /// so an app root handed to one through
     /// <see cref="BrowserAiPaths.DataRootArgument"/>, or to an installer through
     /// <see cref="BrowserAiPaths.AppRootOverride"/>, has to come from here.
     /// Nothing else may.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>With an owner record beside it since 2026-10-10, 5 a</b>, written
+    /// before the folder by <see cref="ScratchRoot.CreateUnderProfile"/>, so another
+    /// checkout's reclaim leaves it alone while this run is alive; disposing it
+    /// removes the record with the folder.
+    /// </para>
     /// </remarks>
     /// <param name="label">What the directory is for.</param>
     /// <returns>The directory.</returns>
     public static ScratchDirectory CreateUnderProfile(string label) =>
-        new(System.IO.Path.Combine(ScratchRoot.ProfileScratch, $"{label}-{Guid.NewGuid():N}"));
+        new(ScratchRoot.CreateUnderProfile($"{label}-{Guid.NewGuid():N}"), owned: true);
 
     /// <summary>
     /// Removes a tree the way the product does, and answers with what would not
@@ -145,5 +156,6 @@ internal sealed class ScratchDirectory : IDisposable
         // of throwing, so a browser or a log handle that has not let go yet
         // becomes ScratchRoot's sweep problem instead of a failed test. That is
         // also why there is no try/catch left here -- there is nothing to catch.
-        _ = RemoveTree(Path);
+        // A folder of the shared root takes its owner record with it.
+        _ = _owned ? ScratchRoot.RemoveOwned(Path) : RemoveTree(Path);
 }

@@ -627,6 +627,31 @@ Measured five ways, all on 2026-08-19 against the assembled payload:
 | **D** | three `install-browser ffmpeg` started together into one empty root, **three rounds** -- a race into the shared component directories themselves | 3/3 exit 0 every round, both trees complete and byte-identical every round (`ffmpeg-1011` 3,517,342 B, `winldd-1007` 258,560 B), no `ELOCKED`, no residue |
 | **E** | `__dirlock` created and then **never refreshed**, which is the state a killed installer leaves -- BrowserAI closes the installer's job on a cap or on `Dispose` | Reclaimed as stale and the install completed **in 13 s total**, against ~10 s for the same install with no lock present. An abandoned lock costs the next installer the staleness window and nothing else |
 
+⚠️ *Added 2026-10-10 by addition, from the night of 2026-10-08:* **a sixth way,
+F -- `__dirlock` deleted by another process while the installer holds it -- ends the
+install with exit 1, 3 of 3.** Measured 2026-10-09 between 01:00:19Z and 01:00:58Z
+under the suite lock, with BrowserAI's own payload of that day, `@playwright/mcp`
+0.0.83 with `playwright-core` 1.64.0-alpha-1790635538000, under Node v24.21.0, run
+as `cli.js install-browser chromium --no-shell --no-progress` with
+`PLAYWRIGHT_BROWSERS_PATH`, `TEMP` and `TMP` pointing at a fresh root of the round's
+own. Each planted round deleted the lock about 2.1 s after it appeared, and the
+installer exited **1** about 5 s after the lock appeared, at its first refresh,
+through `onCompromised` at `coreBundle.js:34787`, `setLockAsCompromised` at `:11220`
+and the refresh's stat callback at `:11178`, with the message line
+*"Error: ENOENT: no such file or directory, stat '<root>\__dirlock' Path:
+<root>\__dirlock"*. The control round, nothing deleted, installed chromium v1247,
+ffmpeg v1011 and winldd v1007 and exited 0 in about 14.7 s. Every frame and the Node
+version match the failure of 2026-10-08 in a gate's first-run arm, whose record had
+kept only the frames: the stack's two long paths per frame pushed the error line out
+of the 800 characters `BrowserProvisioner[64]` then kept, and the record keeps that
+line whole since 2026-10-10 (`BrowserProvisioner.Said`). **So the installer behaves
+as its source says, and what deleted the lock that afternoon is not identified**: no
+product code of that day's builds deletes `__dirlock`, and the one mechanism found
+that leaves its end state, the suite's scratch reclaim, had no host running at the
+moment. The reclaim checks a folder's owner since 2026-10-10. The rounds, the
+driver and both log checks:
+[`docs/evidence/2026-10-08-pw-lock`](../../docs/evidence/2026-10-08-pw-lock/README.md).
+
 **So the corruption is upstream's to prevent and upstream prevents it.**
 *Corrected 2026-08-19: `ReinstallSharedAsync`'s remarks previously called two
 family installs racing into one shared component directory "reachable in the

@@ -1,0 +1,30 @@
+import json, sys
+path = sys.argv[1]
+needle = sys.argv[2]
+prev_tool = {}
+with open(path, encoding='utf-8') as f:
+    for i, line in enumerate(f, 1):
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        m = r.get('message') or {}
+        c = m.get('content')
+        if not isinstance(c, list):
+            continue
+        for b in c:
+            if b.get('type') == 'tool_use':
+                prev_tool[b.get('id')] = (i, r.get('timestamp'), json.dumps(b.get('input'))[:1500])
+            if b.get('type') == 'tool_result':
+                cc = b.get('content')
+                if isinstance(cc, list):
+                    cc = '\n'.join(x.get('text', '') for x in cc if isinstance(x, dict))
+                cc = str(cc)
+                if needle in cc:
+                    tu = prev_tool.get(b.get('tool_use_id'))
+                    print('=' * 100)
+                    print('RECORD', i, r.get('timestamp'))
+                    if tu:
+                        print('TOOL_USE (record %s, %s): %s' % tu)
+                    k = cc.find(needle)
+                    print('RESULT EXCERPT:\n' + cc[max(0, k - 2500):k + 1500])

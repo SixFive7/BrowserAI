@@ -1,9 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
+using System.Text;
 using BrowserAI.Hosting;
+using BrowserAI.Logging;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -26,11 +30,78 @@ namespace BrowserAI.Tests.Harness;
 /// a directory still held open belongs to something still running, and killing
 /// that is a later step's job with a later step's evidence.
 /// </para>
+/// <para>
+/// ⚠️ <b>The shared root's folders have owners since 2026-10-10, 5 a, the
+/// maintainer's words verbatim: "5 a".</b> <see cref="ProfileScratch"/> is one
+/// folder for every checkout of this repository, and until that day the pass
+/// deleted every folder in it with no check at all, so a run in one worktree
+/// deleted the live app roots of a gate in another: proven on 2026-10-08, when an
+/// install's folder went from under the gate that made it. Each folder there now
+/// has a record beside it naming the process that made it, by pid and creation
+/// time as <see cref="InstallerLock"/> names a holder, and the pass takes only the
+/// folders whose owner is gone, naming each in the machine's process log with the
+/// moment and itself. The repository's own scratch is one per checkout and keeps
+/// the old pass. <c>ScratchReclaimTests</c> drives it from a second test host.
+/// </para>
 /// </remarks>
 internal static class ScratchRoot
 {
+    /// <summary>
+    /// What the file beside a folder of <see cref="ProfileScratch"/> that names its
+    /// owner is called after the folder's own name.
+    /// </summary>
+    public const string OwnerSuffix = ".owner";
+
+    /// <summary>
+    /// The variable that makes a child test host run the profile half of the reclaim
+    /// and write what it did to the file the variable names.
+    /// </summary>
+    public const string ReclaimProbeVariable = "BROWSERAI_SCRATCH_RECLAIM_PROBE";
+
+    /// <summary>The category the reclaim's own records carry in the process log.</summary>
+    private const string AnnouncementCategory = "BrowserAI.Tests.ScratchReclaim";
+
     private static readonly Lock Gate = new();
     private static bool _reclaimed;
+
+    /// <summary>
+    /// How old a folder of the shared root with no owner record has to be before the
+    /// pass takes it.
+    /// </summary>
+    /// <remarks>
+    /// <b>A day, because a folder with no record is either a leftover from before
+    /// the records or one a run of an older harness is using</b>, and the second
+    /// kind is the live folder this whole check exists to keep. No test host has
+    /// run for a day, so a folder made more than a day ago is nobody's. An older
+    /// harness writes no record, so its runs cannot be told any other way.
+    /// </remarks>
+    private static readonly TimeSpan UnownedAge = TimeSpan.FromDays(1);
+
+    /// <summary>
+    /// How long a record that names nobody is given to be one being written, which
+    /// is <see cref="InstallerLock"/>'s grace for the same moment.
+    /// </summary>
+    private static readonly TimeSpan UnreadableOwnerGrace = TimeSpan.FromSeconds(10);
+
+    /// <summary>This process, as an owner record names it.</summary>
+    private static readonly Lazy<InstallerLockHolder> Self = new(() =>
+        new InstallerLockHolder(Environment.ProcessId, ProcessIdentity.CreationTimeOf(Environment.ProcessId)));
+
+    /// <summary>What an owner record says about the folder beside it.</summary>
+    private enum Ownership
+    {
+        /// <summary>There is no record, or one that names nobody and is past its grace.</summary>
+        None,
+
+        /// <summary>A record that names nobody yet, inside its grace: its owner is writing it.</summary>
+        Writing,
+
+        /// <summary>The owner it names is running.</summary>
+        Alive,
+
+        /// <summary>The owner it names is gone.</summary>
+        Gone,
+    }
 
     /// <summary>
     /// Everything the reclaim pass could not remove, in the order it met them.
@@ -220,11 +291,15 @@ internal static class ScratchRoot
 
             Reclaim(path);
 
-            // The profile-anchored root gets the identical pass, because it
-            // holds whole app roots -- browsers directory, index and live
-            // markers -- and a leaked one is exactly the leftover this class
-            // exists to stop the next run meeting as a failure.
-            Reclaim(profile);
+            // The profile-anchored root gets a pass too, because it holds whole
+            // app roots -- browsers directory, index and live markers -- and a
+            // leaked one is exactly the leftover this class exists to stop the
+            // next run meeting as a failure.
+            //
+            // ⚠️ NOT THE IDENTICAL PASS SINCE 2026-10-10, 5 a: every checkout's
+            // runs share this root, so it takes only the folders whose owner is
+            // gone and names each one it deletes. See ReclaimOwned.
+            LastPassReport.AddRange(ReclaimOwned(profile));
 
             ReclaimStrayIndexEntries(path);
             ReclaimStrayIndexEntries(profile);
@@ -322,6 +397,267 @@ internal static class ScratchRoot
         }
     }
 
+    /// <summary>The line an owner record holds: who made the folder beside it.</summary>
+    /// <param name="owner">The process that made it.</param>
+    /// <returns>The line.</returns>
+    public static string OwnerRecord(InstallerLockHolder owner) =>
+        $"holder=suite {InstallerLock.TokenOf(owner)} at={DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture)}\n";
+
+    /// <summary>
+    /// Runs the profile half of the reclaim now, in this process, whether or not the
+    /// once-per-run pass has run here, and answers with what it did.
+    /// </summary>
+    /// <remarks>
+    /// For the second test host of <c>ScratchReclaimTests</c>, which has to run the
+    /// pass every other run's first use of <see cref="ProfileScratch"/> runs, over the
+    /// shared root and nothing else: the full pass would also sweep the repository
+    /// scratch its parent is using.
+    /// </remarks>
+    /// <returns>One line per folder it acted on.</returns>
+    public static List<string> ReclaimProfileScratchNow() => ReclaimOwned(ProfileAnchoredScratch);
+
+    /// <summary>
+    /// Creates a folder under <see cref="ProfileScratch"/>, its owner record first.
+    /// </summary>
+    /// <remarks>
+    /// <b>The record is written before the folder exists</b>, so no pass anywhere can
+    /// meet the folder without one: a folder with no record is a leftover from before
+    /// the records, or a run of an older harness, and is judged by its age.
+    /// </remarks>
+    /// <param name="name">The folder's name, unique to the caller.</param>
+    /// <returns>The folder's absolute path.</returns>
+    public static string CreateUnderProfile(string name)
+    {
+        var folder = System.IO.Path.Combine(ProfileScratch, name);
+
+        using (var record = new FileStream(folder + OwnerSuffix, FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete))
+        {
+            record.Write(Encoding.UTF8.GetBytes(OwnerRecord(Self.Value)));
+        }
+
+        _ = Directory.CreateDirectory(folder);
+
+        return folder;
+    }
+
+    /// <summary>
+    /// Removes a folder of <see cref="ProfileScratch"/> that its owner is done with,
+    /// and its record once nothing of the folder is left.
+    /// </summary>
+    /// <param name="folder">The folder.</param>
+    /// <returns>Every node that could not be deleted, one line each.</returns>
+    public static IReadOnlyList<string> RemoveOwned(string folder)
+    {
+        var survivors = new List<string>();
+
+        TreeDelete.Remove(folder, survivors);
+
+        // A folder that would not go keeps its record, so it stays this run's until
+        // this run is gone, and the next pass after that takes it.
+        if (survivors.Count is 0)
+        {
+            TryDelete(folder + OwnerSuffix);
+        }
+
+        return survivors;
+    }
+
+    /// <summary>
+    /// The owner-checked pass over the shared root: every folder whose owner is gone,
+    /// or which has no owner and is older than <see cref="UnownedAge"/>, is deleted and
+    /// named in the process log with the moment and this process.
+    /// </summary>
+    /// <param name="root">The shared root.</param>
+    /// <returns>One line per folder it deleted, or could delete only part of.</returns>
+    private static List<string> ReclaimOwned(string root)
+    {
+        var acted = new List<string>();
+
+        if (!Directory.Exists(root))
+        {
+            return acted;
+        }
+
+        var announced = new List<(string Folder, string At, string Reason)>();
+
+        foreach (var folder in Directory.EnumerateDirectories(root))
+        {
+            var (ownership, owner) = OwnershipOf(folder + OwnerSuffix);
+            string reason;
+
+            switch (ownership)
+            {
+                case Ownership.Gone:
+                    reason = $"its owner {owner} is no longer running";
+                    break;
+
+                case Ownership.None when TryCreationTime(folder) is { } made && DateTime.UtcNow - made > UnownedAge:
+                    reason = $"it has no owner record and was made at {Utc(made)}, more than a day ago";
+                    break;
+
+                default:
+                    // Alive, being written, or with no record and young enough to be a
+                    // live run of an older harness: left alone.
+                    continue;
+            }
+
+            var survivors = new List<string>();
+
+            try
+            {
+                TreeDelete.Remove(folder, survivors);
+            }
+#pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+                survivors.Add(folder);
+            }
+
+            var at = Utc(DateTime.UtcNow);
+
+            if (survivors.Count is 0)
+            {
+                TryDelete(folder + OwnerSuffix);
+                acted.Add($"deleted {folder} at {at} by {SelfText()}: {reason}");
+            }
+            else
+            {
+                LastPassSurvivors.AddRange(survivors);
+                acted.Add($"deleted part of {folder} at {at} by {SelfText()}: {reason}; {survivors.Count.ToString(CultureInfo.InvariantCulture)} node(s) would not go");
+            }
+
+            announced.Add((folder, at, reason));
+        }
+
+        // A record whose folder is gone, left by a run that removed its folder and
+        // was ended before it removed the record, goes with its owner.
+        foreach (var record in Directory.EnumerateFiles(root, "*" + OwnerSuffix))
+        {
+            if (!Directory.Exists(record[..^OwnerSuffix.Length]) && OwnershipOf(record).Ownership is Ownership.Gone or Ownership.None)
+            {
+                TryDelete(record);
+            }
+        }
+
+        Announce(announced);
+
+        return acted;
+    }
+
+    /// <summary>What the record at a path says about its folder, and the owner it names.</summary>
+    /// <param name="record">The owner record's path.</param>
+    /// <returns>The answer, and the owner's token when the record names one.</returns>
+    private static (Ownership Ownership, string? Owner) OwnershipOf(string record)
+    {
+        string text;
+        DateTime written;
+
+        try
+        {
+            using var stream = new FileStream(record, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+
+            text = reader.ReadToEnd();
+            written = File.GetLastWriteTimeUtc(record);
+        }
+        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return (Ownership.None, null);
+        }
+#pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            // Open for writing by its owner this instant, or unreadable to this
+            // process: either way, nobody may be told the folder is free.
+            return (Ownership.Writing, null);
+        }
+
+        if (InstallerLock.Parse(text) is not { } holder)
+        {
+            return DateTime.UtcNow - written < UnreadableOwnerGrace ? (Ownership.Writing, null) : (Ownership.None, null);
+        }
+
+        return (InstallerLock.IsAlive(holder) ? Ownership.Alive : Ownership.Gone, InstallerLock.TokenOf(holder));
+    }
+
+    /// <summary>
+    /// Writes what the owner-checked pass deleted to the machine's process log, and
+    /// nothing when it deleted nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>The process log, for <see cref="SpawnRecord"/>'s reasons</b>: it is the
+    /// machine-wide record of what processes on this box did, it is outside the
+    /// root the pass deletes from, and the one question a vanished folder raises is
+    /// which process took it and when. Never fatal: a pass that could not describe
+    /// itself has still reclaimed.
+    /// </remarks>
+    /// <param name="deleted">Each folder, the moment, and why.</param>
+    private static void Announce(List<(string Folder, string At, string Reason)> deleted)
+    {
+        if (deleted.Count is 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var log = ProcessLog.Create(BrowserAiPaths.Real, LogLevel.Information);
+            var logger = log.Factory.CreateLogger(AnnouncementCategory);
+            var host = SelfText();
+
+            foreach (var (folder, at, reason) in deleted)
+            {
+                ScratchReclaimAnnouncement.Deleted(logger, folder, at, host, reason);
+            }
+        }
+#pragma warning disable CA1031 // An announcement never becomes the outage.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+    }
+
+    /// <summary>This process as <c>pid@createdFileTime</c>, the spelling the process log uses.</summary>
+    /// <returns>The identity.</returns>
+    private static string SelfText() =>
+        string.Create(CultureInfo.InvariantCulture, $"{Self.Value.ProcessId}@{Self.Value.CreatedFileTime}");
+
+    /// <summary>A moment in UTC, to the millisecond.</summary>
+    /// <param name="moment">The moment, in UTC.</param>
+    /// <returns>Its text.</returns>
+    private static string Utc(DateTime moment) =>
+        moment.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
+
+    /// <summary>When a folder was made, or nothing when it cannot be read.</summary>
+    /// <param name="folder">The folder.</param>
+    /// <returns>The moment, in UTC.</returns>
+    private static DateTime? TryCreationTime(string folder)
+    {
+        try
+        {
+            return Directory.GetCreationTimeUtc(folder);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Deletes a file, and says nothing when it cannot.</summary>
+    /// <param name="path">The file.</param>
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
     private static void Reclaim(string path)
     {
         foreach (var directory in Directory.EnumerateDirectories(path))
@@ -352,4 +688,25 @@ internal static class ScratchRoot
             }
         }
     }
+}
+
+/// <summary>The one record the shared root's reclaim writes about itself.</summary>
+/// <remarks>
+/// Source-generated so the message is a single literal, at
+/// <see cref="LogLevel.Information"/>: a folder whose owner is gone is a killed
+/// run's leftover, and taking it is the pass working.
+/// </remarks>
+internal static partial class ScratchReclaimAnnouncement
+{
+    /// <summary>Records one folder the pass deleted.</summary>
+    /// <param name="logger">The process log's logger.</param>
+    /// <param name="folder">The folder.</param>
+    /// <param name="at">The moment, in UTC.</param>
+    /// <param name="host">The process that deleted it, as <c>pid@createdFileTime</c>.</param>
+    /// <param name="reason">Why it was taken.</param>
+    [LoggerMessage(
+        EventId = 1,
+        Level = LogLevel.Information,
+        Message = "The test harness's scratch reclaim deleted {Folder} at {At}, from {Host}, because {Reason}.")]
+    public static partial void Deleted(ILogger logger, string folder, string at, string host, string reason);
 }

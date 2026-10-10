@@ -1,0 +1,302 @@
+playwright-core 1.64.0-alpha-1790635538000 (payload of .work/wt/arch), lib/coreBundle.js
+sha256: cd6730be1bbcff00771a0fc1390f200306d28428ce68e305420ca623cb39cdeb
+
+=== coreBundle.js 11087-11238 (vendored proper-lockfile: probe, acquireLock, isLockStale, updateLock, setLockAsCompromised, lockImpl defaults)
+ 11087  // packages/utils/third_party/lockfile.ts
+ 11088  function probe(file, fs72, callback) {
+ 11089    const cachedPrecision = fs72[cacheSymbol];
+ 11090    if (cachedPrecision) {
+ 11091      return fs72.stat(file, (err, stat) => {
+ 11092        if (err)
+ 11093          return callback(err);
+ 11094        callback(null, stat.mtime, cachedPrecision);
+ 11095      });
+ 11096    }
+ 11097    const mtime = new Date(Math.ceil(Date.now() / 1e3) * 1e3 + 5);
+ 11098    fs72.utimes(file, mtime, mtime, (err) => {
+ 11099      if (err)
+ 11100        return callback(err);
+ 11101      fs72.stat(file, (err2, stat) => {
+ 11102        if (err2)
+ 11103          return callback(err2);
+ 11104        const precision = stat.mtime.getTime() % 1e3 === 0 ? "s" : "ms";
+ 11105        Object.defineProperty(fs72, cacheSymbol, { value: precision });
+ 11106        callback(null, stat.mtime, precision);
+ 11107      });
+ 11108    });
+ 11109  }
+ 11110  function getMtime(precision) {
+ 11111    let now = Date.now();
+ 11112    if (precision === "s")
+ 11113      now = Math.ceil(now / 1e3) * 1e3;
+ 11114    return new Date(now);
+ 11115  }
+ 11116  function getLockFile(file, options) {
+ 11117    return options.lockfilePath || `${file}.lock`;
+ 11118  }
+ 11119  function resolveCanonicalPath(file, options, callback) {
+ 11120    if (!options.realpath)
+ 11121      return callback(null, import_path8.default.resolve(file));
+ 11122    options.fs.realpath(file, callback);
+ 11123  }
+ 11124  function acquireLock(file, options, callback) {
+ 11125    const lockfilePath = getLockFile(file, options);
+ 11126    options.fs.mkdir(lockfilePath, (err) => {
+ 11127      if (!err) {
+ 11128        return probe(lockfilePath, options.fs, (err2, mtime, mtimePrecision) => {
+ 11129          if (err2) {
+ 11130            options.fs.rmdir(lockfilePath, () => {
+ 11131            });
+ 11132            return callback(err2);
+ 11133          }
+ 11134          callback(null, mtime, mtimePrecision);
+ 11135        });
+ 11136      }
+ 11137      if (err.code !== "EEXIST")
+ 11138        return callback(err);
+ 11139      if (options.stale <= 0)
+ 11140        return callback(Object.assign(new Error("Lock file is already being held"), { code: "ELOCKED", file }));
+ 11141      options.fs.stat(lockfilePath, (err2, stat) => {
+ 11142        if (err2) {
+ 11143          if (err2.code === "ENOENT")
+ 11144            return acquireLock(file, { ...options, stale: 0 }, callback);
+ 11145          return callback(err2);
+ 11146        }
+ 11147        if (!isLockStale(stat, options))
+ 11148          return callback(Object.assign(new Error("Lock file is already being held"), { code: "ELOCKED", file }));
+ 11149        removeLock(file, options, (err3) => {
+ 11150          if (err3)
+ 11151            return callback(err3);
+ 11152          acquireLock(file, { ...options, stale: 0 }, callback);
+ 11153        });
+ 11154      });
+ 11155    });
+ 11156  }
+ 11157  function isLockStale(stat, options) {
+ 11158    return stat.mtime.getTime() < Date.now() - options.stale;
+ 11159  }
+ 11160  function removeLock(file, options, callback) {
+ 11161    options.fs.rmdir(getLockFile(file, options), (err) => {
+ 11162      if (err && err.code !== "ENOENT")
+ 11163        return callback(err);
+ 11164      callback(null);
+ 11165    });
+ 11166  }
+ 11167  function updateLock(file, options) {
+ 11168    const lock2 = locks[file];
+ 11169    if (lock2.updateTimeout)
+ 11170      return;
+ 11171    lock2.updateDelay = lock2.updateDelay || options.update;
+ 11172    lock2.updateTimeout = setTimeout(() => {
+ 11173      lock2.updateTimeout = null;
+ 11174      options.fs.stat(lock2.lockfilePath, (err, stat) => {
+ 11175        const isOverThreshold = lock2.lastUpdate + options.stale < Date.now();
+ 11176        if (err) {
+ 11177          if (err.code === "ENOENT" || isOverThreshold)
+ 11178            return setLockAsCompromised(file, lock2, Object.assign(err, { code: "ECOMPROMISED" }));
+ 11179          lock2.updateDelay = 1e3;
+ 11180          return updateLock(file, options);
+ 11181        }
+ 11182        const isMtimeOurs = lock2.mtime.getTime() === stat.mtime.getTime();
+ 11183        if (!isMtimeOurs) {
+ 11184          return setLockAsCompromised(
+ 11185            file,
+ 11186            lock2,
+ 11187            Object.assign(
+ 11188              new Error("Unable to update lock within the stale threshold"),
+ 11189              { code: "ECOMPROMISED" }
+ 11190            )
+ 11191          );
+ 11192        }
+ 11193        const mtime = getMtime(lock2.mtimePrecision);
+ 11194        options.fs.utimes(lock2.lockfilePath, mtime, mtime, (err2) => {
+ 11195          const isOverThreshold2 = lock2.lastUpdate + options.stale < Date.now();
+ 11196          if (lock2.released)
+ 11197            return;
+ 11198          if (err2) {
+ 11199            if (err2.code === "ENOENT" || isOverThreshold2)
+ 11200              return setLockAsCompromised(file, lock2, Object.assign(err2, { code: "ECOMPROMISED" }));
+ 11201            lock2.updateDelay = 1e3;
+ 11202            return updateLock(file, options);
+ 11203          }
+ 11204          lock2.mtime = mtime;
+ 11205          lock2.lastUpdate = Date.now();
+ 11206          lock2.updateDelay = null;
+ 11207          updateLock(file, options);
+ 11208        });
+ 11209      });
+ 11210    }, lock2.updateDelay);
+ 11211    if (lock2.updateTimeout && lock2.updateTimeout.unref)
+ 11212      lock2.updateTimeout.unref();
+ 11213  }
+ 11214  function setLockAsCompromised(file, lock2, err) {
+ 11215    lock2.released = true;
+ 11216    if (lock2.updateTimeout)
+ 11217      clearTimeout(lock2.updateTimeout);
+ 11218    if (locks[file] === lock2)
+ 11219      delete locks[file];
+ 11220    lock2.options.onCompromised(err);
+ 11221  }
+ 11222  function lockImpl(file, options, callback) {
+ 11223    const resolvedOptions = {
+ 11224      stale: 1e4,
+ 11225      update: null,
+ 11226      realpath: true,
+ 11227      retries: 0,
+ 11228      fs: gracefulFs,
+ 11229      onCompromised: (err) => {
+ 11230        throw err;
+ 11231      },
+ 11232      ...options
+ 11233    };
+ 11234    resolvedOptions.retries = resolvedOptions.retries || 0;
+ 11235    resolvedOptions.retries = typeof resolvedOptions.retries === "number" ? { retries: resolvedOptions.retries } : resolvedOptions.retries;
+ 11236    resolvedOptions.stale = Math.max(resolvedOptions.stale || 0, 2e3);
+ 11237    resolvedOptions.update = resolvedOptions.update === null || resolvedOptions.update === void 0 ? resolvedOptions.stale / 2 : resolvedOptions.update || 0;
+ 11238    resolvedOptions.update = Math.max(Math.min(resolvedOptions.update, resolvedOptions.stale / 2), 1e3);
+
+=== coreBundle.js 34771-34843 (Registry.install: the __dirlock call site)
+ 34771        async install(executablesToInstall, options) {
+ 34772          const executables = this._dedupe(executablesToInstall);
+ 34773          await import_fs19.default.promises.mkdir(registryDirectory, { recursive: true });
+ 34774          const lockfilePath = import_path20.default.join(registryDirectory, "__dirlock");
+ 34775          const linksDir = import_path20.default.join(registryDirectory, ".links");
+ 34776          let releaseLock;
+ 34777          try {
+ 34778            releaseLock = await lock(registryDirectory, {
+ 34779              retries: {
+ 34780                // Retry 20 times during 10 minutes with
+ 34781                // exponential back-off.
+ 34782                // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+ 34783                retries: 20,
+ 34784                factor: 1.27579
+ 34785              },
+ 34786              onCompromised: (err) => {
+ 34787                throw new Error(`${err.message} Path: ${lockfilePath}`);
+ 34788              },
+ 34789              lockfilePath
+ 34790            });
+ 34791            await import_fs19.default.promises.mkdir(linksDir, { recursive: true });
+ 34792            await import_fs19.default.promises.writeFile(import_path20.default.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+ 34793            if (options?.gc !== false && !getAsBooleanFromENV("PLAYWRIGHT_SKIP_BROWSER_GC"))
+ 34794              await this._validateInstallationCache(linksDir);
+ 34795            for (const executable of executables) {
+ 34796              if (!executable._install)
+ 34797                throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
+ 34798              if (!getAsBooleanFromENV("CI") && !executable._isHermeticInstallation && !options?.force && executable.executablePath()) {
+ 34799                const { embedderName } = getEmbedderName();
+ 34800                const command = buildPlaywrightCLICommand(embedderName, "install --force " + executable.name);
+ 34801                process.stderr.write("\n" + wrapInASCIIBox([
+ 34802                  `ATTENTION: "${executable.name}" is already installed on the system!`,
+ 34803                  ``,
+ 34804                  `"${executable.name}" installation is not hermetic; installing newer version`,
+ 34805                  `requires *removal* of a current installation first.`,
+ 34806                  ``,
+ 34807                  `To *uninstall* current version and re-install latest "${executable.name}":`,
+ 34808                  ``,
+ 34809                  `- Close all running instances of "${executable.name}", if any`,
+ 34810                  `- Use "--force" to install browser:`,
+ 34811                  ``,
+ 34812                  `    ${command}`,
+ 34813                  ``,
+ 34814                  `<3 Playwright Team`
+ 34815                ].join("\n"), 1) + "\n\n");
+ 34816                return;
+ 34817              }
+ 34818              await executable._install(!!options?.force);
+ 34819            }
+ 34820          } catch (e) {
+ 34821            if (e.code === "ELOCKED") {
+ 34822              const rmCommand = process.platform === "win32" ? "rm -R" : "rm -rf";
+ 34823              throw new Error("\n" + wrapInASCIIBox([
+ 34824                `An active lockfile is found at:`,
+ 34825                ``,
+ 34826                `  ${lockfilePath}`,
+ 34827                ``,
+ 34828                `Either:`,
+ 34829                `- wait a few minutes if other Playwright is installing browsers in parallel`,
+ 34830                `- remove lock manually with:`,
+ 34831                ``,
+ 34832                `    ${rmCommand} ${lockfilePath}`,
+ 34833                ``,
+ 34834                `<3 Playwright Team`
+ 34835              ].join("\n"), 1));
+ 34836            } else {
+ 34837              throw e;
+ 34838            }
+ 34839          } finally {
+ 34840            if (releaseLock)
+ 34841              await releaseLock();
+ 34842          }
+ 34843        }
+
+=== coreBundle.js 33612-33650, 33828-33840 (download and extraction run in the forked oopBrowserDownload child)
+ 33612  async function downloadBrowserWithProgressBar(title, browserDirectory, executablePath, downloadURLs, downloadFileName, downloadSocketTimeout, force) {
+ 33613    if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
+ 33614      debugLogger.log("install", `${title} is already downloaded.`);
+ 33615      if (force)
+ 33616        debugLogger.log("install", `force-downloading ${title}.`);
+ 33617      else
+ 33618        return;
+ 33619    }
+ 33620    const uniqueTempDir = await import_fs17.default.promises.mkdtemp(import_path18.default.join(import_os7.default.tmpdir(), "playwright-download-"));
+ 33621    const zipPath = import_path18.default.join(uniqueTempDir, downloadFileName);
+ 33622    try {
+ 33623      const retryCount = 5;
+ 33624      for (let attempt = 1; attempt <= retryCount; ++attempt) {
+ 33625        debugLogger.log("install", `downloading ${title} - attempt #${attempt}`);
+ 33626        const url3 = downloadURLs[(attempt - 1) % downloadURLs.length];
+ 33627        logPolitely(`Downloading ${title}` + colors2.dim(` from ${url3}`));
+ 33628        const { error } = await downloadBrowserWithProgressBarOutOfProcess(title, browserDirectory, url3, zipPath, executablePath, downloadSocketTimeout);
+ 33629        if (!error) {
+ 33630          debugLogger.log("install", `SUCCESS installing ${title}`);
+ 33631          break;
+ 33632        }
+ 33633        if (await existsAsync(zipPath))
+ 33634          await import_fs17.default.promises.unlink(zipPath);
+ 33635        if (await existsAsync(browserDirectory))
+ 33636          await removeFolders([browserDirectory]);
+ 33637        const errorMessage = error?.message || "";
+ 33638        debugLogger.log("install", `attempt #${attempt} - ERROR: ${errorMessage}`);
+ 33639        if (attempt >= retryCount)
+ 33640          throw error;
+ 33641      }
+ 33642    } catch (e) {
+ 33643      debugLogger.log("install", `FAILED installation ${title} with error: ${e}`);
+ 33644      process.exitCode = 1;
+ 33645      throw e;
+ 33646    } finally {
+ 33647      await removeFolders([uniqueTempDir]);
+ 33648    }
+ 33649    logPolitely(`${title} downloaded to ${browserDirectory}`);
+ 33650  }
+ 33828  async function main(options) {
+ 33829    await downloadFile(options);
+ 33830    log(`SUCCESS downloading ${options.title}`);
+ 33831    log(`removing existing browser directory if any`);
+ 33832    await removeFolders([options.browserDirectory]);
+ 33833    log(`extracting archive`);
+ 33834    await extractZip(options.zipPath, { dir: options.browserDirectory });
+ 33835    if (options.executablePath) {
+ 33836      log(`fixing permissions at ${options.executablePath}`);
+ 33837      await import_fs18.default.promises.chmod(options.executablePath, 493);
+ 33838    }
+ 33839    await import_fs18.default.promises.writeFile(browserDirectoryToMarkerFilePath2(options.browserDirectory), "");
+ 33840  }
+
+=== utilsBundle.js 31959-31973 (graceful-fs statFix: the 'callback' frame at 31971)
+ 31959        function statFix(orig) {
+ 31960          if (!orig) return orig;
+ 31961          return function(target, options2, cb) {
+ 31962            if (typeof options2 === "function") {
+ 31963              cb = options2;
+ 31964              options2 = null;
+ 31965            }
+ 31966            function callback(er, stats) {
+ 31967              if (stats) {
+ 31968                if (stats.uid < 0) stats.uid += 4294967296;
+ 31969                if (stats.gid < 0) stats.gid += 4294967296;
+ 31970              }
+ 31971              if (cb) cb.apply(this, arguments);
+ 31972            }
+ 31973            return options2 ? orig.call(fs7, target, options2, callback) : orig.call(fs7, target, callback);

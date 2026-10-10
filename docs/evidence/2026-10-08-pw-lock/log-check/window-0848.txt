@@ -1,0 +1,9 @@
+born=2026-10-08 17:47:17 mod=2026-10-08 18:21:18 rt=2 | wt/arch/.work/suite/arch2-ps.log | 
+born=2026-10-08 17:48:37 mod=2026-10-08 17:49:36 rt=0 | wt/s1b/.work/suite/build-7.log | 
+born=2026-10-08 17:49:23 mod=2026-10-08 18:20:26 rt=2 | wt/ui/.work/suite/final2-20261008-174923.log | 
+born=2026-10-08 17:49:47 mod=2026-10-08 17:51:49 rt=0 | wt/ui/.work/suite/publish-20261008-174947.log | 
+born=2026-10-08 17:49:59 mod=2026-10-08 17:50:02 rt=2 | wt/arch-relay/.work/plant-crash-during-a-call-read-as-a-stop.log | 
+born=2026-10-08 17:47:55 mod=2026-10-08 17:48:02 rt=2 | wt/arch-relay/.work/plant-failed-classifier-says-none.log | 
+born=2026-10-08 17:47:05 mod=2026-10-08 17:47:07 rt=2 | wt/arch-relay/.work/plant-greeting-without-reconnect.log | 
+born=2026-10-08 17:49:12 mod=2026-10-08 17:49:15 rt=2 | wt/arch-relay/.work/plant-updating-refusal-read-as-any-refusal.log | 
+born=2026-10-08 17:46:03 mod=2026-10-08 17:46:14 rt=0 | wt/arch-update/.work/build-after-plants.log | 

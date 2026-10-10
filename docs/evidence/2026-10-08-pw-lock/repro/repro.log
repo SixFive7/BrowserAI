@@ -1,0 +1,20 @@
+2026-10-09T00:32:19.6295787Z  repro starting; payload=C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload
+2026-10-09T00:32:19.6664128Z  suite lock held; waiting
+2026-10-09T01:00:19.7615677Z  took suite lock
+2026-10-09T01:00:19.8112532Z  round-1 node pid=51424 start=2026-10-09T01:00:19.7930266Z delete=True
+2026-10-09T01:00:20.3568510Z  round-1 __dirlock appeared 2026-10-09T01:00:20.3566719Z
+2026-10-09T01:00:22.5036234Z  round-1 __dirlock deleted 2026-10-09T01:00:22.5034395Z
+2026-10-09T01:00:25.3471679Z  round-1 node exit=1
+2026-10-09T01:00:27.3640809Z  round-2 node pid=7020 start=2026-10-09T01:00:27.3612575Z delete=True
+2026-10-09T01:00:27.6826864Z  round-2 __dirlock appeared 2026-10-09T01:00:27.6825299Z
+2026-10-09T01:00:29.7262509Z  round-2 __dirlock deleted 2026-10-09T01:00:29.7261392Z
+2026-10-09T01:00:32.6499074Z  round-2 node exit=1
+2026-10-09T01:00:34.6754590Z  round-3 node pid=79448 start=2026-10-09T01:00:34.6732241Z delete=True
+2026-10-09T01:00:35.0111989Z  round-3 __dirlock appeared 2026-10-09T01:00:35.0110477Z
+2026-10-09T01:00:37.0402657Z  round-3 __dirlock deleted 2026-10-09T01:00:37.0401585Z
+2026-10-09T01:00:39.9884220Z  round-3 node exit=1
+2026-10-09T01:00:42.0350010Z  control node pid=62752 start=2026-10-09T01:00:42.0317417Z delete=False
+2026-10-09T01:00:56.7265111Z  control node exit=0
+2026-10-09T01:00:58.7534564Z  released suite lock
+2026-10-09T01:00:59.0572043Z  cleaned scratch roots
+2026-10-09T01:00:59.0582140Z  done

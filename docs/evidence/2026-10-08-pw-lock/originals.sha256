@@ -1,0 +1,9 @@
+# Every file whose bytes were changed: its path here, the original's bytes and SHA-256, and how many places were changed. The account's name was replaced by <user>, the terminal's colour codes were removed from the installer's output, and one other control byte was written as <0x01>.
+5b260529e0ee3b05a1ecb67e1c642ad73216ca7f9759e8bcca92512d4df22737  162  2  repro\round-1.out
+5b260529e0ee3b05a1ecb67e1c642ad73216ca7f9759e8bcca92512d4df22737  162  2  repro\round-2.out
+5b260529e0ee3b05a1ecb67e1c642ad73216ca7f9759e8bcca92512d4df22737  162  2  repro\round-3.out
+bef27eded0efdae764ae93958568686b64652bb9eac8323406a00c024bcfee13  840  6  repro\control.out
+6d46ef619227a61258a9ebd832e345b8fa0861a016ee93ac34160836f8bf3e24  3107  2  log-check\timeline.txt
+d4eb921ed8e95985acb25f62fb5a4ce73a0ca95136b01173593adf5390148e12  5526  2  log-check\tail-records.txt
+06ab9625092512f4d1b8b9cf994753efb655d1c5255d94cbaa217df6da898a2e  964  6  log-check\sess-scanA3.txt
+e010a209216ec36fc9bcdb89d864899a5e8ddd226f86d5308a55159c643fed09  44438  6  log-check\sess-window.txt

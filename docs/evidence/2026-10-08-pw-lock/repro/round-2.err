@@ -1,0 +1,12 @@
+C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:34787
+              throw new Error(`${err.message} Path: ${lockfilePath}`);
+              ^
+
+Error: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\pw-lock\repro\round-2\__dirlock' Path: C:\Source\SixFive7\BrowserAI\.work\pw-lock\repro\round-2\__dirlock
+    at Object.onCompromised (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:34787:21)
+    at setLockAsCompromised (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11220:17)
+    at C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11178:18
+    at callback (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\utilsBundle.js:31971:24)
+    at FSReqCallback.oncomplete (node:fs:197:21)
+
+Node.js v24.21.0

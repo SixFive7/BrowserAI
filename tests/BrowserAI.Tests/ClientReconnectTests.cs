@@ -123,7 +123,7 @@ internal sealed class ClientReconnectTests
         var configuration = OnboardedClientConfig.Seed(Path.Combine(work.FullName, "cfg"));
         var project = Directory.CreateDirectory(Path.Combine(work.FullName, "proj")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
-        var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
+        var appRoot = ScratchRoot.CreateUnderProfile(run);
 
         var arguments = new JsonObject { ["directory"] = sessions }.ToJsonString();
         var call = $"tool:mcp__browserai__{SessionToolSurface.List}:{arguments}";
@@ -270,7 +270,7 @@ internal sealed class ClientReconnectTests
         var work = Directory.CreateDirectory(Path.Combine(ScratchRoot.Path, run));
         var home = Directory.CreateDirectory(Path.Combine(work.FullName, "codexhome")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
-        var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
+        var appRoot = ScratchRoot.CreateUnderProfile(run);
 
         await using var background = BackgroundOver(appRoot, work);
 
@@ -430,7 +430,7 @@ internal sealed class ClientReconnectTests
         var home = Directory.CreateDirectory(Path.Combine(work.FullName, "codexhome")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
         var install = Directory.CreateDirectory(Path.Combine(work.FullName, "install")).FullName;
-        var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
+        var appRoot = ScratchRoot.CreateUnderProfile(run);
 
         await using var background = BackgroundOver(appRoot, work);
 

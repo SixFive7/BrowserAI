@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using BrowserAI.Interop;
 using BrowserAI.Protocol;
 using BrowserAI.Sessions;
@@ -330,7 +331,7 @@ internal sealed record ProvisioningTimers
 /// naming nothing relevant and pointing nowhere near the cause.
 /// </para>
 /// </remarks>
-internal sealed class BrowserProvisioner : IDisposable
+internal sealed partial class BrowserProvisioner : IDisposable
 {
     /// <summary>
     /// Playwright's own per-socket stall timeout, which BrowserAI deliberately
@@ -1767,12 +1768,14 @@ internal sealed class BrowserProvisioner : IDisposable
         // launches as `spawn EFTYPE` and never re-downloads.
         if (exitCode is not 0 || !IsComplete(directory))
         {
-            ProvisioningLog.InstallerRefused(_logger, browser, exitCode, Tail(run.Output));
+            var said = Said(run.Output);
+
+            ProvisioningLog.InstallerRefused(_logger, browser, exitCode, said);
             TreeDelete.Remove(directory, []);
 
             return new ProvisioningResult(
                 false,
-                $"The installer for {revision.Description} exited with code {exitCode.ToString(CultureInfo.InvariantCulture)} and left no '{BrowsersManifest.InstallationCompleteMarker}' in '{directory}'. {Tail(run.Output)}");
+                $"The installer for {revision.Description} exited with code {exitCode.ToString(CultureInfo.InvariantCulture)} and left no '{BrowsersManifest.InstallationCompleteMarker}' in '{directory}'. {said}");
         }
 
         if (_logger.IsEnabled(LogLevel.Debug))
@@ -1886,17 +1889,64 @@ internal sealed class BrowserProvisioner : IDisposable
     private static string Minutes(TimeSpan span) =>
         span.TotalMinutes.ToString(span.TotalMinutes < 1 ? "F2" : "F0", CultureInfo.InvariantCulture);
 
-    private static string Tail(string output)
+    /// <summary>
+    /// How much of what a failed installer wrote is quoted, counted back from its end.
+    /// </summary>
+    /// <remarks>
+    /// <b>A tail and not the whole</b>, because an installer that downloads for minutes
+    /// can write a great deal, and a failure is read for how it ended. What the tail
+    /// can cut is the line naming the error, and <see cref="Said"/> quotes that line
+    /// whole beside it.
+    /// </remarks>
+    internal const int InstallerTailCharacters = 800;
+
+    /// <summary>
+    /// What a failed installer said, as a failure quotes it: its error line whole,
+    /// and the end of everything it wrote.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>5 a, the maintainer's words of 2026-10-10, verbatim: "5 a".</b> On
+    /// 2026-10-08 the installer exited 1 in a gate's first-run arm with Node's
+    /// report of an uncaught error, which prints the error line and then the stack
+    /// under it. Each frame carried two long paths, so the last 800 characters began
+    /// inside the first frame, and <c>BrowserProvisioner[64]</c> recorded the frames
+    /// and not the line that named the error: <i>ENOENT</i> on the install's own
+    /// <c>__dirlock</c>. Corrected that day (previously the last 800 characters and
+    /// nothing else).
+    /// </para>
+    /// <para>
+    /// <b>The error line is the last line that reads as one</b>, Node's
+    /// <c>Error: ...</c>, <c>TypeError: ...</c> or <c>Error [CODE]: ...</c>, and
+    /// commander's <c>error: ...</c>. It is quoted only when the tail does not
+    /// already hold it whole, so a short failure reads as it always did.
+    /// </para>
+    /// </remarks>
+    /// <param name="output">Everything the installer wrote, both streams.</param>
+    /// <returns>The words a failure quotes.</returns>
+    internal static string Said(string output)
     {
         var text = output.Trim();
 
-        return text.Length switch
+        if (text.Length is 0)
         {
-            0 => "The installer wrote nothing.",
-            > 800 => "The installer said: " + text[^800..],
-            _ => "The installer said: " + text,
-        };
+            return "The installer wrote nothing.";
+        }
+
+        var tail = text.Length > InstallerTailCharacters ? text[^InstallerTailCharacters..] : text;
+        var error = text.Split('\n')
+            .Select(line => line.Trim())
+            .LastOrDefault(line => ErrorLine().IsMatch(line));
+
+        return error is null || tail.Contains(error, StringComparison.Ordinal)
+            ? "The installer said: " + tail
+            : $"The installer's error line: {error} The end of what it said: {tail}";
     }
+
+    /// <summary>A line that names an error the way Node and commander print one.</summary>
+    /// <returns>The pattern.</returns>
+    [GeneratedRegex(@"^(?:[A-Za-z_$][A-Za-z0-9_$]*)?(?:Error|error)(?: \[[^\]]+\])?: \S", RegexOptions.CultureInvariant)]
+    private static partial Regex ErrorLine();
 
     /// <summary>
     /// How long this attempt has been running, read from the injected clock.

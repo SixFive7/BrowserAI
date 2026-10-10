@@ -1,0 +1,36 @@
+Supporting data for the 2026-10-08 installer-lock failure (gate on f68ae4cf, ARCH lane, PowerShell half "arch2-ps").
+All times UTC unless marked local (CEST = UTC+2).
+
+Source A: the first-run app root's log, as quoted in the ARCH lane's transcript
+  C:\Users\<user>\.claude\projects\c--Source-SixFive7-BrowserAI\3220505d-7d58-4389-8559-4219bbebe3cb\subagents\agent-a12e5dc436d1ff5df.jsonl
+  records 2067 (16:20:31Z) and 2083 (16:21:05Z); decoded with scan_transcript.py into tail-records.txt.
+  The app root itself (C:\Users\<user>\AppData\Local\BrowserAI-test-scratch\first-run-84d65ab26f83448f847af0d531ef50c2\app-root)
+  no longer exists: %LocalAppData%\BrowserAI-test-scratch was empty when read on 2026-10-09 (last modified 00:20 local).
+
+15:47:50.77  BrowserAI pid 119064 serving stdio (first-run arm's server).
+15:47:52.22  BrowserProvisioner[60] Provisioning chromium revision 1247 into ...\first-run-84d65...\app-root\browsers
+15:47:56.65  pid 91780 BrowserAI.App: "This BrowserAI is the coordinator: it holds \\.\pipe\BrowserAI-Coordinator-EE09B59C0A8F17EFDEE7B612E6D6FA07"
+             (same pipe and port 49490 as the peer in ProtocolSplitTests.TheNewOpeningRequestIsRefused..., which hung 30 min in the same run)
+15:48:16.44  BrowserProvisioner[61] Extracting chromium; the download took 24 s.
+15:48:40.24  BrowserProvisioner[64] The installer for chromium exited 1 without completing. Tail (last 800 chars) ends:
+               ...coreBundle.js:34787:21)
+               at setLockAsCompromised (...coreBundle.js:11220:17)
+               at ...coreBundle.js:11178:18                      <- the stat-error branch of updateLock
+               at callback (...utilsBundle.js:31971:24)          <- graceful-fs statFix wrapper around fs.stat
+               at FSReqCallback.oncomplete (node:fs:197:21)
+             Node.js v24.21.0
+             The message line ("Error: <stat error> Path: ...\__dirlock") was cut off by the 800-character tail.
+             Nothing further was logged after this record.
+16:20:31     du -sh <app-root>\browsers -> 4.0K   (the ~207 MB archive under browsers\.downloads\chromium\playwright-download-*\ was gone)
+16:21:18     arch2-ps test host stopped (run summary: 974 total, 3 failed, 34m 01s).
+
+Lock arithmetic (stale 10000 ms, update 5000 ms, both defaults; Registry.install passes neither):
+  lock taken ~15:47:52-53 -> refreshes ~every 5 s -> the failing refresh is the one near 15:48:38;
+  the one near 15:48:33 must have succeeded, so a NON-ENOENT stat error at 15:48:38 would have been retried
+  (lastUpdate + 10 s not yet passed). ENOENT compromises on the first refresh after the delete.
+
+Other worktrees' test hosts alive or starting in the window (local 17:47:52-17:48:40), from .work/wt/*/.work logs:
+  sess   scan-A3   started 17:45:43, no output, "exit 1 at 18:13:38" (consistent with waiting in InstallerLock.Take)
+  arch-relay plant-failed-classifier-says-none 17:47:55-17:48:02 (RelayTests only, declared=pid=5836)
+  s1b    build-7   17:48:37-17:49:36 (dotnet build, no test host)
+  None is shown to have run ScratchRoot.EnsureReclaimed in the window.

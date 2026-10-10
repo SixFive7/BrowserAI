@@ -1,0 +1,15 @@
+=== RESULT rec 1620 2026-10-08T16:23:56.861Z
+USE: {"command": "ls -la /c/Source/SixFive7/BrowserAI/.work/locks/ 2>&1; cat /c/Source/SixFive7/BrowserAI/.work/wt/sess/.work/suite/gate-A.lockstatus; echo; cat /c/Source/SixFive7/BrowserAI/.work/wt/sess/.work/locked-run.sh; ls -la /c/Source/SixFive7/BrowserAI/.work/wt/sess/.work/suite/ | tail -6", "description": "Inspect the suite lock and the queued gate for batch A"}
+%Y-%m-%dT%H:%M:%SZ)" "$what" "$tag" > "$lockdir/owner.txt"
+echo "taken $(date +%H:%M:%S)" >> "$status"
+"$@"
+rc=$?
+rm -rf "$lockdir"
+echo "released $(date +%H:%M:%S) rc=$rc" >> "$status"
+-rw-r--r-- 1 <user> 197609  94943 Oct  8 16:55 red-A2.log
+-rw-r--r-- 1 <user> 197609  10337 Oct  8 17:17 scan-A.log
+-rw-r--r-- 1 <user> 197609    717 Oct  8 17:19 scan-A2.log
+-rw-r--r-- 1 <user> 197609    375 Oct  8 18:13 scan-A3.log
+-rw-r--r-- 1 <user> 197609   7745 Oct  8 18:15 scan-A4.log
+-rw-r--r-- 1 <user> 197609    719 Oct  8 18:16 scan-A5.log
+DONE

@@ -1,0 +1,32 @@
+====================================================================================================
+RECORD 2067 2026-10-08T16:20:31.167Z
+TOOL_USE (record 2066, 2026-10-08T16:20:29.914Z): {"command": "d=\"$LOCALAPPDATA/BrowserAI-test-scratch/first-run-84d65ab26f83448f847af0d531ef50c2/app-root\"; ls \"$d\"; ls \"$d/logs\" 2>/dev/null; tail -15 \"$d\"/logs/*.log 2>/dev/null | cut -c1-300; du -sh \"$d/browsers\" 2>/dev/null", "description": "Read the first-run test's server log"}
+RESULT EXCERPT:
+-10-08T15:47:50.7703640Z  made=2026-10-08T15:47:50.7703479Z  INFO   pid=119064@134359480677259498  ModelContextProtocol.Client.McpClient[1017245113]  Client (BrowserAI 1.1.1-alpha.0.227) client created and connected.
+2026-10-08T15:47:50.7704912Z  made=2026-10-08T15:47:50.7704642Z  INFO   pid=119064@134359480677259498  BrowserAI.Proxy.ChildConnection[1]  Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+2026-10-08T15:47:50.7722244Z  made=2026-10-08T15:47:50.7721976Z  INFO   pid=119064@134359480677259498  BrowserAI.Startup[2]  BrowserAI is serving stdio. childProtocol=2025-11-25
+2026-10-08T15:47:50.7783486Z  made=2026-10-08T15:47:50.7783128Z  INFO   pid=119064@134359480677259498  ModelContextProtocol.Server.McpServer[570385771]  Server (BrowserAI 1.1.1-alpha.0.227) method 'initialize' request handler called.
+2026-10-08T15:47:50.7797069Z  made=2026-10-08T15:47:50.7796676Z  INFO   pid=119064@134359480677259498  ModelContextProtocol.Server.McpServer[1867955179]  Server (BrowserAI 1.1.1-alpha.0.227), Client (BrowserAI.RawStdioClient 1) method 'initialize' request handler completed in 1.0777ms.
+2026-10-08T15:47:52.2223370Z  made=2026-10-08T15:47:52.2223091Z  INFO   pid=119064@134359480677259498  BrowserAI.Runtime.BrowserProvisioner[60]  Provisioning chromium revision 1247 into C:\Users\<user>\AppData\Local\BrowserAI-test-scratch\first-run-84d65ab26f83448f847af0d531ef50c2\app-root\browsers. i
+2026-10-08T15:47:52.2852309Z  made=2026-10-08T15:47:52.2851653Z  INFO   pid=119064@134359480677259498  BrowserAI.Sessions.SessionManager[45]  'browser_navigate' was refused because chromium provisioning is 'Provisioning'. The session stays open and the same call succeeds once it lands.
+2026-10-08T15:47:52.2880388Z  made=2026-10-08T15:47:52.2880132Z  INFO   pid=119064@134359480677259498  BrowserAI.Sessions.SessionManager[45]  'browser_get_config' was refused because chromium provisioning is 'Provisioning'. The session stays open and the same call succeeds once it lands.
+2026-10-08T15:48:16.4434119Z  made=2026-10-08T15:48:16.4433647Z  INFO   pid=119064@134359480677259498  BrowserAI.Runtime.BrowserProvisioner[61]  Extracting chromium; the download took 24 s.
+2026-10-08T15:48:40.2443340Z  made=2026-10-08T15:48:40.2442817Z  ERROR  pid=119064@134359480677259498  BrowserAI.Runtime.BrowserProvisioner[64]  The installer for chromium exited 1 without completing. The installer said: Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windo
+    at setLockAsCompromised (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11220:17)
+    at C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11178:18
+    at callback (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\utilsBundle.js:31971:24)
+    at FSReqCallback.oncomplete (node:fs:197:21)
+Node.js v24.21.0
+4.0K	C:\Users\<user>\AppData\Local/BrowserAI-test-scratch/first-run-84d65ab26f83448f847af0d531ef50c2/app-root/browsers
+====================================================================================================
+RECORD 2083 2026-10-08T16:21:05.899Z
+TOOL_USE (record 2082, 2026-10-08T16:21:03.344Z): {"command": "d=\"$LOCALAPPDATA/BrowserAI-test-scratch/first-run-84d65ab26f83448f847af0d531ef50c2/app-root\"; grep -n 'BrowserProvisioner\\[64\\]' -A3 \"$d\"/logs/*.log | cut -c1-2000 | head -12; grep -c '' \"$d\"/logs/*.log; tail -3 \"$d\"/logs/*.log | cut -c1-300", "description": "Read the full provisioning failure record"}
+RESULT EXCERPT:
+18:2026-10-08T15:48:40.2443340Z  made=2026-10-08T15:48:40.2442817Z  ERROR  pid=119064@134359480677259498  BrowserAI.Runtime.BrowserProvisioner[64]  The installer for chromium exited 1 without completing. The installer said: Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:34787:21)
+19-    at setLockAsCompromised (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11220:17)
+20-    at C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:11178:18
+21-    at callback (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\utilsBundle.js:31971:24)
+23
+    at callback (C:\Source\SixFive7\BrowserAI\.work\wt\arch\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\mcp\node_modules\playwright-core\lib\utilsBundle.js:31971:24)
+    at FSReqCallback.oncomplete (node:fs:197:21)
+Node.js v24.21.0

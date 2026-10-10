@@ -1,0 +1,31 @@
+import json, sys
+path, needle, out = sys.argv[1], sys.argv[2], sys.argv[3]
+uses = {}
+w = open(out, 'w', encoding='utf-8')
+with open(path, encoding='utf-8') as f:
+    for i, line in enumerate(f, 1):
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        m = r.get('message') or {}
+        c = m.get('content')
+        if not isinstance(c, list):
+            continue
+        for b in c:
+            t = b.get('type')
+            if t == 'tool_use':
+                uses[b.get('id')] = json.dumps(b.get('input'))[:600]
+            elif t == 'text' and needle in b.get('text', ''):
+                k = b['text'].find(needle)
+                w.write('=== TEXT rec %d %s\n%s\n' % (i, r.get('timestamp'), b['text'][max(0, k-600):k+900]))
+            elif t == 'tool_result':
+                cc = b.get('content')
+                if isinstance(cc, list):
+                    cc = '\n'.join(x.get('text', '') for x in cc if isinstance(x, dict))
+                cc = str(cc)
+                if needle in cc:
+                    k = cc.find(needle)
+                    w.write('=== RESULT rec %d %s\nUSE: %s\n%s\n' % (i, r.get('timestamp'), uses.get(b.get('tool_use_id'), '?'), cc[max(0, k-400):k+1200]))
+w.write('DONE\n')
+w.close()

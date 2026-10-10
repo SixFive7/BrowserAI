@@ -1,0 +1,80 @@
+The deletion premise is confirmed. Deleting `__dirlock` during an install kills the installer with exit 1 through `coreBundle.js:11178` with ENOENT, 3 times out of 3. The control round without the delete completed with exit 0. The log check did not find which process deleted the lock on 2026-10-08. No test host that runs the reclaim was alive at the moment it was deleted.
+
+## 1. Planted repro
+
+**Setup.** I ran BrowserAI's own payload, `.work\wt\arch\...\publish\payload`, with Node v24.21.0. The command was the one BrowserAI uses: `cli.js install-browser chromium --no-shell --no-progress`. `PLAYWRIGHT_BROWSERS_PATH`, `TEMP` and `TMP` pointed at a fresh root under `.work\pw-lock\repro\<round>\`. Nothing went to the real `%LOCALAPPDATA%\BrowserAI` or any ms-playwright cache. I held the suite lock from 01:00:19Z to 01:00:58Z, after waiting about 28 minutes behind lanes ui and ARCH T1.
+
+| Round | node pid | `__dirlock` appeared | Deleted | Exit |
+|---|---|---|---|---|
+| round-1 | 51424 | 01:00:20.357 | 01:00:22.503 | **1** at 01:00:25.347 |
+| round-2 | 7020 | 01:00:27.683 | 01:00:29.726 | **1** at 01:00:32.650 |
+| round-3 | 79448 | 01:00:35.011 | 01:00:37.040 | **1** at 01:00:39.988 |
+| control | 62752 | not deleted | not deleted | **0** at 01:00:56.727 |
+
+The control took about 14.7 s and installed chromium v1247, ffmpeg v1011 and winldd v1007.
+
+Each planted round exited about 5 s after `__dirlock` appeared. That is the first refresh of the lock, as the source predicts.
+
+The stack was identical in all three rounds. It also shows the message line that the incident's 800-character log tail had cut off:
+```
+Error: ENOENT: no such file or directory, stat '...\repro\round-N\__dirlock' Path: ...\repro\round-N\__dirlock
+    at Object.onCompromised (...coreBundle.js:34787:21)
+    at setLockAsCompromised (...coreBundle.js:11220:17)
+    at ...coreBundle.js:11178:18
+    at callback (...utilsBundle.js:31971:24)
+    at FSReqCallback.oncomplete (node:fs:197:21)
+Node.js v24.21.0
+```
+Every frame and the Node version match the incident's recorded tail.
+
+## 2. Log check
+
+**When the lock vanished.** The refresh at about 15:48:32Z succeeded, and the one at about 15:48:37Z hit ENOENT. So the deletion falls between 15:48:32Z and 15:48:37Z.
+
+**Every test host alive then, across all of `.work\wt\`, with end times taken from the logs:**
+- **arch2-ps:** the gate that ran the first-run arm, i.e. the victim. Its own one-time reclaim ran before that arm created its app root.
+- **sess scan-A3 (15:45:43Z to 16:13:38Z):** it printed "Running tests from" and then nothing for 28 minutes before exiting 1. That fits a test host stuck in the `InstallerLock.Take` session hook behind ARCH's driver. It never reached a test, so it never reclaimed.
+- **records gate-rec-1:** its runner was waiting for the suite lock from 15:23:44Z to 16:35:36Z, so no test host was running.
+- **dotnet builds:** these never reclaim.
+
+**Hosts that were not running at the time:**
+- The arch-relay plant and repeat runs are RelayTests, which run fully in memory and touch no scratch member. `plant-failed-classifier-says-none` ended at 15:48:02Z.
+- Every earlier host had ended by 15:45:44Z: sess-b green-B, red-B, scan-B and scan-B2, and ui final, plant3, plant4 and plant45.
+- UI had no run alive in the window: `final` ended 15:45:39Z and `final2` started 15:49:23Z. This agrees with your S1, S1b and SESS timelines.
+
+The reclaim deletes silently, and no lane log names either victim directory. The search was confirmed against a file known to contain the string.
+
+**Does the orphaned install support the reclaim as the deleter?**
+- **It shows that the reclaim deletes live directories.** `final2` ran outside the lock, inside ARCH's gate, and deleted the gate's live `real-install-85ee853...` directory. That left the BrowserAI.app.test uninstall key orphaned, which `final3` reported at 16:22:15Z.
+- **It does not show this deletion.** `final2` started 46 to 51 s after the lock had to be gone, and it removed a different directory.
+- **One lead I could not follow.** pid 91780, a BrowserAI.App coordinator and ProtocolSplitTests' peer, was writing into the first-run app root during the install. Its log was lost when that app root was deleted.
+
+## Does my recommendation change?
+
+Partly. The repro shows the installer behaved exactly as its source says, so this is not an upstream defect. But the log check makes the reclaim a less certain cause of this particular deletion. Revised:
+1. **Record the whole installer error.** This now matters more. Also make the reclaim log every directory it deletes, with the UTC time and its pid, so the next deletion names its deleter.
+2. **Keep the reclaim away from live directories** with an owner or liveness check. The orphaned install is a measured case of it deleting a live directory, even though it is not proven to be this one. Your "every host takes the suite lock" rule covers it for now; this would make it a mechanism.
+3. **New: look into the second process in the victim's app root** (pid 91780). The logs cannot rule it out.
+
+The retry, serialized-install and upstream options are unchanged.
+
+HAZARDS row: the branch and the error are now measured (ENOENT, because the lock was deleted). Moving the row from "upstream's half" to "deleted by another process", with the deleter still open, is for the maintainer to decide.
+
+## Deviations, cleanup, locks
+- **Deviation from the original read-only brief:** you redirected me to run the repro, so I did, using chromium (the browser that failed). Traffic was up to four chromium downloads from the CDN in about 40 s. I did not measure it. That is above the maintainer's once-per-hour wish recorded for the suite.
+- **No windows:** none should have opened, since every process was started with `-NoNewWindow` from a hidden shell. No window watcher was running to check it.
+- **Cleanup:**
+  - All four node pids are gone, checked by pid and start time. No download child was caught at launch, and none was left running.
+  - No process references the repro path.
+  - The browser trees are removed.
+  - No `playwright-download-*` folder leaked into the real `%TEMP%`.
+- **Earlier hang:** my Bash call at 23:09Z that hung was a grep over the subagents folder. Every search after it ran in the background, writing to a file, and none touched that folder.
+- **Suite lock:** my script released it (owner.txt removed, then rmdir). It is now held by lane ARCH helper T2, not me.
+
+Files are in `C:\Source\SixFive7\BrowserAI\.work\pw-lock\`:
+- `repro.log`
+- `round-1.err`, `round-2.err`, `round-3.err`
+- `control.out`
+- `run-repro.ps1`
+- `born-before.txt`
+- `timeline.txt`

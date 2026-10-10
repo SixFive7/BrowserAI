@@ -227,6 +227,25 @@ The reclaim pass runs before anything else and is idempotent:
   (`TreeDelete`), because the common leftover is a session directory a browser
   has not finished letting go of, and a delete that fails whole here fails the run
   for the previous run's reason.
+
+  ⚠️ **The scratch root every checkout shares takes only folders whose owner is
+  gone -- *added 2026-10-10 by addition, 5 a, the maintainer's words verbatim:
+  "5 a"*.** `%LocalAppData%\BrowserAI-test-scratch` is one folder for every
+  worktree, and until that day the pass deleted everything in it, so a run in one
+  worktree deleted a live gate's app roots in another: proven 2026-10-08. Each
+  folder there now gets an owner record beside it, `<folder>.owner`, written before
+  the folder by `ScratchRoot.CreateUnderProfile` and naming the process that made
+  it by pid and creation time, the way `.work\installer.lock` names a holder. The
+  pass deletes a folder only when that process is gone, or when it has no record
+  and was made more than a day ago, and every folder it deletes is a line in the
+  machine's process log, `BrowserAI.Tests.ScratchReclaim[1]`, with the UTC moment
+  and the deleting process's pid and creation time, so the next deletion names its
+  deleter. `ScratchReclaimTests.AnotherTestHostsReclaimTakesOnlyTheFoldersWhoseOwnersAreGone`
+  drives the pass from a second test host while the first holds a folder, and was
+  watched red against the old pass, which deleted that folder with the rest. **The
+  repository's own scratch keeps the old pass**: it is one per checkout, so what
+  keeps two runs in one checkout apart is still the suite lock, which nothing
+  enforces.
 - **Leftover session-index entries are removed**, since the index is machine-wide
   and a test run's entries otherwise show up in a developer's real
   `browserai_list`.

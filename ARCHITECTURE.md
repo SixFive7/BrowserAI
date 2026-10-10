@@ -182,6 +182,14 @@ and at 25 minutes in).*
 `INSTALLATION_COMPLETE` is the completeness check upstream never makes at launch;
 a run that exits 0 without it is a failure whose partial tree is removed.
 
+⚠️ **A failed install's record and answer quote the installer's error line whole**
+-- *added 2026-10-10 by addition, 5 a*. `BrowserProvisioner.Said` gives the last
+800 characters of what the installer wrote, and the last line that reads as Node's
+or commander's error line in full beside them when the tail does not already hold
+it. On 2026-10-08 the tail began inside the stack's first frame, and the line that
+named the error, *ENOENT* on the install's own `__dirlock`, was cut from
+`BrowserProvisioner[64]`.
+
 ## The MCP server
 
 ⚠️ **ONE EXECUTABLE AGAIN SINCE 2026-10-08, AND TWO LIBRARIES -- D7 a, the
@@ -1888,6 +1896,7 @@ the two gates. What implements it:
 | The upstream-review gate | `upstream-snapshots/`, `build/upstream-snapshots.mjs`, `build/Update-UpstreamSnapshots.ps1`, `build/UpstreamSnapshots.targets`, `tests/BrowserAI.Tests/{UpstreamSnapshotTests, UpstreamReviewTests, ReVerificationIndexTests, ResolvedVersions}.cs` |
 | The documents themselves | `tests/BrowserAI.Tests/{DocumentationLinkTests, HazardIndexTests, ChangelogTests, BuildConfigurationTests}.cs` |
 | The numbers index against the code, both ways, and the scan that refuses a literal duration outside the named classes -- **added 2026-10-09, F3** | `tests/BrowserAI.Tests/NumbersIndexTests.cs`, over [`kb/numbers.md`](kb/numbers.md) |
+| The two scratch roots and their reclaim, owner-checked over the one every checkout shares -- **added 2026-10-10, 5 a** | `tests/BrowserAI.Tests/Harness/{ScratchRoot, ScratchDirectory, SpawnRecord}.cs`, `tests/BrowserAI.Tests/ScratchReclaimTests.cs` |
 
 **The raw client is mandatory, not a nicety.** With both SDK transports replaced,
 an `McpClient` would be testing the code under test using the code under test.

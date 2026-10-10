@@ -1,0 +1,49 @@
+Pid 91780 did not delete it, because it never ran in the first-run app root. I also have to correct what I told you earlier. No product code path deletes these files in either build. The deleter is still unidentified, and the scratch reclaim is still the only mechanism I can find that leaves exactly this end state.
+
+**Correction first.** I said 91780 wrote into the first-run app root. That was wrong. My grep over the ARCH lane's transcript merged lines from two different logs: the default data root's log, which ARCH read at 16:23Z, and the first-run root's 23-line log. The first-run log's own tail from 15:47:50Z onward (record 2067) holds only pid 119064 lines. ARCH's row (HAZARDS line 378) puts 91780 in the default data root, with its live marker in `%LOCALAPPDATA%\BrowserAI\live`.
+
+## (1) How 91780 started, and in which root
+- ProtocolSplitTests started `BrowserAI.exe` with no arguments through `RawStdioClient`, passing a copy of the test host's own environment. That environment carried no app-root override, so 91780 ran in the default data root.
+- At f68ae4cf the first-run arm's override is not process-wide. It sets it in a copied dictionary passed only to its own client, and the arm has no `[NotInParallel]`. Its root could not leak into another arm, so that premise does not hold.
+
+## (2) Product code that deletes under a browsers folder (f68ae4cf)
+- **BrowserProvisioner deletes two kinds of things.** Neither is `__dirlock` or `.links`:
+  - It deletes the revision directory (`chromium-<rev>`) on reinstall (lines 1089 and 1184), on an abandoned tree with no marker (1567), when a cap fires (1758), and when the installer exits nonzero or leaves no marker (1771).
+  - It empties `.downloads\<family>` (2259), and only in the process that holds that family's mutex, right before it starts its own installer. A second process for the same family only watches for the marker.
+- **RevisionPrune (252)** deletes old revision directories after a successful install. It only touches names that start with a browser prefix, so it skips `__dirlock`, `.links` and `.downloads`.
+- **Everything else** deletes outside the browsers folder: instance directories, sessions, live markers, the index, lock files and logs. `DataRootDisposal` removes the whole data root, but only from the uninstall hook when the person asks for it. arch2-ps installed nothing.
+- **A coordinator starting in a root mid-install** runs the stray sweep, which ends processes and deletes no files, and the live-marker reclaim, which only touches `<root>\live\`. Neither meets any of the conditions above.
+- **The only way two processes of one root touch the lock:** a chromium install and a firefox install running at once. That ends the first install at 11184 ("Unable to update lock within the stale threshold"), not at the 11178 ENOENT we saw, and leaves the archive in place.
+
+## (3) Master (3527fc23, after ac275a74)
+- The provisioner lines (1089, 1184, 1567, 1758, 1771, 2259) and RevisionPrune:252 are unchanged.
+- The one-binary background's own delete is its instance directory (`Program.Background.cs:173`). The other new deletes are single files.
+- The suite can no longer start the binary with no arguments; HAZARDS row 378 records that as closed.
+- `ScratchRoot.cs` is byte-identical to the gate's. The reclaim still has no owner check.
+
+## Most likely deleter
+**For the scratch reclaim:**
+- The end state matches a tree delete over an ancestor folder. `__dirlock` went first, which gives the 11178 ENOENT. The 207 MB archive, `.links` and the partial tree went too. The browsers folder survived because it was the installer's working directory, and the logs folder survived because the log was open.
+- The only code that deletes a whole tree like that is the reclaim (the disposal didn't run).
+- UI concludes from the orphaned install key that its `final2` reclaim took the gate's real-install directory that afternoon. I did not verify that myself.
+
+**Against it:** no host that runs the reclaim was running tests at 15:48:32-37Z.
+- **sess `scan-A3`:** now confirmed, not just inferred. The SESS transcript shows it blocked behind the installer lock that ARCH's driver held from 15:45:45Z. SESS ended it at 16:13:33Z and it never ran a test.
+- **records:** waiting for the suite lock until 16:35:36Z.
+- **The relay runs:** RelayTests run fully in memory and never reclaim.
+- **The gate's child test hosts:** their tests touch no scratch, and the guard test was not among the run's 3 failures.
+- **The four agent transcripts I read:** the root session, the ARCH lane and both relay agents ran no delete between 15:47:30Z and 15:48:40Z, only reads.
+
+**Not examined:** hosts or tools whose logs are outside `.work\wt\`, other agents' transcripts (a broad search is what you ruled out), and anything outside BrowserAI.
+
+**Is it a product defect that survives?** No product path in either build deletes another process's in-progress install. The defect that survives on master is the harness reclaim. The new suite-lock rule holds it back only by convention.
+
+## Fixes and their cost
+1. **Make the reclaim safe and traceable:** an owner file with pid and start time in each profile-scratch folder, reclaiming only dead owners, and a log line for every folder it deletes. Small harness change plus a two-host test planted red. It removes the only known mechanism, and the next deletion would name its deleter.
+2. **Log the installer's whole error, not the last 800 characters.** Small. It would have shown ENOENT and the path on the first sighting.
+3. **One installer per app root:** key the provisioning mutex on the root alone. A second family waits minutes. It removes the in-product takeover route (11184), which is not this incident.
+4. **Optional:** have the first-run arm record the browsers root's contents every second while it provisions, so a vanishing `__dirlock` is timed to the second. Small, test-only.
+
+I recommend 1 and 2 now and 3 when convenient. I suggest the HAZARDS row read "an external deletion of `__dirlock` (ENOENT, reproduced 3 of 3), deleter not identified", not "upstream's half". That wording is the maintainer's call.
+
+Everything in this follow-up was read-only. No lock is held, and nothing I started is still running. The extractors and their outputs are in `C:\Source\SixFive7\BrowserAI\.work\pw-lock\`; `sess-window.txt` and `win-*.txt` are the transcript extracts.

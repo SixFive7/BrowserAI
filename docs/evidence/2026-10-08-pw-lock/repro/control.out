@@ -1,0 +1,6 @@
+Downloading Chrome for Testing 155.0.8059.12 (playwright chromium v1247) from https://cdn.playwright.dev/builds/cft/155.0.8059.12/win64/chrome-win64.zip
+Chrome for Testing 155.0.8059.12 (playwright chromium v1247) downloaded to C:\Source\SixFive7\BrowserAI\.work\pw-lock\repro\control\chromium-1247
+Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip
+FFmpeg (playwright ffmpeg v1011) downloaded to C:\Source\SixFive7\BrowserAI\.work\pw-lock\repro\control\ffmpeg-1011
+Downloading Winldd (playwright winldd v1007) from https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip
+Winldd (playwright winldd v1007) downloaded to C:\Source\SixFive7\BrowserAI\.work\pw-lock\repro\control\winldd-1007

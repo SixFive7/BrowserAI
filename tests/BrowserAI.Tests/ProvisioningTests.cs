@@ -231,6 +231,86 @@ internal sealed partial class ProvisioningTests
         await Assert.That(Directory.Exists(directory)).IsFalse();
     }
 
+    /// <summary>
+    /// An installer that fails has its whole error line in BrowserAI's record and in
+    /// the answer, however long the stack after it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>5 a, the maintainer's words of 2026-10-10, verbatim: "5 a".</b> On
+    /// 2026-10-08 Playwright's installer exited 1 in a gate's first-run arm, and
+    /// <c>BrowserProvisioner[64]</c> kept only the last 800 characters of what it
+    /// wrote. The stack after the error carried two long paths per frame, so the
+    /// record began inside the first frame and the line that named the error,
+    /// <i>ENOENT</i> on the install's own <c>__dirlock</c>, was cut. It took a
+    /// planted reproduction to read it (<c>docs/evidence/2026-10-08-pw-lock</c>).
+    /// </para>
+    /// <para>
+    /// <b>The fixture is that run's output, line for line</b>, with the payload in
+    /// an install root of the suite's own and the lock in this arm's scratch. The
+    /// stack after the error line is asserted to be longer than the old tail first,
+    /// so the arm cannot pass on a fixture short enough for a tail to keep the line:
+    /// the first draft's shorter install root left 637 characters after it, and the
+    /// arm went red on that precondition and not on the record.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFailedInstallRecordsTheInstallersWholeErrorLine()
+    {
+        using var records = new CapturingLoggerProvider();
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(records));
+        using var scratch = ScratchDirectory.Create("provision-error-line");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        var payload = @"C:\Users\someone\AppData\Local\BrowserAI-test-scratch\real-install-0123456789abcdef0123456789abcdef\current\payload";
+        var bundle = payload + @"\mcp\node_modules\playwright-core\lib\coreBundle.js";
+        var utils = payload + @"\mcp\node_modules\playwright-core\lib\utilsBundle.js";
+        var dirlock = Path.Combine(root, "__dirlock");
+        var error = $"Error: ENOENT: no such file or directory, stat '{dirlock}' Path: {dirlock}";
+        var stack = string.Join(
+            "\n",
+            $"    at Object.onCompromised ({bundle}:34787:21)",
+            $"    at setLockAsCompromised ({bundle}:11220:17)",
+            $"    at {bundle}:11178:18",
+            $"    at callback ({utils}:31971:24)",
+            "    at FSReqCallback.oncomplete (node:fs:197:21)",
+            string.Empty,
+            "Node.js v24.21.0");
+        var said = string.Join(
+            "\n",
+            "Downloading Chrome for Testing 155.0.8059.12 (playwright chromium v1247) from https://cdn.playwright.dev/builds/cft/155.0.8059.12/win64/chrome-win64.zip",
+            $"{bundle}:34787",
+            "              throw new Error(`${err.message} Path: ${lockfilePath}`);",
+            "              ^",
+            string.Empty,
+            error,
+            stack);
+
+        // The precondition: what follows the error line is longer than the tail the
+        // record used to keep, which is what cut the line on 2026-10-08.
+        await Assert.That(said[(said.IndexOf(error, StringComparison.Ordinal) + error.Length)..].Length).IsGreaterThan(800);
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log)
+        {
+            StartInstaller = (_, _) => FakeInstaller.Failing(directory, said),
+        };
+
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
+
+        var refused = records.Records.Where(record => record.EventId.Id is 64).ToList();
+
+        await Assert.That(refused.Count).IsEqualTo(1);
+        await Assert.That(refused[0].Message).Contains(error).Because(refused[0].Message);
+        await Assert.That(status.Detail).Contains(error).Because(status.Detail);
+
+        // And the end of what it said is still there: the frames and the runtime.
+        await Assert.That(refused[0].Message).Contains("Node.js v24.21.0");
+    }
+
     [Test]
     public async Task TheStallCapStopsADownloadThatNeverProgresses()
     {
