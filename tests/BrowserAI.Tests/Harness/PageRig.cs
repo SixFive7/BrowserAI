@@ -52,7 +52,9 @@ internal sealed class PageRig : IDisposable
             PageTabs.ProductLinger,
             logs?.CreateLogger("page") ?? NullLogger.Instance)
         {
-            Holds = holds,
+            // The product's page always has the update core behind it (Program.Background),
+            // so an arm that sets no holds gets one where nothing waits.
+            Holds = holds ?? new NothingHolds(),
             Changelog = changelog,
         };
     }
@@ -110,6 +112,18 @@ internal sealed class PageRig : IDisposable
     }
 }
 
+/// <summary>
+/// What holds an update where an arm names nothing: no update waits, and an
+/// install-now is refused the way the update core refuses one with nothing waiting.
+/// </summary>
+internal sealed class NothingHolds : IUpdateHolds
+{
+    public UpdateHoldSnapshot Read() => UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
+
+    public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
+        Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
+}
+
 /// <summary>The update machinery, scripted.</summary>
 internal sealed class FakeUpdates : IPageUpdates
 {
@@ -157,15 +171,7 @@ internal sealed class FakeSessions : IPageSessions
 {
     public SessionsSnapshot Snapshot { get; set; } = SessionsSnapshot.Empty;
 
-    public ConcurrentQueue<string> Closed { get; } = new();
-
     public Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken) => Task.FromResult(Snapshot);
-
-    public Task<string?> CloseAsync(ServerEntry server, CancellationToken cancellationToken)
-    {
-        Closed.Enqueue(server.Id);
-        return Task.FromResult<string?>(null);
-    }
 }
 
 /// <summary>A desktop that records what it was asked to open and opens nothing.</summary>

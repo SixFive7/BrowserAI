@@ -42,6 +42,22 @@ internal sealed record InstallerSettings(string? DataRoot, string? UpdateSource)
             ? [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, root]
             : [RegistrationTarget.McpArgument];
 
+    /// <summary>What the install's hooks saved beside it: what a running BrowserAI reads, never the environment.</summary>
+    /// <remarks>
+    /// <b>For the dashboard's Register and Repair</b> (2026-10-10), which run in the
+    /// background, where no <c>BROWSERAI_</c> variable is read: the definition the hooks
+    /// saved carries the data root and the update source the installer named, exactly
+    /// as <see cref="Read"/> falls back to them.
+    /// </remarks>
+    /// <param name="installRoot">The install whose saved definition is read; <see langword="null"/> when there is none.</param>
+    /// <returns>What the install saved, or <see cref="None"/>.</returns>
+    public static InstallerSettings SavedFor(string? installRoot)
+    {
+        var saved = installRoot is { Length: > 0 } root ? SignInTask.SavedDefinition(root) : null;
+
+        return new(SignInTask.DataRootIn(saved), SignInTask.UpdateSourceIn(saved));
+    }
+
     /// <summary>
     /// The hooks' one read of the installer's environment, and for a setting it does
     /// not name, the value the install wrote into its task.

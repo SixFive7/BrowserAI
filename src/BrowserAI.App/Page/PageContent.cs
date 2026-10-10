@@ -90,7 +90,7 @@ internal static class PageContent
 
         return kind switch
         {
-            PageKind.Sessions => SessionsMain(view, now),
+            PageKind.Sessions => SessionsMain(view),
             PageKind.Update => UpdatePageContent.Render(view, now),
             PageKind.Changelog => ChangelogPageContent.Render(view),
             _ => StatusMain(view, occasion, tab),
@@ -133,14 +133,16 @@ internal static class PageContent
                 $"BrowserAI {update.Version} is on offer, and it is older than the installed {facts.Version}. Installing it goes back to the earlier version.",
             UpdateStage.Available => $"BrowserAI {update.Version} is available.",
             UpdateStage.Failed => "The update check did not finish.",
-            UpdateStage.NoFeed => "No release feed is set for this build, so there is nothing to check.",
-            UpdateStage.NotInstalled => "This BrowserAI is not installed, so there is nothing to update.",
+            UpdateStage.NotInstalled => NotInstalledSentence,
             UpdateStage.Installing =>
                 $"Installing BrowserAI {update.Version}. This tab stops working while it installs, and a new tab opens when it is done.",
             UpdateStage.InstallFailed => $"BrowserAI {update.Version} was not installed.",
             _ => string.Empty,
         };
     }
+
+    /// <summary>What a BrowserAI that is not installed says about updates, on the status page and the update page alike.</summary>
+    public const string NotInstalledSentence = "This BrowserAI is not installed, so there is nothing to update.";
 
     /// <summary>What installing closes, said beside every install button.</summary>
     public const string InstallWarning =
@@ -227,10 +229,20 @@ internal static class PageContent
 
         // The resident background builds this page with no feed of its own and
         // reports what holds an update, so where the page checks for nothing itself
-        // the section says what the background holds and leads to the update page.
-        if (update.Stage is UpdateStage.NoFeed && view.Holds is { } holds)
+        // the section says what the background holds and leads to the update page, or,
+        // where reading that failed, says so (#66, 2026-10-10: "No release feed is set
+        // for this build" was false there, because the background has one).
+        if (update.Stage is UpdateStage.NoFeed)
         {
-            UpdatePageContent.AppendStatusSection(html, holds, tab);
+            if (view.Holds is { } holds)
+            {
+                UpdatePageContent.AppendStatusSection(html, holds, tab);
+            }
+            else
+            {
+                UpdatePageContent.AppendUnread(html, facts);
+            }
+
             _ = html.Append("</section>\n");
             return;
         }
@@ -305,9 +317,12 @@ internal static class PageContent
             .Append(Button("open-folder", "Open", ("folder", "logs"))).Append("</li>\n")
             .Append("</ul>\n");
 
+        // #67, 2026-10-10: the whole command, as every registration of this install
+        // writes it. Started with no argument the same file is a person's start, which
+        // opens this page.
         if (facts.ServerCommand is { Length: > 0 } server)
         {
-            _ = html.Append("<p>The server a client starts: <code>").Append(Text(server)).Append("</code></p>\n");
+            _ = html.Append("<p>The server a client starts: <code>").Append(Text(CommandLine(server, facts.ServerArguments))).Append("</code></p>\n");
         }
         else if (facts.ServerRefusal is { Length: > 0 } refusal)
         {
@@ -315,6 +330,18 @@ internal static class PageContent
         }
 
         _ = html.Append("</section>\n");
+    }
+
+    /// <summary>A command and its arguments as one line, each part with a space in it quoted.</summary>
+    /// <param name="command">The executable.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>The line.</returns>
+    internal static string CommandLine(string command, IReadOnlyList<string> arguments)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(arguments);
+
+        return string.Join(' ', [$"\"{command}\"", .. arguments.Select(argument => argument.Contains(' ', StringComparison.Ordinal) ? $"\"{argument}\"" : argument)]);
     }
 
     private static void AppendRegistration(StringBuilder html, PageView view)
@@ -438,15 +465,22 @@ internal static class PageContent
         _ = html.Append("<p>").Append(Button(action, label, ("client", client)).TrimEnd('\n'))
             .Append(" <span class=\"muted\">").Append(Text(what)).Append("</span></p>\n");
 
-    private static string SessionsMain(PageView view, DateTimeOffset now)
+    /// <summary>The sessions page's main part: the background, the sessions it holds, and each client connected to it.</summary>
+    /// <remarks>
+    /// <b>17 a, the maintainer's answer of 2026-10-10, verbatim: <i>"17 a"</i></b>: the
+    /// page offers no close. The background refused every close it offered, because a
+    /// relay ends with its client, so the boxes, the button and the close path went
+    /// (#68 of the texts review).
+    /// </remarks>
+    /// <param name="view">What is true now.</param>
+    /// <returns>The HTML.</returns>
+    private static string SessionsMain(PageView view)
     {
         var html = new StringBuilder();
         var sessions = view.Sessions;
 
         _ = html.Append("<h1>Sessions</h1>\n")
-            .Append("<p>Every BrowserAI server running from this install, the client that started it, and its sessions. ")
-            .Append("Closing a server that holds its own sessions ends their browsers. Where the session host holds them, ")
-            .Append("closing a client's server ends only its connection, and the host keeps the sessions it drove.</p>\n");
+            .Append("<p>").Append(Text(SessionsIntroduction)).Append("</p>\n");
 
         AppendNote(html, view.Note);
 
@@ -456,11 +490,9 @@ internal static class PageContent
                 : $"Read at {Text(sessions.ReadAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture))}.")
             .Append(' ').Append(Button("refresh-sessions", "Refresh")).Append("</p>\n");
 
-        if (sessions.Servers.Count is 0)
-        {
-            _ = html.Append("<p>No BrowserAI server is running from this install.</p>\n");
-        }
-        else
+        // Nothing is listed only before the first read, which the line above says: once
+        // read, the background lists itself.
+        if (sessions.Servers.Count > 0)
         {
             _ = html.Append("<ul class=\"servers\">\n");
 
@@ -470,7 +502,7 @@ internal static class PageContent
             {
                 if (window is null)
                 {
-                    AppendServer(html, servers[0], now);
+                    AppendServer(html, servers[0]);
                     continue;
                 }
 
@@ -485,24 +517,13 @@ internal static class PageContent
 
                 foreach (var server in servers)
                 {
-                    AppendServer(html, server, now);
+                    AppendServer(html, server);
                 }
 
                 _ = html.Append("</ul></li>\n");
             }
 
-            _ = html.Append("</ul>\n")
-                .Append("<p>").Append(Button("close-servers", "Close the selected servers")).Append("</p>\n");
-        }
-
-        if (sessions.Unanswered.Count > 0)
-        {
-            _ = html.Append("<p>")
-                .Append(Text(sessions.Unanswered.Count is 1
-                    ? "One more server is running and did not answer, so it is not listed."
-                    : $"{sessions.Unanswered.Count} more servers are running and did not answer, so they are not listed."))
-                .Append("</p>\n");
-            AppendDetails(html, string.Join("\n", sessions.Unanswered));
+            _ = html.Append("</ul>\n");
         }
 
         return html.ToString();
@@ -568,41 +589,27 @@ internal static class PageContent
         return ClientNames.Of(name, client?.Version);
     }
 
-    /// <summary>How long ago, in words.</summary>
-    /// <param name="then">When.</param>
-    /// <param name="now">Now.</param>
-    /// <returns>The words.</returns>
-    public static string Ago(DateTimeOffset then, DateTimeOffset now)
-    {
-        var elapsed = now - then;
+    /// <summary>What the sessions page says first.</summary>
+    public const string SessionsIntroduction = "BrowserAI's background, every session it holds, and each client connected to it.";
 
-        return elapsed < WordingTimes.Minute ? "less than a minute ago"
-            : elapsed < WordingTimes.TwoMinutes ? "a minute ago"
-            : elapsed < WordingTimes.Hour ? $"{(int)elapsed.TotalMinutes} minutes ago"
-            : elapsed < WordingTimes.TwoHours ? "an hour ago"
-            : elapsed < WordingTimes.Day ? $"{(int)elapsed.TotalHours} hours ago"
-            : $"{(int)elapsed.TotalDays} days ago";
-    }
-
-    /// <summary>The warning a Codex-hosted server carries.</summary>
-    public const string CodexWarning =
-        "Codex does not start this server again: its thread loses BrowserAI until a new thread is started.";
-
-    /// <summary>The warning a server that answered recently carries.</summary>
-    public const string RecentWarning =
-        "This server answered a call in the last ten minutes and may be in the middle of a task. Closing it ends its browser.";
-
-    /// <summary>The warning a server that relays to the session host carries when its client was busy.</summary>
-    public const string RelayRecentWarning =
-        "Its client made a call in the last ten minutes and may be in the middle of a task. Closing this server fails a call it is answering; the session host keeps the sessions.";
-
-    /// <summary>What the page says of the session host.</summary>
+    /// <summary>What the page says of the background.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "It holds the sessions of every client that
+    /// reaches BrowserAI through it, and ends a minute after its last session and its last
+    /// client have gone. The page offers no close for it, because closing it would end
+    /// every session below.")</i>, #68 of the texts review: the one background ends at
+    /// sign-out, at an uninstall or for an update, never because it is idle.
+    /// </remarks>
     public const string HostSentence =
-        "It holds the sessions of every client that reaches BrowserAI through it, and ends a minute after its last session and its last client have gone. The page offers no close for it, because closing it would end every session below.";
+        "It holds every session, and ends at sign-out, at an uninstall or for an update, never because it is idle.";
 
-    /// <summary>What the page says of a server that relays to the session host.</summary>
-    public const string RelaySentence =
-        "The session host holds its sessions. Closing this server ends its client's connection, and the host keeps them.";
+    /// <summary>What the page says of each client connected to the background.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "The session host holds its sessions. Closing
+    /// this server ends its client's connection, and the host keeps them.")</i>: the page
+    /// closes nothing since 17 a, and a relay ends with its client.
+    /// </remarks>
+    public const string RelaySentence = "It ends when its client closes or its conversation ends.";
 
     /// <summary>The start of what the page says of a session the host keeps.</summary>
     public const string KeptSentence = "Kept: its client has gone";
@@ -629,25 +636,35 @@ internal static class PageContent
 
         return underHost && session.DrivenBy is { Length: > 0 } client
             ? session.DrivenThrough is { } through
-                ? $"Driven by {client} through its server, pid {through.ToString(CultureInfo.InvariantCulture)}."
+                ? $"Driven by {client} through its connection, pid {through.ToString(CultureInfo.InvariantCulture)}."
                 : $"Driven by {client}."
             : null;
     }
 
-    private static void AppendServer(StringBuilder html, ServerEntry server, DateTimeOffset now)
+    /// <summary>One entry: the background with every session it holds, or one client connected to it.</summary>
+    /// <remarks>
+    /// <b>Since 17 a (2026-10-10) the page offers no close</b>, so no entry has a box, and
+    /// the warnings about what a close would end went with it. Every session is the
+    /// background's and is listed under it, naming the client that drives it, and a
+    /// client's entry lists the sessions its client drives as well. The one background
+    /// reports only itself and its relays, so no other kind of entry reaches the page.
+    /// </remarks>
+    /// <param name="html">Where to write.</param>
+    /// <param name="server">The entry.</param>
+    private static void AppendServer(StringBuilder html, ServerEntry server)
     {
         var description = server.Description;
 
         if (server.IsHost)
         {
-            _ = html.Append("<li class=\"server host\"><p><strong>BrowserAI's session host</strong>, pid ")
+            _ = html.Append("<li class=\"server host\"><p><strong>BrowserAI's background</strong>, pid ")
                 .Append(description.ProcessId.ToString(CultureInfo.InvariantCulture)).Append("</p>\n<p>").Append(Text(HostSentence)).Append("</p>\n");
             AppendSessions(html, server, underHost: true);
             _ = html.Append("</li>\n");
             return;
         }
 
-        _ = html.Append("<li class=\"server\"><label><input type=\"checkbox\" name=\"server\" value=\"").Append(Text(server.Id)).Append("\"> ");
+        _ = html.Append("<li class=\"server\"><p>");
 
         // 1.2 a, 2026-10-10: the conversation first, as the person sees it called.
         if (server.Conversation is { } conversation)
@@ -656,46 +673,8 @@ internal static class PageContent
         }
 
         _ = html.Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture))
-            .Append("</label>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ");
-
-        if (server.IsRelay)
-        {
-            _ = html.Append(Text(RelaySentence)).Append("</p>\n");
-
-            if (server.Kind is ClientKind.Codex)
-            {
-                _ = html.Append("<p class=\"warning\">").Append(Text(CodexWarning)).Append("</p>\n");
-            }
-
-            if (server.RecentlyActive)
-            {
-                _ = html.Append("<p class=\"warning\">").Append(Text(RelayRecentWarning)).Append("</p>\n");
-            }
-
-            AppendSessions(html, server, underHost: false);
-            _ = html.Append("</li>\n");
-            return;
-        }
-
-        _ = html.Append(Text(description.LastToolCall is { } last ? $"Last call {Ago(last, now)}." : "No call yet."));
-
-        if (description.CallsInFlight > 0)
-        {
-            _ = html.Append(' ').Append(Text(description.CallsInFlight is 1 ? "One call is running now." : $"{description.CallsInFlight} calls are running now."));
-        }
-
-        _ = html.Append("</p>\n");
-
-        if (server.Kind is ClientKind.Codex)
-        {
-            _ = html.Append("<p class=\"warning\">").Append(Text(CodexWarning)).Append("</p>\n");
-        }
-
-        if (server.RecentlyActive)
-        {
-            _ = html.Append("<p class=\"warning\">").Append(Text(RecentWarning)).Append("</p>\n");
-        }
-
+            .Append("</p>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ")
+            .Append(Text(RelaySentence)).Append("</p>\n");
         AppendSessions(html, server, underHost: false);
         _ = html.Append("</li>\n");
     }
@@ -705,7 +684,7 @@ internal static class PageContent
         if (server.Sessions.Count is 0)
         {
             _ = html.Append("<p class=\"muted\">")
-                .Append(server.IsRelay ? "Its client drives no session the host holds." : "It holds no session.")
+                .Append(server.IsRelay ? "Its client drives no session." : "It holds no session.")
                 .Append("</p>\n");
             return;
         }

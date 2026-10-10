@@ -129,6 +129,18 @@ internal sealed record UpdateHoldSnapshot(
     IReadOnlyList<HoldingSession> VisibleWindows,
     IReadOnlyList<HoldingRelay> Relays)
 {
+    /// <summary>The version downloaded and waiting, or <see langword="null"/> when nothing is.</summary>
+    /// <remarks>
+    /// <b>A held or installing update always names its version</b>, so no reader has to
+    /// word one that does not: the background builds those two states only from the
+    /// package it holds, whose version is required. <i>Added 2026-10-10, with #62, #64
+    /// and #94 of the texts review, which found the page wording "the new version" for a
+    /// case that could not arise.</i>
+    /// </remarks>
+    public string? Version { get; init; } = State is UpdateHoldState.None || Version is { Length: > 0 }
+        ? Version
+        : throw new ArgumentException("A held or installing update names its version.", nameof(Version));
+
     /// <summary>No update is waiting.</summary>
     /// <param name="readAt">When that was read.</param>
     /// <returns>The snapshot.</returns>
@@ -221,16 +233,23 @@ internal enum UpdateWait
 internal readonly record struct UpdateWaitReading(UpdateWait Wait, DateTimeOffset? Ends);
 
 /// <summary>
-/// The seam the background implements and the update toast and the dashboard's
-/// update page read: what holds the update, and the person's install-now.
+/// What the update toast reads: what holds the update, and nothing that installs it.
 /// </summary>
 /// <remarks>
-/// <b>Both members are answered from the background's own memory</b>: the
-/// sessions, the relays and the update are all in that one process, so a read
-/// asks no pipe and waits on nothing, which is what lets the toast read it once a
-/// second while it counts down.
+/// <para>
+/// <b>Every member is answered from the background's own memory</b>: the sessions,
+/// the relays and the update are all in that one process, so a read asks no pipe and
+/// waits on nothing, which is what lets the toast read it once a second while it
+/// counts down.
+/// </para>
+/// <para>
+/// <i>Split from <see cref="IUpdateHolds"/> on 2026-10-10</i>, #101 of the texts
+/// review: the indirection the toasts are built over answered an install-now with a
+/// sentence nothing could show, because only the update page installs, on the update
+/// core itself, and a toast's <i>Install now</i> opens that page.
+/// </para>
 /// </remarks>
-internal interface IUpdateHolds
+internal interface IUpdateHoldsReader
 {
     /// <summary>Reads what holds the downloaded update now.</summary>
     /// <remarks>
@@ -253,7 +272,14 @@ internal interface IUpdateHolds
     /// </remarks>
     /// <returns>The snapshot, every relay's conversation and name left unread.</returns>
     UpdateHoldSnapshot ReadCountdown() => Read();
+}
 
+/// <summary>
+/// What the dashboard's update page reads and acts on: what holds the update, and the
+/// person's install-now. The background implements it.
+/// </summary>
+internal interface IUpdateHolds : IUpdateHoldsReader
+{
     /// <summary>
     /// The person's install-now, from the dashboard's update page: every session
     /// is closed cleanly, every relay ends, and the update installs at once.

@@ -24,9 +24,11 @@ namespace BrowserAI.Background;
 /// draws them the way it drew lane c's host and fronts.
 /// </para>
 /// <para>
-/// <b>Closing a relay from the page is not offered</b>: a relay ends with its client,
-/// or for an update through the agreement, and the background has no message that
-/// ends one relay alone. The page's close answers with a sentence that says so.
+/// <b>The page closes nothing</b>: a relay ends with its client, or for an update
+/// through the agreement, and the background has no message that ends one relay
+/// alone. <i>Corrected 2026-10-10 (previously "The page's close answers with a sentence
+/// that says so")</i>: the maintainer's 17 a took the page's close away, and with it the
+/// refusal this answered every close with.
 /// </para>
 /// <para>
 /// <b>Each relay carries its conversation's name and its VS Code window</b>, added
@@ -103,14 +105,5 @@ internal sealed class BackgroundPageSessions(SessionHost host, RelayRoster roste
                     : server),
             ],
         });
-    }
-
-    /// <inheritdoc />
-    public Task<string?> CloseAsync(ServerEntry server, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(server);
-
-        return Task.FromResult<string?>(
-            "A client's BrowserAI ends with the client itself: close the client, or end its conversation, and its BrowserAI goes with it. The background is ended from its own task or when you sign out.");
     }
 }

@@ -772,7 +772,7 @@ internal sealed class BackgroundUpdatesTests
     // ---- What the toast and the dashboard read ----------------------------------
 
     /// <summary>
-    /// <see cref="IUpdateHolds.Read"/> splits the sessions by visibility and lists
+    /// <see cref="IUpdateHoldsReader.Read"/> splits the sessions by visibility and lists
     /// every connected relay, holding or not, with what its client needs afterwards.
     /// </summary>
     /// <returns>The assertion task.</returns>

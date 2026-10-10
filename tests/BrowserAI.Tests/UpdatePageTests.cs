@@ -54,12 +54,16 @@ internal sealed class UpdatePageTests
         await Assert.That(Section(html, "hidden")).Contains($"Closes in {Countdown(Now.AddMinutes(5), "5:00")} if no call names it.");
 
         await Assert.That(Section(html, "windows")).Contains("<span class=\"warning\">Close this to let the update proceed.</span>");
-        await Assert.That(Section(html, "windows")).Contains($"Closes by itself in {Countdown(Now.AddMinutes(50), "50:00")} if nobody uses it.");
+        // #78, 2026-10-10: a visible window's countdown starts again on a call that
+        // names its session and on the person's input in it, as browserai_init says.
+        await Assert.That(Section(html, "windows")).Contains($"Closes by itself in {Countdown(Now.AddMinutes(50), "50:00")} if no call names it and nobody types or clicks in it.");
 
         var agents = Section(html, "agents");
 
         await Assert.That(agents).Contains("<strong>Claude Code 2.1.290</strong> in <code>C:\\Source\\one</code>");
-        await Assert.That(agents).Contains($"Holds the update for {Countdown(Now.AddMinutes(8), "8:00")} more if its client sends nothing.");
+        // #84, 2026-10-10: a client's ping does not start an agent's ten minutes again.
+        await Assert.That(agents).Contains("An agent holds the update for ten minutes after its client last sent BrowserAI anything but a ping.");
+        await Assert.That(agents).Contains($"Holds the update for {Countdown(Now.AddMinutes(8), "8:00")} more if its client sends nothing but pings.");
         await Assert.That(agents).Contains(PageContent.Text(UpdatePageContent.ReconnectSentence(RelayReconnect.McpReconnect)));
         await Assert.That(agents).Contains("Idle: it no longer holds the update.");
         await Assert.That(agents).Contains(PageContent.Text(UpdatePageContent.ReconnectSentence(RelayReconnect.NewConversation)));
@@ -227,13 +231,20 @@ internal sealed class UpdatePageTests
     }
 
     /// <summary>
-    /// With nothing waiting the page says which version is installed; while it
-    /// installs it says so and offers no button; and where nothing reports what holds
-    /// an update it says that, and claims nothing else.
+    /// With nothing waiting the page says which version is installed, or that this
+    /// BrowserAI is not installed, as the status page does; while it installs it says
+    /// so and offers no button; and where reading what holds the update failed it
+    /// says that, and where the log is.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "and where nothing reports what holds an
+    /// update it says that, and claims nothing else")</i>: the page always has the
+    /// update core since the one background (#73), so a snapshot it does not have is a
+    /// read that failed, and a background that is not installed holds nothing (#71).
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePageSaysWhenNothingWaitsWhenItIsInstallingAndWhenNothingReports()
+    public async Task ThePageSaysWhenNothingWaitsWhenItIsInstallingAndWhenTheReadFailed()
     {
         var none = Render(UpdateHoldSnapshot.Nothing(Now));
 
@@ -244,22 +255,58 @@ internal sealed class UpdatePageTests
         await Assert.That(none).Contains("<p>No downloaded update is waiting. BrowserAI 9.0.0 is installed.</p>");
         await Assert.That(none).DoesNotContain("data-action=\"install-now\"");
 
+        var uninstalled = Render(UpdateHoldSnapshot.Nothing(Now), UpdateStage.NotInstalled);
+
+        await Assert.That(uninstalled).Contains("<p>This BrowserAI is not installed, so there is nothing to update.</p>");
+        await Assert.That(uninstalled).DoesNotContain("is installed.</p>");
+
         var installing = Render(new UpdateHoldSnapshot(Now, UpdateHoldState.Installing, "1.2.0", [], [], []));
 
         await Assert.That(installing).Contains("BrowserAI 1.2.0 is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself.");
         await Assert.That(installing).DoesNotContain("data-action=\"install-now\"");
 
-        var unreported = Render(null);
+        var unread = Render(null);
 
-        await Assert.That(unreported).Contains(PageContent.Text(UpdatePageContent.NoHoldsReported));
-        await Assert.That(unreported).DoesNotContain("data-action=\"install-now\"");
+        await Assert.That(unread).Contains("<p>BrowserAI could not read what holds an update. Its log, in <code>C:\\data\\logs</code>, says why.</p>");
+        await Assert.That(unread).DoesNotContain("does not report");
+        await Assert.That(unread).DoesNotContain("data-action=\"install-now\"");
+    }
+
+    /// <summary>
+    /// A held or installing update always names its version, so no page has to word
+    /// one that does not.
+    /// </summary>
+    /// <remarks>
+    /// <b>#62, #64 and #94 of the texts review, 2026-10-10</b>: the page wrote
+    /// <i>"BrowserAI the new version is downloaded"</i>, <i>"is installing now"</i> and
+    /// <i>"Install BrowserAI the new version now"</i> for a version the background
+    /// never leaves out. The contract now refuses such a snapshot, and the fallback is
+    /// gone.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHeldOrInstallingUpdateAlwaysNamesItsVersion()
+    {
+        _ = Assert.Throws<ArgumentException>(() => _ = new UpdateHoldSnapshot(Now, UpdateHoldState.Held, null, [], [], []));
+        _ = Assert.Throws<ArgumentException>(() => _ = new UpdateHoldSnapshot(Now, UpdateHoldState.Installing, null, [], [], []));
+        _ = Assert.Throws<ArgumentException>(() => _ = new UpdateHoldSnapshot(Now, UpdateHoldState.Held, string.Empty, [], [], []));
+
+        await Assert.That(UpdateHoldSnapshot.Nothing(Now).Version).IsNull();
     }
 
     /// <summary>
     /// The update page is served at its own route, the navigation marks it, and its
     /// button asks the background to install now: a refusal is a sentence on the page,
-    /// and an install that started tells every tab and ends their streams.
+    /// and an install that started is said to every tab once, by the background's own
+    /// stop, and never by the page as well.
     /// </summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10 (previously "and an install that started tells every
+    /// tab and ends their streams")</i>: #105 of the texts review. The page's own
+    /// sentence and the background's were released by the same stop and raced, so a tab
+    /// showed whichever came first, and only the background's says how to get the page
+    /// back.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheUpdatePageIsServedAndItsButtonAsksTheBackgroundToInstallNow()
@@ -291,26 +338,31 @@ internal sealed class UpdatePageTests
         holds.Answer = null;
         _ = await rig.ActAsync("""{"action":"install-now","version":"1.2.0"}""");
 
+        // The page's own note while the request runs, then a new state once the
+        // background has the install, and no word of its own to the tabs.
+        await Assert.That(await StateContainingAsync(stream, "Closing every session and connection, then installing BrowserAI 1.2.0.")).IsNotNull();
+
+        var handedOver = await stream.NextAsync();
+
+        await Assert.That(handedOver?.Name).IsEqualTo(PageEvents.State).Because("the page tells no tab the install has started: the background's stop does");
+        await Assert.That(string.Join(",", holds.Asked)).IsEqualTo("1.2.0,1.2.0");
+
+        // The background's stop, as Program.Background says it, is the one sentence.
+        const string Stopped = "BrowserAI is installing an update, so this tab has stopped. Open BrowserAI from the Start Menu again once the installed notification has appeared.";
+
+        rig.Page.Tell(Stopped);
+
         var closing = await stream.NextNamedAsync(PageEvents.Closing);
 
         await Assert.That(closing).IsNotNull();
-        await Assert.That(closing!.Member("sentence")).Contains("BrowserAI is installing 1.2.0");
-        await Assert.That(string.Join(",", holds.Asked)).IsEqualTo("1.2.0,1.2.0");
+        await Assert.That(closing!.Member("sentence")).IsEqualTo(Stopped);
     }
 
-    /// <summary>A page with nothing reporting what holds an update refuses the install button's request.</summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task WithNothingReportingTheInstallRequestIsRefused()
-    {
-        using var rig = new PageRig();
-
-        _ = rig.HandOut(PageKind.Update);
-
-        var answer = await rig.ActAsync("""{"action":"install-now","version":"1.2.0"}""");
-
-        await Assert.That(answer.Status).IsNotEqualTo(204);
-    }
+    // RETIRED 2026-10-10: WithNothingReportingTheInstallRequestIsRefused. The page is
+    // always given the update core since the one background (Program.Background sets
+    // it, and PageService now requires it), so there is no page with nothing reporting
+    // what holds an update, and no request to refuse at the door; an install-now is
+    // the update core's to answer (#73 of the texts review).
 
     /// <summary>
     /// Every tab is sent a new state once what holds the update has changed, read
@@ -349,7 +401,7 @@ internal sealed class UpdatePageTests
     /// Where the page checks for nothing itself and the background reports what holds
     /// an update, the status page's update section says what is waiting and leads to
     /// the update page, and never that no release feed is set, because the background
-    /// has one; where nothing reports, the stage's own sentence stands.
+    /// has one; where the read failed, it says that, and where the log is.
     /// </summary>
     /// <remarks>
     /// The background builds its page with no feed of its own since 2026-10-08, so
@@ -380,7 +432,12 @@ internal sealed class UpdatePageTests
         await Assert.That(installing).Contains("<p>BrowserAI 1.2.0 is installing now.</p>");
         await Assert.That(installing).DoesNotContain(NoFeed);
 
-        await Assert.That(Status(null)).Contains(NoFeed);
+        // #66, 2026-10-10 (previously "where nothing reports, the stage's own sentence
+        // stands"): a read that failed is said as one.
+        var unread = Status(null);
+
+        await Assert.That(unread).Contains("<p>BrowserAI could not read what holds an update. Its log, in <code>C:\\data\\logs</code>, says why.</p>");
+        await Assert.That(unread).DoesNotContain(NoFeed);
     }
 
     /// <summary>
@@ -430,7 +487,7 @@ internal sealed class UpdatePageTests
             Occasion.Ordinary,
             Now);
 
-    private static string Render(UpdateHoldSnapshot? holds) =>
+    private static string Render(UpdateHoldSnapshot? holds, UpdateStage stage = UpdateStage.NotChecked) =>
         UpdatePageContent.Render(
             new PageView(
                 new PageFacts
@@ -442,7 +499,7 @@ internal sealed class UpdatePageTests
                     ServerCommand = null,
                     ServerRefusal = null,
                 },
-                new UpdateView(UpdateStage.NotChecked),
+                new UpdateView(stage),
                 null,
                 SessionsSnapshot.Empty,
                 null,

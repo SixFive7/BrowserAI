@@ -49,8 +49,23 @@ internal static class UpdatePageContent
         "BrowserAI starts again by itself once the new version is installed.",
     ];
 
-    /// <summary>What the page says when nothing reports what holds an update.</summary>
-    public const string NoHoldsReported = "This BrowserAI does not report what holds an update, so there is nothing to show here.";
+    /// <summary>
+    /// Says that reading what holds the update failed, and where the log that says why is.
+    /// </summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10 in place of "This BrowserAI does not report what holds an
+    /// update", #66 and #73 of the texts review</i>: the page always has the update
+    /// core, so a snapshot it does not have is a read that threw, which is logged.
+    /// </remarks>
+    /// <param name="html">Where to write.</param>
+    /// <param name="facts">What does not change, the log's folder among it.</param>
+    internal static void AppendUnread(StringBuilder html, PageFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(html);
+        ArgumentNullException.ThrowIfNull(facts);
+
+        _ = html.Append("<p>BrowserAI could not read what holds an update. Its log, in <code>").Append(PageContent.Text(facts.LogDirectory)).Append("</code>, says why.</p>\n");
+    }
 
     /// <summary>The update page's main part.</summary>
     /// <param name="view">What is true now.</param>
@@ -67,26 +82,31 @@ internal static class UpdatePageContent
         switch (view.Holds)
         {
             case null:
-                _ = html.Append("<p>").Append(PageContent.Text(NoHoldsReported)).Append("</p>\n");
+                AppendUnread(html, view.Facts);
                 break;
 
-            case { State: UpdateHoldState.None }:
-                // The sentence ends at what is installed: since 2026-10-08 the status
-                // page checks for nothing itself, and whether the background checks is
-                // not something a snapshot says.
+            case { State: UpdateHoldState.Installing, Version: { } installing }:
+                _ = html.Append("<p>")
+                    .Append(PageContent.Text($"BrowserAI {installing} is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself."))
+                    .Append("</p>\n");
+                break;
+
+            case { State: UpdateHoldState.Held, Version: { } version } holds:
+                AppendHeld(html, holds, version, now);
+                break;
+
+            // #71, 2026-10-10: a background that is not installed holds nothing and says
+            // so as the status page does. The installed sentence ends at what is
+            // installed: since 2026-10-08 the status page checks for nothing itself, and
+            // whether the background checks is not something a snapshot says.
+            case { } when view.Update.Stage is UpdateStage.NotInstalled:
+                _ = html.Append("<p>").Append(PageContent.Text(PageContent.NotInstalledSentence)).Append("</p>\n");
+                break;
+
+            default:
                 _ = html.Append("<p>")
                     .Append(PageContent.Text($"No downloaded update is waiting. BrowserAI {view.Facts.Version} is installed."))
                     .Append("</p>\n");
-                break;
-
-            case { State: UpdateHoldState.Installing } installing:
-                _ = html.Append("<p>")
-                    .Append(PageContent.Text($"BrowserAI {installing.Version} is installing now. This page stops when BrowserAI closes, and BrowserAI starts again by itself."))
-                    .Append("</p>\n");
-                break;
-
-            case { } holds:
-                AppendHeld(html, holds, now);
                 break;
         }
 
@@ -105,7 +125,7 @@ internal static class UpdatePageContent
     {
         if (holds is null)
         {
-            return "none reported";
+            return "unread";
         }
 
         var text = new StringBuilder()
@@ -138,10 +158,10 @@ internal static class UpdatePageContent
     };
 
     /// <summary>The first sentence about a downloaded update that waits, the same on the status page and on this one.</summary>
-    /// <param name="version">The version, or <see langword="null"/> where the background named none.</param>
+    /// <param name="version">The version waiting.</param>
     /// <returns>The sentence.</returns>
-    public static string HeldSentence(string? version) =>
-        $"BrowserAI {version ?? "the new version"} is downloaded and ready to install. It installs by itself once BrowserAI has been idle.";
+    public static string HeldSentence(string version) =>
+        $"BrowserAI {version} is downloaded and ready to install. It installs by itself once BrowserAI has been idle.";
 
     /// <summary>
     /// The status page's update section where the page checks for nothing itself and
@@ -163,22 +183,21 @@ internal static class UpdatePageContent
         ArgumentNullException.ThrowIfNull(html);
         ArgumentNullException.ThrowIfNull(holds);
 
-        _ = holds.State switch
+        _ = holds switch
         {
-            UpdateHoldState.Held => html.Append("<p>").Append(PageContent.Text(HeldSentence(holds.Version))).Append("</p>\n")
+            { State: UpdateHoldState.Held, Version: { } version } => html.Append("<p>").Append(PageContent.Text(HeldSentence(version))).Append("</p>\n")
                 .Append("<p><a href=\"").Append(PageNames.RouteOf(PageKind.Update)).Append("?tab=").Append(tab.ToString(CultureInfo.InvariantCulture))
                 .Append("\">See what holds it, or install it now</a></p>\n"),
-            UpdateHoldState.Installing => html.Append("<p>").Append(PageContent.Text($"BrowserAI {holds.Version ?? "the new version"} is installing now.")).Append("</p>\n"),
+            { State: UpdateHoldState.Installing, Version: { } installing } => html.Append("<p>").Append(PageContent.Text($"BrowserAI {installing} is installing now.")).Append("</p>\n"),
             _ => html.Append("<p>No downloaded update is waiting.</p>\n"),
         };
     }
 
-    private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, DateTimeOffset now)
+    private static void AppendHeld(StringBuilder html, UpdateHoldSnapshot holds, string version, DateTimeOffset now)
     {
-        var version = holds.Version ?? "the new version";
         var wait = holds.WaitAt(now);
 
-        _ = html.Append("<p>").Append(PageContent.Text(HeldSentence(holds.Version)))
+        _ = html.Append("<p>").Append(PageContent.Text(HeldSentence(version)))
             .Append("</p>\n<p class=\"wait\">");
 
         _ = wait switch
@@ -207,7 +226,7 @@ internal static class UpdatePageContent
             _ = html.Append("<li>").Append(PageContent.Text(effect)).Append("</li>\n");
         }
 
-        _ = html.Append("</ul>\n<p><button type=\"button\" data-action=\"install-now\" data-version=\"").Append(PageContent.Text(holds.Version))
+        _ = html.Append("</ul>\n<p><button type=\"button\" data-action=\"install-now\" data-version=\"").Append(PageContent.Text(version))
             .Append("\">").Append(PageContent.Text($"Install BrowserAI {version} now")).Append("</button></p>\n</section>\n");
     }
 
@@ -235,7 +254,7 @@ internal static class UpdatePageContent
 
             _ = session.ClosesAt is { } closes
                 ? closes > now
-                    ? html.Append(visible ? "Closes by itself in " : "Closes in ").Append(Countdown(closes, now)).Append(visible ? " if nobody uses it." : " if no call names it.")
+                    ? html.Append(visible ? "Closes by itself in " : "Closes in ").Append(Countdown(closes, now)).Append(visible ? " if no call names it and nobody types or clicks in it." : " if no call names it.")
                     : html.Append("Closing now.")
                 : html.Append(PageContent.Text(visible ? "Set never to close by itself." : "Set never to close: an agent has to close it."));
 
@@ -255,7 +274,7 @@ internal static class UpdatePageContent
             return;
         }
 
-        _ = html.Append("<p>").Append(PageContent.Text("An agent holds the update for ten minutes after its client last sent BrowserAI anything. Every connection ends when the update installs, whether it holds the update or not."))
+        _ = html.Append("<p>").Append(PageContent.Text("An agent holds the update for ten minutes after its client last sent BrowserAI anything but a ping. Every connection ends when the update installs, whether it holds the update or not."))
             .Append("</p>\n<ul class=\"holders\">\n");
 
         // 1.5 a, 2026-10-10: a VS Code window's tabs are listed together, under the
@@ -306,7 +325,7 @@ internal static class UpdatePageContent
         _ = relay.CallInFlight
             ? html.Append("A call is running now, so it holds the update.")
             : relay.IdleAt > now
-                ? html.Append("Holds the update for ").Append(Countdown(relay.IdleAt, now)).Append(" more if its client sends nothing.")
+                ? html.Append("Holds the update for ").Append(Countdown(relay.IdleAt, now)).Append(" more if its client sends nothing but pings.")
                 : html.Append("Idle: it no longer holds the update.");
 
         _ = html.Append("<br>").Append(relay.Reconnect is RelayReconnect.None

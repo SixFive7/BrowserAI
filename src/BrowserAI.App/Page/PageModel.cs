@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Coordination;
+using BrowserAI.Registration;
 using BrowserAI.Updates;
 
 namespace BrowserAI.App.Page;
@@ -26,6 +27,13 @@ internal sealed record PageFacts
 
     /// <summary>The server this install would register, or <see langword="null"/> when it refused to compose one.</summary>
     public required string? ServerCommand { get; init; }
+
+    /// <summary>
+    /// The arguments a client starts <see cref="ServerCommand"/> with, as every
+    /// registration of this install writes them: <c>--mcp</c>, and the data root
+    /// when the install names one.
+    /// </summary>
+    public IReadOnlyList<string> ServerArguments { get; init; } = [RegistrationTarget.McpArgument];
 
     /// <summary>Why there is no server command, when there is not.</summary>
     public required string? ServerRefusal { get; init; }

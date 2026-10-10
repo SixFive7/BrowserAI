@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Background;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 
@@ -266,6 +267,24 @@ internal sealed class UpdateToastsTests
         memory.Forget();
 
         await Assert.That(memory.WaitedFor()).IsNull();
+    }
+
+    /// <summary>
+    /// The toasts are handed what holds the update and nothing that installs: the
+    /// indirection the background builds them over reads, and has no install-now.
+    /// </summary>
+    /// <remarks>
+    /// <b>#101 of the texts review, 2026-10-10</b>: the indirection answered an
+    /// install-now with <i>"BrowserAI is still starting, so it installs nothing now."</i>,
+    /// which nothing could ever show: only the update page installs, on the update core
+    /// itself, and a toast's <i>Install now</i> opens that page.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheToastsAreHandedWhatHoldsTheUpdateAndNothingThatInstalls()
+    {
+        await Assert.That(typeof(DeferredUpdateHolds).IsAssignableTo(typeof(IUpdateHolds))).IsFalse();
+        await Assert.That(typeof(UpdateToasts).GetMethod(nameof(UpdateToasts.ForThisProcess))!.GetParameters()[0].ParameterType.IsAssignableTo(typeof(IUpdateHolds))).IsFalse();
     }
 
     private static string Lines(params string[] lines) => string.Join('\n', lines);

@@ -111,7 +111,7 @@ internal interface IUpdateRelays
     /// <remarks>
     /// <para>
     /// <b>1.3 c, decided 2026-10-10</b>: the files are read when the dashboard or a
-    /// toast is drawn, which is what <see cref="IUpdateHolds.Read"/> serves, and never
+    /// toast is drawn, which is what <see cref="IUpdateHoldsReader.Read"/> serves, and never
     /// held open. So the core's own decisions read <see cref="Connected"/>, which reads
     /// no file, and only the snapshot a reader draws reads this.
     /// </para>

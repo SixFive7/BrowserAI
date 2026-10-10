@@ -264,81 +264,42 @@ internal sealed class PageServiceTests
         await Assert.That(await stream.EndAsync()).IsTrue();
 
         await Assert.That(rig.Updates.Installed.Select(candidate => candidate.Version).ToArray()).IsEquivalentTo(["9.2.0"]);
-        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["101-1", "102-1"]);
+        // Corrected 2026-10-10 (previously the two servers asked to close first): the
+        // page asks nothing to close since 17 a; an update's closing is the update core's.
         await Assert.That(rig.Page.IsExitRequested()).IsTrue();
         await Assert.That(rig.Page.HandOut(PageKind.Status)).IsNull();
     }
 
+    // RETIRED 2026-10-10: TheSessionsPageListsEveryServerWithItsWarningsAndClosesOnlyTheSelected,
+    // which held a page of servers that each held their own sessions, with the Codex
+    // and the recently-active warnings, the servers that did not answer, and a close of
+    // the selected ones. The one background lists only itself and the clients connected
+    // to it, so no such server reaches the page, and the maintainer's 17 a removed the
+    // close those warnings were about.
+
     /// <summary>
-    /// The sessions page lists every server with its client, its sessions and both
-    /// warnings where they apply, encodes what a model wrote, and closes the servers
-    /// that were selected and nothing else.
+    /// The sessions page lists BrowserAI's background with every session it holds,
+    /// each kept session for what it is and what ends it, and each client connected to
+    /// it; it offers no box and no close, and a close sent anyway is refused like an
+    /// action the page does not have.
     /// </summary>
     /// <remarks>
-    /// <b>Q254 and Q317 c.</b> The two warnings are the <i>informs you of the
-    /// dangers</i> half of the maintainer's instruction: a Codex-hosted server does
-    /// not come back in the same thread, and a server that answered a call within the
-    /// browser-idle period, or is answering one, may be in the middle of a task.
+    /// <para>
+    /// <b>17 a, the maintainer's answer of 2026-10-10, verbatim: <i>"17 a"</i></b>, to
+    /// whether the page should offer a close the background always refused: the boxes,
+    /// the button and the close path went, because a relay ends with its client.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-10 (previously
+    /// TheSessionsPageShowsTheHostsKeptSessionsForWhatTheyAreAndOffersNoCloseForTheHost,
+    /// which drew the background as the session host that ends a minute after its last
+    /// client, gave each client's server a box, and closed one)</i>: #68 of the texts
+    /// review.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheSessionsPageListsEveryServerWithItsWarningsAndClosesOnlyTheSelected()
-    {
-        using var rig = new PageRig();
-
-        var claude = Server(201, "claude-code", Now.AddMinutes(-3), purpose: "<img src=x onerror=alert(1)> checks the shop");
-        var codex = Server(202, "codex-mcp-client", Now.AddHours(-2));
-        var unnamed = Server(203, null, null, inFlight: 1);
-
-        rig.Sessions.Snapshot = new SessionsSnapshot(Now, [claude, codex, unnamed], ["9999-x.live: the pipe did not answer"]);
-
-        var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
-
-        await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(page.Body).Contains("data-page=\"sessions\"");
-        await Assert.That(page.Body).Contains("value=\"201-1\"");
-        await Assert.That(page.Body).Contains("value=\"202-1\"");
-        await Assert.That(page.Body).Contains("value=\"203-1\"");
-        await Assert.That(page.Body).Contains("Claude Code 2.1.288, pid 201");
-        await Assert.That(page.Body).Contains("unnamed client, pid 203");
-        await Assert.That(page.Body).Contains("Last call 3 minutes ago.");
-        await Assert.That(page.Body).Contains("One call is running now.");
-        await Assert.That(page.Body).Contains("One more server is running and did not answer");
-
-        // The Codex warning once, for the Codex server; the recent one for the two that are busy.
-        await Assert.That(page.Body.Split(PageContent.Text(PageContent.CodexWarning)).Length - 1).IsEqualTo(1);
-        await Assert.That(page.Body.Split(PageContent.Text(PageContent.RecentWarning)).Length - 1).IsEqualTo(2);
-
-        // What a model wrote is text.
-        await Assert.That(page.Body).Contains("&lt;img src=x onerror=alert(1)&gt; checks the shop");
-        await Assert.That(page.Body).DoesNotContain("<img src=x");
-
-        using var stream = await rig.StreamAsync(rig.Gate.Root + "sessions", 1, "sessions");
-
-        await rig.ActAsync("""{"action":"close-servers","servers":[]}""");
-        await Assert.That(await StateContainingAsync(stream, "No server was selected")).IsNotNull();
-
-        await rig.ActAsync("""{"action":"close-servers","servers":["201-1","203-1","not-a-server"]}""");
-
-        await Assert.That(await StateContainingAsync(stream, "2 servers were asked to close.")).IsNotNull();
-        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["201-1", "203-1"]);
-    }
-
-    /// <summary>
-    /// With the session host, the sessions page shows the host with every session it
-    /// holds, a session whose client has gone as kept and what ends it, and each
-    /// client's server with the sessions its client drives; it offers no close for the
-    /// host, and a close sent for it closes nothing.
-    /// </summary>
-    /// <remarks>
-    /// <b>Asked by the root session on 2026-10-03, when option c (Q366 b) arrived</b>:
-    /// the page shows the sessions kept for a client that has gone for what they are.
-    /// A server a client starts relays to the host and never reads its client's
-    /// handshake, so the host's description is what names that client.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheSessionsPageShowsTheHostsKeptSessionsForWhatTheyAreAndOffersNoCloseForTheHost()
+    public async Task TheSessionsPageListsTheBackgroundAndItsClientsAndOffersNoClose()
     {
         using var rig = new PageRig();
 
@@ -357,7 +318,8 @@ internal sealed class PageServiceTests
             [
                 (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, [])),
                 (@"C:\install\live\900-0.live", host),
-                (@"C:\install\live\302-0.live", Description(302, ServerDescription.Roles.Relay, [])),
+                (@"C:\install\live\302-0.live", Description(302, ServerDescription.Roles.Relay, []) with { Client = new ClientIdentity("codex-mcp-client", "Codex", "0.155.0") }),
+                (@"C:\install\live\303-0.live", Description(303, ServerDescription.Roles.Relay, [])),
             ],
             []);
 
@@ -365,11 +327,12 @@ internal sealed class PageServiceTests
         var body = page.Body;
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
+        await Assert.That(body).Contains(PageContent.Text("BrowserAI's background, every session it holds, and each client connected to it."));
 
-        // The host comes first, says what it is, and has no box to close it with.
-        await Assert.That(body).Contains("BrowserAI's session host</strong>, pid 900");
-        await Assert.That(body).Contains(PageContent.Text(PageContent.HostSentence));
-        await Assert.That(body).DoesNotContain("value=\"900-1\"");
+        // The background comes first and says what it is: it ends with the session, an
+        // uninstall or an update, never because it is idle.
+        await Assert.That(body).Contains("<strong>BrowserAI's background</strong>, pid 900");
+        await Assert.That(body).Contains(PageContent.Text("It holds every session, and ends at sign-out, at an uninstall or for an update, never because it is idle."));
         await Assert.That(body.IndexOf("pid 900", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
 
         // Each kept session says so, and what ends it.
@@ -379,22 +342,29 @@ internal sealed class PageServiceTests
         await Assert.That(body).Contains(PageContent.Text($"{PageContent.KeptSentence}, and its window is still open. {PageContent.KeptTakeOver} Until then it ends when its window is closed."));
         await Assert.That(body.Split("<li class=\"kept\">").Length - 1).IsEqualTo(2);
 
-        // The driven one names its client under the host, and is listed under that client's server as well.
-        await Assert.That(body).Contains(PageContent.Text("Driven by claude-code through its server, pid 301."));
-        await Assert.That(body).Contains("value=\"301-1\"> claude-code, pid 301");
-        await Assert.That(body).Contains(PageContent.Text(PageContent.RelaySentence));
-        await Assert.That(body.Split(PageContent.Text(PageContent.RelayRecentWarning)).Length - 1).IsEqualTo(1);
+        // The driven one names its client and its connection under the background, and is
+        // listed under that client as well; a client that drives none says so.
+        await Assert.That(body).Contains(PageContent.Text("Driven by claude-code through its connection, pid 301."));
         await Assert.That(body.Split("reads the docs").Length - 1).IsEqualTo(2);
-        await Assert.That(body).Contains("value=\"302-1\">");
-        await Assert.That(body).Contains("Its client drives no session the host holds.");
+        await Assert.That(body.Split("Its client drives no session.").Length - 1).IsEqualTo(2);
 
-        // A close sent for the host closes nothing; the client's server is closed.
-        using var stream = await rig.StreamAsync(rig.Gate.Root + "sessions", 1, "sessions");
+        // Each client connected, with what ends it, and no box, no warning and no close.
+        await Assert.That(body).Contains("<li class=\"server\"><p>claude-code, pid 301</p>");
+        await Assert.That(body).Contains("<li class=\"server\"><p>Codex 0.155.0, pid 302</p>");
 
-        await rig.ActAsync("""{"action":"close-servers","servers":["900-1","301-1"]}""");
+        // A client that gave no name is called what the update page calls it (#85).
+        await Assert.That(body).Contains("<li class=\"server\"><p>unnamed client, pid 303</p>");
+        await Assert.That(body.Split(PageContent.Text("It ends when its client closes or its conversation ends.")).Length - 1).IsEqualTo(3);
+        await Assert.That(body).DoesNotContain("type=\"checkbox\"");
+        await Assert.That(body).DoesNotContain("close-servers");
+        await Assert.That(body).DoesNotContain("the host holds");
+        await Assert.That(body).DoesNotContain("Codex does not start this server again");
 
-        await Assert.That(await StateContainingAsync(stream, "The server was asked to close.")).IsNotNull();
-        await Assert.That(rig.Sessions.Closed.ToArray()).IsEquivalentTo(["301-1"]);
+        // A close sent anyway is an action the page does not have.
+        var answer = await rig.ActAsync("""{"action":"close-servers","servers":["301-1"]}""");
+
+        await Assert.That(answer.Status).IsEqualTo(404);
+        await Assert.That(answer.Body).IsEmpty();
     }
 
     /// <summary>
@@ -448,9 +418,9 @@ internal sealed class PageServiceTests
         var body = page.Body;
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(body).Contains("value=\"301-1\"> <strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296, pid 301");
-        await Assert.That(body).Contains("value=\"302-1\"> <strong>Claude Code in one</strong>, claude-code 2.1.296, pid 302");
-        await Assert.That(body).Contains("value=\"303-1\"> <strong>new conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
+        await Assert.That(body).Contains("<li class=\"server\"><p><strong>" + PageContent.Text("\"Fix the <login> bug\"") + "</strong>, claude-code 2.1.296, pid 301");
+        await Assert.That(body).Contains("<li class=\"server\"><p><strong>Claude Code in one</strong>, claude-code 2.1.296, pid 302");
+        await Assert.That(body).Contains("<li class=\"server\"><p><strong>new conversation in BrowserAI</strong>, claude-code 2.1.296, pid 303");
 
         var heading = body.IndexOf("<strong>VS Code window on BrowserAI</strong>", StringComparison.Ordinal);
 

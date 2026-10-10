@@ -4,6 +4,7 @@
 using BrowserAI.App;
 using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
+using BrowserAI.Interop;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -461,6 +462,111 @@ internal sealed class PageRegistrationTests
         await Assert.That(FakeRegisterAi.Option(ran[1], "--client")).IsEqualTo("codex");
         await Assert.That(FakeRegisterAi.Option(ran[1], "--scope")).IsEqualTo("user");
     }
+
+    /// <summary>
+    /// Register and Repair write the arguments the install itself registers with: the
+    /// data root an install made with <c>BROWSERAI_ROOT</c> names, read from the
+    /// definition its hooks saved, so a repair keeps it; an install that named none
+    /// registers <c>--mcp</c> alone.
+    /// </summary>
+    /// <remarks>
+    /// <b>Found by the texts review of 2026-10-10</b>: the page registered <c>--mcp</c>
+    /// alone, so a Repair rewrote a hook's <c>--mcp --data-root</c> entry without its
+    /// root, and the client then started a relay that no background serves.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task RegisterAndRepairKeepTheDataRootTheInstallRegistersWith()
+    {
+        using var install = ScratchDirectory.Create("page-registration-root");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var root = Path.Combine(install.Path, "a data root");
+        var tool = new FakeRegisterAi();
+
+        tool.Register("claude-code", server);
+
+        var state = StateFor(
+            install.Path,
+            server,
+            [
+                ClientFor(RegistrationClient.ClaudeCode, server, RegistrationOwnership.OursAndStale),
+                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
+            ]);
+
+        using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
+
+        var address = rig.HandOut();
+
+        using var stream = await rig.StreamAsync(address, 1);
+
+        _ = await PageRig.GetAsync(address);
+
+        // An install whose hooks named no data root: --mcp alone.
+        await Assert.That((await rig.ActAsync("""{"action":"register","client":"codex"}""")).Status).IsEqualTo(204);
+        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Codex")).IsNotNull();
+        await Assert.That(string.Join(" ", AfterTheCommand(Changes(tool)[^1]))).IsEqualTo("--mcp");
+
+        // The hooks saved a definition naming the data root: the Repair keeps it.
+        await File.WriteAllTextAsync(
+            Path.Combine(install.Path, SignInTask.SavedDefinitionFileName),
+            SignInTask.DefinitionFor(server, NamedPipes.CurrentUserSid(), install.Path, SignInTask.ArgumentsFor(root, null)));
+
+        await Assert.That((await rig.ActAsync("""{"action":"register","client":"claude-code"}""")).Status).IsEqualTo(204);
+        await Assert.That(await StateContainingAsync(stream, "Registered 'browserai' with Claude Code")).IsNotNull();
+        await Assert.That(string.Join(" ", AfterTheCommand(Changes(tool)[^1]))).IsEqualTo($"--mcp --data-root {root}");
+    }
+
+    /// <summary>
+    /// The status page names the whole command a client starts: BrowserAI.exe with
+    /// <c>--mcp</c>, and the install's data root when it names one, as every
+    /// registration writes it. Started with no argument the same file opens the page.
+    /// </summary>
+    /// <remarks>
+    /// <b>#67 of the texts review, 2026-10-10</b>: the page named the file alone, while
+    /// the sentence after a Codex project registration says the entry names it with
+    /// <c>--mcp</c>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStatusPageNamesTheWholeCommandAClientStarts()
+    {
+        const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.exe";
+
+        await Assert.That(Where(Server, [RegistrationTarget.McpArgument]))
+            .Contains("<p>The server a client starts: <code>&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp</code></p>");
+
+        await Assert.That(Where(Server, [RegistrationTarget.McpArgument, SignInTask.DataRootArgument, @"C:\Users\someone\BrowserAI data"]))
+            .Contains("&quot;C:\\Users\\someone\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe&quot; --mcp --data-root &quot;C:\\Users\\someone\\BrowserAI data&quot;</code>");
+    }
+
+    /// <summary>The status page's main part for a server command and its arguments.</summary>
+    private static string Where(string server, IReadOnlyList<string> arguments) =>
+        PageContent.Fragment(
+            new PageView(
+                new PageFacts
+                {
+                    Version = "9.0.0",
+                    InstallRoot = @"C:\Users\someone\AppData\Local\BrowserAI.app",
+                    DataRoot = @"C:\data",
+                    LogDirectory = @"C:\data\logs",
+                    ServerCommand = server,
+                    ServerArguments = arguments,
+                    ServerRefusal = null,
+                },
+                new UpdateView(UpdateStage.NoFeed),
+                null,
+                SessionsSnapshot.Empty,
+                null),
+            PageKind.Status,
+            1,
+            Occasion.Ordinary,
+            DateTimeOffset.UnixEpoch);
+
+    /// <summary>What a registration passes after the command it names.</summary>
+    private static IEnumerable<string> AfterTheCommand(IReadOnlyList<string> call) =>
+        call.SkipWhile(argument => argument is not "--").Skip(2);
 
     /// <summary>Every call that asked RegisterAI to change an entry, in order.</summary>
     private static List<IReadOnlyList<string>> Changes(FakeRegisterAi tool) =>

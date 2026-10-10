@@ -70,19 +70,18 @@ internal interface IPageUpdates
     Task InstallAsync(UpdateCandidate candidate, CancellationToken cancellationToken);
 }
 
-/// <summary>What the page asks of the running servers.</summary>
+/// <summary>What the page reads of the background's sessions and the clients connected to it.</summary>
+/// <remarks>
+/// <i>Corrected 2026-10-10 (previously "What the page asks of the running servers", with
+/// a <c>CloseAsync</c> that asked one server to stop)</i>: the maintainer's 17 a took
+/// the page's close away, because a relay ends with its client.
+/// </remarks>
 internal interface IPageSessions
 {
-    /// <summary>Reads every server running from this install, and what each holds.</summary>
+    /// <summary>Reads the background and every client connected to it, and the sessions it holds.</summary>
     /// <param name="cancellationToken">Ends the read.</param>
     /// <returns>The snapshot.</returns>
     Task<SessionsSnapshot> ReadAsync(CancellationToken cancellationToken);
-
-    /// <summary>Asks one server to stop, through its pipe.</summary>
-    /// <param name="server">The server.</param>
-    /// <param name="cancellationToken">Ends the wait.</param>
-    /// <returns><see langword="null"/> when it acknowledged, and otherwise why not, as one sentence.</returns>
-    Task<string?> CloseAsync(ServerEntry server, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -146,11 +145,13 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     private bool _installingNow;
     private string? _holdsSignature;
 
-    /// <summary>
-    /// What holds a downloaded update, and the person's install-now, or
-    /// <see langword="null"/> where nothing reports them: the update page says so.
-    /// </summary>
-    internal IUpdateHolds? Holds { get; init; }
+    /// <summary>What holds a downloaded update, and the person's install-now: the background's update core.</summary>
+    /// <remarks>
+    /// <i>Required since 2026-10-10</i> (#73 of the texts review): the one background
+    /// always has its update core, so a page with nothing reporting what holds an update
+    /// does not exist, and a snapshot the page does not have is a read that failed.
+    /// </remarks>
+    internal required IUpdateHolds Holds { get; init; }
 
     /// <summary>The installed version's section of the changelog shipped in the build, or <see langword="null"/>.</summary>
     internal ChangelogSection? Changelog { get; init; }
@@ -271,7 +272,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
                 {
                     // While a listener is up, what holds the update is read once a
                     // second, and every tab is sent a new state when it has changed.
-                    HoldsWatch = Holds is null ? null : _clock.CreateTimer(_ => WatchHolds(), null, HoldsWatchPeriod, HoldsWatchPeriod),
+                    HoldsWatch = _clock.CreateTimer(_ => WatchHolds(), null, HoldsWatchPeriod, HoldsWatchPeriod),
                 };
             }
 
@@ -592,7 +593,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             "open-session" => OpenSession(String(request, "session")),
             "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
-            "close-servers" => Run(CloseServersAsync(Strings(request, "servers"))),
             "read-registration" => StartRegistrationRead(),
             "register" or "unregister" or "register-in-project" or "unregister-from-project" or "unregister-from-a-project" =>
                 StartRegistration(String(request, "client"), action),
@@ -608,18 +608,13 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         return true;
     }
 
-    /// <summary>Reads what holds the update, or <see langword="null"/> where nothing reports it or the read failed.</summary>
+    /// <summary>Reads what holds the update, or <see langword="null"/> where the read failed.</summary>
     /// <returns>The snapshot.</returns>
     private UpdateHoldSnapshot? ReadHolds()
     {
-        if (Holds is not { } holds)
-        {
-            return null;
-        }
-
         try
         {
-            return holds.Read();
+            return Holds.Read();
         }
 #pragma warning disable CA1031 // A read that failed is a page that says so, never a background that stops.
         catch (Exception failure)
@@ -653,7 +648,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     /// <returns>Whether the request was taken.</returns>
     private bool StartInstallNow(string? version)
     {
-        if (Holds is not { } holds || version is not { Length: > 0 })
+        if (version is not { Length: > 0 })
         {
             return false;
         }
@@ -670,7 +665,7 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         }
 
         Push();
-        _ = Task.Run(() => InstallNowAsync(holds, version), CancellationToken.None);
+        _ = Task.Run(() => InstallNowAsync(Holds, version), CancellationToken.None);
         return true;
     }
 
@@ -695,16 +690,14 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
             refused = new PageNote($"BrowserAI {version} was not installed.", failure.Message);
         }
 
+        // #105, 2026-10-10: an install that started is said to every tab once, by the
+        // background's own stop, which also says how to get the page back. The page
+        // said it as well, released by the same stop, and a tab showed whichever came
+        // first; now the page shows what the background reports until that stop.
         lock (_gate)
         {
             _installingNow = false;
             _notes[PageKind.Update] = refused;
-        }
-
-        if (refused is null)
-        {
-            Tell($"BrowserAI is installing {version}. This tab has stopped, and BrowserAI starts again by itself when the install is done.");
-            return;
         }
 
         Push();
@@ -712,11 +705,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
 
     private static string? String(JsonElement request, string name) =>
         request.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.String ? value.GetString() : null;
-
-    private static List<string> Strings(JsonElement request, string name) =>
-        request.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.Array
-            ? [.. value.EnumerateArray().Where(item => item.ValueKind is JsonValueKind.String).Select(item => item.GetString()!)]
-            : [];
 
     private static bool Run(Task work)
     {
@@ -902,13 +890,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
     {
         try
         {
-            var running = await _sessions.ReadAsync(CancellationToken.None).ConfigureAwait(false);
-
-            foreach (var server in running.Servers.Where(server => !server.IsHost))
-            {
-                _ = await _sessions.CloseAsync(server, CancellationToken.None).ConfigureAwait(false);
-            }
-
             // Bounded by the server's own tripwire for the same download, the bound the
             // window's install ran under.
             using var bounded = new CancellationTokenSource(UpdateBudgets.CrashTripwire, _clock);
@@ -1204,61 +1185,6 @@ internal sealed partial class PageService : IPageRoutes, IAsyncDisposable, IDisp
         }
 
         Push();
-    }
-
-    private async Task CloseServersAsync(IReadOnlyList<string> ids)
-    {
-        List<ServerEntry> chosen;
-
-        lock (_gate)
-        {
-            // The session host is not a server a person closes from here (Q366 b):
-            // closing it ends every client's sessions, and the page offers no box for it.
-            chosen = [.. ids.Select(_snapshot.ServerById).OfType<ServerEntry>().Where(server => !server.IsHost)];
-        }
-
-        if (chosen.Count is 0)
-        {
-            Note(PageKind.Sessions, new PageNote("No server was selected, so nothing was closed."));
-            return;
-        }
-
-        var refused = new List<string>();
-
-        foreach (var server in chosen)
-        {
-            string? why;
-
-            try
-            {
-                why = await _sessions.CloseAsync(server, CancellationToken.None).ConfigureAwait(false);
-            }
-#pragma warning disable CA1031 // One server that could not be asked is a line in the note, and the others are still asked.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                why = failure.Message;
-            }
-
-            if (why is not null)
-            {
-                refused.Add(string.Create(CultureInfo.InvariantCulture, $"pid {server.Description.ProcessId}: {why}"));
-            }
-        }
-
-        var closed = chosen.Count - refused.Count;
-
-        Note(
-            PageKind.Sessions,
-            refused.Count is 0
-                ? new PageNote(closed is 1 ? "The server was asked to close." : $"{closed} servers were asked to close.")
-                : new PageNote(
-                    refused.Count == chosen.Count
-                        ? "No server could be asked to close."
-                        : $"{closed} of {chosen.Count} servers were asked to close, and the others could not be.",
-                    string.Join("\n", refused)));
-
-        await RefreshSessionsAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <summary>One listener and its tabs, started together and stopped together.</summary>

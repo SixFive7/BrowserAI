@@ -731,10 +731,9 @@ internal sealed class BackgroundServerTests
         await Assert.That(relayed.Description.WorkingDirectory).IsEqualTo(BackgroundPipeClient.Folder);
         await Assert.That(relayed.Sessions.Count(session => SamePath(session.Directory, directory))).IsEqualTo(1).Because("the session its client drives is not drawn under the relay");
 
-        // A relay ends with its client, never from the page.
-        var refusal = await page.CloseAsync(relayed, hang.Token);
-
-        await Assert.That(refusal).Contains("ends with the client itself");
+        // Corrected 2026-10-10 (previously a close asked of the page was refused with
+        // "ends with the client itself"): the maintainer's 17 a took the page's close
+        // away, so the page has nothing to ask, and a relay ends with its client.
         await Assert.That(rig.Roster.Count).IsEqualTo(1);
     }
 

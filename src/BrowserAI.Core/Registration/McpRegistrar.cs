@@ -167,6 +167,7 @@ internal static class McpRegistrar
     /// <param name="tool">RegisterAI.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
+    /// <param name="commandArguments">The arguments the command is registered with, or <see langword="null"/> for the target's own, <c>--mcp</c>.</param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
     public static RegistrationReport Apply(
         RegistrationClient who,
@@ -174,11 +175,12 @@ internal static class McpRegistrar
         string? imagePath,
         IRegisterAi tool,
         ILogger logger,
-        bool replace = false)
+        bool replace = false,
+        IReadOnlyList<string>? commandArguments = null)
     {
         ArgumentNullException.ThrowIfNull(who);
 
-        return Apply([who], intent, imagePath, tool, logger, replace)[0].Report;
+        return Apply([who], intent, imagePath, tool, logger, replace, commandArguments)[0].Report;
     }
 
     /// <summary>Runs one user-scope pass for several clients, with one run of RegisterAI.</summary>

@@ -115,9 +115,6 @@ internal static class PageAssets
             const button = event.target.closest('button[data-action]');
             if (!button || finished) { return; }
             const request = { ...button.dataset };
-            if (request.action === 'close-servers') {
-              request.servers = [...main.querySelectorAll('input[name=server]:checked')].map((element) => element.value);
-            }
             button.disabled = true;
             try {
               const response = await fetch('action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });

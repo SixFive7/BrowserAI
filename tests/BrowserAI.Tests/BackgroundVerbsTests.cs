@@ -107,43 +107,33 @@ internal sealed class BackgroundVerbsTests
     [Test]
     public async Task TheToastsReadNothingHeldUntilTheUpdateCoreExistsAndThenTheCoresHolds()
     {
-        using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
-
         var deferred = new DeferredUpdateHolds();
         var before = deferred.Read();
 
         await Assert.That(before.State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(before.Version).IsNull();
         await Assert.That(before.Relays).IsEmpty();
-        await Assert.That(await deferred.InstallNowAsync("9.9.10-verbs-tests", hang.Token)).Contains("still starting");
 
         var core = new StandInHolds();
 
         deferred.Target = core;
 
         await Assert.That(deferred.Read()).IsSameReferenceAs(core.Snapshot);
-        await Assert.That(await deferred.InstallNowAsync("9.9.10-verbs-tests", hang.Token)).IsNull();
-        await Assert.That(string.Join(" | ", core.InstallsAsked)).IsEqualTo("9.9.10-verbs-tests");
+
+        // Corrected 2026-10-10 (previously the deferred holds answered an install-now with
+        // "still starting" and then passed it on): #101 of the texts review. The toasts
+        // never install, so the deferred holds only read; the page's install-now goes to
+        // the update core itself.
     }
 
-    /// <summary>The update core's holds, as the arm sets them, with a record of every install asked for.</summary>
-    private sealed class StandInHolds : IUpdateHolds
+    /// <summary>The update core's holds, as the arm sets them.</summary>
+    private sealed class StandInHolds : IUpdateHoldsReader
     {
         /// <summary>What every read answers.</summary>
         public UpdateHoldSnapshot Snapshot { get; } =
             UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch) with { State = UpdateHoldState.Held, Version = "9.9.10-verbs-tests" };
 
-        /// <summary>Every version an install was asked for, in order.</summary>
-        public List<string> InstallsAsked { get; } = [];
-
         /// <inheritdoc />
         public UpdateHoldSnapshot Read() => Snapshot;
-
-        /// <inheritdoc />
-        public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken)
-        {
-            InstallsAsked.Add(version);
-            return Task.FromResult<string?>(null);
-        }
     }
 }

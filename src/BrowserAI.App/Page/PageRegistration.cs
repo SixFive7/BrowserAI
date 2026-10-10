@@ -53,7 +53,7 @@ internal interface IPageRegistration
 /// <remarks>
 /// <para>
 /// <b>Every call is the one the configuration window made, moved off a click
-/// handler.</b> <see cref="McpRegistrar.Apply(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool)"/>
+/// handler.</b> <see cref="McpRegistrar.Apply(RegistrationClient, RegistrationIntent, string?, IRegisterAi, ILogger, bool, IReadOnlyList{string}?)"/>
 /// and <see cref="McpRegistrar.ApplyToProject(RegistrationClient, bool, string, string?, IRegisterAi, ILogger, string?)"/>
 /// start RegisterAI and wait for it within <see cref="McpRegistrar.ToolBudget"/>,
 /// so each runs on the thread pool and never on a request thread of Kestrel's
@@ -82,7 +82,7 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
 
     /// <inheritdoc />
     public Task<RegistrationReport> RegisterAsync(RegistrationClient who, CancellationToken cancellationToken) =>
-        Task.Run(() => McpRegistrar.Apply(who, RegistrationIntent.Install, imagePath, tool, logger, replace: true), cancellationToken);
+        Task.Run(() => McpRegistrar.Apply(who, RegistrationIntent.Install, imagePath, tool, logger, replace: true, RelayArguments()), cancellationToken);
 
     /// <inheritdoc />
     public Task<RegistrationReport> UnregisterAsync(RegistrationClient who, CancellationToken cancellationToken) =>
@@ -95,6 +95,20 @@ internal sealed class RegisterAiPageRegistration(IRegisterAi tool, string? image
     /// <inheritdoc />
     public Task<RegistrationReport> UnregisterFromProjectAsync(RegistrationClient who, string folder, CancellationToken cancellationToken) =>
         Task.Run(() => McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, tool, logger), cancellationToken);
+
+    /// <summary>The arguments this install registers its relay with, read as its hooks wrote them.</summary>
+    /// <remarks>
+    /// <b>A Register or a Repair keeps the data root an install was made with</b>, found
+    /// by the texts review of 2026-10-10: the page registered <c>--mcp</c> alone, so a
+    /// Repair rewrote a hook's <c>--mcp --data-root</c> entry without its root, and the
+    /// client started a relay that no background serves. Read from the definition the
+    /// hooks saved, never from a variable.
+    /// </remarks>
+    /// <returns>The arguments.</returns>
+    private IReadOnlyList<string> RelayArguments() =>
+        RegistrationTarget.TryResolve(imagePath, out var target, out _)
+            ? InstallerSettings.SavedFor(target!.InstallRoot).RelayArguments
+            : InstallerSettings.None.RelayArguments;
 }
 
 /// <summary>What the page says after a registration action, Q309 b.</summary>

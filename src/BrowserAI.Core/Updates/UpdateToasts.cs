@@ -144,11 +144,11 @@ internal sealed record UpdateToastFacts(string RunningVersion, string VelopackLo
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The countdown is read from <see cref="IUpdateHolds"/> every second</b>, which
+/// <b>The countdown is read from <see cref="IUpdateHoldsReader"/> every second</b>, which
 /// the background answers from its own memory, and written to the toast through
 /// <see cref="IToastSurface.Update"/> with a sequence number one higher each time.
-/// <i>Since 2026-10-10</i> it reads <see cref="IUpdateHolds.ReadCountdown"/>, which names
-/// no conversation, and the raise reads <see cref="IUpdateHolds.Read"/>, whose names the
+/// <i>Since 2026-10-10</i> it reads <see cref="IUpdateHoldsReader.ReadCountdown"/>, which names
+/// no conversation, and the raise reads <see cref="IUpdateHoldsReader.Read"/>, whose names the
 /// reconnect line carries.
 /// It stops when Windows answers that the toast is gone, which is what a person's
 /// click or dismissal leaves, and when the update stops waiting.
@@ -171,7 +171,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
 
     private readonly Lock _gate = new();
     private readonly IToastSurface _surface;
-    private readonly IUpdateHolds? _holds;
+    private readonly IUpdateHoldsReader? _holds;
     private readonly IUpdateToastMemory _memory;
     private readonly UpdateToastFacts _facts;
     private readonly TimeProvider _clock;
@@ -196,7 +196,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     /// <param name="owned">What this disposes with itself: the product's surface, which it made.</param>
     public UpdateToasts(
         IToastSurface surface,
-        IUpdateHolds? holds,
+        IUpdateHoldsReader? holds,
         IUpdateToastMemory memory,
         UpdateToastFacts facts,
         TimeProvider clock,
@@ -340,7 +340,7 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     /// <param name="paths">Where the data root and the log are.</param>
     /// <param name="logger">Where refusals are recorded.</param>
     /// <returns>The toasts; dispose them when the process ends.</returns>
-    public static IUpdateToasts ForThisProcess(IUpdateHolds? holds, IAppPaths paths, ILogger logger)
+    public static IUpdateToasts ForThisProcess(IUpdateHoldsReader? holds, IAppPaths paths, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(paths);
 
@@ -477,8 +477,8 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     /// <summary>What holds the update, or <see langword="null"/> when it could not be read.</summary>
     /// <param name="countdown">
     /// Whether this is a second of the countdown, which names no conversation
-    /// (<see cref="IUpdateHolds.ReadCountdown"/>); otherwise the raise, whose reconnect
-    /// line names each one (<see cref="IUpdateHolds.Read"/>).
+    /// (<see cref="IUpdateHoldsReader.ReadCountdown"/>); otherwise the raise, whose reconnect
+    /// line names each one (<see cref="IUpdateHoldsReader.Read"/>).
     /// </param>
     /// <returns>The snapshot.</returns>
     private UpdateHoldSnapshot? Read(bool countdown = false)

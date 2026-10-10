@@ -179,36 +179,26 @@ release body; nothing else depends on it.
   Q315 a, the maintainer's words verbatim: *"Q315 a"*. A start a person makes now opens a tab
   in the default browser, at an address on `127.0.0.1` that BrowserAI makes for it, and opens
   no window of its own. The page shows the installed version, the install, data and log folders
-  with a button that opens each, the server a client starts, and an update section: a check
-  that can be stopped while it waits, a version on offer said to be older when it is (Q308 a),
-  a package a server has already downloaded with a button that installs it (Q310 a), a failure
-  as one sentence with the raw text under *Show details* (Q309 b), and a feed folder with no
-  release list said to have none, where the window read it as up to date. Installing asks
-  every running server to stop through its own pipe first, and the restart opens a new tab
-  (Q338 b).
+  with a button that opens each, the whole command a client starts, and whether a downloaded
+  update is waiting, with a link to the update page.
 
-  **A second page lists every BrowserAI server running from the install**: its client, when it
-  last answered a call, the sessions it holds with their purposes and whether a browser is open,
-  a button for each session's folder, and the traces each has written. It warns where closing a
-  server costs a Codex thread its server and where a server may be in the middle of a task, and
-  closes only the servers a person selects (Q317 c). `BrowserAI.exe --sessions` opens a tab on
-  that page, which is what the update toast's *Review* will start (Q339).
-
-  **With the session host, that page shows what the host keeps.** The host comes first, with
-  every session it holds: one a client drives names the client, and one whose client has gone
-  is marked kept, with the time its idle close ends it, or that it ends when its window is
-  closed. Each client's server lists the sessions its client drives, and closing it ends only
-  its connection. The page offers no close for the host, and an install from the page has the
-  host close every browser and end before it hands over.
+  **A second page lists BrowserAI's background, every session it holds and each client connected
+  to it.** Each session shows its purpose, whether a browser is open, a button for its folder and
+  the traces it has written; one a client drives names that client, and one whose client has gone
+  is marked kept, with the time its idle close ends it, or that it ends when its window is closed.
+  Each client is listed by its conversation, with the folder it started in. The page offers no
+  close, the maintainer's *"17 a"*: a client's connection ends with the client.
+  `BrowserAI.exe --sessions` opens a tab on that page.
 
   **Registration lives on the status page, and the configuration window is gone (Q319 b).** Each
   client has its own section: what it has, for all your projects and in the project the page was
   started in, and buttons that each name their client, to register or unregister for all your
-  projects, register in a project, or remove BrowserAI from a project. A project folder is chosen
-  in Windows' own folder picker, which BrowserAI opens (Q311) and which may come up behind the
-  browser. A registration that was not done is one sentence with the full text under *Show
-  details* (Q309 b), and the Codex section says that a Codex already running when BrowserAI was
-  installed finds it in a project only after a restart (Q314 b). The first tab after an install
+  projects, register in a project, or remove BrowserAI from a project. A register or a repair keeps
+  the data root the install was made with, read from the definition its hooks saved. A project
+  folder is chosen in Windows' own folder picker, which BrowserAI opens (Q311) and which may come up
+  behind the browser. A registration that was not done is one sentence with the full text under
+  *Show details* (Q309 b), and the Codex section says that a Codex already running when BrowserAI
+  was installed finds it in a project only after a restart (Q314 b). The first tab after an install
   says BrowserAI is installed and shows what each client has; it no longer claims every client was
   registered. The window, its task dialog and the link handler that could run what a project file
   planted are deleted.
