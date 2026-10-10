@@ -128,7 +128,7 @@ internal sealed class ChangelogPageTests
         var unreleased = await PageRig.GetAsync(development.HandOut(PageKind.Changelog));
 
         await Assert.That(unreleased.Body).Contains("<h1>What changed since the last release</h1>");
-        await Assert.That(unreleased.Body).Contains("This is a development build, 9.0.0. What it has over the last release is what the changelog lists as not yet released.");
+        await Assert.That(unreleased.Body).Contains("This is a development build, 9.0.0. Below is what the changelog lists as not yet released.");
         await Assert.That(unreleased.Body).Contains("Toasts with a countdown.");
 
         using var none = new PageRig();

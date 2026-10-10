@@ -192,8 +192,10 @@ internal static class RelayErrors
     /// <returns>The sentence.</returns>
     public static string RootRefused(string tool, Hosting.RootRefusal? refusal, string logPath) =>
         (refusal is { } refused
-            ? $"BrowserAI's background process will not start: it will not serve out of its {refused.Noun} '{refused.Root}', because {refused.Why}. "
-            : $"BrowserAI's background process will not start: it will not serve out of its data root or its install root, and its log, {logPath}, says which and why. ")
+            // The texts polish, 2026-10-10, pages #149 and #150 (previously "will not
+            // start: it will not serve out of ..."), which said "will not" twice.
+            ? $"BrowserAI's background process does not start, because it will not serve out of its {refused.Noun} '{refused.Root}': {refused.Why}. "
+            : $"BrowserAI's background process does not start, because it will not serve out of its data root or its install root; its log, {logPath}, says which and why. ")
         + $"'{tool}' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until the setting is changed. "
         + (refusal is { } fix
             ? $"The person at this computer needs to {fix.Remedy} "
@@ -313,16 +315,18 @@ internal static class RelayErrors
             TaskState.Missing =>
                 $"Its scheduled task, '{taskName}', is missing, so nothing starts BrowserAI at sign-in. "
                 + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again from the copy the install saved and starts BrowserAI. "
-                + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to install BrowserAI again. ",
+                + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to reinstall BrowserAI. ",
 
             // Added 2026-10-10, round 2 of the texts review, #140: with no pack id the task
             // has no name, and a Start Menu start runs nothing (PersonStart's 6112).
             TaskState.Unnamed =>
                 "This BrowserAI is installed, but its pack id is unknown, so its scheduled task has no name and nothing starts its background process, a person's own start included. "
-                + "The person at this computer needs to install BrowserAI again, which registers the task. ",
+                + "The person at this computer needs to reinstall BrowserAI, which registers the task. ",
             _ => "The person at this computer needs to start BrowserAI from the Start Menu. ",
         }
-        + (detail is { Length: > 0 } said ? $"The Task Scheduler reported: {said.TrimEnd('.', ' ')}. " : string.Empty)
+        // The texts polish, 2026-10-10, page #142 (previously "The Task Scheduler reported:
+        // " before the detail, which is BrowserAI's own sentence about the Task Scheduler).
+        + (detail is { Length: > 0 } said ? $"{said.TrimEnd('.', ' ')}. " : string.Empty)
         + "Only that person can do this: do not start BrowserAI or change its task yourself, and do not retry this call until they have.";
 
     /// <summary>
@@ -383,7 +387,10 @@ internal static class RelayErrors
         + PassedOn
         + (developerStart is { Length: > 0 } command
             ? NothingStartsItAgain(command)
-            : $"BrowserAI holds the next call for up to {Seconds(RelayConstants.HoldBound)} seconds while the background process starts again; if it does not start, the person at this computer needs to start BrowserAI from the Start Menu. "
+            // The texts polish, 2026-10-10, page #144 (previously "... while the background
+            // process starts again; if it does not start, ..."): after an uninstall, the
+            // Task Scheduler's End or a sign-out nothing starts one.
+            : $"BrowserAI holds the next call for up to {Seconds(RelayConstants.HoldBound)} seconds in case the background process starts again; if it does not, the person at this computer needs to start BrowserAI from the Start Menu. "
                 + "Do not start BrowserAI yourself.");
 
     /// <summary>The background refused this relay's greeting, and said why.</summary>
@@ -393,10 +400,13 @@ internal static class RelayErrors
     /// goes on looking, so the next call meets whatever serves the pipe then.
     /// </remarks>
     /// <param name="tool">The tool the call named.</param>
-    /// <param name="refusal">The background's sentence.</param>
+    /// <param name="refusal">The background's sentence, or <see langword="null"/> when its error carried none.</param>
     /// <returns>The sentence.</returns>
-    public static string BackgroundRefused(string tool, string refusal) =>
-        $"'{tool}' was NOT run: nothing reached a browser. BrowserAI's background process refused this connection and said: {refusal}";
+    // The texts polish, 2026-10-10, page #145 (previously "... refused this connection and
+    // said: it gave no reason." when the error carried no message).
+    public static string BackgroundRefused(string tool, string? refusal) =>
+        $"'{tool}' was NOT run: nothing reached a browser. BrowserAI's background process refused this connection and "
+        + (refusal is { Length: > 0 } said ? $"said: {said}" : "gave no reason.");
 
     /// <summary>
     /// An update is installing, and the call was not run: U2's sentence.
@@ -429,8 +439,10 @@ internal static class RelayErrors
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
     /// <returns>The sentence.</returns>
     public static string UpdateInstalling(string tool, string? version, string? clientName) =>
-        $"BrowserAI is installing an update{To(version)}; nothing was run. "
-        + $"'{tool}' did not reach a browser, and nothing changed. "
+        // The texts polish, 2026-10-10, page #146 (previously "...; nothing was run. '{tool}'
+        // did not reach a browser, and nothing changed."), one fact said once, in the form
+        // every other answer says it.
+        $"BrowserAI is installing an update{To(version)}, so '{tool}' was NOT run: nothing reached a browser. "
         + UpdateRemedy(clientName)
         + SessionsAfterAnUpdate;
 
@@ -447,7 +459,8 @@ internal static class RelayErrors
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
     /// <returns>The sentence.</returns>
     public static string UpdateInstallingDuringTheCall(string tool, string? version, string? clientName) =>
-        $"BrowserAI is installing an update{To(version)} and ended while '{tool}' was running. "
+        // The texts polish, 2026-10-10, page #147 (previously "and ended while", with no object).
+        $"BrowserAI is installing an update{To(version)} and ended this connection while '{tool}' was running. "
         + PassedOn
         + UpdateRemedy(clientName, passedOn: true)
         + SessionsAfterAnUpdate;
@@ -487,13 +500,17 @@ internal static class RelayErrors
     private static string UpdateRemedy(string? clientName, bool passedOn = false) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
             ? (passedOn
-                ? "When your client runs with -p or in VS Code, it starts the updated BrowserAI by itself on its next call, a few seconds from now."
+                // The texts polish, 2026-10-10, page #147 (previously "..., a few seconds
+                // from now." and "BrowserAI answers again in a few seconds"): when the next
+                // call comes is the model's to decide, and one before the installer
+                // finishes meets the row above.
+                ? "When your client runs with -p or in VS Code, it starts the updated BrowserAI by itself on its next call."
                 : "When your client runs with -p or in VS Code, call again in a few seconds: it starts the updated BrowserAI by itself on that call.")
                 + " In a terminal session it shows BrowserAI as disconnected instead, and the person at this computer needs to run /mcp, choose BrowserAI and choose Reconnect before BrowserAI answers again."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Your client does not start BrowserAI again once this one has ended, so BrowserAI answers again in a new conversation."
                 : passedOn
-                    ? "If your client starts BrowserAI again by itself, BrowserAI answers again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation."
+                    ? "If your client starts BrowserAI again by itself, BrowserAI answers again once the update is installed; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation."
                     : "If your client starts BrowserAI again by itself, call again in a few seconds; if it shows BrowserAI as disconnected, reconnect the BrowserAI server, or start a new conversation.";
 
     private static string When(DateTimeOffset at) => SessionErrors.When(at);

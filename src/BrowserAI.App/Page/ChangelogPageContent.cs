@@ -108,7 +108,10 @@ internal static partial class ChangelogPageContent
 
             default:
                 _ = html.Append("<h1>").Append(PageContent.Text("What changed since the last release")).Append("</h1>\n<p>")
-                    .Append(PageContent.Text($"This is a development build, {installed}. What it has over the last release is what the changelog lists as not yet released."))
+                    // The texts polish, 2026-10-10, page #135 (previously "... What it has
+                    // over the last release is what the changelog lists as not yet
+                    // released.").
+                    .Append(PageContent.Text($"This is a development build, {installed}. Below is what the changelog lists as not yet released."))
                     .Append("</p>\n");
                 break;
         }

@@ -353,7 +353,7 @@ internal sealed class ScheduledTasks : ILogonTasks
         thread.Start();
 
         return !thread.Join(CallBound)
-            ? Failed(what, string.Create(CultureInfo.InvariantCulture, $"the scheduler did not answer inside {CallBound.TotalSeconds:F0} s"))
+            ? Failed(what, string.Create(CultureInfo.InvariantCulture, $"the scheduler did not answer within {CallBound.TotalSeconds:F0} s"))
             : report ?? Failed(what, "the call ended without saying what it did");
     }
 
@@ -364,6 +364,9 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// sentence used to end in two: in the hooks' line, and in a person's start's 6105
     /// and its line for a task it could not register again. <i>Corrected 2026-10-10
     /// (previously the reason was written with a full stop after it, unchanged).</i>
+    /// <i>Corrected 2026-10-10 again, the texts polish, page #142 (previously "The task
+    /// scheduler could not ..."): the name as Windows spells it, as the lines that carry
+    /// this sentence spell it beside it.</i>
     /// <c>internal</c> so the suite can give it a reason that ends in one: the real
     /// scheduler's failures are not the suite's to choose.
     /// </remarks>
@@ -371,5 +374,5 @@ internal sealed class ScheduledTasks : ILogonTasks
     /// <param name="why">Why it failed.</param>
     /// <returns>The report.</returns>
     internal static TaskReport Failed(string what, string why) =>
-        new(TaskChange.Failed, $"The task scheduler could not {what}: {why.TrimEnd().TrimEnd('.')}.");
+        new(TaskChange.Failed, $"The Task Scheduler could not {what}: {why.TrimEnd().TrimEnd('.')}.");
 }

@@ -65,7 +65,12 @@ internal sealed class BrokenInstallTests
         await Assert.That(toast.Xml).Contains("<text>BrowserAI needs reinstalling</text>");
         // The installer as the release ships it and README names it, since 2026-10-10
         // (previously "Run BrowserAI-win-Setup.exe again", a name no release carries).
-        await Assert.That(toast.Xml).Contains("Download BrowserAI.exe from the latest release and run it");
+        // ⚠️ And since the texts polish of the same day, page #78 (previously "Download
+        // BrowserAI.exe from the latest release and run it"): an install that takes its
+        // updates from a folder is not reinstalled from the release, and the status page
+        // the button opens says how for both.
+        await Assert.That(toast.Xml).Contains("Reinstall BrowserAI the way you installed it; your sessions and their files are kept.");
+        await Assert.That(toast.Xml).DoesNotContain("latest release");
         await Assert.That(toast.Xml).DoesNotContain("Setup.exe");
         await Assert.That(toast.Xml).Contains("<action content=\"How to reinstall\" arguments=\"action=status-page\" activationType=\"background\"/>");
         await Assert.That(toast.SuppressPopup).IsFalse();
@@ -176,7 +181,11 @@ internal sealed class BrokenInstallTests
             await Assert.That(html).StartsWith("<div class=\"note broken\" role=\"alert\">").Because(PageNames.Of(kind));
             await Assert.That(html).Contains("BrowserAI needs reinstalling.");
             await Assert.That(html).Contains(PageContent.Text(Difference));
-            await Assert.That(html).Contains("To reinstall, download BrowserAI.exe from");
+            // ⚠️ Both installs, since the texts polish of 2026-10-10, page #81 (previously
+            // "To reinstall, download BrowserAI.exe from" the latest release alone).
+            await Assert.That(html).Contains("<p>Reinstall BrowserAI the way you installed it. For a release, download BrowserAI.exe from <a href=");
+            await Assert.That(html).Contains($"run BrowserAI.exe from that folder with the {UpdateConfiguration.FeedVariable} you installed it with.");
+            await Assert.That(html).DoesNotContain("BROWSERAI_ROOT");
             await Assert.That(html).DoesNotContain("Setup.exe");
             await Assert.That(html).Contains(PageContent.ReleasesUrl);
         }

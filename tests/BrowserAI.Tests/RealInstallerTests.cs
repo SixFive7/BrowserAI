@@ -1027,7 +1027,7 @@ internal sealed partial class RealInstallerTests
         // same day. The task's name holds this install root's key, so the line found is
         // this arm's and no other run's. Planted red against the hooks as they were.
         await Assert.That(VelopackLogOf(ReleaseLayout.TestPackId))
-            .Contains($"-- sign-in task ({RegistrationIntent.Install}): {TaskChange.Registered}. The task '{taskName}' is registered.");
+            .Contains($"-- sign-in task ({RegistrationIntent.Install}): The task '{taskName}' is registered.");
 
         // ---- And uninstall, in the same sandbox --------------------------------
         var update = Path.Combine(installRoot.Path, "Update.exe");

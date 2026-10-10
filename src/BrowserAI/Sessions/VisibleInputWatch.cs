@@ -371,7 +371,7 @@ internal static partial class VisibleInputLog
     [LoggerMessage(
         EventId = 100,
         Level = LogLevel.Information,
-        Message = "A visible session is open, so the check for a person's keyboard or mouse input in its window has started: one timer for every visible session in this process.")]
+        Message = "A visible session is open, so the check for a person's keyboard or mouse input in visible windows has started; one timer serves every visible session in this process.")]
     public static partial void Started(ILogger logger);
 
     /// <summary>The last visible session went, and the timer stopped.</summary>

@@ -55,7 +55,12 @@ internal static class InstallToastContent
             UpdateToastContent.Arguments(ToastAction.StatusPage, null),
             [
                 "BrowserAI needs reinstalling",
-                "Part of this install does not match the rest, so no browser session can open. Download BrowserAI.exe from the latest release and run it; your sessions and their files are kept.",
+                // ⚠️ Corrected 2026-10-10, the texts polish, page #78 (previously "...
+                // so no browser session can open. Download BrowserAI.exe from the latest
+                // release and run it; ..."): an install that takes its updates from a
+                // folder on this computer is not reinstalled from the release, and the
+                // status page the button opens says how for both.
+                "Part of this install does not match the rest, so no browser session opens. Reinstall BrowserAI the way you installed it; your sessions and their files are kept.",
             ],
             null,
             ("How to reinstall", UpdateToastContent.Arguments(ToastAction.StatusPage, null)),
@@ -211,7 +216,9 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
     /// <summary>The broken install toast's records.</summary>
     private static partial class InstallToastsLog
     {
-        [LoggerMessage(EventId = 7201, Level = LogLevel.Warning, Message = "This install is broken ({Difference}), and the toast that says BrowserAI needs reinstalling was raised.")]
+        // The texts polish, 2026-10-10, pages #236 and #239 (previously "... was raised."
+        // and "The dashboard could not be told ..."): the words 7202 and the pages use.
+        [LoggerMessage(EventId = 7201, Level = LogLevel.Warning, Message = "This install is broken ({Difference}), and the toast that says BrowserAI needs reinstalling was shown.")]
         public static partial void Shown(ILogger logger, string difference);
 
         [LoggerMessage(EventId = 7202, Level = LogLevel.Warning, Message = "Windows did not show the toast that says BrowserAI needs reinstalling.")]
@@ -220,7 +227,7 @@ internal sealed partial class BrokenInstallNotice : IInstallHealth, IDisposable
         [LoggerMessage(EventId = 7203, Level = LogLevel.Warning, Message = "Windows did not remove the toast that says BrowserAI needs reinstalling.")]
         public static partial void RemoveThrew(ILogger logger, Exception failure);
 
-        [LoggerMessage(EventId = 7204, Level = LogLevel.Warning, Message = "The dashboard could not be told that the install's state changed.")]
+        [LoggerMessage(EventId = 7204, Level = LogLevel.Warning, Message = "BrowserAI's page could not be told that the install's state changed.")]
         public static partial void TellThrew(ILogger logger, Exception failure);
     }
 }

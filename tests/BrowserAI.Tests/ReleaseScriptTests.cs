@@ -122,7 +122,11 @@ internal sealed class ReleaseScriptTests
         var (sectionlessExit, _, sectionlessSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", sectionless, "-Today", Today);
 
         await Assert.That(sectionlessExit).IsNotEqualTo(0);
-        await Assert.That(sectionlessSaid).Contains($"'{sectionless}' has no 'vendored' section").Because(sectionlessSaid);
+        // ⚠️ The header names the file, and a reason does not repeat it, since the texts
+        // polish of the same day, page #243 (previously "'<file>' has no 'vendored'
+        // section" and "'<file>' holds no rows at all").
+        await Assert.That(sectionlessSaid).Contains($"and '{sectionless}' does not show that they are").Because(sectionlessSaid);
+        await Assert.That(sectionlessSaid).Contains("There is no 'vendored' section, so its rows were never read.").Because(sectionlessSaid);
         await Assert.That(sectionlessSaid).DoesNotContain("drift-check.json has no").Because(sectionlessSaid);
 
         var empty = await WriteDriftCheckAsync(scratch.Path, "empty", Today, check =>
@@ -133,7 +137,7 @@ internal sealed class ReleaseScriptTests
         var (emptyExit, _, emptySaid) = await RunAsync(DriftCheckScript, "-DriftCheck", empty, "-Today", Today);
 
         await Assert.That(emptyExit).IsNotEqualTo(0);
-        await Assert.That(emptySaid).Contains($"'{empty}' holds no rows at all").Because(emptySaid);
+        await Assert.That(emptySaid).Contains("There are no rows at all, so nothing was checked.").Because(emptySaid);
 
         var bare = await WriteDriftCheckAsync(scratch.Path, "bare", Today, check =>
         {
@@ -181,7 +185,7 @@ internal sealed class ReleaseScriptTests
         var (exit, _, said) = await RunAsync(ReleaseScript, "-DriftCheckFile", stale, "-OutputDir", Path.Combine(scratch.Path, "Releases"));
 
         await Assert.That(exit).IsNotEqualTo(0);
-        await Assert.That(said).Contains("A release takes only the latest of every dependency").Because(said);
+        await Assert.That(said).Contains("A release needs every dependency at its latest version").Because(said);
         await Assert.That(said).Contains("was last taken on 2000-01-01");
         await Assert.That(said).DoesNotContain("matches Velopack").Because(said);
 
@@ -190,6 +194,11 @@ internal sealed class ReleaseScriptTests
         // $ErrorActionPreference Stop, which ended the release script before it could say
         // that no release was cut. Planted red against the script with no catch.
         await Assert.That(said).Contains("No release was cut.").Because(said);
+
+        // And only the check's own reasons say what to do, since the texts polish of the
+        // same day, page #249 (previously the script's line went on "Take the daily drift
+        // check AGENTS.md describes, adopt every drift ..." after them).
+        await Assert.That(said).DoesNotContain("adopt every drift it finds").Because(said);
 
         // ⚠️ AND A CURRENT CHECK LETS THE RELEASE GO ON, the positive control the
         // refusal needs: a script that refused every check would pass the half above.
@@ -225,7 +234,7 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(testPackBranch).IsGreaterThan(0).Because("the call sits in the branch a test pack does not take");
         await Assert.That(otherwise).IsGreaterThan(testPackBranch);
-        await Assert.That(script[testPackBranch..otherwise]).Contains("the drift check is a release's");
+        await Assert.That(script[testPackBranch..otherwise]).Contains("the drift check is for a release");
     }
 
     /// <summary>

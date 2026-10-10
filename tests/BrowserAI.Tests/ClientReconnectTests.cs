@@ -609,7 +609,7 @@ internal sealed class ClientReconnectTests
         {
             var line = ProcessLogRecords.In(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created)
                 .Split('\n')
-                .FirstOrDefault(record => record.Contains(needle, StringComparison.Ordinal) && record.Contains(" went; ", StringComparison.Ordinal));
+                .FirstOrDefault(record => record.Contains(needle, StringComparison.Ordinal) && record.Contains(" disconnected; ", StringComparison.Ordinal));
 
             if (line is not null)
             {

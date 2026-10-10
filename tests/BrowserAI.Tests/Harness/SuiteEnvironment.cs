@@ -1040,11 +1040,17 @@ internal static class SuiteEnvironment
     private static string NameOf(string fallback) =>
         TestContext.Current?.Metadata.TestName is { Length: > 0 } name ? name : fallback;
 
+    // The texts polish, 2026-10-10, page #242 (previously opened in lower case, with the
+    // shipping release's path standing alone as a sentence, and "so it is a failure rather
+    // than a skip").
     private static string RefusalFor(SuiteCapability capability) =>
-        $"{Title(capability)} is not available to this run, so this test would prove nothing that its name claims. {WitnessFor(capability)}. {RemedyFor(capability)}"
+        $"{Capitalised(Title(capability))} is not available to this run, so this test would prove nothing that its name claims. "
+        + $"{(capability is SuiteCapability.ShippingRelease ? "It looks for " : string.Empty)}{WitnessFor(capability)}. {RemedyFor(capability)}"
         + (IsReleaseRun
-            ? $" This is a release run ({ReleaseRunVariable} is set), so it is a failure rather than a skip."
+            ? $" This is a release run ({ReleaseRunVariable} is set), so it fails instead of skipping."
             : $" Set {ReleaseRunVariable}=1 to make this a failure instead of a skip.");
+
+    private static string Capitalised(string words) => words.Length is 0 ? words : char.ToUpperInvariant(words[0]) + words[1..];
 
     private static string Title(SuiteCapability capability) => capability switch
     {

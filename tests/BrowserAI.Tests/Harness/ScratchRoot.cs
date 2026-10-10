@@ -717,7 +717,7 @@ internal static partial class ScratchReclaimAnnouncement
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "The test harness's scratch reclaim deleted {Folder} at {At}, from {Host}, because {Reason}.")]
+        Message = "The test harness's scratch reclaim, in process {Host}, deleted {Folder} at {At}, because {Reason}.")]
     public static partial void Deleted(ILogger logger, string folder, string at, string host, string reason);
 
     /// <summary>Records one folder the pass could delete only part of.</summary>
@@ -731,6 +731,6 @@ internal static partial class ScratchReclaimAnnouncement
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Information,
-        Message = "The test harness's scratch reclaim deleted part of {Folder} at {At}, from {Host}, because {Reason}; {Left} node(s) would not go, and the folder keeps its owner record until a later pass takes the rest.")]
+        Message = "The test harness's scratch reclaim, in process {Host}, deleted part of {Folder} at {At}, because {Reason}; {Left} node(s) would not go, and a later pass tries them again.")]
     public static partial void DeletedPart(ILogger logger, string folder, string at, string host, string reason, int left);
 }

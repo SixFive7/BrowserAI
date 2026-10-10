@@ -285,13 +285,19 @@ internal sealed record RegistrationClient
     /// <param name="found">The file the bare name resolves to, as RegisterAI reported it, or <see langword="null"/>.</param>
     /// <returns>The sentence.</returns>
     /// <remarks>
-    /// <b>The sentence names what the name finds, and that it may take a restart</b>:
-    /// a Codex process started before the install carries a PATH without the folder,
-    /// which follows from how the launcher builds the server's environment. <i>Corrected
-    /// 2026-10-10 (previously "and was not measured")</i>: measured 2026-09-25, where such a
-    /// Codex never started the server, 3 of 3, and on 2026-10-10 at codex-cli
-    /// 0.162.0-alpha.2, where it started it 0 of 6 (<c>kb/mcp/protocol.md</c>). <i>Moved here 2026-10-03 from <c>CodexRegistration.ProjectCommandGiven</c>,
-    /// with its wording unchanged.</i>
+    /// <b>The sentence names what the name finds</b>, and a Codex process started before
+    /// the install carries a PATH without the folder, which follows from how the launcher
+    /// builds the server's environment. <i>Corrected 2026-10-10 (previously "and was not
+    /// measured")</i>: measured 2026-09-25, where such a Codex never started the server, 3
+    /// of 3, and on 2026-10-10 at codex-cli 0.162.0-alpha.2, where it started it 0 of 6
+    /// (<c>kb/mcp/protocol.md</c>). <i>Moved here 2026-10-03 from
+    /// <c>CodexRegistration.ProjectCommandGiven</c>, with its wording unchanged.</i>
+    /// ⚠️ <i>Corrected 2026-10-10 a second time, the texts polish, page #90 (previously
+    /// "The sentence names what the name finds, and that it may take a restart", and the
+    /// sentence ended "A Codex that was already running before BrowserAI was installed may
+    /// need to be restarted to see it.")</i>: the restart is said once, by the page's Codex
+    /// section, <c>PageContent.CodexStartedBeforeTheInstall</c>, without the hedge the
+    /// measurement above took away.
     /// </remarks>
     public static string CodexProjectNote(string server, string? found)
     {
@@ -302,7 +308,11 @@ internal sealed record RegistrationClient
         return found is null
             ? $"{How} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."
             : string.Equals(Path.GetFullPath(found), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
-                ? $"{How} It finds this install. A Codex that was already running before BrowserAI was installed may need to be restarted to see it."
-                : $"{How} The first one on your PATH is '{found}', which is not this install.";
+                // The texts polish, 2026-10-10, page #90 (previously "It finds this install.
+                // A Codex that was already running ... may need to be restarted to see it." and
+                // "..., which is not this install."): the page's Codex section says the restart,
+                // and the other ending says what follows.
+                ? $"{How} It finds this install."
+                : $"{How} The first one on your PATH is '{found}', which is not this install, so Codex starts that one.";
     }
 }

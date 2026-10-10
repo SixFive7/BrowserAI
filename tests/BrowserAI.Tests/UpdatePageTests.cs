@@ -209,7 +209,7 @@ internal sealed class UpdatePageTests
 
         var session = Render(empty with { HiddenSessions = [new HoldingSession(@"C:\h", null, null)] });
 
-        await Assert.That(session).Contains(PageContent.Text("A hidden session set never to close holds it: it installs once an agent closes that session and nothing else uses BrowserAI."));
+        await Assert.That(session).Contains(PageContent.Text("A hidden browser session set never to close holds it: it installs once an agent closes that session and nothing else uses BrowserAI."));
         await Assert.That(Section(session, "hidden")).Contains(PageContent.Text("Set never to close: an agent has to close it."));
 
         var call = Render(empty with { Relays = [new HoldingRelay("Codex", null, Now.AddMinutes(-1), CallInFlight: true, RelayReconnect.NewConversation)] });
@@ -321,7 +321,10 @@ internal sealed class UpdatePageTests
         // ⚠️ And what installing now does names the version that installs, round 2 of
         // the texts review, 2026-10-10, #118 (previously "once the new version is
         // installed", above an older one). Planted red against "the new version".
-        await Assert.That(Section(Render(older), "install-now")).Contains("BrowserAI starts again by itself once BrowserAI 8.5.0 is installed.");
+        // And BrowserAI named once, since the texts polish of the same day, page #120
+        // (previously "once BrowserAI 8.5.0 is installed").
+        await Assert.That(Section(Render(older), "install-now")).Contains("BrowserAI starts again by itself once 8.5.0 is installed.");
+        await Assert.That(Section(Render(older), "install-now")).Contains("For Claude Code in a terminal, run /mcp there, choose BrowserAI, then Reconnect.");
         await Assert.That(Section(Render(older), "install-now")).DoesNotContain("new version");
 
         // An open tab hears of it: the watch's signature tells the two apart.
@@ -382,7 +385,17 @@ internal sealed class UpdatePageTests
         await Assert.That(string.Join(",", holds.Asked)).IsEqualTo("1.2.0,1.2.0");
 
         // The background's stop, as Program.Background says it, is the one sentence.
-        const string Stopped = "BrowserAI is installing an update, so this tab has stopped. Open BrowserAI from the Start Menu again once the installed notification has appeared.";
+        // ⚠️ Since the texts polish of 2026-10-10, pages #131 and #132 (previously "... so
+        // this tab has stopped. Open BrowserAI from the Start Menu again once the installed
+        // notification has appeared."), and a build that is not installed is not sent to
+        // the Start Menu, which starts another BrowserAI.
+        const string Stopped = "BrowserAI is installing an update, so this page has stopped. When a notification says the update is installed, open BrowserAI from the Start Menu again.";
+
+        await Assert.That(Program.StopSentence(BrowserAI.Background.BackgroundState.Updating, @"C:\install")).IsEqualTo(Stopped);
+        await Assert.That(Program.StopSentence(BrowserAI.Background.BackgroundState.Stopping, @"C:\install"))
+            .IsEqualTo("BrowserAI's background has stopped, so this page has stopped. Open BrowserAI from the Start Menu to start it again.");
+        await Assert.That(Program.StopSentence(BrowserAI.Background.BackgroundState.Stopping, null))
+            .IsEqualTo("BrowserAI's background has stopped, so this page has stopped.");
 
         rig.Page.Tell(Stopped);
 

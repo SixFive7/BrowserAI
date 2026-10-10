@@ -343,7 +343,7 @@ internal static class Program
         }
 
         var run = ScheduledTasks.Instance.Run(name, startedBy);
-        AppLog.TaskAsked(logger, run.Change, run.Detail);
+        AppLog.TaskAsked(logger, run.Detail);
     }
 
     /// <summary>
@@ -403,11 +403,13 @@ internal static partial class AppLog
         Message = "Velopack reported a problem: {Message}")]
     public static partial void VelopackProblem(ILogger logger, string message, Exception? failure);
 
+    // The texts polish, 2026-10-10 (previously "... BrowserAI's background: {Change}.
+    // {Detail}", a TaskChange member's name in mid-sentence): the detail says it.
     [LoggerMessage(
         EventId = 6006,
         Level = LogLevel.Information,
-        Message = "Asked the Task Scheduler for BrowserAI's background: {Change}. {Detail}")]
-    public static partial void TaskAsked(ILogger logger, TaskChange change, string detail);
+        Message = "Asked the Task Scheduler for BrowserAI's background. {Detail}")]
+    public static partial void TaskAsked(ILogger logger, string detail);
 
     // Ids 6001 (the window opening) and 6005 (a click in the window threw) went with
     // the configuration window on 2026-10-03, which the browser tab replaced. A log

@@ -92,9 +92,13 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).DoesNotContain("live-instance set");
         // And it says what a refused start leaves, round 2 of the texts review,
         // 2026-10-10, first page 147 (previously it ended at "created under '<root>'.").
+        // In fewer words since the texts polish of the same day, page #184 (previously
+        // "What a refused start leaves is ... when the start was the background's, ...").
         await Assert.That(refusal).EndsWith(
             $"Nothing was started, and no session or browser was created under '{verdict.Detail!.Root}'. "
-            + "What a refused start leaves is this line in the log and, when the start was the background's, the refusal in its record under the data root, which every relay reads to answer each call.");
+            + "A refused start leaves this line in the log and, for a background, the refusal in its record under the data root, which every relay answers each call from.");
+        await Assert.That(refusal).Contains("so reinstall it with that variable cleared;");
+        await Assert.That(refusal).DoesNotContain("naming a directory under that profile");
 
         // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
         // used to end "if the root was set by the installer's install-to flag,
@@ -114,9 +118,12 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).Contains("it moves the install root and never the data root");
 
         // And both roots are named, whichever is at fault, so a reader never has
-        // to guess which one the sentence is about.
-        await Assert.That(refusal).Contains("the data root is");
-        await Assert.That(refusal).Contains("the install root is");
+        // to guess which one the sentence is about. ⚠️ In fewer words since the texts
+        // polish of 2026-10-10, page #184 (previously "the data root is '...' and the
+        // install root is absent, because this process was not installed"): a build
+        // that is not installed has one root, and the sentence says so.
+        await Assert.That(refusal).Contains("This build is not installed, so its one root is the data root '");
+        await Assert.That(refusal).DoesNotContain("the install root is absent");
 
         // ⚠️ Case-insensitively, and that is not a nicety. Windows hands every
         // path back with an upper-case drive letter while a process keeps
@@ -525,17 +532,25 @@ internal sealed class InstallRootScopeTests
         // cannot -- asserted in both directions, because a refusal offering
         // BROWSERAI_ROOT here would send somebody to change a setting that has
         // no effect on the thing being refused.
-        await Assert.That(refusal).Contains("--installto");
+        //
+        // ⚠️ The default location and no other, since the texts polish of 2026-10-10,
+        // pages #149 and #184 (previously "install BrowserAI inside '<profile>' -- the
+        // default location, or with the installer the release ships, 'BrowserAI.exe
+        // --installto <a directory under that profile>'"): the maintainer's 21 of the same
+        // day refuses an install in a non-standard folder, so that a project's entry
+        // resolves on every developer's PC.
+        await Assert.That(refusal).Contains("reinstall BrowserAI inside '");
+        await Assert.That(refusal).Contains("': its default location is there.");
+        await Assert.That(refusal).DoesNotContain("--installto");
         await Assert.That(refusal).Contains("it moves the data root and never the install root");
-        await Assert.That(refusal).Contains("applying an update terminates every process under the install root");
+        await Assert.That(refusal).Contains("applying an update ends every process under the install root");
         await Assert.That(refusal.Contains(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
-
-        // ⚠️ And the installer by the name the release ships it under, round 2 of the
-        // texts review, 2026-10-10, #147 and #175 (previously "Setup.exe --installto"):
-        // the release renames vpk's Setup.exe to BrowserAI.exe, whose parser reads
-        // --installto from its arguments and not from its name (kb, packaging).
-        await Assert.That(refusal).Contains("'BrowserAI.exe --installto <a directory under that profile>'");
         await Assert.That(refusal).DoesNotContain("Setup.exe");
+
+        // And the two roots named once, since the same page (previously "This build has
+        // two roots and they are moved by two different levers, so both are named: ...").
+        await Assert.That(refusal).Contains($"Its two roots are the data root '");
+        await Assert.That(refusal).DoesNotContain("two different levers");
     }
 
     /// <summary>
@@ -571,6 +586,43 @@ internal sealed class InstallRootScopeTests
 
         await Assert.That(real.MayServe).IsTrue();
         await Assert.That(real.Refusal).IsNull();
+    }
+
+    /// <summary>
+    /// Two roots neither of which could be settled are said in one line that names each
+    /// root once and says once what it costs, and two roots with no profile behind them
+    /// are one sentence.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, page #186.</b> Until that day the two whole
+    /// lines were joined, so the one line said <i>It is serving anyway</i>, the cost and
+    /// <i>This is the one line that would say so</i> twice. Neither case can be provoked
+    /// on a working filesystem, so the composition is asked directly, with the sentences
+    /// <c>Judge</c> writes for one root. Planted red against the join.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TwoRootsNeitherOfWhichCouldBeSettledAreSaidInOneLine()
+    {
+        const string Tail = " It is serving anyway. If two Windows users share this root, nothing reports it at run time: the second user's background finds its pipe's name taken and exits, and applying an update ends every process under the install root, the other user's browsers included. This is the one line that would say so.";
+
+        var data = @"The filesystem would not say what it calls 'C:\Users\someone', so BrowserAI cannot tell whether its data root 'C:\Users\someone\data' is inside this user's profile at 'C:\Users\someone'." + Tail;
+        var install = @"The filesystem would not say what it calls 'C:\Users\someone', so BrowserAI cannot tell whether its install root 'C:\Users\someone\app' is inside this user's profile at 'C:\Users\someone'." + Tail;
+
+        var both = InstallRootScope.BothUnestablished(data, install, @"C:\Users\someone\data", @"C:\Users\someone\app");
+
+        await Assert.That(both.Split("It is serving anyway.").Length - 1).IsEqualTo(1).Because(both);
+        await Assert.That(both.Split("This is the one line that would say so.").Length - 1).IsEqualTo(1).Because(both);
+        await Assert.That(both).Contains(@"its data root 'C:\Users\someone\data' is inside this user's profile at 'C:\Users\someone'. The filesystem would not say");
+        await Assert.That(both).Contains("If two Windows users share these roots, nothing reports it at run time");
+
+        var noProfile = InstallRootScope.BothUnestablished(
+            @"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its data root 'D:\data' is a per-user one.",
+            @"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its install root 'D:\app' is a per-user one.",
+            @"D:\data",
+            @"D:\app");
+
+        await Assert.That(noProfile).IsEqualTo(@"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its data root 'D:\data' and its install root 'D:\app' are per-user ones.");
     }
 
     /// <summary>

@@ -1432,11 +1432,15 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         // a reload would show this note again.
         if (!string.Equals(held.Version, version, StringComparison.OrdinalIgnoreCase))
         {
-            return $"The update waiting is {held.Version}, not {version}, so nothing was installed. This page shows {held.Version} now, with its own button.";
+            // ⚠️ And the texts polish of the same day, page #124 (previously it went on
+            // "This page shows {waiting} now, with its own button."): the note stays until
+            // the next Install now, so that sentence goes false, and the page under it
+            // shows the waiting version with its own button.
+            return $"The update waiting is {held.Version}, not {version}, so nothing was installed.";
         }
 
         return _downloading is { } newer
-            ? $"BrowserAI is downloading update {newer} right now, so try again once the download has finished."
+            ? $"BrowserAI is downloading update {newer}, so try again once the download has finished."
             : null;
     }
 

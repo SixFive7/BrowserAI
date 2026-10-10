@@ -271,7 +271,7 @@ internal sealed partial class RelayTests
             "BrowserAI's background process is not running, and none started in the 150 seconds this call was held, so 'browser_navigate' was NOT run: nothing reached a browser. "
             + $"Its scheduled task, '{FakeBackgroundFinder.TaskName}', is missing, so nothing starts BrowserAI at sign-in. "
             + "The person at this computer needs to start BrowserAI from the Start Menu, which registers the task again from the copy the install saved and starts BrowserAI. "
-            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to install BrowserAI again. "
+            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and the person needs to reinstall BrowserAI. "
             + "Only that person can do this: do not start BrowserAI or change its task yourself, and do not retry this call until they have.");
 
         Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Missing, FakeBackgroundFinder.TaskName, null));
@@ -306,7 +306,7 @@ internal sealed partial class RelayTests
 
         await Assert.That(answered.IdText).IsEqualTo("1");
         await Assert.That(answered.ToolText).DoesNotContain("Start Menu");
-        await Assert.That(answered.ToolText).Contains("needs to install BrowserAI again");
+        await Assert.That(answered.ToolText).Contains("needs to reinstall BrowserAI");
         Match(answered.ToolText, nameof(RelayErrors.NotRunning), RelayErrors.NotRunning("browser_navigate", TaskState.Unnamed, string.Empty, null));
     }
 
@@ -395,8 +395,8 @@ internal sealed partial class RelayTests
         var refusal = new BrowserAI.Hosting.RootRefusal(
             BrowserAI.Hosting.JudgedRoot.Data,
             @"D:\Shared\BrowserAI",
-            "it is outside this user's profile, so it is not storage Windows keeps per-user",
-            @"give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so install it again with that variable cleared.");
+            "it is outside this user's profile, so it is not per-user storage",
+            @"give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so reinstall it with that variable cleared.");
 
         rig.Finder.Absence = new BackgroundAbsence.RootRefused(refusal, Log);
 
@@ -410,9 +410,9 @@ internal sealed partial class RelayTests
 
         // Written out here and not taken from the catalogue.
         await Assert.That(first.ToolText).IsEqualTo(
-            @"BrowserAI's background process will not start: it will not serve out of its data root 'D:\Shared\BrowserAI', because it is outside this user's profile, so it is not storage Windows keeps per-user. "
+            @"BrowserAI's background process does not start, because it will not serve out of its data root 'D:\Shared\BrowserAI': it is outside this user's profile, so it is not per-user storage. "
             + "'browser_navigate' was NOT run: nothing reached a browser, and waiting cannot help, because every start of BrowserAI meets the same refusal until the setting is changed. "
-            + @"The person at this computer needs to give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so install it again with that variable cleared. "
+            + @"The person at this computer needs to give BrowserAI a data root under 'C:\Users\someone'. An install takes its data root from the installer's BROWSERAI_ROOT, so reinstall it with that variable cleared. "
             + "Only that person can do this: do not start BrowserAI or change its settings yourself.");
         await Assert.That(first.ToolText).DoesNotContain("crashed");
         await Assert.That(first.ToolText).DoesNotContain(RelayErrors.IssuesUrl);
@@ -677,7 +677,10 @@ internal sealed partial class RelayTests
             await rig.SendAsync(RelayRig.CallFrame("1"));
             var answered = await rig.NextAsync();
 
-            await Assert.That(answered.ToolText).StartsWith("BrowserAI is installing an update; nothing was run. 'browser_navigate' did not reach a browser, and nothing changed.");
+            // One fact said once, since the texts polish of 2026-10-10, page #146
+            // (previously "BrowserAI is installing an update; nothing was run.
+            // 'browser_navigate' did not reach a browser, and nothing changed.").
+            await Assert.That(answered.ToolText).StartsWith("BrowserAI is installing an update, so 'browser_navigate' was NOT run: nothing reached a browser.");
 
             // One instruction per client: calling again helps only where the client
             // starts BrowserAI again by itself.

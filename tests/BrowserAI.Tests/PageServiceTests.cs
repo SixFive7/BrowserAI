@@ -70,6 +70,21 @@ internal sealed class PageServiceTests
         await Assert.That(script.Header("Content-Type")).IsEqualTo("text/javascript; charset=utf-8");
         await Assert.That(script.Body).Contains("new EventSource('events?tab='");
 
+        // ⚠️ What the banner says once BrowserAI stops answering is the page's, since the
+        // texts polish of 2026-10-10 (previously the script's own sentence, with the Start
+        // Menu advice on every build): an installed build points at the Start Menu, and a
+        // build that is not installed, whose Start Menu entry starts another, does not.
+        await Assert.That(page.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.") + "\"");
+        await Assert.That(script.Body).Contains("say(unanswered)");
+        await Assert.That(script.Body).DoesNotContain("Start Menu");
+
+        using (var notInstalled = new PageRig(installed: false))
+        {
+            var bare = await PageRig.GetAsync(notInstalled.HandOut());
+
+            await Assert.That(bare.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page.") + "\"");
+        }
+
         var style = await PageRig.GetAsync(rig.Root + "page.css");
 
         await Assert.That(style.Status).IsEqualTo(200);
@@ -177,7 +192,9 @@ internal sealed class PageServiceTests
         var body = page.Body;
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
-        await Assert.That(body).Contains(PageContent.Text("BrowserAI's background, every session it holds, and each client connected to it."));
+        // ⚠️ How a connection ends is said once, here, since the texts polish of
+        // 2026-10-10, page #92 (previously in every client's entry).
+        await Assert.That(body).Contains(PageContent.Text("BrowserAI's background, every session it holds, and each client connected to it. A client's connection ends when the client closes it or exits, and when an update installs."));
 
         // The background comes first and says what it is: it ends with the session, an
         // uninstall or an update, never because it is idle.
@@ -204,7 +221,8 @@ internal sealed class PageServiceTests
 
         // A client that gave no name is called what the update page calls it (#85).
         await Assert.That(body).Contains("<li class=\"server\"><p>unnamed client, pid 303</p>");
-        await Assert.That(body.Split(PageContent.Text("It ends when its client closes it or exits, and when an update installs.")).Length - 1).IsEqualTo(3);
+        await Assert.That(body).DoesNotContain(PageContent.Text("It ends when its client closes it or exits"));
+        await Assert.That(body.Split("<p>Started in <code>" + PageContent.Text(@"C:\work") + "</code>.</p>").Length - 1).IsEqualTo(3);
         await Assert.That(body).DoesNotContain("type=\"checkbox\"");
         await Assert.That(body).DoesNotContain("close-servers");
         await Assert.That(body).DoesNotContain("the host holds");
@@ -247,6 +265,7 @@ internal sealed class PageServiceTests
                 (@"C:\install\live\301-0.live", Description(301, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
                 (@"C:\install\live\302-0.live", Description(302, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
                 (@"C:\install\live\303-0.live", Description(303, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
+                (@"C:\install\live\304-0.live", Description(304, ServerDescription.Roles.Relay, []) with { Client = ClaudeCode }),
             ],
             []);
 
@@ -259,6 +278,7 @@ internal sealed class PageServiceTests
                     301 => server with { Conversation = new ConversationName("Fix the <login> bug", IsTitle: true), Window = window },
                     302 => server with { Conversation = new ConversationName("Claude Code in one", IsTitle: false) },
                     303 => server with { Conversation = new ConversationName("unnamed conversation in BrowserAI", IsTitle: false), Window = window },
+                    304 => server with { Conversation = ClientFolder.Unnamed("Claude Code", @"C:\work") },
                     _ => server,
                 }),
             ],
@@ -278,6 +298,16 @@ internal sealed class PageServiceTests
         await Assert.That(heading).IsLessThan(body.IndexOf("pid 301", StringComparison.Ordinal));
         await Assert.That(body.IndexOf("pid 301", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 303", StringComparison.Ordinal));
         await Assert.That(body.IndexOf("pid 303", StringComparison.Ordinal)).IsLessThan(body.IndexOf("pid 302", StringComparison.Ordinal));
+
+        // ⚠️ And the folder only where nothing names it already, since the texts polish of
+        // 2026-10-10, page #95 (previously "Started in <folder>." under every name): a
+        // label in BrowserAI's own words that ends with the folder's name says it, which
+        // is the update page's rule, and a title or a label naming another folder does not.
+        var own = body[body.IndexOf("pid 304", StringComparison.Ordinal)..];
+
+        await Assert.That(body).Contains("<li class=\"server\"><p><strong>Claude Code in work</strong>, claude-code 2.1.296, pid 304");
+        await Assert.That(own[..own.IndexOf("</li>", StringComparison.Ordinal)]).DoesNotContain("Started in");
+        await Assert.That(body.Split("<p>Started in <code>" + PageContent.Text(@"C:\work") + "</code>.</p>").Length - 1).IsEqualTo(3);
     }
 
     // RETIRED 2026-10-08: AnInstallStopsTheSessionHostAfterTheServersAndBeforeTheHandOver,

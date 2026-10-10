@@ -471,7 +471,9 @@ internal sealed class LiveSession : IAsyncDisposable, IVisibleWindowOwner
     /// </para>
     /// </remarks>
     public const string IdleCloseWhy =
-        "BrowserAI closed this session's browser itself: no call had named the session for its idle period, and in a visible window nobody had used it, "
+        // The texts polish, 2026-10-10, page #224 (previously ", and in a visible window
+        // nobody had used it,"), which read as if every session had a window.
+        "BrowserAI closed this session's browser itself: no call had named the session for its idle period and, in a visible window, nobody had typed or clicked in it, "
         + "so it ended the browser server, node child included. Every browser call is refused until browserai_resume starts a new one, "
         + "and the browser's own session restore then reopens the tabs that were open.";
 

@@ -206,6 +206,14 @@ release body; nothing else depends on it.
   note:*: the cost of a full-page screenshot, when to ask a snapshot for bounding boxes, and the
   warnings on `browser_route` and `browser_network_state_set`.
 
+- 🔧 **The tool descriptions, the answers, the pages and the log say the same things in fewer words.**
+  The tool list an agent is handed is about 2,200 characters shorter on every prompt. A session
+  is a directory in every text, and another conversation is named by its client and its folder,
+  never by a process id. A browser call whose browser download failed says so, and no answer
+  tells an agent to delete a session's directory. How to reinstall a broken install covers one
+  that takes its updates from a folder, and a BrowserAI that is not installed is never sent to
+  the Start Menu.
+
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
   Over nine pages boxes cost 175,611 tokens against 105,804 without them, measured 2026-09-25.
   `browser_snapshot` still takes `boxes: true` for the call that needs coordinates.

@@ -131,7 +131,9 @@ internal sealed class InheritedEnvironmentTests
             var background = log.Factory.CreateLogger("BrowserAI.Background");
 
             StartupLog.Started(startup, BuildVersion.Current, Environment.ProcessId, image, workingDirectory, sqlite, sqliteBuild);
-            BackgroundLog.Started(background, pipe, PersonStart.StartedByPerson, record);
+            var how = Program.HowStarted(PersonStart.StartedByPerson);
+
+            BackgroundLog.Started(background, pipe, how, record);
 
             written = log.CurrentFile;
         }
@@ -140,6 +142,7 @@ internal sealed class InheritedEnvironmentTests
 
         await Assert.That(text).Contains($"BrowserAI {BuildVersion.Current} started.").Because("the startup record was not written at all");
         await Assert.That(text).Contains("BrowserAI's background serves");
+        await Assert.That(text).Contains("; it was started by a person's start, and its record is ");
         await AssertCarriesNoneOfItAsync(text, token, "the process log");
 
         // The positive control.

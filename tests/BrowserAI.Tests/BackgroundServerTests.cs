@@ -158,7 +158,12 @@ internal sealed class BackgroundServerTests
         await Assert.That(Kind(build)).IsEqualTo(RelayProtocol.RefusedForTheBuild);
         await Assert.That(Sentence(build)).Contains(BackgroundServerRig.Build);
         await Assert.That(Sentence(build)).Contains(Older);
-        await Assert.That(Sentence(build)).Contains("Start Menu");
+
+        // ⚠️ No Start Menu advice since the texts polish of 2026-10-10, page #154
+        // (previously it went on "Starting BrowserAI from the Start Menu starts the
+        // installed version's background."): this background is running, and a person's
+        // start only asks it for a page.
+        await Assert.That(Sentence(build)).DoesNotContain("Start Menu");
 
         var root = await RefusedAsync(rig, rig.Hello(dataRoot: elsewhere.Path));
 
@@ -166,9 +171,15 @@ internal sealed class BackgroundServerTests
         await Assert.That(Sentence(root)).Contains(rig.Identity.DataRoot);
         await Assert.That(Sentence(root)).Contains(elsewhere.Path);
 
+        // And the data root for what it is, the same page, #155 (previously "This
+        // background keeps its sessions under ...", and "'no data root'" in quotes): it
+        // holds the browsers, the session index and the log, not the sessions.
+        await Assert.That(Sentence(root)).StartsWith($"This background serves the data root '{rig.Identity.DataRoot}', and the client's BrowserAI was registered for '{elsewhere.Path}'");
+
         var none = await RefusedAsync(rig, BackgroundPipeClient.Hello(BackgroundServerRig.Build, dataRoot: null, rig.Clock.GetUtcNow()));
 
         await Assert.That(Kind(none)).IsEqualTo(RelayProtocol.RefusedForTheDataRoot);
+        await Assert.That(Sentence(none)).EndsWith("and the client's BrowserAI was registered for no data root, so it is not served here.");
 
         // The positive control: the same root in another spelling is served.
         using (var sameRoot = rig.Connect())
@@ -793,7 +804,7 @@ internal sealed class BackgroundServerTests
         var waited = rig.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
 
         await Assert.That(string.Join(" | ", waited))
-            .IsEqualTo("The background's pipe is closed; it waits for the 1 connection(s) on its list to end before it stops.");
+            .IsEqualTo("The background's pipe is closed; it waits for 1 open connection(s) to end before it stops.");
         await Assert.That(await client.ClosedAsync()).IsTrue();
     }
 
@@ -1080,6 +1091,35 @@ internal sealed class BackgroundServerTests
             await Assert.That(rig.Logs.Records.Any(log => (log.Message + log.Exception).Contains(secret, StringComparison.Ordinal)))
                 .IsFalse().Because($"a log record carries '{secret}'");
         }
+    }
+
+    /// <summary>
+    /// The background's own lines say in words how it was started and what a relay could
+    /// not be told, never an argument's raw value or a method's name on the wire.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, the texts polish, pages #187, #188 and #202.</b> Until that
+    /// day every sign-in read <i>started by $(Arg0)</i>, because the Task Scheduler leaves
+    /// the trigger's placeholder unexpanded, the installer's start read <i>started by
+    /// first-run</i>, and a relay that missed a call-off <i>could not be told
+    /// 'browserai/called-off'</i>. Planted red against the words as they were.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBackgroundsLinesSayHowItWasStartedAndWhatARelayWasNotToldInWords()
+    {
+        // The placeholder the sign-in trigger leaves is the task's own.
+        await Assert.That(BrowserAI.Registration.SignInTask.Arguments).EndsWith(" $(Arg0)");
+
+        await Assert.That(Program.HowStarted("$(Arg0)")).IsEqualTo("at sign-in");
+        await Assert.That(Program.HowStarted(BrowserAI.App.PersonStart.StartedByPerson)).IsEqualTo("by a person's start");
+        await Assert.That(Program.HowStarted(BrowserAI.App.PersonStart.StartedByTheInstaller)).IsEqualTo("by the installer after an install");
+        await Assert.That(Program.HowStarted(BrowserAI.App.PersonStart.StartedAfterAnUpdate)).IsEqualTo("by Velopack after an update");
+        await Assert.That(Program.HowStarted(null)).IsEqualTo($"with no {Program.StartedByArgument}");
+        await Assert.That(Program.HowStarted("a scheduler of its own")).IsEqualTo($"with {Program.StartedByArgument} 'a scheduler of its own'");
+
+        await Assert.That(RelayRoster.Told(RelayProtocol.CalledOff)).IsEqualTo("that the update was called off");
+        await Assert.That(RelayRoster.Told(RelayProtocol.End)).IsEqualTo("to end for the update");
     }
 
     /// <summary>

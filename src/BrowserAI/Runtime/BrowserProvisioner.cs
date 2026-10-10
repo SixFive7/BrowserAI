@@ -2500,7 +2500,7 @@ internal static partial class ProvisioningLog
     [LoggerMessage(
         EventId = 64,
         Level = LogLevel.Error,
-        Message = "The installer for {Browser} exited {ExitCode} without completing. {Tail}")]
+        Message = "The installer for {Browser} exited with code {ExitCode} without completing. {Tail}")]
     public static partial void InstallerRefused(ILogger logger, string browser, int exitCode, string tail);
 
     /// <summary>One of the caps fired and the installer was stopped.</summary>

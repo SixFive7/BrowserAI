@@ -371,7 +371,9 @@ internal sealed class RegistrationTests
 
         var text = string.Join("\n", logs.Select(ReadShared));
 
-        await Assert.That(text).Contains("Velopack Install hook running for BrowserAI 9.9.9");
+        // In words since the texts polish of 2026-10-10 (previously "Velopack Install hook
+        // running for BrowserAI 9.9.9. image=...").
+        await Assert.That(text).Contains("Velopack's Install hook is running for BrowserAI 9.9.9, as ");
         await Assert.That(text).Contains($"Registered '{McpRegistrar.ServerName}'");
 
         // ⚠️ THE HALF THAT IS RED AGAINST THE OLD LAYOUT: the install root the

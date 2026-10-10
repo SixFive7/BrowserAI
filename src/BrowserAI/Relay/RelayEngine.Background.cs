@@ -371,7 +371,7 @@ internal sealed partial class RelayEngine
     /// <returns>A task that completes once every held call is answered.</returns>
     private async Task RefusedAsync(JsonNode? error)
     {
-        var sentence = Text(Member(error, "message")) ?? "it gave no reason.";
+        var sentence = Text(Member(error, "message"));
         var refusal = Text(Member(Member(error, "data"), "refusal"));
 
         // The kind and never the sentence: a log record names, it does not quote.

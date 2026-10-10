@@ -149,7 +149,9 @@ internal static partial class Program
                 {
                     // FILE_FLAG_FIRST_PIPE_INSTANCE: another background serves this
                     // user, install root and data root, and this one was never needed.
-                    BackgroundLog.AlreadyServed(backgroundLogger, pipeName, startedBy ?? "nobody named");
+                    var how = HowStarted(startedBy);
+
+                    BackgroundLog.AlreadyServed(backgroundLogger, pipeName, how);
                     return 0;
                 }
 
@@ -298,7 +300,9 @@ internal static partial class Program
             BackgroundLog.RecordNotWritten(backgroundLogger, recordPath, failure.Message);
         }
 
-        BackgroundLog.Started(backgroundLogger, server.Name, startedBy ?? "nobody named", recordPath);
+        var how = HowStarted(startedBy);
+
+        BackgroundLog.Started(backgroundLogger, server.Name, how, recordPath);
 
         using var window = SessionEndWindow.Create(notice =>
         {
@@ -406,24 +410,62 @@ internal static partial class Program
         }
 
         // Every open tab is told why it stops, and an update says how to come back.
-        page.Tell(verbs.State is BackgroundState.Updating
-            ? "BrowserAI is installing an update, so this tab has stopped. Open BrowserAI from the Start Menu again once the installed notification has appeared."
-            : "BrowserAI's background has stopped, so this tab has stopped. Open BrowserAI from the Start Menu to start it again.");
+        page.Tell(StopSentence(verbs.State, installRoot));
 
         BackgroundLog.Ending(backgroundLogger, host.Sessions.HeldCount, roster.Count);
 
         return 0;
     }
+
+    /// <summary>What the task's <c>$(Arg0)</c> is at sign-in, where the Task Scheduler leaves it unexpanded.</summary>
+    private const string SignInPlaceholder = "$(Arg0)";
+
+    /// <summary>What every open tab is told when the background stops.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, pages #131 and #132 (previously "... so
+    /// this tab has stopped. Open BrowserAI from the Start Menu again once the installed
+    /// notification has appeared." and the same Start Menu advice for every build)</i>: a
+    /// person cannot tell which notification "the installed notification" is, and for a
+    /// build that is not installed the Start Menu starts the installed BrowserAI, never
+    /// this one.
+    /// </remarks>
+    /// <param name="state">How the background is ending.</param>
+    /// <param name="installRoot">The install root, or <see langword="null"/> for a build that is not installed.</param>
+    /// <returns>The sentence.</returns>
+    internal static string StopSentence(BackgroundState state, string? installRoot) => state is BackgroundState.Updating
+        ? "BrowserAI is installing an update, so this page has stopped. When a notification says the update is installed, open BrowserAI from the Start Menu again."
+        : installRoot is not null
+            ? "BrowserAI's background has stopped, so this page has stopped. Open BrowserAI from the Start Menu to start it again."
+            : "BrowserAI's background has stopped, so this page has stopped.";
+
+    /// <summary>How the background was started, in words, for its first log line.</summary>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, pages #187 and #188 (previously the
+    /// argument's value as it arrived, so every sign-in read "started by $(Arg0)" and the
+    /// installer's start "started by first-run")</i>.
+    /// </remarks>
+    /// <param name="startedBy">What <c>--started-by</c> carried, or <see langword="null"/>.</param>
+    /// <returns>The words, after "it was started".</returns>
+    internal static string HowStarted(string? startedBy) => startedBy switch
+    {
+        null => $"with no {StartedByArgument}",
+        SignInPlaceholder => "at sign-in",
+        PersonStart.StartedByPerson => "by a person's start",
+        PersonStart.StartedByTheInstaller => "by the installer after an install",
+        PersonStart.StartedAfterAnUpdate => "by Velopack after an update",
+        _ => $"with {StartedByArgument} '{startedBy}'",
+    };
 }
 
 /// <summary>Source-generated log messages for the background mode.</summary>
 internal static partial class BackgroundLog
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "BrowserAI's background serves {Pipe}, started by {StartedBy}; its record is {Record}.")]
-    public static partial void Started(ILogger logger, string pipe, string startedBy, string record);
+    // The texts polish, 2026-10-10, pages #187 and #188: {How} is Program.HowStarted's.
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "BrowserAI's background serves {Pipe}; it was started {How}, and its record is {Record}.")]
+    public static partial void Started(ILogger logger, string pipe, string how, string record);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Another background already serves {Pipe}, so this one, started by {StartedBy}, exits.")]
-    public static partial void AlreadyServed(ILogger logger, string pipe, string startedBy);
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Another background already serves {Pipe}, so this one, started {How}, exits.")]
+    public static partial void AlreadyServed(ILogger logger, string pipe, string how);
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "The background is ending with {Sessions} session(s), each asked to close its browser first, and {Relays} relay(s).")]
     public static partial void Ending(ILogger logger, int sessions, int relays);

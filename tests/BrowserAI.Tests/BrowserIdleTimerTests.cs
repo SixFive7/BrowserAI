@@ -1392,7 +1392,7 @@ internal sealed partial class BrowserIdleTimerTests
         {
             var line = ProcessLogRecords.For(processId, created)
                 .Split('\n')
-                .FirstOrDefault(record => record.Contains(text, StringComparison.Ordinal) && record.Contains(" went; ", StringComparison.Ordinal));
+                .FirstOrDefault(record => record.Contains(text, StringComparison.Ordinal) && record.Contains(" disconnected; ", StringComparison.Ordinal));
 
             if (line is not null)
             {

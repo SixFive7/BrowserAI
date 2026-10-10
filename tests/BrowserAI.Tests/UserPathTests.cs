@@ -209,8 +209,14 @@ internal sealed class UserPathTests
         var nowhere = RegistrationClient.Codex.ProjectNoteAfter(Server, null);
 
         await Assert.That(here!).Contains("finds this install");
-        await Assert.That(here!).Contains("restarted");
+
+        // ⚠️ Without the restart since the texts polish of 2026-10-10, page #90
+        // (previously "A Codex that was already running before BrowserAI was installed
+        // may need to be restarted to see it."): the page's Codex section says it, without
+        // the hedge. And the other ending says what follows.
+        await Assert.That(here!).DoesNotContain("restarted");
         await Assert.That(elsewhere!).Contains(Other);
+        await Assert.That(elsewhere!).EndsWith("which is not this install, so Codex starts that one.");
         await Assert.That(nowhere!).Contains("No folder on your PATH holds one yet");
 
         // Claude Code has no sentence to add after the run.

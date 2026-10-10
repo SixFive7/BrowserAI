@@ -141,7 +141,12 @@ internal static class BackgroundClient
 
                 if (line is null)
                 {
-                    return new BackgroundAnswer(BackgroundAnswerOutcome.NoAnswer, null, "The background closed the connection without an answer.", server);
+                    // The texts polish, 2026-10-10, pages #218 to #220 (previously "The
+                    // background closed the connection without an answer.", "The background
+                    // answered with neither a result nor an error." and "The background did
+                    // not answer within N s."): every line that carries one names the
+                    // background already.
+                    return new BackgroundAnswer(BackgroundAnswerOutcome.NoAnswer, null, "The connection closed without an answer.", server);
                 }
 
                 using var document = JsonDocument.Parse(line);
@@ -154,13 +159,13 @@ internal static class BackgroundClient
 
                 var sentence = root.TryGetProperty("error", out var refusal) && refusal.TryGetProperty("message", out var message)
                     ? message.GetString()
-                    : "The background answered with neither a result nor an error.";
+                    : "The answer carried neither a result nor an error.";
 
                 return new BackgroundAnswer(BackgroundAnswerOutcome.Refused, null, sentence, server);
             }
             catch (OperationCanceledException)
             {
-                return new BackgroundAnswer(BackgroundAnswerOutcome.NoAnswer, null, string.Create(CultureInfo.InvariantCulture, $"The background did not answer within {bound.TotalSeconds:0} s."), server);
+                return new BackgroundAnswer(BackgroundAnswerOutcome.NoAnswer, null, string.Create(CultureInfo.InvariantCulture, $"No answer came within {bound.TotalSeconds:0} s."), server);
             }
             catch (Exception failure) when (failure is IOException or JsonException)
             {

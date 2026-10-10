@@ -260,7 +260,9 @@ internal static class McpRegistrar
                         // texts review, 2026-10-10 (previously every intent was told it was
                         // not registered and given the line that registers it).
                         intent is RegistrationIntent.Uninstall
-                            ? $"The unregistration pass threw: {failure.Message}. BrowserAI may still be registered with {who.DisplayName}; remove it by hand with: {who.ManualRemoveCommand}"
+                            // The texts polish, 2026-10-10, page #171 (previously "The
+                            // unregistration pass threw: ...; remove it by hand with:").
+                            ? $"Unregistering BrowserAI failed: {failure.Message.TrimEnd('.')}. BrowserAI may still be registered with {who.DisplayName}. To remove it by hand, run: {who.ManualRemoveCommand}"
                             : $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>", commandArguments ?? [RegistrationTarget.McpArgument])}",
                         null,
                         imagePath))),
@@ -616,7 +618,9 @@ internal static class McpRegistrar
 
                 return new RegistrationReport(
                     RegistrationStatus.ClientNotFound,
-                    $"{result.Error ?? $"{who.Executable} was not found."} So there is no {who.DisplayName} to remove BrowserAI from, and nothing was changed.",
+                    // The texts polish, 2026-10-10, page #170, and the register's form
+                    // below (previously each opened its second sentence with "So").
+                    $"{result.Error ?? $"{who.Executable} was not found."} There is no {who.DisplayName} to remove BrowserAI from, so nothing was changed.",
                     null,
                     command);
             }
@@ -625,7 +629,7 @@ internal static class McpRegistrar
 
             return new RegistrationReport(
                 RegistrationStatus.ClientNotFound,
-                $"{result.Error ?? $"{who.Executable} was not found."} So BrowserAI has not registered itself with {who.DisplayName}. Install the client and run: {manual}",
+                $"{result.Error ?? $"{who.Executable} was not found."} BrowserAI has not registered itself with {who.DisplayName}, because there is none. Install the client and run: {manual}",
                 null,
                 command);
         }
@@ -634,7 +638,7 @@ internal static class McpRegistrar
 
         if (removing)
         {
-            RegistrationLog.RemovalFailed(logger, client ?? who.Executable, said, manual);
+            RegistrationLog.RemovalFailed(logger, who.DisplayName, said, manual);
 
             return new RegistrationReport(
                 RegistrationStatus.Failed,
@@ -643,7 +647,7 @@ internal static class McpRegistrar
                 command);
         }
 
-        RegistrationLog.Failed(logger, verb, client ?? who.Executable, said, manual);
+        RegistrationLog.Failed(logger, verb, who.DisplayName, said, manual);
 
         return new RegistrationReport(
             RegistrationStatus.Failed,
@@ -674,7 +678,10 @@ internal static class McpRegistrar
             ? "That entry belongs to the other install, and removing it is for that install to do."
             : inProject is { Length: > 0 } file
                 ? $"If this install is the one you want, remove the other install's 'browserai' entry from '{file}' and register this one in that project again, with BrowserAI's page: Register in a project for {who.DisplayName}."
-                : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command, arguments)}";
+                // The texts polish, 2026-10-10, page #168 (previously "unregister the other
+                // and register this one"): how, and the add line alone fails while the other
+                // entry stands.
+                : $"If this install is the one you want, remove the other entry with {who.ManualRemoveCommand} and then register this one: {who.ManualCommandFor(command, arguments)}";
 
         return $"Another BrowserAI is registered at '{result.Before.Command ?? "<an entry with no local command>"}', which is not under this install root. "
             + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{ServerName}' entry it did not write. "
@@ -689,7 +696,7 @@ internal static class McpRegistrar
         // As NotDone: a removal at user scope is told the line that removes the entry.
         if (removing)
         {
-            RegistrationLog.RemovalFailed(logger, tool.Executable, said, who.ManualRemoveCommand);
+            RegistrationLog.RemovalFailed(logger, who.DisplayName, said, who.ManualRemoveCommand);
 
             return new RegistrationReport(
                 RegistrationStatus.Failed,
@@ -700,7 +707,7 @@ internal static class McpRegistrar
 
         var manual = who.ManualCommandFor(command, arguments);
 
-        RegistrationLog.Failed(logger, verb, tool.Executable, said, manual);
+        RegistrationLog.Failed(logger, verb, who.DisplayName, said, manual);
 
         return new RegistrationReport(
             RegistrationStatus.Failed,
@@ -813,13 +820,18 @@ internal static partial class RegistrationLog
     /// BrowserAI and gives the line that adds it.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
-    /// <param name="client">The client executable, or RegisterAI when it gave no answer.</param>
+    /// <param name="client">The client's name, Claude Code or Codex.</param>
     /// <param name="said">What happened, in its own words where it had any.</param>
     /// <param name="manual">The command that removes the entry by hand.</param>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, page #175 (previously "from the MCP client.
+    /// {Client} {Said} ... Remove it by hand: {Manual}", with the client's path, or
+    /// RegisterAI's when it gave no answer, standing between two sentences)</i>.
+    /// </remarks>
     [LoggerMessage(
         EventId = 13,
         Level = LogLevel.Error,
-        Message = "BrowserAI could not unregister itself from the MCP client. {Client} {Said} The client may still point at BrowserAI. Remove it by hand: {Manual}")]
+        Message = "BrowserAI could not unregister itself from {Client}. {Said} The client may still point at BrowserAI. To remove it by hand, run: {Manual}")]
     public static partial void RemovalFailed(ILogger logger, string client, string said, string manual);
 
     /// <summary>A registration in a project that was not done, with the entry that adds it by hand.</summary>
@@ -860,13 +872,18 @@ internal static partial class RegistrationLog
     /// <summary>The client ran and did not do what was asked.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="verb">Register or unregister.</param>
-    /// <param name="client">The client executable.</param>
+    /// <param name="client">The client's name, Claude Code or Codex.</param>
     /// <param name="said">What it did, in its own words where it had any.</param>
     /// <param name="manual">The command to run by hand.</param>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish (previously "with the MCP client. {Client}
+    /// {Said}. ...", which put a bare path between two sentences and ended in two full
+    /// stops when the client's words ended in one)</i>.
+    /// </remarks>
     [LoggerMessage(
         EventId = 7,
         Level = LogLevel.Error,
-        Message = "BrowserAI could not {Verb} itself with the MCP client. {Client} {Said}. BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {Manual}")]
+        Message = "BrowserAI could not {Verb} itself with {Client}. {Said} BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {Manual}")]
     public static partial void Failed(ILogger logger, string verb, string client, string said, string manual);
 
     /// <summary>The pass threw, which the installer must never see.</summary>

@@ -208,7 +208,11 @@ internal sealed record RegistrationTarget
 
         if (!File.Exists(server))
         {
-            refusal = $"'{server}' is not there. BrowserAI registers '{AppFileName} {McpArgument}' from the folder its hooks run in, and this install has no such file. Nothing is registered: a client pointed at a file that does not exist reports a server that will not start, with nothing to say which file was missing. Reinstall BrowserAI, or run the installer again over this root.";
+            // The texts polish, 2026-10-10, page #164 (previously "BrowserAI registers
+            // 'BrowserAI.exe --mcp' from ..." and "Reinstall BrowserAI, or run the installer
+            // again over this root."): one action, and a registration does not always carry
+            // --mcp alone.
+            refusal = $"'{server}' is not there. BrowserAI registers the {AppFileName} in the folder its hooks run in, and this install has no such file. Nothing is registered: a client pointed at a missing file reports a server that will not start, without saying which file is missing. Reinstall BrowserAI.";
             return false;
         }
 
@@ -216,7 +220,17 @@ internal sealed record RegistrationTarget
 
         if (subsystem is not Runtime.PeSubsystem.WindowsGui)
         {
-            refusal = $"'{server}' is {Runtime.PeSubsystem.Describe(subsystem)}, and BrowserAI is one Windows-subsystem file, so that no starter, a client included, ever gives it a console window. A file of another kind at that name is a mispacked release or an older build, and registering it would put a console window on the screen at every session start. Nothing is registered.";
+            // The texts polish, 2026-10-10, page #165 (previously "'<file>' is no readable
+            // PE header at all, ...", not a sentence, and "no starter"). Its own words, since
+            // PeSubsystem.Describe has other callers.
+            var kind = subsystem switch
+            {
+                null => "it has no readable PE header",
+                Runtime.PeSubsystem.WindowsCui => "it is a console-subsystem binary (3)",
+                _ => $"its subsystem is {subsystem.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
+            };
+
+            refusal = $"'{server}' is not a Windows-subsystem file: {kind}. BrowserAI is one Windows-subsystem file, so that nothing that starts it, a client included, gives it a console window. A file of another kind at that name is a mispacked release or an older build, and registering it would put a console window on the screen at every session start. Nothing is registered.";
             return false;
         }
 

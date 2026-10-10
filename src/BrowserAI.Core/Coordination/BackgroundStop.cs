@@ -85,7 +85,9 @@ internal static class BackgroundStop
                 (BackgroundStopOutcome.Ended, $"BrowserAI's background, pid {held.ProcessId}, closed its sessions and ended."),
 
             BackgroundAnswerOutcome.Answered =>
-                (BackgroundStopOutcome.StillRunning, $"BrowserAI's background, pid {held!.ProcessId}, was asked to stop and was still closing its sessions when the hook moved on."),
+                // The texts polish, 2026-10-10, page #177 (previously "... still closing its
+                // sessions when the hook moved on."): the wait it ran out of.
+                (BackgroundStopOutcome.StillRunning, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"BrowserAI's background, pid {held!.ProcessId}, was asked to stop and was still closing its sessions after {bound.TotalSeconds:0} s, when the hook moved on.")),
 
             _ => (BackgroundStopOutcome.NotAsked, $"BrowserAI's background could not be asked to stop: {answer.Sentence}"),
         };

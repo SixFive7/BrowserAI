@@ -699,7 +699,7 @@ internal static partial class IdleLog
     [LoggerMessage(
         EventId = 71,
         Level = LogLevel.Warning,
-        Message = "The read of the person's input that the countdown of the session at {Session} makes before it decides failed; the countdown decides without it.")]
+        Message = "The session at {Session} could not read the person's input before its countdown decided, so the countdown decided without it.")]
     public static partial void InputCheckFailed(ILogger logger, string session, Exception failure);
 
     /// <summary>A destroy cut a close in flight short.</summary>

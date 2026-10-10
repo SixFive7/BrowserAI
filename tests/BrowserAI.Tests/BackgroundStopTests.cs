@@ -85,7 +85,9 @@ internal sealed class BackgroundStopTests
         var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
 
         await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.StillRunning).Because(detail);
-        await Assert.That(detail).IsEqualTo($"BrowserAI's background, pid {Environment.ProcessId}, was asked to stop and was still closing its sessions when the hook moved on.");
+        await Assert.That(detail).IsEqualTo(string.Create(
+            System.Globalization.CultureInfo.InvariantCulture,
+            $"BrowserAI's background, pid {Environment.ProcessId}, was asked to stop and was still closing its sessions after {Bound.TotalSeconds:0} s, when the hook moved on."));
         await Assert.That(background.Verbs.Stops).IsEqualTo(2).Because("the background was not asked both times");
     }
 
@@ -119,7 +121,7 @@ internal sealed class BackgroundStopTests
             var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(silentPipe, BackgroundRecord.PathFor(data.Path, silentPipe), Bound));
 
             await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.NotAsked).Because(detail);
-            await Assert.That(detail).StartsWith("BrowserAI's background could not be asked to stop: The background did not answer within ");
+            await Assert.That(detail).StartsWith("BrowserAI's background could not be asked to stop: No answer came within ");
         }
 
         // Answers with a refusal.

@@ -188,7 +188,7 @@ internal static class InstallRootScope
             (null, null) => InstallRootVerdict.MayServeHere,
             (null, not null) => install,
             (not null, null) => data,
-            var (first, second) => InstallRootVerdict.CouldNotEstablish($"{first} {second}"),
+            var (first, second) => InstallRootVerdict.CouldNotEstablish(BothUnestablished(first, second, dataRoot, installRoot)),
         };
     }
 
@@ -209,7 +209,7 @@ internal static class InstallRootScope
         if (profile is not { Length: > 0 })
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its {Noun(which)} '{root}' is a per-user one.");
+                $"{NoProfile}, so BrowserAI cannot tell whether its {Noun(which)} '{root}' is a per-user one.");
         }
 
         // 1. Characters only, and first, because everything below opens a
@@ -235,7 +235,7 @@ internal static class InstallRootScope
                     profile,
                     dataRoot,
                     installRoot,
-                    "it is a UNC path, which is storage every account that can reach the share can reach");
+                    "it is a UNC path, so the root is a share, not per-user storage");
             }
 
             // The prefix is stripped for the volume question only. Everything
@@ -305,8 +305,34 @@ internal static class InstallRootScope
                 dataRoot,
                 installRoot,
                 string.Equals(resolvedRoot, root, StringComparison.OrdinalIgnoreCase)
-                    ? "it is outside this user's profile, so it is not storage Windows keeps per-user"
-                    : $"the filesystem calls it '{resolvedRoot}', which is outside this user's profile, so it is not storage Windows keeps per-user");
+                    ? "it is outside this user's profile, so it is not per-user storage"
+                    : $"the filesystem calls it '{resolvedRoot}', which is outside this user's profile, so it is not per-user storage");
+    }
+
+    /// <summary>The two unestablished verdicts said as one, when neither root could be settled.</summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10, the texts polish, page #186 (previously the two whole sentences
+    /// joined, which said "It is serving anyway", the cost and "This is the one line" twice
+    /// in one line)</i>. Each root's first sentence is kept, and what follows is said once,
+    /// for both. A pair this does not recognise is joined as before.
+    /// </remarks>
+    /// <param name="first">The data root's.</param>
+    /// <param name="second">The install root's.</param>
+    /// <param name="dataRoot">The data root.</param>
+    /// <param name="installRoot">The install root.</param>
+    /// <returns>The sentence.</returns>
+    internal static string BothUnestablished(string first, string second, string dataRoot, string? installRoot)
+    {
+        const string Served = " It is serving anyway. " + UnseenAtRunTime;
+
+        if (first.StartsWith(NoProfile, StringComparison.Ordinal) && second.StartsWith(NoProfile, StringComparison.Ordinal))
+        {
+            return $"{NoProfile}, so BrowserAI cannot tell whether its data root '{dataRoot}' and its install root '{installRoot}' are per-user ones.";
+        }
+
+        return first.EndsWith(Served, StringComparison.Ordinal) && second.EndsWith(Served, StringComparison.Ordinal)
+            ? $"{first[..^Served.Length]} {second[..^Served.Length]} It is serving anyway. {UnseenAtRunTimeForBoth}"
+            : $"{first} {second}";
     }
 
     /// <summary>The final name with the extended-length prefix removed.</summary>
@@ -350,6 +376,13 @@ internal static class InstallRootScope
     /// </remarks>
     private const string UnseenAtRunTime =
         "If two Windows users share this root, nothing reports it at run time: the second user's background finds its pipe's name taken and exits, and applying an update ends every process under the install root, the other user's browsers included. This is the one line that would say so.";
+
+    /// <summary>The same, said once for both roots.</summary>
+    private const string UnseenAtRunTimeForBoth =
+        "If two Windows users share these roots, nothing reports it at run time: the second user's background finds its pipe's name taken and exits, and applying an update ends every process under the install root, the other user's browsers included. This is the one line that would say so.";
+
+    /// <summary>What Windows says when it reports no profile for this user, as a clause.</summary>
+    private const string NoProfile = "Windows reported no profile directory for this user";
 
     /// <summary>
     /// The refusal, which has to carry the remedy and not only the verdict.
@@ -405,8 +438,16 @@ internal static class InstallRootScope
         // root, including the other user's browsers and whatever they were driving."): no
         // process joins a live-instance set since the one background, and the pipe is
         // what two users would meet on.
-        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the background's pipe is named for its roots and open only to the user who made it, so the second user's background finds the name taken and exits, leaving that user's clients with no background; and applying an update terminates every process under the install root, the other user's browsers included. "
-        + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
+        //
+        // ⚠️ Corrected 2026-10-10 a second time, the texts polish, page #184 (previously
+        // "terminates every process", "This build has two roots and they are moved by two
+        // different levers, so both are named: ..." and "What a refused start leaves is
+        // ..."): the sentence that announced what it was about to do says it, the remedy
+        // names the lever, and "ends" is the word the unestablished lines use.
+        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the background's pipe is named for its roots and open only to the user who made it, so the second user's background finds the name taken and exits, leaving that user's clients with no background; and applying an update ends every process under the install root, the other user's browsers included. "
+        + (installRoot is { Length: > 0 } installed
+            ? $"Its two roots are the data root '{dataRoot}' and the install root '{installed}'. "
+            : $"This build is not installed, so its one root is the data root '{dataRoot}'. ")
         + "Recovery: " + Remedy(which, profile)
 
         // Corrected the same day (previously "Nothing was started, nothing was changed, and
@@ -416,7 +457,7 @@ internal static class InstallRootScope
         // say what is written (previously it ended at "created under '{root}'."): a
         // person reading the log then knows what every relay answers from.
         + $"Nothing was started, and no session or browser was created under '{root}'. "
-        + "What a refused start leaves is this line in the log and, when the start was the background's, the refusal in its record under the data root, which every relay reads to answer each call.";
+        + "A refused start leaves this line in the log and, for a background, the refusal in its record under the data root, which every relay answers each call from.";
 
     /// <summary>What puts a refused root right, as a clause that starts with what to do.</summary>
     /// <remarks>
@@ -428,10 +469,17 @@ internal static class InstallRootScope
     /// <param name="which">Which root is at fault.</param>
     /// <param name="profile">This user's profile directory.</param>
     /// <returns>The remedy, ending with a space.</returns>
+    // ⚠️ Corrected 2026-10-10, the texts polish, pages #149 and #184 (previously "install
+    // BrowserAI inside '...' -- the default location, or with the installer the release
+    // ships, 'BrowserAI.exe --installto <...>'" and "install it again with that variable
+    // cleared or naming a directory under that profile"): "reinstall" is the word every
+    // broken-install text uses, and under the maintainer's 21 of the same day, "refusing
+    // installing into a non-standard folder so the project specific setups always resolve
+    // on every dev's pc", a shipping install is told its default location and no other.
     private static string Remedy(JudgedRoot which, string profile) =>
         which is JudgedRoot.Install
-            ? $"install BrowserAI inside '{profile}' -- the default location, or with the installer the release ships, 'BrowserAI.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so install it again with that variable cleared or naming a directory under that profile; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ";
+            ? $"reinstall BrowserAI inside '{profile}': its default location is there. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
+            : $"give BrowserAI a data root under '{profile}'. An install takes its data root from the installer's {LocalAppDataPaths.RootVariable}, which its hooks write into the scheduled task and the client registrations as --data-root, so reinstall it with that variable cleared; a background a developer starts takes --data-root, which has to name one there too. With neither, the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ";
 
     /// <summary>The refusing verdict: the whole sentence for the log, and its parts for a relay.</summary>
     /// <param name="which">Which root is at fault.</param>

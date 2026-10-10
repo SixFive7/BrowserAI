@@ -337,9 +337,12 @@ internal sealed record BackgroundFinderSettings
 /// </remarks>
 internal static partial class FinderLog
 {
-    [LoggerMessage(EventId = 23, Level = LogLevel.Warning, Message = "Whether this install's updater runs could not be read, so the relay goes on as if it does not.")]
+    // The texts polish, 2026-10-10, pages #205 and #206 (previously "Whether this
+    // install's updater runs could not be read, ..." and "... may name another time for
+    // the same crash.").
+    [LoggerMessage(EventId = 23, Level = LogLevel.Warning, Message = "The relay could not check whether this install's updater is running, so it goes on as if it is not.")]
     public static partial void UpdaterNotChecked(ILogger logger, Exception failure);
 
-    [LoggerMessage(EventId = 24, Level = LogLevel.Warning, Message = "The background's record at {Path} could not be written, so another relay may name another time for the same crash.")]
+    [LoggerMessage(EventId = 24, Level = LogLevel.Warning, Message = "The background's record at {Path} could not be written, so another relay may report the same crash at a different time.")]
     public static partial void RecordNotWritten(ILogger logger, string path, Exception failure);
 }

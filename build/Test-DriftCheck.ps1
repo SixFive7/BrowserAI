@@ -66,7 +66,7 @@ try {
     $record = Get-Content -LiteralPath $DriftCheck -Raw | ConvertFrom-Json -DateKind String
 }
 catch {
-    Write-Error "'$DriftCheck' could not be read as JSON ($($_.Exception.Message)), so nothing says the dependencies are the latest."
+    Write-Error "'$DriftCheck' could not be read as JSON ($($_.Exception.Message)), so nothing says the dependencies are the latest. Take the daily drift check AGENTS.md describes, write it there, and cut again."
     exit 1
 }
 
@@ -82,12 +82,14 @@ if ($stamped -ne $Today) {
 
 $rows = 0
 
-# Every reason names the file it read, which the suite and -DriftCheckFile set: round 2
+# The header names the file it read, which the suite and -DriftCheckFile set: round 2
 # of the texts review, 2026-10-10, #231 (previously the two section reasons named
-# drift-check.json whatever file was read).
+# drift-check.json whatever file was read). Corrected the same day, the texts polish,
+# page #243 (previously "Every reason names the file it read"): the header above the
+# reasons names it, so a reason that named it again repeated the whole path.
 foreach ($section in @('resolved', 'vendored')) {
     if ($names -notcontains $section) {
-        $reasons.Add("'$DriftCheck' has no '$section' section, so the rows it should hold were never read.")
+        $reasons.Add("There is no '$section' section, so its rows were never read.")
         continue
     }
 
@@ -115,11 +117,11 @@ foreach ($section in @('resolved', 'vendored')) {
 }
 
 if ($rows -eq 0) {
-    $reasons.Add("'$DriftCheck' holds no rows at all, so nothing was checked.")
+    $reasons.Add("There are no rows at all, so nothing was checked.")
 }
 
 if ($reasons.Count -gt 0) {
-    Write-Error ("A release takes only the latest of every dependency, and '$DriftCheck' does not say that it has them:`n  " + ($reasons -join "`n  "))
+    Write-Error ("A release needs every dependency at its latest version, and '$DriftCheck' does not show that they are:`n  " + ($reasons -join "`n  "))
     exit 1
 }
 

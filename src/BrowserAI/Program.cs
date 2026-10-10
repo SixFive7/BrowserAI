@@ -551,13 +551,19 @@ internal static partial class StartupLog
     /// nobody expected looks exactly like one that lost them.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
-    /// <param name="variable">Which variable moved it.</param>
+    /// <param name="argument">Which argument moved it.</param>
     /// <param name="root">Where it now is.</param>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, page #183 (previously "{Variable} is set,
+    /// so this BrowserAI's app root is ... Its sessions, log and provisioned browsers all
+    /// live there.")</i>: the root is moved by an argument, the argument calls it the data
+    /// root, and it holds the session index, not the sessions.
+    /// </remarks>
     [LoggerMessage(
         EventId = 4,
         Level = LogLevel.Warning,
-        Message = "{Variable} is set, so this BrowserAI's app root is {Root}, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
-    public static partial void AppRootOverridden(ILogger logger, string variable, string root);
+        Message = "This BrowserAI was started with {Argument}, so its data root is {Root}, not the one under %LocalAppData%. Its browsers, session index and log are there.")]
+    public static partial void AppRootOverridden(ILogger logger, string argument, string root);
 
     /// <summary>
     /// The app root is one more than this user can reach, so this process is not
@@ -630,7 +636,7 @@ internal static partial class StartupLog
     [LoggerMessage(
         EventId = 14,
         Level = LogLevel.Warning,
-        Message = "BrowserAI was started with --mcp and standard input is not a pipe, so there is no client to serve and it exits (started by pid={Launcher}). A client that registers BrowserAI starts it with --mcp and gives it a pipe on standard input; a person starts it with no argument.")]
+        Message = "BrowserAI was started with --mcp by pid {Launcher}, and its standard input is not a pipe, so there is no client to serve and it exits. A client starts BrowserAI with --mcp and a pipe on standard input; a person starts it with no argument.")]
     public static partial void NoPipeToServe(ILogger logger, int launcher);
 
     /// <summary>

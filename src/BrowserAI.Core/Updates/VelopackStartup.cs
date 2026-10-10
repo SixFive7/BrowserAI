@@ -360,7 +360,9 @@ internal static class VelopackStartup
         {
             log(
                 pass.Report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
-                $"BrowserAI {version} -- MCP registration with {pass.DisplayName} ({intent}): {pass.Report.Status}. {pass.Report.Detail}",
+                // The texts polish, 2026-10-10, page #176 (previously a member's name,
+                // "{Status}. " and "{Change}. ", before a detail that already says it).
+                $"BrowserAI {version} -- MCP registration with {pass.DisplayName} ({intent}): {pass.Report.Detail}",
                 null);
         }
 
@@ -371,7 +373,7 @@ internal static class VelopackStartup
         {
             log(
                 pathEntry.Change is UserPathChange.Failed ? VelopackLogLevel.Warning : VelopackLogLevel.Information,
-                $"BrowserAI {version} -- user PATH ({intent}): {pathEntry.Change}. {pathEntry.Detail}",
+                $"BrowserAI {version} -- user PATH ({intent}): {pathEntry.Detail}",
                 null);
         }
 
@@ -382,7 +384,7 @@ internal static class VelopackStartup
         {
             log(
                 task.Change is Registration.TaskChange.Failed ? VelopackLogLevel.Warning : VelopackLogLevel.Information,
-                $"BrowserAI {version} -- sign-in task ({intent}): {task.Change}. {task.Detail}",
+                $"BrowserAI {version} -- sign-in task ({intent}): {task.Detail}",
                 null);
         }
 

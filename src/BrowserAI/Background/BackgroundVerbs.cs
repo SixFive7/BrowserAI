@@ -39,7 +39,9 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
         if (State is not BackgroundState.Serving)
         {
             return (null, State is BackgroundState.Updating
-                ? "BrowserAI is installing an update, so it opens no page now. Start it again in a few seconds."
+                // The texts polish, 2026-10-10, page #158 (previously "Start it again in a
+                // few seconds."): the background is ending, and then the installer runs.
+                ? "BrowserAI is installing an update, so it opens no page now. Start it again once the update is installed."
                 : "BrowserAI's background is stopping, so it opens no page now.");
         }
 
@@ -72,7 +74,8 @@ internal sealed partial class BackgroundVerbs(ILogger logger) : IBackgroundVerbs
 
     private static partial class VerbsLog
     {
-        [LoggerMessage(EventId = 20, Level = LogLevel.Information, Message = "The background was asked to stop: every session closes cleanly, each within the minute's cap, and then it ends.")]
+        // The texts polish, 2026-10-10, page #199 (previously "each within the minute's cap").
+        [LoggerMessage(EventId = 20, Level = LogLevel.Information, Message = "The background was asked to stop: every session closes cleanly, each within a minute, and then it ends.")]
         public static partial void Stopping(ILogger logger);
     }
 }

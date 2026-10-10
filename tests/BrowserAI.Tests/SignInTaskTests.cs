@@ -105,10 +105,10 @@ internal sealed class SignInTaskTests
 
         await Assert.That(one("Description").Value).IsEqualTo(
             $"Starts BrowserAI, installed in {Root}, when you sign in, when you start it from the Start Menu and after an update. "
-            + "BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. "
-            + "Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, "
-            + "which registers it again from the copy the install saved as background-task.xml. "
-            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs installing again.");
+            + "BrowserAI then runs in the background and holds its browser sessions, its page and its updates. "
+            + "While this task is disabled, BrowserAI does not start. Deleting it keeps BrowserAI from starting at sign-in until it is started from the Start Menu, "
+            + "which registers the task again from the copy the install saved as background-task.xml. "
+            + "If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs reinstalling.");
 
         // The installer's settings travel in the same action, escaped like the rest.
         var named = XDocument.Parse(SignInTask.DefinitionFor(Image, sid, Root, SignInTask.ArgumentsFor(Root + @"\data", @"D:\feeds\BrowserAI")));
@@ -465,7 +465,9 @@ internal sealed class SignInTaskTests
         // NotWaitedFor since 2026-10-10, the texts review's #141 (previously Ended): this
         // background's record names no process, so nothing waited for it to end.
         var stopped = log.IndexOf("Background stop: BrowserAI's background was asked to stop; its record named no process to wait for.", StringComparison.Ordinal);
-        var taskGone = log.IndexOf($"Sign-in task: {TaskChange.Removed}.", StringComparison.Ordinal);
+        // The sentence alone since the texts polish of 2026-10-10, page #176 (previously
+        // "Sign-in task: Removed." before it, the member's name).
+        var taskGone = log.IndexOf($"Sign-in task: The task '{name}' is removed.", StringComparison.Ordinal);
 
         await Assert.That(stopped).IsGreaterThanOrEqualTo(0).Because(log);
         await Assert.That(taskGone).IsGreaterThan(stopped).Because("the task went before the background was asked to stop");
@@ -571,8 +573,8 @@ internal sealed class SignInTaskTests
         // The hooks' own log carries the same sentences.
         var log = HookLog(data.Path);
 
-        await Assert.That(log).Contains($"Sign-in task: {TaskChange.Failed}. The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
-        await Assert.That(log).Contains($"Sign-in task: {TaskChange.Failed}. The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
+        await Assert.That(log).Contains($"Sign-in task: The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
+        await Assert.That(log).Contains($"Sign-in task: The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
 
         // A failure before the scheduler is asked leaves the task as it was, and says so.
         Directory.Delete(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName));
@@ -607,9 +609,11 @@ internal sealed class SignInTaskTests
     {
         static string sentence(string why) => ScheduledTasks.Failed("register 'the task'", why).Detail;
 
-        await Assert.That(sentence("0x80070005, Access is denied.")).IsEqualTo("The task scheduler could not register 'the task': 0x80070005, Access is denied.");
-        await Assert.That(sentence("0x80070005, Access is denied.\r\n")).IsEqualTo("The task scheduler could not register 'the task': 0x80070005, Access is denied.");
-        await Assert.That(sentence("the scheduler did not answer inside 5 s")).IsEqualTo("The task scheduler could not register 'the task': the scheduler did not answer inside 5 s.");
+        // The name as Windows spells it, since the texts polish of 2026-10-10, page #142
+        // (previously "The task scheduler could not").
+        await Assert.That(sentence("0x80070005, Access is denied.")).IsEqualTo("The Task Scheduler could not register 'the task': 0x80070005, Access is denied.");
+        await Assert.That(sentence("0x80070005, Access is denied.\r\n")).IsEqualTo("The Task Scheduler could not register 'the task': 0x80070005, Access is denied.");
+        await Assert.That(sentence("the scheduler did not answer within 5 s")).IsEqualTo("The Task Scheduler could not register 'the task': the scheduler did not answer within 5 s.");
         await Assert.That(ScheduledTasks.Failed("register 'the task'", "it ended.").Change).IsEqualTo(TaskChange.Failed);
     }
 

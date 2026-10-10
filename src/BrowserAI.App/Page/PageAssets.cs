@@ -65,6 +65,7 @@ internal static class PageAssets
           const main = document.querySelector('main');
           const banner = document.getElementById('banner');
           const say = (text) => { banner.textContent = text; banner.hidden = false; };
+          const unanswered = body.dataset.unanswered;
           const events = new EventSource('events?tab=' + encodeURIComponent(body.dataset.tab) + '&page=' + encodeURIComponent(body.dataset.page));
           let finished = false;
 
@@ -95,7 +96,7 @@ internal static class PageAssets
           });
 
           events.onerror = () => {
-            if (!finished) { say('BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.'); }
+            if (!finished) { say(unanswered); }
           };
 
           const pad = (value) => String(value).padStart(2, '0');
@@ -120,7 +121,7 @@ internal static class PageAssets
               const response = await fetch('action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
               if (!response.ok) { say('BrowserAI did not take that request.'); }
             } catch {
-              say('BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again.');
+              say(unanswered);
             } finally {
               button.disabled = false;
             }

@@ -345,7 +345,9 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
                         return;
 
                     default:
-                        await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.MethodNotFound, $"The background's pipe starts with '{RelayProtocol.Hello}', '{BackgroundPipe.Show}' or '{BackgroundPipe.Stop}', and this connection sent '{request.Method}'.", "method")).ConfigureAwait(false);
+                        // The texts polish, 2026-10-10, page #156 (previously "The
+                        // background's pipe starts with ..."): a connection starts with one.
+                        await WriteAsync(stream, Refusal(request.Id, (int)McpErrorCode.MethodNotFound, $"A connection to the background's pipe starts with '{RelayProtocol.Hello}', '{BackgroundPipe.Show}' or '{BackgroundPipe.Stop}', and this one sent '{request.Method}'.", "method")).ConfigureAwait(false);
                         return;
                 }
             }
@@ -503,12 +505,18 @@ internal sealed partial class BackgroundServer : IAsyncDisposable
 
         if (!string.Equals(build, _identity.Build, StringComparison.Ordinal))
         {
-            return (RelayProtocol.RefusedForTheBuild, $"This background is BrowserAI {_identity.Build} and the client's BrowserAI is {build ?? "of no stated version"}, and the two speak to each other only within one version. Starting BrowserAI from the Start Menu starts the installed version's background.");
+            // The texts polish, 2026-10-10, page #154 (previously it went on "Starting
+            // BrowserAI from the Start Menu starts the installed version's background."):
+            // this background is running, and a person's start only asks it for a page.
+            return (RelayProtocol.RefusedForTheBuild, $"This background is BrowserAI {_identity.Build} and the client's BrowserAI is {build ?? "of no stated version"}, and the two speak to each other only within one version.");
         }
 
         if (dataRoot is null || !RootKey.Same(dataRoot, _identity.DataRoot))
         {
-            return (RelayProtocol.RefusedForTheDataRoot, $"This background keeps its sessions under '{_identity.DataRoot}', and the client's BrowserAI was registered for '{dataRoot ?? "no data root"}', so it is not served here.");
+            // The texts polish, 2026-10-10, page #155 (previously "This background keeps
+            // its sessions under '...'", and "'no data root'" in quotes): the data root
+            // holds the browsers, the session index and the log, not the sessions.
+            return (RelayProtocol.RefusedForTheDataRoot, $"This background serves the data root '{_identity.DataRoot}', and the client's BrowserAI was registered for {(dataRoot is null ? "no data root" : $"'{dataRoot}'")}, so it is not served here.");
         }
 
         return null;
@@ -591,24 +599,27 @@ internal static partial class BackgroundServerLog
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Relay {Relay} connected, for {Client} (client pid {ClientPid}).")]
     public static partial void RelayConnected(ILogger logger, string relay, string client, int clientPid);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Relay {Relay} went; {Relays} relay(s) and {Sessions} session(s) are left.")]
+    // The texts polish, 2026-10-10, pages #193 to #200: the word that pairs with
+    // "connected", a noun after "every other", an object for "accepting", a capital to
+    // open the line, and no list.
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Relay {Relay} disconnected; {Relays} relay(s) and {Sessions} session(s) are left.")]
     public static partial void RelayDisconnected(ILogger logger, string relay, int relays, int sessions);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "A relay (pid {Relay}) was refused: {Kind}.")]
     public static partial void RelayRefused(ILogger logger, int relay, string kind);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "A connection from pid {Client} failed and was dropped. The background goes on serving every other.")]
+    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "A connection from pid {Client} failed and was dropped. The background goes on serving the others.")]
     public static partial void ConnectionFailed(ILogger logger, int client, Exception failure);
 
-    [LoggerMessage(EventId = 6, Level = LogLevel.Error, Message = "The background stopped accepting on {Name} after a failure. Its sessions run on until it ends.")]
+    [LoggerMessage(EventId = 6, Level = LogLevel.Error, Message = "The background stopped accepting connections on {Name} after a failure. Its sessions run on until it ends.")]
     public static partial void ListenerFailed(ILogger logger, string name, Exception failure);
 
     [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "A connection from pid {Client} sent no request first, and was closed.")]
     public static partial void NotARequest(ILogger logger, int client);
 
-    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "pid {Client} asked the background to stop.")]
+    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Process {Client} asked the background to stop.")]
     public static partial void StopAsked(ILogger logger, int client);
 
-    [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "The background's pipe is closed; it waits for the {Connections} connection(s) on its list to end before it stops.")]
+    [LoggerMessage(EventId = 9, Level = LogLevel.Information, Message = "The background's pipe is closed; it waits for {Connections} open connection(s) to end before it stops.")]
     public static partial void WaitingForConnections(ILogger logger, int connections);
 }

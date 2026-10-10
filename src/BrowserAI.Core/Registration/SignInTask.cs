@@ -164,7 +164,7 @@ internal static partial class SignInTask
             <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
               <RegistrationInfo>
                 <Author>BrowserAI</Author>
-                <Description>Starts BrowserAI, installed in {root}, when you sign in, when you start it from the Start Menu and after an update. BrowserAI runs in the background from then on and holds its browser sessions, its page and its updates. Disabling this task stops BrowserAI until it is enabled again; deleting it stops BrowserAI until BrowserAI is started from the Start Menu, which registers it again from the copy the install saved as {SavedDefinitionFileName}. If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs installing again.</Description>
+                <Description>Starts BrowserAI, installed in {root}, when you sign in, when you start it from the Start Menu and after an update. BrowserAI then runs in the background and holds its browser sessions, its page and its updates. While this task is disabled, BrowserAI does not start. Deleting it keeps BrowserAI from starting at sign-in until it is started from the Start Menu, which registers the task again from the copy the install saved as {SavedDefinitionFileName}. If that copy cannot be read or the Task Scheduler refuses it, the start registers nothing and says why in BrowserAI's log, and BrowserAI needs reinstalling.</Description>
               </RegistrationInfo>
               <Triggers>
                 <LogonTrigger>
@@ -366,14 +366,14 @@ internal static partial class SignInTask
             report = new SignInTaskReport(
                 null,
                 TaskChange.Failed,
-                "The pack id is unknown, so the task that starts BrowserAI has no name and was not changed. BrowserAI then starts only once it is installed again.");
+                "The pack id is unknown, so the task that starts BrowserAI has no name and was not changed. BrowserAI starts again only once it is reinstalled.");
         }
         else
         {
             report = ChangeTheTaskAndItsCopy(intent, target, NameFor(appId, target.InstallRoot), tasks, arguments);
         }
 
-        SignInTaskLog.Changed(logger, report.Change, report.Detail);
+        SignInTaskLog.Changed(logger, report.Detail);
 
         return report;
     }
@@ -472,11 +472,15 @@ internal static partial class SignInTaskLog
 {
     /// <summary>What a hook did to the task.</summary>
     /// <param name="logger">Where to write.</param>
-    /// <param name="change">What changed.</param>
     /// <param name="detail">The sentence.</param>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, page #176 (previously "Sign-in task:
+    /// {Change}. {Detail}", with the member's name before a sentence that already says
+    /// it)</i>.
+    /// </remarks>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "Sign-in task: {Change}. {Detail}")]
-    public static partial void Changed(ILogger logger, TaskChange change, string detail);
+        Message = "Sign-in task: {Detail}")]
+    public static partial void Changed(ILogger logger, string detail);
 }

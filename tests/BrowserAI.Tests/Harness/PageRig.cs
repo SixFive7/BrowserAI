@@ -23,14 +23,15 @@ internal sealed class PageRig : IDisposable
         Occasion occasion = Occasion.Ordinary,
         IUpdateHolds? holds = null,
         ChangelogSection? changelog = null,
-        BrokenInstallNotice? install = null)
+        BrokenInstallNotice? install = null,
+        bool installed = true)
     {
         Registration = registration ?? new FakeRegistration();
 
         Facts = new PageFacts
         {
             Version = "9.0.0",
-            InstallRoot = Directory.CreateDirectory(Path.Combine(_scratch.Path, "install")).FullName,
+            InstallRoot = installed ? Directory.CreateDirectory(Path.Combine(_scratch.Path, "install")).FullName : null,
             DataRoot = Directory.CreateDirectory(Path.Combine(_scratch.Path, "data")).FullName,
             LogDirectory = Path.Combine(_scratch.Path, "data", "logs"),
             ServerCommand = Path.Combine(_scratch.Path, "install", "current", "BrowserAI.exe"),

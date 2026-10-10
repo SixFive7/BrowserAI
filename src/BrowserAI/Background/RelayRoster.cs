@@ -351,7 +351,9 @@ internal sealed class RelayRoster : IUpdateRelays
         // The words of the label, since the on-screen check of 2026-10-10 (previously "a new
         // conversation in its folder").
         NameSource.NoRecordYet => "it has no record yet, so it is called an unnamed conversation in its folder",
-        NameSource.ClientAndFolder => "BrowserAI cannot tell which it is, so it is called by its client and folder",
+        // The texts polish, 2026-10-10, page #201 (previously "BrowserAI cannot tell which
+        // it is"), which a line that also says where the conversation was found contradicted.
+        NameSource.ClientAndFolder => "BrowserAI has no name for it, so it is called by its client and folder",
         _ => "it has no name",
     };
 
@@ -460,7 +462,9 @@ internal sealed class RelayRoster : IUpdateRelays
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            RelayRosterLog.NotTold(_logger, entry.Greeting.Id, method, failure);
+            var told = Told(method);
+
+            RelayRosterLog.NotTold(_logger, entry.Greeting.Id, told, failure);
         }
     }
 
@@ -480,6 +484,20 @@ internal sealed class RelayRoster : IUpdateRelays
             RelayRosterLog.EndedWithAFault(_logger, entry.Greeting.Id, failure);
         }
     }
+
+    /// <summary>What a relay was to be told, in words, for the line that says it could not be.</summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10, the texts polish, page #202 (previously the wire's method name,
+    /// "could not be told 'browserai/called-off'")</i>.
+    /// </remarks>
+    /// <param name="method">The method.</param>
+    /// <returns>The words, after "could not be told".</returns>
+    internal static string Told(string method) => method switch
+    {
+        RelayProtocol.CalledOff => "that the update was called off",
+        RelayProtocol.End => "to end for the update",
+        _ => $"'{method}'",
+    };
 
     private Entry? Find(string id)
     {
@@ -537,9 +555,11 @@ internal static partial class RelayRosterLog
     [LoggerMessage(EventId = 30, Level = LogLevel.Information, Message = "Relay {Relay}'s conversation was {Found}, and {Named}.")]
     public static partial void ConversationFound(ILogger logger, string relay, string found, string named);
 
-    [LoggerMessage(EventId = 31, Level = LogLevel.Warning, Message = "Relay {Relay} could not be told '{Method}'; every other relay is still told.")]
-    public static partial void NotTold(ILogger logger, string relay, string method, Exception failure);
+    [LoggerMessage(EventId = 31, Level = LogLevel.Warning, Message = "Relay {Relay} could not be told {What}; every other relay is still told.")]
+    public static partial void NotTold(ILogger logger, string relay, string what, Exception failure);
 
-    [LoggerMessage(EventId = 32, Level = LogLevel.Warning, Message = "Relay {Relay}'s connection ended with a fault; it has gone all the same.")]
+    // The texts polish, 2026-10-10, page #203 (previously "; it has gone all the same."):
+    // what the update's wait does with it.
+    [LoggerMessage(EventId = 32, Level = LogLevel.Warning, Message = "Relay {Relay}'s connection ended with a fault, and the relay is counted as gone.")]
     public static partial void EndedWithAFault(ILogger logger, string relay, Exception failure);
 }

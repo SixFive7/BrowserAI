@@ -31,7 +31,10 @@ internal static class ToastActivatorStep
 
         if (ToastInterop.CurrentAppUserModelId() is not { Length: > 0 } id)
         {
-            return "This process runs under no application id, so the toasts' activator was not changed.";
+            // The texts polish, 2026-10-10, page #178 (previously "This process runs under
+            // no application id, so the toasts' activator was not changed."), after a frame
+            // that names the activator already.
+            return "Not changed: this process runs under no application id.";
         }
 
         try

@@ -391,7 +391,7 @@ internal static class HookRegistration
             ? UserPath.Remove(userPath, entry)
             : UserPath.Add(userPath, entry);
 
-        RegistrationHookLog.PathChanged(logger, report.Change, report.Detail);
+        RegistrationHookLog.PathChanged(logger, report.Detail);
 
         return report;
     }
@@ -445,18 +445,22 @@ internal static partial class RegistrationHookLog
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "Velopack {Intent} hook running for BrowserAI {Version}. image={ImagePath}")]
+        Message = "Velopack's {Intent} hook is running for BrowserAI {Version}, as {ImagePath}.")]
     public static partial void HookRunning(ILogger logger, RegistrationIntent intent, string version, string imagePath);
 
     /// <summary>What became of the install's folder on the user's PATH.</summary>
     /// <param name="logger">Where to write.</param>
-    /// <param name="change">The change.</param>
     /// <param name="detail">The sentence.</param>
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, page #176 (previously "User PATH: {Change}.
+    /// {Detail}", with the member's name, <c>Added</c> or <c>AlreadyThere</c>, before a
+    /// sentence that already says it)</i>.
+    /// </remarks>
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Information,
-        Message = "User PATH: {Change}. {Detail}")]
-    public static partial void PathChanged(ILogger logger, UserPathChange change, string detail);
+        Message = "User PATH: {Detail}")]
+    public static partial void PathChanged(ILogger logger, string detail);
 
     /// <summary>What asking the background to stop came to, at an uninstall.</summary>
     /// <param name="logger">Where to write.</param>

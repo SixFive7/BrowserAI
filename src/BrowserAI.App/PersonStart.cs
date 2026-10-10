@@ -340,13 +340,16 @@ internal static partial class PersonStartLog
     [LoggerMessage(EventId = 6102, Level = LogLevel.Warning, Message = "No background runs for this build, and a build that is not installed has nothing that starts one. Start one with: \"{Executable}\" --background --data-root \"{DataRoot}\"")]
     public static partial void NotInstalled(ILogger logger, string executable, string dataRoot);
 
-    [LoggerMessage(EventId = 6103, Level = LogLevel.Error, Message = "The task '{Task}' is missing and the definition the install wrote could not be read, so it was not registered again. Reinstalling BrowserAI registers it.")]
+    // The texts polish, 2026-10-10, pages #209 and #210 (previously "the definition the
+    // install wrote" and "from the definition the install saved"): the saved copy, by the
+    // name of the file to look for, as the task's own description calls it.
+    [LoggerMessage(EventId = 6103, Level = LogLevel.Error, Message = "The task '{Task}' is missing and its saved copy, background-task.xml, could not be read, so it was not registered again. Reinstalling BrowserAI registers it.")]
     public static partial void NoDefinition(ILogger logger, string task);
 
     // Corrected 2026-10-10 (previously "The task was missing and is registered again:
     // {Change}. {Detail}", written whatever the scheduler answered), the texts review's
     // #168: written only once the task is registered. A refusal is 6113.
-    [LoggerMessage(EventId = 6104, Level = LogLevel.Information, Message = "The task '{Task}' was missing and is registered again, from the definition the install saved.")]
+    [LoggerMessage(EventId = 6104, Level = LogLevel.Information, Message = "The task '{Task}' was missing and is registered again from its saved copy, background-task.xml.")]
     public static partial void Registered(ILogger logger, string task);
 
     // Corrected 2026-10-10, round 2 of the texts review, #201 (previously "The Task
@@ -358,7 +361,10 @@ internal static partial class PersonStartLog
 
     // Corrected 2026-10-10 (previously "within {Bound}", a TimeSpan, which prints as
     // 00:00:30), the texts review's #170.
-    [LoggerMessage(EventId = 6106, Level = LogLevel.Error, Message = "The task '{Task}' was started, and no background opened its pipe within {Seconds} seconds. The log of the background, and the task's last run result, say why.")]
+    //
+    // The texts polish, 2026-10-10, page #212 (previously "The log of the background, and
+    // the task's last run result, say why."): the background writes into this same log.
+    [LoggerMessage(EventId = 6106, Level = LogLevel.Error, Message = "The task '{Task}' was started, and no background opened its pipe within {Seconds} seconds. The background's own lines in this log, and the task's last run result in Task Scheduler, say why.")]
     public static partial void NoPipeInTime(ILogger logger, string task, double seconds);
 
     // Corrected 2026-10-10 (previously an int?, which prints as "(null)" when the record
@@ -369,7 +375,11 @@ internal static partial class PersonStartLog
     // The reason arrives without a full stop of its own since 2026-10-10 (PersonStart.Clause),
     // the texts review's #172: every reason the client gives ended in one, so the line
     // ended in two.
-    [LoggerMessage(EventId = 6108, Level = LogLevel.Warning, Message = "The background (pid {ProcessId}) took the connection and did not answer: {Why}. This start judges it hung.")]
+    //
+    // The texts polish, 2026-10-10, pages #214 and #217 (previously "took the connection
+    // and did not answer: {Why}. This start judges it hung." and "... did not answer
+    // either: {Why}"): the reason says how it did not answer.
+    [LoggerMessage(EventId = 6108, Level = LogLevel.Warning, Message = "The background (pid {ProcessId}) took the connection and is judged hung: {Why}.")]
     public static partial void Hung(ILogger logger, int processId, string why);
 
     // As 6108, the texts review's #173: three of the reasons BrowserProcesses gives for a
@@ -380,13 +390,16 @@ internal static partial class PersonStartLog
     [LoggerMessage(EventId = 6110, Level = LogLevel.Warning, Message = "The hung background (pid {ProcessId}) was ended, its record cleared, and a new one is started through the task.")]
     public static partial void HungEnded(ILogger logger, int processId);
 
-    [LoggerMessage(EventId = 6111, Level = LogLevel.Error, Message = "The background the task started took the connection and did not answer either: {Why}")]
+    [LoggerMessage(EventId = 6111, Level = LogLevel.Error, Message = "The background the task started took the connection and is judged hung too: {Why}")]
     public static partial void NewBackgroundHung(ILogger logger, string why);
 
     // Added 2026-10-10, the texts review's #166: an installed build whose pack id is
     // unknown, which took 6102's line until then. The hooks' own sentence for the same
     // case is SignInTask.Apply's.
-    [LoggerMessage(EventId = 6112, Level = LogLevel.Error, Message = "No background runs for this build, which is installed in '{InstallRoot}'. The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Installing BrowserAI again registers the task.")]
+    //
+    // The texts polish, 2026-10-10, page #222 (previously "Installing BrowserAI again
+    // registers the task."): the word every broken-install text uses.
+    [LoggerMessage(EventId = 6112, Level = LogLevel.Error, Message = "No background runs for this build, which is installed in '{InstallRoot}'. The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Reinstalling BrowserAI registers the task.")]
     public static partial void NoTaskName(ILogger logger, string installRoot);
 
     // Added 2026-10-10, the texts review's #168: the Task Scheduler refused the missing

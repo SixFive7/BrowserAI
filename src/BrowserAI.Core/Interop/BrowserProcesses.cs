@@ -312,9 +312,19 @@ internal static partial class BrowserProcesses
 
         var path = ImagePathOf(handle);
 
-        if (path is null || !Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+        // The texts polish, 2026-10-10, page #215 (previously "pid N runs 'an image that
+        // could not be read', which is not under ..."): a placeholder in quotes read as a
+        // path, and claimed what nobody could read.
+        if (path is null)
         {
-            refusal = $"pid {processId} runs '{path ?? "an image that could not be read"}', which is not under '{root}'";
+            refusal = $"the image pid {processId} runs could not be read, so it is not known to be under '{root}'";
+            handle.Dispose();
+            return null;
+        }
+
+        if (!Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            refusal = $"pid {processId} runs '{path}', which is not under '{root}'";
             handle.Dispose();
             return null;
         }
@@ -874,7 +884,10 @@ internal sealed partial class StrayCandidate : IDisposable
     {
         if (!IsStillTheProcessThatWasFound())
         {
-            refusal = $"PID {ProcessId} is no longer the process that was found -- its creation time has changed, so the pid now names something else. Nothing was terminated.";
+            // The texts polish, 2026-10-10, page #215 (previously "PID N is no longer the
+            // process that was found -- ... Nothing was terminated."): "pid" and "ended"
+            // as every other reason says them, and a clause, as they are.
+            refusal = $"pid {ProcessId} is no longer the process that was found: its creation time has changed, so the pid now names something else. Nothing was ended";
             return false;
         }
 

@@ -214,7 +214,7 @@ $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 # nothing. The rule is its own script so that the suite can drive it, as
 # Test-ReleaseVersion.ps1 is.
 if ($TestPackOnly) {
-    Write-Host "Test pack only: the drift check is a release's, and was not read."
+    Write-Host "Test pack only: the drift check is for a release, and was not read."
 }
 else {
     if (-not $DriftCheckFile) { $DriftCheckFile = Join-Path $root 'drift-check.json' }
@@ -235,9 +235,16 @@ else {
         $driftRefusal = $_.Exception.Message
     }
 
+    # The texts polish, 2026-10-10, page #249 (previously every refusal went on "Take the
+    # daily drift check AGENTS.md describes, adopt every drift ..."): each of the check's
+    # reasons already says what to do, so only the guard, which has no reason, says it.
     if ($null -ne $driftRefusal -or $LASTEXITCODE -ne 0) {
-        $because = if ($driftRefusal) { "$driftRefusal`n" } else { '' }
-        Write-Error "${because}No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."
+        if ($driftRefusal) {
+            Write-Error "$driftRefusal`nNo release was cut."
+        }
+        else {
+            Write-Error "No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."
+        }
         exit 1
     }
 

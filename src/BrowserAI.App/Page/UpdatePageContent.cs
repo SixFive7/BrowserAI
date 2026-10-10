@@ -53,8 +53,13 @@ internal static class UpdatePageContent
     [
         "Every browser session is closed cleanly, and each comes back where it was with browserai_resume.",
         "Every visible window closes, with what is open in it.",
-        "Every agent's connection to BrowserAI ends. Claude Code in VS Code reconnects by itself. Claude Code in a terminal needs /mcp, then BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
-        $"BrowserAI starts again by itself once BrowserAI {version} is installed.",
+        //
+        // The texts polish, 2026-10-10, pages #119 and #120 (previously "Claude Code in a
+        // terminal needs /mcp, then BrowserAI, then Reconnect." and "BrowserAI starts again
+        // by itself once BrowserAI {version} is installed."): the steps as the same page's
+        // agent line says them, and BrowserAI named once.
+        "Every agent's connection to BrowserAI ends. Claude Code in VS Code reconnects by itself. For Claude Code in a terminal, run /mcp there, choose BrowserAI, then Reconnect. A Codex conversation gets BrowserAI back only in a new conversation.",
+        $"BrowserAI starts again by itself once {version} is installed.",
     ];
 
     /// <summary>
@@ -205,7 +210,7 @@ internal static class UpdatePageContent
     /// <param name="label">What the conversation is called, or <see langword="null"/>.</param>
     /// <param name="folder">The relay's folder.</param>
     /// <returns><see langword="true"/> for a label that is not a title and ends with the folder's name.</returns>
-    private static bool NamesTheFolder(ConversationName? label, string folder) =>
+    internal static bool NamesTheFolder(ConversationName? label, string folder) =>
         label is { IsTitle: false } words
         && ClientFolder.NameOf(folder) is { } name
         && words.Text.EndsWith($" in {name}", StringComparison.Ordinal);
@@ -241,7 +246,9 @@ internal static class UpdatePageContent
                 .Append(", at about ").Append(PageContent.Text(ends.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)))
                 .Append(", if nothing uses BrowserAI before then."),
             { Wait: UpdateWait.WindowNeverCloses } => html.Append(PageContent.Text("A visible window set never to close holds it: it installs once you close that window and nothing else uses BrowserAI.")),
-            { Wait: UpdateWait.SessionNeverCloses } => html.Append(PageContent.Text("A hidden session set never to close holds it: it installs once an agent closes that session and nothing else uses BrowserAI.")),
+            // The texts polish, 2026-10-10, page #101 (previously "A hidden session set
+            // never to close"): the section's own words, "Hidden browser sessions".
+            { Wait: UpdateWait.SessionNeverCloses } => html.Append(PageContent.Text("A hidden browser session set never to close holds it: it installs once an agent closes that session and nothing else uses BrowserAI.")),
             { Wait: UpdateWait.CallRunning } => html.Append(PageContent.Text("Every countdown has run out, and a call is still running: it installs once that call has finished.")),
             { Wait: UpdateWait.Closing } => html.Append(PageContent.Text("Every countdown has run out: it installs once the last browser has closed.")),
             _ => html.Append(PageContent.Text("Nothing uses BrowserAI now: it installs in a moment.")),

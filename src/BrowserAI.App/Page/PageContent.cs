@@ -67,7 +67,7 @@ internal static class PageContent
             <link rel="stylesheet" href="page.css">
             <script src="page.js" defer></script>
             </head>
-            <body data-page="{page}" data-tab="{tabText}">
+            <body data-page="{page}" data-tab="{tabText}" data-unanswered="{Text(Unanswered(view.Facts.InstallRoot is not null))}">
             <nav>{Navigation(kind, tab)}</nav>
             <p id="banner" hidden></p>
             <main>
@@ -79,6 +79,19 @@ internal static class PageContent
 
             """;
     }
+
+    /// <summary>What the page's banner says once BrowserAI stops answering it.</summary>
+    /// <remarks>
+    /// <i>Added 2026-10-10, the texts polish (previously the script said "BrowserAI is not
+    /// answering this page. If it does not come back, open BrowserAI from the Start Menu
+    /// again." on every build)</i>: for a build that is not installed, the Start Menu
+    /// starts the installed BrowserAI, never this one, as the background's own stop says.
+    /// </remarks>
+    /// <param name="installed">Whether this BrowserAI is installed.</param>
+    /// <returns>The sentence.</returns>
+    public static string Unanswered(bool installed) => installed
+        ? "BrowserAI is not answering this page. If it does not come back, open BrowserAI from the Start Menu again."
+        : "BrowserAI is not answering this page.";
 
     /// <summary>The part of the page a state event replaces.</summary>
     /// <param name="view">What is true now.</param>
@@ -111,7 +124,13 @@ internal static class PageContent
     /// by one toast, whose button opens the status page. ⚠️ <i>Corrected 2026-10-10
     /// (previously "To reinstall, run BrowserAI-win-Setup.exe again, the installer from the
     /// latest release."): the release ships the installer as <c>BrowserAI.exe</c>, and the
-    /// notice names it as README's recovery note does.</i>
+    /// notice names it as README's recovery note does.</i> ⚠️ <i>Corrected 2026-10-10 a
+    /// second time, the texts polish, page #81 (previously "To reinstall, download
+    /// BrowserAI.exe from the latest release and run it. It installs over this
+    /// install, ..."): this is the page the toast's How to reinstall opens, and an install
+    /// that takes its updates from a folder on this computer is reinstalled from that
+    /// folder, with the feed variable it was installed with, which a reinstall does not
+    /// keep.</i>
     /// </remarks>
     /// <param name="difference">The first difference, as the refusal words it.</param>
     /// <returns>The HTML.</returns>
@@ -120,9 +139,11 @@ internal static class PageContent
         + "<p><strong>BrowserAI needs reinstalling.</strong> Part of this install does not match the rest: the browser server it starts for every session lists different tools from the ones this BrowserAI was built with, and the first difference is "
         + Text(difference)
         + ". Every session is refused until BrowserAI is reinstalled.</p>"
-        + "<p>To reinstall, download BrowserAI.exe from <a href=\""
+        + "<p>Reinstall BrowserAI the way you installed it. For a release, download BrowserAI.exe from <a href=\""
         + ReleasesUrl
-        + "\" target=\"_blank\" rel=\"noopener noreferrer\">the latest release</a> and run it. It installs over this install, and every session, with its profile and its files, is kept.</p>"
+        + "\" target=\"_blank\" rel=\"noopener noreferrer\">the latest release</a> and run it. "
+        + $"For an install that takes its updates from a folder on this computer, run BrowserAI.exe from that folder with the {UpdateConfiguration.FeedVariable} you installed it with. "
+        + "Either way it installs over this install, and every session, with its profile and its files, is kept.</p>"
         + "</div>\n";
 
     /// <summary>Encodes text for HTML, attribute values included.</summary>
@@ -270,7 +291,9 @@ internal static class PageContent
             _ = html.Append("<li>This BrowserAI is not installed, so there is no install folder to show.</li>\n");
         }
 
-        _ = html.Append("<li>Browsers, sessions and logs in <code>").Append(Text(facts.DataRoot)).Append("</code> ")
+        // The texts polish, 2026-10-10 (previously "Browsers, sessions and logs in"): a
+        // session is the directory its agent named, and the data root holds the index.
+        _ = html.Append("<li>Browsers, the session index and logs in <code>").Append(Text(facts.DataRoot)).Append("</code> ")
             .Append(Button("open-folder", "Open", ("folder", "data"))).Append("</li>\n")
             .Append("<li>Logs in <code>").Append(Text(facts.LogDirectory)).Append("</code> ")
             .Append(Button("open-folder", "Open", ("folder", "logs"))).Append("</li>\n")
@@ -555,7 +578,13 @@ internal static class PageContent
     }
 
     /// <summary>What the sessions page says first.</summary>
-    public const string SessionsIntroduction = "BrowserAI's background, every session it holds, and each client connected to it.";
+    /// <remarks>
+    /// <i>Corrected 2026-10-10, the texts polish, page #92 (previously the first sentence
+    /// alone)</i>: how a client's connection ends is said once here, and no longer in
+    /// every client's entry.
+    /// </remarks>
+    public const string SessionsIntroduction =
+        "BrowserAI's background, every session it holds, and each client connected to it. A client's connection ends when the client closes it or exits, and when an update installs.";
 
     /// <summary>What the page says of the background.</summary>
     /// <remarks>
@@ -578,9 +607,9 @@ internal static class PageContent
     /// update installing ends every connection too, as the update page says, and a
     /// conversation's end does not end one in Claude Code, where <c>/clear</c> starts a
     /// new conversation on the same connection (measured, kb/mcp/protocol.md).
+    /// ⚠️ <i>Deleted 2026-10-10, the texts polish, page #95</i>: the sentence moved into
+    /// <see cref="SessionsIntroduction"/>, said once for every client.
     /// </remarks>
-    public const string RelaySentence = "It ends when its client closes it or exits, and when an update installs.";
-
     /// <summary>The start of what the page says of a session the host keeps.</summary>
     public const string KeptSentence = "Kept: its client has gone";
 
@@ -642,9 +671,18 @@ internal static class PageContent
             _ = html.Append("<strong>").Append(Text(conversation.Shown())).Append("</strong>, ");
         }
 
-        _ = html.Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture))
-            .Append("</p>\n<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>. ")
-            .Append(Text(RelaySentence)).Append("</p>\n");
+        _ = html.Append(Text(ClientOf(server))).Append(", pid ").Append(description.ProcessId.ToString(CultureInfo.InvariantCulture)).Append("</p>\n");
+
+        // The texts polish, 2026-10-10, page #95 (previously "Started in <folder>." after
+        // every name, and the relay sentence): BrowserAI's own words for a conversation it
+        // has no title for end with the folder's name already, "Claude Code in BrowserAI",
+        // so the folder is named again only beside a title, or when nothing names it. The
+        // update page's rule, UpdatePageContent.NamesTheFolder.
+        if (!UpdatePageContent.NamesTheFolder(server.Conversation, description.WorkingDirectory))
+        {
+            _ = html.Append("<p>Started in <code>").Append(Text(description.WorkingDirectory)).Append("</code>.</p>\n");
+        }
+
         AppendSessions(html, server, underHost: false);
         _ = html.Append("</li>\n");
     }

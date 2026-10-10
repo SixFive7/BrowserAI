@@ -319,7 +319,7 @@ internal sealed class BackgroundRecordTests
         var refusal = new BrowserAI.Hosting.RootRefusal(
             BrowserAI.Hosting.JudgedRoot.Data,
             @"D:\Shared\BrowserAI",
-            "it is outside this user's profile, so it is not storage Windows keeps per-user",
+            "it is outside this user's profile, so it is not per-user storage",
             @"give BrowserAI a data root under 'C:\Users\someone'.");
 
         var written = BackgroundRecord.Refused(path, "9.9.9-record-tests", "image", refusal, StartedAt);

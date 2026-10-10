@@ -144,7 +144,7 @@ internal sealed class PersonStartTests
 
         await Assert.That(Lines(unnamed, 6112)).IsEqualTo(
             $"No background runs for this build, which is installed in '{scratch.InstallRoot}'. "
-            + "The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Installing BrowserAI again registers the task.");
+            + "The pack id is unknown, so the task that starts BrowserAI has no name and was not run. Reinstalling BrowserAI registers the task.");
         await Assert.That(Lines(unnamed, 6102)).IsEmpty().Because("an installed build was told it is not installed");
     }
 
@@ -203,7 +203,7 @@ internal sealed class PersonStartTests
 
             await Assert.That(string.Join(" | ", background.Verbs.Pages)).IsEqualTo("update");
             await Assert.That(Lines(logs, 6104))
-                .IsEqualTo($"The task '{TaskName}' was missing and is registered again, from the definition the install saved.")
+                .IsEqualTo($"The task '{TaskName}' was missing and is registered again from its saved copy, {SignInTask.SavedDefinitionFileName}.")
                 .Because("the start did not say it registered the task again, in these words");
         }
         finally
@@ -235,7 +235,7 @@ internal sealed class PersonStartTests
     {
         using var scratch = new StartScratch("person-start-disabled");
 
-        const string Disabled = "The task scheduler could not start the task: 0x80041326, The task is disabled.";
+        const string Disabled = "The Task Scheduler could not start the task: 0x80041326, The task is disabled.";
 
         var tasks = new ScriptedLogonTasks { RunAnswer = (_, _) => new TaskReport(TaskChange.Failed, Disabled) };
         using var logs = new CapturingLoggerProvider();
@@ -271,7 +271,7 @@ internal sealed class PersonStartTests
     {
         using var scratch = new StartScratch("person-start-not-registered-again");
 
-        const string Refused = "The task scheduler could not register 'BrowserAI.app.scratch sign-in person-start-tests': 0x80070005, Access is denied.";
+        const string Refused = "The Task Scheduler could not register 'BrowserAI.app.scratch sign-in person-start-tests': 0x80070005, Access is denied.";
 
         var tasks = new RefusingScheduler(Refused);
         using var logs = new CapturingLoggerProvider();
@@ -317,7 +317,7 @@ internal sealed class PersonStartTests
         await Assert.That(shown).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
         await Assert.That(Lines(logs, 6106)).IsEqualTo(
             $"The task '{TaskName}' was started, and no background opened its pipe within {PersonStart.LookInterval.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. "
-            + "The log of the background, and the task's last run result, say why.");
+            + "The background's own lines in this log, and the task's last run result in Task Scheduler, say why.");
     }
 
     /// <summary>
@@ -404,7 +404,7 @@ internal sealed class PersonStartTests
         var hung = await ShowAsync(settings, page: null, logs);
 
         await Assert.That(hung).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
-        await Assert.That(Lines(logs, 6108)).IsEqualTo($"The background (pid {pid}) took the connection and did not answer: The background did not answer within 0 s. This start judges it hung.");
+        await Assert.That(Lines(logs, 6108)).IsEqualTo($"The background (pid {pid}) took the connection and is judged hung: No answer came within 0 s.");
         await Assert.That(Lines(logs, 6109)).IsEqualTo($"The hung background (pid {pid}) was not ended: pid {pid} could not be opened: Access is denied.");
         await Assert.That(string.Join(" | ", asked)).IsEqualTo(string.Create(CultureInfo.InvariantCulture, $"{pid} {created} {scratch.InstallRoot}"));
         await Assert.That(tasks.Events).IsEmpty();
