@@ -1,0 +1,89 @@
+{
+  "tool": "registerai",
+  "version": "0.3.0",
+  "schema": 1,
+  "verb": "register",
+  "dryRun": false,
+  "exitCode": 0,
+  "error": null,
+  "server": {
+    "name": "browserai",
+    "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe",
+    "args": [
+      "--mcp"
+    ],
+    "env": []
+  },
+  "results": [
+    {
+      "client": "codex",
+      "scope": "user",
+      "project": null,
+      "clientPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+      "config": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\.work\\regai-eof-3\\run-01\\codexhome\\config.toml",
+      "before": {
+        "state": "absent",
+        "command": null,
+        "args": [],
+        "env": [],
+        "resolvesTo": null
+      },
+      "action": "added",
+      "after": {
+        "state": "ours",
+        "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe",
+        "args": [
+          "--mcp"
+        ],
+        "env": [],
+        "resolvesTo": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe"
+      },
+      "ran": [
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "list",
+            "--json"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "add",
+            "browserai",
+            "--",
+            "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe",
+            "--mcp"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        },
+        {
+          "argv": [
+            "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+            "mcp",
+            "list",
+            "--json"
+          ],
+          "exitCode": 0,
+          "timedOut": false
+        }
+      ],
+      "said": "Added global MCP server 'browserai'.",
+      "advice": [
+        {
+          "code": "codex-new-thread",
+          "text": "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
+          "command": null
+        }
+      ],
+      "manual": "codex mcp add browserai -- 'C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\BrowserAI.exe' --mcp",
+      "error": null
+    }
+  ],
+  "path": null
+}

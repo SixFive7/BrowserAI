@@ -667,6 +667,69 @@ times under scratch homes, and `rig/summarize.js` prints the table above from th
 result files. Against a newer CLI the first thing to look at is the `_cmd` rows: one
 that starts means Codex has begun expanding.
 
+⚠️ *Re-measured 2026-10-10 by addition @ codex-cli 0.162.0-alpha.2, with one round at
+0.159.0-alpha.12.1*, for the maintainer's 21 of that day
+([evidence](../../docs/evidence/2026-10-10-codex-project/README.md)). **Nothing above has
+moved**: the eight spellings in `command` started 0 of 48 at both scopes, and 0 of 8 at
+0.159. The launch chain, `stdio_server_launcher.rs`, `program_resolver.rs` and `utils.rs`
+among six files, is byte-identical at the measured build's tag `rust-v0.162.0-alpha.2`, at
+the newest release `rust-v0.162.1` and at the newest pre-release `rust-v0.163.0-alpha.5`,
+so the run speaks for those two by source identity and not by a run of them; and #2680 is
+still open, with no linked pull request (read 2026-10-10). This time the stand-in was named
+`BrowserAI.exe` and built as a Windows-subsystem binary, as the real one is, under a
+scratch `LOCALAPPDATA` and `USERPROFILE`, so that the forms a committed project entry could
+take were measured against the folder every PC has:
+
+| The project entry | Started | What the server received |
+|---|---|---|
+| The bare `BrowserAI.exe`, the install on Codex's own PATH: Q294 b's entry | 24 of 24; **0 of 6 for an app-server started before the install**, *"MCP startup failed: program not found"*; and **the other copy, 3 of 3**, when another `BrowserAI.exe` came first on that PATH | the arguments the entry configures |
+| The same name with the entry's own `env = { PATH = '~\AppData\Local\BrowserAI.app\current' }` | **33 of 33**, the install's copy each time: an app-server started before the install, another copy first on Codex's PATH, and a space and `& ! ^ % ( )` in the profile path | the arguments the entry configures, under a PATH of that one entry as written |
+| `cmd.exe /d /v:on /c !LOCALAPPDATA!\BrowserAI.app\current\BrowserAI.exe --mcp` | 27 of 27 | **a split argument list wherever the profile path holds a space**, 6 of 6, the tail of the path arriving as the first arguments |
+| A committed `.codex/browserai.cmd`, named relatively | 15 of 15 for a thread at the project root; **0 of 3 for a thread in a subfolder with the app-server outside the project**, which is how the desktop app runs it | the arguments the entry configures |
+
+The second row starts because `which` expands a leading `~` in each PATH entry from
+`USERPROFILE` (`finder.rs:151-154, 242-262` in `which` 8.0.0, through `env_home`), and an
+entry whose own PATH finds nothing falls back to the first row, because Rust's own search
+ends in Codex's PATH: 3 of 3 with the install on that PATH, 0 of 3 without. Codex starts
+every stdio server with `CREATE_NO_WINDOW` (`child_command.rs:104-105`), and no process of
+any app-server tree owned a top-level window in 48 sessions.
+
+**A project's entries load only in a trusted project, and a full-access app-server trusts
+one itself.** A project with no trust entry under a read-only sandbox loaded 0 of 12; one
+marked `trust_level = "untrusted"`, 0 of 12; and one under workspace-write on a machine
+with no Windows sandbox set up, which Codex turns into read-only (`config_toml.rs:821-833`),
+0 of 12, each with the app-server's *"Project-local config, hooks, and exec policies are
+disabled in the following folders until the project is trusted, but skills still load."*
+A project with no trust entry under full access was trusted by the app-server at
+`thread/start`, which wrote `trust_level = "trusted"` for its folder into the user's
+`config.toml`, 3 of 3, and then loaded 12 of 12 (`thread_processor.rs:1350-1377` at
+`rust-v0.162.1`, the same code as at 0.155.0-alpha.9.2). That workspace-write does the same
+once the Windows sandbox is set up is read from that source and not measured. **And Claude
+Code 2.1.296 expanded `${LOCALAPPDATA}` in a project `.mcp.json` command, 6 of 6
+connected**, three of them with a space in the expanded path, which is the measurement
+behind *"the way `${LOCALAPPDATA}/...` does for Claude Code"* above.
+
+⚠️ *Corrected 2026-10-10 by addition*, three readings of the 2026-09-24 record:
+
+- its `cmdwrap_space_v`, *"3 of 3 with `/v:on` and `!LOCALAPPDATA!`"*, counted starts
+  only: that batch's own `summary.txt:127` shows the server received the tail of the
+  spaced path as its first argument, which the third row above reproduces at 0.159 and
+  0.162;
+- its *"an untrusted project's own entries, which Codex does not read"* held because that
+  rig ran read-only: a project with no trust decision is trusted by a full-access
+  app-server itself, as above;
+- and the remark on `RegistrationClient.CodexProjectNote` that a Codex started before the
+  install cannot see the server *"was not measured"* had been stale since the measurement
+  of 2026-09-25 above, in which such a Codex never started it, 3 of 3; here it started it
+  0 of 6.
+
+**What it means for BrowserAI**: Q294 b's bare name is the entry BrowserAI writes, and its
+two failures above are a Codex started before the install, which does not find the server
+until it is started again, and another `BrowserAI.exe` earlier on the PATH, which starts
+silently. The entry with its own PATH started in every condition measured; its costs are a
+server whose PATH is that one entry, and a reliance on `which` expanding `~`, which Codex
+neither documents nor tests. Which entry BrowserAI writes is the maintainer's to decide.
+
 ## Every status list starts one more copy of each Codex server -- measured 2026-09-24
 
 `[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, from the same Q288 runs

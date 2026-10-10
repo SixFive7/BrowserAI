@@ -287,8 +287,10 @@ internal sealed record RegistrationClient
     /// <remarks>
     /// <b>The sentence names what the name finds, and that it may take a restart</b>:
     /// a Codex process started before the install carries a PATH without the folder,
-    /// which follows from how the launcher builds the server's environment and was not
-    /// measured. <i>Moved here 2026-10-03 from <c>CodexRegistration.ProjectCommandGiven</c>,
+    /// which follows from how the launcher builds the server's environment. <i>Corrected
+    /// 2026-10-10 (previously "and was not measured")</i>: measured 2026-09-25, where such a
+    /// Codex never started the server, 3 of 3, and on 2026-10-10 at codex-cli
+    /// 0.162.0-alpha.2, where it started it 0 of 6 (<c>kb/mcp/protocol.md</c>). <i>Moved here 2026-10-03 from <c>CodexRegistration.ProjectCommandGiven</c>,
     /// with its wording unchanged.</i>
     /// </remarks>
     public static string CodexProjectNote(string server, string? found)

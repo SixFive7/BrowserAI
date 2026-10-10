@@ -1,0 +1,21 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Prints a character range of one file inside an Electron app.asar, read as
+// data and never executed. usage: node asar-slice.js <app.asar> <inner path> <start> <length>
+const fs = require('fs');
+const [file, inner, startArg, lenArg] = process.argv.slice(2);
+const fd = fs.openSync(file, 'r');
+const head = Buffer.alloc(16);
+fs.readSync(fd, head, 0, 16, 0);
+const headerSize = head.readUInt32LE(4);
+const jsonLen = head.readUInt32LE(12);
+const hdr = Buffer.alloc(jsonLen);
+fs.readSync(fd, hdr, 0, jsonLen, 16);
+let node = JSON.parse(hdr.toString('utf8'));
+for (const part of inner.split('/')) node = node.files[part];
+const buf = Buffer.alloc(node.size);
+fs.readSync(fd, buf, 0, node.size, 8 + headerSize + Number(node.offset));
+const text = buf.toString('utf8');
+const start = Number(startArg);
+console.log(text.slice(start, start + Number(lenArg)));

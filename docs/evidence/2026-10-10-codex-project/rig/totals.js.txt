@@ -1,0 +1,40 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Totals over the newest binary's runs (rounds 1-3), or RIG_CODEX's: controls,
+// launches per server per session, and the first PATH entry a server saw.
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+const t = { ctl: [0, 0], uctl: [0, 0], launches: {}, firstPathArg0: [0, 0], runs: 0 };
+for (const id of fs.readdirSync(L.RUNS).sort()) {
+  const p = path.join(L.RUNS, id, 'result.json');
+  if (!fs.existsSync(p)) continue;
+  const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+  if (!r.spec || r.spec.round === 0 || r.codex.toLowerCase() !== L.CODEX.toLowerCase()) continue;
+  t.runs++;
+  for (const n of ['ctl', 'uctl']) {
+    if (!r.spec.expect.includes(n)) continue;
+    // A project control in a project Codex never loaded is not an attempt.
+    if (n === 'ctl' && !r.startupStatusAll[n]) continue;
+    t[n][1]++;
+    if (r.startupStatusAll[n] === 'ready' && r.toolCalls[n]) t[n][0]++;
+  }
+  const perTag = {};
+  for (const sl of r.stubLogs) {
+    const l = sl.events.find((e) => e.event === 'launch');
+    if (!l) continue;
+    const i = l.argv.indexOf('--tag');
+    const tag = i >= 0 ? l.argv[i + 1] : '?';
+    perTag[tag] = (perTag[tag] || 0) + 1;
+    const entryHasPath = /^(tildepath|envpath_bogus)$/.test(tag);
+    if (!entryHasPath) {
+      t.firstPathArg0[1]++;
+      const first = ((l.env && l.env.PATH) || '').split(';')[0];
+      if (first.toLowerCase().startsWith(path.join(r.spec.home, 'tmp', 'arg0').toLowerCase() + '\\codex-arg0')) t.firstPathArg0[0]++;
+    }
+  }
+  for (const [tag, n] of Object.entries(perTag)) t.launches[n] = (t.launches[n] || 0) + 1;
+}
+console.log(JSON.stringify(t, null, 1));
+fs.writeFileSync(path.join(L.SCR, 'raw', `totals${process.env.RIG_CODEX ? '-alt-codex' : ''}.json`), JSON.stringify(t, null, 1));

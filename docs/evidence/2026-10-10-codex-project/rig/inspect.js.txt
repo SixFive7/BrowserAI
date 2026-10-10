@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Prints one run's tool-call answers, process tree and windows.
+// usage: node inspect.js <runDir>
+const path = require('path');
+const r = require(path.resolve(process.argv[2], 'result.json'));
+const base = (p) => (p || '?').split('\\').pop();
+console.log('status', JSON.stringify(r.startupStatus));
+for (const [n, e] of Object.entries(r.startupError || {})) if (e) console.log('error', n, '::', e);
+for (const [n, c] of Object.entries(r.toolCalls)) {
+  let t = null;
+  try { t = JSON.parse(c.result.content[0].text); } catch (e) { t = { err: JSON.stringify(c).slice(0, 300) }; }
+  console.log(n.padEnd(18), 'image=' + t.image, '| ppid=' + t.ppid, '| built=' + t.builtAs, '| argv=' + JSON.stringify(t.argv), '| consoleWin=' + t.consoleWindow, 'consoleProcs=' + t.consoleProcessCount, '| PATH=' + ((t.env && t.env.PATH) || '').slice(0, 80));
+}
+for (const snap of ['whileAlive', 'afterCalls']) {
+  console.log('--- tree', snap);
+  for (const p of (r.census[snap].tree || [])) console.log(' '.repeat(p.depth * 2) + p.pid + ' <' + p.ppid + '> ' + base(p.path) + ' :: ' + (p.cmd || '').slice(0, 150));
+}
+const vis = [...(r.census.windowsWhileAlive.windows || []), ...(r.census.windowsAfterCalls.windows || [])];
+console.log('--- windows owned by the tree:', vis.length, 'visible:', vis.filter((w) => w.visible).length, JSON.stringify(vis.map((w) => `${w.pid}:${w.class}:${w.visible}`)));
+console.log('--- killed', JSON.stringify(r.killed));
+console.log('--- stub launches', r.stubLogs.length, r.stubLogs.map((s) => s.file).join(' '));
+console.log('--- mcp list', r.mcpListJson.status, (r.mcpListJson.stdout || '').slice(0, 200).replace(/\s+/g, ' '));

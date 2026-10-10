@@ -1,0 +1,188 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// 2026-10-10 Codex project-registration re-run: shared helpers. Not part of the
+// product. Adapted from docs/evidence/2026-09-24-codex-expansion/rig/lib.js.
+// What changed from that rig is listed in FINDINGS.md; the main points:
+// - every LOCALAPPDATA and USERPROFILE Codex sees is a scratch folder, so no
+//   file is written outside .work and a space can be put in the expanded path;
+// - the probe is named BrowserAI.exe, sits at <LOCALAPPDATA>\BrowserAI.app\
+//   current\ and is built as a Windows-subsystem binary, as the real one is;
+// - every entry is written straight into the project's .codex/config.toml;
+// - processes are observed by the app-server's own pid tree and the probe's
+//   own scratch paths, never by image name.
+const fs = require('fs');
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+const SCR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project';
+const RUNS = path.join(SCR, 'runs');
+const STUB_GUI = path.join(SCR, 'stub', 'probe-gui.exe');
+const STUB_CONSOLE = path.join(SCR, 'stub', 'probe-console.exe');
+const WINPROBE = path.join(SCR, 'rig', 'winprobe.exe');
+const CODEX_NEWEST = 'C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1002.7124.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe';
+const CODEX = process.env.RIG_CODEX || CODEX_NEWEST;
+
+// Scratch user profiles. LOCALAPPDATA is <profile>\AppData\Local, as on a real
+// machine, so that ~\AppData\Local and %LOCALAPPDATA% name the same folder.
+const PROFILES = {
+  ns: path.join(SCR, 'profiles', 'user'),
+  sp: path.join(SCR, 'profiles', 'Jo Smith'),
+  spx: path.join(SCR, 'profiles', 'Jo Smith & Co (!x^ 100%)'),
+  nsb: path.join(SCR, 'profiles', 'user-before'),
+};
+const OTHER_DIR = path.join(SCR, 'other');
+
+function ladOf(profile) { return path.join(profile, 'AppData', 'Local'); }
+function installDirOf(profile) { return path.join(ladOf(profile), 'BrowserAI.app', 'current'); }
+function installExeOf(profile) { return path.join(installDirOf(profile), 'BrowserAI.exe'); }
+function consoleExeOf(profile) { return path.join(ladOf(profile), 'BrowserAI.app', 'console', 'BrowserAI.exe'); }
+
+function stripAnsi(s) { return (s || '').replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ''); }
+
+// The PATH this process inherited, without any entry that holds a BrowserAI
+// binary, so that no case can reach the real install.
+function sanitizedPathEntries() {
+  const raw = (process.env.PATH || process.env.Path || '').split(';').filter((e) => e.length);
+  const kept = [];
+  const removed = [];
+  for (const e of raw) {
+    let hit = false;
+    for (const f of ['BrowserAI.exe', 'BrowserAI.Server.exe']) {
+      try { if (fs.existsSync(path.join(e.replace(/"/g, ''), f))) hit = true; } catch (err) { /* unreadable entry: keep */ }
+    }
+    (hit ? removed : kept).push(e);
+  }
+  return { kept, removed };
+}
+
+function baseEnv(extra) {
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (/^CLAUDE/i.test(k)) continue;
+    if (/^CODEX_/i.test(k)) continue;
+    if (/^RUST_LOG$/i.test(k)) continue;
+    if (/^PATH$/i.test(k)) continue; // set explicitly by every caller
+    env[k] = v;
+  }
+  // Codex runs git itself; nothing it runs may prompt.
+  env.GIT_TERMINAL_PROMPT = '0';
+  env.GCM_INTERACTIVE = 'never';
+  return Object.assign(env, extra || {});
+}
+
+function run(file, args, opts) {
+  opts = opts || {};
+  const t0 = Date.now();
+  const r = spawnSync(file, args, {
+    env: opts.env, cwd: opts.cwd, windowsHide: true, encoding: 'utf8',
+    timeout: opts.timeoutMs || 60000, maxBuffer: 64 * 1024 * 1024,
+  });
+  return {
+    file, args, cwd: opts.cwd || null, status: r.status, signal: r.signal,
+    error: r.error ? String(r.error) : null,
+    stdout: stripAnsi(r.stdout), stderr: stripAnsi(r.stderr), ms: Date.now() - t0,
+  };
+}
+
+// One read of the machine's process table. Nothing is selected here: callers
+// reduce it to the tree under a pid this rig started, or to the probe's own
+// scratch paths, and never by image name.
+function allProcs() {
+  const script = [
+    "$ErrorActionPreference='Stop'",
+    '$ps = @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine,CreationDate)',
+    "$out = foreach ($p in $ps) { [pscustomobject]@{ pid=$p.ProcessId; ppid=$p.ParentProcessId; path=$p.ExecutablePath; cmd=$p.CommandLine; created=$(if ($p.CreationDate) { $p.CreationDate.ToUniversalTime().ToString('o') } else { $null }) } }",
+    'ConvertTo-Json -InputObject @($out) -Depth 3 -Compress',
+  ].join('\n');
+  const r = run('pwsh.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { timeoutMs: 90000 });
+  try { return JSON.parse(r.stdout.trim()); } catch (e) { return null; }
+}
+
+// The tree under one pid, from one read of the process table.
+function treeOf(rootPid, all) {
+  all = all || allProcs();
+  if (!all) return { at: new Date().toISOString(), error: 'process table unreadable' };
+  const byParent = new Map();
+  for (const p of all) { if (!byParent.has(p.ppid)) byParent.set(p.ppid, []); byParent.get(p.ppid).push(p); }
+  const root = all.find((p) => p.pid === rootPid);
+  const tree = [];
+  const walk = (pid, depth) => {
+    for (const c of byParent.get(pid) || []) {
+      // A recycled pid is not a child: a child is never older than its parent.
+      const parent = all.find((p) => p.pid === pid);
+      if (parent && parent.created && c.created && c.created < parent.created) continue;
+      tree.push(Object.assign({ depth }, c));
+      walk(c.pid, depth + 1);
+    }
+  };
+  if (root) walk(rootPid, 1);
+  return { at: new Date().toISOString(), root: root || null, tree };
+}
+
+function windowsOf(pids) {
+  if (!pids.length) return { at: new Date().toISOString(), windows: [] };
+  const r = run(WINPROBE, pids.map(String), { timeoutMs: 30000 });
+  let windows = null;
+  try { windows = JSON.parse(r.stdout.trim() || '[]'); } catch (e) { windows = { parseError: r.stdout.slice(0, 300) }; }
+  return { at: new Date().toISOString(), pids, windows, status: r.status };
+}
+
+// Processes whose image is one of this rig's probe copies, by full path.
+function probesByPath(paths, all) {
+  all = all || allProcs();
+  if (!all) return { at: new Date().toISOString(), list: null };
+  const wanted = new Set(paths.map((p) => p.toLowerCase()));
+  const list = all.filter((p) => p.path && wanted.has(p.path.toLowerCase()))
+    .map((p) => ({ pid: p.pid, ppid: p.ppid, path: p.path, created: p.created }));
+  return { at: new Date().toISOString(), list };
+}
+
+function tomlLiteral(s) {
+  if (s.includes("'") || /[\r\n]/.test(s)) throw new Error('not a literal-safe string: ' + s);
+  return `'${s}'`;
+}
+
+function serverToml(e) {
+  const lines = [`[mcp_servers.${e.name}]`, `command = ${tomlLiteral(e.command)}`];
+  if (e.args && e.args.length) lines.push(`args = [${e.args.map(tomlLiteral).join(', ')}]`);
+  if (e.env && Object.keys(e.env).length) {
+    lines.push(`env = { ${Object.entries(e.env).map(([k, v]) => `${k} = ${tomlLiteral(v)}`).join(', ')} }`);
+  }
+  return lines.join('\n');
+}
+
+const PROVIDER_TOML = [
+  'model = "stub-model"',
+  'model_provider = "stub"',
+  'approval_policy = "never"',
+  'sandbox_mode = "danger-full-access"',
+  '',
+  '# The curated plugin sync clones github.com/openai/plugins into CODEX_HOME on',
+  '# every start (65 MB per scratch home); it is not on the MCP launch path.',
+  '[features]',
+  'plugins = false',
+  '',
+  '[model_providers.stub]',
+  'name = "stub"',
+  'base_url = "http://127.0.0.1:9/v1"',
+  'wire_api = "responses"',
+  'env_key = "RIG_STUB_KEY"',
+].join('\n');
+
+function readStubLogs(dir) {
+  const out = [];
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir).sort()) {
+    if (!f.endsWith('.jsonl')) continue;
+    const events = fs.readFileSync(path.join(dir, f), 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return { unparsed: l }; } });
+    out.push({ file: f, events });
+  }
+  return out;
+}
+
+module.exports = {
+  SCR, RUNS, STUB_GUI, STUB_CONSOLE, WINPROBE, CODEX, CODEX_NEWEST, PROFILES, OTHER_DIR,
+  ladOf, installDirOf, installExeOf, consoleExeOf, stripAnsi, sanitizedPathEntries, baseEnv,
+  run, allProcs, treeOf, windowsOf, probesByPath, tomlLiteral, serverToml, PROVIDER_TOML, readStubLogs,
+};

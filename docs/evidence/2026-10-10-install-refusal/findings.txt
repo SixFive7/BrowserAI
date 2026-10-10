@@ -1,0 +1,307 @@
+A refusing install hook under Velopack 1.2.161 -- measured 2026-10-10
+
+The account written when it was measured, for the maintainer's decision of that day:
+"21 refusing installing into a non-standard folder so the project specific setups always
+resolve on every dev's pc."
+
+Velopack: 1.2.161 for every part: vpk global tool 1.2.161 (dotnet tool list -g; pack log "vpk
+1.2.161 matches Velopack 1.2.161" and "Velopack CLI 1.2.161"), Setup "Starting Velopack Setup
+(1.2.161)", Update "Starting Velopack Updater (1.2.161)", hook "library version 1.2.161".
+Source read: .work\step0-research\velopack-1.2.161, tag 1.2.161, commit
+92d6a1c91716729d449034df5c50307dcce39493. Every file:line is in that tree unless it names a
+BrowserAI file.
+Windows: Windows 11 Pro 10.0.26300.9550 (ver); Setup logged "Windows 10.0.26300 (Windows 11
+Professional) [64-bit], Arch=X64".
+BrowserAI commit: db50964e8c8c8a87067e08b7a150cd35da3a5175, plus the scratch patch
+rig/velopack-startup-probe.diff.txt.
+.NET SDK: 10.0.401.
+Payload: @playwright/mcp 0.0.83, playwright-core 1.64.0-alpha-1790635538000, Node v24.21.0,
+RegisterAI 0.3.0.
+Installer: BrowserAI.test-installer.exe, pack id BrowserAI.app.test, title "BrowserAI (suite)",
+1.1.1-alpha.0.324, 62,472,361 bytes, SHA-256
+88A9E3A811CEC89AC5F5425F50415F17F82F5299ABD1EC97838464D2042AF45B; package 54,911,145 bytes.
+When: publish 13:06:11Z to 13:08:41Z; pack 13:09:51Z to 13:10:21Z; measurement 13:12:20.8Z to
+13:13:42.0Z.
+
+1. THE ANSWER
+
+- A hook that exits non-zero does not stop a Velopack install. Measured twice, silent. Setup
+  logged "[WARN] Hook exited with non-zero exit code: 5", then "Writing uninstall registry
+  key..." and "Installation completed successfully!", and exited 0. Everything stayed: 209
+  files (203,836,749 bytes), Update.exe, the Start Menu shortcut and the Add/Remove entry.
+  Nothing is rolled back.
+- In a silent install the caller cannot see the refusal. Setup exits 0 either way. The only
+  trace in Setup's own output is that WARN line.
+- The install hook can see everything a refusal needs. Measured from inside the hook: the
+  install root (InstallLocation.RootAppDir is the --installto folder); the pack id
+  (BrowserAI.app.test); the installer's data root (BROWSERAI_ROOT, which InstallerSettings.Read
+  also returns); whether the install is silent (the hook's parent is the installer, its command
+  line carries --silent --log ... --installto ..., and
+  DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()) returned true).
+- A refused install at a non-standard folder still rewrites the pack id's Add/Remove entry and
+  the title's Start Menu shortcut. Measured: the second refused install moved both from root-1
+  to root-2. For the shipping pack these are the standard install's
+  HKCU\...\Uninstall\BrowserAI.app and BrowserAI.lnk. Uninstalling the refused folder
+  afterwards deletes that entry.
+- Non-silent (read in the source, not run): a person sees Velopack's warning, "BrowserAI Setup"
+  / "Install Partially Succeeded" / "Installation has completed, but some steps may have
+  failed. ...", with one OK button. After OK, Velopack writes the entry and starts the refused
+  folder's current\BrowserAI.exe with VELOPACK_FIRSTRUN=true.
+
+2. SOURCE READINGS AT 1.2.161
+
+2.1 Where the hook runs, and what follows a failure. src/bins/src/commands/install.rs:189-258
+(install_impl) does these steps in this order: extract Update.exe and the stub (205-213); copy
+the package (215-218); extract current\ (220-222); apply a channel override (224-230); refuse a
+missing main exe (232-237); create the shortcuts (239-242); run the install hook with a 30 s
+timeout (244-245), and on failure call dialogs::show_install_hook_warning (246) and carry on;
+write the uninstall entry (250); only when not silent, log "Starting app..." and start the app
+with VELOPACK_FIRSTRUN (252-255). There is no rollback for a failed hook: install() (147-165)
+rolls back only when install_impl returns Err, and only by restoring a root it had renamed
+aside for an overwrite (156-164); a failed hook does not return Err, so the install logs
+"Installation completed successfully!" (151); src/bins/src/setup.rs:60 exits 0 whenever
+real_main returns Ok.
+
+2.2 run_hook (src/bins/src/windows/util.rs:19-62). The hook is <root>\current\BrowserAI.exe
+--veloapp-install <version>, run in current\ (24-29), started through process::run_process(...,
+show_window=false, None) (29). Exit code 0 is the only success: INFO "Hook executed
+successfully (took Nms)" (42-45). Non-zero: WARN "Hook exited with non-zero exit code: N"
+(46-48). No wait possible: WARN, counted as a failure (39-41). Timeout: the hook is killed
+(50-53), with TerminateProcess(handle, 1) at src/lib-rust/src/process_win.rs:433. Wait error:
+logged at ERROR (54-56). force_stop_package(&root_dir) runs after every one of those outcomes
+(59-60); the only exception, a hook that could not be started, returns early (31-34) and skips
+it. process_win.rs:352-412 (run_process): the flags are CREATE_NO_WINDOW |
+CREATE_UNICODE_ENVIRONMENT (388-392), and Setup logged PROCESS_CREATION_FLAGS(134218752), which
+is 0x08000400; the environment is a copy of Setup's whole environment (make_envp, 135-156),
+which is how BROWSERAI_ROOT reaches the hook; CreateProcessW is called with
+bInheritHandles=false (401), so the hook cannot write into Setup's log, and its exit code is the
+only value a hook can put there (util.rs:47). src/bins/src/shared/util_windows.rs:35-102
+(force_stop_package) kills every process whose full image path is under the root, except Setup
+itself; a process whose image is outside the root survives.
+
+2.3 Silent and non-silent dialogs. setup.rs:116-120: --silent sets the flag, and a non-silent run
+gets a 300 s dialog timeout. src/l18n/src/dialogs.rs: set_silent (11-14) also calls
+xdialog::set_silent_mode; show_warn (48-62) returns at once when silent, otherwise shows
+xdialog::show_message with a Warning icon, one OK button and the dialog timeout;
+show_install_hook_warning (266-271) builds title_setup(title), install_hook_header() and
+install_hook_body(), then calls show_warn. The splash is shown at install.rs:129-145 and closed
+only at 148, after install_impl returns, so the warning appears while the splash is still up,
+and the install waits on the warning (read, not run). dialogs.rs:194-196: when silent,
+show_overwrite_repair_dialog returns true, so a silent install over a non-empty folder
+overwrites it.
+
+2.4 What a person sees in a non-silent install whose hook fails (locales/en-US.ftl and nl.ftl):
+title (line 3) "{ $app_title } Setup": "BrowserAI Setup" (shipping), "BrowserAI (suite) Setup"
+(test pack), nl "{ $app_title } Installatie"; header (line 52) "Install Partially Succeeded",
+nl "Installatie gedeeltelijk gelukt"; body (line 53) "Installation has completed, but some steps
+may have failed. If the application does not work correctly you can try re-installing or
+contacting the application author.", nl "De installatie is voltooid, maar sommige stappen
+kunnen zijn mislukt. Als de toepassing niet correct werkt, kunt u proberen deze opnieuw te
+installeren of contact opnemen met de auteur van de toepassing."; button (line 16) "OK"; icon
+Warning; 300 s, then it closes as if answered. The message keys are at
+src/l18n/src/locale_constants.rs:62, 74, 96-97 and locale_strings.rs:67-69, 99-101, 115-119.
+Which language: localization.rs:35-40 picks a locale with sys_locale::get_locale() and matches
+it against the shipped files, with en-US as the default (13-31); the 1.2.161 Cargo.lock pins
+sys-locale 0.3.2, whose Windows source (read at
+https://raw.githubusercontent.com/1Password/sys-locale/v0.3.2/src/windows.rs) calls
+GetUserPreferredUILanguages(MUI_LANGUAGE_NAME); on this machine that call returned "en-GB,
+en-US" (measured through P/Invoke, flag 0x8); the unit test language_only_match_en_gb_to_en_us
+(localization.rs:102-105) maps en-GB to en-US, so this machine shows the English text, and a
+machine whose first UI language is Dutch shows the nl text. The Setup log never records the
+locale: dialogs::init() (setup.rs:64) logs "Locale selected" before logging starts at
+setup.rs:127.
+
+2.5 Whether the app is started, and with what. install.rs:249-255: after the warning is
+dismissed, the entry is written; then, only when not silent, Setup logs "Starting app..." and
+calls start_package(locator, start_args, Some(HOOK_ENV_FIRSTRUN)). util_windows.rs:104-119: it
+starts <root>\current\BrowserAI.exe in current\, with VELOPACK_FIRSTRUN=true added to the
+environment (112-116; the name is at src/lib-rust/src/constants.rs:3), with show_window=true
+(117), which means CREATE_UNICODE_ENVIRONMENT alone plus AllowSetForegroundWindow
+(process_win.rs:388-392, 402-404). In the silent runs none of this happened: no "Starting
+app..." line, and no process under either root in the 15 s after Setup exited.
+
+2.6 "Fail the hook" against "exit 0 and do nothing" (the exit-0 path read in the source:
+util.rs:43-45 logs at INFO and returns true; no dialog is shown (install.rs:245-247); the entry
+is written (250); a non-silent install starts the app (252-255); Setup exits 0):
+- Setup exit code: 0 either way (measured twice for non-zero; read for 0).
+- Setup log: "[WARN] Hook exited with non-zero exit code: N" (measured) against "[INFO] Hook
+  executed successfully (took Nms)" (read; seen in the patched uninstall hooks).
+- Files, Update.exe, current\, packages\, the shortcut (written before the hook) and the entry
+  (written after it): stay either way.
+- Non-silent dialog: "Install Partially Succeeded", OK, 300 s timeout, against none.
+- Non-silent app start: yes, VELOPACK_FIRSTRUN=true, after the dialog, against yes, at once.
+- Silent app start: no either way.
+- force_stop_package after the hook: yes either way.
+
+2.7 The C# side of a hook. src/lib-csharp/VelopackApp.cs:172-224 logs "Found fast exit hook"
+(213), runs the callback (215), logs "Completed hook, exiting..." (216) and exits 0 (217). An
+exception thrown by the callback is caught, logged (220) and turned into Exit(-1) (221); Setup
+counts that as non-zero, and it does not reach Windows Error Reporting (read, not run). Exit is
+Environment.Exit (Locators/DefaultProcessImpl.cs:73-78). Measured: Environment.Exit(5) inside
+the callback ends the process before line 216; the hook's lines stop at "Found fast exit hook:
+--veloapp-install", with no "Completed hook". The hook's Velopack lines go to
+%LOCALAPPDATA%\velopack\velopack_<id>.log (Locators/WindowsVelopackLocator.cs:154-166), never
+into Setup's --log file.
+
+2.8 Uninstall. src/bins/src/commands/uninstall.rs:6-53, in order: stop processes under the root
+(21); run the uninstall hook with 60 s (24); remove shortcuts that point into the root (27);
+empty the root (30); remove %TEMP%\velopack_<id> (32-36); remove the entry, a failure only
+logged (38-40); show the completion dialog (44; nothing when silent); schedule the root's own
+removal (46-50). registry.rs: the entry HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\<id>
+is named by the id alone (39-40), and remove_uninstall_entry is an unconditional
+delete_subkey_all(&app_id) (60-67, line 65). shortcuts.rs: the file name is <title>.lnk (54-61);
+START_MENU_ROOT is <Start Menu>\Programs\<title>.lnk (68; known_path.rs:42-46); a new shortcut
+is written with save_as (232), over any existing file of that name. self_delete.rs:4-20: the
+root is removed with cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "<root>", started with
+CREATE_NO_WINDOW.
+
+3. MEASUREMENTS
+
+3.1 The rig. The patch (rig/velopack-startup-probe.diff.txt, VelopackStartup.cs only): the
+install callback writes hook-records\install-<utc>-<pid>.json, then calls Environment.Exit(5),
+and does not throw; the uninstall callback is _ => { }; the update callback is unchanged and was
+never invoked. Publish: dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+--self-contained, exit 0, 150 s, no warning or error line. Pack: pwsh -File
+build/New-Release.ps1 -TestPackOnly, exit 0; the test pack took 10.9 s and the twin 9.5 s, and
+the script deleted the twin's installer. Locks: measure.ps1 took the suite lock at
+13:12:20.855Z and the installer lock at 13:12:21.5Z (-HolderPid of its own pid), and released
+them at 13:13:41.99Z and 13:13:41.98Z. Children: each was started like RealInstallerTests.RunAsync
+(UseShellExecute=false, CreateNoWindow=true, stdout and stderr drained), with CLAUDE_CONFIG_DIR,
+CODEX_HOME, BROWSERAI_ROOT and BROWSERAI_UPDATE_FEED pointing at empty scratch folders; unlike
+RunAsync, the rig also redirected and closed stdin (see 3.4). Processes: selected from
+Win32_Process by ExecutablePath under <root>\, never by name, polled about every 0.5 s while
+each child ran and for 15 s after it exited.
+
+3.2 Install 1: --silent --log setup-1.log --installto root-1, BROWSERAI_ROOT=data-1. Exit code 0,
+wall time 1,998 ms; Setup pid 54908, hook pid 69260. Setup's log from the hook on is setup-1.log,
+lines 52-62: the hook exited 5, the entry was still written, there is no "Starting app...", and
+the install reported success; the shortcut had already been created at line 51. On disk under
+root-1: 209 files, 203,836,749 bytes: current\ 205 files, 144,447,652 bytes (Setup logged
+"Extracting 211 app files", not looked into); packages\ .velopack_lock (0 bytes) and
+BrowserAI.app.test-1.1.1-alpha.0.324-full.nupkg (54,911,145 bytes); the stub "BrowserAI
+(suite).exe" (451,584 bytes); Update.exe (4,026,368 bytes); no background-task.xml, so the hook
+saved nothing. The uninstall entry BrowserAI.app.test: InstallLocation the root-1 folder,
+UninstallString "<root-1>\Update.exe" --uninstall and QuietUninstallString the same plus
+--silent, DisplayIcon <root-1>\current\BrowserAI.exe, DisplayName "BrowserAI (suite)",
+DisplayVersion "1.1.1", EstimatedSize 141062, InstallDate 20261010, Publisher "Jori Huisman",
+NoModify 1, NoRepair 1, Language 1033. Start Menu: %APPDATA%\Microsoft\Windows\Start
+Menu\Programs\BrowserAI (suite).lnk, target <root-1>\current\BrowserAI.exe, working directory
+<root-1>\current, icon <root-1>\current\BrowserAI.exe,0, no arguments, AUMID
+velopack.BrowserAI.app.test. Processes: none under root-1 while Setup ran or in the 15 s after
+it exited; Velopack's own scan after the hook also found "0 matched directory". What the hook
+recorded is hook-records\install-20261010T131231562-69260.json: its process path and
+arguments, its directory, the install location as installed with its root, pack id, version
+and channel, the standard install root for the pack id and whether the root is it (false), the
+registration target's install root, BROWSERAI_ROOT and the data root InstallerSettings reads,
+the update source, the default data root, its parent pid and command line, whether that reads
+as silent (true), the grandparent, VELOPACK_FIRSTRUN (null), and the two scratch client homes.
+Velopack's own log gained seven [lib-csharp:69260] lines, the last "Found fast exit hook:
+--veloapp-install". data-1 and every sandbox folder were still empty afterwards.
+
+3.3 Install 2: --installto root-2, BROWSERAI_ROOT=data-2. Exit code 0, wall time 1,417 ms; Setup
+pid 71876, hook pid 72216. setup-2.log is setup-1.log with root-2 in place of root-1, apart from
+timestamps, pids, the free-space figure and the COM timing: the same WARN with code 5, the same
+entry write, the same success line, and no app start. The hook's record shows root-2,
+BROWSERAI_ROOT and InstallerSettings' data root data-2, update source feed-2, and parent 71876
+started with --installto <root-2>; silent is true. The refused install rewrote what install 1
+had written: the entry's InstallLocation, UninstallString, QuietUninstallString and DisplayIcon
+moved from root-1 to root-2, and "BrowserAI (suite).lnk" now starts <root-2>\current\BrowserAI.exe
+(its SHA-256 50F53639... after install 1 and 79D93430... after install 2; Setup logged "Will
+update all current shortcuts: []", then "Creating new shortcut ... BrowserAI (suite).lnk",
+which overwrote the old one). root-1 was untouched.
+
+3.4 The two uninstalls, root-1 first. root-1\Update.exe --uninstall --silent: exit 0, 995 ms
+(pid 78500); its hook "Hook executed successfully (took 70.1605ms)"; the entry before named
+root-2, and after was deleted ("Removing uninstall registry keys...", no error); the shortcut
+was left in place, since it pointed at root-2; the root was gone 277 ms after exit; the only
+process under the root was Update.exe (seen at 409 ms). root-2\Update.exe --uninstall --silent:
+exit 0, 1,392 ms (pid 7512); its hook took 68.77329 ms; the entry was already absent, and it
+logged "[ERROR] Unable to remove uninstall registry entry (The system cannot find the file
+specified. (os error 2))." and exited 0 anyway; the shortcut was selected ("target ...root-2...
+matched") and removed; the root was gone 239 ms after exit; Update.exe only (379 ms). The
+removal times are an artifact of the rig: Update.exe's stderr carried "ERROR: The file is either
+empty or does not contain the valid choices.", because the cmd /C choice ... & rmdir it starts
+inherited the stdin the rig had redirected and closed, so choice failed at once and the 3 s
+wait collapsed. RunAsync does not redirect stdin. The full Update.exe and hook lines are in
+results.json (uninstalls[].velopackTestLogNewText).
+
+3.5 Before and after (snapshots at 13:12:22Z and 13:13:38Z): HKCU\Environment Path unchanged
+(REG_EXPAND_SZ, 1,450 characters, compared case-sensitively); the Uninstall subkeys unchanged,
+no BrowserAI.app.test before or after; the real BrowserAI.app entry's values hashed the same
+before and after; the Start Menu's .lnk files 94 before and 94 after, every hash equal, the
+real BrowserAI.lnk's in every read; the Desktop's .lnk files and HKCU\...\Run unchanged; the
+Task Scheduler 203 tasks before and after, none added, none named BrowserAI, with its root
+folder listed (5 tasks there), where the sign-in task would go; HKCU\Software\Classes\CLSID 143
+subkeys before and after, none added; HKCU\Software\Classes\AppUserModelId unchanged;
+%TEMP%\velopack_BrowserAI.app.test absent before and after; the Velopack test log 371,221 bytes
+before and 384,270 after, written by Velopack, its .old unchanged; no process left. The readers'
+positive controls: the link reader saw "BrowserAI (suite).lnk" appear, change target and
+disappear; the entry reader saw the key appear, move and disappear; the process reader saw
+Update.exe under each root during each uninstall.
+
+4. WHAT "TWO INSTALLS OF ONE APP ID" MEANS FOR A REFUSED INSTALL
+
+The kb section (kb/packaging/velopack.md, measured 2026-09-14, re-established 2026-09-24 at
+1.2.158) says the entry is named by the id, not by the location; a second --installto install
+rewrites InstallLocation, DisplayIcon, UninstallString and QuietUninstallString; and the first
+uninstall of either root deletes the entry while the other root is still complete. This run
+re-establishes all of that at 1.2.161, with the second install refused by its hook, and shows
+what a refusal cannot prevent: the entry is written after the hook (install.rs:250) and the
+shortcut before it (239-242), so a refusal in the hook changes neither, and install 2 moved both
+although its hook exited 5. For the shipping pack, an --installto install on a machine that
+already has a standard install leaves the standard install's HKCU\...\Uninstall\BrowserAI.app
+naming the refused folder; %APPDATA%\...\Programs\BrowserAI.lnk (the shipping title is
+BrowserAI, so it is the same file) starting the refused folder's current\BrowserAI.exe; and
+about 204 MB of files in the refused folder. Settings then offers to uninstall the refused
+folder, because that is what the entry names, and doing so deletes the entry unconditionally
+(registry.rs:65; measured: uninstall 1 deleted an entry that named root-2) and removes
+BrowserAI.lnk, because it now points into the refused folder (measured: uninstall 2 removed the
+shortcut into its own root). The standard install then still has its files and its Update.exe,
+but Windows no longer lists it. A refusal in the hook does prevent BrowserAI's own writes:
+measured, none happened (no client registration, the sandboxes stayed empty; no scheduled task;
+no PATH entry; no CLSID activator; no background-task.xml).
+
+5. READINGS IN BROWSERAI AT db50964e THAT BEAR ON THE DESIGN (NOT MEASURED)
+
+The installer's first-run start after a refused non-silent install: src/BrowserAI/Program.cs:172-185
+reads VELOPACK_FIRSTRUN, serves no hook, and calls App.Program.Run; src/BrowserAI.App/Program.cs:160-164
+takes the data root from --data-root, or from the saved background-task.xml (SignInTask.cs:98,
+328-334), or uses the default, and opens its process log there; a refused install saved
+nothing, so that log lands in the default %LOCALAPPDATA%\BrowserAI; PersonStart.Show
+(Program.cs:251-269) finds no background, finds the task unregistered (PersonStart.cs:179),
+finds no saved definition (183-189, PersonStartLog.NoDefinition) and returns NotShown, and the
+app then exits 1 with no window. So after OK the person sees nothing more, unless that start is
+taught to explain; it is the only place BrowserAI's code runs with a window allowed during a
+non-silent install.
+
+The real uninstall hook on a refused install's leftovers: HookRegistration.cs:141, 154 take the
+data root from InstallerSettings.Read (InstallerSettings.cs:90-99): the uninstaller's
+BROWSERAI_ROOT, else the saved definition, else the default. An uninstall started from Settings
+has no BROWSERAI_ROOT, and a refused install saved no definition, so the hook would act on the
+standard install's data root: it writes its registration record there (292), and in a
+non-silent uninstall it asks whether to delete that root (335; DataRootDisposal.cs:188). Three
+things have their own guards, by reading: the background it asks to stop is named after the
+refused root (273); the PATH step touches only its own folder (304); removing the toast
+activator checks who owns it (ToastActivatorStep.cs:47, ToastActivation.cs:140-151). What
+RegisterAI's unregister does with a client entry that names the standard install was not read.
+
+Hook budget: the install hook gets 30 s (install.rs:245); anything left running under the root is
+killed afterwards (util.rs:60); a process whose image is outside the root survives
+(util_windows.rs:35-102).
+
+6. WHAT COULD NOT BE ESTABLISHED
+
+- No non-silent install was run, because it would show windows; 2.4 and 2.5 are readings, and
+  the dialog language is inferred, not seen on screen.
+- The install hook itself never showed up in the process poll: hooks take about 70 ms by
+  Velopack's own count, against a poll every 0.5 s. "Nothing ran from the root after exit"
+  rests on the 15 s post-exit polls (the same poller did see Update.exe) and on Velopack's scan
+  ("0 matched").
+- The true branch of the standard-root comparison was never observed: an install without
+  --installto would have gone into %LOCALAPPDATA%\BrowserAI.app.test, outside the brief. Both
+  records show the two paths, so the comparison can be checked by eye.
+- A throwing callback and an exit-0 install hook were not run; both are readings, and the exit-0
+  path was seen only in the patched uninstall hooks.
+- Velopack's real 3 s removal delay was not observed (a rig artifact, 3.4).
+- Section 5 is reading only; the patched uninstall hook did nothing.
+- The 211 against 205 file count was not examined.

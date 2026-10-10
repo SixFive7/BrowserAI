@@ -1,0 +1,47 @@
+MATRIX2 START 2026-10-10T13:49:08Z codex=default
+elsewhere-r1: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewhere-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:49:15.391Z"} leftover=0
+rc=0
+elsewheresub-r1: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewheresub-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:49:31.751Z"} leftover=0
+rc=0
+untrustedro-r1: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedro-r1: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:50:03.071Z"} leftover=0
+rc=0
+untrustedexpl-r1: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedexpl-r1: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:50:34.599Z"} leftover=0
+rc=0
+autotrustww-r1: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+autotrustww-r1: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:51:06.552Z"} leftover=0
+rc=0
+elsewhere-r2: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewhere-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:51:23.354Z"} leftover=0
+rc=0
+elsewheresub-r2: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewheresub-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:51:39.835Z"} leftover=0
+rc=0
+untrustedro-r2: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedro-r2: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:52:10.754Z"} leftover=0
+rc=0
+untrustedexpl-r2: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedexpl-r2: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:52:41.853Z"} leftover=0
+rc=0
+autotrustww-r2: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+autotrustww-r2: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:53:12.809Z"} leftover=0
+rc=0
+elsewhere-r3: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewhere-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:53:28.877Z"} leftover=0
+rc=0
+elsewheresub-r3: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewheresub-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:53:45.101Z"} leftover=0
+rc=0
+untrustedro-r3: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedro-r3: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:54:15.742Z"} leftover=0
+rc=0
+untrustedexpl-r3: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedexpl-r3: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:54:46.162Z"} leftover=0
+rc=0
+autotrustww-r3: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+autotrustww-r3: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:55:16.833Z"} leftover=0
+rc=0
+MATRIX2 END 2026-10-10T13:55:26Z

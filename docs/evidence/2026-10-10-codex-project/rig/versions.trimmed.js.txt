@@ -1,0 +1,29 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Reads `codex --version` from every Codex binary found on this machine, each
+// under its own scratch CODEX_HOME, with CLAUDE_CONFIG_DIR in scratch too.
+const fs = require('fs');
+const path = require('path');
+const { spawnSync } = require('child_process');
+const SCR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project';
+const bins = [
+  'C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1002.7124.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe',
+  'C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe',
+  'C:\\Users\\jori\\AppData\\Local\\OpenAI\\Codex\\bin\\be3fd7e5c1969ff6\\codex.exe',
+  'C:\\Users\\jori\\AppData\\Local\\Programs\\<another application>\\resources\\app.asar.unpacked\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe',
+];
+const out = [];
+bins.forEach((b, i) => {
+  const home = path.join(SCR, 'homes', `version-${i}`);
+  fs.mkdirSync(home, { recursive: true });
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) { if (/^(CLAUDE|CODEX_)/i.test(k)) continue; env[k] = v; }
+  env.CODEX_HOME = home;
+  env.CLAUDE_CONFIG_DIR = path.join(SCR, 'claude-config');
+  const r = spawnSync(b, ['--version'], { env, cwd: home, windowsHide: true, encoding: 'utf8', timeout: 60000 });
+  const rec = { at: new Date().toISOString(), bin: b, status: r.status, error: r.error ? String(r.error) : null, stdout: (r.stdout || '').trim(), stderr: (r.stderr || '').trim().slice(0, 2000), homeAfter: fs.readdirSync(home, { recursive: true }) };
+  out.push(rec);
+  console.log(JSON.stringify(rec));
+});
+fs.writeFileSync(path.join(SCR, 'raw', 'versions.json'), JSON.stringify(out, null, 1));

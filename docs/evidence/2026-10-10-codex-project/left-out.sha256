@@ -1,0 +1,6 @@
+# SHA-256, byte count and name of every file left out one at a time
+6b41b7dd7e3243381daec3d5c7f6c27063b5829e665eacc5fba966f282c8e476  9728  stub/probe-gui.exe
+68a37b5c2a1062ce88516011431ed9259ed21868aa4d4b9c033fe0a4a0642046  9728  stub/probe-console.exe
+4b56d9b0e7c3f084ad72659c6053de06ee20843a916eda05e8be7741ebced3ac  6144  rig/winprobe.exe
+57be6ca39dcf53f2f0d2c44e4b0d3af2a9eb2b9bba07b6f0142c873730ab2957  4606  raw/selftest-gui/stub-66592-639272356804996390.jsonl
+9bb4e48ffc7d271bb2193391e582ca507ecf79c10dc83b7db2b2d2d94a1dcf80  33714  raw/summarize-newest.out

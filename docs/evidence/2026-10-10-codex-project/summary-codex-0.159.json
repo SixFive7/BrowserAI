@@ -1,0 +1,1809 @@
+{
+ "runs": [
+  {
+   "runId": "alt-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:56:32.290Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "ready",
+    "cmdwrap": "ready",
+    "cmdwrap_v": "ready",
+    "cmdwrap_v_console": "ready",
+    "tildepath": "ready",
+    "relcmd": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap": null,
+    "cmdwrap_v": null,
+    "cmdwrap_v_console": null,
+    "tildepath": null,
+    "relcmd": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\alt-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\alt-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:56:37.883Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "altsp-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:56:48.277Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "ready",
+    "cmdwrap": "failed",
+    "cmdwrap_v": "ready",
+    "cmdwrap_v_console": "ready",
+    "tildepath": "ready",
+    "relcmd": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap": "MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+    "cmdwrap_v": null,
+    "cmdwrap_v_console": null,
+    "tildepath": null,
+    "relcmd": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\altsp-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\altsp-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:56:54.102Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "altspx-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:57:04.561Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "ready",
+    "cmdwrap": "failed",
+    "cmdwrap_v": "ready",
+    "cmdwrap_v_console": "ready",
+    "tildepath": "ready",
+    "relcmd": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap": "MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+    "cmdwrap_v": null,
+    "cmdwrap_v_console": null,
+    "tildepath": null,
+    "relcmd": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\altspx-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\altspx-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:57:10.357Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "autotrustww-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:58:44.472Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\autotrustww-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\autotrustww-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:59:05.440Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "before-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:57:21.799Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "failed",
+    "cmdwrap_v": "ready",
+    "tildepath": "ready",
+    "relcmd": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": "MCP client for `barepath` failed to start: MCP startup failed: program not found",
+    "cmdwrap_v": null,
+    "tildepath": null,
+    "relcmd": null
+   },
+   "path": ";[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\before-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\before-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:57:30.196Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "elsewheresub-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:57:56.948Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "ready",
+    "cmdwrap_v": "ready",
+    "tildepath": "ready",
+    "relcmd": "failed"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null,
+    "relcmd": "MCP client for `relcmd` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\elsewheresub-r11\\neutral",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\elsewheresub-r11\\proj\\sub",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:58:02.702Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "exp-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:56:16.554Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "braced_fwd": "failed",
+    "braced_back": "failed",
+    "bare_fwd": "failed",
+    "bare_back": "failed",
+    "percent_fwd": "failed",
+    "percent_back": "failed",
+    "tilde_fwd": "failed",
+    "tilde_back": "failed",
+    "argsliteral": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "braced_fwd": "MCP client for `braced_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "braced_back": "MCP client for `braced_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "bare_fwd": "MCP client for `bare_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "bare_back": "MCP client for `bare_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "percent_fwd": "MCP client for `percent_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "percent_back": "MCP client for `percent_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "tilde_fwd": "MCP client for `tilde_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "tilde_back": "MCP client for `tilde_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "argsliteral": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\exp-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\exp-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:56:21.916Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "shadow-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:57:40.659Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": "ready",
+    "barepath": "ready",
+    "cmdwrap_v": "ready",
+    "tildepath": "ready"
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\other;C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\shadow-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\shadow-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:57:46.502Z"
+   },
+   "killed": []
+  },
+  {
+   "runId": "untrustedro-r11",
+   "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+   "startedAt": "2026-10-10T13:58:13.154Z",
+   "startupStatus": {
+    "uctl": "ready",
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null
+   },
+   "startupError": {
+    "uctl": null,
+    "ctl": null,
+    "barepath": null,
+    "cmdwrap_v": null,
+    "tildepath": null
+   },
+   "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current;[cut: 64 entries of this machine's PATH]",
+   "localAppData": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local",
+   "userProfile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user",
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\untrustedro-r11\\proj",
+   "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\runs\\untrustedro-r11\\proj",
+   "appServerExit": {
+    "code": 0,
+    "signal": null,
+    "at": "2026-10-10T13:58:34.012Z"
+   },
+   "killed": []
+  }
+ ],
+ "rows": [
+  {
+   "kind": "alt",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"barepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "cmdwrap",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "cmdwrap_v_console",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\console\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap_v_console\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "alt",
+   "name": "relcmd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"relcmd\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altsp",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altsp",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altsp",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"barepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altsp",
+   "name": "cmdwrap",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "altsp",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 0,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"Smith\\\\AppData\\\\Local\\\\BrowserAI.app\\\\current\\\\BrowserAI.exe\",\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj"
+   ],
+   "argvDirty": "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+  },
+  {
+   "kind": "altsp",
+   "name": "cmdwrap_v_console",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 0,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\console\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"Smith\\\\AppData\\\\Local\\\\BrowserAI.app\\\\console\\\\BrowserAI.exe\",\"--mcp\",\"--tag\",\"cmdwrap_v_console\"]"
+   ],
+   "cwds": [
+    "proj"
+   ],
+   "argvDirty": "[\"--mcp\",\"--tag\",\"cmdwrap_v_console\"]"
+  },
+  {
+   "kind": "altsp",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altsp",
+   "name": "relcmd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"relcmd\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altspx",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altspx",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altspx",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"barepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altspx",
+   "name": "cmdwrap",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "altspx",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 0,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"Smith\",\"&\",\"Co\",\"(!x^\",\"100%)\\\\AppData\\\\Local\\\\BrowserAI.app\\\\current\\\\BrowserAI.exe\",\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj"
+   ],
+   "argvDirty": "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+  },
+  {
+   "kind": "altspx",
+   "name": "cmdwrap_v_console",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 0,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\console\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"Smith\",\"&\",\"Co\",\"(!x^\",\"100%)\\\\AppData\\\\Local\\\\BrowserAI.app\\\\console\\\\BrowserAI.exe\",\"--mcp\",\"--tag\",\"cmdwrap_v_console\"]"
+   ],
+   "cwds": [
+    "proj"
+   ],
+   "argvDirty": "[\"--mcp\",\"--tag\",\"cmdwrap_v_console\"]"
+  },
+  {
+   "kind": "altspx",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "altspx",
+   "name": "relcmd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\Jo Smith & Co (!x^ 100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"relcmd\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "autotrustww",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "autotrustww",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "autotrustww",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "autotrustww",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "autotrustww",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "before",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "before",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "before",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `barepath` failed to start: MCP startup failed: program not found"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "before",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "before",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "before",
+   "name": "relcmd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user-before\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"relcmd\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj\\sub"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj\\sub"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"barepath\"]"
+   ],
+   "cwds": [
+    "proj\\sub"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj\\sub"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj\\sub"
+   ]
+  },
+  {
+   "kind": "elsewheresub",
+   "name": "relcmd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `relcmd` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "exp",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "exp",
+   "name": "braced_fwd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `braced_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "braced_back",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `braced_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "bare_fwd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `bare_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "bare_back",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `bare_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "percent_fwd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `percent_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "percent_back",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `percent_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "tilde_fwd",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `tilde_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "tilde_back",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [
+    "MCP client for `tilde_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"
+   ],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "exp",
+   "name": "argsliteral",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"${LOCALAPPDATA}/a\",\"$LOCALAPPDATA/b\",\"%LOCALAPPDATA%\\\\c\",\"~/d\",\"--tag\",\"argsliteral\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "shadow",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "shadow",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"ctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "shadow",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\other\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"barepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "shadow",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"cmdwrap_v\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "shadow",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"tildepath\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "untrustedro",
+   "name": "uctl",
+   "scope": "user",
+   "runs": 1,
+   "loaded": 1,
+   "ready": 1,
+   "answered": 1,
+   "imageExpected": 1,
+   "argvClean": 1,
+   "errors": [],
+   "images": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project\\profiles\\user\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   ],
+   "argvs": [
+    "[\"--mcp\",\"--tag\",\"uctl\"]"
+   ],
+   "cwds": [
+    "proj"
+   ]
+  },
+  {
+   "kind": "untrustedro",
+   "name": "ctl",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "untrustedro",
+   "name": "barepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "untrustedro",
+   "name": "cmdwrap_v",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  },
+  {
+   "kind": "untrustedro",
+   "name": "tildepath",
+   "scope": "project",
+   "runs": 1,
+   "loaded": 0,
+   "ready": 0,
+   "answered": 0,
+   "imageExpected": 0,
+   "argvClean": 0,
+   "errors": [],
+   "images": [],
+   "argvs": [],
+   "cwds": []
+  }
+ ],
+ "cmdParent": [
+  {
+   "run": "alt-r11",
+   "snap": "whileAlive",
+   "tag": "relcmd\"",
+   "cmdPid": 46604,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap",
+   "cmdPid": 78016,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 61384,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 71784,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "afterCalls",
+   "tag": "relcmd\"",
+   "cmdPid": 46604,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap",
+   "cmdPid": 78016,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 61384,
+   "probeChildren": 1
+  },
+  {
+   "run": "alt-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 71784,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "whileAlive",
+   "tag": "relcmd\"",
+   "cmdPid": 24080,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 72900,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 67072,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "afterCalls",
+   "tag": "relcmd\"",
+   "cmdPid": 24080,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 72900,
+   "probeChildren": 1
+  },
+  {
+   "run": "altsp-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 67072,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "whileAlive",
+   "tag": "relcmd\"",
+   "cmdPid": 8468,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 8392,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 73772,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "afterCalls",
+   "tag": "relcmd\"",
+   "cmdPid": 8468,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v_console",
+   "cmdPid": 8392,
+   "probeChildren": 1
+  },
+  {
+   "run": "altspx-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 73772,
+   "probeChildren": 1
+  },
+  {
+   "run": "before-r11",
+   "snap": "whileAlive",
+   "tag": "relcmd\"",
+   "cmdPid": 53236,
+   "probeChildren": 1
+  },
+  {
+   "run": "before-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 25720,
+   "probeChildren": 1
+  },
+  {
+   "run": "before-r11",
+   "snap": "afterCalls",
+   "tag": "relcmd\"",
+   "cmdPid": 53236,
+   "probeChildren": 1
+  },
+  {
+   "run": "before-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 25720,
+   "probeChildren": 1
+  },
+  {
+   "run": "elsewheresub-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 52536,
+   "probeChildren": 1
+  },
+  {
+   "run": "elsewheresub-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 52536,
+   "probeChildren": 1
+  },
+  {
+   "run": "shadow-r11",
+   "snap": "whileAlive",
+   "tag": "cmdwrap_v",
+   "cmdPid": 54632,
+   "probeChildren": 1
+  },
+  {
+   "run": "shadow-r11",
+   "snap": "afterCalls",
+   "tag": "cmdwrap_v",
+   "cmdPid": 54632,
+   "probeChildren": 1
+  }
+ ],
+ "windowsFound": 0,
+ "windowsVisible": 0,
+ "launchCounts": [
+  {
+   "run": "alt-r11",
+   "perTag": {
+    "tildepath": 3,
+    "barepath": 3,
+    "relcmd": 3,
+    "ctl": 3,
+    "uctl": 3,
+    "cmdwrap": 3,
+    "cmdwrap_v": 3,
+    "cmdwrap_v_console": 3
+   }
+  },
+  {
+   "run": "altsp-r11",
+   "perTag": {
+    "barepath": 3,
+    "tildepath": 3,
+    "cmdwrap_v": 3,
+    "uctl": 3,
+    "relcmd": 3,
+    "ctl": 3,
+    "cmdwrap_v_console": 3
+   }
+  },
+  {
+   "run": "altspx-r11",
+   "perTag": {
+    "barepath": 3,
+    "tildepath": 3,
+    "uctl": 3,
+    "ctl": 3,
+    "relcmd": 3,
+    "cmdwrap_v": 3,
+    "cmdwrap_v_console": 3
+   }
+  },
+  {
+   "run": "autotrustww-r11",
+   "perTag": {
+    "uctl": 3
+   }
+  },
+  {
+   "run": "before-r11",
+   "perTag": {
+    "ctl": 3,
+    "uctl": 3,
+    "cmdwrap_v": 3,
+    "tildepath": 3,
+    "relcmd": 3
+   }
+  },
+  {
+   "run": "elsewheresub-r11",
+   "perTag": {
+    "ctl": 2,
+    "uctl": 3,
+    "tildepath": 2,
+    "cmdwrap_v": 2,
+    "barepath": 2
+   }
+  },
+  {
+   "run": "exp-r11",
+   "perTag": {
+    "argsliteral": 3,
+    "uctl": 3,
+    "ctl": 3
+   }
+  },
+  {
+   "run": "shadow-r11",
+   "perTag": {
+    "ctl": 3,
+    "uctl": 3,
+    "tildepath": 3,
+    "cmdwrap_v": 3,
+    "barepath": 3
+   }
+  },
+  {
+   "run": "untrustedro-r11",
+   "perTag": {
+    "uctl": 3
+   }
+  }
+ ]
+}

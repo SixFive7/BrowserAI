@@ -1,0 +1,225 @@
+Codex project-registration re-run, 9 app-server runs (rounds 1-3), codex C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+Rounds per kind: alt=1 altsp=1 altspx=1 autotrustww=1 before=1 elsewheresub=1 exp=1 shadow=1 untrustedro=1
+
+Columns: runs = app-server sessions; loaded = sessions in which Codex reported a startup status for the entry;
+ready = status "ready"; answered = the probe answered probe_whoami; image-ok = the probe that answered is the
+expected file (for shadow/barepath: the copy first on PATH); argv-clean = the probe received exactly the
+arguments the entry configures.
+
+kind          entry               scope    runs loaded ready answered image-ok argv-clean
+alt           uctl                user        1      1     1        1        1          1
+alt           ctl                 project     1      1     1        1        1          1
+alt           barepath            project     1      1     1        1        1          1
+alt           cmdwrap             project     1      1     1        1        1          1
+alt           cmdwrap_v           project     1      1     1        1        1          1
+alt           cmdwrap_v_console   project     1      1     1        1        1          1
+alt           tildepath           project     1      1     1        1        1          1
+alt           relcmd              project     1      1     1        1        1          1
+altsp         uctl                user        1      1     1        1        1          1
+altsp         ctl                 project     1      1     1        1        1          1
+altsp         barepath            project     1      1     1        1        1          1
+altsp         cmdwrap             project     1      1     0        0        0          0
+altsp         cmdwrap_v           project     1      1     1        1        1          0
+altsp         cmdwrap_v_console   project     1      1     1        1        1          0
+altsp         tildepath           project     1      1     1        1        1          1
+altsp         relcmd              project     1      1     1        1        1          1
+altspx        uctl                user        1      1     1        1        1          1
+altspx        ctl                 project     1      1     1        1        1          1
+altspx        barepath            project     1      1     1        1        1          1
+altspx        cmdwrap             project     1      1     0        0        0          0
+altspx        cmdwrap_v           project     1      1     1        1        1          0
+altspx        cmdwrap_v_console   project     1      1     1        1        1          0
+altspx        tildepath           project     1      1     1        1        1          1
+altspx        relcmd              project     1      1     1        1        1          1
+autotrustww   uctl                user        1      1     1        1        1          1
+autotrustww   ctl                 project     1      0     0        0        0          0
+autotrustww   barepath            project     1      0     0        0        0          0
+autotrustww   cmdwrap_v           project     1      0     0        0        0          0
+autotrustww   tildepath           project     1      0     0        0        0          0
+before        uctl                user        1      1     1        1        1          1
+before        ctl                 project     1      1     1        1        1          1
+before        barepath            project     1      1     0        0        0          0
+before        cmdwrap_v           project     1      1     1        1        1          1
+before        tildepath           project     1      1     1        1        1          1
+before        relcmd              project     1      1     1        1        1          1
+elsewheresub  uctl                user        1      1     1        1        1          1
+elsewheresub  ctl                 project     1      1     1        1        1          1
+elsewheresub  barepath            project     1      1     1        1        1          1
+elsewheresub  cmdwrap_v           project     1      1     1        1        1          1
+elsewheresub  tildepath           project     1      1     1        1        1          1
+elsewheresub  relcmd              project     1      1     0        0        0          0
+exp           uctl                user        1      1     1        1        1          1
+exp           ctl                 project     1      1     1        1        1          1
+exp           braced_fwd          project     1      1     0        0        0          0
+exp           braced_back         project     1      1     0        0        0          0
+exp           bare_fwd            project     1      1     0        0        0          0
+exp           bare_back           project     1      1     0        0        0          0
+exp           percent_fwd         project     1      1     0        0        0          0
+exp           percent_back        project     1      1     0        0        0          0
+exp           tilde_fwd           project     1      1     0        0        0          0
+exp           tilde_back          project     1      1     0        0        0          0
+exp           argsliteral         project     1      1     1        1        1          1
+shadow        uctl                user        1      1     1        1        1          1
+shadow        ctl                 project     1      1     1        1        1          1
+shadow        barepath            project     1      1     1        1        1          1
+shadow        cmdwrap_v           project     1      1     1        1        1          1
+shadow        tildepath           project     1      1     1        1        1          1
+untrustedro   uctl                user        1      1     1        1        1          1
+untrustedro   ctl                 project     1      0     0        0        0          0
+untrustedro   barepath            project     1      0     0        0        0          0
+untrustedro   cmdwrap_v           project     1      0     0        0        0          0
+untrustedro   tildepath           project     1      0     0        0        0          0
+
+Errors, by kind and entry:
+  altsp/cmdwrap: MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+  altspx/cmdwrap: MCP client for `cmdwrap` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+  before/barepath: MCP client for `barepath` failed to start: MCP startup failed: program not found
+  elsewheresub/relcmd: MCP client for `relcmd` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+  exp/braced_fwd: MCP client for `braced_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/braced_back: MCP client for `braced_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/bare_fwd: MCP client for `bare_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/bare_back: MCP client for `bare_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/percent_fwd: MCP client for `percent_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/percent_back: MCP client for `percent_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/tilde_fwd: MCP client for `tilde_fwd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+  exp/tilde_back: MCP client for `tilde_back` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)
+
+Argument vectors the probe received, where they differ from what the entry configures:
+  altsp/cmdwrap_v: received ["Smith\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe","--mcp","--tag","cmdwrap_v"], configured ["--mcp","--tag","cmdwrap_v"]
+  altsp/cmdwrap_v_console: received ["Smith\\AppData\\Local\\BrowserAI.app\\console\\BrowserAI.exe","--mcp","--tag","cmdwrap_v_console"], configured ["--mcp","--tag","cmdwrap_v_console"]
+  altspx/cmdwrap_v: received ["Smith","&","Co","(!x^","100%)\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe","--mcp","--tag","cmdwrap_v"], configured ["--mcp","--tag","cmdwrap_v"]
+  altspx/cmdwrap_v_console: received ["Smith","&","Co","(!x^","100%)\\AppData\\Local\\BrowserAI.app\\console\\BrowserAI.exe","--mcp","--tag","cmdwrap_v_console"], configured ["--mcp","--tag","cmdwrap_v_console"]
+
+Images that answered, for the kinds where more than one copy could:
+  shadow/uctl: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  shadow/ctl: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  shadow/barepath: <SCR>\other\BrowserAI.exe
+  shadow/cmdwrap_v: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  shadow/tildepath: <SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+
+Trust: sandbox mode, the trust entry the rig wrote, the entries in the home config after the run, project entries loaded:
+  alt-r11            sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=7/7
+  altsp-r11          sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=7/7
+  altspx-r11         sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=7/7
+  autotrustww-r11    sandbox=workspace-write    rig=null      after=[] loaded=0/4
+  before-r11         sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=5/5
+  elsewheresub-r11   sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=5/5
+  exp-r11            sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=10/10
+  shadow-r11         sandbox=danger-full-access rig=trusted   after=["trusted"] loaded=4/4
+  untrustedro-r11    sandbox=read-only          rig=null      after=[] loaded=0/4
+
+Probe working folders (relative to the run folder):
+  alt/uctl: proj
+  alt/ctl: proj
+  alt/barepath: proj
+  alt/cmdwrap: proj
+  alt/cmdwrap_v: proj
+  alt/cmdwrap_v_console: proj
+  alt/tildepath: proj
+  alt/relcmd: proj
+  altsp/uctl: proj
+  altsp/ctl: proj
+  altsp/barepath: proj
+  altsp/cmdwrap: 
+  altsp/cmdwrap_v: proj
+  altsp/cmdwrap_v_console: proj
+  altsp/tildepath: proj
+  altsp/relcmd: proj
+  altspx/uctl: proj
+  altspx/ctl: proj
+  altspx/barepath: proj
+  altspx/cmdwrap: 
+  altspx/cmdwrap_v: proj
+  altspx/cmdwrap_v_console: proj
+  altspx/tildepath: proj
+  altspx/relcmd: proj
+  autotrustww/uctl: proj
+  autotrustww/ctl: 
+  autotrustww/barepath: 
+  autotrustww/cmdwrap_v: 
+  autotrustww/tildepath: 
+  before/uctl: proj
+  before/ctl: proj
+  before/barepath: 
+  before/cmdwrap_v: proj
+  before/tildepath: proj
+  before/relcmd: proj
+  elsewheresub/uctl: proj\sub
+  elsewheresub/ctl: proj\sub
+  elsewheresub/barepath: proj\sub
+  elsewheresub/cmdwrap_v: proj\sub
+  elsewheresub/tildepath: proj\sub
+  elsewheresub/relcmd: 
+  exp/uctl: proj
+  exp/ctl: proj
+  exp/braced_fwd: 
+  exp/braced_back: 
+  exp/bare_fwd: 
+  exp/bare_back: 
+  exp/percent_fwd: 
+  exp/percent_back: 
+  exp/tilde_fwd: 
+  exp/tilde_back: 
+  exp/argsliteral: proj
+  shadow/uctl: proj
+  shadow/ctl: proj
+  shadow/barepath: proj
+  shadow/cmdwrap_v: proj
+  shadow/tildepath: proj
+  untrustedro/uctl: proj
+  untrustedro/ctl: 
+  untrustedro/barepath: 
+  untrustedro/cmdwrap_v: 
+  untrustedro/tildepath: 
+
+cmd.exe processes seen at a census: 28; still the parent of a probe at that census: 28
+Top-level windows owned by any process of any app-server tree: 0; visible: 0
+
+Launches per server per run (each status list starts another copy):
+  alt-r11: barepath=3 cmdwrap=3 cmdwrap_v=3 cmdwrap_v_console=3 ctl=3 relcmd=3 tildepath=3 uctl=3
+  altsp-r11: barepath=3 cmdwrap_v=3 cmdwrap_v_console=3 ctl=3 relcmd=3 tildepath=3 uctl=3
+  altspx-r11: barepath=3 cmdwrap_v=3 cmdwrap_v_console=3 ctl=3 relcmd=3 tildepath=3 uctl=3
+  autotrustww-r11: uctl=3
+  before-r11: cmdwrap_v=3 ctl=3 relcmd=3 tildepath=3 uctl=3
+  elsewheresub-r11: barepath=2 cmdwrap_v=2 ctl=2 tildepath=2 uctl=3
+  exp-r11: argsliteral=3 ctl=3 uctl=3
+  shadow-r11: barepath=3 cmdwrap_v=3 ctl=3 tildepath=3 uctl=3
+  untrustedro-r11: uctl=3
+
+Resolver lines in the app-server log (debug), counted:
+  3x alt: Resolved ".codex/browserai.cmd" to "<SCR>\runs\alt-r11\proj\.codex\browserai.cmd"
+  6x alt: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  6x alt: Resolved "BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  9x alt: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  3x altsp: Resolved ".codex/browserai.cmd" to "<SCR>\runs\altsp-r11\proj\.codex\browserai.cmd"
+  6x altsp: Resolved "<SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  6x altsp: Resolved "BrowserAI.exe" to "<SCR>\profiles\Jo Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  9x altsp: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  3x altspx: Resolved ".codex/browserai.cmd" to "<SCR>\runs\altspx-r11\proj\.codex\browserai.cmd"
+  6x altspx: Resolved "<SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  6x altspx: Resolved "BrowserAI.exe" to "<SCR>\profiles\Jo Smith & Co (!x^ 100%)\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  9x altspx: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  3x autotrustww: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  3x before: Failed to resolve "BrowserAI.exe": cannot find binary path. Using original path
+  3x before: Resolved ".codex/browserai.cmd" to "<SCR>\runs\before-r11\proj\.codex\browserai.cmd"
+  6x before: Resolved "<SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  3x before: Resolved "BrowserAI.exe" to "<SCR>\profiles\user-before\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  3x before: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  2x elsewheresub: Failed to resolve ".codex/browserai.cmd": cannot find binary path. Using original path
+  5x elsewheresub: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  4x elsewheresub: Resolved "BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  2x elsewheresub: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  3x exp: Failed to resolve "$LOCALAPPDATA/BrowserAI.app/current/BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "$LOCALAPPDATA\BrowserAI.app\current\BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "${LOCALAPPDATA}\BrowserAI.app\current\BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "%LOCALAPPDATA%/BrowserAI.app/current/BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "%LOCALAPPDATA%\BrowserAI.app\current\BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "~/AppData/Local/BrowserAI.app/current/BrowserAI.exe": cannot find binary path. Using original path
+  3x exp: Failed to resolve "~\AppData\Local\BrowserAI.app\current\BrowserAI.exe": cannot find binary path. Using original path
+  9x exp: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  6x shadow: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  3x shadow: Resolved "BrowserAI.exe" to "<SCR>\other\BrowserAI.exe"
+  3x shadow: Resolved "BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"
+  3x shadow: Resolved "cmd.exe" to "C:\Windows\system32\cmd.exe"
+  3x untrustedro: Resolved "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe" to "<SCR>\profiles\user\AppData\Local\BrowserAI.app\current\BrowserAI.exe"

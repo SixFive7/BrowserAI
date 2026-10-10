@@ -1,0 +1,150 @@
+diff --git a/src/BrowserAI.Core/Updates/VelopackStartup.cs b/src/BrowserAI.Core/Updates/VelopackStartup.cs
+index be0a9a61..48ecd107 100644
+--- a/src/BrowserAI.Core/Updates/VelopackStartup.cs
++++ b/src/BrowserAI.Core/Updates/VelopackStartup.cs
+@@ -1,6 +1,10 @@
+ // SPDX-FileCopyrightText: 2026 Jori Huisman
+ // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+ 
++using System.Globalization;
++using System.Text.Json;
++using BrowserAI.Hosting;
++using BrowserAI.Interop;
+ using BrowserAI.Registration;
+ using Microsoft.Extensions.Logging;
+ using Velopack;
+@@ -134,9 +138,12 @@ public static void RunAndServeLifecycleHooks(string[] args, Action<VelopackLogLe
+             // 2026-10-10: it goes through Velopack's own logger, which writes the
+             // file, and no longer only into the caller's delegate, which in the
+             // product is a list nothing reads before the process exits.
+-            .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), ThroughVelopacksLog(log)))
++            // SCRATCH PROBE, NEVER COMMITTED (2026-10-10): the
++            // install hook records what it can see and refuses with exit code 5, and
++            // the uninstall hook does nothing at all.
++            .OnAfterInstallFastCallback(version => RecordAndRefuse(version))
+             .OnAfterUpdateFastCallback(version => Register(RegistrationIntent.Update, Describe(version), ThroughVelopacksLog(log)))
+-            .OnBeforeUninstallFastCallback(version => Register(RegistrationIntent.Uninstall, Describe(version), ThroughVelopacksLog(log)))
++            .OnBeforeUninstallFastCallback(_ => { })
+ 
+             .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null))
+             .Run();
+@@ -316,6 +323,119 @@ level is VelopackLogLevel.Warning
+     /// </remarks>
+     private static string Describe(SemanticVersion? version) => version?.ToFullString() ?? "<unknown>";
+ 
++    /// <summary>Where the scratch probe writes one record per install hook it serves.</summary>
++    private const string ProbeRecordDirectory = @"C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\hook-records";
++
++    /// <summary>The exit code the scratch probe refuses an install with.</summary>
++    private const int ProbeRefusalExitCode = 5;
++
++    /// <summary>
++    /// SCRATCH PROBE, NEVER COMMITTED: writes what an install hook can see and then
++    /// exits with <see cref="ProbeRefusalExitCode"/>, without throwing.
++    /// </summary>
++    /// <param name="version">The version Velopack handed the callback.</param>
++    private static void RecordAndRefuse(SemanticVersion? version)
++    {
++        try
++        {
++            WriteProbeRecord(version);
++        }
++        catch (IOException)
++        {
++            // The driver notices a missing record; the exit code below is what is measured.
++        }
++        catch (UnauthorizedAccessException)
++        {
++            // Same as above.
++        }
++
++        Environment.Exit(ProbeRefusalExitCode);
++    }
++
++    /// <summary>Writes the scratch probe's record as one JSON file.</summary>
++    /// <param name="version">The version Velopack handed the callback.</param>
++    private static void WriteProbeRecord(SemanticVersion? version)
++    {
++        var parentCommandLine = ProcessLiveness.ParentCommandLine();
++        var parent = ProcessLiveness.ReadParent();
++        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
++        var appId = InstallLocation.AppId;
++        var rootAppDir = InstallLocation.RootAppDir;
++        var standardRoot = appId is null ? null : Path.Combine(localAppData, appId);
++        var resolved = RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out var refusal);
++        var settings = InstallerSettings.Read(resolved ? target!.InstallRoot : null);
++        var rootIsStandard = rootAppDir is not null
++            && standardRoot is not null
++            && string.Equals(
++                Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootAppDir)),
++                Path.TrimEndingDirectorySeparator(Path.GetFullPath(standardRoot)),
++                StringComparison.OrdinalIgnoreCase);
++
++        _ = Directory.CreateDirectory(ProbeRecordDirectory);
++
++        var file = Path.Combine(
++            ProbeRecordDirectory,
++            string.Create(CultureInfo.InvariantCulture, $"install-{DateTime.UtcNow:yyyyMMddTHHmmssfff}-{Environment.ProcessId}.json"));
++
++        using var stream = new FileStream(file, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
++        using var json = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
++
++        json.WriteStartObject();
++        json.WriteString("utc", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
++        json.WriteNumber("pid", Environment.ProcessId);
++        json.WriteStartArray("commandLineArgs");
++
++        foreach (var argument in Environment.GetCommandLineArgs())
++        {
++            json.WriteStringValue(argument);
++        }
++
++        json.WriteEndArray();
++        json.WriteString("versionArgument", Describe(version));
++        json.WriteString("processPath", Environment.ProcessPath);
++        json.WriteString("currentDirectory", Environment.CurrentDirectory);
++        json.WriteBoolean("installLocationIsInstalled", InstallLocation.IsInstalled);
++        json.WriteString("installLocationRootAppDir", rootAppDir);
++        json.WriteString("installLocationAppId", appId);
++        json.WriteString("installLocationInstalledVersion", InstallLocation.InstalledVersion);
++        json.WriteString("installLocationInstalledChannel", InstallLocation.InstalledChannel);
++        json.WriteString("localAppData", localAppData);
++        json.WriteString("standardInstallRootForThisAppId", standardRoot);
++        json.WriteBoolean("rootAppDirIsTheStandardOne", rootIsStandard);
++        json.WriteBoolean("registrationTargetResolved", resolved);
++        json.WriteString("registrationTargetInstallRoot", resolved ? target!.InstallRoot : null);
++        json.WriteString("registrationTargetRefusal", resolved ? null : refusal);
++        json.WriteString("browserAiRootVariable", Environment.GetEnvironmentVariable(LocalAppDataPaths.RootVariable));
++        json.WriteString("browserAiUpdateFeedVariable", Environment.GetEnvironmentVariable(UpdateConfiguration.FeedVariable));
++        json.WriteString("installerSettingsDataRoot", settings.DataRoot);
++        json.WriteString("installerSettingsUpdateSource", settings.UpdateSource);
++        json.WriteString("dataRootTheHookWouldUse", new LocalAppDataPaths(settings.DataRoot).RootAppDir);
++        json.WriteString("defaultDataRoot", LocalAppDataPaths.Default);
++        json.WriteNumber("parentProcessId", ProcessLiveness.ParentProcessId());
++        json.WriteString("parentCommandLine", parentCommandLine);
++        json.WriteBoolean("isSilentByParentCommandLine", DataRootDisposal.IsSilent(parentCommandLine));
++
++        if (parent is not null)
++        {
++            json.WriteNumber("readParentProcessId", parent.ProcessId);
++            json.WriteNumber("readParentCreatedFileTime", parent.CreatedFileTime);
++            json.WriteString("readParentCommandLine", parent.CommandLine);
++
++            if (parent.Parent is { } grandparent)
++            {
++                json.WriteNumber("readGrandparentProcessId", grandparent.ProcessId);
++                json.WriteNumber("readGrandparentCreatedFileTime", grandparent.CreatedFileTime);
++            }
++        }
++
++        json.WriteString("velopackFirstRunVariable", Environment.GetEnvironmentVariable(FirstRunVariable));
++        json.WriteString("claudeConfigDir", Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR"));
++        json.WriteString("codexHome", Environment.GetEnvironmentVariable("CODEX_HOME"));
++        json.WriteNumber("exitCodeAboutToBeReturned", ProbeRefusalExitCode);
++        json.WriteEndObject();
++        json.Flush();
++    }
++
+     /// <summary>
+     /// One hook's whole body: register, repair or unregister, and mirror the
+     /// answer into Velopack's own log as well as BrowserAI's.

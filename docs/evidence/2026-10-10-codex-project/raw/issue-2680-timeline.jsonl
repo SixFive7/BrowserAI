@@ -1,0 +1,10 @@
+{"created_at":"2025-08-25T18:11:47Z","event":"labeled","label":"enhancement","src":null,"srcIsPR":false,"srcState":null,"srcTitle":null}
+{"created_at":"2025-09-04T22:39:05Z","event":"cross-referenced","label":null,"src":3157,"srcIsPR":false,"srcState":"closed","srcTitle":"\"Allow every time\" is asked every time"}
+{"created_at":"2026-02-23T22:09:49Z","event":"labeled","label":"mcp","src":null,"srcIsPR":false,"srcState":null,"srcTitle":null}
+{"created_at":"2026-06-24T17:25:35Z","event":"cross-referenced","label":null,"src":29884,"srcIsPR":false,"srcState":"open","srcTitle":"Home Directory (`~`) Expansion in Unix Socket Paths"}
+{"created_at":"2026-07-08T10:36:55Z","event":"cross-referenced","label":null,"src":531,"srcIsPR":false,"srcState":"closed","srcTitle":"codex-saga: codex-triage:dup:openai/codex#2680"}
+{"created_at":"2026-08-26T17:43:32Z","event":"referenced","label":null,"src":null,"srcIsPR":false,"srcState":null,"srcTitle":null}
+{"created_at":"2026-08-26T17:44:37Z","event":"referenced","label":null,"src":null,"srcIsPR":false,"srcState":null,"srcTitle":null}
+{"created_at":"2026-08-26T17:57:10Z","event":"cross-referenced","label":null,"src":5,"srcIsPR":true,"srcState":"closed","srcTitle":"The Codex bootstrap was two commands Codex does not have"}
+{"created_at":"2026-09-09T11:14:18Z","event":"cross-referenced","label":null,"src":693,"srcIsPR":true,"srcState":"closed","srcTitle":"fix(tooling): chrome-devtools MCP hardcodes a macOS browser path"}
+{"created_at":"2026-09-24T17:26:44Z","event":"referenced","label":null,"src":null,"srcIsPR":false,"srcState":null,"srcTitle":null}

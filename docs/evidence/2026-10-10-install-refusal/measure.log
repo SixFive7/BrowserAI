@@ -1,0 +1,16 @@
+[2026-10-10T13:12:20.813Z] Waiting for the suite lock at C:\Source\SixFive7\BrowserAI\.work\locks\suite
+[2026-10-10T13:12:20.855Z] Suite lock taken.
+[2026-10-10T13:12:20.855Z] Taking the installer lock for pid 62968
+[2026-10-10T13:12:21.501Z] Installer lock taken: Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=62968 created=134361115401105237). | pid=62968 created=134361115401105237
+[2026-10-10T13:12:30.054Z] Install 1 into C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-1
+[2026-10-10T13:12:47.124Z] Install 1 exited 0 after 1998 ms
+[2026-10-10T13:12:47.390Z] Install 2 into C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-2
+[2026-10-10T13:13:04.218Z] Install 2 exited 0 after 1417 ms
+[2026-10-10T13:13:04.359Z] Uninstall 1 from C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-1
+[2026-10-10T13:13:20.798Z] Uninstall 1 exited 0 after 995 ms
+[2026-10-10T13:13:20.885Z] Uninstall 2 from C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-2
+[2026-10-10T13:13:37.729Z] Uninstall 2 exited 0 after 1392 ms
+[2026-10-10T13:13:41.446Z] Measurement complete.
+[2026-10-10T13:13:41.983Z] Installer lock release: Let go of C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=62968 created=134361115401105237).
+[2026-10-10T13:13:41.994Z] Suite lock released: gone=True
+driver exit=0

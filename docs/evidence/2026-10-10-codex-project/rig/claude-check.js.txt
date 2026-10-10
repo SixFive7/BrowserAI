@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Whether Claude Code expands ${LOCALAPPDATA} in a project .mcp.json command on
+// Windows: `claude mcp list` health-checks each approved project server, and
+// the probe records how it was started. Everything Claude Code could write
+// goes to scratch: CLAUDE_CONFIG_DIR, CODEX_HOME, USERPROFILE and LOCALAPPDATA
+// are scratch folders, the auto-updater and non-essential traffic are off, and
+// the repository's own four project servers, which a claude started inside the
+// repository finds by walking up, are refused in the scratch user settings.
+// usage: node claude-check.js <profileKey: ns|sp> <round>
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+
+const CLAUDE = 'C:\\Users\\jori\\.local\\bin\\claude.exe';
+const [profileKey, round] = process.argv.slice(2);
+const profile = L.PROFILES[profileKey];
+const runId = `claude-${profileKey}-r${round}`;
+const runDir = path.join(L.RUNS, runId);
+if (fs.existsSync(runDir)) throw new Error('exists: ' + runDir);
+const configDir = path.join(runDir, 'claude-config');
+const proj = path.join(runDir, 'proj');
+fs.mkdirSync(configDir, { recursive: true });
+fs.mkdirSync(proj, { recursive: true });
+fs.writeFileSync(path.join(configDir, 'settings.json'), JSON.stringify({
+  enabledMcpjsonServers: ['probe_braced', 'probe_abs'],
+  disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'],
+}, null, 1));
+const mcp = {
+  mcpServers: {
+    probe_braced: { type: 'stdio', command: '${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe', args: ['--mcp', '--tag', 'probe_braced'] },
+    probe_abs: { type: 'stdio', command: L.installExeOf(profile), args: ['--mcp', '--tag', 'probe_abs'] },
+  },
+};
+fs.writeFileSync(path.join(proj, '.mcp.json'), JSON.stringify(mcp, null, 1));
+// The same refusal in the scratch project's own local settings, as the
+// 2026-10 client-id rig did, so that either file alone keeps them out.
+fs.mkdirSync(path.join(proj, '.claude'), { recursive: true });
+fs.writeFileSync(path.join(proj, '.claude', 'settings.local.json'), JSON.stringify({ disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'] }, null, 1));
+const { kept } = L.sanitizedPathEntries();
+const env = L.baseEnv({
+  PATH: kept.join(';'),
+  CLAUDE_CONFIG_DIR: configDir,
+  CODEX_HOME: path.join(runDir, 'codex-home'),
+  LOCALAPPDATA: L.ladOf(profile),
+  USERPROFILE: profile,
+  DISABLE_AUTOUPDATER: '1',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+});
+fs.mkdirSync(env.CODEX_HOME, { recursive: true });
+const launches = path.join(L.installDirOf(profile), 'launches');
+const before = fs.existsSync(launches) ? fs.readdirSync(launches) : [];
+const result = { runId, claude: CLAUDE, profile, startedAt: new Date().toISOString(), mcpJson: mcp };
+result.version = L.run(CLAUDE, ['--version'], { env, cwd: proj, timeoutMs: 60000 });
+result.list = L.run(CLAUDE, ['mcp', 'list'], { env, cwd: proj, timeoutMs: 120000 });
+result.getBraced = L.run(CLAUDE, ['mcp', 'get', 'probe_braced'], { env, cwd: proj, timeoutMs: 120000 });
+const all = L.allProcs() || [];
+result.probesLeft = L.probesByPath([L.installExeOf(profile)], all).list;
+for (const p of result.probesLeft || []) { try { process.kill(p.pid); } catch (e) { /* gone */ } }
+const after = fs.existsSync(launches) ? fs.readdirSync(launches).filter((f) => !before.includes(f)) : [];
+const target = path.join(runDir, 'stublogs');
+fs.mkdirSync(target, { recursive: true });
+result.launches = [];
+for (const f of after) {
+  fs.renameSync(path.join(launches, f), path.join(target, f));
+  const ev = fs.readFileSync(path.join(target, f), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const l = ev.find((e) => e.event === 'launch');
+  result.launches.push({ file: f, image: l && l.image, argv: l && l.argv, ppid: l && l.ppid });
+}
+result.configDirAfter = fs.readdirSync(configDir, { recursive: true });
+result.finishedAt = new Date().toISOString();
+fs.writeFileSync(path.join(runDir, 'result.json'), JSON.stringify(result, null, 1));
+console.log(`${runId}: version=${result.version.stdout.trim()} list.status=${result.list.status}`);
+console.log(result.list.stdout.trim());
+console.log(result.list.stderr.trim().slice(0, 500));
+console.log('launches:', JSON.stringify(result.launches.map((x) => [x.argv && x.argv[x.argv.length - 1], x.image && x.image.split(L.SCR).join('<SCR>')])));
+console.log('probes left and ended:', (result.probesLeft || []).length);

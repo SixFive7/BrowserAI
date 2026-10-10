@@ -31,11 +31,11 @@ every `runs/*/result.json`.
 |---|---|---|
 | `${LOCALAPPDATA}`, `$LOCALAPPDATA`, `%LOCALAPPDATA%` and `~` in `command`, with `/` and with `\` | four spellings, two separators, user and project scope, three rounds | **0 of 48**, each *"MCP startup failed: The system cannot find the path specified. (os error 3)"* |
 | The same four spellings in `args` | an absolute `command` | 24 of 24, and the server received each argument as written |
-| Absolute controls, `ctl` and `uctl` | an absolute `command` | 45 of the 45 Codex loaded; the other 3 are an untrusted project's own entries, which Codex does not read |
+| Absolute controls, `ctl` and `uctl` | an absolute `command` | 45 of the 45 Codex loaded; the other 3 are an untrusted project's own entries, which Codex does not read. ⚠️ *Corrected 2026-10-10 by addition*: that held because this rig ran read-only; under full access the app-server trusts a project with no trust decision itself at `thread/start` and then reads its entries, 3 of 3 ([`2026-10-10-codex-project`](../2026-10-10-codex-project/README.md)) |
 | `barepath` | `command = "probe-stub.exe"` and the entry's own `env.PATH` naming the stub's directory | 3 of 3, project scope |
 | `tildepath` | the same with `env.PATH` spelled `~\AppData\Local\...` | 3 of 3, project scope |
 | `cmdwrap`, `cmdwrap_v` | `cmd.exe /d /c %LOCALAPPDATA%\...` and its `/v:on` form | 3 of 3 each |
-| `cmdwrap_space*` | the same with a space in the expanded path | 0 of 9 plain or quoted; 3 of 3 with `/v:on` and `!LOCALAPPDATA!` |
+| `cmdwrap_space*` | the same with a space in the expanded path | 0 of 9 plain or quoted; 3 of 3 with `/v:on` and `!LOCALAPPDATA!`. ⚠️ *Corrected 2026-10-10 by addition*: the 3 of 3 counted starts only; `summary.txt:127` shows the server received the tail of the spaced path, `ace\codex-expansion-probe\probe-stub.exe`, as its first argument, which [`2026-10-10-codex-project`](../2026-10-10-codex-project/README.md) reproduced 6 of 6 at 0.159 and 0.162 |
 
 **`codex mcp add` stores what it is given, literally**: 78 of 78 adds exited 0 and read
 back byte for byte through `codex mcp get --json` (`runs/*/setup.json`).

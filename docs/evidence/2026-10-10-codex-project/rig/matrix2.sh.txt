@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+# 2026-10-10 Codex project-registration re-run, second matrix: the kinds added
+# after the first one showed (1) a relative command resolving against the
+# app-server's own folder and (2) the app-server trusting a project itself.
+set -u
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+cd /c/Source/SixFive7/BrowserAI/.work/next-scratch/codex-project/rig
+echo "MATRIX2 START $(date -u +%FT%TZ) codex=${RIG_CODEX:-default}"
+for r in 1 2 3; do
+  for kind in elsewhere elsewheresub untrustedro untrustedexpl autotrustww; do
+    out=$(node setup.js "$kind" "$r" 2>&1); echo "$out" | head -1
+    dir=$(echo "$out" | tail -1)
+    if [ -d "$dir" ]; then timeout 240 node appsrv.js "$dir" 2>&1; echo "rc=$?"; else echo "SETUP FAILED for $kind r$r"; fi
+  done
+done
+echo "MATRIX2 END $(date -u +%FT%TZ)"

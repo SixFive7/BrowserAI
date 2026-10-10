@@ -1,0 +1,46 @@
+=== issues: environment variable expansion
+2680 [open] 2025-08-25 upd 2026-09-30 Support environment variable expansion
+35564 [open] 2026-07-27 upd 2026-07-27 Windows command safety blocks cleanup of an exact verified workspace artifact directory
+24362 [open] 2026-05-24 upd 2026-05-24 Windows Codex Desktop stdio MCP child process does not inherit user env vars for mcp-remote header substitution
+5160 [closed] 2025-10-14 upd 2026-02-08 Make confg.toml sharable across machines
+5019 [closed] 2025-10-09 upd 2025-12-23 Dynamic Expressions, Command Substitution, and Context Variables in Custom Prompts
+3157 [closed] 2025-09-04 upd 2025-11-19 "Allow every time" is asked every time
+=== prs: environment variable expansion
+=== issues: env var expansion
+2680 [open] 2025-08-25 upd 2026-09-30 Support environment variable expansion
+=== prs: env var expansion
+=== issues: variable expansion mcp
+=== prs: variable expansion mcp
+=== issues: expand env
+14465 [open] 2026-03-12 upd 2026-06-09 Not able to use env var for otlp headers in config
+=== prs: expand env
+=== issues: LOCALAPPDATA
+51684 [open] 2026-10-07 upd 2026-10-08 Windows desktop blocked by “Organization settings could not be loaded” despite successful backend initialization
+50266 [open] 2026-10-02 upd 2026-10-02 [Windows][Chrome Dev] Enabled ChatGPT extension missed by default profile detection; native-host registration absent
+52425 [open] 2026-10-09 upd 2026-10-09 Windows Dots execution blocked by runtime ACL refresh: WRITE_DAC succeeds but read/write open of active node_repl.exe fails with error 32
+52155 [open] 2026-10-08 upd 2026-10-10 Windows desktop sandbox setup fails on node_repl.exe with os error 32 after reboot and reinstall
+49183 [open] 2026-09-29 upd 2026-09-30 Windows: ChatGPT desktop app (Microsoft Store, OpenAI.ChatGPT-Desktop) closes immediately on launch, no crash logged
+27171 [open] 2026-06-09 upd 2026-07-15 Windows sandbox blocks per-user (%LOCALAPPDATA%) executables on PATH with "Access denied"
+41958 [open] 2026-09-01 upd 2026-10-05 [Windows 26.825.6671.0] Regression: ChatGPT fails to start with "spawn UNKNOWN" when AppLocker blocks Codex runtime extracted to %LOCALAPPDATA%
+45858 [open] 2026-09-16 upd 2026-10-01 [Windows] Startup fails after a Store update with rename_staging EPERM for CLI and Node runtime
+50916 [open] 2026-10-04 upd 2026-10-04 Windows app: sandbox setup fails with "setup refresh had errors" after reinstall with a fresh .codex — DACL change on %LOCALAPPDATA%\Temp denied (ESET HIPS suspected)
+51699 [open] 2026-10-07 upd 2026-10-07 [Windows][CLI 0.160.0 → 0.160.1] Update notice repeats when the npm prefix differs from the installation on PATH
+50022 [open] 2026-10-01 upd 2026-10-01 Windows desktop updates change codex.exe path, breaking persistent TinyWall exceptions and OAuth login
+52054 [open] 2026-10-08 upd 2026-10-09 Windows sandbox refresh fails before command execution: node_repl.exe ACL update hits sharing violation (os error 32)
+47177 [open] 2026-09-22 upd 2026-09-22 GPT-5.6 Luna missing from Windows Desktop Codex model picker dropdown, usable via manual config.toml
+51925 [open] 2026-10-08 upd 2026-10-08 Windows: local commands fail with “setup refresh had errors” and OS error 32 on node_repl.exe
+41577 [open] 2026-08-29 upd 2026-08-31 Windows Desktop bundled CLI doctor reports rg.exe missing even though Codex ships it
+=== prs: LOCALAPPDATA
+47108 [merged] 2026-09-21 upd 2026-09-21 Preserve required Windows runtime variables for filesystem helpers
+51819 [merged] 2026-10-07 upd 2026-10-07 Migrate the MXC sandbox to the 1.0.0 SDK
+3866 [closed] 2025-09-18 upd 2025-11-06 fix(mcp): resolve Windows MCP startup timeout by adding essential environment variables
+=== issues: expand tilde command
+=== prs: expand tilde command
+=== issues: mcp command relative path
+=== prs: mcp command relative path
+=== issues: mcp_servers command path windows
+=== prs: mcp_servers command path windows
+=== issues: shellexpand
+=== prs: shellexpand
+4684 [closed] 2025-10-03 upd 2026-02-17 add [admin] config
+667 [merged] 2025-04-25 upd 2025-04-25 fix: remove dependency on expanduser crate

@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Self-test of a probe stub over pipes: initialize, tools/list, tools/call, EOF.
+// usage: node selftest.js <stub.exe> <logDir>
+const { spawn } = require('child_process');
+const fs = require('fs');
+const [stub, logDir] = process.argv.slice(2);
+fs.mkdirSync(logDir, { recursive: true });
+const env = Object.assign({}, process.env, { PROBE_LOG_DIR: logDir });
+const child = spawn(stub, ['--mcp', '--tag', 'selftest'], { env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+let out = '';
+child.stdout.on('data', (d) => { out += d.toString('utf8'); });
+child.on('exit', (code) => {
+  console.log(JSON.stringify({ stub, exit: code, replies: out.trim().split('\n').map((l) => JSON.parse(l)) }, null, 1));
+  console.log('logs:', fs.readdirSync(logDir));
+});
+const send = (o) => child.stdin.write(JSON.stringify(o) + '\n');
+send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'selftest', version: '1' } } });
+send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+send({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+send({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'probe_whoami', arguments: {} } });
+setTimeout(() => child.stdin.end(), 1500);

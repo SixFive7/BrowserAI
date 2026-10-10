@@ -1,0 +1,6 @@
+# SHA-256, byte count and name of every file as taken, before the .txt names and the cuts the README gives
+cdd0a816660e5d2260be3a413b41473bc97d35a7742710909f688b532bc63468  23643  rig/measure.ps1
+c5050b3edacb0764ff0ef13c393168dafc276a43c8b6ebd375034c2543818cbf  8267  rig/velopack-startup-probe.diff
+c91a15efac22e4aa9b2375022f4e457e93eafed7d19659d8a2b283c1342fed2e  2988  rig/commands.txt
+dd30909107acd16e3a68dc93d553ff4f4dbede46ce23a401e3a320536deecdae  159329  results.json
+7b5a29cae00329ab4ce077f3941462679ed46ea214a7c0b1ede8d19c2bfc7276  23409  findings.txt

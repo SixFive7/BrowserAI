@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Prints `codex <args>` output under a scratch CODEX_HOME and CLAUDE_CONFIG_DIR.
+// usage: node help.js <codex.exe> <homeName> <args...>
+const path = require('path');
+const fs = require('fs');
+const { spawnSync } = require('child_process');
+const SCR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\codex-project';
+const [codex, homeName, ...args] = process.argv.slice(2);
+const home = path.join(SCR, 'homes', homeName);
+fs.mkdirSync(home, { recursive: true });
+const env = {};
+for (const [k, v] of Object.entries(process.env)) { if (/^(CLAUDE|CODEX_)/i.test(k)) continue; env[k] = v; }
+env.CODEX_HOME = home;
+env.CLAUDE_CONFIG_DIR = path.join(SCR, 'claude-config');
+const r = spawnSync(codex, args, { env, cwd: home, windowsHide: true, encoding: 'utf8', timeout: 60000 });
+console.log(`status=${r.status} error=${r.error || ''}`);
+console.log((r.stdout || '').replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ''));
+console.log((r.stderr || '').replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ''));

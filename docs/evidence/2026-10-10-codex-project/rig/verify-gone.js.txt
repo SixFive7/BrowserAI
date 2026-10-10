@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Confirms that nothing this rig started is still running: every app-server
+// pid a run recorded, checked against its image path so a recycled pid is not
+// mistaken for it, and every process whose image is one of the probe copies.
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+
+const recorded = [];
+for (const id of fs.readdirSync(L.RUNS)) {
+  const p = path.join(L.RUNS, id, 'result.json');
+  if (!fs.existsSync(p)) continue;
+  const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+  if (r.appServerPid) recorded.push({ id, pid: r.appServerPid, codex: r.codex });
+}
+const all = L.allProcs() || [];
+const stillCodex = recorded.filter((x) => all.some((p) => p.pid === x.pid && p.path && p.path.toLowerCase() === x.codex.toLowerCase()));
+const probePaths = [
+  ...['ns', 'sp', 'spx', 'nsb'].flatMap((key) => [L.installExeOf(L.PROFILES[key]), L.consoleExeOf(L.PROFILES[key])]),
+  path.join(L.OTHER_DIR, 'BrowserAI.exe'),
+];
+const probes = L.probesByPath(probePaths, all).list;
+const out = { at: new Date().toISOString(), processTableRows: all.length, appServerPidsRecorded: recorded.length, appServersStillRunning: stillCodex, probesStillRunning: probes };
+fs.writeFileSync(path.join(L.SCR, 'raw', 'verify-gone.json'), JSON.stringify(out, null, 1));
+console.log(JSON.stringify(out, null, 1));

@@ -1,0 +1,11 @@
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI.Core\BrowserAI.Core.csproj (in 603 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI\BrowserAI.csproj (in 603 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI.App\BrowserAI.App.csproj (in 603 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\BrowserAI.App.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\wt\next-velo\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\
+exit=0
+2026-10-10T13:08:41Z

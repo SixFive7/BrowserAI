@@ -1,0 +1,31 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Counts over runs/claude-*/result.json: what `claude mcp list` reported for
+// each probe entry, and what the probe that started was and received.
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+const out = [];
+const counts = {};
+for (const id of fs.readdirSync(L.RUNS).filter((d) => d.startsWith('claude-')).sort()) {
+  const r = JSON.parse(fs.readFileSync(path.join(L.RUNS, id, 'result.json'), 'utf8'));
+  const lines = r.list.stdout.split('\n').map((l) => l.trim()).filter((l) => /^probe_/.test(l));
+  for (const l of lines) {
+    const name = l.split(':')[0];
+    const ok = /Connected/.test(l);
+    const k = name;
+    counts[k] = counts[k] || { runs: 0, connected: 0, probeImageExpected: 0, argvClean: 0 };
+    counts[k].runs++;
+    if (ok) counts[k].connected++;
+    const launches = r.launches.filter((x) => x.argv && x.argv[x.argv.length - 1] === name);
+    if (launches.length && launches.every((x) => x.image.toLowerCase() === L.installExeOf(r.profile).toLowerCase())) counts[k].probeImageExpected++;
+    if (launches.length && launches.every((x) => JSON.stringify(x.argv) === JSON.stringify(['--mcp', '--tag', name]))) counts[k].argvClean++;
+  }
+  const repoServersListed = ['microsoft-learn', 'context7', 'nuget', 'github'].filter((s) => r.list.stdout.includes(s));
+  out.push(`${id}: ${r.version.stdout.trim()} | LOCALAPPDATA=${L.ladOf(r.profile).split(L.SCR).join('<SCR>')} | ${lines.map((l) => l.replace(L.SCR, '<SCR>')).join(' || ')} | repository servers listed: ${repoServersListed.length}`);
+}
+out.push('');
+out.push(JSON.stringify(counts));
+fs.writeFileSync(path.join(L.SCR, 'summary-claude.txt'), out.join('\n') + '\n');
+console.log(out.join('\n'));

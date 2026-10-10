@@ -1,0 +1,26 @@
+=== issues: mcp program not found
+=== prs: mcp program not found
+=== issues: MCP startup failed windows path
+=== prs: MCP startup failed windows path
+=== issues: mcp server PATH inherit
+=== prs: mcp server PATH inherit
+=== issues: env_vars mcp
+46386 [closed] 2026-09-18 upd 2026-09-18 [Windows] Chrome control repeatedly breaks after updates: bundled CUA does not apply proxy settings
+=== prs: env_vars mcp
+5246 [merged] 2025-10-16 upd 2025-10-17 [MCP] Allow specifying cwd and additional env vars
+=== issues: project config.toml mcp_servers trusted
+=== prs: project config.toml mcp_servers trusted
+=== issues: mcp server cwd relative
+=== prs: mcp server cwd relative
+=== issues: home directory expansion config
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID D0A4:3B85A8:953E43D:DF9C73C:6ACA3723 and timestamp 2026-10-10 13:01:24 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22home+directory+expansion+config%22+%29+repo%3Aopenai%2Fcodex+type%3Aissue)
+=== prs: home directory expansion config
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID 2C00:D7670:9675A00:E139BB1:6ACA3725 and timestamp 2026-10-10 13:01:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22home+directory+expansion+config%22+%29+repo%3Aopenai%2Fcodex+type%3Apr)
+=== issues: config portable across machines
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID 7541:1E3FE4:976CF77:E309D5D:6ACA3725 and timestamp 2026-10-10 13:01:25 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22config+portable+across+machines%22+%29+repo%3Aopenai%2Fcodex+type%3Aissue)
+=== prs: config portable across machines
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID 8973:B47D0:984AF31:E47589E:6ACA3726 and timestamp 2026-10-10 13:01:26 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22config+portable+across+machines%22+%29+repo%3Aopenai%2Fcodex+type%3Apr)
+=== issues: dollar HOME config.toml
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID 30B6:3A5831:942357F:DE4D948:6ACA3727 and timestamp 2026-10-10 13:01:27 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22dollar+HOME+config.toml%22+%29+repo%3Aopenai%2Fcodex+type%3Aissue)
+=== prs: dollar HOME config.toml
+HTTP 403: API rate limit exceeded for user ID 6650122. If you reach out to GitHub Support for help, please include the request ID 100D:26494C:9BA1956:E91EE96:6ACA3727 and timestamp 2026-10-10 13:01:27 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (https://api.github.com/search/issues?advanced_search=true&page=1&per_page=12&q=%28+%22dollar+HOME+config.toml%22+%29+repo%3Aopenai%2Fcodex+type%3Apr)

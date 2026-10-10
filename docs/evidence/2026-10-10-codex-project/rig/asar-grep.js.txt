@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// Reads an Electron app.asar as data (never executes any of it) and prints the
+// text around each match of a pattern in its .js/.cjs/.mjs files.
+// usage: node asar-grep.js <app.asar> <regex> [contextChars] [maxHits]
+const fs = require('fs');
+const [file, pattern, ctxArg, maxArg] = process.argv.slice(2);
+const ctx = Number(ctxArg || 300);
+const maxHits = Number(maxArg || 40);
+const fd = fs.openSync(file, 'r');
+const head = Buffer.alloc(16);
+fs.readSync(fd, head, 0, 16, 0);
+const headerSize = head.readUInt32LE(4);
+const jsonLen = head.readUInt32LE(12);
+const hdr = Buffer.alloc(jsonLen);
+fs.readSync(fd, hdr, 0, jsonLen, 16);
+const header = JSON.parse(hdr.toString('utf8'));
+const base = 8 + headerSize;
+const re = new RegExp(pattern, 'g');
+let hits = 0;
+const files = [];
+(function walk(node, prefix) {
+  for (const [name, e] of Object.entries(node.files || {})) {
+    const p = prefix ? prefix + '/' + name : name;
+    if (e.files) walk(e, p);
+    else files.push({ p, e });
+  }
+})(header, '');
+console.log(`entries=${files.length}`);
+for (const { p, e } of files) {
+  if (!/\.(c|m)?js$/.test(p) || e.unpacked) continue;
+  const buf = Buffer.alloc(e.size);
+  fs.readSync(fd, buf, 0, e.size, base + Number(e.offset));
+  const text = buf.toString('utf8');
+  re.lastIndex = 0;
+  let m;
+  while ((m = re.exec(text)) && hits < maxHits) {
+    hits++;
+    const s = Math.max(0, m.index - ctx);
+    console.log(`\n=== ${p} @${m.index}\n` + text.slice(s, m.index + ctx).replace(/\s+/g, ' '));
+  }
+  if (hits >= maxHits) break;
+}
+console.log(`\nhits=${hits}`);

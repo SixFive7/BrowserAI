@@ -1,0 +1,20 @@
+MATRIX4 START 2026-10-10T13:59:36Z codex=default
+fallback-r1: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallback-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","tildepath":"ready","envpath_bogus":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:59:44.386Z"} leftover=0
+rc=0
+fallbackbefore-r1: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallbackbefore-r1: status={"uctl":"ready","ctl":"ready","barepath":"failed","tildepath":"ready","envpath_bogus":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T14:00:00.948Z"} leftover=0
+rc=0
+fallback-r2: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallback-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","tildepath":"ready","envpath_bogus":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T14:00:17.155Z"} leftover=0
+rc=0
+fallbackbefore-r2: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallbackbefore-r2: status={"uctl":"ready","ctl":"ready","barepath":"failed","tildepath":"ready","envpath_bogus":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T14:00:33.968Z"} leftover=0
+rc=0
+fallback-r3: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallback-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","tildepath":"ready","envpath_bogus":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T14:00:50.590Z"} leftover=0
+rc=0
+fallbackbefore-r3: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+fallbackbefore-r3: status={"uctl":"ready","ctl":"ready","barepath":"failed","tildepath":"ready","envpath_bogus":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T14:01:20.063Z"} leftover=0
+rc=0
+MATRIX4 END 2026-10-10T14:01:28Z

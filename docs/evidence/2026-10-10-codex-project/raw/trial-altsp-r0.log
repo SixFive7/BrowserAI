@@ -1,0 +1,1 @@
+altsp-r0: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:37:36.638Z"} leftover=0

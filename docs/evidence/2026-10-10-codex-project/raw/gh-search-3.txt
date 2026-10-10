@@ -1,0 +1,9 @@
+=== issues: home directory expansion config
+=== prs: home directory expansion config
+=== issues: config portable across machines
+15433 [closed] 2026-03-22 upd 2026-03-22 Separate project trust state from ~/.codex/config.toml so global config can be VCS-managed
+=== prs: config portable across machines
+=== issues: dollar HOME config.toml
+=== prs: dollar HOME config.toml
+=== issues: tilde mcp command
+=== prs: tilde mcp command

@@ -1,0 +1,349 @@
+# Codex project registrations that resolve on any PC -- findings, 2026-10-10
+
+Everything below was read or measured on 2026-10-10 on this machine (Windows 11 Pro 10.0.26300), between 12:59Z (first Codex call) and 14:03Z (last check that nothing was left running). Every Codex and Claude Code call ran with `CODEX_HOME` and `CLAUDE_CONFIG_DIR` in this folder. No BrowserAI, browser or installer was started. The probes are a stub named `BrowserAI.exe`.
+
+## 1. The answer in brief
+
+- **Codex still expands nothing in an MCP server's `command`.** The newest Codex on this machine is codex-cli 0.162.0-alpha.2. With `${LOCALAPPDATA}`, `$LOCALAPPDATA`, `%LOCALAPPDATA%` and `~` (each with `/` and `\`), at project and user scope, three rounds: **0 of 48 started**. Each failed with *"MCP startup failed: The system cannot find the path specified. (os error 3)"*. The 0.159.0-alpha.12.1 build gave 0 of 8.
+  - The launch chain is byte-identical in the newest release (`rust-v0.162.1`), the newest prerelease (`rust-v0.163.0-alpha.5`) and the measured build. Nothing on it expands a variable or `~` in `command`, `args`, `env` or `cwd`.
+  - openai/codex#2680 is open, with no linked pull request.
+- **A project entry is read only in a trusted project, but the app-server can trust one by itself.**
+  - No trust entry and a read-only sandbox: 0 of 12 project entries loaded. `trust_level = "untrusted"`: 0 of 12.
+  - A `thread/start` whose effective permissions can write the folder writes `trust_level = "trusted"` for the folder's git root into the user's `config.toml`. This was measured with full access (3 of 3, and then 12 of 12 entries loaded). Source says workspace-write does the same once the Windows sandbox is set up; that was not measured.
+- **Four forms resolve without a variable in `command`, and each fails differently:**
+  - **A, the bare name `BrowserAI.exe` on Codex's own PATH (today's entry).** It fails for any Codex process started before the install: 0 of 6, *"program not found"*. It also starts whichever `BrowserAI.exe` comes first on PATH: 3 of 3 started the other copy.
+  - **B, the same bare name with the entry's own `env.PATH = '~\AppData\Local\BrowserAI.app\current'`.** It started 33 of 33 with a clean argument list in every condition measured: Codex started before the install, another copy earlier on PATH, and spaces and `& ! ^ % ( )` in the profile path. When that entry finds nothing, Rust's own process search falls back to Codex's PATH: 3 of 3 started that way, 0 of 3 when that PATH lacked the install too.
+  - **C, `cmd.exe /d /v:on /c !LOCALAPPDATA!\...`.** It started 27 of 27, but **hands the server a split argument list whenever the profile path contains a space** (6 of 6).
+  - **D, a committed `.codex/browserai.cmd` named relatively.** It only works for a thread opened at the project root: 0 of 3 in a subfolder when the app-server runs outside the project, which is how the desktop app runs it.
+- **No form opens a window.** Codex starts every stdio server with `CREATE_NO_WINDOW`. In 48 sessions and 96 process-tree censuses, no process of any app-server tree owned a top-level window. The window probe's positive control does find a window that is never shown.
+- **Recommendation: B, keeping the installer's user-PATH entry.** It is the only form measured to resolve in every condition, and when it fails it behaves like today's form.
+- Claude Code 2.1.296 still expands `${LOCALAPPDATA}` in a project `.mcp.json` `command`: 6 of 6 connected, including a space in the expanded path.
+
+## 2. Versions, and where each was read
+
+**Codex binaries on this machine** (each `--version` read with a scratch `CODEX_HOME`, `raw/versions.json`):
+
+| Path | Version | Notes |
+|---|---|---|
+| `C:\Program Files\WindowsApps\OpenAI.Codex_26.1002.7124.0_x64__2p2nqsd0c76g0\app\resources\codex.exe` | **0.162.0-alpha.2** | Ships with the desktop app OpenAI.Codex 26.1002.7124.0 (`Get-AppxPackage`). 333,357,008 bytes, written 2026-10-08T15:37:36Z, SHA-256 `3553CD6E7DF5A093D8CB8301CD8088A57E0971ABA71DDBE0E67F7F44A15CDF68`. Newest here; the matrix ran against it. |
+| `C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe` | 0.159.0-alpha.12.1 | It is the `codexCliPath` in `%LOCALAPPDATA%\OpenAI\Codex\chrome-native-hosts-v2.json`, which is how the 2026-09-24 rig found its Codex. SHA-256 `1722907AA64401BCC9B34467EF5C2AF43F6AEF9A5045EF04D11D19DFAE4589FB`. Used for the cross-check round. |
+| `C:\Users\jori\AppData\Local\OpenAI\Codex\bin\be3fd7e5c1969ff6\codex.exe` | 0.159.0-alpha.12.1 | Byte-identical to the row above. |
+| `C:\Users\jori\AppData\Local\Programs\<another application>\...\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\bin\codex.exe` | 0.144.1 | Another application's bundled copy. SHA-256 `CBACBB9726262EF558B4AF0438A1B2A5BBA9076132401D947B5B4D2BF92AB0E4`. |
+
+No `codex` is on PATH (`where.exe codex` finds nothing), and neither the user nor the machine PATH holds a codex or BrowserAI entry.
+
+**GitHub** (gh 2.102.0, `gh release list` and `releases/latest`, read about 13:00Z, `raw/gh-release-list.json`):
+- Latest: **`rust-v0.162.1`**, published 2026-10-09T19:44:51Z, commit `092d3acd6bec3e3a14bdc7e7a2810ab628ab759d`.
+- Newest prerelease: `rust-v0.163.0-alpha.5`, published 2026-10-10T00:26:59Z, commit `cf4041fa09238f33cf106e3046801ed23590bae8`.
+- The measured build's tag: `rust-v0.162.0-alpha.2`, published 2026-10-02T01:44:23Z, commit `74e804deeb1241d5fe699b31fb319f7d46454c42`.
+- The 0.159.0-alpha.12.1 tag: commit `180d8caa`, published 2026-10-01T19:37:00Z.
+
+**Dependencies and tools:**
+- Codex's toolchain is Rust 1.95.0 (`rust-toolchain.toml`). The std source was read at rust-lang/rust tag `1.95.0`.
+- `which` 8.0.0 (`Cargo.lock` checksum `d3fabb95...ba1d`) and `env_home` 0.1.0 (`c7f84e12...c0fe`) are the same at all three tags. Both crates were fetched from static.crates.io and their digests match.
+- Claude Code **2.1.296**: `C:\Users\jori\.local\bin\claude.exe --version` with scratch dirs. The VS Code extension's `native-binary\claude.exe` has PE FileVersion 2.1.296.0.
+- The desktop bundle `app.asar` has SHA-256 `76fe7078248c00e4e03dd2177a4275ec9ce158a9dd43452a4f0427d39a4ed012`. It was read as data and never executed.
+
+## 3. What the source says (file:line at `rust-v0.162.1` unless stated)
+
+**The launch chain is byte-identical at all three tags.** SHA-256 prefixes:
+- `rmcp-client/src/stdio_server_launcher.rs`: `33c5e4160fa3`
+- `program_resolver.rs`: `e0c81492e5d9`
+- `utils.rs`: `90e35a8811aa`
+- `config/src/mcp_types.rs`: `e7ec58e387b8`
+- `utils/pty/src/child_command.rs`: `5173950a9600`
+- `utils/pty/src/win/job.rs`: `1b3f332fbd95`
+
+Three neighbouring files differ, none on the launch or trust path:
+- `protocol/src/shell_environment.rs` gains a `CODEX_TOOL_CALL_ID` setter at 0.163.0-alpha.5; the allowlist is unchanged.
+- `codex-mcp/src/rmcp_client.rs` boxes one future (line 427).
+- `config/src/loader/mod.rs` changes a strict-config check and credential masking.
+
+**So the 0.162.0-alpha.2 run speaks for 0.162.1 and 0.163.0-alpha.5 by source identity, not by a run of those builds.**
+
+Against 0.155.0-alpha.9.2 (`4607249e`, the build behind the 2026-09-24 record, fetched into `src/v0.155-files/`): `program_resolver.rs` lines 1-65 and `utils.rs` are identical.
+
+**Nothing on the path expands anything:**
+- `config/src/mcp_types.rs:367-435`: `command` is a plain `Option<String>` (369), `cwd` an `Option<LegacyAppPathString>` (377). The `Stdio` transport is built at 507-513 from these values unchanged.
+- `utils/path-uri/src/api_path_string.rs:28-38`: `LegacyAppPathString` "accept[s] any UTF-8 string without interpreting or validating it". Its home-relative `resolve_against` (97-140) is used only by the executor launcher (`stdio_server_launcher.rs:598-605`).
+- `config/src/loader/mod.rs:1627`: each project layer goes through `resolve_relative_paths_in_config_toml`. That function (1432-1460) only rewrites fields typed `AbsolutePathBuf`. So **a relative `command` or `cwd` is not made relative to the config file.**
+- `codex-mcp/src/rmcp_client.rs:1216-1260`: the stdio fields pass through unchanged. The launcher is built with `LocalStdioServerLauncher::new(runtime_context.local_process_cwd())` (1235-1237).
+- `stdio_server_launcher.rs:263-283`: environment (276), working directory (277), `program_resolver::resolve(program, &envs, &cwd)` (278-279), then `Command::new(&resolved_program)` (282-283).
+- `program_resolver.rs:41-65`: `which::which_in` over the PATH in the server's environment. If that fails, the original text is used (59-63).
+- `utils.rs:16-59`: allowlisted variables are read from **Codex's own environment**, and the entry's `env` is laid over them, case-insensitively on Windows (39-53). The Windows allowlist is at `protocol/src/shell_environment.rs:170-201`: PATH, PATHEXT, COMSPEC, SYSTEMROOT, USERPROFILE, LOCALAPPDATA, APPDATA, TEMP and others.
+- I searched for `expand_env`, `shellexpand`, `envsubst`, `interpolat`, `expand_tilde`, `expand_home` and `fn expand` outside tests. The hits are all unrelated code: plugin placeholders, shell snapshots, the TUI, marketplace sources, the sandbox, and `AbsolutePathBuf` home handling. Positive control: the same search finds the `which::which_in` call.
+
+**What a program name resolves against:**
+- MCP launches use the thread's local environment folder, or a host fallback (`core/src/session/mcp.rs:163-180`).
+- `which` 8.0.0, `finder.rs`:
+  - A name containing a separator is joined to the working directory (79-94, 123-138).
+  - A bare name is searched in PATH entries only.
+  - **Each PATH entry goes through `tilde_expansion`** (151-154, 242-262). The home folder comes from `env_home`, which reads `USERPROFILE` (`sys.rs:145-155`; `env_home` `lib.rs:47-55`).
+- Rust std 1.95.0, `library/std/src/sys/process/windows.rs`, `resolve_exe` (464-522) and `search_paths` (526-583):
+  - A path with a separator is not searched.
+  - A bare name is searched in this order: the child's PATH, codex.exe's own folder, System32, the Windows folder, and **last the parent's (Codex's own) PATH**.
+  - If nothing matches, the error is *"program not found"* (521).
+
+**Windows process creation:** `child_command.rs:94-126` sets `env_clear`, piped stdio and `CREATE_NO_WINDOW` (104-105). `win/job.rs:125-133` adds `CREATE_SUSPENDED` (used at `stdio_server_launcher.rs:297-307`), and the process is assigned to a job object (325-344). Without a job object, Codex's terminator only holds the process it started (345-357).
+
+**Trust:**
+- `loader/mod.rs:1653-1757`: every `.codex/` folder from the project root down to the thread's folder is a layer, and an untrusted layer is loaded disabled. The trust decision is at 1047-1091 and its message at 1093-1111. The keys a project file may not set (89-102) do not include `mcp_servers`.
+- **`app-server/src/request_processors/thread_processor.rs:1350-1377`**: when `thread/start` names a folder with no trust decision, the app-server may trust it. It does so if the effective permission profile is `Disabled` or `External`, or a managed profile that can write the folder. It then writes `trust_level = "trusted"` for the git root (or the folder) into the user's `config.toml`.
+  - The same code is at 0.155.0-alpha.9.2 (1347-1370) and 0.163.0-alpha.5 (1365-1386). The 2026-09-24 rig ran read-only and never reached it.
+- `config/src/config_toml.rs:821-833`: on Windows, if the Windows sandbox is not set up, a requested workspace-write becomes read-only.
+- The terminal client asks *"Trust this folder? ... Your trust decision will be saved."* (`tui/src/onboarding/trust_directory.rs:70-73`), and that trust applies to the repository root (147).
+
+**Two other routes, neither usable for a project file:**
+- Agent Plugins replace only `${PLUGIN_ROOT}` and `${PLUGIN_DATA}`, in an installed plugin's `mcp.json` (`codex-mcp/src/agent_plugin_config.rs:150-246, 374-396`).
+- `env_vars` only forwards named variables (`mcp_types.rs:97-135`).
+
+**Codex's own environment:**
+- **Desktop app** (bundle `.vite/build/application-network-startup-Bt0a8E1L.js`, excerpts in `raw/desktop-bundle-excerpts.txt`):
+  - The app-server is spawned over stdio (`spawnProcess` @254950).
+  - Its environment is `{...process.env, CODEX_HOME, LOG_FORMAT, RUST_LOG, ...}` (`cc` @266204). PATH is only filtered (`dc` @266944).
+  - The shared daemon is not used on Windows (@259658).
+  - The bundle has no read of `HKCU...Environment` or the machine environment key: 0 hits, with `CODEX_CLI_PATH` as the positive control (2 hits).
+  - **So the desktop app's app-server, and every server it starts, keep the PATH the app had when it was launched.**
+- **Terminal CLI:**
+  - `daemon_auto_start` is Stable and on by default (`features/src/lib.rs:990-996`). The CLI starts or attaches to the shared daemon (`tui/src/startup_orchestration.rs:509-512, 547-575`).
+  - The daemon starts from the launching CLI's environment, detached, with `DETACHED_PROCESS | CREATE_BREAKAWAY_FROM_JOB` (`app-server-daemon/src/backend/pid_start.rs:98-213, 182`). I found no idle shutdown.
+  - Read, not measured: a terminal opened after the install can be served by a daemon started before it.
+
+## 4. openai/codex#2680 and related issues (gh, 2026-10-10; `raw/issue-*`, `raw/gh-search*.txt`)
+
+- **#2680 "Support environment variable expansion": OPEN.**
+  - Created 2025-08-25, labels `enhancement` and `mcp`, last updated 2026-09-30 ("Any updates on this?").
+  - 6 comments, none from OpenAI, and no openai/codex pull request is linked.
+  - It cross-references #3157 (closed) and #29884 (open: tilde in Unix socket paths).
+- #24362 (open): a Windows desktop stdio child does not get user environment variables. This is the allowlist above, seen from a user's side.
+- #5160 (closed 2026-01-30): OpenAI's etraut-openai wrote on 2026-02-07: *"We did recently add support for project-local config.toml overrides. Those are designed to be checked in to projects and used across machines."*
+- #5246 (merged 2025-10-16) added `cwd` and `env_vars`. #3866 (closed) is the Windows allowlist. #15433 (closed) is about separating trust state.
+- I searched further for expansion, tilde, PATH, relative commands and portability, and found nothing newer. Positive control: the first query returned #2680.
+
+## 5. Official documentation
+
+- https://developers.openai.com/codex/config-basic (redirects 308 to https://learn.chatgpt.com/docs/config-file/config-basic):
+  - *"For security, Codex loads project `.codex/` layers only when you trust the project."*
+  - *"If you mark a project as untrusted, Codex skips project-scoped `.codex/` layers, including project-local config, hooks, and rules."*
+  - Project files are applied *"ordered from the project root down to your current working directory (closest wins; trusted projects only)"*.
+  - No variable expansion is mentioned.
+- https://developers.openai.com/codex/mcp (redirects 308 to https://learn.chatgpt.com/docs/extend/mcp?surface=cli):
+  - *"you can also scope MCP servers to a project with `.codex/config.toml` (trusted projects only)."*
+  - The page lists the fields `command`, `args`, `env`, `env_vars` and `cwd`. It says nothing about PATH, how a command is resolved, expansion, or how a project becomes trusted.
+- https://learn.chatgpt.com/docs/config-file/config-reference: `projects.<path>.trust_level` *"Mark a project or worktree as trusted or untrusted"*. Nothing on expansion, `~` or PATH.
+- https://code.claude.com/docs/en/mcp: `${VAR}` and `${VAR:-default}` are expanded in `command`, `args`, `env`, `url` and `headers`.
+
+## 6. Measurements
+
+**The rig.** `rig/` drives `codex app-server --listen stdio://`:
+- Each run gets its own scratch `CODEX_HOME`, and the model provider points at `127.0.0.1:9`. No turn is started, so no model is ever asked anything.
+- Every configured server is `stub/ProbeStub.cs`. It records its image, command line, argv, folder, parent pid and console state, and answers the tool `probe_whoami`.
+- Each session:
+  1. sends `initialize` and `thread/start`, and waits for each server's startup status;
+  2. takes a process-tree census and a window census;
+  3. calls `mcpServerStatus/list` with and without the thread;
+  4. calls `probe_whoami` on every ready server;
+  5. closes stdin and ends anything left in its own tree, by pid.
+- Rounds: `matrix.sh`, `matrix2.sh` and `matrix4.sh` ran 3 rounds against 0.162.0-alpha.2. `matrix3.sh` ran 1 round against 0.159.0-alpha.12.1. `summarize.js` writes the summaries.
+
+**What changed from the 2026-09-24 rig, and why:**
+- **Scratch `LOCALAPPDATA` and `USERPROFILE`** (`profiles\user`, `profiles\Jo Smith`, `profiles\Jo Smith & Co (!x^ 100%)`, `profiles\user-before`, each with `AppData\Local`). This keeps every write inside `.work`, and lets me put a space or special characters in the expanded path. The old rig wrote its probe under the real `%LOCALAPPDATA%`.
+- **The probe is named `BrowserAI.exe`**, sits at `<LOCALAPPDATA>\BrowserAI.app\current\`, and is built as a **Windows-subsystem** binary, like the real one (origin/master `db50964e` declares `WinExe`; the installed file's PE subsystem is 2). A console-subsystem build in `BrowserAI.app\console\` is the control.
+- **The PATH handed to Codex** is this process's PATH minus any entry holding a BrowserAI binary (none did), plus scratch entries per kind.
+- **Entries are written directly into `.codex/config.toml`**, and every entry's `args` end with `--tag <name>`.
+- **`sandbox_mode = "danger-full-access"`** (the old rig used read-only), so that no sandbox setup can run. **This turned on the app-server's auto-trust**, which the trust kinds then separate out.
+- **`[features] plugins = false`**. Otherwise every start clones github.com/openai/plugins (65 MB).
+- **`GIT_TERMINAL_PROMPT=0` and `GCM_INTERACTIVE=never`** are in Codex's environment, because Codex runs git itself.
+- **Processes are observed** through one read of the process table, reduced to the app-server's pid tree or the probes' scratch paths, never by image name. Windows are counted with `rig/winprobe.exe`, keyed by owning pid. Its `--selftest` positive control found its own window that is never shown.
+
+**How the rig marks a project trusted:** it writes `[projects.'<git init project folder>']` with `trust_level = "trusted"` into the scratch home's `config.toml`. When Codex trusts a project itself, it writes the same table under a lower-cased key.
+
+**Cases:**
+- `ctl` and `uctl`: absolute path, at project and user scope.
+- The 8 spellings: each variable form in `command`.
+- `argsliteral`: the spellings in `args`.
+- `barepath`: `command = 'BrowserAI.exe'`, no `env`.
+- `tildepath`: the same plus `env = { PATH = '~\AppData\Local\BrowserAI.app\current' }`.
+- `envpath_bogus`: the same, with `env.PATH` naming a folder that does not exist.
+- `cmdwrap`: `cmd.exe /d /c %LOCALAPPDATA%\...\BrowserAI.exe --mcp`.
+- `cmdwrap_v`: `cmd.exe /d /v:on /c !LOCALAPPDATA!\...\BrowserAI.exe --mcp`.
+- `cmdwrap_v_console`: the same, with the console probe.
+- `relcmd`: `command = '.codex/browserai.cmd'`, a file holding `@"%LOCALAPPDATA%\BrowserAI.app\current\BrowserAI.exe" %*`.
+
+**Kinds:**
+- `alt`, `altsp`, `altspx`: the install on Codex's PATH, with the three profiles.
+- `subdir`: thread in `proj\sub`, app-server in the project.
+- `elsewhere` and `elsewheresub`: app-server in a plain folder, thread at the root or in `proj\sub`.
+- `before` and `fallbackbefore`: Codex's PATH lacks the install, and the install is created after `initialize`.
+- `shadow`: another `BrowserAI.exe` first on PATH.
+- `fallback`: the install on PATH, used for `envpath_bogus`.
+- Trust kinds:
+  - `untrusted`: no trust entry, full access.
+  - `untrustedro`: no trust entry, read-only.
+  - `untrustedexpl`: `trust_level = "untrusted"`, full access.
+  - `autotrustww`: no trust entry, workspace-write.
+
+**Results at 0.162.0-alpha.2, 3 rounds, 48 sessions, 13:39:44Z to 14:01:28Z.** "Started" means Codex reported the server ready and the expected probe file answered. "Argv" means the probe received exactly the arguments the entry configures.
+
+| Case | Started | Argv | Error text |
+|---|---|---|---|
+| 8 spellings, project and user scope | **0 of 48** | -- | *"MCP startup failed: The system cannot find the path specified. (os error 3)"*; resolver: *"Failed to resolve "<text>": cannot find binary path. Using original path"* |
+| `argsliteral` | 3 of 3 | 3 of 3, passed literally | |
+| `ctl` / `uctl` | 36/36, 48/48 | all | |
+| `barepath`, install on PATH (8 kinds) | 24 of 24 | 24 of 24 | |
+| `barepath`, `shadow` | 3 of 3, **all the other copy** | 3 of 3 | |
+| `barepath`, Codex before install | **0 of 6** | -- | *"MCP startup failed: program not found"* |
+| `tildepath`, 11 trusted kinds | **33 of 33**, always the install's copy | 33 of 33 | |
+| `envpath_bogus`, `fallback` / `fallbackbefore` | 3 of 3 (via Codex's PATH) / 0 of 3 | 3 of 3 | *"program not found"* |
+| `cmdwrap`, no space / space | 3 of 3 / **0 of 6** | 3 of 3 | *"MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"*; cmd: *"'...\profiles\Jo' is not recognized as an internal or external command,"*, and for `altspx` also *"'Co' is not recognized"* (the `&` ran a second command) |
+| `cmdwrap_v`, no space (7 kinds) / space | 21 of 21 / 6 of 6 | 21 of 21 / **0 of 6** | received `["Smith\AppData\Local\BrowserAI.app\current\BrowserAI.exe","--mcp",...]`, and for `altspx` `["Smith","&","Co","(!x^","100%)\AppData\...\BrowserAI.exe","--mcp",...]` |
+| `cmdwrap_v_console` | 9 of 9 | 3 of 3 no space, 0 of 6 space | same split |
+| `relcmd`, thread at the root (5 kinds) | 15 of 15 | 15 of 15 | |
+| `relcmd`, `subdir` | 3 of 3 | 3 of 3 | worked only through Windows' fallback to the app-server's own folder, after *"Failed to resolve ".codex/browserai.cmd": cannot find binary path. Using original path"* |
+| `relcmd`, `elsewheresub` | **0 of 3** | -- | *"handshaking with MCP server failed: connection closed: initialize response ..."*; cmd: *"The system cannot find the path specified."* |
+
+**Trust results:**
+
+| Kind | Effective sandbox at thread start | Trust entry afterwards | Project entries loaded |
+|---|---|---|---|
+| `untrustedro` | readOnly | none (3/3) | **0 of 12** |
+| `untrustedexpl` | dangerFullAccess | `untrusted` (3/3) | **0 of 12** |
+| `autotrustww` | readOnly (workspace-write requested, no Windows sandbox) | none (3/3) | **0 of 12** |
+| `untrusted` | dangerFullAccess | **`trusted`, written by Codex (3/3)** | 12 of 12 |
+| `expuser` (plain folder, no project) | dangerFullAccess | `trusted` for that folder, written by Codex (3/3) | -- |
+
+In every untrusted session the app-server logged *"Project-local config, hooks, and exec policies are disabled in the following folders until the project is trusted, but skills still load."* It then added *"add <folder> as a trusted project in <home>\config.toml"*, or *"<folder> is marked as untrusted in the effective configuration"* for the explicit case.
+
+**Processes and windows:**
+- cmd.exe was still the parent of the probe at every census: 114 of 114, including the GUI-subsystem probe. So `cmd /c` waits for its child. Each cmd.exe had its own conhost.exe.
+- Windows owned by any app-server tree: **0**, visible or hidden.
+- Launches per server: 3 per session in 180 server-sessions (the thread plus two status lists), and 2 in 27. The 2-launch cases are the `elsewhere` kinds: there the status list without a thread reads the configuration of the app-server's own folder, which is not the project.
+- `<CODEX_HOME>\tmp\arg0\codex-arg0...` was the first PATH entry in 492 of 492 launches whose entry set no PATH.
+
+**Cross-check at 0.159.0-alpha.12.1** (1 round of 9 kinds, 13:56:16Z to 13:59:15Z, `summary-codex-0.159.txt`): every row matches 0.162.0-alpha.2.
+- Spellings: 0 of 8.
+- `barepath`: 0 of 1 before the install; the other copy under `shadow`.
+- `tildepath`: 6 of 6, clean.
+- `cmdwrap_v`: argv split with a space.
+- `relcmd`: 0 of 1 in `elsewheresub`.
+- Untrusted kinds: 0 of 4 loaded.
+- cmd.exe the parent 28 of 28; 0 windows.
+
+**Claude Code 2.1.296** (6 runs, 14:02:29Z to 14:02:54Z).
+- **Setup:**
+  - A scratch project with `.mcp.json` naming `${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe --mcp`, plus an absolute control.
+  - Checked with `claude mcp list` and `claude mcp get`.
+  - `LOCALAPPDATA` and `USERPROFILE` were scratch, with `DISABLE_AUTOUPDATER=1` and `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`.
+  - The repository's four project servers were refused with `disabledMcpjsonServers`, in both the scratch user settings and the scratch project's `settings.local.json`.
+- **Results:**
+  - **Connected 6 of 6**: 3 runs with `...\profiles\user\AppData\Local` and 3 with `...\profiles\Jo Smith\AppData\Local`. The probe was the scratch install every time and received a clean argv every time. The control also connected 6 of 6.
+  - `claude mcp get` shows the command unexpanded, with Status Connected.
+- **What was not separated:** none of the four repository servers appeared in the output. I did not test whether that was the refusal or no walk-up, because the control for that would start them.
+
+## 7. Corrections to the 2026-09-24 record
+
+- **"`cmdwrap_space_v` 3 of 3"** counted starts only. That batch's own `summary.txt:127` shows the server received `["ace\\codex-expansion-probe\\probe-stub.exe","--tag","cmdwrap_space_v"]`, the tail of `sp ace`. Today's runs reproduce this at 0.159 and 0.162.
+- **"an untrusted project's own entries, which Codex does not read"** only held because that rig ran read-only. With full access, the app-server trusts the project at `thread/start` (`thread_processor.rs:1350-1377`, measured 3 of 3).
+- **`RegistrationClient.CodexProjectNote`'s "was not measured"** (origin/master) is stale. kb records it measured on 2026-09-25 (3 of 3), and `before` measured it again here (0 of 6 started).
+
+## 8. What I could not establish, and why
+
+- **The desktop app and the CLI daemon were not driven.** Nothing here may show a window, and starting the daemon would leave a detached long-lived process. Their environment handling comes from the bundle and source. In particular, whether the desktop app keeps one app-server for its whole lifetime, and how long a daemon lives, are not measured.
+- **Auto-trust with workspace-write and the Windows sandbox set up** was not measured, because setting the sandbox up changes ACLs and accounts. It is read from source.
+- **The real BrowserAI.exe was never started.** Two things come from origin/master `db50964e` source only:
+  - It tolerates leading junk arguments: `Program.ServesStdio` is `args.Contains("--mcp")`.
+  - Its relay does not need PATH: the background starts through Task Scheduler (`IRegisteredTask::Run`), and RegisterAI runs by absolute path.
+- **A LocalAppData folder moved away from `%USERPROFILE%\AppData\Local`** was not measured.
+- **The 0.162.1 and 0.163.0-alpha.5 binaries** are not on this machine and were not downloaded. They are covered by the launch chain's byte identity.
+- **How the desktop app keeps its own console-subsystem app-server windowless** was not traced. It does not affect the servers, which always get `CREATE_NO_WINDOW`.
+
+## 9. What it means for a committed project registration
+
+**Every form is read only in a trusted project:** 0 of 24 entries loaded when untrusted (read-only or explicit). A full-access Codex app-server trusts the project by itself at the first thread. **A variable in `command` never works:** 0 of 56 across the two builds. An absolute path resolves on one machine only.
+
+**A. The bare name on Codex's PATH (today's entry, Q294 b).** `command = 'BrowserAI.exe'`, `args = ['--mcp']`.
+- **Works when** the install's `current\` folder was on that Codex process's PATH when the process started: 24 of 24, clean argv, any profile path, any folder.
+- **Fails for any Codex started before the install:** 0 of 6, *"program not found"*. That lasts until the desktop app is restarted (it takes its environment at launch and never re-reads the registry). For the terminal CLI it may last until the daemon is restarted (read, not measured).
+- **Silently starts another `BrowserAI.exe`** if one comes earlier on PATH (3 of 3).
+- Fails if the installer's PATH edit is missing (not measured).
+- No window.
+
+**B. The bare name with the entry's own PATH, built from the home folder.**
+
+```toml
+[mcp_servers.browserai]
+command = 'BrowserAI.exe'
+args = ['--mcp']
+env = { PATH = '~\AppData\Local\BrowserAI.app\current' }
+```
+
+- **Works whenever `%USERPROFILE%\AppData\Local\BrowserAI.app\current\BrowserAI.exe` exists when the server starts**, regardless of Codex's own PATH or when Codex started: 33 of 33 with clean argv. That includes Codex started before the install (6 of 6), another copy on PATH (3 of 3 started the install's copy), and spaces and `& ! ^ % ( )` (6 of 6).
+- **If that entry finds nothing, it degrades into A:** Rust's search ends in Codex's PATH (3 of 3; 0 of 3 when that PATH lacks the install too). Keeping the installer's PATH entry therefore keeps today's behaviour as the fallback.
+- **Fails** if LocalAppData has been moved out of the profile (not measured; the A fallback still applies), and in an untrusted project.
+- **Costs:**
+  - The server's PATH is exactly the literal entry `~\AppData\Local\BrowserAI.app\current` (that is what the probe saw). `BrowserAI.exe --mcp` must therefore not rely on PATH; source suggests it does not.
+  - It relies on `which` expanding `~` in a PATH entry, which Codex neither documents nor tests. That held at 0.155.0-alpha.9.2, 0.159.0-alpha.12.1 and 0.162.0-alpha.2, all on `which` 8.0.0.
+  - The ownership checks in RegisterAI and BrowserAI must recognise an entry with this `env` table as BrowserAI's.
+- No window.
+
+**C. `cmd.exe /d /v:on /c !LOCALAPPDATA!\BrowserAI.app\current\BrowserAI.exe --mcp`.**
+- **Works** whenever `LOCALAPPDATA` is set (it always is; `shell_environment.rs:192`) and the install exists: 27 of 27. It does not depend on PATH or on when Codex started (3 of 3 before the install).
+- **Corrupts the argument list** when the profile path has a space: 6 of 6 started with the path's tail as leading arguments, because cmd passes the expanded path to the child unquoted. Today's BrowserAI.exe would still find `--mcp`, but nothing guarantees it stays that way. A Codex entry cannot add quoting, because Rust escapes an embedded quote as `\"` (0 of 9 on 2026-09-24).
+- **Adds a cmd.exe and a conhost.exe** beside each of the three server copies per session. cmd waits for its child (114 of 114), and the job object covers both processes.
+- No window.
+- **Never write the plain `%LOCALAPPDATA%` form:** 0 of 6 with a space, and an `&` in the profile path runs a second command.
+
+**D. A committed `.codex/browserai.cmd` named relatively.**
+- **Works only for a thread opened at the project root:** 15 of 15, clean argv.
+- **Fails for a thread in a subfolder** when the app-server runs outside the project, which is the desktop app's case: 0 of 3, plus 0 of 1 at 0.159.
+- It is a second committed file, and an executable one.
+
+**The forms side by side:**
+
+| Condition | A | B | C | D |
+|---|---|---|---|---|
+| Codex started after the install | 24/24 | 33/33 | 27/27 | 15/15 at root |
+| Codex started before the install | **0/6** | 6/6 | 3/3 | 3/3 |
+| Another `BrowserAI.exe` earlier on PATH | **starts it, 3/3** | install, 3/3 | install, 3/3 | not run (uses the expanded path) |
+| Space or `& ! ^ % ( )` in the profile path | 6/6 clean | 6/6 clean | 6/6 started, **argv split** | 6/6 clean |
+| Thread in a subfolder, app-server outside the project | 3/3 | 3/3 | 3/3 | **0/3** |
+| Untrusted project | not read | not read | not read | not read |
+| Console window | none | none | none | none |
+| What the server receives | its usual PATH | PATH = one literal `~` entry | argv split on a space | its usual PATH |
+
+**Recommendation: B, keeping the installer's PATH entry.**
+1. It is the only form that resolved in every condition the maintainer's decision covers, 33 of 33, with the argument list intact.
+2. When it fails, it falls back to A, so it is at least as good as today's entry in every case measured.
+3. C corrupts the arguments for every profile path with a space.
+4. D breaks for threads opened in subfolders in the desktop app.
+5. A remains the fallback choice if replacing the server's PATH is unacceptable. Its failures are either visible (*"program not found"*) or silent (the wrong copy starts).
+
+**What B would require:**
+- RegisterAI's writer and the ownership check must handle the `env` table.
+- `resolvesTo` should report what the tilde entry finds.
+- `CodexProjectNote` needs new wording.
+- `BrowserAI.exe --mcp` must not depend on PATH.
+- kb row 161's re-establish step should require `tildepath` to start, and should check `cmdwrap_v`'s argument list.
+
+Claude Code's entry stays `${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.exe`.
+
+## 10. Files (under `C:\Source\SixFive7\BrowserAI\.work\next-scratch\codex-project\`)
+
+- **Rig** (`rig/`): `lib.js`, `setup.js`, `appsrv.js`, `matrix.sh`, `matrix2.sh`, `matrix3.sh`, `matrix4.sh`, `summarize.js`, `totals.js`, `inspect.js`, `verify-gone.js`, `claude-check.js`, `claude-summary.js`, `versions.js`, `help.js`, `selftest.js`, `clone.sh`, `asar-grep.js`, `asar-slice.js`, `WinProbe.cs`, `winprobe.exe`.
+- **Probe** (`stub/`): `ProbeStub.cs`, built with the .NET Framework `csc.exe` into:
+  - `probe-gui.exe`, SHA-256 `6b41b7dd7e3243381daec3d5c7f6c27063b5829e665eacc5fba966f282c8e476`;
+  - `probe-console.exe`, SHA-256 `68a37b5c2a1062ce88516011431ed9259ed21868aa4d4b9c033fe0a4a0642046`;
+  - 9,728 bytes each. Copies of them are under `profiles\*\AppData\Local\BrowserAI.app\` and `other\`.
+- **Summaries:**
+  - `summary.txt` and `.json` (0.162.0-alpha.2, 48 sessions);
+  - `summary-codex-0.159.txt` and `.json`;
+  - `summary-claude.txt`;
+  - `raw/totals*.json`;
+  - `raw/verify-gone.json`: 60 app-server pids recorded, none running and no probe running at 14:03:44Z, with 454 process-table rows read.
+- **Runs** (`runs/`, 66 folders): 48 at 0.162, 9 at 0.159 (`-r11`), 3 trials (`-r0`), 6 Claude Code runs. Each Codex run holds `setup.json`, `spec.json`, `result.json`, `driver.log`, `appserver.stderr.txt`, `stublogs\`, `home\` and `proj\`. **These carry this machine's PATH and profile path uncut.** The summaries cut PATH down to the scratch and `codex-arg0` entries.
+- **Raw** (`raw/`): `versions.json`, `gh-release-list.json`, `issue-2680*.json*`, `issue-24362.json`, `issue-5160.json`, `gh-search*.txt`, `clone.log`, `matrix*.log`, `trial-*.log`, `selftest-gui\`, `desktop-bundle-excerpts.txt`, `summarize-newest.out`.
+- **Sources** (`src/`):
+  - sparse clones of the three tags, about 122 MB each;
+  - `v0.155-files\`;
+  - `rust-std-1.95.0\process-windows.rs`;
+  - `crates/`: `which` 8.0.0 and `env_hom` 0.1.0, unpacked.

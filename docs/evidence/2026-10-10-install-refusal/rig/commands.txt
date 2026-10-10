@@ -1,0 +1,47 @@
+Commands run on 2026-10-10, in order, so the run can be
+turned into a probe rig. Environment for every one of them:
+DOTNET_CLI_TELEMETRY_OPTOUT=1, GIT_TERMINAL_PROMPT=0, GCM_INTERACTIVE=never.
+S = C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal
+W = C:\Source\SixFive7\BrowserAI\.work\wt\next-velo
+
+1. Worktree on origin/master (db50964e8c8c8a87067e08b7a150cd35da3a5175), never pushed:
+   git -C C:\Source\SixFive7\BrowserAI worktree add .work/wt/next-velo -b overnight/next-velo origin/master
+
+2. Payload (@playwright/mcp 0.0.83, Node v24.21.0, RegisterAI 0.3.0):
+   robocopy C:\Source\SixFive7\BrowserAI\.work\wt\texts2\payload W\payload /E /NP /NFL /NDL /R:2 /W:2 /LOG:S\robocopy-payload.log
+   (exit 1 = files copied; 201 files, 148.41 MB)
+
+3. The patch, from W:
+   git apply S\velopack-startup-probe.diff
+   (src/BrowserAI.Core/Updates/VelopackStartup.cs only. The install callback writes
+   S\hook-records\install-<utc>-<pid>.json and calls Environment.Exit(5); the
+   uninstall callback is "_ => { }". The record directory is a constant in the patch.)
+
+4. Publish, from W, detached, output to S\publish.log (one project since the
+   one-binary build, AGENTS.md D7 a):
+   dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64 --self-contained -nodeReuse:false -p:UseSharedCompilation=false
+
+5. Pack the suite's installer, from W, detached, output to S\pack.log (vpk 1.2.161 global tool):
+   pwsh -NoProfile -NonInteractive -File build/New-Release.ps1 -TestPackOnly
+   -> W\Releases\test-pack\BrowserAI.test-installer.exe
+
+6. Measure, detached, output to S\measure.log, results to S\results.json:
+   pwsh -NoProfile -NonInteractive -File S\measure.ps1 -Worktree W -Scratch S
+   It takes the suite lock (.work\locks\suite with owner.txt) and the installer lock
+   (build\InstallerLock.ps1 -Take -HolderPid <its own pid>), snapshots the user state,
+   runs, each windowless (UseShellExecute=false, CreateNoWindow=true, streams
+   redirected) with CLAUDE_CONFIG_DIR, CODEX_HOME, BROWSERAI_ROOT and
+   BROWSERAI_UPDATE_FEED pointed into S:
+     <installer> --silent --log S\setup-1.log --installto S\root-1   (BROWSERAI_ROOT=S\data-1)
+     <installer> --silent --log S\setup-2.log --installto S\root-2   (BROWSERAI_ROOT=S\data-2)
+     S\root-1\Update.exe --uninstall --silent
+     S\root-2\Update.exe --uninstall --silent
+   then snapshots again, diffs, and releases both locks in a finally block.
+   NOTE for a rig: measure.ps1 redirects and closes the children's standard input.
+   Update.exe's deferred removal (cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir ...)
+   inherits it, so choice fails at once and the 3 s delay collapses. A rig that
+   wants Velopack's real timing should not redirect standard input.
+
+7. Clean-up of the worktree, after everything above was saved here:
+   git -C C:\Source\SixFive7\BrowserAI worktree remove --force .work/wt/next-velo
+   git -C C:\Source\SixFive7\BrowserAI branch -D overnight/next-velo

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+# 2026-10-10 Codex project-registration re-run, cross-check: one round of the
+# deciding kinds against the 0.159.0-alpha.12.1 binary that the browser
+# extension's native-host manifest names as codexCliPath. Round number 11.
+set -u
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+export RIG_CODEX='C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe'
+cd /c/Source/SixFive7/BrowserAI/.work/next-scratch/codex-project/rig
+echo "MATRIX3 START $(date -u +%FT%TZ) codex=$RIG_CODEX"
+for kind in exp alt altsp altspx before shadow elsewheresub untrustedro autotrustww; do
+  out=$(node setup.js "$kind" 11 2>&1); echo "$out" | head -1
+  dir=$(echo "$out" | tail -1)
+  if [ -d "$dir" ]; then timeout 240 node appsrv.js "$dir" 2>&1; echo "rc=$?"; else echo "SETUP FAILED for $kind r11"; fi
+done
+echo "MATRIX3 END $(date -u +%FT%TZ)"

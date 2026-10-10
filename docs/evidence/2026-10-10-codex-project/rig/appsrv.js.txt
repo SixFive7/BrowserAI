@@ -1,0 +1,213 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// 2026-10-10 Codex project-registration re-run: one `codex app-server` session
+// against a prepared run directory. usage: node appsrv.js <runDir>
+// Adapted from docs/evidence/2026-09-24-codex-expansion/rig/appsrv.js. No model
+// is ever asked anything: the provider points at 127.0.0.1:9 and no turn starts.
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const L = require('./lib.js');
+
+const TERMINAL = new Set(['ready', 'failed', 'cancelled']);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function sweepStubLogs(spec, runDir) {
+  const moved = [];
+  for (const dir of spec.probeDirs) {
+    const launches = path.join(dir, 'launches');
+    if (!fs.existsSync(launches)) continue;
+    const label = path.relative(L.SCR, dir).replace(/[\\/:*?"<>|]/g, '_');
+    const target = path.join(runDir, 'stublogs', label);
+    fs.mkdirSync(target, { recursive: true });
+    for (const f of fs.readdirSync(launches)) {
+      fs.renameSync(path.join(launches, f), path.join(target, f));
+      moved.push(path.join(label, f));
+    }
+  }
+  return moved;
+}
+
+function removeInstall(spec) {
+  // Only the scratch install this rig itself writes for the "before" kind.
+  const exe = spec.installExe;
+  if (!exe.startsWith(L.SCR + path.sep)) throw new Error('refusing to touch ' + exe);
+  const current = path.dirname(exe);
+  const launches = path.join(current, 'launches');
+  if (fs.existsSync(launches)) for (const f of fs.readdirSync(launches)) fs.unlinkSync(path.join(launches, f));
+  if (fs.existsSync(launches)) fs.rmdirSync(launches);
+  if (fs.existsSync(exe)) fs.unlinkSync(exe);
+  if (fs.existsSync(current)) fs.rmdirSync(current);
+  const app = path.dirname(current);
+  if (fs.existsSync(app) && fs.readdirSync(app).length === 0) fs.rmdirSync(app);
+}
+
+async function main() {
+  const runDir = process.argv[2];
+  const spec = JSON.parse(fs.readFileSync(path.join(runDir, 'spec.json'), 'utf8'));
+  const logPath = path.join(runDir, 'driver.log');
+  const log = (s) => fs.appendFileSync(logPath, `${new Date().toISOString()} ${s}\n`);
+  const result = { spec, codex: spec.codex, startedAt: new Date().toISOString(), notes: [], responses: {}, census: {}, toolCalls: {}, killed: [], install: null };
+
+  // Stub logs left by an earlier run would be misattributed: sweep them first.
+  result.strayLogsBefore = sweepStubLogs(spec, path.join(runDir, 'pre-run-strays'));
+  if (spec.installAfterInit) {
+    removeInstall(spec);
+    result.install = { existsAtStart: fs.existsSync(spec.installExe) };
+  }
+  result.census.probesBefore = L.probesByPath(spec.probePaths);
+
+  const env = L.baseEnv(Object.assign({}, spec.env, {
+    CODEX_HOME: spec.home,
+    RIG_STUB_KEY: 'not-a-real-key',
+    RUST_LOG: 'codex_rmcp_client=debug,codex_mcp=debug,warn',
+  }));
+  const child = spawn(spec.codex, ['app-server', '--listen', 'stdio://'], { cwd: spec.cwd, env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  result.appServerPid = child.pid;
+  log(`SPAWNED app-server pid=${child.pid} cwd=${spec.cwd} CODEX_HOME=${spec.home}`);
+  let stderrBuf = '';
+  child.stderr.on('data', (d) => { stderrBuf += d.toString('utf8'); });
+  let exitInfo = null;
+  const exited = new Promise((res) => child.on('exit', (code, signal) => { exitInfo = { code, signal, at: new Date().toISOString() }; log(`APPSERVER EXIT code=${code} signal=${signal}`); res(); }));
+  child.on('error', (e) => log(`SPAWN ERROR ${e}`));
+
+  let buf = '';
+  const pending = new Map();
+  let nextId = 1;
+  const statusByName = {};
+  const errorByName = {};
+  child.stdout.on('data', (d) => {
+    buf += d.toString('utf8');
+    let nl;
+    while ((nl = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line) continue;
+      let msg;
+      try { msg = JSON.parse(line); } catch (e) { log(`NONJSON ${line.slice(0, 300)}`); continue; }
+      if (msg.id !== undefined && (msg.result !== undefined || msg.error !== undefined)) {
+        log(`RESP id=${msg.id} ${JSON.stringify(msg.error ?? msg.result).slice(0, 3000)}`);
+        const p = pending.get(msg.id);
+        if (p) { pending.delete(msg.id); p(msg); }
+      } else if (msg.method) {
+        result.notes.push({ at: new Date().toISOString(), method: msg.method, params: msg.params });
+        log(`NOTE ${msg.method} ${JSON.stringify(msg.params ?? {}).slice(0, 2000)}`);
+        if (msg.method === 'mcpServer/startupStatus/updated' && msg.params && msg.params.name) {
+          statusByName[msg.params.name] = msg.params.status;
+          if (msg.params.error) errorByName[msg.params.name] = msg.params.error;
+        }
+        if (msg.id !== undefined) {
+          child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: {} }) + '\n');
+          log(`AUTOREPLY ${msg.method}`);
+        }
+      }
+    }
+  });
+
+  function call(method, params, timeoutMs) {
+    const id = nextId++;
+    log(`SEND id=${id} ${method} ${JSON.stringify(params ?? {}).slice(0, 600)}`);
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+    return new Promise((resolve) => {
+      const t = setTimeout(() => { pending.delete(id); log(`TIMEOUT id=${id} ${method}`); resolve({ timeout: true }); }, timeoutMs || 60000);
+      pending.set(id, (m) => { clearTimeout(t); resolve(m); });
+    });
+  }
+
+  result.responses.initialize = await call('initialize', { clientInfo: { name: 'codex-project-probe', title: 'codex-project-probe', version: '1' } }, 30000);
+
+  if (spec.installAfterInit) {
+    // The install happens after this Codex process started, with its PATH
+    // already fixed: the probe goes to the install's place now.
+    fs.mkdirSync(path.dirname(spec.installExe), { recursive: true });
+    fs.copyFileSync(L.STUB_GUI, spec.installExe);
+    result.install.installedAt = new Date().toISOString();
+    log(`INSTALLED probe at ${spec.installExe}`);
+  }
+
+  const ts = await call('thread/start', { cwd: spec.threadCwd }, 60000);
+  result.responses.threadStart = ts;
+  const threadId = ts && ts.result ? (ts.result.thread && ts.result.thread.id) || ts.result.threadId : null;
+  result.threadId = threadId;
+
+  // A project with no trust written by this rig may still be trusted by the
+  // app-server itself at thread start, so every entry is waited for, and for
+  // a shorter time when none may appear.
+  const waitFor = spec.expect;
+  const deadline = Date.now() + (spec.trusted || spec.projectEntries.length === 0 ? 45000 : 15000);
+  while (Date.now() < deadline) {
+    if (waitFor.every((n) => TERMINAL.has(statusByName[n]))) break;
+    await sleep(100);
+  }
+  await sleep(2000);
+  result.startupStatus = Object.fromEntries(spec.expect.map((n) => [n, statusByName[n] || null]));
+  result.startupError = Object.fromEntries(spec.expect.map((n) => [n, errorByName[n] || null]));
+  result.startupStatusAll = Object.assign({}, statusByName);
+
+  const all1 = L.allProcs();
+  result.census.whileAlive = L.treeOf(child.pid, all1);
+  result.census.windowsWhileAlive = L.windowsOf([child.pid, ...((result.census.whileAlive.tree || []).map((p) => p.pid))]);
+
+  if (threadId) {
+    result.responses.statusListThread = await call('mcpServerStatus/list', { threadId }, 60000);
+  }
+  result.responses.statusListNoThread = await call('mcpServerStatus/list', {}, 60000);
+
+  if (threadId) {
+    for (const name of Object.keys(statusByName).sort()) {
+      if (statusByName[name] !== 'ready') continue;
+      result.toolCalls[name] = await call('mcpServer/tool/call', { threadId, server: name, tool: 'probe_whoami', arguments: {} }, 30000);
+    }
+  }
+  const all2 = L.allProcs();
+  result.census.afterCalls = L.treeOf(child.pid, all2);
+  result.census.windowsAfterCalls = L.windowsOf([child.pid, ...((result.census.afterCalls.tree || []).map((p) => p.pid))]);
+
+  log('DONE, closing app-server stdin');
+  child.stdin.end();
+  await Promise.race([exited, sleep(10000)]);
+  if (!exitInfo) {
+    log('KILLING the app-server (it did not exit within 10 s of its stdin EOF)');
+    result.killed.push({ what: 'app-server', pid: child.pid });
+    child.kill();
+    await Promise.race([exited, sleep(5000)]);
+  }
+  result.appServerExit = exitInfo;
+  await sleep(1500);
+
+  // Anything still alive from the tree this run recorded is ours: end it by
+  // pid, and only when its start time still matches the recorded one.
+  const seen = new Map();
+  for (const snap of [result.census.whileAlive, result.census.afterCalls]) for (const p of (snap.tree || [])) seen.set(p.pid, p);
+  const all3 = L.allProcs() || [];
+  result.census.afterExit = all3.filter((p) => seen.has(p.pid) && seen.get(p.pid).created === p.created).map((p) => ({ pid: p.pid, path: p.path, created: p.created }));
+  const probesAfter = L.probesByPath(spec.probePaths, all3);
+  result.census.probesAfterExit = probesAfter;
+  const leftovers = new Map();
+  for (const p of result.census.afterExit) leftovers.set(p.pid, p);
+  for (const p of probesAfter.list || []) leftovers.set(p.pid, p);
+  for (const p of leftovers.values()) {
+    log(`LEFTOVER pid=${p.pid} path=${p.path}; ending it by pid`);
+    try { process.kill(p.pid); result.killed.push({ what: 'leftover', pid: p.pid, path: p.path }); } catch (e) { result.killed.push({ what: 'leftover', pid: p.pid, path: p.path, error: String(e) }); }
+  }
+  if (leftovers.size) { await sleep(800); result.census.probesAfterCleanup = L.probesByPath(spec.probePaths); }
+
+  fs.writeFileSync(path.join(runDir, 'appserver.stderr.txt'), L.stripAnsi(stderrBuf));
+  result.mcpListJson = L.run(spec.codex, ['mcp', 'list', '--json'], { env: L.baseEnv(Object.assign({}, spec.env, { CODEX_HOME: spec.home })), cwd: spec.threadCwd });
+  result.stubLogFiles = sweepStubLogs(spec, runDir);
+  result.stubLogs = [];
+  for (const rel of result.stubLogFiles) {
+    const events = fs.readFileSync(path.join(runDir, 'stublogs', rel), 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return { unparsed: l }; } });
+    result.stubLogs.push({ file: rel, events });
+  }
+  if (spec.installAfterInit) { removeInstall(spec); result.install.removedAfter = !fs.existsSync(spec.installExe); }
+  // What the home's config says about trust after the run: Codex may write it.
+  const homeConfig = fs.readFileSync(path.join(spec.home, 'config.toml'), 'utf8');
+  result.trustAfter = [...homeConfig.matchAll(/^\[projects\.([^\]]+)\]\s*\r?\ntrust_level\s*=\s*"([^"]+)"/gm)].map((m) => ({ key: m[1], trust_level: m[2] }));
+  result.finishedAt = new Date().toISOString();
+  fs.writeFileSync(path.join(runDir, 'result.json'), JSON.stringify(result, null, 1));
+  console.log(`${spec.runId}: status=${JSON.stringify(result.startupStatus)} exit=${JSON.stringify(exitInfo)} leftover=${leftovers.size}`);
+}
+
+main().catch((e) => { console.error('DRIVER FAILURE', e && e.stack || e); process.exit(2); });

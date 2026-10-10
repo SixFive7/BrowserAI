@@ -110,6 +110,18 @@ SPDX header to its report; every original's digest is in its `originals.sha256`.
 hex digits replaced by `<session id>`, at the maintainer's answer *"18 b"*, with the
 digest of the report it was cut from in the same file.
 
+⚠️ *Added 2026-10-10 by addition, later that day.* **Four more batches of that day depart
+in those named ways, and each one's own README says how**:
+[`2026-10-10-toast-screen`](2026-10-10-toast-screen/README.md),
+[`2026-10-10-install-refusal`](2026-10-10-install-refusal/README.md),
+[`2026-10-10-codex-project`](2026-10-10-codex-project/README.md) and
+[`2026-10-10-registerai-eof`](2026-10-10-registerai-eof/README.md) store their rigs with
+`.txt` appended; `install-refusal` and `codex-project` re-spell the lines of their rigs and
+accounts that named the part of the build that did the work, and cut what their records
+listed of the software on this machine, which in `codex-project` is one other
+application's folder; every original's digest is in the batch's `originals.sha256`, and
+every file left out one at a time is in its `left-out.sha256`.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
@@ -196,3 +208,6 @@ negation silently drops evidence from the tree.
 | [`2026-10-10-velopack-swap`](2026-10-10-velopack-swap/README.md) | The maintainer's 6 of 2026-10-10, measured by lane VELO: an apply whose last rename fails with the stock Velopack 1.2.161, four rounds with a file of the new version held open, what the log, the uninstall and a repair with `Setup.exe --silent` then do, and seven rounds with a fixed `Update.exe`; and the source reading of the day before | [kb](../../kb/packaging/velopack.md#an-apply-whose-last-rename-fails-leaves-no-program-and-the-installer-puts-it-back----measured-2026-10-10), [`HAZARDS.md`](../../HAZARDS.md#hazard-index), [`README.md`](../../README.md#install) |
 | [`2026-10-10-codex-first-message`](2026-10-10-codex-first-message/README.md) | 1.4 a's middle step: each of the 18 rollouts of the scratch Codex homes of `2026-10-08-client-tabs`, codex-cli 0.162.0, read for its first `UserMessage` record against the `title` of its thread in a copy of `state_5.sqlite`, and which files four opens of a write-ahead-log database leave beside it, at SQLite 3.50.4 | [kb](../../kb/mcp/protocol.md#a-codex-threads-first-message----measured-2026-10-10), [re-verification](../../kb/re-verification.md) row 208, [`DECISIONS.md`](../../DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10) |
 | [`2026-10-10-toast-screen`](2026-10-10-toast-screen/README.md) | The on-screen check of 2026-10-10 at the maintainer's 28 b: the seven toasts `db50964e` composed, the update toasts and the broken install's, shown one at a time on his screen and cropped, with the rig, the composer and the lines each crop shows; the crops left out by digest | [kb](../../kb/windows/notifications.md#a-toast-breaks-a-line-after-a-slash-or-a-hyphen-too----read-2026-10-10), `Harness/BannerText`, [`DECISIONS.md`](../../DECISIONS.md#the-answers-of-the-afternoon-of-2026-10-10) |
+| [`2026-10-10-install-refusal`](2026-10-10-install-refusal/README.md) | The maintainer's 21 of 2026-10-10: the suite's test pack with an install hook that exits 5, installed twice with `--silent` into scratch folders and uninstalled twice, every child windowless: Setup's own logs, what the hook could see, the Add/Remove entry and the shortcut moving to the refused folder, and the source readings at Velopack 1.2.161 | [kb](../../kb/packaging/velopack.md#a-hook-that-refuses-does-not-stop-an-install-and-a-refused-folder-takes-the-shared-entry----measured-2026-10-10), [`DECISIONS.md`](../../DECISIONS.md#the-answers-of-the-afternoon-of-2026-10-10) |
+| [`2026-10-10-codex-project`](2026-10-10-codex-project/README.md) | The maintainer's 21 of 2026-10-10: which spelling of a committed Codex project entry starts the server on every PC, 48 app-server sessions at codex-cli 0.162.0-alpha.2 and 9 at 0.159.0-alpha.12.1 with a stand-in named `BrowserAI.exe` under scratch profiles, the trust a project's entries need, and Claude Code 2.1.296 expanding a project entry's `${LOCALAPPDATA}` | [kb](../../kb/mcp/protocol.md#codex-expands-nothing-in-a-servers-command-and-finds-a-bare-name-on-the-servers-path----measured-2026-09-24), [re-verification](../../kb/re-verification.md) row 161, [`2026-09-24-codex-expansion`](2026-09-24-codex-expansion/README.md) |
+| [`2026-10-10-registerai-eof`](2026-10-10-registerai-eof/README.md) | A red of the gate at `a557aa0f`: thirty registrations with Codex through the payload's RegisterAI 0.3.0, each pipe's end timed against RegisterAI's exit, outside any test host | [`HAZARDS.md`](../../HAZARDS.md#hazard-index) |

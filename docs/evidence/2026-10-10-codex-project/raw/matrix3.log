@@ -1,0 +1,29 @@
+MATRIX3 START 2026-10-10T13:56:16Z codex=C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+exp-r11: prepared, 10 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+exp-r11: status={"uctl":"ready","ctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed","argsliteral":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:56:21.916Z"} leftover=0
+rc=0
+alt-r11: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+alt-r11: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:56:37.883Z"} leftover=0
+rc=0
+altsp-r11: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altsp-r11: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:56:54.102Z"} leftover=0
+rc=0
+altspx-r11: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altspx-r11: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:57:10.357Z"} leftover=0
+rc=0
+before-r11: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+before-r11: status={"uctl":"ready","ctl":"ready","barepath":"failed","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:57:30.196Z"} leftover=0
+rc=0
+shadow-r11: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+shadow-r11: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:57:46.502Z"} leftover=0
+rc=0
+elsewheresub-r11: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+elsewheresub-r11: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:58:02.702Z"} leftover=0
+rc=0
+untrustedro-r11: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrustedro-r11: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:58:34.012Z"} leftover=0
+rc=0
+autotrustww-r11: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+autotrustww-r11: status={"uctl":"ready","ctl":null,"barepath":null,"cmdwrap_v":null,"tildepath":null} exit={"code":0,"signal":null,"at":"2026-10-10T13:59:05.440Z"} leftover=0
+rc=0
+MATRIX3 END 2026-10-10T13:59:15Z

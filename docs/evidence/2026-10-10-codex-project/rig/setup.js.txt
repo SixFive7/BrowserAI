@@ -1,0 +1,162 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// 2026-10-10 Codex project-registration re-run: prepares one run directory.
+// usage: node setup.js <kind> <round>
+//   kind: exp | expuser | alt | altsp | altspx | subdir | before | shadow | untrusted
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+
+function ensureFile(from, to) {
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  if (!fs.existsSync(to)) fs.copyFileSync(from, to);
+}
+
+function ensureProfiles() {
+  for (const key of ['ns', 'sp', 'spx']) {
+    const p = L.PROFILES[key];
+    ensureFile(L.STUB_GUI, L.installExeOf(p));
+    ensureFile(L.STUB_CONSOLE, L.consoleExeOf(p));
+  }
+  fs.mkdirSync(L.ladOf(L.PROFILES.nsb), { recursive: true });
+  ensureFile(L.STUB_GUI, path.join(L.OTHER_DIR, 'BrowserAI.exe'));
+}
+
+function E(name, command, args, env) {
+  return { name, command, args: [...args, '--tag', name], env };
+}
+
+const SPELLINGS = {
+  braced: ['${LOCALAPPDATA}', '${LOCALAPPDATA}'],
+  bare: ['$LOCALAPPDATA', '$LOCALAPPDATA'],
+  percent: ['%LOCALAPPDATA%', '%LOCALAPPDATA%'],
+  tilde: ['~/AppData/Local', '~\\AppData\\Local'],
+};
+
+function spellingEntries() {
+  const out = [];
+  for (const [sp, [fwd, back]] of Object.entries(SPELLINGS)) {
+    out.push(E(`${sp}_fwd`, `${fwd}/BrowserAI.app/current/BrowserAI.exe`, ['--mcp']));
+    out.push(E(`${sp}_back`, `${back}\\BrowserAI.app\\current\\BrowserAI.exe`, ['--mcp']));
+  }
+  return out;
+}
+
+function altEntries(profile, which) {
+  const all = {
+    ctl: E('ctl', L.installExeOf(profile), ['--mcp']),
+    barepath: E('barepath', 'BrowserAI.exe', ['--mcp']),
+    cmdwrap: E('cmdwrap', 'cmd.exe', ['/d', '/c', '%LOCALAPPDATA%\\BrowserAI.app\\current\\BrowserAI.exe', '--mcp']),
+    cmdwrap_v: E('cmdwrap_v', 'cmd.exe', ['/d', '/v:on', '/c', '!LOCALAPPDATA!\\BrowserAI.app\\current\\BrowserAI.exe', '--mcp']),
+    cmdwrap_v_console: E('cmdwrap_v_console', 'cmd.exe', ['/d', '/v:on', '/c', '!LOCALAPPDATA!\\BrowserAI.app\\console\\BrowserAI.exe', '--mcp']),
+    tildepath: E('tildepath', 'BrowserAI.exe', ['--mcp'], { PATH: '~\\AppData\\Local\\BrowserAI.app\\current' }),
+    relcmd: E('relcmd', '.codex/browserai.cmd', ['--mcp']),
+    // An entry PATH that resolves nothing: what is left is Rust's own search,
+    // which ends in Codex's own PATH.
+    envpath_bogus: E('envpath_bogus', 'BrowserAI.exe', ['--mcp'], { PATH: path.join(L.SCR, 'no-such-dir') }),
+  };
+  return which.map((k) => all[k]);
+}
+
+const KINDS = {
+  exp: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', entries: (p) => [altEntries(p, ['ctl'])[0], ...spellingEntries(), E('argsliteral', L.installExeOf(p), ['--mcp', '${LOCALAPPDATA}/a', '$LOCALAPPDATA/b', '%LOCALAPPDATA%\\c', '~/d'])] },
+  expuser: { profile: 'ns', scope: 'user', trusted: false, pathInstall: 'end', entries: () => spellingEntries() },
+  alt: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap', 'cmdwrap_v', 'cmdwrap_v_console', 'tildepath', 'relcmd']) },
+  altsp: { profile: 'sp', scope: 'project', trusted: true, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap', 'cmdwrap_v', 'cmdwrap_v_console', 'tildepath', 'relcmd']) },
+  altspx: { profile: 'spx', scope: 'project', trusted: true, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap', 'cmdwrap_v', 'cmdwrap_v_console', 'tildepath', 'relcmd']) },
+  subdir: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', threadInSub: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath', 'relcmd']) },
+  before: { profile: 'nsb', scope: 'project', trusted: true, pathInstall: 'none', installAfterInit: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath', 'relcmd']) },
+  shadow: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', otherFirst: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath']) },
+  untrusted: { profile: 'ns', scope: 'project', trusted: false, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath']) },
+  // The app-server's own process folder is not the project, as with the
+  // desktop app, whose app-server inherits the app's folder.
+  elsewhere: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', procElsewhere: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath', 'relcmd']) },
+  elsewheresub: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', procElsewhere: true, threadInSub: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath', 'relcmd']) },
+  // Trust. "untrusted" above has no trust entry and full access, which the
+  // app-server turns into trust at thread start; these three separate the cases.
+  untrustedro: { profile: 'ns', scope: 'project', trusted: false, sandbox: 'read-only', pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath']) },
+  untrustedexpl: { profile: 'ns', scope: 'project', trusted: false, explicitUntrusted: true, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath']) },
+  autotrustww: { profile: 'ns', scope: 'project', trusted: false, sandbox: 'workspace-write', pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'cmdwrap_v', 'tildepath']) },
+  // The fallback chain behind a bare name: with and without the install on Codex's own PATH.
+  fallback: { profile: 'ns', scope: 'project', trusted: true, pathInstall: 'end', entries: (p) => altEntries(p, ['ctl', 'barepath', 'tildepath', 'envpath_bogus']) },
+  fallbackbefore: { profile: 'nsb', scope: 'project', trusted: true, pathInstall: 'none', installAfterInit: true, entries: (p) => altEntries(p, ['ctl', 'barepath', 'tildepath', 'envpath_bogus']) },
+};
+
+function main() {
+  const [kind, round] = process.argv.slice(2);
+  const k = KINDS[kind];
+  if (!k) throw new Error('bad kind ' + kind);
+  ensureProfiles();
+  const runId = `${kind}-r${round}`;
+  const runDir = path.join(L.RUNS, runId);
+  if (fs.existsSync(runDir)) throw new Error('run dir exists: ' + runDir);
+  const home = path.join(runDir, 'home');
+  fs.mkdirSync(home, { recursive: true });
+  const profile = L.PROFILES[k.profile];
+  const entries = k.entries(profile);
+  const uctl = E('uctl', L.installExeOf(profile), ['--mcp']);
+
+  const { kept, removed } = L.sanitizedPathEntries();
+  const pathEntries = [...(k.otherFirst ? [L.OTHER_DIR] : []), ...kept, ...(k.pathInstall === 'end' ? [L.installDirOf(profile)] : [])];
+
+  let cwd;
+  let projDir = null;
+  let threadCwd;
+  let projectToml = null;
+  const userEntries = k.scope === 'user' ? [uctl, ...entries] : [uctl];
+  if (k.scope === 'project') {
+    const proj = path.join(runDir, 'proj');
+    projDir = proj;
+    fs.mkdirSync(path.join(proj, '.codex'), { recursive: true });
+    fs.mkdirSync(path.join(proj, 'sub'), { recursive: true });
+    const gitInit = L.run('git', ['init', '-q', proj], { cwd: runDir, env: Object.assign({}, process.env, { GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' }) });
+    if (gitInit.status !== 0) throw new Error('git init failed: ' + gitInit.stderr);
+    projectToml = entries.map((e) => L.serverToml(e) + '\n').join('\n');
+    fs.writeFileSync(path.join(proj, '.codex', 'config.toml'), projectToml);
+    fs.writeFileSync(path.join(proj, '.codex', 'browserai.cmd'), '@"%LOCALAPPDATA%\\BrowserAI.app\\current\\BrowserAI.exe" %*\r\n');
+    cwd = proj;
+    if (k.procElsewhere) {
+      cwd = path.join(runDir, 'neutral');
+      fs.mkdirSync(cwd, { recursive: true });
+    }
+    threadCwd = k.threadInSub ? path.join(proj, 'sub') : proj;
+  } else {
+    const neutral = path.join(runDir, 'neutral');
+    fs.mkdirSync(neutral, { recursive: true });
+    cwd = neutral;
+    threadCwd = neutral;
+  }
+  const trustLevel = k.scope === 'project' ? (k.trusted ? 'trusted' : k.explicitUntrusted ? 'untrusted' : null) : null;
+  const trust = trustLevel ? `[projects.${L.tomlLiteral(projDir)}]\ntrust_level = "${trustLevel}"\n` : '';
+  const sandbox = k.sandbox || 'danger-full-access';
+  const userToml = [L.PROVIDER_TOML.replace('sandbox_mode = "danger-full-access"', `sandbox_mode = "${sandbox}"`), '', ...userEntries.map((e) => L.serverToml(e) + '\n'), trust].join('\n');
+  fs.writeFileSync(path.join(home, 'config.toml'), userToml);
+
+  const probePaths = [
+    ...['ns', 'sp', 'spx', 'nsb'].flatMap((key) => [L.installExeOf(L.PROFILES[key]), L.consoleExeOf(L.PROFILES[key])]),
+    path.join(L.OTHER_DIR, 'BrowserAI.exe'),
+  ];
+  const spec = {
+    runId, kind, round: Number(round), codex: L.CODEX, home, cwd, threadCwd,
+    profileKey: k.profile, profile,
+    env: { LOCALAPPDATA: L.ladOf(profile), USERPROFILE: profile, PATH: pathEntries.join(';') },
+    pathNotes: { removedEntriesHoldingBrowserAI: removed, keptCount: kept.length, otherFirst: !!k.otherFirst, installDirOnPath: k.pathInstall === 'end' },
+    installAfterInit: !!k.installAfterInit,
+    installExe: L.installExeOf(profile),
+    expect: [...new Set([...userEntries, ...(k.scope === 'project' ? entries : [])].map((e) => e.name))],
+    projectEntries: k.scope === 'project' ? entries.map((e) => e.name) : [],
+    userEntries: userEntries.map((e) => e.name),
+    trusted: !!(k.scope === 'project' && k.trusted),
+    trustLevelWritten: trustLevel,
+    sandbox,
+    probePaths,
+    probeDirs: [...new Set(probePaths.map((p) => path.dirname(p)))],
+  };
+  fs.writeFileSync(path.join(runDir, 'setup.json'), JSON.stringify({ spec, entries, uctl, projectToml, userToml }, null, 1));
+  fs.writeFileSync(path.join(runDir, 'spec.json'), JSON.stringify(spec, null, 1));
+  console.log(`${runId}: prepared, ${entries.length} entries (${k.scope}), trusted=${spec.trusted}, removed PATH entries holding a BrowserAI binary: ${removed.length}`);
+  console.log(runDir);
+}
+
+main();

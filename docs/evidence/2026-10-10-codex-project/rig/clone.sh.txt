@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+# Shallow, sparse clones of openai/codex at the tags read for FINDINGS.md.
+set -u
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+W=/c/Source/SixFive7/BrowserAI/.work/next-scratch/codex-project/src
+mkdir -p "$W"
+cd "$W"
+echo "START $(date -u +%FT%TZ)"
+for t in rust-v0.162.1 rust-v0.163.0-alpha.5 rust-v0.162.0-alpha.2; do
+  d="$W/$t"
+  if [ -e "$d" ]; then echo "exists: $d"; continue; fi
+  git -c advice.detachedHead=false clone --depth 1 --branch "$t" --filter=blob:none --sparse https://github.com/openai/codex.git "$d" \
+    && (cd "$d" && git sparse-checkout set codex-rs docs && git rev-parse HEAD && git log -1 --format='%H %cI %s')
+  echo "$t DONE rc=$? $(date -u +%FT%TZ)"
+done
+echo "END $(date -u +%FT%TZ)"

@@ -1,0 +1,62 @@
+[setup:54908] [15:12:30] [INFO] Starting Velopack Setup (1.2.161)
+[setup:54908] [15:12:30] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe"
+[setup:54908] [15:12:30] [INFO]     Silent: true
+[setup:54908] [15:12:30] [INFO]     Verbose: false
+[setup:54908] [15:12:30] [INFO]     Log: "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-1.log"
+[setup:54908] [15:12:30] [INFO]     Install To: Some("C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1")
+[setup:54908] [15:12:30] [INFO] OS: Windows 10.0.26300 (Windows 11 Professional) [64-bit], Arch=Some(
+    X64,
+)
+[setup:54908] [15:12:30] [INFO] Reading bundle header...
+[setup:54908] [15:12:30] [INFO] Bundle offset = 7561216, length = 54911145
+[setup:54908] [15:12:30] [INFO] Loading bundle from embedded zip...
+[setup:54908] [15:12:30] [INFO] No channel override tag found in installer signature.
+[setup:54908] [15:12:30] [INFO] Loading bundle from embedded zip...
+[setup:54908] [15:12:30] [INFO] Reading package manifest...
+[setup:54908] [15:12:30] [INFO] Package manifest loaded successfully.
+[setup:54908] [15:12:30] [INFO]     Package ID: BrowserAI.app.test
+[setup:54908] [15:12:30] [INFO]     Package Version: 1.1.1-alpha.0.324
+[setup:54908] [15:12:30] [INFO]     Package Title: BrowserAI (suite)
+[setup:54908] [15:12:30] [INFO]     Package Authors: Jori Huisman
+[setup:54908] [15:12:30] [INFO]     Package Description: BrowserAI (suite)
+[setup:54908] [15:12:30] [INFO]     Package Machine Architecture: x64
+[setup:54908] [15:12:30] [INFO]     Package Runtime Dependencies: 
+[setup:54908] [15:12:30] [INFO] Checking application pre-requisites...
+[setup:54908] [15:12:30] [INFO] Determining install directory...
+[setup:54908] [15:12:30] [INFO] Installation Directory: "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1"
+[setup:54908] [15:12:30] [INFO] There is 198.59 GB free space available at destination, this package requires 253.84 MB.
+[setup:54908] [15:12:30] [INFO] Preparing and cleaning installation directory...
+[setup:54908] [15:12:30] [INFO] Acquiring lock...
+[setup:54908] [15:12:30] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-1' writable: true
+[setup:54908] [15:12:30] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-1\packages
+[setup:54908] [15:12:30] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...
+[setup:54908] [15:12:30] [INFO] Will not show splash because silent mode is on.
+[setup:54908] [15:12:30] [INFO] Starting installation!
+[setup:54908] [15:12:30] [INFO] Extracting Update.exe...
+[setup:54908] [15:12:30] [INFO] Extracting stub 'BrowserAI (suite)_ExecutionStub.exe' to '"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\BrowserAI (suite).exe"'
+[setup:54908] [15:12:30] [INFO] Successfully extracted stub executable: "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\BrowserAI (suite).exe"
+[setup:54908] [15:12:30] [INFO] Copying nupkg to packages directory...
+[setup:54908] [15:12:30] [INFO] Extracting 211 app files to '"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current"'...
+[setup:54908] [15:12:30] [INFO] Creating shortcuts...
+[setup:54908] [15:12:30] [INFO] COM context initialized in 9ms
+[setup:54908] [15:12:30] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(0x0) (None)
+[setup:54908] [15:12:30] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.1.1-alpha.0.324")
+[setup:54908] [15:12:30] [INFO] App Model ID: Some("velopack.BrowserAI.app.test")
+[setup:54908] [15:12:30] [INFO] Searching for shortcuts containing root: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1"'
+[setup:54908] [15:12:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[setup:54908] [15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[setup:54908] [15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[setup:54908] [15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[setup:54908] [15:12:31] [INFO] Will update all current shortcuts: []
+[setup:54908] [15:12:31] [INFO] Creating new shortcut for flag '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU_ROOT)).
+[setup:54908] [15:12:31] [INFO] Starting process install hook
+[setup:54908] [15:12:31] [INFO] Running --veloapp-install hook...
+[setup:54908] [15:12:31] [INFO] About to launch: 'WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current"))' with arguments: WideString("\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe\" --veloapp-install 1.1.1-alpha.0.324\0")
+[setup:54908] [15:12:31] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[setup:54908] [15:12:31] [INFO] Waiting 30000ms for process handle to exit.
+[setup:54908] [15:12:31] [WARN] Hook exited with non-zero exit code: 5
+[setup:54908] [15:12:31] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\next-scratch\velopack-refusal\root-1
+[setup:54908] [15:12:31] [INFO] Inspected 431 running processes in 77ms, 0 matched directory
+[setup:54908] [15:12:31] [INFO] Force-stop check complete.
+[setup:54908] [15:12:31] [INFO] Writing uninstall registry key...
+[setup:54908] [15:12:31] [INFO] Installation completed successfully!

@@ -1,0 +1,485 @@
+# Scratch rig, 2026-10-10. Not part of the tree.
+#
+# Measures what a refusing install hook (exit code 5, written by the scratch patch
+# velopack-startup-probe.diff) does to a SILENT Velopack 1.2.161 install of the
+# suite's test pack (pack id BrowserAI.app.test), twice, into two scratch roots,
+# and then uninstalls both silently. Everything runs windowless: every child is
+# started with UseShellExecute=false and CreateNoWindow=true, and the installer
+# only ever with --silent.
+#
+# It takes the suite lock (a directory) and the installer lock (build/InstallerLock.ps1,
+# held by this process's own pid) and releases both in a finally block.
+#
+# Processes are read by FULL IMAGE PATH under a scratch root, never by name. The
+# only processes it may stop are the ones it started itself (a hung installer or
+# uninstaller), by the handle it holds.
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)] [string] $Worktree,
+    [Parameter(Mandatory)] [string] $Scratch,
+    [string] $MainCheckout = 'C:\Source\SixFive7\BrowserAI'
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$PSStyle.OutputRendering = 'PlainText'
+
+$utcNow = { (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ') }
+$results = [ordered]@{}
+$results.startedUtc = & $utcNow
+$results.driverPid = $PID
+$results.worktree = $Worktree
+$results.scratch = $Scratch
+
+function Write-Step([string] $text) {
+    Write-Host ("[{0}] {1}" -f (& $utcNow), $text)
+}
+
+$installer = Join-Path $Worktree 'Releases\test-pack\BrowserAI.test-installer.exe'
+$uninstallKeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall'
+$testKeyPath = Join-Path $uninstallKeyPath 'BrowserAI.app.test'
+$realKeyPath = Join-Path $uninstallKeyPath 'BrowserAI.app'
+$startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu'
+$desktop = [Environment]::GetFolderPath('Desktop')
+$velopackLogDir = Join-Path $env:LOCALAPPDATA 'velopack'
+$testLog = Join-Path $velopackLogDir 'velopack_BrowserAI.app.test.log'
+$testLogOld = Join-Path $velopackLogDir 'velopack_BrowserAI.app.test.log.old'
+$hookRecords = Join-Path $Scratch 'hook-records'
+$suiteLock = Join-Path $MainCheckout '.work\locks\suite'
+$lockScript = Join-Path $Worktree 'build\InstallerLock.ps1'
+
+# ---------------------------------------------------------------------------
+# Readers. All read-only.
+# ---------------------------------------------------------------------------
+
+function Get-KeyValues([string] $path) {
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    $key = Get-Item -LiteralPath $path
+    $values = [ordered]@{}
+    foreach ($name in ($key.GetValueNames() | Sort-Object)) {
+        $kind = $key.GetValueKind($name).ToString()
+        $value = $key.GetValue($name, $null, 'DoNotExpandEnvironmentNames')
+        $values[$name] = [ordered]@{ kind = $kind; value = "$value" }
+    }
+    return $values
+}
+
+function Get-KeyHash($values) {
+    if ($null -eq $values) { return $null }
+    $text = ($values.Keys | ForEach-Object { "$_=$($values[$_].kind):$($values[$_].value)" }) -join "`n"
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($text)
+    return [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($bytes))
+}
+
+$shell = New-Object -ComObject WScript.Shell
+
+function Get-LinkInfo([string] $path) {
+    $link = $shell.CreateShortcut($path)
+    return [ordered]@{
+        path             = $path
+        target           = $link.TargetPath
+        arguments        = $link.Arguments
+        workingDirectory = $link.WorkingDirectory
+        iconLocation     = $link.IconLocation
+        sha256           = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        lastWriteUtc     = (Get-Item -LiteralPath $path).LastWriteTimeUtc.ToString('o')
+    }
+}
+
+function Get-Links([string] $root) {
+    $found = [ordered]@{}
+    if (Test-Path -LiteralPath $root) {
+        foreach ($file in (Get-ChildItem -LiteralPath $root -Filter '*.lnk' -Recurse -File -Force -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+            $found[$file.FullName] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        }
+    }
+    return $found
+}
+
+function Get-BrowserAiLinks {
+    $links = [ordered]@{}
+    foreach ($file in (Get-ChildItem -LiteralPath $startMenu -Filter '*BrowserAI*.lnk' -Recurse -File -Force -ErrorAction SilentlyContinue | Sort-Object FullName)) {
+        $links[$file.FullName] = Get-LinkInfo $file.FullName
+    }
+    return $links
+}
+
+function Get-Snapshot([string] $label) {
+    $environmentKey = Get-Item -LiteralPath 'HKCU:\Environment'
+    $pathValue = $environmentKey.GetValue('Path', $null, 'DoNotExpandEnvironmentNames')
+    $pathKind = if ($null -ne $pathValue) { $environmentKey.GetValueKind('Path').ToString() } else { $null }
+    $clsid = @(Get-ChildItem -LiteralPath 'HKCU:\Software\Classes\CLSID' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Sort-Object)
+    $aumid = @(Get-ChildItem -LiteralPath 'HKCU:\Software\Classes\AppUserModelId' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Sort-Object)
+    $tasks = @(Get-ScheduledTask | ForEach-Object { "$($_.TaskPath)$($_.TaskName)" } | Sort-Object)
+    $uninstallNames = @(Get-ChildItem -LiteralPath $uninstallKeyPath | ForEach-Object { $_.PSChildName } | Sort-Object)
+    $realKey = Get-KeyValues $realKeyPath
+    $testKey = Get-KeyValues $testKeyPath
+    $browserAiLinks = Get-BrowserAiLinks
+    $runKey = Get-KeyValues 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+
+    return [ordered]@{
+        label                   = $label
+        utc                     = & $utcNow
+        userPathKind            = $pathKind
+        userPath                = $pathValue
+        uninstallSubkeys        = $uninstallNames
+        realKeyValues           = $realKey
+        realKeySha256           = Get-KeyHash $realKey
+        testKeyValues           = $testKey
+        startMenuLinks          = Get-Links $startMenu
+        startMenuBrowserAiLinks = $browserAiLinks
+        desktopLinks            = Get-Links $desktop
+        runKeySha256            = Get-KeyHash $runKey
+        runKeyValueNames        = if ($runKey) { @($runKey.Keys) } else { @() }
+        scheduledTasks          = $tasks
+        classesClsidCount       = $clsid.Count
+        classesClsid            = $clsid
+        classesAppUserModelId   = $aumid
+        velopackTestLogBytes    = if (Test-Path -LiteralPath $testLog) { (Get-Item -LiteralPath $testLog).Length } else { $null }
+        velopackTestLogOldBytes = if (Test-Path -LiteralPath $testLogOld) { (Get-Item -LiteralPath $testLogOld).Length } else { $null }
+        velopackTempDirExists   = Test-Path -LiteralPath (Join-Path ([System.IO.Path]::GetTempPath()) 'velopack_BrowserAI.app.test')
+    }
+}
+
+function Compare-List($before, $after) {
+    $b = @($before); $a = @($after)
+    return [ordered]@{
+        added   = @($a | Where-Object { $b -notcontains $_ })
+        removed = @($b | Where-Object { $a -notcontains $_ })
+    }
+}
+
+function Compare-Map($before, $after) {
+    $added = @(); $removed = @(); $changed = @()
+    foreach ($k in $after.Keys) { if (-not $before.Contains($k)) { $added += $k } elseif ($before[$k] -ne $after[$k]) { $changed += $k } }
+    foreach ($k in $before.Keys) { if (-not $after.Contains($k)) { $removed += $k } }
+    return [ordered]@{ added = $added; removed = $removed; changed = $changed }
+}
+
+# Every process whose image is under $root, by full image path. One CIM read of the
+# whole table, filtered here on ExecutablePath, never on Name.
+function Get-ProcessesUnder([string] $root) {
+    $prefix = [System.IO.Path]::TrimEndingDirectorySeparator($root) + '\'
+    $hits = @()
+    foreach ($p in (Get-CimInstance -ClassName Win32_Process -Property ProcessId, ParentProcessId, ExecutablePath, CommandLine, CreationDate)) {
+        if ($p.ExecutablePath -and $p.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+            $hits += [ordered]@{
+                pid         = $p.ProcessId
+                parentPid   = $p.ParentProcessId
+                path        = $p.ExecutablePath
+                commandLine = $p.CommandLine
+                createdUtc  = if ($p.CreationDate) { $p.CreationDate.ToUniversalTime().ToString('o') } else { $null }
+            }
+        }
+    }
+    return $hits
+}
+
+function Get-Tree([string] $root) {
+    if (-not (Test-Path -LiteralPath $root)) { return [ordered]@{ exists = $false } }
+    $all = @(Get-ChildItem -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue)
+    $files = @($all | Where-Object { -not $_.PSIsContainer })
+    $top = @(Get-ChildItem -LiteralPath $root -Force -ErrorAction SilentlyContinue | ForEach-Object {
+            if ($_.PSIsContainer) {
+                $inner = @(Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Force -ErrorAction SilentlyContinue)
+                $sum = ($inner | Measure-Object -Property Length -Sum).Sum
+                "{0}\  ({1} files, {2} bytes)" -f $_.Name, $inner.Count, $(if ($sum) { $sum } else { 0 })
+            }
+            else { "{0}  ({1} bytes)" -f $_.Name, $_.Length }
+        })
+    $packages = @()
+    $packagesDir = Join-Path $root 'packages'
+    if (Test-Path -LiteralPath $packagesDir) {
+        $packages = @(Get-ChildItem -LiteralPath $packagesDir -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
+                "{0}{1}" -f $_.FullName.Substring($packagesDir.Length), $(if ($_.PSIsContainer) { '\' } else { "  ($($_.Length) bytes)" })
+            })
+    }
+    return [ordered]@{
+        exists        = $true
+        fileCount     = $files.Count
+        totalBytes    = ($files | Measure-Object -Property Length -Sum).Sum
+        topLevel      = $top
+        packages      = $packages
+        updateExe     = Test-Path -LiteralPath (Join-Path $root 'Update.exe')
+        currentExe    = Test-Path -LiteralPath (Join-Path $root 'current\BrowserAI.exe')
+        stubExe       = Test-Path -LiteralPath (Join-Path $root 'BrowserAI.exe')
+        sqVersion     = if (Test-Path -LiteralPath (Join-Path $root 'current\sq.version')) { Get-Content -LiteralPath (Join-Path $root 'current\sq.version') -Raw } else { $null }
+    }
+}
+
+function Read-NewBytes([string] $path, $fromBytes) {
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    $stream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    try {
+        $start = if ($null -ne $fromBytes -and $fromBytes -le $stream.Length) { [long] $fromBytes } else { 0 }
+        $null = $stream.Seek($start, [System.IO.SeekOrigin]::Begin)
+        $reader = New-Object System.IO.StreamReader($stream)
+        return $reader.ReadToEnd()
+    }
+    finally { $stream.Dispose() }
+}
+
+# Starts one child windowless with a scratch environment, polls the process table
+# under $watchRoot while it runs, and returns what happened.
+function Invoke-Windowless([string] $exe, [string[]] $arguments, [hashtable] $environment, [string] $watchRoot, [int] $hangMs) {
+    $start = New-Object System.Diagnostics.ProcessStartInfo($exe)
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    $start.RedirectStandardInput = $true
+    $start.WorkingDirectory = $Scratch
+    foreach ($a in $arguments) { $start.ArgumentList.Add($a) }
+    foreach ($k in $environment.Keys) { $start.Environment[$k] = $environment[$k] }
+
+    $seen = [ordered]@{}
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    $process = [System.Diagnostics.Process]::Start($start)
+    $process.StandardInput.Close()
+    $out = $process.StandardOutput.ReadToEndAsync()
+    $err = $process.StandardError.ReadToEndAsync()
+    $hung = $false
+
+    while (-not $process.HasExited) {
+        foreach ($hit in (Get-ProcessesUnder $watchRoot)) {
+            $key = "$($hit.pid)@$($hit.createdUtc)"
+            if (-not $seen.Contains($key)) { $hit.firstSeenMs = $clock.ElapsedMilliseconds; $seen[$key] = $hit }
+        }
+        if ($clock.ElapsedMilliseconds -gt $hangMs) {
+            $hung = $true
+            # Ours: started above, stopped by the handle we hold, never by name.
+            $process.Kill()
+            break
+        }
+        Start-Sleep -Milliseconds 150
+    }
+
+    $process.WaitForExit()
+    $wall = $clock.ElapsedMilliseconds
+    $exitUtc = & $utcNow
+
+    # What runs from the root once the child has exited: polled for 15 s. The same
+    # loop notes when the root itself was first seen gone, for the uninstall's
+    # deferred removal.
+    $after = [ordered]@{}
+    $goneMs = $null
+    $tail = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($tail.ElapsedMilliseconds -lt 15000) {
+        foreach ($hit in (Get-ProcessesUnder $watchRoot)) {
+            $key = "$($hit.pid)@$($hit.createdUtc)"
+            if (-not $after.Contains($key)) { $hit.firstSeenMsAfterExit = $tail.ElapsedMilliseconds; $after[$key] = $hit }
+        }
+        if ($null -eq $goneMs -and -not (Test-Path -LiteralPath $watchRoot)) { $goneMs = $tail.ElapsedMilliseconds }
+        Start-Sleep -Milliseconds 250
+    }
+
+    return [ordered]@{
+        exe                           = $exe
+        arguments                     = $arguments
+        environment                   = $environment
+        pid                           = $process.Id
+        exitCode                      = $process.ExitCode
+        wallMs                        = $wall
+        exitedUtc                     = $exitUtc
+        hungAndKilled                 = $hung
+        stdout                        = $out.Result
+        stderr                        = $err.Result
+        processesUnderRootWhileRunning = @($seen.Values)
+        processesUnderRootAfterExit   = @($after.Values)
+        rootFirstSeenGoneMsAfterExit  = $goneMs
+    }
+}
+
+function Save-Results {
+    $results.savedUtc = & $utcNow
+    $results | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $Scratch 'results.json') -Encoding utf8NoBOM
+}
+
+# ---------------------------------------------------------------------------
+# Preconditions.
+# ---------------------------------------------------------------------------
+
+if (-not (Test-Path -LiteralPath $installer)) { throw "No installer at $installer." }
+$item = Get-Item -LiteralPath $installer
+$results.installer = [ordered]@{
+    path           = $installer
+    bytes          = $item.Length
+    sha256         = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+    fileVersion    = $item.VersionInfo.FileVersion
+    productVersion = $item.VersionInfo.ProductVersion
+}
+
+$roots = @((Join-Path $Scratch 'root-1'), (Join-Path $Scratch 'root-2'))
+foreach ($r in $roots) { if (Test-Path -LiteralPath $r) { throw "$r exists already; refusing to install over it." } }
+
+# ---------------------------------------------------------------------------
+# Locks.
+# ---------------------------------------------------------------------------
+
+$suiteLockHeld = $false
+$installerLockHeld = $false
+
+try {
+    Write-Step "Waiting for the suite lock at $suiteLock"
+    while ($true) {
+        $created = $false
+        try {
+            $null = New-Item -ItemType Directory -Path $suiteLock -ErrorAction Stop
+            $created = $true
+        }
+        catch {
+            if (-not (Test-Path -LiteralPath $suiteLock)) { throw }
+        }
+        if ($created) { $suiteLockHeld = $true; break }
+        $owner = Join-Path $suiteLock 'owner.txt'
+        $who = if (Test-Path -LiteralPath $owner) { (Get-Content -LiteralPath $owner -Raw).Trim() } else { '<no owner.txt>' }
+        Write-Step "Suite lock held: $who. Trying again in 60 s."
+        Start-Sleep -Seconds 60
+    }
+    $results.suiteLockTakenUtc = & $utcNow
+    Set-Content -LiteralPath (Join-Path $suiteLock 'owner.txt') -Encoding utf8NoBOM -Value @(
+        'the install-refusal measurement'
+        "started $($results.suiteLockTakenUtc)"
+        "running: two silent installs of the test pack BrowserAI.app.test (BrowserAI.test-installer.exe --silent --installto <scratch>) with a refusing install hook, and two silent uninstalls (Update.exe --uninstall --silent), from .work\next-scratch\velopack-refusal\measure.ps1, driver pid $PID"
+    )
+    Write-Step "Suite lock taken."
+
+    Write-Step "Taking the installer lock for pid $PID"
+    $tokenLines = & pwsh -NoProfile -NonInteractive -File $lockScript -Take -HolderPid $PID 2>&1
+    $results.installerLockTake = [ordered]@{ exitCode = $LASTEXITCODE; output = @($tokenLines | ForEach-Object { "$_" }) }
+    if ($LASTEXITCODE -ne 0) { throw "The installer lock was not taken: $($tokenLines -join ' | ')" }
+    $installerLockHeld = $true
+    $results.installerLockTakenUtc = & $utcNow
+    Write-Step "Installer lock taken: $($tokenLines -join ' | ')"
+
+    # -----------------------------------------------------------------------
+    # Before.
+    # -----------------------------------------------------------------------
+    if (-not (Test-Path -LiteralPath $hookRecords)) { $null = New-Item -ItemType Directory -Path $hookRecords }
+    $results.before = Get-Snapshot 'before'
+    if ($null -ne $results.before.testKeyValues) { throw "An uninstall key for BrowserAI.app.test exists already; installing would repoint it and uninstalling would delete it." }
+    Save-Results
+
+    $sandbox = Join-Path $Scratch 'sandbox'
+    $runs = @()
+    for ($n = 1; $n -le 2; $n++) {
+        $root = Join-Path $Scratch "root-$n"
+        $dataRoot = Join-Path $Scratch "data-$n"
+        $claude = Join-Path $sandbox "claude-config-$n"
+        $codex = Join-Path $sandbox "codex-home-$n"
+        $feed = Join-Path $sandbox "feed-$n"
+        foreach ($d in @($dataRoot, $claude, $codex, $feed)) { $null = New-Item -ItemType Directory -Force -Path $d }
+
+        $environment = @{
+            CLAUDE_CONFIG_DIR     = $claude
+            CODEX_HOME            = $codex
+            BROWSERAI_ROOT        = $dataRoot
+            BROWSERAI_UPDATE_FEED = $feed
+        }
+
+        $recordsBefore = @(Get-ChildItem -LiteralPath $hookRecords -File | ForEach-Object { $_.Name })
+        $logBytesBefore = if (Test-Path -LiteralPath $testLog) { (Get-Item -LiteralPath $testLog).Length } else { 0 }
+        $setupLog = Join-Path $Scratch "setup-$n.log"
+
+        Write-Step "Install $n into $root"
+        $run = Invoke-Windowless $installer @('--silent', '--log', $setupLog, '--installto', $root) $environment $root 300000
+        Write-Step "Install $n exited $($run.exitCode) after $($run.wallMs) ms"
+
+        $run.n = $n
+        $run.root = $root
+        $run.dataRoot = $dataRoot
+        $run.hookRecords = @(Get-ChildItem -LiteralPath $hookRecords -File | Where-Object { $recordsBefore -notcontains $_.Name } | ForEach-Object {
+                [ordered]@{ file = $_.FullName; content = (Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json) }
+            })
+        $run.tree = Get-Tree $root
+        $run.testKeyAfter = Get-KeyValues $testKeyPath
+        $run.browserAiLinksAfter = Get-BrowserAiLinks
+        $run.dataRootAfter = @(Get-ChildItem -LiteralPath $dataRoot -Recurse -Force | ForEach-Object { $_.FullName })
+        $run.sandboxAfter = @(Get-ChildItem -LiteralPath $claude, $codex, $feed -Recurse -Force | ForEach-Object { $_.FullName })
+        $run.velopackTestLogNewText = Read-NewBytes $testLog $logBytesBefore
+        $runs += $run
+        $results.installs = $runs
+        Save-Results
+    }
+
+    # -----------------------------------------------------------------------
+    # Uninstall both, root-1 first.
+    # -----------------------------------------------------------------------
+    $removals = @()
+    for ($n = 1; $n -le 2; $n++) {
+        $root = Join-Path $Scratch "root-$n"
+        $update = Join-Path $root 'Update.exe'
+        $environment = @{
+            CLAUDE_CONFIG_DIR     = (Join-Path $sandbox "claude-config-$n")
+            CODEX_HOME            = (Join-Path $sandbox "codex-home-$n")
+            BROWSERAI_ROOT        = (Join-Path $Scratch "data-$n")
+            BROWSERAI_UPDATE_FEED = (Join-Path $sandbox "feed-$n")
+        }
+        $logBytesBefore = if (Test-Path -LiteralPath $testLog) { (Get-Item -LiteralPath $testLog).Length } else { 0 }
+        $keyBefore = Get-KeyValues $testKeyPath
+
+        Write-Step "Uninstall $n from $root"
+        $removal = Invoke-Windowless $update @('--uninstall', '--silent') $environment $root 300000
+        Write-Step "Uninstall $n exited $($removal.exitCode) after $($removal.wallMs) ms"
+
+        # Velopack's own deferred removal: cmd.exe /C choice /T 3 & rmdir /s /q <root>.
+        # Invoke-Windowless polled 15 s already; give it up to 60 s more if needed.
+        $wait = [System.Diagnostics.Stopwatch]::StartNew()
+        while ((Test-Path -LiteralPath $root) -and $wait.ElapsedMilliseconds -lt 60000) { Start-Sleep -Milliseconds 250 }
+
+        $removal.n = $n
+        $removal.root = $root
+        $removal.rootStillThereAfterWait = Test-Path -LiteralPath $root
+        $removal.treeAfter = Get-Tree $root
+        $removal.testKeyBefore = $keyBefore
+        $removal.testKeyAfter = Get-KeyValues $testKeyPath
+        $removal.browserAiLinksAfter = Get-BrowserAiLinks
+        $removal.velopackTestLogNewText = Read-NewBytes $testLog $logBytesBefore
+        $removals += $removal
+        $results.uninstalls = $removals
+        Save-Results
+    }
+
+    # -----------------------------------------------------------------------
+    # After, and the comparison.
+    # -----------------------------------------------------------------------
+    $results.after = Get-Snapshot 'after'
+    $b = $results.before; $a = $results.after
+    $results.diff = [ordered]@{
+        userPathChanged         = ($b.userPath -cne $a.userPath) -or ($b.userPathKind -ne $a.userPathKind)
+        uninstallSubkeys        = Compare-List $b.uninstallSubkeys $a.uninstallSubkeys
+        realKeyUnchanged        = $b.realKeySha256 -eq $a.realKeySha256
+        testKeyPresentAfter     = $null -ne $a.testKeyValues
+        startMenuLinks          = Compare-Map $b.startMenuLinks $a.startMenuLinks
+        desktopLinks            = Compare-Map $b.desktopLinks $a.desktopLinks
+        runKeyUnchanged         = $b.runKeySha256 -eq $a.runKeySha256
+        scheduledTasks          = Compare-List $b.scheduledTasks $a.scheduledTasks
+        classesClsid            = Compare-List $b.classesClsid $a.classesClsid
+        classesAppUserModelId   = Compare-List $b.classesAppUserModelId $a.classesAppUserModelId
+        velopackTempDirBefore   = $b.velopackTempDirExists
+        velopackTempDirAfter    = $a.velopackTempDirExists
+    }
+    Save-Results
+    Write-Step "Measurement complete."
+}
+catch {
+    $results.error = "$_"
+    $results.errorAt = "$($_.InvocationInfo.PositionMessage)"
+    Write-Step "FAILED: $_"
+}
+finally {
+    if ($installerLockHeld) {
+        $released = & pwsh -NoProfile -NonInteractive -File $lockScript -Release -HolderPid $PID 2>&1
+        $results.installerLockRelease = [ordered]@{ exitCode = $LASTEXITCODE; output = @($released | ForEach-Object { "$_" }); utc = & $utcNow }
+        Write-Step "Installer lock release: $($released -join ' | ')"
+    }
+    if ($suiteLockHeld) {
+        Remove-Item -LiteralPath (Join-Path $suiteLock 'owner.txt') -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $suiteLock -Force -ErrorAction SilentlyContinue
+        $results.suiteLockReleasedUtc = & $utcNow
+        $results.suiteLockGone = -not (Test-Path -LiteralPath $suiteLock)
+        Write-Step "Suite lock released: gone=$($results.suiteLockGone)"
+    }
+    Save-Results
+}

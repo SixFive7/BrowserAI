@@ -1,0 +1,11 @@
+{"run": 1, "exit": 0, "ranMs": 256, "stdoutEofAfterExitMs": -3, "stderrEofAfterExitMs": -3, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 2, "exit": 0, "ranMs": 238, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -1, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 3, "exit": 0, "ranMs": 237, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -2, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 4, "exit": 0, "ranMs": 238, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -2, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 5, "exit": 0, "ranMs": 246, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -2, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 6, "exit": 0, "ranMs": 240, "stdoutEofAfterExitMs": -1, "stderrEofAfterExitMs": -1, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 7, "exit": 0, "ranMs": 234, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -2, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 8, "exit": 0, "ranMs": 238, "stdoutEofAfterExitMs": -1, "stderrEofAfterExitMs": -1, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 9, "exit": 0, "ranMs": 245, "stdoutEofAfterExitMs": -1, "stderrEofAfterExitMs": -1, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+{"run": 10, "exit": 0, "ranMs": 229, "stdoutEofAfterExitMs": -2, "stderrEofAfterExitMs": -2, "stdoutBytes": 2724, "stderrBytes": 0, "documentParses": true, "aliveUnderToolWhenEofLate": null, "action": ["added"]}
+runs=10 late=0 max=-1ms

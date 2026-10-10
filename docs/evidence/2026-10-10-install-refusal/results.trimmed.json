@@ -1,0 +1,798 @@
+{
+ "startedUtc": "2026-10-10T13:12:20.632Z",
+ "driverPid": 62968,
+ "worktree": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo",
+ "scratch": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal",
+ "installer": {
+  "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe",
+  "bytes": 62472361,
+  "sha256": "88A9E3A811CEC89AC5F5425F50415F17F82F5299ABD1EC97838464D2042AF45B",
+  "fileVersion": "1.1.1-alpha.0.324",
+  "productVersion": "1.1.1-alpha.0.324"
+ },
+ "suiteLockTakenUtc": "2026-10-10T13:12:20.830Z",
+ "installerLockTake": {
+  "exitCode": 0,
+  "output": [
+   "Took C:\\Source\\SixFive7\\BrowserAI\\.work\\installer.lock (pid=62968 created=134361115401105237).",
+   "pid=62968 created=134361115401105237"
+  ]
+ },
+ "installerLockTakenUtc": "2026-10-10T13:12:21.500Z",
+ "before": {
+  "label": "before",
+  "utc": "2026-10-10T13:12:22.735Z",
+  "userPathKind": "ExpandString",
+  "userPath": {
+   "cut": "22 entries of this machine's PATH",
+   "sha256": "67bacfbf9c7f437e9a579c24b92bc1baa4b3b9dfe99d794c430955c7aa97bcd5",
+   "browserAi": []
+  },
+  "uninstallSubkeys": {
+   "cut": "33 names",
+   "sha256": "0b3c3a26b9ef1172ef6d258d79c3fa9e1681e4d3960826ce7026c89abb3fde0d",
+   "browserAi": [
+    "BrowserAI.app"
+   ]
+  },
+  "realKeyValues": {
+   "DisplayIcon": {
+    "kind": "String",
+    "value": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   },
+   "DisplayName": {
+    "kind": "String",
+    "value": "BrowserAI"
+   },
+   "DisplayVersion": {
+    "kind": "String",
+    "value": "1.1.0"
+   },
+   "EstimatedSize": {
+    "kind": "DWord",
+    "value": "140351"
+   },
+   "InstallDate": {
+    "kind": "String",
+    "value": "20260924"
+   },
+   "InstallLocation": {
+    "kind": "String",
+    "value": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app"
+   },
+   "Language": {
+    "kind": "DWord",
+    "value": "1033"
+   },
+   "NoModify": {
+    "kind": "DWord",
+    "value": "1"
+   },
+   "NoRepair": {
+    "kind": "DWord",
+    "value": "1"
+   },
+   "Publisher": {
+    "kind": "String",
+    "value": "Jori Huisman"
+   },
+   "QuietUninstallString": {
+    "kind": "String",
+    "value": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\Update.exe\" --uninstall --silent"
+   },
+   "UninstallString": {
+    "kind": "String",
+    "value": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\Update.exe\" --uninstall"
+   }
+  },
+  "realKeySha256": "15812AD603EDA9BA006E9716BB01A4F6B5D04C5CD04FA86E703E0CF7D6B439E1",
+  "testKeyValues": null,
+  "startMenuLinks": {
+   "cut": "94 shortcuts",
+   "sha256": "72356d264cd0f6f5e5c21fab41505d189d9002a293f4921928e2f87a4ca34ea0",
+   "browserAi": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145"
+   }
+  },
+  "startMenuBrowserAiLinks": {
+   "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+    "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+    "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "arguments": "",
+    "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+    "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+    "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+    "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+   }
+  },
+  "desktopLinks": {
+   "cut": "25 shortcuts",
+   "sha256": "3225dec62a01052ab61773d71b348d4a7fd48769afdafcaeee3b761e33f1420e",
+   "browserAi": {}
+  },
+  "runKeySha256": "077FB8EE94032C1407C087B706499ED8D23BF768AE414FFDCCF851AE1D33ADF2",
+  "runKeyValueNames": {
+   "cut": "10 names",
+   "sha256": "8b31d25519b82dc85108381d09be7bc0a9008538b3c169953d34f2a0e0e2a292",
+   "browserAi": []
+  },
+  "scheduledTasks": {
+   "cut": "203 names",
+   "sha256": "a6539f75654ad11507040d54a62a4e144558de710f02a649617f839e1475f831",
+   "browserAi": []
+  },
+  "classesClsidCount": 143,
+  "classesClsid": {
+   "cut": "143 class ids",
+   "sha256": "be953f7a3d12a0c3742778003020262a2a5c52e96573ee9f3fb1a76d040e1799"
+  },
+  "classesAppUserModelId": {
+   "cut": "12 names",
+   "sha256": "2c477f6ccf664dbeefc8f93d95c6d0e984754b4a60059a9e380bc90330aede5b",
+   "browserAi": []
+  },
+  "velopackTestLogBytes": 371221,
+  "velopackTestLogOldBytes": 1049973,
+  "velopackTempDirExists": false
+ },
+ "savedUtc": "2026-10-10T13:13:41.994Z",
+ "installs": [
+  {
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe",
+   "arguments": [
+    "--silent",
+    "--log",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-1.log",
+    "--installto",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1"
+   ],
+   "environment": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-1",
+    "BROWSERAI_UPDATE_FEED": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-1",
+    "BROWSERAI_ROOT": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1"
+   },
+   "pid": 54908,
+   "exitCode": 0,
+   "wallMs": 1998,
+   "exitedUtc": "2026-10-10T13:12:32.080Z",
+   "hungAndKilled": false,
+   "stdout": "[15:12:30] [INFO] Starting Velopack Setup (1.2.161)\n[15:12:30] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\wt\\\\next-velo\\\\Releases\\\\test-pack\\\\BrowserAI.test-installer.exe\"\n[15:12:30] [INFO]     Silent: true\n[15:12:30] [INFO]     Verbose: false\n[15:12:30] [INFO]     Log: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\setup-1.log\"\n[15:12:30] [INFO]     Install To: Some(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\")\n[15:12:30] [INFO] OS: Windows 10.0.26300 (Windows 11 Professional) [64-bit], Arch=Some(\n    X64,\n)\n[15:12:30] [INFO] Reading bundle header...\n[15:12:30] [INFO] Bundle offset = 7561216, length = 54911145\n[15:12:30] [INFO] Loading bundle from embedded zip...\n[15:12:30] [INFO] No channel override tag found in installer signature.\n[15:12:30] [INFO] Loading bundle from embedded zip...\n[15:12:30] [INFO] Reading package manifest...\n[15:12:30] [INFO] Package manifest loaded successfully.\n[15:12:30] [INFO]     Package ID: BrowserAI.app.test\n[15:12:30] [INFO]     Package Version: 1.1.1-alpha.0.324\n[15:12:30] [INFO]     Package Title: BrowserAI (suite)\n[15:12:30] [INFO]     Package Authors: Jori Huisman\n[15:12:30] [INFO]     Package Description: BrowserAI (suite)\n[15:12:30] [INFO]     Package Machine Architecture: x64\n[15:12:30] [INFO]     Package Runtime Dependencies: \n[15:12:30] [INFO] Checking application pre-requisites...\n[15:12:30] [INFO] Determining install directory...\n[15:12:30] [INFO] Installation Directory: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"\n[15:12:30] [INFO] There is 198.59 GB free space available at destination, this package requires 253.84 MB.\n[15:12:30] [INFO] Preparing and cleaning installation directory...\n[15:12:30] [INFO] Acquiring lock...\n[15:12:30] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1' writable: true\n[15:12:30] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\packages\n[15:12:30] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...\n[15:12:30] [INFO] Will not show splash because silent mode is on.\n[15:12:30] [INFO] Starting installation!\n[15:12:30] [INFO] Extracting Update.exe...\n[15:12:30] [INFO] Extracting stub 'BrowserAI (suite)_ExecutionStub.exe' to '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\BrowserAI (suite).exe\"'\n[15:12:30] [INFO] Successfully extracted stub executable: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\BrowserAI (suite).exe\"\n[15:12:30] [INFO] Copying nupkg to packages directory...\n[15:12:30] [INFO] Extracting 211 app files to '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\"'...\n[15:12:30] [INFO] Creating shortcuts...\n[15:12:30] [INFO] COM context initialized in 9ms\n[15:12:30] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(0x0) (None)\n[15:12:30] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) (\"1.1.1-alpha.0.324\")\n[15:12:30] [INFO] App Model ID: Some(\"velopack.BrowserAI.app.test\")\n[15:12:30] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"'\n[15:12:30] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[15:12:31] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[15:12:31] [INFO] Will update all current shortcuts: []\n[15:12:31] [INFO] Creating new shortcut for flag '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' (ShortcutLocationFlags(START_MENU_ROOT)).\n[15:12:31] [INFO] Starting process install hook\n[15:12:31] [INFO] Running --veloapp-install hook...\n[15:12:31] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\\\" --veloapp-install 1.1.1-alpha.0.324\\0\")\n[15:12:31] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[15:12:31] [INFO] Waiting 30000ms for process handle to exit.\n[15:12:31] [WARN] Hook exited with non-zero exit code: 5\n[15:12:31] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\n[15:12:31] [INFO] Inspected 431 running processes in 77ms, 0 matched directory\n[15:12:31] [INFO] Force-stop check complete.\n[15:12:31] [INFO] Writing uninstall registry key...\n[15:12:31] [INFO] Installation completed successfully!\n",
+   "stderr": "",
+   "processesUnderRootWhileRunning": [],
+   "processesUnderRootAfterExit": [],
+   "rootFirstSeenGoneMsAfterExit": null,
+   "n": 1,
+   "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+   "dataRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1",
+   "hookRecords": [
+    {
+     "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\hook-records\\install-20261010T131231562-69260.json",
+     "content": {
+      "utc": "2026-10-10T13:12:31.5631624Z",
+      "pid": 69260,
+      "commandLineArgs": [
+       "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe",
+       "--veloapp-install",
+       "1.1.1-alpha.0.324"
+      ],
+      "versionArgument": "1.1.1-alpha.0.324",
+      "processPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe",
+      "currentDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current",
+      "installLocationIsInstalled": true,
+      "installLocationRootAppDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+      "installLocationAppId": "BrowserAI.app.test",
+      "installLocationInstalledVersion": "1.1.1-alpha.0.324",
+      "installLocationInstalledChannel": "win",
+      "localAppData": "C:\\Users\\jori\\AppData\\Local",
+      "standardInstallRootForThisAppId": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app.test",
+      "rootAppDirIsTheStandardOne": false,
+      "registrationTargetResolved": true,
+      "registrationTargetInstallRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+      "registrationTargetRefusal": null,
+      "browserAiRootVariable": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1",
+      "browserAiUpdateFeedVariable": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-1",
+      "installerSettingsDataRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1",
+      "installerSettingsUpdateSource": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-1",
+      "dataRootTheHookWouldUse": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1",
+      "defaultDataRoot": "C:\\Users\\jori\\AppData\\Local\\BrowserAI",
+      "parentProcessId": 54908,
+      "parentCommandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe\" --silent --log C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-1.log --installto C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+      "isSilentByParentCommandLine": true,
+      "readParentProcessId": 54908,
+      "readParentCreatedFileTime": 134361115501388985,
+      "readParentCommandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe\" --silent --log C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-1.log --installto C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+      "readGrandparentProcessId": 62968,
+      "readGrandparentCreatedFileTime": 134361115401105237,
+      "velopackFirstRunVariable": null,
+      "claudeConfigDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-1",
+      "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-1",
+      "exitCodeAboutToBeReturned": 5
+     }
+    }
+   ],
+   "tree": {
+    "exists": true,
+    "fileCount": 209,
+    "totalBytes": 203836749.0,
+    "topLevel": [
+     "current\\  (205 files, 144447652 bytes)",
+     "packages\\  (2 files, 54911145 bytes)",
+     "BrowserAI (suite).exe  (451584 bytes)",
+     "Update.exe  (4026368 bytes)"
+    ],
+    "packages": [
+     "\\.velopack_lock  (0 bytes)",
+     "\\BrowserAI.app.test-1.1.1-alpha.0.324-full.nupkg  (54911145 bytes)"
+    ],
+    "updateExe": true,
+    "currentExe": true,
+    "stubExe": false,
+    "sqVersion": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<package xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">\n<metadata>\n<id>BrowserAI.app.test</id>\n<title>BrowserAI (suite)</title>\n<description>BrowserAI (suite)</description>\n<authors>Jori Huisman</authors>\n<version>1.1.1-alpha.0.324</version>\n<channel>win</channel>\n<mainExe>BrowserAI.exe</mainExe>\n<os>win</os>\n<rid>win</rid>\n<shortcutLocations>StartMenuRoot</shortcutLocations>\r\n<shortcutAumid>velopack.BrowserAI.app.test</shortcutAumid>\n</metadata>\n</package>"
+   },
+   "testKeyAfter": {
+    "DisplayIcon": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe"
+    },
+    "DisplayName": {
+     "kind": "String",
+     "value": "BrowserAI (suite)"
+    },
+    "DisplayVersion": {
+     "kind": "String",
+     "value": "1.1.1"
+    },
+    "EstimatedSize": {
+     "kind": "DWord",
+     "value": "141062"
+    },
+    "InstallDate": {
+     "kind": "String",
+     "value": "20261010"
+    },
+    "InstallLocation": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1"
+    },
+    "Language": {
+     "kind": "DWord",
+     "value": "1033"
+    },
+    "NoModify": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "NoRepair": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "Publisher": {
+     "kind": "String",
+     "value": "Jori Huisman"
+    },
+    "QuietUninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe\" --uninstall --silent"
+    },
+    "UninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe\" --uninstall"
+    }
+   },
+   "browserAiLinksAfter": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk",
+     "target": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current",
+     "iconLocation": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\BrowserAI.exe,0",
+     "sha256": "50F53639C7AC96E076AE04954DFC15EB508B3F3959DC99AA6FC8DC71EEC7415D",
+     "lastWriteUtc": "2026-10-10T13:12:31.4449676Z"
+    },
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+     "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+     "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+     "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+     "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+    }
+   },
+   "dataRootAfter": [],
+   "sandboxAfter": [],
+   "velopackTestLogNewText": "[lib-csharp:69260] [15:12:31] [Information] Initializing WindowsVelopackLocator\r\n[lib-csharp:69260] [15:12:31] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\sq.version\r\n[lib-csharp:69260] [15:12:31] [Information] Root directory is writable, using packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\packages\r\n[lib-csharp:69260] [15:12:31] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.1-alpha.0.324\r\n[lib-csharp:69260] [15:12:31] [Information] Starting VelopackApp.Run (library version 1.2.161).\r\n[lib-csharp:69260] [15:12:31] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'\r\n[lib-csharp:69260] [15:12:31] [Information] Found fast exit hook: --veloapp-install\r\n"
+  },
+  {
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe",
+   "arguments": [
+    "--silent",
+    "--log",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-2.log",
+    "--installto",
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2"
+   ],
+   "environment": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-2",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-2",
+    "BROWSERAI_UPDATE_FEED": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-2",
+    "BROWSERAI_ROOT": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2"
+   },
+   "pid": 71876,
+   "exitCode": 0,
+   "wallMs": 1417,
+   "exitedUtc": "2026-10-10T13:12:48.809Z",
+   "hungAndKilled": false,
+   "stdout": "[15:12:47] [INFO] Starting Velopack Setup (1.2.161)\n[15:12:47] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\wt\\\\next-velo\\\\Releases\\\\test-pack\\\\BrowserAI.test-installer.exe\"\n[15:12:47] [INFO]     Silent: true\n[15:12:47] [INFO]     Verbose: false\n[15:12:47] [INFO]     Log: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\setup-2.log\"\n[15:12:47] [INFO]     Install To: Some(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\")\n[15:12:47] [INFO] OS: Windows 10.0.26300 (Windows 11 Professional) [64-bit], Arch=Some(\n    X64,\n)\n[15:12:47] [INFO] Reading bundle header...\n[15:12:47] [INFO] Bundle offset = 7561216, length = 54911145\n[15:12:47] [INFO] Loading bundle from embedded zip...\n[15:12:47] [INFO] No channel override tag found in installer signature.\n[15:12:47] [INFO] Loading bundle from embedded zip...\n[15:12:47] [INFO] Reading package manifest...\n[15:12:47] [INFO] Package manifest loaded successfully.\n[15:12:47] [INFO]     Package ID: BrowserAI.app.test\n[15:12:47] [INFO]     Package Version: 1.1.1-alpha.0.324\n[15:12:47] [INFO]     Package Title: BrowserAI (suite)\n[15:12:47] [INFO]     Package Authors: Jori Huisman\n[15:12:47] [INFO]     Package Description: BrowserAI (suite)\n[15:12:47] [INFO]     Package Machine Architecture: x64\n[15:12:47] [INFO]     Package Runtime Dependencies: \n[15:12:47] [INFO] Checking application pre-requisites...\n[15:12:47] [INFO] Determining install directory...\n[15:12:47] [INFO] Installation Directory: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"\n[15:12:47] [INFO] There is 198.39 GB free space available at destination, this package requires 253.84 MB.\n[15:12:47] [INFO] Preparing and cleaning installation directory...\n[15:12:47] [INFO] Acquiring lock...\n[15:12:47] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2' writable: true\n[15:12:47] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\packages\n[15:12:47] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...\n[15:12:47] [INFO] Will not show splash because silent mode is on.\n[15:12:47] [INFO] Starting installation!\n[15:12:47] [INFO] Extracting Update.exe...\n[15:12:47] [INFO] Extracting stub 'BrowserAI (suite)_ExecutionStub.exe' to '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\BrowserAI (suite).exe\"'\n[15:12:47] [INFO] Successfully extracted stub executable: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\BrowserAI (suite).exe\"\n[15:12:47] [INFO] Copying nupkg to packages directory...\n[15:12:47] [INFO] Extracting 211 app files to '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\"'...\n[15:12:48] [INFO] Creating shortcuts...\n[15:12:48] [INFO] COM context initialized in 7ms\n[15:12:48] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(0x0) (None)\n[15:12:48] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) (\"1.1.1-alpha.0.324\")\n[15:12:48] [INFO] App Model ID: Some(\"velopack.BrowserAI.app.test\")\n[15:12:48] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"'\n[15:12:48] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[15:12:48] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[15:12:48] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[15:12:48] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[15:12:48] [INFO] Will update all current shortcuts: []\n[15:12:48] [INFO] Creating new shortcut for flag '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' (ShortcutLocationFlags(START_MENU_ROOT)).\n[15:12:48] [INFO] Starting process install hook\n[15:12:48] [INFO] Running --veloapp-install hook...\n[15:12:48] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\\\" --veloapp-install 1.1.1-alpha.0.324\\0\")\n[15:12:48] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[15:12:48] [INFO] Waiting 30000ms for process handle to exit.\n[15:12:48] [WARN] Hook exited with non-zero exit code: 5\n[15:12:48] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\n[15:12:48] [INFO] Inspected 432 running processes in 73ms, 0 matched directory\n[15:12:48] [INFO] Force-stop check complete.\n[15:12:48] [INFO] Writing uninstall registry key...\n[15:12:48] [INFO] Installation completed successfully!\n",
+   "stderr": "",
+   "processesUnderRootWhileRunning": [],
+   "processesUnderRootAfterExit": [],
+   "rootFirstSeenGoneMsAfterExit": null,
+   "n": 2,
+   "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+   "dataRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2",
+   "hookRecords": [
+    {
+     "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\hook-records\\install-20261010T131248653-72216.json",
+     "content": {
+      "utc": "2026-10-10T13:12:48.6539077Z",
+      "pid": 72216,
+      "commandLineArgs": [
+       "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe",
+       "--veloapp-install",
+       "1.1.1-alpha.0.324"
+      ],
+      "versionArgument": "1.1.1-alpha.0.324",
+      "processPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe",
+      "currentDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current",
+      "installLocationIsInstalled": true,
+      "installLocationRootAppDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+      "installLocationAppId": "BrowserAI.app.test",
+      "installLocationInstalledVersion": "1.1.1-alpha.0.324",
+      "installLocationInstalledChannel": "win",
+      "localAppData": "C:\\Users\\jori\\AppData\\Local",
+      "standardInstallRootForThisAppId": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app.test",
+      "rootAppDirIsTheStandardOne": false,
+      "registrationTargetResolved": true,
+      "registrationTargetInstallRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+      "registrationTargetRefusal": null,
+      "browserAiRootVariable": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2",
+      "browserAiUpdateFeedVariable": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-2",
+      "installerSettingsDataRoot": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2",
+      "installerSettingsUpdateSource": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-2",
+      "dataRootTheHookWouldUse": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2",
+      "defaultDataRoot": "C:\\Users\\jori\\AppData\\Local\\BrowserAI",
+      "parentProcessId": 71876,
+      "parentCommandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe\" --silent --log C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-2.log --installto C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+      "isSilentByParentCommandLine": true,
+      "readParentProcessId": 71876,
+      "readParentCreatedFileTime": 134361115673935817,
+      "readParentCommandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\next-velo\\Releases\\test-pack\\BrowserAI.test-installer.exe\" --silent --log C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\setup-2.log --installto C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+      "readGrandparentProcessId": 62968,
+      "readGrandparentCreatedFileTime": 134361115401105237,
+      "velopackFirstRunVariable": null,
+      "claudeConfigDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-2",
+      "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-2",
+      "exitCodeAboutToBeReturned": 5
+     }
+    }
+   ],
+   "tree": {
+    "exists": true,
+    "fileCount": 209,
+    "totalBytes": 203836749.0,
+    "topLevel": [
+     "current\\  (205 files, 144447652 bytes)",
+     "packages\\  (2 files, 54911145 bytes)",
+     "BrowserAI (suite).exe  (451584 bytes)",
+     "Update.exe  (4026368 bytes)"
+    ],
+    "packages": [
+     "\\.velopack_lock  (0 bytes)",
+     "\\BrowserAI.app.test-1.1.1-alpha.0.324-full.nupkg  (54911145 bytes)"
+    ],
+    "updateExe": true,
+    "currentExe": true,
+    "stubExe": false,
+    "sqVersion": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<package xmlns=\"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd\">\n<metadata>\n<id>BrowserAI.app.test</id>\n<title>BrowserAI (suite)</title>\n<description>BrowserAI (suite)</description>\n<authors>Jori Huisman</authors>\n<version>1.1.1-alpha.0.324</version>\n<channel>win</channel>\n<mainExe>BrowserAI.exe</mainExe>\n<os>win</os>\n<rid>win</rid>\n<shortcutLocations>StartMenuRoot</shortcutLocations>\r\n<shortcutAumid>velopack.BrowserAI.app.test</shortcutAumid>\n</metadata>\n</package>"
+   },
+   "testKeyAfter": {
+    "DisplayIcon": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe"
+    },
+    "DisplayName": {
+     "kind": "String",
+     "value": "BrowserAI (suite)"
+    },
+    "DisplayVersion": {
+     "kind": "String",
+     "value": "1.1.1"
+    },
+    "EstimatedSize": {
+     "kind": "DWord",
+     "value": "141062"
+    },
+    "InstallDate": {
+     "kind": "String",
+     "value": "20261010"
+    },
+    "InstallLocation": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2"
+    },
+    "Language": {
+     "kind": "DWord",
+     "value": "1033"
+    },
+    "NoModify": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "NoRepair": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "Publisher": {
+     "kind": "String",
+     "value": "Jori Huisman"
+    },
+    "QuietUninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe\" --uninstall --silent"
+    },
+    "UninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe\" --uninstall"
+    }
+   },
+   "browserAiLinksAfter": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk",
+     "target": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current",
+     "iconLocation": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe,0",
+     "sha256": "79D93430FC310CE9AD28C822F569F44AD29F0E5E92B2AE081BC206BE7E760B5D",
+     "lastWriteUtc": "2026-10-10T13:12:48.5411879Z"
+    },
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+     "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+     "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+     "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+     "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+    }
+   },
+   "dataRootAfter": [],
+   "sandboxAfter": [],
+   "velopackTestLogNewText": "[lib-csharp:72216] [15:12:48] [Information] Initializing WindowsVelopackLocator\r\n[lib-csharp:72216] [15:12:48] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\sq.version\r\n[lib-csharp:72216] [15:12:48] [Information] Root directory is writable, using packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\packages\r\n[lib-csharp:72216] [15:12:48] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.1-alpha.0.324\r\n[lib-csharp:72216] [15:12:48] [Information] Starting VelopackApp.Run (library version 1.2.161).\r\n[lib-csharp:72216] [15:12:48] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'\r\n[lib-csharp:72216] [15:12:48] [Information] Found fast exit hook: --veloapp-install\r\n"
+  }
+ ],
+ "uninstalls": [
+  {
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe",
+   "arguments": [
+    "--uninstall",
+    "--silent"
+   ],
+   "environment": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-1",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-1",
+    "BROWSERAI_UPDATE_FEED": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-1",
+    "BROWSERAI_ROOT": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-1"
+   },
+   "pid": 78500,
+   "exitCode": 0,
+   "wallMs": 995,
+   "exitedUtc": "2026-10-10T13:13:05.355Z",
+   "hungAndKilled": false,
+   "stdout": "[15:13:04] [INFO] --\n[15:13:04] [INFO] Starting Velopack Updater (1.2.161)\n[15:13:04] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\Update.exe\"\n[15:13:04] [INFO]     CWD: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"\n[15:13:04] [INFO]     Verbose: false\n[15:13:04] [INFO]     Silent: true\n[15:13:04] [INFO]     Root Directory: None\n[15:13:04] [INFO]     Log File: \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\velopack\\\\velopack_BrowserAI.app.test.log\"\n[15:13:04] [INFO]     Context: IAmUpdateExe\n[15:13:04] [INFO] Command: Uninstall\n[15:13:04] [INFO] Auto-locating app manifest...\n[15:13:04] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1' writable: true\n[15:13:04] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\packages\n[15:13:04] [INFO] Command: Uninstall\n[15:13:04] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\n[15:13:04] [INFO] Inspected 434 running processes in 78ms, 1 matched directory\n[15:13:04] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe (78500)\n[15:13:04] [INFO] Force-stop check complete.\n[15:13:04] [INFO] Running --veloapp-uninstall hook...\n[15:13:04] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\\\" --veloapp-uninstall 1.1.1-alpha.0.324\\0\")\n[15:13:04] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[15:13:04] [INFO] Waiting 60000ms for process handle to exit.\n[15:13:04] [INFO] Hook executed successfully (took 70.1605ms)\n[15:13:04] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\n[15:13:04] [INFO] Inspected 432 running processes in 79ms, 1 matched directory\n[15:13:04] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe (78500)\n[15:13:04] [INFO] Force-stop check complete.\n[15:13:04] [INFO] COM context initialized in 6ms\n[15:13:04] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"'\n[15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[15:13:05] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[15:13:05] [INFO] Removing directory '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"'\n[15:13:05] [INFO] Removing directory '\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\Temp\\\\velopack_BrowserAI.app.test\"'\n[15:13:05] [INFO] Removing uninstall registry keys...\n[15:13:05] [INFO] Finished successfully.\n[15:13:05] [INFO] Scheduling removal of install directory...\n[15:13:05] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q \"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\"\n",
+   "stderr": "\r\nERROR: The file is either empty or does not contain the valid choices.\r\n",
+   "processesUnderRootWhileRunning": [
+    {
+     "pid": 78500,
+     "parentPid": 62968,
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe",
+     "commandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe\" --uninstall --silent",
+     "createdUtc": "2026-10-10T13:13:04.4763120Z",
+     "firstSeenMs": 409
+    }
+   ],
+   "processesUnderRootAfterExit": [],
+   "rootFirstSeenGoneMsAfterExit": 277,
+   "n": 1,
+   "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1",
+   "rootStillThereAfterWait": false,
+   "treeAfter": {
+    "exists": false
+   },
+   "testKeyBefore": {
+    "DisplayIcon": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe"
+    },
+    "DisplayName": {
+     "kind": "String",
+     "value": "BrowserAI (suite)"
+    },
+    "DisplayVersion": {
+     "kind": "String",
+     "value": "1.1.1"
+    },
+    "EstimatedSize": {
+     "kind": "DWord",
+     "value": "141062"
+    },
+    "InstallDate": {
+     "kind": "String",
+     "value": "20261010"
+    },
+    "InstallLocation": {
+     "kind": "String",
+     "value": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2"
+    },
+    "Language": {
+     "kind": "DWord",
+     "value": "1033"
+    },
+    "NoModify": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "NoRepair": {
+     "kind": "DWord",
+     "value": "1"
+    },
+    "Publisher": {
+     "kind": "String",
+     "value": "Jori Huisman"
+    },
+    "QuietUninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe\" --uninstall --silent"
+    },
+    "UninstallString": {
+     "kind": "String",
+     "value": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe\" --uninstall"
+    }
+   },
+   "testKeyAfter": null,
+   "browserAiLinksAfter": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk",
+     "target": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current",
+     "iconLocation": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\BrowserAI.exe,0",
+     "sha256": "79D93430FC310CE9AD28C822F569F44AD29F0E5E92B2AE081BC206BE7E760B5D",
+     "lastWriteUtc": "2026-10-10T13:12:48.5411879Z"
+    },
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+     "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+     "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+     "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+     "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+    }
+   },
+   "velopackTestLogNewText": "[update:78500] [15:13:04] [INFO] --\n[update:78500] [15:13:04] [INFO] Starting Velopack Updater (1.2.161)\n[update:78500] [15:13:04] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\Update.exe\"\n[update:78500] [15:13:04] [INFO]     CWD: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"\n[update:78500] [15:13:04] [INFO]     Verbose: false\n[update:78500] [15:13:04] [INFO]     Silent: true\n[update:78500] [15:13:04] [INFO]     Root Directory: None\n[update:78500] [15:13:04] [INFO]     Log File: \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\velopack\\\\velopack_BrowserAI.app.test.log\"\n[update:78500] [15:13:04] [INFO]     Context: IAmUpdateExe\n[update:78500] [15:13:04] [INFO] Command: Uninstall\n[update:78500] [15:13:04] [INFO] Auto-locating app manifest...\n[update:78500] [15:13:04] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1' writable: true\n[update:78500] [15:13:04] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\packages\n[update:78500] [15:13:04] [INFO] Command: Uninstall\n[update:78500] [15:13:04] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\n[update:78500] [15:13:04] [INFO] Inspected 434 running processes in 78ms, 1 matched directory\n[update:78500] [15:13:04] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe (78500)\n[update:78500] [15:13:04] [INFO] Force-stop check complete.\n[update:78500] [15:13:04] [INFO] Running --veloapp-uninstall hook...\n[update:78500] [15:13:04] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\\\\current\\\\BrowserAI.exe\\\" --veloapp-uninstall 1.1.1-alpha.0.324\\0\")\n[update:78500] [15:13:04] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[update:78500] [15:13:04] [INFO] Waiting 60000ms for process handle to exit.\n[lib-csharp:57440] [15:13:04] [Information] Initializing WindowsVelopackLocator\r\n[lib-csharp:57440] [15:13:04] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\current\\sq.version\r\n[lib-csharp:57440] [15:13:04] [Information] Root directory is writable, using packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\packages\r\n[lib-csharp:57440] [15:13:04] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.1-alpha.0.324\r\n[lib-csharp:57440] [15:13:04] [Information] Starting VelopackApp.Run (library version 1.2.161).\r\n[lib-csharp:57440] [15:13:04] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'\r\n[lib-csharp:57440] [15:13:04] [Information] Found fast exit hook: --veloapp-uninstall\r\n[lib-csharp:57440] [15:13:04] [Information] Completed hook, exiting...\r\n[update:78500] [15:13:04] [INFO] Hook executed successfully (took 70.1605ms)\n[update:78500] [15:13:04] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\n[update:78500] [15:13:04] [INFO] Inspected 432 running processes in 79ms, 1 matched directory\n[update:78500] [15:13:04] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\\Update.exe (78500)\n[update:78500] [15:13:04] [INFO] Force-stop check complete.\n[update:78500] [15:13:04] [INFO] COM context initialized in 6ms\n[update:78500] [15:13:04] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"'\n[update:78500] [15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[update:78500] [15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[update:78500] [15:13:04] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[update:78500] [15:13:05] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[update:78500] [15:13:05] [INFO] Removing directory '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-1\"'\n[update:78500] [15:13:05] [INFO] Removing directory '\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\Temp\\\\velopack_BrowserAI.app.test\"'\n[update:78500] [15:13:05] [INFO] Removing uninstall registry keys...\n[update:78500] [15:13:05] [INFO] Finished successfully.\n[update:78500] [15:13:05] [INFO] Scheduling removal of install directory...\n[update:78500] [15:13:05] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q \"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-1\"\n"
+  },
+  {
+   "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe",
+   "arguments": [
+    "--uninstall",
+    "--silent"
+   ],
+   "environment": {
+    "CLAUDE_CONFIG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\claude-config-2",
+    "CODEX_HOME": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\codex-home-2",
+    "BROWSERAI_UPDATE_FEED": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\sandbox\\feed-2",
+    "BROWSERAI_ROOT": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\data-2"
+   },
+   "pid": 7512,
+   "exitCode": 0,
+   "wallMs": 1392,
+   "exitedUtc": "2026-10-10T13:13:22.279Z",
+   "hungAndKilled": false,
+   "stdout": "[15:13:21] [INFO] --\n[15:13:21] [INFO] Starting Velopack Updater (1.2.161)\n[15:13:21] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\Update.exe\"\n[15:13:21] [INFO]     CWD: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"\n[15:13:21] [INFO]     Verbose: false\n[15:13:21] [INFO]     Silent: true\n[15:13:21] [INFO]     Root Directory: None\n[15:13:21] [INFO]     Log File: \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\velopack\\\\velopack_BrowserAI.app.test.log\"\n[15:13:21] [INFO]     Context: IAmUpdateExe\n[15:13:21] [INFO] Command: Uninstall\n[15:13:21] [INFO] Auto-locating app manifest...\n[15:13:21] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2' writable: true\n[15:13:21] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\packages\n[15:13:21] [INFO] Command: Uninstall\n[15:13:21] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\n[15:13:21] [INFO] Inspected 433 running processes in 73ms, 1 matched directory\n[15:13:21] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe (7512)\n[15:13:21] [INFO] Force-stop check complete.\n[15:13:21] [INFO] Running --veloapp-uninstall hook...\n[15:13:21] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\\\" --veloapp-uninstall 1.1.1-alpha.0.324\\0\")\n[15:13:21] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[15:13:21] [INFO] Waiting 60000ms for process handle to exit.\n[15:13:21] [INFO] Hook executed successfully (took 68.77329ms)\n[15:13:21] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\n[15:13:21] [INFO] Inspected 433 running processes in 74ms, 1 matched directory\n[15:13:21] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe (7512)\n[15:13:21] [INFO] Force-stop check complete.\n[15:13:21] [INFO] COM context initialized in 5ms\n[15:13:21] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"'\n[15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[15:13:21] [INFO] Selected shortcut for update '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' because target '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\"' matched.\n[15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[15:13:21] [INFO] Removing shortcut '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' (ShortcutLocationFlags(START_MENU)).\n[15:13:21] [INFO] Removing directory '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"'\n[15:13:21] [INFO] Removing directory '\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\Temp\\\\velopack_BrowserAI.app.test\"'\n[15:13:21] [INFO] Removing uninstall registry keys...\n[15:13:21] [INFO] Finished successfully.\n[15:13:21] [INFO] Scheduling removal of install directory...\n[15:13:21] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q \"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\"\n",
+   "stderr": "[15:13:21] [ERROR] Unable to remove uninstall registry entry (The system cannot find the file specified. (os error 2)).\n\r\nERROR: The file is either empty or does not contain the valid choices.\r\n",
+   "processesUnderRootWhileRunning": [
+    {
+     "pid": 7512,
+     "parentPid": 62968,
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe",
+     "commandLine": "\"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe\" --uninstall --silent",
+     "createdUtc": "2026-10-10T13:13:20.9958140Z",
+     "firstSeenMs": 379
+    }
+   ],
+   "processesUnderRootAfterExit": [],
+   "rootFirstSeenGoneMsAfterExit": 239,
+   "n": 2,
+   "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2",
+   "rootStillThereAfterWait": false,
+   "treeAfter": {
+    "exists": false
+   },
+   "testKeyBefore": null,
+   "testKeyAfter": null,
+   "browserAiLinksAfter": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+     "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+     "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+     "arguments": "",
+     "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+     "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+     "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+     "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+    }
+   },
+   "velopackTestLogNewText": "[update:7512] [15:13:21] [INFO] --\n[update:7512] [15:13:21] [INFO] Starting Velopack Updater (1.2.161)\n[update:7512] [15:13:21] [INFO]     Location: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\Update.exe\"\n[update:7512] [15:13:21] [INFO]     CWD: \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"\n[update:7512] [15:13:21] [INFO]     Verbose: false\n[update:7512] [15:13:21] [INFO]     Silent: true\n[update:7512] [15:13:21] [INFO]     Root Directory: None\n[update:7512] [15:13:21] [INFO]     Log File: \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\velopack\\\\velopack_BrowserAI.app.test.log\"\n[update:7512] [15:13:21] [INFO]     Context: IAmUpdateExe\n[update:7512] [15:13:21] [INFO] Command: Uninstall\n[update:7512] [15:13:21] [INFO] Auto-locating app manifest...\n[update:7512] [15:13:21] [INFO] Root directory 'C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2' writable: true\n[update:7512] [15:13:21] [INFO] Using root packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\packages\n[update:7512] [15:13:21] [INFO] Command: Uninstall\n[update:7512] [15:13:21] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\n[update:7512] [15:13:21] [INFO] Inspected 433 running processes in 73ms, 1 matched directory\n[update:7512] [15:13:21] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe (7512)\n[update:7512] [15:13:21] [INFO] Force-stop check complete.\n[update:7512] [15:13:21] [INFO] Running --veloapp-uninstall hook...\n[update:7512] [15:13:21] [INFO] About to launch: 'WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\")' in dir 'Some(WideString(\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\"))' with arguments: WideString(\"\\\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\\\" --veloapp-uninstall 1.1.1-alpha.0.324\\0\")\n[update:7512] [15:13:21] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)\n[update:7512] [15:13:21] [INFO] Waiting 60000ms for process handle to exit.\n[lib-csharp:73024] [15:13:21] [Information] Initializing WindowsVelopackLocator\r\n[lib-csharp:73024] [15:13:21] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\current\\sq.version\r\n[lib-csharp:73024] [15:13:21] [Information] Root directory is writable, using packages directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\packages\r\n[lib-csharp:73024] [15:13:21] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.1-alpha.0.324\r\n[lib-csharp:73024] [15:13:21] [Information] Starting VelopackApp.Run (library version 1.2.161).\r\n[lib-csharp:73024] [15:13:21] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'\r\n[lib-csharp:73024] [15:13:21] [Information] Found fast exit hook: --veloapp-uninstall\r\n[lib-csharp:73024] [15:13:21] [Information] Completed hook, exiting...\r\n[update:7512] [15:13:21] [INFO] Hook executed successfully (took 68.77329ms)\n[update:7512] [15:13:21] [INFO] Checking for running processes in: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\n[update:7512] [15:13:21] [INFO] Inspected 433 running processes in 74ms, 1 matched directory\n[update:7512] [15:13:21] [WARN] Skipping killing self: C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\\Update.exe (7512)\n[update:7512] [15:13:21] [INFO] Force-stop check complete.\n[update:7512] [15:13:21] [INFO] COM context initialized in 5ms\n[update:7512] [15:13:21] [INFO] Searching for shortcuts containing root: '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"'\n[update:7512] [15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\\Users\\jori\\Desktop/*.lnk)\n[update:7512] [15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup/*.lnk)\n[update:7512] [15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs/**/*.lnk)\n[update:7512] [15:13:21] [INFO] Selected shortcut for update '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' because target '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\\\\current\\\\BrowserAI.exe\"' matched.\n[update:7512] [15:13:21] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned/**/*.lnk)\n[update:7512] [15:13:21] [INFO] Removing shortcut '\"C:\\\\Users\\\\jori\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\BrowserAI (suite).lnk\"' (ShortcutLocationFlags(START_MENU)).\n[update:7512] [15:13:21] [INFO] Removing directory '\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\next-scratch\\\\velopack-refusal\\\\root-2\"'\n[update:7512] [15:13:21] [INFO] Removing directory '\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\Temp\\\\velopack_BrowserAI.app.test\"'\n[update:7512] [15:13:21] [INFO] Removing uninstall registry keys...\n[update:7512] [15:13:21] [ERROR] Unable to remove uninstall registry entry (The system cannot find the file specified. (os error 2)).\n[update:7512] [15:13:21] [INFO] Finished successfully.\n[update:7512] [15:13:21] [INFO] Scheduling removal of install directory...\n[update:7512] [15:13:21] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q \"C:\\Source\\SixFive7\\BrowserAI\\.work\\next-scratch\\velopack-refusal\\root-2\"\n"
+  }
+ ],
+ "after": {
+  "label": "after",
+  "utc": "2026-10-10T13:13:38.606Z",
+  "userPathKind": "ExpandString",
+  "userPath": {
+   "cut": "22 entries of this machine's PATH",
+   "sha256": "67bacfbf9c7f437e9a579c24b92bc1baa4b3b9dfe99d794c430955c7aa97bcd5",
+   "browserAi": []
+  },
+  "uninstallSubkeys": {
+   "cut": "33 names",
+   "sha256": "0b3c3a26b9ef1172ef6d258d79c3fa9e1681e4d3960826ce7026c89abb3fde0d",
+   "browserAi": [
+    "BrowserAI.app"
+   ]
+  },
+  "realKeyValues": {
+   "DisplayIcon": {
+    "kind": "String",
+    "value": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"
+   },
+   "DisplayName": {
+    "kind": "String",
+    "value": "BrowserAI"
+   },
+   "DisplayVersion": {
+    "kind": "String",
+    "value": "1.1.0"
+   },
+   "EstimatedSize": {
+    "kind": "DWord",
+    "value": "140351"
+   },
+   "InstallDate": {
+    "kind": "String",
+    "value": "20260924"
+   },
+   "InstallLocation": {
+    "kind": "String",
+    "value": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app"
+   },
+   "Language": {
+    "kind": "DWord",
+    "value": "1033"
+   },
+   "NoModify": {
+    "kind": "DWord",
+    "value": "1"
+   },
+   "NoRepair": {
+    "kind": "DWord",
+    "value": "1"
+   },
+   "Publisher": {
+    "kind": "String",
+    "value": "Jori Huisman"
+   },
+   "QuietUninstallString": {
+    "kind": "String",
+    "value": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\Update.exe\" --uninstall --silent"
+   },
+   "UninstallString": {
+    "kind": "String",
+    "value": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\Update.exe\" --uninstall"
+   }
+  },
+  "realKeySha256": "15812AD603EDA9BA006E9716BB01A4F6B5D04C5CD04FA86E703E0CF7D6B439E1",
+  "testKeyValues": null,
+  "startMenuLinks": {
+   "cut": "94 shortcuts",
+   "sha256": "72356d264cd0f6f5e5c21fab41505d189d9002a293f4921928e2f87a4ca34ea0",
+   "browserAi": {
+    "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145"
+   }
+  },
+  "startMenuBrowserAiLinks": {
+   "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk": {
+    "path": "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI.lnk",
+    "target": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe",
+    "arguments": "",
+    "workingDirectory": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current",
+    "iconLocation": "C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe,0",
+    "sha256": "F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145",
+    "lastWriteUtc": "2026-09-24T07:40:44.1118316Z"
+   }
+  },
+  "desktopLinks": {
+   "cut": "25 shortcuts",
+   "sha256": "3225dec62a01052ab61773d71b348d4a7fd48769afdafcaeee3b761e33f1420e",
+   "browserAi": {}
+  },
+  "runKeySha256": "077FB8EE94032C1407C087B706499ED8D23BF768AE414FFDCCF851AE1D33ADF2",
+  "runKeyValueNames": {
+   "cut": "10 names",
+   "sha256": "8b31d25519b82dc85108381d09be7bc0a9008538b3c169953d34f2a0e0e2a292",
+   "browserAi": []
+  },
+  "scheduledTasks": {
+   "cut": "203 names",
+   "sha256": "a6539f75654ad11507040d54a62a4e144558de710f02a649617f839e1475f831",
+   "browserAi": []
+  },
+  "classesClsidCount": 143,
+  "classesClsid": {
+   "cut": "143 class ids",
+   "sha256": "be953f7a3d12a0c3742778003020262a2a5c52e96573ee9f3fb1a76d040e1799"
+  },
+  "classesAppUserModelId": {
+   "cut": "12 names",
+   "sha256": "2c477f6ccf664dbeefc8f93d95c6d0e984754b4a60059a9e380bc90330aede5b",
+   "browserAi": []
+  },
+  "velopackTestLogBytes": 384270,
+  "velopackTestLogOldBytes": 1049973,
+  "velopackTempDirExists": false
+ },
+ "diff": {
+  "userPathChanged": false,
+  "uninstallSubkeys": {
+   "added": [],
+   "removed": []
+  },
+  "realKeyUnchanged": true,
+  "testKeyPresentAfter": false,
+  "startMenuLinks": {
+   "added": [],
+   "removed": [],
+   "changed": []
+  },
+  "desktopLinks": {
+   "added": [],
+   "removed": [],
+   "changed": []
+  },
+  "runKeyUnchanged": true,
+  "scheduledTasks": {
+   "added": [],
+   "removed": []
+  },
+  "classesClsid": {
+   "added": [],
+   "removed": []
+  },
+  "classesAppUserModelId": {
+   "added": [],
+   "removed": []
+  },
+  "velopackTempDirBefore": false,
+  "velopackTempDirAfter": false
+ },
+ "installerLockRelease": {
+  "exitCode": 0,
+  "output": [
+   "Let go of C:\\Source\\SixFive7\\BrowserAI\\.work\\installer.lock (pid=62968 created=134361115401105237)."
+  ],
+  "utc": "2026-10-10T13:13:41.982Z"
+ },
+ "suiteLockReleasedUtc": "2026-10-10T13:13:41.992Z",
+ "suiteLockGone": true
+}

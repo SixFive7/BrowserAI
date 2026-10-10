@@ -1,0 +1,66 @@
+[
+ {
+  "at": "2026-10-10T12:59:33.226Z",
+  "bin": "C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1002.7124.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe",
+  "status": 0,
+  "error": null,
+  "stdout": "codex-cli 0.162.0-alpha.2",
+  "stderr": "",
+  "homeAfter": [
+   "tmp",
+   "tmp\\arg0",
+   "tmp\\arg0\\codex-arg0kdC2s7",
+   "tmp\\arg0\\codex-arg0kdC2s7\\.lock",
+   "tmp\\arg0\\codex-arg0kdC2s7\\applypatch.bat",
+   "tmp\\arg0\\codex-arg0kdC2s7\\apply_patch.bat"
+  ]
+ },
+ {
+  "at": "2026-10-10T12:59:33.277Z",
+  "bin": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+  "status": 0,
+  "error": null,
+  "stdout": "codex-cli 0.159.0-alpha.12.1",
+  "stderr": "",
+  "homeAfter": [
+   "tmp",
+   "tmp\\arg0",
+   "tmp\\arg0\\codex-arg0pDduvD",
+   "tmp\\arg0\\codex-arg0pDduvD\\.lock",
+   "tmp\\arg0\\codex-arg0pDduvD\\applypatch.bat",
+   "tmp\\arg0\\codex-arg0pDduvD\\apply_patch.bat"
+  ]
+ },
+ {
+  "at": "2026-10-10T12:59:33.665Z",
+  "bin": "C:\\Users\\jori\\AppData\\Local\\OpenAI\\Codex\\bin\\be3fd7e5c1969ff6\\codex.exe",
+  "status": 0,
+  "error": null,
+  "stdout": "codex-cli 0.159.0-alpha.12.1",
+  "stderr": "",
+  "homeAfter": [
+   "tmp",
+   "tmp\\arg0",
+   "tmp\\arg0\\codex-arg0u6xg9d",
+   "tmp\\arg0\\codex-arg0u6xg9d\\.lock",
+   "tmp\\arg0\\codex-arg0u6xg9d\\applypatch.bat",
+   "tmp\\arg0\\codex-arg0u6xg9d\\apply_patch.bat"
+  ]
+ },
+ {
+  "at": "2026-10-10T12:59:34.118Z",
+  "bin": "C:\\Users\\jori\\AppData\\Local\\Programs\\<another application>\\resources\\app.asar.unpacked\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+  "status": 0,
+  "error": null,
+  "stdout": "codex-cli 0.144.1",
+  "stderr": "",
+  "homeAfter": [
+   "tmp",
+   "tmp\\arg0",
+   "tmp\\arg0\\codex-arg0rdP7NG",
+   "tmp\\arg0\\codex-arg0rdP7NG\\.lock",
+   "tmp\\arg0\\codex-arg0rdP7NG\\applypatch.bat",
+   "tmp\\arg0\\codex-arg0rdP7NG\\apply_patch.bat"
+  ]
+ }
+]

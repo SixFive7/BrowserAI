@@ -237,6 +237,52 @@ separate from .NET's**, and can fail *before* the managed app exists: before
 > `IsWow64Process2` is now dynamically loaded with an error path. Shipped binaries
 > are MinOS 6.0, 32-bit PE32 GUI; no `vpk pack` option sets `os_min_version`.
 
+## A hook that refuses does not stop an install, and a refused folder takes the shared entry -- measured 2026-10-10
+
+`[FLOATS]` **Measured 2026-10-10 @ Velopack 1.2.161**, with the suite's test pack built
+from `db50964e` and its install hook patched to exit 5, installed twice with `--silent`
+into scratch folders and uninstalled twice
+([evidence](../../docs/evidence/2026-10-10-install-refusal/README.md)), for the
+maintainer's 21 of that day, which has the shipping install refuse a folder other than its own.
+
+- **A failing install hook does not stop or undo an install.** Setup logged *"Hook exited
+  with non-zero exit code: 5"*, wrote the Add/Remove entry, logged *"Installation completed
+  successfully!"* and exited **0**, 2 of 2; the 209 files of the install, `Update.exe` and
+  the Start Menu shortcut stayed. Velopack rolls back only when the install itself returns
+  an error, and only by restoring a folder it had renamed aside for an overwrite
+  (`install.rs` at the tag, read).
+- **A silent caller cannot see it**: the exit code is 0 either way, and the hook's exit code
+  is the one thing of the hook's that reaches Setup's own log. Its lines go to
+  `velopack_<app id>.log`, through Velopack's logger (above).
+- **Not silent, read and not run**: the hook's failure shows Velopack's own box, *"BrowserAI
+  Setup"*, *"Install Partially Succeeded"*, *"Installation has completed, but some steps may
+  have failed. If the application does not work correctly you can try re-installing or
+  contacting the application author."*, with OK, while the splash is still up; then the
+  entry is written and the refused folder's `current\BrowserAI.exe` is started with
+  `VELOPACK_FIRSTRUN=true`. A hook that exits 0 shows no box and is started the same way.
+- **The hook can tell everything a refusal needs**, measured from inside it: the install
+  root (`InstallLocation.RootAppDir`, the `--installto` folder), the pack id, the
+  installer's `BROWSERAI_ROOT`, and whether the install is silent, from its parent's command
+  line, the installer's own, which `DataRootDisposal.IsSilent` read as silent.
+- **The Add/Remove entry and the Start Menu shortcut belong to the pack id, not to the
+  folder, and a refused install still takes both.** The shortcut is written before the hook
+  and the entry after it, so the second install moved both to its own folder although its
+  hook exited 5, and the first uninstall then deleted the entry, which named the other
+  folder: on a PC with a standard install, an `--installto` install that refuses leaves the
+  standard install unlisted once the refused copy is uninstalled. This re-establishes
+  [the 2026-09-14 entry below](#two-installs-of-one-app-id-share-one-uninstall-key----measured-2026-09-14)
+  at 1.2.161.
+- **What a refusal in the hook does prevent is BrowserAI's own writes**: no client
+  registration, no scheduled task, no PATH entry, no toast activator, no saved task
+  definition, measured.
+
+**Re-establish it** with the batch's patch over `VelopackStartup.cs`, a publish and
+`build/New-Release.ps1 -TestPackOnly`, then the driver's two `--silent --installto`
+installs into scratch and their two `Update.exe --uninstall --silent`, under the suite and
+installer locks, reading Setup's `--log`, the hook's records, the entry and the shortcut
+between each step. Never run the non-silent half from a session nobody is watching: it puts
+Velopack's box on the screen.
+
 ## Two installs of one app id share one uninstall key -- measured 2026-09-14
 
 **Measured 2026-09-14 @ Velopack 1.2.0**, on this machine, by accident. The app

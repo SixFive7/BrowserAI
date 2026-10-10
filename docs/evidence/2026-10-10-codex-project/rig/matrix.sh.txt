@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+# 2026-10-10 Codex project-registration re-run: every case kind, three rounds.
+# RIG_CODEX picks the Codex binary (default: the newest on this machine).
+set -u
+export GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never
+cd /c/Source/SixFive7/BrowserAI/.work/next-scratch/codex-project/rig
+echo "MATRIX START $(date -u +%FT%TZ) codex=${RIG_CODEX:-default}"
+for r in 1 2 3; do
+  for kind in exp expuser alt altsp altspx subdir before shadow untrusted; do
+    out=$(node setup.js "$kind" "$r" 2>&1); echo "$out" | head -1
+    dir=$(echo "$out" | tail -1)
+    if [ -d "$dir" ]; then timeout 240 node appsrv.js "$dir" 2>&1; echo "rc=$?"; else echo "SETUP FAILED for $kind r$r"; fi
+  done
+done
+echo "MATRIX END $(date -u +%FT%TZ)"

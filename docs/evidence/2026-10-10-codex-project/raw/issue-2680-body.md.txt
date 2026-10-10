@@ -1,0 +1,13 @@
+### What feature would you like to see?
+
+From CC docs: https://docs.anthropic.com/en/docs/claude-code/mcp#environment-variable-expansion-in-mcp-json
+
+I think codex doesn't support this yet, at least the same `${ENV_VAR}` syntax didn't work for me. Currently I have to put secrets directly into ~/.codex/config.toml, I think?
+
+### Are you interested in implementing this feature?
+
+No
+
+### Additional information
+
+_No response_

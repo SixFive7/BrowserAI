@@ -1,0 +1,164 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+'use strict';
+// 2026-10-10 Codex project-registration re-run: tables over runs/*/result.json.
+// usage: node summarize.js [roundsFilter]   (default: rounds 1-3 only; "all" includes r0 trials)
+// Writes summary.txt and summary.json beside rig/. PATH values are cut to the
+// scratch entries, because the rest names the software on this machine.
+const fs = require('fs');
+const path = require('path');
+const L = require('./lib.js');
+
+const includeAll = process.argv[2] === 'all';
+const runs = [];
+for (const id of fs.readdirSync(L.RUNS).sort()) {
+  const p = path.join(L.RUNS, id, 'result.json');
+  if (!fs.existsSync(p)) continue;
+  const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+  if (!r.spec) continue; // a Claude Code check, summarized by claude-summary.js
+  if (!includeAll && r.spec.round === 0) continue;
+  // One Codex binary per summary: RIG_CODEX picks it, as it does for the runs.
+  if (r.codex.toLowerCase() !== L.CODEX.toLowerCase()) continue;
+  runs.push(r);
+}
+const suffix = process.env.RIG_CODEX ? '-' + (process.env.RIG_SUMMARY_NAME || 'alt-codex') : '';
+
+function cutPath(v) {
+  if (!v) return v;
+  const parts = v.split(';');
+  const kept = parts.filter((e) => e.startsWith(L.SCR) || /codex-arg0/i.test(e) || e.startsWith('~'));
+  const cut = parts.length - kept.length;
+  return kept.join(';') + (cut ? `;[cut: ${cut} entries of this machine's PATH]` : '');
+}
+
+const rows = new Map();
+const key = (kind, name) => `${kind}|${name}`;
+const cmdParent = [];
+let windowsFound = 0;
+let windowsVisible = 0;
+const launchCounts = [];
+const resolverLines = new Map();
+const trustRows = [];
+for (const r of runs) {
+  const s = r.spec;
+  const setup = JSON.parse(fs.readFileSync(path.join(L.RUNS, s.runId, 'setup.json'), 'utf8'));
+  // What the probe itself should receive: the entry's arguments, or for a cmd.exe
+  // entry the arguments that follow the program cmd is told to run after /c.
+  const probeArgs = (e) => {
+    if (/^cmd(\.exe)?$/i.test(e.command)) {
+      const c = e.args.findIndex((a) => a.toLowerCase() === '/c');
+      return c >= 0 ? e.args.slice(c + 2) : e.args;
+    }
+    return e.args;
+  };
+  const configured = new Map([...setup.entries, setup.uctl].map((e) => [e.name, JSON.stringify(probeArgs(e))]));
+  let trustAfter = r.trustAfter || null;
+  const homeConfig = path.join(s.home, 'config.toml');
+  if (!trustAfter && fs.existsSync(homeConfig)) {
+    // Runs from before the driver recorded it: read the home the run left.
+    trustAfter = [...fs.readFileSync(homeConfig, 'utf8').matchAll(/^\[projects\.([^\]]+)\]\s*\r?\ntrust_level\s*=\s*"([^"]+)"/gm)].map((m) => ({ key: m[1], trust_level: m[2], readAfterwards: true }));
+  }
+  trustRows.push({ run: s.runId, sandbox: s.sandbox || 'danger-full-access', trustWrittenByRig: s.trustLevelWritten === undefined ? (s.trusted ? 'trusted' : null) : s.trustLevelWritten, trustAfter, projectEntriesLoaded: s.projectEntries.filter((n) => r.startupStatusAll[n]).length, projectEntries: s.projectEntries.length });
+  const expectedImage = (name) => (s.kind === 'shadow' && name === 'barepath') ? path.join(L.OTHER_DIR, 'BrowserAI.exe')
+    : name === 'cmdwrap_v_console' ? L.consoleExeOf(s.profile) : s.installExe;
+  for (const name of s.expect) {
+    const k = key(s.kind, name);
+    if (!rows.has(k)) rows.set(k, { kind: s.kind, name, scope: s.userEntries.includes(name) ? 'user' : 'project', runs: 0, loaded: 0, ready: 0, answered: 0, imageExpected: 0, argvClean: 0, errors: new Set(), images: new Set(), argvs: new Set(), cwds: new Set() });
+    const row = rows.get(k);
+    row.runs++;
+    const st = r.startupStatusAll[name];
+    if (st) row.loaded++;
+    if (st === 'ready') row.ready++;
+    const err = (r.startupError || {})[name];
+    if (err) row.errors.add(err);
+    const call = r.toolCalls[name];
+    if (call && call.result && call.result.content) {
+      let t = null;
+      try { t = JSON.parse(call.result.content[0].text); } catch (e) { t = null; }
+      if (t) {
+        row.answered++;
+        row.images.add(t.image);
+        row.argvs.add(JSON.stringify(t.argv));
+        row.cwds.add(path.relative(path.join(L.RUNS, s.runId), t.cwd) || '.');
+        if (t.image.toLowerCase() === expectedImage(name).toLowerCase()) row.imageExpected++;
+        if (JSON.stringify(t.argv) === configured.get(name)) row.argvClean++;
+        else row.argvDirty = configured.get(name);
+      }
+    }
+  }
+  // Whether each cmd.exe a cmd form started was still the probe's parent at the census.
+  for (const snap of ['whileAlive', 'afterCalls']) {
+    const tree = (r.census[snap] && r.census[snap].tree) || [];
+    for (const p of tree) {
+      if (!p.path || !/\\cmd\.exe$/i.test(p.path)) continue;
+      const kids = tree.filter((c) => c.ppid === p.pid && c.path && /BrowserAI\.exe$/i.test(c.path));
+      const tag = ((p.cmd || '').match(/--tag (\S+)/) || [])[1] || '?';
+      cmdParent.push({ run: s.runId, snap, tag, cmdPid: p.pid, probeChildren: kids.length });
+    }
+  }
+  for (const w of [...((r.census.windowsWhileAlive || {}).windows || []), ...((r.census.windowsAfterCalls || {}).windows || [])]) {
+    windowsFound++;
+    if (w.visible) windowsVisible++;
+  }
+  const perTag = {};
+  for (const sl of r.stubLogs) {
+    const l = sl.events.find((e) => e.event === 'launch');
+    if (!l) continue;
+    const i = l.argv.indexOf('--tag');
+    const tag = i >= 0 ? l.argv[i + 1] : '?';
+    perTag[tag] = (perTag[tag] || 0) + 1;
+  }
+  launchCounts.push({ run: s.runId, perTag });
+  const stderr = fs.readFileSync(path.join(L.RUNS, s.runId, 'appserver.stderr.txt'), 'utf8');
+  for (const m of stderr.matchAll(/(Resolved "[^"]*" to "[^"]*"|Failed to resolve "[^"]*": [^.]*\. Using original path)/g)) {
+    const line = m[1].replace(/\\\\/g, '\\').split(L.SCR).join('<SCR>');
+    const kk = `${s.kind}: ${line}`;
+    resolverLines.set(kk, (resolverLines.get(kk) || 0) + 1);
+  }
+}
+
+const out = [];
+out.push(`Codex project-registration re-run, ${runs.length} app-server runs (${includeAll ? 'all rounds' : 'rounds 1-3'}), codex ${runs[0] ? runs[0].codex : '?'}`);
+out.push(`Rounds per kind: ${[...new Set(runs.map((r) => r.spec.kind))].map((k) => `${k}=${runs.filter((r) => r.spec.kind === k).length}`).join(' ')}`);
+out.push('');
+out.push('Columns: runs = app-server sessions; loaded = sessions in which Codex reported a startup status for the entry;');
+out.push('ready = status "ready"; answered = the probe answered probe_whoami; image-ok = the probe that answered is the');
+out.push('expected file (for shadow/barepath: the copy first on PATH); argv-clean = the probe received exactly the');
+out.push('arguments the entry configures.');
+out.push('');
+out.push('kind          entry               scope    runs loaded ready answered image-ok argv-clean');
+for (const row of rows.values()) {
+  out.push(`${row.kind.padEnd(13)} ${row.name.padEnd(19)} ${row.scope.padEnd(8)} ${String(row.runs).padStart(4)} ${String(row.loaded).padStart(6)} ${String(row.ready).padStart(5)} ${String(row.answered).padStart(8)} ${String(row.imageExpected).padStart(8)} ${String(row.argvClean).padStart(10)}`);
+}
+out.push('');
+out.push('Errors, by kind and entry:');
+for (const row of rows.values()) for (const e of row.errors) out.push(`  ${row.kind}/${row.name}: ${e}`);
+out.push('');
+out.push('Argument vectors the probe received, where they differ from what the entry configures:');
+for (const row of rows.values()) {
+  if (!row.argvDirty) continue;
+  for (const a of row.argvs) if (a !== row.argvDirty) out.push(`  ${row.kind}/${row.name}: received ${a}, configured ${row.argvDirty}`);
+}
+out.push('');
+out.push('Images that answered, for the kinds where more than one copy could:');
+for (const row of rows.values()) if (row.kind === 'shadow') out.push(`  ${row.kind}/${row.name}: ${[...row.images].map((i) => i.split(L.SCR).join('<SCR>')).join(', ')}`);
+out.push('');
+out.push('Trust: sandbox mode, the trust entry the rig wrote, the entries in the home config after the run, project entries loaded:');
+for (const t of trustRows) out.push(`  ${t.run.padEnd(18)} sandbox=${t.sandbox.padEnd(18)} rig=${String(t.trustWrittenByRig).padEnd(9)} after=${t.trustAfter ? JSON.stringify(t.trustAfter.map((x) => x.trust_level)) : 'not recorded'} loaded=${t.projectEntriesLoaded}/${t.projectEntries}`);
+out.push('');
+out.push('Probe working folders (relative to the run folder):');
+for (const row of rows.values()) out.push(`  ${row.kind}/${row.name}: ${[...row.cwds].join(', ')}`);
+out.push('');
+const cmdAlive = cmdParent.filter((c) => c.probeChildren > 0).length;
+out.push(`cmd.exe processes seen at a census: ${cmdParent.length}; still the parent of a probe at that census: ${cmdAlive}`);
+out.push(`Top-level windows owned by any process of any app-server tree: ${windowsFound}; visible: ${windowsVisible}`);
+out.push('');
+out.push('Launches per server per run (each status list starts another copy):');
+for (const lc of launchCounts) out.push(`  ${lc.run}: ${Object.entries(lc.perTag).sort().map(([t, n]) => `${t}=${n}`).join(' ')}`);
+out.push('');
+out.push('Resolver lines in the app-server log (debug), counted:');
+for (const [k, n] of [...resolverLines.entries()].sort()) out.push(`  ${n}x ${k}`);
+fs.writeFileSync(path.join(L.SCR, `summary${suffix}.txt`), out.join('\n') + '\n');
+const json = [...rows.values()].map((r) => Object.assign({}, r, { errors: [...r.errors], images: [...r.images], argvs: [...r.argvs], cwds: [...r.cwds] }));
+fs.writeFileSync(path.join(L.SCR, `summary${suffix}.json`), JSON.stringify({ runs: runs.map((r) => ({ runId: r.spec.runId, codex: r.codex, startedAt: r.startedAt, startupStatus: r.startupStatus, startupError: r.startupError, path: cutPath(r.spec.env.PATH), localAppData: r.spec.env.LOCALAPPDATA, userProfile: r.spec.env.USERPROFILE, cwd: r.spec.cwd, threadCwd: r.spec.threadCwd, appServerExit: r.appServerExit, killed: r.killed })), rows: json, cmdParent, windowsFound, windowsVisible, launchCounts }, null, 1));
+console.log(out.join('\n'));

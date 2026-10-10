@@ -1,0 +1,101 @@
+# How long after RegisterAI exits does its stdout reach end of file, when it registers
+# BrowserAI with Codex under a scratch CODEX_HOME? Scratch probe, 2026-10-10, not part of
+# the tree. It starts RegisterAI only, which starts codex.exe; it stops nothing, and it
+# reads the process table only to name what is still alive under RegisterAI's pid.
+import json, os, subprocess, sys, threading, time
+
+WT = r'C:\Source\SixFive7\BrowserAI\.work\wt\next'
+TOOL = WT + r'\payload\registerai\RegisterAI.exe'
+SLICE = WT + r'\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish'
+BASE = WT + r'\.work\regai-eof' + (sys.argv[2] if len(sys.argv) > 2 else '')
+RUNS = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+
+os.makedirs(BASE, exist_ok=True)
+
+
+def snapshot():
+    ps = ('Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,ExecutablePath,CreationDate '
+          '| ConvertTo-Json -Compress')
+    out = subprocess.run(['pwsh', '-NoProfile', '-NonInteractive', '-Command', ps], capture_output=True, text=True,
+                         creationflags=0x08000000, stdin=subprocess.DEVNULL).stdout
+    return json.loads(out)
+
+
+def below(rows, root):
+    kids = {}
+    for r in rows:
+        kids.setdefault(r['ParentProcessId'], []).append(r)
+    found, todo = [], [root]
+    while todo:
+        p = todo.pop()
+        for r in kids.get(p, []):
+            found.append({'pid': r['ProcessId'], 'parent': p, 'image': r['ExecutablePath']})
+            todo.append(r['ProcessId'])
+    return found
+
+
+results = []
+for i in range(1, RUNS + 1):
+    run = os.path.join(BASE, f'run-{i:02d}')
+    home = os.path.join(run, 'codexhome')
+    claude = os.path.join(run, 'claudecfg')
+    install = os.path.join(run, 'install')
+    for d in (home, claude, install):
+        os.makedirs(d, exist_ok=True)
+    with open(os.path.join(home, 'config.toml'), 'w', encoding='utf-8') as f:
+        f.write('approval_policy = "never"\nsandbox_mode = "read-only"\nproject_doc_max_bytes = 0\n')
+    env = dict(os.environ)
+    env.update({'CODEX_HOME': home, 'CLAUDE_CONFIG_DIR': claude, 'GIT_TERMINAL_PROMPT': '0', 'GCM_INTERACTIVE': 'never',
+                'DOTNET_CLI_TELEMETRY_OPTOUT': '1'})
+    args = [TOOL, 'register', '--name', 'browserai', '--client', 'codex', '--scope', 'user', '--owned-root', install,
+            '--timeout', '30', '--', os.path.join(SLICE, 'BrowserAI.exe'), '--mcp']
+    t0 = time.perf_counter()
+    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+                         cwd=os.path.dirname(TOOL), creationflags=0x08000000)
+    p.stdin.close()
+    got = {}
+
+    def drain(name, stream):
+        data = stream.read()
+        got[name] = (time.perf_counter(), data)
+
+    threads = [threading.Thread(target=drain, args=('out', p.stdout)), threading.Thread(target=drain, args=('err', p.stderr))]
+    for t in threads:
+        t.start()
+    code = p.wait()
+    exited = time.perf_counter()
+    alive = None
+    threads[0].join(0.5)
+    if threads[0].is_alive():
+        alive = below(snapshot(), p.pid)
+    for t in threads:
+        t.join(120)
+    out_at, out = got.get('out', (None, b''))
+    err_at, err = got.get('err', (None, b''))
+    row = {
+        'run': i,
+        'exit': code,
+        'ranMs': round((exited - t0) * 1000),
+        'stdoutEofAfterExitMs': None if out_at is None else round((out_at - exited) * 1000),
+        'stderrEofAfterExitMs': None if err_at is None else round((err_at - exited) * 1000),
+        'stdoutBytes': len(out),
+        'stderrBytes': len(err),
+        'documentParses': False,
+        'aliveUnderToolWhenEofLate': alive,
+    }
+    try:
+        doc = json.loads(out.decode('utf-8'))
+        row['documentParses'] = doc.get('tool') == 'registerai'
+        row['action'] = [r.get('action') for r in doc.get('results', [])]
+        row['clientPath'] = [r.get('clientPath') for r in doc.get('results', [])]
+        with open(os.path.join(run, 'document.json'), 'wb') as f:
+            f.write(out)
+    except Exception as e:
+        row['parseError'] = str(e)[:200]
+    results.append(row)
+    print(json.dumps(row), flush=True)
+
+with open(os.path.join(BASE, 'results.json'), 'w', encoding='utf-8') as f:
+    json.dump(results, f, indent=1)
+late = [r for r in results if (r['stdoutEofAfterExitMs'] or 0) > 200]
+print(f'runs={len(results)} late={len(late)} max={max(r["stdoutEofAfterExitMs"] or 0 for r in results)}ms')

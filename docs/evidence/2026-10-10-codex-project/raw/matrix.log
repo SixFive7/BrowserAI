@@ -1,0 +1,83 @@
+MATRIX START 2026-10-10T13:39:44Z codex=default
+exp-r1: prepared, 10 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+exp-r1: status={"uctl":"ready","ctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed","argsliteral":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:39:50.562Z"} leftover=0
+rc=0
+expuser-r1: prepared, 8 entries (user), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+expuser-r1: status={"uctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:40:06.496Z"} leftover=0
+rc=0
+alt-r1: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+alt-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:40:27.288Z"} leftover=0
+rc=0
+altsp-r1: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altsp-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:40:47.131Z"} leftover=0
+rc=0
+altspx-r1: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altspx-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:41:03.826Z"} leftover=0
+rc=0
+subdir-r1: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+subdir-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:41:20.651Z"} leftover=0
+rc=0
+before-r1: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+before-r1: status={"uctl":"ready","ctl":"ready","barepath":"failed","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:41:37.062Z"} leftover=0
+rc=0
+shadow-r1: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+shadow-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:41:53.495Z"} leftover=0
+rc=0
+untrusted-r1: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrusted-r1: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:42:09.966Z"} leftover=0
+rc=0
+exp-r2: prepared, 10 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+exp-r2: status={"uctl":"ready","ctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed","argsliteral":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:42:26.289Z"} leftover=0
+rc=0
+expuser-r2: prepared, 8 entries (user), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+expuser-r2: status={"uctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:42:42.093Z"} leftover=0
+rc=0
+alt-r2: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+alt-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:42:58.437Z"} leftover=0
+rc=0
+altsp-r2: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altsp-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:43:14.634Z"} leftover=0
+rc=0
+altspx-r2: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altspx-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:43:30.841Z"} leftover=0
+rc=0
+subdir-r2: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+subdir-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:43:46.910Z"} leftover=0
+rc=0
+before-r2: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+before-r2: status={"uctl":"ready","ctl":"ready","barepath":"failed","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:44:03.353Z"} leftover=0
+rc=0
+shadow-r2: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+shadow-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:44:19.411Z"} leftover=0
+rc=0
+untrusted-r2: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrusted-r2: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:44:35.421Z"} leftover=0
+rc=0
+exp-r3: prepared, 10 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+exp-r3: status={"uctl":"ready","ctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed","argsliteral":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:44:51.124Z"} leftover=0
+rc=0
+expuser-r3: prepared, 8 entries (user), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+expuser-r3: status={"uctl":"ready","braced_fwd":"failed","braced_back":"failed","bare_fwd":"failed","bare_back":"failed","percent_fwd":"failed","percent_back":"failed","tilde_fwd":"failed","tilde_back":"failed"} exit={"code":0,"signal":null,"at":"2026-10-10T13:45:06.981Z"} leftover=0
+rc=0
+alt-r3: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+alt-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:45:23.093Z"} leftover=0
+rc=0
+altsp-r3: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altsp-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:45:39.236Z"} leftover=0
+rc=0
+altspx-r3: prepared, 7 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+altspx-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap":"failed","cmdwrap_v":"ready","cmdwrap_v_console":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:45:55.562Z"} leftover=0
+rc=0
+subdir-r3: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+subdir-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:46:11.683Z"} leftover=0
+rc=0
+before-r3: prepared, 5 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+before-r3: status={"uctl":"ready","ctl":"ready","barepath":"failed","cmdwrap_v":"ready","tildepath":"ready","relcmd":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:46:27.843Z"} leftover=0
+rc=0
+shadow-r3: prepared, 4 entries (project), trusted=true, removed PATH entries holding a BrowserAI binary: 0
+shadow-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:46:46.033Z"} leftover=0
+rc=0
+untrusted-r3: prepared, 4 entries (project), trusted=false, removed PATH entries holding a BrowserAI binary: 0
+untrusted-r3: status={"uctl":"ready","ctl":"ready","barepath":"ready","cmdwrap_v":"ready","tildepath":"ready"} exit={"code":0,"signal":null,"at":"2026-10-10T13:47:02.511Z"} leftover=0
+rc=0
+MATRIX END 2026-10-10T13:47:12Z
