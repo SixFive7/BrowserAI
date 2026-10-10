@@ -2026,7 +2026,7 @@ release body; nothing else depends on it.
   task's state as after any clean end. `BackgroundRecordTests` and `BackgroundFinderTests` hold
   it, planted red first.
 
-- 🐛 **The background's stop waits for a connection it accepted while stopping, and one relay that cannot be told to end costs only itself.**
+- 🐛 **The background's stop waits for a late connection, and one relay that fails costs only itself.**
   The maintainer's 9 a. The stop took its list of connections before it joined its listener,
   so one the listener had just accepted ran on past the stop; and ending the relays for an
   update stopped at the first relay whose connection failed with anything but a broken pipe,
@@ -2038,7 +2038,7 @@ release body; nothing else depends on it.
   every uninstall took the class back. Now an uninstall takes it back only when it starts that
   install's own program. `ToastActivationTests` holds it over two roots, planted red first.
 
-- ✅ **`AppBinaryTests` and `SandboxFlagTests` no longer go red over a file or a process that is not theirs.**
+- ✅ **`AppBinaryTests` and `SandboxFlagTests` no longer go red over a file or process not theirs.**
   The first read a stale `BrowserAI.exe` that a build before 2026-10-08 left in the
   configuration app's output and no later build removes, which cost four lanes a red each; it
   now reads whether the app's assembly, as the current build produced it, has an entry point. The
