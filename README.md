@@ -94,7 +94,9 @@ tells you why.)*
 running `codex mcp add` with `CODEX_HOME` pointed at that `.codex` folder, so the
 file is Codex's own. ⚠️ **Codex reads a project's own configuration only in a
 project you have trusted**, so the entry does nothing in a folder Codex has not been
-told to trust. **The entry names `BrowserAI.exe` with `--mcp` and no folder** *(`BrowserAI.Server.exe`
+told to trust. A Codex running with full access trusts a project itself when it opens its
+first thread there, and writes that into your own Codex configuration, measured on
+2026-10-10 ([kb](kb/mcp/protocol.md#codex-expands-nothing-in-a-servers-command-and-finds-a-bare-name-on-the-servers-path----measured-2026-09-24)). *(Added 2026-10-10.)* **The entry names `BrowserAI.exe` with `--mcp` and no folder** *(`BrowserAI.Server.exe`
 until 2026-10-08)*, because
 Codex expands no variable in a server's command -- measured: none of four spellings of
 `LOCALAPPDATA` started anything in 48 attempts -- so the portable spelling above does
@@ -103,8 +105,12 @@ BrowserAI's own `current` folder on your user PATH** and the uninstaller takes i
 again, so the same committed file serves every machine with BrowserAI installed.
 ⚠️ **Restart Codex after installing BrowserAI**: a Codex that was already running
 keeps the PATH it started with and will not find the server until it is started again.
-Both follow from how Codex builds a server's environment, read in its source, and
-neither has been measured end to end.
+Both are measured: a Codex started after the install found the server 3 of 3 through
+the suite's test installer on 2026-09-25, and 24 of 24 with a stand-in at codex-cli
+0.162.0-alpha.2 on 2026-10-10; one started before it found it 0 of 3 and 0 of 6
+([kb](kb/mcp/protocol.md#codex-expands-nothing-in-a-servers-command-and-finds-a-bare-name-on-the-servers-path----measured-2026-09-24)).
+*Corrected 2026-10-10 (previously "Both follow from how Codex builds a server's
+environment, read in its source, and neither has been measured end to end.").*
 *(Until 2026-09-24 the entry carried this machine's absolute path, which was right on
 the machine that wrote it and on no other.)*
 
@@ -116,6 +122,13 @@ at or above that folder also offers *Remove BrowserAI from that project*, naming
 file. Started from the Start Menu, BrowserAI starts in its own install folder and finds
 none, so only the first button appears. *(The window's links until 2026-10-03.)* Neither removes another install's entry: one
 found in the folder you pick is reported and left alone.
+
+**When a registration or a removal in a project cannot be done**, the page says what
+happened and gives what fixes that project's own file: the entry to put into it, written
+the way the registration would have written it, or that BrowserAI's `browserai` entry is
+to be deleted from it. *Changed 2026-10-10 (previously a registration in a project that
+was not done offered the line that registers BrowserAI for all your projects, with
+`${LOCALAPPDATA}` left for your shell to expand, and a removal the line that adds it).*
 
 This is an addition, not a replacement: registering for **all** your
 projects is still one entry in your own configuration with no file in any
