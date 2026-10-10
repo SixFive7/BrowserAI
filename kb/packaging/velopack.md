@@ -1027,6 +1027,19 @@ that no lock file can see.
 makes the update lane testable at all without pointing an installer at the real
 `%LocalAppData%\BrowserAI`.
 
+*Read again 2026-10-10 @ Velopack 1.2.161, for round 2 of the texts review: the flag is
+the same under the name the release ships the installer as.* The release script
+renames `vpk`'s `<pack id>-<channel>-Setup.exe` to `BrowserAI.exe`
+(`build/New-Release.ps1`, the download rename), and the installer's own parser is
+clap's `Command::new("Setup")` over the process's arguments, built in `main_inner` of
+`src/bins/src/setup.rs` at the 1.2.161 tag, so the file's name is never read for an
+option. The renamed form is also what every gate runs: the suite's installer is the
+same `Setup.exe` renamed to `BrowserAI.test-installer.exe` by the same rename, and
+`RealInstallerTests` installs it with `--silent --installto <scratch>`, which exits 0.
+The shipping `BrowserAI.exe` itself was not run, because running it installs. To
+re-establish, read `main_inner` in `setup.rs` at the pinned tag, and read a gate's
+`RealInstallerTests` arms.
+
 ### A version-string sweep over a publish directory is too broad to use
 
 `[STABLE]` -- this is about how NuGet packages are built, not about Velopack.

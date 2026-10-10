@@ -122,9 +122,9 @@ release body; nothing else depends on it.
 - ✨ **Every session's browser closes after its own idle time, and a visible window after an hour.**
   E2, the maintainer's words verbatim: *"What if we change the never to 1 hour and then allow the
   calling agent to change this default behaviour with a parameter?"* `browserai_init` and
-  `browserai_resume` take `idleMinutes`, a whole number of minutes or `never`, with ten minutes
-  without a window and sixty with one when a call names none. A visible window was never closed
-  for being idle until now. Every call that names a live session starts its countdown again,
+  `browserai_resume` take `idleMinutes`, a whole number of minutes or `never`, which every call
+  states since F2, and ten minutes without a window and sixty with one are the defaults a longer
+  time is held back against. A visible window was never closed for being idle until now. Every call that names a live session starts its countdown again,
   whatever the answer, a refused call and BrowserAI's own tools included, where only a forwarded
   call did; a resume of a live session says so and names no time. Upstream's own one-hour idle
   timeout is off for every launch, so BrowserAI's countdown is the only one, and the update and
@@ -136,9 +136,10 @@ release body; nothing else depends on it.
   browserai_close could then not just become a single thing."* and *"f1 a"*. The ninth tool of
   BrowserAI's own asks the browser to close itself, gives it up to a minute to write what it holds
   to disk, ends its browser server and answers; the profile with its logins and cookies, the site
-  storage and the tabs with their history are kept, and every later call naming the session is
-  refused, quoting who closed it and why, until `browserai_resume`. A session with no browser up
-  is closed without starting one. `browser_close` describes itself as closing the page, while in
+  storage and the tabs with their history are kept, and every later browser call naming the
+  session is refused, quoting who closed it and why, until `browserai_resume`; `browserai_catch_up`,
+  `browserai_change_purpose`, `browserai_destroy` and `browserai_close` itself still answer it. A
+  session with no browser up is closed without starting one. `browser_close` describes itself as closing the page, while in
   BrowserAI it ends the whole browser, so it is a `deny` row now: out of the tool list, and a call
   naming it gets the answer any tool BrowserAI does not have gets, with no text of its own, in his
   words *"do not make an exception"*. BrowserAI still sends `browser_close` to a session's own
@@ -193,12 +194,13 @@ release body; nothing else depends on it.
   environment, which goes stale at `/clear`; then from `--resume` or `--session-id` on its command
   line. Its name is the one its VS Code tab shows, by the extension's own rule over the first and the
   last 64 KB of the session's record, and a conversation with no record yet is *new conversation in
-  &lt;folder&gt;*. A Codex conversation is the thread its first call names, called by the name Codex
+  `<folder>`*. A Codex conversation is the thread its first call names, called by the name Codex
   gave it; else by its first message, from Codex's state database or the thread's own record, on
-  one line and cut past 200 characters; or *Codex in &lt;folder&gt;*. The files are read when the
+  one line and cut past 200 characters; or *Codex in `<folder>`*. The files are read when the
   dashboard or the toast is drawn and never held open, and a VS Code window's tabs are listed
-  together under *VS Code window on &lt;folder&gt;*. The toast's reconnect line names two
-  conversations of each kind, each cut as its tab cuts it, and counts the rest. These are another
+  together under *VS Code window on `<folder>`*. The toast's reconnect line spells out two
+  conversations of each kind while the line fits three lines of 50 characters, then one of each
+  kind, then none, each cut as its tab cuts it, and counts the rest. These are another
   product's undocumented files, so every read that fails falls back to the next source, and
   nothing writes a title, a prompt or a session id to a log. `ConversationReaderTests`,
   `CodexStateTests`, `ClaudeCodeTitleTests`, `ClientRecognitionTests`,
@@ -262,14 +264,15 @@ release body; nothing else depends on it.
   **The page proves itself by its address, and nothing else gets in (Q334 a, Q335 a).** The
   listener is Kestrel from ASP.NET Core's empty builder (Q340 b), on `127.0.0.1` alone and a
   port Windows picks. Its address carries 256 random bits made for each listener and handed out
-  only through the coordinator's pipe, which admits the current user alone. One gate runs before
+  only through the background's own pipe, which admits the current user alone. One gate runs before
   any route: the token, exactly one `Host` of `127.0.0.1` and the port, a browser's
   `Sec-Fetch-Site` from the page itself or from outside the browser, and on a write our own
   `Origin`, a JSON body and at most 64 KB. Everything it does not admit gets a 404 with nothing
   in it, and no cookie is ever set. Another Windows user on the machine can reach the port and
-  is kept out by the token alone, which is a hazard row of its own. The hidden process stays
+  is kept out by the token alone, which is a hazard row of its own. The page's listener stays
   while a tab is connected and stops a minute after the last one closes, so a reload keeps
-  working (Q336 a), and a newer tab tells an older one to close itself (Q337 a).
+  working (Q336 a), and the background itself stays; a newer tab tells an older one to close
+  itself (Q337 a).
 
 - ✨ **Every server answers on a named pipe of its own: who it is, what it holds, and a stop.**
   Q284 a, the maintainer's words verbatim: *"Q284 a"*. A server opens
@@ -983,7 +986,8 @@ release body; nothing else depends on it.
   whose background is the scheduler's process, serves the dashboard and keeps a session across
   a killed relay; a relay started during an update; a deleted task, named after the hold and
   registered again by a Start Menu start; a disabled one, left disabled; and a data root
-  BrowserAI refuses, whose start is now recorded as the crash it is. The install hook now keeps
+  BrowserAI refuses, whose start is recorded as a refusal of its own, which every call is told at
+  once with the root, why and how to put it right. The install hook now keeps
   the task's definition beside the install even when the Task Scheduler refused the task,
   which is the case a Start Menu start registers it from. A relay started before its
   background now reaches it once it starts: the relay's look timer, which fires a little early
@@ -1015,8 +1019,9 @@ release body; nothing else depends on it.
   `captureNetwork` and `idleMinutes`, and a call that leaves any of them out is
   refused, naming every one it left out, and nothing is created or changed. Each is something a
   person notices: a window on their screen, what is written to disk in plain text, and how long the
-  browser stays open and holds updates back. `viewport`, `locale`, `timezone`,
-  `ignoreHTTPSErrors` and `debug` keep this machine's defaults when a call leaves them out.
+  browser stays open and holds BrowserAI's automatic updates back. `viewport`, `locale`,
+  `timezone`, `ignoreHTTPSErrors` and `debug` keep their defaults when a call leaves them out:
+  1920x1080, this machine's locale and time zone, and false.
 - 🔧 **A resume that changes a session's settings is held back once, then switches the browser itself.**
   F2 d and F1 a, the maintainer's words verbatim: *"explain in the hold text what parameter is
   different, what the previous values was and what the newly requested value was."* Every opening
@@ -2092,6 +2097,82 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A call whose browser server ends under it is answered with what happened and how to go on.**
+  Found by lane FINAL, in the one red of `ScreenshotLimitTests` nobody could explain. The call was
+  answered with the transport's own words and the .NET exception's name, which reached a model as
+  *TaskCanceledException*, and `browserai_catch_up` showed the exception's stack trace. Both say
+  now that the browser server for that directory ended during the call, that part of the call may
+  have happened, and that `browserai_resume` starts a replacement; the stack trace is the session
+  log's. `LosslessPassthroughTests` holds the answer and `ErrorCatalogueTests` the record, each
+  planted red first.
+
+- 🐛 **When Unregister cannot remove BrowserAI from a client, the line it offers removes it.**
+  Lane TEXTS2, from round 2 of the texts review. A removal that failed, from the page's
+  Unregister or from the uninstall hook, was answered with the `claude mcp add` or `codex mcp add`
+  line, which registers BrowserAI again. It offers `claude mcp remove browserai --scope user` or
+  `codex mcp remove browserai` now, an uninstall whose pass throws says the same, and with no
+  client to remove BrowserAI from the answer says that nothing was changed. A removal from a
+  project is unchanged and waits on the maintainer's answer about project registrations. Over
+  another install's entry in a project, the advice names that file and the page's *Register in
+  a project*, since the user-scope line it gave changes nothing there. `RegisterAiTests` holds
+  both, planted red first.
+
+- 🐛 **A BrowserAI the Start Menu cannot start is no longer told to start from it.**
+  Lane TEXTS2, from round 2 of the texts review. A build started from a checkout or a publish
+  folder whose background crashed, hung, never opened its pipe or stopped under a call told the
+  person to start BrowserAI from the Start Menu, which starts the installed BrowserAI and never
+  this one. Each of those answers names the command that starts this build's background now, with
+  its data root, as the answer for a background that is not running already did. An installed
+  BrowserAI whose pack id is unknown has a scheduled task with no name, so no start of it starts
+  the background, and it is told to install BrowserAI again. `RelayTests` and
+  `BackgroundFinderTests` hold both, planted red first, and `BackgroundProcessTests` holds the
+  crash's form through the published background.
+
+- 📦 **A release the drift check refuses prints the reasons and that no release was cut.**
+  Lane TEXTS2, from round 2 of the texts review. `Test-DriftCheck.ps1` refuses with an error that
+  `$ErrorActionPreference = 'Stop'` makes terminating, which ended `New-Release.ps1` before its own
+  sentence, so *No release was cut* was never printed. The script prints it now beneath the drift
+  check's reasons, which name the file they read, and a drifted row that names neither version
+  says so where the sentence used to end at its colon. `ReleaseScriptTests` holds both, planted
+  red first.
+
+- ✅ **The arm that classifies a release directory's files skips where no release was cut.**
+  Found by lane FINAL. In a fresh worktree `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished`
+  failed, because the capability it asked for was met by the test pack's twin under
+  `test-pack\twin\`, and no shipping release was there to classify. It asks for a capability of its
+  own now, `shipping release`, which reads ABSENT there and skips the arm loudly, naming how to
+  cut or copy one in; a release run fails on it. Watched red against a fresh worktree's
+  `Releases\` first, and watched skip against the same.
+
+- 🐛 **Tool descriptions and refusals say what a window, a close and an update do.**
+  Lane TEXTS2, from round 2 of the texts review, for the maintainer's wording on the page.
+  `headed` says the person's Install now closes a visible window too, and that switching between
+  visible and hidden closes the browser and opens it again, keeping what a clean close keeps; the
+  line every answer that opens a window ends with says the same. `browserai_close` names all four
+  tools that still answer a closed session, itself included. A refusal for a setting left unstated
+  says the updates it holds back are BrowserAI's automatic ones, the background's three close
+  reasons say it closed the session, which may have had no browser up, and a failed browser
+  install is told without a .NET type name, with the installer's error line on a line of its own.
+  An update that ends a call already passed on no longer has the client told to call again. The
+  init, resume and catch-up descriptions are shorter, at 1,769, 1,747 and 1,757 of the 2,048
+  characters a client hands a model whole. `ProvisioningTests` holds the install's two, planted
+  red first; the rest is wording, and every test that holds a text passes.
+
+- 🐛 **The pages and the process log say in words what happened, with one event id per line.**
+  Lane TEXTS2, from round 2 of the texts review. The sessions page says a client's connection
+  ends when the client closes it or exits, and when an update installs; the update page names a
+  conversation's folder once, names the version that starts after Install now, a rollback's
+  included, and answers a button for a version no longer waiting with the one the page shows now;
+  and the command a client starts quotes its data root whenever it carries one. In the process
+  log a relay's refusal, its conversation, its end, the background's end, the uninstall hook's
+  stop and the Task Scheduler's refusal are sentences in place of enum names; the background's
+  stop waits only for connections still open, and writes nothing when there are none; a root the
+  start could not judge names what a shared root costs; and `BrowserAI.Background` and
+  `BrowserAI.Relay` give each line an event id of its own. `ProcessLogTests` holds the ids,
+  `BackgroundServerTests` the stop's wait, and `UpdatePageTests` and `PageRegistrationTests` the
+  pages' lines, each planted red first; the rest is wording, and every test that holds a text
+  passes.
+
 - 🐛 **A data root BrowserAI refuses is answered with what is wrong and how to fix it.**
   The maintainer's 9 a. A background that would not serve out of a data root or an install root
   outside the person's profile was recorded as a crash, so every call met the crash sentence,
@@ -2143,8 +2224,9 @@ release body; nothing else depends on it.
   5 a. `%LocalAppData%\BrowserAI-test-scratch` serves every checkout of the repository, and each run
   deleted everything in it, so a run in one worktree deleted a live gate's app roots in another, as
   happened on 2026-10-08. Each folder there now has an owner record naming the process that made it,
-  the cleanup takes only folders whose owner has exited, and every folder it deletes is a line in the
-  machine's process log with the time and the deleting process. `ScratchReclaimTests` drives the
+  the cleanup takes only a folder whose owner has exited or one with no owner record made more than
+  a day ago, and every folder it deletes is a line in the machine's process log with the time and
+  the deleting process. `ScratchReclaimTests` drives the
   cleanup from a second test host, watched red first against the old one.
 
 - ✅ **The hundred-relay arm's cleanup takes only the instance folder its own background made.**

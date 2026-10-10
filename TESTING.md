@@ -262,7 +262,11 @@ The reclaim pass runs before anything else and is idempotent:
   and the deleting process's pid and creation time, so the next deletion names its
   deleter. `ScratchReclaimTests.AnotherTestHostsReclaimTakesOnlyTheFoldersWhoseOwnersAreGone`
   drives the pass from a second test host while the first holds a folder, and was
-  watched red against the old pass, which deleted that folder with the rest. **The
+  watched red against the old pass, which deleted that folder with the rest. A folder
+  that went only in part is `BrowserAI.Tests.ScratchReclaim[2]`, which says how many
+  nodes would not go and that the folder keeps its owner record until a later pass takes
+  the rest -- *added 2026-10-10 by addition, round 2 of the texts review (previously the
+  `[1]` line said such a folder was deleted)*. **The
   repository's own scratch keeps the old pass**: it is one per checkout, so what
   keeps two runs in one checkout apart is still the suite lock, which nothing
   enforces.
@@ -527,6 +531,19 @@ release publish. In a release run the `release installer` capability compares th
 with the release publish (`ReleaseLayout.PackedBinaries`), and the slice arms still drive
 the dev publishes, so a release gate needs both publishes. The driver scan above holds
 both halves, and was watched red against the two release drivers as they stood.
+
+⚠️ **The arm that classifies the release directory's files asks for a shipping release of
+its own** -- *added 2026-10-10 by addition, round 2 of the texts review, found by lane
+FINAL.* `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished` reads every file a
+pack leaves at the top of `Releases\`, and it asked for the `packed release` capability,
+which the test pack's twin under `test-pack\twin\` satisfies, so in a fresh worktree, where
+the gate's test pack is the only pack there is, it failed on a directory with nothing at its
+top. It asks for `shipping release` now, a shipping pack's full package at the top of the
+directory (`SuiteEnvironment.RequireShippingRelease`), which reads ABSENT there and skips the
+arm loudly, naming `build/New-Release.ps1` and the main checkout's `Releases` folder; a
+release run fails on it, since a release is cut into that directory before it is gated.
+Watched red against a copy of a fresh worktree's `Releases\` holding only the twin, and
+watched skip against the same.
 
 ### The installer lock is the suite's own
 
