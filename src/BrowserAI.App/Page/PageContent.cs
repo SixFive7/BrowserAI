@@ -108,7 +108,10 @@ internal static class PageContent
     /// <b>The maintainer's 10 b, 2026-10-10.</b> The session that met a browser server
     /// listing different tools was refused, and every session will be until BrowserAI is
     /// reinstalled; the model was told so in the refusal, and the person is told here and
-    /// by one toast, whose button opens the status page.
+    /// by one toast, whose button opens the status page. ⚠️ <i>Corrected 2026-10-10
+    /// (previously "To reinstall, run BrowserAI-win-Setup.exe again, the installer from the
+    /// latest release."): the release ships the installer as <c>BrowserAI.exe</c>, and the
+    /// notice names it as README's recovery note does.</i>
     /// </remarks>
     /// <param name="difference">The first difference, as the refusal words it.</param>
     /// <returns>The HTML.</returns>
@@ -117,9 +120,9 @@ internal static class PageContent
         + "<p><strong>BrowserAI needs reinstalling.</strong> Part of this install does not match the rest: the browser server it starts for every session lists different tools from the ones this BrowserAI was built with, and the first difference is "
         + Text(difference)
         + ". Every session is refused until BrowserAI is reinstalled.</p>"
-        + "<p>To reinstall, run BrowserAI-win-Setup.exe again, the installer from <a href=\""
+        + "<p>To reinstall, download BrowserAI.exe from <a href=\""
         + ReleasesUrl
-        + "\" target=\"_blank\" rel=\"noopener noreferrer\">the latest release</a>. It installs over this install, and every session, with its profile and its files, is kept.</p>"
+        + "\" target=\"_blank\" rel=\"noopener noreferrer\">the latest release</a> and run it. It installs over this install, and every session, with its profile and its files, is kept.</p>"
         + "</div>\n";
 
     /// <summary>Encodes text for HTML, attribute values included.</summary>

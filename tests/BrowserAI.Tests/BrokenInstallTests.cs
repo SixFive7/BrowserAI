@@ -63,7 +63,10 @@ internal sealed class BrokenInstallTests
 
         await Assert.That(toast.Xml).StartsWith("<toast scenario=\"reminder\" launch=\"action=status-page\">");
         await Assert.That(toast.Xml).Contains("<text>BrowserAI needs reinstalling</text>");
-        await Assert.That(toast.Xml).Contains("Run BrowserAI-win-Setup.exe again");
+        // The installer as the release ships it and README names it, since 2026-10-10
+        // (previously "Run BrowserAI-win-Setup.exe again", a name no release carries).
+        await Assert.That(toast.Xml).Contains("Download BrowserAI.exe from the latest release and run it");
+        await Assert.That(toast.Xml).DoesNotContain("Setup.exe");
         await Assert.That(toast.Xml).Contains("<action content=\"How to reinstall\" arguments=\"action=status-page\" activationType=\"background\"/>");
         await Assert.That(toast.SuppressPopup).IsFalse();
         await Assert.That(notice.Difference).IsEqualTo("'browser_click', which this BrowserAI does not have");
@@ -173,7 +176,8 @@ internal sealed class BrokenInstallTests
             await Assert.That(html).StartsWith("<div class=\"note broken\" role=\"alert\">").Because(PageNames.Of(kind));
             await Assert.That(html).Contains("BrowserAI needs reinstalling.");
             await Assert.That(html).Contains(PageContent.Text(Difference));
-            await Assert.That(html).Contains("BrowserAI-win-Setup.exe");
+            await Assert.That(html).Contains("To reinstall, download BrowserAI.exe from");
+            await Assert.That(html).DoesNotContain("Setup.exe");
             await Assert.That(html).Contains(PageContent.ReleasesUrl);
         }
 

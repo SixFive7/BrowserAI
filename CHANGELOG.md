@@ -46,10 +46,10 @@ release body; nothing else depends on it.
   broken install, and the model is told to stop and say that BrowserAI needs reinstalling. Now
   the person is told as well, once per run of the background: a toast that stays until it is
   acted on, under a tag of its own, whose button opens the dashboard, and a notice first on
-  every page of the dashboard, for as long as the condition stands, saying what is wrong, to run
-  `BrowserAI-win-Setup.exe` again and that the sessions are kept. A later session whose server
-  matches again takes both away. `BrokenInstallTests` holds it through the product's own session
-  host, planted red first.
+  every page of the dashboard, for as long as the condition stands, saying what is wrong, to
+  download `BrowserAI.exe` from the latest release and run it, and that the sessions are kept. A
+  later session whose server matches again takes both away. `BrokenInstallTests` holds it
+  through the product's own session host, planted red first.
 
 - ✅ **The four paths the one-binary build left untested are held.**
   A relay reading the exit code of the background it held, the uninstall hook's stop when the

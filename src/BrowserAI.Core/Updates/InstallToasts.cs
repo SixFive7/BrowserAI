@@ -29,7 +29,10 @@ internal interface IInstallHealth
 /// <b>The maintainer's 10 b, 2026-10-10, as the root briefed it</b>: one toast per
 /// background run, through lane UI's toast machinery, under a tag of its own, with no
 /// timeout like the update toasts, and a button that opens the dashboard's explanation of
-/// how to reinstall: run <c>BrowserAI-win-Setup.exe</c> again, and the data is kept.
+/// how to reinstall: download <c>BrowserAI.exe</c> from the latest release and run it, and the
+/// data is kept. <i>Corrected 2026-10-10 (previously "run <c>BrowserAI-win-Setup.exe</c>
+/// again"): the release ships the installer as <c>BrowserAI.exe</c>, and README's recovery
+/// note names it that way.</i>
 /// </para>
 /// <para>
 /// <b>Its own tag and its own group</b>, so raising an update toast, which removes the
@@ -52,7 +55,7 @@ internal static class InstallToastContent
             UpdateToastContent.Arguments(ToastAction.StatusPage, null),
             [
                 "BrowserAI needs reinstalling",
-                "Part of this install does not match the rest, so no browser session can open. Run BrowserAI-win-Setup.exe again; your sessions and their files are kept.",
+                "Part of this install does not match the rest, so no browser session can open. Download BrowserAI.exe from the latest release and run it; your sessions and their files are kept.",
             ],
             null,
             ("How to reinstall", UpdateToastContent.Arguments(ToastAction.StatusPage, null)),
