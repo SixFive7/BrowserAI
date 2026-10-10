@@ -1,0 +1,114 @@
+// Codex batches for the C# harness, codex-cli 0.162.0.
+// usage: node gencx.js <batch> <reps> a|b
+//  phase a, per rep (CODEX_HOME rep\home, folder proj\x):
+//    exec   codex exec --skip-git-repo-check "..."              (pipes)
+//    app2   codex app-server: two threads, one turn in each       (pipes, JSON-RPC)
+//    tui    codex --no-daemon, one prompt, /quit                  (pseudoconsole)
+//  phase b, per rep: codex exec resume <the exec run's thread id> "..." (read from phase a's rollouts)
+// Codex hands an MCP server an allowlisted environment, so each run rewrites config.toml with its
+// own log folder before it starts.
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const C = require('./common');
+
+const [batch, repsArg, phase] = process.argv.slice(2);
+const reps = Number(repsArg || 3);
+const BATCHDIR = `${C.S}\\runs\\${batch}`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.writeFileSync(POLICY, JSON.stringify({ logDir: BATCHDIR, tag: 'model', server: 'idstub', realTool: 'ping' }));
+const rpc = (id, method, params) => JSON.stringify(id === null ? { jsonrpc: '2.0', method, ...(params !== undefined && { params }) } : { jsonrpc: '2.0', id, method, params });
+const calls = (run, n, ms) => ({ do: 'waitFileMatch', dir: run, pattern: 'idstub-*.wire.jsonl', regex: '"method":"tools/call"', count: n, timeoutMs: ms || 90000 });
+const runs = [];
+for (let r = 1; r <= reps; r++) {
+  const rep = `${BATCHDIR}\\r${r}`;
+  const home = `${rep}\\home`;
+  fs.mkdirSync(home, { recursive: true });
+  const cfgFor = (run, arm) => [{ path: `${home}\\config.toml`, content: C.cxConfig(home, `${batch}-r${r}-${arm}`, run) }];
+  const env = (arm) => C.cxEnv(home, `${batch}-r${r}-${arm}`);
+  if (phase === 'a') {
+    let run = `${rep}\\exec`;
+    runs.push({ name: `r${r}-exec`, dir: run, exe: C.BIN.cx, args: ['exec', '--skip-git-repo-check', `Codex exec r${r}. Please call the ping tool once.`], cwd: C.PROJ.x, env: env('exec'), console: 'pipes', stdin: 'closed', maxMs: 120000, settleMs: 15000, writeFiles: cfgFor(run, 'exec'), steps: [] });
+    run = `${rep}\\app2`;
+    runs.push({ name: `r${r}-app2`, dir: run, exe: C.BIN.cx, args: ['app-server'], cwd: C.PROJ.x, env: env('app2'), console: 'pipes', stdin: 'pipe', autoReplyJsonRpc: true, maxMs: 150000, settleMs: 15000, writeFiles: cfgFor(run, 'app2'),
+      steps: [
+        { do: 'send', line: rpc(1, 'initialize', { clientInfo: { name: 'tabrig_host', title: 'TabRig Host', version: '1.0.0' }, capabilities: { experimentalApi: true } }) },
+        { do: 'waitFor', pattern: '"id":1[,}]', timeoutMs: 60000 },
+        { do: 'send', line: rpc(null, 'initialized') },
+        { do: 'send', line: rpc(2, 'thread/start', { cwd: C.PROJ.x }) },
+        { do: 'waitFor', pattern: '"id":2,"result".*?"thread":\\{.*?"id":"(?<t1>[0-9a-f-]{36})"', timeoutMs: 60000 },
+        { do: 'send', line: rpc(3, 'thread/start', { cwd: C.PROJ.x }) },
+        { do: 'waitFor', pattern: '"id":3,"result".*?"thread":\\{.*?"id":"(?<t2>[0-9a-f-]{36})"', timeoutMs: 60000 },
+        { do: 'sleep', ms: 2000 },
+        { do: 'send', line: rpc(4, 'turn/start', { threadId: '$t1', input: [{ type: 'text', text: `Thread one r${r}. Please call the ping tool once.` }] }) },
+        { do: 'waitFor', pattern: '"method":"turn/completed"', timeoutMs: 90000 },
+        { do: 'send', line: rpc(5, 'turn/start', { threadId: '$t2', input: [{ type: 'text', text: `Thread two r${r}. Please call the ping tool once.` }] }) },
+        { do: 'waitFor', pattern: '"method":"turn/completed"', timeoutMs: 90000 },
+        calls(run, 2, 30000), { do: 'sleep', ms: 2500 }, { do: 'closeStdin' },
+      ] });
+    run = `${rep}\\tui`;
+    runs.push({ name: `r${r}-tui`, dir: run, exe: C.BIN.cx, args: ['--no-daemon'], cwd: C.PROJ.x, env: env('tui'), console: 'pty', ptyNullStdHandles: true, maxMs: 150000, settleMs: 15000, writeFiles: cfgFor(run, 'tui'),
+      steps: [
+        { do: 'waitGlobCount', dir: run, pattern: 'idstub-*.listed', count: 1, timeoutMs: 90000 }, { do: 'sleep', ms: 3000 }, { do: 'snap', text: 'up' },
+        { do: 'type', text: `Codex terminal r${r}. Please call the ping tool once.` }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' },
+        calls(run, 1, 90000), { do: 'sleep', ms: 4000 }, { do: 'snap', text: 'after turn' },
+        { do: 'type', text: '/quit' }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 5000 },
+      ] });
+  } else if (phase === 'd') {
+    // The Codex terminal UI as it starts by default: through the background app-server it installs
+    // under CODEX_HOME. Its socket path must fit in SUN_LEN, so this home is short and outside rep\.
+    // After /quit the run stops that background server the documented way.
+    const dhome = `${C.S}\\h\\d${r}`;
+    fs.mkdirSync(dhome, { recursive: true });
+    const run = `${rep}\\tuid`;
+    runs.push({ name: `r${r}-tuid`, dir: run, exe: C.BIN.cx, args: [], cwd: C.PROJ.x, env: C.cxEnv(dhome, `${batch}-r${r}-tuid`), console: 'pty', ptyNullStdHandles: true, maxMs: 180000, settleMs: 20000,
+      writeFiles: [{ path: `${dhome}\\config.toml`, content: C.cxConfig(dhome, `${batch}-r${r}-tuid`, run) }],
+      steps: [
+        { do: 'waitGlobCount', dir: run, pattern: 'idstub-*.listed', count: 1, timeoutMs: 90000 }, { do: 'sleep', ms: 3000 }, { do: 'snap', text: 'up' },
+        { do: 'type', text: `Codex daemon terminal r${r}. Please call the ping tool once.` }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' },
+        calls(run, 1, 90000), { do: 'sleep', ms: 4000 }, { do: 'snap', text: 'after turn' },
+        { do: 'type', text: '/quit' }, { do: 'sleep', ms: 700 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 4000 },
+        { do: 'mark', text: 'TUI quit; stopping the background app-server' },
+        { do: 'exec', exe: C.BIN.cx, args: ['app-server', 'daemon', 'stop'], timeoutMs: 60000 }, { do: 'sleep', ms: 3000 },
+      ] });
+  } else if (phase === 'c') {
+    // A thread named through the app-server (what the desktop app's rename does), then a second turn.
+    const run = `${rep}\\appname`;
+    runs.push({ name: `r${r}-appname`, dir: run, exe: C.BIN.cx, args: ['app-server'], cwd: C.PROJ.x, env: env('appname'), console: 'pipes', stdin: 'pipe', autoReplyJsonRpc: true, maxMs: 150000, settleMs: 15000, writeFiles: cfgFor(run, 'appname'),
+      steps: [
+        { do: 'send', line: rpc(1, 'initialize', { clientInfo: { name: 'tabrig_host', title: 'TabRig Host', version: '1.0.0' }, capabilities: { experimentalApi: true } }) },
+        { do: 'waitFor', pattern: '"id":1[,}]', timeoutMs: 60000 },
+        { do: 'send', line: rpc(null, 'initialized') },
+        { do: 'send', line: rpc(2, 'thread/start', { cwd: C.PROJ.x }) },
+        { do: 'waitFor', pattern: '"id":2,"result".*?"thread":\\{.*?"id":"(?<t1>[0-9a-f-]{36})"', timeoutMs: 60000 },
+        { do: 'send', line: rpc(3, 'turn/start', { threadId: '$t1', input: [{ type: 'text', text: `Named thread r${r}, first turn. Please call the ping tool once.` }] }) },
+        { do: 'waitFor', pattern: '"method":"turn/completed"', timeoutMs: 90000 },
+        { do: 'send', line: rpc(4, 'thread/name/set', { threadId: '$t1', name: `Codex named ${r}` }) },
+        { do: 'waitFor', pattern: '"id":4[,}]', timeoutMs: 30000 },
+        { do: 'sleep', ms: 1500 },
+        { do: 'send', line: rpc(5, 'turn/start', { threadId: '$t1', input: [{ type: 'text', text: `Named thread r${r}, second turn. Please call the ping tool once.` }] }) },
+        { do: 'waitFor', pattern: '"method":"turn/completed"', timeoutMs: 90000 },
+        calls(run, 2, 30000), { do: 'sleep', ms: 2500 }, { do: 'closeStdin' },
+      ] });
+  } else {
+    // The thread the exec run made: the newest rollout file in this rep's CODEX_HOME at generation time.
+    const sess = `${home}\\sessions`;
+    const all = [];
+    const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (/^rollout-.*\.jsonl$/.test(e.name)) all.push(p); } };
+    if (fs.existsSync(sess)) walk(sess);
+    const execRun = `${rep}\\exec`;
+    const execStub = fs.readdirSync(execRun).find((f) => /^idstub-\d+\.start\.json$/.test(f));
+    const execStart = new Date(JSON.parse(fs.readFileSync(path.join(execRun, execStub), 'utf8')).createdUtc).getTime();
+    const mine = all.map((p) => ({ p, t: fs.statSync(p).birthtimeMs })).filter((x) => Math.abs(x.t - execStart) < 60000).sort((a, b) => a.t - b.t);
+    const tid = mine.length ? mine[0].p.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/)[1] : null;
+    if (!tid) throw new Error(`no rollout for the exec run in ${home}`);
+    fs.writeFileSync(`${rep}\\exec-thread.json`, JSON.stringify({ tid, from: mine[0].p }, null, 1));
+    const run = `${rep}\\resume`;
+    runs.push({ name: `r${r}-resume`, dir: run, exe: C.BIN.cx, args: ['exec', '--skip-git-repo-check', 'resume', tid, `Codex resumed r${r}. Please call the ping tool once.`], cwd: C.PROJ.x, env: env('resume'), console: 'pipes', stdin: 'closed', maxMs: 120000, settleMs: 15000, writeFiles: cfgFor(run, 'resume'), steps: [] });
+  }
+}
+const stub = { name: 'openai', exe: C.NODE, args: [`${C.S}\\rig\\cxmodel.js`], env: { STUB_PORT: String(C.PORT.cx), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'model' } };
+const name = `batch-${phase}.json`;
+fs.writeFileSync(`${BATCHDIR}\\${name}`, JSON.stringify({ progress: `${BATCHDIR}\\progress-${phase}.log`, gapMs: 1500, stubs: [stub], runs }, null, 1));
+console.log(`${BATCHDIR}\\${name}: ${runs.length} runs`);

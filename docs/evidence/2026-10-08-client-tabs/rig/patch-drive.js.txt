@@ -1,0 +1,10 @@
+'use strict';
+const fs = require('fs');
+function rep(s, a, b) { if (!s.includes(a)) throw new Error('missing: ' + a.slice(0, 80)); return s.replace(a, b); }
+let s = fs.readFileSync('vsdrive.js', 'utf8');
+s = rep(s, "  const args = [...sc.baseArgs, ...(extraArgs || []).map(subst)];\n  const p = spawn(sc.exe, args, { cwd: sc.cwd, env: sc.env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });",
+  "  const extra = (extraArgs || []).map(subst);\n  const args = sc.baseArgs.flatMap((a) => (a === '$EXTRA' ? extra : [a]));\n  const env = Object.assign({}, sc.env, { IDRIG_LOGDIR: sc.dir });\n  const p = spawn(sc.exe, args, { cwd: sc.cwd, env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });");
+s = rep(s, "function countFiles(re) {", "// The stubs a tab started: every idstub-PID.start.json in this window's folder whose ppid is the tab's pid.\nfunction stubsOf(tab) {\n  const out = [];\n  for (const f of fs.readdirSync(sc.dir).filter((x) => /^idstub-\d+\.start\.json$/.test(x))) {\n    try { const j = JSON.parse(fs.readFileSync(path.join(sc.dir, f), 'utf8')); if (j.ppid === tab.pid) out.push(j.pid); } catch { }\n  }\n  return out;\n}\nfunction callsOf(tab) {\n  let n = 0;\n  for (const pid of stubsOf(tab)) { const w = path.join(sc.dir, `idstub-${pid}.wire.jsonl`); if (fs.existsSync(w)) n += (fs.readFileSync(w, 'utf8').match(/\"method\":\"tools\/call\"/g) || []).length; }\n  return n;\n}\nfunction countFiles(re) {");
+s = rep(s, "        case 'waitStubs':", "        case 'waitStub': await poll(() => stubsOf(tab).filter((pid) => fs.existsSync(path.join(sc.dir, `idstub-${pid}.listed`))).length, st.count || 1, st.timeoutMs, `tab ${st.tab}: stubs listed >= ${st.count || 1}`); break;\n        case 'waitCall': await poll(() => callsOf(tab), st.count || 1, st.timeoutMs, `tab ${st.tab}: tools/call >= ${st.count || 1}`); break;\n        case 'waitStubs':");
+fs.writeFileSync('vsdrive.js', s);
+console.log('ok');

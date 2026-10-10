@@ -844,6 +844,25 @@ registration**: the product surface's constructor and both factories that make o
 the user's own classes key, and the activator's registration with COM. The surface's
 static `Compose` stays usable, because building a toast object shows nothing.
 
+## The names of the clients' conversations: what the suite can and cannot see
+
+*Added 2026-10-10 with the maintainer's answer of that day, verbatim: "1.1-2.3 I accept
+all your recommendations".* The background names each relay's conversation from the
+client's own records, which are Claude Code's and Codex's internals. **No arm reads the
+maintainer's real `~\.claude` or `~\.codex`**: every configuration folder and home an arm
+names is a scratch directory, and every file in one is written by the arm in the shapes
+the measurement of 2026-10-08 read
+([kb](kb/mcp/protocol.md#which-conversation-of-a-client-started-a-server----measured-2026-10-08)).
+
+| What | How the suite reaches it | What it cannot see |
+|---|---|---|
+| The VS Code extension's title rule | `ClaudeCodeTitleTests`, over records written as text: which title wins from which end, the prompts, and the field read as the extension reads it | The extension changing its rule, which [re-verification](kb/re-verification.md) row 208 says how to read |
+| The order of the sources, the reads that never hold a file, a torn file, a record under another project folder, a Codex index | `ConversationReaderTests`, over scratch files, with the product's reads wrapped where a torn read has to be handed over; a client's handles are stood in by a handle that writes and deletes | A real client writing while BrowserAI reads, measured on 2026-10-08 and not since |
+| What the relay reads of its client | `ClientRecognitionTests` over a written environment and parent reading, and `ProcessLivenessTests.ARelayReadsItsParentAndItsParentsParentEachWithItsCreationTime` over a real chain of three processes, the test host where a VS Code window's extension host stands | A real VS Code, which no arm starts |
+| The greeting, the roster, a Codex call's thread and the log | `RelayTests`, `BackgroundServerTests` and `InheritedEnvironmentTests`, which also hold that no log record and no greeting carries a title, a prompt, a session id or a messaging token | Nothing new |
+| When the names are read | `BackgroundUpdatesTests` and `UpdateToastsTests` count the reads that name the conversations: a draw reads them once, and the update core's passes and the toast's countdown never | Nothing new |
+| The pages and the toast | `UpdatePageTests`, `PageServiceTests` and `UpdateToastContentTests` | How Windows and a browser draw them |
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

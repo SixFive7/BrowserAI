@@ -1,0 +1,15 @@
+// Prints the text around each occurrence of a literal string in a big binary (a Bun-compiled
+// claude.exe, a codex.exe). Read-only.
+// usage: node grep-bundle.js <file> <literal> [max=5] [before=400] [after=400] [minOffset=0]
+'use strict';
+const fs = require('fs');
+const [file, pat, max = '5', before = '400', after = '400', minOff = '0'] = process.argv.slice(2);
+const s = fs.readFileSync(file).toString('latin1');
+let idx = Number(minOff) - 1, c = 0, total = 0;
+const hits = [];
+while ((idx = s.indexOf(pat, idx + 1)) >= 0) { total++; if (hits.length < Number(max)) hits.push(idx); }
+console.log(`# ${pat}: ${total} occurrence(s) at or after ${minOff}; showing ${hits.length}`);
+for (const i of hits) {
+  console.log(`===== @${i}`);
+  console.log(s.slice(Math.max(0, i - Number(before)), i + Number(after)));
+}

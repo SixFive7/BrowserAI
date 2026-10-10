@@ -131,6 +131,30 @@ release body; nothing else depends on it.
   update waits and leads to it. `UpdatePageTests` and `ToastPageStartTests` hold it, planted red
   first.
 
+- ✨ **The dashboard and the toast name each conversation as you see it, and group tabs by window.**
+  The maintainer's answer of 2026-10-10, verbatim: *"1.1-2.3 I accept all your recommendations"*,
+  to his ask of 2026-10-08 to tell several Claude Code tabs of one VS Code window apart. For Claude
+  Code, the conversation is read from the file Claude Code keeps for each running process, accepted
+  only when it is the client's own; then from the session the client handed BrowserAI in its
+  environment, which goes stale at `/clear`; then from `--resume` or `--session-id` on its command
+  line. Its name is the one its VS Code tab shows, by the extension's own rule over the first and the
+  last 64 KB of the session's record, and a conversation with no record yet is *new conversation in
+  &lt;folder&gt;*. A Codex conversation is the thread its first call names, called by the name Codex
+  gave it, or *Codex in &lt;folder&gt;*. The files are read when the dashboard or the toast is
+  drawn and never held open, and a VS Code window's tabs are listed together under *VS Code window
+  on &lt;folder&gt;*. The toast's reconnect line names two conversations of each kind, each cut as
+  its tab cuts it, and counts the rest. These are another product's undocumented files, so every
+  read that fails falls back to the next source, and nothing writes a title, a prompt or a session
+  id to a log. `ConversationReaderTests`, `ClaudeCodeTitleTests`, `ClientRecognitionTests`,
+  `BackgroundServerTests`, `RelayTests`, `ProcessLivenessTests`, `BackgroundUpdatesTests`,
+  `UpdateToastsTests`, `UpdateToastContentTests`, `UpdatePageTests`, `PageServiceTests` and
+  `InheritedEnvironmentTests` hold it, planted red first, over records the suite writes in scratch.
+
+- ✅ **The seventeen rows of the client classifier's table that nobody had watched fail are planted red.**
+  The maintainer's 8 a of 2026-10-10: `ClientRecognitionTests` held 22 rows, and only five had ever
+  been seen red. Ten plants of the rule, one at a time, turned every one of the other seventeen
+  red, and each test's remarks say which plant turned which row.
+
 - ✨ **The dashboard has a changelog page, read from the changelog the build carries.**
   The installed toast's **Changelog** opens it. `CHANGELOG.md` is embedded in the executable, and
   the page shows the installed version's section, or for a development build, which no heading

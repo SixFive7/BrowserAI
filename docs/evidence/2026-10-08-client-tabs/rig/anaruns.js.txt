@@ -1,0 +1,71 @@
+// Reads a C# harness batch back (terminal UI, claude -p, Codex): one row per run, every stub
+// linked to the client by its recorded parent pid. For pseudoconsole runs it also lists the
+// terminal titles the client set (OSC 0 and OSC 2), which is what a terminal tab shows.
+// usage: node anaruns.js <batchdir>   writes <batchdir>\runs.tsv and prints one JSON row per run
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const B = process.argv[2];
+const jl = (f) => fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+const short = (s) => (s ? String(s).slice(0, 8) : '-');
+const tabTitle = (s) => (!s ? null : s.length > 25 ? s.slice(0, 24) + '…' : s);
+
+function oscTitles(file) {
+  if (!fs.existsSync(file)) return [];
+  const buf = fs.readFileSync(file);
+  const chunks = [];
+  for (let o = 0; o + 12 <= buf.length;) { const n = buf.readInt32LE(o + 8); chunks.push(buf.subarray(o + 12, o + 12 + n)); o += 12 + n; }
+  const text = Buffer.concat(chunks).toString('utf8');
+  const out = [];
+  const re = /\x1b\](0|2);([^\x07\x1b]*)(?:\x07|\x1b\\)/g;
+  let m;
+  while ((m = re.exec(text))) if (out[out.length - 1] !== m[2]) out.push(m[2]);
+  return out;
+}
+
+const rows = [];
+for (const rep of fs.readdirSync(B).filter((d) => /^r\d+$/.test(d)).sort()) {
+  for (const arm of fs.readdirSync(path.join(B, rep)).filter((d) => fs.existsSync(path.join(B, rep, d, 'result.json'))).sort()) {
+    const dir = path.join(B, rep, arm);
+    const res = JSON.parse(fs.readFileSync(path.join(dir, 'result.json'), 'utf8'));
+    const client = (res.procs || []).find((p) => p.role === 'client') || {};
+    const row = { rep, arm, clientPid: res.clientPid, args: (client.cmd || '').replace(/^"[^"]*"\s*|^\S+\s*/, '').replace(/([0-9a-f]{8})-[0-9a-f-]{27}/g, '$1-*').slice(0, 160), exit: res.clientExitCode, timeouts: res.waitTimeout || '-' };
+    const stubs = fs.readdirSync(dir).filter((f) => /^idstub-\d+\.start\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+    row.stubs = stubs.length;
+    stubs.sort((a, b) => a.createdUtc.localeCompare(b.createdUtc)).forEach((s, i) => {
+      const pfx = path.join(dir, `idstub-${s.pid}`);
+      const views = jl(pfx + '.views.jsonl');
+      const wire = jl(pfx + '.wire.jsonl');
+      const env = s.env || {};
+      const v0 = views[0] && views[0].view; const withReg = views.filter((w) => w.view && w.view.claude && typeof w.view.claude.registry === 'object'); const vN = (withReg.length ? withReg[withReg.length - 1] : views[views.length - 1] || {}).view; // the last view taken while the client still had its registry file
+      const reg0 = (v0 && v0.claude && v0.claude.registry) || {}, regN = (vN && vN.claude && vN.claude.registry) || {};
+      const tr = (v, sid) => { const t = v && v.claude && v.claude.transcripts && v.claude.transcripts[sid]; return Array.isArray(t) ? t[0] : null; };
+      const t0 = tr(v0, env.CLAUDE_CODE_SESSION_ID);
+      const tN = tr(vN, regN.sessionId) || tr(vN, env.CLAUDE_CODE_SESSION_ID);
+      const calls = wire.filter((w) => w.dir === 'in' && w.frame && w.frame.method === 'tools/call');
+      const metas = calls.map((c) => (c.frame.params && c.frame.params._meta) || {});
+      const p = `s${i + 1}.`;
+      Object.assign(row, {
+        [p + 'parentIsClient']: s.ppid === res.clientPid,
+        [p + 'parentCmd']: ((s.ancestors || [])[0] || {}).cmd ? String(s.ancestors[0].cmd).replace(/^"[^"]*"\s*|^\S+\s*/, '').replace(/([0-9a-f]{8})-[0-9a-f-]{27}/g, '$1-*').slice(0, 120) : '-',
+        [p + 'env']: short(env.CLAUDE_CODE_SESSION_ID), [p + 'entry']: env.CLAUDE_CODE_ENTRYPOINT || '-',
+        [p + 'codexEnvKeys']: env.CLAUDE_CODE_SESSION_ID ? undefined : Object.keys(env).filter((k) => /CODEX|THREAD|SESSION/i.test(k)).join(',') || '(none)',
+        [p + 'reg0']: reg0.sessionId ? `${short(reg0.sessionId)} ${reg0.name}/${reg0.nameSource} kind=${reg0.kind} proc=${reg0.procStartMatchesParent}` : (v0 && v0.claude && v0.claude.registry) || '-',
+        [p + 'regN']: regN.sessionId ? `${short(regN.sessionId)} ${regN.name}/${regN.nameSource}` : '-',
+        [p + 'transcriptAtStart']: t0 ? `custom=${t0.customTitle || '-'} ai=${t0.aiTitle || '-'}` : 'absent',
+        [p + 'labelAtEnd']: tN ? tabTitle(tN.customTitle || tN.aiTitle || tN.firstPrompt) : '-',
+        [p + 'calls']: calls.length,
+        [p + 'metaKeys']: [...new Set(metas.flatMap((m) => Object.keys(m)))].join('+') || '-',
+        [p + 'metaThread']: [...new Set(metas.map((m) => m.threadId).filter(Boolean))].map(short).join(',') || '-',
+      });
+      const cx = vN && vN.codex;
+      if (cx && !cx.skipped) row[p + 'codexHome'] = `rollouts=${(cx.rollouts || []).length} index=${(cx.sessionIndex || []).length}`;
+    });
+    if (fs.existsSync(path.join(dir, 'pty-raw.bin'))) row.terminalTitles = oscTitles(path.join(dir, 'pty-raw.bin')).slice(0, 12).join(' | ');
+    rows.push(row);
+  }
+}
+const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+fs.writeFileSync(path.join(B, 'runs.tsv'), [cols.join('\t'), ...rows.map((r) => cols.map((c) => (r[c] === undefined ? '' : String(r[c]))).join('\t'))].join('\n') + '\n');
+for (const r of rows) console.log(JSON.stringify(r));

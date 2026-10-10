@@ -1,0 +1,38 @@
+# Read-only: the command lines of the claude.exe and codex.exe processes on this machine, their
+# parents, and the BrowserAI servers they started (Win32_Process only: no process memory, no
+# environment). Session ids are cut to their first 8 characters. Writes JSON to the path given.
+param([Parameter(Mandatory = $true)][string]$Out)
+$procs = Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId, Name, CommandLine, CreationDate, ExecutablePath
+$byPid = @{}; foreach ($p in $procs) { $byPid[[int]$p.ProcessId] = $p }
+function Short([string]$s) { if (-not $s) { return $s }; return [regex]::Replace($s, '([0-9a-f]{8})-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', '$1-<uuid>') }
+function Kind($p) {
+    if (-not $p) { return 'gone' }
+    $c = $p.CommandLine
+    if ($p.Name -eq 'Code.exe') { $t = [regex]::Match($c, '--type=(\S+)').Groups[1].Value; $u = [regex]::Match($c, '--utility-sub-type=(\S+)').Groups[1].Value; if (-not $t) { return 'Code.exe main' }; return "Code.exe $t $u" }
+    return $p.Name
+}
+$rows = @()
+foreach ($p in ($procs | Where-Object { $_.Name -in @('claude.exe', 'codex.exe') } | Sort-Object CreationDate)) {
+    $par = $byPid[[int]$p.ParentProcessId]
+    $gp = if ($par) { $byPid[[int]$par.ParentProcessId] } else { $null }
+    $kids = @($procs | Where-Object { [int]$_.ParentProcessId -eq [int]$p.ProcessId -and $_.CreationDate -ge $p.CreationDate -and $_.Name -notin @('conhost.exe', 'bash.exe', 'cmd.exe', 'pwsh.exe', 'powershell.exe') -and $_.CommandLine })
+    $cmd = $p.CommandLine
+    $args = $cmd.Substring([Math]::Min($cmd.Length, ($cmd.IndexOf('.exe') + 4))).Trim().Trim('"').Trim()
+    $rows += [pscustomobject]@{
+        pid = [int]$p.ProcessId; name = $p.Name; created = $p.CreationDate.ToUniversalTime().ToString('o')
+        createdFileTime = [string]$p.CreationDate.ToUniversalTime().ToFileTimeUtc()  # a string: a FILETIME does not survive a JSON number
+        image = $p.ExecutablePath
+        args = (Short $args)
+        resumeId = ([regex]::Match($cmd, '--resume[= ]([0-9a-f]{8})').Groups[1].Value)
+        sessionIdArg = ([regex]::Match($cmd, '--session-id[= ]([0-9a-f]{8})').Groups[1].Value)
+        hasContinue = [bool]($cmd -match '(^|\s)(-c|--continue)(\s|$)')
+        hasName = [bool]($cmd -match '(^|\s)(-n|--name)(\s|=)')
+        parent = [pscustomobject]@{ pid = [int]$p.ParentProcessId; kind = (Kind $par); created = if ($par) { $par.CreationDate.ToUniversalTime().ToString('o') } else { $null } }
+        grandparent = [pscustomobject]@{ pid = if ($par) { [int]$par.ParentProcessId } else { $null }; kind = (Kind $gp) }
+        children = @($kids | ForEach-Object { [pscustomobject]@{ pid = [int]$_.ProcessId; name = $_.Name; created = $_.CreationDate.ToUniversalTime().ToString('o'); args = (Short ($_.CommandLine.Substring([Math]::Min($_.CommandLine.Length, ($_.CommandLine.IndexOf('.exe') + 4))).Trim().Trim('"').Trim())) } })
+    }
+}
+$mains = @($procs | Where-Object { $_.Name -eq 'Code.exe' -and $_.CommandLine -notmatch '--type=' -and (Kind $byPid[[int]$_.ParentProcessId]) -notlike 'Code.exe*' } | ForEach-Object { [int]$_.ProcessId })
+$extHosts = @($procs | Where-Object { $_.Name -eq 'Code.exe' -and $_.CommandLine -match 'node\.mojom\.NodeService' -and $_.CommandLine -notmatch 'extensions[\\/]' } | ForEach-Object { [pscustomobject]@{ pid = [int]$_.ProcessId; ppid = [int]$_.ParentProcessId } })
+[pscustomobject]@{ utc = (Get-Date).ToUniversalTime().ToString('o'); processes = $rows; vscodeMains = $mains; codeNodeServices = $extHosts } | ConvertTo-Json -Depth 6 | Set-Content -Path $Out -Encoding utf8
+"wrote $Out ($($rows.Count) client processes)"

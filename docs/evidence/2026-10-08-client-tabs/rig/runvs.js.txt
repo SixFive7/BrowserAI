@@ -1,0 +1,39 @@
+// Runs a VS Code tab batch: starts the model stub, then each rep's window drivers at the same
+// time, and stops the model stub at the end. Every process it starts it started itself, with
+// no window, and it ends only those (by the handle it holds).
+// usage: node runvs.js <vsbatch.json>
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const C = require('./common');
+
+const b = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const log = (s) => fs.appendFileSync(b.progress, `${new Date().toISOString()}\t${s}\n`);
+const run = (args, env, name) => new Promise((resolve) => {
+  const p = spawn(C.NODE, args, { env, stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+  let err = '';
+  p.stderr.on('data', (d) => { err += d; });
+  log(`START ${name} pid=${p.pid}`);
+  p.on('exit', (code) => { log(`END ${name} pid=${p.pid} code=${code}${err ? ' stderr=' + err.slice(0, 500).replace(/\s+/g, ' ') : ''}`); resolve(code); });
+});
+(async () => {
+  const stubEnv = Object.assign(C.allowEnv(), { STUB_PORT: String(b.modelStub.port), STUB_POLICY_FILE: b.modelStub.policy, STUB_LOGDIR: b.modelStub.logdir, STUB_TAG: 'model' });
+  const stub = spawn(C.NODE, [`${C.S}\\rig\\ccmodel.js`], { env: stubEnv, stdio: 'ignore', windowsHide: true });
+  log(`MODEL_STUB pid=${stub.pid} port=${b.modelStub.port}`);
+  await new Promise((r) => setTimeout(r, 1500));
+  try {
+    for (const rep of b.reps) {
+      if (fs.existsSync(path.join(path.dirname(rep.windows[0]), '..', 'rep-done'))) { log(`SKIP ${rep.name}`); continue; }
+      log(`REP_START ${rep.name}`);
+      await Promise.all(rep.windows.map((w) => run([`${C.S}\\rig\\vsdrive.js`, w], C.allowEnv(), `${rep.name}/${path.basename(path.dirname(w))}`)));
+      fs.writeFileSync(path.join(path.dirname(rep.windows[0]), '..', 'rep-done'), new Date().toISOString());
+      log(`REP_END ${rep.name}`);
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  } finally {
+    stub.kill();
+    log(`MODEL_STUB_STOPPED pid=${stub.pid}`);
+    log('BATCH_DONE');
+  }
+})();

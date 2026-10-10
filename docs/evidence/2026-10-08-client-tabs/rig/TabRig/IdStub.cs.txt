@@ -1,0 +1,353 @@
+using System.Collections;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+/// <summary>
+/// The identification stub: a stdio MCP server that records everything a server can observe
+/// about the client that started it, before and during the handshake, and then answers
+/// initialize, tools/list (one tool, "ping") and tools/call. It never writes anything but
+/// JSON-RPC frames to stdout.
+///
+/// Files, all under --logdir:
+///   idstub-PID.start.json   environment (secrets masked), ancestors, std handles, console,
+///                           STARTUPINFO, job, cwd, own command line
+///   idstub-PID.wire.jsonl   every frame in and out, with a UTC time and a QPC millisecond
+///   idstub-PID.listed       written once tools/list has been answered (the harness waits on it)
+///   idstub-PID.end.json     how the input ended, and the console title read again
+/// </summary>
+static class IdStub
+{
+    [StructLayout(LayoutKind.Sequential)]
+    struct STARTUPINFO_RAW
+    {
+        public int cb; public IntPtr lpReserved; public IntPtr lpDesktop; public IntPtr lpTitle;
+        public int dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
+        public short wShowWindow, cbReserved2; public IntPtr lpReserved2, hStdInput, hStdOutput, hStdError;
+    }
+
+    [DllImport("kernel32.dll")] static extern void GetStartupInfoW(out STARTUPINFO_RAW si);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetConsoleMode(IntPtr h, out uint mode);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetFileInformationByHandleEx(IntPtr h, int cls, IntPtr buf, int size);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetNamedPipeServerProcessId(IntPtr h, out uint pid);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetNamedPipeClientProcessId(IntPtr h, out uint pid);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetNamedPipeInfo(IntPtr h, out uint flags, out uint outSize, out uint inSize, out uint maxInstances);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern uint GetConsoleTitleW(StringBuilder sb, uint size);
+    [DllImport("kernel32.dll")] static extern uint GetConsoleCP();
+    [DllImport("kernel32.dll")] static extern uint GetConsoleOutputCP();
+    [DllImport("kernel32.dll")] static extern uint GetPriorityClass(IntPtr h);
+    [DllImport("kernel32.dll")] static extern bool ProcessIdToSessionId(uint pid, out uint session);
+    [DllImport("ntdll.dll")] static extern int NtQueryInformationProcess(IntPtr h, int cls, ref Native.PROCESS_BASIC_INFORMATION pbi, int len, out int ret);
+
+    static readonly Regex Secret = new("KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|COOKIE|AUTH", RegexOptions.IgnoreCase);
+    static readonly HashSet<string> KnownFake = new(StringComparer.Ordinal) { "stub-key-not-real", "not-a-real-key" };
+
+    static Native.HandlerRoutine? _ctrl;
+    static string _dir = ".";
+    static int _pid;
+    static FileStream? _wire;
+    static readonly object WireGate = new();
+
+    static void Wire(string dir, JsonNode? frame, string raw)
+    {
+        var o = new JsonObject
+        {
+            ["utc"] = Clock.Utc(), ["qpcMs"] = Clock.Ms(Clock.Now()), ["dir"] = dir,
+        };
+        if (frame is not null) o["frame"] = frame.DeepClone(); else o["raw"] = raw.Length > 2000 ? raw[..2000] : raw;
+        var b = Encoding.UTF8.GetBytes(o.ToJsonString() + "\n");
+        lock (WireGate) { _wire!.Write(b, 0, b.Length); _wire.Flush(); }
+    }
+
+    static string Masked(string name, string value)
+    {
+        if (!Secret.IsMatch(name)) return value;
+        if (KnownFake.Contains(value)) return value;
+        return $"<masked, {value.Length} chars>";
+    }
+
+    static int ParentOf(SafeProcessHandle h)
+    {
+        var pbi = new Native.PROCESS_BASIC_INFORMATION();
+        int st = NtQueryInformationProcess(h.DangerousGetHandle(), 0, ref pbi, Marshal.SizeOf<Native.PROCESS_BASIC_INFORMATION>(), out _);
+        return st == 0 ? (int)pbi.InheritedFromUniqueProcessId : -1;
+    }
+
+    /// <summary>Walks up by parent pid, keeping a step only if the parent was created before its child.</summary>
+    static JsonArray Ancestors(int startPid, long childCreated, int max)
+    {
+        var arr = new JsonArray();
+        int pid = startPid;
+        long created = childCreated;
+        for (int i = 0; i < max && pid > 0; i++)
+        {
+            var o = new JsonObject { ["level"] = i + 1, ["pid"] = pid };
+            using var h = Native.OpenProcess(Native.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (h.IsInvalid) { o["error"] = $"OpenProcess failed, {Marshal.GetLastWin32Error()}"; arr.Add(o); break; }
+            long ct = Native.CreationTime(h);
+            o["created"] = Clock.Ft(ct);
+            if (ct == 0 || ct > created) { o["error"] = "created after its child, so the pid was reused: not the parent"; arr.Add(o); break; }
+            o["image"] = Native.ImageOf(h);
+            o["cmd"] = Native.CommandLineOf(h);
+            int ppid = ParentOf(h);
+            o["ppid"] = ppid;
+            if (Native.IsProcessInJob(h, IntPtr.Zero, out bool j)) o["inJob"] = j;
+            arr.Add(o);
+            pid = ppid;
+            created = ct;
+        }
+        return arr;
+    }
+
+    static string PipeName(IntPtr h)
+    {
+        int size = 4 + 2 * 1024;
+        IntPtr buf = Marshal.AllocHGlobal(size);
+        try
+        {
+            if (!GetFileInformationByHandleEx(h, 2, buf, size)) return $"<FileNameInfo failed, {Marshal.GetLastWin32Error()}>";
+            int bytes = Marshal.ReadInt32(buf);
+            return Marshal.PtrToStringUni(buf + 4, bytes / 2);
+        }
+        finally { Marshal.FreeHGlobal(buf); }
+    }
+
+    static JsonObject Handle(int std, string name)
+    {
+        IntPtr h = Native.GetStdHandle(std);
+        var o = new JsonObject { ["stream"] = name, ["handle"] = $"0x{h.ToInt64():X}" };
+        if (h == IntPtr.Zero || h == new IntPtr(-1)) { o["type"] = "none"; return o; }
+        uint ft = Native.GetFileType(h);
+        o["type"] = ft switch { 1 => "disk", 2 => "char", 3 => "pipe", 0 => "unknown", _ => ft.ToString(CultureInfo.InvariantCulture) };
+        o["consoleMode"] = GetConsoleMode(h, out uint mode) ? $"0x{mode:X}" : null;
+        if (ft == 3)
+        {
+            o["pipeName"] = PipeName(h);
+            if (GetNamedPipeInfo(h, out uint flags, out uint outSize, out uint inSize, out uint maxInst))
+                o["pipeInfo"] = $"flags=0x{flags:X} ({((flags & 1) != 0 ? "server end" : "client end")}, {((flags & 4) != 0 ? "message" : "byte")}) out={outSize} in={inSize} maxInstances={maxInst}";
+            else o["pipeInfo"] = $"<GetNamedPipeInfo failed, {Marshal.GetLastWin32Error()}>";
+            o["pipeServerPid"] = GetNamedPipeServerProcessId(h, out uint sp) ? sp : null;
+            o["pipeClientPid"] = GetNamedPipeClientProcessId(h, out uint cp) ? cp : null;
+        }
+        return o;
+    }
+
+    static string ConsoleTitle()
+    {
+        var sb = new StringBuilder(4096);
+        uint n = GetConsoleTitleW(sb, 4096);
+        return n == 0 ? $"<none, error {Marshal.GetLastWin32Error()}>" : sb.ToString();
+    }
+
+    static JsonObject Console_()
+    {
+        IntPtr w = Native.GetConsoleWindow();
+        var list = new uint[64];
+        uint n = Native.GetConsoleProcessList(list, 64);
+        var procs = new JsonArray();
+        for (int i = 0; i < Math.Min(n, 64); i++)
+        {
+            int pid = (int)list[i];
+            procs.Add(new JsonObject { ["pid"] = pid, ["image"] = pid == Environment.ProcessId ? "(self)" : Native.ImageOfPid(pid) });
+        }
+        return new JsonObject
+        {
+            ["consoleWindow"] = $"0x{w.ToInt64():X}",
+            ["consoleWindowVisible"] = w != IntPtr.Zero && Native.IsWindowVisible(w),
+            ["consoleProcessCount"] = n,
+            ["consoleProcesses"] = procs,
+            ["consoleTitle"] = ConsoleTitle(),
+            ["inputCodePage"] = GetConsoleCP(),
+            ["outputCodePage"] = GetConsoleOutputCP(),
+        };
+    }
+
+    static JsonObject Startup()
+    {
+        GetStartupInfoW(out var si);
+        return new JsonObject
+        {
+            ["dwFlags"] = $"0x{si.dwFlags:X}",
+            ["STARTF_USESHOWWINDOW"] = (si.dwFlags & 0x1) != 0,
+            ["STARTF_USESTDHANDLES"] = (si.dwFlags & 0x100) != 0,
+            ["wShowWindow"] = si.wShowWindow,
+            ["lpDesktop"] = si.lpDesktop == IntPtr.Zero ? null : Marshal.PtrToStringUni(si.lpDesktop),
+            ["lpTitle"] = si.lpTitle == IntPtr.Zero ? null : Marshal.PtrToStringUni(si.lpTitle),
+            ["hStdInput"] = $"0x{si.hStdInput.ToInt64():X}",
+            ["hStdOutput"] = $"0x{si.hStdOutput.ToInt64():X}",
+            ["hStdError"] = $"0x{si.hStdError.ToInt64():X}",
+        };
+    }
+
+    static JsonObject Job()
+    {
+        var o = new JsonObject { ["summary"] = Native.OwnJobInfo() };
+        var buf = new byte[8 + 8 * 4096];
+        if (Native.QueryInformationJobObject(IntPtr.Zero, 3, buf, buf.Length, out _))
+        {
+            uint listed = BitConverter.ToUInt32(buf, 4);
+            var procs = new JsonArray();
+            for (int i = 0; i < listed && i < 64; i++)
+            {
+                int pid = (int)BitConverter.ToUInt64(buf, 8 + 8 * i);
+                procs.Add(new JsonObject { ["pid"] = pid, ["image"] = pid == Environment.ProcessId ? "(self)" : Native.ImageOfPid(pid) });
+            }
+            o["processes"] = procs;
+        }
+        return o;
+    }
+
+    public static int Run(string[] a)
+    {
+        long t0 = Clock.Now();
+        var o = Args.Parse(a, 1);
+        // --logdir-env NAME: the run directory comes from the client's environment, so one
+        // configuration file can serve every run that shares it.
+        string? fromEnv = o.TryGetValue("logdir-env", out var envName) ? Environment.GetEnvironmentVariable(envName) : null;
+        _dir = fromEnv ?? o.GetValueOrDefault("logdir", Environment.CurrentDirectory);
+        Directory.CreateDirectory(_dir);
+        _pid = Environment.ProcessId;
+        string pfx = Path.Combine(_dir, $"idstub-{_pid}");
+        _wire = new FileStream(pfx + ".wire.jsonl", FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, 1);
+
+        // Everything that can be read without a single frame of the protocol, taken before any
+        // reader starts so no handle query can meet a pending synchronous read.
+        long selfCreated;
+        using (var self = new SafeProcessHandle(Native.GetCurrentProcess(), false)) selfCreated = Native.CreationTime(self);
+        int ppid = Native.ParentPid();
+        var env = new JsonObject();
+        var names = new List<string>();
+        foreach (DictionaryEntry de in Environment.GetEnvironmentVariables()) names.Add((string)de.Key);
+        names.Sort(StringComparer.OrdinalIgnoreCase);
+        foreach (var n in names) env[n] = Masked(n, Environment.GetEnvironmentVariable(n) ?? "");
+        string? tag = o.GetValueOrDefault("tag");
+        uint session = ProcessIdToSessionId((uint)_pid, out uint s) ? s : uint.MaxValue;
+        var start = new JsonObject
+        {
+            ["tag"] = tag,
+            ["pid"] = _pid,
+            ["createdUtc"] = Clock.Ft(selfCreated),
+            ["startQpcMs"] = Clock.Ms(t0),
+            ["image"] = Environment.ProcessPath,
+            ["commandLine"] = Environment.CommandLine,
+            ["cwd"] = Environment.CurrentDirectory,
+            ["sessionId"] = session,
+            ["priorityClass"] = $"0x{GetPriorityClass(Native.GetCurrentProcess()):X}",
+            ["ppid"] = ppid,
+            ["ancestors"] = Ancestors(ppid, selfCreated, 8),
+            ["stdio"] = new JsonArray(Handle(-10, "stdin"), Handle(-11, "stdout"), Handle(-12, "stderr")),
+            ["console"] = Console_(),
+            ["startupInfo"] = Startup(),
+            ["job"] = Job(),
+            ["envCount"] = names.Count,
+            ["env"] = env,
+        };
+        File.WriteAllText(pfx + ".start.json", start.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false));
+        Views.Start(pfx, ppid, o.GetValueOrDefault("codex-home"), int.Parse(o.GetValueOrDefault("view-ms", "1000"), CultureInfo.InvariantCulture));
+
+        string endHow = "?";
+        _ctrl = t =>
+        {
+            Wire("ctrl", null, Native.CtrlName(t));
+            return true;
+        };
+        Native.SetConsoleCtrlHandler(_ctrl, true);
+
+        var stdin = Console.OpenStandardInput();
+        var stdout = Console.OpenStandardOutput();
+        var reader = new StreamReader(stdin, new UTF8Encoding(false), false, 65536);
+        var outGate = new object();
+        void Send(JsonObject msg)
+        {
+            var bytes = Encoding.UTF8.GetBytes(msg.ToJsonString() + "\n");
+            try { lock (outGate) { stdout.Write(bytes, 0, bytes.Length); stdout.Flush(); } Wire("out", msg, ""); }
+            catch (Exception e) { Wire("out-failed", null, e.GetType().Name + ": " + e.Message); }
+        }
+
+        bool rootsAsked = false;
+        bool rootsDeclared = false;
+        int received = 0;
+        while (true)
+        {
+            string? line;
+            try { line = reader.ReadLine(); }
+            catch (Exception e) { endHow = "read error " + e.GetType().Name + ": " + e.Message; break; }
+            if (line is null) { endHow = "EOF"; break; }
+            if (line.Length == 0) continue;
+            received++;
+            JsonNode? node = null;
+            try { node = JsonNode.Parse(line); } catch { }
+            if (node is not JsonObject msg) { Wire("in-unparsed", null, line); continue; }
+            Wire("in", msg, "");
+            string method = msg["method"]?.GetValue<string>() ?? "";
+            JsonNode? id = msg["id"]?.DeepClone();
+            JsonObject? result = null;
+            switch (method)
+            {
+                case "initialize":
+                {
+                    var pv = msg["params"]?["protocolVersion"]?.GetValue<string>() ?? "2025-06-18";
+                    rootsDeclared = msg["params"]?["capabilities"]?["roots"] is not null;
+                    result = new JsonObject
+                    {
+                        ["protocolVersion"] = pv,
+                        ["capabilities"] = new JsonObject { ["tools"] = new JsonObject() },
+                        ["serverInfo"] = new JsonObject { ["name"] = "idstub", ["version"] = "1.0.0" },
+                    };
+                    File.WriteAllText(pfx + ".initialize.json", msg.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false));
+                    break;
+                }
+                case "tools/list":
+                    result = new JsonObject
+                    {
+                        ["tools"] = new JsonArray(new JsonObject
+                        {
+                            ["name"] = "ping",
+                            ["description"] = "Returns pong.",
+                            ["inputSchema"] = new JsonObject { ["type"] = "object", ["properties"] = new JsonObject() },
+                        }),
+                    };
+                    break;
+                case "tools/call":
+                {
+                    var snap = Views.Log("tools/call " + (id?.ToJsonString() ?? ""), force: true);
+                    result = new JsonObject { ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = $"pong from pid {_pid}; {Views.Brief(snap)}" }), ["isError"] = false };
+                    break;
+                }
+                case "ping":
+                case "logging/setLevel":
+                    result = new JsonObject();
+                    break;
+                case "resources/list": result = new JsonObject { ["resources"] = new JsonArray() }; break;
+                case "resources/templates/list": result = new JsonObject { ["resourceTemplates"] = new JsonArray() }; break;
+                case "prompts/list": result = new JsonObject { ["prompts"] = new JsonArray() }; break;
+            }
+            if (method == "notifications/initialized" && rootsDeclared && !rootsAsked)
+            {
+                rootsAsked = true;
+                Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = "idstub-roots-1", ["method"] = "roots/list" });
+            }
+            if (id is null) continue;
+            if (method.Length == 0) continue; // a response to our own request; already in the wire log
+            if (result is not null) Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["result"] = result });
+            else Send(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id, ["error"] = new JsonObject { ["code"] = -32601, ["message"] = $"Method not found: {method}" } });
+            if (method == "tools/list") File.WriteAllText(pfx + ".listed", Clock.Utc() + "	" + ConsoleTitle());
+        }
+
+        try { Views.Log("end", force: true); } catch { }
+        var end = new JsonObject
+        {
+            ["how"] = endHow, ["received"] = received, ["utc"] = Clock.Utc(), ["qpcMs"] = Clock.Ms(Clock.Now()),
+            ["consoleTitleAtEnd"] = ConsoleTitle(),
+        };
+        File.WriteAllText(pfx + ".end.json", end.ToJsonString(new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false));
+        return 0;
+    }
+}

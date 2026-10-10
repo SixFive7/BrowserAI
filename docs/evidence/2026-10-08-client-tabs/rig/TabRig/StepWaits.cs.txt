@@ -1,0 +1,49 @@
+using System.Diagnostics;
+using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+
+namespace ExitRig;
+
+/// <summary>
+/// Waits shared by the pipe and the pseudoconsole harness.
+///   waitGlobCount {dir, pattern, count, timeoutMs}: at least COUNT files match PATTERN in DIR.
+///   waitFileMatch {dir, pattern, regex, count?, timeoutMs}: the files matching PATTERN in DIR
+///     hold at least COUNT (default 1) matches of REGEX between them.
+/// A timeout is recorded in the run's result, never thrown.
+/// </summary>
+static class StepWaits
+{
+    static string ReadShared(string path)
+    {
+        try
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var sr = new StreamReader(fs, new UTF8Encoding(false));
+            return sr.ReadToEnd();
+        }
+        catch { return ""; }
+    }
+
+    public static bool Run(string kind, JsonObject step, Log ev, JsonObject result)
+    {
+        string dir = step["dir"]!.GetValue<string>();
+        string pattern = step["pattern"]!.GetValue<string>();
+        int timeout = step["timeoutMs"]?.GetValue<int>() ?? 60000;
+        int count = step["count"]?.GetValue<int>() ?? 1;
+        Regex? re = kind == "waitFileMatch" ? new Regex(step["regex"]!.GetValue<string>()) : null;
+        var sw = Stopwatch.StartNew();
+        int got = 0;
+        while (true)
+        {
+            string[] files = Directory.Exists(dir) ? Directory.GetFiles(dir, pattern) : Array.Empty<string>();
+            got = re is null ? files.Length : files.Sum(f => re.Matches(ReadShared(f)).Count);
+            if (got >= count || sw.ElapsedMilliseconds >= timeout) break;
+            Thread.Sleep(100);
+        }
+        bool ok = got >= count;
+        ev.W("harness", ok ? kind.ToUpperInvariant() + "_OK" : kind.ToUpperInvariant() + "_TIMEOUT", $"{dir} {pattern} {step["regex"]} got={got} want={count} afterMs={sw.ElapsedMilliseconds}");
+        if (!ok) result["waitTimeout"] = (result["waitTimeout"]?.GetValue<string>() ?? "") + $"{kind}:{pattern}:{step["regex"]};";
+        return ok;
+    }
+}

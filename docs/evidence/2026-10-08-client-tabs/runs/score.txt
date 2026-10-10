@@ -1,0 +1,86 @@
+{
+ "vscode/env/call": {
+  "right": 12,
+  "wrong": 15,
+  "examples": []
+ },
+ "vscode/registry/call": {
+  "right": 12,
+  "wrong": 15,
+  "examples": []
+ },
+ "vscode/cmdline/call": {
+  "right": 9,
+  "wrong": 18,
+  "examples": []
+ },
+ "vscode/env/last": {
+  "right": 18,
+  "wrong": 3,
+  "examples": []
+ },
+ "vscode/registry/last": {
+  "right": 21,
+  "wrong": 0,
+  "examples": []
+ },
+ "vscode/cmdline/last": {
+  "right": 9,
+  "wrong": 12,
+  "examples": []
+ },
+ "terminal/env/last": {
+  "right": 18,
+  "wrong": 0,
+  "examples": []
+ },
+ "terminal/registry/last": {
+  "right": 18,
+  "wrong": 0,
+  "examples": []
+ },
+ "terminal/cmdline/last": {
+  "right": 6,
+  "wrong": 12,
+  "examples": []
+ },
+ "terminal/registryName/last": {
+  "right": 6,
+  "wrong": 12,
+  "examples": []
+ }
+}
+wrong (env/registry only):
+  r1/w1 tab A call env: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r1/w1 tab A call registry: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r1/w1 tab A call env: got "Apples tab" truth "Tab A: after clear. [[ti…"
+  r1/w1 tab A call registry: got "<command-name>/clear</co…" truth "Tab A: after clear. [[ti…"
+  r1/w1 tab A last env: got "Apples tab" truth "After clear tab"
+  r1/w1 tab B call env: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r1/w1 tab B call registry: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r1/w1 tab C call env: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r1/w1 tab C call registry: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r1/w2 tab D call env: got "Dates tab" truth "Tab D: dates. [[title:Da…"
+  r1/w2 tab D call registry: got "Dates tab" truth "Tab D: dates. [[title:Da…"
+  r2/w1 tab A call env: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r2/w1 tab A call registry: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r2/w1 tab A call env: got "Apples tab" truth "Tab A: after clear. [[ti…"
+  r2/w1 tab A call registry: got "<command-name>/clear</co…" truth "Tab A: after clear. [[ti…"
+  r2/w1 tab A last env: got "Apples tab" truth "After clear tab"
+  r2/w1 tab B call env: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r2/w1 tab B call registry: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r2/w1 tab C call env: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r2/w1 tab C call registry: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r2/w2 tab D call env: got "Dates tab" truth "Tab D: dates. [[title:Da…"
+  r2/w2 tab D call registry: got "Dates tab" truth "Tab D: dates. [[title:Da…"
+  r3/w1 tab A call env: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r3/w1 tab A call registry: got "Apples tab" truth "Tab A: apples. [[title:A…"
+  r3/w1 tab A call env: got "Apples tab" truth "Tab A: after clear. [[ti…"
+  r3/w1 tab A call registry: got "<command-name>/clear</co…" truth "Tab A: after clear. [[ti…"
+  r3/w1 tab A last env: got "Apples tab" truth "After clear tab"
+  r3/w1 tab B call env: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r3/w1 tab B call registry: got "Bananas tab" truth "Tab B: bananas. [[title:…"
+  r3/w1 tab C call env: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r3/w1 tab C call registry: got "Cherries tab" truth "Tab C: cherries. [[title…"
+  r3/w2 tab D call env: got "Dates tab" truth "Tab D: dates. [[title:Da…"
+  r3/w2 tab D call registry: got "Dates tab" truth "Tab D: dates. [[title:Da…"

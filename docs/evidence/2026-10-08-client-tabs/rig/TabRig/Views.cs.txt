@@ -1,0 +1,243 @@
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+/// <summary>
+/// What a server could learn about WHICH conversation started it, read from the client's own
+/// records on disk: Claude Code's per-process registry (CONFIG\sessions\PID.json) and its
+/// transcripts (CONFIG\projects\SLUG\SESSION.jsonl); Codex's rollouts and thread-name index.
+/// A snapshot is logged at start, before every tools/call answer, at end, and whenever a
+/// periodic read differs from the last one, to idstub-PID.views.jsonl.
+///
+/// Values are logged only when the folder read is under this lane's scratch root. Anything
+/// else is reduced to structure (types, lengths, counts), so a mistake in a run's environment
+/// cannot copy a real conversation's title or text into a log.
+/// </summary>
+static class Views
+{
+    public const string ScratchRoot = @"C:\Source\SixFive7\BrowserAI\.work\client-tabs\";
+    static readonly object Gate = new();
+    static FileStream? _out;
+    static string _lastKey = "";
+    static int _ppid;
+    static long _parentCreatedFt;
+    static string? _envSessionId;
+    static string _claudeCfg = "";
+    static string? _codexHome;
+    static int _snapshots, _torn;
+
+    static bool InScratch(string p) => p.StartsWith(ScratchRoot, StringComparison.OrdinalIgnoreCase);
+
+    public static void Start(string pfx, int ppid, string? codexHomeArg, int periodMs)
+    {
+        _out = new FileStream(pfx + ".views.jsonl", FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, 1);
+        _ppid = ppid;
+        using (var h = Native.OpenProcess(Native.PROCESS_QUERY_LIMITED_INFORMATION, false, ppid))
+            _parentCreatedFt = h.IsInvalid ? 0 : Native.CreationTime(h);
+        _envSessionId = Environment.GetEnvironmentVariable("CLAUDE_CODE_SESSION_ID");
+        _claudeCfg = Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR")
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude");
+        _codexHome = codexHomeArg ?? Environment.GetEnvironmentVariable("CODEX_HOME");
+        Log("start", force: true);
+        if (periodMs > 0)
+        {
+            var t = new Thread(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(periodMs);
+                    try { Log("change", force: false); } catch { }
+                }
+            }) { IsBackground = true, Name = "views" };
+            t.Start();
+        }
+    }
+
+    /// <summary>Takes a snapshot and logs it (always when forced, else only when it changed).</summary>
+    public static JsonObject Log(string reason, bool force)
+    {
+        var snap = Take();
+        string key = snap.ToJsonString();
+        lock (Gate)
+        {
+            if (!force && key == _lastKey) return snap;
+            _lastKey = key;
+            _snapshots++;
+            var o = new JsonObject { ["utc"] = Clock.Utc(), ["qpcMs"] = Clock.Ms(Clock.Now()), ["reason"] = reason, ["n"] = _snapshots, ["view"] = snap.DeepClone() };
+            var b = Encoding.UTF8.GetBytes(o.ToJsonString() + "\n");
+            _out!.Write(b, 0, b.Length);
+            _out.Flush();
+        }
+        return snap;
+    }
+
+    static JsonObject Take()
+    {
+        var o = new JsonObject
+        {
+            ["envSessionId"] = _envSessionId,
+            ["ppid"] = _ppid,
+            ["parentCreated"] = _parentCreatedFt.ToString(CultureInfo.InvariantCulture),
+        };
+        try { o["claude"] = Claude(); } catch (Exception e) { o["claude"] = new JsonObject { ["error"] = e.GetType().Name + ": " + e.Message }; }
+        if (_codexHome is not null)
+        {
+            try { o["codex"] = Codex(_codexHome); } catch (Exception e) { o["codex"] = new JsonObject { ["error"] = e.GetType().Name + ": " + e.Message }; }
+        }
+        return o;
+    }
+
+    static string? ReadShared(string path)
+    {
+        try
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var sr = new StreamReader(fs, new UTF8Encoding(false));
+            return sr.ReadToEnd();
+        }
+        catch (FileNotFoundException) { return null; }
+        catch (DirectoryNotFoundException) { return null; }
+    }
+
+    static JsonNode? Val(bool scratch, JsonNode? v)
+    {
+        if (v is null) return null;
+        if (scratch) return v.DeepClone();
+        if (v is JsonValue jv && jv.TryGetValue<string>(out var s)) return $"<string, {s.Length} chars>";
+        return $"<{v.GetValueKind()}>";
+    }
+
+    static JsonObject Claude()
+    {
+        var o = new JsonObject { ["configDir"] = _claudeCfg, ["configInScratch"] = InScratch(_claudeCfg) };
+        bool scratch = InScratch(_claudeCfg);
+        string regPath = Path.Combine(_claudeCfg, "sessions", $"{_ppid}.json");
+        string? text = ReadShared(regPath);
+        if (text is null) { o["registry"] = "absent"; }
+        else
+        {
+            JsonObject? reg = null;
+            for (int attempt = 0; attempt < 3 && reg is null; attempt++)
+            {
+                try { reg = JsonNode.Parse(text) as JsonObject; }
+                catch { _torn++; Thread.Sleep(30); text = ReadShared(regPath) ?? ""; }
+            }
+            if (reg is null) o["registry"] = "unparseable";
+            else
+            {
+                var r = new JsonObject();
+                foreach (var k in new[] { "sessionId", "name", "nameSource", "nameSince", "formerNames", "status", "kind", "entrypoint", "cwd", "version", "startedAt", "updatedAt", "procStart", "hostSessionId" })
+                    if (reg[k] is not null) r[k] = k is "sessionId" or "kind" or "entrypoint" or "status" or "nameSource" or "version" or "procStart" or "startedAt" or "updatedAt" or "nameSince" ? reg[k]!.DeepClone() : Val(scratch, reg[k]);
+                r["keys"] = string.Join(",", reg.Select(kv => kv.Key));
+                string? ps = reg["procStart"]?.ToString();
+                r["procStartMatchesParent"] = ps is not null && ps == _parentCreatedFt.ToString(CultureInfo.InvariantCulture);
+                o["registry"] = r;
+            }
+        }
+        o["tornReads"] = _torn;
+        // Transcripts for every session id this server could know.
+        var ids = new List<string>();
+        if (!string.IsNullOrEmpty(_envSessionId)) ids.Add(_envSessionId!);
+        string? regSid = (o["registry"] as JsonObject)?["sessionId"]?.ToString();
+        if (regSid is not null && !ids.Contains(regSid)) ids.Add(regSid);
+        var tr = new JsonObject();
+        string projects = Path.Combine(_claudeCfg, "projects");
+        foreach (var id in ids)
+        {
+            if (!Regex.IsMatch(id, "^[0-9a-fA-F-]{36}$")) { tr[id] = "not a uuid"; continue; }
+            string[] hits = Directory.Exists(projects) ? Directory.GetFiles(projects, id + ".jsonl", SearchOption.AllDirectories) : Array.Empty<string>();
+            if (hits.Length == 0) { tr[id] = "absent"; continue; }
+            var arr = new JsonArray();
+            foreach (var h in hits) arr.Add(Transcript(h, scratch));
+            tr[id] = arr;
+        }
+        o["transcripts"] = tr;
+        // Every transcript in the scratch configuration, by name and size: shows /clear opening a new one.
+        if (scratch && Directory.Exists(projects))
+        {
+            var all = new JsonArray();
+            foreach (var f in Directory.GetFiles(projects, "*.jsonl", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))
+                all.Add($"{Path.GetFileName(Path.GetDirectoryName(f))}/{Path.GetFileName(f)}:{new FileInfo(f).Length}");
+            o["allTranscripts"] = all;
+        }
+        return o;
+    }
+
+    const int Window = 64 * 1024;
+
+    static JsonObject Transcript(string path, bool scratch)
+    {
+        var o = new JsonObject { ["slug"] = Path.GetFileName(Path.GetDirectoryName(path)) };
+        string? text = ReadShared(path);
+        if (text is null) { o["state"] = "vanished"; return o; }
+        byte[] bytes = Encoding.UTF8.GetBytes(text);
+        o["bytes"] = bytes.Length;
+        var counts = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        string? custom = null, ai = null; long customAt = -1, aiAt = -1; int lines = 0, bad = 0;
+        string? firstPrompt = null;
+        long offset = 0;
+        foreach (var line in text.Split('\n'))
+        {
+            long lineStart = offset;
+            offset += Encoding.UTF8.GetByteCount(line) + 1;
+            if (line.Trim().Length == 0) continue;
+            lines++;
+            JsonObject? rec;
+            try { rec = JsonNode.Parse(line) as JsonObject; } catch { bad++; continue; }
+            if (rec is null) continue;
+            string type = rec["type"]?.ToString() ?? "?";
+            counts[type] = counts.TryGetValue(type, out var c) ? c + 1 : 1;
+            if (type == "custom-title") { custom = rec["customTitle"]?.ToString(); customAt = lineStart; }
+            if (type == "ai-title") { ai = rec["aiTitle"]?.ToString(); aiAt = lineStart; }
+            if (type == "user" && firstPrompt is null && rec["isMeta"]?.GetValue<bool>() != true)
+            {
+                var content = rec["message"]?["content"];
+                if (content is JsonValue cv && cv.TryGetValue<string>(out var s)) firstPrompt = s;
+                else if (content is JsonArray ca) firstPrompt = ca.OfType<JsonObject>().Where(b => b["type"]?.ToString() == "text").Select(b => b["text"]?.ToString()).FirstOrDefault();
+            }
+        }
+        o["lines"] = lines; o["unparsed"] = bad;
+        var ct = new JsonObject(); foreach (var kv in counts) ct[kv.Key] = kv.Value; o["types"] = ct;
+        o["customTitle"] = scratch ? custom : custom is null ? null : $"<{custom.Length} chars>";
+        o["aiTitle"] = scratch ? ai : ai is null ? null : $"<{ai.Length} chars>";
+        o["firstPrompt"] = scratch ? firstPrompt : firstPrompt is null ? null : $"<{firstPrompt.Length} chars>";
+        o["customTitleBytesFromEnd"] = customAt < 0 ? null : bytes.Length - customAt;
+        o["aiTitleBytesFromEnd"] = aiAt < 0 ? null : bytes.Length - aiAt;
+        // The cheap read the VS Code extension's session list does: the first and the last 64 KB.
+        bool InHeadOrTail(long at) => at >= 0 && (at < Window || at >= bytes.Length - Window);
+        o["headTailFindsCustom"] = customAt < 0 ? null : InHeadOrTail(customAt);
+        o["headTailFindsAi"] = aiAt < 0 ? null : InHeadOrTail(aiAt);
+        return o;
+    }
+
+    static JsonObject Codex(string home)
+    {
+        var o = new JsonObject { ["home"] = home, ["inScratch"] = InScratch(home) };
+        if (!InScratch(home)) { o["skipped"] = "not under the scratch root"; return o; }
+        if (!Directory.Exists(home)) { o["state"] = "absent"; return o; }
+        o["top"] = new JsonArray(Directory.GetFileSystemEntries(home).Select(p => (JsonNode)JsonValue.Create(Path.GetFileName(p))!).OrderBy(x => x!.ToString(), StringComparer.Ordinal).ToArray());
+        string sessions = Path.Combine(home, "sessions");
+        if (Directory.Exists(sessions))
+        {
+            var arr = new JsonArray();
+            foreach (var f in Directory.GetFiles(sessions, "rollout-*.jsonl", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))
+                arr.Add($"{Path.GetFileName(f)}:{new FileInfo(f).Length}");
+            o["rollouts"] = arr;
+        }
+        string idx = Path.Combine(home, "session_index.jsonl");
+        string? it = ReadShared(idx);
+        if (it is not null) o["sessionIndex"] = new JsonArray(it.Split('\n').Where(l => l.Trim().Length > 0).Select(l => (JsonNode)JsonValue.Create(l.Length > 400 ? l[..400] : l)!).ToArray());
+        return o;
+    }
+
+    public static string Brief(JsonObject snap)
+    {
+        string? reg = (snap["claude"]?["registry"] as JsonObject)?["sessionId"]?.ToString();
+        return $"env={snap["envSessionId"]} registry={reg ?? "-"}";
+    }
+}

@@ -1,0 +1,69 @@
+// Reads a VS Code tab batch back: one row per tab, linking each stub to the tab that started it
+// by the stub's recorded parent pid, never by order or by tag.
+// usage: node anavs.js <batchdir>   writes <batchdir>\tabs.tsv and prints a per-question tally
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const B = process.argv[2];
+const rows = [];
+const jl = (f) => fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+const short = (s) => (s ? String(s).slice(0, 8) : '-');
+const label = (t) => (!t ? null : (t.customTitle || t.aiTitle || t.firstPrompt || null));
+const tabTitle = (s) => (!s ? 'Claude Code' : s.length > 25 ? s.slice(0, 24) + '…' : s); // extension.js EM1 and webview kf1
+
+function transcriptOf(view, sid) {
+  const t = view && view.claude && view.claude.transcripts && view.claude.transcripts[sid];
+  return Array.isArray(t) ? t[0] : null;
+}
+
+for (const rep of fs.readdirSync(B).filter((d) => /^r\d+$/.test(d)).sort()) {
+  for (const win of fs.readdirSync(path.join(B, rep)).filter((d) => /^w\d+$/.test(d)).sort()) {
+    const dir = path.join(B, rep, win);
+    const res = JSON.parse(fs.readFileSync(path.join(dir, 'result.json'), 'utf8'));
+    const stubs = fs.readdirSync(dir).filter((f) => /^idstub-\d+\.start\.json$/.test(f)).map((f) => {
+      const s = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+      const pfx = path.join(dir, `idstub-${s.pid}`);
+      const views = jl(pfx + '.views.jsonl');
+      const wire = jl(pfx + '.wire.jsonl');
+      return { s, views, wire };
+    });
+    for (const tab of res.tabs) {
+      const mine = stubs.filter((x) => x.s.ppid === tab.pid);
+      const sids = (res.sessionIds[tab.name] || {}).sessionIds || [];
+      const resume = (tab.args.find((a) => a.startsWith('--resume=')) || '').slice(9);
+      const row = { rep, win, tab: tab.name, tabPid: tab.pid, launch: resume ? `resume ${short(resume)}` : 'fresh', streamIds: sids.map(short).join('>'), stubs: mine.length };
+      mine.forEach((x, i) => {
+        const env = x.s.env || {};
+        const v0 = x.views[0] && x.views[0].view;
+        const withReg = x.views.filter((w) => w.view && w.view.claude && typeof w.view.claude.registry === 'object');
+        const vN = (withReg.length ? withReg[withReg.length - 1] : x.views[x.views.length - 1] || {}).view; // the last view taken while the client still had its registry file
+        const reg0 = (v0 && v0.claude && v0.claude.registry) || {};
+        const regN = (vN && vN.claude && vN.claude.registry) || {};
+        const envId = env.CLAUDE_CODE_SESSION_ID;
+        const t0 = transcriptOf(v0, envId);
+        const tN = transcriptOf(vN, regN.sessionId) || transcriptOf(vN, envId);
+        const calls = x.wire.filter((w) => w.dir === 'in' && w.frame && w.frame.method === 'tools/call');
+        const metaKeys = [...new Set(calls.flatMap((c) => Object.keys((c.frame.params && c.frame.params._meta) || {})))].join('+');
+        const anc = x.s.ancestors || [];
+        const p = `s${i + 1}.`;
+        Object.assign(row, {
+          [p + 'pid']: x.s.pid,
+          [p + 'env']: short(envId), [p + 'env=stream1']: envId === sids[0], [p + 'env=resumeArg']: resume ? envId === resume : '-',
+          [p + 'grandparent']: anc[1] ? anc[1].pid : '-', [p + 'gp=driver']: anc[1] ? anc[1].pid === res.driverPid : '-',
+          [p + 'projectDir']: path.basename(env.CLAUDE_PROJECT_DIR || '?'),
+          [p + 'reg0']: `${short(reg0.sessionId)} ${reg0.name || '-'}/${reg0.nameSource || '-'} proc=${reg0.procStartMatchesParent}`,
+          [p + 'regN']: `${short(regN.sessionId)} ${regN.name || '-'}/${regN.nameSource || '-'}`,
+          [p + 'transcriptAtStart']: t0 ? `custom=${t0.customTitle || '-'} ai=${t0.aiTitle || '-'}` : 'absent',
+          [p + 'labelAtEnd']: tN ? tabTitle(label(tN)) : '(no transcript)',
+          [p + 'calls']: calls.length, [p + 'meta']: metaKeys || '-',
+          [p + 'views']: x.views.length,
+        });
+      });
+      rows.push(row);
+    }
+  }
+}
+const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+fs.writeFileSync(path.join(B, 'tabs.tsv'), [cols.join('\t'), ...rows.map((r) => cols.map((c) => (r[c] === undefined ? '' : String(r[c]))).join('\t'))].join('\n') + '\n');
+for (const r of rows) console.log(JSON.stringify(r));

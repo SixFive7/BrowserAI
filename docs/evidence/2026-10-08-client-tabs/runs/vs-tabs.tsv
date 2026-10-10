@@ -1,0 +1,22 @@
+rep	win	tab	tabPid	launch	streamIds	stubs	s1.pid	s1.env	s1.env=stream1	s1.env=resumeArg	s1.grandparent	s1.gp=driver	s1.projectDir	s1.reg0	s1.regN	s1.transcriptAtStart	s1.labelAtEnd	s1.calls	s1.meta	s1.views
+r1	w1	A	46284	fresh	b6e306e1>19d75d18	1	15848	b6e306e1	true	-	59144	true	w1	b6e306e1 w1-0c/derived proc=true	19d75d18 w1-0c/derived	absent	After clear tab	2	claudecode/toolUseId+progressToken	14
+r1	w1	B	72456	fresh	00ff0a9e	1	80164	00ff0a9e	true	-	59144	true	w1	00ff0a9e w1-73/derived proc=true	00ff0a9e w1-73/derived	absent	Bananas tab	1	claudecode/toolUseId+progressToken	7
+r1	w1	C	63224	fresh	1ccb221a	1	54256	1ccb221a	true	-	59144	true	w1	1ccb221a w1-85/derived proc=true	1ccb221a Renamed cherries/user	absent	Renamed cherries	2	claudecode/toolUseId+progressToken	14
+r1	w1	B2	66980	resume 00ff0a9e	00ff0a9e	1	68396	00ff0a9e	true	true	59144	true	w1	00ff0a9e w1-7a/derived proc=true	00ff0a9e w1-7a/derived	custom=- ai=Bananas tab	Bananas tab	1	claudecode/toolUseId+progressToken	8
+r1	w2	D	69068	fresh	6bd05afe	1	10280	6bd05afe	true	-	8532	true	w2	6bd05afe w2-9e/derived proc=true	6bd05afe w2-9e/derived	absent	Dates tab	1	claudecode/toolUseId+progressToken	4
+r1	w2	D1	70636	resume 6bd05afe	6bd05afe	1	52956	6bd05afe	true	true	8532	true	w2	6bd05afe w2-61/derived proc=true	6bd05afe w2-61/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	7
+r1	w2	D2	59880	resume 6bd05afe	6bd05afe	1	81960	6bd05afe	true	true	8532	true	w2	6bd05afe w2-ab/derived proc=true	6bd05afe w2-ab/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	7
+r2	w1	A	63480	fresh	f756f297>0c57df3d	1	77324	f756f297	true	-	59472	true	w1	f756f297 w1-0b/derived proc=true	0c57df3d w1-0b/derived	absent	After clear tab	2	claudecode/toolUseId+progressToken	15
+r2	w1	B	33324	fresh	01fcebbd	1	62684	01fcebbd	true	-	59472	true	w1	01fcebbd w1-e0/derived proc=true	01fcebbd w1-e0/derived	absent	Bananas tab	1	claudecode/toolUseId+progressToken	6
+r2	w1	C	76256	fresh	cd92ad62	1	80956	cd92ad62	true	-	59472	true	w1	cd92ad62 w1-53/derived proc=true	cd92ad62 Renamed cherries/user	absent	Renamed cherries	2	claudecode/toolUseId+progressToken	13
+r2	w1	B2	71920	resume 01fcebbd	01fcebbd	1	80404	01fcebbd	true	true	59472	true	w1	01fcebbd w1-c0/derived proc=true	01fcebbd w1-c0/derived	custom=- ai=Bananas tab	Bananas tab	1	claudecode/toolUseId+progressToken	8
+r2	w2	D	53784	fresh	3c05ff1c	1	70112	3c05ff1c	true	-	41580	true	w2	3c05ff1c w2-80/derived proc=true	3c05ff1c w2-80/derived	absent	Dates tab	1	claudecode/toolUseId+progressToken	5
+r2	w2	D1	74024	resume 3c05ff1c	3c05ff1c	1	71088	3c05ff1c	true	true	41580	true	w2	3c05ff1c w2-e3/derived proc=true	3c05ff1c w2-e3/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	5
+r2	w2	D2	63904	resume 3c05ff1c	3c05ff1c	1	61760	3c05ff1c	true	true	41580	true	w2	3c05ff1c w2-18/derived proc=true	3c05ff1c w2-18/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	5
+r3	w1	A	63948	fresh	abed8091>597b636b	1	58732	abed8091	true	-	56492	true	w1	abed8091 w1-78/derived proc=true	597b636b w1-78/derived	absent	After clear tab	2	claudecode/toolUseId+progressToken	13
+r3	w1	B	60368	fresh	2220c095	1	79856	2220c095	true	-	56492	true	w1	2220c095 w1-fe/derived proc=true	2220c095 w1-fe/derived	absent	Bananas tab	1	claudecode/toolUseId+progressToken	6
+r3	w1	C	77152	fresh	84b5d7bb	1	65440	84b5d7bb	true	-	56492	true	w1	84b5d7bb w1-cb/derived proc=true	84b5d7bb Renamed cherries/user	absent	Renamed cherries	2	claudecode/toolUseId+progressToken	12
+r3	w1	B2	54968	resume 2220c095	2220c095	1	69192	2220c095	true	true	56492	true	w1	2220c095 w1-e3/derived proc=true	2220c095 w1-e3/derived	custom=- ai=Bananas tab	Bananas tab	1	claudecode/toolUseId+progressToken	8
+r3	w2	D	65492	fresh	d2c33d45	1	67672	d2c33d45	true	-	77856	true	w2	d2c33d45 w2-a7/derived proc=true	d2c33d45 w2-a7/derived	absent	Dates tab	1	claudecode/toolUseId+progressToken	4
+r3	w2	D1	57912	resume d2c33d45	d2c33d45	1	80976	d2c33d45	true	true	77856	true	w2	d2c33d45 w2-41/derived proc=true	d2c33d45 w2-41/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	6
+r3	w2	D2	67832	resume d2c33d45	d2c33d45	1	64416	d2c33d45	true	true	77856	true	w2	d2c33d45 w2-16/derived proc=true	d2c33d45 w2-16/derived	custom=- ai=Dates tab	Dates tab	1	claudecode/toolUseId+progressToken	6

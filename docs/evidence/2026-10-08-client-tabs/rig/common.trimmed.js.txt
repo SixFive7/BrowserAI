@@ -1,0 +1,126 @@
+// Shared paths, environments and seeds for the client-tabs batches. Nothing here names a real
+// configuration: every client gets CLAUDE_CONFIG_DIR and CODEX_HOME inside this scratch folder,
+// and an environment built from an allowlist, never this process's own environment (which holds
+// the live root session's id, messaging pipe and token).
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-tabs';
+const RIG = `${S}\\rig\\bin\\TabRig.exe`;
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const BIN = {
+  cli: `${S}\\bin\\cc-cli\\claude.exe`,
+  vsc: `${S}\\bin\\cc-vsc\\claude.exe`,
+  cx: `${S}\\bin\\codex\\package\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe`, // codex-cli 0.162.0, npm latest 2026-10-08
+};
+const VER = { cli: '2.1.295', vsc: '2.1.292' };
+const PORT = { cc: 8973, cx: 8974 };
+const PROJ = { w1: `${S}\\proj\\w1`, w2: `${S}\\proj\\w2`, t: `${S}\\proj\\t`, p: `${S}\\proj\\p`, x: `${S}\\proj\\x` };
+for (const p of Object.values(PROJ)) fs.mkdirSync(p, { recursive: true });
+
+const ALLOW = ['ALLUSERSPROFILE', 'COMPUTERNAME', 'ComSpec', 'CommonProgramFiles', 'CommonProgramFiles(x86)', 'CommonProgramW6432',
+  'DriverData', 'HOMEDRIVE', 'HOMEPATH', 'LOGONSERVER', 'NUMBER_OF_PROCESSORS', 'OS', 'Path', 'PATHEXT',
+  'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL', 'PROCESSOR_REVISION', 'ProgramData',
+  'ProgramFiles', 'ProgramFiles(x86)', 'ProgramW6432', 'PUBLIC', 'SESSIONNAME', 'SystemDrive', 'SystemRoot',
+  'USERDOMAIN', 'USERDOMAIN_ROAMINGPROFILE', 'USERNAME', 'USERPROFILE', 'windir'];
+function allowEnv() {
+  const out = {};
+  const keys = Object.keys(process.env);
+  for (const want of ALLOW) {
+    const k = keys.find((x) => x.toLowerCase() === want.toLowerCase());
+    if (k !== undefined) out[want] = process.env[k];
+  }
+  return out;
+}
+
+const common = (marker) => ({
+  DISABLE_AUTOUPDATER: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+  TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`, APPDATA: `${S}\\appdata\\roaming`, LOCALAPPDATA: `${S}\\appdata\\local`,
+  GIT_CEILING_DIRECTORIES: S, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+  IDRIG_MARKER: marker,
+});
+const ccEnv = (cfg, marker) => Object.assign(common(marker), {
+  CLAUDE_CONFIG_DIR: cfg, CODEX_HOME: `${S}\\cfg-unused\\codex`,
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${PORT.cc}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+});
+const cxEnv = (home, marker) => Object.assign(common(marker), {
+  CODEX_HOME: home, CLAUDE_CONFIG_DIR: `${S}\\cfg-unused\\claude`, STUB_KEY: 'not-a-real-key',
+});
+
+// The extension host's own variables, read from this session's environment (a VS Code extension
+// session), minus VSCODE_PID, VSCODE_IPC_HOOK and CHROME_CRASHPAD_PIPE_NAME, which name the
+// user's running VS Code and must not reach it. None of these differs between two windows of one
+// VS Code: VSCODE_PID and the crashpad pipe name the main process every window shares.
+const vscodeHostEnv = {
+  ELECTRON_RUN_AS_NODE: '1',
+  VSCODE_CODE_CACHE_PATH: '%USERPROFILE%\\AppData\\Roaming\\Code\\CachedData\\07f806f999227108933c2e30515b26eecc1fda74',
+  VSCODE_CRASH_REPORTER_PROCESS_TYPE: 'extensionHost',
+  VSCODE_CWD: 'C:\\WINDOWS\\system32',
+  VSCODE_ESM_ENTRYPOINT: 'vs/workbench/api/node/extensionHostProcess',
+  VSCODE_HANDLES_UNCAUGHT_ERRORS: 'true',
+  VSCODE_L10N_BUNDLE_LOCATION: '',
+  VSCODE_NLS_CONFIG: '{"userLocale":"en-us","osLocale":"en-nl","resolvedLanguage":"en","defaultMessagesFile":"C:\\\\Program Files\\\\Microsoft VS Code\\\\07f806f999\\\\resources\\\\app\\\\out\\\\nls.messages.json","locale":"en-us","availableLanguages":{}}',
+  VSCODE_NODE_COMPILE_CACHE_KIND: 'extension-host',
+  VSCODE_NODE_COMPILE_CACHE_ROOT: 'C:\\Program Files\\Microsoft VS Code\\07f806f999\\resources\\app\\node-compile-cache',
+};
+// What extension 2.1.292 sets for its claude process (extension.js: the extension's own
+// additions, and its bundled agent SDK's: CLAUDE_AGENT_SDK_VERSION, READS_SESSION_STATE, checkpointing).
+const vscodeExtEnv = {
+  MCP_CONNECTION_NONBLOCKING: 'true', CLAUDE_CODE_ENABLE_TASKS: '0', CLAUDE_CODE_EMIT_STARTUP_TIMING: '1',
+  CLAUDE_CODE_ENTRYPOINT: 'claude-vscode', CLAUDE_AGENT_SDK_VERSION: '0.3.292',
+  CLAUDE_CODE_SDK_READS_SESSION_STATE: '1', CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: 'true',
+};
+// The extension's argument list, read off live extension sessions on this machine; a restored
+// tab carries --resume=<id> where $EXTRA stands.
+const VSC_ARGS = ['--output-format', 'stream-json', '--verbose', '--input-format', 'stream-json', '--max-thinking-tokens', '31999', '--thinking-display', 'summarized', '--permission-prompt-tool', 'stdio', '$EXTRA', '--setting-sources=user,project,local', '--permission-mode', 'bypassPermissions', '--allow-dangerously-skip-permissions', '--include-partial-messages', '--debug', '--debug-to-stderr', '--enable-auth-status', '--no-chrome', '--replay-user-messages'];
+
+const fwd = (p) => p.replace(/\\/g, '/');
+function writeCcSeed(cfg, ver, tag, stray) {
+  fs.mkdirSync(cfg, { recursive: true });
+  const projects = {};
+  // The repository's own .mcp.json sits above every scratch folder and Claude Code finds it by
+  // walking up; its four servers are refused here so no run starts them (the shake run did once).
+  for (const p of Object.values(PROJ)) projects[fwd(p)] = { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [], enableAllProjectMcpServers: false, enabledMcpjsonServers: [], disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'] };
+  const seed = {
+    hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: true,
+    customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] },
+    lastReleaseNotesSeen: ver, projects,
+    mcpServers: { idstub: { type: 'stdio', command: RIG, args: ['stub', '--logdir-env', 'IDRIG_LOGDIR', '--logdir', stray, '--tag', tag], env: {} } },
+  };
+  fs.writeFileSync(path.join(cfg, '.claude.json'), JSON.stringify(seed, null, 1));
+  // The same refusal as a user setting, where Claude Code 2.1.29x reads it (the list in
+  // .claude.json alone did not stop the shake run's second attempt).
+  fs.writeFileSync(path.join(cfg, 'settings.json'), JSON.stringify({ enableAllProjectMcpServers: false, enabledMcpjsonServers: [], disabledMcpjsonServers: ['microsoft-learn', 'context7', 'nuget', 'github'], skipDangerousModePermissionPrompt: true, permissions: { allow: ['mcp__idstub__ping'] } }, null, 1));
+}
+const tq = (s) => `'${s}'`;
+// Codex hands an MCP server only an allowlisted environment, so the stub's log folder is written
+// into the configuration itself; a run that shares a CODEX_HOME rewrites it before it starts.
+function cxConfig(home, tag, logdir) {
+  return `model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:${PORT.cx}"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.idstub]
+command = ${tq(RIG)}
+args = [${['stub', '--logdir', logdir, '--tag', tag, '--codex-home', home].map(tq).join(', ')}]
+
+[projects.${tq(PROJ.x)}]
+trust_level = "trusted"
+
+[projects.${tq(PROJ.x.toLowerCase())}]
+trust_level = "trusted"
+`;
+}
+
+module.exports = { S, RIG, NODE, BIN, VER, PORT, PROJ, allowEnv, common, ccEnv, cxEnv, vscodeHostEnv, vscodeExtEnv, VSC_ARGS, writeCcSeed, cxConfig };

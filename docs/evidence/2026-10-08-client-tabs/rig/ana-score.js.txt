@@ -1,0 +1,131 @@
+// Scores each way a server could name its conversation against what the person sees.
+//   VS Code tabs: what the extension shows on the tab (extension.js EM1 / webview kf1): the custom
+//     title if the tab was renamed, else the generated title, else the first prompt, cut at 25
+//     characters with an ellipsis; "Claude Code" before the first prompt. The truth is taken from the
+//     driver's own log: the rename it made, the title the CLI answered, the conversation reset.
+//   Terminal UI runs: the terminal title the client set last (OSC 0/2), minus its status glyph.
+// Strategies, each evaluated at every tools/call and at the last view while the client lived:
+//   env:      CLAUDE_CODE_SESSION_ID from the server's environment -> transcript -> title
+//   registry: CONFIG\sessions\<parent pid>.json -> sessionId -> transcript -> title
+//   cmdline:  --resume/--session-id on the parent's command line -> transcript -> title (else nothing)
+// usage: node ana-score.js <vs batchdir> <tui batchdir>
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const [VS, TUI] = process.argv.slice(2);
+const jl = (f) => fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+const cut = (s) => (!s ? 'Claude Code' : s.length > 25 ? s.slice(0, 24) + '…' : s);
+const titleOf = (t) => (t ? (t.customTitle || t.aiTitle || t.firstPrompt || null) : null);
+function tr(view, sid) { const t = sid && view && view.claude && view.claude.transcripts && view.claude.transcripts[sid]; return Array.isArray(t) ? t[0] : null; }
+// A view only holds transcripts for the env id and the registry id; for a command-line id that is
+// neither, nothing can be said from it, and the strategy is scored as giving no label.
+function labels(view, cmdId) {
+  const env = view.envSessionId;
+  const reg = view.claude && typeof view.claude.registry === 'object' ? view.claude.registry.sessionId : null;
+  return {
+    env: cut(titleOf(tr(view, env))),
+    registry: reg ? cut(titleOf(tr(view, reg))) : '(no registry)',
+    cmdline: cmdId ? cut(titleOf(tr(view, cmdId))) : '(no id)',
+  };
+}
+const score = {};
+const add = (key, ok) => { const s = score[key] || (score[key] = { right: 0, wrong: 0, examples: [] }); if (ok) s.right++; else s.wrong++; };
+const wrongs = [];
+
+// ---- VS Code tabs
+for (const rep of fs.readdirSync(VS).filter((d) => /^r\d+$/.test(d)).sort()) {
+  for (const win of fs.readdirSync(path.join(VS, rep)).filter((d) => /^w\d+$/.test(d)).sort()) {
+    const dir = path.join(VS, rep, win);
+    const res = JSON.parse(fs.readFileSync(path.join(dir, 'result.json'), 'utf8'));
+    const dlog = fs.readFileSync(path.join(dir, 'driver.log'), 'utf8').split('\n');
+    // Truth over time for each tab: events in driver order.
+    const truthAt = {}; // tab -> [{utc, title}]
+    const push = (tab, utc, title) => (truthAt[tab] || (truthAt[tab] = [])).push({ utc, title });
+    for (const l of dlog) {
+      const [utc, kind, rest] = l.split('\t');
+      if (!rest) continue;
+      const tab = (rest.match(/tab=(\S+)/) || [])[1];
+      if (kind === 'SEND' && /"type":"user"/.test(rest)) { const text = (rest.match(/"text":"((?:[^"\\]|\\.)*)"/) || [])[1]; if (text && text !== '/clear') { const prev = (truthAt[tab] || []).slice(-1)[0]; if (!prev || prev.title === null) push(tab, utc, `prompt:${JSON.parse('"' + text + '"')}`); } }
+      if (kind === 'RESET') push(tab, utc, null);
+      if (kind === 'CONTROL_OUT' && /generate_session_title/.test(rest)) { const t = (rest.match(/"title":"([^"]*)"/) || [])[1]; if (t) push(tab, utc, `title:${t}`); }
+      if (kind === 'SEND' && /"subtype":"rename_session"/.test(rest)) { const t = (rest.match(/"title":"([^"]*)"/) || [])[1]; push(tab, utc, `custom:${t}`); }
+    }
+    // A restored tab opens on its conversation's existing title: the extension's session list
+    // (extension.js listedSessions) supplies it to createWebviewPanel.
+    for (const t of res.tabs) {
+      const resume = (t.args.find((a) => a.startsWith('--resume=')) || '').slice(9);
+      if (resume) { const src = res.tabs.find((x) => (res.sessionIds[x.name] || {}).sessionIds && res.sessionIds[x.name].sessionIds[0] === resume && x.name !== t.name && !x.args.some((a) => a.startsWith('--resume='))); if (src) truthAt[t.name] = [{ utc: t.startUtc || '', title: `inherit:${src.name}` }, ...(truthAt[t.name] || [])]; }
+    }
+    const truthFor = (tab, utc) => {
+      let custom = null, title = null, prompt = null;
+      const ev = (truthAt[tab] || []).filter((e) => e.utc <= utc || e.title && e.title.startsWith('inherit:'));
+      for (const e of ev) {
+        if (e.title === null) { custom = null; title = null; prompt = null; continue; } // a reset starts a new conversation
+        if (e.title.startsWith('inherit:')) { const r = truthFor(e.title.slice(8), '9999'); if (r !== 'Claude Code') title = r; continue; }
+        if (e.title.startsWith('custom:')) custom = e.title.slice(7);
+        else if (e.title.startsWith('title:')) title = e.title.slice(6);
+        else if (e.title.startsWith('prompt:')) prompt = prompt || e.title.slice(7);
+      }
+      return cut(custom || title || prompt);
+    };
+    const stubs = fs.readdirSync(dir).filter((f) => /^idstub-\d+\.start\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+    for (const t of res.tabs) {
+      const resume = (t.args.find((a) => a.startsWith('--resume=')) || '').slice(9) || null;
+      for (const s of stubs.filter((x) => x.ppid === t.pid)) {
+        const views = jl(path.join(dir, `idstub-${s.pid}.views.jsonl`));
+        const calls = views.filter((v) => v.reason.startsWith('tools/call'));
+        const live = views.filter((v) => v.view.claude && typeof v.view.claude.registry === 'object');
+        const points = [...calls.map((v) => ['call', v]), ...(live.length ? [['last', live[live.length - 1]]] : [])];
+        for (const [what, v] of points) {
+          const truth = truthFor(t.name, v.utc);
+          const got = labels(v.view, resume);
+          for (const k of Object.keys(got)) {
+            const ok = got[k] === truth;
+            add(`vscode/${k}/${what}`, ok);
+            if (!ok && k !== 'cmdline') wrongs.push(`${rep}/${win} tab ${t.name} ${what} ${k}: got "${got[k]}" truth "${truth}"`);
+          }
+        }
+      }
+    }
+  }
+}
+
+// ---- terminal UI runs
+function oscTitles(file) {
+  if (!fs.existsSync(file)) return [];
+  const buf = fs.readFileSync(file);
+  const out = [];
+  let text = '';
+  for (let o = 0; o + 12 <= buf.length;) { const n = buf.readInt32LE(o + 8); text += buf.subarray(o + 12, o + 12 + n).toString('utf8'); o += 12 + n; }
+  const re = /\x1b\](0|2);([^\x07\x1b]*)(?:\x07|\x1b\\)/g; let m;
+  while ((m = re.exec(text))) out.push(m[2]);
+  return out;
+}
+if (TUI) for (const rep of fs.readdirSync(TUI).filter((d) => /^r\d+$/.test(d)).sort()) {
+  for (const arm of fs.readdirSync(path.join(TUI, rep)).filter((d) => fs.existsSync(path.join(TUI, rep, d, 'result.json'))).sort()) {
+    const dir = path.join(TUI, rep, arm);
+    const titles = oscTitles(path.join(dir, 'pty-raw.bin')).map((x) => x.replace(/^[^\p{L}\p{N}]+\s*/u, '').trim()).filter((x) => x && x !== 'claude');
+    const truth = titles[titles.length - 1] || 'Claude Code';
+    const s = fs.readdirSync(dir).filter((f) => /^idstub-\d+\.start\.json$/.test(f)).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))[0];
+    const cmd = ((s.ancestors || [])[0] || {}).cmd || '';
+    const cmdId = (cmd.match(/--(?:resume|session-id)[= ]([0-9a-f-]{36})/) || [])[1] || null;
+    const views = jl(path.join(dir, `idstub-${s.pid}.views.jsonl`));
+    const live = views.filter((v) => v.view.claude && typeof v.view.claude.registry === 'object');
+    const v = live[live.length - 1];
+    const raw = labels(v.view, cmdId);
+    // The terminal shows the title uncut.
+    const full = (sid) => titleOf(tr(v.view, sid)) || 'Claude Code';
+    const reg = v.view.claude.registry.sessionId;
+    const got = { env: full(v.view.envSessionId), registry: full(reg), cmdline: cmdId ? full(cmdId) : '(no id)', registryName: v.view.claude.registry.nameSource === 'user' ? v.view.claude.registry.name : '(derived)' };
+    void raw;
+    for (const k of Object.keys(got)) {
+      const ok = got[k] === truth;
+      add(`terminal/${k}/last`, ok);
+      if (!ok && k !== 'cmdline' && k !== 'registryName') wrongs.push(`${rep}/${arm} ${k}: got "${got[k]}" truth "${truth}"`);
+    }
+  }
+}
+console.log(JSON.stringify(score, null, 1));
+console.log('wrong (env/registry only):');
+for (const w of wrongs) console.log('  ' + w);

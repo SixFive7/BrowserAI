@@ -1,0 +1,19 @@
+// Adapts the client-id model stubs to this rig: the tool to call is idstub's ping, with no
+// arguments, and a session-title request is answered with the title the prompt names.
+'use strict';
+const fs = require('fs');
+function rep(s, a, b) { if (!s.includes(a)) throw new Error('missing: ' + a.slice(0, 80)); return s.replace(a, b); }
+let s = fs.readFileSync('ccmodel.js', 'utf8');
+s = rep(s, "const prefix = p.prefix || process.env.STUB_PREFIX || 'mcp__browserai__';", "const prefix = p.prefix || process.env.STUB_PREFIX || 'mcp__idstub__';");
+s = rep(s, "realTool: p.realTool || process.env.STUB_REAL_TOOL || `${prefix}browserai_list`,", "realTool: p.realTool || process.env.STUB_REAL_TOOL || `${prefix}ping`,");
+s = rep(s, "kind = 'tool'; tool = REAL_TOOL; input = { directory: P.directory };", "kind = 'tool'; tool = REAL_TOOL; input = {};");
+s = rep(s, "    let kind = 'text';\n", "    let kind = 'text';\n    const isTitleReq = sys.includes('You are naming a coding session');\n    const titleMark = raw.match(/\[\[title:([^\]]+)\]\]/);\n");
+s = rep(s, "    if (names.includes('ToolSearch') && toLoad.length)", "    if (isTitleReq) { text = JSON.stringify({ title: titleMark ? titleMark[1] : 'Stub session title' }); }\n    else if (names.includes('ToolSearch') && toLoad.length)");
+s = rep(s, "decision: kind === 'tool' ? `tool_use ${tool}` : `text \"${text}\"`,", "decision: kind === 'tool' ? `tool_use ${tool}` : `text \"${text}\"`, isTitleReq, sysHead: sys.slice(0, 90),");
+fs.writeFileSync('ccmodel.js', s);
+let c = fs.readFileSync('cxmodel.js', 'utf8');
+c = rep(c, "server: p.server || 'browserai',", "server: p.server || 'idstub',");
+c = rep(c, "realTool: p.realTool || 'browserai_list',", "realTool: p.realTool || 'ping',");
+c = rep(c, "arguments: JSON.stringify(pick.tool === 'update_in_flight' ? {} : { directory: P.directory })", "arguments: JSON.stringify({})");
+fs.writeFileSync('cxmodel.js', c);
+console.log('patched');

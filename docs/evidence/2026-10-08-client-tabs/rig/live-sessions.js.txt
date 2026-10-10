@@ -1,0 +1,119 @@
+// Read-only, structure only: what Claude Code's own records on this machine say about the live
+// conversations and about recent transcripts in general. It never writes a title, a prompt or
+// any conversation text: only record type names, counts, byte positions, booleans and the first
+// 8 characters of session ids.
+// usage: node live-sessions.js <procs.json> <out.json> [days=14]
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const [procsFile, outFile, daysArg] = process.argv.slice(2);
+const CFG = path.join(os.homedir(), '.claude');
+const procs = JSON.parse(fs.readFileSync(procsFile, 'utf8').replace(/^﻿/, ''));
+const WINDOW = 64 * 1024;
+const short = (s) => (s ? String(s).slice(0, 8) : null);
+
+function readShared(p) { try { return fs.readFileSync(p, 'utf8'); } catch { return null; } }
+
+// The extension's session list (extension.js fetchSessionsInDir) reads only the first and the last
+// 64 KB and takes customTitle from the tail, then the head, then aiTitle the same way; it falls back
+// to lastPrompt and summary from the tail and the first prompt from the head.
+function structure(file) {
+  const text = readShared(file);
+  if (text === null) return { state: 'unreadable' };
+  const buf = Buffer.from(text, 'utf8');
+  const types = {};
+  const entry = {}; let lastVersion = null;
+  let lastCustom = -1, lastAi = -1, firstAi = -1, firstAssistant = -1, firstUser = -1, lastPrompt = -1, offset = 0, idx = 0;
+  for (const line of text.split('\n')) {
+    const start = offset;
+    offset += Buffer.byteLength(line, 'utf8') + 1;
+    if (!line.trim()) continue;
+    idx++;
+    let rec; try { rec = JSON.parse(line); } catch { types['<unparsed>'] = (types['<unparsed>'] || 0) + 1; continue; }
+    const t = typeof rec.type === 'string' ? rec.type : '<none>';
+    types[t] = (types[t] || 0) + 1;
+    if (t === 'custom-title' && rec.customTitle) lastCustom = start;
+    if (t === 'ai-title' && rec.aiTitle) { lastAi = start; if (firstAi < 0) firstAi = idx; }
+    if (t === 'assistant' && firstAssistant < 0) firstAssistant = idx;
+    if (t === 'user' && firstUser < 0 && !rec.isMeta) firstUser = idx;
+    if ((t === 'user' || t === 'assistant') && typeof rec.entrypoint === 'string') entry[rec.entrypoint] = (entry[rec.entrypoint] || 0) + 1;
+    if ((t === 'user' || t === 'assistant') && typeof rec.version === 'string') lastVersion = rec.version;
+    if (t === 'last-prompt') lastPrompt = start;
+  }
+  const head = buf.subarray(0, WINDOW).toString('utf8');
+  const tail = buf.subarray(Math.max(0, buf.length - WINDOW)).toString('utf8');
+  const has = (s, k) => s.includes(`"${k}"`);
+  const listSource = has(tail, 'customTitle') || has(head, 'customTitle') ? 'customTitle' : has(tail, 'aiTitle') || has(head, 'aiTitle') ? 'aiTitle' : has(tail, 'lastPrompt') ? 'lastPrompt' : has(tail, 'summary') ? 'summary' : 'firstPrompt-or-none';
+  const fullSource = lastCustom >= 0 ? 'customTitle' : lastAi >= 0 ? 'aiTitle' : 'firstPrompt-or-none';
+  return {
+    bytes: buf.length, records: idx, types, entrypoints: entry, lastVersion,
+    customTitleBytesFromEnd: lastCustom < 0 ? null : buf.length - lastCustom,
+    aiTitleBytesFromEnd: lastAi < 0 ? null : buf.length - lastAi,
+    lastPromptBytesFromEnd: lastPrompt < 0 ? null : buf.length - lastPrompt,
+    firstAiTitleRecord: firstAi < 0 ? null : firstAi, firstUserRecord: firstUser < 0 ? null : firstUser, firstAssistantRecord: firstAssistant < 0 ? null : firstAssistant,
+    aiTitleBeforeFirstAssistant: firstAi > 0 && firstAssistant > 0 ? firstAi < firstAssistant : null,
+    headTailSource: listSource, fullScanSource: fullSource, headTailAgrees: listSource === fullSource || (fullSource === 'firstPrompt-or-none' && listSource !== 'customTitle' && listSource !== 'aiTitle'),
+  };
+}
+
+function findTranscript(sid) {
+  const projects = path.join(CFG, 'projects');
+  for (const d of fs.readdirSync(projects)) { const f = path.join(projects, d, `${sid}.jsonl`); if (fs.existsSync(f)) return f; }
+  return null;
+}
+
+const out = { utc: new Date().toISOString(), config: '~/.claude (read only)', live: [], recent: null };
+for (const p of [].concat(procs.processes || [])) {
+  if (p.name !== 'claude.exe') continue;
+  if (String(p.image || '').toLowerCase().includes('\\.work\\client-tabs\\')) continue; // this lane's own scratch runs
+  const row = { pid: p.pid, parentKind: p.parent.kind, grandparentKind: p.grandparent.kind, grandparentPid: p.grandparent.pid, resumeArg: p.resumeId || null, children: [].concat(p.children || []).map((c) => c.name) };
+  const reg = readShared(path.join(CFG, 'sessions', `${p.pid}.json`));
+  if (!reg) row.registry = 'absent';
+  else {
+    const j = JSON.parse(reg);
+    row.registry = { sessionId: short(j.sessionId), procStartMatchesCreationToTheMicrosecond: (BigInt(j.procStart) / 10n) === (BigInt(p.createdFileTime) / 10n), entrypoint: j.entrypoint, kind: j.kind, version: j.version, status: j.status, nameSource: j.nameSource, nameLength: (j.name || '').length, keys: Object.keys(j).join(',') };
+    row.resumeArgMatchesRegistry = p.resumeId ? short(j.sessionId) === p.resumeId : null;
+    const f = findTranscript(j.sessionId);
+    row.transcript = f ? structure(f) : 'absent';
+  }
+  out.live.push(row);
+}
+
+// Recent top-level transcripts: aggregate structure only.
+const days = Number(daysArg || 14);
+const cutoff = Date.now() - days * 86400e3;
+const agg = { days, files: 0, bytes: 0, withCustom: 0, withAi: 0, withNeither: 0, headTailAgrees: 0, titleInTail: 0, titleInHead: 0, titleInNeither: 0,
+  aiBeforeFirstAssistant: 0, aiAfterFirstAssistant: 0, maxTitleBytesFromEnd: 0, maxBytes: 0, sources: {}, byEntrypoint: {} };
+const projects = path.join(CFG, 'projects');
+for (const d of fs.readdirSync(projects)) {
+  let es; try { es = fs.readdirSync(path.join(projects, d), { withFileTypes: true }); } catch { continue; }
+  for (const e of es) {
+    if (!e.isFile() || !/^[0-9a-f-]{36}\.jsonl$/.test(e.name)) continue;
+    const f = path.join(projects, d, e.name);
+    const st = fs.statSync(f);
+    if (st.mtimeMs < cutoff) continue;
+    const s = structure(f);
+    if (s.state) continue;
+    agg.files++; agg.bytes += s.bytes; agg.maxBytes = Math.max(agg.maxBytes, s.bytes);
+    if (s.customTitleBytesFromEnd !== null) agg.withCustom++;
+    if (s.aiTitleBytesFromEnd !== null) agg.withAi++;
+    if (s.customTitleBytesFromEnd === null && s.aiTitleBytesFromEnd === null) agg.withNeither++;
+    if (s.headTailAgrees) agg.headTailAgrees++;
+    agg.sources[s.fullScanSource] = (agg.sources[s.fullScanSource] || 0) + 1;
+    const ep = Object.keys(s.entrypoints).sort().join('+') || '<none>';
+    const b = agg.byEntrypoint[ep] || (agg.byEntrypoint[ep] = { files: 0, withAi: 0, withCustom: 0, neither: 0 });
+    b.files++; if (s.aiTitleBytesFromEnd !== null) b.withAi++; if (s.customTitleBytesFromEnd !== null) b.withCustom++; if (s.aiTitleBytesFromEnd === null && s.customTitleBytesFromEnd === null) b.neither++;
+    const title = s.customTitleBytesFromEnd ?? s.aiTitleBytesFromEnd;
+    if (title !== null) {
+      agg.maxTitleBytesFromEnd = Math.max(agg.maxTitleBytesFromEnd, title);
+      if (title <= WINDOW) agg.titleInTail++; else if (s.bytes - title < WINDOW) agg.titleInHead++; else agg.titleInNeither++;
+    }
+    if (s.aiTitleBeforeFirstAssistant === true) agg.aiBeforeFirstAssistant++;
+    if (s.aiTitleBeforeFirstAssistant === false) agg.aiAfterFirstAssistant++;
+  }
+}
+out.recent = agg;
+fs.writeFileSync(outFile, JSON.stringify(out, null, 1));
+console.log(JSON.stringify(out, null, 1));

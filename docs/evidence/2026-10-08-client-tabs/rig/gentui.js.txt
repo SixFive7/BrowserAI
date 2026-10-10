@@ -1,0 +1,65 @@
+// Terminal Claude Code batches for the C# harness (pseudoconsole, no window), CLI 2.1.295.
+// usage: node gentui.js <batch> <reps>
+// One rep is a chain of six runs sharing one CLAUDE_CONFIG_DIR and one folder (proj\t):
+//   fresh     `claude`: prompt, /rename, /clear, prompt again
+//   sid       `claude --session-id U`
+//   resume    `claude --resume U`
+//   continue  `claude --continue`
+//   fork      `claude --resume U --fork-session`
+//   name      `claude -n "Launch name R"`
+// Every run's stub logs into the run's own folder through IDRIG_LOGDIR.
+'use strict';
+const fs = require('fs');
+const crypto = require('crypto');
+const C = require('./common');
+
+const [batch, repsArg] = process.argv.slice(2);
+const reps = Number(repsArg || 3);
+const BATCHDIR = `${C.S}\\runs\\${batch}`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.writeFileSync(POLICY, JSON.stringify({ logDir: BATCHDIR, tag: 'model', prefix: 'mcp__idstub__', realTool: 'mcp__idstub__ping' }));
+
+const listed = (run, n, ms) => ({ do: 'waitGlobCount', dir: run, pattern: 'idstub-*.listed', count: n || 1, timeoutMs: ms || 90000 });
+const calls = (run, n, ms) => ({ do: 'waitFileMatch', dir: run, pattern: 'idstub-*.wire.jsonl', regex: '"method":"tools/call"', count: n, timeoutMs: ms || 60000 });
+const say = (text) => [{ do: 'type', text }, { do: 'sleep', ms: 600 }, { do: 'type', text: '\r' }];
+const cmd = (text, wait) => [{ do: 'type', text }, { do: 'sleep', ms: 900 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: wait || 3000 }];
+const exit = [...cmd('/exit', 5000)];
+
+const runs = [];
+for (let r = 1; r <= reps; r++) {
+  const rep = `${BATCHDIR}\\r${r}`;
+  const cfg = `${rep}\\cfg`;
+  C.writeCcSeed(cfg, C.VER.cli, `${batch}-r${r}`, `${rep}\\stray`);
+  const U = crypto.randomUUID();
+  fs.writeFileSync(`${rep}\\chain.json`, JSON.stringify({ U }, null, 1));
+  const arms = {
+    fresh: { args: [], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'up' },
+      ...say(`Terminal apples r${r}. [[title:Terminal apples ${r}]] Please call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 6000 }, { do: 'snap', text: 'after first turn' },
+      ...cmd(`/rename Renamed in terminal ${r}`, 4000), { do: 'snap', text: 'after rename' },
+      ...cmd('/clear', 5000), { do: 'snap', text: 'after clear' }, listed(run, 2, 6000),
+      ...say(`After clear r${r}. [[title:After clear terminal ${r}]] Please call the ping tool once.`), calls(run, 2), { do: 'sleep', ms: 6000 }, { do: 'snap', text: 'after second turn' },
+      ...exit] },
+    sid: { args: ['--session-id', U], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 },
+      ...say(`Session id run r${r}. [[title:Fixed id ${r}]] Please call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 6000 }, ...exit] },
+    resume: { args: ['--resume', U], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 },
+      ...say(`Resumed r${r}, call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 4000 }, ...exit] },
+    continue: { args: ['--continue'], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 },
+      ...say(`Continued r${r}, call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 4000 }, ...exit] },
+    fork: { args: ['--resume', U, '--fork-session'], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 },
+      ...say(`Forked r${r}, call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 4000 }, ...exit] },
+    name: { args: ['-n', `Launch name ${r}`], steps: (run) => [listed(run), { do: 'sleep', ms: 2500 },
+      ...say(`Named at launch r${r}. [[title:Named launch ${r}]] Please call the ping tool once.`), calls(run, 1), { do: 'sleep', ms: 6000 }, ...exit] },
+  };
+  for (const [arm, d] of Object.entries(arms)) {
+    const run = `${rep}\\${arm}`;
+    const env = Object.assign(C.ccEnv(cfg, `${batch}-r${r}-${arm}`), { IDRIG_LOGDIR: run });
+    // --dangerously-skip-permissions: the launch shape of every terminal session live on this machine, and
+    // what lets the stub tool run without a permission prompt nobody would answer.
+    runs.push({ name: `r${r}-${arm}`, dir: run, exe: C.BIN.cli, args: ['--dangerously-skip-permissions', ...d.args], cwd: C.PROJ.t, env, console: 'pty', ptyNullStdHandles: true,
+      maxMs: 180000, settleMs: 15000, writeFiles: [], steps: d.steps(run) });
+  }
+}
+const stub = { name: 'anthropic', exe: C.NODE, args: [`${C.S}\\rig\\ccmodel.js`], env: { STUB_PORT: String(C.PORT.cc), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'model' } };
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify({ progress: `${BATCHDIR}\\progress.log`, gapMs: 1500, stubs: [stub], runs }, null, 1));
+console.log(`${BATCHDIR}\\batch.json: ${runs.length} runs`);

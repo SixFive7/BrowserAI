@@ -1,0 +1,210 @@
+// Drives several Claude Code processes the way one VS Code window's extension host drives its
+// tabs: each tab is a claude.exe with the extension's argument list, speaking stream-json over
+// pipes, started with no window (CREATE_NO_WINDOW) by THIS process, so every tab of one
+// "window" shares one parent pid, one environment and one working folder.
+//
+// usage: node vsdrive.js <scenario.json>
+// scenario: { name, dir, exe, baseArgs[], cwd, env{}, steps[] }
+// steps:
+//   {do:"spawn", tab, extraArgs[]}             start a tab; "$X.sid" in an argument is tab X's session id
+//   {do:"init", tab, timeoutMs}                control_request initialize, wait for its response
+//   {do:"prompt", tab, text, timeoutMs}        a user message; waits for the turn's "result"
+//   {do:"title", tab, description, timeoutMs}  control_request generate_session_title {persist:true}
+//   {do:"rename", tab, title, timeoutMs}       what the extension does: append a custom-title record to
+//                                              the transcript, then control_request rename_session
+//   {do:"close", tab, timeoutMs}               end stdin and wait for the exit (terminate after timeout)
+//   {do:"waitStubs", count, timeoutMs}         at least COUNT idstub-*.listed files in dir
+//   {do:"waitWire", regex, count, timeoutMs}   at least COUNT matches over all idstub-*.wire.jsonl
+//   {do:"sleep", ms} | {do:"mark", text}
+// Every stdout line of every tab is kept in tab-<tab>-<n>.stdout.jsonl; stderr in .stderr.log.
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+const crypto = require('crypto');
+
+const sc = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+fs.mkdirSync(sc.dir, { recursive: true });
+const LOG = path.join(sc.dir, 'driver.log');
+const log = (kind, text) => fs.appendFileSync(LOG, `${new Date().toISOString()}\t${kind}\t${text}\n`);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const tabs = new Map();
+let spawnNo = 0;
+let reqNo = 0;
+const result = { name: sc.name, startUtc: new Date().toISOString(), driverPid: process.pid, tabs: [], timeouts: [] };
+
+function subst(s) {
+  return s.replace(/\$([A-Za-z0-9_]+)\.sid/g, (m, t) => {
+    const tab = tabs.get(t);
+    if (!tab || !tab.sessionId) throw new Error(`no session id known for tab ${t}`);
+    return tab.sessionId;
+  });
+}
+
+function startTab(name, extraArgs) {
+  const n = ++spawnNo;
+  const extra = (extraArgs || []).map(subst);
+  const args = sc.baseArgs.flatMap((a) => (a === '$EXTRA' ? extra : [a]));
+  const env = Object.assign({}, sc.env, { IDRIG_LOGDIR: sc.dir });
+  const p = spawn(sc.exe, args, { cwd: sc.cwd, env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  const base = path.join(sc.dir, `tab-${name}-${n}`);
+  const out = fs.createWriteStream(base + '.stdout.jsonl');
+  const err = fs.createWriteStream(base + '.stderr.log');
+  const tab = { name, n, p, pid: p.pid, args, lines: [], waiters: [], sessionIds: [], sessionId: null, exited: null, startUtc: new Date().toISOString() };
+  tabs.set(name, tab);
+  log('SPAWN', `tab=${name} n=${n} pid=${p.pid} args=${JSON.stringify(args)}`);
+  let buf = '';
+  p.stdout.on('data', (d) => {
+    buf += d.toString('utf8');
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).replace(/\r$/, ''); buf = buf.slice(i + 1);
+      if (!line.trim()) continue;
+      out.write(JSON.stringify({ utc: new Date().toISOString(), line }) + '\n');
+      let m = null; try { m = JSON.parse(line); } catch { }
+      if (!m) continue;
+      if (typeof m.session_id === 'string' && m.session_id && tab.sessionIds[tab.sessionIds.length - 1] !== m.session_id) {
+        tab.sessionIds.push(m.session_id);
+        log('SESSION_ID', `tab=${name} n=${n} type=${m.type}/${m.subtype || ''} session_id=${m.session_id}`);
+      }
+      if (m.type === 'system' && m.subtype === 'init') tab.sessionId = m.session_id;
+      if (!tab.sessionId && typeof m.session_id === 'string' && m.session_id) tab.sessionId = m.session_id;
+      if (m.type === 'conversation_reset' || m.subtype === 'conversation_reset' || m.newConversationId) log('RESET', `tab=${name} ${line.slice(0, 400)}`);
+      if (m.type === 'control_request') answerControl(tab, m);
+      tab.lines.push(m);
+      for (const w of [...tab.waiters]) if (w.pred(m)) { tab.waiters.splice(tab.waiters.indexOf(w), 1); w.resolve(m); }
+    }
+  });
+  p.stderr.on('data', (d) => err.write(d));
+  p.on('exit', (code, sig) => { tab.exited = { code, sig, utc: new Date().toISOString() }; log('EXIT', `tab=${name} n=${n} pid=${p.pid} code=${code} sig=${sig}`); for (const w of tab.waiters) w.resolve(null); tab.waiters = []; });
+  p.on('error', (e) => log('SPAWN_ERROR', `tab=${name} ${e.message}`));
+  result.tabs.push({ name, n, pid: p.pid, args });
+  return tab;
+}
+
+function send(tab, obj) {
+  const s = JSON.stringify(obj);
+  tab.p.stdin.write(s + '\n');
+  log('SEND', `tab=${tab.name} ${s.slice(0, 300)}`);
+}
+
+function answerControl(tab, m) {
+  const r = m.request || {};
+  let response = {};
+  if (r.subtype === 'can_use_tool') response = { behavior: 'allow', updatedInput: r.input || {} };
+  send(tab, { type: 'control_response', response: { subtype: 'success', request_id: m.request_id, response } });
+  log('CONTROL_IN', `tab=${tab.name} subtype=${r.subtype} answered`);
+}
+
+function waitMsg(tab, pred, timeoutMs, what) {
+  for (const m of tab.lines) if (m.__seen !== true && pred(m)) { m.__seen = true; return Promise.resolve(m); }
+  return new Promise((resolve) => {
+    const w = { pred: (m) => { if (pred(m)) { m.__seen = true; return true; } return false; }, resolve };
+    tab.waiters.push(w);
+    setTimeout(() => { const i = tab.waiters.indexOf(w); if (i >= 0) { tab.waiters.splice(i, 1); log('TIMEOUT', `tab=${tab.name} waiting for ${what}`); result.timeouts.push(`${tab.name}:${what}`); resolve(null); } }, timeoutMs || 60000);
+  });
+}
+
+async function control(tab, request, timeoutMs, what) {
+  const id = `req_${++reqNo}`;
+  send(tab, { type: 'control_request', request_id: id, request });
+  const m = await waitMsg(tab, (x) => x.type === 'control_response' && x.response && x.response.request_id === id, timeoutMs, what || request.subtype);
+  log('CONTROL_OUT', `tab=${tab.name} ${request.subtype} -> ${m ? JSON.stringify(m.response).slice(0, 400) : 'timeout'}`);
+  return m;
+}
+
+// The stubs a tab started: every idstub-PID.start.json in this window's folder whose ppid is the tab's pid.
+function stubsOf(tab) {
+  const out = [];
+  for (const f of fs.readdirSync(sc.dir).filter((x) => /^idstub-\d+\.start\.json$/.test(x))) {
+    try { const j = JSON.parse(fs.readFileSync(path.join(sc.dir, f), 'utf8')); if (j.ppid === tab.pid) out.push(j.pid); } catch { }
+  }
+  return out;
+}
+function callsOf(tab) {
+  let n = 0;
+  for (const pid of stubsOf(tab)) { const w = path.join(sc.dir, `idstub-${pid}.wire.jsonl`); if (fs.existsSync(w)) n += (fs.readFileSync(w, 'utf8').match(/"method":"tools\/call"/g) || []).length; }
+  return n;
+}
+function countFiles(re) { try { return fs.readdirSync(sc.dir).filter((f) => re.test(f)).length; } catch { return 0; } }
+function wireMatches(re) {
+  let n = 0;
+  for (const f of fs.readdirSync(sc.dir).filter((x) => /^idstub-\d+\.wire\.jsonl$/.test(x))) {
+    const t = fs.readFileSync(path.join(sc.dir, f), 'utf8');
+    n += (t.match(new RegExp(re, 'g')) || []).length;
+  }
+  return n;
+}
+async function poll(fn, want, timeoutMs, what) {
+  const t0 = Date.now();
+  let got = fn();
+  while (got < want && Date.now() - t0 < (timeoutMs || 60000)) { await sleep(100); got = fn(); }
+  log(got >= want ? 'WAIT_OK' : 'TIMEOUT', `${what} got=${got} want=${want} afterMs=${Date.now() - t0}`);
+  if (got < want) result.timeouts.push(what);
+}
+
+// Where the extension's own Sessions store would put a transcript: CONFIG\projects\<slug>\<id>.jsonl.
+function transcriptOf(sid) {
+  const projects = path.join(sc.env.CLAUDE_CONFIG_DIR, 'projects');
+  for (const d of fs.readdirSync(projects)) { const f = path.join(projects, d, `${sid}.jsonl`); if (fs.existsSync(f)) return f; }
+  return null;
+}
+
+(async () => {
+  log('START', `scenario=${sc.name} driverPid=${process.pid}`);
+  try {
+    for (const st of sc.steps) {
+      log('STEP', JSON.stringify(st));
+      const tab = st.tab ? tabs.get(st.tab) : null;
+      switch (st.do) {
+        case 'spawn': startTab(st.tab, st.extraArgs); break;
+        case 'init': await control(tab, { subtype: 'initialize' }, st.timeoutMs || 60000, 'initialize'); break;
+        case 'prompt': {
+          const uuid = crypto.randomUUID();
+          send(tab, { type: 'user', session_id: '', message: { role: 'user', content: [{ type: 'text', text: st.text }] }, parent_tool_use_id: null, uuid });
+          const r = await waitMsg(tab, (x) => x.type === 'result', st.timeoutMs || 90000, `result of "${st.text.slice(0, 30)}"`);
+          log('RESULT', `tab=${tab.name} ${r ? JSON.stringify({ subtype: r.subtype, session_id: r.session_id, is_error: r.is_error, result: String(r.result || '').slice(0, 200) }) : 'none'}`);
+          break;
+        }
+        case 'title': await control(tab, { subtype: 'generate_session_title', description: st.description, persist: true }, st.timeoutMs || 60000, 'generate_session_title'); break;
+        case 'rename': {
+          const sid = tab.sessionId;
+          const f = sid && transcriptOf(sid);
+          if (f) { fs.appendFileSync(f, JSON.stringify({ type: 'custom-title', sessionId: sid, customTitle: st.title }) + '\n'); log('RENAME_FILE', `tab=${tab.name} appended custom-title to ${f}`); }
+          else log('RENAME_FILE', `tab=${tab.name} no transcript for ${sid}`);
+          await control(tab, { subtype: 'rename_session', title: st.title, source: 'host', session_id: sid }, st.timeoutMs || 30000, 'rename_session');
+          break;
+        }
+        case 'close': {
+          tab.p.stdin.end();
+          log('CLOSE_STDIN', `tab=${tab.name}`);
+          const t0 = Date.now();
+          while (!tab.exited && Date.now() - t0 < (st.timeoutMs || 20000)) await sleep(50);
+          if (!tab.exited) { log('TERMINATE', `tab=${tab.name} pid=${tab.pid} still alive`); tab.p.kill(); while (!tab.exited && Date.now() - t0 < 30000) await sleep(50); }
+          break;
+        }
+        case 'waitStub': await poll(() => stubsOf(tab).filter((pid) => fs.existsSync(path.join(sc.dir, `idstub-${pid}.listed`))).length, st.count || 1, st.timeoutMs, `tab ${st.tab}: stubs listed >= ${st.count || 1}`); break;
+        case 'waitCall': await poll(() => callsOf(tab), st.count || 1, st.timeoutMs, `tab ${st.tab}: tools/call >= ${st.count || 1}`); break;
+        case 'waitStubs': await poll(() => countFiles(/^idstub-\d+\.listed$/), st.count, st.timeoutMs, `stubs listed >= ${st.count}`); break;
+        case 'waitWire': await poll(() => wireMatches(st.regex), st.count || 1, st.timeoutMs, `wire /${st.regex}/ >= ${st.count || 1}`); break;
+        case 'sleep': await sleep(st.ms); break;
+        case 'mark': log('MARK', st.text || ''); break;
+        default: log('UNKNOWN_STEP', st.do);
+      }
+    }
+  } catch (e) {
+    log('ERROR', e.stack || String(e));
+    result.error = String(e);
+  } finally {
+    for (const t of tabs.values()) if (!t.exited) { log('END_CLOSE', `tab=${t.name} pid=${t.pid}`); try { t.p.stdin.end(); } catch { } }
+    const t0 = Date.now();
+    while ([...tabs.values()].some((t) => !t.exited) && Date.now() - t0 < 20000) await sleep(100);
+    for (const t of tabs.values()) if (!t.exited) { log('END_TERMINATE', `tab=${t.name} pid=${t.pid}`); try { t.p.kill(); } catch { } }
+    await sleep(500);
+    result.endUtc = new Date().toISOString();
+    result.sessionIds = Object.fromEntries([...tabs.values()].map((t) => [t.name, { pid: t.pid, sessionIds: t.sessionIds, exited: t.exited }]));
+    fs.writeFileSync(path.join(sc.dir, 'result.json'), JSON.stringify(result, null, 1));
+    log('DONE', '');
+    process.exit(0); // pending wait timers would otherwise hold the driver open for their full timeout
+  }
+})();

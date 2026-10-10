@@ -1,0 +1,83 @@
+// VS Code tab batches. usage: node genvs.js <batch> <reps> [shake]
+// One rep = two emulated windows of one VS Code, started at the same time, sharing one
+// CLAUDE_CONFIG_DIR (as every window on a machine shares ~/.claude) but not a parent process:
+//   W1 (folder proj\w1): tabs A, B, C fresh; a prompt and a generated title in each; C renamed;
+//      B closed and restored with --resume=<B's id> (what a window reload does); /clear in A.
+//   W2 (folder proj\w2): tab D fresh; then D closed and resumed in TWO tabs at once (D1, D2).
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const C = require('./common');
+
+const [batch, repsArg, shake] = process.argv.slice(2);
+const reps = Number(repsArg || 3);
+const BATCHDIR = `${C.S}\\runs\\${batch}`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.writeFileSync(POLICY, JSON.stringify({ logDir: BATCHDIR, tag: 'model', prefix: 'mcp__idstub__', realTool: 'mcp__idstub__ping' }));
+
+const P = (tab, word, title) => `Tab ${tab}: ${word}. [[title:${title}]] Please call the ping tool once.`;
+const out = { progress: `${BATCHDIR}\\progress.log`, modelStub: { port: C.PORT.cc, policy: POLICY, logdir: BATCHDIR }, reps: [] };
+for (let r = 1; r <= reps; r++) {
+  const rep = `${BATCHDIR}\\r${r}`;
+  const cfg = `${rep}\\cfg`;
+  C.writeCcSeed(cfg, C.VER.vsc, `${batch}-r${r}`, `${rep}\\stray`);
+  const env = Object.assign(C.allowEnv(), C.ccEnv(cfg, `${batch}-r${r}`), C.vscodeHostEnv, C.vscodeExtEnv);
+  const base = { exe: C.BIN.vsc, baseArgs: C.VSC_ARGS, env };
+  const w1 = shake ? [
+    { do: 'spawn', tab: 'A' }, { do: 'init', tab: 'A' }, { do: 'waitStub', tab: 'A', timeoutMs: 60000 },
+    { do: 'prompt', tab: 'A', text: P('A', 'apples', 'Apples tab') }, { do: 'waitCall', tab: 'A', count: 1, timeoutMs: 30000 },
+    { do: 'title', tab: 'A', description: P('A', 'apples', 'Apples tab') }, { do: 'sleep', ms: 2500 },
+    { do: 'rename', tab: 'A', title: 'Renamed apples' }, { do: 'sleep', ms: 2500 },
+    { do: 'prompt', tab: 'A', text: 'Second prompt in A, call ping again please.' }, { do: 'waitCall', tab: 'A', count: 2, timeoutMs: 30000 },
+    { do: 'sleep', ms: 2000 }, { do: 'close', tab: 'A' },
+  ] : [
+    { do: 'spawn', tab: 'A' }, { do: 'spawn', tab: 'B' }, { do: 'spawn', tab: 'C' },
+    { do: 'init', tab: 'A' }, { do: 'init', tab: 'B' }, { do: 'init', tab: 'C' },
+    { do: 'waitStub', tab: 'A', timeoutMs: 60000 }, { do: 'waitStub', tab: 'B', timeoutMs: 60000 }, { do: 'waitStub', tab: 'C', timeoutMs: 60000 },
+    { do: 'mark', text: 'three tabs up, no prompt yet' }, { do: 'sleep', ms: 2000 },
+    { do: 'prompt', tab: 'A', text: P('A', 'apples', 'Apples tab') }, { do: 'waitCall', tab: 'A', count: 1, timeoutMs: 30000 },
+    { do: 'title', tab: 'A', description: P('A', 'apples', 'Apples tab') },
+    { do: 'prompt', tab: 'B', text: P('B', 'bananas', 'Bananas tab') }, { do: 'waitCall', tab: 'B', count: 1, timeoutMs: 30000 },
+    { do: 'title', tab: 'B', description: P('B', 'bananas', 'Bananas tab') },
+    { do: 'prompt', tab: 'C', text: P('C', 'cherries', 'Cherries tab') }, { do: 'waitCall', tab: 'C', count: 1, timeoutMs: 30000 },
+    { do: 'title', tab: 'C', description: P('C', 'cherries', 'Cherries tab') },
+    { do: 'sleep', ms: 2500 },
+    { do: 'mark', text: 'rename C' }, { do: 'rename', tab: 'C', title: 'Renamed cherries' }, { do: 'sleep', ms: 2500 },
+    { do: 'prompt', tab: 'C', text: 'Second prompt in C, call ping again please.' }, { do: 'waitCall', tab: 'C', count: 2, timeoutMs: 30000 },
+    { do: 'mark', text: 'close B and restore it the way a window reload does' }, { do: 'close', tab: 'B' }, { do: 'sleep', ms: 1500 },
+    { do: 'spawn', tab: 'B2', extraArgs: ['--resume=$B.sid'] }, { do: 'init', tab: 'B2' }, { do: 'waitStub', tab: 'B2', timeoutMs: 60000 },
+    { do: 'sleep', ms: 2500 },
+    { do: 'prompt', tab: 'B2', text: 'Back in B after a restore, call ping again please.' }, { do: 'waitCall', tab: 'B2', count: 1, timeoutMs: 30000 },
+    { do: 'mark', text: '/clear in A' }, { do: 'prompt', tab: 'A', text: '/clear', timeoutMs: 30000 }, { do: 'sleep', ms: 4000 },
+    { do: 'prompt', tab: 'A', text: P('A', 'after clear', 'After clear tab') }, { do: 'sleep', ms: 1500 },
+    { do: 'title', tab: 'A', description: P('A', 'after clear', 'After clear tab') }, { do: 'sleep', ms: 3000 },
+    { do: 'mark', text: 'end of W1' },
+  ];
+  const w2 = [
+    { do: 'spawn', tab: 'D' }, { do: 'init', tab: 'D' }, { do: 'waitStub', tab: 'D', timeoutMs: 60000 },
+    { do: 'prompt', tab: 'D', text: P('D', 'dates', 'Dates tab') }, { do: 'waitCall', tab: 'D', count: 1, timeoutMs: 30000 },
+    { do: 'title', tab: 'D', description: P('D', 'dates', 'Dates tab') }, { do: 'sleep', ms: 2000 },
+    { do: 'mark', text: 'close D, then resume it in two tabs at once' }, { do: 'close', tab: 'D' }, { do: 'sleep', ms: 1500 },
+    { do: 'spawn', tab: 'D1', extraArgs: ['--resume=$D.sid'] }, { do: 'spawn', tab: 'D2', extraArgs: ['--resume=$D.sid'] },
+    { do: 'init', tab: 'D1' }, { do: 'init', tab: 'D2' },
+    { do: 'waitStub', tab: 'D1', timeoutMs: 60000 }, { do: 'waitStub', tab: 'D2', timeoutMs: 60000 }, { do: 'sleep', ms: 2500 },
+    { do: 'prompt', tab: 'D1', text: 'D1 speaking, call ping please.' }, { do: 'waitCall', tab: 'D1', count: 1, timeoutMs: 30000 },
+    { do: 'prompt', tab: 'D2', text: 'D2 speaking, call ping please.' }, { do: 'waitCall', tab: 'D2', count: 1, timeoutMs: 30000 },
+    { do: 'sleep', ms: 2500 }, { do: 'mark', text: 'end of W2' },
+  ];
+  const windows = [];
+  const mk = (name, cwd, steps) => {
+    const dir = `${rep}\\${name}`;
+    fs.mkdirSync(dir, { recursive: true });
+    const sc = Object.assign({ name: `${batch}-r${r}-${name}`, dir, cwd, steps }, base);
+    const f = `${dir}\\scenario.json`;
+    fs.writeFileSync(f, JSON.stringify(sc, null, 1));
+    windows.push(f);
+  };
+  mk('w1', C.PROJ.w1, w1);
+  if (!shake) mk('w2', C.PROJ.w2, w2);
+  out.reps.push({ name: `r${r}`, windows });
+}
+fs.writeFileSync(`${BATCHDIR}\\vsbatch.json`, JSON.stringify(out, null, 1));
+console.log(`${BATCHDIR}\\vsbatch.json: ${reps} rep(s), ${shake ? 1 : 2} window(s) each`);

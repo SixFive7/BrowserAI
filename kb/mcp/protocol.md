@@ -1624,6 +1624,110 @@ every run, and `summarize.js.txt` the tables), every client under a scratch conf
 the local API stubs; compare against `runs/all-runs.tsv` and
 `runs/all-arms-summary.txt`.
 
+## Which conversation of a client started a server -- measured 2026-10-08
+
+`[FLOATS]` on the clients' releases and on two record layouts neither client
+documents: Claude Code **2.1.295**, npm `latest` and `next` that night (`stable`
+2.1.286), for the terminal and `claude -p` runs, and **2.1.292**, the binary the VS Code
+extension bundles, for the tab runs, with the extension's own `extension.js` and
+`webview\index.js` at 2.1.292 read and not changed; codex-cli **0.162.0**, npm `latest`.
+Windows 11 Pro 10.0.26300. Taken 2026-10-08 between 22:30Z and 23:00Z with the client-id
+stub of the section above, extended to read the clients' own records at its start,
+before each answer to a tool call, at its end and whenever a read once a second
+changed; every client under a scratch configuration and against local model stubs, no
+window shown. **21 emulated VS Code tabs in 2 windows over 3 repetitions (21 servers,
+27 tool calls), 18 terminal runs (21 calls), 15 `claude -p` runs and 18 Codex runs
+(21 servers, 24 calls).** Everything it was read from, with the rig:
+[`docs/evidence/2026-10-08-client-tabs`](../../docs/evidence/2026-10-08-client-tabs/README.md).
+It answers the maintainer's ask of 2026-10-08 to tell several Claude Code tabs of one
+VS Code window apart, and what was built on it is his answer of 2026-10-10,
+[in DECISIONS](../../DECISIONS.md#telling-the-clients-conversations-apart-decided-2026-10-10).
+
+**Claude Code keeps a file per running process that names the live conversation.**
+`<config>\sessions\<pid>.json`, `<config>` being `CLAUDE_CONFIG_DIR` or else
+`%USERPROFILE%\.claude`, seen from 2.1.288 to 2.1.295, and in a live 2.1.296 on
+2026-10-10 with the same members: `pid`, `sessionId`, `cwd`, `startedAt`, `procStart`,
+`version`, `kind`, `entrypoint`, `name`, `nameSource`, `nameSince`, `status`,
+`updatedAt` and a messaging socket's path. `procStart` is the process's creation time,
+a decimal FILETIME written as a string: it matched the parent in 284 of 284 scratch
+reads and the live tabs to the millisecond, 15 of 15. Every mode writes the file, `-p`
+too, all with `kind: interactive`, 54 of 54, and deletes it at exit, 18 of 18. Its
+`sessionId` moved to the new conversation within the one-second poll after `/clear`,
+6 of 6, and was the resumed one, 12 of 12; 54 servers reading it once a second never
+read it torn. Its `name` is `<folder>-<two hex digits>` unless the person renamed the
+session or started it with `-n`, and an AI title never changes it, 21 of 21. ⚠️ A
+`.key` file sits beside it, and nothing here read one.
+
+**A session's record names it the way its VS Code tab does.**
+`<config>\projects\<slug>\<sessionId>.jsonl`, the slug being the folder Claude Code runs
+in with every character that is not a letter or a digit made a hyphen. There is no
+record until the first prompt, 24 of 24 new conversations. The AI title is written when
+the first prompt is sent, by a model request beside the turn: there at the first tool
+call in 12 of 12 tabs and 8 of 12 terminal sessions, within 0.7 s in the other 4, which
+with a real model is a race. Title records are written again at the end of the record
+every turn, and a rename writes a custom title. `-p` sessions get no AI title, 15 of 15
+here and 0 of 38 real ones of the last 14 days. **The extension's session list reads the
+first and the last 64 KB of a record** and takes the custom title from the end, then the
+start; the AI title the same way; the last prompt; the summary; the first real prompt;
+then *Image* or *Document*. A tab shows at most 25 characters, a longer title cut to 24
+and an ellipsis; a new panel shows *Claude Code*. Over the maintainer's 138 records of
+the last 14 days, 485 MB read for structure only, every one of the 82 with a title had
+it within the last 64 KB, the furthest 33,411 bytes from the end of a record of 80 MB,
+and the two ends gave the same answer as the whole record in 138 of 138. **Scored at the
+end of every run, the file and the rule named 21 of 21 tabs and 18 of 18 terminal runs
+as the person saw them**, through `/clear`, renames and restores; the terminal's own
+title was the same text in 18 of 18.
+
+**What the other sources do.**
+
+- `CLAUDE_CODE_SESSION_ID` is set for every server, 54 of 54, and tells tabs apart from
+  the first instant, but it is fixed at the server's start: after `/clear` the server is
+  not restarted and the variable names the conversation before, 6 of 6, so tab A said
+  "Apples tab" while it showed "After clear tab", 3 of 3. Two tabs resuming one session
+  share it, 3 of 3, and `claude -p --continue` starts with a throwaway id.
+- The parent's command line carries `--resume=<id>` for a VS Code tab restored after a
+  reload (8 of 8 live tabs, each matching its file) and `--resume` or `--session-id` in
+  the terminal; a fresh tab, plain `claude` and `--continue` carry nothing, and a fork's
+  id is the old session's. Fixed at launch, it named 9 of 21 tabs and 6 of 18 runs right
+  at the end.
+- The protocol carries no session id, 0 of 54 servers, against the per-call tool-use
+  ids the same search found in 54 of 54; `/clear` and renames send the server nothing.
+
+**Codex is the reverse.** Nothing identifies the thread before the first call, and every
+`tools/call`'s `_meta` carries `threadId`, `sessionId` (the same), `windowId`, `callId`,
+`itemId` and `x-codex-turn-metadata`, 24 of 24; the thread's name never appears there.
+`app-server` runs one server process per thread, 3 of 3, and under the default terminal
+UI a server's parent is the background app-server. Naming a thread appends
+`{"id":...,"thread_name":...,"updated_at":...}` to `session_index.jsonl` in the home, 3
+of 3; the real `~\.codex` of the desktop app at 0.159 alpha has that file and no
+`state_5.sqlite`. Only an allowlist of variables reaches a server, so **`CODEX_HOME` never
+does**, 21 of 21.
+
+**The VS Code window.** Each window's extension host, a `Code.exe` utility process, is
+the parent of every `claude.exe` its tabs start: 12 live tabs under 3 hosts before the
+pause, and 21 of 21 by construction in the emulation. `CLAUDE_PROJECT_DIR`, the working
+folder and the `roots/list` answer all name the window's folder, 21 of 21. Nothing in
+the environment differs per window, and the window's caption names its active editor
+and not the tab.
+
+**What it does not establish.** VS Code itself was not driven, because nothing could
+show a window: one driver process per window stood in for its extension host, speaking
+the extension's control protocol to the extension's own binary with the arguments read
+off live tabs, and the real webview asks for a title right after the first prompt
+where the driver asked after the turn. A fresh conversation before its first prompt has
+no title anywhere, and two processes on one session share its id and its title. Hosts
+not run: JetBrains, the Claude desktop app, the Agent SDK and the Codex IDE extension;
+remote sessions do not write the file. **None of these files is a contract**, and any
+release of either client can change them.
+
+**Re-establish it** with the batch's `rig/`: `TabRig/IdStub.cs.txt` and
+`TabRig/Views.cs.txt` are the stub and its view of the records, `vsdrive.js.txt`,
+`genvs.js.txt` and `runvs.js.txt` drive the emulated tabs, `gentui.js.txt`,
+`genprint.js.txt` and `gencx.js.txt` write the other batches, and `ana-score.js.txt`
+scores each source against what the person saw; every client under a scratch
+configuration, with the project servers refused in its scratch user settings, and against
+the local model stubs. Compare against `runs/score.txt` and the four tables.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

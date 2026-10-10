@@ -1,0 +1,35 @@
+// Builds the in-memory needles for live-windows.ps1 from the live VS Code session's own records
+// (the workspace folders in ~/.claude/ide/*.lock and the title in the session's transcript) and
+// runs it. Nothing read here is printed or written; the PowerShell side writes booleans only.
+// usage: node live-windows.js <out.json> <claude pid>
+'use strict';
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+const [out, pidArg] = process.argv.slice(2);
+const CFG = path.join(os.homedir(), '.claude');
+const needles = {};
+let i = 0;
+for (const f of fs.readdirSync(path.join(CFG, 'ide')).filter((x) => x.endsWith('.lock'))) {
+  const j = JSON.parse(fs.readFileSync(path.join(CFG, 'ide', f), 'utf8'));
+  for (const w of j.workspaceFolders || []) needles[`workspaceFolder${++i}`] = path.win32.basename(w);
+}
+const reg = JSON.parse(fs.readFileSync(path.join(CFG, 'sessions', `${pidArg}.json`), 'utf8'));
+let ai = null, custom = null;
+for (const d of fs.readdirSync(path.join(CFG, 'projects'))) {
+  const f = path.join(CFG, 'projects', d, `${reg.sessionId}.jsonl`);
+  if (!fs.existsSync(f)) continue;
+  const text = fs.readFileSync(f, 'utf8');
+  const tail = text.slice(Math.max(0, text.length - 65536));
+  for (const line of tail.split('\n')) {
+    if (!line.includes('-title')) continue;
+    try { const r = JSON.parse(line); if (r.type === 'ai-title') ai = r.aiTitle; if (r.type === 'custom-title') custom = r.customTitle; } catch { }
+  }
+}
+const title = custom || ai;
+if (title) { needles.sessionTitle = title; needles.tabTitle = title.length > 25 ? title.slice(0, 24) + '…' : title; }
+const r = spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'live-windows.ps1'), '-Out', out],
+  { env: Object.assign({}, process.env, { LIVE_NEEDLES: JSON.stringify(needles) }), encoding: 'utf8', windowsHide: true });
+console.log((r.stdout || '').trim(), (r.stderr || '').trim().slice(0, 400), `needle names: ${Object.keys(needles).join(',')}`);

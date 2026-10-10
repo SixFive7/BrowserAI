@@ -1,0 +1,53 @@
+# Read-only: can a VS Code window's caption be read without showing or focusing anything, and
+# does it name the workspace folder or the active Claude Code tab? It enumerates top-level windows
+# (EnumWindows), keeps those owned by the VS Code main process, and reads each caption with
+# GetWindowTextW, which for a window of another process returns the stored caption and sends
+# that window no message. Captions and titles are compared in memory and never written: the
+# output holds lengths and booleans only.
+# The needles arrive in the environment variable LIVE_NEEDLES (JSON object name -> text), never on
+# a command line, so no title is visible in a process listing either.
+param([Parameter(Mandatory = $true)][string]$Out)
+$needles = ConvertFrom-Json $env:LIVE_NEEDLES
+$Needle = @($needles.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" })
+Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class TopWindows {
+    delegate bool EnumProc(IntPtr h, IntPtr l);
+    [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr l);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+    [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowTextW(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassNameW(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    public sealed class W { public long Hwnd; public uint Pid; public bool Visible; public string Cls; public string Text; }
+    public static List<W> Of(uint[] pids) {
+        var set = new HashSet<uint>(pids); var list = new List<W>();
+        EnumWindows((h, l) => {
+            uint pid; GetWindowThreadProcessId(h, out pid);
+            if (!set.Contains(pid)) return true;
+            var t = new StringBuilder(1024); GetWindowTextW(h, t, 1024);
+            var c = new StringBuilder(256); GetClassNameW(h, c, 256);
+            list.Add(new W { Hwnd = h.ToInt64(), Pid = pid, Visible = IsWindowVisible(h), Cls = c.ToString(), Text = t.ToString() });
+            return true;
+        }, IntPtr.Zero);
+        return list;
+    }
+    public static long Foreground() { return GetForegroundWindow().ToInt64(); }
+}
+'@
+$fgBefore = [TopWindows]::Foreground()
+$mains = @(Get-CimInstance Win32_Process -Filter "Name='Code.exe'" -Property ProcessId, ParentProcessId, CommandLine | Where-Object { $_.CommandLine -notmatch '--type=' } | ForEach-Object { [uint32]$_.ProcessId })
+$wins = [TopWindows]::Of([uint32[]]$mains)
+$rows = @()
+foreach ($w in $wins) {
+    if (-not $w.Visible -or $w.Text.Length -eq 0) { continue }
+    $hits = @{}
+    foreach ($n in $Needle) { $hits[$n.Split('=')[0]] = $w.Text.Contains($n.Substring($n.IndexOf('=') + 1)) }
+    $rows += [pscustomobject]@{ pid = $w.Pid; class = $w.Cls; captionLength = $w.Text.Length; endsWithAppName = $w.Text.EndsWith(' - Visual Studio Code'); contains = $hits }
+}
+$fgAfter = [TopWindows]::Foreground()
+[pscustomobject]@{ utc = (Get-Date).ToUniversalTime().ToString('o'); vscodeMainPids = $mains; topLevelWindowsOwned = $wins.Count; visibleCaptioned = $rows.Count; foregroundUnchanged = ($fgBefore -eq $fgAfter); windows = $rows } | ConvertTo-Json -Depth 5 | Set-Content -Path $Out -Encoding utf8
+"wrote $Out"

@@ -1,0 +1,42 @@
+// claude -p batches for the C# harness (pipes, stdin closed), CLI 2.1.295.
+// usage: node genprint.js <batch> <reps>
+// One rep is a chain sharing one CLAUDE_CONFIG_DIR and folder proj\p:
+//   sid       claude -p "..." --session-id V
+//   resume    claude -p "..." --resume V
+//   continue  claude -p "..." --continue
+//   fork      claude -p "..." --resume V --fork-session
+//   plain     claude -p "..."
+'use strict';
+const fs = require('fs');
+const crypto = require('crypto');
+const C = require('./common');
+
+const [batch, repsArg] = process.argv.slice(2);
+const reps = Number(repsArg || 3);
+const BATCHDIR = `${C.S}\\runs\\${batch}`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.writeFileSync(POLICY, JSON.stringify({ logDir: BATCHDIR, tag: 'model', prefix: 'mcp__idstub__', realTool: 'mcp__idstub__ping' }));
+const runs = [];
+for (let r = 1; r <= reps; r++) {
+  const rep = `${BATCHDIR}\\r${r}`;
+  const cfg = `${rep}\\cfg`;
+  C.writeCcSeed(cfg, C.VER.cli, `${batch}-r${r}`, `${rep}\\stray`);
+  const V = crypto.randomUUID();
+  fs.writeFileSync(`${rep}\\chain.json`, JSON.stringify({ V }, null, 1));
+  const arms = {
+    sid: ['-p', `Print with a fixed id r${r}. [[title:Print fixed ${r}]] Please call the ping tool once.`, '--session-id', V],
+    resume: ['-p', `Print resumed r${r}, call the ping tool once.`, '--resume', V],
+    continue: ['-p', `Print continued r${r}, call the ping tool once.`, '--continue'],
+    fork: ['-p', `Print forked r${r}, call the ping tool once.`, '--resume', V, '--fork-session'],
+    plain: ['-p', `Print plain r${r}. [[title:Print plain ${r}]] Please call the ping tool once.`],
+  };
+  for (const [arm, args] of Object.entries(arms)) {
+    const run = `${rep}\\${arm}`;
+    const env = Object.assign(C.ccEnv(cfg, `${batch}-r${r}-${arm}`), { IDRIG_LOGDIR: run });
+    runs.push({ name: `r${r}-${arm}`, dir: run, exe: C.BIN.cli, args, cwd: C.PROJ.p, env, console: 'pipes', stdin: 'closed', maxMs: 120000, settleMs: 15000, writeFiles: [], steps: [] });
+  }
+}
+const stub = { name: 'anthropic', exe: C.NODE, args: [`${C.S}\\rig\\ccmodel.js`], env: { STUB_PORT: String(C.PORT.cc), STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'model' } };
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify({ progress: `${BATCHDIR}\\progress.log`, gapMs: 1000, stubs: [stub], runs }, null, 1));
+console.log(`${BATCHDIR}\\batch.json: ${runs.length} runs`);
