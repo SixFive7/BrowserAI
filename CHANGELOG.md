@@ -66,6 +66,16 @@ release body; nothing else depends on it.
   class derived as the product derives it, so a test pack's left behind stops the gate.
   `SuiteCoverageTests` runs the reading over a scratch key.
 
+- 📦 **A release is refused unless every dependency was checked that day and none has moved.**
+  The maintainer's rule of 2026-10-10, verbatim: *"Before we cut any realease all dependencies should
+  always be checked if they are on the latest version. Part of the upstream checks we already do."*
+  `build/New-Release.ps1` now runs `build/Test-DriftCheck.ps1` before anything else, and stops a
+  release, though never the suite's test pack, while `drift-check.json` was not taken that day by the
+  local clock or any of its rows, the vendored SQLite row included, records a drift. A drift is adopted
+  through `UPSTREAM-REVIEW.md` or the vendored row's own steps, and the check taken again.
+  `ReleaseScriptTests` drives the rule over copies of the real file and runs the release script into
+  it, both watched red first.
+
 - ✅ **Every number BrowserAI tunes has a row in a numbers index, and the build holds the two together.**
   F3, after the maintainer's question of 2026-10-07, verbatim: *"Maybe we should start tracking all
   magical numbers used in this project in an index of sorts so that we can at a later date re-check

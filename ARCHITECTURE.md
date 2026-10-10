@@ -1842,6 +1842,11 @@ where the version comes from are in [`STACK.md`](STACK.md). The short form:
 - **Every dependency floats to latest at build time and is frozen into the
   artifact.** Version numbers in the documentation are provenance stamps, not
   targets -- the build does not read them.
+- **A release takes only the latest of every dependency, checked the day it is cut**
+  -- *added 2026-10-10, the maintainer's rule*. `build/New-Release.ps1` runs
+  `build/Test-DriftCheck.ps1` before anything else and refuses a release while
+  `drift-check.json` was not taken that day or any of its rows, the vendored SQLite
+  row included, records a drift; a test pack does not read it.
 - **Versions come from git tags** via MinVer, product project only. A version
   derived from no tag fails the build with the remedy in the message, and nothing
   reads `AssemblyVersion`.

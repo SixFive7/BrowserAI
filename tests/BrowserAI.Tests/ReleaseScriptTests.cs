@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO.Enumeration;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -53,6 +54,145 @@ internal sealed class ReleaseScriptTests
     private static string ClearScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Clear-TestPackFeed.ps1");
 
     private static string UploadAssetsScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Set-UploadAssets.ps1");
+
+    private static string DriftCheckScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Test-DriftCheck.ps1");
+
+    /// <summary>
+    /// A release is refused while the drift check is older than today or any of its
+    /// rows, the vendored one included, records a drift; and a current one passes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's rule of 2026-10-10, verbatim: "Before we cut any realease
+    /// all dependencies should always be checked if they are on the latest version.
+    /// Part of the upstream checks we already do."</b> The check is the daily drift
+    /// check, which needs the network and a reader; what a run can hold is the
+    /// refusal, driven here over copies of the real <c>drift-check.json</c> with one
+    /// field changed each, so the shape the script reads is the shape the tree keeps.
+    /// </para>
+    /// <para>
+    /// <b>The current copy is the positive control</b>: every row set to no drift
+    /// and the stamp set to the day the script is told it is. A script that refused
+    /// everything would fail there, and one that refused nothing fails on each of
+    /// the four after it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDriftCheckRefusesAStaleStampAndEveryDriftedRowAndPassesACurrentOne()
+    {
+        using var scratch = ScratchDirectory.Create("release-drift-check");
+        const string Today = "2026-10-10";
+
+        var current = await WriteDriftCheckAsync(scratch.Path, "current", Today, _ => { });
+        var (passed, verdict, said) = await RunAsync(DriftCheckScript, "-DriftCheck", current, "-Today", Today);
+
+        await Assert.That(passed).IsEqualTo(0).Because(said);
+        await Assert.That(verdict.Trim()).IsEqualTo("current");
+
+        var stale = await WriteDriftCheckAsync(scratch.Path, "stale", "2026-10-09", _ => { });
+        var (staleExit, _, staleSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", stale, "-Today", Today);
+
+        await Assert.That(staleExit).IsNotEqualTo(0);
+        await Assert.That(staleSaid).Contains("was last taken on 2026-10-09 and today is 2026-10-10");
+
+        var upstream = await WriteDriftCheckAsync(scratch.Path, "upstream", Today, check => check["resolved"]!["@playwright/mcp"]!["drift"] = true);
+        var (upstreamExit, _, upstreamSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", upstream, "-Today", Today);
+
+        await Assert.That(upstreamExit).IsNotEqualTo(0);
+        await Assert.That(upstreamSaid).Contains("The resolved row '@playwright/mcp' records a drift");
+
+        var vendored = await WriteDriftCheckAsync(scratch.Path, "vendored", Today, check => check["vendored"]!["sqlite-amalgamation"]!["drift"] = true);
+        var (vendoredExit, _, vendoredSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", vendored, "-Today", Today);
+
+        await Assert.That(vendoredExit).IsNotEqualTo(0);
+        await Assert.That(vendoredSaid).Contains("The vendored row 'sqlite-amalgamation' records a drift");
+
+        var silent = await WriteDriftCheckAsync(scratch.Path, "silent", Today, check => _ = check["resolved"]!["Velopack"]!.AsObject().Remove("drift"));
+        var (silentExit, _, silentSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", silent, "-Today", Today);
+
+        await Assert.That(silentExit).IsNotEqualTo(0);
+        await Assert.That(silentSaid).Contains("The resolved row 'Velopack' does not say whether it drifted");
+    }
+
+    /// <summary>
+    /// The release script refuses a release over a drift check that is not current,
+    /// before it does anything else, and a test pack does not read the check at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Run for real, as far as the refusal.</b> The rest of the script needs
+    /// <c>vpk</c>, a publish and minutes; the refusal comes first, so a stale copy
+    /// handed to it stops the run before the first of those, and the output says
+    /// so by not carrying the <c>vpk</c> line that would follow.
+    /// </para>
+    /// <para>
+    /// <b>The test pack's half is read off the script</b>, because running
+    /// <c>-TestPackOnly</c> to its end is a publish and a pack: the call sits inside
+    /// the branch that a test pack skips, and the branch says so out loud.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AReleaseIsRefusedFirstWhenTheDriftCheckIsNotCurrentAndATestPackDoesNotReadIt()
+    {
+        using var scratch = ScratchDirectory.Create("release-drift-refusal");
+
+        var stale = await WriteDriftCheckAsync(scratch.Path, "stale", "2000-01-01", _ => { });
+        var (exit, _, said) = await RunAsync(ReleaseScript, "-DriftCheckFile", stale, "-OutputDir", Path.Combine(scratch.Path, "Releases"));
+
+        await Assert.That(exit).IsNotEqualTo(0);
+        await Assert.That(said).Contains("A release takes only the latest of every dependency").Because(said);
+        await Assert.That(said).Contains("was last taken on 2000-01-01");
+        await Assert.That(said).DoesNotContain("matches Velopack").Because(said);
+
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+        var check = script.IndexOf("(Join-Path $PSScriptRoot 'Test-DriftCheck.ps1')", StringComparison.Ordinal);
+        var firstStep = script.IndexOf("--- 1. vpk and Velopack must agree", StringComparison.Ordinal);
+
+        await Assert.That(check).IsGreaterThan(0);
+        await Assert.That(firstStep).IsGreaterThan(check).Because("the drift check is the release's first refusal, ahead of the vpk check");
+
+        var branch = script[..check];
+        var testPackBranch = branch.LastIndexOf("if ($TestPackOnly)", StringComparison.Ordinal);
+        var otherwise = branch.LastIndexOf("else", StringComparison.Ordinal);
+
+        await Assert.That(testPackBranch).IsGreaterThan(0).Because("the call sits in the branch a test pack does not take");
+        await Assert.That(otherwise).IsGreaterThan(testPackBranch);
+        await Assert.That(script[testPackBranch..otherwise]).Contains("the drift check is a release's");
+    }
+
+    /// <summary>
+    /// A copy of the real <c>drift-check.json</c> with its stamp set, every row set
+    /// to no drift, and then one change made to it.
+    /// </summary>
+    /// <param name="directory">Where to write it.</param>
+    /// <param name="name">The copy's name.</param>
+    /// <param name="stamped">The <c>lastChecked</c> it carries.</param>
+    /// <param name="change">The one change, made last.</param>
+    /// <returns>The copy's path.</returns>
+    private static async Task<string> WriteDriftCheckAsync(string directory, string name, string stamped, Action<JsonNode> change)
+    {
+        var check = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "drift-check.json")))!;
+
+        check["lastChecked"] = stamped;
+
+        foreach (var section in new[] { "resolved", "vendored" })
+        {
+            foreach (var (_, row) in check[section]!.AsObject())
+            {
+                row!["drift"] = false;
+            }
+        }
+
+        change(check);
+
+        var path = Path.Combine(directory, $"drift-check-{name}.json");
+
+        await File.WriteAllTextAsync(path, check.ToJsonString());
+
+        return path;
+    }
 
     /// <summary>An empty channel accepts anything, because there is nothing to be older than.</summary>
     /// <remarks>

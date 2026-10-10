@@ -223,6 +223,18 @@ writing one, for the same reason a missing file does.
 watched red -- the first on the field being absent altogether, the second on
 *"A parameter cannot be found that matches parameter name 'OverriddenPackage'"*.
 
+⚠️ **And every dependency, checked the day the release is cut** -- *added 2026-10-10
+by addition, the maintainer's rule verbatim: "Before we cut any realease all
+dependencies should always be checked if they are on the latest version. Part of
+the upstream checks we already do."* The daily drift check is that check, and a
+release now refuses to be cut over one that was not taken that day or that records a
+drift on any row, the vendored SQLite row included: `build/New-Release.ps1` runs
+`build/Test-DriftCheck.ps1` first, and
+`ReleaseScriptTests.TheDriftCheckRefusesAStaleStampAndEveryDriftedRowAndPassesACurrentOne`
+holds it. A crunch override above is still a human's, and it is still stated in the
+manifest; what the rule adds is that nobody reaches the override by not looking.
+[The overnight findings](#the-overnight-findings-answered-2026-10-10) carry the row.
+
 *Written down 2026-08-26, at the maintainer's decision. Nothing enforces the
 "agents may never" half and nothing can -- it is a rule about who is asking, and
 the build cannot see that. What the build does hold is the trace: the manifest is
@@ -1012,6 +1024,7 @@ upstream report.
 | Decision | Outcome |
 |---|---|
 | **The vendored SQLite is 3.54.0** | ⚠️ **Decided 2026-10-10 by the maintainer, 13, in his words verbatim: _"13 a - Before we cut any realease all dependencies should always be checked if they are on the latest version. Part of the upstream checks we already do."_**: a, the direction to adopt it now, before the install on his machine, and a rule for every release, which is a row of its own. The archive sqlite.org's line names was downloaded into scratch, checked against its SHA3-256 before it was unzipped, and its `sqlite3.c` and `sqlite3.h` replaced the vendored pair; the pin, the archive record and the two file hashes in [`drift-check.json`](drift-check.json) describe 3.54.0, and `SqliteTests`' published arms read the linked version off the published binary ([kb](kb/toolchain.md)). Not taken: b, with the next release; c, waiting for a 3.54.x point release. |
+| **A release takes only the latest of every dependency** | ⚠️ **Decided 2026-10-10 by the maintainer, as a standing rule, in the second half of his answer to 13, verbatim: _"Before we cut any realease all dependencies should always be checked if they are on the latest version. Part of the upstream checks we already do."_** A mechanism and not a habit: `build/New-Release.ps1` runs `build/Test-DriftCheck.ps1` before anything else and refuses a release, never a test pack, while `drift-check.json` was not taken today by the local clock or any row, the vendored one included, records a drift. [Item 3 of the checklist](RELEASING.md#3-upstream-drift-adjudicated) carries the step, and `ReleaseScriptTests.TheDriftCheckRefusesAStaleStampAndEveryDriftedRowAndPassesACurrentOne` and `.AReleaseIsRefusedFirstWhenTheDriftCheckIsNotCurrentAndATestPackDoesNotReadIt` hold it, both planted red. It cannot see whether the lookups behind a stamp were taken; the drift check's honesty rule is what covers that. |
 
 ### Still open
 

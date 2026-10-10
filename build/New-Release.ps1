@@ -16,6 +16,15 @@
     a hand-maintained count of the numbered list directly below it is the same
     defect again, one number later.)
 
+      0. EVERY DEPENDENCY IS THE LATEST, CHECKED TODAY. The maintainer's rule
+         of 2026-10-10, verbatim: "Before we cut any realease all dependencies
+         should always be checked if they are on the latest version. Part of the
+         upstream checks we already do." A release is refused, before anything
+         else runs, while drift-check.json was not taken today or any of its rows,
+         the vendored SQLite row included, records a drift. The rule lives in
+         build/Test-DriftCheck.ps1 so that the suite can drive it. A test pack is
+         not a release and does not read the check.
+
       1. `vpk` and the Velopack library must be the SAME version. The CLI writes
          the package format the library reads, and nothing else in this
          repository can enforce it: `vpk` is a global tool, so it is outside
@@ -146,6 +155,10 @@
     the twin's installer and archive are deleted and only its package and feed
     manifest stay. Never published, never tagged.
 
+.PARAMETER DriftCheckFile
+    The drift check a release is held to. Defaults to drift-check.json at the
+    repository root; the suite hands it a copy to watch the refusal.
+
 .PARAMETER FromReleasePublish
     With -TestPackOnly only: pack the suite's installer from the release publish,
     `artifacts\publish-release`, and not from the two dev publishes. Q305, decided
@@ -176,7 +189,8 @@ param(
     [switch] $SkipPublish,
     [string] $PackVersion,
     [switch] $TestPackOnly,
-    [switch] $FromReleasePublish
+    [switch] $FromReleasePublish,
+    [string] $DriftCheckFile
 )
 
 Set-StrictMode -Version Latest
@@ -185,6 +199,29 @@ $PSStyle.OutputRendering = 'PlainText'
 $ErrorView = 'NormalView'
 
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+
+# --- 0. Every dependency is the latest, checked today --------------------------
+# The maintainer, 2026-10-10, verbatim: "Before we cut any realease all
+# dependencies should always be checked if they are on the latest version. Part
+# of the upstream checks we already do." FIRST, before the tool check, the
+# derivation and the publish, so a release over a stale or drifted check costs
+# nothing. The rule is its own script so that the suite can drive it, as
+# Test-ReleaseVersion.ps1 is.
+if ($TestPackOnly) {
+    Write-Host "Test pack only: the drift check is a release's, and was not read."
+}
+else {
+    if (-not $DriftCheckFile) { $DriftCheckFile = Join-Path $root 'drift-check.json' }
+
+    $null = & (Join-Path $PSScriptRoot 'Test-DriftCheck.ps1') -DriftCheck $DriftCheckFile
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."
+        exit 1
+    }
+
+    Write-Host "Drift check: every dependency is the latest, read today from $DriftCheckFile."
+}
 
 # ⚠️ ONE PROJECT PUBLISHES INTO THE PACK DIRECTORY -- 2026-10-08, D7 a, the
 # maintainer's words verbatim: "d7 a". BrowserAI is one windowless file,

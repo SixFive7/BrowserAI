@@ -469,6 +469,25 @@ to an intermediate version, review, land it green, then bump again.
 and the marker test's result. [`drift-check.json`](drift-check.json) stamped
 with `lastChecked` **only after a lookup actually returned a version.**
 
+⚠️ **The check is taken on the day of the cut, the vendored SQLite row included, and
+the release script refuses otherwise** -- *added 2026-10-10 by addition, the
+maintainer's rule verbatim: "Before we cut any realease all dependencies should
+always be checked if they are on the latest version. Part of the upstream checks we
+already do."* Take the [daily drift check](AGENTS.md#the-daily-drift-check) on the
+day of the cut even when it was taken earlier that week, and adopt whatever it finds
+before going further: an upstream through [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md),
+the vendored SQLite through the steps its row's `how` names. **This one is a
+mechanism and not a habit.** `build/New-Release.ps1` runs
+[`build/Test-DriftCheck.ps1`](build/Test-DriftCheck.ps1) before anything else and
+refuses a release, never a test pack, while `drift-check.json`'s `lastChecked` is not
+today by the local clock it is stamped by or any row in `resolved` or `vendored`
+records a drift. `ReleaseScriptTests.TheDriftCheckRefusesAStaleStampAndEveryDriftedRowAndPassesACurrentOne`
+drives the rule over copies of the real file and
+`.AReleaseIsRefusedFirstWhenTheDriftCheckIsNotCurrentAndATestPackDoesNotReadIt` runs
+the release script into it, both planted red. **What it cannot see** is whether the
+lookups behind a stamp were taken: a file stamped today by somebody who looked at
+nothing passes, which is why the [honesty rule](drift-check.json) stands beside it.
+
 ### 4. The four snapshots and the verdict file adjudicated
 
 `tools-list.json`, `cli-help.txt`, `config-schema.d.ts`, `browsers.json` --
