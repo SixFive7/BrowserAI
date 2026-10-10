@@ -82,9 +82,12 @@ if ($stamped -ne $Today) {
 
 $rows = 0
 
+# Every reason names the file it read, which the suite and -DriftCheckFile set: round 2
+# of the texts review, 2026-10-10, #231 (previously the two section reasons named
+# drift-check.json whatever file was read).
 foreach ($section in @('resolved', 'vendored')) {
     if ($names -notcontains $section) {
-        $reasons.Add("drift-check.json has no '$section' section, so the rows it should hold were never read.")
+        $reasons.Add("'$DriftCheck' has no '$section' section, so the rows it should hold were never read.")
         continue
     }
 
@@ -97,16 +100,22 @@ foreach ($section in @('resolved', 'vendored')) {
             continue
         }
 
+        # Each half says what it knows, and a row that names neither still reads as a
+        # sentence: round 2 of the texts review, 2026-10-10, #231 (previously a row with
+        # no 'resolved' read "records a drift:, the tree is ...").
         if ($row.Value.drift -ne $false) {
-            $now = if ($fields -contains 'resolved') { " upstream is at $($row.Value.resolved)" } else { '' }
-            $ours = if ($fields -contains 'reviewed') { ", the tree is reviewed at $($row.Value.reviewed)" } elseif ($fields -contains 'pinned') { ", the tree is pinned at $($row.Value.pinned)" } else { '' }
-            $reasons.Add("The $section row '$($row.Name)' records a drift:$now$ours. Adopt it first: UPSTREAM-REVIEW.md for an upstream, the row's own 'how' for the vendored source.")
+            $known = [System.Collections.Generic.List[string]]::new()
+            if ($fields -contains 'resolved') { $known.Add("upstream is at $($row.Value.resolved)") }
+            if ($fields -contains 'reviewed') { $known.Add("the tree is reviewed at $($row.Value.reviewed)") }
+            elseif ($fields -contains 'pinned') { $known.Add("the tree is pinned at $($row.Value.pinned)") }
+            $said = if ($known.Count -gt 0) { ": " + ($known -join ', ') } else { ', and names neither the version upstream is at nor the one the tree has' }
+            $reasons.Add("The $section row '$($row.Name)' records a drift$said. Adopt it first: UPSTREAM-REVIEW.md for an upstream, the row's own 'how' for the vendored source.")
         }
     }
 }
 
 if ($rows -eq 0) {
-    $reasons.Add('drift-check.json holds no rows at all, so nothing was checked.')
+    $reasons.Add("'$DriftCheck' holds no rows at all, so nothing was checked.")
 }
 
 if ($reasons.Count -gt 0) {

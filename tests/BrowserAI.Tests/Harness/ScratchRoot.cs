@@ -478,7 +478,7 @@ internal static class ScratchRoot
             return acted;
         }
 
-        var announced = new List<(string Folder, string At, string Reason)>();
+        var announced = new List<(string Folder, string At, string Reason, int Left)>();
 
         foreach (var folder in Directory.EnumerateDirectories(root))
         {
@@ -527,7 +527,7 @@ internal static class ScratchRoot
                 acted.Add($"deleted part of {folder} at {at} by {SelfText()}: {reason}; {survivors.Count.ToString(CultureInfo.InvariantCulture)} node(s) would not go");
             }
 
-            announced.Add((folder, at, reason));
+            announced.Add((folder, at, reason, survivors.Count));
         }
 
         // A record whose folder is gone, left by a run that removed its folder and
@@ -594,7 +594,7 @@ internal static class ScratchRoot
     /// itself has still reclaimed.
     /// </remarks>
     /// <param name="deleted">Each folder, the moment, and why.</param>
-    private static void Announce(List<(string Folder, string At, string Reason)> deleted)
+    private static void Announce(List<(string Folder, string At, string Reason, int Left)> deleted)
     {
         if (deleted.Count is 0)
         {
@@ -607,9 +607,19 @@ internal static class ScratchRoot
             var logger = log.Factory.CreateLogger(AnnouncementCategory);
             var host = SelfText();
 
-            foreach (var (folder, at, reason) in deleted)
+            // A folder that went in part is said to have, as the pass says it for itself:
+            // round 2 of the texts review, 2026-10-10, #230 (previously every folder the
+            // pass acted on was announced as deleted).
+            foreach (var (folder, at, reason, left) in deleted)
             {
-                ScratchReclaimAnnouncement.Deleted(logger, folder, at, host, reason);
+                if (left is 0)
+                {
+                    ScratchReclaimAnnouncement.Deleted(logger, folder, at, host, reason);
+                }
+                else
+                {
+                    ScratchReclaimAnnouncement.DeletedPart(logger, folder, at, host, reason, left);
+                }
             }
         }
 #pragma warning disable CA1031 // An announcement never becomes the outage.
@@ -709,4 +719,18 @@ internal static partial class ScratchReclaimAnnouncement
         Level = LogLevel.Information,
         Message = "The test harness's scratch reclaim deleted {Folder} at {At}, from {Host}, because {Reason}.")]
     public static partial void Deleted(ILogger logger, string folder, string at, string host, string reason);
+
+    /// <summary>Records one folder the pass could delete only part of.</summary>
+    /// <remarks>Added 2026-10-10, round 2 of the texts review, #230.</remarks>
+    /// <param name="logger">The process log's logger.</param>
+    /// <param name="folder">The folder.</param>
+    /// <param name="at">The moment, in UTC.</param>
+    /// <param name="host">The process that deleted it, as <c>pid@createdFileTime</c>.</param>
+    /// <param name="reason">Why it was taken.</param>
+    /// <param name="left">How many nodes would not go.</param>
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Information,
+        Message = "The test harness's scratch reclaim deleted part of {Folder} at {At}, from {Host}, because {Reason}; {Left} node(s) would not go, and the folder keeps its owner record until a later pass takes the rest.")]
+    public static partial void DeletedPart(ILogger logger, string folder, string at, string host, string reason, int left);
 }

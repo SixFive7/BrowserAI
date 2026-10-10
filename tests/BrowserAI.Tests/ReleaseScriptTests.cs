@@ -113,6 +113,39 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(silentExit).IsNotEqualTo(0);
         await Assert.That(silentSaid).Contains("The resolved row 'Velopack' does not say whether it drifted");
+
+        // ⚠️ AND EACH REASON NAMES THE FILE IT READ, AND READS AS A SENTENCE WHATEVER A ROW
+        // LEAVES OUT, round 2 of the texts review, 2026-10-10, #231: the two reasons about a
+        // section named drift-check.json whatever file was read, and a drifted row with no
+        // 'resolved' read "records a drift:, the tree is ...". Planted red against both.
+        var sectionless = await WriteDriftCheckAsync(scratch.Path, "sectionless", Today, check => _ = check.AsObject().Remove("vendored"));
+        var (sectionlessExit, _, sectionlessSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", sectionless, "-Today", Today);
+
+        await Assert.That(sectionlessExit).IsNotEqualTo(0);
+        await Assert.That(sectionlessSaid).Contains($"'{sectionless}' has no 'vendored' section").Because(sectionlessSaid);
+        await Assert.That(sectionlessSaid).DoesNotContain("drift-check.json has no").Because(sectionlessSaid);
+
+        var empty = await WriteDriftCheckAsync(scratch.Path, "empty", Today, check =>
+        {
+            check["resolved"] = new JsonObject();
+            check["vendored"] = new JsonObject();
+        });
+        var (emptyExit, _, emptySaid) = await RunAsync(DriftCheckScript, "-DriftCheck", empty, "-Today", Today);
+
+        await Assert.That(emptyExit).IsNotEqualTo(0);
+        await Assert.That(emptySaid).Contains($"'{empty}' holds no rows at all").Because(emptySaid);
+
+        var bare = await WriteDriftCheckAsync(scratch.Path, "bare", Today, check =>
+        {
+            check["resolved"]!["@playwright/mcp"]!["drift"] = true;
+            _ = check["resolved"]!["@playwright/mcp"]!.AsObject().Remove("resolved");
+            _ = check["resolved"]!["@playwright/mcp"]!.AsObject().Remove("reviewed");
+        });
+        var (bareExit, _, bareSaid) = await RunAsync(DriftCheckScript, "-DriftCheck", bare, "-Today", Today);
+
+        await Assert.That(bareExit).IsNotEqualTo(0);
+        await Assert.That(bareSaid).Contains("The resolved row '@playwright/mcp' records a drift").Because(bareSaid);
+        await Assert.That(bareSaid).DoesNotContain("records a drift:").Because(bareSaid);
     }
 
     /// <summary>
@@ -151,6 +184,12 @@ internal sealed class ReleaseScriptTests
         await Assert.That(said).Contains("A release takes only the latest of every dependency").Because(said);
         await Assert.That(said).Contains("was last taken on 2000-01-01");
         await Assert.That(said).DoesNotContain("matches Velopack").Because(said);
+
+        // ⚠️ AND THE RELEASE SCRIPT SAYS ITS OWN LINE, round 2 of the texts review,
+        // 2026-10-10, #237: the check's refusal is a terminating error under
+        // $ErrorActionPreference Stop, which ended the release script before it could say
+        // that no release was cut. Planted red against the script with no catch.
+        await Assert.That(said).Contains("No release was cut.").Because(said);
 
         // ⚠️ AND A CURRENT CHECK LETS THE RELEASE GO ON, the positive control the
         // refusal needs: a script that refused every check would pass the half above.
@@ -2477,12 +2516,19 @@ internal sealed class ReleaseScriptTests
     /// scope by construction: neither is ever published, and the second is the
     /// suite's own installer.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>A shipping pack, since 2026-10-10</b>, round 2 of the texts review, found by
+    /// lane FINAL (previously <c>RequirePackagedRelease</c>): the test pack's twin
+    /// satisfied that one from under <c>test-pack\</c>, so in a fresh worktree whose only
+    /// pack was the gate's this arm failed on an empty top instead of skipping. Planted
+    /// red against a copy of such a directory.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task NothingElseInTheReleaseDirectoryIsPublished()
     {
-        _ = SuiteEnvironment.RequirePackagedRelease();
+        _ = SuiteEnvironment.RequireShippingRelease();
 
         var directory = new DirectoryInfo(ReleaseLayout.Directory);
         var present = directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(file => file.Name).ToArray();

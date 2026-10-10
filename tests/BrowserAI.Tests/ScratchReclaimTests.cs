@@ -75,11 +75,23 @@ internal sealed partial class ScratchReclaimTests
         var young = Path.Combine(root, $"reclaim-unowned-young-{Guid.NewGuid():N}");
         var old = Path.Combine(root, $"reclaim-unowned-old-{Guid.NewGuid():N}");
 
+        // ⚠️ A FIFTH, round 2 of the texts review, 2026-10-10, #230: a gone run's folder
+        // holding a file this host keeps open with no delete sharing, so the second host
+        // can take only part of it. Its line in the process log said "deleted" all the
+        // same; planted red against that.
+        var held = Path.Combine(root, $"reclaim-dead-owner-held-{Guid.NewGuid():N}");
+        FileStream? holding = null;
+
         try
         {
             await File.WriteAllTextAsync(dead + ScratchRoot.OwnerSuffix, ScratchRoot.OwnerRecord(new InstallerLockHolder(Environment.ProcessId, 1)));
             _ = Directory.CreateDirectory(dead);
             await File.WriteAllTextAsync(Path.Combine(dead, "left-behind.txt"), "a killed run's app root");
+
+            await File.WriteAllTextAsync(held + ScratchRoot.OwnerSuffix, ScratchRoot.OwnerRecord(new InstallerLockHolder(Environment.ProcessId, 1)));
+            _ = Directory.CreateDirectory(held);
+            await File.WriteAllTextAsync(Path.Combine(held, "gone.txt"), "a file the reclaim can take");
+            holding = new FileStream(Path.Combine(held, "still-open.txt"), FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
 
             _ = Directory.CreateDirectory(young);
             _ = Directory.CreateDirectory(old);
@@ -155,10 +167,22 @@ internal sealed partial class ScratchReclaimTests
 
             await Assert.That(records).Contains(dead);
             await Assert.That(records).Contains(old);
+
+            // The folder that would not go whole: the pass's own line and the process
+            // log's both say part of it went, and the file still open is still there.
+            await Assert.That(said.Any(entry => entry.StartsWith($"deleted part of {held} ", StringComparison.Ordinal))).IsTrue().Because(everything);
+            await Assert.That(File.Exists(Path.Combine(held, "still-open.txt"))).IsTrue();
+            await Assert.That(records).Contains($"deleted part of {held} at ").Because(records);
+            await Assert.That(records).DoesNotContain($"deleted {held} at ").Because(records);
         }
         finally
         {
-            foreach (var folder in new[] { dead, young, old })
+            if (holding is not null)
+            {
+                await holding.DisposeAsync();
+            }
+
+            foreach (var folder in new[] { dead, young, old, held })
             {
                 _ = ScratchDirectory.RemoveTree(folder);
                 File.Delete(folder + ScratchRoot.OwnerSuffix);

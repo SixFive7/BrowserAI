@@ -35,6 +35,23 @@ internal enum SuiteCapability
     PackagedRelease,
 
     /// <summary>
+    /// A shipping pack's own output at the top of <c>Releases/</c>: its full package,
+    /// with the installer and the feed beside it, which a release cut or a copy of one
+    /// leaves.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, round 2 of the texts review, found by lane FINAL</b>: the arm
+    /// that classifies every file a pack leaves at the top of the release directory took
+    /// <see cref="PackagedRelease"/>, which the suite's own test pack satisfies through its
+    /// twin under <c>test-pack\twin\</c>. In a fresh worktree, where the gate's test pack is
+    /// the only pack there is, the arm then failed on a directory with nothing at its top
+    /// instead of skipping. A shipping pack is what it classifies, so it asks for one.
+    /// Absent, it skips loudly; under <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is
+    /// correct: a release is cut into that directory before it is gated.
+    /// </remarks>
+    ShippingRelease,
+
+    /// <summary>
     /// The MCP client's command line on this machine, which is the only thing
     /// that can answer whether BrowserAI's registration works.
     /// </summary>
@@ -268,6 +285,15 @@ internal static class SuiteEnvironment
     {
         Require(SuiteCapability.PackagedRelease, test);
         return PackagedRelease()!;
+    }
+
+    /// <summary>A shipping pack's full package at the top of the release directory, or a skip.</summary>
+    /// <param name="test">The calling test, filled in by the compiler.</param>
+    /// <returns>The package's path.</returns>
+    public static string RequireShippingRelease([CallerMemberName] string test = "")
+    {
+        Require(SuiteCapability.ShippingRelease, test);
+        return ShippingRelease()!;
     }
 
     /// <summary>A git that can answer about this tree, or a skip.</summary>
@@ -893,6 +919,12 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
+        // No Partial state either: the top of the directory holds a shipping pack's full
+        // package or it does not, and the test pack's directory below it is not one.
+        SuiteCapability.ShippingRelease => ShippingRelease() is not null
+            ? CapabilityState.Present
+            : CapabilityState.AbsentAsAWhole,
+
         _ => PackagedRelease() is not null ? CapabilityState.Present : CapabilityState.AbsentAsAWhole,
     };
 
@@ -932,6 +964,28 @@ internal static class SuiteEnvironment
 
         return releases.Exists
             ? releases.EnumerateFiles($"{ReleaseLayout.PackId}-*-full.nupkg", SearchOption.AllDirectories)
+                .OrderByDescending(file => file.LastWriteTimeUtc)
+                .FirstOrDefault()?.FullName
+            : null;
+    }
+
+    /// <summary>
+    /// The newest shipping full package at the top of the release directory, or
+    /// <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The top only</b>: the suite's test pack and its twin live under
+    /// <c>test-pack\</c>, and the twin is a full package under the shipping id, which is
+    /// what let <see cref="SuiteCapability.PackagedRelease"/> stand in for a shipping pack
+    /// it was not.
+    /// </remarks>
+    /// <returns>The package's path, or <see langword="null"/>.</returns>
+    public static string? ShippingRelease()
+    {
+        var releases = new DirectoryInfo(ReleaseLayout.Directory);
+
+        return releases.Exists
+            ? releases.EnumerateFiles($"{ReleaseLayout.PackId}-*-full.nupkg", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(file => file.LastWriteTimeUtc)
                 .FirstOrDefault()?.FullName
             : null;
@@ -1002,6 +1056,7 @@ internal static class SuiteEnvironment
         SuiteCapability.CodexCommandLine => "Codex CLI",
         SuiteCapability.ReleaseInstaller => "release installer",
         SuiteCapability.Git => "git",
+        SuiteCapability.ShippingRelease => "shipping release",
         _ => "packed release",
     };
 
@@ -1024,6 +1079,7 @@ internal static class SuiteEnvironment
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
+        SuiteCapability.ShippingRelease => ShippingRelease() ?? Path.Combine(ReleaseLayout.Directory, $"{ReleaseLayout.PackId}-<version>-full.nupkg, at the top of the directory and not under test-pack"),
         _ => PackagedRelease() ?? Path.Combine(ReleaseLayout.Directory, $"{ReleaseLayout.PackId}-<version>-full.nupkg"),
     };
 
@@ -1037,6 +1093,7 @@ internal static class SuiteEnvironment
         SuiteCapability.CodexCommandLine => "Install the Codex CLI. Nothing is written to it: the real-client arms force CODEX_HOME at a scratch directory and never read the user's own.",
         SuiteCapability.ReleaseInstaller => $"Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
         SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",
+        SuiteCapability.ShippingRelease => $"Run: pwsh -File build/New-Release.ps1, which packs into that directory, or copy the main checkout's Releases folder in; the gate's test pack and its twin are not a shipping pack. Or set {ReleaseLayout.FeedVariable} to a directory one was packed into.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",
     };
 }

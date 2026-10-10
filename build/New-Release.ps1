@@ -222,10 +222,22 @@ else {
     $driftArguments = @{ DriftCheck = $DriftCheckFile }
     if ($DriftCheckToday) { $driftArguments.Today = $DriftCheckToday }
 
-    $null = & (Join-Path $PSScriptRoot 'Test-DriftCheck.ps1') @driftArguments
+    # ⚠️ CAUGHT, round 2 of the texts review, 2026-10-10, #237: the check refuses with
+    # Write-Error, which $ErrorActionPreference Stop makes a terminating error, so it
+    # ended this script before the line below could say that no release was cut. The
+    # check's own reasons come first, then this script's line.
+    $driftRefusal = $null
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."
+    try {
+        $null = & (Join-Path $PSScriptRoot 'Test-DriftCheck.ps1') @driftArguments
+    }
+    catch {
+        $driftRefusal = $_.Exception.Message
+    }
+
+    if ($null -ne $driftRefusal -or $LASTEXITCODE -ne 0) {
+        $because = if ($driftRefusal) { "$driftRefusal`n" } else { '' }
+        Write-Error "${because}No release was cut. Take the daily drift check AGENTS.md describes, adopt every drift it finds through UPSTREAM-REVIEW.md, and cut again."
         exit 1
     }
 
