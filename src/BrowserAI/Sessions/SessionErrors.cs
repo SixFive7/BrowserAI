@@ -126,24 +126,23 @@ internal static class SessionErrors
     /// made before the session is resolved, so there is no browser state to
     /// reason about and the retry the sentence recommends is safe.
     /// </para>
+    /// <para>
+    /// ⚠️ <i>Corrected 2026-10-10, from the texts review (previously a parameter
+    /// <c>throughTheSessionHost</c> chose a second sentence, "It reached BrowserAI's
+    /// session host, version {version}, which may be the BrowserAI the tool list you are
+    /// calling from came from, or may have started after that list was read; ...")</i>:
+    /// every connection to the background is a relay's since the one-binary build, and
+    /// the relay lists for it, so no product path could reach that sentence.
+    /// </para>
     /// </remarks>
     /// <param name="tool">The tool the call named, whatever the caller said.</param>
     /// <param name="version">The version of the BrowserAI that is actually serving the connection.</param>
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
-    /// <param name="throughTheSessionHost">
-    /// Whether the connection reached the session host through a front, Q366 b. A server
-    /// a client started is a new process, so a list its connection never asked for was
-    /// read before it started, and the sentence says so. The host outlives its fronts:
-    /// a client that re-dials reaches the same host, whose list it may already hold, so
-    /// that sentence would be false, and this one says only what the host can know.
-    /// </param>
     /// <param name="tools">The tool list this server answers now, for the block that names every tool in it.</param>
     /// <returns>The refusal.</returns>
-    public static string ToolListPredatesThisServer(string tool, string version, string? clientName, bool throughTheSessionHost = false, ToolSignatures? tools = null) =>
+    public static string ToolListPredatesThisServer(string tool, string version, string? clientName, ToolSignatures? tools = null) =>
         $"'{tool}' was NOT forwarded, once, because this connection has never asked BrowserAI for its tool list. "
-        + (throughTheSessionHost
-            ? $"It reached BrowserAI's session host, version {version}, which may be the BrowserAI the tool list you are calling from came from, or may have started after that list was read; BrowserAI cannot tell which from here, and in the second case the list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
-            : $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. ")
+        + $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
         + $"{Remedy(clientName)} "
         + "Nothing reached a browser, no session was opened or changed, and this is said once per connection: if you call again without a list, the call is forwarded normally."
         + ToolsNow(tools);
@@ -677,7 +676,7 @@ internal static class SessionErrors
     /// <param name="tools">The tool list this server answers now, for the block that names every tool in it.</param>
     /// <returns>The refusal.</returns>
     public static string ToolDoesNotExist(string tool, ToolSignatures? tools = null) =>
-        $"BrowserAI has no tool '{RecordText.Escape(tool)}', so nothing ran. Use the tools in your tool list. "
+        $"BrowserAI has no tool '{RecordText.Escape(tool)}', so nothing ran. Use one of the tools this BrowserAI has now, listed below. "
         + "If BrowserAI was updated during this conversation, a tool your list does not show cannot be called until the person you are working with reconnects BrowserAI or starts a new conversation: your client keeps the list it fetched when the conversation started."
         + ToolsNow(tools);
 
@@ -1324,7 +1323,7 @@ internal static class SessionErrors
     /// <param name="why">What failed.</param>
     /// <returns>The refusal.</returns>
     public static string BrowserRuntimeDidNotStart(string path, string why) =>
-        $"The browser runtime for '{path}' did not start: {why} The directory is left as it is, nothing is running, and the lock has been released. "
+        $"The browser runtime for '{path}' did not start: {Sentence(why)} The directory is left as it is, nothing is running, and the lock has been released. "
         + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
 
     /// <summary>
@@ -1353,7 +1352,8 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string InstallIsBroken(string path, string difference) =>
         $"BrowserAI did not open '{path}': this BrowserAI install is broken. The browser server it starts for every session lists different tools from the list this BrowserAI was built with, and the first difference is {difference}. "
-        + "Nothing was opened, nothing is running, and the directory is as it was. Every session will be refused the same way until BrowserAI is reinstalled, so stop and tell the person that it needs reinstalling.";
+        + $"Nothing was opened and nothing is running. The directory and its record are left on disk: once BrowserAI is reinstalled, call {SessionToolSurface.Resume} on it. "
+        + $"Every session will be refused the same way until then, and {SessionToolSurface.ReinstallBrowser} does not repair this, so stop and tell the person that BrowserAI needs reinstalling.";
 
     /// <summary>
     /// Row 7's other companion -- the session's browser server has gone, so the
@@ -1552,7 +1552,8 @@ internal static class SessionErrors
     /// again."</i> And of the first refusal, 2026-10-07: <i>"I want to prevent the
     /// calling agent from thinking the parameters are wrong on the first refusal and it
     /// thinking it should work differently."</i> So it opens with
-    /// <see cref="SettingsHoldBack.NothingIsWrong"/>, lists every difference with both
+    /// <see cref="SettingsHoldBack.HeldBackOnce"/> (<i>corrected 2026-10-10, previously
+    /// "Not done yet, and nothing in this call is wrong."</i>), lists every difference with both
     /// values, marks a setting the call left out as its default (RESOLUTIONS 4), and
     /// names both ways on: the same call again, and the last run's settings written as a
     /// call.
@@ -1589,8 +1590,8 @@ internal static class SessionErrors
         ArgumentNullException.ThrowIfNull(asked);
 
         var text = new System.Text.StringBuilder()
-            .Append(SettingsHoldBack.NothingIsWrong)
-            .Append(" It asks for settings that differ from the ones this session's last run used, and BrowserAI holds back such a call once, so that a change is a choice and not an accident.\n")
+            .Append(SettingsHoldBack.HeldBackOnce)
+            .Append(" its settings differ from the ones this session's last run used, and BrowserAI holds back a change once so that it is a choice and not an accident.\n")
             .Append("What differs:\n");
 
         foreach (var difference in differences)
@@ -1615,7 +1616,7 @@ internal static class SessionErrors
         _ = text.Append("If you meant it, send exactly the same call again and it will go through")
             .Append(session switch
             {
-                ResumeFinds.LiveWithItsBrowserUp => ": the session's browser then closes and opens again with these settings, and its logins, cookies, storage, tabs and history are kept.\n",
+                ResumeFinds.LiveWithItsBrowserUp => ": the session's browser then closes and opens again with these settings, and a clean close keeps its logins, cookies, storage, tabs and history.\n",
                 ResumeFinds.LiveWithNoBrowserYet => ": the session's browser has not started yet, so the first browser call after it starts the browser with these settings.\n",
                 _ => ", and the session opens with these settings.\n",
             })
@@ -1645,9 +1646,25 @@ internal static class SessionErrors
     {
         ArgumentNullException.ThrowIfNull(asked);
 
-        return $"{SettingsHoldBack.NothingIsWrong} It sets a longer idle time than the default, and BrowserAI holds back such a call once, so that it is a choice and not an accident.\n"
+        return $"{SettingsHoldBack.HeldBackOnce} it sets a longer idle time than the default, and BrowserAI holds that back once so that it is a choice and not an accident.\n"
             + $"{SettingsHoldBack.UpdatesWait(asked)}\n"
             + $"If you meant it, send exactly the same call again and it will go through. Otherwise send it with {IdleSetting.ParameterName}: {IdleSetting.DefaultFor(asked.Headed)} or less.";
+    }
+
+    /// <summary>A reason as one sentence: with a full stop at its end unless it already ends one.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, from the texts review</b>: a reason read off an exception may
+    /// end without a full stop, and the sentence after it then ran on.
+    /// </remarks>
+    /// <param name="reason">The reason.</param>
+    /// <returns>The reason, ending a sentence.</returns>
+    internal static string Sentence(string reason)
+    {
+        ArgumentNullException.ThrowIfNull(reason);
+
+        var trimmed = reason.TrimEnd();
+
+        return trimmed.Length is 0 || trimmed[^1] is '.' or '!' or '?' ? trimmed : trimmed + ".";
     }
 
     /// <summary>

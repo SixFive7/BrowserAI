@@ -108,7 +108,6 @@ internal sealed partial class RelayTests
             "browser_navigate",
             RelayRig.Facts.Build,
             KnownClients.ClaudeCode,
-            throughTheSessionHost: false,
             ToolSignatures.From(RelayRig.ToolList())));
 
         // Once: the next is held, and nothing answers it while no background is there.

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
+using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -431,6 +432,45 @@ internal sealed class CloseReasonTests
         });
 
         await Assert.That(HostConnection.TextOf(resumed)).Contains("why this session was last closed: A person closed this session's browser window at");
+    }
+
+    /// <summary>
+    /// A close made by another client is said with that client named once: "another
+    /// client 'name' (...)", never "another client, client 'name' (...)", for
+    /// <c>browserai_close</c> and for a resume's switch alike; to the client that closed
+    /// it, it is "this client".
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, from the texts review</b>, which read "from another client,
+    /// client 'claude-code' (its BrowserAI server is pid ...)". Planted red against the
+    /// tree before the fix.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnotherClientsCloseNamesThatClientOnce()
+    {
+        var closer = new CallerConnection(clientProcessId: 4242);
+        var reader = new CallerConnection(clientProcessId: 4343);
+
+        closer.Introduced("claude-code");
+        reader.Introduced("codex");
+
+        foreach (var cause in new[] { SessionCloseCause.Caller, SessionCloseCause.SettingsChanged })
+        {
+            var closure = new SessionClosure(cause, DateTimeOffset.UnixEpoch, IdlePeriod: null)
+            {
+                ClosedBy = closer,
+                By = closer.Describe(),
+                Why = "the suite closing it",
+            };
+
+            var toAnother = CloseReasons.Of(closure, reader);
+            var toItsOwn = CloseReasons.Of(closure, closer);
+
+            await Assert.That(toAnother).Contains("from another client 'claude-code' (its BrowserAI server is pid 4242)").Because(cause.ToString());
+            await Assert.That(toAnother).DoesNotContain("another client, client").Because(cause.ToString());
+            await Assert.That(toItsOwn).Contains("from this client").Because(cause.ToString());
+        }
     }
 
     /// <summary>

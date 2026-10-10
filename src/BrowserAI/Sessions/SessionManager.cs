@@ -310,7 +310,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     public const string ClosedByTheAgent =
         "Closed. The browser closed itself, so what it held is written to disk, and the session is kept: its profile with the logins and cookies, its site storage, and its tabs with their history. "
-        + "Every call that names this session is refused until browserai_resume opens it again, and the first browser call after that reopens the tabs.";
+        + "Every browser call that names this session is refused until browserai_resume opens it again, and the first browser call after that reopens the tabs.";
 
     /// <summary>
     /// What <c>browserai_close</c> answers when the session had no browser up.
@@ -324,7 +324,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     public const string ClosedWithNoBrowserUp =
         "Closed. No browser had started in this session, so none was started in order to close it and nothing was lost. "
-        + "Every call that names this session is refused until browserai_resume opens it again.";
+        + "Every browser call that names this session is refused until browserai_resume opens it again.";
 
     /// <summary>
     /// What <c>browserai_close</c> answers when the browser did not finish closing
@@ -340,7 +340,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     public const string ClosedWhenTheCapRanOut =
         "Closed, but the browser did not finish closing within a minute, so BrowserAI ended it: what it had not yet written to disk may be lost, recent cookie and localStorage writes first. "
-        + "The session is kept with everything that reached the disk. Every call that names this session is refused until browserai_resume opens it again.";
+        + "The session is kept with everything that reached the disk. Every browser call that names this session is refused until browserai_resume opens it again.";
 
     /// <summary>
     /// What <c>browserai_close</c> answers when the session was closed already.
@@ -3794,7 +3794,7 @@ internal sealed class SessionManager : IAsyncDisposable
             Failed(acquired, failure);
 
             return new ToolOutcome(
-                SessionErrors.BrowserRuntimeDidNotStart(location.FullPath, $"{failure.GetType().Name}: {failure.Message}"),
+                SessionErrors.BrowserRuntimeDidNotStart(location.FullPath, failure.Message),
                 IsError: true);
         }
         finally
@@ -4490,7 +4490,7 @@ internal sealed class SessionManager : IAsyncDisposable
         return value.GetValueKind() is JsonValueKind.Object
             ? value.DeepClone()
             : throw new SessionToolException(
-                $"'{SessionToolSurface.ArgumentsParameter}' must be an object, and it arrived as {value.GetValueKind()}. It is what the page's own tool receives, so there is no reading of another shape that would be safe to guess at. Nothing was called.");
+                $"'{SessionToolSurface.ArgumentsParameter}' must be an object, and it arrived as {ArgumentKind.Of(value)}. It is what the page's own tool receives, so there is no reading of another shape that would be safe to guess at. Nothing was called.");
     }
 
     /// <summary>Every text block of a child's answer, joined.</summary>
@@ -4518,7 +4518,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (value.GetValueKind() is not JsonValueKind.String)
         {
-            throw new SessionToolException($"'{name}' must be a string, and it arrived as {value.GetValueKind()}.");
+            throw new SessionToolException($"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}.");
         }
 
         var text = value.GetValue<string>();
@@ -4552,7 +4552,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (value.GetValueKind() is not JsonValueKind.Number)
         {
             throw new SessionToolException(
-                $"'{name}' must be a whole number, and it arrived as {value.GetValueKind()}. Nothing was changed.");
+                $"'{name}' must be a whole number, and it arrived as {ArgumentKind.Of(value)}. Nothing was changed.");
         }
 
         return value.GetValue<JsonElement>().TryGetInt64(out var number)
@@ -4572,7 +4572,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            _ => throw new SessionToolException($"'{name}' must be true or false, and it arrived as {value.GetValueKind()}."),
+            _ => throw new SessionToolException($"'{name}' must be true or false, and it arrived as {ArgumentKind.Of(value)}."),
         };
     }
 

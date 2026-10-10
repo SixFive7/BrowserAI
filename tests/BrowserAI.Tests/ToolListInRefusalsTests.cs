@@ -133,8 +133,7 @@ internal sealed class ToolListInRefusalsTests
 
         foreach (var client in new string?[] { null, KnownClients.ClaudeCode, KnownClients.Codex, "an-unknown-client" })
         {
-            refusals.Add(SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheSessionHost: false, tools));
-            refusals.Add(SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheSessionHost: true, tools));
+            refusals.Add(SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, tools));
         }
 
         var longest = refusals.Max(refusal => refusal.Length);

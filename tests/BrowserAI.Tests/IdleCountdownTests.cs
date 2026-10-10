@@ -206,18 +206,23 @@ internal sealed class IdleCountdownTests
         await using var rig = Sessions(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
-        var wrong = new (string Label, JsonNode Value)[]
+        // ⚠️ What arrived is named in words for every kind since 2026-10-10, from the
+        // texts review (previously .NET's own name for a boolean, an object or an array:
+        // "False", "Object", "Array").
+        var wrong = new (string Label, JsonNode Value, string Arrived)[]
         {
-            ("zero", 0),
-            ("negative", -5),
-            ("fraction", 1.5),
-            ("digits in a string", "10"),
-            ("another word", "sometimes"),
-            ("a boolean", false),
-            ("past a 32-bit count", 3_000_000_000L),
+            ("zero", 0, "the number 0"),
+            ("negative", -5, "the number -5"),
+            ("fraction", 1.5, "the number 1.5"),
+            ("digits in a string", "10", "the string '10'"),
+            ("another word", "sometimes", "the string 'sometimes'"),
+            ("a boolean", false, "the value false"),
+            ("past a 32-bit count", 3_000_000_000L, "the number 3000000000"),
+            ("an object", new JsonObject { ["minutes"] = 10 }, "an object"),
+            ("a list", new JsonArray { 10 }, "a list"),
         };
 
-        foreach (var (label, value) in wrong)
+        foreach (var (label, value, arrived) in wrong)
         {
             var directory = Path.Combine(rig.Root, $"refused-{label.Replace(' ', '-')}");
 
@@ -234,6 +239,7 @@ internal sealed class IdleCountdownTests
             await Assert.That((bool?)answer["isError"]).IsTrue().Because(label);
             await Assert.That(TextOf(answer)).StartsWith($"'{IdleSetting.ParameterName}' must be a whole number of minutes from 1 to {int.MaxValue.ToString(CultureInfo.InvariantCulture)}, or \"never\"").Because(label);
             await Assert.That(TextOf(answer)).Contains("Nothing was created and nothing was changed.").Because(label);
+            await Assert.That(TextOf(answer)).Contains($"and it arrived as {arrived}. Nothing was created").Because(label);
             await Assert.That(File.Exists(Path.Combine(directory, SessionLayout.DataFileName))).IsFalse().Because(label);
         }
 
@@ -252,7 +258,7 @@ internal sealed class IdleCountdownTests
 
         var held = await CallAsync(harness, SessionToolSurface.Init, (JsonObject)capitals.DeepClone());
 
-        await Assert.That(TextOf(held)).StartsWith(SettingsHoldBack.NothingIsWrong);
+        await Assert.That(TextOf(held)).StartsWith(SettingsHoldBack.HeldBackOnce);
 
         var accepted = await CallAsync(harness, SessionToolSurface.Init, capitals);
 
@@ -616,7 +622,7 @@ internal sealed class IdleCountdownTests
         // default is held back once at init, and the same call sent again goes
         // through. The arms here are about the countdown and not the hold-back, which
         // SettingsHoldBackTests holds, so the helper sends it again.
-        if ((bool?)answer["isError"] is true && TextOf(answer).StartsWith(SettingsHoldBack.NothingIsWrong, StringComparison.Ordinal))
+        if ((bool?)answer["isError"] is true && TextOf(answer).StartsWith(SettingsHoldBack.HeldBackOnce, StringComparison.Ordinal))
         {
             answer = await CallAsync(harness, SessionToolSurface.Init, (JsonObject)arguments.DeepClone());
         }

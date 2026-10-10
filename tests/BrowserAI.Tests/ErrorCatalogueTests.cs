@@ -987,6 +987,18 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.InstallIsBroken),
             SessionErrors.InstallIsBroken(directory, "'browser_snapshot', whose definition differs"));
 
+        // ⚠️ Since 2026-10-10, from the texts review (previously "Nothing was opened,
+        // nothing is running, and the directory is as it was. ... so stop and tell the
+        // person that it needs reinstalling."): an init has created the directory and its
+        // record by the time the check runs, a retried init would be told the directory
+        // is already a session, and browserai_reinstall_browser replaces the browsers and
+        // not the browser server whose list differs.
+        await Assert.That(TextOf(answer)).Contains("The directory and its record are left on disk: once BrowserAI is reinstalled, call browserai_resume on it.");
+        await Assert.That(TextOf(answer)).Contains("browserai_reinstall_browser does not repair this");
+        await Assert.That(TextOf(answer)).DoesNotContain("the directory is as it was");
+        await Assert.That(File.Exists(Path.Combine(directory, SessionLayout.DataFileName))).IsTrue()
+            .Because("the refusal says the record is left on disk");
+
         // Nothing was opened: the session is unknown to the next call.
         var listed = await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root });
 
@@ -1053,7 +1065,13 @@ internal sealed partial class ErrorCatalogueTests
         Match(
             TextOf(answer),
             nameof(SessionErrors.BrowserRuntimeDidNotStart),
-            SessionErrors.BrowserRuntimeDidNotStart(SessionPath.For(directory).FullPath, "IOException: spawn EFTYPE"));
+            SessionErrors.BrowserRuntimeDidNotStart(SessionPath.For(directory).FullPath, "spawn EFTYPE"));
+
+        // ⚠️ Since 2026-10-10, from the texts review (previously "did not start:
+        // IOException: spawn EFTYPE The directory is left ..."): the cause carries no
+        // .NET type name, and a reason that does not end a sentence is given its full stop.
+        await Assert.That(TextOf(answer)).Contains("did not start: spawn EFTYPE. The directory is left as it is");
+        await Assert.That(TextOf(answer)).DoesNotContain("IOException");
 
         // Recoverable in one turn, which is what the sentence promises: the
         // directory was released, so the same resume succeeds once a child can
@@ -1317,6 +1335,53 @@ internal sealed partial class ErrorCatalogueTests
             TextOf(answer),
             nameof(SessionErrors.LongerIdleHeldBack),
             SessionErrors.LongerIdleHeldBack(new SessionRunSettings(true, false, false, BrowserAI.Runtime.RunOptions.Default, IdleSetting.Never)));
+    }
+
+    /// <summary>
+    /// Row 7 again, for a session child that does not answer the tools/list BrowserAI asks
+    /// right after its handshake: the reason ends a sentence, and the cause carries no
+    /// .NET type name.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-10, from the texts review</b>, which read "it wrote no result
+    /// BrowserAI could read The directory is left as it is" with no full stop between,
+    /// after "InvalidOperationException: ". Planted red against the tree before the fix.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBrowserRuntimeRowForAChildThatListsNothingEndsItsReasonAndNamesNoType()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            // The list BrowserAI asks for after the handshake answered with an error, whose
+            // message ends without a full stop.
+            child => child.ToolsListError = "the list is not ready",
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "lists-nothing");
+
+        var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a browser server that answers its tool list with nothing",
+            ["headed"] = false,
+            ["transcript"] = false,
+            ["captureNetwork"] = false,
+            ["idleMinutes"] = 10,
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        // The SDK's own words for the child's error sit between BrowserAI's two, so the
+        // row is held by its parts and not by one string.
+        var text = TextOf(answer);
+
+        await Assert.That(text).StartsWith($"The browser runtime for '{SessionPath.For(directory).FullPath}' did not start: The browser server did not answer tools/list after its handshake: ");
+        await Assert.That(text).Contains("the list is not ready. The directory is left as it is");
+        await Assert.That(text).DoesNotContain("Exception");
+
+        Record(nameof(SessionErrors.BrowserRuntimeDidNotStart));
     }
 
     /// <summary>

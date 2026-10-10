@@ -688,7 +688,7 @@ internal static class SessionToolSurface
     /// </para>
     /// </remarks>
     private const string VisibleWindowCost =
-        "A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's updates back until it closes. "
+        "A VISIBLE WINDOW TAKES THE PERSON'S SCREEN AND FOCUS: Chromium's comes to the front and takes the keyboard focus when it opens, and Firefox's may, and like any open browser it holds BrowserAI's automatic updates back until it closes. "
         + "Switching between visible and hidden keeps logins, cookies, storage, tabs and history";
 
     /// <summary>
@@ -717,7 +717,8 @@ internal static class SessionToolSurface
         "How long this session's browser may go unused before BrowserAI closes it: a whole number of minutes, or \"never\", stated on every call. "
         + "Unused means no call names this session and, in a visible window, nobody types or clicks in it; every call that names the session starts the countdown again, whatever its answer, and so does the person's input in its window. "
         + $"The defaults are {SessionTimes.HiddenIdleMinutes.ToString(CultureInfo.InvariantCulture)} minutes without a window and {SessionTimes.VisibleIdleMinutes.ToString(CultureInfo.InvariantCulture)} with one. The close keeps the session, and browserai_resume opens it again. "
-        + "A LONGER TIME IS NOT FREE: BrowserAI cannot install an update while a session's browser is open, so a longer time, or never, keeps every update waiting for as long as the browser stays open, and a call that sets one is held back once with that warning.";
+        + "A LONGER TIME IS NOT FREE: BrowserAI installs an update on its own only once every session's browser has closed, so a longer time, or never, keeps updates waiting for as long as this browser stays open, unless the person chooses Install now, which closes it. "
+        + "A call that sets a longer time is held back once with that warning, unless it is a resume that repeats its last run's time and mode.";
 
     /// <summary>
     /// What <c>why</c> asks for, on an upstream browser tool.
@@ -861,13 +862,13 @@ internal static class SessionToolSurface
             "Creates a browser session whose home is the directory you name. The directory IS the session: everything this session stores -- its browser profile, its screenshots and downloads, its log -- lives there, and you name it again on every browser call. "
             + "Its 'output' folder is the only place a tool may read a file from or write one to: for browser_file_upload to send a file, copy it in there first -- and the copy goes when the session does. "
             + $"There is no default directory and no fallback; an empty, relative or unusable path is refused, not turned into one that happens to work. If the directory is already a session, this refuses and tells you to call {Resume} -- being made to say so is the point. "
-            + "Every capability this server can grant is granted to every session, so there is nothing to choose and nothing bound that a later call has to live with. "
+            + "Every capability this server can grant is granted to every session, so there is no capability to choose and none bound that a later call has to live with. "
             // ⚠️ 2026-10-08, F2: previously "Nothing about the browser is bound either:
             // 'headed', 'transcript', 'debug', 'viewport', 'locale', 'timezone',
             // 'ignoreHTTPSErrors', 'captureNetwork' and 'idleMinutes' are all per-run, none
             // is recorded, and the same arguments are accepted again on browserai_resume."
-            + $"Nothing about the browser is bound either: every setting below is per-run and {Resume} takes them again. "
-            + "'headed', 'transcript', 'captureNetwork' and 'idleMinutes' are required, because a person notices each; the rest default to this machine's. "
+            + $"Every setting below but 'browser' is per-run, and {Resume} takes them again. "
+            + "'headed', 'transcript', 'captureNetwork' and 'idleMinutes' are required, because a person notices each; the rest have the defaults their descriptions name. "
             + "A resume that changes them is held back once, then goes through. "
             + "SECURITY: name a NEW directory. A path on a network drive is refused and nothing else about it is validated: one that already holds a browser profile -- the user's real Chrome profile, or a copy -- becomes this session's, and that session then drives its live cookies and logins, as can any agent given the path. "
             + $"RETENTION: nothing here expires and BrowserAI never deletes a session directory, so destroying it is your job: the agent that made a session destroys it when the work is done, and promptly when it held a login, because the cookies and logins are in the profile on disk until then. {Destroy} takes the whole directory, screenshots and downloads included, so move out anything worth keeping first; {List} shows what has accumulated, and its size.",
@@ -927,7 +928,7 @@ internal static class SessionToolSurface
             "Reopens a session that exists, and replays what it was: its recorded browser, purpose and history. "
             + "It takes init's per-run arguments, 'headed', 'transcript', 'captureNetwork' and 'idleMinutes' required, and compares them with the last run's settings, a left-out optional one counting as its default. "
             + "The same settings go through. "
-            + "DIFFERENT SETTINGS ARE HELD BACK ONCE, naming each difference; nothing in the call is wrong, and the same call sent again goes through, closing a live browser and opening it with them, keeping logins, cookies, storage, tabs and history. "
+            + "DIFFERENT SETTINGS ARE HELD BACK ONCE, naming each difference, and the same call sent again goes through: a live browser is closed and opened with them, and a clean close keeps logins, cookies, storage, tabs and history. "
             + $"After its idle time ('{IdleSetting.ParameterName}') BrowserAI closes its browser, and every browser call is refused until this is called. "
             + "'browser' is NOT an argument -- it was bound when the session was created and a profile on disk belongs to its browser -- and passing it is refused. "
             + "A session is resumable forever; there is no expiry, so a directory that exists can always be resumed. "
@@ -969,7 +970,7 @@ internal static class SessionToolSurface
             "Close a session's browser and keep the session.",
             "Closes the session's browser cleanly and keeps the session: its profile with the logins and cookies, its site storage, its tabs with their history, and its folder and log. "
             + "The browser is asked to close itself and given up to a minute to write what it holds to disk. "
-            + $"After this, every call that names the session is refused, saying who closed it and why, until {Resume} opens it again; the first browser call after that reopens the tabs. "
+            + $"After this, every browser call that names the session is refused, saying who closed it and why, until {Resume} opens it again, and the first browser call after that reopens the tabs; {CatchUp}, {ChangePurpose} and {Destroy} still answer it. "
             + "Call it when the work in a session is done for now and the session should stay resumable, or to free what an open browser holds. "
             + $"To delete the session and everything in it, call {Destroy} instead.",
             new JsonObject

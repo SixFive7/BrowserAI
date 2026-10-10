@@ -689,7 +689,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await RefuseAsync(
             caller,
             request.Id,
-            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheHost, signatures),
+            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, signatures),
             cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -1625,7 +1625,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         return value.GetValueKind() is JsonValueKind.String
             ? value.GetValue<string>()
             : throw new SessionToolException(
-                $"'{name}' must be a string, and it arrived as {value.GetValueKind()}. Nothing was forwarded and nothing was changed.");
+                $"'{name}' must be a string, and it arrived as {ArgumentKind.Of(value)}. Nothing was forwarded and nothing was changed.");
     }
 
     /// <summary>

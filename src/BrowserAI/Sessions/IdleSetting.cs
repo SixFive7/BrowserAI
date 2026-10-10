@@ -131,16 +131,11 @@ internal sealed record IdleSetting
 
         throw new SessionToolException(
             $"'{ParameterName}' must be a whole number of minutes from 1 to {int.MaxValue.ToString(CultureInfo.InvariantCulture)}, or \"{NeverWord}\", "
-            + $"and it arrived as {Shown(value)}. Nothing was created and nothing was changed.");
+            + $"and it arrived as {ArgumentKind.Of(value)}. Nothing was created and nothing was changed.");
     }
 
-    /// <summary>What arrived, for the refusal, escaped because a caller wrote it.</summary>
-    /// <param name="value">The argument.</param>
-    /// <returns>A short description of it.</returns>
-    private static string Shown(JsonNode value) => value.GetValueKind() switch
-    {
-        JsonValueKind.String => $"the string '{RecordText.Escape(value.GetValue<string>())}'",
-        JsonValueKind.Number => $"the number {value.GetValue<JsonElement>().GetRawText()}",
-        var kind => kind.ToString(),
-    };
+    // ⚠️ MOVED 2026-10-10: `Shown`, which named a string and a number in words and
+    // every other kind by .NET's own name for it ("True", "Object", "Array"), is
+    // `ArgumentKind.Of` now, which names every kind in words, and every refusal that
+    // says what arrived uses it.
 }

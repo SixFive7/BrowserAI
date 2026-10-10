@@ -191,6 +191,13 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     public string ToolsListResult { get; set; } = DefaultToolsList;
 
     /// <summary>
+    /// When set, <c>tools/list</c> answers with a JSON-RPC error carrying this message
+    /// in place of <see cref="ToolsListResult"/>: a browser server that does not answer
+    /// the list BrowserAI asks for right after its handshake.
+    /// </summary>
+    public string? ToolsListError { get; set; }
+
+    /// <summary>
     /// What a relative <c>filename</c> argument resolves against, which is the
     /// real child's own working directory.
     /// </summary>
@@ -547,7 +554,9 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
                 return true;
 
             case "tools/list":
-                await _channel.WriteFrameAsync(Result(id, ToolsListResult), _stopping.Token);
+                await _channel.WriteFrameAsync(
+                    ToolsListError is { } failure ? Error(id, -32603, failure, rawData: null) : Result(id, ToolsListResult),
+                    _stopping.Token);
                 return true;
 
             case "tools/call":

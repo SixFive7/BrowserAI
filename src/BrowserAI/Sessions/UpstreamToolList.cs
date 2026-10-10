@@ -184,7 +184,7 @@ internal sealed class UpstreamToolList
 
         if (answer.Response is null || answer.Payload is not { IsError: false } payload)
         {
-            var why = answer.ProtocolFailure?.Message ?? answer.TransportFailure?.Message ?? "it wrote no result BrowserAI could read";
+            var why = answer.ProtocolFailure?.Message ?? answer.TransportFailure?.Message ?? "it wrote no result BrowserAI could read.";
 
             throw new InvalidOperationException($"The browser server did not answer tools/list after its handshake: {why}");
         }

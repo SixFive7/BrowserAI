@@ -429,9 +429,12 @@ internal sealed class SessionPolicyTests
             await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolDoesNotExist(invented, tools));
 
             // The maintainer's own wording, Q371.6 c, as literals: the name, that
-            // nothing ran, the tool list as the place to look, and why a tool the
-            // caller expected may be missing from it.
-            await Assert.That(TextOf(answer)).StartsWith($"BrowserAI has no tool '{invented}', so nothing ran. Use the tools in your tool list.");
+            // nothing ran, the list of current tools as the place to look, and why a
+            // tool the caller expected may be missing from its own list. ⚠️ Corrected
+            // 2026-10-10, from the texts review (previously "Use the tools in your tool
+            // list."): a list that predates an update still names a tool BrowserAI no
+            // longer has, so the answer points at the list it prints itself.
+            await Assert.That(TextOf(answer)).StartsWith($"BrowserAI has no tool '{invented}', so nothing ran. Use one of the tools this BrowserAI has now, listed below.");
             await Assert.That(TextOf(answer)).Contains("reconnects BrowserAI or starts a new conversation");
 
             // No history and no guess: no other name is suggested.
@@ -1083,7 +1086,9 @@ internal sealed class SessionPolicyTests
 
         await Assert.That((bool?)wrongName["isError"]).IsTrue();
         await Assert.That(TextOf(wrongName)).Contains("'name' must be a string");
-        await Assert.That(TextOf(wrongName)).Contains("Number");
+        // ⚠️ In words since 2026-10-10 (previously .NET's own name for the kind,
+        // "Number", "True" and "Array"), from the texts review.
+        await Assert.That(TextOf(wrongName)).Contains("it arrived as the number 5.");
         await Assert.That(TextOf(wrongName)).DoesNotContain("Internal error");
 
         var wrongSession = await rig.Client.RoundTripAsync("tools/call", new JsonObject
@@ -1094,7 +1099,7 @@ internal sealed class SessionPolicyTests
 
         await Assert.That((bool?)wrongSession["isError"]).IsTrue();
         await Assert.That(TextOf(wrongSession)).Contains("'session' must be a string");
-        await Assert.That(TextOf(wrongSession)).Contains("True");
+        await Assert.That(TextOf(wrongSession)).Contains("it arrived as the value true.");
 
         var wrongWhy = await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -1104,7 +1109,7 @@ internal sealed class SessionPolicyTests
 
         await Assert.That((bool?)wrongWhy["isError"]).IsTrue();
         await Assert.That(TextOf(wrongWhy)).Contains("'why' must be a string");
-        await Assert.That(TextOf(wrongWhy)).Contains("Array");
+        await Assert.That(TextOf(wrongWhy)).Contains("it arrived as a list.");
 
         // ⚠️ THE POSITIVE CONTROL. The same three arguments, right this time,
         // reach the child -- so a version that refused everything would pass

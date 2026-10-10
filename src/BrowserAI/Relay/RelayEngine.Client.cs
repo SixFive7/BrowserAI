@@ -329,7 +329,7 @@ internal sealed partial class RelayEngine
         await WriteToClientAsync(RelayWire.Notification(NotificationMethods.ToolListChangedNotification, null)).ConfigureAwait(false);
         await AnswerInPlaceAsync(
             id,
-            SessionErrors.ToolListPredatesThisServer(tool, _facts.Build, _clientName, throughTheSessionHost: false, Signatures),
+            SessionErrors.ToolListPredatesThisServer(tool, _facts.Build, _clientName, Signatures),
             "the connection never asked for the tool list").ConfigureAwait(false);
 
         return true;

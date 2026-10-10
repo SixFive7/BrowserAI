@@ -62,7 +62,7 @@ internal static class CloseReasons
         ArgumentNullException.ThrowIfNull(closure);
 
         var client = closure.Cause is SessionCloseCause.Caller or SessionCloseCause.SettingsChanged && asking is not null && closure.ClosedBy is { } by
-            ? ReferenceEquals(by, asking) ? "this client" : $"another client, {by.Describe()}"
+            ? ReferenceEquals(by, asking) ? "this client" : $"another {by.Describe()}"
             : null;
 
         return Of(closure.Recorded, closure.At, closure.IdlePeriod, client);

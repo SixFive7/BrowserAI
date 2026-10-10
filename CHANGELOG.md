@@ -79,15 +79,16 @@ release body; nothing else depends on it.
   wait a tool call can meet ends inside the stricter client's limit on one call. Planted red four
   ways first.
 
-- ✨ **Every answer that opens a visible window says the window can go again at no loss.**
+- ✨ **Every answer that opens a visible window says going back to hidden keeps the session.**
   F5 a, the maintainer's words verbatim: *"f5 a"*, realising E1, which asked to *"teach the model
   that it can then immediately after make it a headless session"*. Such an answer from
   `browserai_init` or `browserai_resume` ends with *"When the part that needs the person is done,
-  resuming with headed: false keeps everything."*, and `headed`'s description now says what a window
-  costs: Chromium's comes to the front and takes the keyboard focus when it opens, Firefox's may,
-  and like any open browser it holds BrowserAI's updates back until it closes. It also says that
-  switching between visible and hidden keeps logins, cookies, storage, tabs and history.
-  `SettingsHoldBackTests` holds both, planted red first.
+  resuming with headed: false keeps its logins, cookies, storage, tabs and history."*, and
+  `headed`'s description now says what a window costs: Chromium's comes to the front and takes the
+  keyboard focus when it opens, Firefox's may, and like any open browser it holds BrowserAI's
+  automatic updates back until it closes. It also says that switching between visible and hidden
+  keeps logins, cookies, storage, tabs and history. `SettingsHoldBackTests` holds both, planted red
+  first.
 
 - ✨ **A person typing or clicking in a visible window keeps that window open.**
   F4, the maintainer's words verbatim: *"f4 a - but only if this is easy."* and *"Make sure the
@@ -967,7 +968,7 @@ release body; nothing else depends on it.
   different, what the previous values was and what the newly requested value was."* Every opening
   now records the settings its run uses in `browserai.data`, and a resume is compared with the last
   run on every setting, one the call left out counting as its default. A difference is answered once
-  with *"Not done yet, and nothing in this call is wrong."*, each setting with both values, and the
+  with *"Held back once, and the call is valid:"*, each setting with both values, and the
   two ways on: the same call again, or the last run's settings written as a call. The same call
   sent again on the same connection goes through, and on a session whose browser is up it closes
   that browser cleanly and opens it with the new settings, keeping its logins, cookies, storage,
@@ -1831,7 +1832,7 @@ release body; nothing else depends on it.
   The maintainer's words verbatim: *"Calls to a tool BrowserAI doesn't have: a) Yes, in the same
   lane."* Such a call met the refusal written for a listed tool with no verdict, which called it a
   gap a human must adjudicate and said not to retry. It now gets *"BrowserAI has no tool '<name>',
-  so nothing ran. Use the tools in your tool list."* and one sentence saying that after an update a
+  so nothing ran. Use one of the tools this BrowserAI has now, listed below."* and one sentence saying that after an update a
   tool the client's own list does not show cannot be called until the person reconnects BrowserAI
   or starts a new conversation. `browserai_set_purpose`, an invented name and a denied tool all get
   it. **A denied tool's answer is a proposal put to the maintainer**: it no longer quotes the deny's

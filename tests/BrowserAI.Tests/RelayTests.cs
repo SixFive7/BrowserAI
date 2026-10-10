@@ -229,7 +229,6 @@ internal sealed partial class RelayTests
             "browser_navigate",
             RelayRig.Facts.Build,
             KnownClients.ClaudeCode,
-            throughTheSessionHost: false,
             ToolSignatures.From(RelayRig.ToolList()));
 
         await rig.SendAsync(RelayRig.CallFrame("1"));

@@ -938,7 +938,8 @@ never succeed costs attention and description budget for as long as it is in the
 list -- carrying the row's own `why` as the refusal and a `since` as provenance.
 ⚠️ *Corrected 2026-10-04 by addition, three ways.* **A denied tool is answered
 like a name BrowserAI does not have**, *"BrowserAI has no tool '<name>', so
-nothing ran. Use the tools in your tool list."* with one sentence about a
+nothing ran. Use the tools in your tool list."* (*"Use one of the tools this BrowserAI
+has now, listed below."* since 2026-10-10, from the texts review) with one sentence about a
 client's own list going stale after an update, and its `why` stays the human
 record; this was proposed to the maintainer and is his to approve. **A name in no
 list this server serves, with no row, gets the same answer**, and only a name

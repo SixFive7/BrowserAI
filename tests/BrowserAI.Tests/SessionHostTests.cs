@@ -79,18 +79,21 @@ internal sealed class SessionHostTests
 
     /// <summary>
     /// A client that re-dials the session host and calls before it lists is refused
-    /// once, in words that are true of a host which may have served its list, and its
-    /// next call reaches the session it kept.
+    /// once, and its next call reaches the session it kept.
     /// </summary>
     /// <remarks>
     /// <b>Found by the research of 2026-10-03 into the client at startup.</b> A Claude
-    /// Code that re-dials lists nothing, measured for Q261, and the host outlives the
-    /// front the client re-dials through, so the server's own sentence, that the list
-    /// came from a different BrowserAI, would be false here as often as not.
+    /// Code that re-dials lists nothing, measured for Q261. ⚠️ <i>Corrected 2026-10-10
+    /// (previously <c>AClientThatRedialsTheHostWithoutListingIsRefusedOnceInWordsTrueOfTheHost</c>,
+    /// which held a sentence of the session host's own, "It reached BrowserAI's session
+    /// host, version ...")</i>: since the one-binary build every connection to the
+    /// background is a relay's, and the relay lists for it, so no product path reached
+    /// that sentence and the texts review had it deleted. A host connection with no relay
+    /// in front of it, which only this rig makes, meets the one sentence there is.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AClientThatRedialsTheHostWithoutListingIsRefusedOnceInWordsTrueOfTheHost()
+    public async Task AClientThatRedialsTheHostWithoutListingIsRefusedOnceAndItsNextCallGoesThrough()
     {
         await using var sessions = NewSessions();
         await using var rig = await SessionHostRig.StartAsync(sessions);
@@ -113,10 +116,9 @@ internal sealed class SessionHostTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(HostConnection.TextOf(refused)).StartsWith(
-            SessionErrors.ToolListPredatesThisServer("browser_snapshot", BuildVersion.Current, ClientName, throughTheSessionHost: true));
+            SessionErrors.ToolListPredatesThisServer("browser_snapshot", BuildVersion.Current, ClientName));
         await Assert.That(HostConnection.TextOf(refused)).Contains("\n\nThe tools this BrowserAI has now:\n- " + SessionToolSurface.Init + ": ");
-        await Assert.That(HostConnection.TextOf(refused)).DoesNotContain("it started after the tool list you are calling from was read")
-            .Because("the host may well be the BrowserAI the client's list came from");
+        await Assert.That(HostConnection.TextOf(refused)).DoesNotContain("session host");
         await Assert.That(sessions.SessionChildren.Single().ToolCallsReceived).DoesNotContain("browser_snapshot");
 
         var served = await redialled.CallAsync("browser_snapshot", new JsonObject

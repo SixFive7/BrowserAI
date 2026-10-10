@@ -104,8 +104,10 @@ internal enum ResumeFinds
 /// 2026-10-07: <i>"But do make sure to communicate clearly to the llm that the first
 /// call did not work but that the second call will work. I want to prevent the calling
 /// agent from thinking the parameters are wrong on the first refusal and it thinking it
-/// should work differently."</i> So every hold-back opens with "Not done yet, and
-/// nothing in this call is wrong", and names the call that goes through.
+/// should work differently."</i> So every hold-back says the call is valid and names
+/// the call that goes through. ⚠️ <i>Corrected 2026-10-10, from the texts review
+/// (previously it opened "Not done yet, and nothing in this call is wrong")</i>: it is
+/// sent with <c>isError</c> set and recorded as failed, which those words contradicted.
 /// </para>
 /// <para>
 /// ⚠️ <b>It is the one place BrowserAI asks a caller to confirm anything</b>, and the
@@ -124,12 +126,22 @@ internal static class SettingsHoldBack
     /// 2026-10-07: <i>"Basically I want to hint towards the flow of having only a small
     /// section of the browseruse be interactive with the user (say the login) and teach
     /// the model that it can then immediately after make it a headless session."</i> The
-    /// sentence is the one the proposal he took wrote, word for word.
+    /// sentence is the one the proposal he took wrote, word for word. ⚠️ <i>Corrected
+    /// 2026-10-10 (previously "... keeps everything.")</i>, from the texts review: the
+    /// switch keeps what the headed descriptions name, and its own answer says that refs
+    /// from earlier snapshots and a page that answered a form POST do not come back.
     /// </remarks>
-    public const string HeadedHint = "When the part that needs the person is done, resuming with headed: false keeps everything.";
+    public const string HeadedHint = "When the part that needs the person is done, resuming with headed: false keeps its logins, cookies, storage, tabs and history.";
 
-    /// <summary>The sentence every hold-back opens with.</summary>
-    public const string NothingIsWrong = "Not done yet, and nothing in this call is wrong.";
+    /// <summary>The words every hold-back opens with.</summary>
+    /// <remarks>
+    /// ⚠️ <i>Corrected 2026-10-10 (previously "Not done yet, and nothing in this call is
+    /// wrong.", named <c>NothingIsWrong</c>)</i>, from the texts review: a hold-back is
+    /// sent with <c>isError</c> set and recorded as failed, which the old words
+    /// contradicted. What D2's intent needs is kept: the call is valid, and the same call
+    /// sent again goes through.
+    /// </remarks>
+    public const string HeldBackOnce = "Held back once, and the call is valid:";
 
     /// <summary>Every setting the call asks for that differs from the last run's, in the order they are listed.</summary>
     /// <param name="lastRun">What the session's last run used.</param>
@@ -201,11 +213,17 @@ internal static class SettingsHoldBack
         var usual = IdleSetting.DefaultFor(asked.Headed).InWords();
         var mode = asked.Headed ? $"a visible window closes after {usual}" : $"a browser with no window closes after {usual}";
 
+        // ⚠️ Corrected 2026-10-10 (previously "BrowserAI cannot install an update while a
+        // session's browser is open, so every update waits until ..."), from the texts
+        // review: the automatic install waits for this browser, and a person's Install now
+        // closes it and installs at once.
+        const string InstallNow = " The person can still choose Install now, which closes this browser and installs at once.";
+
         return asked.Idle.IsNever
             ? $"UPDATES WAIT WHILE THIS BROWSER IS OPEN. {IdleSetting.ParameterName}: \"{IdleSetting.NeverWord}\" means BrowserAI never closes it for being idle, where {mode} by default. "
-                + $"BrowserAI cannot install an update while a session's browser is open, so every update waits until {SessionToolSurface.Close} closes this one{(asked.Headed ? " or the person closes its window" : string.Empty)}."
+                + $"BrowserAI installs an update on its own only once every session's browser has closed, so updates wait until {SessionToolSurface.Close} closes this one{(asked.Headed ? " or the person closes its window" : string.Empty)}.{InstallNow}"
             : $"UPDATES WAIT WHILE THIS BROWSER IS OPEN. {IdleSetting.ParameterName}: {asked.Idle} is longer than the default: {mode}. "
-                + $"BrowserAI cannot install an update while a session's browser is open, so every update waits until this one closes: after {asked.Idle.InWords()} in which no call names the session{(asked.Headed ? " and nobody uses its window" : string.Empty)}, or when {SessionToolSurface.Close} closes it.";
+                + $"BrowserAI installs an update on its own only once every session's browser has closed, so updates wait until this one closes: after {asked.Idle.InWords()} in which no call names the session{(asked.Headed ? " and nobody uses its window" : string.Empty)}, or when {SessionToolSurface.Close} closes it.{InstallNow}";
     }
 
     /// <summary>

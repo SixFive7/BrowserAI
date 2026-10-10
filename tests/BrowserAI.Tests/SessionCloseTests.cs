@@ -700,11 +700,11 @@ internal sealed class SessionCloseTests
         // the last run's settings as a call.
         var text = TextOf(held);
 
-        await Assert.That(text).StartsWith("Not done yet, and nothing in this call is wrong.");
+        await Assert.That(text).StartsWith("Held back once, and the call is valid:");
         await Assert.That(text).Contains("- headed: the last run had false, this call asks for true\n");
         await Assert.That(text).Contains("- transcript: the last run had false, this call asks for true\n");
         await Assert.That(text).Contains($"- viewport: the last run had '{BrowserConfiguration.DefaultViewport}', this call asks for '1280x720'\n");
-        await Assert.That(text).Contains("If you meant it, send exactly the same call again and it will go through: the session's browser then closes and opens again with these settings, and its logins, cookies, storage, tabs and history are kept.\n");
+        await Assert.That(text).Contains("If you meant it, send exactly the same call again and it will go through: the session's browser then closes and opens again with these settings, and a clean close keeps its logins, cookies, storage, tabs and history.\n");
         await Assert.That(text).Contains("To keep the last run's settings, send them instead: headed: false, transcript: false, captureNetwork: false, idleMinutes: 10.");
 
         // Nothing changed: no new child, and the purpose the held call carried is not
