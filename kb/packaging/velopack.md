@@ -1684,6 +1684,20 @@ no-start option on `Setup.exe`'s command line, and `--silent` skips the start
 only as a side effect of hiding every dialog and answering yes to every prompt.
 It is filed as [velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056).
 
+⚠️ *Added 2026-10-11 by addition:* **#1056 is closed, and the ask lives on in
+[velopack/velopack#38](https://github.com/velopack/velopack/issues/38).** `caesay`, a
+member of the velopack organisation, closed it on 2026-10-10 at 20:02 UTC with *"I am
+going to close this in favor of #38 but I have noted your request there"*, and GitHub
+records the close as completed with no linked pull request. #38, *"Better support for
+Console / CLI Applications"*, opened 2024-02-26 and labelled `enhancement` and
+`os:windows`, is open with no linked pull request, and its body now ends with this line:
+*"https://github.com/velopack/velopack/issues/1056 requested that the first launch (after
+hooks) be configurable, or `CREATE_NO_WINDOW` during the first launch is configurable."*
+Read 2026-10-11 through GitHub's API, both issues and the one comment on #1056; read them
+again with `gh issue view 1056 --repo velopack/velopack --comments` and
+`gh issue view 38 --repo velopack/velopack`. No code moved with the close, and
+[`TODO.md`](../../TODO.md) watches #38.
+
 **How to re-establish.** Launch `Setup.exe` from a windowless parent (a detached
 `pwsh` with no console, as
 [`docs/probes/2026-09-14-firstrun/launch-detached.ps1`](../../docs/probes/2026-09-14-firstrun/README.md)
@@ -1707,7 +1721,9 @@ time, both read as kernel process times. Read at the 1.2.158 tag, with
 alone, `install.rs:252-255` starts the app on every non-silent install, and
 `setup.rs:97-104` has no option that skips the start.
 [velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056) was
-still open with no comments on 2026-09-24. ⚠️ **The console-window half was not
+still open with no comments on 2026-09-24. *Added 2026-10-11 by addition:* it was closed
+on 2026-10-10 in favour of #38, and the dated addition earlier in this section has the
+details. ⚠️ **The console-window half was not
 re-observed, and no pack this repository builds can show it**: `--mainExe` has
 been the Windows-subsystem configuration app since 2026-09-15, so what the start
 produced was that app's `#32770` dialog, whose log line reads `(FirstRun)`, and
@@ -1732,6 +1748,12 @@ shipping pack still cannot show it**, for the reason above: its main executable 
 the configuration app. Runs `I3` and `I3b` of the evidence batch; the screenshot
 of that window is not kept, because it showed the maintainer's own windows around
 it.
+
+*Read 2026-10-11 in the tree, by addition:* **the shipping pack still cannot show it**,
+for a newer reason than the configuration app: since D7 a of 2026-10-08 the pack's
+`--mainExe` is `BrowserAI.exe`, the one executable (`build/New-Release.ps1`), and
+`src/BrowserAI/BrowserAI.csproj` builds it as `WinExe`. Not measured again through
+`Setup.exe`.
 
 ### Re-measured 2026-09-15 against the published v1.0.0, and the paragraph above was half wrong
 

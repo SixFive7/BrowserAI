@@ -1325,6 +1325,33 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `myapp/` holding the held-file case, for the day `.work` is gone, and the
       measurement has
       [a kb section of its own](kb/packaging/velopack.md#an-apply-whose-last-rename-fails-leaves-no-program-and-the-installer-puts-it-back----measured-2026-10-10).
+- [ ] **WATCH [velopack/velopack#38](https://github.com/velopack/velopack/issues/38),
+      better support for console applications, where our ask for a start with no
+      console window after an install went.** Added 2026-10-11, on the maintainer's
+      "37 swtich to watching #38". Our
+      [velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056),
+      filed on 2026-09-15 under `SixFive7`, asked for a way to start the installed app
+      without a console window after a non-silent install: `Setup.exe` starts it without
+      `CREATE_NO_WINDOW`, so a console-subsystem app gets a terminal on the person's
+      screen ([kb](kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it----measured-2026-09-14),
+      [re-verification row 124](kb/re-verification.md)). `caesay`, a member of the
+      velopack organisation, closed it on 2026-10-10 at 20:02 UTC with *"I am going to
+      close this in favor of #38 but I have noted your request there"*, and GitHub
+      records the close as completed with no linked pull request. #38, *"Better support
+      for Console / CLI Applications"*, opened 2024-02-26 and labelled `enhancement` and
+      `os:windows`, is open with no linked pull request, and its body now ends with a
+      line naming #1056's request. **Read 2026-10-11** through GitHub's API. No pack this
+      repository builds can show that window, because its `--mainExe` is `BrowserAI.exe`,
+      a Windows-subsystem program, so nothing in BrowserAI waits on this. **What to
+      do:** check #38 at least once a week, and read the notes of every Velopack release
+      the daily drift check finds. **When #38 is answered, gains a pull request or
+      closes**, read what changed and write it into this item with its date. **When a
+      Velopack release carries a way to start the app with no console window, or to skip
+      the start**, re-run row 124 against that release, measured and never inferred from
+      the issue's state, correct the kb section with dated previously clauses, and close
+      this item; adopting the option is a question for the maintainer through
+      [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). If #38 closes without either, record
+      the reason in the kb section and close this item.
 
 ---
 
