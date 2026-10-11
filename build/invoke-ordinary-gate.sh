@@ -92,7 +92,21 @@ done
 echo "scratch released after ${waited}s"
 
 log=".work/suite/$tag.log"
-BROWSERAI_DRIVE_CASE=lower dotnet test "$forced/BrowserAI.slnx" 2>&1 | tee "$log"
+# THE RUN WRITES TO A FILE, AND THIS DRIVER WAITS FOR THE RUN'S PROCESS -- 64 c, the
+# maintainer's words verbatim: "64 c now". Until 2026-10-11 a run was read through a
+# pipe into tee, and a pipe ends only once every process holding its write end has
+# closed it. Twice that day a frozen child of a test host held it after the run had
+# printed its summary, a suspended git (pid 102292) and a suspended cmd.exe (pid
+# 23920), and the driver waited on them with nothing in any log to say why. The run's
+# output is a FILE now, which a child that inherits it cannot hold anybody up with;
+# the driver waits for the run's own process, and `tail --pid` copies the log into the
+# driver's output as it grows and stops once that process has gone. GateDriverTests
+# runs each driver against a run that leaves such a child behind.
+: > "$log"
+BROWSERAI_DRIVE_CASE=lower dotnet test "$forced/BrowserAI.slnx" > "$log" 2>&1 &
+run=$!
+tail -n +1 -f --pid="$run" "$log"
+wait "$run"
 
 # The coverage block reaches .work/suite-coverage.txt and never a `dotnet test`
 # log, so a multi-run gate would otherwise keep one block it needs one of per run.

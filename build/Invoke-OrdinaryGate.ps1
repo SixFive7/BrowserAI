@@ -61,6 +61,66 @@ $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $forced = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)
 $null = New-Item -ItemType Directory -Force -Path (Join-Path $root '.work' 'suite')
 
+# ⚠️ A RUN WRITES TO A FILE, AND THIS DRIVER WAITS FOR THE RUN'S PROCESS -- 64 c, the
+# maintainer's words verbatim: "64 c now". Until 2026-10-11 a run was read through a
+# pipe into Tee-Object, and a pipe ends only once every process holding its write end
+# has closed it. Twice that day a frozen child of a test host held it after the run had
+# printed its summary, a suspended git (pid 102292) and a suspended cmd.exe (pid
+# 23920), and the driver waited on them with nothing in any log to say why. The run's
+# cmd.exe opens the run's log and hands that FILE to `dotnet test`, so a child that
+# inherits it holds nothing up; the driver waits for the cmd.exe it started, and the
+# functions below copy what the run wrote into the driver's own output as the file
+# grows. GateDriverTests runs each driver against a run that leaves such a child behind.
+function Copy-Grown([string] $Path, [long] $From) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $From }
+    $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    try {
+        $grown = $stream.Length - $From
+        if ($grown -le 0) { return $From }
+        $bytes = [byte[]]::new($grown)
+        $null = $stream.Seek($From, [System.IO.SeekOrigin]::Begin)
+        $read = $stream.Read($bytes, 0, $bytes.Length)
+        [Console]::Out.Flush()
+        $out = [Console]::OpenStandardOutput()
+        $out.Write($bytes, 0, $read)
+        $out.Flush()
+        return $From + $read
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
+# Waits for the run's process, never for the end of a pipe, copying the run's log as
+# it grows; then copies the rest.
+function Wait-Run([System.Diagnostics.Process] $Run, [string] $Log) {
+    $copied = 0L
+    while (-not $Run.HasExited) {
+        $copied = Copy-Grown -Path $Log -From $copied
+        Start-Sleep -Milliseconds 500
+    }
+    $null = Copy-Grown -Path $Log -From $copied
+}
+
+# Appends one file to a run's log while a child the run left behind may still hold the
+# log open: shared for reading, writing and deletion, as the run's own handle is.
+function Add-Shared([string] $Path, [string] $Source) {
+    if (-not (Test-Path -LiteralPath $Source)) { return }
+    $bytes = [System.IO.File]::ReadAllBytes($Source)
+    $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+    try { $stream.Write($bytes, 0, $bytes.Length) } finally { $stream.Dispose() }
+}
+
+# The run itself, through cmd.exe, whose redirection opens the log and hands its handle
+# to the run for both of its output streams.
+function Start-Run([string] $Command, [string] $Log) {
+    $start = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $env:SystemRoot 'System32' 'cmd.exe'))
+    $start.Arguments = '/d /s /c "' + $Command + ' > "' + $Log + '" 2>&1"'
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    return [System.Diagnostics.Process]::Start($start)
+}
+
 Write-Host "=== ORDINARY RUN $Tag starting $(Get-Date -Format HH:mm:ss) ==="
 
 # ⚠️ THE INSTALLER LOCK, BEFORE THE FIRST CLEARANCE SNAPSHOT AND LET GO AFTER THE
@@ -121,12 +181,12 @@ try {
 
     $log = Join-Path $root '.work' 'suite' "$Tag.log"
     $env:BROWSERAI_DRIVE_CASE = 'upper'
-    & dotnet test (Join-Path $forced 'BrowserAI.slnx') 2>&1 | Tee-Object -LiteralPath $log
+    Wait-Run -Run (Start-Run -Command ('dotnet test "' + (Join-Path $forced 'BrowserAI.slnx') + '"') -Log $log) -Log $log
 
     # The coverage block reaches `.work\suite-coverage.txt` and never a `dotnet
     # test` log: neither real stream survives the MTP integration. Appending it is
     # what gives a multi-run gate one block per run instead of one in total.
-    Get-Content (Join-Path $root '.work' 'suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
+    Add-Shared -Path $log -Source (Join-Path $root '.work' 'suite-coverage.txt')
 
     & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-after" | Out-Null
 
