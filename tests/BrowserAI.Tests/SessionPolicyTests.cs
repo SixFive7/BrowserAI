@@ -231,7 +231,7 @@ internal sealed class SessionPolicyTests
     [Test]
     public async Task ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised()
     {
-        var everything = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
+        var everything = await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities);
         var advertised = everything.Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)).ToList();
 
         // The denominators are stated before the numerator, and there are two of
@@ -311,7 +311,7 @@ internal sealed class SessionPolicyTests
     {
         const string FromTheFuture = "browser_a_tool_from_the_future";
 
-        await using var sessions = RigSessionEnvironment.Create(child => child.Tools[FromTheFuture] = new FakeToolBehaviour(),
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child => child.Tools[FromTheFuture] = new FakeToolBehaviour(),
             toolsList: """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{}}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""");
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
@@ -398,7 +398,7 @@ internal sealed class SessionPolicyTests
     [Test]
     public async Task ANameBrowserAiDoesNotHaveIsToldSoPlainlyWithOrWithoutASession()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "a-name-that-does-not-exist");
@@ -505,7 +505,7 @@ internal sealed class SessionPolicyTests
     [Test]
     public async Task PlaywrightsBrowserCloseIsAnsweredLikeAToolBrowserAiDoesNotHave()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
         {
             child.Tools["browser_navigate"] = new FakeToolBehaviour();
             child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
@@ -582,7 +582,7 @@ internal sealed class SessionPolicyTests
     [Test]
     public async Task ThePurposeToolIsChangePurposeAndTheOldNameIsAToolBrowserAiDoesNotHave()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
@@ -610,7 +610,7 @@ internal sealed class SessionPolicyTests
         });
 
         await Assert.That((bool?)changed["isError"]).IsNotEqualTo(true);
-        await Assert.That(SessionLock.ReadRecord(SessionPath.For(rig.Session!))!.Purpose).IsEqualTo("the purpose the new name records");
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(rig.Session!)))!.Purpose).IsEqualTo("the purpose the new name records");
     }
 
     [Test]
@@ -622,12 +622,12 @@ internal sealed class SessionPolicyTests
         // answer back). It no longer does, and the child double below is what
         // makes that a real claim and not a missing case: it answers the
         // tool happily, so a proxy that forwarded would visibly succeed here.
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"the human drew something"}]}""",
             },
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         // The list the binary answers with is upstream's own committed one, so
         // the absence asserted below is a filter and not a list that never had
@@ -725,9 +725,9 @@ internal sealed class SessionPolicyTests
 
         // The session child would answer it, so a proxy that forwarded would
         // visibly succeed here instead of failing for some other reason.
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools[DebuggerResume] = new FakeToolBehaviour(),
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         // The list the binary answers with is upstream's own committed one, so
         // the absence asserted below is a filter and not a list that never had
@@ -870,10 +870,10 @@ internal sealed class SessionPolicyTests
 
         // The session child would answer it happily, so a proxy that forwarded
         // would visibly succeed here instead of failing for some other reason.
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools[Denied] = new FakeToolBehaviour(),
-            verdicts: RepositoryVerdicts.Denying(Denied, Why),
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            verdicts: await RepositoryVerdicts.DenyingAsync(Denied, Why),
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         // The list the binary answers with is upstream's own committed one, so
         // the absence asserted below is a filter and not a list that never had
@@ -966,14 +966,14 @@ internal sealed class SessionPolicyTests
         const string Unjudged = "browser_navigate";
         const string Nowhere = "browser_a_tool_from_the_future";
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools[Unjudged] = new FakeToolBehaviour();
                 child.Tools[Nowhere] = new FakeToolBehaviour();
             },
-            verdicts: RepositoryVerdicts.Without(Unjudged),
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            verdicts: await RepositoryVerdicts.WithoutAsync(Unjudged),
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             sessions: sessions);
@@ -1074,7 +1074,7 @@ internal sealed class SessionPolicyTests
         // The positive control at the bottom has to reach a tool the child
         // actually answers, or "the same three arguments, right" proves only
         // that the double is a double.
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_snapshot"] = new FakeToolBehaviour());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -1131,7 +1131,7 @@ internal sealed class SessionPolicyTests
         // them: before `session` was made mandatory such a call was answered by
         // the RUN'S OWN child, which is a session nobody chose the mode or the
         // directory of, and whose profile outlives the call.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count);
@@ -1186,7 +1186,7 @@ internal sealed class SessionPolicyTests
         // and could no longer see a swapped lookup at all. What replaces it is
         // stronger, not weaker: the per-child call log says which session
         // actually received the work.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directories = new Dictionary<string, string>(StringComparer.Ordinal);

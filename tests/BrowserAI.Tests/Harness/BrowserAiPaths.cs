@@ -138,7 +138,7 @@ internal static class BrowserAiPaths
     /// <b>Named so that "nobody has provisioned it" is distinguishable from "it
     /// was provisioned and the executable is missing".</b> The second is a real
     /// defect and reads as a clean machine without it --
-    /// <see cref="SuiteEnvironment.StateOf"/> answers
+    /// <see cref="SuiteEnvironment.StateOfAsync"/> answers
     /// <see cref="CapabilityState.Partial"/> for that shape, which fails in
     /// every run instead of skipping. The distinction used to be drawn inside
     /// the one test that needed it, which is why it was lost when that test's
@@ -221,7 +221,10 @@ internal static class BrowserAiPaths
     /// the snapshot's shape is known. The file is regenerated from the resolved
     /// payload and diffed by <c>build/UpstreamSnapshots.targets</c> on every
     /// build, which is what makes it an answer about today and not about
-    /// whenever it was committed.
+    /// whenever it was committed. <b>Read from the copy the build compiled in since
+    /// 2026-10-11</b>, through <see cref="RepositoryCopy"/>, because the revisions are
+    /// read by static initialisers and a file read is asynchronous since that day
+    /// (decision 63).
     /// </remarks>
     /// <param name="browser">The component, as upstream names it.</param>
     /// <returns>The revision, as a string, because that is how a directory spells it.</returns>
@@ -256,8 +259,7 @@ internal static class BrowserAiPaths
     /// <exception cref="InvalidOperationException">The component or the field is absent.</exception>
     private static string FieldOf(string browser, string field)
     {
-        using var snapshot = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "browsers.json")));
+        using var snapshot = JsonDocument.Parse(RepositoryCopy.Bytes(RepositoryCopy.BrowsersSnapshot));
 
         foreach (var entry in snapshot.RootElement.GetProperty("browsers").EnumerateArray())
         {

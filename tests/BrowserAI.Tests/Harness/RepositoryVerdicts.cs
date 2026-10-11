@@ -34,7 +34,12 @@ internal static class RepositoryVerdicts
         System.IO.Path.Combine(RepositoryLayout.Root.FullName, ToolVerdicts.FileName);
 
     /// <summary>The committed file, parsed once.</summary>
-    public static ToolVerdicts Committed { get; } = ToolVerdicts.Parse(File.ReadAllBytes(Path), Path);
+    /// <remarks>
+    /// <b>The copy the build compiled in since 2026-10-11</b>, through
+    /// <see cref="RepositoryCopy"/>, because a static initialiser cannot await a file read
+    /// (decision 63). <i>Previously the working tree's file, read at first use.</i>
+    /// </remarks>
+    public static ToolVerdicts Committed { get; } = ToolVerdicts.Parse(RepositoryCopy.Bytes(RepositoryCopy.ToolVerdicts), Path);
 
     /// <summary>
     /// Every tool this build ships a <c>deny</c> for, found and not named,
@@ -103,11 +108,11 @@ internal static class RepositoryVerdicts
 
     /// <summary>The committed file's raw text, for an arm that doctors it.</summary>
     /// <returns>The bytes on disk, as text.</returns>
-    public static string Text() => File.ReadAllText(Path);
+    public static async Task<string> TextAsync() => await File.ReadAllTextAsync(Path);
 
     /// <summary>The committed file as a mutable node, for an arm that doctors it.</summary>
     /// <returns>A fresh parse; the caller owns it.</returns>
-    public static JsonObject Document() => JsonNode.Parse(Text())!.AsObject();
+    public static async Task<JsonObject> DocumentAsync() => JsonNode.Parse(await TextAsync())!.AsObject();
 
     /// <summary>Parses a doctored copy the way the product parses the real one.</summary>
     /// <param name="document">The doctored file.</param>
@@ -137,9 +142,9 @@ internal static class RepositoryVerdicts
     /// <param name="why">The refusal a caller would read.</param>
     /// <param name="since">The ISO date to record.</param>
     /// <returns>The verdicts, with that one row changed.</returns>
-    public static ToolVerdicts Denying(string tool, string why, string since = "2026-08-26")
+    public static async Task<ToolVerdicts> DenyingAsync(string tool, string why, string since = "2026-08-26")
     {
-        var document = Document();
+        var document = await DocumentAsync();
 
         document["upstream"]![tool] = new JsonObject
         {
@@ -157,9 +162,9 @@ internal static class RepositoryVerdicts
     /// </summary>
     /// <param name="tool">The tool whose row goes.</param>
     /// <returns>The verdicts, with that row absent.</returns>
-    public static ToolVerdicts Without(string tool)
+    public static async Task<ToolVerdicts> WithoutAsync(string tool)
     {
-        var document = Document();
+        var document = await DocumentAsync();
 
         _ = document["upstream"]!.AsObject().Remove(tool);
 

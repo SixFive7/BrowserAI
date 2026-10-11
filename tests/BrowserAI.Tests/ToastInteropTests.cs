@@ -64,7 +64,7 @@ internal sealed class ToastInteropTests
 
         foreach (var (hand, file, name) in interfaces)
         {
-            var (id, methods) = ReadInterface(Path.Combine(WinMetadata, file), name);
+            var (id, methods) = await ReadInterfaceAsync(Path.Combine(WinMetadata, file), name);
             var declared = Declared(hand);
 
             await Assert.That(hand.GUID).IsEqualTo(id).Because(name);
@@ -92,12 +92,12 @@ internal sealed class ToastInteropTests
     [Test]
     public async Task TheStringMapIsTheInterfaceWindowsHandsOut()
     {
-        var (_, methods) = ReadInterface(Path.Combine(WinMetadata, "Windows.Foundation.winmd"), "Windows.Foundation.Collections.IMap`2");
+        var (_, methods) = await ReadInterfaceAsync(Path.Combine(WinMetadata, "Windows.Foundation.winmd"), "Windows.Foundation.Collections.IMap`2");
         var declared = Declared(typeof(IStringMap));
 
         await Assert.That(string.Join(", ", declared)).IsEqualTo(string.Join(", ", methods.Take(declared.Count)));
 
-        var (inserted, read) = OnComThread(() =>
+        var (inserted, read) = await OnComThreadAsync(() =>
         {
             using var name = new HString(ToastInterop.NotificationDataClass);
 
@@ -139,7 +139,7 @@ internal sealed class ToastInteropTests
         var (values, _) = UpdateToastContent.ReadyData(holds, at, TimeZoneInfo.Utc, default);
         var request = new ToastRequest(UpdateToastContent.Ready("1.2.0", holds, "1.1.0"), values, SuppressPopup: true, ExpiresOnReboot: true);
 
-        var (tag, group, silent, reboot, sequence, status, count) = OnComThread(() =>
+        var (tag, group, silent, reboot, sequence, status, count) = await OnComThreadAsync(() =>
         {
             var toast = WindowsToastSurface.Compose(WindowsToastSurface.NewFactory(), UpdateToastContent.ReadyTag, UpdateToastContent.Group, request, 41);
             var second = (IToastNotification2)toast;
@@ -209,9 +209,9 @@ internal sealed class ToastInteropTests
     /// One interface's id and method names as a Windows metadata file declares them,
     /// accessors spelled the way the product spells them: <c>get_Tag</c> is <c>GetTag</c>.
     /// </summary>
-    private static (Guid Id, List<string> Methods) ReadInterface(string file, string fullName)
+    private static async Task<(Guid Id, List<string> Methods)> ReadInterfaceAsync(string file, string fullName)
     {
-        using var stream = File.OpenRead(file);
+        await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
         using var image = new PEReader(stream);
 
         var reader = image.GetMetadataReader();
@@ -293,10 +293,13 @@ internal sealed class ToastInteropTests
     }
 
     /// <summary>Runs one call on a thread of its own in the multi-threaded apartment, the way the product's surface does.</summary>
-    private static T OnComThread<T>(Func<T> call)
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54: the thread hands its
+    /// answer back through a task. <i>Previously the caller joined the thread.</i>
+    /// </remarks>
+    private static async Task<T> OnComThreadAsync<T>(Func<T> call)
     {
-        T result = default!;
-        Exception? failure = null;
+        var answered = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var thread = new Thread(() =>
         {
@@ -304,13 +307,13 @@ internal sealed class ToastInteropTests
 
             try
             {
-                result = call();
+                _ = answered.TrySetResult(call());
             }
 #pragma warning disable CA1031 // Handed back to the arm, which fails on it.
             catch (Exception thrown)
 #pragma warning restore CA1031
             {
-                failure = thrown;
+                _ = answered.TrySetException(new InvalidOperationException("The call on the COM thread threw.", thrown));
             }
             finally
             {
@@ -323,11 +326,13 @@ internal sealed class ToastInteropTests
 
         thread.Start();
 
-        if (!thread.Join(TestDefaults.InProcessHang))
+        try
         {
-            throw new TimeoutException("The call on the COM thread did not return.");
+            return await answered.Task.WaitAsync(TestDefaults.InProcessHang);
         }
-
-        return failure is null ? result : throw new InvalidOperationException("The call on the COM thread threw.", failure);
+        catch (TimeoutException failure)
+        {
+            throw new TimeoutException("The call on the COM thread did not return.", failure);
+        }
     }
 }

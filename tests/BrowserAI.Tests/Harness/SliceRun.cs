@@ -178,12 +178,12 @@ internal sealed record SliceRun(
     {
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("slice");
+        using var scratch = await ScratchDirectory.CreateAsync("slice");
 
         // The job this client owns is also the containment net: an assertion
         // that throws anywhere below closes it, and KILL_ON_JOB_CLOSE takes the
         // browser with it.
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -304,7 +304,7 @@ internal sealed record SliceRun(
             browserAi,
             survivors,
             standardError,
-            ProcessLogRecords.For(browserAi, browserAiCreated),
+            await ProcessLogRecords.ForAsync(browserAi, browserAiCreated),
             session,
             initText);
     }

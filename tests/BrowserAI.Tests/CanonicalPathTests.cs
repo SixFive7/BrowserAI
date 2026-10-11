@@ -78,7 +78,7 @@ internal sealed class CanonicalPathTests
         // spelling below was a refusal until 2026-08-26 and each carried the
         // accepted form INSIDE the refusal string -- so normalising them costs
         // no syscall that was not already being paid to compose that sentence.
-        using var scratch = ScratchDirectory.Create("canonical-aliases");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-aliases");
 
         // A name with a space in it, so this volume's 8.3 generator has
         // something to shorten.
@@ -122,7 +122,7 @@ internal sealed class CanonicalPathTests
         // second key -- which a refusal satisfies. Nothing is refused here any
         // more, so the claim is the whole one: every spelling is admitted, and
         // every one of them hashes to the same identity.
-        using var scratch = ScratchDirectory.Create("canonical-invariant");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-invariant");
 
         var real = Path.Combine(casing.Spell(scratch.Path), "one real session directory");
 
@@ -211,7 +211,7 @@ internal sealed class CanonicalPathTests
         // And the positive control, without which the assertion above proves
         // only that SOMETHING was refused: the same shape on a local letter is
         // accepted.
-        using var scratch = ScratchDirectory.Create("canonical-local-control");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-local-control");
 
         await Assert.That(CanonicalPath.Of(Path.Combine(casing.Spell(scratch.Path), "session"), PathOrigin.Named, "directory").Refusal).IsNull();
     }
@@ -280,7 +280,7 @@ internal sealed class CanonicalPathTests
         // The control for the middle assertion: FinalNameOf really does answer
         // for a directory it can open, so "it returned null" above is about the
         // share and not about the call being broken.
-        using var scratch = ScratchDirectory.Create("canonical-final-name-control");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-final-name-control");
 
         await Assert.That(VolumeIdentity.FinalNameOf(scratch.Path)).IsNotNull();
     }
@@ -298,7 +298,7 @@ internal sealed class CanonicalPathTests
         // deleted filename gate refused it for exactly that reason, in those
         // words. Making the directory rule agree with the filename rule removes
         // an asymmetry instead of adding a rule.
-        using var scratch = ScratchDirectory.Create("canonical-device-namespace");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-device-namespace");
 
         var real = Path.Combine(casing.Spell(scratch.Path), "device-namespace");
         _ = Directory.CreateDirectory(real);
@@ -333,7 +333,7 @@ internal sealed class CanonicalPathTests
         // Measured 2026-08-26 on .NET 10.0.11, Windows 11 Pro 26200, and
         // asserted here, not quoted, so a runtime that stopped doing it
         // shows up as a red test and not as a stale comment:
-        using var scratch = ScratchDirectory.Create("canonical-hostile-names");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-hostile-names");
 
         var root = casing.Spell(scratch.Path);
 
@@ -385,7 +385,7 @@ internal sealed class CanonicalPathTests
         // above about the ORIGIN and not about the mapping being invisible.
         await Assert.That(CanonicalPath.Of(mapped.PathTo("session"), PathOrigin.Named, "session").Refusal).IsNotNull();
 
-        using var scratch = ScratchDirectory.Create("canonical-read");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-read");
 
         var root = casing.Spell(scratch.Path);
         var real = Path.Combine(root, "recorded");
@@ -449,7 +449,7 @@ internal sealed class CanonicalPathTests
         // Which branch ran is printed, not inferred, because a two-branch
         // test whose branch nobody can see is a test that can quietly take the
         // emptier one for ever.
-        using var scratch = ScratchDirectory.Create("canonical-short-name");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-short-name");
 
         var real = Path.Combine(casing.Spell(scratch.Path), "a real session directory");
         _ = Directory.CreateDirectory(real);
@@ -495,7 +495,7 @@ internal sealed class CanonicalPathTests
         // contradict it. SessionPathTests asserts that a case change and a
         // trailing separator are ONE session; refusing them would make that
         // assertion unreachable through the tools.
-        using var scratch = ScratchDirectory.Create("canonical-case");
+        using var scratch = await ScratchDirectory.CreateAsync("canonical-case");
 
         var root = casing.Spell(scratch.Path);
         var directory = Path.Combine(root, "Mixed Case Session");
@@ -597,7 +597,7 @@ internal sealed class CanonicalPathTests
     [Test]
     public async Task TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath()
     {
-        using var scratch = ScratchDirectory.Create("walk-limit");
+        using var scratch = await ScratchDirectory.CreateAsync("walk-limit");
 
         // Composed from the product's own bound. A number written here would be
         // a second copy of it, and the arm would stop testing the boundary the

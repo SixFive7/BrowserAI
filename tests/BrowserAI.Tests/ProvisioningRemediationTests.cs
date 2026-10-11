@@ -114,7 +114,7 @@ internal sealed class ProvisioningRemediationTests
         // The double answers with upstream's own sentence, spliced in as literal
         // JSON: nothing about it is re-serialised on the way out, so what the
         // caller receives is attributable to the proxy alone.
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
                 RawResult = $$"""{"content":[{"type":"text","text":{{JsonValue.Create(UpstreamMessage)!.ToJsonString()}}}],"isError":true}""",
@@ -183,7 +183,7 @@ internal sealed class ProvisioningRemediationTests
         // The sentence sits exactly where upstream puts a page title, and the
         // answer carries no `isError`: this is an ordinary, successful call
         // against a page that happens to render the words.
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
                 RawResult = $$"""{"content":[{"type":"text","text":{{JsonValue.Create("### Page\n- Page Title: " + UpstreamMessage)!.ToJsonString()}}}]}""",
@@ -264,9 +264,9 @@ internal sealed class ProvisioningRemediationTests
     [Test]
     public async Task ARealChildWithNoBrowsersStillSaysTheSentenceTheRewriteIsAnchoredOn()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("remediation-canary");
+        using var scratch = await ScratchDirectory.CreateAsync("remediation-canary");
 
         var browsers = Path.Combine(scratch.Path, "browsers-with-nothing-in-them");
         var session = SessionPath.For(Path.Combine(scratch.Path, "canary-session"));
@@ -284,7 +284,7 @@ internal sealed class ProvisioningRemediationTests
             transcript: false,
             RunOptions.Default);
 
-        BrowserConfiguration.WriteTo(configFile, config);
+        await BrowserConfiguration.WriteToAsync(configFile, config);
 
         // Empty in the only way that counts: nothing installed, and no
         // INSTALLATION_COMPLETE marker for a check to short-circuit on.
@@ -293,7 +293,7 @@ internal sealed class ProvisioningRemediationTests
         var environment = ChildEnvironment.Build(
             [new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, browsers)]);
 
-        await using var child = RawStdioClient.Start(
+        await using var child = await RawStdioClient.StartAsync(
             RepositoryPayload.Layout.NodeExecutable,
             [
                 RepositoryPayload.Layout.PlaywrightMcpCli,

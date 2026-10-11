@@ -103,10 +103,10 @@ internal sealed class BackgroundUpdateRig : IDisposable
     /// <see cref="UpdateToasts"/> over a recording surface.
     /// </param>
     /// <returns>The core.</returns>
-    public BackgroundUpdates Start(IUpdateToasts? toasts = null)
+    public async Task<BackgroundUpdates> StartAsync(IUpdateToasts? toasts = null)
     {
         var updates = Build(toasts);
-        updates.Start();
+        await updates.StartAsync();
         Settle();
         return updates;
     }
@@ -128,7 +128,11 @@ internal sealed class BackgroundUpdateRig : IDisposable
             Sessions,
             toasts ?? Toasts,
             Stamp,
-            () => Events.Enqueue("exit"),
+            () =>
+            {
+                Events.Enqueue("exit");
+                return Task.CompletedTask;
+            },
             Clock,
             Log.CreateLogger("BrowserAI.Updates"));
 
@@ -456,21 +460,27 @@ internal sealed class ScriptedSessions(ConcurrentQueue<string> events) : IUpdate
 internal sealed class RecordedToasts(ConcurrentQueue<string> events) : IUpdateToasts
 {
     /// <inheritdoc />
-    public void Held(string version) => events.Enqueue($"toast ready {version}");
+    public Task HeldAsync(string version) => Record($"toast ready {version}");
 
     /// <inheritdoc />
-    public void Installing(string version) => events.Enqueue($"toast installing {version}");
+    public Task InstallingAsync(string version) => Record($"toast installing {version}");
 
     /// <inheritdoc />
-    public void Installed(string version) => events.Enqueue($"toast installed {version}");
+    public Task InstalledAsync(string version) => Record($"toast installed {version}");
 
     /// <inheritdoc />
-    public void Failed(string version) => events.Enqueue($"toast failed {version}");
+    public Task FailedAsync(string version) => Record($"toast failed {version}");
 
     /// <inheritdoc />
     /// <remarks>Recorded as <c>reconnects</c> and not as a toast: nothing shows (52 b).</remarks>
-    public void Ending(string version, IReadOnlyList<RelayReconnect> needs) =>
-        events.Enqueue($"reconnects {version} [{string.Join(' ', needs)}]");
+    public Task EndingAsync(string version, IReadOnlyList<RelayReconnect> needs) =>
+        Record($"reconnects {version} [{string.Join(' ', needs)}]");
+
+    private Task Record(string line)
+    {
+        events.Enqueue(line);
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>The record of the last check, in memory.</summary>
@@ -483,8 +493,12 @@ internal sealed class MemoryCheckStamp : IUpdateCheckStamp
     public UpdateCheckStampReading Reading { get; set; }
 
     /// <inheritdoc />
-    public UpdateCheckStampReading Read() => Reading;
+    public Task<UpdateCheckStampReading> ReadAsync() => Task.FromResult(Reading);
 
     /// <inheritdoc />
-    public void Write(DateTimeOffset at) => Reading = new UpdateCheckStampReading(at, null);
+    public Task WriteAsync(DateTimeOffset at)
+    {
+        Reading = new UpdateCheckStampReading(at, null);
+        return Task.CompletedTask;
+    }
 }

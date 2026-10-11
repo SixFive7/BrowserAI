@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Reflection;
-using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Tests.Harness;
@@ -33,7 +32,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task DisposingTheProcessLogReleasesTheFileHandle()
     {
-        using var scratch = ScratchDirectory.Create("processlog-handle");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-handle");
 
         string? file;
 
@@ -49,7 +48,7 @@ internal sealed partial class ProcessLogTests
 
         // FileShare.None is the assertion: it succeeds only when nothing at all
         // holds the file, which is exactly the property being claimed.
-        using var exclusive = new FileStream(file!, FileMode.Open, FileAccess.Read, FileShare.None);
+        await using var exclusive = new FileStream(file!, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
         await Assert.That(exclusive.Length).IsGreaterThan(0);
     }
@@ -57,7 +56,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task TwoConsecutiveRunsBothAppearInTheProcessLog()
     {
-        using var scratch = ScratchDirectory.Create("processlog-append");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-append");
 
         var first = await ProbeProcess.RunAsync("log-once", scratch.Path, "first-run-marker");
         var second = await ProbeProcess.RunAsync("log-once", scratch.Path, "second-run-marker");
@@ -68,7 +67,7 @@ internal sealed partial class ProcessLogTests
         // The failure this prevents: a sink that truncates on start has deleted
         // the previous crash by the time anyone looks, and with ~100 concurrent
         // processes a start is the most common event there is.
-        var log = ProbeProcess.ReadProcessLog(scratch.Path);
+        var log = await ProbeProcess.ReadProcessLogAsync(scratch.Path);
         await Assert.That(log).Contains("first-run-marker");
         await Assert.That(log).Contains("second-run-marker");
     }
@@ -76,7 +75,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task AnUnhandledExceptionStillLeavesItsLastLogLineOnDisk()
     {
-        using var scratch = ScratchDirectory.Create("processlog-crash");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-crash");
 
         var result = await ProbeProcess.RunAsync("crash", scratch.Path);
 
@@ -86,7 +85,7 @@ internal sealed partial class ProcessLogTests
         // UnhandledException handler ran, not because a finally block did.
         await Assert.That(result.ExitCode).IsNotEqualTo(0);
 
-        var log = ProbeProcess.ReadProcessLog(scratch.Path);
+        var log = await ProbeProcess.ReadProcessLogAsync(scratch.Path);
         await Assert.That(log).Contains("about to throw");
         await Assert.That(log).Contains("Unhandled exception reached the process boundary");
         await Assert.That(log).Contains("Deliberate unhandled exception from the crash probe.");
@@ -95,7 +94,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task NothingIsWrittenToStdoutByTheLoggingStack()
     {
-        using var scratch = ScratchDirectory.Create("processlog-stdout");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-stdout");
 
         var result = await ProbeProcess.RunAsync("log-once", scratch.Path, "stdout-must-stay-empty");
 
@@ -115,7 +114,7 @@ internal sealed partial class ProcessLogTests
         // quietly finds nothing." The pass ran and nothing asserted that it had
         // until 2026-08-17, which is the exact shape the sentence warns about:
         // a sweep whose silence is indistinguishable from its success.
-        var root = ScratchRoot.Path;
+        var root = await ScratchRoot.PathAsync();
 
         await Assert.That(ScratchRoot.HasReclaimed).IsTrue();
         await Assert.That(Directory.Exists(root)).IsTrue();
@@ -129,10 +128,10 @@ internal sealed partial class ProcessLogTests
         // Idempotent, which is the property that lets it run before anything
         // else without being ordered against anything. Asking again neither
         // re-runs it nor deletes what this run has since created.
-        using var mine = ScratchDirectory.Create("reclaim-is-idempotent");
+        using var mine = await ScratchDirectory.CreateAsync("reclaim-is-idempotent");
         await File.WriteAllTextAsync(Path.Combine(mine.Path, "written-after-the-pass.txt"), "still here");
 
-        await Assert.That(ScratchRoot.Path).IsEqualTo(root);
+        await Assert.That(await ScratchRoot.PathAsync()).IsEqualTo(root);
         await Assert.That(File.Exists(Path.Combine(mine.Path, "written-after-the-pass.txt"))).IsTrue();
     }
 
@@ -179,7 +178,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task TheSpawnRecordEndsAPreviousRunsProcessAndSkipsARecycledPid()
     {
-        using var scratch = ScratchDirectory.Create("spawn-record");
+        using var scratch = await ScratchDirectory.CreateAsync("spawn-record");
         var record = Path.Combine(scratch.Path, "spawn-record.txt");
         var probe = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
         var session = Directory.CreateDirectory(Path.Combine(scratch.Path, "held")).FullName;
@@ -190,7 +189,7 @@ internal sealed partial class ProcessLogTests
         // about to prove can be cleaned up.
         using (var scope = new JobObjectScope())
         {
-            var started = scope.Launch(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
+            var started = await scope.LaunchAsync(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
             _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
             var created = ProcessIdentity.CreationTimeOf(started.Id);
@@ -215,7 +214,7 @@ internal sealed partial class ProcessLogTests
                 $"{int.MaxValue - 1}@{created} {ownedByNobody}",
             ]);
 
-            var report = SpawnRecord.Reclaim(record);
+            var report = await SpawnRecord.ReclaimAsync(record);
 
             await Assert.That(report.Count).IsEqualTo(3).Because(string.Join(" | ", report));
             await Assert.That(report.Count(line => line.StartsWith("terminated ", StringComparison.Ordinal))).IsEqualTo(1)
@@ -231,7 +230,7 @@ internal sealed partial class ProcessLogTests
             // Emptied, so a second reclaim of the same file is a no-op and
             // not a second pass over pids that now belong to somebody else.
             await Assert.That(await File.ReadAllTextAsync(record)).IsEmpty();
-            await Assert.That(SpawnRecord.Reclaim(record).Count).IsEqualTo(0);
+            await Assert.That((await SpawnRecord.ReclaimAsync(record)).Count).IsEqualTo(0);
         }
 
         // And the live suite really does write one, which is the half a
@@ -275,7 +274,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ARowOwnedByALiveProcessSurvivesAReclaimRunFromSomewhereElse()
     {
-        using var scratch = ScratchDirectory.Create("spawn-record-live-owner");
+        using var scratch = await ScratchDirectory.CreateAsync("spawn-record-live-owner");
         var record = Path.Combine(scratch.Path, "spawn-record.txt");
 
         using var scope = new JobObjectScope();
@@ -292,7 +291,7 @@ internal sealed partial class ProcessLogTests
         var row = $"{victimId}@{victimCreated} {ownerId}@{ownerCreated}";
         await File.WriteAllLinesAsync(record, [row]);
 
-        var report = SpawnRecord.Reclaim(record);
+        var report = await SpawnRecord.ReclaimAsync(record);
 
         // THE ASSERTION, and it is a process and not a message: with the
         // owner column absent this process is dead here, exit code 1, 18 times
@@ -328,7 +327,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ARowWhoseOwnerIsGoneIsStillReclaimed()
     {
-        using var scratch = ScratchDirectory.Create("spawn-record-dead-owner");
+        using var scratch = await ScratchDirectory.CreateAsync("spawn-record-dead-owner");
         var record = Path.Combine(scratch.Path, "spawn-record.txt");
 
         using var scope = new JobObjectScope();
@@ -341,13 +340,13 @@ internal sealed partial class ProcessLogTests
         // asserting the opposite of what this test is about.
         ProcessIdentity.Terminate(ownerId, ownerCreated);
 
-        await Assert.That(ProcessIdentity.WaitUntilGone(ownerId, ownerCreated, TestDefaults.ProcessHang))
+        await Assert.That(await ProcessIdentity.WaitUntilGoneAsync(ownerId, ownerCreated, TestDefaults.ProcessHang))
             .IsTrue();
 
         await File.WriteAllLinesAsync(record,
             [$"{orphanId}@{orphanCreated} {ownerId}@{ownerCreated}"]);
 
-        var report = SpawnRecord.Reclaim(record);
+        var report = await SpawnRecord.ReclaimAsync(record);
 
         await Assert.That(report.Count).IsEqualTo(1).Because(string.Join(" | ", report));
         await Assert.That(report[0]).StartsWith("terminated ");
@@ -393,7 +392,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ATerminatingPassAnnouncesItselfInTheProcessLogAndAPassThatEndedNothingStaysSilent()
     {
-        using var scratch = ScratchDirectory.Create("spawn-record-announce");
+        using var scratch = await ScratchDirectory.CreateAsync("spawn-record-announce");
         var silent = Path.Combine(scratch.Path, "ended-nothing.txt");
         var loud = Path.Combine(scratch.Path, "ended-something.txt");
 
@@ -404,7 +403,7 @@ internal sealed partial class ProcessLogTests
 
         ProcessIdentity.Terminate(ownerId, ownerCreated);
 
-        await Assert.That(ProcessIdentity.WaitUntilGone(ownerId, ownerCreated, TestDefaults.ProcessHang))
+        await Assert.That(await ProcessIdentity.WaitUntilGoneAsync(ownerId, ownerCreated, TestDefaults.ProcessHang))
             .IsTrue();
 
         // A pass with nothing to end: an owner that is gone and a subject that is
@@ -412,7 +411,7 @@ internal sealed partial class ProcessLogTests
         await File.WriteAllLinesAsync(silent,
             [$"{int.MaxValue - 1}@{ownerCreated} {ownerId}@{ownerCreated}"]);
 
-        var quiet = SpawnRecord.Reclaim(silent);
+        var quiet = await SpawnRecord.ReclaimAsync(silent);
 
         await Assert.That(quiet.Count).IsEqualTo(1).Because(string.Join(" | ", quiet));
         await Assert.That(quiet[0]).StartsWith("skipped ");
@@ -420,11 +419,11 @@ internal sealed partial class ProcessLogTests
         await File.WriteAllLinesAsync(loud,
             [$"{orphanId}@{orphanCreated} {ownerId}@{ownerCreated}"]);
 
-        var acted = SpawnRecord.Reclaim(loud);
+        var acted = await SpawnRecord.ReclaimAsync(loud);
 
         await Assert.That(acted[0]).StartsWith("terminated ").Because(string.Join(" | ", acted));
 
-        var records = ProcessLogRecords.For(
+        var records = await ProcessLogRecords.ForAsync(
             Environment.ProcessId,
             ProcessIdentity.CreationTimeOf(Environment.ProcessId));
 
@@ -484,7 +483,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ARecordWearingThisPidWithAnotherCreationTimeIsAStrangersAndIsNotReturned()
     {
-        using var scratch = ScratchDirectory.Create("processlog-identity");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-identity");
 
         var directory = Directory.CreateDirectory(new LocalAppDataPaths(scratch.Path).LogDirectory).FullName;
 
@@ -514,7 +513,7 @@ internal sealed partial class ProcessLogTests
             Path.Combine(directory, "browserai-20260829.log"),
             string.Join('\n', ours, stranger, prefix) + "\n");
 
-        var read = ProcessLogRecords.In(directory, Pid, Ours);
+        var read = await ProcessLogRecords.InAsync(directory, Pid, Ours);
 
         await Assert.That(read).Contains("ours");
         await Assert.That(read).DoesNotContain("a stranger's");
@@ -638,7 +637,7 @@ internal sealed partial class ProcessLogTests
         var session = Directory.CreateDirectory(Path.Combine(scratch, $"{label}-session")).FullName;
         var ready = Path.Combine(scratch, $"{label}-ready.json");
 
-        var started = scope.Launch(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
+        var started = await scope.LaunchAsync(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
 
         _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
@@ -679,7 +678,7 @@ internal sealed partial class ProcessLogTests
 
         // And a local directory is still written, so the guard refuses shares
         // and not everything.
-        using var scratch = ScratchDirectory.Create("rollingwriter-local");
+        using var scratch = await ScratchDirectory.CreateAsync("rollingwriter-local");
         using var local = new RollingFileWriter(scratch.Path);
 
         local.Write("a record that must reach disk");
@@ -746,9 +745,11 @@ internal sealed partial class ProcessLogTests
 
         // And nowhere else in the product builds a logging stack, so counting
         // one file is counting all of them.
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.ProductSourceFiles);
+
         var elsewhere = RepositoryLayout.ProductSourceFiles
             .Where(file => !string.Equals(file.Name, "ProcessLog.cs", StringComparison.Ordinal))
-            .Select(file => (file.Name, Code: File.ReadAllText(file.FullName)))
+            .Select(file => (file.Name, Code: texts[file.FullName]))
             .Where(entry => entry.Code.Contains("AddConsole(", StringComparison.Ordinal))
             .Select(entry => entry.Name)
             .ToList();
@@ -757,117 +758,86 @@ internal sealed partial class ProcessLogTests
     }
 
     /// <summary>
-    /// A timed <c>WaitForExit</c> is always followed by a bare one.
+    /// <c>WaitForExitAsync</c> returns only once both redirected readers have reached the
+    /// end of their streams, so nothing a child wrote is still in flight when it does.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The same shape as the pairing above, for the same reason: deleting one
-    /// half loses diagnostics and nothing goes red.</b>
-    /// <c>Process.WaitForExit(int)</c> returns as soon as the process is gone
-    /// and does <b>not</b> drain the asynchronous output readers, so a
-    /// <c>ErrorDataReceived</c> handler is routinely left holding half the
-    /// child's stderr. The parameterless overload is what flushes the event
-    /// queue. The SDK's own transport documents this in as many words, and this
-    /// repository's one timed call site carries the second call and a comment
-    /// saying why.
+    /// <b>Added 2026-10-11 with the maintainer's decision 54</b>, which bans every
+    /// <c>WaitForExit</c> overload repository-wide (<c>build/BannedSymbols.txt</c>): the
+    /// asynchronous form is the one left, and the property the timed overload lacked is the
+    /// one asserted here. The probe writes two thousand lines to its standard error and
+    /// ends once its input does; the arm counts them in the <c>ErrorDataReceived</c> handler
+    /// and reads the count the moment the await returns, with no wait of its own after it.
     /// </para>
     /// <para>
-    /// <b>The analyzer cannot express this and the suppression makes it worse.</b>
-    /// <c>build/BannedSymbols.txt</c> bans the timed overload, so the call site
-    /// carries an <c>RS0030</c> suppression -- which permits the timed call and
-    /// has no way to require the flush. A later edit that deletes the bare call
-    /// leaves the suppression, its comment and the whole build intact, and
-    /// truncates stderr silently. That is the exact gap this fills.
+    /// <b>Not planted red, and the reason is the ban</b>: the overload that would make it
+    /// red cannot be written in this tree. What it holds is the framework's own behaviour,
+    /// which the conversion relies on at every call site that used to pair a timed wait
+    /// with a bare one.
     /// </para>
     /// <para>
-    /// <b>Why it does not assert that a timed call exists.</b> A corpus check
-    /// would pin today's tree and go red the day the last timed call is
-    /// legitimately replaced by <c>WaitForExitAsync</c>, which is the direction
-    /// this repository wants to move in. What is asserted instead is that the
-    /// matcher still works, against two samples held here -- so the scan cannot
-    /// pass by having quietly stopped matching, and an empty tree stays green.
+    /// <i>Replaces <c>EveryTimedWaitForExitIsFollowedByABareOne</c>, deleted that day</i>, a
+    /// tree-as-text scan that held every timed <c>WaitForExit</c> beside a bare one: with no
+    /// overload left to call, there is no pairing to hold.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryTimedWaitForExitIsFollowedByABareOne()
+    public async Task WaitForExitAsyncWaitsForTheEndOfBothRedirectedReaders()
     {
-        var offenders = new List<string>();
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-exit-drains");
 
-        foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(file => file.Extension is ".cs"))
+        const int Lines = 2000;
+        var said = 0;
+
+        var start = new System.Diagnostics.ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"))
         {
-            // Comments stripped, because ProbeProcess.cs explains this very rule
-            // in a comment that names the banned call, and a scan that could not
-            // tell a rule from its statement would fail on the sentence
-            // describing it. No line number is reported for the same reason:
-            // ReadCodeAsync removes those lines instead of emptying them, so
-            // what survives no longer agrees with the file about numbering.
-            offenders.AddRange(UnpairedWaits(await RepositoryLayout.ReadCodeAsync(file))
-                .Select(call => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}: '{call}' is not followed by a bare WaitForExit()"));
-        }
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = scratch.Path,
+        };
 
-        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+        start.ArgumentList.Add("transport-child");
+        start.ArgumentList.Add(Path.Combine(scratch.Path, "report.json"));
+        start.ArgumentList.Add(Lines.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        start.ArgumentList.Add(Path.Combine(scratch.Path, "frames.ndjson"));
 
-        // ⚠️ Composed, not spelled, so that this file does not match its
-        // own scan. It is the trap NeverByImageNameTests assembles its needles
-        // to avoid, and this test fell straight into it on the first run: the
-        // samples below were offenders in the very list they exist to verify.
-        // Excluding this file would have been the other way out, and it is the
-        // worse one -- it would create the single place in the repository where
-        // the rule does not apply.
-        const string Timed = ".WaitFor" + "Exit(5000)";
-        const string Later = ".WaitFor" + "Exit(9000)";
-        const string Bare = ".WaitFor" + "Exit()";
+        using var process = new System.Diagnostics.Process { StartInfo = start };
 
-        // The matcher is alive: one sample pairs and one does not.
-        await Assert.That(UnpairedWaits($"if (!p{Timed}) {{ return; }}\np{Bare};\nvar code = p.ExitCode;")).IsEmpty();
-        await Assert.That(UnpairedWaits($"if (!p{Timed}) {{ return; }}\nvar code = p.ExitCode;").Count).IsEqualTo(1);
-
-        // And a second timed call cannot be covered by the first one's flush.
-        await Assert.That(UnpairedWaits($"p{Timed};\np{Bare};\np{Later};").Count).IsEqualTo(1);
-    }
-
-    /// <summary>Every timed wait with no bare wait between it and the next one.</summary>
-    /// <param name="code">Source with comment-only lines already removed.</param>
-    /// <returns>The offending call text, one entry each.</returns>
-    private static List<string> UnpairedWaits(string code)
-    {
-        var unpaired = new List<string>();
-        var timed = TimedWait().Matches(code).ToList();
-
-        for (var at = 0; at < timed.Count; at++)
+        process.ErrorDataReceived += (_, line) =>
         {
-            // The window ends at the NEXT timed call and not at the end of
-            // the file: one bare call flushes one wait, so two timed calls
-            // sharing a single flush is the same defect wearing a disguise.
-            var from = timed[at].Index + timed[at].Length;
-            var to = at + 1 < timed.Count ? timed[at + 1].Index : code.Length;
-
-            if (!BareWait().IsMatch(code[from..to]))
+            if (line.Data?.StartsWith("probe-stderr#", StringComparison.Ordinal) is true)
             {
-                unpaired.Add(timed[at].Value.Trim());
+                _ = Interlocked.Increment(ref said);
             }
-        }
+        };
 
-        return unpaired;
+        process.OutputDataReceived += (_, _) => { };
+
+        await Assert.That(process.Start()).IsTrue();
+
+        // Started outside a job object, so the spawn record is what names it if this
+        // run is killed while it is running.
+        await SpawnRecord.AddAsync(process.Id);
+
+        process.BeginErrorReadLine();
+        process.BeginOutputReadLine();
+
+        // The end of its input, which is how the probe knows to end.
+        await process.StandardInput.DisposeAsync();
+
+        using var hang = new CancellationTokenSource(TestDefaults.ProcessHang);
+
+        await process.WaitForExitAsync(hang.Token);
+
+        await Assert.That(process.ExitCode).IsEqualTo(0);
+        await Assert.That(Volatile.Read(ref said)).IsEqualTo(Lines)
+            .Because("every line the child wrote to its standard error is read by the time WaitForExitAsync returns");
     }
-
-    /// <summary>
-    /// A <c>WaitForExit</c> call with an argument.
-    /// </summary>
-    /// <remarks>
-    /// Anchored on the dot so a declaration cannot match, and it cannot reach
-    /// <c>WaitForExitAsync</c> because the parenthesis has to follow the name
-    /// immediately. Both overloads of the async form are what this repository
-    /// uses everywhere else, and they are correct: on .NET,
-    /// <c>WaitForExitAsync</c> waits for the readers as well.
-    /// </remarks>
-    [GeneratedRegex(@"\.WaitForExit\((?!\s*\))(?:[^()]|\([^()]*\))*\)")]
-    private static partial Regex TimedWait();
-
-    /// <summary>The parameterless overload, which is the one that drains the queue.</summary>
-    [GeneratedRegex(@"\.WaitForExit\(\s*\)")]
-    private static partial Regex BareWait();
 
     private static int CountOf(string source, string needle)
     {
@@ -885,7 +855,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ConcurrentProcessesDoNotLoseEachOthersRecords()
     {
-        using var scratch = ScratchDirectory.Create("processlog-concurrent");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-concurrent");
 
         const int Processes = 8;
         const int LinesEach = 25;
@@ -902,7 +872,7 @@ internal sealed partial class ProcessLogTests
         // log. That only works if a concurrent append cannot overwrite another
         // process's bytes, and that is a property of the platform and not
         // of our code -- so it is measured here, not assumed.
-        var log = ProbeProcess.ReadProcessLog(scratch.Path);
+        var log = await ProbeProcess.ReadProcessLogAsync(scratch.Path);
 
         var missing = (from writer in Enumerable.Range(0, Processes)
                        from line in Enumerable.Range(0, LinesEach)
@@ -935,7 +905,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task ASessionsRecordsGoToItsOwnLogAndNotToTheSharedOne()
     {
-        using var scratch = ScratchDirectory.Create("processlog-session-scope");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-session-scope");
 
         var session = Path.Combine(scratch.Path, "session");
         _ = Directory.CreateDirectory(session);
@@ -956,7 +926,7 @@ internal sealed partial class ProcessLogTests
             ProcessLogProbe.Wrote(mine, marker);
         }
 
-        var shared = ProbeProcess.ReadProcessLog(scratch.Path);
+        var shared = await ProbeProcess.ReadProcessLogAsync(scratch.Path);
 
         // The positive control for the line below: the shared file exists, is
         // readable, and holds this run's records.
@@ -1006,7 +976,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task EveryRecordInTheSharedLogSitsInTheOrderItWasWritten()
     {
-        using var scratch = ScratchDirectory.Create("processlog-ordered");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-ordered");
 
         const int Processes = 8;
         const int LinesEach = 60;
@@ -1019,7 +989,7 @@ internal sealed partial class ProcessLogTests
             await Assert.That(run.ExitCode).IsEqualTo(0);
         }
 
-        var stamps = WriteStampsIn(ProbeProcess.ReadProcessLog(scratch.Path));
+        var stamps = WriteStampsIn(await ProbeProcess.ReadProcessLogAsync(scratch.Path));
 
         // Not vacuous: eight processes wrote sixty records each, so anything
         // near zero means the file was not read, not that it was sorted.
@@ -1056,7 +1026,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task EveryRecordNamesItsWriterByPidAndCreationTimeAndCarriesBothTimes()
     {
-        using var scratch = ScratchDirectory.Create("processlog-writer");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-writer");
 
         using (var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information))
         {
@@ -1065,7 +1035,7 @@ internal sealed partial class ProcessLogTests
             ProcessLogProbe.Wrote(logger, nameof(EveryRecordNamesItsWriterByPidAndCreationTimeAndCarriesBothTimes));
         }
 
-        var lines = ProbeProcess.ReadProcessLog(scratch.Path)
+        var lines = (await ProbeProcess.ReadProcessLogAsync(scratch.Path))
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
@@ -1105,7 +1075,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task NoFileInTheSharedLogEverExceedsItsCap()
     {
-        using var scratch = ScratchDirectory.Create("processlog-cap");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-cap");
 
         var directory = new LocalAppDataPaths(scratch.Path).LogDirectory;
 
@@ -1161,7 +1131,7 @@ internal sealed partial class ProcessLogTests
     [Test]
     public async Task TheSharedLogCannotBeUnlinkedWhileAWriterHoldsIt()
     {
-        using var scratch = ScratchDirectory.Create("processlog-unlink");
+        using var scratch = await ScratchDirectory.CreateAsync("processlog-unlink");
 
         using var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information);
 
@@ -1186,7 +1156,7 @@ internal sealed partial class ProcessLogTests
         // Measured here 2026-08-24; the type is .NET is mapping, so it floats
         // with the framework and the Windows half does not.
         await Assert.That(() => File.Delete(file!)).Throws<IOException>();
-        await Assert.That(ProbeProcess.ReadProcessLog(scratch.Path)).IsNotEmpty();
+        await Assert.That(await ProbeProcess.ReadProcessLogAsync(scratch.Path)).IsNotEmpty();
         await Assert.That(File.Exists(file!)).IsTrue();
     }
 

@@ -22,7 +22,7 @@ internal sealed class SessionPathTests
     [Test]
     public async Task ThreeSpellingsOfOneDirectoryProduceOneIdentity()
     {
-        using var scratch = ScratchDirectory.Create("session-identity");
+        using var scratch = await ScratchDirectory.CreateAsync("session-identity");
 
         // Mixed case on purpose: the case-folding half of the chain is what
         // makes `c:\a` and `C:\A` one session and not two.
@@ -87,7 +87,7 @@ internal sealed class SessionPathTests
         // not about the spelling failing to resolve at all. The test host's own
         // current directory is fixed and shared by every test running in
         // parallel.
-        using var scratch = ScratchDirectory.Create("session-identity-relative");
+        using var scratch = await ScratchDirectory.CreateAsync("session-identity-relative");
 
         var directory = Path.Combine(scratch.Path, "Session One");
         _ = Directory.CreateDirectory(directory);
@@ -126,7 +126,7 @@ internal sealed class SessionPathTests
     [Test]
     public async Task TheMutexNameIsGlobalAndCarriesNoPathSeparator()
     {
-        using var scratch = ScratchDirectory.Create("session-mutex-name");
+        using var scratch = await ScratchDirectory.CreateAsync("session-mutex-name");
         var path = SessionPath.For(scratch.Path);
 
         await Assert.That(path.MutexName).StartsWith(@"Global\BrowserAI-");

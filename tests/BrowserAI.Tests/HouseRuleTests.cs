@@ -188,7 +188,7 @@ internal sealed partial class HouseRuleTests
     /// <c>CREATE_NO_WINDOW</c> governs a console and does nothing for a GUI child's
     /// window: a launch whose executable, or the ten lines above it, names
     /// <see cref="WindowsSubsystemBinaries"/> is an offence however the flag is set,
-    /// and the way out is <see cref="PrivateDesktop.Launch"/>. It was credited at
+    /// and the way out is <see cref="PrivateDesktop.LaunchAsync"/>. It was credited at
     /// two sites until this day, and one of them put a task dialog on the
     /// maintainer's screen in every full run for nine days.
     /// </para>
@@ -1130,7 +1130,7 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>The seam that seeds a scratch configuration directory.</summary>
-    private const string Seam = nameof(OnboardedClientConfig) + "." + nameof(OnboardedClientConfig.Seed);
+    private const string Seam = nameof(OnboardedClientConfig) + "." + nameof(OnboardedClientConfig.SeedAsync);
 
     /// <summary>
     /// The configuration-directory constant's name, composed so this file is not
@@ -1678,7 +1678,8 @@ internal sealed partial class HouseRuleTests
     /// <b>The precedent is
     /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c></b>: a
     /// pairing no analyzer and no banned symbol can require, because each half is
-    /// perfectly legal on its own.
+    /// perfectly legal on its own. <i>That scan was deleted 2026-10-11, when every
+    /// <c>WaitForExit</c> overload was banned and nothing was left to pair.</i>
     /// </para>
     /// <para>
     /// <b>What it cannot see, stated, not glossed:</b> a struct built any
@@ -2568,7 +2569,7 @@ internal sealed partial class HouseRuleTests
         //
         // The escapes are C#'s, so THIS file stays clean: the compiler makes the
         // byte at run time and the scan below reads this file too.
-        using var scratch = ScratchDirectory.Create("control-bytes");
+        using var scratch = await ScratchDirectory.CreateAsync("control-bytes");
 
         var planted = Path.Combine(scratch.Path, "planted.md");
         var clean = Path.Combine(scratch.Path, "clean.md");
@@ -2576,12 +2577,12 @@ internal sealed partial class HouseRuleTests
         await File.WriteAllTextAsync(planted, "A line.\nA \bword boundary that is not one.\n");
         await File.WriteAllTextAsync(clean, "A line.\nA \\bword boundary that is one.\n\tTabs and\r\nCRLF are not controls.\n");
 
-        var caught = ControlByteOffences(new FileInfo(planted));
+        var caught = await ControlByteOffencesAsync(new FileInfo(planted));
 
         await Assert.That(caught.Count).IsEqualTo(1);
         await Assert.That(caught[0]).Contains("0x08");
         await Assert.That(caught[0]).Contains("line 2");
-        await Assert.That(ControlByteOffences(new FileInfo(clean))).IsEmpty();
+        await Assert.That(await ControlByteOffencesAsync(new FileInfo(clean))).IsEmpty();
 
         var scanned = 0;
         var skipped = 0;
@@ -2589,14 +2590,14 @@ internal sealed partial class HouseRuleTests
 
         foreach (var file in RepositoryLayout.AllFiles)
         {
-            if (IsBinary(file))
+            if (await IsBinaryAsync(file))
             {
                 skipped++;
                 continue;
             }
 
             scanned++;
-            offenders.AddRange(ControlByteOffences(file));
+            offenders.AddRange(await ControlByteOffencesAsync(file));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -2624,7 +2625,7 @@ internal sealed partial class HouseRuleTests
     /// </remarks>
     /// <param name="file">The file.</param>
     /// <returns>Whether to skip it.</returns>
-    private static bool IsBinary(FileInfo file)
+    private static async Task<bool> IsBinaryAsync(FileInfo file)
     {
         if (RepositoryLayout.IsLinkBearing(file.Name))
         {
@@ -2632,8 +2633,8 @@ internal sealed partial class HouseRuleTests
         }
 
         var head = new byte[8000];
-        using var stream = file.OpenRead();
-        var read = stream.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);
+        await using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
+        var read = await stream.ReadAtLeastAsync(head, head.Length, throwOnEndOfStream: false);
 
         return head.AsSpan(0, read).IndexOf((byte)0) >= 0;
     }
@@ -2650,9 +2651,9 @@ internal sealed partial class HouseRuleTests
     /// </remarks>
     /// <param name="file">The file to read.</param>
     /// <returns>One line per offending byte.</returns>
-    private static List<string> ControlByteOffences(FileInfo file)
+    private static async Task<List<string>> ControlByteOffencesAsync(FileInfo file)
     {
-        var bytes = File.ReadAllBytes(file.FullName);
+        var bytes = await File.ReadAllBytesAsync(file.FullName);
         var offences = new List<string>();
         var line = 1;
         var column = 1;
@@ -2742,7 +2743,7 @@ internal sealed partial class HouseRuleTests
     [Test]
     public async Task TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds()
     {
-        SuiteEnvironment.RequireGit();
+        await SuiteEnvironment.RequireGitAsync();
 
         // Through RepositoryLayout.IsLinkBearing on both sides, so the two lists
         // cannot be filtered by two different opinions about what a scanned file
@@ -3112,7 +3113,7 @@ internal sealed partial class HouseRuleTests
         {
             var name = Relative(file).Replace('\\', '/');
 
-            if (!IsSwept(name) || IsBinary(file))
+            if (!IsSwept(name) || await IsBinaryAsync(file))
             {
                 continue;
             }
@@ -3135,7 +3136,7 @@ internal sealed partial class HouseRuleTests
         {
             var name = Relative(file).Replace('\\', '/');
 
-            if (!IsProductVoice(name) || IsBinary(file))
+            if (!IsProductVoice(name) || await IsBinaryAsync(file))
             {
                 continue;
             }
@@ -3647,7 +3648,7 @@ internal sealed partial class HouseRuleTests
         {
             var name = Relative(file).Replace('\\', '/');
 
-            if (!IsSwept(name) || IsBinary(file))
+            if (!IsSwept(name) || await IsBinaryAsync(file))
             {
                 continue;
             }
@@ -4043,7 +4044,7 @@ internal sealed partial class HouseRuleTests
         {
             var name = Relative(file).Replace('\\', '/');
 
-            if (!IsSwept(name) || !IsCode(Path.GetExtension(name)) || IsBinary(file))
+            if (!IsSwept(name) || !IsCode(Path.GetExtension(name)) || await IsBinaryAsync(file))
             {
                 continue;
             }

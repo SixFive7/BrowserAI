@@ -4,6 +4,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -58,8 +59,10 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task NoProjectFileDeclaresAPackageVersion()
     {
+        var documents = await TestFiles.LoadXmlAsync(RepositoryLayout.ProjectFiles);
+
         var offenders = RepositoryLayout.ProjectFiles
-            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+            .SelectMany(file => documents[file.FullName].Descendants()
                 .Where(element =>
                     (element.Name.LocalName is "PackageReference" && element.Attribute("Version") is not null)
                     || element.Name.LocalName is "PackageVersion")
@@ -93,7 +96,7 @@ internal sealed partial class BuildConfigurationTests
 
         foreach (var file in RepositoryLayout.ProjectFiles)
         {
-            var document = XDocument.Load(file.FullName);
+            var document = await TestFiles.LoadXmlAsync(file.FullName);
             document.DescendantNodes().OfType<XComment>().Remove();
             document.Descendants()
                 .Where(element => element.Name.LocalName is "Error" or "Warning" or "Message")
@@ -110,7 +113,7 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task EveryCentrallyManagedPackageVersionFloats()
     {
-        var packages = CentralPackageManagement().Descendants()
+        var packages = (await CentralPackageManagementAsync()).Descendants()
             .Where(element => element.Name.LocalName is "PackageVersion")
             .ToList();
 
@@ -129,7 +132,7 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task CentralPackageManagementIsOnWithTransitivePinning()
     {
-        var properties = CentralPackageManagement().Descendants()
+        var properties = (await CentralPackageManagementAsync()).Descendants()
             .Where(element => element.Name.LocalName is "ManagePackageVersionsCentrally" or "CentralPackageTransitivePinningEnabled")
             .ToDictionary(element => element.Name.LocalName, element => element.Value, StringComparer.Ordinal);
 
@@ -155,8 +158,10 @@ internal sealed partial class BuildConfigurationTests
         // a `#pragma warning disable` or an [SuppressMessage] at the line that
         // needs it, with the reason beside it, is visible in a diff. A shared
         // property is not.
+        var documents = await TestFiles.LoadXmlAsync(RepositoryLayout.BuildFiles);
+
         var offenders = RepositoryLayout.BuildFiles
-            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+            .SelectMany(file => documents[file.FullName].Descendants()
                 .Where(element => element.Name.LocalName is "NoWarn" or "WarningsNotAsErrors")
                 .Select(element => $"{Relative(file)}: <{element.Name.LocalName}>{element.Value}</{element.Name.LocalName}>"))
             .ToList();
@@ -197,8 +202,10 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears()
     {
+        var documents = await TestFiles.LoadXmlAsync(RepositoryLayout.BuildFiles);
+
         var declarations = RepositoryLayout.BuildFiles
-            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+            .SelectMany(file => documents[file.FullName].Descendants()
                 .Where(element => element.Name.LocalName is "UseSystemResourceKeys")
                 .Select(element => (File: Relative(file), element.Value)))
             .ToList();
@@ -243,7 +250,7 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task WarningsAreErrorsForEveryProject()
     {
-        var declarations = Declarations("TreatWarningsAsErrors");
+        var declarations = await DeclarationsAsync("TreatWarningsAsErrors");
 
         var demoted = declarations
             .Where(declaration => !string.Equals(declaration.Value, "true", StringComparison.OrdinalIgnoreCase))
@@ -271,7 +278,7 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task UnreachableCodeIsPromotedToAnErrorByName()
     {
-        var promotions = Declarations("WarningsAsErrors");
+        var promotions = await DeclarationsAsync("WarningsAsErrors");
 
         await Assert.That(promotions.Select(declaration => declaration.File)).Contains("Directory.Build.props");
 
@@ -307,15 +314,17 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task AotAndTrimAnalysisIsScopedPerAssemblyAndNeverRepoWide()
     {
+        var documents = await TestFiles.LoadXmlAsync(RepositoryLayout.RepositoryWideBuildFiles);
+
         var repoWide = RepositoryLayout.RepositoryWideBuildFiles
-            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+            .SelectMany(file => documents[file.FullName].Descendants()
                 .Where(element => PerAssemblyOnly.Contains(element.Name.LocalName, StringComparer.Ordinal))
                 .Select(element => $"{Relative(file)}: <{element.Name.LocalName}>{element.Value}</{element.Name.LocalName}> reaches every project, including the ones that do not exist yet"));
 
         await Assert.That(string.Join(Environment.NewLine, repoWide)).IsEmpty();
 
         // And the assembly that actually ships still says it, in its own file.
-        var product = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"))
+        var product = (await TestFiles.LoadXmlAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj")))
             .Descendants()
             .Where(element => element.Name.LocalName is "SuppressTrimAnalysisWarnings")
             .Select(element => element.Value)
@@ -406,7 +415,7 @@ internal sealed partial class BuildConfigurationTests
 
         foreach (var file in RepositoryLayout.ProjectFiles)
         {
-            var project = XDocument.Load(file.FullName);
+            var project = await TestFiles.LoadXmlAsync(file.FullName);
 
             foreach (var attached in project.Descendants().Where(element => element.Name.LocalName is "ApplicationManifest"))
             {
@@ -423,7 +432,7 @@ internal sealed partial class BuildConfigurationTests
 
         foreach (var path in manifests)
         {
-            var manifest = XDocument.Load(path);
+            var manifest = await TestFiles.LoadXmlAsync(path);
 
             await Assert.That(manifest.Descendants()
                 .Where(element => element.Name.LocalName is "longPathAware")
@@ -464,7 +473,7 @@ internal sealed partial class BuildConfigurationTests
     [Test]
     public async Task TheOneExecutableDeclaresTheVersionSixCommonControls()
     {
-        var manifest = XDocument.Load(
+        var manifest = await TestFiles.LoadXmlAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
 
         var identities = manifest.Descendants()
@@ -495,16 +504,21 @@ internal sealed partial class BuildConfigurationTests
             : "<absent>";
 
     /// <summary>Every declaration of a property across every build file.</summary>
-    private static List<(string File, string Value)> Declarations(string property) =>
-    [
-        .. RepositoryLayout.BuildFiles
-            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
-                .Where(element => string.Equals(element.Name.LocalName, property, StringComparison.Ordinal))
-                .Select(element => (File: Relative(file), element.Value))),
-    ];
+    private static async Task<List<(string File, string Value)>> DeclarationsAsync(string property)
+    {
+        var documents = await TestFiles.LoadXmlAsync(RepositoryLayout.BuildFiles);
 
-    private static XDocument CentralPackageManagement() =>
-        XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Packages.props"));
+        return
+        [
+            .. RepositoryLayout.BuildFiles
+                .SelectMany(file => documents[file.FullName].Descendants()
+                    .Where(element => string.Equals(element.Name.LocalName, property, StringComparison.Ordinal))
+                    .Select(element => (File: Relative(file), element.Value))),
+        ];
+    }
+
+    private static async Task<XDocument> CentralPackageManagementAsync() =>
+        await TestFiles.LoadXmlAsync(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Packages.props"));
 
     private static string Relative(FileInfo file) =>
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);

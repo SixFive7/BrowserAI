@@ -187,18 +187,31 @@ internal static partial class ProcessIdentity
     /// <param name="createdFileTime">Its creation time, recorded at the same moment.</param>
     /// <param name="patience">How long to wait before answering that it is still there.</param>
     /// <returns><see langword="true"/> when it is gone, or was never that process.</returns>
-    public static bool WaitUntilGone(int processId, long createdFileTime, TimeSpan patience)
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54: the process's handle is
+    /// watched by the pool's wait registration, through the product's
+    /// <c>Interop.HandleWaits</c>, which parks no thread. <i>Previously
+    /// <c>WaitUntilGone</c>, a <c>WaitForSingleObject</c> that parked the asking thread for up
+    /// to the whole patience.</i>
+    /// </remarks>
+    public static async Task<bool> WaitUntilGoneAsync(int processId, long createdFileTime, TimeSpan patience)
     {
-        using var handle = OpenProcess(Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
+        using var process = new WaitableProcess(OpenProcessToWait(Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId));
 
-        if (handle.IsInvalid
-            || !GetProcessTimes(handle, out var creation, out _, out _, out _)
+        if (process.SafeWaitHandle.IsInvalid
+            || !GetProcessTimesToWait(process.SafeWaitHandle, out var creation, out _, out _, out _)
             || creation != createdFileTime)
         {
             return true;
         }
 
-        return WaitForSingleObject(handle, (uint)patience.TotalMilliseconds) is WaitObject0;
+        return await BrowserAI.Interop.HandleWaits.WhenSignaledAsync(process, patience);
+    }
+
+    /// <summary>A process's handle, as a wait handle a registration can watch.</summary>
+    private sealed class WaitableProcess : WaitHandle
+    {
+        public WaitableProcess(SafeWaitHandle handle) => SafeWaitHandle = handle;
     }
 
     /// <summary>The creation time of a live process, for recording alongside its pid.</summary>
@@ -240,6 +253,23 @@ internal static partial class ProcessIdentity
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     private static partial uint WaitForSingleObject(SafeProcessHandle hHandle, uint dwMilliseconds);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "OpenProcess", SetLastError = true)]
+    private static partial SafeWaitHandle OpenProcessToWait(
+        uint dwDesiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
+        uint dwProcessId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "GetProcessTimes", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimesToWait(
+        SafeWaitHandle hProcess,
+        out long lpCreationTime,
+        out long lpExitTime,
+        out long lpKernelTime,
+        out long lpUserTime);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]

@@ -27,8 +27,10 @@ namespace BrowserAI.Tests.Harness;
 /// <i>thread</i> that waited on it; a test that acquired one and then awaited
 /// anything would release it from whichever pool thread the continuation landed
 /// on, and <c>ReleaseMutex</c> would throw about "an unsynchronized block of
-/// code" -- naming nothing relevant. The same pattern, for the same reason, is in
-/// <c>RevisionPruneTests.NothingIsPrunedWhileAnotherProcessIsProvisioning</c>.
+/// code" -- naming nothing relevant. <b>The thread is the product's own since
+/// 2026-10-11</b>: <see cref="MutexHold"/>, which the claim awaits.
+/// <i>Corrected that day (previously a holder thread of this class's own, waited
+/// for with a blocking wait on its start and a join on its end).</i>
 /// </para>
 /// <para>
 /// <b><see cref="Held"/> is not decoration.</b> A claim that silently failed
@@ -37,11 +39,10 @@ namespace BrowserAI.Tests.Harness;
 /// assume it.
 /// </para>
 /// </remarks>
-internal sealed class ProvisioningClaim : IDisposable
+internal sealed class ProvisioningClaim : IAsyncDisposable
 {
     /// <summary>
-    /// The holder thread's own tripwire, matched to the provisioner's absolute
-    /// cap.
+    /// The claim's own tripwire, matched to the provisioner's absolute cap.
     /// </summary>
     /// <remarks>
     /// It exists so a test that dies without disposing cannot leave a
@@ -50,42 +51,24 @@ internal sealed class ProvisioningClaim : IDisposable
     /// </remarks>
     private static readonly TimeSpan Ceiling = TimeSpan.FromMinutes(45);
 
-    private readonly ManualResetEventSlim _taken = new();
-    private readonly ManualResetEventSlim _release = new();
-    private readonly Thread _holder;
+    private readonly MachineMutex _mutex;
+    private readonly MutexHold _hold;
+    private readonly CancellationTokenSource _disposing = new();
+    private readonly Task _ceiling;
 
-    private ProvisioningClaim(string name)
+    private ProvisioningClaim(string name, MachineMutex mutex, MutexHold hold)
     {
         MutexName = name;
-
-        _holder = new Thread(() =>
-        {
-            using var mutex = MachineMutex.Create(name);
-
-            Held = mutex.Acquire(TestDefaults.ProcessHang) is not MutexAcquisition.NotAcquired;
-            _taken.Set();
-
-            _ = _release.Wait(Ceiling);
-
-            if (Held)
-            {
-                mutex.Release();
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "browserai-provisioning-claim",
-        };
-
-        _holder.Start();
-        _ = _taken.Wait(TestDefaults.ProcessHang);
+        _mutex = mutex;
+        _hold = hold;
+        _ceiling = ReleaseAtTheCeilingAsync();
     }
 
     /// <summary>The kernel object's name, for a failure message to quote.</summary>
     public string MutexName { get; }
 
     /// <summary>Whether the mutex was actually acquired.</summary>
-    public bool Held { get; private set; }
+    public bool Held => _hold.Held;
 
     /// <summary>
     /// Takes the claim a second BrowserAI process installing into
@@ -94,15 +77,45 @@ internal sealed class ProvisioningClaim : IDisposable
     /// <param name="browsersDirectory">The absolute browsers root, which is half the mutex's name.</param>
     /// <param name="browser">The family, which is the other half.</param>
     /// <returns>The claim, held until it is disposed.</returns>
-    public static ProvisioningClaim Take(string browsersDirectory, string browser) =>
-        new(BrowserProvisioner.MutexNameFor(browsersDirectory, browser));
+    public static async Task<ProvisioningClaim> TakeAsync(string browsersDirectory, string browser)
+    {
+        var name = BrowserProvisioner.MutexNameFor(browsersDirectory, browser);
+        var mutex = MachineMutex.Create(name);
+
+        try
+        {
+            return new ProvisioningClaim(name, mutex, await mutex.HoldAsync(TestDefaults.ProcessHang));
+        }
+        catch
+        {
+            mutex.Dispose();
+            throw;
+        }
+    }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _release.Set();
-        _ = _holder.Join(TestDefaults.ProcessHang);
-        _release.Dispose();
-        _taken.Dispose();
+        await _disposing.CancelAsync();
+        await _ceiling;
+        await _hold.DisposeAsync();
+        _mutex.Dispose();
+        _disposing.Dispose();
+    }
+
+    /// <summary>Lets the mutex go once the ceiling passes, unless the claim was disposed first.</summary>
+    /// <returns>The wait.</returns>
+    private async Task ReleaseAtTheCeilingAsync()
+    {
+        try
+        {
+            await Task.Delay(Ceiling, _disposing.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await _hold.DisposeAsync();
     }
 }

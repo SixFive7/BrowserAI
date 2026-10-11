@@ -207,7 +207,7 @@ internal sealed class RelayRig : IAsyncDisposable
         var frame = await Client.ReadFrameAsync(hang.Token);
 
         return frame is null
-            ? throw new InvalidOperationException($"The relay closed the client's output with no further frame; its run is {Describe(Running)}.")
+            ? throw new InvalidOperationException($"The relay closed the client's output with no further frame; its run is {await DescribeAsync(Running)}.")
             : new WireFrame(frame);
     }
 
@@ -339,9 +339,9 @@ internal sealed class RelayRig : IAsyncDisposable
         }
     }
 
-    private static string Describe(Task<RelayEnd> running) => running.Status switch
+    private static async Task<string> DescribeAsync(Task<RelayEnd> running) => running.Status switch
     {
-        TaskStatus.RanToCompletion => $"ended: {running.Result}",
+        TaskStatus.RanToCompletion => $"ended: {await running}",
         TaskStatus.Faulted => $"faulted: {running.Exception}",
         TaskStatus.Canceled => "cancelled",
         _ => "still running",

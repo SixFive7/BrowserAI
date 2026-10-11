@@ -33,7 +33,7 @@ internal static class ProbeImage
     /// <summary>Copies the probe into a directory and returns its executable there.</summary>
     /// <param name="directory">Where to copy it. Created if absent.</param>
     /// <returns>The copy's executable.</returns>
-    public static string CopyInto(string directory)
+    public static async Task<string> CopyIntoAsync(string directory)
     {
         var source = AppContext.BaseDirectory;
 
@@ -41,10 +41,10 @@ internal static class ProbeImage
 
         foreach (var file in new[] { Name + ".exe", Name + ".dll", Name + ".runtimeconfig.json", Name + ".deps.json" })
         {
-            File.Copy(Path.Combine(source, file), Path.Combine(directory, file), overwrite: true);
+            await TestFiles.CopyAsync(Path.Combine(source, file), Path.Combine(directory, file), overwrite: true);
         }
 
-        using var manifest = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(source, Name + ".deps.json")));
+        using var manifest = JsonDocument.Parse(await File.ReadAllBytesAsync(Path.Combine(source, Name + ".deps.json")));
 
         foreach (var target in manifest.RootElement.GetProperty("targets").EnumerateObject())
         {
@@ -55,7 +55,7 @@ internal static class ProbeImage
                     foreach (var asset in runtime.EnumerateObject())
                     {
                         var leaf = Path.GetFileName(asset.Name);
-                        File.Copy(Path.Combine(source, leaf), Path.Combine(directory, leaf), overwrite: true);
+                        await TestFiles.CopyAsync(Path.Combine(source, leaf), Path.Combine(directory, leaf), overwrite: true);
                     }
                 }
 
@@ -73,7 +73,7 @@ internal static class ProbeImage
 
                         var copy = Path.Combine(directory, relative);
                         _ = Directory.CreateDirectory(Path.GetDirectoryName(copy)!);
-                        File.Copy(Path.Combine(source, relative), copy, overwrite: true);
+                        await TestFiles.CopyAsync(Path.Combine(source, relative), copy, overwrite: true);
                     }
                 }
             }

@@ -85,7 +85,7 @@ internal sealed record SessionRun
     {
         PublishedSlice.EnsureFresh();
 
-        var root = Path.Combine(ScratchRoot.Path, $"sessions-{Guid.NewGuid():N}");
+        var root = Path.Combine(await ScratchRoot.PathAsync(), $"sessions-{Guid.NewGuid():N}");
         _ = Directory.CreateDirectory(root);
 
         var first = await FirstProcessAsync(root).ConfigureAwait(false);
@@ -101,7 +101,7 @@ internal sealed record SessionRun
         var gamma = Path.Combine(root, "gamma");
         var held = Path.Combine(beta, SessionLayout.OutputFolderName, "held.txt");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             root,
@@ -367,7 +367,7 @@ internal sealed record SessionRun
 
             // FileShare.None, so the destroy below meets a file it cannot remove
             // and has to report it, not fail.
-            using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
+            await using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
             {
                 answers["destroyBeta"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
                 {
@@ -486,7 +486,7 @@ internal sealed record SessionRun
         // because they all share this one capture.
         await MoveWhenReleasedAsync(gamma, moved).ConfigureAwait(false);
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             root,
@@ -512,7 +512,7 @@ internal sealed record SessionRun
         // no longer exists -- which is the move signature exactly, and BrowserAI
         // repairs it silently. Measured 2026-08-16; the first version of this
         // capture copied first and the copy was accepted as a move.
-        CopyTree(moved, copy);
+        await CopyTreeAsync(moved, copy);
 
         // ⚠️ ONE CALL, no flag. `acknowledgeCopy` was deleted on 2026-08-18 with
         // the refusal it unlocked: under schema 2 the record is an append-only
@@ -581,18 +581,18 @@ internal sealed record SessionRun
                 $"'{tool}' answered with a JSON-RPC error rather than a result, which no authored tool may do: {envelope.ToJsonString()}");
     }
 
-    private static void CopyTree(string source, string destination)
+    private static async Task CopyTreeAsync(string source, string destination)
     {
         _ = Directory.CreateDirectory(destination);
 
         foreach (var file in Directory.EnumerateFiles(source))
         {
-            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)));
+            await TestFiles.CopyAsync(file, Path.Combine(destination, Path.GetFileName(file)));
         }
 
         foreach (var child in Directory.EnumerateDirectories(source))
         {
-            CopyTree(child, Path.Combine(destination, Path.GetFileName(child)));
+            await CopyTreeAsync(child, Path.Combine(destination, Path.GetFileName(child)));
         }
     }
 
@@ -600,14 +600,14 @@ internal sealed record SessionRun
     /// Reads a file another process has open for append, which is what a session
     /// log is while its session runs.
     /// </summary>
-    private static string ReadSharing(string path)
+    private static async Task<string> ReadSharingAsync(string path)
     {
         try
         {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream, Encoding.UTF8);
 
-            return reader.ReadToEnd();
+            return await reader.ReadToEndAsync();
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {

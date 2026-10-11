@@ -88,12 +88,12 @@ internal static partial class HazardIndex
 
     /// <summary>Every row of the hazard table, in file order.</summary>
     /// <returns>The rows.</returns>
-    public static List<HazardRow> Rows()
+    public static async Task<List<HazardRow>> RowsAsync()
     {
         var rows = new List<HazardRow>();
         var number = 0;
 
-        foreach (var line in File.ReadAllLines(Path))
+        foreach (var line in await File.ReadAllLinesAsync(Path))
         {
             number++;
 
@@ -128,7 +128,7 @@ internal static partial class HazardIndex
     /// <remarks>
     /// <para>
     /// <b>A second, deliberately independent enumeration of the same table.</b>
-    /// <see cref="Rows"/> scans the whole file and keeps whatever looks like a
+    /// <see cref="RowsAsync"/> scans the whole file and keeps whatever looks like a
     /// row; this walks the contiguous run of pipe-leading lines that starts at
     /// the header. The two share the <i>predicate</i> -- <see cref="SplitRow"/>
     /// and <see cref="Fields"/> -- and nothing else, which is what lets one check
@@ -145,10 +145,10 @@ internal static partial class HazardIndex
     /// </para>
     /// </remarks>
     /// <returns>The header line, the separator line, and every row line after them.</returns>
-    public static List<(int Line, string Text)> TableLines()
+    public static async Task<List<(int Line, string Text)>> TableLinesAsync()
     {
         var region = new List<(int Line, string Text)>();
-        var lines = File.ReadAllLines(Path);
+        var lines = await File.ReadAllLinesAsync(Path);
         var started = false;
 
         for (var index = 0; index < lines.Length; index++)

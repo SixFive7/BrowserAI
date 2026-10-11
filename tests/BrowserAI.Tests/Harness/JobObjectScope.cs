@@ -33,7 +33,7 @@ namespace BrowserAI.Tests.Harness;
 internal sealed class JobObjectScope : IDisposable
 {
     /// <summary>
-    /// How long <see cref="SaidBy"/> waits for the drains to reach EOF before
+    /// How long <see cref="SaidByAsync"/> waits for the drains to reach EOF before
     /// answering with what it has.
     /// </summary>
     /// <remarks>
@@ -57,8 +57,8 @@ internal sealed class JobObjectScope : IDisposable
     /// <param name="workingDirectory">The working directory it is given.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The started process. The scope owns it.</returns>
-    public LaunchedProcess Launch(string command, string workingDirectory, params string[] arguments) =>
-        LaunchWith(command, workingDirectory, ChildEnvironment.Build(), arguments);
+    public async Task<LaunchedProcess> LaunchAsync(string command, string workingDirectory, params string[] arguments) =>
+        await LaunchWithAsync(command, workingDirectory, ChildEnvironment.Build(), arguments);
 
     /// <summary>Starts a process inside this scope's job, with an environment the caller composed.</summary>
     /// <remarks>
@@ -71,7 +71,7 @@ internal sealed class JobObjectScope : IDisposable
     /// <param name="environment">The child's complete environment block.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The started process. The scope owns it.</returns>
-    public LaunchedProcess LaunchWith(string command, string workingDirectory, IReadOnlyDictionary<string, string> environment, params string[] arguments)
+    public async Task<LaunchedProcess> LaunchWithAsync(string command, string workingDirectory, IReadOnlyDictionary<string, string> environment, params string[] arguments)
     {
         var process = JobLauncher.Start(_job, command, arguments, workingDirectory, environment);
         _started.Add(process);
@@ -79,7 +79,7 @@ internal sealed class JobObjectScope : IDisposable
         // Written where the NEXT run can read it. The job object above is what
         // contains this process while this run is alive; the record is what
         // names it if this run is killed and the job dies with it.
-        SpawnRecord.Add(process.Id);
+        await SpawnRecord.AddAsync(process.Id);
 
         // ⚠️ Drained because an undrained pipe stops the child once its buffer
         // fills -- which presents as "the launcher never finished" and not
@@ -116,9 +116,9 @@ internal sealed class JobObjectScope : IDisposable
     /// between revisions. What it is for is the sentence a test prints when the
     /// process it was asserting about is no longer there.
     /// </remarks>
-    /// <param name="processId">The pid <see cref="Launch"/> returned.</param>
+    /// <param name="processId">The pid <see cref="LaunchAsync"/> returned.</param>
     /// <returns>The captured text, or a note that there was none.</returns>
-    public string SaidBy(int processId)
+    public async Task<string> SaidByAsync(int processId)
     {
         if (!_said.TryGetValue(processId, out var said))
         {
@@ -127,9 +127,22 @@ internal sealed class JobObjectScope : IDisposable
 
         // Both drains to EOF first, bounded. A pipe holds what was written to it
         // after the writer exits, so a child that died having said why is still
-        // readable here -- but only if something reads it.
-        var drained = _drains.TryGetValue(processId, out var drains)
-            && Task.WaitAll(drains, DrainPatience);
+        // readable here -- but only if something reads it. Awaited since
+        // 2026-10-11 (previously Task.WaitAll, which parked the asking thread).
+        var drained = false;
+
+        if (_drains.TryGetValue(processId, out var drains))
+        {
+            try
+            {
+                await Task.WhenAll(drains).WaitAsync(DrainPatience);
+                drained = true;
+            }
+            catch (TimeoutException)
+            {
+                // Still running: said so below, never as the child's silence.
+            }
+        }
 
         lock (said)
         {

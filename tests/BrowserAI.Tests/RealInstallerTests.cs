@@ -115,16 +115,16 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
-        using var installRoot = ScratchDirectory.CreateUnderProfile("real-install");
-        using var dataRoot = ScratchDirectory.CreateUnderProfile("real-install-data");
-        using var clientConfig = ScratchDirectory.Create("real-install-client");
-        using var logs = ScratchDirectory.Create("real-install-logs");
-        using var feed = ScratchDirectory.Create("real-install-feed");
+        using var installRoot = await ScratchDirectory.CreateUnderProfileAsync("real-install");
+        using var dataRoot = await ScratchDirectory.CreateUnderProfileAsync("real-install-data");
+        using var clientConfig = await ScratchDirectory.CreateAsync("real-install-client");
+        using var logs = await ScratchDirectory.CreateAsync("real-install-logs");
+        using var feed = await ScratchDirectory.CreateAsync("real-install-feed");
 
         var paths = new LocalAppDataPaths(dataRoot.Path);
-        var planted = Plant(paths);
+        var planted = await PlantAsync(paths);
 
         // ⚠️ CODEX_HOME IS THE THIRD VARIABLE SINCE 2026-09-24, AND IT IS THE ONE
         // THAT STOPS A WRITE. The install and uninstall hooks register with Codex
@@ -143,7 +143,7 @@ internal sealed partial class RealInstallerTests
 
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
-            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
+            [RegistrationTests.ConfigDirectoryVariable] = await OnboardedClientConfig.SeedAsync(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
             [RegistrationTests.CodexHomeVariable] = codexHome,
             [UpdateConfiguration.FeedVariable] = feed.Path,
@@ -166,7 +166,7 @@ internal sealed partial class RealInstallerTests
         // the pack id; this half survived the split and is read here for the
         // same reason the key is: an unread claim about somebody's Start Menu is
         // not a claim.
-        var startMenuBefore = ReadStartMenuShortcuts();
+        var startMenuBefore = await ReadStartMenuShortcutsAsync();
 
         // ⚠️ AND THE USER'S OWN PATH, since Q294 b -- 2026-09-24. The install hook
         // puts the install's `current\` folder on the real HKCU\Environment Path and
@@ -194,7 +194,7 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(realKeyAfter).IsEqualTo(realKeyBefore);
 
-        var startMenuAfter = ReadStartMenuShortcuts();
+        var startMenuAfter = await ReadStartMenuShortcutsAsync();
 
         // Nothing under the SHIPPING title may point into this arm's scratch
         // root -- which is what a shared title produced, and what is asserted,
@@ -232,7 +232,7 @@ internal sealed partial class RealInstallerTests
     /// two things COM was asked about.
     /// </remarks>
     /// <returns>The file name of each, and its content.</returns>
-    private static Dictionary<string, byte[]> ReadStartMenuShortcuts()
+    private static async Task<Dictionary<string, byte[]>> ReadStartMenuShortcutsAsync()
     {
         var found = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
         var programs = ReleaseLayout.StartMenuPrograms;
@@ -246,7 +246,7 @@ internal sealed partial class RealInstallerTests
         {
             try
             {
-                found[Path.GetFileName(file)] = File.ReadAllBytes(file);
+                found[Path.GetFileName(file)] = await File.ReadAllBytesAsync(file);
             }
 #pragma warning disable CA1031 // A shortcut that cannot be read is recorded as unreadable, not dropped from the comparison.
             catch (IOException)
@@ -260,7 +260,7 @@ internal sealed partial class RealInstallerTests
     }
 
     /// <summary>A shortcut set as one comparable string, so a failure names what moved.</summary>
-    /// <param name="shortcuts">What <see cref="ReadStartMenuShortcuts"/> found.</param>
+    /// <param name="shortcuts">What <see cref="ReadStartMenuShortcutsAsync"/> found.</param>
     /// <returns>One line per shortcut: its name and the SHA-256 of its bytes.</returns>
     private static string Describe(Dictionary<string, byte[]> shortcuts) =>
         shortcuts.Count == 0
@@ -299,11 +299,16 @@ internal sealed partial class RealInstallerTests
     /// <summary>Polls a condition until it holds or the hang detector runs out.</summary>
     /// <param name="condition">The condition.</param>
     /// <returns>Whether it held.</returns>
-    private static async Task<bool> WaitForAsync(Func<bool> condition)
+    private static Task<bool> WaitForAsync(Func<bool> condition) => WaitForAsync(() => Task.FromResult(condition()));
+
+    /// <summary>Waits until an awaited condition holds, or the suite's process hang detector runs out.</summary>
+    /// <param name="condition">The condition, asked again every tenth of a second.</param>
+    /// <returns>Whether it held in time.</returns>
+    private static async Task<bool> WaitForAsync(Func<Task<bool>> condition)
     {
         var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
-        while (!condition())
+        while (!await condition())
         {
             if (DateTime.UtcNow > deadline)
             {
@@ -345,29 +350,29 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
-        using var namedRootFirst = ScratchDirectory.CreateUnderProfile("two-roots-1a");
-        using var namedRootSecond = ScratchDirectory.CreateUnderProfile("two-roots-1b");
-        using var otherRootFirst = ScratchDirectory.CreateUnderProfile("two-roots-2a");
-        using var otherRootSecond = ScratchDirectory.CreateUnderProfile("two-roots-2b");
-        using var dataRoot = ScratchDirectory.CreateUnderProfile("two-roots-data");
-        using var clientConfig = ScratchDirectory.Create("two-roots-client");
-        using var logs = ScratchDirectory.Create("two-roots-logs");
+        using var namedRootFirst = await ScratchDirectory.CreateUnderProfileAsync("two-roots-1a");
+        using var namedRootSecond = await ScratchDirectory.CreateUnderProfileAsync("two-roots-1b");
+        using var otherRootFirst = await ScratchDirectory.CreateUnderProfileAsync("two-roots-2a");
+        using var otherRootSecond = await ScratchDirectory.CreateUnderProfileAsync("two-roots-2b");
+        using var dataRoot = await ScratchDirectory.CreateUnderProfileAsync("two-roots-data");
+        using var clientConfig = await ScratchDirectory.CreateAsync("two-roots-client");
+        using var logs = await ScratchDirectory.CreateAsync("two-roots-logs");
 
         // The same three variables every arm here sets, for the reason the first
         // arm gives: the hooks register with both clients and write a record.
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
-            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
+            [RegistrationTests.ConfigDirectoryVariable] = await OnboardedClientConfig.SeedAsync(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
             [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
-        var startMenuBefore = ReadStartMenuShortcuts();
+        var startMenuBefore = await ReadStartMenuShortcutsAsync();
         var pathBefore = RegistryUserPathStore.User.Read();
-        var realTaskBefore = ScheduledTasks.DefinitionOf(RealSignInTask);
+        var realTaskBefore = await ScheduledTasks.DefinitionOfAsync(RealSignInTask);
 
         try
         {
@@ -385,14 +390,14 @@ internal sealed partial class RealInstallerTests
 
         // The real entry and the real Start Menu are what they were, byte for byte.
         await Assert.That(ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}")).IsEqualTo(realKeyBefore);
-        await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
+        await Assert.That(Describe(await ReadStartMenuShortcutsAsync())).IsEqualTo(Describe(startMenuBefore));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
 
         // And so is the user's PATH, after four installs and four uninstalls.
         await Assert.That(RegistryUserPathStore.User.Read()).IsEqualTo(pathBefore);
 
         // And the real install's sign-in task, whether or not there is one.
-        await Assert.That(ScheduledTasks.DefinitionOf(RealSignInTask)).IsEqualTo(realTaskBefore);
+        await Assert.That(await ScheduledTasks.DefinitionOfAsync(RealSignInTask)).IsEqualTo(realTaskBefore);
     }
 
     /// <summary>
@@ -447,8 +452,8 @@ internal sealed partial class RealInstallerTests
         // the resident background since S a.
         var background = SignInTask.ArgumentsFor(dataRoot, updateSource: null);
 
-        await Assert.That(SignInCommandOf(first, background)).IsEqualTo(Path.Combine(first, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
-        await Assert.That(SignInCommandOf(second, background)).IsEqualTo(Path.Combine(second, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        await Assert.That(await SignInCommandOfAsync(first, background)).IsEqualTo(Path.Combine(first, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        await Assert.That(await SignInCommandOfAsync(second, background)).IsEqualTo(Path.Combine(second, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
 
         var (goesFirst, staysBehind) = uninstallTheNamedRootFirst ? (second, first) : (first, second);
 
@@ -465,15 +470,15 @@ internal sealed partial class RealInstallerTests
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(1);
 
         // So did the scheduler: the uninstalled root's task is gone, the other's stays.
-        await Assert.That(SignInCommandOf(goesFirst, background)).IsNull();
-        await Assert.That(SignInCommandOf(staysBehind, background)).IsNotNull();
+        await Assert.That(await SignInCommandOfAsync(goesFirst, background)).IsNull();
+        await Assert.That(await SignInCommandOfAsync(staysBehind, background)).IsNotNull();
 
         // And the root left behind still uninstalls cleanly, finding no key.
         await Assert.That(await RunAsync(Path.Combine(staysBehind, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
         await WaitOutTheDeferredRemoval(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
-        await Assert.That(SignInCommandOf(staysBehind, background)).IsNull();
+        await Assert.That(await SignInCommandOfAsync(staysBehind, background)).IsNull();
     }
 
     /// <summary>
@@ -491,9 +496,9 @@ internal sealed partial class RealInstallerTests
     /// <param name="installRoot">The scratch root the test pack was installed into.</param>
     /// <param name="arguments">The action's arguments the hook should have written.</param>
     /// <returns>The command, or <see langword="null"/>.</returns>
-    private static string? SignInCommandOf(string installRoot, string arguments)
+    private static async Task<string?> SignInCommandOfAsync(string installRoot, string arguments)
     {
-        if (StoredTaskOf(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot)) is not { } task)
+        if (await StoredTaskOfAsync(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot)) is not { } task)
         {
             return null;
         }
@@ -541,8 +546,8 @@ internal sealed partial class RealInstallerTests
     /// <summary>What the scheduler stored for a task, or <see langword="null"/> when there is no such task.</summary>
     /// <param name="name">The task's name.</param>
     /// <returns>The task.</returns>
-    private static StoredTask? StoredTaskOf(string name) =>
-        ScheduledTasks.DefinitionOf(name) is { } xml ? StoredTask.Parse(xml) : null;
+    private static async Task<StoredTask?> StoredTaskOfAsync(string name) =>
+        await ScheduledTasks.DefinitionOfAsync(name) is { } xml ? StoredTask.Parse(xml) : null;
 
     /// <summary>A command and its arguments as one comparable string, the command normalised.</summary>
     /// <param name="parts">The command, then each argument.</param>
@@ -560,7 +565,7 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     /// <param name="configDirectory">The directory <c>CLAUDE_CONFIG_DIR</c> named.</param>
     /// <returns>The entry, <see cref="Spelled"/>.</returns>
-    private static string? ClaudeEntryIn(string configDirectory)
+    private static async Task<string?> ClaudeEntryInAsync(string configDirectory)
     {
         var file = Path.Combine(configDirectory, OnboardedClientConfig.FileName);
 
@@ -569,7 +574,7 @@ internal sealed partial class RealInstallerTests
             return null;
         }
 
-        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
+        using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(file));
 
         if (!document.RootElement.TryGetProperty("mcpServers", out var servers)
             || !servers.TryGetProperty(McpRegistrar.ServerName, out var entry))
@@ -597,7 +602,7 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     /// <param name="codexHome">The directory <c>CODEX_HOME</c> named.</param>
     /// <returns>The entry, <see cref="Spelled"/>.</returns>
-    private static string? CodexEntryIn(string codexHome)
+    private static async Task<string?> CodexEntryInAsync(string codexHome)
     {
         var file = Path.Combine(codexHome, "config.toml");
 
@@ -606,7 +611,7 @@ internal sealed partial class RealInstallerTests
             return null;
         }
 
-        var text = File.ReadAllText(file);
+        var text = await File.ReadAllTextAsync(file);
         var header = Regex.Match(text, $@"(?m)^[ \t]*\[mcp_servers\.{McpRegistrar.ServerName}\][ \t]*\r?$");
 
         if (!header.Success)
@@ -651,9 +656,9 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     /// <param name="installRoot">The install root.</param>
     /// <returns>The id.</returns>
-    private static string AppUserModelIdOf(string installRoot)
+    private static async Task<string> AppUserModelIdOfAsync(string installRoot)
     {
-        var manifest = System.Xml.Linq.XDocument.Load(Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName, "sq.version"));
+        var manifest = await TestFiles.LoadXmlAsync(Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName, "sq.version"));
 
         return manifest.Descendants().FirstOrDefault(element => element.Name.LocalName == "shortcutAumid")?.Value
             ?? throw new InvalidOperationException($"The manifest under '{installRoot}' names no shortcutAumid, so the toasts' activator cannot be found.");
@@ -723,25 +728,25 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
-        using var installRoot = ScratchDirectory.CreateUnderProfile("firstrun-installed");
-        using var outside = ScratchDirectory.CreateUnderProfile("firstrun-outside");
-        using var installedData = ScratchDirectory.CreateUnderProfile("firstrun-installed-data");
-        using var outsideData = ScratchDirectory.CreateUnderProfile("firstrun-outside-data");
-        using var dataRoot = ScratchDirectory.CreateUnderProfile("firstrun-hooks-data");
-        using var clientConfig = ScratchDirectory.Create("firstrun-client");
-        using var logs = ScratchDirectory.Create("firstrun-logs");
+        using var installRoot = await ScratchDirectory.CreateUnderProfileAsync("firstrun-installed");
+        using var outside = await ScratchDirectory.CreateUnderProfileAsync("firstrun-outside");
+        using var installedData = await ScratchDirectory.CreateUnderProfileAsync("firstrun-installed-data");
+        using var outsideData = await ScratchDirectory.CreateUnderProfileAsync("firstrun-outside-data");
+        using var dataRoot = await ScratchDirectory.CreateUnderProfileAsync("firstrun-hooks-data");
+        using var clientConfig = await ScratchDirectory.CreateAsync("firstrun-client");
+        using var logs = await ScratchDirectory.CreateAsync("firstrun-logs");
 
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
-            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
+            [RegistrationTests.ConfigDirectoryVariable] = await OnboardedClientConfig.SeedAsync(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
             [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
-        var startMenuBefore = ReadStartMenuShortcuts();
+        var startMenuBefore = await ReadStartMenuShortcutsAsync();
 
         try
         {
@@ -752,16 +757,16 @@ internal sealed partial class RealInstallerTests
 
             await Assert.That(File.Exists(installed)).IsTrue();
 
-            File.Copy(installed, copy);
+            await TestFiles.CopyAsync(installed, copy);
 
             // The installed server: Run() cleared the variable, so the general exit.
-            using (var run = OrphanedConsoleStart.Begin(installed, installedData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
+            await using (var run = await OrphanedConsoleStart.BeginAsync(installed, installedData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
             {
                 await Assert.That(run.Started).IsTrue();
-                await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
+                await Assert.That(await run.WaitUntilItSaysOneOfAsync(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
                     .IsEqualTo(GeneralExitSentence)
-                    .Because(run.Records());
-                await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+                    .Because(await run.RecordsAsync());
+                await Assert.That(await run.WaitUntilItExitsAsync(TestDefaults.ProcessHang)).IsTrue();
             }
 
             // The copy outside any install: the variable is still set when the
@@ -771,13 +776,13 @@ internal sealed partial class RealInstallerTests
             // because the pack was a 1.1.0 build that still had it.* The pack is this
             // tree's build since Q287 a, so the expectation is typed and the
             // installer exit's sentence stays only as a sentence the run would stop on.
-            using (var run = OrphanedConsoleStart.Begin(copy, outsideData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
+            await using (var run = await OrphanedConsoleStart.BeginAsync(copy, outsideData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
             {
                 await Assert.That(run.Started).IsTrue();
-                await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
+                await Assert.That(await run.WaitUntilItSaysOneOfAsync(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
                     .IsEqualTo(GeneralExitSentence)
-                    .Because(run.Records());
-                await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+                    .Because(await run.RecordsAsync());
+                await Assert.That(await run.WaitUntilItExitsAsync(TestDefaults.ProcessHang)).IsTrue();
             }
 
             await Assert.That(await RunAsync(Path.Combine(installRoot.Path, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
@@ -789,7 +794,7 @@ internal sealed partial class RealInstallerTests
         }
 
         await Assert.That(ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}")).IsEqualTo(realKeyBefore);
-        await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
+        await Assert.That(Describe(await ReadStartMenuShortcutsAsync())).IsEqualTo(Describe(startMenuBefore));
     }
 
     /// <summary>What the general exit says: <c>Startup[14]</c> since 2026-10-08.</summary>
@@ -843,7 +848,7 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     /// <param name="packId">The pack id.</param>
     /// <returns>The text, the rotated file's first.</returns>
-    private static string VelopackLogOf(string packId)
+    private static async Task<string> VelopackLogOfAsync(string packId)
     {
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "velopack");
         var text = new StringBuilder();
@@ -857,10 +862,10 @@ internal sealed partial class RealInstallerTests
                 continue;
             }
 
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream);
 
-            _ = text.Append(reader.ReadToEnd());
+            _ = text.Append(await reader.ReadToEndAsync());
         }
 
         return text.ToString();
@@ -996,10 +1001,10 @@ internal sealed partial class RealInstallerTests
         var app = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
         var taskName = SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot.Path);
         var action = SignInTask.ArgumentsFor(dataRoot.Path, sandbox.UpdateFeed);
-        var task = StoredTaskOf(taskName);
+        var task = await StoredTaskOfAsync(taskName);
         var saved = Path.Combine(installRoot.Path, SignInTask.SavedDefinitionFileName);
         var kept = File.Exists(saved) ? StoredTask.Parse(await File.ReadAllTextAsync(saved)) : null;
-        var aumid = AppUserModelIdOf(installRoot.Path);
+        var aumid = await AppUserModelIdOfAsync(installRoot.Path);
 
         IReadOnlyList<string> relay = [app, RegistrationTarget.McpArgument, SignInTask.DataRootArgument, dataRoot.Path];
 
@@ -1008,14 +1013,14 @@ internal sealed partial class RealInstallerTests
             await Assert.That(task?.Command is { } command ? Normalised(command) : "<no task>").IsEqualTo(Normalised(app));
             await Assert.That(task?.Arguments).IsEqualTo(action);
             await Assert.That(task?.InstancesPolicy).IsEqualTo(StoredTask.IgnoreNew);
-            await Assert.That(ScheduledTasks.DefinitionOf(SignInTask.NameFor(ReleaseLayout.PackId, installRoot.Path))).IsNull();
+            await Assert.That(await ScheduledTasks.DefinitionOfAsync(SignInTask.NameFor(ReleaseLayout.PackId, installRoot.Path))).IsNull();
 
             await Assert.That(kept?.Command is { } savedCommand ? Normalised(savedCommand) : "<no saved definition>").IsEqualTo(Normalised(app));
             await Assert.That(kept?.Arguments).IsEqualTo(action);
             await Assert.That(kept?.InstancesPolicy).IsEqualTo(StoredTask.IgnoreNew);
 
-            await Assert.That(ClaudeEntryIn(sandbox.ClaudeConfig)).IsEqualTo(Spelled(relay));
-            await Assert.That(CodexEntryIn(sandbox.CodexHome)).IsEqualTo(Spelled(relay));
+            await Assert.That(await ClaudeEntryInAsync(sandbox.ClaudeConfig)).IsEqualTo(Spelled(relay));
+            await Assert.That(await CodexEntryInAsync(sandbox.CodexHome)).IsEqualTo(Spelled(relay));
 
             await Assert.That(ToastActivatorOf(aumid)).IsEqualTo(ExpectedToastActivator(aumid, app));
         }
@@ -1026,7 +1031,7 @@ internal sealed partial class RealInstallerTests
         // 0 of the 332 hooks this machine's Velopack logs recorded carried one, read the
         // same day. The task's name holds this install root's key, so the line found is
         // this arm's and no other run's. Planted red against the hooks as they were.
-        await Assert.That(VelopackLogOf(ReleaseLayout.TestPackId))
+        await Assert.That(await VelopackLogOfAsync(ReleaseLayout.TestPackId))
             .Contains($"-- sign-in task ({RegistrationIntent.Install}): The task '{taskName}' is registered.");
 
         // ---- And uninstall, in the same sandbox --------------------------------
@@ -1054,10 +1059,10 @@ internal sealed partial class RealInstallerTests
         // toasts' activator.
         using (Assert.Multiple())
         {
-            await Assert.That(ScheduledTasks.DefinitionOf(taskName)).IsNull();
+            await Assert.That(await ScheduledTasks.DefinitionOfAsync(taskName)).IsNull();
             await Assert.That(File.Exists(saved)).IsFalse();
-            await Assert.That(ClaudeEntryIn(sandbox.ClaudeConfig)).IsNull();
-            await Assert.That(CodexEntryIn(sandbox.CodexHome)).IsNull();
+            await Assert.That(await ClaudeEntryInAsync(sandbox.ClaudeConfig)).IsNull();
+            await Assert.That(await CodexEntryInAsync(sandbox.CodexHome)).IsNull();
             await Assert.That(ToastActivatorOf(aumid)).IsNull();
         }
     }
@@ -1100,7 +1105,7 @@ internal sealed partial class RealInstallerTests
         // at its path and died before putting it back would otherwise run the
         // stand-in, a copy of cmd.exe, as the uninstaller; one that cannot be put back
         // is not run at all, and the steps below take back what they can by name.
-        var theInstallersOwn = PutTheUpdaterBack(installRoot);
+        var theInstallersOwn = await PutTheUpdaterBackAsync(installRoot);
         var update = Path.Combine(installRoot, "Update.exe");
 
         if (theInstallersOwn && File.Exists(update))
@@ -1123,7 +1128,7 @@ internal sealed partial class RealInstallerTests
         // maintainer's, and deleting that is the defect this whole split exists
         // to stop. The read happens before the tree goes, which is why the paths
         // are gathered first and removed after.
-        foreach (var (name, bytes) in ReadStartMenuShortcuts())
+        foreach (var (name, bytes) in await ReadStartMenuShortcutsAsync())
         {
             if (!Mentions(bytes, installRoot))
             {
@@ -1155,7 +1160,7 @@ internal sealed partial class RealInstallerTests
         // key>`, and an arm that died before its uninstall would leave it in the
         // person's scheduler. The name is this root's under the test id and can be
         // nobody else's.
-        _ = ScheduledTasks.Instance.Remove(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot));
+        _ = await ScheduledTasks.Instance.RemoveAsync(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot));
 
         try
         {
@@ -1259,7 +1264,7 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears()
     {
-        _ = SuiteEnvironment.RequireReleaseInstaller();
+        _ = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
         // ⚠️ THE TWIN, SINCE Q287 a -- 2026-09-24. *Previously the shipping pack in
         // Releases, which a release cut left beside the test pack of the same
@@ -1280,8 +1285,8 @@ internal sealed partial class RealInstallerTests
         using var a = await ZipFile.OpenReadAsync(shipping!.FullName);
         using var b = await ZipFile.OpenReadAsync(mine!.FullName);
 
-        var left = Entries(a, ReleaseLayout.PackId);
-        var right = Entries(b, ReleaseLayout.TestPackId);
+        var left = await EntriesAsync(a, ReleaseLayout.PackId);
+        var right = await EntriesAsync(b, ReleaseLayout.TestPackId);
 
         // The same files, once the id is taken out of their names.
         await Assert.That(string.Join(", ", left.Keys.Except(right.Keys).Order(StringComparer.Ordinal))).IsEmpty();
@@ -1397,7 +1402,7 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task TheSuitesInstallerIsTheBuildThisRunTested()
     {
-        using var scratch = ScratchDirectory.Create("test-pack-bytes");
+        using var scratch = await ScratchDirectory.CreateAsync("test-pack-bytes");
 
         // One executable since 2026-10-08, D7 a (previously the server and the app,
         // each compared on its own).
@@ -1415,20 +1420,20 @@ internal sealed partial class RealInstallerTests
         await PackageAsync(other, ("lib/app/BrowserAI.exe", "the one executable's bytes, one release ago"));
         await PackageAsync(missing, ("lib/app/payload/payload.json", "a package with no executable"));
 
-        await Assert.That(ReleaseLayout.MismatchBetween(same, binaries)).IsNull();
-        await Assert.That(ReleaseLayout.MismatchBetween(other, binaries)).Contains("BrowserAI.exe");
-        await Assert.That(ReleaseLayout.MismatchBetween(missing, binaries)).Contains("carries no lib/app/BrowserAI.exe");
+        await Assert.That(await ReleaseLayout.MismatchBetweenAsync(same, binaries)).IsNull();
+        await Assert.That(await ReleaseLayout.MismatchBetweenAsync(other, binaries)).Contains("BrowserAI.exe");
+        await Assert.That(await ReleaseLayout.MismatchBetweenAsync(missing, binaries)).Contains("carries no lib/app/BrowserAI.exe");
 
         // ---- The live half: this run's installer is this run's build.
-        _ = SuiteEnvironment.RequireReleaseInstaller();
+        _ = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
-        await Assert.That(ReleaseLayout.TestPackMismatch).IsNull();
+        await Assert.That(await ReleaseLayout.TestPackMismatchAsync()).IsNull();
     }
 
     /// <summary>Writes a package holding the given entries.</summary>
     private static async Task PackageAsync(string path, params (string Entry, string Text)[] entries)
     {
-        await using var stream = File.Create(path);
+        await using var stream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
 
         foreach (var (entry, text) in entries)
@@ -1474,7 +1479,7 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task ThePackNamesTheOneExecutableAsItsMainExeAndCarriesItAlone()
     {
-        _ = SuiteEnvironment.RequireReleaseInstaller();
+        _ = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
         var package = ReleaseLayout.FullPackage(test: true);
 
@@ -1515,16 +1520,16 @@ internal sealed partial class RealInstallerTests
     /// <param name="archive">The package.</param>
     /// <param name="id">The pack id to take out of the names.</param>
     /// <returns>The entries.</returns>
-    private static Dictionary<string, byte[]> Entries(ZipArchive archive, string id)
+    private static async Task<Dictionary<string, byte[]>> EntriesAsync(ZipArchive archive, string id)
     {
         var entries = new Dictionary<string, byte[]>(StringComparer.Ordinal);
 
         foreach (var entry in archive.Entries)
         {
-            using var stream = entry.Open();
+            await using var stream = await entry.OpenAsync();
             using var bytes = new MemoryStream();
 
-            stream.CopyTo(bytes);
+            await stream.CopyToAsync(bytes);
             entries[NormaliseEntryName(entry.FullName, id)] = bytes.ToArray();
         }
 
@@ -1689,7 +1694,7 @@ internal sealed partial class RealInstallerTests
     /// <summary>Plants files whose content is their own name, and records their hashes.</summary>
     /// <param name="paths">The scratch data seam.</param>
     /// <returns>Each planted path and the SHA-256 it held.</returns>
-    private static List<(string Path, string Sha256)> Plant(LocalAppDataPaths paths)
+    private static async Task<List<(string Path, string Sha256)>> PlantAsync(LocalAppDataPaths paths)
     {
         var planted = new List<(string Path, string Sha256)>();
 
@@ -1705,8 +1710,8 @@ internal sealed partial class RealInstallerTests
 
             var path = Path.Combine(directory, name);
 
-            File.WriteAllText(path, $"planted by the suite at {DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture)} -- {path}");
-            planted.Add((path, Hash(path)));
+            await File.WriteAllTextAsync(path, $"planted by the suite at {DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture)} -- {path}");
+            planted.Add((path, await HashAsync(path)));
         }
 
         return planted;
@@ -1762,7 +1767,7 @@ internal sealed partial class RealInstallerTests
                 continue;
             }
 
-            var now = Hash(path);
+            var now = await HashAsync(path);
 
             if (!string.Equals(now, sha, StringComparison.Ordinal))
             {
@@ -1806,7 +1811,7 @@ internal sealed partial class RealInstallerTests
             && RolledProcessLog().IsMatch(segments[1]);
     }
 
-    private static string Hash(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+    private static async Task<string> HashAsync(string path) => Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(path)));
 
     private static async Task<int> RunAsync(string executable, string[] arguments)
     {

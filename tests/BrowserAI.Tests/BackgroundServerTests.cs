@@ -62,10 +62,10 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AGreetingIsAnsweredWithTheBuildAndPidAndTheRelaysTrafficThenReachesTheSessionHost()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         var idleAt = rig.Clock.GetUtcNow() + RelayConstants.IdleCountdown;
-        using var relay = rig.Connect();
+        using var relay = await rig.ConnectAsync();
 
         await relay.SendAsync(rig.Hello(idleAt: idleAt));
         var hello = await relay.NextAsync();
@@ -149,8 +149,8 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task EachRefusalCarriesItsSentenceAndItsKindAndNoRefusedRelayIsAdmitted()
     {
-        await using var rig = BackgroundServerRig.Start();
-        using var elsewhere = ScratchDirectory.Create("background-other-data-root");
+        await using var rig = await BackgroundServerRig.StartAsync();
+        using var elsewhere = await ScratchDirectory.CreateAsync("background-other-data-root");
 
         const string Older = "9.9.8-an-older-build";
 
@@ -183,7 +183,7 @@ internal sealed class BackgroundServerTests
         await Assert.That(Sentence(none)).EndsWith("and the client's BrowserAI was registered for no data root, so it is not served here.");
 
         // The positive control: the same root in another spelling is served.
-        using (var sameRoot = rig.Connect())
+        using (var sameRoot = await rig.ConnectAsync())
         {
             await sameRoot.SendAsync(rig.Hello(dataRoot: rig.Identity.DataRoot.ToUpperInvariant() + Path.DirectorySeparatorChar));
 
@@ -245,7 +245,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AShowIsAnsweredWithThePagesAddressAndAStopCallsTheBackgroundsStop()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         var sessions = await AskAsync(rig, BackgroundPipe.Show, new JsonObject { ["page"] = "sessions" });
 
@@ -281,7 +281,7 @@ internal sealed class BackgroundServerTests
         await Assert.That(Kind(unknown)).IsEqualTo("method");
 
         // A notification first asks nothing: closed, with no answer and no verb called.
-        using (var notifier = rig.Connect())
+        using (var notifier = await rig.ConnectAsync())
         {
             await notifier.SendAsync($$"""{"jsonrpc":"2.0","method":"{{BackgroundPipe.Show}}"}""");
 
@@ -328,13 +328,13 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AConnectionThatNeverSendsItsFirstMessageHoldsUpNoOther()
     {
-        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
+        await using var rig = await BackgroundServerRig.StartAsync(boundOnTheClock: true);
 
-        using var silent = rig.Connect();
+        using var silent = await rig.ConnectAsync();
 
         await rig.FirstMessageBoundsArmedAsync(1);
 
-        using var halfway = rig.Connect();
+        using var halfway = await rig.ConnectAsync();
 
         await rig.FirstMessageBoundsArmedAsync(2);
         await halfway.SendPartAsync("""{"jsonrpc":"2.0","id":"browserai-start-half","method":""");
@@ -345,7 +345,7 @@ internal sealed class BackgroundServerTests
         await Assert.That(Json.Text(shown.Result, "address")).IsEqualTo(FakeBackgroundVerbs.DefaultAddress).Because(shown.Text);
 
         // And so is a relay.
-        using (var relay = rig.Connect())
+        using (var relay = await rig.ConnectAsync())
         {
             await relay.SendAsync(rig.Hello());
 
@@ -403,9 +403,9 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AFirstMessageIsWaitedForAsLongAsARelayHoldsACall()
     {
-        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
+        await using var rig = await BackgroundServerRig.StartAsync(boundOnTheClock: true);
 
-        using var late = rig.Connect();
+        using var late = await rig.ConnectAsync();
 
         await rig.FirstMessageBoundsArmedAsync(1);
 
@@ -459,13 +459,13 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AConnectionWhoseFirstMessageHasNotComeWhenTheBoundRunsOutIsRefusedAndClosed()
     {
-        await using var rig = BackgroundServerRig.Start(boundOnTheClock: true);
+        await using var rig = await BackgroundServerRig.StartAsync(boundOnTheClock: true);
 
-        using var silent = rig.Connect();
+        using var silent = await rig.ConnectAsync();
 
         await rig.FirstMessageBoundsArmedAsync(1);
 
-        using var halfway = rig.Connect();
+        using var halfway = await rig.ConnectAsync();
 
         await rig.FirstMessageBoundsArmedAsync(2);
         await halfway.SendPartAsync("""{"jsonrpc":"2.0","id":"browserai-start-half","method":""");
@@ -522,7 +522,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task ASecondBackgroundOnTheSameNameFailsWithAccessDeniedAndTheFirstServesOn()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         var second = TryToServe(rig, new FakeBackgroundVerbs(), out var refusal);
 
@@ -582,7 +582,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task TheRosterHearsARelaysActivityAndAWithdrawnYesAndNothingElseOfItsOwnGoesFurther()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         var greeted = rig.Clock.GetUtcNow() + RelayConstants.IdleCountdown;
         using var relay = await rig.ConnectARelayAsync(greeted);
@@ -643,7 +643,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AReadyToEndQuestionTravelsOnTheRelaysConnectionAndItsAnswerIsReadAsGiven()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         var greeted = rig.Clock.GetUtcNow() + RelayConstants.IdleCountdown;
         using var relay = await rig.ConnectARelayAsync(greeted);
@@ -717,7 +717,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task ACallOffAndAnEndReachTheRelayAndTheEndWaitsForItsConnectionToClose()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         using var relay = await rig.ConnectARelayAsync();
 
@@ -776,7 +776,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task ARelayTheUpdateEndsLeavesWhatItDroveRecordingTheUpdate()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         // ---- The control: a relay that goes on its own.
         var gone = Path.Combine(rig.Sessions.Root, "let-go-when-its-relay-went");
@@ -790,7 +790,7 @@ internal sealed class BackgroundServerTests
 
         await BackgroundServerRig.WaitUntilAsync(() => rig.Host.Sessions.Find(gone) is null, "the session of a relay that went was never let go");
 
-        await Assert.That(SessionLock.ReadRecord(SessionPath.For(gone))!.LastClose!.Value.Cause).IsEqualTo(SessionCloseCause.Released);
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(gone)))!.LastClose!.Value.Cause).IsEqualTo(SessionCloseCause.Released);
 
         // ---- The relay the update ends.
         var ended = Path.Combine(rig.Sessions.Root, "let-go-when-the-update-ended-its-relay");
@@ -814,7 +814,7 @@ internal sealed class BackgroundServerTests
         await ending.WaitAsync(TestDefaults.InProcessHang);
         await BackgroundServerRig.WaitUntilAsync(() => rig.Host.Sessions.Find(ended) is null, "the session of the relay the update ended was never let go");
 
-        var close = SessionLock.ReadRecord(SessionPath.For(ended))!.LastClose!;
+        var close = (await SessionLock.ReadRecordAsync(SessionPath.For(ended)))!.LastClose!;
 
         await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Updating);
         await Assert.That(CloseReasons.Of(close)).EndsWith("to install an update.");
@@ -844,7 +844,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task ARelayWhoseLinkFailsKeepsNoOtherFromBeingToldToEnd()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         // First in the roster's order, ahead of the relay the background accepts next.
         var failing = new FailingRelayLink(new ObjectDisposedException("the failing relay's connection"));
@@ -896,9 +896,16 @@ internal sealed class BackgroundServerTests
     /// <b>The listener is held by the product's seam</b>,
     /// <see cref="BackgroundServer.Accepted"/>, between taking the connection and serving
     /// it, until the stop is waiting for the listener: the one moment that ordering is
-    /// about. The stop runs on a thread of its own, because it joins the listener
-    /// thread and blocks there; the stop's own record says how many connections it
-    /// waits for, which is what the order decides.
+    /// about. The stop's own record says how many connections it waits for, which is
+    /// what the order decides.
+    /// </para>
+    /// <para>
+    /// <b>The stop is awaited since 2026-10-11</b>, the maintainer's decision 54: it awaits
+    /// the listener, so the stop that has begun and not ended is waiting for the
+    /// listener the seam holds, which the arm asserts before it lets the seam go.
+    /// <i>Corrected that day (previously "The stop runs on a thread of its own, because it
+    /// joins the listener thread and blocks there", with the thread's state read for the
+    /// wait).</i>
     /// </para>
     /// <para>
     /// <b>Planted red 2026-10-10</b> against a stop that took its list before it joined
@@ -909,41 +916,35 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task AConnectionAcceptedWhileTheBackgroundStopsIsWaitedFor()
     {
-        using var accepted = new SemaphoreSlim(0);
-        using var release = new ManualResetEventSlim(initialState: false);
+        var accepted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = BackgroundServerRig.Start(accepted: () =>
+        await using var rig = await BackgroundServerRig.StartAsync(accepted: async () =>
         {
-            _ = accepted.Release();
-            _ = release.Wait(TestDefaults.InProcessHang);
+            _ = accepted.TrySetResult();
+            await release.Task.WaitAsync(TestDefaults.InProcessHang);
         });
 
-        using var client = rig.Connect();
+        using var client = await rig.ConnectAsync();
 
-        await Assert.That(await accepted.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
+        await accepted.Task.WaitAsync(TestDefaults.InProcessHang);
 
-        var stopping = new Thread(() => rig.Server.DisposeAsync().AsTask().GetAwaiter().GetResult())
-        {
-            IsBackground = true,
-            Name = "BrowserAI suite stop",
-        };
+        Task stopping;
 
         try
         {
-            stopping.Start();
+            // The stop has stopped the listener's loop and awaits the listener the seam
+            // is holding, so it has begun and cannot end.
+            stopping = rig.Server.DisposeAsync().AsTask();
 
-            // The stop has stopped the listener's loop and is waiting for the thread
-            // the seam is holding.
-            await BackgroundServerRig.WaitUntilAsync(
-                () => (stopping.ThreadState & ThreadState.WaitSleepJoin) is not 0,
-                "the stop never came to wait for its listener");
+            await Assert.That(stopping.IsCompleted).IsFalse().Because("the stop must wait for the listener the seam holds");
         }
         finally
         {
-            release.Set();
+            _ = release.TrySetResult();
         }
 
-        await Assert.That(stopping.Join(TestDefaults.InProcessHang)).IsTrue().Because("the stop never finished");
+        await stopping.WaitAsync(TestDefaults.InProcessHang);
 
         var waited = rig.Logs.Records.Where(record => record.EventId.Id is 9).Select(record => record.Message).ToList();
 
@@ -975,7 +976,7 @@ internal sealed class BackgroundServerTests
     public async Task TheStopsWaitCountsOnlyConnectionsStillOpenAndWithNoneWritesNoLine()
     {
         // No connection at all.
-        await using (var quiet = BackgroundServerRig.Start())
+        await using (var quiet = await BackgroundServerRig.StartAsync())
         {
             await quiet.Server.DisposeAsync();
 
@@ -985,7 +986,7 @@ internal sealed class BackgroundServerTests
         }
 
         // A relay that came and went before the stop.
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
 
         using (var gone = await rig.ConnectARelayAsync())
         {
@@ -1029,7 +1030,7 @@ internal sealed class BackgroundServerTests
         var navigate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var snapshot = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { HoldUntil = navigate.Task };
@@ -1038,7 +1039,7 @@ internal sealed class BackgroundServerTests
             },
             opensDefaultSession: false);
 
-        await using var rig = BackgroundServerRig.Start(sessions: sessions);
+        await using var rig = await BackgroundServerRig.StartAsync(sessions: sessions);
 
         // The holds are let go before the background and its sessions are disposed,
         // which is the order the declarations above give.
@@ -1108,7 +1109,7 @@ internal sealed class BackgroundServerTests
     [Test]
     public async Task TheSessionsPageDescribesTheBackgroundAndEachRelayFromMemory()
     {
-        await using var rig = BackgroundServerRig.Start();
+        await using var rig = await BackgroundServerRig.StartAsync();
         using var relay = await rig.ConnectARelayAsync();
         using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
 
@@ -1172,7 +1173,7 @@ internal sealed class BackgroundServerTests
         const long Started = 134360637732277608;
         const string Window = "1200-134360600000000000";
 
-        using var scratch = ScratchDirectory.Create("background-conversation");
+        using var scratch = await ScratchDirectory.CreateAsync("background-conversation");
         var config = Path.Combine(scratch.Path, "claude-config");
         var project = Path.Combine(config, "projects", ClaudeCodeRecords.Slug(BackgroundPipeClient.Folder));
 
@@ -1191,8 +1192,8 @@ internal sealed class BackgroundServerTests
 
             """);
 
-        await using var rig = BackgroundServerRig.Start();
-        using var relay = rig.Connect();
+        await using var rig = await BackgroundServerRig.StartAsync();
+        using var relay = await rig.ConnectAsync();
 
         await relay.SendAsync(Hello(rig, BackgroundPipeClient.ClientName, new ConversationFacts(config, Started, null, null, null), Window));
         await Assert.That((await relay.NextAsync()).Result).IsNotNull();
@@ -1203,7 +1204,7 @@ internal sealed class BackgroundServerTests
         await Assert.That(rig.OnlyRelay().Conversation).IsNull();
 
         // A draw reads the records.
-        var drawn = rig.Roster.ConnectedWithNames().Single();
+        var drawn = (await rig.Roster.ConnectedWithNamesAsync()).Single();
 
         await Assert.That(drawn.Conversation).IsEqualTo(Session);
         await Assert.That(drawn.Label).IsEqualTo(new ConversationName("Apple scales", IsTitle: true));
@@ -1212,7 +1213,7 @@ internal sealed class BackgroundServerTests
         // And again at the next draw: a rename is seen with no message from anybody.
         await File.AppendAllTextAsync(record, """{"type":"custom-title","customTitle":"Apples, renamed"}""" + "\n");
 
-        await Assert.That(rig.Roster.ConnectedWithNames().Single().Label?.Text).IsEqualTo("Apples, renamed");
+        await Assert.That((await rig.Roster.ConnectedWithNamesAsync()).Single().Label?.Text).IsEqualTo("Apples, renamed");
 
         // The sessions page reads the same, with the window.
         var page = await new BackgroundPageSessions(rig.Host, rig.Roster, rig.Clock).ReadAsync(CancellationToken.None);
@@ -1289,7 +1290,7 @@ internal sealed class BackgroundServerTests
         const string Thread = "dddddddd-4444-7444-8444-444444444444";
         const string Other = "eeeeeeee-5555-7555-8555-555555555555";
 
-        using var scratch = ScratchDirectory.Create("background-codex");
+        using var scratch = await ScratchDirectory.CreateAsync("background-codex");
         var home = Path.Combine(scratch.Path, "codex-home");
 
         _ = Directory.CreateDirectory(home);
@@ -1299,15 +1300,15 @@ internal sealed class BackgroundServerTests
 
             """);
 
-        await using var rig = BackgroundServerRig.Start();
-        using var relay = rig.Connect();
+        await using var rig = await BackgroundServerRig.StartAsync();
+        using var relay = await rig.ConnectAsync();
 
         await relay.SendAsync(Hello(rig, "codex-mcp-client", new ConversationFacts(null, null, null, null, home), window: null));
         await Assert.That((await relay.NextAsync()).Result).IsNotNull();
         _ = await relay.InitializeAsync();
         _ = await relay.ListAsync();
 
-        var before = rig.Roster.ConnectedWithNames().Single();
+        var before = (await rig.Roster.ConnectedWithNamesAsync()).Single();
 
         await Assert.That(before.Label).IsEqualTo(new ConversationName("Codex in BackgroundTests", IsTitle: false));
         await Assert.That(before.Conversation).IsNull();
@@ -1316,7 +1317,7 @@ internal sealed class BackgroundServerTests
         // naming no session, says the link has read it.
         _ = await relay.RequestAsync("tools/call", CodexCall(Thread));
 
-        var after = rig.Roster.ConnectedWithNames().Single();
+        var after = (await rig.Roster.ConnectedWithNamesAsync()).Single();
 
         await Assert.That(after.Conversation).IsEqualTo(Thread);
         await Assert.That(after.Label).IsEqualTo(new ConversationName("Lemon list", IsTitle: true));
@@ -1324,7 +1325,7 @@ internal sealed class BackgroundServerTests
         // A later call naming another thread changes nothing: one server, one thread.
         _ = await relay.RequestAsync("tools/call", CodexCall(Other));
 
-        await Assert.That(rig.Roster.ConnectedWithNames().Single().Label?.Text).IsEqualTo("Lemon list");
+        await Assert.That((await rig.Roster.ConnectedWithNamesAsync()).Single().Label?.Text).IsEqualTo("Lemon list");
     }
 
     /// <summary>
@@ -1348,7 +1349,7 @@ internal sealed class BackgroundServerTests
         const string Thread = "dddddddd-4444-7444-8444-444444444444";
         const string FirstMessage = "Count the lemons in the crate";
 
-        using var scratch = ScratchDirectory.Create("background-codex-first");
+        using var scratch = await ScratchDirectory.CreateAsync("background-codex-first");
         var home = Path.Combine(scratch.Path, "codex-home");
         var day = Path.Combine(home, "sessions", "2026", "10", "09");
 
@@ -1360,8 +1361,8 @@ internal sealed class BackgroundServerTests
 
             """.Replace("THREAD", Thread, StringComparison.Ordinal).Replace("MESSAGE", FirstMessage, StringComparison.Ordinal));
 
-        await using var rig = BackgroundServerRig.Start();
-        using var relay = rig.Connect();
+        await using var rig = await BackgroundServerRig.StartAsync();
+        using var relay = await rig.ConnectAsync();
 
         await relay.SendAsync(Hello(rig, "codex-mcp-client", new ConversationFacts(null, null, null, null, home), window: null));
         await Assert.That((await relay.NextAsync()).Result).IsNotNull();
@@ -1369,7 +1370,7 @@ internal sealed class BackgroundServerTests
         _ = await relay.ListAsync();
         _ = await relay.RequestAsync("tools/call", CodexCall(Thread));
 
-        var drawn = rig.Roster.ConnectedWithNames().Single();
+        var drawn = (await rig.Roster.ConnectedWithNamesAsync()).Single();
 
         await Assert.That(drawn.Label).IsEqualTo(new ConversationName(FirstMessage, IsTitle: true));
 
@@ -1423,7 +1424,7 @@ internal sealed class BackgroundServerTests
     /// <returns>The answer.</returns>
     private static async Task<WireFrame> AskAsync(BackgroundServerRig rig, string method, JsonObject? parameters)
     {
-        using var start = rig.Connect();
+        using var start = await rig.ConnectAsync();
 
         await start.SendAsync(new JsonObject
         {
@@ -1447,7 +1448,7 @@ internal sealed class BackgroundServerTests
     /// <returns>The refusal.</returns>
     private static async Task<WireFrame> RefusedAsync(BackgroundServerRig rig, string hello)
     {
-        using var relay = rig.Connect();
+        using var relay = await rig.ConnectAsync();
 
         await relay.SendAsync(hello);
 

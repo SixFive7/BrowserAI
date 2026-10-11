@@ -31,17 +31,17 @@ internal sealed class BackgroundPageFoldersTests
     [Test]
     public async Task EveryIndexedSessionAndEveryHeldOneIsWeighedAndAJunctionInsideOneIsNotFollowed()
     {
-        using var scratch = ScratchDirectory.Create("page-folders");
+        using var scratch = await ScratchDirectory.CreateAsync("page-folders");
 
         var paths = new LocalAppDataPaths(Path.Combine(scratch.Path, "appdata"));
         var index = new SessionIndex(paths, NullLogger.Instance);
 
-        var first = Session(scratch.Path, "first", 3_000);
-        var second = Session(scratch.Path, "second", 5_000);
-        var held = Session(scratch.Path, "held", 700);
+        var first = await SessionAsync(scratch.Path, "first", 3_000);
+        var second = await SessionAsync(scratch.Path, "second", 5_000);
+        var held = await SessionAsync(scratch.Path, "held", 700);
 
-        index.Record(SessionPath.For(first));
-        index.Record(SessionPath.For(second));
+        await index.RecordAsync(SessionPath.For(first));
+        await index.RecordAsync(SessionPath.For(second));
 
         // A junction inside the second session, to a folder that weighs a mebibyte.
         var big = Directory.CreateDirectory(Path.Combine(scratch.Path, "big")).FullName;
@@ -53,11 +53,11 @@ internal sealed class BackgroundPageFoldersTests
         var stranger = Directory.CreateDirectory(Path.Combine(scratch.Path, "stranger")).FullName;
 
         await File.WriteAllBytesAsync(Path.Combine(stranger, "profile.bin"), new byte[4_000]);
-        index.Record(SessionPath.For(stranger));
-        index.Record(SessionPath.For(Path.Combine(scratch.Path, "gone")));
+        await index.RecordAsync(SessionPath.For(stranger));
+        await index.RecordAsync(SessionPath.For(Path.Combine(scratch.Path, "gone")));
 
         var entries = Directory.GetFiles(index.Root).Length;
-        var measured = new BackgroundPageFolders(index, () => [held], new ManualClock()).Measure();
+        var measured = await new BackgroundPageFolders(index, () => [held], new ManualClock()).MeasureAsync();
 
         await Assert.That(string.Join(" | ", measured.Folders.Select(folder => folder.Directory)))
             .IsEqualTo(string.Join(" | ", new[] { second, first, held }));
@@ -80,12 +80,12 @@ internal sealed class BackgroundPageFoldersTests
     private static readonly byte[] Record = "a session's record"u8.ToArray();
 
     /// <summary>A folder holding a session's record and one file of the given weight.</summary>
-    private static string Session(string under, string name, int bytes)
+    private static async Task<string> SessionAsync(string under, string name, int bytes)
     {
         var directory = Directory.CreateDirectory(Path.Combine(under, name)).FullName;
 
-        File.WriteAllBytes(Path.Combine(directory, SessionLayout.DataFileName), Record);
-        File.WriteAllBytes(Path.Combine(directory, "page.bin"), new byte[bytes]);
+        await File.WriteAllBytesAsync(Path.Combine(directory, SessionLayout.DataFileName), Record);
+        await File.WriteAllBytesAsync(Path.Combine(directory, "page.bin"), new byte[bytes]);
 
         return directory;
     }

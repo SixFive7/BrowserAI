@@ -55,7 +55,7 @@ internal sealed class CodexStateTests
     [Test]
     public async Task CodexsStateIsReadAsASecondReaderReadsItAndNoFileAppearsBesideIt()
     {
-        using var scratch = ScratchDirectory.Create("codex-state");
+        using var scratch = await ScratchDirectory.CreateAsync("codex-state");
 
         // Closed cleanly: write-ahead-log mode, its log checkpointed away at the close.
         var closed = Path.Combine(scratch.Path, "home #1 100% Zo\u00EB");
@@ -95,8 +95,8 @@ internal sealed class CodexStateTests
         var orphanDatabase = Path.Combine(orphan, CodexState.FileName);
 
         _ = Directory.CreateDirectory(orphan);
-        CopyShared(liveDatabase, orphanDatabase);
-        CopyShared(liveDatabase + "-wal", orphanDatabase + "-wal");
+        await CopySharedAsync(liveDatabase, orphanDatabase);
+        await CopySharedAsync(liveDatabase + "-wal", orphanDatabase + "-wal");
 
         await Assert.That(CodexState.TitleOf(orphanDatabase, Thread)).IsNull();
         await Assert.That(FilesIn(orphan)).IsEqualTo($"{CodexState.FileName}, {CodexState.FileName}-wal");
@@ -139,11 +139,11 @@ internal sealed class CodexStateTests
         string.Join(", ", Directory.EnumerateFiles(folder).Select(Path.GetFileName).Order(StringComparer.Ordinal));
 
     /// <summary>A copy of a file a writer holds, read sharing everything.</summary>
-    private static void CopyShared(string from, string to)
+    private static async Task CopySharedAsync(string from, string to)
     {
-        using var source = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        using var target = new FileStream(to, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        await using var source = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
+        await using var target = new FileStream(to, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
-        source.CopyTo(target);
+        await source.CopyToAsync(target);
     }
 }

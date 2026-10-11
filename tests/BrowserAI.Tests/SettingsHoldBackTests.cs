@@ -52,7 +52,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task AnInitOrResumeThatLeavesOutAStatedSettingIsRefusedNamingEveryOneAndCreatesNothing()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "four-settings");
@@ -97,7 +97,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task AnInitWithALongerIdleTimeIsHeldBackOnceWithTheWarningAndNothingElseAtInitIs()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var longer = Path.Combine(rig.Root, "longer-idle");
@@ -146,7 +146,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task AResumeThatChangesSettingsIsHeldBackOnceNamingEachDifferenceAndTheSameCallGoesThrough()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "changed-settings");
@@ -209,7 +209,7 @@ internal sealed class SettingsHoldBackTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "switched");
@@ -249,9 +249,9 @@ internal sealed class SettingsHoldBackTests
         var after = rig.SessionChildren[^1];
 
         await Assert.That(after).IsNotSameReferenceAs(before);
-        await Assert.That((bool?)ConfigOf(rig.Launches[^1])["browser"]?["launchOptions"]?["headless"]).IsFalse();
+        await Assert.That((bool?)(await ConfigOfAsync(rig.Launches[^1]))["browser"]?["launchOptions"]?["headless"]).IsFalse();
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         await Assert.That(record.ClosedHistory[^1].Value.Cause).IsEqualTo(SessionCloseCause.SettingsChanged);
         await Assert.That(record.SettingsHistory[^1].Value).IsEqualTo(Run(asked).Write());
@@ -271,7 +271,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task TheLastRunsSettingsAsTheHoldBackWritesThemGoThroughAtOnce()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "kept-as-it-was");
@@ -309,7 +309,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task TheSameChangedCallGoesThroughOnlyOnTheConnectionThatWasHeldBack()
     {
-        await using var sessions = Sessions(new ManualClock());
+        await using var sessions = await SessionsAsync(new ManualClock());
         await using var host = await SessionHostRig.StartAsync(sessions);
 
         var first = await host.ConnectAsync("the first client");
@@ -348,7 +348,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task ASessionNobodyHoldsIsComparedWithTheSettingsItsRecordKeeps()
     {
-        await using var sessions = Sessions(new ManualClock());
+        await using var sessions = await SessionsAsync(new ManualClock());
         await using var host = await SessionHostRig.StartAsync(sessions);
 
         var first = await host.ConnectAsync("the client that made the session");
@@ -361,7 +361,7 @@ internal sealed class SettingsHoldBackTests
         await first.EndAsync();
         await WaitUntilAsync(() => host.Host.Sessions.Find(directory) is null, "the session was never let go");
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         await Assert.That(record.SettingsHistory.Count).IsEqualTo(1);
         await Assert.That(record.SettingsHistory[0].Value).IsEqualTo(Run(made).Write());
@@ -384,7 +384,7 @@ internal sealed class SettingsHoldBackTests
 
         await Assert.That((bool?)same["isError"]).IsFalse();
 
-        var after = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var after = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         await Assert.That(after.SettingsHistory.Count).IsEqualTo(2);
         await Assert.That(after.SettingsHistory[^1].Value).IsEqualTo(Run(asked).Write());
@@ -405,7 +405,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task AResumeOfASessionAnotherBrowserAiHoldsIsRefusedAtOnceAndNotHeldBack()
     {
-        await using var sessions = Sessions(new ManualClock());
+        await using var sessions = await SessionsAsync(new ManualClock());
         await using var host = await SessionHostRig.StartAsync(sessions);
 
         var first = await host.ConnectAsync("the client that made the session");
@@ -418,10 +418,10 @@ internal sealed class SettingsHoldBackTests
         await WaitUntilAsync(() => host.Host.Sessions.Find(directory) is null, "the session was never let go");
 
         // Another BrowserAI takes the session's guard, as a second install would.
-        using var held = SessionLock.TryAcquire(
+        using var held = (await SessionLock.TryAcquireAsync(
             SessionPath.For(directory),
             new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
-            NullLogger.Instance).Acquired!;
+            NullLogger.Instance)).Acquired!;
 
         var second = await host.ConnectAsync("a client that did not make it");
         var refused = await second.CallAsync(SessionToolSurface.Resume, ResumeArguments(directory, Settings(headed: false)));
@@ -441,11 +441,11 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task ASessionWhoseRecordKeepsNoSettingsIsHeldBackOnlyForALongerIdleTime()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
-        var older = LegacySession(rig, "written-before-settings");
-        var longer = LegacySession(rig, "written-before-settings-longer");
+        var older = await LegacySessionAsync(rig, "written-before-settings");
+        var longer = await LegacySessionAsync(rig, "written-before-settings-longer");
 
         var window = await CallAsync(harness, SessionToolSurface.Resume, ResumeArguments(older.FullPath, Settings(headed: true, transcript: true, idle: 60, viewport: OtherViewport)));
 
@@ -473,7 +473,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task ALongerIdleTimeTheLastRunAlreadyHadGoesThroughWithNoWarning()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "kept-longer");
@@ -516,7 +516,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task EveryAnswerThatOpensAVisibleWindowEndsWithTheHintAndNoOtherDoes()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var visible = Path.Combine(rig.Root, "with-a-window");
@@ -543,7 +543,7 @@ internal sealed class SettingsHoldBackTests
     [Test]
     public async Task TheSchemasRequireTheFourAndTheWindowsDescriptionSaysWhatItCostsAndWhatSwitchingKeeps()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var listed = await harness.Client.RoundTripAsync("tools/list");
@@ -679,13 +679,13 @@ internal sealed class SettingsHoldBackTests
     }
 
     /// <summary>A session directory whose record was written the way a build before 2026-10-08 wrote it: with no settings.</summary>
-    private static SessionPath LegacySession(RigSessionEnvironment rig, string name)
+    private static async Task<SessionPath> LegacySessionAsync(RigSessionEnvironment rig, string name)
     {
         var path = SessionPath.For(Path.Combine(rig.Root, name));
 
         SessionLayout.Create(path);
 
-        using (SessionLock.TryAcquire(path, new SessionLockRequest { Browser = SessionManager.DefaultBrowser, Purpose = "a session from before settings were kept" }, NullLogger.Instance).Acquired!)
+        using ((await SessionLock.TryAcquireAsync(path, new SessionLockRequest { Browser = SessionManager.DefaultBrowser, Purpose = "a session from before settings were kept" }, NullLogger.Instance)).Acquired!)
         {
         }
 
@@ -713,15 +713,15 @@ internal sealed class SettingsHoldBackTests
         string.Concat((result["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
 
-    private static JsonObject ConfigOf(BrowserAI.Protocol.ChildProcessOptions launch)
+    private static async Task<JsonObject> ConfigOfAsync(BrowserAI.Protocol.ChildProcessOptions launch)
     {
         var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
 
-        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+        return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
 
-    private static RigSessionEnvironment Sessions(ManualClock clock) =>
-        RigSessionEnvironment.Create(
+    private static async Task<RigSessionEnvironment> SessionsAsync(ManualClock clock) =>
+        await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();

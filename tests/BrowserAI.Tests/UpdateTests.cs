@@ -114,7 +114,7 @@ internal sealed class UpdateTests
     [Test]
     public async Task ALocalDirectoryFeedIsAcceptedAndDeclaresItself()
     {
-        using var scratch = ScratchDirectory.Create("update-feed");
+        using var scratch = await ScratchDirectory.CreateAsync("update-feed");
         var feed = UpdateFeed.Create(scratch.Path);
 
         await Assert.That(feed.IsLocalDirectory).IsTrue();
@@ -386,7 +386,7 @@ internal sealed class UpdateTests
     [Test]
     public async Task AMarkerThatCannotBeOpenedIsLeftAloneByTheReclaimAndNamedInItsReason()
     {
-        using var scratch = ScratchDirectory.Create("update-live-denied");
+        using var scratch = await ScratchDirectory.CreateAsync("update-live-denied");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
@@ -407,7 +407,7 @@ internal sealed class UpdateTests
             InheritanceFlags.ObjectInherit,
             PropagationFlags.InheritOnly))
         {
-            reclaim = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
+            reclaim = await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance);
         }
 
         await Assert.That(reclaim.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
@@ -419,7 +419,7 @@ internal sealed class UpdateTests
         // The positive control: with the denial lifted the same marker is
         // reclaimed, so the answer above came from the ACL and not from
         // something structural about this directory.
-        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That((await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance)).Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(stranger)).IsFalse();
     }
 
@@ -459,7 +459,7 @@ internal sealed class UpdateTests
     [Test]
     public async Task AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased()
     {
-        using var scratch = ScratchDirectory.Create("update-live-reclaim");
+        using var scratch = await ScratchDirectory.CreateAsync("update-live-reclaim");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
@@ -469,11 +469,11 @@ internal sealed class UpdateTests
 
         await File.WriteAllTextAsync(stale, string.Empty);
 
-        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
 
         try
         {
-            var first = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
+            var first = await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance);
 
             await Assert.That(first.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
             await Assert.That(first.Held).IsEqualTo(1);
@@ -491,7 +491,7 @@ internal sealed class UpdateTests
 
         // The other half of the control: nothing about that file made it
         // un-reclaimable except the handle, and the handle is gone.
-        var second = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
+        var second = await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance);
 
         await Assert.That(second.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
         await Assert.That(second.Held).IsEqualTo(0);
@@ -535,7 +535,7 @@ internal sealed class UpdateTests
     [Test]
     public async Task TheLiveSetsGateCannotCollideWithASessionOpenedOnTheInstallRoot()
     {
-        using var scratch = ScratchDirectory.Create("update-live-namespace");
+        using var scratch = await ScratchDirectory.CreateAsync("update-live-namespace");
 
         // ⚠️ AN INSTALL ROOT, SPELLED AS ONE -- 2026-09-15. It used to be
         // `new LocalAppDataPaths(scratch.Path).RootAppDir`, which is the DATA
@@ -559,7 +559,7 @@ internal sealed class UpdateTests
 
         // And it is still a function of the root, so two roots do not share one
         // live set -- which is the property the old name did have.
-        using var other = ScratchDirectory.Create("update-live-namespace-other");
+        using var other = await ScratchDirectory.CreateAsync("update-live-namespace-other");
 
         await Assert.That(LiveInstances.MutexNameFor(other.Path)).IsNotEqualTo(live);
     }
@@ -606,54 +606,39 @@ internal sealed class UpdateTests
     [Test]
     public async Task AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing()
     {
-        using var scratch = ScratchDirectory.Create("update-live-contended");
+        using var scratch = await ScratchDirectory.CreateAsync("update-live-contended");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
         var stale = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-nobody-is-there.live");
         await File.WriteAllTextAsync(stale, string.Empty);
 
-        using var taken = new ManualResetEventSlim(false);
-        using var release = new ManualResetEventSlim(false);
+        // Kept, not discarded, because it is the PRECONDITION: a peer that did
+        // not take the gate would leave the assertions below measuring a skip
+        // that happened for some other reason. Held by the hold's own thread
+        // since 2026-10-11, decision 54 (previously a thread of this arm's own,
+        // signalled and joined, whose release of a mutex it did not own would
+        // have thrown on a background thread).
+        using var gate = MachineMutex.Create(LiveInstances.MutexNameFor(paths.RootAppDir));
 
-        // Kept, not discarded, for two reasons that are both about this
-        // test being able to fail honestly. It is the PRECONDITION -- a peer
-        // that did not take the gate would leave the assertions below measuring
-        // a skip that happened for some other reason -- and `Release` on a mutex
-        // this thread does not own throws, on a background thread, which ends
-        // the test host instead of failing a test.
-        var acquisition = MutexAcquisition.NotAcquired;
+        // Corrected 2026-10-10 (previously "LockScopes.LiveInstanceGate", deleted
+        // that day with the census): the peer waits for a free gate by a hang
+        // detector, and the precondition below says whether it got it.
+        var hold = await gate.HoldAsync(TestDefaults.InProcessHang);
+        var acquisition = hold.Acquisition;
 
-        var holder = new Thread(() =>
+        LiveMarkerReclaim skipped;
+
+        try
         {
-            using var gate = MachineMutex.Create(LiveInstances.MutexNameFor(paths.RootAppDir));
-
-            // Corrected 2026-10-10 (previously "LockScopes.LiveInstanceGate", deleted
-            // that day with the census): the peer waits for a free gate by a hang
-            // detector, and the precondition below says whether it got it.
-            acquisition = gate.Acquire(TestDefaults.InProcessHang);
-            taken.Set();
-            release.Wait();
-
-            if (acquisition is not MutexAcquisition.NotAcquired)
-            {
-                gate.Release();
-            }
-        })
+            skipped = await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance);
+        }
+        finally
         {
-            IsBackground = true,
-        };
+            await hold.DisposeAsync();
+        }
 
-        holder.Start();
-        taken.Wait();
-
-        var skipped = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
-
-        release.Set();
-        holder.Join();
-
-        // `Join` is the barrier that makes this read safe, and the precondition
-        // is asserted before anything that depends on it.
+        // The precondition is asserted before anything that depends on it.
         await Assert.That(acquisition).IsNotEqualTo(MutexAcquisition.NotAcquired);
 
         await Assert.That(skipped.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Skipped);
@@ -678,7 +663,7 @@ internal sealed class UpdateTests
 
         // The positive control: the same call, the same directory, nothing
         // holding the gate. A skip that was really a no-op would fail here.
-        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That((await LiveInstances.ReclaimStaleMarkersAsync(paths.RootAppDir, NullLogger.Instance)).Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(stale)).IsFalse();
     }
 

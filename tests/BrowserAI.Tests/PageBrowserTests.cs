@@ -59,28 +59,28 @@ internal sealed class PageBrowserTests
     [Arguments(ProvisionedBrowsers.Firefox)]
     public async Task InARealBrowserThePageConnectsPostsThroughTheGateAndAsksToCloseWhenReplaced(string browser)
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         if (browser is ProvisionedBrowsers.Firefox)
         {
-            SuiteEnvironment.RequireProvisionedFirefox();
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
         }
         else
         {
-            SuiteEnvironment.RequireProvisionedChromium();
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
         }
 
         PublishedSlice.EnsureFresh();
 
-        using var rig = new PageRig();
-        using var scratch = ScratchDirectory.Create($"page-browser-{browser}");
+        await using var rig = await PageRig.CreateAsync();
+        using var scratch = await ScratchDirectory.CreateAsync($"page-browser-{browser}");
 
         // The setup page, where the button the arm clicks is since 2026-10-11 (40 a): the
         // home's cards lead to it, and the registration moved off the home with it.
-        var first = rig.HandOut(PageKind.Setup);
+        var first = await rig.HandOutAsync(PageKind.Setup);
         var session = Path.Combine(scratch.Path, "page-session");
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -159,7 +159,7 @@ internal sealed class PageBrowserTests
 
             // A second Start Menu click: a new tab with a new address. The first tab
             // is told it was replaced and asks to close itself.
-            var second = rig.HandOut();
+            var second = await rig.HandOutAsync();
 
             _ = await CallAsync(client, "browser_tabs", new JsonObject
             {
@@ -225,29 +225,29 @@ internal sealed class PageBrowserTests
     [Arguments(ProvisionedBrowsers.Firefox)]
     public async Task InARealBrowserTheMapDrawsItsLinesAndANewStateKeepsTheFocusAndTheChoice(string browser)
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         if (browser is ProvisionedBrowsers.Firefox)
         {
-            SuiteEnvironment.RequireProvisionedFirefox();
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
         }
         else
         {
-            SuiteEnvironment.RequireProvisionedChromium();
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
         }
 
         PublishedSlice.EnsureFresh();
 
-        using var rig = new PageRig();
-        using var scratch = ScratchDirectory.Create($"page-map-{browser}");
+        await using var rig = await PageRig.CreateAsync();
+        using var scratch = await ScratchDirectory.CreateAsync($"page-map-{browser}");
 
         rig.Sessions.Snapshot = DashboardTests.Busy();
 
-        var address = rig.HandOut(PageKind.Sessions);
+        var address = await rig.HandOutAsync(PageKind.Sessions);
         var session = Path.Combine(scratch.Path, "map-session");
         var node = "n-s-" + BrowserAI.App.Page.CensusPageSessions.IdOf(DashboardTests.CheckoutRounding);
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, PublishedSlice.InheritedEnvironment());
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 

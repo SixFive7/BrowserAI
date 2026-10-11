@@ -115,10 +115,10 @@ internal sealed class FirefoxTests
     [Test]
     public async Task ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists()
     {
-        using var scratch = ScratchDirectory.Create("firefox-preflight");
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-preflight");
         using var scope = new JobObjectScope();
 
-        var session = NewSession(scratch, "held");
+        var session = await NewSessionAsync(scratch, "held");
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
         var config = BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, transcript: false, RunOptions.Default);
 
@@ -130,8 +130,8 @@ internal sealed class FirefoxTests
         // one would not be refused to this one, and the Restart Manager would
         // name the test host and not the holder.
         var ready = Path.Combine(scratch.Path, "holder.json");
-        var holder = scope.Launch(
-            PlantedProbe.ExecutablePath,
+        var holder = await scope.LaunchAsync(
+            await PlantedProbe.ExecutablePathAsync(),
             scratch.Path,
             "hold-file",
             FirefoxProfile.LockFileIn(profile),
@@ -298,12 +298,12 @@ internal sealed class FirefoxTests
         // Recorded, not skipped: the half above needs no payload and is
         // worth running without one, but a run that took the shorter path must
         // still say so in the coverage block -- and must fail a release run.
-        if (SuiteEnvironment.HasRepositoryPayload())
+        if (await SuiteEnvironment.HasRepositoryPayloadAsync())
         {
             // The same refusal through the function every child launch actually
             // passes through, so the guard is proven where it lives and not
             // only where it is convenient to call.
-            var thrown = Assert.Throws<FirefoxProfileLockedException>(() => ChildLaunch.Create(
+            var thrown = await Assert.ThrowsAsync<FirefoxProfileLockedException>(() => ChildLaunch.CreateAsync(
                 RepositoryPayload.Layout,
                 BrowserAiPaths.BrowsersDirectory,
                 scratch.Path,
@@ -323,9 +323,9 @@ internal sealed class FirefoxTests
 
         await Assert.That(FirefoxProfileLockedException.For(config)).IsNull();
 
-        if (SuiteEnvironment.HasRepositoryPayload())
+        if (await SuiteEnvironment.HasRepositoryPayloadAsync())
         {
-            var options = ChildLaunch.Create(
+            var options = await ChildLaunch.CreateAsync(
                 RepositoryPayload.Layout,
                 BrowserAiPaths.BrowsersDirectory,
                 scratch.Path,
@@ -336,7 +336,7 @@ internal sealed class FirefoxTests
             await Assert.That(File.Exists(configFile)).IsTrue();
         }
 
-        Record("preflight", new JsonObject
+        await RecordAsync("preflight", new JsonObject
         {
             ["refusalMilliseconds"] = clock.Elapsed.TotalMilliseconds,
             ["modalWouldHaveBlockedMilliseconds"] = ModalTimeout.TotalMilliseconds,
@@ -373,9 +373,9 @@ internal sealed class FirefoxTests
     [Test]
     public async Task AnUnheldLockAttributesNobodyAndAForeignFirefoxIsAttributedToNoSession()
     {
-        using var scratch = ScratchDirectory.Create("firefox-attribution-negative");
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-attribution-negative");
 
-        var session = NewSession(scratch, "quiet");
+        var session = await NewSessionAsync(scratch, "quiet");
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
 
         _ = Directory.CreateDirectory(profile);
@@ -441,7 +441,7 @@ internal sealed class FirefoxTests
             await Assert.That(claimed.Contains(holder.ProcessId)).IsFalse();
         }
 
-        Record("attribution-negative", new JsonObject
+        await RecordAsync("attribution-negative", new JsonObject
         {
             ["millisecondsPerRestartManagerQuery"] = perQuery,
             ["foreignProfilesExamined"] = foreignProfiles.Count,
@@ -471,16 +471,16 @@ internal sealed class FirefoxTests
         // guarantee would rest on the recorded measurement in
         // kb/chromium/resurrection.md alone. So it reports as SKIPPED and
         // not as a pass, and a release run refuses outright.
-        SuiteEnvironment.RequireProvisionedFirefox();
+        await SuiteEnvironment.RequireProvisionedFirefoxAsync();
 
-        using var scratch = ScratchDirectory.Create("firefox-attribution");
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-attribution");
 
         // Two sessions: one this Firefox will run in, and one that stands beside
         // it with a lock file and no browser. The second is what makes
         // "attributed to its own session" mean something more than "attributed
         // to the only session there is".
-        var session = NewSession(scratch, "driven");
-        var bystander = NewSession(scratch, "bystander");
+        var session = await NewSessionAsync(scratch, "driven");
+        var bystander = await NewSessionAsync(scratch, "bystander");
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
         var bystanderProfile = Path.Combine(bystander.FullPath, SessionLayout.ProfileFolderName);
 
@@ -492,7 +492,7 @@ internal sealed class FirefoxTests
 
         // The product's own launch funnel, which also runs the preflight against
         // a free profile -- so this test is the other half of the one above.
-        var options = ChildLaunch.Create(
+        var options = await ChildLaunch.CreateAsync(
             RepositoryPayload.Layout,
             BrowserAiPaths.BrowsersDirectory,
             scratch.Path,
@@ -502,7 +502,7 @@ internal sealed class FirefoxTests
         // The hand-written raw client: no SDK and no product protocol type
         // between the assertion and the wire, and its job object is what makes a
         // failed assertion below unable to leave a browser running.
-        await using var child = RawStdioClient.Start(
+        await using var child = await RawStdioClient.StartAsync(
             options.Command,
             options.Arguments,
             options.WorkingDirectory,
@@ -586,14 +586,14 @@ internal sealed class FirefoxTests
 
         // ---- The sweep, three ways -------------------------------------------
 
-        using var indexRoot = ScratchDirectory.Create("firefox-sweep-index");
+        using var indexRoot = await ScratchDirectory.CreateAsync("firefox-sweep-index");
         var paths = new LocalAppDataPaths(indexRoot.Path);
         var index = new SessionIndex(paths, NullLogger.Instance);
 
         // 1. An index that does not know this session. The browser is foreign to
         //    every session there is, so it is attributed to none of them and
         //    reported, not touched.
-        index.Record(bystander);
+        await index.RecordAsync(bystander);
 
         var unknown = await SweepAsync(index);
 
@@ -605,9 +605,9 @@ internal sealed class FirefoxTests
         // 2. The session is known and its lock is held by this test, which is
         //    what a live session looks like. Attribution succeeds and the kill
         //    is refused on the ownership test -- R1.
-        index.Record(session);
+        await index.RecordAsync(session);
 
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             session,
             new SessionLockRequest { Browser = ProvisionedBrowsers.Firefox, Purpose = "the live session that owns this browser" },
             NullLogger.Instance);
@@ -644,7 +644,7 @@ internal sealed class FirefoxTests
         // the state an existence check would misread as "a browser is running".
         var lockSurvived = await LockFileStillThereAsync(profile, attributedPid, holders, TestDefaults.ProcessHang);
 
-        Record("attribution", new JsonObject
+        await RecordAsync("attribution", new JsonObject
         {
             ["browserProcessesInTheJob"] = browsers.Count,
             ["registeredForRestart"] = registered.Count,
@@ -744,62 +744,31 @@ internal sealed class FirefoxTests
     /// serialisation. See <c>StraySweepTests.SweepAsync</c>, which is where the
     /// once-in-five failure that provoked this was measured.
     /// </para>
+    /// <para>
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54, as the product's own
+    /// background sweep is: the gate is held by the mutex's own thread and the sweep's
+    /// reads and writes are asynchronous, so nothing in it waits on a worker. Its
+    /// remaining synchronous system calls, the process walk and the Restart Manager
+    /// query, run on whichever pool thread its continuation lands on. <i>Previously run
+    /// on a thread of its own by <c>OnItsOwnThreadAsync</c>, deleted that day, whose
+    /// remarks read: "A sweep is several hundred blocking syscalls and one Restart
+    /// Manager query per known session, and the pool grows by about one thread a
+    /// second."</i>
+    /// </para>
     /// </remarks>
     private static Task<StraySweepResult> SweepAsync(SessionIndex index) =>
-        OnItsOwnThreadAsync(() => new StraySweep(
+        new StraySweep(
             [BrowserAiPaths.FirefoxExecutable],
             index,
             NullLogger.Instance,
-            [BrowserAiPaths.FirefoxExecutable]).Run(TestDefaults.ProcessHang));
+            [BrowserAiPaths.FirefoxExecutable]).RunAsync(TestDefaults.ProcessHang);
 
-    /// <summary>
-    /// Runs blocking work on a dedicated thread and not on the pool.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>A sweep is several hundred blocking syscalls and one Restart
-    /// Manager query per known session, and the pool grows by about one thread a
-    /// second.</b> Run through <c>Task.Run</c>, it occupies a worker for as long
-    /// as it takes and the suite's in-process rigs -- which answer in
-    /// milliseconds and assert budgets in tens of seconds -- start failing
-    /// somewhere else entirely. That is a measured failure in this repository
-    /// and not a precaution: <c>StraySweepTests</c> records a file-I/O loop
-    /// on a pool thread taking <c>FakeChildHarnessTests</c> from 8 ms to 2.9 s.
-    /// </remarks>
-    /// <typeparam name="T">What the work produces.</typeparam>
-    /// <param name="work">The blocking work.</param>
-    /// <returns>Its result.</returns>
-    private static Task<T> OnItsOwnThreadAsync<T>(Func<T> work)
-    {
-        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                completion.SetResult(work());
-            }
-#pragma warning disable CA1031 // Whatever the work threw belongs to the awaiter, not to this thread.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                completion.SetException(failure);
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "firefox-test sweep",
-        };
-
-        thread.Start();
-        return completion.Task;
-    }
-
-    private static SessionPath NewSession(ScratchDirectory scratch, string label)
+    private static async Task<SessionPath> NewSessionAsync(ScratchDirectory scratch, string label)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, label));
         SessionLayout.Create(path);
 
-        var result = SessionLock.TryAcquire(
+        var result = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = ProvisionedBrowsers.Firefox, Purpose = $"firefox session {label}" },
             NullLogger.Instance);
@@ -879,12 +848,12 @@ internal sealed class FirefoxTests
     /// The run's own numbers, written where a person re-establishing
     /// [rows 1 and 9](../../kb/re-verification.md) can read them.
     /// </summary>
-    private static void Record(string label, JsonObject summary)
+    private static async Task RecordAsync(string label, JsonObject summary)
     {
         summary["utc"] = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture);
 
         var path = Path.Combine(RepositoryLayout.Root.FullName, ".work", $"firefox-{label}.json");
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, summary.ToJsonString());
+        await File.WriteAllTextAsync(path, summary.ToJsonString());
     }
 }

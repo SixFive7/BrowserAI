@@ -72,7 +72,7 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task TheCountsAgreeWithTheArraysTheyCount()
     {
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
         var root = snapshot.RootElement;
         var counts = root.GetProperty("counts");
 
@@ -100,7 +100,7 @@ internal sealed class UpstreamSnapshotTests
         // caller asks for. That is why setting `capabilities: ["config"]`
         // yields 25 tools and not 1, and it is the mechanism a session
         // type cannot opt out of.
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
         var root = snapshot.RootElement;
 
         var byCapability = root.GetProperty("toolsByCapability");
@@ -122,7 +122,7 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task NoSkillOnlyToolIsExposedAndEveryDefaultToolIs()
     {
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
         var root = snapshot.RootElement;
 
         var exposed = root.GetProperty("tools").EnumerateArray()
@@ -137,7 +137,7 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task EveryCapabilityInTheSnapshotIsOneUpstreamDeclares()
     {
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
         var root = snapshot.RootElement;
 
         var declared = Names(root.GetProperty("declaredCapabilities")).ToHashSet(StringComparer.Ordinal);
@@ -155,7 +155,7 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task EveryExposedToolCarriesANameADescriptionAndASchema()
     {
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
 
         var defective = snapshot.RootElement.GetProperty("tools").EnumerateArray()
             .Where(tool =>
@@ -193,7 +193,7 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task TheDoubleAdvertisesWhatTheRealChildDoes() =>
         await Assert.That(FakePlaywrightChild.AdvertisedCapabilities)
-            .IsEqualTo(UpstreamSurface.ServerCapabilities())
+            .IsEqualTo(await UpstreamSurface.ServerCapabilitiesAsync())
             .Because("the fake child must not advertise a capability @playwright/mcp does not, or the in-process layer covers behaviour production cannot reach.");
 
     /// <summary>The snapshot's provenance is the marker test's idea of "resolved".</summary>
@@ -205,13 +205,13 @@ internal sealed class UpstreamSnapshotTests
         // the assembled tree. They can only disagree if a payload was built
         // from a lock that was never committed, and then every version this
         // repository reports is a version nobody resolved.
-        using var snapshot = ReadToolsList();
+        using var snapshot = await ReadToolsListAsync();
         var resolvedFrom = snapshot.RootElement.GetProperty("resolvedFrom");
 
         foreach (var package in new[] { "@playwright/mcp", "playwright-core" })
         {
             await Assert.That(resolvedFrom.GetProperty(package).GetString())
-                .IsEqualTo(ResolvedVersions.FromPayloadLock(package));
+                .IsEqualTo(await ResolvedVersions.FromPayloadLockAsync(package));
         }
 
         await Assert.That(resolvedFrom.GetProperty("node").GetString()).StartsWith("v");
@@ -234,8 +234,8 @@ internal sealed class UpstreamSnapshotTests
     [Test]
     public async Task TheCapabilityFilterReproducesTheRecordedSurfaces()
     {
-        await Assert.That(string.Join(", ", UpstreamSurface.For([])))
-            .IsEqualTo(string.Join(", ", UpstreamSurface.DefaultSurface()));
+        await Assert.That(string.Join(", ", await UpstreamSurface.ForAsync([])))
+            .IsEqualTo(string.Join(", ", await UpstreamSurface.DefaultSurfaceAsync()));
 
         // ⚠️ Corrected 2026-08-20 (previously 42 for `BaseCapabilities` and 59
         // for `UnionCapabilities`, the two lists a session's mode chose
@@ -282,12 +282,12 @@ internal sealed class UpstreamSnapshotTests
         // the tool, `storage` is still 17, and both figures move by the same two
         // because `core` is unconditional and so is in every set. The default
         // surface moved with them, 27 -> 25, for the same reason.
-        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(45);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(72);
+        await Assert.That((await UpstreamSurface.ForAsync(["config", "vision", "devtools"])).Count).IsEqualTo(45);
+        await Assert.That((await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities)).Count).IsEqualTo(72);
     }
 
-    private static JsonDocument ReadToolsList() =>
-        JsonDocument.Parse(File.ReadAllText(Path.Combine(SnapshotDirectory.FullName, "tools-list.json")));
+    private static async Task<JsonDocument> ReadToolsListAsync() =>
+        JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(SnapshotDirectory.FullName, "tools-list.json")));
 
     private static List<string> Names(JsonElement array) =>
         [.. array.EnumerateArray().Select(element => element.GetString()!)];

@@ -109,14 +109,19 @@ internal static class SpawnRecord
     /// </summary>
     private const string AnnouncementCategory = "BrowserAI.Tests.SpawnRecordReclaim";
 
-    private static readonly Lock Gate = new();
+    /// <summary>
+    /// The record's in-process gate, awaited: the record is read and written with
+    /// asynchronous I/O since 2026-10-11 (decision 63), and a lock cannot be held across
+    /// an await.
+    /// </summary>
+    private static readonly SemaphoreSlim Gate = new(1, 1);
 
     /// <summary>
     /// This process, as the owner column of every row it writes.
     /// </summary>
     /// <remarks>
     /// Read once. A creation time of <c>0</c> means it could not be read at all,
-    /// which <see cref="Add"/> treats as a reason to record nothing -- see there.
+    /// which <see cref="AddAsync"/> treats as a reason to record nothing -- see there.
     /// </remarks>
     private static readonly Identity Self = new(Environment.ProcessId, OwnCreationTimeOrZero());
 
@@ -144,7 +149,7 @@ internal static class SpawnRecord
     /// </para>
     /// </remarks>
     /// <param name="processId">The pid, as the launcher returned it.</param>
-    public static void Add(int processId)
+    public static async Task AddAsync(int processId)
     {
         if (Self.Created is 0)
         {
@@ -155,10 +160,16 @@ internal static class SpawnRecord
         {
             var subject = new Identity(processId, ProcessIdentity.CreationTimeOf(processId));
 
-            lock (Gate)
+            await Gate.WaitAsync();
+
+            try
             {
                 _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-                File.AppendAllText(Path, Row(subject) + Environment.NewLine);
+                await File.AppendAllTextAsync(Path, Row(subject) + Environment.NewLine);
+            }
+            finally
+            {
+                _ = Gate.Release();
             }
         }
 #pragma warning disable CA1031 // See the remarks: bookkeeping is never a reason to fail a test.
@@ -204,7 +215,7 @@ internal static class SpawnRecord
     /// </remarks>
     /// <param name="path">The record to read, so this is testable as itself.</param>
     /// <returns>One line per recorded process, saying what was done about it.</returns>
-    public static List<string> Reclaim(string path)
+    public static async Task<List<string>> ReclaimAsync(string path)
     {
         ArgumentNullException.ThrowIfNull(path);
 
@@ -212,14 +223,16 @@ internal static class SpawnRecord
         var kept = new List<string>();
         var ended = new List<(Identity Subject, Identity Owner)>();
 
-        lock (Gate)
+        await Gate.WaitAsync();
+
+        try
         {
             if (!File.Exists(path))
             {
                 return report;
             }
 
-            foreach (var line in ReadOrNothing(path))
+            foreach (var line in await ReadOrNothingAsync(path))
             {
                 if (string.IsNullOrWhiteSpace(line))
                 {
@@ -262,7 +275,7 @@ internal static class SpawnRecord
                     // only asks; a delete that raced it would report a locked
                     // file and name the wrong cause -- which is the exact
                     // misdiagnosis this whole pass exists to prevent.
-                    report.Add(ProcessIdentity.WaitUntilGone(subject.ProcessId, subject.Created, TestDefaults.ProcessHang)
+                    report.Add(await ProcessIdentity.WaitUntilGoneAsync(subject.ProcessId, subject.Created, TestDefaults.ProcessHang)
                         ? $"terminated {subject}: left over from a previous run owned by {owner}"
                         : $"could not terminate {subject}: it was asked to exit and has not");
                 }
@@ -274,7 +287,11 @@ internal static class SpawnRecord
                 }
             }
 
-            TryRewrite(path, kept);
+            await TryRewriteAsync(path, kept);
+        }
+        finally
+        {
+            _ = Gate.Release();
         }
 
         // Outside the gate: the announcement goes to a different file, and a
@@ -312,7 +329,7 @@ internal static class SpawnRecord
     /// <para>
     /// ⚠️ <b>So the suite now writes outside the repository in two places and
     /// not one</b>, and the claims that said otherwise --
-    /// <see cref="ScratchRoot.ProfileScratch"/> and
+    /// <see cref="ScratchRoot.ProfileScratchAsync"/> and
     /// <see cref="ScratchDirectory"/> -- carry the correction.
     /// </para>
     /// <para>
@@ -322,7 +339,7 @@ internal static class SpawnRecord
     /// being one.
     /// </para>
     /// <para>
-    /// <b>Never fatal, for the reason <see cref="Add"/> is not.</b> A reclaim that
+    /// <b>Never fatal, for the reason <see cref="AddAsync"/> is not.</b> A reclaim that
     /// could not describe itself has still reclaimed, and a diagnostic that can
     /// fail a run is a diagnostic that becomes the outage -- which is the process
     /// log's own founding rule, applied to a writer that is not the product.
@@ -387,11 +404,11 @@ internal static class SpawnRecord
             : null;
     }
 
-    private static string[] ReadOrNothing(string path)
+    private static async Task<string[]> ReadOrNothingAsync(string path)
     {
         try
         {
-            return File.ReadAllLines(path);
+            return await File.ReadAllLinesAsync(path);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -412,11 +429,11 @@ internal static class SpawnRecord
     /// </remarks>
     /// <param name="path">The record.</param>
     /// <param name="kept">The rows, verbatim, that the pass did not act on.</param>
-    private static void TryRewrite(string path, List<string> kept)
+    private static async Task TryRewriteAsync(string path, List<string> kept)
     {
         try
         {
-            File.WriteAllText(
+            await File.WriteAllTextAsync(
                 path,
                 kept.Count is 0 ? string.Empty : string.Join(Environment.NewLine, kept) + Environment.NewLine);
         }

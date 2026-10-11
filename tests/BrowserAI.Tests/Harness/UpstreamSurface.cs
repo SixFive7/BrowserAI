@@ -21,7 +21,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The <c>core*</c> family is unconditional.</b> Upstream ors
 /// <c>capability.startsWith("core")</c> with whatever <c>capabilities</c> says,
 /// so nothing can go below the default 24 and naming a <c>core*</c> capability
-/// does nothing. <see cref="For"/> reproduces that, and
+/// does nothing. <see cref="ForAsync"/> reproduces that, and
 /// <c>UpstreamSnapshotTests.TheCapabilityFilterReproducesTheRecordedSurfaces</c>
 /// is what keeps the reproduction honest: it recomputes the snapshot's own
 /// <c>defaultSurface</c> from this helper and compares.
@@ -32,9 +32,9 @@ internal static class UpstreamSurface
     /// <summary>The tools a child exposes with these capabilities configured, in upstream's order.</summary>
     /// <param name="capabilities">The capabilities BrowserAI writes into the config.</param>
     /// <returns>The tool names, in the order the child returns them.</returns>
-    public static IReadOnlyList<string> For(IEnumerable<string> capabilities)
+    public static async Task<IReadOnlyList<string>> ForAsync(IEnumerable<string> capabilities)
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         var enabled = new HashSet<string>(
             snapshot.RootElement.GetProperty("unconditionalCapabilities").EnumerateArray().Select(value => value.GetString()!),
@@ -70,9 +70,9 @@ internal static class UpstreamSurface
     /// snapshot diff first and a red build second.
     /// </remarks>
     /// <returns>Parameter name to the tools that declare it, in the snapshot's own order.</returns>
-    public static IReadOnlyDictionary<string, IReadOnlyList<string>> ToolsCarryingParameter()
+    public static async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> ToolsCarryingParameterAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         var carriers = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
@@ -115,9 +115,9 @@ internal static class UpstreamSurface
     /// nothing to grant.
     /// </remarks>
     /// <returns>The capability names, in the snapshot's own order.</returns>
-    public static IReadOnlyList<string> CapabilitiesCarryingTools()
+    public static async Task<IReadOnlyList<string>> CapabilitiesCarryingToolsAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return
         [
@@ -132,9 +132,9 @@ internal static class UpstreamSurface
     /// naming one in <c>capabilities</c> would do nothing.
     /// </summary>
     /// <returns>The capability names.</returns>
-    public static IReadOnlyList<string> UnconditionalCapabilities()
+    public static async Task<IReadOnlyList<string>> UnconditionalCapabilitiesAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return
         [
@@ -153,9 +153,9 @@ internal static class UpstreamSurface
     /// first time upstream adds a tool.
     /// </remarks>
     /// <returns>The count.</returns>
-    public static int SnapshotToolCount()
+    public static async Task<int> SnapshotToolCountAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return snapshot.RootElement.GetProperty("tools").GetArrayLength();
     }
@@ -165,9 +165,9 @@ internal static class UpstreamSurface
     /// exactly as the snapshot recorded it.
     /// </summary>
     /// <returns>The minified JSON.</returns>
-    public static string ServerCapabilities()
+    public static async Task<string> ServerCapabilitiesAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         // Minified through the node API and not by stripping characters out
         // of the raw text: the snapshot is pretty-printed, and the double it is
@@ -178,9 +178,9 @@ internal static class UpstreamSurface
 
     /// <summary>The snapshot's own record of the default, no-capabilities surface.</summary>
     /// <returns>The 24 names upstream exposes with nothing configured.</returns>
-    public static IReadOnlyList<string> DefaultSurface()
+    public static async Task<IReadOnlyList<string>> DefaultSurfaceAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return
         [
@@ -211,12 +211,12 @@ internal static class UpstreamSurface
     /// not the payload. Measured 2026-08-18, on the first test that answered
     /// <c>tools/list</c> with this over the wire instead of passing it to
     /// <c>SessionToolSurface.Rewrite</c> in process. Minified through the node
-    /// API for the same reason <see cref="ServerCapabilities"/> is: stripping
+    /// API for the same reason <see cref="ServerCapabilitiesAsync"/> is: stripping
     /// whitespace by hand would corrupt any string that contains a newline.
     /// </remarks>
-    public static string SnapshotToolsListResult()
+    public static async Task<string> SnapshotToolsListResultAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return new System.Text.Json.Nodes.JsonObject
         {
@@ -226,9 +226,9 @@ internal static class UpstreamSurface
 
     /// <summary>Upstream's own description for every tool it can expose.</summary>
     /// <returns>Name to description, in the snapshot's order.</returns>
-    public static IReadOnlyList<(string Name, string Description)> SnapshotDescriptions()
+    public static async Task<IReadOnlyList<(string Name, string Description)>> SnapshotDescriptionsAsync()
     {
-        using var snapshot = Snapshot();
+        using var snapshot = await SnapshotAsync();
 
         return
         [
@@ -239,7 +239,7 @@ internal static class UpstreamSurface
         ];
     }
 
-    private static JsonDocument Snapshot() =>
-        JsonDocument.Parse(File.ReadAllText(
+    private static async Task<JsonDocument> SnapshotAsync() =>
+        JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));
 }

@@ -72,12 +72,12 @@ internal sealed class DashboardTests
     [Test]
     public async Task EveryAddressHandedOutBeforeLandsOnThePageThatNowHoldsWhatItHeld()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
-        var home = rig.HandOut(PageKind.Status);
-        var sessions = rig.HandOut(PageKind.Sessions);
-        var update = rig.HandOut(PageKind.Update);
-        var changelog = rig.HandOut(PageKind.Changelog);
+        var home = await rig.HandOutAsync(PageKind.Status);
+        var sessions = await rig.HandOutAsync(PageKind.Sessions);
+        var update = await rig.HandOutAsync(PageKind.Update);
+        var changelog = await rig.HandOutAsync(PageKind.Changelog);
 
         await Assert.That(home).IsEqualTo(rig.Root + "?tab=1");
         await Assert.That(sessions).IsEqualTo(rig.Root + "sessions?tab=2");
@@ -137,10 +137,10 @@ internal sealed class DashboardTests
     [Test]
     public async Task EachPageBehindACardIsServedAtItsRouteAndBeginsWithAWayBack()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         rig.Sessions.Snapshot = Busy();
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         var checkout = CensusPageSessions.IdOf(CheckoutRounding);
 
@@ -189,7 +189,7 @@ internal sealed class DashboardTests
     {
         const long MiB = 1024 * 1024;
 
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         const string Invoice = @"C:\Code\billing\.work\invoice-export";
         const string Search = @"C:\Code\acme-shop\.work\search-slow-network";
@@ -203,7 +203,7 @@ internal sealed class DashboardTests
         ];
 
         // The page, which asks for the measurement, and then its stream, as a browser opens it.
-        _ = await PageRig.GetAsync(rig.HandOut(PageKind.Storage));
+        _ = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Storage));
 
         using var storage = await rig.StreamAsync(rig.Gate.Root, 1, "storage");
 
@@ -231,7 +231,7 @@ internal sealed class DashboardTests
         await Assert.That(rig.Host.Opened.ToArray()).Contains(Invoice);
 
         // And the home's card says the whole and its two parts.
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         using var home = await rig.StreamAsync(rig.Gate.Root, 2);
 
@@ -265,9 +265,9 @@ internal sealed class DashboardTests
         const string InstallsByItself = "When a newer version is out, BrowserAI downloads it and installs it once nothing uses BrowserAI.";
         var at = Now.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
-        using (var rig = new PageRig())
+        await using (var rig = await PageRig.CreateAsync())
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains("No update is waiting");
             await Assert.That(home.Body).Contains($"BrowserAI last checked GitHub releases at {at}.");
@@ -281,9 +281,9 @@ internal sealed class DashboardTests
 
         var folder = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.Checking, UpdateSourceKind.Folder, @"C:\BrowserAI-feed", null, Now) };
 
-        using (var rig = new PageRig(holds: folder))
+        await using (var rig = await PageRig.CreateAsync(holds: folder))
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains($"BrowserAI last checked its update folder at {at}.");
 
@@ -295,9 +295,9 @@ internal sealed class DashboardTests
 
         var refused = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.SourceRefused, UpdateSourceKind.None, null, "'feed' is neither an absolute http or https URL nor a fully qualified folder path.", null) };
 
-        using (var rig = new PageRig(holds: refused))
+        await using (var rig = await PageRig.CreateAsync(holds: refused))
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains("BrowserAI does not check for updates, because the update source its install named was refused.");
             await Assert.That(home.Body).DoesNotContain("last checked");
@@ -306,17 +306,17 @@ internal sealed class DashboardTests
 
         var development = new NothingHolds { Watching = new UpdateWatch(UpdateChecks.PreReleaseUrl, UpdateSourceKind.Url, "https://example.invalid/feed", null, null) };
 
-        using (var rig = new PageRig(holds: development))
+        await using (var rig = await PageRig.CreateAsync(holds: development))
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains("This development build does not check for updates, because its install named a web address and it checks only a folder.");
             await Assert.That(home.Body).DoesNotContain(InstallsByItself).Because("a development build that checks nothing said a newer version installs by itself");
         }
 
-        using (var rig = new PageRig(installed: false))
+        await using (var rig = await PageRig.CreateAsync(installed: false))
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains(PageContent.Text(PageContent.NotInstalledSentence));
         }
@@ -338,9 +338,9 @@ internal sealed class DashboardTests
     [Test]
     public async Task TheHomeSaysHowLongAConversationHoldsTheUpdateFromTheRelaysCountdown()
     {
-        using var rig = new PageRig(holds: new ScriptedHolds { Snapshot = Held() }, facts: facts => facts with { RelayHold = TimeSpan.FromMinutes(7) });
+        await using var rig = await PageRig.CreateAsync(holds: new ScriptedHolds { Snapshot = Held() }, facts: facts => facts with { RelayHold = TimeSpan.FromMinutes(7) });
 
-        var home = await PageRig.GetAsync(rig.HandOut());
+        var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
         await Assert.That(home.Body).Contains("1 active conversation");
         await Assert.That(home.Body).Contains("7 min after the last message to BrowserAI");
@@ -362,9 +362,9 @@ internal sealed class DashboardTests
     public async Task AWatchThatCannotBeReadIsLoggedAsItselfAndNotAsWhatHoldsTheUpdate()
     {
         using var logs = new CapturingLoggerProvider();
-        using var rig = new PageRig(logs: logs, holds: new NothingHolds { WatchFailure = new InvalidOperationException("the update core is gone") });
+        await using var rig = await PageRig.CreateAsync(logs: logs, holds: new NothingHolds { WatchFailure = new InvalidOperationException("the update core is gone") });
 
-        var home = await PageRig.GetAsync(rig.HandOut());
+        var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
         await Assert.That(home.Status).IsEqualTo(200).Because(home.Raw);
         await Assert.That(home.Body).DoesNotContain("last checked");
@@ -384,9 +384,9 @@ internal sealed class DashboardTests
     {
         var at = Now.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
 
-        using (var rig = new PageRig())
+        await using (var rig = await PageRig.CreateAsync())
         {
-            var home = await PageRig.GetAsync(rig.HandOut());
+            var home = await PageRig.GetAsync(await rig.HandOutAsync());
 
             await Assert.That(home.Body).Contains($"Running since {at}");
 
@@ -395,9 +395,9 @@ internal sealed class DashboardTests
             await Assert.That(install.Body).Contains($"since {at}, started at sign-in");
         }
 
-        using (var rig = new PageRig(facts: facts => facts with { StartedHow = BackgroundStart.Person }))
+        await using (var rig = await PageRig.CreateAsync(facts: facts => facts with { StartedHow = BackgroundStart.Person }))
         {
-            var install = await PageRig.GetAsync(rig.HandOut(PageKind.Install));
+            var install = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Install));
 
             await Assert.That(install.Body).Contains($"since {at}, started when you opened BrowserAI");
         }
@@ -440,13 +440,13 @@ internal sealed class DashboardTests
     {
         var holds = new ScriptedHolds();
 
-        using var rig = new PageRig(holds: holds);
+        await using var rig = await PageRig.CreateAsync(holds: holds);
 
         // The session's folder weighs a mebibyte, so the state its measurement sends can be
         // told from the one before it.
         rig.Folders.Folders = [new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 1024 * 1024)];
 
-        _ = rig.HandOut(PageKind.Sessions);
+        _ = await rig.HandOutAsync(PageKind.Sessions);
 
         using (var conversations = await rig.StreamAsync(rig.Gate.Root, 1, "sessions"))
         {
@@ -482,7 +482,7 @@ internal sealed class DashboardTests
         }
 
         // The home, in a tab of its own: every conversation ends, and the home says so.
-        _ = rig.HandOut(PageKind.Status);
+        _ = await rig.HandOutAsync(PageKind.Status);
 
         using var home = await rig.StreamAsync(rig.Gate.Root, 2);
 
@@ -507,7 +507,7 @@ internal sealed class DashboardTests
     [Test]
     public async Task ThePageOffersNoDeleteAndADeleteSentIsRefused()
     {
-        using var scratch = ScratchDirectory.Create("dashboard-no-delete");
+        using var scratch = await ScratchDirectory.CreateAsync("dashboard-no-delete");
 
         var folders = new List<SessionFolder>();
 
@@ -519,11 +519,11 @@ internal sealed class DashboardTests
             folders.Add(new SessionFolder(CensusPageSessions.IdOf(directory), directory, name.Length));
         }
 
-        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() });
+        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = Apps() });
 
         rig.Sessions.Snapshot = Busy();
         rig.Folders.Folders = folders;
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
@@ -581,11 +581,11 @@ internal sealed class DashboardTests
             ],
             []);
 
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         rig.Sessions.Snapshot = relaysOf(8);
 
-        var drawn = (await PageRig.GetAsync(rig.HandOut(PageKind.Sessions))).Body;
+        var drawn = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
 
         await Assert.That(drawn).Contains("<div class=\"map\" id=\"map\">");
         await Assert.That(drawn).Contains("<div class=\"list-view\">");
@@ -593,7 +593,7 @@ internal sealed class DashboardTests
 
         rig.Sessions.Snapshot = relaysOf(9);
 
-        var listed = (await PageRig.GetAsync(rig.HandOut(PageKind.Sessions))).Body;
+        var listed = (await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions))).Body;
 
         await Assert.That(listed).DoesNotContain("id=\"map\"");
         await Assert.That(listed).Contains("<div class=\"list-view crowded\">");
@@ -615,11 +615,11 @@ internal sealed class DashboardTests
     {
         string[] forbidden = ["client", "pid", "driven by", "driven through", "registered", "register", "relay", "connection, pid"];
 
-        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() }, holds: new ScriptedHolds { Snapshot = Held() });
+        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = Apps() }, holds: new ScriptedHolds { Snapshot = Held() });
 
         rig.Sessions.Snapshot = Busy();
         rig.Folders.Folders = [new SessionFolder(CensusPageSessions.IdOf(CheckoutRounding), CheckoutRounding, 1024)];
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
@@ -650,10 +650,10 @@ internal sealed class DashboardTests
     [Test]
     public async Task EveryPageCarriesOneScriptFromItsOwnOriginAndNothingInline()
     {
-        using var rig = new PageRig(registration: new FakeRegistration { State = Apps() });
+        await using var rig = await PageRig.CreateAsync(registration: new FakeRegistration { State = Apps() });
 
         rig.Sessions.Snapshot = Busy();
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
@@ -799,7 +799,9 @@ internal sealed class DashboardTests
     {
         public UpdateHoldSnapshot Snapshot { get; set; } = UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
 
-        public UpdateHoldSnapshot Read() => Snapshot;
+        public Task<UpdateHoldSnapshot> ReadAsync() => Task.FromResult(Snapshot);
+
+        public UpdateHoldSnapshot ReadCountdown() => Snapshot;
 
         public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
             Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");

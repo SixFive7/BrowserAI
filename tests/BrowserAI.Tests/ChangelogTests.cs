@@ -594,7 +594,7 @@ internal sealed partial class ChangelogTests
         // The generator's own fixed text, read by generating a body and not
         // by scanning the script: what the script SAYS and what it EMITS are two
         // different sets of strings, and only one of them reaches a reader.
-        using var scratch = ScratchDirectory.Create("release-notes-characters");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-characters");
         var fixture = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
         var generated = Path.Combine(scratch.Path, "body.md");
 
@@ -895,7 +895,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AReleaseIsRefusedWhenTheUnreleasedSectionIsEmpty()
     {
-        using var scratch = ScratchDirectory.Create("changelog-empty");
+        using var scratch = await ScratchDirectory.CreateAsync("changelog-empty");
         var file = await WriteAsync(scratch, "empty.md", """
             # Changelog
 
@@ -922,7 +922,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task TheNotesAreTheUnreleasedSectionAndNothingBelowIt()
     {
-        using var scratch = ScratchDirectory.Create("changelog-extract");
+        using var scratch = await ScratchDirectory.CreateAsync("changelog-extract");
         var file = await WriteAsync(scratch, "full.md", """
             # Changelog
 
@@ -946,7 +946,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task StampingMovesTheEntriesUnderTheVersionAndLeavesAnEmptyUnreleased()
     {
-        using var scratch = ScratchDirectory.Create("changelog-stamp");
+        using var scratch = await ScratchDirectory.CreateAsync("changelog-stamp");
         var file = await WriteAsync(scratch, "stamp.md", """
             # Changelog
 
@@ -982,7 +982,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AVersionThisProjectCannotCutIsRefusedBeforeTheFileIsTouched()
     {
-        using var scratch = ScratchDirectory.Create("changelog-version");
+        using var scratch = await ScratchDirectory.CreateAsync("changelog-version");
         var file = await WriteAsync(scratch, "version.md", """
             # Changelog
 
@@ -1049,7 +1049,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AVersionSectionBecomesHeadlinesEachLinkedToItsOwnLineRange()
     {
-        using var scratch = ScratchDirectory.Create("release-notes");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes");
         var changelog = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
         var body = Path.Combine(scratch.Path, "body.md");
 
@@ -1117,7 +1117,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task ABodyThatDoesNotFitFallsBackToHeadlinesAndSaysSo()
     {
-        using var scratch = ScratchDirectory.Create("release-notes-limit");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-limit");
         var changelog = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
         var body = Path.Combine(scratch.Path, "body.md");
 
@@ -1186,9 +1186,9 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task ABodyIsGeneratedOnlyFromTheChangelogTheTagCarries()
     {
-        SuiteEnvironment.RequireGit();
+        await SuiteEnvironment.RequireGitAsync();
 
-        using var scratch = ScratchDirectory.Create("release-notes-tag");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-tag");
 
         // A repository of its own, nested under the gitignored scratch root: git
         // resolves the innermost one, so this is a repository whose whole
@@ -1320,7 +1320,7 @@ internal sealed partial class ChangelogTests
     [Arguments("## [9.9.9-alpha.1] - 2026-01-01", "9.9.9-alpha.1")]
     public async Task TheReleaseNotesAnchorIsTheOneTheLinkCheckerComputes(string heading, string version)
     {
-        using var scratch = ScratchDirectory.Create("release-notes-anchor");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-anchor");
 
         var changelog = await WriteAsync(
             scratch,
@@ -1346,7 +1346,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AnEntryNotInTheHeadlineShapeRefusesTheBody()
     {
-        using var scratch = ScratchDirectory.Create("release-notes-shape");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-shape");
 
         var changelog = await WriteAsync(
             scratch,
@@ -1394,7 +1394,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AnEntryAboveTheFirstGroupAndAParagraphInsideOneAreBothRefused()
     {
-        using var scratch = ScratchDirectory.Create("release-notes-shapes");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-shapes");
         var body = Path.Combine(scratch.Path, "body.md");
 
         // An entry above the first '### ' heading.
@@ -1447,7 +1447,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task AVersionWithNoSectionRefusesRatherThanWritingAnEmptyBody()
     {
-        using var scratch = ScratchDirectory.Create("release-notes-missing");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-missing");
         var changelog = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
         var body = Path.Combine(scratch.Path, "body.md");
 
@@ -1482,7 +1482,7 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task ALegendThatIsNotATableRefusesTheBody()
     {
-        using var scratch = ScratchDirectory.Create("release-notes-legend");
+        using var scratch = await ScratchDirectory.CreateAsync("release-notes-legend");
 
         // The shape this replaced, in a fixture that is otherwise the accepted
         // one -- so the refusal is about the legend and about nothing else.

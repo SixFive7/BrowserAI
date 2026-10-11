@@ -45,12 +45,12 @@ internal sealed class StarvedPoolTests
     [Test]
     public async Task ThePipeClientGetsItsAnswerOnAPoolOfOneWorker()
     {
-        using var work = ScratchDirectory.Create("starved-ask");
+        using var work = await ScratchDirectory.CreateAsync("starved-ask");
         using var scope = new JobObjectScope();
 
         var pipe = $@"\\.\pipe\BrowserAI-Tests-starved-{Guid.NewGuid():N}";
         var ready = Path.Combine(work.Path, "ready.txt");
-        var standIn = scope.Launch(ProbePath, work.Path, "answering-background", pipe, ready);
+        var standIn = await scope.LaunchAsync(ProbePath, work.Path, "answering-background", pipe, ready);
 
         await Assert.That(await AppearsAsync(ready)).IsTrue()
             .Because($"the answering stand-in never wrote '{ready}'. It said: {await scope.SaidByAsync(standIn.Id)}");
@@ -66,7 +66,7 @@ internal sealed class StarvedPoolTests
     [Test]
     public async Task TheLockRetryWaitsOutAHeldFileOnAPoolOfOneWorker()
     {
-        using var work = ScratchDirectory.Create("starved-rename");
+        using var work = await ScratchDirectory.CreateAsync("starved-rename");
         using var scope = new JobObjectScope();
 
         await StarvedPathFinishesAsync(scope, work.Path, "rename-window", Path.Combine(work.Path, "held.lock"));
@@ -80,7 +80,7 @@ internal sealed class StarvedPoolTests
     [Test]
     public async Task AChildsOutputIsReadOnAPoolOfOneWorker()
     {
-        using var work = ScratchDirectory.Create("starved-pipes");
+        using var work = await ScratchDirectory.CreateAsync("starved-pipes");
         using var scope = new JobObjectScope();
 
         await StarvedPathFinishesAsync(scope, work.Path, "child-pipes", "-");
@@ -96,7 +96,7 @@ internal sealed class StarvedPoolTests
     {
         var environment = ChildEnvironment.Build([new("DOTNET_PROCESSOR_COUNT", "1")]);
         var bound = TestDefaults.InProcessHang.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture);
-        var starved = scope.LaunchWith(ProbePath, workingDirectory, environment, "starved", scenario, argument, bound);
+        var starved = await scope.LaunchWithAsync(ProbePath, workingDirectory, environment, "starved", scenario, argument, bound);
 
         var finished = await starved.WaitForExitAsync(TestDefaults.ProcessHang);
         var said = await scope.SaidByAsync(starved.Id);

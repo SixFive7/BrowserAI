@@ -59,7 +59,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AReadOnlyOpenOfAStoreThatIsNotThereIsRefusedAndCreatesNothing()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-absent");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-absent");
 
         var path = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
@@ -149,7 +149,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AFreshStoreIsVersionOneInWalModeWithTheDirectoryGatesPatience()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-fresh");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-fresh");
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         await Assert.That(store.RecordedSchemaVersion()).IsEqualTo((long)SessionStore.SchemaVersion);
@@ -176,7 +176,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AStoreFromAnotherSchemaIsRefusedWithTheVersionAsTheReason()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-version");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-version");
 
         var path = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
@@ -215,7 +215,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AnAcquisitionsStatementsArriveTogetherOrNotAtAll()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-acquire");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-acquire");
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         var at = Now();
@@ -290,7 +290,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task ALogRowIsWrittenInFlightAndSettledOnTheSameRow()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-log");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-log");
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         var hung = store.AppendLog(Now(), "browser_navigate", "the one that never came back", SessionStore.InFlight);
@@ -351,7 +351,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AStoredValueCarryingAZeroByteComesBackWhole()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-nul");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-nul");
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         const string Why = "before\0after";
@@ -388,7 +388,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task NothingInTheStoreIsCappedByLengthOrByCount()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-uncapped");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-uncapped");
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
         // Comfortably past every cap the old record carried, and past the
@@ -439,12 +439,12 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AReaderSeesWhatALiveWriterHasJustAppended()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-live-read");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-live-read");
 
         var lockFile = Path.Combine(scratch.Path, LockFile.FileName);
         var data = Path.Combine(scratch.Path, SessionStore.DataFileName);
 
-        using var hold = LockFile.TakeAndWrite(lockFile, LockFileHolder.ForThisProcess());
+        using var hold = await LockFile.TakeAndWriteAsync(lockFile, LockFileHolder.ForThisProcess());
         using var writer = SessionStore.OpenForWriting(data);
 
         writer.RecordAcquisition([new StoredStatement("purpose", Now(), "be read from while it is being written to")]);
@@ -515,7 +515,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AReadOnlyOpenAgainstAnUncheckpointedWalIsRefusedUntilSomebodyWritesToIt()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-hot-wal");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-hot-wal");
 
         var live = Path.Combine(scratch.Path, "live");
         var dead = Path.Combine(scratch.Path, "dead");
@@ -536,8 +536,8 @@ internal sealed class SqliteStorageTests
         {
             _ = writer.AppendLog(Now(), "browser_navigate", "committed into the log and never folded back", SessionStore.InFlight);
 
-            CopyWhileHeld(livePath, deadPath);
-            CopyWhileHeld(livePath + "-wal", deadPath + "-wal");
+            await CopyWhileHeldAsync(livePath, deadPath);
+            await CopyWhileHeldAsync(livePath + "-wal", deadPath + "-wal");
         }
 
         // The state a killed holder leaves: a store file, a hot log beside it,
@@ -604,7 +604,7 @@ internal sealed class SqliteStorageTests
     [Test]
     public async Task AReadOnlyOpenInAWritableDirectoryRecoversACrashedLogAndLeavesAnIndexBehind()
     {
-        using var scratch = ScratchDirectory.Create("sqlite-hot-wal-writable");
+        using var scratch = await ScratchDirectory.CreateAsync("sqlite-hot-wal-writable");
 
         var live = Path.Combine(scratch.Path, "live");
         var dead = Path.Combine(scratch.Path, "dead");
@@ -621,8 +621,8 @@ internal sealed class SqliteStorageTests
         {
             _ = writer.AppendLog(Now(), "browser_navigate", "committed by a holder that never closed", SessionStore.InFlight);
 
-            CopyWhileHeld(livePath, deadPath);
-            CopyWhileHeld(livePath + "-wal", deadPath + "-wal");
+            await CopyWhileHeldAsync(livePath, deadPath);
+            await CopyWhileHeldAsync(livePath + "-wal", deadPath + "-wal");
         }
 
         await Assert.That(File.Exists(deadPath + "-shm")).IsFalse();
@@ -682,11 +682,11 @@ internal sealed class SqliteStorageTests
     /// </remarks>
     /// <param name="from">The file to copy.</param>
     /// <param name="to">Where to put it.</param>
-    private static void CopyWhileHeld(string from, string to)
+    private static async Task CopyWhileHeldAsync(string from, string to)
     {
-        using var source = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 65_536);
-        using var destination = new FileStream(to, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 65_536);
+        await using var source = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 65_536, FileOptions.Asynchronous);
+        await using var destination = new FileStream(to, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 65_536, FileOptions.Asynchronous);
 
-        source.CopyTo(destination);
+        await source.CopyToAsync(destination);
     }
 }

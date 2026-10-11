@@ -31,7 +31,7 @@ internal sealed class SdkStdioClientTransportTests
     [Test]
     public async Task TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild()
     {
-        using var scratch = ScratchDirectory.Create("sdk-cmd-wrapping");
+        using var scratch = await ScratchDirectory.CreateAsync("sdk-cmd-wrapping");
 
         var reportPath = Path.Combine(scratch.Path, "report.json");
         var framePath = Path.Combine(scratch.Path, "frames.jsonl");

@@ -32,7 +32,7 @@ namespace BrowserAI.Tests;
 /// <list type="table">
 ///   <item>
 ///     <term>R1 -- the sweep kills a browser a live session just launched</term>
-///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.lock</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill -- and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
+///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.lock</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill -- and by <see cref="SessionLock.TryHoldUnownedAsync"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
 ///   </item>
 ///   <item>
 ///     <term>R2 -- PID reuse between detection and kill</term>
@@ -139,10 +139,10 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ASweepEndsABrowserNoSessionHoldsAndLeavesItsProfileExactlyAsItWas()
     {
-        using var scratch = ScratchDirectory.Create("sweep-kill");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-kill");
         using var scope = new JobObjectScope();
 
-        var session = NewSessionDirectory(scratch, "abandoned");
+        var session = await NewSessionDirectoryAsync(scratch, "abandoned");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
         var lockFile = Path.Combine(session, SessionLayout.LockFileName);
         var before = await File.ReadAllBytesAsync(lockFile);
@@ -168,14 +168,14 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ASweepLeavesABrowserAloneWhileALiveSessionHoldsItsDirectory()
     {
-        using var scratch = ScratchDirectory.Create("sweep-owned");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-owned");
         using var scope = new JobObjectScope();
 
-        var session = NewSessionDirectory(scratch, "owned");
+        var session = await NewSessionDirectoryAsync(scratch, "owned");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
         var (pid, created) = await PublishAsync(scope, scratch, profile);
 
-        var held = SessionLock.TryAcquire(
+        var held = await SessionLock.TryAcquireAsync(
             SessionPath.For(session),
             new SessionLockRequest { Browser = "chromium", Purpose = "driving a checkout flow" },
             NullLogger.Instance);
@@ -205,12 +205,12 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ACandidatesPidCannotBeRecycledBecauseTheScanNeverLetGoOfItsHandle()
     {
-        using var scratch = ScratchDirectory.Create("sweep-pid-pin");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-pid-pin");
         using var scope = new JobObjectScope();
 
         var (pid, created) = await PublishAsync(scope, scratch, Path.Combine(scratch.Path, "no-session"));
 
-        using var scan = BrowserProcesses.ScanFor([PlantedProbe.ExecutablePath]);
+        using var scan = BrowserProcesses.ScanFor([await PlantedProbe.ExecutablePathAsync()]);
         var candidate = scan.Candidates.Single(entry => entry.ProcessId == pid);
 
         await Assert.That(candidate.CreatedFileTime).IsEqualTo(created);
@@ -233,7 +233,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task TerminationIsRefusedWhenTheRecordedCreationTimeNoLongerMatches()
     {
-        using var scratch = ScratchDirectory.Create("sweep-pid-reuse");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-pid-reuse");
         using var scope = new JobObjectScope();
 
         var (pid, created) = await PublishAsync(scope, scratch, Path.Combine(scratch.Path, "no-session"));
@@ -242,7 +242,7 @@ internal sealed class StraySweepTests
         // is exactly the shape a recycled pid produces: the number still opens,
         // and it names somebody else.
         using var owner = Process.GetProcessById(pid);
-        using var stale = new StrayCandidate(pid, created + 1, PlantedProbe.ExecutablePath, owner.SafeHandle);
+        using var stale = new StrayCandidate(pid, created + 1, await PlantedProbe.ExecutablePathAsync(), owner.SafeHandle);
 
         await Assert.That(stale.IsStillTheProcessThatWasFound()).IsFalse();
         await Assert.That(stale.TryTerminate(out var refusal)).IsFalse();
@@ -266,7 +266,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task AnAbandonedSweepMutexIsAcquiredAndThePassProceedsAnyway()
     {
-        using var scratch = ScratchDirectory.Create("sweep-abandoned");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-abandoned");
 
         // Opened BEFORE the holder dies, and never acquired. Without it the
         // object would be destroyed with the probe and the next Create would
@@ -279,7 +279,7 @@ internal sealed class StraySweepTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
+            _ = await scope.LaunchAsync(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
 
             var report = await ProbeReport.ReadAsync(ready, Patience);
 
@@ -357,7 +357,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task TheSweepReclaimsStaleLiveMarkersAndLeavesAHeldOneAlone()
     {
-        using var scratch = ScratchDirectory.Create("sweep-live-markers");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-live-markers");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
@@ -369,12 +369,11 @@ internal sealed class StraySweepTests
 
         // The product's own open, so what is asserted is the kernel's sharing
         // rule and not a convention this test invented.
-        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
 
         try
         {
-            var result = await OnItsOwnThreadAsync(() =>
-                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).Run(GatePatience));
+            var result = await new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).RunAsync(GatePatience);
 
             await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
             await Assert.That(result.LiveMarkers).IsNotNull();
@@ -396,8 +395,7 @@ internal sealed class StraySweepTests
 
         // The other half of the control: nothing about that marker made it
         // un-reclaimable except the handle.
-        var second = await OnItsOwnThreadAsync(() =>
-            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).Run(GatePatience));
+        var second = await new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).RunAsync(GatePatience);
 
         await Assert.That(second.LiveMarkers!.Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(held)).IsFalse();
@@ -430,7 +428,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ASweepWithNoAppPathsReportsNoMarkerPassAtAll()
     {
-        var result = await OnItsOwnThreadAsync(() => new StraySweep([], index: null, NullLogger.Instance).Run(GatePatience));
+        var result = await new StraySweep([], index: null, NullLogger.Instance).RunAsync(GatePatience);
 
         await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
         await Assert.That(result.LiveMarkers).IsNull();
@@ -463,14 +461,13 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task APassThatHadTheGateStartsTheRegistryReapEvenWhenItEndedNothing()
     {
-        using var scratch = ScratchDirectory.Create("sweep-startup-reap");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-startup-reap");
         using var records = new CapturingLoggerProvider();
         using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(records));
 
         var reap = new ServerRegistryReap(new PayloadLayout(scratch.Path), factory.CreateLogger<ServerRegistryReap>());
 
-        var result = await OnItsOwnThreadAsync(() =>
-            new StraySweep([], index: null, NullLogger.Instance, reap: reap).Run(GatePatience));
+        var result = await new StraySweep([], index: null, NullLogger.Instance, reap: reap).RunAsync(GatePatience);
 
         await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
         await Assert.That(result.Terminated.Count).IsEqualTo(0);
@@ -482,11 +479,17 @@ internal sealed class StraySweepTests
     {
         await Assert.That(LockScopes.Sweep).StartsWith(LockScopes.GlobalPrefix);
 
-        var naming = RepositoryLayout.ProductSourceFiles
-            .Where(file => File.ReadAllText(file.FullName).Contains("BrowserAI-Sweep", StringComparison.Ordinal))
-            .Select(file => file.Name)
-            .Order(StringComparer.Ordinal)
-            .ToList();
+        var naming = new List<string>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            if ((await File.ReadAllTextAsync(file.FullName)).Contains("BrowserAI-Sweep", StringComparison.Ordinal))
+            {
+                naming.Add(file.Name);
+            }
+        }
+
+        naming.Sort(StringComparer.Ordinal);
 
         await Assert.That(string.Join(", ", naming)).IsEqualTo("LockScopes.cs");
 
@@ -701,14 +704,14 @@ internal sealed class StraySweepTests
         // suite that exists to catch it. The "provisioned but the executable is
         // missing" case the old branch drew is now
         // `CapabilityState.Partial`, which fails in every run.
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         var chromium = BrowserAiPaths.ExpectedChromiumExecutable;
 
-        using var scratch = ScratchDirectory.Create("sweep-real-browser");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-real-browser");
         using var scope = new JobObjectScope();
 
-        var session = NewSessionDirectory(scratch, "real");
+        var session = await NewSessionDirectoryAsync(scratch, "real");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
 
         // ⚠️ `about:blank` and not `--no-startup-window`, and that is not
@@ -730,7 +733,7 @@ internal sealed class StraySweepTests
         // them.
         var chromiumLog = Path.Combine(scratch.Path, "chrome_debug.log");
 
-        var browser = scope.Launch(
+        var browser = await scope.LaunchAsync(
             chromium,
             scratch.Path,
             "--headless=new",
@@ -797,7 +800,7 @@ internal sealed class StraySweepTests
     /// so the branch under test is reached deterministically, on the first pass
     /// of the loop, without a provisioned Chromium and without the desktop this
     /// arm is about being touched. It is the probe's <b>own</b> build output
-    /// and not <see cref="PlantedProbe.ExecutablePath"/>, so no sweep
+    /// and not <see cref="PlantedProbe.ExecutablePathAsync"/>, so no sweep
     /// anywhere can see it as a candidate and this arm needs no place in the
     /// serialised key.
     /// </para>
@@ -812,10 +815,10 @@ internal sealed class StraySweepTests
     [Test]
     public async Task ABrowserGoneBeforeItsWindowAppearedIsAskedWhetherTheDesktopHeapWasSpent()
     {
-        using var scratch = ScratchDirectory.Create("attribution-died-early");
+        using var scratch = await ScratchDirectory.CreateAsync("attribution-died-early");
         using var scope = new JobObjectScope();
 
-        var browser = scope.Launch(ProbeExecutable, scratch.Path);
+        var browser = await scope.LaunchAsync(ProbeExecutable, scratch.Path);
         var created = ProcessIdentity.CreationTimeOf(browser.Id);
 
         // Gone before the attribution loop is entered, so the branch is taken on
@@ -851,14 +854,17 @@ internal sealed class StraySweepTests
     [Test]
     public async Task EntriesWrittenWhileTheIndexIsBeingSweptAreNeverLost()
     {
-        using var scratch = ScratchDirectory.Create("sweep-index-race");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-index-race");
 
         var paths = new LocalAppDataPaths(scratch.Path);
         var index = new SessionIndex(paths, NullLogger.Instance);
 
-        var live = Enumerable.Range(0, 8)
-            .Select(number => SessionPath.For(NewSessionDirectory(scratch, $"live-{number}")))
-            .ToList();
+        var live = new List<SessionPath>();
+
+        foreach (var number in Enumerable.Range(0, 8))
+        {
+            live.Add(SessionPath.For(await NewSessionDirectoryAsync(scratch, $"live-{number}")));
+        }
 
         // The baseline, written before anything sweeps. Without it a writer task
         // that the scheduler had not got round to starting would leave this test
@@ -867,7 +873,7 @@ internal sealed class StraySweepTests
         // under a fully parallel suite.
         foreach (var session in live)
         {
-            index.Record(session);
+            await index.RecordAsync(session);
         }
 
         using var stop = new CancellationTokenSource();
@@ -876,31 +882,28 @@ internal sealed class StraySweepTests
         // One side writes, exactly as `init` and `resume` do -- idempotently and
         // without any lock. The other side sweeps, over and over.
         //
-        // ⚠️ A dedicated thread and not Task.Run, and a Yield in the loop.
-        // A tight file-I/O loop on a POOL thread starves the pool for as long as
-        // it runs, and the suite's in-process rigs -- which answer in single
-        // milliseconds and assert a two-second budget -- then fail somewhere
-        // else entirely. Measured 2026-08-16: this loop took
-        // `FakeChildHarnessTests` from 8 ms to 2.9 s.
-        var writer = new Thread(() =>
+        // ⚠️ AWAITED SINCE 2026-10-11, decision 63: each record is written with
+        // asynchronous I/O, so the loop holds no pool thread while a write is in
+        // flight, and it yields between passes. Corrected that day (previously "A
+        // dedicated thread and not Task.Run, and a Yield in the loop. A tight
+        // file-I/O loop on a POOL thread starves the pool for as long as it runs,
+        // and the suite's in-process rigs -- which answer in single milliseconds
+        // and assert a two-second budget -- then fail somewhere else entirely.
+        // Measured 2026-08-16: this loop took `FakeChildHarnessTests` from 8 ms to
+        // 2.9 s."): that was a loop of synchronous writes.
+        var writer = Task.Run(async () =>
         {
             while (!stop.IsCancellationRequested)
             {
                 foreach (var session in live)
                 {
-                    index.Record(session);
+                    await index.RecordAsync(session);
                 }
 
                 _ = Interlocked.Increment(ref passes);
-                _ = Thread.Yield();
+                await Task.Yield();
             }
-        })
-        {
-            IsBackground = true,
-            Name = "index race writer",
-        };
-
-        writer.Start();
+        });
 
         while (Volatile.Read(ref passes) is 0)
         {
@@ -911,7 +914,7 @@ internal sealed class StraySweepTests
 
         while (sweeps < 25)
         {
-            var swept = index.Sweep();
+            var swept = await index.SweepAsync();
             sweeps++;
 
             // A live session's entry is never removable: it exists, it has a
@@ -921,13 +924,13 @@ internal sealed class StraySweepTests
         }
 
         await stop.CancelAsync();
-        writer.Join(TestDefaults.InProcessHang);
+        await writer.WaitAsync(TestDefaults.InProcessHang);
 
         // Not vacuous: writes really did land while sweeps were running.
         await Assert.That(passes).IsGreaterThan(0);
-        await Assert.That(writer.IsAlive).IsFalse();
+        await Assert.That(writer.IsCompleted).IsTrue();
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
 
         foreach (var session in live)
         {
@@ -946,14 +949,14 @@ internal sealed class StraySweepTests
     [Test]
     public async Task APointerWhoseDirectoryCameBackBeforeTheDeleteIsKeptAndOneThatIsLostComesStraightBack()
     {
-        using var scratch = ScratchDirectory.Create("sweep-index-recheck");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-index-recheck");
 
         var paths = new LocalAppDataPaths(scratch.Path);
         var index = new SessionIndex(paths, NullLogger.Instance);
 
-        var directory = NewSessionDirectory(scratch, "flickering");
+        var directory = await NewSessionDirectoryAsync(scratch, "flickering");
         var session = SessionPath.For(directory);
-        index.Record(session);
+        await index.RecordAsync(session);
 
         // The state an enumeration would capture a microsecond before an `init`
         // recreates the directory.
@@ -961,29 +964,29 @@ internal sealed class StraySweepTests
         // repository-wide, and the assertions below depend on the directory
         // actually being gone, so the survivors are asserted.
         await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(directory))).IsEmpty();
-        var stale = index.Follow().Single(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase));
+        var stale = (await index.FollowAsync()).Single(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase));
 
         await Assert.That(stale.State).IsEqualTo(SessionIndexEntryState.DirectoryMissing);
         await Assert.That(stale.IsRemovable).IsTrue();
 
         // The `init` lands.
-        _ = NewSessionDirectory(scratch, "flickering");
+        _ = await NewSessionDirectoryAsync(scratch, "flickering");
 
         // What Sweep asks immediately before deleting: not what it read a
         // moment ago, but what is true now.
-        await Assert.That(SessionIndex.ReFollow(stale).IsRemovable).IsFalse();
-        await Assert.That(index.Sweep().Removed).IsEmpty();
-        await Assert.That(index.Follow().Any(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase))).IsTrue();
+        await Assert.That((await SessionIndex.ReFollowAsync(stale)).IsRemovable).IsFalse();
+        await Assert.That((await index.SweepAsync()).Removed).IsEmpty();
+        await Assert.That((await index.FollowAsync()).Any(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase))).IsTrue();
 
         // The other half: an entry that IS lost costs one cycle of invisibility
         // and no more, because every `init` and every `resume` re-asserts it.
         await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(directory))).IsEmpty();
-        await Assert.That(index.Sweep().Removed.Count).IsEqualTo(1);
+        await Assert.That((await index.SweepAsync()).Removed.Count).IsEqualTo(1);
 
-        _ = NewSessionDirectory(scratch, "flickering");
-        index.Record(session);
+        _ = await NewSessionDirectoryAsync(scratch, "flickering");
+        await index.RecordAsync(session);
 
-        await Assert.That(index.Follow().Any(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase))).IsTrue();
+        await Assert.That((await index.FollowAsync()).Any(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase))).IsTrue();
     }
 
     /// <summary>
@@ -1003,7 +1006,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task TwoSweepersContendingForOneMachineWideNameSerialiseRatherThanBothRunning()
     {
-        using var scratch = ScratchDirectory.Create("sweep-two-sweepers");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-two-sweepers");
 
         await Assert.That(LockScopes.Sweep).StartsWith(@"Global\");
         await Assert.That(LockScopes.Sweep).DoesNotContain(@"Local\");
@@ -1011,7 +1014,7 @@ internal sealed class StraySweepTests
         var ready = Path.Combine(scratch.Path, "held.json");
         using var scope = new JobObjectScope();
 
-        _ = scope.Launch(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
+        _ = await scope.LaunchAsync(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
         var report = await ProbeReport.ReadAsync(ready, Patience);
 
         await Assert.That((string?)report["acquisition"]).IsNotEqualTo(nameof(MutexAcquisition.NotAcquired));
@@ -1028,15 +1031,15 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ASweepAlreadyRunningMakesTheNextOneDoNothingAtAllRatherThanWait()
     {
-        using var scratch = ScratchDirectory.Create("sweep-skip");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-skip");
         using var scope = new JobObjectScope();
 
-        var session = NewSessionDirectory(scratch, "would-be-stray");
+        var session = await NewSessionDirectoryAsync(scratch, "would-be-stray");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
         var (pid, created) = await PublishAsync(scope, scratch, profile);
 
         var ready = Path.Combine(scratch.Path, "held.json");
-        _ = scope.Launch(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
+        _ = await scope.LaunchAsync(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
         _ = await ProbeReport.ReadAsync(ready, Patience);
 
         var skipped = await Sweep();
@@ -1085,7 +1088,7 @@ internal sealed class StraySweepTests
         // And a logger that itself throws, which is the case the catch-all
         // cannot report through: the boundary must still not let anything out.
         var throwing = new ThrowingLogger();
-        StraySweep.StartInBackground(() => new StraySweep([], index: null, throwing), throwing);
+        StraySweep.StartInBackground(() => Task.FromResult(new StraySweep([], index: null, throwing)), throwing);
 
         await WaitUntil(() => throwing.Attempts >= 2);
 
@@ -1107,10 +1110,10 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task TheSweepWritesNothingToStandardOutput()
     {
-        using var scratch = ScratchDirectory.Create("sweep-stdout");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-stdout");
         using var scope = new JobObjectScope();
 
-        var session = NewSessionDirectory(scratch, "silent");
+        var session = await NewSessionDirectoryAsync(scratch, "silent");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
         var (pid, created) = await PublishAsync(scope, scratch, profile);
 
@@ -1125,7 +1128,7 @@ internal sealed class StraySweepTests
             scratch.Path,
             "stray-sweep",
             report,
-            PlantedProbe.ExecutablePath,
+            await PlantedProbe.ExecutablePathAsync(),
             ((int)GatePatience.TotalMilliseconds).ToString(CultureInfo.InvariantCulture));
 
         await Assert.That(run.ExitCode).IsEqualTo(0);
@@ -1163,7 +1166,7 @@ internal sealed class StraySweepTests
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath("profile")).IsFalse();
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(@"C:\work\profile")).IsTrue();
 
-        using var scratch = ScratchDirectory.Create("sweep-unc");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-unc");
         using var scope = new JobObjectScope();
 
         var (pid, created) = await PublishAsync(scope, scratch, Unc);
@@ -1278,7 +1281,7 @@ internal sealed class StraySweepTests
         // about substitution: a letter standing in for a real local directory is
         // still admitted, because refusing it would narrow what the sweep can
         // see and cost a stray browser left running.
-        using var scratch = ScratchDirectory.Create("sweep-local-subst");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-local-subst");
         using var local = DosDeviceAlias.Substituting(scratch.Path);
 
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(local.PathTo("profile"))).IsTrue();
@@ -1291,7 +1294,7 @@ internal sealed class StraySweepTests
     [NotInParallel(SweepGroup)]
     public async Task ACandidateNoWindowClaimsIsReportedLoudlyAndLeftRunning()
     {
-        using var scratch = ScratchDirectory.Create("sweep-unattributable");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-unattributable");
         using var scope = new JobObjectScope();
 
         // A candidate with no window at all: the product's own detection sees
@@ -1316,7 +1319,7 @@ internal sealed class StraySweepTests
         // the OS, which always reports it upper-case. An ordinal compare makes
         // this assertion a property of the invoking shell and not of the
         // sweep. Fixed 2026-08-17, ahead of CI picking a shell.
-        await Assert.That(reported.Message).Contains(PlantedProbe.ExecutablePath, StringComparison.OrdinalIgnoreCase);
+        await Assert.That(reported.Message).Contains(await PlantedProbe.ExecutablePathAsync(), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -1343,7 +1346,7 @@ internal sealed class StraySweepTests
     {
         string[] ours = [BrowserAiPaths.ExpectedChromiumExecutable, BrowserAiPaths.FirefoxExecutable];
 
-        using var scratch = ScratchDirectory.Create("sweep-foreign");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-foreign");
         using var scope = new JobObjectScope();
 
         // A process at the same shape of path the retired npx setup leaves
@@ -1399,9 +1402,9 @@ internal sealed class StraySweepTests
     [Test]
     public async Task TheProvisionedExecutablesAreComposedFromTheResolvedRevisionRatherThanSpelled()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
         var executables = ProvisionedBrowsers.Executables(BrowserAiPaths.BrowsersDirectory, manifest);
 
         // The harness composes these from the committed snapshot and the product
@@ -1454,7 +1457,7 @@ internal sealed class StraySweepTests
     [Test]
     public async Task DetectionSeesABinaryThroughAJunctionedRootAndStillSeesNothingElseInIt()
     {
-        using var scratch = ScratchDirectory.Create("sweep-junctioned-root");
+        using var scratch = await ScratchDirectory.CreateAsync("sweep-junctioned-root");
         using var scope = new JobObjectScope();
 
         // A real junction standing in for a relocated profile: `real` is where
@@ -1578,10 +1581,10 @@ internal sealed class StraySweepTests
         // image that runs from a strange directory without its own dependency
         // closure beside it, and with no arguments it reads its stdin forever.
         var image = Path.Combine(directory, "chrome.exe");
-        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), image, overwrite: true);
+        await TestFiles.CopyAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), image, overwrite: true);
 
         var composed = Path.Combine(link, "browsers", leaf, "chrome-win64", "chrome.exe");
-        var process = scope.Launch(composed, real);
+        var process = await scope.LaunchAsync(composed, real);
         var waited = Stopwatch.StartNew();
 
         while (BrowserProcesses.RunningFrom(real).All(entry => entry.ProcessId != process.Id))
@@ -1598,14 +1601,14 @@ internal sealed class StraySweepTests
         return new PlantedThroughJunction(process, image, composed);
     }
 
-    private static string NewSessionDirectory(ScratchDirectory scratch, string label)
+    private static async Task<string> NewSessionDirectoryAsync(ScratchDirectory scratch, string label)
     {
         var directory = Path.Combine(scratch.Path, label);
         var path = SessionPath.For(directory);
 
         SessionLayout.Create(path);
 
-        var result = SessionLock.TryAcquire(
+        var result = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "chromium", Purpose = $"session {label}" },
             NullLogger.Instance);
@@ -1622,7 +1625,7 @@ internal sealed class StraySweepTests
         var report = await PlantedProbe.PublishWindowAsync(scope, scratch.Path, MessageWindows.ChromiumSingletonClass, title);
         var pid = (int)report["pid"]!;
 
-        await PlantedProbe.WaitUntilDetectableAsync([PlantedProbe.ExecutablePath], pid);
+        await PlantedProbe.WaitUntilDetectableAsync([await PlantedProbe.ExecutablePathAsync()], pid);
 
         return (pid, ProcessIdentity.CreationTimeOf(pid));
     }
@@ -1630,10 +1633,10 @@ internal sealed class StraySweepTests
     private static async Task<(int ProcessId, long Created)> StartPlantedAsync(JobObjectScope scope, ScratchDirectory scratch)
     {
         var ready = Path.Combine(scratch.Path, "held.json");
-        var process = scope.Launch(PlantedProbe.ExecutablePath, scratch.Path, "session-hold-named", $@"Global\BrowserAI-Test-{Guid.NewGuid():N}", ready);
+        var process = await scope.LaunchAsync(await PlantedProbe.ExecutablePathAsync(), scratch.Path, "session-hold-named", $@"Global\BrowserAI-Test-{Guid.NewGuid():N}", ready);
 
         _ = await ProbeReport.ReadAsync(ready, Patience);
-        await PlantedProbe.WaitUntilDetectableAsync([PlantedProbe.ExecutablePath], process.Id);
+        await PlantedProbe.WaitUntilDetectableAsync([await PlantedProbe.ExecutablePathAsync()], process.Id);
 
         return (process.Id, ProcessIdentity.CreationTimeOf(process.Id));
     }
@@ -1663,15 +1666,16 @@ internal sealed class StraySweepTests
     /// is a finding and not a flake.
     /// </para>
     /// <para>
-    /// <b>On a thread of its own, never the pool.</b> The wait is a blocking
-    /// wait and the pool grows by about one thread a second, so parking a worker
-    /// on it is how an unrelated in-process rig starts missing its budget.
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54: the gate is
+    /// held by the mutex's own thread since that day, so the wait for it parks no
+    /// worker. <i>Corrected that day (previously "On a thread of its own, never the
+    /// pool. The wait is a blocking wait and the pool grows by about one thread a
+    /// second, so parking a worker on it is how an unrelated in-process rig starts
+    /// missing its budget").</i>
     /// </para>
     /// </remarks>
-    private static Task<StraySweepResult> SweepAsync(ILogger? logger = null) =>
-        OnItsOwnThreadAsync(() =>
-            new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance)
-                .Run(GatePatience));
+    private static async Task<StraySweepResult> SweepAsync(ILogger? logger = null) =>
+        await new StraySweep([await PlantedProbe.ExecutablePathAsync()], index: null, logger ?? NullLogger.Instance).RunAsync(GatePatience);
 
     /// <summary>
     /// Runs one pass the way the product does -- taking the gate or not, never
@@ -1683,8 +1687,8 @@ internal sealed class StraySweepTests
     /// pass that queued would eventually acquire, and the property under test
     /// would be gone and not red.
     /// </remarks>
-    private static Task<StraySweepResult> Sweep(ILogger? logger = null) =>
-        Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance).Run());
+    private static async Task<StraySweepResult> Sweep(ILogger? logger = null) =>
+        await new StraySweep([await PlantedProbe.ExecutablePathAsync()], index: null, logger ?? NullLogger.Instance).RunAsync();
 
     /// <summary>
     /// How long a suite pass may wait for <c>Global\BrowserAI-Sweep</c>.
@@ -1695,36 +1699,6 @@ internal sealed class StraySweepTests
     /// stopped.
     /// </remarks>
     private static TimeSpan GatePatience => TestDefaults.ProcessHang;
-
-    /// <summary>Runs blocking work on a dedicated thread and not on the pool.</summary>
-    /// <param name="work">The work.</param>
-    /// <returns>Its result.</returns>
-    private static Task<StraySweepResult> OnItsOwnThreadAsync(Func<StraySweepResult> work)
-    {
-        var completion = new TaskCompletionSource<StraySweepResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                completion.SetResult(work());
-            }
-#pragma warning disable CA1031 // The exception belongs to the awaiting test, not to this thread.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                completion.SetException(failure);
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "stray sweep test pass",
-        };
-
-        thread.Start();
-
-        return completion.Task;
-    }
 
     private static async Task<Attribution> WaitForAttributionAsync(
         string image,
@@ -1770,8 +1744,8 @@ internal sealed class StraySweepTests
                     $"The browser (pid {browserId}) exited before it published a message window for '{profile}'. "
                     + "That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one."
                     + $"{Environment.NewLine}--- exit code: {browser.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"} ---"
-                    + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{scope.SaidBy(browserId)}"
-                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{ChromiumLog(chromiumLog)}"
+                    + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{await scope.SaidByAsync(browserId)}"
+                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{await ChromiumLogAsync(chromiumLog)}"
                     + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}"
                     + $"{Environment.NewLine}{DesktopHeapProbe.Describe()}");
             }
@@ -1796,7 +1770,7 @@ internal sealed class StraySweepTests
             {
                 throw new TimeoutException(
                     $"No message-only window titled '{profile}' appeared within {Patience}. A real Chromium publishes its user-data-dir there, and the sweep's attribution half reads it."
-                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{ChromiumLog(chromiumLog)}"
+                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{await ChromiumLogAsync(chromiumLog)}"
                     + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}");
             }
 
@@ -1815,13 +1789,13 @@ internal sealed class StraySweepTests
     /// </remarks>
     /// <param name="path">Where the browser was told to log.</param>
     /// <returns>The log, or a sentence saying why there is not one.</returns>
-    private static string ChromiumLog(string path)
+    private static async Task<string> ChromiumLogAsync(string path)
     {
         try
         {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream);
-            var text = reader.ReadToEnd();
+            var text = await reader.ReadToEndAsync();
 
             return text.Length is 0 ? "<the log file exists and is empty>" : text;
         }

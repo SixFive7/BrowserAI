@@ -43,20 +43,20 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task AStartedRecordNamesThisProcessWholeAndReadsBackAsRunning()
     {
-        using var data = ScratchDirectory.Create("background-record-started");
+        using var data = await ScratchDirectory.CreateAsync("background-record-started");
 
         var pipe = BackgroundPipe.NamePrefix + "suite-" + Guid.NewGuid().ToString("N");
         var path = BackgroundRecord.PathFor(data.Path, pipe);
 
         await Assert.That(path).IsEqualTo(Path.Combine(data.Path, BackgroundRecord.DirectoryName, pipe[(pipe.LastIndexOf('\\') + 1)..] + ".json"));
 
-        var written = BackgroundRecord.Started(path, "9.9.9-record-tests", @"C:\Users\someone\BrowserAI\current\BrowserAI.exe", StartedAt);
+        var written = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", @"C:\Users\someone\BrowserAI\current\BrowserAI.exe", StartedAt);
 
         await Assert.That(written.ProcessId).IsEqualTo(Environment.ProcessId);
         await Assert.That(written.CreatedFileTime).IsEqualTo(ProcessLiveness.CreationTimeOfThisProcess());
         await Assert.That(written.Ended).IsNull();
 
-        var read = BackgroundRecord.Read(path);
+        var read = await BackgroundRecord.ReadAsync(path);
 
         await Assert.That(read).IsEqualTo(written);
         await Assert.That(read!.StartedAt).IsEqualTo(StartedAt);
@@ -93,37 +93,37 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task ACleanEndIsMarkedOnlyOnThisProcesssOwnRecord()
     {
-        using var data = ScratchDirectory.Create("background-record-clean");
+        using var data = await ScratchDirectory.CreateAsync("background-record-clean");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "clean.json");
         var created = ProcessLiveness.CreationTimeOfThisProcess();
 
         // No record: nothing to mark, and nothing is written.
-        await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, StartedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Stopped, StartedAt)).IsFalse();
         await Assert.That(File.Exists(path)).IsFalse();
 
         // This pid, another creation time: somebody else's record.
-        HandWrittenRecord.Write(path, Environment.ProcessId, created - 1);
+        await HandWrittenRecord.WriteAsync(path, Environment.ProcessId, created - 1);
         var before = await File.ReadAllBytesAsync(path);
 
-        await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, StartedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Stopped, StartedAt)).IsFalse();
         await Assert.That((await File.ReadAllBytesAsync(path)).SequenceEqual(before)).IsTrue().Because("a record that was not this write's to touch was rewritten");
 
         // Another pid, this creation time.
-        HandWrittenRecord.Write(path, Environment.ProcessId + 4, created);
+        await HandWrittenRecord.WriteAsync(path, Environment.ProcessId + 4, created);
         before = await File.ReadAllBytesAsync(path);
 
-        await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.SessionEnding, StartedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.SessionEnding, StartedAt)).IsFalse();
         await Assert.That((await File.ReadAllBytesAsync(path)).SequenceEqual(before)).IsTrue().Because("a record that was not this write's to touch was rewritten");
 
         // This process's own: marked, with how and when.
-        _ = BackgroundRecord.Started(path, "9.9.9-record-tests", "image", StartedAt);
+        _ = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", "image", StartedAt);
 
         var endedAt = StartedAt.AddHours(3);
 
-        await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.EndCommand, endedAt)).IsTrue();
+        await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.EndCommand, endedAt)).IsTrue();
 
-        var read = BackgroundRecord.Read(path)!;
+        var read = (await BackgroundRecord.ReadAsync(path))!;
 
         await Assert.That(read.Ended).IsEqualTo(BackgroundEnd.EndCommand);
         await Assert.That(read.EndedAt).IsEqualTo(endedAt);
@@ -150,47 +150,47 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task AnExitIsWrittenOnlyForTheIdentityItNamesAndOnlyWhenNoCleanEndIsRecorded()
     {
-        using var data = ScratchDirectory.Create("background-record-exited");
+        using var data = await ScratchDirectory.CreateAsync("background-record-exited");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "exited.json");
         const int Pid = 31337;
         const long Created = 133_700_000_000_000_000;
         var exitedAt = StartedAt.AddMinutes(42);
 
-        await Assert.That(BackgroundRecord.Exited(path, Pid, Created, 3, exitedAt)).IsFalse().Because("there is no record to write into");
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid, Created, 3, exitedAt)).IsFalse().Because("there is no record to write into");
         await Assert.That(File.Exists(path)).IsFalse();
 
-        HandWrittenRecord.Write(path, Pid, Created);
+        await HandWrittenRecord.WriteAsync(path, Pid, Created);
         var before = await File.ReadAllBytesAsync(path);
 
         // Another identity: neither the pid nor the creation time may differ.
-        await Assert.That(BackgroundRecord.Exited(path, Pid + 1, Created, 3, exitedAt)).IsFalse();
-        await Assert.That(BackgroundRecord.Exited(path, Pid, Created + 1, 3, exitedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid + 1, Created, 3, exitedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid, Created + 1, 3, exitedAt)).IsFalse();
         await Assert.That((await File.ReadAllBytesAsync(path)).SequenceEqual(before)).IsTrue().Because("a record that was not this write's to touch was rewritten");
 
         // Its own: the exit code and the time.
-        await Assert.That(BackgroundRecord.Exited(path, Pid, Created, unchecked((int)0xC0000005), exitedAt)).IsTrue();
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid, Created, unchecked((int)0xC0000005), exitedAt)).IsTrue();
 
-        var crashed = BackgroundRecord.Read(path)!;
+        var crashed = (await BackgroundRecord.ReadAsync(path))!;
 
         await Assert.That(crashed.ExitCode).IsEqualTo(unchecked((int)0xC0000005));
         await Assert.That(crashed.ExitedAt).IsEqualTo(exitedAt);
         await Assert.That(crashed.Ended).IsNull();
 
         // A relay that found it gone and could read no code writes the time alone.
-        HandWrittenRecord.Write(path, Pid, Created);
+        await HandWrittenRecord.WriteAsync(path, Pid, Created);
 
-        await Assert.That(BackgroundRecord.Exited(path, Pid, Created, exitCode: null, exitedAt)).IsTrue();
-        await Assert.That(BackgroundRecord.Read(path)!.ExitCode).IsNull();
-        await Assert.That(BackgroundRecord.Read(path)!.ExitedAt).IsEqualTo(exitedAt);
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid, Created, exitCode: null, exitedAt)).IsTrue();
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.ExitCode).IsNull();
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.ExitedAt).IsEqualTo(exitedAt);
 
         // A record that says it ended cleanly is never written over.
-        HandWrittenRecord.Write(path, Pid, Created, ended: nameof(BackgroundEnd.SessionEnding));
+        await HandWrittenRecord.WriteAsync(path, Pid, Created, ended: nameof(BackgroundEnd.SessionEnding));
         before = await File.ReadAllBytesAsync(path);
 
-        await Assert.That(BackgroundRecord.Exited(path, Pid, Created, 1, exitedAt)).IsFalse();
+        await Assert.That(await BackgroundRecord.ExitedAsync(path, Pid, Created, 1, exitedAt)).IsFalse();
         await Assert.That((await File.ReadAllBytesAsync(path)).SequenceEqual(before)).IsTrue().Because("a record that was not this write's to touch was rewritten");
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.SessionEnding);
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsEqualTo(BackgroundEnd.SessionEnding);
     }
 
     /// <summary>
@@ -205,16 +205,16 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task AClearedRecordIsGoneAndClearingNothingIsNothingToDo()
     {
-        using var data = ScratchDirectory.Create("background-record-clear");
+        using var data = await ScratchDirectory.CreateAsync("background-record-clear");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "cleared.json");
 
-        _ = BackgroundRecord.Started(path, "9.9.9-record-tests", "image", StartedAt);
+        _ = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", "image", StartedAt);
 
         BackgroundRecord.Clear(path);
 
         await Assert.That(File.Exists(path)).IsFalse();
-        await Assert.That(BackgroundRecord.Read(path)).IsNull();
+        await Assert.That(await BackgroundRecord.ReadAsync(path)).IsNull();
 
         // Again, with the folder still there and the file gone.
         BackgroundRecord.Clear(path);
@@ -248,15 +248,15 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task ARecordThatCannotBeReadIsReadAsNoRecord()
     {
-        using var data = ScratchDirectory.Create("background-record-unreadable");
+        using var data = await ScratchDirectory.CreateAsync("background-record-unreadable");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "unreadable.json");
 
-        await Assert.That(BackgroundRecord.Read(path)).IsNull().Because("the folder does not exist");
+        await Assert.That(await BackgroundRecord.ReadAsync(path)).IsNull().Because("the folder does not exist");
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-        await Assert.That(BackgroundRecord.Read(path)).IsNull().Because("the file does not exist");
+        await Assert.That(await BackgroundRecord.ReadAsync(path)).IsNull().Because("the file does not exist");
 
         string[] unreadable =
         [
@@ -277,13 +277,13 @@ internal sealed class BackgroundRecordTests
         {
             await File.WriteAllTextAsync(path, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-            await Assert.That(BackgroundRecord.Read(path)).IsNull().Because($"'{text}' was read as a record");
+            await Assert.That(await BackgroundRecord.ReadAsync(path)).IsNull().Because($"'{text}' was read as a record");
         }
 
         // The positive control.
-        HandWrittenRecord.Write(path, 7, 1, ended: nameof(BackgroundEnd.Update));
+        await HandWrittenRecord.WriteAsync(path, 7, 1, ended: nameof(BackgroundEnd.Update));
 
-        var readable = BackgroundRecord.Read(path);
+        var readable = await BackgroundRecord.ReadAsync(path);
 
         await Assert.That(readable).IsNotNull();
         await Assert.That(readable!.ProcessId).IsEqualTo(7);
@@ -313,7 +313,7 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task ARefusalReadsBackWholeAndAnEndThisBuildDoesNotKnowIsStillAnEnd()
     {
-        using var data = ScratchDirectory.Create("background-record-refused");
+        using var data = await ScratchDirectory.CreateAsync("background-record-refused");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "refused.json");
         var refusal = new BrowserAI.Hosting.RootRefusal(
@@ -322,8 +322,8 @@ internal sealed class BackgroundRecordTests
             "it is outside this user's profile, so it is not per-user storage",
             @"give BrowserAI a data root under 'C:\Users\someone'.");
 
-        var written = BackgroundRecord.Refused(path, "9.9.9-record-tests", "image", refusal, StartedAt);
-        var read = BackgroundRecord.Read(path)!;
+        var written = await BackgroundRecord.RefusedAsync(path, "9.9.9-record-tests", "image", refusal, StartedAt);
+        var read = (await BackgroundRecord.ReadAsync(path))!;
 
         await Assert.That(read).IsEqualTo(written);
         await Assert.That(read.ProcessId).IsEqualTo(Environment.ProcessId);
@@ -335,25 +335,25 @@ internal sealed class BackgroundRecordTests
         var partial = (await File.ReadAllTextAsync(path)).Replace("\"remedy\"", "\"remedies\"", StringComparison.Ordinal);
         await File.WriteAllTextAsync(path, partial, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Refused);
-        await Assert.That(BackgroundRecord.Read(path)!.Refusal).IsNull();
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsEqualTo(BackgroundEnd.Refused);
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Refusal).IsNull();
 
         // A later build's end: a clean end all the same, whatever it is called.
         foreach (var unknown in new[] { "SomethingALaterBuildWrites", "3", "Stopped, Update", "stopped" })
         {
-            HandWrittenRecord.Write(path, 7, 1, ended: unknown);
+            await HandWrittenRecord.WriteAsync(path, 7, 1, ended: unknown);
 
-            await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Unrecognised).Because($"'{unknown}' read as something else");
+            await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsEqualTo(BackgroundEnd.Unrecognised).Because($"'{unknown}' read as something else");
         }
 
         // An empty name is no end, and so is no name: the crash R names.
-        HandWrittenRecord.Write(path, 7, 1, ended: string.Empty);
+        await HandWrittenRecord.WriteAsync(path, 7, 1, ended: string.Empty);
 
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsNull();
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsNull();
 
-        HandWrittenRecord.Write(path, 7, 1);
+        await HandWrittenRecord.WriteAsync(path, 7, 1);
 
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsNull();
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsNull();
     }
 
     /// <summary>
@@ -375,11 +375,11 @@ internal sealed class BackgroundRecordTests
     /// Windows renames a file over another only when nobody has the target open, and
     /// sharing it for deletion does not change that. The record stays whole, which is
     /// what this arm holds; that the write is lost, and that
-    /// <see cref="BackgroundRecord.Started"/> and
-    /// <see cref="BackgroundRecord.EndedCleanly"/> let the failure escape, is reported
+    /// <see cref="BackgroundRecord.StartedAsync"/> and
+    /// <see cref="BackgroundRecord.EndedCleanlyAsync"/> let the failure escape, is reported
     /// to the background's build and not held here either way. <i>Fixed 2026-10-09 in the background's build:</i>
     /// a write now waits out a reader for <see cref="BackgroundRecord.WriteBound"/>,
-    /// <see cref="BackgroundRecord.EndedCleanly"/> never throws, the background serves
+    /// <see cref="BackgroundRecord.EndedCleanlyAsync"/> never throws, the background serves
     /// on when its start cannot be recorded, and the arm below holds the write's side.
     /// </para>
     /// <para>
@@ -391,22 +391,22 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task AReaderOfTheRecordReadsItWholeWhateverAWriteDoes()
     {
-        using var data = ScratchDirectory.Create("background-record-whole");
+        using var data = await ScratchDirectory.CreateAsync("background-record-whole");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "whole.json");
 
-        _ = BackgroundRecord.Started(path, "9.9.9-record-tests", "image", StartedAt);
+        _ = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", "image", StartedAt);
 
         var old = await File.ReadAllBytesAsync(path);
         string written;
 
         // A reader that opened the record before the write, sharing it as widely as a
         // reader can.
-        using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        await using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous))
         {
             try
             {
-                written = BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, StartedAt.AddHours(1)) ? "written" : "not this process's record";
+                written = await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Stopped, StartedAt.AddHours(1)) ? "written" : "not this process's record";
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -429,9 +429,9 @@ internal sealed class BackgroundRecordTests
         // The reader has gone: the write goes through, whole.
         var endedAt = StartedAt.AddHours(2);
 
-        await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, endedAt)).IsTrue();
+        await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Stopped, endedAt)).IsTrue();
 
-        var record = BackgroundRecord.Read(path)!;
+        var record = (await BackgroundRecord.ReadAsync(path))!;
 
         await Assert.That(record.Ended).IsEqualTo(BackgroundEnd.Stopped);
         await Assert.That(record.EndedAt).IsEqualTo(endedAt);
@@ -461,19 +461,19 @@ internal sealed class BackgroundRecordTests
     [Test]
     public async Task AWriteWaitsOutAReaderAndOneThatCannotGetThroughLeavesNothingBesideTheRecord()
     {
-        using var data = ScratchDirectory.Create("background-record-waits");
+        using var data = await ScratchDirectory.CreateAsync("background-record-waits");
 
         var path = Path.Combine(data.Path, BackgroundRecord.DirectoryName, "waits.json");
 
-        _ = BackgroundRecord.Started(path, "9.9.9-record-tests", "image", StartedAt);
+        _ = await BackgroundRecord.StartedAsync(path, "9.9.9-record-tests", "image", StartedAt);
 
         Task<bool> ending;
 
         // A reader that opened the record the way BackgroundRecord.Read does, held for a
         // tenth of the bound.
-        using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        await using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            ending = Task.Run(() => BackgroundRecord.EndedCleanly(path, BackgroundEnd.Stopped, StartedAt.AddHours(1)));
+            ending = Task.Run(() => BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Stopped, StartedAt.AddHours(1)));
 
             await Task.Delay(BackgroundRecord.WriteBound / 10);
 
@@ -482,17 +482,17 @@ internal sealed class BackgroundRecordTests
         }
 
         await Assert.That(await ending.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Stopped);
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsEqualTo(BackgroundEnd.Stopped);
         await Assert.That(Beside(path)).IsEqualTo(Path.GetFileName(path)).Because("a write that waited left a file of its own beside the record");
 
         // A reader that holds it past the bound: the write gives up, the record is as it
         // was, and nothing is left beside it.
-        using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        await using (var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            await Assert.That(BackgroundRecord.EndedCleanly(path, BackgroundEnd.Update, StartedAt.AddHours(2))).IsFalse();
+            await Assert.That(await BackgroundRecord.EndedCleanlyAsync(path, BackgroundEnd.Update, StartedAt.AddHours(2))).IsFalse();
         }
 
-        await Assert.That(BackgroundRecord.Read(path)!.Ended).IsEqualTo(BackgroundEnd.Stopped);
+        await Assert.That((await BackgroundRecord.ReadAsync(path))!.Ended).IsEqualTo(BackgroundEnd.Stopped);
         await Assert.That(Beside(path)).IsEqualTo(Path.GetFileName(path)).Because("a write that gave up left a file of its own beside the record");
     }
 

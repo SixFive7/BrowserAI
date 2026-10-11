@@ -54,7 +54,7 @@ internal sealed class WireFrame(byte[] bytes)
 
 /// <summary>
 /// The finder the engine looks through: it hands over a background the arm offered,
-/// and answers <see cref="IBackgroundFinder.Explain"/> with whatever the arm set.
+/// and answers <see cref="IBackgroundFinder.ExplainAsync"/> with whatever the arm set.
 /// </summary>
 internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
 {
@@ -73,7 +73,7 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
     private TaskCompletionSource? _release;
     private TaskCompletionSource _waiting = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    /// <summary>What <see cref="Explain"/> answers.</summary>
+    /// <summary>What <see cref="ExplainAsync"/> answers.</summary>
     public BackgroundAbsence Absence
     {
         get
@@ -113,7 +113,7 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
         }
     }
 
-    /// <summary>Whether <see cref="Explain"/> throws, as a finder that could not read the Task Scheduler does.</summary>
+    /// <summary>Whether <see cref="ExplainAsync"/> throws, as a finder that could not read the Task Scheduler does.</summary>
     public bool FailsToExplain
     {
         get
@@ -230,7 +230,7 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
     }
 
     /// <inheritdoc />
-    public BackgroundAbsence Explain(int? lastBackgroundPid)
+    public async Task<BackgroundAbsence> ExplainAsync(int? lastBackgroundPid)
     {
         BackgroundAbsence answer;
         Task? release;
@@ -253,10 +253,17 @@ internal sealed class FakeBackgroundFinder : IBackgroundFinder, IDisposable
             }
         }
 
-        // On the engine's thread-pool call, as a finder that blocks briefly does.
-        if (release is not null && !release.Wait(TestDefaults.InProcessHang))
+        // Awaited by the engine, as a finder whose look takes a while is.
+        if (release is not null)
         {
-            throw new TimeoutException("Nothing released the suite's held explanation.");
+            try
+            {
+                await release.WaitAsync(TestDefaults.InProcessHang);
+            }
+            catch (TimeoutException failure)
+            {
+                throw new TimeoutException("Nothing released the suite's held explanation.", failure);
+            }
         }
 
         return answer;
@@ -444,13 +451,13 @@ internal sealed class DuplexStream : Stream
         _writes.WriteAsync(buffer, offset, count, cancellationToken);
 
     /// <inheritdoc />
-    public override void Write(byte[] buffer, int offset, int count) => _writes.Write(buffer, offset, count);
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException("The relay writes asynchronously.");
 
     /// <inheritdoc />
     public override Task FlushAsync(CancellationToken cancellationToken) => _writes.FlushAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Flush() => _writes.Flush();
+    public override void Flush() => throw new NotSupportedException("The relay flushes asynchronously.");
 
     /// <inheritdoc />
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -587,7 +594,7 @@ internal sealed class GatedStream(Stream inner) : Stream
     public override Task FlushAsync(CancellationToken cancellationToken) => inner.FlushAsync(cancellationToken);
 
     /// <inheritdoc />
-    public override void Flush() => inner.Flush();
+    public override void Flush() => throw new NotSupportedException("The relay flushes asynchronously.");
 
     /// <inheritdoc />
     public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();

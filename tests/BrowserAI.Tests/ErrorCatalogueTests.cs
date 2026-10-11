@@ -78,7 +78,7 @@ internal sealed partial class ErrorCatalogueTests
         // the property; where the scope is written is not.
         static async Task refusedOnceAsync(string client)
         {
-            await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+            await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
             await using var rig = await McpTestHarness.ThroughTheProxyAsync(
                 sessions: sessions,
                 listsBeforeCalling: false,
@@ -139,7 +139,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheProxyRefusesACallWithNoSessionAndOneNamingNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // Row 1 -- no session at all. Before step 13 this was answered by the
@@ -183,14 +183,14 @@ internal sealed partial class ErrorCatalogueTests
         // the crashed-holder shape, and a read-only open recovers it.
         var stranded = Path.Combine(sessions.Root, "stranded-session");
         Directory.CreateDirectory(stranded);
-        File.Copy(Path.Combine(closed, SessionLayout.LockFileName), Path.Combine(stranded, SessionLayout.LockFileName));
-        File.Copy(Path.Combine(closed, SessionLayout.DataFileName), Path.Combine(stranded, SessionLayout.DataFileName));
+        await TestFiles.CopyAsync(Path.Combine(closed, SessionLayout.LockFileName), Path.Combine(stranded, SessionLayout.LockFileName));
+        await TestFiles.CopyAsync(Path.Combine(closed, SessionLayout.DataFileName), Path.Combine(stranded, SessionLayout.DataFileName));
 
         var journal = Path.Combine(closed, $"{SessionLayout.DataFileName}-wal");
 
         if (File.Exists(journal))
         {
-            File.Copy(journal, Path.Combine(stranded, $"{SessionLayout.DataFileName}-wal"));
+            await TestFiles.CopyAsync(journal, Path.Combine(stranded, $"{SessionLayout.DataFileName}-wal"));
         }
 
         var notOpen = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = stranded, ["why"] = "the suite exercising this call" });
@@ -198,7 +198,7 @@ internal sealed partial class ErrorCatalogueTests
         // 8 b, 2026-10-04: the copy carries an opening and no close, which is the
         // shape a holder that was killed leaves, so the refusal names that as its
         // last close. Read off the copy's own record, the way the refusal reads it.
-        var strandedRecord = SessionLock.ReadRecord(SessionPath.For(stranded))!;
+        var strandedRecord = (await SessionLock.ReadRecordAsync(SessionPath.For(stranded)))!;
 
         await Assert.That(strandedRecord.LastClose?.Value.Cause).IsEqualTo(SessionCloseCause.Unrecorded);
 
@@ -258,7 +258,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task InitRefusesAnUnusablePath()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // Row 3's second half: absolute and still unusable.
@@ -291,7 +291,7 @@ internal sealed partial class ErrorCatalogueTests
         // What a unit test of the function cannot say is that each of these
         // doors REACHES it, which is what the catalogue's census exists to
         // require.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // A UNC path, refused on its characters before any filesystem call.
@@ -386,7 +386,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var original = Path.Combine(sessions.Root, "original");
@@ -412,7 +412,7 @@ internal sealed partial class ErrorCatalogueTests
             ["idleMinutes"] = 10,
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.For(original))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(original)))!;
 
         await Assert.That((bool?)again["isError"]).IsTrue();
         Match(
@@ -480,7 +480,7 @@ internal sealed partial class ErrorCatalogueTests
         // the refusal no longer depends on one, so the provocation is a caller
         // naming a tool it was never offered -- which is the only way the row is
         // reachable, and exactly the case it was written for.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "unattended");
@@ -559,7 +559,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         const string Unjudged = "browser_a_tool_from_the_future";
 
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
         {
             child.Tools[Unjudged] = new FakeToolBehaviour();
             child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -614,7 +614,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheLockRowsAreEmittedByRealLockConditions()
     {
-        var root = Path.Combine(ScratchRoot.Path, $"lock-rows-{Guid.NewGuid():N}");
+        var root = Path.Combine(await ScratchRoot.PathAsync(), $"lock-rows-{Guid.NewGuid():N}");
         var directory = Path.Combine(root, "held");
         _ = Directory.CreateDirectory(directory);
 
@@ -624,9 +624,9 @@ internal sealed partial class ErrorCatalogueTests
 
         // Row 8 -- held. A second acquisition against a lock this process still
         // owns is the same refusal a second BrowserAI would meet.
-        using (var held = SessionLock.TryAcquire(location, request, logger).Acquired!)
+        using (var held = (await SessionLock.TryAcquireAsync(location, request, logger)).Acquired!)
         {
-            var contended = SessionLock.TryAcquire(location, request, logger);
+            var contended = await SessionLock.TryAcquireAsync(location, request, logger);
 
             await Assert.That(contended.Acquired).IsNull();
             await Assert.That(contended.Message).Contains("is in use by PID");
@@ -636,7 +636,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // Row 9 -- the holder is gone, so the lock is reclaimed. Not an error:
         // the call proceeds and says so.
-        var reclaimed = SessionLock.TryAcquire(location, request, logger);
+        var reclaimed = await SessionLock.TryAcquireAsync(location, request, logger);
 
         await Assert.That(reclaimed.Acquired).IsNotNull();
         await Assert.That(reclaimed.Message).Contains("Reclaiming it");
@@ -662,7 +662,7 @@ internal sealed partial class ErrorCatalogueTests
 
         using (DirectoryDenial.Apply(directory, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
         {
-            denied = SessionLock.TryAcquire(location, request, logger);
+            denied = await SessionLock.TryAcquireAsync(location, request, logger);
         }
 
         denied.Acquired?.Dispose();
@@ -683,7 +683,7 @@ internal sealed partial class ErrorCatalogueTests
         // And nothing was changed: the refusal is about a read, so the record the
         // reclaim wrote is still the record on disk. An arm that had overwritten
         // it would satisfy every assertion above.
-        var untouched = SessionLock.ReadRecord(location);
+        var untouched = await SessionLock.ReadRecordAsync(location);
 
         await Assert.That(untouched).IsNotNull();
         await Assert.That(untouched!.Purpose).IsEqualTo(request.Purpose);
@@ -700,7 +700,7 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That(created).IsTrue();
 
-        var refused = SessionLock.TryAcquire(blockedLocation, request, logger);
+        var refused = await SessionLock.TryAcquireAsync(blockedLocation, request, logger);
 
         await Assert.That(refused.Acquired).IsNull();
         await Assert.That(refused.Message).Contains("machine-wide lock");
@@ -718,7 +718,7 @@ internal sealed partial class ErrorCatalogueTests
         // Row 7. The seam that stands sessions up is made to fail the way a
         // missing payload or a broken node would, so the refusal, the released
         // lock and the untouched directory are all the product's.
-        await using var sessions = RigSessionEnvironment.Failing("spawn EFTYPE");
+        await using var sessions = await RigSessionEnvironment.FailingAsync("spawn EFTYPE");
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "cannot-start");
@@ -744,7 +744,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // The lock was released, so a retry is possible in one turn -- which is
         // what "recoverable" means and is not implied by the sentence alone.
-        var record = SessionLock.ReadRecord(SessionPath.For(directory));
+        var record = await SessionLock.ReadRecordAsync(SessionPath.For(directory));
         await Assert.That(record).IsNotNull();
     }
 
@@ -764,7 +764,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheInstallIsBrokenRowIsEmittedByASessionChildWhoseListDiffers()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.ToolsListResult = child.ToolsListResult.Replace("Capture an accessibility snapshot", "Capture an accessibility snapshot, changed", StringComparison.Ordinal),
             opensDefaultSession: false);
 
@@ -829,7 +829,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <para>
     /// <b>It needs a session that opened and then lost its child</b>, which is
     /// why the rig refuses the <i>next</i> child and not every one:
-    /// <see cref="RigSessionEnvironment.Failing"/> cannot reach this path at
+    /// <see cref="RigSessionEnvironment.FailingAsync"/> cannot reach this path at
     /// all, because nothing it stands up ever becomes a live session.
     /// </para>
     /// </remarks>
@@ -837,7 +837,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ARuntimeThatWillNotStartForAResumeGetsRowSevenAndLeavesTheDirectoryFree()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "relaunch-refused");
@@ -922,7 +922,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         var clock = new ManualClock();
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -1002,7 +1002,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheHeldByAnotherBrowserAiRowIsEmittedByACloseOfASessionAnotherHolderHas()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "held-elsewhere");
@@ -1011,10 +1011,10 @@ internal sealed partial class ErrorCatalogueTests
 
         var location = SessionPath.For(directory);
 
-        using var held = SessionLock.TryAcquire(
+        using var held = (await SessionLock.TryAcquireAsync(
             location,
             new SessionLockRequest { Browser = "chromium", Purpose = "the session another BrowserAI holds" },
-            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance).Acquired!;
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)).Acquired!;
 
         var answer = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
@@ -1049,7 +1049,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         const string Said = "Installing chromium failed: the suite's installer would not start";
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             opensDefaultSession: false,
             provisioningProbe: browser => new ProvisioningStatus(browser, ProvisioningState.Failed, string.Empty, Said));
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -1097,7 +1097,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheSettingsNotStatedRowIsEmittedByAnInitThatLeavesTwoOut()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -1124,7 +1124,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheSettingsHeldBackRowIsEmittedByAResumeThatAsksForAWindow()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
             opensDefaultSession: false);
 
@@ -1181,7 +1181,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheLongerIdleHeldBackRowIsEmittedByAnInitThatSetsNever()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var answer = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -1216,7 +1216,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheBrowserRuntimeRowForAChildThatListsNothingEndsItsReasonAndNamesNoType()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             // The list BrowserAI asks for after the handshake answered with an error, whose
             // message ends without a full stop.
             child => child.ToolsListError = "the list is not ready",
@@ -1262,7 +1262,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheDeadBrowserServerRowIsEmittedByACallForwardedAfterTheChildDied()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "server-gone");
@@ -1393,7 +1393,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheScreenshotRowIsEmittedByAChromiumScreenshotPastItsLimit()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools[ScreenshotLimit.ScreenshotTool] = new FakeToolBehaviour
             {
                 RawResult = $$"""{"content":[{"type":"image","data":"{{Convert.ToBase64String(ScreenshotLimitTests.PngHead(1920, 16385))}}","mimeType":"image/png"}]}""",
@@ -1480,7 +1480,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // And it round-trips through browserai.data capped and stripped, which is the
         // half that has to be true of the FILE and not of a formatter.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "hostile-purpose");
@@ -1495,7 +1495,7 @@ internal sealed partial class ErrorCatalogueTests
             ["idleMinutes"] = 10,
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         // ⚠️ NOT A LENGTH ANY MORE. Every cap on the record is gone, so what
         // makes a hostile purpose safe is the character rule alone: `\n`
@@ -1526,7 +1526,7 @@ internal sealed partial class ErrorCatalogueTests
         // so "still downloading" is a fact about state and not about time.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             installer: (_, root) => FakeInstaller.SucceedingWhenReleased(
                 Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
                 stillDownloading.Task));
@@ -1596,12 +1596,12 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheMaintenanceRowIsEmittedByAnInitThatMeetsARunningReinstall()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
 
-        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
+        using var claim = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock;
 
         await Assert.That(claim).IsNotNull();
 
@@ -1627,7 +1627,7 @@ internal sealed partial class ErrorCatalogueTests
         var reference = SessionErrors.BrowsersAreBeingReinstalled(
             SessionToolSurface.Init,
             root,
-            MaintenanceLock.Describe(root));
+            await MaintenanceLock.DescribeAsync(root));
 
         Match(
             TextOf(refused),
@@ -1665,7 +1665,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
@@ -1735,7 +1735,7 @@ internal sealed partial class ErrorCatalogueTests
         // No session at all, and that is the whole condition: a browser running
         // out of our tree that SOMETHING claims produces the other refusal, which
         // names the session. Row 13 is the case where nothing does.
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = sessions.ChromiumDirectory;
@@ -1796,7 +1796,7 @@ internal sealed partial class ErrorCatalogueTests
     [NotInParallel("stray-sweep")]
     public async Task TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims()
     {
-        using var scratch = ScratchDirectory.Create("catalogue-stray");
+        using var scratch = await ScratchDirectory.CreateAsync("catalogue-stray");
         using var scope = new JobObjectScope();
         using var capturing = new CapturingLoggerProvider();
 
@@ -1804,15 +1804,15 @@ internal sealed partial class ErrorCatalogueTests
         // no window at all -- which is the condition, and the only one: detection
         // succeeded and attribution has nothing to say.
         var ready = Path.Combine(scratch.Path, "held.json");
-        var process = scope.Launch(
-            PlantedProbe.ExecutablePath,
+        var process = await scope.LaunchAsync(
+            await PlantedProbe.ExecutablePathAsync(),
             scratch.Path,
             "session-hold-named",
             $@"Global\BrowserAI-Test-{Guid.NewGuid():N}",
             ready);
 
         _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
-        await PlantedProbe.WaitUntilDetectableAsync([PlantedProbe.ExecutablePath], process.Id);
+        await PlantedProbe.WaitUntilDetectableAsync([await PlantedProbe.ExecutablePathAsync()], process.Id);
 
         var logger = capturing.CreateLogger("BrowserAI.Sweep");
         var result = await RunSweepAsync(logger);
@@ -1842,7 +1842,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen()
     {
-        using var scratch = ScratchDirectory.Create("catalogue-firefox-lock");
+        using var scratch = await ScratchDirectory.CreateAsync("catalogue-firefox-lock");
         using var scope = new JobObjectScope();
 
         var session = SessionPath.For(Path.Combine(scratch.Path, "firefox"));
@@ -1859,8 +1859,8 @@ internal sealed partial class ErrorCatalogueTests
             RunOptions.Default);
 
         var ready = Path.Combine(scratch.Path, "holder.json");
-        var holder = scope.Launch(
-            PlantedProbe.ExecutablePath,
+        var holder = await scope.LaunchAsync(
+            await PlantedProbe.ExecutablePathAsync(),
             scratch.Path,
             "hold-file",
             FirefoxProfile.LockFileIn(profile),
@@ -1909,39 +1909,15 @@ internal sealed partial class ErrorCatalogueTests
     /// is not a missed one").</b> That is true of the product and was never a
     /// reason for a test that needs its own pass to have run: asking again is a
     /// poll that can lose every time, and the mutex is a queue. The measurement
-    /// behind the change is in <c>StraySweepTests.SweepAsync</c>.
+    /// behind the change is in <c>StraySweepTests.SweepAsync</c>. <b>Awaited since
+    /// 2026-10-11</b>, the maintainer's decision 54: the gate is held by the mutex's own
+    /// thread since that day, so the wait for it parks no worker. <i>Previously run on a
+    /// thread of its own, because the wait was a blocking one.</i>
     /// </remarks>
     /// <param name="logger">Where the pass records itself.</param>
     /// <returns>What the pass found.</returns>
-    private static Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger)
-    {
-        var completion = new TaskCompletionSource<StraySweepResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        // A dedicated thread and not the pool: the wait is blocking, and a
-        // parked worker is how an unrelated in-process rig starts missing its
-        // budget.
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                completion.SetResult(new StraySweep([PlantedProbe.ExecutablePath], index: null, logger).Run(TestDefaults.ProcessHang));
-            }
-#pragma warning disable CA1031 // The exception belongs to the awaiting test, not to this thread.
-            catch (Exception failure)
-#pragma warning restore CA1031
-            {
-                completion.SetException(failure);
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "stray sweep test pass",
-        };
-
-        thread.Start();
-
-        return completion.Task;
-    }
+    private static async Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger) =>
+        await new StraySweep([await PlantedProbe.ExecutablePathAsync()], index: null, logger).RunAsync(TestDefaults.ProcessHang);
 
     /// <summary>
     /// A call whose log row cannot be written is refused, and nothing reaches
@@ -1970,7 +1946,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ACallWhoseLogRowCannotBeWrittenIsRefusedAndNeverReachesTheChild()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -2048,7 +2024,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheDrivenElsewhereRowIsEmittedByASecondClientNamingASessionTheFirstDrives()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var host = await SessionHostRig.StartAsync(sessions);
 
         var driving = await host.ConnectAsync("the client that opened it");
@@ -2418,7 +2394,7 @@ internal sealed partial class ErrorCatalogueTests
         // tree for relative links that do not resolve.
         const string TabLine = "### Result\\n- 0: (current) [a page]";
 
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
         {
             child.Tools["browser_tabs"] = new FakeToolBehaviour
             {
@@ -2508,7 +2484,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ThePageCouldNotBeEstablishedRowIsEmittedByATabListingNothingCanRead()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
         {
             child.Tools["browser_tabs"] = new FakeToolBehaviour
             {
@@ -2556,7 +2532,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         using var release = new CancellationTokenSource();
 
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
         {
             child.Tools["webmcp_slow"] = new FakeToolBehaviour
             {
@@ -2706,7 +2682,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task DestroyRefusesEveryRecordShapeItIsSpecifiedToRefuseThroughDestroyItself()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var real = Path.Combine(sessions.Root, "a-real-session");
@@ -2725,7 +2701,7 @@ internal sealed partial class ErrorCatalogueTests
         // the guard open for write: a reader that does not share write is
         // refused outright, which is §D's own reader rule met from the test
         // side. File.ReadAllText asks for FileShare.Read and fails here.
-        var guard = ReadWhileHeld(Path.Combine(real, SessionLayout.LockFileName));
+        var guard = await ReadWhileHeldAsync(Path.Combine(real, SessionLayout.LockFileName));
 
         // 1 -- no record at all. The check that makes it safe to hand a model a
         // tool that deletes trees: it cannot be aimed at Documents.
@@ -2801,17 +2777,17 @@ internal sealed partial class ErrorCatalogueTests
     private static partial Regex AuthoredToolToken();
 
     /// <summary>Reads a file another process is holding open for write.</summary>
-    private static string ReadWhileHeld(string path)
+    private static async Task<string> ReadWhileHeldAsync(string path)
     {
-        using var stream = new FileStream(
+        await using var stream = new FileStream(
             path,
             FileMode.Open,
             FileAccess.Read,
-            FileShare.ReadWrite | FileShare.Delete);
+            FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
 
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     /// <summary>Asserts an observed refusal is exactly the catalogue row it claims.</summary>
@@ -2839,7 +2815,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ARefusalEchoesNoControlCharacterAndNamesNoCSharpParameter()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var bell = Path.Combine(sessions.Root, "se\u0007ss");
@@ -2915,7 +2891,7 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task ADirectoryWithNoRoomLeftForItsOutputFolderIsRefusedAtTheDoorRatherThanAtLaunch()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // Composed against the real budget and not against a number written

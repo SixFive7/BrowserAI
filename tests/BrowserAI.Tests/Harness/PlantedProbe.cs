@@ -36,17 +36,24 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal static class PlantedProbe
 {
-    private static readonly Lazy<string> Planted = new(Plant, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<Task<string>> Planted = new(PlantAsync, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
     /// The planted executable, copied on first use and reused afterwards.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Nothing else on the machine runs this path</b>, which is what makes it
     /// safe to declare it as "a browser BrowserAI provisioned" in a test that
     /// then terminates what it finds.
+    /// </para>
+    /// <para>
+    /// <b>Awaited since 2026-10-11</b>, because the copy is made with asynchronous I/O
+    /// (decision 63). <i>Previously the property <c>ExecutablePath</c>.</i>
+    /// </para>
     /// </remarks>
-    public static string ExecutablePath => Planted.Value;
+    /// <returns>The path.</returns>
+    public static Task<string> ExecutablePathAsync() => Planted.Value;
 
     /// <summary>
     /// Starts a planted probe that publishes one message-only window and stays
@@ -58,13 +65,13 @@ internal static class PlantedProbe
     /// <param name="title">The window title, which is what attribution reads.</param>
     /// <param name="suppress">Whether its WndProc should lie about <c>WM_GETTEXT</c>.</param>
     /// <returns>The probe's own report: its pid, its window handle and the same-process reads.</returns>
-    public static Task<JsonNode> PublishWindowAsync(
+    public static async Task<JsonNode> PublishWindowAsync(
         JobObjectScope scope,
         string workingDirectory,
         string className,
         string title,
         bool suppress = false) =>
-        PublishWindowAsync(scope, ExecutablePath, workingDirectory, className, title, suppress);
+        await PublishWindowAsync(scope, await ExecutablePathAsync(), workingDirectory, className, title, suppress);
 
     /// <summary>
     /// Starts a probe from an explicit image path that publishes one message-only
@@ -90,7 +97,7 @@ internal static class PlantedProbe
         _ = Directory.CreateDirectory(workingDirectory);
         var report = Path.Combine(workingDirectory, $"window-{Guid.NewGuid():N}.json");
 
-        _ = scope.Launch(
+        _ = await scope.LaunchAsync(
             executablePath,
             workingDirectory,
             "window",
@@ -142,16 +149,16 @@ internal static class PlantedProbe
             + "Without it, a test about what the sweep does would be asserting against an empty answer.");
     }
 
-    private static string Plant()
+    private static async Task<string> PlantAsync()
     {
         var source = ProbeOutputDirectory();
-        var target = Path.Combine(ScratchRoot.Path, "planted-probe");
+        var target = Path.Combine(await ScratchRoot.PathAsync(), "planted-probe");
 
         _ = Directory.CreateDirectory(target);
 
         foreach (var file in Directory.EnumerateFiles(source))
         {
-            File.Copy(file, Path.Combine(target, Path.GetFileName(file)), overwrite: true);
+            await TestFiles.CopyAsync(file, Path.Combine(target, Path.GetFileName(file)), overwrite: true);
         }
 
         var planted = Path.Combine(target, "BrowserAI.TestProbe.exe");

@@ -36,7 +36,7 @@ internal sealed class TreeDeleteTests
     [Test]
     public async Task AJunctionInsideTheTreeIsUnlinkedAndItsTargetIsLeftAlone()
     {
-        using var scratch = ScratchDirectory.Create("tree-delete-junction");
+        using var scratch = await ScratchDirectory.CreateAsync("tree-delete-junction");
 
         var target = Path.Combine(scratch.Path, "target");
         var precious = Path.Combine(target, "on-the-other-side.txt");
@@ -76,7 +76,7 @@ internal sealed class TreeDeleteTests
     [Test]
     public async Task AJunctionNamedDirectlyIsRemovedAsTheLinkItIs()
     {
-        using var scratch = ScratchDirectory.Create("tree-delete-junction-named");
+        using var scratch = await ScratchDirectory.CreateAsync("tree-delete-junction-named");
 
         var target = Path.Combine(scratch.Path, "target");
         var precious = Path.Combine(target, "on-the-other-side.txt");
@@ -101,7 +101,7 @@ internal sealed class TreeDeleteTests
     [Test]
     public async Task AnOrdinaryTreeIsStillRemovedWholeAndWhatWillNotGoIsNamed()
     {
-        using var scratch = ScratchDirectory.Create("tree-delete-ordinary");
+        using var scratch = await ScratchDirectory.CreateAsync("tree-delete-ordinary");
 
         var tree = Path.Combine(scratch.Path, "tree");
         var deep = Path.Combine(tree, "a", "b", "c");
@@ -116,7 +116,7 @@ internal sealed class TreeDeleteTests
 
         var failures = new List<string>();
 
-        using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        await using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
             TreeDelete.Remove(tree, failures);
         }
@@ -173,7 +173,7 @@ internal sealed class TreeDeleteTests
     [Test]
     public async Task AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo()
     {
-        using var scratch = ScratchDirectory.Create("tree-delete-readonly");
+        using var scratch = await ScratchDirectory.CreateAsync("tree-delete-readonly");
 
         var tree = Path.Combine(scratch.Path, "tree");
         var objects = Path.Combine(tree, "objects", "06");
@@ -204,7 +204,7 @@ internal sealed class TreeDeleteTests
 
         var failures = new List<string>();
 
-        using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        await using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
             TreeDelete.Remove(tree, failures);
         }

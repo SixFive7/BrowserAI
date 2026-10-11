@@ -179,41 +179,41 @@ internal sealed class FakeInstaller : IInstallerRun
 
         _ = Interlocked.Increment(ref _starts);
 
-        // ⚠️ A THREAD OF ITS OWN, and it is a correctness requirement and not
-        // a preference. The product's watcher polls from a `LongRunning` thread
+        // ⚠️ AS SCHEDULABLE AS THE WATCHER, and that is a correctness requirement
+        // and not a preference: a double whose gaps stretched while the watcher's
+        // did not would let the stall cap fire on the scheduler and not on the
+        // behaviour under test, observed exactly that way on 2026-08-19, green
+        // alone and red in a full run. Corrected 2026-10-11 (previously "A THREAD
+        // OF ITS OWN ... The product's watcher polls from a `LongRunning` thread
         // and never starves; a double that ticked from the thread pool would
-        // starve at unbounded suite parallelism, so its gaps would stretch while
-        // the watcher's did not -- and the stall cap would then fire on the
-        // scheduler and not on the behaviour under test. Observed exactly
-        // that way on 2026-08-19: green alone, red in a full run. The real
-        // installer is a separate OS process and is never pool-bound either, so
-        // this is the double being as schedulable as the thing it replaces.
-        _ = Task.Factory.StartNew(
-            () =>
+        // starve"): the watcher awaits a timer since that day, decision 54, so the
+        // double awaits one too, and neither holds a thread between ticks.
+        _ = Task.Run(async () =>
+        {
+            _ = Directory.CreateDirectory(directory);
+
+            for (var index = 0; index < steps; index++)
             {
-                _ = Directory.CreateDirectory(directory);
-
-                for (var index = 0; index < steps; index++)
+                try
                 {
-                    if (installer._stopped.Token.WaitHandle.WaitOne(step))
-                    {
-                        // Stopped by a cap, which is what the other arm asserts.
-                        return;
-                    }
-
-                    PlantPart(directory, index);
-                    installer.StepsWritten = index + 1;
+                    await Task.Delay(step, installer._stopped.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Stopped by a cap, which is what the other arm asserts.
+                    return;
                 }
 
-                InstallationMarker.Write(directory);
+                await PlantPartAsync(directory, index);
+                installer.StepsWritten = index + 1;
+            }
 
-                installer.Output = "Downloading a browser\nDone";
-                installer.ExitCode = 0;
-                installer.HasExited = true;
-            },
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
+            await InstallationMarker.WriteAsync(directory);
+
+            installer.Output = "Downloading a browser\nDone";
+            installer.ExitCode = 0;
+            installer.HasExited = true;
+        });
 
         return installer;
     }
@@ -242,7 +242,7 @@ internal sealed class FakeInstaller : IInstallerRun
         {
             try
             {
-                PlantArchive(file, bytes);
+                await PlantArchiveAsync(file, bytes);
                 installer.StepsWritten = 1;
 
                 await release.WaitAsync(installer._stopped.Token).ConfigureAwait(false);
@@ -298,22 +298,22 @@ internal sealed class FakeInstaller : IInstallerRun
     /// one; a suppression would have turned that off for the whole body.
     /// </remarks>
     /// <param name="directory">The browser directory to plant.</param>
-    private static void PlantPartialTree(string directory)
+    private static async Task PlantPartialTreeAsync(string directory)
     {
         _ = Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, "chrome.exe"), "not really a browser");
+        await File.WriteAllTextAsync(Path.Combine(directory, "chrome.exe"), "not really a browser");
     }
 
     /// <summary>
     /// One step of a creeping install, in a method of its own for
-    /// <see cref="PlantPartialTree"/>'s reason: the blocking-call analyzer is
+    /// <see cref="PlantPartialTreeAsync"/>'s reason: the blocking-call analyzer is
     /// right about <c>async</c> bodies in general and wrong about this one, and a
     /// suppression would switch it off for the whole method.
     /// </summary>
     /// <param name="directory">The browser directory.</param>
     /// <param name="index">Which step this is.</param>
-    private static void PlantPart(string directory, int index) =>
-        File.WriteAllText(
+    private static async Task PlantPartAsync(string directory, int index) =>
+        await File.WriteAllTextAsync(
             Path.Combine(directory, $"part-{index.ToString(System.Globalization.CultureInfo.InvariantCulture)}.bin"),
             new string('x', 512));
 
@@ -322,10 +322,10 @@ internal sealed class FakeInstaller : IInstallerRun
     /// </summary>
     /// <param name="file">The archive path.</param>
     /// <param name="bytes">How large it is.</param>
-    private static void PlantArchive(string file, int bytes)
+    private static async Task PlantArchiveAsync(string file, int bytes)
     {
         _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        File.WriteAllBytes(file, new byte[bytes]);
+        await File.WriteAllBytesAsync(file, new byte[bytes]);
     }
 
     private static FakeInstaller Scripted(
@@ -371,7 +371,7 @@ internal sealed class FakeInstaller : IInstallerRun
                 {
                     foreach (var directory in directories)
                     {
-                        PlantPartialTree(directory);
+                        await PlantPartialTreeAsync(directory);
                     }
                 }
 
@@ -388,7 +388,7 @@ internal sealed class FakeInstaller : IInstallerRun
                     // at the same instant -- see InstallationMarker's remarks.
                     foreach (var directory in directories)
                     {
-                        InstallationMarker.Write(directory);
+                        await InstallationMarker.WriteAsync(directory);
                     }
                 }
 

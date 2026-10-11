@@ -101,20 +101,24 @@ internal sealed class RegistrationTests
     [Test]
     public async Task TheExecutionStubIsRefusedAndTheBinaryInsideCurrentIsRegistered()
     {
-        using var install = ScratchDirectory.Create("registration-stub");
+        using var install = await ScratchDirectory.CreateAsync("registration-stub");
 
         var root = install.Path;
-        var app = InstalledLayout.Create(root);
+        var app = await InstalledLayout.CreateAsync(root);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out _)).IsTrue();
+        var targetResolution = await RegistrationTarget.ResolveAsync(app);
+        var target = targetResolution.Target;
+        await Assert.That(targetResolution.Resolved).IsTrue();
         await Assert.That(target!.Command).IsEqualTo(InstalledLayout.ServerIn(root));
         await Assert.That(target.InstallRoot).IsEqualTo(root);
 
         // The stub, which sits directly under the root. It is refused on the
         // SHAPE of its path, before anything on disk is opened, which is why
         // this arm never has to write one.
-        await Assert.That(RegistrationTarget.TryResolve(
-            Path.Combine(root, RegistrationTarget.AppFileName), out var stub, out var refusal)).IsFalse();
+        var stubResolution = await RegistrationTarget.ResolveAsync(Path.Combine(root, RegistrationTarget.AppFileName));
+        var stub = stubResolution.Target;
+        var refusal = stubResolution.Refusal;
+        await Assert.That(stubResolution.Resolved).IsFalse();
         await Assert.That(stub).IsNull();
         await Assert.That(refusal).Contains("current");
         await Assert.That(refusal).Contains("59 ms");
@@ -142,11 +146,14 @@ internal sealed class RegistrationTests
     [Test]
     public async Task TheOneExecutableIsRegisteredWithTheMcpArgument()
     {
-        using var install = ScratchDirectory.Create("registration-one-file");
+        using var install = await ScratchDirectory.CreateAsync("registration-one-file");
 
-        var app = InstalledLayout.Create(install.Path);
+        var app = await InstalledLayout.CreateAsync(install.Path);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out var refusal)).IsTrue();
+        var targetResolution = await RegistrationTarget.ResolveAsync(app);
+        var target = targetResolution.Target;
+        var refusal = targetResolution.Refusal;
+        await Assert.That(targetResolution.Resolved).IsTrue();
         await Assert.That(refusal).IsEmpty();
         await Assert.That(target!.Command).IsEqualTo(app);
         await Assert.That(target.CommandLine).IsEquivalentTo([app, Program.McpArgument]);
@@ -174,11 +181,14 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AFolderWithoutTheOneExecutableIsRefusedByName()
     {
-        using var install = ScratchDirectory.Create("registration-no-server");
+        using var install = await ScratchDirectory.CreateAsync("registration-no-server");
 
-        var renamed = InstalledLayout.CreateUnderAnotherName(install.Path);
+        var renamed = await InstalledLayout.CreateUnderAnotherNameAsync(install.Path);
 
-        await Assert.That(RegistrationTarget.TryResolve(renamed, out var target, out var refusal)).IsFalse();
+        var targetResolution = await RegistrationTarget.ResolveAsync(renamed);
+        var target = targetResolution.Target;
+        var refusal = targetResolution.Refusal;
+        await Assert.That(targetResolution.Resolved).IsFalse();
         await Assert.That(target).IsNull();
         await Assert.That(refusal).Contains(RegistrationTarget.AppFileName);
         await Assert.That(refusal).Contains(InstalledLayout.ServerIn(install.Path));
@@ -208,20 +218,26 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AFileAtTheOneExecutablesNameThatIsNotWindowlessIsRefused()
     {
-        using var install = ScratchDirectory.Create("registration-wrong-subsystem");
+        using var install = await ScratchDirectory.CreateAsync("registration-wrong-subsystem");
 
-        var app = InstalledLayout.Create(install.Path);
+        var app = await InstalledLayout.CreateAsync(install.Path);
 
         // A console binary wearing the one executable's name.
-        InstalledLayout.WritePortableExecutable(app, PeSubsystem.WindowsCui);
+        await InstalledLayout.WritePortableExecutableAsync(app, PeSubsystem.WindowsCui);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var console, out var consoleRefusal)).IsFalse();
+        var consoleResolution = await RegistrationTarget.ResolveAsync(app);
+        var console = consoleResolution.Target;
+        var consoleRefusal = consoleResolution.Refusal;
+        await Assert.That(consoleResolution.Resolved).IsFalse();
         await Assert.That(console).IsNull();
         await Assert.That(consoleRefusal).Contains("Windows-subsystem");
 
-        InstalledLayout.WriteSomethingThatIsNotAnExecutable(app);
+        await InstalledLayout.WriteSomethingThatIsNotAnExecutableAsync(app);
 
-        await Assert.That(RegistrationTarget.TryResolve(app, out var garbage, out var garbageRefusal)).IsFalse();
+        var garbageResolution = await RegistrationTarget.ResolveAsync(app);
+        var garbage = garbageResolution.Target;
+        var garbageRefusal = garbageResolution.Refusal;
+        await Assert.That(garbageResolution.Resolved).IsFalse();
         await Assert.That(garbage).IsNull();
         await Assert.That(garbageRefusal).Contains("no readable PE header");
     }
@@ -231,21 +247,26 @@ internal sealed class RegistrationTests
     [Test]
     public async Task APathThatIsNotAnInstalledBrowserAiIsRefused()
     {
-        await Assert.That(RegistrationTarget.TryResolve(null, out _, out var noPath)).IsFalse();
+        var noPathResolution = await RegistrationTarget.ResolveAsync(null);
+        var noPath = noPathResolution.Refusal;
+        await Assert.That(noPathResolution.Resolved).IsFalse();
         await Assert.That(noPath).Contains("no path");
 
-        await Assert.That(RegistrationTarget.TryResolve(@"current\BrowserAI.exe", out _, out var relative)).IsFalse();
+        var relativeResolution = await RegistrationTarget.ResolveAsync(@"current\BrowserAI.exe");
+        var relative = relativeResolution.Refusal;
+        await Assert.That(relativeResolution.Resolved).IsFalse();
         await Assert.That(relative).Contains("fully qualified");
 
         // Case is not what decides it: the directory is `current` either way.
-        using var shoutingInstall = ScratchDirectory.Create("registration-shouting");
+        using var shoutingInstall = await ScratchDirectory.CreateAsync("registration-shouting");
         var shoutingCurrent = Directory.CreateDirectory(Path.Combine(shoutingInstall.Path, "CURRENT"));
 
-        InstalledLayout.WritePortableExecutable(
+        await InstalledLayout.WritePortableExecutableAsync(
             Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), PeSubsystem.WindowsGui);
 
-        await Assert.That(RegistrationTarget.TryResolve(
-            Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), out var shouting, out _)).IsTrue();
+        var shoutingResolution = await RegistrationTarget.ResolveAsync(Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName));
+        var shouting = shoutingResolution.Target;
+        await Assert.That(shoutingResolution.Resolved).IsTrue();
         await Assert.That(shouting!.InstallRoot).IsEqualTo(shoutingInstall.Path);
     }
 
@@ -317,11 +338,11 @@ internal sealed class RegistrationTests
     [Test]
     public async Task TheHookWritesItsOutcomeIntoTheDataRootAndNothingUnderTheInstallRoot()
     {
-        using var install = ScratchDirectory.Create("registration-hook");
-        using var data = ScratchDirectory.Create("registration-hook-data");
+        using var install = await ScratchDirectory.CreateAsync("registration-hook");
+        using var data = await ScratchDirectory.CreateAsync("registration-hook-data");
 
 
-        var command = InstalledLayout.Create(install.Path);
+        var command = await InstalledLayout.CreateAsync(install.Path);
         var tool = new FakeRegisterAi();
 
         var before = Directory
@@ -329,7 +350,7 @@ internal sealed class RegistrationTests
             .Select(entry => Path.GetRelativePath(install.Path, entry))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var report = HookRegistration.Run(
+        var report = (await HookRegistration.RunAsync(
             RegistrationIntent.Install,
             "9.9.9",
             command,
@@ -337,7 +358,7 @@ internal sealed class RegistrationTests
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
-            ScratchLogonTasks.AppId).For(RegistrationClient.ClaudeCode.Key);
+            ScratchLogonTasks.AppId)).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
 
@@ -360,7 +381,7 @@ internal sealed class RegistrationTests
 
         await Assert.That(logs).IsNotEmpty();
 
-        var text = string.Join("\n", logs.Select(ReadShared));
+        var text = string.Join("\n", await Task.WhenAll(logs.Select(ReadSharedAsync)));
 
         // In words since the texts polish of 2026-10-10 (previously "Velopack Install hook
         // running for BrowserAI 9.9.9. image=...").
@@ -404,14 +425,14 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AFailedRegistrationIsRecordedRatherThanLeavingTheInstallSilent()
     {
-        using var install = ScratchDirectory.Create("registration-hook-failed");
-        using var data = ScratchDirectory.Create("registration-hook-failed-data");
+        using var install = await ScratchDirectory.CreateAsync("registration-hook-failed");
+        using var data = await ScratchDirectory.CreateAsync("registration-hook-failed-data");
 
 
-        var command = InstalledLayout.Create(install.Path);
+        var command = await InstalledLayout.CreateAsync(install.Path);
         var tool = new FakeRegisterAi { Missing = { "claude-code", "codex" } };
 
-        var report = HookRegistration.Run(
+        var report = (await HookRegistration.RunAsync(
             RegistrationIntent.Install,
             "9.9.9",
             command,
@@ -419,7 +440,7 @@ internal sealed class RegistrationTests
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
-            ScratchLogonTasks.AppId).For(RegistrationClient.ClaudeCode.Key);
+            ScratchLogonTasks.AppId)).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
 
@@ -460,13 +481,13 @@ internal sealed class RegistrationTests
     [Test]
     public async Task OneHookRegistersEveryClientAndTheRecordCarriesAnEntryForEach()
     {
-        using var install = ScratchDirectory.Create("registration-both");
-        using var data = ScratchDirectory.Create("registration-both-data");
+        using var install = await ScratchDirectory.CreateAsync("registration-both");
+        using var data = await ScratchDirectory.CreateAsync("registration-both-data");
 
-        var command = InstalledLayout.Create(install.Path);
+        var command = await InstalledLayout.CreateAsync(install.Path);
         var tool = new FakeRegisterAi();
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Install,
             "9.9.9",
             command,
@@ -533,13 +554,13 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AClientThisMachineDoesNotHaveIsNamedInTheRecordAndNeverFailsTheHook()
     {
-        using var install = ScratchDirectory.Create("registration-absent");
-        using var data = ScratchDirectory.Create("registration-absent-data");
+        using var install = await ScratchDirectory.CreateAsync("registration-absent");
+        using var data = await ScratchDirectory.CreateAsync("registration-absent-data");
 
-        var command = InstalledLayout.Create(install.Path);
+        var command = await InstalledLayout.CreateAsync(install.Path);
         var tool = new FakeRegisterAi { Missing = { "codex" } };
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Install,
             "9.9.9",
             command,
@@ -585,18 +606,18 @@ internal sealed class RegistrationTests
     [Test]
     public async Task ASilentUninstallKeepsTheDataRootAndNeverAsks()
     {
-        using var install = ScratchDirectory.Create("uninstall-silent");
-        using var data = ScratchDirectory.Create("uninstall-silent-data");
+        using var install = await ScratchDirectory.CreateAsync("uninstall-silent");
+        using var data = await ScratchDirectory.CreateAsync("uninstall-silent-data");
 
 
         var paths = new LocalAppDataPaths(data.Path);
-        var planted = PlantADataRoot(paths);
+        var planted = await PlantADataRootAsync(paths);
         var asked = 0;
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            InstalledLayout.Create(install.Path),
+            await InstalledLayout.CreateAsync(install.Path),
             new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
@@ -606,7 +627,7 @@ internal sealed class RegistrationTests
             ask: _ =>
             {
                 asked++;
-                return true;
+                return Task.FromResult(true);
             });
 
         // Nothing was registered with the double first, so the registration half
@@ -637,18 +658,18 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AnUninstallAnsweredNoKeepsTheDataRootAndTheQuestionNamedIt()
     {
-        using var install = ScratchDirectory.Create("uninstall-keep");
-        using var data = ScratchDirectory.Create("uninstall-keep-data");
+        using var install = await ScratchDirectory.CreateAsync("uninstall-keep");
+        using var data = await ScratchDirectory.CreateAsync("uninstall-keep-data");
 
 
         var paths = new LocalAppDataPaths(data.Path);
-        var planted = PlantADataRoot(paths);
+        var planted = await PlantADataRootAsync(paths);
         var questions = new List<string>();
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            InstalledLayout.Create(install.Path),
+            await InstalledLayout.CreateAsync(install.Path),
             new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
@@ -658,7 +679,7 @@ internal sealed class RegistrationTests
             ask: message =>
             {
                 questions.Add(message);
-                return false;
+                return Task.FromResult(false);
             });
 
         await Assert.That(questions.Count).IsEqualTo(1);
@@ -689,24 +710,24 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AnUninstallAnsweredYesRemovesTheWholeDataRootIncludingTheHooksOwnLog()
     {
-        using var install = ScratchDirectory.Create("uninstall-remove");
-        using var data = ScratchDirectory.Create("uninstall-remove-data");
+        using var install = await ScratchDirectory.CreateAsync("uninstall-remove");
+        using var data = await ScratchDirectory.CreateAsync("uninstall-remove-data");
 
 
         var paths = new LocalAppDataPaths(data.Path);
-        var planted = PlantADataRoot(paths);
+        var planted = await PlantADataRootAsync(paths);
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            InstalledLayout.Create(install.Path),
+            await InstalledLayout.CreateAsync(install.Path),
             new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
             ScratchLogonTasks.AppId,
             silent: false,
-            ask: _ => true);
+            ask: _ => Task.FromResult(true));
 
         await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
         await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Remove);
@@ -735,18 +756,18 @@ internal sealed class RegistrationTests
     [Arguments(RegistrationIntent.Update)]
     public async Task AnUpgradeNeverAsksAboutTheDataRootAndNeverTouchesIt(RegistrationIntent intent)
     {
-        using var install = ScratchDirectory.Create("upgrade-keeps");
-        using var data = ScratchDirectory.Create("upgrade-keeps-data");
+        using var install = await ScratchDirectory.CreateAsync("upgrade-keeps");
+        using var data = await ScratchDirectory.CreateAsync("upgrade-keeps-data");
 
 
         var paths = new LocalAppDataPaths(data.Path);
-        var planted = PlantADataRoot(paths);
+        var planted = await PlantADataRootAsync(paths);
         var asked = 0;
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             intent,
             "9.9.9",
-            InstalledLayout.Create(install.Path),
+            await InstalledLayout.CreateAsync(install.Path),
             new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
@@ -756,7 +777,7 @@ internal sealed class RegistrationTests
             ask: _ =>
             {
                 asked++;
-                return true;
+                return Task.FromResult(true);
             });
 
         await Assert.That(outcome.Disposal).IsNull();
@@ -780,17 +801,17 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AnUninstallOfABrowserAiThatNeverRanAsksNothing()
     {
-        using var install = ScratchDirectory.Create("uninstall-unused");
-        using var data = ScratchDirectory.Create("uninstall-unused-data");
+        using var install = await ScratchDirectory.CreateAsync("uninstall-unused");
+        using var data = await ScratchDirectory.CreateAsync("uninstall-unused-data");
 
 
         var paths = new LocalAppDataPaths(data.Path);
         var asked = 0;
 
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            InstalledLayout.Create(install.Path),
+            await InstalledLayout.CreateAsync(install.Path),
             new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
@@ -800,7 +821,7 @@ internal sealed class RegistrationTests
             ask: _ =>
             {
                 asked++;
-                return true;
+                return Task.FromResult(true);
             });
 
         await Assert.That(asked).IsEqualTo(0);
@@ -846,7 +867,7 @@ internal sealed class RegistrationTests
     /// </summary>
     /// <param name="paths">The scratch data seam.</param>
     /// <returns>The planted file's path.</returns>
-    private static string PlantADataRoot(LocalAppDataPaths paths)
+    private static async Task<string> PlantADataRootAsync(LocalAppDataPaths paths)
     {
         _ = Directory.CreateDirectory(paths.BrowsersDirectory);
         _ = Directory.CreateDirectory(paths.IndexDirectory);
@@ -854,7 +875,7 @@ internal sealed class RegistrationTests
         var planted = Path.Combine(paths.BrowsersDirectory, "chromium-0000", "chrome.exe");
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(planted)!);
-        File.WriteAllText(planted, "not really a browser, but it is 768 MB in spirit");
+        await File.WriteAllTextAsync(planted, "not really a browser, but it is 768 MB in spirit");
 
         return planted;
     }
@@ -884,26 +905,26 @@ internal sealed class RegistrationTests
     [Test]
     public async Task ThePayloadsRegisterAiRegistersBrowserAiWithBothRealClients()
     {
-        _ = SuiteEnvironment.RequireClientCommandLine();
-        _ = SuiteEnvironment.RequireCodexCommandLine();
-        SuiteEnvironment.RequireRepositoryPayload();
+        _ = await SuiteEnvironment.RequireClientCommandLineAsync();
+        _ = await SuiteEnvironment.RequireCodexCommandLineAsync();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         await Assert.That(File.Exists(RepositoryPayload.RegisterAi)).IsTrue().Because($"the payload holds no '{RepositoryPayload.RegisterAi}'. Run: pwsh -File build/Get-RegisterAi.ps1");
 
-        using var config = ScratchDirectory.Create("registerai-live");
-        using var install = ScratchDirectory.Create("registerai-live-install");
+        using var config = await ScratchDirectory.CreateAsync("registerai-live");
+        using var install = await ScratchDirectory.CreateAsync("registerai-live-install");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var tool = new RegisterAiTool(RepositoryPayload.RegisterAi);
         var (logger, _) = Capture();
 
-        using (PointTheClientAt(config.Path))
+        using (await PointTheClientAtAsync(config.Path))
         {
             var claudeFile = Path.Combine(config.Path, ConfigFileName);
             var codexFile = Path.Combine(Environment.GetEnvironmentVariable(CodexHomeVariable)!, "config.toml");
 
-            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, tool, logger))
+            foreach (var pass in await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Install, image, tool, logger))
             {
                 await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.Registered).Because(pass.Report.Detail);
             }
@@ -915,7 +936,7 @@ internal sealed class RegistrationTests
             // an entry of ours that already names this server exactly as it is.
             foreach (var intent in new[] { RegistrationIntent.Update, RegistrationIntent.Install })
             {
-                foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, intent, image, tool, logger))
+                foreach (var pass in await McpRegistrar.ApplyAsync(RegistrationClient.All, intent, image, tool, logger))
                 {
                     await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.AlreadyRegistered).Because(pass.Report.Detail);
                 }
@@ -924,7 +945,7 @@ internal sealed class RegistrationTests
             await Assert.That(Occurrences(await File.ReadAllTextAsync(claudeFile), $"\"{McpRegistrar.ServerName}\"")).IsEqualTo(1);
             await Assert.That(Occurrences(await File.ReadAllTextAsync(codexFile), "[mcp_servers.browserai]")).IsEqualTo(1);
 
-            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
+            foreach (var pass in await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
             {
                 await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.Unregistered).Because(pass.Report.Detail);
             }
@@ -932,7 +953,7 @@ internal sealed class RegistrationTests
             await Assert.That(await File.ReadAllTextAsync(claudeFile)).DoesNotContain($"\"{McpRegistrar.ServerName}\"");
             await Assert.That(await File.ReadAllTextAsync(codexFile)).DoesNotContain("[mcp_servers.browserai]");
 
-            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
+            foreach (var pass in await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
             {
                 await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.NothingToUnregister).Because(pass.Report.Detail);
             }
@@ -950,7 +971,7 @@ internal sealed class RegistrationTests
             await Assert.That(await File.ReadAllTextAsync(mine)).DoesNotContain(install.Path.Replace(@"\", @"\\", StringComparison.Ordinal));
         }
 
-        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
+        await Assert.That(await TheMaintainersOwnCodexConfigurationAsync()).DoesNotContain(install.Path);
     }
 
     // ---- The scratch configuration the real clients are pointed at -----------
@@ -982,13 +1003,13 @@ internal sealed class RegistrationTests
     [Test]
     public async Task TheScratchConfigurationIsSeededWithWhatTheClientReadsAsOnboarded()
     {
-        using var config = ScratchDirectory.Create("registration-onboarded");
+        using var config = await ScratchDirectory.CreateAsync("registration-onboarded");
 
         // A fresh scratch directory is empty, which is the state being guarded
         // against: to the client that is a machine nobody has ever signed in on.
         await Assert.That(Directory.EnumerateFileSystemEntries(config.Path)).IsEmpty();
 
-        using (PointTheClientAt(config.Path))
+        using (await PointTheClientAtAsync(config.Path))
         {
             var seeded = Path.Combine(config.Path, OnboardedClientConfig.FileName);
 
@@ -1023,14 +1044,14 @@ internal sealed class RegistrationTests
     /// <c>CODEX_HOME</c>, which is exactly what these arms move.
     /// </remarks>
     /// <returns>Its text.</returns>
-    private static string TheMaintainersOwnCodexConfiguration()
+    private static async Task<string> TheMaintainersOwnCodexConfigurationAsync()
     {
         var file = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
             ".codex",
             "config.toml");
 
-        return File.Exists(file) ? File.ReadAllText(file) : string.Empty;
+        return File.Exists(file) ? await File.ReadAllTextAsync(file) : string.Empty;
     }
 
     // ---- Helpers ------------------------------------------------------------
@@ -1046,12 +1067,12 @@ internal sealed class RegistrationTests
     /// </remarks>
     /// <param name="path">The log file.</param>
     /// <returns>Its text.</returns>
-    private static string ReadShared(string path)
+    private static async Task<string> ReadSharedAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     private static (ILogger Logger, CapturingLoggerProvider Log) Capture()
@@ -1110,13 +1131,13 @@ internal sealed class RegistrationTests
     /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns>The scope that restores whatever was there before.</returns>
-    private static EnvironmentScope PointTheClientAt(string directory)
+    private static async Task<EnvironmentScope> PointTheClientAtAsync(string directory)
     {
         var codexHome = Directory.CreateDirectory(Path.Combine(directory, "codex")).FullName;
 
         return new EnvironmentScope(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
-            [ConfigDirectoryVariable] = OnboardedClientConfig.Seed(directory),
+            [ConfigDirectoryVariable] = await OnboardedClientConfig.SeedAsync(directory),
             [CodexHomeVariable] = codexHome,
         });
     }

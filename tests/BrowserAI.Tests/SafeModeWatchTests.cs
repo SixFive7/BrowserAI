@@ -143,7 +143,7 @@ internal sealed class SafeModeWatchTests
         await Assert.That(SafeModeWatch.RowFor(unwatched)).Contains(SafeModeWatch.UnwatchedState);
 
         // And the session's own row reaches the block.
-        await Assert.That(SuiteEnvironment.Summary()).Contains("  " + SafeModeWatch.Title.PadRight(20));
+        await Assert.That(await SuiteEnvironment.SummaryAsync()).Contains("  " + SafeModeWatch.Title.PadRight(20));
     }
 
     /// <summary>
@@ -170,10 +170,10 @@ internal sealed class SafeModeWatchTests
     [Test]
     public async Task AScanFindsARealProcessByItsSwitchAndReadsItsChainBackToTheHost()
     {
-        using var scratch = ScratchDirectory.Create("safe-mode-control");
+        using var scratch = await ScratchDirectory.CreateAsync("safe-mode-control");
 
         var image = Path.Combine(scratch.Path, "firefox.exe");
-        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), image);
+        await TestFiles.CopyAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), image);
 
         var planted = $"-browseraiSafeModeControl{Guid.NewGuid():N}";
 

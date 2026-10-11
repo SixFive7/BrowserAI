@@ -48,11 +48,11 @@ internal sealed class BackgroundUpdatesTests
     [Test]
     public async Task TheRecordOfTheLastCheckSurvivesARestartAndNoSecondCheckRunsInsideTheInterval()
     {
-        using var scratch = ScratchDirectory.Create("update-stamp-restart");
+        using var scratch = await ScratchDirectory.CreateAsync("update-stamp-restart");
         using var rig = new BackgroundUpdateRig { Stamp = UpdateCheckStampFile.In(scratch.Path) };
 
         // No record yet: the first run checks at once, and says why.
-        var first = rig.Start();
+        var first = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
         await Assert.That(rig.Logged(34)).IsTrue().Because("event 34 says no earlier check is recorded");
@@ -61,7 +61,7 @@ internal sealed class BackgroundUpdatesTests
         // Three minutes on, the background goes down and a new one starts.
         rig.Clock.Advance(TimeSpan.FromMinutes(3));
         first.Dispose();
-        _ = rig.Start();
+        _ = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks)
             .IsEqualTo(1)
@@ -87,7 +87,7 @@ internal sealed class BackgroundUpdatesTests
     [Test]
     public async Task ACheckRunsAtOnceWhenTheRecordIsUnreadableOldOrAheadAndTheLogSaysWhich()
     {
-        using var scratch = ScratchDirectory.Create("update-stamp-cases");
+        using var scratch = await ScratchDirectory.CreateAsync("update-stamp-cases");
         var record = Path.Combine(scratch.Path, UpdateCheckStampFile.FileName);
 
         // Unreadable.
@@ -95,7 +95,7 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Stamp = UpdateCheckStampFile.In(scratch.Path) })
         {
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(35)).IsTrue().Because("event 35 says the record could not be read");
@@ -108,7 +108,7 @@ internal sealed class BackgroundUpdatesTests
             var old = rig.Clock.GetUtcNow() - BackgroundUpdates.CheckInterval - TimeSpan.FromMinutes(1);
             await File.WriteAllTextAsync(record, old.ToString("O", CultureInfo.InvariantCulture));
 
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(37)).IsTrue().Because("event 37 says the last check is older than the interval");
@@ -120,7 +120,7 @@ internal sealed class BackgroundUpdatesTests
             var ahead = rig.Clock.GetUtcNow() + TimeSpan.FromHours(1);
             await File.WriteAllTextAsync(record, ahead.ToString("O", CultureInfo.InvariantCulture));
 
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(36)).IsTrue().Because("event 36 says the record names a time later than now");
@@ -132,7 +132,7 @@ internal sealed class BackgroundUpdatesTests
             var recent = rig.Clock.GetUtcNow() - TimeSpan.FromMinutes(1);
             await File.WriteAllTextAsync(record, recent.ToString("O", CultureInfo.InvariantCulture));
 
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(0);
         }
@@ -151,14 +151,14 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Install = new UpdateInstall(true, BackgroundUpdateRig.PackId, PreRelease) })
         {
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(1).Because("a pre-release build checks a folder source (H2)");
         }
 
         using (var rig = new BackgroundUpdateRig { Install = new UpdateInstall(true, BackgroundUpdateRig.PackId, PreRelease), Source = url })
         {
-            _ = rig.Start();
+            _ = await rig.StartAsync();
             rig.Clock.Advance(BackgroundUpdates.CheckInterval * 3);
 
             await Assert.That(rig.Client.Checks).IsEqualTo(0).Because("a pre-release build never checks a URL");
@@ -168,7 +168,7 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Source = url })
         {
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(1).Because("a release build checks the same URL");
         }
@@ -194,7 +194,7 @@ internal sealed class BackgroundUpdatesTests
 
             ((MemoryCheckStamp)rig.Stamp).Reading = new UpdateCheckStampReading(earlier, null);
 
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
             var watch = updates.Watch();
 
             await Assert.That(rig.Client.Checks).IsEqualTo(0).Because("the record is inside the interval");
@@ -212,7 +212,7 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([]) })
         {
-            var watch = rig.Start().Watch();
+            var watch = (await rig.StartAsync()).Watch();
 
             await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.GitHubReleases);
             await Assert.That(watch.Location).IsNull();
@@ -221,7 +221,7 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([UpdateSource.Argument, "https://example.invalid/browserai"]) })
         {
-            var watch = rig.Start().Watch();
+            var watch = (await rig.StartAsync()).Watch();
 
             await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.Url);
             await Assert.That(watch.Location).IsEqualTo("https://example.invalid/browserai");
@@ -229,12 +229,12 @@ internal sealed class BackgroundUpdatesTests
 
         using (var rig = new BackgroundUpdateRig { Install = new UpdateInstall(false, null, "1.1.0") })
         {
-            await Assert.That(rig.Start().Watch().Checks).IsEqualTo(UpdateChecks.NotInstalled);
+            await Assert.That((await rig.StartAsync()).Watch().Checks).IsEqualTo(UpdateChecks.NotInstalled);
         }
 
         using (var rig = new BackgroundUpdateRig { Source = UpdateSource.Read([UpdateSource.Argument, "feed"]) })
         {
-            var watch = rig.Start().Watch();
+            var watch = (await rig.StartAsync()).Watch();
 
             await Assert.That(watch.Checks).IsEqualTo(UpdateChecks.SourceRefused);
             await Assert.That(watch.Source).IsEqualTo(UpdateSourceKind.None);
@@ -247,7 +247,7 @@ internal sealed class BackgroundUpdatesTests
             Source = UpdateSource.Read([UpdateSource.Argument, "https://example.invalid/browserai"]),
         })
         {
-            await Assert.That(rig.Start().Watch().Checks).IsEqualTo(UpdateChecks.PreReleaseUrl);
+            await Assert.That((await rig.StartAsync()).Watch().Checks).IsEqualTo(UpdateChecks.PreReleaseUrl);
         }
     }
 
@@ -260,13 +260,13 @@ internal sealed class BackgroundUpdatesTests
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
         rig.Client.StagedCandidate = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
         rig.Clock.Advance(BackgroundUpdates.CheckInterval * 3);
 
         await Assert.That(rig.Client.Checks).IsEqualTo(0);
         await Assert.That(rig.ClientsBuilt).IsEqualTo(0);
         await Assert.That(rig.EventsStartingWith("toast")).IsEmpty();
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(rig.Logged(31)).IsTrue().Because("event 31 says this build is not installed");
     }
 
@@ -292,12 +292,12 @@ internal sealed class BackgroundUpdatesTests
         rig.Client.Offer = BackgroundUpdateRig.Candidate("9.9.9", BackgroundUpdateRig.OtherPackId);
         rig.Client.StagedCandidate = BackgroundUpdateRig.Candidate("9.9.8", BackgroundUpdateRig.OtherPackId);
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
         await Assert.That(rig.Client.Downloads).IsEqualTo(0);
         await Assert.That(rig.EventsStartingWith("toast ready")).IsEmpty();
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(rig.Logged(43)).IsTrue().Because("event 43 names both pack ids");
 
         // A candidate that names no pack is refused too.
@@ -312,7 +312,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Clock.Advance(BackgroundUpdates.CheckInterval);
 
         await Assert.That(rig.Client.Downloads).IsEqualTo(1);
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
     }
 
     // ---- A pass that does not go to plan --------------------------------------------
@@ -343,7 +343,7 @@ internal sealed class BackgroundUpdatesTests
         using var rig = new BackgroundUpdateRig();
         rig.Client.CheckHangs = true;
 
-        _ = rig.Start();
+        _ = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
 
@@ -382,10 +382,10 @@ internal sealed class BackgroundUpdatesTests
         var back = rollback.Build();
 
         rollback.Client.Offer = BackgroundUpdateRig.Candidate("1.0.0") with { IsDowngrade = true };
-        back.Start();
+        await back.StartAsync();
         rollback.Settle();
 
-        var held = back.Read();
+        var held = await back.ReadAsync();
 
         await Assert.That(held.State).IsEqualTo(UpdateHoldState.Held);
         await Assert.That(held.Version).IsEqualTo("1.0.0");
@@ -398,11 +398,11 @@ internal sealed class BackgroundUpdatesTests
         var ahead = forward.Build();
 
         forward.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-        ahead.Start();
+        await ahead.StartAsync();
         forward.Settle();
 
-        await Assert.That(ahead.Read().State).IsEqualTo(UpdateHoldState.Held);
-        await Assert.That(ahead.Read().Older).IsFalse();
+        await Assert.That((await ahead.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That((await ahead.ReadAsync()).Older).IsFalse();
     }
 
     /// <summary>
@@ -422,7 +422,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Connect(BusyRelay(rig, "a"));
         rig.Client.CheckFailure = new HttpRequestException("the feed is down");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
         await Assert.That(rig.Logged(64)).IsTrue().Because("event 64 says the pass failed and when the next one runs");
@@ -440,7 +440,7 @@ internal sealed class BackgroundUpdatesTests
         await Assert.That(rig.Logged(41)).IsTrue().Because("event 41 says nothing is available");
         await Assert.That(rig.Client.Downloads).IsEqualTo(0);
         await Assert.That(rig.EventsStartingWith("toast")).IsEmpty();
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.None);
     }
 
     /// <summary>
@@ -463,7 +463,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Client.Offer = BackgroundUpdateRig.Candidate("9.9.9");
             rig.Client.DownloadWaits = true;
 
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
 
             await Assert.That(rig.Client.Downloads).IsEqualTo(1);
 
@@ -478,7 +478,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Settle();
 
             await Assert.That(rig.Logged(48)).IsFalse().Because("a download that moves is never a stall, " + string.Join(" | ", rig.Events));
-            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+            await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
         }
 
         using (var rig = new BackgroundUpdateRig())
@@ -487,7 +487,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Client.Offer = BackgroundUpdateRig.Candidate("9.9.9");
             rig.Client.DownloadWaits = true;
 
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
 
             rig.Client.ReportProgress(10);
             rig.Clock.Advance(UpdateBudgets.StallBudget - OneTick);
@@ -498,7 +498,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Settle();
 
             await Assert.That(rig.Logged(48)).IsTrue().Because("event 48 says the download was abandoned and why");
-            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+            await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.None);
         }
     }
 
@@ -517,7 +517,7 @@ internal sealed class BackgroundUpdatesTests
         using var rig = new BackgroundUpdateRig();
         rig.Client.CheckHangs = true;
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
 
@@ -546,7 +546,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Connect(BusyRelay(rig, "a"));
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        _ = rig.Start();
+        _ = await rig.StartAsync();
 
         await Assert.That(Joined(rig.EventsStartingWith("toast ready"))).IsEqualTo("toast ready 1.2.0");
 
@@ -583,7 +583,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Relays.Answer = _ => Yes(rig);
             rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-            _ = rig.Start();
+            _ = await rig.StartAsync();
 
             await Assert.That(rig.EventsStartingWith("ask")).IsEmpty().Because("the session's countdown runs");
 
@@ -603,11 +603,11 @@ internal sealed class BackgroundUpdatesTests
             rig.Relays.Answer = _ => Yes(rig);
             rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
             rig.Clock.Advance(BackgroundUpdates.CheckInterval * 6);
 
             await Assert.That(rig.EventsStartingWith("apply")).IsEmpty().Because("a session set never to close holds the update for good");
-            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+            await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
         }
     }
 
@@ -625,11 +625,11 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Answer = _ => Yes(rig);
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
         rig.Clock.Advance(BackgroundUpdates.CheckInterval * 2);
 
         await Assert.That(rig.EventsStartingWith("ask")).IsEmpty().Because("a call is in flight on the busy relay");
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
 
         // The call ends and the background says so: the quiet relay holds nothing,
         // so both are asked and the update installs.
@@ -663,7 +663,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Answer = _ => Yes(rig);
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         var askA = rig.IndexOf("ask a 1.2.0");
         var askB = rig.IndexOf("ask b 1.2.0");
@@ -682,7 +682,7 @@ internal sealed class BackgroundUpdatesTests
         await Assert.That(rig.EventsStartingWith("call off")).IsEmpty();
         await Assert.That(rig.EventsStartingWith("end relays now")).IsEmpty();
         await Assert.That(rig.ExitRequests).IsEqualTo(1);
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Installing);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Installing);
     }
 
     /// <summary>
@@ -700,11 +700,11 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Answer = relay => relay is "b" ? new RelayReadiness(false, busyUntil, false) : Yes(rig);
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(Joined(rig.EventsStartingWith("call off"))).IsEqualTo("call off 1.2.0");
         await AssertNothingEnded(rig);
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
         await Assert.That(rig.Logged(53)).IsTrue().Because("event 53 says what called it off");
 
         // Called off, it waits, and only now does the ready toast go up (49 b).
@@ -738,7 +738,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Answer = relay => relay is "a" ? Yes(rig) : null;
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        _ = rig.Start();
+        _ = await rig.StartAsync();
 
         await Assert.That(rig.EventsStartingWith("ask").Count).IsEqualTo(2);
         await Assert.That(rig.EventsStartingWith("call off")).IsEmpty();
@@ -785,7 +785,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Answer = relay => relay is "a" ? Yes(rig) : null;
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(rig.EventsStartingWith("call off")).IsEmpty().Because("b has not answered yet");
 
@@ -820,7 +820,7 @@ internal sealed class BackgroundUpdatesTests
         using var rig = new BackgroundUpdateRig();
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        _ = rig.Start();
+        _ = await rig.StartAsync();
 
         var applied = rig.IndexOf("apply 1.2.0 with [--after-update 1.2.0]");
         var exited = rig.IndexOf("exit");
@@ -847,7 +847,7 @@ internal sealed class BackgroundUpdatesTests
             rig.Relays.Connect(BusyRelay(rig, "a"));
             rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
             var refusal = await updates.InstallNowAsync("1.1.9", CancellationToken.None);
 
             await Assert.That(refusal).IsNotNull();
@@ -855,13 +855,13 @@ internal sealed class BackgroundUpdatesTests
             await Assert.That(refusal).Contains("1.1.9");
             await AssertNothingEnded(rig);
             await Assert.That(rig.EventsStartingWith("close sessions")).IsEmpty();
-            await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Held);
+            await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Held);
             await Assert.That(rig.Logged(59)).IsTrue();
         }
 
         using (var rig = new BackgroundUpdateRig())
         {
-            var updates = rig.Start();
+            var updates = await rig.StartAsync();
             var refusal = await updates.InstallNowAsync("1.2.0", CancellationToken.None);
 
             await Assert.That(refusal).IsEqualTo("No update is downloaded and waiting, so there is nothing to install.");
@@ -884,7 +884,7 @@ internal sealed class BackgroundUpdatesTests
         rig.Sessions.Open(new ListedSession(@"C:\work\window", null, Visible: true, ClosesAt: null));
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
         var result = await updates.InstallNowAsync("1.2.0", CancellationToken.None);
 
         await Assert.That(result).IsNull();
@@ -903,13 +903,13 @@ internal sealed class BackgroundUpdatesTests
 
         await Assert.That(rig.EventsStartingWith("ask")).IsEmpty();
         await Assert.That(rig.EventsStartingWith("call off")).IsEmpty();
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.Installing);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.Installing);
     }
 
     // ---- What the toast and the dashboard read ----------------------------------
 
     /// <summary>
-    /// <see cref="IUpdateHoldsReader.Read"/> splits the sessions by visibility and lists
+    /// <see cref="IUpdateHoldsReader.ReadAsync"/> splits the sessions by visibility and lists
     /// every connected relay, holding or not, with what its client needs afterwards.
     /// </summary>
     /// <returns>The assertion task.</returns>
@@ -930,16 +930,16 @@ internal sealed class BackgroundUpdatesTests
         var updates = rig.Build();
 
         // Before anything is held: nothing, and no lists.
-        var before = updates.Read();
+        var before = await updates.ReadAsync();
 
         await Assert.That(before.State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(before.Relays).IsEmpty();
 
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-        updates.Start();
+        await updates.StartAsync();
         rig.Settle();
 
-        var snapshot = updates.Read();
+        var snapshot = await updates.ReadAsync();
 
         await Assert.That(snapshot.State).IsEqualTo(UpdateHoldState.Held);
         await Assert.That(snapshot.Version).IsEqualTo("1.2.0");
@@ -1010,14 +1010,14 @@ internal sealed class BackgroundUpdatesTests
         var updates = rig.Build();
 
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-        updates.Start();
+        await updates.StartAsync();
         rig.Settle();
 
         // Passes ran and a download is held, and nothing has drawn the snapshot yet:
         // the rig's toasts are recorded, not drawn.
         await Assert.That(rig.Relays.NamedReads).IsEqualTo(0).Because("one of the core's own passes read every client's records");
 
-        var snapshot = updates.Read();
+        var snapshot = await updates.ReadAsync();
         var relay = snapshot.Relays.Single();
 
         await Assert.That(snapshot.State).IsEqualTo(UpdateHoldState.Held);
@@ -1054,9 +1054,9 @@ internal sealed class BackgroundUpdatesTests
         rig.Relays.Connect(BusyRelay(rig, "a"));
         rig.Client.StagedCandidate = BackgroundUpdateRig.Candidate("1.2.0");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
-        await Assert.That(updates.Read().Version).IsEqualTo("1.2.0");
+        await Assert.That((await updates.ReadAsync()).Version).IsEqualTo("1.2.0");
         await Assert.That(rig.Client.Downloads).IsEqualTo(0);
         await Assert.That(Joined(rig.EventsStartingWith("toast ready"))).IsEqualTo("toast ready 1.2.0");
         await Assert.That(rig.Logged(51)).IsTrue().Because("event 51 says an earlier run downloaded it");
@@ -1074,11 +1074,11 @@ internal sealed class BackgroundUpdatesTests
         rig.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
         rig.Client.ApplyFailure = new InvalidOperationException("Update.exe is missing");
 
-        var updates = rig.Start();
+        var updates = await rig.StartAsync();
 
         await Assert.That(Joined(rig.EventsStartingWith("toast failed"))).IsEqualTo("toast failed 1.2.0");
         await Assert.That(rig.ExitRequests).IsEqualTo(0);
-        await Assert.That(updates.Read().State).IsEqualTo(UpdateHoldState.None);
+        await Assert.That((await updates.ReadAsync()).State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(rig.Logged(58)).IsTrue();
 
         // The next check offers it again and it is not downloaded or tried again.

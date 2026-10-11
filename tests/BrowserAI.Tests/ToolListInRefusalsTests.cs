@@ -46,7 +46,7 @@ internal sealed class ToolListInRefusalsTests
     public async Task ANameBrowserAiDoesNotHaveIsAnsweredWithEveryToolItHasAndWhatEachDoes()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var answer = await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -81,8 +81,8 @@ internal sealed class ToolListInRefusalsTests
     [Test]
     public async Task TheStaleListRefusalNamesEveryToolTheServerHasNow()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false,
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false,
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             sessions: sessions,
             listsBeforeCalling: false);
@@ -127,7 +127,7 @@ internal sealed class ToolListInRefusalsTests
     public async Task BothRefusalsThatNameEveryToolFitWhatAClientHandsAModelWhole()
     {
         var tools = ToolSignatures.From(SessionToolSurface.Rewrite(
-            JsonNode.Parse(UpstreamSurface.SnapshotToolsListResult())!.AsObject(),
+            JsonNode.Parse(await UpstreamSurface.SnapshotToolsListResultAsync())!.AsObject(),
             RepositoryVerdicts.Committed));
 
         var name = new string('x', 64);

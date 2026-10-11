@@ -89,7 +89,7 @@ internal sealed class ForegroundLockTests
     {
         var reading = ForegroundLock.Reading;
         var verdict = ForegroundLock.Classify(reading.Timeout, ForegroundLock.Budget);
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         // The live call is exercised, not assumed: either Windows
         // answered, or it did not and the error is carried instead of being

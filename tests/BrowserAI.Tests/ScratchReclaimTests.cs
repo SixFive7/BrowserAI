@@ -54,7 +54,7 @@ internal sealed partial class ScratchReclaimTests
         // The second host's half. The variable is set only by the launcher below.
         if (Environment.GetEnvironmentVariable(ScratchRoot.ReclaimProbeVariable) is { Length: > 0 } probeReport)
         {
-            var lines = ScratchRoot.ReclaimProfileScratchNow();
+            var lines = await ScratchRoot.ReclaimProfileScratchNowAsync();
             var self = string.Create(CultureInfo.InvariantCulture, $"{Environment.ProcessId}@{ProcessIdentity.CreationTimeOf(Environment.ProcessId)}");
 
             await File.WriteAllLinesAsync(probeReport, [$"host={self}", .. lines]);
@@ -65,12 +65,12 @@ internal sealed partial class ScratchReclaimTests
 
         await Assert.That(File.Exists(host)).IsTrue().Because(host);
 
-        using var live = ScratchDirectory.CreateUnderProfile("reclaim-live-owner");
+        using var live = await ScratchDirectory.CreateUnderProfileAsync("reclaim-live-owner");
         var marker = Path.Combine(live.Path, "still-here.txt");
 
         await File.WriteAllTextAsync(marker, "a live run's app root");
 
-        var root = ScratchRoot.ProfileScratch;
+        var root = await ScratchRoot.ProfileScratchAsync();
         var dead = Path.Combine(root, $"reclaim-dead-owner-{Guid.NewGuid():N}");
         var young = Path.Combine(root, $"reclaim-unowned-young-{Guid.NewGuid():N}");
         var old = Path.Combine(root, $"reclaim-unowned-old-{Guid.NewGuid():N}");
@@ -91,13 +91,13 @@ internal sealed partial class ScratchReclaimTests
             await File.WriteAllTextAsync(held + ScratchRoot.OwnerSuffix, ScratchRoot.OwnerRecord(new InstallerLockHolder(Environment.ProcessId, 1)));
             _ = Directory.CreateDirectory(held);
             await File.WriteAllTextAsync(Path.Combine(held, "gone.txt"), "a file the reclaim can take");
-            holding = new FileStream(Path.Combine(held, "still-open.txt"), FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            holding = new FileStream(Path.Combine(held, "still-open.txt"), FileMode.Create, FileAccess.ReadWrite, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
 
             _ = Directory.CreateDirectory(young);
             _ = Directory.CreateDirectory(old);
             Directory.SetCreationTimeUtc(old, DateTime.UtcNow.AddDays(-2));
 
-            using var probe = ScratchDirectory.Create("reclaim-second-host");
+            using var probe = await ScratchDirectory.CreateAsync("reclaim-second-host");
             var report = Path.Combine(probe.Path, "reclaim.txt");
 
             var startInfo = new ProcessStartInfo(host)
@@ -121,7 +121,7 @@ internal sealed partial class ScratchReclaimTests
 
             // Started outside a job object, so the spawn record is the only thing that
             // can name it if this run is killed while it is running.
-            SpawnRecord.Add(child.Id);
+            await SpawnRecord.AddAsync(child.Id);
 
             var stdout = child.StandardOutput.ReadToEndAsync();
             var stderr = child.StandardError.ReadToEndAsync();
@@ -161,7 +161,7 @@ internal sealed partial class ScratchReclaimTests
 
             // And the machine's process log carries the same, under the second host's own identity.
             var at = deleter.IndexOf('@', StringComparison.Ordinal);
-            var records = ProcessLogRecords.For(
+            var records = await ProcessLogRecords.ForAsync(
                 int.Parse(deleter[..at], NumberStyles.None, CultureInfo.InvariantCulture),
                 long.Parse(deleter[(at + 1)..], NumberStyles.None, CultureInfo.InvariantCulture));
 

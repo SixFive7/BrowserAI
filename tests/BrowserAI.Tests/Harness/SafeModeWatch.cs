@@ -219,10 +219,11 @@ internal static class SafeModeWatch
 
     private static readonly Lock Gate = new();
     private static readonly List<(SafeModeSighting Sighting, SafeModeOwnership Ownership)> SightingList = [];
-    private static readonly ManualResetEventSlim Stopping = new(initialState: false);
+    /// <summary>Cancelled by the stop; the scan loop's wait between scans ends with it.</summary>
+    private static readonly CancellationTokenSource Stopping = new();
 
     private static SafeModeScan? _scan;
-    private static Thread? _thread;
+    private static Task? _loop;
     private static int _polls;
     private static string? _failure;
     private static bool _stopped;
@@ -242,18 +243,17 @@ internal static class SafeModeWatch
     /// <summary>This run's row in the coverage block.</summary>
     public static string CoverageRow => RowFor(Reading);
 
-    /// <summary>Starts the scan thread. Called once, from the session hook.</summary>
+    /// <summary>Starts the scan loop. Called once, from the session hook.</summary>
+    /// <remarks>
+    /// <b>A loop that awaits its interval since 2026-10-11</b>, the maintainer's decision 54.
+    /// <i>Previously a thread of its own that waited on an event between scans, joined by
+    /// the stop.</i>
+    /// </remarks>
     public static void Start()
     {
-        var thread = new Thread(Loop)
-        {
-            IsBackground = true,
-            Name = "BrowserAI suite safe-mode watch",
-        };
-
         lock (Gate)
         {
-            if (_thread is not null || _failure is not null)
+            if (_loop is not null || _failure is not null)
             {
                 return;
             }
@@ -273,16 +273,15 @@ internal static class SafeModeWatch
                 return;
             }
 
-            _thread = thread;
+            _loop = Task.Run(LoopAsync);
         }
-
-        thread.Start();
     }
 
     /// <summary>Stops the scan thread and scans once more. Called once, from the session hook.</summary>
-    public static void Stop()
+    /// <returns>The stop, once the closing scan is done.</returns>
+    public static async Task StopAsync()
     {
-        Thread? thread;
+        Task? loop;
 
         lock (Gate)
         {
@@ -292,11 +291,23 @@ internal static class SafeModeWatch
             }
 
             _stopped = true;
-            thread = _thread;
+            loop = _loop;
         }
 
-        Stopping.Set();
-        _ = thread?.Join(TestDefaults.ProcessHang);
+        await Stopping.CancelAsync();
+
+        if (loop is not null)
+        {
+            try
+            {
+                await loop.WaitAsync(TestDefaults.ProcessHang);
+            }
+            catch (TimeoutException)
+            {
+                // A scan that has not returned within the hang detector: the closing
+                // scan below still runs.
+            }
+        }
 
         // The closing scan: a process that started after the last tick is read here.
         PollOnce();
@@ -481,14 +492,23 @@ internal static class SafeModeWatch
         ScratchRoot.ProfileScratchAsComposed,
     ];
 
-    /// <summary>The scan thread: one scan, then a wait, until the stop.</summary>
-    private static void Loop()
+    /// <summary>The scan loop: one scan, then a wait, until the stop.</summary>
+    /// <returns>The loop.</returns>
+    private static async Task LoopAsync()
     {
-        do
+        while (true)
         {
             PollOnce();
+
+            try
+            {
+                await Task.Delay(PollInterval, Stopping.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
         }
-        while (!Stopping.Wait(PollInterval));
     }
 
     /// <summary>One scan, recorded, never thrown.</summary>

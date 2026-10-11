@@ -53,18 +53,18 @@ internal sealed class RegisterAiPayloadTests
     [Test]
     public async Task ThePayloadTakesRegisterAiOnlyWhenItMatchesItsChecksumList()
     {
-        var exe = RequireTheRegisterAiThePayloadCarries();
+        var exe = await RequireTheRegisterAiThePayloadCarriesAsync();
 
-        using var scratch = ScratchDirectory.Create("registerai-payload");
+        using var scratch = await ScratchDirectory.CreateAsync("registerai-payload");
 
         var from = Directory.CreateDirectory(Path.Combine(scratch.Path, "release")).FullName;
         var payload = Directory.CreateDirectory(Path.Combine(scratch.Path, "payload")).FullName;
         var stamp = Path.Combine(scratch.Path, "registerai.json");
         var placed = Path.Combine(payload, "registerai", "RegisterAI.exe");
         var sums = Path.Combine(from, "SHA256SUMS");
-        var hash = Hash(exe);
+        var hash = await HashAsync(exe);
 
-        File.Copy(exe, Path.Combine(from, "RegisterAI.exe"));
+        await TestFiles.CopyAsync(exe, Path.Combine(from, "RegisterAI.exe"));
         await File.WriteAllTextAsync(Path.Combine(payload, "payload.json"), "{ \"builtUtc\": \"2026-10-03T00:00:00Z\" }");
 
         string[] arguments = ["-From", from, "-PayloadRoot", payload, "-StampPath", stamp];
@@ -94,7 +94,7 @@ internal sealed class RegisterAiPayloadTests
         var taken = await RunAsync(arguments);
 
         await Assert.That(taken.Exit).IsEqualTo(0).Because(taken.Everything);
-        await Assert.That(Hash(placed)).IsEqualTo(hash);
+        await Assert.That(await HashAsync(placed)).IsEqualTo(hash);
 
         using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(payload, "payload.json")));
         using var record = JsonDocument.Parse(await File.ReadAllTextAsync(stamp));
@@ -129,7 +129,7 @@ internal sealed class RegisterAiPayloadTests
     [Test]
     public async Task ThePayloadTakesTheNewestRegisterAiReleaseWithNoGitHubSignIn()
     {
-        using var scratch = ScratchDirectory.Create("registerai-public");
+        using var scratch = await ScratchDirectory.CreateAsync("registerai-public");
 
         var payload = Directory.CreateDirectory(Path.Combine(scratch.Path, "payload")).FullName;
         var stamp = Path.Combine(scratch.Path, "registerai.json");
@@ -155,7 +155,7 @@ internal sealed class RegisterAiPayloadTests
         await Assert.That(root.GetProperty("repository").GetString()).IsEqualTo("SixFive7/RegisterAI");
         await Assert.That(tag).IsEqualTo("v" + root.GetProperty("version").GetString());
         await Assert.That(root.GetProperty("release").GetString()).IsEqualTo("https://github.com/SixFive7/RegisterAI/releases/tag/" + tag);
-        await Assert.That(Hash(placed)).IsEqualTo(root.GetProperty("sha256").GetString());
+        await Assert.That(await HashAsync(placed)).IsEqualTo(root.GetProperty("sha256").GetString());
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ internal sealed class RegisterAiPayloadTests
     [Test]
     public async Task TheCommittedStampNamesTheRegisterAiThePayloadCarries()
     {
-        var exe = RequireTheRegisterAiThePayloadCarries();
+        var exe = await RequireTheRegisterAiThePayloadCarriesAsync();
 
         using var stamp = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "registerai.json")));
         using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(RepositoryPayload.Layout.Root, "payload.json")));
@@ -180,7 +180,7 @@ internal sealed class RegisterAiPayloadTests
 
         await Assert.That(stamp.RootElement.GetProperty("version").GetString()).IsEqualTo(block.GetProperty("version").GetString());
         await Assert.That(stamp.RootElement.GetProperty("sha256").GetString()).IsEqualTo(block.GetProperty("sha256").GetString());
-        await Assert.That(Hash(exe)).IsEqualTo(stamp.RootElement.GetProperty("sha256").GetString());
+        await Assert.That(await HashAsync(exe)).IsEqualTo(stamp.RootElement.GetProperty("sha256").GetString());
     }
 
     /// <summary>
@@ -245,19 +245,19 @@ internal sealed class RegisterAiPayloadTests
     [Test]
     public async Task ThePublishedSliceCarriesTheRegisterAiOfThePayload()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
-        var exe = RequireTheRegisterAiThePayloadCarries();
+        var exe = await RequireTheRegisterAiThePayloadCarriesAsync();
         var published = Path.Combine(PublishedSlice.Directory, "payload", BrowserAI.Registration.RegisterAiTool.FolderName, BrowserAI.Registration.RegisterAiTool.FileName);
 
         await Assert.That(File.Exists(published)).IsTrue().Because($"the published slice holds no '{published}'. Publish again: {PublishedSlice.PublishCommand}");
-        await Assert.That(Hash(published)).IsEqualTo(Hash(exe));
+        await Assert.That(await HashAsync(published)).IsEqualTo(await HashAsync(exe));
         await Assert.That(BrowserAI.Registration.RegisterAiTool.Beside(PublishedSlice.Executable).Executable).IsEqualTo(published);
     }
 
-    private static string RequireTheRegisterAiThePayloadCarries()
+    private static async Task<string> RequireTheRegisterAiThePayloadCarriesAsync()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var exe = RepositoryPayload.RegisterAi;
 
@@ -266,8 +266,8 @@ internal sealed class RegisterAiPayloadTests
             : throw new InvalidOperationException($"The payload holds no '{exe}'. Run: pwsh -File build/Get-RegisterAi.ps1, or build/Build-Payload.ps1.");
     }
 
-    private static string Hash(string file) =>
-        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(file)));
+    private static async Task<string> HashAsync(string file) =>
+        Convert.ToHexStringLower(SHA256.HashData(await File.ReadAllBytesAsync(file)));
 
     /// <summary>
     /// Every way a stamp names something other than a stable RegisterAI release, or

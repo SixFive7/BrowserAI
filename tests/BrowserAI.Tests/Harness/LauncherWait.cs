@@ -46,7 +46,7 @@ namespace BrowserAI.Tests.Harness;
 /// in the tree -- the driver's <c>stderr</c> tee, the launcher's own
 /// redirections -- is by construction still alive and still holding its handle.
 /// Both halves of the old reader assumed the opposite, and both are fixed on
-/// <see cref="Evidence"/>.
+/// <see cref="EvidenceAsync"/>.
 /// </para>
 /// </remarks>
 internal static class LauncherWait
@@ -92,14 +92,14 @@ internal static class LauncherWait
             {
                 throw new TimeoutException(
                     $"The launcher (pid {launcher.ToString(System.Globalization.CultureInfo.InvariantCulture)}) exited after {deadline.Elapsed.TotalSeconds:F1} s without writing '{donePath}', so nothing was ever going to write it."
-                    + Environment.NewLine + Evidence(scratch));
+                    + Environment.NewLine + await EvidenceAsync(scratch));
             }
 
             if (deadline.Elapsed >= patience)
             {
                 throw new TimeoutException(
                     $"The launcher never wrote '{donePath}' within {patience.TotalSeconds:F0} s, and it is still running."
-                    + Environment.NewLine + Evidence(scratch));
+                    + Environment.NewLine + await EvidenceAsync(scratch));
             }
 
             await Task.Delay(100).ConfigureAwait(false);
@@ -153,7 +153,7 @@ internal static class LauncherWait
     /// </remarks>
     /// <param name="scratch">The tree.</param>
     /// <returns>The evidence block.</returns>
-    public static string Evidence(string scratch)
+    public static async Task<string> EvidenceAsync(string scratch)
     {
         var report = new StringBuilder($"--- what the launcher left in {scratch} ---");
 
@@ -189,11 +189,11 @@ internal static class LauncherWait
                 // method's remarks: every capture file in this tree has a live
                 // writer, so a reader that does not permit writing cannot open
                 // any of them.
-                using var stream = new FileStream(
+                await using var stream = new FileStream(
                     file.FullName,
                     FileMode.Open,
                     FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete);
+                    FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
 
                 // Off the handle and not out of the directory entry the
                 // enumeration cached, so the number beside the name was measured
@@ -202,7 +202,7 @@ internal static class LauncherWait
 
                 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
 
-                text = reader.ReadToEnd();
+                text = await reader.ReadToEndAsync();
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {

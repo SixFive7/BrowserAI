@@ -143,10 +143,10 @@ internal sealed class ScreenshotLimitTests
     {
         // The double answers with a link to the file it writes, so the path has to
         // be known before the rig exists: a directory under the scratch root.
-        var directory = Path.Combine(ScratchRoot.Path, $"tall-file-{Guid.NewGuid():N}");
+        var directory = Path.Combine(await ScratchRoot.PathAsync(), $"tall-file-{Guid.NewGuid():N}");
         var file = Path.Combine(SessionPath.For(directory).FullPath, SessionLayout.OutputFolderName, "tall.png");
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools[ScreenshotLimit.ScreenshotTool] = new FakeToolBehaviour
             {
                 WritesArtifactContent = PngHead(1920, 20000),
@@ -201,9 +201,9 @@ internal sealed class ScreenshotLimitTests
     [Test]
     public async Task AgainstARealChromiumAPageOnePixelPastTheLineIsRefusedAndOneAtItIsNot()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "real-tall");
@@ -269,7 +269,7 @@ internal sealed class ScreenshotLimitTests
     /// <returns>The answer, and the session's directory.</returns>
     private static async Task<(JsonObject Answer, string Directory)> ScreenshotAsync(string browser, FakeToolBehaviour behaviour)
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools[ScreenshotLimit.ScreenshotTool] = behaviour,
             opensDefaultSession: false);
 
@@ -278,7 +278,7 @@ internal sealed class ScreenshotLimitTests
         // same way, the marker written the way upstream writes it.
         if (BrowserConfiguration.IsFirefox(browser))
         {
-            InstallationMarker.Write(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
+            await InstallationMarker.WriteAsync(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
         }
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);

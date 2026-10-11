@@ -90,7 +90,7 @@ internal sealed class InstallerLockTests
         await Assert.That(InstallerLock.CoverageRow).Contains(InstallerLock.Title);
 
         // Held means the file is there and names a live holder.
-        var text = await File.ReadAllTextAsync(InstallerLock.FilePath);
+        var text = await File.ReadAllTextAsync(await InstallerLock.FilePathAsync());
 
         await Assert.That(InstallerLock.Parse(text) is { } holder && InstallerLock.IsAlive(holder)).IsTrue().Because(text);
     }
@@ -108,7 +108,7 @@ internal sealed class InstallerLockTests
     [Test]
     public async Task TheDriversHalfWritesWhatTheSuitesHalfReads()
     {
-        using var scratch = ScratchDirectory.Create("installer-lock");
+        using var scratch = await ScratchDirectory.CreateAsync("installer-lock");
         var lockFile = Path.Combine(scratch.Path, "installer.lock");
         var me = Environment.ProcessId;
 

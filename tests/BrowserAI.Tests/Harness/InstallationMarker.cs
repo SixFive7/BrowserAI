@@ -36,7 +36,7 @@ internal static class InstallationMarker
 
     /// <summary>Writes the marker into a browser revision directory.</summary>
     /// <param name="directory">The revision directory. Created if absent.</param>
-    public static void Write(string directory)
+    public static async Task WriteAsync(string directory)
     {
         _ = Directory.CreateDirectory(directory);
 
@@ -50,11 +50,11 @@ internal static class InstallationMarker
                 // FileShare.ReadWrite | Delete: another writer of the same empty
                 // file must not be refused, and neither must a tree delete that
                 // is about to remove the whole directory.
-                using var stream = new FileStream(
+                await using var stream = new FileStream(
                     path,
                     FileMode.Create,
                     FileAccess.Write,
-                    FileShare.ReadWrite | FileShare.Delete);
+                    FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
 
                 return;
             }
@@ -65,7 +65,7 @@ internal static class InstallationMarker
                     throw;
                 }
 
-                Thread.Sleep(5);
+                await Task.Delay(5);
             }
         }
     }

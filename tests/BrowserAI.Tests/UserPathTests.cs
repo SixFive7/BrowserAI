@@ -50,51 +50,51 @@ internal sealed class UserPathTests
     [Test]
     public async Task EachInstallRootPutsItsOwnFolderOnThePathAndTakesOnlyThatOff()
     {
-        using var first = ScratchDirectory.Create("user-path-root-a");
-        using var second = ScratchDirectory.Create("user-path-root-b");
-        using var data = ScratchDirectory.Create("user-path-data");
+        using var first = await ScratchDirectory.CreateAsync("user-path-root-a");
+        using var second = await ScratchDirectory.CreateAsync("user-path-root-b");
+        using var data = await ScratchDirectory.CreateAsync("user-path-data");
 
-        var appA = InstalledLayout.Create(first.Path);
-        var appB = InstalledLayout.Create(second.Path);
+        var appA = await InstalledLayout.CreateAsync(first.Path);
+        var appB = await InstalledLayout.CreateAsync(second.Path);
         var entryA = Path.GetDirectoryName(InstalledLayout.ServerIn(first.Path))!;
         var entryB = Path.GetDirectoryName(InstalledLayout.ServerIn(second.Path))!;
 
         var store = new ScratchUserPath { Value = new UserPathValue(Theirs, RegistryValueKind.ExpandString) };
 
         // ---- Install A: appended after a separator, kind kept, announced once.
-        var installed = Hook(RegistrationIntent.Install, appA, store, data.Path);
+        var installed = await HookAsync(RegistrationIntent.Install, appA, store, data.Path);
 
         await Assert.That(installed?.Change).IsEqualTo(UserPathChange.Added);
         await Assert.That(store.Value).IsEqualTo(new UserPathValue($"{Theirs};{entryA}", RegistryValueKind.ExpandString));
         await Assert.That(store.Announcements).IsEqualTo(1);
 
         // ---- An update over the same root writes nothing and announces nothing.
-        var updated = Hook(RegistrationIntent.Update, appA, store, data.Path);
+        var updated = await HookAsync(RegistrationIntent.Update, appA, store, data.Path);
 
         await Assert.That(updated?.Change).IsEqualTo(UserPathChange.AlreadyThere);
         await Assert.That(store.Writes).IsEqualTo(1);
         await Assert.That(store.Announcements).IsEqualTo(1);
 
         // ---- Install B beside it: its own entry, and A's untouched.
-        _ = Hook(RegistrationIntent.Install, appB, store, data.Path);
+        _ = await HookAsync(RegistrationIntent.Install, appB, store, data.Path);
 
         await Assert.That(store.Value!.Text).IsEqualTo($"{Theirs};{entryA};{entryB}");
 
         // ---- Uninstall A: A's entry goes, B's and the person's stay.
-        var removed = Hook(RegistrationIntent.Uninstall, appA, store, data.Path);
+        var removed = await HookAsync(RegistrationIntent.Uninstall, appA, store, data.Path);
 
         await Assert.That(removed?.Change).IsEqualTo(UserPathChange.Removed);
         await Assert.That(store.Value!.Text).IsEqualTo($"{Theirs};{entryB}");
 
         // ---- Uninstall B: the value is what it was before either install, byte for byte.
-        _ = Hook(RegistrationIntent.Uninstall, appB, store, data.Path);
+        _ = await HookAsync(RegistrationIntent.Uninstall, appB, store, data.Path);
 
         await Assert.That(store.Value).IsEqualTo(new UserPathValue(Theirs, RegistryValueKind.ExpandString));
 
         // ---- An entry the person wrote in another spelling is not the install's to take.
         var spelled = new ScratchUserPath { Value = new UserPathValue($@"{Theirs};%LOCALAPPDATA%\elsewhere\current", RegistryValueKind.ExpandString) };
 
-        await Assert.That(Hook(RegistrationIntent.Uninstall, appA, spelled, data.Path)?.Change).IsEqualTo(UserPathChange.NotThere);
+        await Assert.That((await HookAsync(RegistrationIntent.Uninstall, appA, spelled, data.Path))?.Change).IsEqualTo(UserPathChange.NotThere);
         await Assert.That(spelled.Writes).IsEqualTo(0);
     }
 
@@ -244,8 +244,8 @@ internal sealed class UserPathTests
     }
 
     /// <summary>One hook pass, the way the hook runs it, against a scratch PATH.</summary>
-    private static UserPathReport? Hook(RegistrationIntent intent, string image, ScratchUserPath store, string data) =>
-        HookRegistration.Run(
+    private static async Task<UserPathReport?> HookAsync(RegistrationIntent intent, string image, ScratchUserPath store, string data) =>
+        (await HookRegistration.RunAsync(
             intent,
             "9.9.9",
             image,
@@ -255,6 +255,6 @@ internal sealed class UserPathTests
             new ScratchLogonTasks(),
             ScratchLogonTasks.AppId,
             silent: true,
-            ask: _ => false,
-            clients: [RegistrationClient.ClaudeCode]).PathEntry;
+            ask: _ => Task.FromResult(false),
+            clients: [RegistrationClient.ClaudeCode])).PathEntry;
 }

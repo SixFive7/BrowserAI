@@ -54,8 +54,8 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ARunningBackgroundHandsOverTheAddressOfThePageAskedForAndNoTaskIsTouched()
     {
-        using var scratch = new StartScratch("person-start-shown");
-        await using var background = BackgroundServerRig.Start(scratch.PipeName);
+        using var scratch = await StartScratch.CreateAsync("person-start-shown");
+        await using var background = await BackgroundServerRig.StartAsync(scratch.PipeName);
 
         var tasks = new ScriptedLogonTasks();
         using var logs = new CapturingLoggerProvider();
@@ -81,8 +81,8 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ARefusalIsNotShownAndStartsNothing()
     {
-        using var scratch = new StartScratch("person-start-refused");
-        await using var background = BackgroundServerRig.Start(scratch.PipeName, verbs: new FakeBackgroundVerbs { Address = null });
+        using var scratch = await StartScratch.CreateAsync("person-start-refused");
+        await using var background = await BackgroundServerRig.StartAsync(scratch.PipeName, verbs: new FakeBackgroundVerbs { Address = null });
 
         var tasks = new ScriptedLogonTasks();
         using var logs = new CapturingLoggerProvider();
@@ -124,7 +124,7 @@ internal sealed class PersonStartTests
     [Test]
     public async Task WithNoBackgroundABuildThatIsNotInstalledIsNotShownAndNoTaskIsTouched()
     {
-        using var scratch = new StartScratch("person-start-not-installed");
+        using var scratch = await StartScratch.CreateAsync("person-start-not-installed");
 
         var tasks = new ScriptedLogonTasks();
         using var notInstalled = new CapturingLoggerProvider();
@@ -181,18 +181,22 @@ internal sealed class PersonStartTests
     [Test]
     public async Task AMissingTaskIsRegisteredAgainFromTheSavedDefinitionRunAndThePipeWaitedFor()
     {
-        using var scratch = new StartScratch("person-start-missing");
+        using var scratch = await StartScratch.CreateAsync("person-start-missing");
 
-        var saved = SaveTheInstallsDefinition(scratch);
+        var saved = await SaveTheInstallsDefinitionAsync(scratch);
         var tasks = new ScriptedLogonTasks();
         var started = new ConcurrentQueue<Task<BackgroundServerRig>>();
 
-        tasks.Started = (_, _) => started.Enqueue(Task.Run(() => BackgroundServerRig.Start(scratch.PipeName)));
+        tasks.Started = (_, _) =>
+        {
+            started.Enqueue(Task.Run(() => BackgroundServerRig.StartAsync(scratch.PipeName)));
+            return Task.CompletedTask;
+        };
 
         try
         {
             using var logs = new CapturingLoggerProvider();
-            var shown = await ShowAsync(scratch.Settings(tasks) with { Definition = () => SignInTask.SavedDefinition(scratch.InstallRoot) }, "update", logs);
+            var shown = await ShowAsync(scratch.Settings(tasks) with { Definition = () => SignInTask.SavedDefinitionAsync(scratch.InstallRoot) }, "update", logs);
 
             await Assert.That(shown).IsEqualTo((PersonStartOutcome.Shown, (string?)FakeBackgroundVerbs.DefaultAddress));
             await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"run {TaskName} {PersonStart.StartedByPerson} | register {TaskName} | run {TaskName} {PersonStart.StartedByPerson}");
@@ -233,7 +237,7 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ADisabledTaskIsNotShownAndNothingIsRegistered()
     {
-        using var scratch = new StartScratch("person-start-disabled");
+        using var scratch = await StartScratch.CreateAsync("person-start-disabled");
 
         const string Disabled = "The Task Scheduler could not start the task: 0x80041326, The task is disabled.";
 
@@ -269,14 +273,14 @@ internal sealed class PersonStartTests
     [Test]
     public async Task AMissingTaskTheSchedulerWillNotRegisterAgainIsNeverSaidToBeRegisteredAgain()
     {
-        using var scratch = new StartScratch("person-start-not-registered-again");
+        using var scratch = await StartScratch.CreateAsync("person-start-not-registered-again");
 
         const string Refused = "The Task Scheduler could not register 'BrowserAI.app.scratch sign-in person-start-tests': 0x80070005, Access is denied.";
 
         var tasks = new RefusingScheduler(Refused);
         using var logs = new CapturingLoggerProvider();
 
-        var refused = await ShowAsync(scratch.Settings(tasks) with { Definition = static () => "the definition the install saved" }, page: null, logs);
+        var refused = await ShowAsync(scratch.Settings(tasks) with { Definition = static () => Task.FromResult<string?>("the definition the install saved") }, page: null, logs);
 
         await Assert.That(refused).IsEqualTo((PersonStartOutcome.NotShown, (string?)null));
         await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"run {TaskName} {PersonStart.StartedByPerson} | register {TaskName}");
@@ -304,7 +308,7 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ATaskThatStartsNoBackgroundIsSaidWithItsBoundInSeconds()
     {
-        using var scratch = new StartScratch("person-start-no-pipe");
+        using var scratch = await StartScratch.CreateAsync("person-start-no-pipe");
 
         // Registered, so the run "starts" the task, and nothing ever serves the pipe.
         var tasks = new ScriptedLogonTasks();
@@ -338,15 +342,15 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ARecordedCrashWithNoExitCodeIsClearedWithItsCodeSaidToBeUnknown()
     {
-        using var scratch = new StartScratch("person-start-crash-code");
+        using var scratch = await StartScratch.CreateAsync("person-start-crash-code");
 
         var tasks = new ScriptedLogonTasks { RunAnswer = (_, _) => new TaskReport(TaskChange.Failed, "The suite's task does not start anything.") };
         using var logs = new CapturingLoggerProvider();
 
-        HandWrittenRecord.Gone(scratch.RecordPath);
+        await HandWrittenRecord.GoneAsync(scratch.RecordPath);
         _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
 
-        HandWrittenRecord.Gone(scratch.RecordPath, exitCode: -1073741819);
+        await HandWrittenRecord.GoneAsync(scratch.RecordPath, exitCode: -1073741819);
         _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
 
         await Assert.That(Lines(logs, 6107)).IsEqualTo(
@@ -379,13 +383,13 @@ internal sealed class PersonStartTests
     [Test]
     public async Task TheLinesAboutAHungBackgroundEndInOneFullStopWhateverTheirReasonsEndIn()
     {
-        using var scratch = new StartScratch("person-start-hung-full-stops");
-        await using var background = BackgroundServerRig.Start(scratch.PipeName, verbs: new FakeBackgroundVerbs { HoldsShow = true });
+        using var scratch = await StartScratch.CreateAsync("person-start-hung-full-stops");
+        await using var background = await BackgroundServerRig.StartAsync(scratch.PipeName, verbs: new FakeBackgroundVerbs { HoldsShow = true });
 
         var pid = Environment.ProcessId;
         var created = ProcessLiveness.CreationTimeOfThisProcess();
 
-        HandWrittenRecord.Write(scratch.RecordPath, pid, created);
+        await HandWrittenRecord.WriteAsync(scratch.RecordPath, pid, created);
 
         var asked = new List<string>();
         var tasks = new ScriptedLogonTasks();
@@ -429,7 +433,7 @@ internal sealed class PersonStartTests
     [Test]
     public async Task ARecordedCrashIsClearedBeforeTheTaskIsAskedAndOnlyACrashIs()
     {
-        using var scratch = new StartScratch("person-start-crash");
+        using var scratch = await StartScratch.CreateAsync("person-start-crash");
 
         var recordAtTheRun = new List<bool>();
         var tasks = new ScriptedLogonTasks
@@ -440,7 +444,7 @@ internal sealed class PersonStartTests
         };
         using var logs = new CapturingLoggerProvider();
 
-        HandWrittenRecord.Gone(scratch.RecordPath, exitCode: 3);
+        await HandWrittenRecord.GoneAsync(scratch.RecordPath, exitCode: 3);
 
         _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
 
@@ -449,7 +453,7 @@ internal sealed class PersonStartTests
         await Assert.That(logs.Records.Count(record => record.EventId.Id is 6107)).IsEqualTo(1);
 
         // A background that is alive and has not opened its pipe is not a crash.
-        _ = BackgroundRecord.Started(scratch.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
+        _ = await BackgroundRecord.StartedAsync(scratch.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
         var alive = await File.ReadAllBytesAsync(scratch.RecordPath);
 
         _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
@@ -457,7 +461,7 @@ internal sealed class PersonStartTests
         await Assert.That((await File.ReadAllBytesAsync(scratch.RecordPath)).SequenceEqual(alive)).IsTrue();
 
         // Nor is one that ended cleanly.
-        HandWrittenRecord.Write(scratch.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.Stopped));
+        await HandWrittenRecord.WriteAsync(scratch.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.Stopped));
         var clean = await File.ReadAllBytesAsync(scratch.RecordPath);
 
         _ = await ShowAsync(scratch.Settings(tasks), page: null, logs);
@@ -494,8 +498,8 @@ internal sealed class PersonStartTests
     [Test]
     public async Task AHungBackgroundTheRecordDoesNotNameIsNotEndedAndNothingIsStarted()
     {
-        using var scratch = new StartScratch("person-start-hung");
-        await using var background = BackgroundServerRig.Start(scratch.PipeName, verbs: new FakeBackgroundVerbs { HoldsShow = true });
+        using var scratch = await StartScratch.CreateAsync("person-start-hung");
+        await using var background = await BackgroundServerRig.StartAsync(scratch.PipeName, verbs: new FakeBackgroundVerbs { HoldsShow = true });
 
         var tasks = new ScriptedLogonTasks();
         using var logs = new CapturingLoggerProvider();
@@ -540,27 +544,27 @@ internal sealed class PersonStartTests
     [Test]
     public async Task AHungBackgroundTheRecordNamesIsEndedItsRecordClearedAndANewOneStarted()
     {
-        using var scratch = new StartScratch("person-start-hung-ended");
+        using var scratch = await StartScratch.CreateAsync("person-start-hung-ended");
         using var scope = new JobObjectScope();
 
-        var standInImage = ProbeImage.CopyInto(Path.Combine(scratch.InstallRoot, "current"));
+        var standInImage = await ProbeImage.CopyIntoAsync(Path.Combine(scratch.InstallRoot, "current"));
         var ready = Path.Combine(scratch.DataRoot, "stand-in.ready");
 
-        var standIn = scope.Launch(standInImage, scratch.DataRoot, "background-standin", scratch.PipeName, scratch.RecordPath, ready, "0");
+        var standIn = await scope.LaunchAsync(standInImage, scratch.DataRoot, "background-standin", scratch.PipeName, scratch.RecordPath, ready, "0");
 
         await BackgroundServerRig.WaitUntilAsync(() => File.Exists(ready) || standIn.HasExited, "the stand-in never took the pipe");
-        await Assert.That(standIn.HasExited).IsFalse().Because(scope.SaidBy(standIn.Id));
+        await Assert.That(standIn.HasExited).IsFalse().Because(await scope.SaidByAsync(standIn.Id));
 
         var recordAtTheRun = new List<bool>();
         var started = new ConcurrentQueue<Task<BackgroundServerRig>>();
         var tasks = new ScriptedLogonTasks
         {
             Asked = (_, _) => recordAtTheRun.Add(File.Exists(scratch.RecordPath)),
-            Started = (_, _) =>
+            Started = async (_, _) =>
             {
                 // The new background takes the pipe once the stuck one has let it go.
-                _ = standIn.WaitForExitAsync(TestDefaults.InProcessHang).GetAwaiter().GetResult();
-                started.Enqueue(Task.Run(() => BackgroundServerRig.Start(scratch.PipeName)));
+                _ = await standIn.WaitForExitAsync(TestDefaults.InProcessHang);
+                started.Enqueue(Task.Run(() => BackgroundServerRig.StartAsync(scratch.PipeName)));
             },
         };
 
@@ -597,7 +601,7 @@ internal sealed class PersonStartTests
     /// <param name="logs">Where it reports.</param>
     /// <returns>What it came to.</returns>
     private static async Task<(PersonStartOutcome Outcome, string? Address)> ShowAsync(PersonStartSettings settings, string? page, CapturingLoggerProvider logs) =>
-        await Task.Run(() => PersonStart.Show(settings, page, logs.CreateLogger("BrowserAI.App"))).WaitAsync(TestDefaults.InProcessHang);
+        await PersonStart.ShowAsync(settings, page, logs.CreateLogger("BrowserAI.App")).WaitAsync(TestDefaults.InProcessHang);
 
     /// <summary>Every line one event wrote, in order, joined.</summary>
     /// <param name="logs">What the start wrote.</param>
@@ -609,14 +613,18 @@ internal sealed class PersonStartTests
     /// <summary>Writes the definition the install hook saves, through the hook's own step, and reads it back.</summary>
     /// <param name="scratch">The start's scratch install.</param>
     /// <returns>The definition as saved.</returns>
-    private static string SaveTheInstallsDefinition(StartScratch scratch)
+    private static async Task<string> SaveTheInstallsDefinitionAsync(StartScratch scratch)
     {
-        if (!RegistrationTarget.TryResolve(InstalledLayout.Create(scratch.InstallRoot), out var target, out var refusal))
+        var resolution = await RegistrationTarget.ResolveAsync(await InstalledLayout.CreateAsync(scratch.InstallRoot));
+        var target = resolution.Target;
+        var refusal = resolution.Refusal;
+
+        if (!resolution.Resolved)
         {
             throw new InvalidOperationException($"The scratch install does not resolve: {refusal}");
         }
 
-        var report = SignInTask.Apply(
+        var report = await SignInTask.ApplyAsync(
             RegistrationIntent.Install,
             target!,
             ScratchLogonTasks.AppId,
@@ -624,7 +632,7 @@ internal sealed class PersonStartTests
             NullLogger.Instance,
             SignInTask.ArgumentsFor(@"C:\Users\someone\BrowserAI-data", updateSource: null));
 
-        return report.Change is TaskChange.Registered && SignInTask.SavedDefinition(scratch.InstallRoot) is { } saved
+        return report.Change is TaskChange.Registered && await SignInTask.SavedDefinitionAsync(scratch.InstallRoot) is { } saved
             ? saved
             : throw new InvalidOperationException($"The install hook's step saved no definition: {report.Detail}");
     }
@@ -635,15 +643,19 @@ internal sealed class PersonStartTests
         private readonly ScratchDirectory _install;
         private readonly ScratchDirectory _data;
 
-        /// <summary>Makes the scratch.</summary>
-        /// <param name="label">What the scratch folders are called.</param>
-        public StartScratch(string label)
+        private StartScratch(ScratchDirectory install, ScratchDirectory data)
         {
-            _install = ScratchDirectory.Create(label + "-install");
-            _data = ScratchDirectory.Create(label + "-data");
+            _install = install;
+            _data = data;
             PipeName = PublishedBackground.NewPipeName();
             RecordPath = BackgroundRecord.PathFor(DataRoot, PipeName);
         }
+
+        /// <summary>Makes the scratch.</summary>
+        /// <param name="label">What the scratch folders are called.</param>
+        /// <returns>The scratch.</returns>
+        public static async Task<StartScratch> CreateAsync(string label) =>
+            new(await ScratchDirectory.CreateAsync(label + "-install"), await ScratchDirectory.CreateAsync(label + "-data"));
 
         /// <summary>The install root.</summary>
         public string InstallRoot => _install.Path;
@@ -688,20 +700,20 @@ internal sealed class PersonStartTests
         public ConcurrentQueue<string> Events { get; } = new();
 
         /// <inheritdoc />
-        public TaskReport Register(string name, string definition)
+        public Task<TaskReport> RegisterAsync(string name, string definition)
         {
             Events.Enqueue($"register {name}");
-            return new TaskReport(TaskChange.Failed, refusal);
+            return Task.FromResult(new TaskReport(TaskChange.Failed, refusal));
         }
 
         /// <inheritdoc />
-        public TaskReport Remove(string name) => throw new InvalidOperationException("A person's start removes no task.");
+        public Task<TaskReport> RemoveAsync(string name) => throw new InvalidOperationException("A person's start removes no task.");
 
         /// <inheritdoc />
-        public TaskReport Run(string name, string argument)
+        public Task<TaskReport> RunAsync(string name, string argument)
         {
             Events.Enqueue($"run {name} {argument}");
-            return new TaskReport(TaskChange.NotRegistered, $"There is no task '{name}' to start.");
+            return Task.FromResult(new TaskReport(TaskChange.NotRegistered, $"There is no task '{name}' to start."));
         }
     }
 }

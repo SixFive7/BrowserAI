@@ -66,7 +66,7 @@ internal sealed class DeadChildTests
     [Test]
     public async Task AResumeRelaunchesAChildThatHasDiedAndSaysSo()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
             opensDefaultSession: false);
 
@@ -146,7 +146,7 @@ internal sealed class DeadChildTests
     [Test]
     public async Task AResumeOfALiveSessionStillChangesNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "healthy");
@@ -208,7 +208,7 @@ internal sealed class DeadChildTests
     [Test]
     public async Task ACallForwardedAfterTheChildDiedComesBackRatherThanWaitingForever()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
             opensDefaultSession: false);
 
@@ -260,7 +260,7 @@ internal sealed class DeadChildTests
     {
         var holding = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
                 RawResult = NavigateResult,

@@ -74,7 +74,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var visible = Path.Combine(rig.Root, "visible");
@@ -132,7 +132,7 @@ internal sealed class IdleCountdownTests
         // And neither launch carries upstream's own timeout.
         foreach (var launch in rig.Launches)
         {
-            await Assert.That((int?)ConfigOf(launch)["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.NoIdleTimeout);
+            await Assert.That((int?)(await ConfigOfAsync(launch))["timeouts"]?["idle"]).IsEqualTo(BrowserAI.Runtime.BrowserConfiguration.NoIdleTimeout);
         }
     }
 
@@ -146,7 +146,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var three = Path.Combine(rig.Root, "three-minutes");
@@ -203,7 +203,7 @@ internal sealed class IdleCountdownTests
     [Test]
     public async Task AnIdleSettingThatIsNotMinutesOrNeverIsRefusedAndNothingIsCreated()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         // ⚠️ What arrived is named in words for every kind since 2026-10-10, from the
@@ -285,7 +285,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var directory = Path.Combine(rig.Root, "named-again-and-again");
@@ -339,7 +339,7 @@ internal sealed class IdleCountdownTests
     [Test]
     public async Task TheAlreadyLiveAnswerSaysTheCountdownStartedAgainAndNamesNoTime()
     {
-        await using var rig = Sessions(new ManualClock());
+        await using var rig = await SessionsAsync(new ManualClock());
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var up = Path.Combine(rig.Root, "browser-up");
@@ -395,7 +395,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var hidden = Path.Combine(rig.Root, "seam-hidden");
@@ -464,7 +464,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var visible = Path.Combine(rig.Root, "typed-into");
@@ -547,7 +547,7 @@ internal sealed class IdleCountdownTests
     {
         var clock = new ManualClock();
 
-        await using var rig = Sessions(clock);
+        await using var rig = await SessionsAsync(clock);
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var visible = Path.Combine(rig.Root, "typed-at-the-last-moment");
@@ -586,8 +586,8 @@ internal sealed class IdleCountdownTests
         await AdvanceUntilAsync(clock, OneMinute, () => child.HasStopped, "the visible window was never idle-closed once the input stopped");
     }
 
-    private static RigSessionEnvironment Sessions(ManualClock clock) =>
-        RigSessionEnvironment.Create(
+    private static async Task<RigSessionEnvironment> SessionsAsync(ManualClock clock) =>
+        await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -688,11 +688,11 @@ internal sealed class IdleCountdownTests
         string.Concat((result["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
 
-    private static JsonObject ConfigOf(BrowserAI.Protocol.ChildProcessOptions launch)
+    private static async Task<JsonObject> ConfigOfAsync(BrowserAI.Protocol.ChildProcessOptions launch)
     {
         var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
 
-        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+        return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
 
     /// <summary>Waits for an event with the clock still, bounded by the suite's hang detector.</summary>

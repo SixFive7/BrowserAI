@@ -254,52 +254,52 @@ internal static class SuiteEnvironment
 
     /// <summary>The published NativeAOT binary and the payload beside it, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
-    public static void RequirePublishedSlice([CallerMemberName] string test = "") =>
-        Require(SuiteCapability.PublishedSlice, test);
+    public static async Task RequirePublishedSliceAsync([CallerMemberName] string test = "") =>
+        await RequireAsync(SuiteCapability.PublishedSlice, test);
 
     /// <summary>The assembled <c>payload/</c> tree at the repository root, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
-    public static void RequireRepositoryPayload([CallerMemberName] string test = "") =>
-        Require(SuiteCapability.RepositoryPayload, test);
+    public static async Task RequireRepositoryPayloadAsync([CallerMemberName] string test = "") =>
+        await RequireAsync(SuiteCapability.RepositoryPayload, test);
 
     /// <summary>A provisioned Chromium, and the payload that drives it, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
-    public static void RequireProvisionedChromium([CallerMemberName] string test = "")
+    public static async Task RequireProvisionedChromiumAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.RepositoryPayload, test);
-        Require(SuiteCapability.ProvisionedChromium, test);
+        await RequireAsync(SuiteCapability.RepositoryPayload, test);
+        await RequireAsync(SuiteCapability.ProvisionedChromium, test);
     }
 
     /// <summary>A provisioned Firefox, and the payload that drives it, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
-    public static void RequireProvisionedFirefox([CallerMemberName] string test = "")
+    public static async Task RequireProvisionedFirefoxAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.RepositoryPayload, test);
-        Require(SuiteCapability.ProvisionedFirefox, test);
+        await RequireAsync(SuiteCapability.RepositoryPayload, test);
+        await RequireAsync(SuiteCapability.ProvisionedFirefox, test);
     }
 
     /// <summary>The packed <c>.nupkg</c> this run can read notices out of, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
     /// <returns>The package's path.</returns>
-    public static string RequirePackagedRelease([CallerMemberName] string test = "")
+    public static async Task<string> RequirePackagedReleaseAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.PackagedRelease, test);
+        await RequireAsync(SuiteCapability.PackagedRelease, test);
         return PackagedRelease()!;
     }
 
     /// <summary>A shipping pack's full package at the top of the release directory, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
     /// <returns>The package's path.</returns>
-    public static string RequireShippingRelease([CallerMemberName] string test = "")
+    public static async Task<string> RequireShippingReleaseAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.ShippingRelease, test);
+        await RequireAsync(SuiteCapability.ShippingRelease, test);
         return ShippingRelease()!;
     }
 
     /// <summary>A git that can answer about this tree, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
-    public static void RequireGit([CallerMemberName] string test = "") =>
-        Require(SuiteCapability.Git, test);
+    public static async Task RequireGitAsync([CallerMemberName] string test = "") =>
+        await RequireAsync(SuiteCapability.Git, test);
 
     /// <summary>
     /// A <c>Setup.exe</c> packed from this tree's layout, or a skip.
@@ -312,9 +312,9 @@ internal static class SuiteEnvironment
     /// holds that the slices are this tree's, the same way every slice arm does, so
     /// a real installer never runs hooks the tree no longer has.
     /// </remarks>
-    public static string RequireReleaseInstaller([CallerMemberName] string test = "")
+    public static async Task<string> RequireReleaseInstallerAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.ReleaseInstaller, test);
+        await RequireAsync(SuiteCapability.ReleaseInstaller, test);
         PublishedSlice.EnsureFresh();
         return ReleaseLayout.TestSetupExecutable;
     }
@@ -322,10 +322,10 @@ internal static class SuiteEnvironment
     /// <summary>The MCP client's own command line, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
     /// <returns>The client executable's absolute path.</returns>
-    public static string RequireClientCommandLine([CallerMemberName] string test = "")
+    public static async Task<string> RequireClientCommandLineAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.ClientCommandLine, test);
-        return ClientExecutable()!;
+        await RequireAsync(SuiteCapability.ClientCommandLine, test);
+        return (await ClientExecutableAsync())!;
     }
 
     /// <summary>
@@ -341,17 +341,18 @@ internal static class SuiteEnvironment
     /// RegisterAI's: see <see cref="ClientsRegisterAiFinds"/>.</i>
     /// </remarks>
     /// <returns>The path, or <see langword="null"/>.</returns>
-    public static string? ClientExecutable() => ClientsRegisterAiFinds.Value.Claude;
+    /// <returns>The path, or <see langword="null"/> when RegisterAI finds no Claude Code.</returns>
+    public static async Task<string?> ClientExecutableAsync() => (await ClientsRegisterAiFinds.Value).Claude;
 
     /// <summary>
     /// The Codex CLI, or a skip.
     /// </summary>
     /// <param name="test">Filled in by the compiler.</param>
     /// <returns>The path to the CLI.</returns>
-    public static string RequireCodexCommandLine([CallerMemberName] string test = "")
+    public static async Task<string> RequireCodexCommandLineAsync([CallerMemberName] string test = "")
     {
-        Require(SuiteCapability.CodexCommandLine, test);
-        return CodexExecutable()!;
+        await RequireAsync(SuiteCapability.CodexCommandLine, test);
+        return (await CodexExecutableAsync())!;
     }
 
     /// <summary>
@@ -365,7 +366,8 @@ internal static class SuiteEnvironment
     /// "Through the product's own <c>CodexRegistration.Locate</c>").</i>
     /// </remarks>
     /// <returns>The path, or <see langword="null"/>.</returns>
-    public static string? CodexExecutable() => ClientsRegisterAiFinds.Value.Codex;
+    /// <returns>The path, or <see langword="null"/> when RegisterAI finds no Codex.</returns>
+    public static async Task<string?> CodexExecutableAsync() => (await ClientsRegisterAiFinds.Value).Codex;
 
     /// <summary>
     /// Both clients, as the payload's RegisterAI finds them: one <c>status</c> run per
@@ -384,9 +386,9 @@ internal static class SuiteEnvironment
     /// no RegisterAI finds no client, and the witness says why.
     /// </para>
     /// </remarks>
-    private static readonly Lazy<(string? Claude, string? Codex, string Why)> ClientsRegisterAiFinds = new(AskRegisterAi);
+    private static readonly Lazy<Task<(string? Claude, string? Codex, string Why)>> ClientsRegisterAiFinds = new(AskRegisterAiAsync);
 
-    private static (string? Claude, string? Codex, string Why) AskRegisterAi()
+    private static async Task<(string? Claude, string? Codex, string Why)> AskRegisterAiAsync()
     {
         var exe = RepositoryPayload.RegisterAi;
 
@@ -415,7 +417,7 @@ internal static class SuiteEnvironment
                     ["CODEX_HOME"] = Directory.CreateDirectory(Path.Combine(homes, "codex")).FullName,
                 });
 
-            run = tool.Run(
+            run = await tool.RunAsync(
                 McpRegistrar.Arguments("status", RegistrationClient.All, "user", project: null, ownedRoot: null, replace: false, pathFolder: null, command: null),
                 McpRegistrar.ToolBudget);
         }
@@ -448,21 +450,21 @@ internal static class SuiteEnvironment
     /// </remarks>
     /// <param name="test">The calling test, filled in by the compiler.</param>
     /// <returns>Whether the payload is present.</returns>
-    public static bool HasRepositoryPayload([CallerMemberName] string test = "")
+    public static async Task<bool> HasRepositoryPayloadAsync([CallerMemberName] string test = "")
     {
-        var state = StateOf(SuiteCapability.RepositoryPayload);
+        var state = await StateOfAsync(SuiteCapability.RepositoryPayload);
 
         if (state is CapabilityState.Present)
         {
             return true;
         }
 
-        RefuseAPartialInstallation(SuiteCapability.RepositoryPayload, state);
+        await RefuseAPartialInstallationAsync(SuiteCapability.RepositoryPayload, state);
         Record(SuiteCapability.RepositoryPayload, test);
 
         if (IsReleaseRun)
         {
-            throw new InvalidOperationException(RefusalFor(SuiteCapability.RepositoryPayload));
+            throw new InvalidOperationException(await RefusalForAsync(SuiteCapability.RepositoryPayload));
         }
 
         return false;
@@ -471,7 +473,24 @@ internal static class SuiteEnvironment
     /// <summary>Whether a capability is available to this run.</summary>
     /// <param name="capability">The capability.</param>
     /// <returns>Whether it is present.</returns>
-    public static bool IsPresent(SuiteCapability capability) => StateOf(capability) is CapabilityState.Present;
+    public static async Task<bool> IsPresentAsync(SuiteCapability capability) => await StateOfAsync(capability) is CapabilityState.Present;
+
+    /// <summary>Every capability this run lacks, in declaration order.</summary>
+    /// <returns>The capabilities.</returns>
+    public static async Task<List<SuiteCapability>> AbsentAsync()
+    {
+        var absent = new List<SuiteCapability>();
+
+        foreach (var capability in All)
+        {
+            if (!await IsPresentAsync(capability))
+            {
+                absent.Add(capability);
+            }
+        }
+
+        return absent;
+    }
 
     /// <summary>The tests that took a degraded path for want of a capability.</summary>
     /// <param name="capability">The capability.</param>
@@ -492,7 +511,7 @@ internal static class SuiteEnvironment
     /// only this block can say whether a browser was started.
     /// </remarks>
     /// <returns>The block, without a trailing newline.</returns>
-    public static string Summary()
+    public static async Task<string> SummaryAsync()
     {
         var report = new StringBuilder();
         var rule = new string('=', 78);
@@ -505,7 +524,7 @@ internal static class SuiteEnvironment
 
         foreach (var capability in All)
         {
-            var state = StateOf(capability);
+            var state = await StateOfAsync(capability);
             var tests = DegradedTests(capability);
             degraded += tests.Count;
 
@@ -518,7 +537,7 @@ internal static class SuiteEnvironment
                     _ => "PARTIAL",
                 })
                 .Append("  ")
-                .Append(WitnessFor(capability))
+                .Append(await WitnessForAsync(capability))
                 .Append('\n');
 
             if (tests.Count is not 0)
@@ -651,7 +670,7 @@ internal static class SuiteEnvironment
 
         _ = report.Append(rule).Append('\n');
 
-        var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);
+        var absent = (await AbsentAsync()).Count;
 
         if (degraded is not 0 && IsReleaseRun)
         {
@@ -754,7 +773,7 @@ internal static class SuiteEnvironment
     /// <param name="declaration">The environment's declaration, or <see langword="null"/> when it made none.</param>
     /// <param name="absent">The capabilities this run does not have.</param>
     /// <returns>One line per disagreement, empty when the two agree or nothing was declared.</returns>
-    public static IReadOnlyList<string> ReconcileDeclaredAbsence(string? declaration, IEnumerable<SuiteCapability> absent)
+    public static async Task<IReadOnlyList<string>> ReconcileDeclaredAbsenceAsync(string? declaration, IEnumerable<SuiteCapability> absent)
     {
         ArgumentNullException.ThrowIfNull(absent);
 
@@ -770,11 +789,12 @@ internal static class SuiteEnvironment
         var missing = new List<string>(problems);
         var actually = absent.ToList();
 
-        missing.AddRange(actually
-            .Where(capability => !declared.Contains(capability))
-            .Select(capability =>
+        foreach (var capability in actually.Where(capability => !declared.Contains(capability)))
+        {
+            missing.Add(
                 $"'{Title(capability)}' ({capability}) is ABSENT and this run's environment did not declare that it would be. "
-                + $"{WitnessFor(capability)}. Either the machine lost a capability it used to have -- which is what this check exists to catch -- or {ExpectedAbsentVariable} needs it added. {RemedyFor(capability)}"));
+                + $"{await WitnessForAsync(capability)}. Either the machine lost a capability it used to have -- which is what this check exists to catch -- or {ExpectedAbsentVariable} needs it added. {RemedyFor(capability)}");
+        }
 
         missing.AddRange(declared
             .Where(capability => !actually.Contains(capability))
@@ -790,7 +810,7 @@ internal static class SuiteEnvironment
     /// it named them.
     /// </summary>
     /// <remarks>
-    /// <b>Split out of <see cref="ReconcileDeclaredAbsence"/> so that a
+    /// <b>Split out of <see cref="ReconcileDeclaredAbsenceAsync"/> so that a
     /// declaration committed to a pipeline definition and this run's live one
     /// are read by one implementation.</b> A second copy of <i>what counts as a
     /// name</i> would eventually answer the two differently.
@@ -854,7 +874,7 @@ internal static class SuiteEnvironment
     /// <summary>What a capability's artefacts look like on disk.</summary>
     /// <param name="capability">The capability.</param>
     /// <returns>Present, absent as a whole, or a partial installation.</returns>
-    public static CapabilityState StateOf(SuiteCapability capability) => capability switch
+    public static async Task<CapabilityState> StateOfAsync(SuiteCapability capability) => capability switch
     {
         SuiteCapability.PublishedSlice => PublishedSlice.IsPresent
             ? CapabilityState.Present
@@ -879,14 +899,14 @@ internal static class SuiteEnvironment
         // No Partial state exists for this one: an executable is either on the
         // search path or it is not, and there is no half-installed shape a
         // directory could be in that would mean anything.
-        SuiteCapability.ClientCommandLine => ClientExecutable() is not null
+        SuiteCapability.ClientCommandLine => await ClientExecutableAsync() is not null
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
         // Same reasoning as the line above, and the same absence of a Partial
         // state: the product's own four-place discovery either answers with a
         // path or it does not.
-        SuiteCapability.CodexCommandLine => CodexExecutable() is not null
+        SuiteCapability.CodexCommandLine => await CodexExecutableAsync() is not null
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
@@ -903,8 +923,8 @@ internal static class SuiteEnvironment
         // the real-installer arms did until the gate began packing one per run. A
         // pack that is not byte for byte the published slices is the same absence
         // as no pack, and is answered by the same command.
-        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller()
-            && ReleaseLayout.TestPackMismatch is null
+        SuiteCapability.ReleaseInstaller => await ReleaseLayout.HasCurrentInstallerAsync()
+            && await ReleaseLayout.TestPackMismatchAsync() is null
             && InstallerLock.IsHeldForThisRun
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
@@ -915,7 +935,7 @@ internal static class SuiteEnvironment
         // repository -- are the same absence to every caller. A `.git` present
         // and unreadable would be a third thing, and it is not distinguished
         // here because nothing could act on the distinction.
-        SuiteCapability.Git => GitOracle.IsAvailable
+        SuiteCapability.Git => await GitOracle.IsAvailableAsync()
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
@@ -991,9 +1011,9 @@ internal static class SuiteEnvironment
             : null;
     }
 
-    private static void Require(SuiteCapability capability, string test)
+    private static async Task RequireAsync(SuiteCapability capability, string test)
     {
-        var state = StateOf(capability);
+        var state = await StateOfAsync(capability);
 
         switch (Decide(state, IsReleaseRun))
         {
@@ -1001,23 +1021,23 @@ internal static class SuiteEnvironment
                 return;
 
             case CapabilityVerdict.Fail:
-                RefuseAPartialInstallation(capability, state);
+                await RefuseAPartialInstallationAsync(capability, state);
                 Record(capability, test);
-                throw new InvalidOperationException(RefusalFor(capability));
+                throw new InvalidOperationException(await RefusalForAsync(capability));
 
             default:
                 Record(capability, test);
-                Skip.Test(RefusalFor(capability));
+                Skip.Test(await RefusalForAsync(capability));
                 return;
         }
     }
 
-    private static void RefuseAPartialInstallation(SuiteCapability capability, CapabilityState state)
+    private static async Task RefuseAPartialInstallationAsync(SuiteCapability capability, CapabilityState state)
     {
         if (state is CapabilityState.Partial)
         {
             throw new InvalidOperationException(
-                $"{Title(capability)}: {WitnessFor(capability)}. The directory exists and what must be inside it does not, which is a broken build rather than a clean clone -- so this is a failure in every run, release or not. {RemedyFor(capability)}");
+                $"{Title(capability)}: {await WitnessForAsync(capability)}. The directory exists and what must be inside it does not, which is a broken build rather than a clean clone -- so this is a failure in every run, release or not. {RemedyFor(capability)}");
         }
     }
 
@@ -1043,9 +1063,9 @@ internal static class SuiteEnvironment
     // The texts polish, 2026-10-10, page #242 (previously opened in lower case, with the
     // shipping release's path standing alone as a sentence, and "so it is a failure rather
     // than a skip").
-    private static string RefusalFor(SuiteCapability capability) =>
+    private static async Task<string> RefusalForAsync(SuiteCapability capability) =>
         $"{Capitalised(Title(capability))} is not available to this run, so this test would prove nothing that its name claims. "
-        + $"{(capability is SuiteCapability.ShippingRelease ? "It looks for " : string.Empty)}{WitnessFor(capability)}. {RemedyFor(capability)}"
+        + $"{(capability is SuiteCapability.ShippingRelease ? "It looks for " : string.Empty)}{await WitnessForAsync(capability)}. {RemedyFor(capability)}"
         + (IsReleaseRun
             ? $" This is a release run ({ReleaseRunVariable} is set), so it fails instead of skipping."
             : $" Set {ReleaseRunVariable}=1 to make this a failure instead of a skip.");
@@ -1066,23 +1086,23 @@ internal static class SuiteEnvironment
         _ => "packed release",
     };
 
-    private static string WitnessFor(SuiteCapability capability) => capability switch
+    private static async Task<string> WitnessForAsync(SuiteCapability capability) => capability switch
     {
         SuiteCapability.PublishedSlice => PublishedSlice.Executable,
         SuiteCapability.RepositoryPayload => Path.Combine(RepositoryPayload.Layout.Root, "payload.json"),
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
-        SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{RegistrationClient.ClaudeCode.Executable}, not found: {ClientsRegisterAiFinds.Value.Why}",
-        SuiteCapability.CodexCommandLine => CodexExecutable() ?? $"{RegistrationClient.Codex.Executable}, not found: {ClientsRegisterAiFinds.Value.Why}",
+        SuiteCapability.ClientCommandLine => await ClientExecutableAsync() ?? $"{RegistrationClient.ClaudeCode.Executable}, not found: {(await ClientsRegisterAiFinds.Value).Why}",
+        SuiteCapability.CodexCommandLine => await CodexExecutableAsync() ?? $"{RegistrationClient.Codex.Executable}, not found: {(await ClientsRegisterAiFinds.Value).Why}",
         SuiteCapability.ReleaseInstaller => string.Join(
             "; ",
             new[]
             {
-                ReleaseLayout.Witness(),
-                ReleaseLayout.HasCurrentInstaller() ? ReleaseLayout.TestPackMismatch : null,
+                await ReleaseLayout.WitnessAsync(),
+                await ReleaseLayout.HasCurrentInstallerAsync() ? await ReleaseLayout.TestPackMismatchAsync() : null,
                 InstallerLock.IsHeldForThisRun ? null : InstallerLock.Detail,
             }.Where(clause => clause is { Length: > 0 })),
-        SuiteCapability.Git => GitOracle.IsAvailable
+        SuiteCapability.Git => await GitOracle.IsAvailableAsync()
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
         SuiteCapability.ShippingRelease => ShippingRelease() ?? Path.Combine(ReleaseLayout.Directory, $"{ReleaseLayout.PackId}-<version>-full.nupkg, at the top of the directory and not under test-pack"),

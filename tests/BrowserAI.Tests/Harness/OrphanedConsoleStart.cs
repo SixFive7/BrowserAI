@@ -87,7 +87,7 @@ namespace BrowserAI.Tests.Harness;
 /// about.
 /// </para>
 /// </remarks>
-internal sealed partial class OrphanedConsoleStart : IDisposable
+internal sealed partial class OrphanedConsoleStart : IAsyncDisposable
 {
     private readonly string _executable;
     private readonly string _appRoot;
@@ -153,12 +153,12 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// <see cref="LauncherCorpse.Freed"/>, which is the installer's.
     /// </param>
     /// <returns>The started rig, whether or not the product wrote anything.</returns>
-    public static OrphanedConsoleStart Begin(
+    public static Task<OrphanedConsoleStart> BeginAsync(
         string appRoot,
         bool startedByTheInstaller,
         TimeSpan patience,
         LauncherCorpse corpse = LauncherCorpse.Freed) =>
-        Begin(PublishedSlice.Executable, appRoot, startedByTheInstaller, patience, corpse);
+        BeginAsync(PublishedSlice.Executable, appRoot, startedByTheInstaller, patience, corpse);
 
     /// <summary>
     /// Starts a server binary of the caller's choosing the same way: a launcher
@@ -175,7 +175,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// <param name="patience">A hang detector for the start, never a budget.</param>
     /// <param name="corpse">Which dead-launcher shape to produce.</param>
     /// <returns>The started rig, whether or not the product wrote anything.</returns>
-    public static OrphanedConsoleStart Begin(
+    public static async Task<OrphanedConsoleStart> BeginAsync(
         string executable,
         string appRoot,
         bool startedByTheInstaller,
@@ -187,8 +187,8 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
         var rig = new OrphanedConsoleStart(executable, appRoot);
 
-        rig.Launch(startedByTheInstaller, corpse);
-        rig.WaitUntilItSaysWhoItIs(patience);
+        await rig.LaunchAsync(startedByTheInstaller, corpse);
+        await rig.WaitUntilItSaysWhoItIsAsync(patience);
 
         return rig;
     }
@@ -222,7 +222,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// <param name="patience">A hang detector for the start, never a budget.</param>
     /// <param name="arguments">The product's arguments: <c>--mcp</c>, and whatever else the arm needs.</param>
     /// <returns>The started rig, whether or not the product wrote anything.</returns>
-    public static OrphanedConsoleStart BeginHandingOnPipes(string appRoot, TimeSpan patience, IReadOnlyList<string> arguments)
+    public static async Task<OrphanedConsoleStart> BeginHandingOnPipesAsync(string appRoot, TimeSpan patience, IReadOnlyList<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(appRoot);
         ArgumentNullException.ThrowIfNull(arguments);
@@ -231,12 +231,12 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
         try
         {
-            rig.LaunchHandingOnPipes(arguments, patience);
-            rig.WaitUntilItSaysWhoItIs(patience);
+            await rig.LaunchHandingOnPipesAsync(arguments, patience);
+            await rig.WaitUntilItSaysWhoItIsAsync(patience);
         }
         catch
         {
-            rig.Dispose();
+            await rig.DisposeAsync();
             throw;
         }
 
@@ -245,24 +245,24 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
     /// <summary>
     /// The write end of the product's standard input, for a rig started by
-    /// <see cref="BeginHandingOnPipes"/>: closing it is the product's end of input.
+    /// <see cref="BeginHandingOnPipesAsync"/>: closing it is the product's end of input.
     /// </summary>
     /// <exception cref="InvalidOperationException">The rig was started with a console.</exception>
     public Stream StandardInput =>
         _handingOn?.StandardInput ?? throw new InvalidOperationException("This rig gave the product a console, so there is no pipe to write to.");
 
-    /// <summary>The read end of the product's standard output, for a rig started by <see cref="BeginHandingOnPipes"/>.</summary>
+    /// <summary>The read end of the product's standard output, for a rig started by <see cref="BeginHandingOnPipesAsync"/>.</summary>
     /// <exception cref="InvalidOperationException">The rig was started with a console.</exception>
     public Stream StandardOutput =>
         _handingOn?.StandardOutput ?? throw new InvalidOperationException("This rig gave the product a console, so there is no pipe to read.");
 
-    private void LaunchHandingOnPipes(IReadOnlyList<string> arguments, TimeSpan patience)
+    private async Task LaunchHandingOnPipesAsync(IReadOnlyList<string> arguments, TimeSpan patience)
     {
         var environment = PublishedSlice.InheritedEnvironment();
 
         _ = environment.Remove(VelopackStartup.FirstRunVariable);
 
-        _launcherReport = ScratchDirectory.Create("orphan-launcher");
+        _launcherReport = await ScratchDirectory.CreateAsync("orphan-launcher");
         _job = BrowserAI.Interop.JobObject.CreateKillOnClose();
 
         var report = Path.Combine(_launcherReport.Path, "launched.txt");
@@ -280,13 +280,13 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         // Drained, and never waited for: it ends when the pipes are closed.
         _ = DrainAsync(_handingOn.StandardError);
 
-        if (!_handingOn.WaitForExitAsync(patience).GetAwaiter().GetResult())
+        if (!await _handingOn.WaitForExitAsync(patience))
         {
             throw new InvalidOperationException($"The launcher probe did not exit within {patience}.");
         }
 
         var exitCode = _handingOn.TryReadExitCode();
-        var said = File.Exists(report) ? File.ReadAllText(report).Trim() : "<no report>";
+        var said = File.Exists(report) ? (await File.ReadAllTextAsync(report)).Trim() : "<no report>";
         var parts = said.Split(' ');
 
         if (exitCode is not 0
@@ -324,9 +324,9 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// about <i>this</i> process and not about whatever the directory holds.
     /// </remarks>
     /// <returns>Its records, joined, or an empty string when it wrote none.</returns>
-    public string Records() =>
+    public async Task<string> RecordsAsync() =>
         Started
-            ? ProcessLogRecords.In(Path.Combine(_appRoot, "logs"), ProcessId, CreatedFileTime)
+            ? await ProcessLogRecords.InAsync(Path.Combine(_appRoot, "logs"), ProcessId, CreatedFileTime)
             : string.Empty;
 
     /// <summary>Waits for the product to exit on its own.</summary>
@@ -338,14 +338,16 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// A method of that name on another type reads identically to it, so the
     /// scan reported this one -- correctly, in the sense that it could not
     /// know. Renaming keeps the scan sharp instead of teaching it an exception.
+    /// <i>That scan was deleted 2026-10-11, when every <c>WaitForExit</c> overload was
+    /// banned; the name stays, and the banned symbol reads the type, not the name.</i>
     /// </remarks>
     /// <param name="patience">
     /// A hang detector, never a budget: the thing being caught is a process that
     /// is never going to exit at all.
     /// </param>
     /// <returns><see langword="true"/> when it went.</returns>
-    public bool WaitUntilItExits(TimeSpan patience) =>
-        !Started || ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, patience);
+    public async Task<bool> WaitUntilItExitsAsync(TimeSpan patience) =>
+        !Started || await ProcessIdentity.WaitUntilGoneAsync(ProcessId, CreatedFileTime, patience);
 
     /// <summary>Whether the product is still running.</summary>
     /// <returns><see langword="true"/> when that exact process is alive.</returns>
@@ -358,21 +360,21 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// <param name="sentence">The text to wait for.</param>
     /// <param name="patience">A hang detector, never a budget.</param>
     /// <returns>Whether it appeared.</returns>
-    public bool WaitUntilItSays(string sentence, TimeSpan patience)
+    public async Task<bool> WaitUntilItSaysAsync(string sentence, TimeSpan patience)
     {
         var deadline = Stopwatch.StartNew();
 
         while (deadline.Elapsed < patience)
         {
-            if (Records().Contains(sentence, StringComparison.Ordinal))
+            if ((await RecordsAsync()).Contains(sentence, StringComparison.Ordinal))
             {
                 return true;
             }
 
-            Thread.Sleep(PollInterval);
+            await Task.Delay(PollInterval);
         }
 
-        return Records().Contains(sentence, StringComparison.Ordinal);
+        return (await RecordsAsync()).Contains(sentence, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -399,7 +401,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// <param name="patience">A hang detector, never a budget.</param>
     /// <param name="sentences">The alternatives, in no particular order.</param>
     /// <returns>Whichever appeared, or <see langword="null"/>.</returns>
-    public string? WaitUntilItSaysOneOf(TimeSpan patience, params string[] sentences)
+    public async Task<string?> WaitUntilItSaysOneOfAsync(TimeSpan patience, params string[] sentences)
     {
         ArgumentNullException.ThrowIfNull(sentences);
 
@@ -407,7 +409,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
         while (true)
         {
-            var said = Records();
+            var said = await RecordsAsync();
             var seen = sentences.FirstOrDefault(sentence => said.Contains(sentence, StringComparison.Ordinal));
 
             if (seen is not null || deadline.Elapsed >= patience)
@@ -415,7 +417,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
                 return seen;
             }
 
-            Thread.Sleep(PollInterval);
+            await Task.Delay(PollInterval);
         }
     }
 
@@ -426,13 +428,15 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// record, which also names the image, so the thing terminated is provably
     /// the process this rig started. A build in which the product does not exit
     /// leaves an orphan holding a node child, and this is what stops it
-    /// outliving the run; its job object takes the child with it.
+    /// outliving the run; its job object takes the child with it. <b>Awaited since
+    /// 2026-10-11</b>, because the wait for the product to be gone is awaited.
     /// </remarks>
-    public void Dispose()
+    /// <returns>The disposal.</returns>
+    public async ValueTask DisposeAsync()
     {
         try
         {
-            TerminateTheProduct();
+            await TerminateTheProductAsync();
         }
         finally
         {
@@ -457,7 +461,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     }
 
     /// <summary>Terminates the product, if it is still there.</summary>
-    private void TerminateTheProduct()
+    private async Task TerminateTheProductAsync()
     {
         if (!IsAlive())
         {
@@ -493,7 +497,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
             // that then stays. That is the case which would leave an orphan
             // holding a node child past the run, and it throws with the original
             // failure attached.
-            if (ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, TestDefaults.ProcessHang))
+            if (await ProcessIdentity.WaitUntilGoneAsync(ProcessId, CreatedFileTime, TestDefaults.ProcessHang))
             {
                 return;
             }
@@ -505,7 +509,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
                 failure);
         }
 
-        _ = ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, TestDefaults.ProcessHang);
+        _ = await ProcessIdentity.WaitUntilGoneAsync(ProcessId, CreatedFileTime, TestDefaults.ProcessHang);
     }
 
     /// <summary>How often the log is re-read while waiting for a record.</summary>
@@ -516,7 +520,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// </remarks>
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(50);
 
-    private void Launch(bool startedByTheInstaller, LauncherCorpse corpse)
+    private async Task LaunchAsync(bool startedByTheInstaller, LauncherCorpse corpse)
     {
         // The root through --data-root since step 5 (previously the suite's
         // BROWSERAI_ROOT), added beside --mcp where the launcher is told the arguments.
@@ -535,7 +539,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         // (previously `cmd /c start /b`, one level for Openable and two for
         // Freed). The shapes differ in one thing only: whether this rig goes on
         // holding the launcher's handle once it has exited.
-        LaunchSuspendedThenResume(environment, keepTheLauncher: corpse is LauncherCorpse.Openable);
+        await LaunchSuspendedThenResumeAsync(environment, keepTheLauncher: corpse is LauncherCorpse.Openable);
     }
 
     /// <summary>
@@ -568,9 +572,9 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// openable corpse when it does, the freed pid when it lets it go before the
     /// product is resumed.
     /// </param>
-    private void LaunchSuspendedThenResume(Dictionary<string, string> environment, bool keepTheLauncher)
+    private async Task LaunchSuspendedThenResumeAsync(Dictionary<string, string> environment, bool keepTheLauncher)
     {
-        _launcherReport = ScratchDirectory.Create("orphan-launcher");
+        _launcherReport = await ScratchDirectory.CreateAsync("orphan-launcher");
 
         var report = Path.Combine(_launcherReport.Path, "launched.txt");
         var start = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"))
@@ -609,7 +613,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
         var launcher = Process.Start(start)
             ?? throw new InvalidOperationException("The launcher probe did not start.");
 
-        launcher.WaitForExit();
+        await launcher.WaitForExitAsync();
 
         var exitCode = launcher.ExitCode;
 
@@ -624,7 +628,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
             launcher.Dispose();
         }
 
-        var said = File.Exists(report) ? File.ReadAllText(report).Trim() : "<no report>";
+        var said = File.Exists(report) ? (await File.ReadAllTextAsync(report)).Trim() : "<no report>";
         var parts = said.Split(' ');
 
         if (exitCode is not 0
@@ -701,13 +705,13 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint hObject);
 
-    private void WaitUntilItSaysWhoItIs(TimeSpan patience)
+    private async Task WaitUntilItSaysWhoItIsAsync(TimeSpan patience)
     {
         var deadline = Stopwatch.StartNew();
 
-        while (deadline.Elapsed < patience && !ReadIdentity())
+        while (deadline.Elapsed < patience && !await ReadIdentityAsync())
         {
-            Thread.Sleep(PollInterval);
+            await Task.Delay(PollInterval);
         }
     }
 
@@ -723,7 +727,7 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
     /// product saying who it is and not by this rig guessing.
     /// </remarks>
     /// <returns>Whether the identity was read.</returns>
-    private bool ReadIdentity()
+    private async Task<bool> ReadIdentityAsync()
     {
         var logs = Path.Combine(_appRoot, "logs");
 
@@ -738,10 +742,10 @@ internal sealed partial class OrphanedConsoleStart : IDisposable
 
             try
             {
-                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
                 using var reader = new StreamReader(stream);
 
-                text = reader.ReadToEnd();
+                text = await reader.ReadToEndAsync();
             }
             catch (IOException)
             {

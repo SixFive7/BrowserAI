@@ -301,7 +301,7 @@ internal sealed class ModelSurfaceTests
     public async Task EverySessionGetsEveryCapabilityAndTheNewlyGrantedTenAreInTheSurface()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var missing = new List<string>();
@@ -336,7 +336,7 @@ internal sealed class ModelSurfaceTests
         //    half that decides whether the call works. A tool in `tools/list`
         //    whose capability the session's own config never names reaches
         //    upstream and is answered with "unknown tool".
-        var reachable = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
+        var reachable = await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities);
 
         missing.AddRange(TheNewlyGrantedTen
             .Where(tool => !reachable.Contains(tool, StringComparer.Ordinal))
@@ -346,9 +346,9 @@ internal sealed class ModelSurfaceTests
         //    tool is either unconditional or named in the generated config.
         //    Nothing upstream offers is left out, which is what "the full union"
         //    means and what a per-mode subset used to break.
-        foreach (var capability in UpstreamSurface.CapabilitiesCarryingTools())
+        foreach (var capability in await UpstreamSurface.CapabilitiesCarryingToolsAsync())
         {
-            if (!UpstreamSurface.UnconditionalCapabilities().Contains(capability, StringComparer.Ordinal)
+            if (!(await UpstreamSurface.UnconditionalCapabilitiesAsync()).Contains(capability, StringComparer.Ordinal)
                 && !BrowserConfiguration.GrantedCapabilities.Contains(capability, StringComparer.Ordinal))
             {
                 missing.Add($"upstream's '{capability}' capability carries tools and no session is granted it");
@@ -364,7 +364,7 @@ internal sealed class ModelSurfaceTests
             missing.Add("browser_run_code_unsafe is listed as newly granted; it is core and always was");
         }
 
-        if (!UpstreamSurface.DefaultSurface().Contains("browser_run_code_unsafe", StringComparer.Ordinal))
+        if (!(await UpstreamSurface.DefaultSurfaceAsync()).Contains("browser_run_code_unsafe", StringComparer.Ordinal))
         {
             missing.Add("browser_run_code_unsafe is not in upstream's default surface, so the claim that it is core is stale");
         }
@@ -382,7 +382,7 @@ internal sealed class ModelSurfaceTests
             ("browser_network_state_set", (string[])["offline", "'why'"]),
         })
         {
-            var upstream = UpstreamSurface.SnapshotDescriptions().Single(entry => entry.Name == tool).Description;
+            var upstream = (await UpstreamSurface.SnapshotDescriptionsAsync()).Single(entry => entry.Name == tool).Description;
             var description = (string?)advertised[tool]?["description"] ?? string.Empty;
 
             if (!description.StartsWith(upstream + SessionToolSurface.NoteMarker, StringComparison.Ordinal))
@@ -406,8 +406,8 @@ internal sealed class ModelSurfaceTests
         //    for a headed session and one for a headless session carry the same
         //    capability list, which is what "no session-scoped capability
         //    decision survives" means at the one place it used to be taken.
-        var headless = CapabilitiesOf(headed: false);
-        var headed = CapabilitiesOf(headed: true);
+        var headless = await CapabilitiesOfAsync(headed: false);
+        var headed = await CapabilitiesOfAsync(headed: true);
 
         if (headless != headed)
         {
@@ -474,9 +474,9 @@ internal sealed class ModelSurfaceTests
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
     /// <param name="headed">Whether the session opens a window.</param>
     /// <returns>The <c>capabilities</c> opinion, serialised.</returns>
-    private static string CapabilitiesOf(bool headed) =>
+    private static async Task<string> CapabilitiesOfAsync(bool headed) =>
         BrowserConfiguration.ForSession(
-            SessionPath.For(Path.Combine(ScratchRoot.Path, $"capabilities-{(headed ? "headed" : "headless")}")),
+            SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"capabilities-{(headed ? "headed" : "headless")}")),
             headed,
             SessionManager.DefaultBrowser,
             transcript: false,
@@ -604,7 +604,7 @@ internal sealed class ModelSurfaceTests
     public async Task TheDirectoryAndPurposeAdviceIsOnTheArgumentsItIsAbout()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
 
@@ -768,10 +768,10 @@ internal sealed class ModelSurfaceTests
         var missing = new List<string>();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
-        var upstreamScreenshot = UpstreamSurface.SnapshotDescriptions()
+        var upstreamScreenshot = (await UpstreamSurface.SnapshotDescriptionsAsync())
             .Single(tool => tool.Name == "browser_take_screenshot").Description;
         var description = (string?)advertised["browser_take_screenshot"]?["description"] ?? string.Empty;
 
@@ -849,7 +849,7 @@ internal sealed class ModelSurfaceTests
         // browser_mouse_*_xy tool." in the instructions.
         var missing = new List<string>();
 
-        var tools = JsonNode.Parse(UpstreamSurface.SnapshotToolsListResult())!["tools"]!.AsArray().OfType<JsonObject>().ToList();
+        var tools = JsonNode.Parse(await UpstreamSurface.SnapshotToolsListResultAsync())!["tools"]!.AsArray().OfType<JsonObject>().ToList();
 
         var snapshot = tools.Single(tool => (string?)tool["name"] == "browser_snapshot");
 
@@ -870,7 +870,7 @@ internal sealed class ModelSurfaceTests
         }
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
 
@@ -950,7 +950,7 @@ internal sealed class ModelSurfaceTests
         var missing = new List<string>();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var descriptions = new List<string>();
@@ -1002,7 +1002,7 @@ internal sealed class ModelSurfaceTests
             missing.Add("the server instructions still carry a clause about the transcript, which Q371 c dropped");
         }
 
-        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-transcript"));
+        var session = SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), "generator-transcript"));
 
         foreach (var transcript in new[] { true, false })
         {
@@ -1017,7 +1017,7 @@ internal sealed class ModelSurfaceTests
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
         // ---- Upstream's half, out of the code that actually runs.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var bundle = await File.ReadAllTextAsync(Path.Combine(
             RepositoryPayload.Layout.Root,
@@ -1065,7 +1065,7 @@ internal sealed class ModelSurfaceTests
     public async Task EveryToolDescriptionFitsTheSameBudget()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var oversized = new List<string>();
@@ -1103,10 +1103,10 @@ internal sealed class ModelSurfaceTests
         // `browser_annotate` and `browser_webmcp_call`, both on liveness -- and
         // the subtrahend is read off the file and not typed, so the arm
         // states a relationship and the file states the number.
-        var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
+        var advertisedUpstream = (await UpstreamSurface.SnapshotDescriptionsAsync())
             .Count(entry => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(entry.Name));
 
-        await Assert.That(advertisedUpstream).IsEqualTo(UpstreamSurface.SnapshotToolCount() - RepositoryVerdicts.Count);
+        await Assert.That(advertisedUpstream).IsEqualTo(await UpstreamSurface.SnapshotToolCountAsync() - RepositoryVerdicts.Count);
         await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + advertisedUpstream);
     }
 
@@ -1114,7 +1114,7 @@ internal sealed class ModelSurfaceTests
     public async Task TheCreationToolsDescriptionCarriesTheProfileWarningAndTheRetentionPolicy()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var description = (string?)Advertised(rig.ToolsList)[SessionToolSurface.Init]?["description"] ?? string.Empty;
         var missing = new List<string>();
@@ -1155,7 +1155,7 @@ internal sealed class ModelSurfaceTests
     public async Task EveryLoadBearingUpstreamPhraseSurvivesOurRewrite()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var lost = new List<string>();
@@ -1217,7 +1217,7 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -1288,12 +1288,12 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var missing = MissingFromTheWire(run, RequiredUploadRootPhrases);
         var descriptions = DescriptionsOnTheWire(run);
-        var upstream = UpstreamSurface.SnapshotDescriptions()
+        var upstream = (await UpstreamSurface.SnapshotDescriptionsAsync())
             .Single(tool => tool.Name == "browser_file_upload").Description;
 
         if (descriptions.TryGetValue("browser_file_upload", out var advertised) && advertised != upstream)
@@ -1329,7 +1329,7 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -1381,7 +1381,7 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task MovingASessionDirectoryByHandIsOnTheResumeDescription()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -1524,7 +1524,7 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task EveryModelFacingStringFitsTheClientsSilentTruncationBudget()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var measured = new List<ModelFacingString>();
@@ -1564,7 +1564,7 @@ internal sealed class ModelSurfaceTests
             entryTotals.Add((name, entry.Length, Encoding.UTF8.GetByteCount(entry)));
         }
 
-        Report(measured, entryTotals);
+        await ReportAsync(measured, entryTotals);
 
         // Both counts measured, gated on CHARACTERS. Corrected 2026-08-18
         // (previously "Both counts, failing on whichever is larger. It is not
@@ -1666,7 +1666,7 @@ internal sealed class ModelSurfaceTests
     /// </remarks>
     /// <param name="measured">Every measured string.</param>
     /// <param name="entryTotals">Each tool's whole serialized <c>tools/list</c> entry.</param>
-    private static void Report(
+    private static async Task ReportAsync(
         IReadOnlyList<ModelFacingString> measured,
         IReadOnlyList<(string Tool, int Characters, int Bytes)> entryTotals)
     {
@@ -1699,14 +1699,14 @@ internal sealed class ModelSurfaceTests
             _ = report.AppendLine(CultureInfo.InvariantCulture, $"  {bytes,6} B  {characters,6} c  {(bytes > ServerInstructions.MaximumCharacters ? "2KB+" : "    ")}  {tool}");
         }
 
-        TestContext.Current?.OutputWriter.WriteLine(report.ToString());
+        await (TestContext.Current?.OutputWriter.WriteLineAsync(report.ToString()) ?? Task.CompletedTask);
 
         try
         {
             var path = Path.Combine(RepositoryLayout.Root.FullName, ".work", "description-budget.txt");
 
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, report.ToString());
+            await File.WriteAllTextAsync(path, report.ToString());
         }
         catch (IOException)
         {
@@ -1723,10 +1723,10 @@ internal sealed class ModelSurfaceTests
     public async Task EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
-        var upstream = UpstreamSurface.SnapshotDescriptions();
+        var upstream = await UpstreamSurface.SnapshotDescriptionsAsync();
         var offenders = new List<string>();
 
         foreach (var (name, original) in upstream)
@@ -1981,7 +1981,7 @@ internal sealed class ModelSurfaceTests
         // same reason the description assertions are: the rewrite is what a
         // model receives, and it is the rewrite that could lose a property.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var wrong = new List<string>();
@@ -2050,7 +2050,7 @@ internal sealed class ModelSurfaceTests
     public async Task EverySchemaInTheSurfaceSaysItTakesNothingItDoesNotList()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var open = advertised
@@ -2124,7 +2124,7 @@ internal sealed class ModelSurfaceTests
         await Assert.That(asksForConfirmation(confirmations, "directory")).IsFalse();
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         var advertised = Advertised(rig.ToolsList);
         var found = new List<string>();

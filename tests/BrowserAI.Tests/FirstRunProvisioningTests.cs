@@ -42,7 +42,7 @@ namespace BrowserAI.Tests;
 /// <i>"only download once per hour. I don't want to hammer the servers"</i> --
 /// because a suite that was run once a day is about to be run dozens of times.
 /// <see cref="FirstRunCache"/> keeps the tree the last CDN run produced;
-/// <see cref="FirstRunCache.Plan"/> decides which mode this run is in, and
+/// <see cref="FirstRunCache.PlanAsync"/> decides which mode this run is in, and
 /// <see cref="FirstRunCache.Record"/> puts the answer in the coverage block that
 /// every run prints. <b>A release run always downloads</b>, so no release is cut
 /// on cached evidence.
@@ -112,24 +112,24 @@ internal sealed class FirstRunProvisioningTests
     [Test]
     public async Task TheWaitForTheMarkerEndsWhenTheLogReportsAFailedInstall()
     {
-        using var root = ScratchDirectory.Create("first-run-failed-wait");
+        using var root = await ScratchDirectory.CreateAsync("first-run-failed-wait");
 
         var logs = Directory.CreateDirectory(Path.Combine(root.Path, "logs"));
         var never = Path.Combine(root.Path, "browsers", "chromium-0");
 
-        await Assert.That(ProvisioningFailureIn(root.Path)).IsNull();
+        await Assert.That(await ProvisioningFailureInAsync(root.Path)).IsNull();
 
         // The record's shape as the gate's own log carried it, category and event id included.
         await File.WriteAllTextAsync(
             Path.Combine(logs.FullName, "browserai-20261008-000.log"),
             "2026-10-08T15:48:40.2443340Z  made=2026-10-08T15:48:40.2442817Z  ERROR  pid=1@2  BrowserAI.Runtime.BrowserProvisioner[64]  The installer for chromium exited 1 without completing.\n");
 
-        var failure = ProvisioningFailureIn(root.Path);
+        var failure = await ProvisioningFailureInAsync(root.Path);
 
         await Assert.That(failure).IsNotNull();
         await Assert.That(failure!).Contains("BrowserProvisioner[64]");
 
-        var (landed, reported) = await WaitForMarkerAsync(never, TestDefaults.InProcessHang, () => ProvisioningFailureIn(root.Path));
+        var (landed, reported) = await WaitForMarkerAsync(never, TestDefaults.InProcessHang, () => ProvisioningFailureInAsync(root.Path));
 
         await Assert.That(landed).IsFalse();
         await Assert.That(reported).IsEqualTo(failure);
@@ -138,15 +138,15 @@ internal sealed class FirstRunProvisioningTests
     [Test]
     public async Task AnEmptyBrowsersRootIsProvisionedAndTheSameChildThenNavigates()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
         // Decided before anything is started, because the decision changes what
         // has to be held before BrowserAI's first init.
-        var plan = FirstRunCache.Plan();
+        var plan = await FirstRunCache.PlanAsync();
 
-        using var scratch = ScratchDirectory.Create("first-run");
+        using var scratch = await ScratchDirectory.CreateAsync("first-run");
 
         // ⚠️ INSIDE THE USER'S PROFILE, and it is the only directory in this
         // test that has to be. Since 2026-08-20 a published BrowserAI refuses at
@@ -160,7 +160,7 @@ internal sealed class FirstRunProvisioningTests
         // A BrowserAI whose whole app root is new, so its browsers directory is
         // empty in the only way that counts: nothing has ever been installed
         // there and no marker exists to short-circuit the check.
-        using var appRootScratch = ScratchDirectory.CreateUnderProfile("first-run");
+        using var appRootScratch = await ScratchDirectory.CreateUnderProfileAsync("first-run");
 
         var appRoot = Path.Combine(appRootScratch.Path, "app-root");
         var browsers = Path.Combine(appRoot, "browsers");
@@ -179,8 +179,8 @@ internal sealed class FirstRunProvisioningTests
         // Nothing about the assertions changes. What changes is who fills the
         // directory -- upstream's installer, or a copy -- which is exactly the
         // distinction the class remarks tabulate.
-        using var elsewhere = plan.Source is FirstRunSource.Cache
-            ? ProvisioningClaim.Take(browsers, SessionManager.DefaultBrowser)
+        await using var elsewhere = plan.Source is FirstRunSource.Cache
+            ? await ProvisioningClaim.TakeAsync(browsers, SessionManager.DefaultBrowser)
             : null;
 
         if (elsewhere is not null)
@@ -196,7 +196,7 @@ internal sealed class FirstRunProvisioningTests
         // it on to the background it starts beside the relay.
         var environment = PublishedSlice.InheritedEnvironment();
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             [.. PublishedSlice.Mcp, BrowserAiPaths.DataRootArgument, appRoot],
             scratch.Path,
@@ -278,7 +278,7 @@ internal sealed class FirstRunProvisioningTests
         // upstream's installer is already several seconds into the download.
         if (plan.Entry is { } cached)
         {
-            FirstRunCache.SeedInto(browsers, cached);
+            await FirstRunCache.SeedIntoAsync(browsers, cached);
         }
 
         // Now wait for the real thing: the marker upstream writes last, into the
@@ -296,7 +296,7 @@ internal sealed class FirstRunProvisioningTests
         // app root afterwards, so both were deleted under the install; nothing
         // points at the load. BrowserAI writes the installer's failure into its log
         // as it happens, so the wait reads that too and ends with what the log said.
-        var (landed, failure) = await WaitForMarkerAsync(installed, Patience, () => ProvisioningFailureIn(appRoot));
+        var (landed, failure) = await WaitForMarkerAsync(installed, Patience, () => ProvisioningFailureInAsync(appRoot));
 
         await Assert.That(landed).IsTrue().Because(failure ?? "the marker did not land within the patience, and BrowserAI's log reported no failure");
 
@@ -363,7 +363,7 @@ internal sealed class FirstRunProvisioningTests
         // cache refreshed by use would never expire and the cold path would
         // never run again.
         var note = plan.Source is FirstRunSource.Cdn
-            ? FirstRunCache.Publish(browsers, startedUtc, FirstRunCache.Root)
+            ? await FirstRunCache.PublishAsync(browsers, startedUtc, FirstRunCache.Root)
             : "The cached tree is untouched, so its hour still runs from the download that produced it.";
 
         FirstRunCache.Record(plan, clock.Elapsed, note);
@@ -414,7 +414,7 @@ internal sealed class FirstRunProvisioningTests
     /// <param name="patience">How long to wait at most: a hang detector.</param>
     /// <param name="failed">What BrowserAI reported as a failed install, or <see langword="null"/> while it reported none.</param>
     /// <returns>Whether the marker landed, and the failure that ended the wait when one did.</returns>
-    internal static async Task<(bool Landed, string? Failure)> WaitForMarkerAsync(string directory, TimeSpan patience, Func<string?> failed)
+    internal static async Task<(bool Landed, string? Failure)> WaitForMarkerAsync(string directory, TimeSpan patience, Func<Task<string?>> failed)
     {
         var marker = Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker);
         var waited = Stopwatch.StartNew();
@@ -426,7 +426,7 @@ internal sealed class FirstRunProvisioningTests
                 return (true, null);
             }
 
-            if (failed() is { } failure)
+            if (await failed() is { } failure)
             {
                 return (false, failure);
             }
@@ -448,7 +448,7 @@ internal sealed class FirstRunProvisioningTests
     /// </remarks>
     /// <param name="appRoot">The app root whose <c>logs</c> folder is read.</param>
     /// <returns>The record, or <see langword="null"/> when there is none yet.</returns>
-    internal static string? ProvisioningFailureIn(string appRoot)
+    internal static async Task<string?> ProvisioningFailureInAsync(string appRoot)
     {
         var logs = Path.Combine(appRoot, "logs");
 
@@ -463,9 +463,9 @@ internal sealed class FirstRunProvisioningTests
 
             try
             {
-                using var stream = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                await using var stream = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
                 using var reader = new StreamReader(stream);
-                text = reader.ReadToEnd();
+                text = await reader.ReadToEndAsync();
             }
             catch (IOException)
             {

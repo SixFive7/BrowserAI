@@ -76,7 +76,7 @@ internal sealed class LauncherEvidenceTests
     [Test]
     public async Task AFileALiveWriterIsHoldingComesBackReadableAndAtItsTrueLength()
     {
-        using var scratch = ScratchDirectory.Create("launcher-evidence-held");
+        using var scratch = await ScratchDirectory.CreateAsync("launcher-evidence-held");
 
         // Upstream's own sentence from the 2026-08-29 stall, so the arm carries
         // the thing that was lost and not a placeholder.
@@ -85,11 +85,11 @@ internal sealed class LauncherEvidenceTests
         // Declared after the scratch directory, so it is disposed before the
         // tree it lives in is removed. It stays open across the Evidence call
         // below -- that is the whole scenario.
-        using var writer = new FileStream(
+        await using var writer = new FileStream(
             Path.Combine(scratch.Path, "cli-stderr.log"),
             FileMode.Append,
             FileAccess.Write,
-            FileShare.ReadWrite | FileShare.Delete);
+            FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
 
         await writer.WriteAsync(written);
 
@@ -98,7 +98,7 @@ internal sealed class LauncherEvidenceTests
         // read.
         await writer.FlushAsync();
 
-        var evidence = LauncherWait.Evidence(scratch.Path);
+        var evidence = await LauncherWait.EvidenceAsync(scratch.Path);
 
         await Assert.That(evidence).Contains("TimeoutError: async initializeServer").Because(evidence);
         await Assert.That(evidence).DoesNotContain("used by another process").Because(evidence);
@@ -128,7 +128,7 @@ internal sealed class LauncherEvidenceTests
     /// <b>Watched red 2026-08-30 against the old body</b>, which printed a
     /// cached byte count beside its own <c>(unreadable: ...)</c> for a file it had
     /// just been refused. The control that keeps this from passing vacuously is
-    /// the arm above: if <see cref="LauncherWait.Evidence"/> ever stopped
+    /// the arm above: if <see cref="LauncherWait.EvidenceAsync"/> ever stopped
     /// printing lengths altogether, that one goes red.
     /// </para>
     /// </remarks>
@@ -136,7 +136,7 @@ internal sealed class LauncherEvidenceTests
     [Test]
     public async Task AFileNothingCouldOpenCarriesNoByteCountBecauseNothingMeasuredOne()
     {
-        using var scratch = ScratchDirectory.Create("launcher-evidence-exclusive");
+        using var scratch = await ScratchDirectory.CreateAsync("launcher-evidence-exclusive");
 
         var path = Path.Combine(scratch.Path, "sealed.log");
 
@@ -145,9 +145,9 @@ internal sealed class LauncherEvidenceTests
         // FileShare.None: not the driver's shape, and not a shape the fix can
         // reach -- deliberately, because what is under test here is what the
         // dump says when it genuinely cannot look.
-        using var heldByAnother = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+        await using var heldByAnother = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
-        var evidence = LauncherWait.Evidence(scratch.Path);
+        var evidence = await LauncherWait.EvidenceAsync(scratch.Path);
 
         await Assert.That(evidence).Contains("--- sealed.log ---").Because(evidence);
         await Assert.That(evidence).Contains("(unreadable: ").Because(evidence);

@@ -80,9 +80,9 @@ internal sealed class PasswordPromptTests
     [Test]
     public async Task NoWindowOpensOnASignInPostAndAControlChildProvesTheProbeCanSeeOne()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        using var scratch = ScratchDirectory.Create("password-prompt");
+        using var scratch = await ScratchDirectory.CreateAsync("password-prompt");
         using var site = LoginSite.Start();
 
         // ⚠️ DECLARED BEFORE THE CHILDREN, so it is released after them: a
@@ -173,9 +173,9 @@ internal sealed class PasswordPromptTests
     [NotInParallel("stray-sweep")]
     public async Task TheFirefoxRememberSignonsPreferenceReachesTheChild()
     {
-        SuiteEnvironment.RequireProvisionedFirefox();
+        await SuiteEnvironment.RequireProvisionedFirefoxAsync();
 
-        using var scratch = ScratchDirectory.Create("password-prompt-firefox");
+        using var scratch = await ScratchDirectory.CreateAsync("password-prompt-firefox");
 
         // Held for the child's life, for the reason SessionGuards gives.
         using var guards = new SessionGuards();
@@ -210,7 +210,7 @@ internal sealed class PasswordPromptTests
         SessionGuards guards,
         string browser = ProvisionedBrowsers.Chromium)
     {
-        var session = NewSession(scratch, label, browser, guards);
+        var session = await NewSessionAsync(scratch, label, browser, guards);
         var config = BrowserConfiguration.ForSession(session, headed: false, browser, transcript: false, RunOptions.Default);
         var configFile = Path.Combine(scratch.Path, $"playwright-mcp-{label}.json");
 
@@ -227,14 +227,14 @@ internal sealed class PasswordPromptTests
             config = config with { Json = System.Text.Encoding.UTF8.GetBytes(stripped.ToJsonString()) };
         }
 
-        var options = ChildLaunch.Create(
+        var options = await ChildLaunch.CreateAsync(
             RepositoryPayload.Layout,
             BrowserAiPaths.BrowsersDirectory,
             scratch.Path,
             configFile,
             config);
 
-        var child = RawStdioClient.Start(
+        var child = await RawStdioClient.StartAsync(
             options.Command,
             options.Arguments,
             options.WorkingDirectory,
@@ -369,12 +369,12 @@ internal sealed class PasswordPromptTests
     /// <param name="browser">The family the lock records.</param>
     /// <param name="guards">Where the guard is held until the arm ends.</param>
     /// <returns>The session path.</returns>
-    private static SessionPath NewSession(ScratchDirectory scratch, string label, string browser, SessionGuards guards)
+    private static async Task<SessionPath> NewSessionAsync(ScratchDirectory scratch, string label, string browser, SessionGuards guards)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, label));
         SessionLayout.Create(path);
 
-        return guards.Take(path, browser, $"password prompt {label}");
+        return await guards.TakeAsync(path, browser, $"password prompt {label}");
     }
 
     /// <summary>
@@ -414,9 +414,9 @@ internal sealed class PasswordPromptTests
         /// <param name="browser">The family the record names.</param>
         /// <param name="purpose">What the record says it is for.</param>
         /// <returns><paramref name="path"/>, so a caller reads as one expression.</returns>
-        public SessionPath Take(SessionPath path, string browser, string purpose)
+        public async Task<SessionPath> TakeAsync(SessionPath path, string browser, string purpose)
         {
-            var taken = SessionLock.TryAcquire(
+            var taken = await SessionLock.TryAcquireAsync(
                 path,
                 new SessionLockRequest { Browser = browser, Purpose = purpose },
                 NullLogger.Instance);

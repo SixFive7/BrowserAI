@@ -59,20 +59,20 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task InitThenResumeLeavesExactlyOneEntryAndAHandDeletionIsRepairedByTheNextResume()
     {
-        using var scratch = ScratchDirectory.Create("index-idempotent");
+        using var scratch = await ScratchDirectory.CreateAsync("index-idempotent");
         var (index, path) = NewIndex(scratch, "session");
 
         // init: the directory is taken for the first time.
-        var first = SessionLock.TryAcquire(path, Request("the first"), NullLogger.Instance);
+        var first = await SessionLock.TryAcquireAsync(path, Request("the first"), NullLogger.Instance);
         await Assert.That(first.Outcome).IsEqualTo(SessionLockOutcome.Acquired);
-        index.Record(path);
+        await index.RecordAsync(path);
         first.Acquired!.Dispose();
 
         // resume: the same directory, taken again. The entry is re-asserted
         // and not written once, which is the whole reason a lost one heals.
-        var second = SessionLock.TryAcquire(path, Request("the second"), NullLogger.Instance);
+        var second = await SessionLock.TryAcquireAsync(path, Request("the second"), NullLogger.Instance);
         await Assert.That(second.Outcome).IsEqualTo(SessionLockOutcome.Reclaimed);
-        index.Record(path);
+        await index.RecordAsync(path);
         second.Acquired!.Dispose();
 
         var entries = Directory.GetFiles(index.Root);
@@ -85,7 +85,7 @@ internal sealed class SessionIndexTests
         await Assert.That(Convert.ToHexString(await File.ReadAllBytesAsync(entries[0])))
             .IsEqualTo(Convert.ToHexString(Encoding.UTF8.GetBytes(path.FullPath)));
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed.Count).IsEqualTo(1);
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
         await Assert.That(followed[0].Record!.Purpose).IsEqualTo("the second");
@@ -93,33 +93,33 @@ internal sealed class SessionIndexTests
         // Deleted by hand, which is a thing a person may do and a thing a wrong
         // sweep may do. Either way the next use puts it back.
         File.Delete(entries[0]);
-        await Assert.That(index.Follow().Count).IsEqualTo(0);
+        await Assert.That((await index.FollowAsync()).Count).IsEqualTo(0);
 
-        var third = SessionLock.TryAcquire(path, Request("the third"), NullLogger.Instance);
-        index.Record(path);
+        var third = await SessionLock.TryAcquireAsync(path, Request("the third"), NullLogger.Instance);
+        await index.RecordAsync(path);
         third.Acquired!.Dispose();
 
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
-        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+        await Assert.That((await index.FollowAsync())[0].State).IsEqualTo(SessionIndexEntryState.Session);
     }
 
     [Test]
     public async Task AnEntryPointingAtADeletedDirectoryIsRemovedOnTheNextSweep()
     {
-        using var scratch = ScratchDirectory.Create("index-deleted");
+        using var scratch = await ScratchDirectory.CreateAsync("index-deleted");
         var (index, path) = NewIndex(scratch, "session");
 
-        var lease = SessionLock.TryAcquire(path, Request("about to be deleted"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("about to be deleted"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
-        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+        await Assert.That((await index.FollowAsync())[0].State).IsEqualTo(SessionIndexEntryState.Session);
 
         // The sweep below can only mean something if the directory really is
         // gone, so the survivors are asserted and not discarded.
         await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(path.FullPath))).IsEmpty();
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.Followed).IsEqualTo(1);
         await Assert.That(sweep.Removed.Count).IsEqualTo(1);
@@ -128,7 +128,7 @@ internal sealed class SessionIndexTests
 
         // Idempotent: a second sweep over an index that is already clean does
         // nothing and says so.
-        var again = index.Sweep();
+        var again = await index.SweepAsync();
         await Assert.That(again.Followed).IsEqualTo(0);
         await Assert.That(again.Removed.Count).IsEqualTo(0);
     }
@@ -136,11 +136,11 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task AnEntryPointingAtADirectoryWithNoLockFileIsRemovedOnTheNextSweep()
     {
-        using var scratch = ScratchDirectory.Create("index-nolock");
+        using var scratch = await ScratchDirectory.CreateAsync("index-nolock");
         var (index, path) = NewIndex(scratch, "session");
 
-        var lease = SessionLock.TryAcquire(path, Request("about to be destroyed"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("about to be destroyed"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
         // The directory survives both of its files, which is what a destroy
@@ -148,11 +148,11 @@ internal sealed class SessionIndexTests
         File.Delete(path.LockFile);
         File.Delete(path.DataFile);
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
         await Assert.That(followed[0].Problem).Contains(SessionLayout.DataFileName);
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.Removed.Count).IsEqualTo(1);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
@@ -207,11 +207,11 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task AnEntryWhoseRecordIsMidRenameIsKeptAndTheSameEntryWithoutOneIsSwept()
     {
-        using var scratch = ScratchDirectory.Create("index-in-flight");
+        using var scratch = await ScratchDirectory.CreateAsync("index-in-flight");
         var (index, path) = NewIndex(scratch, "session");
 
-        var lease = SessionLock.TryAcquire(path, Request("rewriting its own record"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("rewriting its own record"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
         // Exactly what the window leaves on disk: neither file bound, the
@@ -220,13 +220,13 @@ internal sealed class SessionIndexTests
         File.Delete(path.DataFile);
         File.Move(path.LockFile, temp);
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
 
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.RecordInFlight);
         await Assert.That(followed[0].IsRemovable).IsFalse();
         await Assert.That(followed[0].Problem).Contains(Path.GetFileName(temp));
 
-        var kept = index.Sweep();
+        var kept = await index.SweepAsync();
 
         await Assert.That(kept.Removed.Count).IsEqualTo(0);
         await Assert.That(kept.Kept.Count).IsEqualTo(1);
@@ -237,7 +237,7 @@ internal sealed class SessionIndexTests
         // so the sweep takes it.
         File.Delete(temp);
 
-        var swept = index.Sweep();
+        var swept = await index.SweepAsync();
 
         await Assert.That(swept.Removed.Count).IsEqualTo(1);
         await Assert.That(swept.Removed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
@@ -247,7 +247,7 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task AnEntryPointingAtAPersonalChromeProfileIsFollowedAndProducesNoAction()
     {
-        using var scratch = ScratchDirectory.Create("index-chrome");
+        using var scratch = await ScratchDirectory.CreateAsync("index-chrome");
         var index = NewIndex(scratch);
 
         // A profile shaped like the real thing, including the file whose name is
@@ -261,24 +261,24 @@ internal sealed class SessionIndexTests
         await File.WriteAllTextAsync(Path.Combine(profile, "Default", "Cookies"), "SQLite format 3\0");
         await File.WriteAllTextAsync(Path.Combine(profile, "Default", "History"), "SQLite format 3\0");
 
-        var before = Manifest(profile);
+        var before = await ManifestAsync(profile);
         var path = SessionPath.For(profile);
-        index.Record(path);
+        await index.RecordAsync(path);
 
         // Followed, and found not to be ours. That is the entire interaction.
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed.Count).IsEqualTo(1);
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
         await Assert.That(followed[0].Record).IsNull();
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
         await Assert.That(sweep.Removed.Count).IsEqualTo(1);
 
         // NO ACTION. Not a lock taken, not a file written, not a file removed,
         // not a directory deleted -- the manifest is every file under the tree
         // with its length and its content hash, so an addition fails this as
         // loudly as a deletion would.
-        await Assert.That(Manifest(profile)).IsEqualTo(before);
+        await Assert.That(await ManifestAsync(profile)).IsEqualTo(before);
         await Assert.That(File.Exists(Path.Combine(profile, SessionLayout.LockFileName))).IsFalse();
         await Assert.That(Directory.Exists(profile)).IsTrue();
     }
@@ -286,7 +286,7 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task TwoProcessesWritingOneEntryConcurrentlyLeaveOneValidFile()
     {
-        using var scratch = ScratchDirectory.Create("index-race");
+        using var scratch = await ScratchDirectory.CreateAsync("index-race");
         var root = Path.Combine(scratch.Path, "appdata");
         var index = new SessionIndex(new LocalAppDataPaths(root), NullLogger.Instance);
 
@@ -294,7 +294,7 @@ internal sealed class SessionIndexTests
         var path = SessionPath.For(directory);
         SessionLayout.Create(path);
 
-        var lease = SessionLock.TryAcquire(path, Request("raced for"), NullLogger.Instance);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("raced for"), NullLogger.Instance);
         lease.Acquired!.Dispose();
 
         var startName = $@"Local\BrowserAI-Test-Start-{Guid.NewGuid():N}";
@@ -309,7 +309,7 @@ internal sealed class SessionIndexTests
         {
             foreach (var report in reports)
             {
-                _ = scope.Launch(
+                _ = await scope.LaunchAsync(
                     ProbePath,
                     AppContext.BaseDirectory,
                     "session-index",
@@ -343,7 +343,7 @@ internal sealed class SessionIndexTests
             .IsEqualTo(Convert.ToHexString(Encoding.UTF8.GetBytes(path.FullPath)));
 
         // Valid means followable, not merely present.
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed.Count).IsEqualTo(1);
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
 
@@ -353,7 +353,7 @@ internal sealed class SessionIndexTests
         // Recording never throws, so a failure can only be found in the log.
         // Reading it is what stops "one valid file" being satisfied by every
         // writer having quietly given up.
-        var log = ProbeProcess.ReadProcessLog(root);
+        var log = await ProbeProcess.ReadProcessLogAsync(root);
         await Assert.That(log).DoesNotContain("Could not write the session index entry");
     }
 
@@ -373,11 +373,11 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task AnEntryWhoseRecordCannotBeReadIsKeptBecauseNothingElseCanRestoreIt()
     {
-        using var scratch = ScratchDirectory.Create("index-corrupt");
+        using var scratch = await ScratchDirectory.CreateAsync("index-corrupt");
         var (index, path) = NewIndex(scratch, "session");
 
-        var lease = SessionLock.TryAcquire(path, Request("about to be corrupted"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("about to be corrupted"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
         var original = await File.ReadAllBytesAsync(path.DataFile);
@@ -391,17 +391,17 @@ internal sealed class SessionIndexTests
         // resume that would ever re-assert its index entry. Removing the entry
         // would make a directory that still exists permanently invisible to the
         // only inventory there is.
-        var refused = SessionLock.TryAcquire(path, Request("trying to resume it"), NullLogger.Instance);
+        var refused = await SessionLock.TryAcquireAsync(path, Request("trying to resume it"), NullLogger.Instance);
         refused.Acquired?.Dispose();
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.LockUnreadable);
         await Assert.That(followed[0].Record).IsNull();
         await Assert.That(followed[0].Problem).Contains(SessionLayout.DataFileName);
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.Removed.Count).IsEqualTo(0);
         await Assert.That(sweep.Kept.Count).IsEqualTo(1);
@@ -410,20 +410,20 @@ internal sealed class SessionIndexTests
         // And once the file is repaired, the entry is an ordinary session again
         // without anyone re-recording it.
         await File.WriteAllBytesAsync(path.DataFile, original);
-        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+        await Assert.That((await index.FollowAsync())[0].State).IsEqualTo(SessionIndexEntryState.Session);
     }
 
     [Test]
     public async Task AnEntryOnAVolumeThatIsNotMountedIsKeptRatherThanSwept()
     {
-        using var scratch = ScratchDirectory.Create("index-volume");
+        using var scratch = await ScratchDirectory.CreateAsync("index-volume");
         var index = NewIndex(scratch);
 
         var absent = FirstUnmountedDriveLetter();
         var path = SessionPath.For($@"{absent}:\browserai\sessions\research");
-        index.Record(path);
+        await index.RecordAsync(path);
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
 
         // Not "gone". Unknown. A session directory on a drive that is not
         // plugged in, or a share that is not reachable, has not been destroyed --
@@ -433,7 +433,7 @@ internal sealed class SessionIndexTests
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.VolumeMissing);
         await Assert.That(followed[0].Problem).Contains($@"{absent}:\");
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.Removed.Count).IsEqualTo(0);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
@@ -442,7 +442,7 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task AnEntryThatCannotBeFollowedAtAllIsRemoved()
     {
-        using var scratch = ScratchDirectory.Create("index-unusable");
+        using var scratch = await ScratchDirectory.CreateAsync("index-unusable");
         var index = NewIndex(scratch);
         _ = Directory.CreateDirectory(index.Root);
 
@@ -468,7 +468,7 @@ internal sealed class SessionIndexTests
             await File.WriteAllTextAsync(Path.Combine(index.Root, name), content);
         }
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
         await Assert.That(followed.Count).IsEqualTo(planted.Count);
 
         foreach (var entry in followed)
@@ -477,7 +477,7 @@ internal sealed class SessionIndexTests
             await Assert.That(entry.Problem).Contains("cannot be followed");
         }
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.Removed.Count).IsEqualTo(planted.Count);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
@@ -498,7 +498,7 @@ internal sealed class SessionIndexTests
         // So the pointer is checked instead: a stored path that is not the
         // spelling this build writes was not written by this build, and the
         // index already knows what to do with one of those.
-        using var scratch = ScratchDirectory.Create("index-non-canonical");
+        using var scratch = await ScratchDirectory.CreateAsync("index-non-canonical");
         var index = NewIndex(scratch);
         _ = Directory.CreateDirectory(index.Root);
 
@@ -509,7 +509,7 @@ internal sealed class SessionIndexTests
 
         await File.WriteAllTextAsync(Path.Combine(index.Root, SessionPath.For(aliased).IndexKey), aliased);
 
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
 
         await Assert.That(followed.Count).IsEqualTo(1);
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Unusable);
@@ -518,24 +518,24 @@ internal sealed class SessionIndexTests
         // Removing it is safe for the reason every removal here is safe: the
         // next init or resume on the real directory records it again, and this
         // time canonically.
-        await Assert.That(index.Sweep().Removed.Count).IsEqualTo(1);
+        await Assert.That((await index.SweepAsync()).Removed.Count).IsEqualTo(1);
 
         // The positive control, without which the assertion above is satisfied
         // by an index that cannot follow anything: the same directory, spelled
         // the way this build spells it, is followed and not refused.
         await File.WriteAllTextAsync(Path.Combine(index.Root, SessionPath.For(real).IndexKey), real);
 
-        await Assert.That(index.Follow()[0].State).IsNotEqualTo(SessionIndexEntryState.Unusable);
+        await Assert.That((await index.FollowAsync())[0].State).IsNotEqualTo(SessionIndexEntryState.Unusable);
     }
 
     [Test]
     public async Task ASweepClearsThisStoresOwnAbandonedRenameTempsAndNothingElse()
     {
-        using var scratch = ScratchDirectory.Create("index-litter");
+        using var scratch = await ScratchDirectory.CreateAsync("index-litter");
         var (index, path) = NewIndex(scratch, "session");
 
-        var lease = SessionLock.TryAcquire(path, Request("littered"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("littered"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
         var abandoned = Path.Combine(index.Root, $"{path.IndexKey}.new-{Guid.NewGuid():N}");
@@ -552,7 +552,7 @@ internal sealed class SessionIndexTests
         // two microseconds from renaming into place.
         File.SetLastWriteTimeUtc(abandoned, DateTime.UtcNow.AddHours(-2));
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         await Assert.That(sweep.LitterRemoved).IsEqualTo(1);
         await Assert.That(File.Exists(abandoned)).IsFalse();
@@ -561,18 +561,18 @@ internal sealed class SessionIndexTests
         // A file this product did not write is never deleted by anything here,
         // however old it is and whatever it holds.
         File.SetLastWriteTimeUtc(foreign, DateTime.UtcNow.AddYears(-1));
-        _ = index.Sweep();
+        _ = await index.SweepAsync();
         await Assert.That(File.Exists(foreign)).IsTrue();
 
         // And the entry itself survived all of it.
-        await Assert.That(index.Follow().Single(entry => entry.Key == path.IndexKey).State)
+        await Assert.That((await index.FollowAsync()).Single(entry => entry.Key == path.IndexKey).State)
             .IsEqualTo(SessionIndexEntryState.Session);
     }
 
     [Test]
     public async Task AFailureToRecordIsLoggedRatherThanThrownAndTheSessionIsUnaffected()
     {
-        using var scratch = ScratchDirectory.Create("index-unwritable");
+        using var scratch = await ScratchDirectory.CreateAsync("index-unwritable");
         using var provider = new CapturingLoggerProvider();
         using var factory = LoggerFactory.Create(builder => builder.AddProvider(provider).SetMinimumLevel(LogLevel.Trace));
 
@@ -589,13 +589,13 @@ internal sealed class SessionIndexTests
 
         // Does not throw. An inventory line that could not be written must never
         // be what fails a session, because the next use re-asserts it.
-        index.Record(path);
+        await index.RecordAsync(path);
 
         await Assert.That(provider.Logged("Could not write the session index entry")).IsTrue();
         await Assert.That(provider.Records.Any(record => record.Level is LogLevel.Warning)).IsTrue();
 
         // Silence is the enemy; a lost line is not. The session itself is fine.
-        var lease = SessionLock.TryAcquire(path, Request("uninventoried"), NullLogger.Instance);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("uninventoried"), NullLogger.Instance);
 
         try
         {
@@ -607,7 +607,7 @@ internal sealed class SessionIndexTests
         }
 
         // And Follow over an unusable root answers empty instead of throwing.
-        await Assert.That(index.Follow().Count).IsEqualTo(0);
+        await Assert.That((await index.FollowAsync()).Count).IsEqualTo(0);
     }
 
     [Test]
@@ -701,7 +701,7 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task FollowingOneSubtreeReturnsExactlyWhatFollowingEverythingWouldHaveReturnedForIt()
     {
-        using var scratch = ScratchDirectory.Create("index-subtree");
+        using var scratch = await ScratchDirectory.CreateAsync("index-subtree");
 
         var left = Path.Combine(scratch.Path, "left");
         var right = Path.Combine(scratch.Path, "right");
@@ -713,8 +713,8 @@ internal sealed class SessionIndexTests
             var session = SessionPath.For(Path.Combine(root, name));
             SessionLayout.Create(session);
 
-            var lease = SessionLock.TryAcquire(session, Request($"the session called {name}"), NullLogger.Instance);
-            index.Record(session);
+            var lease = await SessionLock.TryAcquireAsync(session, Request($"the session called {name}"), NullLogger.Instance);
+            await index.RecordAsync(session);
             lease.Acquired!.Dispose();
         }
 
@@ -726,12 +726,12 @@ internal sealed class SessionIndexTests
         _ = Directory.CreateDirectory(index.Root);
         await File.WriteAllTextAsync(Path.Combine(index.Root, divergent), Path.Combine(scratch.Path, "elsewhere", "nowhere"));
 
-        await Assert.That(index.Follow().Count).IsEqualTo(5);
+        await Assert.That((await index.FollowAsync()).Count).IsEqualTo(5);
 
         var prefix = Prefix(left);
-        var scoped = index.FollowUnder(prefix);
+        var scoped = await index.FollowUnderAsync(prefix);
 
-        var expected = index.Follow()
+        var expected = (await index.FollowAsync())
             .Where(entry => entry.Session is not { } session
                 || (session.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal))
             .ToList();
@@ -769,7 +769,7 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task FollowingOneSubtreeOpensNoRecordOutsideIt()
     {
-        using var scratch = ScratchDirectory.Create("index-subtree-denied");
+        using var scratch = await ScratchDirectory.CreateAsync("index-subtree-denied");
 
         var mine = SessionPath.For(Path.Combine(scratch.Path, "mine", "session"));
         var stranger = SessionPath.For(Path.Combine(scratch.Path, "stranger", "session"));
@@ -781,8 +781,8 @@ internal sealed class SessionIndexTests
 
         foreach (var session in new[] { mine, stranger })
         {
-            var lease = SessionLock.TryAcquire(session, Request("a session somebody else's tree holds"), NullLogger.Instance);
-            index.Record(session);
+            var lease = await SessionLock.TryAcquireAsync(session, Request("a session somebody else's tree holds"), NullLogger.Instance);
+            await index.RecordAsync(session);
             lease.Acquired!.Dispose();
         }
 
@@ -797,12 +797,12 @@ internal sealed class SessionIndexTests
         {
             // ⚠️ THE CONTROL, and without it this test passes on a denial that
             // never bit.
-            var everything = index.Follow();
+            var everything = await index.FollowAsync();
 
             await Assert.That(everything.Count).IsEqualTo(2);
             await Assert.That(everything.Count(entry => entry.State is SessionIndexEntryState.LockUnreadable)).IsEqualTo(1);
 
-            var scoped = index.FollowUnder(Prefix(Path.Combine(scratch.Path, "mine")));
+            var scoped = await index.FollowUnderAsync(Prefix(Path.Combine(scratch.Path, "mine")));
 
             await Assert.That(scoped.Count).IsEqualTo(1);
             await Assert.That(scoped[0].State).IsEqualTo(SessionIndexEntryState.Session);
@@ -832,7 +832,7 @@ internal sealed class SessionIndexTests
     /// <para>
     /// ⚠️ <b>Until 2026-08-26 every BrowserAI startup opened the SQLite store of
     /// every session on the machine.</b> <c>Program.Main</c> starts the stray
-    /// sweep, one pass calls <see cref="SessionIndex.Sweep"/>, and that followed
+    /// sweep, one pass calls <see cref="SessionIndex.SweepAsync"/>, and that followed
     /// every entry through <c>SessionLock.ReadRecord</c> -- so one process start
     /// was one store open per registered session, each leaving a
     /// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory
@@ -859,13 +859,13 @@ internal sealed class SessionIndexTests
     [Test]
     public async Task ASweepOpensNoSessionsStoreAndLeavesACleanlyClosedOneAtTwoFiles()
     {
-        using var scratch = ScratchDirectory.Create("index-probe-first");
+        using var scratch = await ScratchDirectory.CreateAsync("index-probe-first");
         var (index, path) = NewIndex(scratch, "closed-cleanly");
 
         // A real session, acquired and closed the way a process that has since
         // exited would leave it: the record checkpointed, no -wal, no -shm.
-        var lease = SessionLock.TryAcquire(path, Request("a session the sweep only passes over"), NullLogger.Instance);
-        index.Record(path);
+        var lease = await SessionLock.TryAcquireAsync(path, Request("a session the sweep only passes over"), NullLogger.Instance);
+        await index.RecordAsync(path);
         lease.Acquired!.Dispose();
 
         var afterClose = Directory.GetFiles(path.FullPath).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
@@ -874,7 +874,7 @@ internal sealed class SessionIndexTests
             .IsEqualTo($"{SessionLayout.DataFileName}, {SessionLayout.LockFileName}")
             .Because("a cleanly-closed session is two files, and this arm is about what a sweep adds to them");
 
-        var sweep = index.Sweep();
+        var sweep = await index.SweepAsync();
 
         // The entry is kept -- the directory is a session -- and nothing was
         // added to it. A store open leaves the wal-index behind whether or not
@@ -890,7 +890,7 @@ internal sealed class SessionIndexTests
         // ⚠️ THE POSITIVE CONTROL. The record-bearing walk still reads the
         // record, so this is a sweep that stops at the guard and not an
         // index that stopped reading.
-        var followed = index.Follow();
+        var followed = await index.FollowAsync();
 
         await Assert.That(followed.Count).IsEqualTo(1);
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
@@ -920,14 +920,21 @@ internal sealed class SessionIndexTests
     /// modified or a deleted one. "No action" is a claim about the whole tree,
     /// and checking three named files would pass a routine that wrote a fourth.
     /// </remarks>
-    private static string Manifest(string root) =>
-        string.Join(
-            '\n',
-            Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .Select(file => string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"{Path.GetRelativePath(root, file)} {new FileInfo(file).Length} {Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file)))}")));
+    private static async Task<string> ManifestAsync(string root)
+    {
+        var lines = new List<string>();
+
+        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Order(StringComparer.OrdinalIgnoreCase))
+        {
+            var hash = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(file)));
+
+            lines.Add(string.Create(
+                CultureInfo.InvariantCulture,
+                $"{Path.GetRelativePath(root, file)} {new FileInfo(file).Length} {hash}"));
+        }
+
+        return string.Join('\n', lines);
+    }
 
     /// <summary>The first drive letter this machine has no volume mounted on.</summary>
     /// <remarks>

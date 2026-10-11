@@ -24,7 +24,7 @@ namespace BrowserAI.Tests.Harness;
 /// process log, which is what <see cref="ProcessLogRecords"/> reads -- and since
 /// 2026-08-29 it is not true of the harness either: <see cref="SpawnRecord"/>
 /// announces a reclaim it performed to that same log. The two places outside the
-/// repository are named on <see cref="ScratchRoot.ProfileScratch"/>.
+/// repository are named on <see cref="ScratchRoot.ProfileScratchAsync"/>.
 /// </para>
 /// </remarks>
 internal sealed class ScratchDirectory : IDisposable
@@ -42,8 +42,14 @@ internal sealed class ScratchDirectory : IDisposable
     public string Path { get; }
 
     /// <summary>Creates a fresh scratch directory named after the caller.</summary>
-    public static ScratchDirectory Create(string label) =>
-        new(System.IO.Path.Combine(ScratchRoot.Path, $"{label}-{Guid.NewGuid():N}"));
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, because the scratch root's first use sweeps it with
+    /// asynchronous I/O (decision 63). <i>Previously <c>Create</c>.</i>
+    /// </remarks>
+    /// <param name="label">What the directory is for.</param>
+    /// <returns>The directory.</returns>
+    public static async Task<ScratchDirectory> CreateAsync(string label) =>
+        new(System.IO.Path.Combine(await ScratchRoot.PathAsync(), $"{label}-{Guid.NewGuid():N}"));
 
     /// <summary>
     /// Creates a fresh scratch directory <b>inside this user's profile</b>, for
@@ -51,7 +57,7 @@ internal sealed class ScratchDirectory : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// See <see cref="ScratchRoot.ProfileScratch"/>: a published BrowserAI
+    /// See <see cref="ScratchRoot.ProfileScratchAsync"/>: a published BrowserAI
     /// refuses to serve out of an app root outside the current user's profile,
     /// so an app root handed to one through
     /// <see cref="BrowserAiPaths.DataRootArgument"/>, or to an installer through
@@ -60,15 +66,15 @@ internal sealed class ScratchDirectory : IDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>With an owner record beside it since 2026-10-10, 5 a</b>, written
-    /// before the folder by <see cref="ScratchRoot.CreateUnderProfile"/>, so another
+    /// before the folder by <see cref="ScratchRoot.CreateUnderProfileAsync"/>, so another
     /// checkout's reclaim leaves it alone while this run is alive; disposing it
     /// removes the record with the folder.
     /// </para>
     /// </remarks>
     /// <param name="label">What the directory is for.</param>
     /// <returns>The directory.</returns>
-    public static ScratchDirectory CreateUnderProfile(string label) =>
-        new(ScratchRoot.CreateUnderProfile($"{label}-{Guid.NewGuid():N}"), owned: true);
+    public static async Task<ScratchDirectory> CreateUnderProfileAsync(string label) =>
+        new(await ScratchRoot.CreateUnderProfileAsync($"{label}-{Guid.NewGuid():N}"), owned: true);
 
     /// <summary>
     /// Removes a tree the way the product does, and answers with what would not

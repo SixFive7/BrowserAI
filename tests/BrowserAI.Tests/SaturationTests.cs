@@ -274,7 +274,7 @@ internal sealed partial class SaturationTests
     /// a record read the pid alone over thirty days of the machine's log, and the
     /// background was pid 70276, on which 36 records of a BrowserAI of 2026-09-17 still
     /// stood. It reads each writer's pid and creation time since that day (see
-    /// <see cref="ReadProcessLogSince"/>), and the same plant then read <i>"the
+    /// <see cref="ReadProcessLogSinceAsync"/>), and the same plant then read <i>"the
     /// background (pid 67712) wrote no record into the shared process log"</i>, a pid
     /// carried by 44 records of three other processes in those files.
     /// </description></item>
@@ -288,11 +288,11 @@ internal sealed partial class SaturationTests
     [NotInParallel]
     public async Task TheDesignPointHoldsWithEveryProcessBrowserAndSessionAtOnce()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("saturation");
+        using var scratch = await ScratchDirectory.CreateAsync("saturation");
 
         var logsBefore = LogFilesNow();
         var started = DateTimeOffset.UtcNow;
@@ -305,7 +305,7 @@ internal sealed partial class SaturationTests
         var pipe = PublishedBackground.NewPipeName();
         var record = PublishedBackground.RecordFor(environment, [], pipe);
 
-        using var background = PublishedBackground.Start(backgroundJob, scratch.Path, environment, pipe, []);
+        using var background = await PublishedBackground.StartAsync(backgroundJob, scratch.Path, environment, pipe, []);
 
         // The background's whole identity, read while it is certainly alive, because
         // the shared log is matched on the pair and never on the pid alone (see
@@ -430,7 +430,7 @@ internal sealed partial class SaturationTests
 
             // ---- 5. The shared process log is still readable ----------------
 
-            var (lines, writers) = ReadProcessLogSince(logsBefore, started);
+            var (lines, writers) = await ReadProcessLogSinceAsync(logsBefore, started);
 
             // ⚠️ COUNTED OVER THIS RUN'S OWN PIDS, and that is the 2026-08-18
             // correction. It used to count every record header in every log file
@@ -495,7 +495,7 @@ internal sealed partial class SaturationTests
             // scratch root may still be pointed at from %LocalAppData%. An entry
             // that outlives its directory is a `browserai_list` that grows for
             // ever, which is invisible until somebody reads it.
-            await Assert.That(string.Join(Environment.NewLine, IndexEntriesPointingInto(scratch.Path))).IsEmpty();
+            await Assert.That(string.Join(Environment.NewLine, await IndexEntriesPointingIntoAsync(scratch.Path))).IsEmpty();
         }
         finally
         {
@@ -530,7 +530,7 @@ internal sealed partial class SaturationTests
     /// <b>The both-directions control for the pid scope above, planted here
     /// because it cannot be planted live.</b> The arm it guards reads the
     /// machine-wide log with no time filter -- deliberately, see
-    /// <see cref="ReadProcessLogSince"/> -- so the only way to watch the scope
+    /// <see cref="ReadProcessLogSinceAsync"/> -- so the only way to watch the scope
     /// work is to hand the same predicate a line it must ignore and a line it
     /// must catch. A green run of the live arm proves nothing about either,
     /// because on a machine whose log holds no torn record at all both scopes
@@ -640,7 +640,7 @@ internal sealed partial class SaturationTests
     /// <para>
     /// ⚠️ <b>Scoped by pid and never by time.</b> The obvious filter -- skip what
     /// was written before this run started -- is the one
-    /// <see cref="ReadProcessLogSince"/> already refuses, and for a reason that
+    /// <see cref="ReadProcessLogSinceAsync"/> already refuses, and for a reason that
     /// has not changed: NTFS does not keep a file's last-write time current
     /// while handles are open on it, and this file has a hundred BrowserAIs
     /// appending to it, so the one file holding all the records is the one such
@@ -797,7 +797,7 @@ internal sealed partial class SaturationTests
     [Test]
     public async Task TheBookkeepingReclaimTakesOnlyWhatThisRunsBackgroundMadeWhileItLived()
     {
-        using var root = ScratchDirectory.Create("saturation-reclaim");
+        using var root = await ScratchDirectory.CreateAsync("saturation-reclaim");
 
         const int Pid = 4242;
         var started = new DateTime(2026, 10, 10, 1, 0, 0, DateTimeKind.Utc);
@@ -939,7 +939,7 @@ internal sealed partial class SaturationTests
             ? (pid, created)
             : null;
 
-    private static List<string> IndexEntriesPointingInto(string root)
+    private static async Task<List<string>> IndexEntriesPointingIntoAsync(string root)
     {
         var index = BrowserAiPaths.Real.IndexDirectory;
 
@@ -954,7 +954,7 @@ internal sealed partial class SaturationTests
         {
             try
             {
-                if (File.ReadAllText(entry).Trim().StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                if ((await File.ReadAllTextAsync(entry)).Trim().StartsWith(root, StringComparison.OrdinalIgnoreCase))
                 {
                     leaked.Add($"{entry} still points into {root}");
                 }
@@ -1001,7 +1001,7 @@ internal sealed partial class SaturationTests
     /// of a process of 2026-09-17 under the background's number.
     /// </para>
     /// </remarks>
-    private static (IReadOnlyList<string> Lines, HashSet<(int Pid, long Created)> Writers) ReadProcessLogSince(
+    private static async Task<(IReadOnlyList<string> Lines, HashSet<(int Pid, long Created)> Writers)> ReadProcessLogSinceAsync(
         IReadOnlyList<string> before,
         DateTimeOffset started)
     {
@@ -1024,10 +1024,10 @@ internal sealed partial class SaturationTests
             // is the identity check, not the file selection.
             _ = before;
 
-            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream);
 
-            while (reader.ReadLine() is { } line)
+            while (await reader.ReadLineAsync() is { } line)
             {
                 lines.Add(line);
 
@@ -1141,7 +1141,7 @@ internal sealed partial class SaturationTests
 
             // ⚠️ THE ONE BACKGROUND'S PIPE, so the harness starts no background beside
             // this relay: every peer reaches the same one (2026-10-09).
-            var client = RawStdioClient.Start(
+            var client = await RawStdioClient.StartAsync(
                 PublishedSlice.Executable,
                 [Program.McpArgument, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe],
                 _home,
@@ -1242,7 +1242,7 @@ internal sealed partial class SaturationTests
                 return report with
                 {
                     JobMembers = Observe(client.JobProcessIds()),
-                    LockHolder = HolderOf(Session),
+                    LockHolder = await HolderOfAsync(Session),
                 };
             }
 #pragma warning disable CA1031 // One peer's failure is REPORTED, never thrown: a hundred peers means a hundred failures worth reading, and the first exception to escape would hide the other ninety-nine.
@@ -1315,11 +1315,11 @@ internal sealed partial class SaturationTests
         }
 
         /// <summary>The pid the session's own lock record names, or zero.</summary>
-        private static int HolderOf(string session)
+        private static async Task<int> HolderOfAsync(string session)
         {
             try
             {
-                var record = SessionLock.ReadRecord(SessionPath.For(session));
+                var record = await SessionLock.ReadRecordAsync(SessionPath.For(session));
 
                 return record?.Holder?.ProcessId ?? 0;
             }

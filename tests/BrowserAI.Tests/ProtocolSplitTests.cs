@@ -84,13 +84,13 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task TheNewOpeningRequestIsRefusedWithTheOneRevisionBrowserAiOffersAndTheOldOneListsTheTools()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("protocol-new-opening");
+        using var scratch = await ScratchDirectory.CreateAsync("protocol-new-opening");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -128,7 +128,7 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task TheChildNegotiatesItsCeilingAndTheProductRecordsWhichVersionThatWas()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -157,7 +157,7 @@ internal sealed class ProtocolSplitTests
         // And the pin itself is the child's measured ceiling and not a
         // number somebody liked: the same value the snapshot generator recorded
         // by probing the child from both directions on every build.
-        await Assert.That(BrowserProxy.ChildProtocolVersion).IsEqualTo(SnapshotCeiling());
+        await Assert.That(BrowserProxy.ChildProtocolVersion).IsEqualTo(await SnapshotCeilingAsync());
     }
 
     /// <summary>
@@ -181,13 +181,13 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task ACallerOfferingAnOlderRevisionIsAnsweredWithTheOneBrowserAiOffers()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("protocol-older");
+        using var scratch = await ScratchDirectory.CreateAsync("protocol-older");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -215,8 +215,8 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task TheServerKnowsTheNewOpeningMethodAndTheChildDoesNot()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         PublishedSlice.EnsureFresh();
 
@@ -252,9 +252,9 @@ internal sealed class ProtocolSplitTests
         IReadOnlyList<string> arguments,
         IReadOnlyDictionary<string, string> environment)
     {
-        using var scratch = ScratchDirectory.Create(label);
+        using var scratch = await ScratchDirectory.CreateAsync(label);
 
-        await using var client = RawStdioClient.Start(command, arguments, scratch.Path, environment);
+        await using var client = await RawStdioClient.StartAsync(command, arguments, scratch.Path, environment);
 
         // Sent as the very first frame, before `initialize`, which is what a
         // 2026-07-28 client does.
@@ -263,9 +263,9 @@ internal sealed class ProtocolSplitTests
 
     private static int? ErrorCode(JsonObject envelope) => (int?)envelope["error"]?["code"];
 
-    private static string SnapshotCeiling()
+    private static async Task<string> SnapshotCeilingAsync()
     {
-        using var snapshot = System.Text.Json.JsonDocument.Parse(File.ReadAllText(
+        using var snapshot = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));
 
         return snapshot.RootElement.GetProperty("protocol").GetProperty("ceiling").GetString()!;

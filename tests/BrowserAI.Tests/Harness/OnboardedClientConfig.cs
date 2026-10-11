@@ -136,12 +136,12 @@ internal static class OnboardedClientConfig
     /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns><paramref name="directory"/>, unchanged.</returns>
-    public static string Seed(string directory)
+    public static async Task<string> SeedAsync(string directory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
 
         _ = Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, FileName), Contents);
+        await File.WriteAllTextAsync(Path.Combine(directory, FileName), Contents);
 
         return directory;
     }

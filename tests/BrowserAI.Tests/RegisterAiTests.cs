@@ -64,9 +64,9 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AnInstallOverAnEntryOfOursThatMatchesLeavesItAsItIs()
     {
-        using var install = ScratchDirectory.Create("registerai-matching");
+        using var install = await ScratchDirectory.CreateAsync("registerai-matching");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var tool = new FakeRegisterAi();
         var (logger, _) = Capture();
@@ -75,7 +75,7 @@ internal sealed class RegisterAiTests
 
         foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Update })
         {
-            var report = McpRegistrar.Apply(RegistrationClient.ClaudeCode, intent, image, tool, logger);
+            var report = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, intent, image, tool, logger);
 
             await Assert.That(report.Status).IsEqualTo(RegistrationStatus.AlreadyRegistered);
             await Assert.That(report.Detail).Contains("left exactly as it is");
@@ -83,7 +83,7 @@ internal sealed class RegisterAiTests
         }
 
         // The window's register is a person asking for exactly the rewrite.
-        var again = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, tool, logger, replace: true);
+        var again = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, tool, logger, replace: true);
 
         await Assert.That(again.Status).IsEqualTo(RegistrationStatus.Registered);
         await Assert.That(tool.Calls[^1].Contains("--replace")).IsTrue();
@@ -99,29 +99,29 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task EveryAnswerReadsAsTheStatusAndSentenceBrowserAiGives()
     {
-        using var install = ScratchDirectory.Create("registerai-answers");
-        using var elsewhere = ScratchDirectory.Create("registerai-answers-other");
+        using var install = await ScratchDirectory.CreateAsync("registerai-answers");
+        using var elsewhere = await ScratchDirectory.CreateAsync("registerai-answers-other");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var theirs = InstalledLayout.ServerIn(elsewhere.Path);
         var (logger, log) = Capture();
 
-        _ = InstalledLayout.Create(elsewhere.Path);
+        _ = await InstalledLayout.CreateAsync(elsewhere.Path);
 
         // Nothing there: added.
         var tool = new FakeRegisterAi();
-        var added = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, tool, logger);
+        var added = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, tool, logger);
 
         await Assert.That(added.Status).IsEqualTo(RegistrationStatus.Registered);
         await Assert.That(added.Detail).Contains($"pointing at '{server}'");
         await Assert.That(tool.UserEntry("claude-code")).IsEqualTo(server);
 
         // Removed, then nothing to remove.
-        await Assert.That(McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, tool, logger).Status)
+        await Assert.That((await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, tool, logger)).Status)
             .IsEqualTo(RegistrationStatus.Unregistered);
 
-        var nothing = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, tool, logger);
+        var nothing = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, tool, logger);
 
         await Assert.That(nothing.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
         await Assert.That(nothing.IsWhatWasAskedFor).IsTrue();
@@ -132,7 +132,7 @@ internal sealed class RegisterAiTests
         // app's own file, which was another file until the two became one).
         tool.Register("claude-code", Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.RetiredServerFileName));
 
-        await Assert.That(McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Update, image, tool, logger).Status)
+        await Assert.That((await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Update, image, tool, logger)).Status)
             .IsEqualTo(RegistrationStatus.Registered);
         await Assert.That(log.Logged("Repaired the MCP registration")).IsTrue();
 
@@ -141,7 +141,7 @@ internal sealed class RegisterAiTests
         {
             tool.Register("claude-code", theirs);
 
-            var refused = McpRegistrar.Apply(RegistrationClient.ClaudeCode, intent, image, tool, logger);
+            var refused = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, intent, image, tool, logger);
 
             await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
             await Assert.That(refused.Detail).Contains("Another BrowserAI is registered at");
@@ -153,14 +153,14 @@ internal sealed class RegisterAiTests
 
         // A configuration nobody could read: refused, never read as empty.
         var blind = new FakeRegisterAi { Unreadable = { "claude-code" } };
-        var unreadable = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, blind, logger);
+        var unreadable = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, blind, logger);
 
         await Assert.That(unreadable.Status).IsEqualTo(RegistrationStatus.Refused);
         await Assert.That(unreadable.Detail).Contains("unknown");
 
         // No client: reported, the install fine, and the line to run by hand.
         var bare = new FakeRegisterAi { Missing = { "claude-code", "codex" } };
-        var notFound = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, bare, logger);
+        var notFound = await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Install, image, bare, logger);
 
         foreach (var pass in notFound)
         {
@@ -174,7 +174,7 @@ internal sealed class RegisterAiTests
 
         // A client whose write did not hold: failed, in its own words, with the line.
         var failing = new FakeRegisterAi { Failing = { "claude-code" } };
-        var failed = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, failing, logger);
+        var failed = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, failing, logger);
 
         await Assert.That(failed.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(failed.IsWhatWasAskedFor).IsFalse();
@@ -208,32 +208,32 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task EveryLineAPersonRunsByHandCarriesTheArgumentsTheRegistrationWasGiven()
     {
-        using var install = ScratchDirectory.Create("registerai-manual-lines");
-        using var elsewhere = ScratchDirectory.Create("registerai-manual-lines-other");
+        using var install = await ScratchDirectory.CreateAsync("registerai-manual-lines");
+        using var elsewhere = await ScratchDirectory.CreateAsync("registerai-manual-lines-other");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var theirs = InstalledLayout.ServerIn(elsewhere.Path);
         var (logger, _) = Capture();
 
-        _ = InstalledLayout.Create(elsewhere.Path);
+        _ = await InstalledLayout.CreateAsync(elsewhere.Path);
 
         const string DataRoot = @"C:\Users\someone\a data root";
         string[] arguments = [RegistrationTarget.McpArgument, "--data-root", DataRoot];
         var typed = $"-- \"{server}\" --mcp --data-root \"{DataRoot}\"";
 
         // No client, and a client whose write did not hold.
-        var missing = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code", "codex" } }, logger, commandArguments: arguments);
+        var missing = await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code", "codex" } }, logger, commandArguments: arguments);
 
         await Assert.That(missing[0].Report.Detail).Contains($"claude mcp add browserai --scope user {typed}");
         await Assert.That(missing[1].Report.Detail).Contains($"codex mcp add browserai {typed}");
 
-        var failed = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Failing = { "claude-code" } }, logger, commandArguments: arguments);
+        var failed = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Failing = { "claude-code" } }, logger, commandArguments: arguments);
 
         await Assert.That(failed.Detail).Contains($"claude mcp add browserai --scope user {typed}");
 
         // A RegisterAI that gives no answer.
-        var silent = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger, commandArguments: arguments);
+        var silent = await McpRegistrar.ApplyAsync(RegistrationClient.Codex, RegistrationIntent.Install, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger, commandArguments: arguments);
 
         await Assert.That(silent.Detail).Contains($"codex mcp add browserai {typed}");
 
@@ -241,14 +241,14 @@ internal sealed class RegisterAiTests
         var foreign = new FakeRegisterAi();
         foreign.Register("claude-code", theirs);
 
-        var refused = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, foreign, logger, commandArguments: arguments);
+        var refused = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, foreign, logger, commandArguments: arguments);
 
         await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
         await Assert.That(refused.Detail).Contains($"register this one: claude mcp add browserai --scope user {typed}");
         await Assert.That(refused.Detail).DoesNotContain($"-- \"{theirs}\"");
 
         // With no data root, the line carries --mcp and nothing after it.
-        var plain = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code" } }, logger);
+        var plain = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Missing = { "claude-code" } }, logger);
 
         await Assert.That(plain.Detail).EndsWith($"claude mcp add browserai --scope user -- \"{server}\" --mcp");
     }
@@ -275,9 +275,9 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AnUnregisterThatIsNotDoneOffersTheLineThatRemovesTheEntry()
     {
-        using var install = ScratchDirectory.Create("registerai-remove-lines");
+        using var install = await ScratchDirectory.CreateAsync("registerai-remove-lines");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var (logger, _) = Capture();
 
@@ -289,7 +289,7 @@ internal sealed class RegisterAiTests
         failing.Register("claude-code", server);
         failing.Register("codex", server);
 
-        var failed = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, failing, logger);
+        var failed = await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Uninstall, image, failing, logger);
 
         for (var index = 0; index < failed.Count; index++)
         {
@@ -299,7 +299,7 @@ internal sealed class RegisterAiTests
         }
 
         // A RegisterAI that gives no answer.
-        var silent = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger);
+        var silent = await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) }, logger);
 
         for (var index = 0; index < silent.Count; index++)
         {
@@ -308,7 +308,7 @@ internal sealed class RegisterAiTests
         }
 
         // A pass that throws.
-        var thrown = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Throws = true }, logger);
+        var thrown = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Uninstall, image, new FakeRegisterAi { Throws = true }, logger);
 
         await Assert.That(thrown.Detail).Contains(removals[0]);
         said.Add(("claude-code, thrown", thrown.Detail));
@@ -317,7 +317,7 @@ internal sealed class RegisterAiTests
         var bare = new FakeRegisterAi { Missing = { "claude-code", "codex" } };
         bare.Register("claude-code", server);
 
-        foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, bare, logger))
+        foreach (var pass in await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Uninstall, image, bare, logger))
         {
             await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
             await Assert.That(pass.Report.Detail).DoesNotContain("mcp remove");
@@ -358,7 +358,7 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task ADocumentRegisterAiWroteBeforeItExitedIsReadWhileAProcessItLeftHoldsItsOutput()
     {
-        using var scratch = ScratchDirectory.Create("registerai-lingering");
+        using var scratch = await ScratchDirectory.CreateAsync("registerai-lingering");
 
         var documentPath = Path.Combine(scratch.Path, "document.json");
         await File.WriteAllTextAsync(documentPath, """{"tool":"registerai","schema":1,"verb":"status","exitCode":0,"error":null,"results":[]}""");
@@ -366,7 +366,7 @@ internal sealed class RegisterAiTests
         var probe = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
         var hold = (ProcessBounds.RegisterAiOutputDrain * 2).TotalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        var run = new RegisterAiTool(probe).Run(["registerai-lingering", documentPath, hold], McpRegistrar.ToolBudget);
+        var run = await new RegisterAiTool(probe).RunAsync(["registerai-lingering", documentPath, hold], McpRegistrar.ToolBudget);
 
         await Assert.That(run.TimedOut).IsFalse();
         await Assert.That(run.ExitCode).IsEqualTo(0);
@@ -383,10 +383,10 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task ARegisterAiThatGivesNoAnswerFailsEveryClientAndNeverTheInstall()
     {
-        using var install = ScratchDirectory.Create("registerai-no-answer");
-        using var data = ScratchDirectory.Create("registerai-no-answer-data");
+        using var install = await ScratchDirectory.CreateAsync("registerai-no-answer");
+        using var data = await ScratchDirectory.CreateAsync("registerai-no-answer-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var (logger, _) = Capture();
 
         IRegisterAi[] tools =
@@ -402,7 +402,7 @@ internal sealed class RegisterAiTests
 
         for (var index = 0; index < tools.Length; index++)
         {
-            var passes = McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, tools[index], logger);
+            var passes = await McpRegistrar.ApplyAsync(RegistrationClient.All, RegistrationIntent.Install, image, tools[index], logger);
 
             await Assert.That(passes.Count).IsEqualTo(RegistrationClient.All.Count);
 
@@ -415,7 +415,7 @@ internal sealed class RegisterAiTests
         }
 
         // And through the hook, which writes its record and returns.
-        var outcome = HookRegistration.Run(
+        var outcome = await HookRegistration.RunAsync(
             RegistrationIntent.Install,
             "9.9.9",
             image,
@@ -452,7 +452,7 @@ internal sealed class RegisterAiTests
 
             await Assert.That(Path.IsPathFullyQualified(tool.Executable)).IsFalse().Because(tool.Executable);
 
-            var run = tool.Run(VersionOnly, McpRegistrar.ToolBudget);
+            var run = await tool.RunAsync(VersionOnly, McpRegistrar.ToolBudget);
 
             await Assert.That(run.Failure).IsNotNull();
             await Assert.That(run.Failure!).Contains("is not there");
@@ -467,19 +467,19 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AThrowingToolIsCaughtAndARefusedPathStartsNothing()
     {
-        using var install = ScratchDirectory.Create("registerai-throwing");
+        using var install = await ScratchDirectory.CreateAsync("registerai-throwing");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var (logger, log) = Capture();
 
-        var thrown = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Throws = true }, logger);
+        var thrown = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, image, new FakeRegisterAi { Throws = true }, logger);
 
         await Assert.That(thrown.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(thrown.Detail).Contains("asked to throw");
         await Assert.That(log.Records.Any(record => record.EventId.Id is 8)).IsTrue();
 
         var untouched = new FakeRegisterAi();
-        var refused = McpRegistrar.Apply(RegistrationClient.ClaudeCode, RegistrationIntent.Install, @"C:\install\BrowserAI.exe", untouched, logger);
+        var refused = await McpRegistrar.ApplyAsync(RegistrationClient.ClaudeCode, RegistrationIntent.Install, @"C:\install\BrowserAI.exe", untouched, logger);
 
         await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
         await Assert.That(untouched.Calls).IsEmpty();
@@ -500,15 +500,15 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AProjectRegistrationGivesBothClientsTheBareNameAndTheFolderItIsFoundIn()
     {
-        using var install = ScratchDirectory.Create("registerai-project");
-        using var project = ScratchDirectory.Create("registerai-project-repo");
+        using var install = await ScratchDirectory.CreateAsync("registerai-project");
+        using var project = await ScratchDirectory.CreateAsync("registerai-project-repo");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var tool = new FakeRegisterAi();
         var (logger, _) = Capture();
 
-        var codex = McpRegistrar.ApplyToProject(RegistrationClient.Codex, register: true, project.Path, image, tool, logger);
+        var codex = await McpRegistrar.ApplyToProjectAsync(RegistrationClient.Codex, register: true, project.Path, image, tool, logger);
         var call = tool.Calls.Single();
 
         await Assert.That(codex.Status).IsEqualTo(RegistrationStatus.Registered);
@@ -519,7 +519,7 @@ internal sealed class RegisterAiTests
 
         tool.Calls.Clear();
 
-        var claude = McpRegistrar.ApplyToProject(RegistrationClient.ClaudeCode, register: true, project.Path, image, tool, logger);
+        var claude = await McpRegistrar.ApplyToProjectAsync(RegistrationClient.ClaudeCode, register: true, project.Path, image, tool, logger);
         var claudeCall = tool.Calls.Single();
 
         await Assert.That(claude.Status).IsEqualTo(RegistrationStatus.Registered);
@@ -550,22 +550,22 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AnotherInstallsEntryInAProjectIsAnsweredWithWhatFixesThatProject()
     {
-        using var install = ScratchDirectory.Create("registerai-project-foreign");
-        using var elsewhere = ScratchDirectory.Create("registerai-project-foreign-other");
-        using var project = ScratchDirectory.Create("registerai-project-foreign-repo");
+        using var install = await ScratchDirectory.CreateAsync("registerai-project-foreign");
+        using var elsewhere = await ScratchDirectory.CreateAsync("registerai-project-foreign-other");
+        using var project = await ScratchDirectory.CreateAsync("registerai-project-foreign-repo");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var theirs = InstalledLayout.ServerIn(elsewhere.Path);
         var (logger, _) = Capture();
 
-        _ = InstalledLayout.Create(elsewhere.Path);
+        _ = await InstalledLayout.CreateAsync(elsewhere.Path);
 
         foreach (var who in RegistrationClient.All)
         {
             var tool = new FakeRegisterAi();
             tool.RegisterIn(who.ToolId, project.Path, theirs);
 
-            var refused = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, tool, logger);
+            var refused = await McpRegistrar.ApplyToProjectAsync(who, register: true, project.Path, image, tool, logger);
 
             await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
             await Assert.That(refused.Detail).Contains("Another BrowserAI is registered at");
@@ -574,7 +574,7 @@ internal sealed class RegisterAiTests
             await Assert.That(refused.Detail).Contains($"Register in a project for {who.DisplayName}").Because(refused.Detail);
 
             // An unregister in the project leaves the other install's entry to it.
-            var kept = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, tool, logger);
+            var kept = await McpRegistrar.ApplyToProjectAsync(who, register: false, project.Path, image, tool, logger);
 
             await Assert.That(kept.Status).IsEqualTo(RegistrationStatus.Refused);
             await Assert.That(kept.Detail).EndsWith("That entry belongs to the other install, and removing it is for that install to do.");
@@ -605,10 +605,10 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task AProjectRegistrationOrRemovalThatIsNotDoneIsToldWhatFixesThatProjectsFile()
     {
-        using var install = ScratchDirectory.Create("registerai-project-lines");
-        using var project = ScratchDirectory.Create("registerai-project-lines-repo");
+        using var install = await ScratchDirectory.CreateAsync("registerai-project-lines");
+        using var project = await ScratchDirectory.CreateAsync("registerai-project-lines-repo");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var (logger, _) = Capture();
         var said = new List<(string What, string Detail)>();
@@ -621,14 +621,14 @@ internal sealed class RegisterAiTests
 
             // A client whose write fails, then a RegisterAI that gives no answer.
             var failing = new FakeRegisterAi { Failing = { who.ToolId } };
-            var notWritten = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, failing, logger);
+            var notWritten = await McpRegistrar.ApplyToProjectAsync(who, register: true, project.Path, image, failing, logger);
 
             failing.RegisterIn(who.ToolId, project.Path, command);
-            var notRemoved = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, failing, logger);
+            var notRemoved = await McpRegistrar.ApplyToProjectAsync(who, register: false, project.Path, image, failing, logger);
 
             var silent = new FakeRegisterAi { Answer = new ToolRun(0, "not a document", string.Empty, TimedOut: false, null) };
-            var silentlyNotWritten = McpRegistrar.ApplyToProject(who, register: true, project.Path, image, silent, logger);
-            var silentlyNotRemoved = McpRegistrar.ApplyToProject(who, register: false, project.Path, image, silent, logger);
+            var silentlyNotWritten = await McpRegistrar.ApplyToProjectAsync(who, register: true, project.Path, image, silent, logger);
+            var silentlyNotRemoved = await McpRegistrar.ApplyToProjectAsync(who, register: false, project.Path, image, silent, logger);
 
             foreach (var (what, report) in new[] { ("not written", notWritten), ("no answer to a registration", silentlyNotWritten) })
             {
@@ -677,10 +677,10 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task TheStateIsReadWithOneRunAndOneMorePerProject()
     {
-        using var install = ScratchDirectory.Create("registerai-state");
-        using var repo = ScratchDirectory.Create("registerai-state-repo");
+        using var install = await ScratchDirectory.CreateAsync("registerai-state");
+        using var repo = await ScratchDirectory.CreateAsync("registerai-state-repo");
 
-        _ = InstalledLayout.Create(install.Path);
+        _ = await InstalledLayout.CreateAsync(install.Path);
 
         var server = InstalledLayout.ServerIn(install.Path);
         var deep = Directory.CreateDirectory(Path.Combine(repo.Path, "src", "deep")).FullName;
@@ -695,7 +695,7 @@ internal sealed class RegisterAiTests
         // the installer's PATH entry points (previously the server's absolute path).
         tool.RegisterIn("claude-code", repo.Path, RegistrationTarget.AppFileName);
 
-        var readings = RegistrationReader.Read(tool, RegistrationClient.All, install.Path, server, deep);
+        var readings = await RegistrationReader.ReadAsync(tool, RegistrationClient.All, install.Path, server, deep);
 
         await Assert.That(tool.Verbs).IsEquivalentTo(["status", "status"]);
         await Assert.That(FakeRegisterAi.Option(tool.Calls[0], "--client")).IsEqualTo("all");
@@ -725,12 +725,12 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task ARegisterAiThatCannotBeAskedLeavesEveryClientUnknownAndOffersNothing()
     {
-        using var install = ScratchDirectory.Create("registerai-unknown");
+        using var install = await ScratchDirectory.CreateAsync("registerai-unknown");
 
-        _ = InstalledLayout.Create(install.Path);
+        _ = await InstalledLayout.CreateAsync(install.Path);
 
         var missing = new RegisterAiTool(Path.Combine(install.Path, "current", "payload", "registerai", "RegisterAI.exe"));
-        var readings = RegistrationReader.Read(missing, RegistrationClient.All, install.Path, InstalledLayout.ServerIn(install.Path), install.Path);
+        var readings = await RegistrationReader.ReadAsync(missing, RegistrationClient.All, install.Path, InstalledLayout.ServerIn(install.Path), install.Path);
 
         foreach (var reading in readings)
         {
@@ -768,7 +768,7 @@ internal sealed class RegisterAiTests
     [Test]
     public async Task ThePayloadsRegisterAiWritesTheSchemaThisReaderReads()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var exe = RepositoryPayload.RegisterAi;
 
@@ -808,7 +808,7 @@ internal sealed class RegisterAiTests
         await Assert.That(string.Join(", ", StateWords.Except(states))).IsEmpty();
 
         // A real document reads.
-        using var scratch = ScratchDirectory.Create("registerai-schema");
+        using var scratch = await ScratchDirectory.CreateAsync("registerai-schema");
 
         var run = await RunAsync(
             exe,

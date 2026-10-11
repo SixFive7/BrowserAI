@@ -35,7 +35,7 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task TheDefaultViewportIsTheOneMeasuredAgainstTheImageCap()
     {
-        var opinions = OpinionsOf(RunOptions.Default);
+        var opinions = await OpinionsOfAsync(RunOptions.Default);
 
         await Assert.That(opinions["browser.contextOptions.viewport.width"]).IsEqualTo("1920");
         await Assert.That(opinions["browser.contextOptions.viewport.height"]).IsEqualTo("1080");
@@ -83,7 +83,7 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task LocaleAndTimeZoneComeFromTheHostAndAnArgumentOverridesThem()
     {
-        var host = OpinionsOf(RunOptions.Default);
+        var host = await OpinionsOfAsync(RunOptions.Default);
 
         await Assert.That(host["browser.contextOptions.locale"]).IsEqualTo($"\"{BrowserConfiguration.HostLocale}\"");
 
@@ -108,7 +108,7 @@ internal sealed partial class RunOptionTests
             await Assert.That(host.ContainsKey("browser.contextOptions.timezoneId")).IsFalse();
         }
 
-        var overridden = OpinionsOf(RunOptions.Default with { Locale = "de-DE", TimeZone = "America/New_York" });
+        var overridden = await OpinionsOfAsync(RunOptions.Default with { Locale = "de-DE", TimeZone = "America/New_York" });
 
         await Assert.That(overridden["browser.contextOptions.locale"]).IsEqualTo("\"de-DE\"");
         await Assert.That(overridden["browser.contextOptions.timezoneId"]).IsEqualTo("\"America/New_York\"");
@@ -117,9 +117,9 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task TlsErrorsAreNotIgnoredUnlessAskedFor()
     {
-        await Assert.That(OpinionsOf(RunOptions.Default)["browser.contextOptions.ignoreHTTPSErrors"]).IsEqualTo("false");
+        await Assert.That((await OpinionsOfAsync(RunOptions.Default))["browser.contextOptions.ignoreHTTPSErrors"]).IsEqualTo("false");
 
-        await Assert.That(OpinionsOf(RunOptions.Default with { IgnoreHttpsErrors = true })["browser.contextOptions.ignoreHTTPSErrors"])
+        await Assert.That((await OpinionsOfAsync(RunOptions.Default with { IgnoreHttpsErrors = true }))["browser.contextOptions.ignoreHTTPSErrors"])
             .IsEqualTo("true");
     }
 
@@ -140,12 +140,12 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task NetworkCaptureWritesAHarAndBlocksServiceWorkers()
     {
-        var off = OpinionsOf(RunOptions.Default);
+        var off = await OpinionsOfAsync(RunOptions.Default);
 
         await Assert.That(off.Keys.Any(key => key.Contains("recordHar", StringComparison.Ordinal))).IsFalse();
         await Assert.That(off.ContainsKey("browser.contextOptions.serviceWorkers")).IsFalse();
 
-        var on = OpinionsOf(RunOptions.Default with { CaptureNetwork = true });
+        var on = await OpinionsOfAsync(RunOptions.Default with { CaptureNetwork = true });
 
         await Assert.That(on["browser.contextOptions.serviceWorkers"]).IsEqualTo("\"block\"");
         await Assert.That(on["browser.contextOptions.recordHar.mode"]).IsEqualTo("\"full\"");
@@ -181,7 +181,7 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task EveryLaunchGetsItsOwnArchiveFilenameAtTheOutputRoot()
     {
-        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, $"har-{Guid.NewGuid():N}"));
+        var session = SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"har-{Guid.NewGuid():N}"));
 
         var config = BrowserConfiguration.ForSession(
             session,
@@ -224,7 +224,7 @@ internal sealed partial class RunOptionTests
     public async Task TheHardCodedOpinionsAreTheSameForEverySession(string browser, bool headed)
     {
         var opinions = BrowserConfiguration.ForSession(
-                SessionPath.For(Path.Combine(ScratchRoot.Path, $"hard-coded-{browser}-{headed}")),
+                SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"hard-coded-{browser}-{headed}")),
                 headed,
                 browser,
                 transcript: false,
@@ -275,7 +275,7 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task TheArgumentsSurviveTheFrontDoorAndABadViewportIsRefused()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "front-door-run-options");
@@ -305,7 +305,7 @@ internal sealed partial class RunOptionTests
         await Assert.That(text).Contains("NETWORK CAPTURE IS ON");
         await Assert.That(text).Contains("Service workers are BLOCKED");
 
-        var config = ConfigOf(sessions, directory);
+        var config = await ConfigOfAsync(sessions, directory);
 
         await Assert.That((int?)config["browser"]?["contextOptions"]?["viewport"]?["width"]).IsEqualTo(1280);
         await Assert.That((string?)config["browser"]?["contextOptions"]?["locale"]).IsEqualTo("de-DE");
@@ -334,9 +334,9 @@ internal sealed partial class RunOptionTests
     /// <summary>The generated config for one set of run options, flattened.</summary>
     /// <param name="run">What the launch was asked for.</param>
     /// <returns>Dotted key to serialised value.</returns>
-    private static Dictionary<string, string> OpinionsOf(RunOptions run) =>
+    private static async Task<Dictionary<string, string>> OpinionsOfAsync(RunOptions run) =>
         BrowserConfiguration.ForSession(
-                SessionPath.For(Path.Combine(ScratchRoot.Path, $"run-options-{Guid.NewGuid():N}")),
+                SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"run-options-{Guid.NewGuid():N}")),
                 headed: false,
                 SessionManager.DefaultBrowser,
                 transcript: false,
@@ -355,12 +355,12 @@ internal sealed partial class RunOptionTests
     /// <param name="sessions">The rig.</param>
     /// <param name="directory">The session directory.</param>
     /// <returns>The parsed config.</returns>
-    private static JsonObject ConfigOf(RigSessionEnvironment sessions, string directory)
+    private static async Task<JsonObject> ConfigOfAsync(RigSessionEnvironment sessions, string directory)
     {
         var hash = SessionPath.For(directory).Hash[..16];
         var file = Directory.EnumerateFiles(sessions.Environment.InstanceDirectory, $"playwright-mcp-{hash}.json").Single();
 
-        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+        return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
 
     [GeneratedRegex(@"^network-\d{8}-\d{9}\.har$")]

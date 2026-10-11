@@ -60,33 +60,33 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task AnUpdaterRunningFromThisInstallOutranksARecordedCrashAndTheTask()
     {
-        using var data = ScratchDirectory.Create("finder-updater");
-        using var install = ScratchDirectory.Create("finder-updater-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-updater");
+        using var install = await ScratchDirectory.CreateAsync("finder-updater-install");
 
         var seams = new FinderSeams { UpdaterRuns = true, Task = new ScheduledTaskReading(ScheduledTaskState.Missing, null) };
         using var logs = new CapturingLoggerProvider();
         var settings = Settings(data.Path, install.Path, TaskName, seams, new ManualClock());
 
-        HandWrittenRecord.Gone(settings.RecordPath);
+        await HandWrittenRecord.GoneAsync(settings.RecordPath);
 
         using var finder = new BackgroundFinder(settings, logs.CreateLogger("BrowserAI.Relay"));
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.UpdateInstalling>();
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.UpdateInstalling>();
         await Assert.That(string.Join(" | ", seams.UpdatersLookedFor)).IsEqualTo(install.Path);
         await Assert.That(seams.UpdatersLetGo).IsEqualTo(1).Because("the updater found was held past the look");
         await Assert.That(seams.TasksRead).IsEmpty();
-        await Assert.That(BackgroundRecord.Read(settings.RecordPath)!.ExitedAt).IsNull().Because("nothing below the updater was even read");
+        await Assert.That((await BackgroundRecord.ReadAsync(settings.RecordPath))!.ExitedAt).IsNull().Because("nothing below the updater was even read");
 
         // Gone: the crash it outranked.
         seams.UpdaterRuns = false;
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Crashed>();
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Crashed>();
 
         // An updater that cannot be looked for is read as none, and the log says so.
         seams.UpdaterUnreadable = true;
         BackgroundRecord.Clear(settings.RecordPath);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Missing, TaskName, null));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Missing, TaskName, null));
         // 23 since 2026-10-10, round 2 of the texts review, #195 (previously 1, which the
         // relay's own Connected line has too).
         await Assert.That(logs.Records.Count(record => record.EventId.Id is 23 && record.Level is LogLevel.Warning)).IsEqualTo(1);
@@ -113,8 +113,8 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task ALiveRecordIsAStartAGoneOneACrashAndACleanEndNeither()
     {
-        using var data = ScratchDirectory.Create("finder-records");
-        using var install = ScratchDirectory.Create("finder-records-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-records");
+        using var install = await ScratchDirectory.CreateAsync("finder-records-install");
 
         var seams = new FinderSeams();
         var clock = new ManualClock();
@@ -123,34 +123,34 @@ internal sealed class BackgroundFinderTests
         using var finder = new BackgroundFinder(settings, NullLogger.Instance);
 
         // Alive: this process's own record.
-        _ = BackgroundRecord.Started(settings.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
+        _ = await BackgroundRecord.StartedAsync(settings.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Starting>();
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Starting>();
 
         // Gone, with what a relay that held it saw.
         var exitedAt = HandWrittenRecord.StartedAt.AddMinutes(17);
-        HandWrittenRecord.Gone(settings.RecordPath, exitCode: unchecked((int)0xC0000409), exitedAt);
+        await HandWrittenRecord.GoneAsync(settings.RecordPath, exitCode: unchecked((int)0xC0000409), exitedAt);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null))
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null))
             .IsEqualTo(new BackgroundAbsence.Crashed(exitedAt, unchecked((int)0xC0000409), settings.LogPath));
 
         // Gone, with nothing recorded: the moment this relay found it gone, and no code.
-        HandWrittenRecord.Gone(settings.RecordPath);
+        await HandWrittenRecord.GoneAsync(settings.RecordPath);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null))
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null))
             .IsEqualTo(new BackgroundAbsence.Crashed(clock.GetUtcNow(), null, settings.LogPath));
 
         await Assert.That(seams.TasksRead).IsEmpty().Because("a start and a crash are answered from the record alone");
 
         // Ended cleanly, gone or not: no crash, and the task says the rest.
-        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.EndCommand));
+        await HandWrittenRecord.WriteAsync(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.EndCommand));
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
 
-        _ = BackgroundRecord.Started(settings.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
-        _ = BackgroundRecord.EndedCleanly(settings.RecordPath, BackgroundEnd.Stopped, HandWrittenRecord.StartedAt.AddHours(2));
+        _ = await BackgroundRecord.StartedAsync(settings.RecordPath, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
+        _ = await BackgroundRecord.EndedCleanlyAsync(settings.RecordPath, BackgroundEnd.Stopped, HandWrittenRecord.StartedAt.AddHours(2));
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Ready, TaskName, null));
         await Assert.That(seams.TasksRead.Count).IsEqualTo(2);
     }
 
@@ -174,8 +174,8 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task ACrashIsTimedOnceSoEveryRelayNamesTheSameMoment()
     {
-        using var data = ScratchDirectory.Create("finder-crash-time");
-        using var install = ScratchDirectory.Create("finder-crash-time-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-crash-time");
+        using var install = await ScratchDirectory.CreateAsync("finder-crash-time-install");
 
         var firstClock = new ManualClock();
         var secondClock = new ManualClock();
@@ -186,7 +186,7 @@ internal sealed class BackgroundFinderTests
         var first = Settings(data.Path, install.Path, TaskName, new FinderSeams(), firstClock);
         var second = first with { Clock = secondClock };
 
-        HandWrittenRecord.Gone(first.RecordPath);
+        await HandWrittenRecord.GoneAsync(first.RecordPath);
 
         using var firstRelay = new BackgroundFinder(first, NullLogger.Instance);
         using var secondRelay = new BackgroundFinder(second, NullLogger.Instance);
@@ -194,14 +194,14 @@ internal sealed class BackgroundFinderTests
         var found = firstClock.GetUtcNow();
         var expected = new BackgroundAbsence.Crashed(found, null, first.LogPath);
 
-        await Assert.That(firstRelay.Explain(lastBackgroundPid: null)).IsEqualTo(expected);
-        await Assert.That(secondRelay.Explain(lastBackgroundPid: null)).IsEqualTo(expected).Because("the second relay named its own time for the same crash");
+        await Assert.That(await firstRelay.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(expected);
+        await Assert.That(await secondRelay.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(expected).Because("the second relay named its own time for the same crash");
 
         firstClock.Advance(TimeSpan.FromHours(5));
 
-        await Assert.That(firstRelay.Explain(lastBackgroundPid: null)).IsEqualTo(expected);
+        await Assert.That(await firstRelay.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(expected);
 
-        var record = BackgroundRecord.Read(first.RecordPath)!;
+        var record = (await BackgroundRecord.ReadAsync(first.RecordPath))!;
 
         await Assert.That(record.ExitedAt).IsEqualTo(found);
         await Assert.That(record.ExitCode).IsNull();
@@ -232,8 +232,8 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task TheExitCodeOfTheBackgroundARelayHeldIsWrittenIntoItsRecord()
     {
-        using var data = ScratchDirectory.Create("finder-exit-code");
-        using var install = ScratchDirectory.Create("finder-exit-code-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-exit-code");
+        using var install = await ScratchDirectory.CreateAsync("finder-exit-code-install");
 
         const int ExitCode = 77;
 
@@ -243,7 +243,7 @@ internal sealed class BackgroundFinderTests
 
         using var scope = new JobObjectScope();
 
-        var standIn = scope.Launch(
+        var standIn = await scope.LaunchAsync(
             Path.Combine(AppContext.BaseDirectory, ProbeImage.Name + ".exe"),
             data.Path,
             "background-standin",
@@ -253,7 +253,7 @@ internal sealed class BackgroundFinderTests
             ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         await BackgroundServerRig.WaitUntilAsync(() => File.Exists(ready) || standIn.HasExited, "the stand-in never took the pipe");
-        await Assert.That(standIn.HasExited).IsFalse().Because(scope.SaidBy(standIn.Id));
+        await Assert.That(standIn.HasExited).IsFalse().Because(await scope.SaidByAsync(standIn.Id));
 
         using var finder = new BackgroundFinder(settings, NullLogger.Instance);
         using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
@@ -268,11 +268,11 @@ internal sealed class BackgroundFinderTests
 
         await BackgroundServerRig.WaitUntilAsync(() => standIn.HasExited, "the stand-in did not end when its input closed");
 
-        var absence = finder.Explain(lastBackgroundPid: standIn.Id);
+        var absence = await finder.ExplainAsync(lastBackgroundPid: standIn.Id);
 
         await Assert.That(absence).IsEqualTo(new BackgroundAbsence.Crashed(clock.GetUtcNow(), ExitCode, settings.LogPath));
 
-        var record = BackgroundRecord.Read(settings.RecordPath)!;
+        var record = (await BackgroundRecord.ReadAsync(settings.RecordPath))!;
 
         await Assert.That(record.ProcessId).IsEqualTo(standIn.Id);
         await Assert.That(record.ExitCode).IsEqualTo(ExitCode);
@@ -310,8 +310,8 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task ARefusedRootIsNamedAsTheRefusalAndALaterBuildsEndIsNoCrash()
     {
-        using var data = ScratchDirectory.Create("finder-refused");
-        using var install = ScratchDirectory.Create("finder-refused-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-refused");
+        using var install = await ScratchDirectory.CreateAsync("finder-refused-install");
 
         var seams = new FinderSeams();
         var settings = Settings(data.Path, install.Path, TaskName, seams, new ManualClock());
@@ -324,28 +324,28 @@ internal sealed class BackgroundFinderTests
         using var finder = new BackgroundFinder(settings, NullLogger.Instance);
 
         // Written by this process, which is alive: a refusal all the same, never a start.
-        _ = BackgroundRecord.Refused(settings.RecordPath, BackgroundServerRig.Build, "image", refusal, HandWrittenRecord.StartedAt);
+        _ = await BackgroundRecord.RefusedAsync(settings.RecordPath, BackgroundServerRig.Build, "image", refusal, HandWrittenRecord.StartedAt);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(refusal, settings.LogPath));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(refusal, settings.LogPath));
 
         // Gone, and nothing about it is a crash.
-        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.Refused));
+        await HandWrittenRecord.WriteAsync(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: nameof(BackgroundEnd.Refused));
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(null, settings.LogPath));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.RootRefused(null, settings.LogPath));
         await Assert.That(seams.TasksRead).IsEmpty().Because("a refusal is answered from the record alone");
 
         // An end another version wrote, gone: an update or a downgrade, named by that
         // version, and never a crash.
-        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites", build: "9.9.10-a-later-build");
+        await HandWrittenRecord.WriteAsync(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites", build: "9.9.10-a-later-build");
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(
             new BackgroundAbsence.UnreadableEnd("9.9.10-a-later-build", ThisBuild: false, HandWrittenRecord.StartedAt.AddHours(1), settings.LogPath));
-        await Assert.That(BackgroundRecord.Read(settings.RecordPath)!.ExitedAt).IsNull().Because("an end was timed as a crash");
+        await Assert.That((await BackgroundRecord.ReadAsync(settings.RecordPath))!.ExitedAt).IsNull().Because("an end was timed as a crash");
 
         // The same end written by this same version: a bug, and still no crash.
-        HandWrittenRecord.Write(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites");
+        await HandWrittenRecord.WriteAsync(settings.RecordPath, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: "SomethingALaterBuildWrites");
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(
             new BackgroundAbsence.UnreadableEnd(BackgroundServerRig.Build, ThisBuild: true, HandWrittenRecord.StartedAt.AddHours(1), settings.LogPath));
         await Assert.That(seams.TasksRead).IsEmpty().Because("an end the record names is answered from the record alone");
     }
@@ -386,15 +386,15 @@ internal sealed class BackgroundFinderTests
     [Arguments(ScheduledTaskState.Unknown, TaskState.Unknown)]
     public async Task TheTaskIsReadWithoutChangingItAndEachOfItsStatesIsNamed(ScheduledTaskState read, TaskState named)
     {
-        using var data = ScratchDirectory.Create("finder-task");
-        using var install = ScratchDirectory.Create("finder-task-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-task");
+        using var install = await ScratchDirectory.CreateAsync("finder-task-install");
 
         var detail = read is ScheduledTaskState.Unknown ? "The task scheduler could not read 'it': 0x80070005, Access is denied." : null;
         var seams = new FinderSeams { Task = new ScheduledTaskReading(read, detail) };
 
         using var finder = new BackgroundFinder(Settings(data.Path, install.Path, TaskName, seams, new ManualClock()), NullLogger.Instance);
 
-        await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(named, TaskName, detail));
+        await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(named, TaskName, detail));
         await Assert.That(string.Join(" | ", seams.TasksRead)).IsEqualTo(TaskName);
     }
 
@@ -418,20 +418,20 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task ABuildThatIsNotInstalledIsNamedAndNothingElseIsAsked()
     {
-        using var data = ScratchDirectory.Create("finder-not-installed");
-        using var install = ScratchDirectory.Create("finder-not-installed-install");
+        using var data = await ScratchDirectory.CreateAsync("finder-not-installed");
+        using var install = await ScratchDirectory.CreateAsync("finder-not-installed-install");
 
         var seams = new FinderSeams();
         var settings = Settings(data.Path, installRoot: null, TaskName, seams, new ManualClock());
 
         using (var finder = new BackgroundFinder(settings, NullLogger.Instance))
         {
-            await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotInstalled(Executable, data.Path));
+            await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotInstalled(Executable, data.Path));
 
             // A crash recorded for it is named first.
-            HandWrittenRecord.Gone(settings.RecordPath);
+            await HandWrittenRecord.GoneAsync(settings.RecordPath);
 
-            await Assert.That(finder.Explain(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Crashed>();
+            await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsTypeOf<BackgroundAbsence.Crashed>();
         }
 
         await Assert.That(seams.TasksRead).IsEmpty();
@@ -445,7 +445,7 @@ internal sealed class BackgroundFinderTests
 
         using (var finder = new BackgroundFinder(unnamed, NullLogger.Instance))
         {
-            await Assert.That(finder.Explain(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null));
+            await Assert.That(await finder.ExplainAsync(lastBackgroundPid: null)).IsEqualTo(new BackgroundAbsence.NotRunning(TaskState.Unnamed, string.Empty, null));
         }
 
         await Assert.That(seams.TasksRead).IsEmpty();
@@ -473,7 +473,7 @@ internal sealed class BackgroundFinderTests
     [Test]
     public async Task ALookForAPipeNobodyServesAnswersNothing()
     {
-        using var data = ScratchDirectory.Create("finder-connect");
+        using var data = await ScratchDirectory.CreateAsync("finder-connect");
 
         using var logs = new CapturingLoggerProvider();
         var settings = Settings(data.Path, installRoot: null, TaskName, new FinderSeams(), new ManualClock());
@@ -546,10 +546,10 @@ internal sealed class BackgroundFinderTests
         /// <summary>The task's reading.</summary>
         /// <param name="name">The task.</param>
         /// <returns>What it reads as.</returns>
-        public ScheduledTaskReading ReadTask(string name)
+        public System.Threading.Tasks.Task<ScheduledTaskReading> ReadTask(string name)
         {
             TasksRead.Add(name);
-            return Task;
+            return System.Threading.Tasks.Task.FromResult(Task);
         }
 
         /// <summary>The updater, held, when it runs.</summary>

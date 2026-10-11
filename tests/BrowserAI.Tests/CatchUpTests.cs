@@ -33,7 +33,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task ItReportsWhatWasDoneAndWhatIsHereAndTheTwoAreSeparate()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
             opensDefaultSession: false);
 
@@ -149,7 +149,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task EveryFileThatHoldsLoginDataInClearTextIsNamed()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "all-the-files");
@@ -250,7 +250,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task EveryFileThatCanHoldSomethingSensitiveIsNamedKindByKind()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "every-kind");
@@ -368,7 +368,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task AProfileWithNoCookieStoreIsNamedForWhatElseItHolds()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var browsed = Path.Combine(sessions.Root, "browsed-without-cookies");
@@ -445,7 +445,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task TheBrowsersTemporaryFolderIsNamedWithWhatItHoldsAndGoesWithTheSession()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var used = Path.Combine(sessions.Root, "temporary-files");
@@ -524,7 +524,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task ItIsReadOnlyAndAnswersForASessionSomethingElseIsDriving()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "read-only");
@@ -543,7 +543,7 @@ internal sealed class CatchUpTests
         // `FileShare.Read`, so `File.ReadAllBytes` -- which asks for a share
         // mode of None -- is refused.
         var file = Path.Combine(directory, SessionLayout.LockFileName);
-        var before = ReadSharing(file);
+        var before = await ReadSharingAsync(file);
         var written = File.GetLastWriteTimeUtc(file);
 
         // This BrowserAI is driving the session, so the per-directory gate is
@@ -555,7 +555,7 @@ internal sealed class CatchUpTests
         }));
 
         await Assert.That(text).Contains("a session that is being held while it is read");
-        await Assert.That(ReadSharing(file)).IsEquivalentTo(before);
+        await Assert.That(await ReadSharingAsync(file)).IsEquivalentTo(before);
         await Assert.That(File.GetLastWriteTimeUtc(file)).IsEqualTo(written);
 
         // ⚠️ AND THE LOG GAINS THE READ'S OWN ROW SINCE 2026-10-04, written after
@@ -595,11 +595,11 @@ internal sealed class CatchUpTests
     [Test]
     public async Task ItTakesARequiredWhyAndWritesNoRowToASessionItDoesNotHold()
     {
-        var root = Path.Combine(ScratchRoot.Path, $"catch-up-why-{Guid.NewGuid():N}");
+        var root = Path.Combine(await ScratchRoot.PathAsync(), $"catch-up-why-{Guid.NewGuid():N}");
         var directory = Path.Combine(root, "held-elsewhere-then-released");
 
         // Made by one BrowserAI, which then goes away and releases it.
-        await using (var first = RigSessionEnvironment.Create(opensDefaultSession: false))
+        await using (var first = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false))
         await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: first))
         {
             _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -613,7 +613,7 @@ internal sealed class CatchUpTests
             });
         }
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var reader = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var refused = await CallAsync(reader, SessionToolSurface.CatchUp, new JsonObject { ["session"] = directory });
@@ -662,7 +662,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task AnInitPurposeIsPrintedInFullOnceAndNeverAgainAsATruncatedArgument()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "printed-once");
@@ -735,7 +735,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task ResumeAndSetPurposeRecordTheNewPurposeAsADatedStatement()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "two-values");
@@ -784,7 +784,7 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains("and the same 500 on the mobile checkout");
         await Assert.That(text).Contains("tracking the checkout redirect loop on staging");
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         await Assert.That(record.PurposeHistory.Select(statement => statement.Value).ToArray())
             .IsEquivalentTo([
@@ -837,7 +837,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task TheLogIsPagedFromTheOldestEndAndAnEarlierPageNeverMoves()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
             opensDefaultSession: false);
 
@@ -962,7 +962,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task APageNumberOutsideIntIsRefusedQuotingTheNumberTheCallerSent()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "paged-past-int");
@@ -1031,7 +1031,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task AStaleInFlightRowSaysNoAnswerWasRecordedAndAFailureCarriesWhy()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "stale-in-flight");
@@ -1110,7 +1110,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task AHeldBackResumeIsListedAsHeldBackAndNotAsFailed()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "held-back");
@@ -1171,7 +1171,7 @@ internal sealed class CatchUpTests
     [Test]
     public async Task ADirectoryThatIsNotASessionIsRefusedWithSomewhereToGo()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "never-a-session");
@@ -1195,12 +1195,12 @@ internal sealed class CatchUpTests
     /// <summary>Reads a file its holder has open.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its bytes.</returns>
-    private static byte[] ReadSharing(string path)
+    private static async Task<byte[]> ReadSharingAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var buffer = new MemoryStream();
 
-        stream.CopyTo(buffer);
+        await stream.CopyToAsync(buffer);
 
         return buffer.ToArray();
     }

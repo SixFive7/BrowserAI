@@ -23,7 +23,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task ToolsListReturnsTheChildsToolsWithUpstreamsOwnNames()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -88,7 +88,7 @@ internal sealed class VerticalSliceTests
         // comparing the two: the child really does advertise something BrowserAI
         // does not, so a proxy that started copying the child's capabilities
         // wholesale would be caught here instead of passing by agreement.
-        await Assert.That(UpstreamSurface.ServerCapabilities())
+        await Assert.That(await UpstreamSurface.ServerCapabilitiesAsync())
             .IsNotEqualTo(run.InitializeResult["capabilities"]?.ToJsonString())
             .Because(
                 "if upstream's capabilities and BrowserAI's are identical again, the literal above has stopped "
@@ -132,7 +132,7 @@ internal sealed class VerticalSliceTests
         // snapshot and not typed, and the filter is still applied through the
         // product's own predicate over the product's own file -- so the day the
         // decision is reversed, in the file, this test follows it.
-        var expectedUpstream = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities)
+        var expectedUpstream = (await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities))
             .Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool))
             .ToList();
 
@@ -217,7 +217,7 @@ internal sealed class VerticalSliceTests
         // the tool.
         foreach (var denial in RepositoryVerdicts.TheDenials)
         {
-            await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities))
+            await Assert.That(await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities))
                 .Contains(denial.Name);
         }
 
@@ -262,7 +262,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task EveryUpstreamToolGainsBothInjectedParametersAndNoneLosesItsOwn()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var offenders = new List<string>();
@@ -314,7 +314,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task NavigatingToADataUrlReturnsANonErrorResultThatNamesThePage()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -361,7 +361,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task AScreenshotComesBackInlineAsWellAsAsAFileWithALegibleName()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var content = run.ScreenshotEnvelope["result"]?["content"]?.AsArray() ?? [];
@@ -527,7 +527,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task KillingThePublishedBinaryLeavesNoNodeAndNoBrowser()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 

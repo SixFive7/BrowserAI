@@ -53,11 +53,11 @@ internal sealed class ProbeChild : IAsyncDisposable
             StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Every frame the child received, exactly as its bytes arrived.</summary>
-    public byte[] ReceivedFrameBytes()
+    public async Task<byte[]> ReceivedFrameBytesAsync()
     {
-        using var stream = new FileStream(_framePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(_framePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var buffer = new MemoryStream();
-        stream.CopyTo(buffer);
+        await stream.CopyToAsync(buffer);
         return buffer.ToArray();
     }
 
@@ -73,7 +73,7 @@ internal sealed class ProbeChild : IAsyncDisposable
         Action<string>? standardErrorLines = null,
         IEnumerable<KeyValuePair<string, string>>? additionalEnvironment = null)
     {
-        var scratch = ScratchDirectory.Create(label);
+        var scratch = await ScratchDirectory.CreateAsync(label);
 
         try
         {

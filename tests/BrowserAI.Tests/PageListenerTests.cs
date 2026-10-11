@@ -121,7 +121,7 @@ internal sealed class PageListenerTests
     public async Task OverARealSocketEveryRefusalIsABare404AndNoRouteRuns()
     {
         var routes = new CountingRoutes();
-        using var listener = PageListener.Start(routes, NullLogger.Instance);
+        await using var listener = await PageListener.StartAsync(routes, NullLogger.Instance);
 
         var port = listener.Gate.Port;
         var token = listener.Gate.Token;
@@ -204,7 +204,7 @@ internal sealed class PageListenerTests
     public async Task WhatKestrelRefusesItselfIsAnsweredEmptyAndReachesNoRoute()
     {
         var routes = new CountingRoutes();
-        using var listener = PageListener.Start(routes, NullLogger.Instance);
+        await using var listener = await PageListener.StartAsync(routes, NullLogger.Instance);
 
         var port = listener.Gate.Port;
         var token = listener.Gate.Token;
@@ -263,7 +263,7 @@ internal sealed class PageListenerTests
     public async Task NothingElseOfThisAccountCanTakeTheListenersAddress()
     {
         var routes = new CountingRoutes();
-        using var listener = PageListener.Start(routes, NullLogger.Instance);
+        await using var listener = await PageListener.StartAsync(routes, NullLogger.Instance);
 
         var port = listener.Gate.Port;
 

@@ -36,7 +36,7 @@ internal sealed class HeadlessBinaryTests
     [Test]
     public async Task TheResolvedBrowserIsOurChromiumAndNotTheHeadlessShell()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var browser = run.BrowserProcess(BrowserAiPaths.BrowsersDirectory);
@@ -74,9 +74,9 @@ internal sealed class HeadlessBinaryTests
     [Test]
     public async Task AnEmptyBrowsersDirectoryFailsRatherThanFallingBackToSystemChrome()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("empty-browsers-root");
+        using var scratch = await ScratchDirectory.CreateAsync("empty-browsers-root");
 
         var browsers = Path.Combine(scratch.Path, "browsers");
         var work = Path.Combine(scratch.Path, "work");
@@ -88,7 +88,7 @@ internal sealed class HeadlessBinaryTests
         // test of the config BrowserAI writes and not of a config invented
         // here: delete `browserName` or the channel from BrowserConfiguration
         // and this test goes green while the premise dies.
-        var options = ChildLaunch.Create(
+        var options = await ChildLaunch.CreateAsync(
             RepositoryPayload.Layout,
             browsers,
             work,
@@ -98,7 +98,7 @@ internal sealed class HeadlessBinaryTests
             // the run's own child's, deleted that day with the tool list compiled in).
             BrowserConfiguration.ForSession(SessionPath.For(Path.Combine(scratch.Path, "session")), headed: false, BrowserConfiguration.BrowserName, transcript: false, RunOptions.Default));
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             options.Command,
             options.Arguments,
             options.WorkingDirectory,

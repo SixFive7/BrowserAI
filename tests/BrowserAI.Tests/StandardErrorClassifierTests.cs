@@ -143,16 +143,16 @@ internal sealed class StandardErrorClassifierTests
     [Test]
     public async Task AStartupDiagnosticFromARealChildReachesTheLogAtAWarning()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("stderr-diagnostic");
+        using var scratch = await ScratchDirectory.CreateAsync("stderr-diagnostic");
         using var capture = new CapturingLoggerProvider();
         using var factory = Factory(capture);
 
         // The product's own launch options, with one flag added: the one upstream
         // deleted in 0.0.79. No browser is involved -- the child rejects the
         // command line and dies -- so this costs a second and runs every build.
-        var options = WithArguments(LaunchOptions(scratch.Path, saveSession: false), DeadFlag);
+        var options = WithArguments(await LaunchOptionsAsync(scratch.Path, saveSession: false), DeadFlag);
         var transport = new DirectStdioClientTransport(options, factory);
         var session = (ChildProcessSession)await transport.ConnectAsync();
 
@@ -189,9 +189,9 @@ internal sealed class StandardErrorClassifierTests
     [Test]
     public async Task ARealHealthyStartPrintsTheBenignSessionLineAndIsNotWarnedAbout()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("stderr-benign");
+        using var scratch = await ScratchDirectory.CreateAsync("stderr-benign");
         using var capture = new CapturingLoggerProvider();
         using var factory = Factory(capture);
 
@@ -199,7 +199,7 @@ internal sealed class StandardErrorClassifierTests
         // product's own `tracing` modifier and not a test-only key. A real
         // browser is launched, because the line is written when the backend
         // initialises a context and not before.
-        var options = LaunchOptions(scratch.Path, saveSession: true);
+        var options = await LaunchOptionsAsync(scratch.Path, saveSession: true);
         var transport = new DirectStdioClientTransport(options, factory);
 
         await using (var child = await ChildConnection.ConnectAsync(
@@ -259,12 +259,12 @@ internal sealed class StandardErrorClassifierTests
             _ = builder.AddProvider(capture);
         });
 
-    private static ChildProcessOptions LaunchOptions(string root, bool saveSession)
+    private static async Task<ChildProcessOptions> LaunchOptionsAsync(string root, bool saveSession)
     {
         var work = Path.Combine(root, "work");
         _ = Directory.CreateDirectory(work);
 
-        return ChildLaunch.Create(
+        return await ChildLaunch.CreateAsync(
             RepositoryPayload.Layout,
             BrowserAiPaths.BrowsersDirectory,
             work,

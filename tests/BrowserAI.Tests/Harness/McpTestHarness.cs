@@ -219,7 +219,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
         BrowserProxy? proxy = null;
         DirectStdioServerTransport? serverTransport = null;
         McpServer? server = null;
-        var sessionEnvironment = sessions ?? RigSessionEnvironment.Create(configure, toolsList: toolsList);
+        var sessionEnvironment = sessions ?? await RigSessionEnvironment.CreateAsync(configure, toolsList: toolsList);
 
         // Before the first session is opened, so `Logs` means "this rig logged
         // it" at either scope. A session's records stopped reaching the

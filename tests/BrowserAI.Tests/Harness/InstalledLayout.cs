@@ -42,7 +42,7 @@ internal static class InstalledLayout
     /// </remarks>
     /// <param name="root">The install root.</param>
     /// <returns>The one executable's image path, which is what a hook runs as.</returns>
-    public static string Create(string root)
+    public static async Task<string> CreateAsync(string root)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
 
@@ -51,7 +51,7 @@ internal static class InstalledLayout
 
         var app = Path.Combine(current.FullName, RegistrationTarget.AppFileName);
 
-        WritePortableExecutable(app, PeSubsystem.WindowsGui);
+        await WritePortableExecutableAsync(app, PeSubsystem.WindowsGui);
 
         return app;
     }
@@ -68,7 +68,7 @@ internal static class InstalledLayout
     /// </remarks>
     /// <param name="root">The install root.</param>
     /// <returns>The renamed copy's image path.</returns>
-    public static string CreateUnderAnotherName(string root)
+    public static async Task<string> CreateUnderAnotherNameAsync(string root)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
 
@@ -76,7 +76,7 @@ internal static class InstalledLayout
             Path.Combine(root, RegistrationTarget.CurrentDirectoryName));
 
         var renamed = Path.Combine(current.FullName, "BrowserAI.Renamed.exe");
-        WritePortableExecutable(renamed, PeSubsystem.WindowsGui);
+        await WritePortableExecutableAsync(renamed, PeSubsystem.WindowsGui);
 
         return renamed;
     }
@@ -99,7 +99,7 @@ internal static class InstalledLayout
     /// it at. The header is zero everywhere it does not have to be: nothing here
     /// is loadable and nothing here is meant to be.
     /// </remarks>
-    public static void WritePortableExecutable(string path, int subsystem)
+    public static async Task WritePortableExecutableAsync(string path, int subsystem)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
@@ -127,15 +127,15 @@ internal static class InstalledLayout
         bytes[SubsystemAt] = (byte)(subsystem & 0xFF);
         bytes[SubsystemAt + 1] = (byte)((subsystem >> 8) & 0xFF);
 
-        File.WriteAllBytes(path, bytes);
+        await File.WriteAllBytesAsync(path, bytes);
     }
 
     /// <summary>Writes a file that is not a portable executable at all.</summary>
     /// <param name="path">Where to write it.</param>
-    public static void WriteSomethingThatIsNotAnExecutable(string path)
+    public static async Task WriteSomethingThatIsNotAnExecutableAsync(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        File.WriteAllText(path, "This is not an executable. It is a text file wearing an executable's name.\n");
+        await File.WriteAllTextAsync(path, "This is not an executable. It is a text file wearing an executable's name.\n");
     }
 }

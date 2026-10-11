@@ -57,7 +57,7 @@ internal sealed class SandboxFlagTests
     [Test]
     public async Task NoProcessOfOurBrowserRunsWithTheSandboxDisabled()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var chromium = run.ChromiumProcesses(BrowserAiPaths.BrowsersDirectory);
@@ -112,7 +112,7 @@ internal sealed class SandboxFlagTests
 
         // And it is there instead of in the config, not as well as: the key
         // reads fine, is discarded, and would make this look configured.
-        await Assert.That(BrowserAiConfigOmitsTheSandboxKey()).IsTrue();
+        await Assert.That(await BrowserAiConfigOmitsTheSandboxKeyAsync()).IsTrue();
     }
 
     /// <summary>
@@ -163,9 +163,9 @@ internal sealed class SandboxFlagTests
     [Test]
     public async Task TheConfigKeyIsHonouredByUpstreamNow()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("sandbox-config-key");
+        using var scratch = await ScratchDirectory.CreateAsync("sandbox-config-key");
 
         // Hand-written on purpose. BrowserAI's generator does not emit this key
         // and must not start to; what is under test here is upstream's handling
@@ -196,7 +196,7 @@ internal sealed class SandboxFlagTests
         var configPath = Path.Combine(scratch.Path, "config.json");
         await File.WriteAllTextAsync(configPath, config.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             RepositoryPayload.Layout.NodeExecutable,
 
             // No --sandbox. The config key is the only thing asking for one.
@@ -248,18 +248,18 @@ internal sealed class SandboxFlagTests
     /// Whether the generated config leaves the sandbox key out entirely, read
     /// back from a file the product wrote.
     /// </summary>
-    private static bool BrowserAiConfigOmitsTheSandboxKey()
+    private static async Task<bool> BrowserAiConfigOmitsTheSandboxKeyAsync()
     {
-        using var scratch = ScratchDirectory.Create("sandbox-generated-config");
+        using var scratch = await ScratchDirectory.CreateAsync("sandbox-generated-config");
 
         var path = Path.Combine(scratch.Path, "config.json");
         // A session's config, the only kind left since 2026-10-08 (previously the
         // run's own child's, deleted that day with the tool list compiled in).
-        BrowserConfiguration.WriteTo(
+        await BrowserConfiguration.WriteToAsync(
             path,
             BrowserConfiguration.ForSession(SessionPath.For(Path.Combine(scratch.Path, "session")), headed: false, BrowserConfiguration.BrowserName, transcript: false, RunOptions.Default));
 
-        using var generated = JsonDocument.Parse(File.ReadAllText(path));
+        using var generated = JsonDocument.Parse(await File.ReadAllTextAsync(path));
 
         return !generated.RootElement
             .GetProperty("browser")

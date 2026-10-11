@@ -131,7 +131,7 @@ internal sealed class BrowserContainmentTests
     /// That asks for <c>FileShare.Read</c>, which a live writer refuses, so the
     /// read succeeding <i>is</i> the measurement that nothing is holding the
     /// file. It is also the exact call
-    /// <see cref="LauncherWait.Evidence"/> used to make and no longer does --
+    /// <see cref="LauncherWait.EvidenceAsync"/> used to make and no longer does --
     /// the two halves of this pair meet here, and this one asserts the half the
     /// other cannot: a reader that shares everything can no longer tell a closed
     /// file from a held one.
@@ -168,9 +168,9 @@ internal sealed class BrowserContainmentTests
     [Test]
     public async Task TheDriversStderrTeeIsClosedOnceTheChildItWasTeeingIsGone()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        using var scratch = ScratchDirectory.Create("containment-driver-tee");
+        using var scratch = await ScratchDirectory.CreateAsync("containment-driver-tee");
 
         var readyFile = Path.Combine(scratch.Path, "ready.json");
         var driver = Path.Combine(scratch.Path, "drive-a-browser.js");
@@ -182,7 +182,7 @@ internal sealed class BrowserContainmentTests
 
         using var scope = new JobObjectScope();
 
-        var launched = scope.Launch(
+        var launched = await scope.LaunchAsync(
             RepositoryPayload.Layout.NodeExecutable,
             scratch.Path,
             driver,
@@ -220,13 +220,13 @@ internal sealed class BrowserContainmentTests
             .IsTrue()
             .Because(
                 "the driver is gone, so whether it closed the tee is not what this measured"
-                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
+                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratch.Path));
 
         await Assert.That(teed)
             .IsNotNull()
             .Because(
                 $"the driver was still holding '{tee}' after {waited.Elapsed.TotalSeconds:F1} s, with the child it was teeing long gone"
-                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
+                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratch.Path));
 
         await Assert.That(teed).Contains(TeeSentinel).Because(teed);
     }
@@ -241,14 +241,14 @@ internal sealed class BrowserContainmentTests
         // batteries-included premise being dead code with the suite green.
         if (browser is "firefox")
         {
-            SuiteEnvironment.RequireProvisionedFirefox();
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
         }
         else
         {
-            SuiteEnvironment.RequireProvisionedChromium();
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
         }
 
-        using var scratch = ScratchDirectory.Create($"browser-containment-{browser}");
+        using var scratch = await ScratchDirectory.CreateAsync($"browser-containment-{browser}");
 
         var readyFile = Path.Combine(scratch.Path, "ready.json");
         var donePath = Path.Combine(scratch.Path, "done");
@@ -269,7 +269,7 @@ internal sealed class BrowserContainmentTests
         // browser -- or anything under it -- running.
         using var scope = new JobObjectScope();
 
-        var launcher = scope.Launch(
+        var launcher = await scope.LaunchAsync(
             ProbePath,
             scratch.Path,
             [
@@ -340,7 +340,7 @@ internal sealed class BrowserContainmentTests
             .IsTrue()
             .Because(
                 $"the driver did not navigate. Its answer was: {(string?)child["answer"] ?? "<none>"}"
-                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
+                + Environment.NewLine + await LauncherWait.EvidenceAsync(scratch.Path));
 
         var walked = walk.Select(row => (int)row!["pid"]!).ToHashSet();
 
@@ -427,7 +427,7 @@ internal sealed class BrowserContainmentTests
         // assertions above are the gate; this is the evidence, and a measurement
         // recorded in a document with no reproducible source is the tally this
         // project keeps having to correct.
-        Record(
+        await RecordAsync(
             browser,
             walk.Count,
             (int)report["escapees"]!,
@@ -447,7 +447,7 @@ internal sealed class BrowserContainmentTests
     /// runs -- the launcher's ready-wait is a small fraction of that, against a
     /// patience of 180 s.
     /// </remarks>
-    private static void Record(
+    private static async Task RecordAsync(
         string browser,
         int processes,
         int escapees,
@@ -473,7 +473,7 @@ internal sealed class BrowserContainmentTests
 
         var path = Path.Combine(RepositoryLayout.Root.FullName, ".work", $"containment-{browser}.json");
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, summary.ToJsonString());
+        await File.WriteAllTextAsync(path, summary.ToJsonString());
     }
 
     /// <summary>
@@ -512,7 +512,7 @@ internal sealed class BrowserContainmentTests
     /// </para>
     /// <para>
     /// <b>The file goes in the scratch directory and not through the host</b>,
-    /// because <see cref="LauncherWait.Evidence"/> already inlines every file it
+    /// because <see cref="LauncherWait.EvidenceAsync"/> already inlines every file it
     /// finds there, truncated, into the failure message -- so a tee is the whole
     /// change and nothing on the C# side needs to know this file exists.
     /// </para>
@@ -531,7 +531,7 @@ internal sealed class BrowserContainmentTests
     /// half.</b> When the child ends, the handle goes; when the launcher kills
     /// this process from outside -- which is the event the arms above are about --
     /// nothing runs at all, so the file is still open when
-    /// <see cref="LauncherWait.Evidence"/> reads it. That is why the pair
+    /// <see cref="LauncherWait.EvidenceAsync"/> reads it. That is why the pair
     /// exists and why the reader, not the writer, carries the weight of it. Held
     /// by
     /// <see cref="TheDriversStderrTeeIsClosedOnceTheChildItWasTeeingIsGone"/>.

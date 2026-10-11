@@ -51,7 +51,7 @@ internal sealed class SessionListTests
     [Test]
     public async Task ListSaysWhichSessionsAreInUseAndNeverPrintsCouldNotTellAsFree()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var driven = Path.Combine(sessions.Root, "driven-by-this-browserai");
@@ -77,9 +77,9 @@ internal sealed class SessionListTests
         // is a real browserai.lock that nobody holds.
         var index = new SessionIndex(sessions.Environment.Paths, NullLogger.Instance);
 
-        Plant(index, peerHeld, "a session another BrowserAI is driving");
-        Plant(index, free, "a session whose process exited");
-        Plant(index, unreadable, "a session whose lock file cannot be examined");
+        await PlantAsync(index, peerHeld, "a session another BrowserAI is driving");
+        await PlantAsync(index, free, "a session whose process exited");
+        await PlantAsync(index, unreadable, "a session whose lock file cannot be examined");
 
         // The peer's handle, byte for byte what SessionLock.OpenHeld takes.
         var peer = new FileStream(
@@ -87,7 +87,7 @@ internal sealed class SessionListTests
             FileMode.Open,
             FileAccess.ReadWrite,
             FileShare.Read,
-            bufferSize: 1);
+            bufferSize: 1, FileOptions.Asynchronous);
 
         // WriteData and not ReadData: the probe asks for ReadWrite, so denying
         // the write half refuses it while leaving the record readable -- which
@@ -194,7 +194,7 @@ internal sealed class SessionListTests
     [Test]
     public async Task TheProbeReadsOnlyASharingViolationAsHeldAndAnAbsentGuardIsFree()
     {
-        using var scratch = ScratchDirectory.Create("list-probe");
+        using var scratch = await ScratchDirectory.CreateAsync("list-probe");
 
         var directory = Path.Combine(scratch.Path, "probed");
         var location = SessionPath.For(directory);
@@ -207,7 +207,7 @@ internal sealed class SessionListTests
         await Assert.That(absent.State).IsEqualTo(SessionLiveness.NotHeld);
         await Assert.That(absent.Why).IsNull();
 
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             location,
             new SessionLockRequest { Browser = "chromium", Purpose = "probed for liveness" },
             NullLogger.Instance);
@@ -229,7 +229,7 @@ internal sealed class SessionListTests
         // without either reading the other as an owner, which is what keeps a
         // listing from reporting a peer's own look as a holder.
         using var first = SessionLock.ProbeLiveness(location) is { State: SessionLiveness.NotHeld }
-            ? new FileStream(location.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1)
+            ? new FileStream(location.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1, FileOptions.Asynchronous)
             : throw new InvalidOperationException("the directory was expected to be free at this point");
 
         await Assert.That(SessionLock.ProbeLiveness(location).State).IsEqualTo(SessionLiveness.NotHeld);
@@ -271,13 +271,13 @@ internal sealed class SessionListTests
     [Test]
     public async Task APeerInsideCreateOrTakeIsTheOneWindowTheListingCanStillMisreport()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var midTake = Path.Combine(sessions.Root, "a-peer-is-inside-create-or-take");
         var index = new SessionIndex(sessions.Environment.Paths, NullLogger.Instance);
 
-        Plant(index, midTake, "a session a peer is taking");
+        await PlantAsync(index, midTake, "a session a peer is taking");
 
         var ready = Path.Combine(sessions.Root, "gate-ready.json");
 
@@ -285,7 +285,7 @@ internal sealed class SessionListTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", midTake, ready);
+            _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold-gate", midTake, ready);
 
             // The control that the right kernel object is held by a process that
             // will not let go: without it a probe that failed to start would
@@ -320,8 +320,9 @@ internal sealed class SessionListTests
         // written here.
         using (var gate = MachineMutex.Create(SessionPath.For(midTake).MutexName))
         {
-            await Assert.That(gate.Acquire(LockScopes.PerDirectoryGate)).IsNotEqualTo(MutexAcquisition.NotAcquired);
-            gate.Release();
+            await using var hold = await gate.HoldAsync(LockScopes.PerDirectoryGate);
+
+            await Assert.That(hold.Acquisition).IsNotEqualTo(MutexAcquisition.NotAcquired);
         }
 
         // ⚠️ THE POSITIVE CONTROL, and it is what makes the assertion above
@@ -329,7 +330,7 @@ internal sealed class SessionListTests
         // same session, held for real this time, reads YES.
         var location = SessionPath.For(midTake);
 
-        using var peer = new FileStream(location.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+        await using var peer = new FileStream(location.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
 
         var after = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
         {
@@ -351,7 +352,7 @@ internal sealed class SessionListTests
         // "No BrowserAI sessions under '...'. That is an answer rather than an
         // error." Nothing about that sentence is recoverable in a turn: it is
         // not a refusal, so there is nothing to correct.
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var real = Path.Combine(sessions.Root, "real");
@@ -427,7 +428,7 @@ internal sealed class SessionListTests
     [Test]
     public async Task AListingOnADriveThatDoesNotExistSaysSoRatherThanSayingNoSessions()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // Counted down from Z through the one definition the suite has, because
@@ -470,18 +471,18 @@ internal sealed class SessionListTests
     /// <param name="index">The rig's own index.</param>
     /// <param name="directory">Where the session goes.</param>
     /// <param name="purpose">What the record says it was for.</param>
-    private static void Plant(SessionIndex index, string directory, string purpose)
+    private static async Task PlantAsync(SessionIndex index, string directory, string purpose)
     {
         var location = SessionPath.For(directory);
 
         SessionLayout.Create(location);
 
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             location,
             new SessionLockRequest { Browser = "chromium", Purpose = purpose },
             NullLogger.Instance);
 
-        index.Record(location);
+        await index.RecordAsync(location);
         taken.Acquired!.Dispose();
     }
 

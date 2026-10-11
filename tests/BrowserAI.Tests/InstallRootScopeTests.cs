@@ -72,7 +72,7 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task ARootOutsideTheProfileIsRefusedAndTheRefusalSaysWhatToDo()
     {
-        using var outside = ScratchDirectory.Create("install-root-outside");
+        using var outside = await ScratchDirectory.CreateAsync("install-root-outside");
 
         var verdict = InstallRootScope.Judge(outside.Path, installRoot: null);
 
@@ -138,7 +138,7 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task ARootInsideTheProfileIsServed()
     {
-        using var inside = ScratchDirectory.CreateUnderProfile("install-root-inside");
+        using var inside = await ScratchDirectory.CreateUnderProfileAsync("install-root-inside");
 
         var verdict = InstallRootScope.Judge(inside.Path, installRoot: null);
 
@@ -159,14 +159,14 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task ARootThatDoesNotExistYetIsJudgedByItsDeepestExistingAncestor()
     {
-        using var inside = ScratchDirectory.CreateUnderProfile("install-root-absent");
+        using var inside = await ScratchDirectory.CreateUnderProfileAsync("install-root-absent");
 
         var absent = Path.Combine(inside.Path, "not", "created", "yet");
 
         await Assert.That(Directory.Exists(absent)).IsFalse();
         await Assert.That(InstallRootScope.Judge(absent, installRoot: null).MayServe).IsTrue();
 
-        using var outside = ScratchDirectory.Create("install-root-absent-outside");
+        using var outside = await ScratchDirectory.CreateAsync("install-root-absent-outside");
 
         // And the same arm the other way, so this is not passing because
         // everything absent is accepted.
@@ -187,8 +187,8 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task AJunctionInsideTheProfileThatLeavesItIsRefused()
     {
-        using var inside = ScratchDirectory.CreateUnderProfile("install-root-junction-out");
-        using var target = ScratchDirectory.Create("install-root-junction-out-target");
+        using var inside = await ScratchDirectory.CreateUnderProfileAsync("install-root-junction-out");
+        using var target = await ScratchDirectory.CreateAsync("install-root-junction-out-target");
 
         var link = Path.Combine(inside.Path, "link");
 
@@ -217,8 +217,8 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task AJunctionOutsideTheProfileThatReachesIntoItIsServed()
     {
-        using var outside = ScratchDirectory.Create("install-root-junction-in");
-        using var target = ScratchDirectory.CreateUnderProfile("install-root-junction-in-target");
+        using var outside = await ScratchDirectory.CreateAsync("install-root-junction-in");
+        using var target = await ScratchDirectory.CreateUnderProfileAsync("install-root-junction-in-target");
 
         var link = Path.Combine(outside.Path, "link");
 
@@ -243,7 +243,7 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task ASubstitutedDriveStandingForAProfileDirectoryIsServed()
     {
-        using var target = ScratchDirectory.CreateUnderProfile("install-root-subst");
+        using var target = await ScratchDirectory.CreateUnderProfileAsync("install-root-subst");
         using var alias = DosDeviceAlias.Substituting(target.Path);
 
         // The control: the spelling really is a different one, so a comparison
@@ -269,7 +269,7 @@ internal sealed class InstallRootScopeTests
     public async Task ShortAndExtendedSpellingsOfAProfilePathAreServed()
     {
         // A name long enough to have an 8.3 form at all.
-        using var target = ScratchDirectory.CreateUnderProfile("install-root-short-name-needs-a-long-component");
+        using var target = await ScratchDirectory.CreateUnderProfileAsync("install-root-short-name-needs-a-long-component");
 
         var shortName = PathAliases.ShortNameOf(target.Path);
 
@@ -333,11 +333,11 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var outside = ScratchDirectory.Create("install-root-published");
+        using var outside = await ScratchDirectory.CreateAsync("install-root-published");
 
         var environment = PublishedSlice.InheritedEnvironment();
         var pipe = PublishedBackground.NewPipeName();
@@ -358,7 +358,7 @@ internal sealed class InstallRootScopeTests
         // Until it exits or says that it serves: a hang detector, not a budget.
         while (!process.HasExited && waited.Elapsed < TestDefaults.ProcessHang)
         {
-            said = Said(logs);
+            said = await SaidAsync(logs);
 
             if (said.Contains(ServesSentence, StringComparison.Ordinal))
             {
@@ -370,7 +370,7 @@ internal sealed class InstallRootScopeTests
 
         var exited = await process.WaitForExitAsync(TimeSpan.Zero);
 
-        said = Said(logs);
+        said = await SaidAsync(logs);
 
         await Assert.That(said).DoesNotContain(ServesSentence);
         await Assert.That(exited).IsTrue().Because(said);
@@ -400,7 +400,7 @@ internal sealed class InstallRootScopeTests
         // The record reads as the refusal it is: this background wrote it, with the
         // root, why it was refused and the remedy. Corrected 2026-10-10 by the
         // maintainer's 9 a (previously "The record reads as the crash it is").
-        var state = BackgroundRecord.Read(record);
+        var state = await BackgroundRecord.ReadAsync(record);
 
         await Assert.That(state).IsNotNull();
         await Assert.That(state!.ProcessId).IsEqualTo(process.Id);
@@ -415,7 +415,7 @@ internal sealed class InstallRootScopeTests
         // whole bound and then said that no background was running.
         List<string> relayArguments = [Program.McpArgument, BackgroundPipe.PipeArgument, pipe, Program.DataRootArgument, outside.Path];
 
-        await using var relay = RawStdioClient.Start(PublishedSlice.Executable, relayArguments, outside.Path, environment);
+        await using var relay = await RawStdioClient.StartAsync(PublishedSlice.Executable, relayArguments, outside.Path, environment);
 
         _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -445,9 +445,9 @@ internal sealed class InstallRootScopeTests
     /// <summary>Every log file under a root's <c>logs\</c>, joined.</summary>
     /// <param name="logs">The directory.</param>
     /// <returns>Their text, or an empty string when there is none.</returns>
-    private static string Said(string logs) =>
+    private static async Task<string> SaidAsync(string logs) =>
         Directory.Exists(logs)
-            ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
+            ? string.Join(Environment.NewLine, await Task.WhenAll(Directory.EnumerateFiles(logs).Select(ReadSharedAsync)))
             : string.Empty;
 
     /// <summary>
@@ -455,12 +455,12 @@ internal sealed class InstallRootScopeTests
     /// </summary>
     /// <param name="path">The file.</param>
     /// <returns>Its text.</returns>
-    private static string ReadShared(string path)
+    private static async Task<string> ReadSharedAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     /// <summary>
@@ -509,8 +509,8 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task AnInstallRootOutsideTheProfileIsRefusedEvenWhenTheDataRootIsNot()
     {
-        using var good = ScratchDirectory.CreateUnderProfile("install-root-data-ok");
-        using var outside = ScratchDirectory.Create("install-root-install-outside");
+        using var good = await ScratchDirectory.CreateUnderProfileAsync("install-root-data-ok");
+        using var outside = await ScratchDirectory.CreateAsync("install-root-install-outside");
 
         // The control first: the same data root with no install root at all is
         // served, so what the arm below catches is the second argument.
@@ -574,7 +574,7 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task TheInstalledLayoutIsServedAndSoIsAnyInstallRootInsideTheProfile()
     {
-        using var inside = ScratchDirectory.CreateUnderProfile("install-root-install-inside");
+        using var inside = await ScratchDirectory.CreateUnderProfileAsync("install-root-install-inside");
 
         var scratch = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir, inside.Path);
 
@@ -646,8 +646,8 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task WhenBothRootsAreOutsideTheProfileTheDataRootIsTheOneRefused()
     {
-        using var badData = ScratchDirectory.Create("install-root-both-data");
-        using var badInstall = ScratchDirectory.Create("install-root-both-install");
+        using var badData = await ScratchDirectory.CreateAsync("install-root-both-data");
+        using var badInstall = await ScratchDirectory.CreateAsync("install-root-both-install");
 
         var verdict = InstallRootScope.Judge(badData.Path, badInstall.Path);
 

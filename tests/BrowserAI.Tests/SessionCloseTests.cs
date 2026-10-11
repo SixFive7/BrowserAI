@@ -63,7 +63,7 @@ internal sealed class SessionCloseTests
     {
         var clock = new ManualClock();
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
             opensDefaultSession: false,
             browserIdlePeriod: ShortPeriod,
@@ -164,7 +164,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task BrowserAiCloseEndsTheBrowserKeepsTheSessionAndSaysWhoClosedIt()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -270,7 +270,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task BrowserAiCloseWithNoBrowserUpClosesTheSessionWithoutStartingOne()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -338,7 +338,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task BrowserAiCloseWithNothingToCloseSaysSoAndChangesNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -412,10 +412,10 @@ internal sealed class SessionCloseTests
 
         _ = Directory.CreateDirectory(nobody);
 
-        SessionLock.TryAcquire(
+        (await SessionLock.TryAcquireAsync(
             SessionPath.For(nobody),
             new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a session nobody holds" },
-            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance).Acquired!.Dispose();
+            Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)).Acquired!.Dispose();
 
         var notOpen = await CallAsync(rig, SessionToolSurface.Close, new JsonObject
         {
@@ -487,7 +487,7 @@ internal sealed class SessionCloseTests
         var clock = new ManualClock();
         var children = 0;
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -647,7 +647,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task AResumeWithTheBrowserUpThatAsksForOtherSettingsIsHeldBackAndChangesNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
             opensDefaultSession: false);
 
@@ -709,7 +709,7 @@ internal sealed class SessionCloseTests
         // Nothing changed: no new child, and the purpose the held call carried is not
         // in the record.
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
-        await Assert.That(SessionLock.ReadRecord(location)!.Purpose).IsEqualTo("the session whose browser is up when it is resumed");
+        await Assert.That((await SessionLock.ReadRecordAsync(location))!.Purpose).IsEqualTo("the session whose browser is up when it is resumed");
 
         // The positive control: the same session, resumed with what it runs with, is
         // answered and still left alone -- and the answer leads with the maintainer's
@@ -757,7 +757,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task AResumeThatLeavesOutASettingItsLastRunSetIsHeldBackAndStartsNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "left-out-before-the-browser");
@@ -793,7 +793,7 @@ internal sealed class SessionCloseTests
         // launched with: the viewport and the transcript the init asked for.
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
 
-        var config = ConfigOf(sessions.Launches[^1]);
+        var config = await ConfigOfAsync(sessions.Launches[^1]);
 
         await Assert.That((int?)config["browser"]?["contextOptions"]?["viewport"]?["width"]).IsEqualTo(1280);
         await Assert.That((bool?)config["saveSession"]).IsTrue();
@@ -832,7 +832,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task AResumeWithNoBrowserUpAppliesItsSettingsByStartingANewChildWhenSentAgain()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "no-browser-up");
@@ -889,7 +889,7 @@ internal sealed class SessionCloseTests
 
         // The new child's config is the one with the window and the new viewport:
         // what a browser launched from it gets.
-        var config = ConfigOf(sessions.Launches[^1]);
+        var config = await ConfigOfAsync(sessions.Launches[^1]);
 
         await Assert.That((bool?)config["browser"]?["launchOptions"]?["headless"]).IsFalse();
         await Assert.That((int?)config["browser"]?["contextOptions"]?["viewport"]?["width"]).IsEqualTo(1280);
@@ -912,7 +912,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task ACaptureAcrossACloseIsGivenAnArchiveOfItsOwnAtTheResume()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -1018,7 +1018,7 @@ internal sealed class SessionCloseTests
         var clock = new ManualClock();
         var opened = 0;
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -1123,7 +1123,7 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task ASessionChildsTemporaryFolderIsAVisibleFolderOfItsSession()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var launch = sessions.Launches[^1];
@@ -1178,9 +1178,9 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task ARealChildWithNoBrowserReadsAsNoneAndOneWithAPageReadsAsOne()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "real-child");
@@ -1272,16 +1272,16 @@ internal sealed class SessionCloseTests
     {
         if (BrowserConfiguration.IsFirefox(browser))
         {
-            SuiteEnvironment.RequireProvisionedFirefox();
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
         }
         else
         {
-            SuiteEnvironment.RequireProvisionedChromium();
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
         }
 
         using var site = LoopbackSite.Start();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, $"restore-{browser}");
@@ -1405,11 +1405,11 @@ internal sealed class SessionCloseTests
     [Test]
     public async Task AResumeAfterTheBrowserWasKilledReopensTheTabsItHadOnDisk()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         using var site = LoopbackSite.Start();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "restore-after-a-kill");
@@ -1510,7 +1510,7 @@ internal sealed class SessionCloseTests
             () => members.All(member => !ProcessIdentity.IsAlive(member.Pid, member.Created)) && child.ChildHasGone,
             "a process the suite terminated in the session's job was still running");
 
-        await Assert.That(SessionFilesName(sessionFiles, site.Url("first")) && SessionFilesName(sessionFiles, site.Url("second"))).IsTrue()
+        await Assert.That(await SessionFilesNameAsync(sessionFiles, site.Url("first")) && await SessionFilesNameAsync(sessionFiles, site.Url("second"))).IsTrue()
             .Because("the killed browser's session file names both pages, or the resume has nothing on disk to restore and the arm tests nothing");
 
         var resumed = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
@@ -1573,7 +1573,7 @@ internal sealed class SessionCloseTests
     /// <param name="folder">The profile's <c>Sessions</c> folder.</param>
     /// <param name="url">The address, looked for as UTF-8 and as UTF-16.</param>
     /// <returns>Whether one of the files names it.</returns>
-    private static bool SessionFilesName(string folder, string url)
+    private static async Task<bool> SessionFilesNameAsync(string folder, string url)
     {
         if (!Directory.Exists(folder))
         {
@@ -1589,10 +1589,10 @@ internal sealed class SessionCloseTests
 
             try
             {
-                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
                 using var copy = new MemoryStream();
 
-                stream.CopyTo(copy);
+                await stream.CopyToAsync(copy);
                 bytes = copy.ToArray();
             }
             catch (IOException)
@@ -1637,11 +1637,11 @@ internal sealed class SessionCloseTests
     /// <summary>The generated config a launch was given, read back off disk.</summary>
     /// <param name="launch">The launch, as the rig recorded it.</param>
     /// <returns>The config.</returns>
-    private static JsonObject ConfigOf(BrowserAI.Protocol.ChildProcessOptions launch)
+    private static async Task<JsonObject> ConfigOfAsync(BrowserAI.Protocol.ChildProcessOptions launch)
     {
         var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
 
-        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+        return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
 
     private static Task<JsonObject> NavigateAsync(McpTestHarness rig, string directory, string why) =>

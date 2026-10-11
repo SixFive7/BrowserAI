@@ -117,7 +117,7 @@ internal sealed partial class RecordedCountTests
 
         await Assert.That(recorded.Success).IsTrue();
 
-        var rows = HazardIndex.Rows();
+        var rows = await HazardIndex.RowsAsync();
         var unadjudicated = rows.Where(row => row.IsOpenAndUnadjudicated).ToList();
         var disagreements = new List<string>();
 
@@ -370,8 +370,10 @@ internal sealed partial class RecordedCountTests
             ? 0
             : int.Parse(recorded.Groups["carriers"].Value, CultureInfo.InvariantCulture);
 
+        var articles = await TestFiles.ReadAllTextAsync(ReVerificationIndexTests.ArticleFiles());
+
         var carriers = StampedArticles(ReVerificationIndexTests.ArticleFiles()
-            .Select(file => (Path.GetRelativePath(RepositoryLayout.Root.FullName, file), File.ReadAllText(file))));
+            .Select(file => (Path.GetRelativePath(RepositoryLayout.Root.FullName, file), articles[file])));
 
         await Assert.That(carriers.Count)
             .IsEqualTo(published)
@@ -462,7 +464,7 @@ internal sealed partial class RecordedCountTests
                 int.Parse(cells[3].Trim(), CultureInfo.InvariantCulture)));
         }
 
-        var rows = ReVerificationIndexTests.Rows();
+        var rows = await ReVerificationIndexTests.RowsAsync();
         var disagreements = new List<string>();
 
         foreach (var (article, markers, cited) in published)
@@ -475,7 +477,7 @@ internal sealed partial class RecordedCountTests
                 continue;
             }
 
-            var live = ReVerificationIndexTests.MarkersIn(file);
+            var live = await ReVerificationIndexTests.MarkersInAsync(file);
 
             if (markers != live)
             {
@@ -509,11 +511,11 @@ internal sealed partial class RecordedCountTests
         // The sum, asserted separately from the parts, against the number the
         // anchor sentence already answers for. A breakdown nobody adds up is the
         // shape that produced this defect.
-        if (published.Sum(entry => entry.Markers) != ReVerificationIndexTests.MarkersAcrossTheArticles())
+        if (published.Sum(entry => entry.Markers) != await ReVerificationIndexTests.MarkersAcrossTheArticlesAsync())
         {
             disagreements.Add(
                 $"the holes table's marker column sums to {published.Sum(entry => entry.Markers)} and the corpus holds "
-                + $"{ReVerificationIndexTests.MarkersAcrossTheArticles().ToString(CultureInfo.InvariantCulture)}");
+                + $"{(await ReVerificationIndexTests.MarkersAcrossTheArticlesAsync()).ToString(CultureInfo.InvariantCulture)}");
         }
 
         await Assert.That(string.Join(Environment.NewLine, disagreements)).IsEmpty();
@@ -541,8 +543,8 @@ internal sealed partial class RecordedCountTests
         // regenerates from the resolved payload and diffs on every run -- so an
         // upstream change reaches these sentences as a snapshot diff first and a
         // red count second, which is the right order.
-        var granted = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
-        var everything = UpstreamSurface.SnapshotToolCount();
+        var granted = await UpstreamSurface.ForAsync(BrowserConfiguration.GrantedCapabilities);
+        var everything = await UpstreamSurface.SnapshotToolCountAsync();
         var withheld = granted.Count(RepositoryVerdicts.Committed.IsWithheldFromTheSurface);
 
         await Assert.That(int.Parse(whole.Groups["tools"].Value, CultureInfo.InvariantCulture))
@@ -592,7 +594,7 @@ internal sealed partial class RecordedCountTests
         // decided it: F1 a denies `browser_close`, which BrowserAI's own
         // `browserai_close` replaces.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
-        await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
+        await Assert.That(granted.Count).IsGreaterThan((await UpstreamSurface.DefaultSurfaceAsync()).Count);
         await Assert.That(withheld).IsEqualTo(9);
     }
 
@@ -813,7 +815,7 @@ internal sealed partial class RecordedCountTests
     [Test]
     public async Task NoClaimInTheTreeIsStillMarkedAssumed()
     {
-        var carried = AssumedMarkers();
+        var carried = await AssumedMarkersAsync();
         var live = carried.Sum(entry => entry.Count);
 
         // ⚠️ THE PUBLISHED NUMBER FIRST, so a stale figure in TODO.md is caught
@@ -832,7 +834,17 @@ internal sealed partial class RecordedCountTests
 
         // Both directions on the exempt set, which is the only part of the corpus
         // rule that can rot.
-        await Assert.That(string.Join(", ", DiscussesTheMarker.Where(file => !MentionsTheMarker(file)).Order(StringComparer.Ordinal)))
+        var silent = new List<string>();
+
+        foreach (var file in DiscussesTheMarker)
+        {
+            if (!await MentionsTheMarkerAsync(file))
+            {
+                silent.Add(file);
+            }
+        }
+
+        await Assert.That(string.Join(", ", silent.Order(StringComparer.Ordinal)))
             .IsEmpty()
             .Because("a file exempted from this scan that does not mention the marker at all is an exemption nobody needs");
 
@@ -846,26 +858,34 @@ internal sealed partial class RecordedCountTests
 
     /// <summary>Every file carrying a marker, and how many.</summary>
     /// <returns>One entry per file that carries at least one, in path order.</returns>
-    private static List<(string File, int Count)> AssumedMarkers() =>
-    [
-        .. RepositoryLayout.AllFiles
+    private static async Task<List<(string File, int Count)>> AssumedMarkersAsync()
+    {
+        var names = RepositoryLayout.AllFiles
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName).Replace('\\', '/'))
             .Where(name => !name.StartsWith("docs/evidence/", StringComparison.Ordinal)
                 && !name.StartsWith("third-party/", StringComparison.Ordinal)
                 && !name.Contains("/TestResults/", StringComparison.Ordinal)
                 && !NotText.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase)
                 && !DiscussesTheMarker.Contains(name, StringComparer.Ordinal))
-            .Select(name => (File: name, Count: Assumed().Count(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, name)))))
-            .Where(entry => entry.Count > 0)
-            .OrderBy(entry => entry.File, StringComparer.Ordinal),
-    ];
+            .ToList();
+
+        var texts = await TestFiles.ReadAllTextAsync(names.Select(name => Path.Combine(RepositoryLayout.Root.FullName, name)));
+
+        return
+        [
+            .. names
+                .Select(name => (File: name, Count: Assumed().Count(texts[Path.Combine(RepositoryLayout.Root.FullName, name)])))
+                .Where(entry => entry.Count > 0)
+                .OrderBy(entry => entry.File, StringComparer.Ordinal),
+        ];
+    }
 
     /// <summary>Whether an exempt file really does discuss the marker.</summary>
     /// <param name="file">The repository-relative path, with forward slashes.</param>
     /// <returns>Whether the token appears in it at all.</returns>
-    private static bool MentionsTheMarker(string file) =>
-        Assumed().IsMatch(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, file)))
-        || File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, file)).Contains("ASSUM" + "ED", StringComparison.Ordinal);
+    private static async Task<bool> MentionsTheMarkerAsync(string file) =>
+        Assumed().IsMatch(await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, file)))
+        || (await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, file))).Contains("ASSUM" + "ED", StringComparison.Ordinal);
 
     /// <summary>
     /// The three files whose job is to discuss the marker instead of carrying one.

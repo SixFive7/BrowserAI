@@ -52,7 +52,7 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task APersonClosingAHeadedWindowClosesTheSessionAndEveryAnswerSaysSo()
     {
-        await using var sessions = Sessions();
+        await using var sessions = await SessionsAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "window-closed");
@@ -79,7 +79,7 @@ internal sealed class CloseReasonTests
         await Assert.That(child.ToolCallsReceived.Count(tool => tool == "browser_navigate")).IsEqualTo(1);
         await Assert.That(sessions.SessionChildren.Count).IsEqualTo(1);
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         await Assert.That(record.ClosedHistory.Select(close => close.Value.Cause).ToArray()).IsEquivalentTo([SessionCloseCause.WindowClosed]);
         await Assert.That(record.ClosedHistory[^1].Value.ExitCode).IsEqualTo(0);
@@ -126,7 +126,9 @@ internal sealed class CloseReasonTests
             (0, "exited on its own at"),
         })
         {
-            await using var sessions = Sessions();
+#pragma warning disable CA2000 // Disposed on every path by the await using; the rule does not follow an awaited factory inside a loop.
+            await using var sessions = await SessionsAsync();
+#pragma warning restore CA2000
             await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
             var directory = Path.Combine(sessions.Root, $"ended-{code.ToString(CultureInfo.InvariantCulture)}");
@@ -145,7 +147,7 @@ internal sealed class CloseReasonTests
             await Assert.That((bool?)refused["isError"]).IsTrue();
             await Assert.That(TextOf(refused)).Contains(says);
 
-            var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+            var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
             await Assert.That(record.ClosedHistory[^1].Value.Cause)
                 .IsEqualTo(code is 0 ? SessionCloseCause.BrowserEnded : SessionCloseCause.BrowserCrashed);
@@ -166,7 +168,7 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task TheCallersOwnCloseIsRecordedWithItsClientAndItsReason()
     {
-        await using var sessions = Sessions();
+        await using var sessions = await SessionsAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "closed-by-the-caller");
@@ -186,7 +188,7 @@ internal sealed class CloseReasonTests
 
         await Assert.That(TextOf(refused)).Contains($"by a {SessionToolSurface.Close} call from this conversation, which gave the reason \"done with the checkout page\".");
 
-        var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
+        var close = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value;
 
         await Assert.That(close.Cause).IsEqualTo(SessionCloseCause.Caller);
         await Assert.That(close.Why).IsEqualTo("done with the checkout page");
@@ -217,7 +219,7 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task AnotherClientsCloseIsNamedToTheNextClient()
     {
-        await using var sessions = Sessions();
+        await using var sessions = await SessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var first = await rig.ConnectAsync(clientName: "agent-one");
@@ -307,9 +309,9 @@ internal sealed class CloseReasonTests
 
         foreach (var (declared, recorded, said) in causes)
         {
-            var directory = Path.Combine(ScratchRoot.Path, $"shut-down-{Guid.NewGuid():N}");
+            var directory = Path.Combine(await ScratchRoot.PathAsync(), $"shut-down-{Guid.NewGuid():N}");
 
-            await using (var sessions = Sessions())
+            await using (var sessions = await SessionsAsync())
             {
                 await using var rig = await SessionHostRig.StartAsync(sessions);
 
@@ -325,11 +327,13 @@ internal sealed class CloseReasonTests
                 await rig.Host.DisposeAsync();
             }
 
-            var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
+            var close = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value;
 
             await Assert.That(close.Cause).IsEqualTo(recorded);
 
-            await using (var sessions = Sessions())
+#pragma warning disable CA2000 // Disposed on every path by the await using; the rule does not follow an awaited factory inside a loop.
+            await using (var sessions = await SessionsAsync())
+#pragma warning restore CA2000
             {
                 await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -371,7 +375,7 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task TheUpdatesCloseOfEverySessionRecordsTheUpdateAsItsReason()
     {
-        await using var sessions = Sessions();
+        await using var sessions = await SessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync(clientName: "agent-one");
@@ -382,7 +386,7 @@ internal sealed class CloseReasonTests
         using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
         await new Background.BackgroundSessions(rig.Host).CloseAllAsync(hang.Token);
 
-        var close = SessionLock.ReadRecord(SessionPath.For(directory))!.LastClose!;
+        var close = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.LastClose!;
 
         await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Updating);
         await Assert.That(CloseReasons.Of(close)).IsEqualTo($"BrowserAI closed this session at {SessionErrors.When(close.At)} to install an update.");
@@ -421,9 +425,9 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task AnOpeningNoCloseFollowedIsReadAsAKillOrACrash()
     {
-        var directory = Path.Combine(ScratchRoot.Path, $"killed-holder-{Guid.NewGuid():N}");
+        var directory = Path.Combine(await ScratchRoot.PathAsync(), $"killed-holder-{Guid.NewGuid():N}");
 
-        await using (var sessions = Sessions())
+        await using (var sessions = await SessionsAsync())
         {
             await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -431,14 +435,14 @@ internal sealed class CloseReasonTests
         }
 
         var location = SessionPath.For(directory);
-        var taken = SessionLock.TryAcquire(location, new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a holder the suite plays dead" }, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+        var taken = await SessionLock.TryAcquireAsync(location, new SessionLockRequest { Browser = ProvisionedBrowsers.Chromium, Purpose = "a holder the suite plays dead" }, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
         using (var held = taken.Acquired!)
         {
             held.AppendLifecycle(RecordFields.Opened, SessionToolSurface.Resume);
         }
 
-        await using (var sessions = Sessions())
+        await using (var sessions = await SessionsAsync())
         {
             await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -461,7 +465,7 @@ internal sealed class CloseReasonTests
         }
 
         // Written down by the resume that found it, so it no longer has to be inferred.
-        await Assert.That(SessionLock.ReadRecord(location)!.ClosedHistory.Any(close => close.Value.Cause is SessionCloseCause.Unrecorded)).IsTrue();
+        await Assert.That((await SessionLock.ReadRecordAsync(location))!.ClosedHistory.Any(close => close.Value.Cause is SessionCloseCause.Unrecorded)).IsTrue();
     }
 
     /// <summary>
@@ -472,7 +476,7 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task AKeptWindowAPersonClosesIsRecordedAsTheirsAndLetGo()
     {
-        await using var sessions = Sessions();
+        await using var sessions = await SessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync();
@@ -505,7 +509,7 @@ internal sealed class CloseReasonTests
 
         await WaitUntilAsync(() => rig.Host.Sessions.Find(directory) is null, "a kept session whose window was closed was never let go");
 
-        await Assert.That(SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value.Cause).IsEqualTo(SessionCloseCause.WindowClosed);
+        await Assert.That((await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value.Cause).IsEqualTo(SessionCloseCause.WindowClosed);
 
         var back = await rig.ConnectAsync();
 
@@ -587,9 +591,9 @@ internal sealed class CloseReasonTests
     [Test]
     public async Task AgainstARealChromiumAKilledBrowserClosesTheSessionWithItsExitCode()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "real-killed");
@@ -615,11 +619,11 @@ internal sealed class CloseReasonTests
         ProcessIdentity.Terminate(processId, created);
 
         await WaitUntilAsync(
-            () => SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Count is not 0,
+            async () => (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Count is not 0,
             "the session never recorded its killed browser",
             TestDefaults.ProcessHang);
 
-        var close = SessionLock.ReadRecord(SessionPath.For(directory))!.ClosedHistory.Single().Value;
+        var close = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!.ClosedHistory.Single().Value;
 
         await Assert.That(close.Cause).IsEqualTo(SessionCloseCause.BrowserCrashed);
         await Assert.That(close.ExitCode).IsEqualTo(ProcessIdentity.TerminationExitCode);
@@ -632,8 +636,8 @@ internal sealed class CloseReasonTests
 
     /// <summary>A rig whose doubles answer a navigation and a close.</summary>
     /// <returns>The environment, which the arm disposes.</returns>
-    private static RigSessionEnvironment Sessions() =>
-        RigSessionEnvironment.Create(
+    private static async Task<RigSessionEnvironment> SessionsAsync() =>
+        await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult };
@@ -712,12 +716,20 @@ internal sealed class CloseReasonTests
     /// <param name="whatWentWrong">What it means when it never comes.</param>
     /// <param name="patience">The hang detector, the suite's in-process one unless a real process is involved.</param>
     /// <returns>A task that completes once the event has happened.</returns>
-    private static async Task WaitUntilAsync(Func<bool> condition, string whatWentWrong, TimeSpan? patience = null)
+    private static Task WaitUntilAsync(Func<bool> condition, string whatWentWrong, TimeSpan? patience = null) =>
+        WaitUntilAsync(() => Task.FromResult(condition()), whatWentWrong, patience);
+
+    /// <summary>Waits until an awaited condition holds, or throws naming what never happened.</summary>
+    /// <param name="condition">The condition.</param>
+    /// <param name="whatWentWrong">What a timeout means.</param>
+    /// <param name="patience">The hang detector, or <see langword="null"/> for the suite's in-process one.</param>
+    /// <returns>The wait.</returns>
+    private static async Task WaitUntilAsync(Func<Task<bool>> condition, string whatWentWrong, TimeSpan? patience = null)
     {
         var bound = patience ?? TestDefaults.InProcessHang;
         var waited = Stopwatch.StartNew();
 
-        while (!condition())
+        while (!await condition())
         {
             if (waited.Elapsed > bound)
             {

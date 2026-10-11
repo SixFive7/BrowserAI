@@ -669,7 +669,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             {
                 // Opened AFTER the write and before the answer, so the router
                 // meets a file that exists, has a length, and cannot be read.
-                _heldFiles.Add(new FileStream(artifact, FileMode.Open, FileAccess.Read, FileShare.None));
+                _heldFiles.Add(new FileStream(artifact, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous));
             }
         }
 

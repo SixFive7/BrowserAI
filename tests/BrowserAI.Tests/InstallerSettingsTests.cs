@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Step 5 of the one-binary build, 2026-10-08</b>: no running BrowserAI reads a
 /// <c>BROWSERAI_</c> variable, and the hooks read the installer's environment once,
-/// in <see cref="InstallerSettings.Read"/>, and write <c>--data-root</c> and
+/// in <see cref="InstallerSettings.ReadAsync"/>, and write <c>--data-root</c> and
 /// <c>--update-source</c> into the task's action. H2 a, the maintainer's words of
 /// 2026-10-08 verbatim, <i>"h2 a"</i>, fixes his install's update folder at install
 /// time.
@@ -49,18 +49,18 @@ internal sealed class InstallerSettingsTests
     [Test]
     public async Task AnUpdateHookWithNoInstallersVariablesKeepsWhatTheInstallWroteIntoItsTask()
     {
-        using var install = ScratchDirectory.Create("installer-settings-update");
+        using var install = await ScratchDirectory.CreateAsync("installer-settings-update");
         var dataRoot = Path.Combine(install.Path, "Tom & Jerry's data");
 
-        Save(install.Path, SignInTask.ArgumentsFor(dataRoot, Folder));
+        await SaveAsync(install.Path, SignInTask.ArgumentsFor(dataRoot, Folder));
 
-        var read = InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, NoVariables);
+        var read = await InstallerSettings.ReadAsync(install.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(read.DataRoot).IsEqualTo(dataRoot);
         await Assert.That(read.UpdateSource).IsEqualTo(Folder);
 
         // And it is the same read a person's start makes for its data root.
-        await Assert.That(SignInTask.DataRootIn(SignInTask.SavedDefinition(install.Path))).IsEqualTo(dataRoot);
+        await Assert.That(SignInTask.DataRootIn(await SignInTask.SavedDefinitionAsync(install.Path))).IsEqualTo(dataRoot);
     }
 
     /// <summary>
@@ -83,13 +83,13 @@ internal sealed class InstallerSettingsTests
     [Test]
     public async Task TheInstallersEnvironmentWinsAndWithNeitherThereIsNothing()
     {
-        using var install = ScratchDirectory.Create("installer-settings-environment");
+        using var install = await ScratchDirectory.CreateAsync("installer-settings-environment");
         var saved = Path.Combine(install.Path, "saved");
         var named = Path.Combine(install.Path, "named");
 
-        Save(install.Path, SignInTask.ArgumentsFor(saved, Folder));
+        await SaveAsync(install.Path, SignInTask.ArgumentsFor(saved, Folder));
 
-        var read = InstallerSettings.Read(
+        var read = await InstallerSettings.ReadAsync(
             install.Path,
             ReleaseLayout.TestPackId,
             name => name switch
@@ -103,16 +103,16 @@ internal sealed class InstallerSettingsTests
         await Assert.That(read.UpdateSource).IsEqualTo(@"C:\another-feed");
 
         // A fresh install has no saved definition: nothing named, nothing saved.
-        using var fresh = ScratchDirectory.Create("installer-settings-fresh");
-        var nothing = InstallerSettings.Read(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
+        using var fresh = await ScratchDirectory.CreateAsync("installer-settings-fresh");
+        var nothing = await InstallerSettings.ReadAsync(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(nothing.DataRoot).IsNull();
         await Assert.That(nothing.UpdateSource).IsNull();
 
         // And a task written with neither setting names neither.
-        Save(fresh.Path, SignInTask.ArgumentsFor(null, null));
+        await SaveAsync(fresh.Path, SignInTask.ArgumentsFor(null, null));
 
-        var plain = InstallerSettings.Read(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
+        var plain = await InstallerSettings.ReadAsync(fresh.Path, ReleaseLayout.TestPackId, NoVariables);
 
         await Assert.That(plain.DataRoot).IsNull();
         await Assert.That(plain.UpdateSource).IsNull();
@@ -137,18 +137,18 @@ internal sealed class InstallerSettingsTests
     [Test]
     public async Task ARelativeRootIsIgnoredAndADefinitionThatIsNotXmlNamesNothing()
     {
-        using var install = ScratchDirectory.Create("installer-settings-relative");
+        using var install = await ScratchDirectory.CreateAsync("installer-settings-relative");
 
-        Save(install.Path, SignInTask.ArgumentsFor("relative\\root", null));
+        await SaveAsync(install.Path, SignInTask.ArgumentsFor("relative\\root", null));
 
-        var read = InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, name => name == LocalAppDataPaths.RootVariable ? "also\\relative" : null);
+        var read = await InstallerSettings.ReadAsync(install.Path, ReleaseLayout.TestPackId, name => name == LocalAppDataPaths.RootVariable ? "also\\relative" : null);
 
         await Assert.That(read.DataRoot).IsNull();
 
         await File.WriteAllTextAsync(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName), "not a task <");
 
-        await Assert.That(SignInTask.DataRootIn(SignInTask.SavedDefinition(install.Path))).IsNull();
-        await Assert.That(SignInTask.UpdateSourceIn(SignInTask.SavedDefinition(install.Path))).IsNull();
+        await Assert.That(SignInTask.DataRootIn(await SignInTask.SavedDefinitionAsync(install.Path))).IsNull();
+        await Assert.That(SignInTask.UpdateSourceIn(await SignInTask.SavedDefinitionAsync(install.Path))).IsNull();
     }
 
     /// <summary>
@@ -168,11 +168,11 @@ internal sealed class InstallerSettingsTests
     [Test]
     public async Task TheShippingInstallReadsNoDataRootFromTheInstallerOrFromItsTask()
     {
-        using var install = ScratchDirectory.Create("installer-settings-shipping");
+        using var install = await ScratchDirectory.CreateAsync("installer-settings-shipping");
         var saved = Path.Combine(install.Path, "saved");
         var named = Path.Combine(install.Path, "named");
 
-        Save(install.Path, SignInTask.ArgumentsFor(saved, Folder));
+        await SaveAsync(install.Path, SignInTask.ArgumentsFor(saved, Folder));
 
         string? installers(string name) => name switch
         {
@@ -182,18 +182,18 @@ internal sealed class InstallerSettingsTests
 
         await Assert.That(StandardLocation.ShippingPackId).IsEqualTo(ReleaseLayout.PackId);
 
-        var shipping = InstallerSettings.Read(install.Path, ReleaseLayout.PackId, installers);
+        var shipping = await InstallerSettings.ReadAsync(install.Path, ReleaseLayout.PackId, installers);
 
         await Assert.That(shipping.DataRoot).IsNull();
         await Assert.That(shipping.UpdateSource).IsEqualTo(Folder);
         await Assert.That(shipping.RelayArguments).IsEquivalentTo([RegistrationTarget.McpArgument]);
 
         // What a page's Register reads for the shipping install names none either.
-        await Assert.That(InstallerSettings.SavedFor(install.Path, ReleaseLayout.PackId).DataRoot).IsNull();
+        await Assert.That((await InstallerSettings.SavedForAsync(install.Path, ReleaseLayout.PackId)).DataRoot).IsNull();
 
         // And the test pack keeps both, which is the positive control.
-        await Assert.That(InstallerSettings.Read(install.Path, ReleaseLayout.TestPackId, installers).DataRoot).IsEqualTo(named);
-        await Assert.That(InstallerSettings.SavedFor(install.Path, ReleaseLayout.TestPackId).DataRoot).IsEqualTo(saved);
+        await Assert.That((await InstallerSettings.ReadAsync(install.Path, ReleaseLayout.TestPackId, installers)).DataRoot).IsEqualTo(named);
+        await Assert.That((await InstallerSettings.SavedForAsync(install.Path, ReleaseLayout.TestPackId)).DataRoot).IsEqualTo(saved);
     }
 
     /// <summary>An environment that names no variable.</summary>
@@ -202,8 +202,8 @@ internal sealed class InstallerSettingsTests
     /// <summary>Saves a definition the way the hooks do, beside the install.</summary>
     /// <param name="installRoot">The install root.</param>
     /// <param name="arguments">The action's arguments.</param>
-    private static void Save(string installRoot, string arguments) =>
-        File.WriteAllText(
+    private static async Task SaveAsync(string installRoot, string arguments) =>
+        await File.WriteAllTextAsync(
             Path.Combine(installRoot, SignInTask.SavedDefinitionFileName),
             SignInTask.DefinitionFor(Path.Combine(installRoot, "current", "BrowserAI.exe"), NamedPipes.CurrentUserSid(), installRoot, arguments));
 }

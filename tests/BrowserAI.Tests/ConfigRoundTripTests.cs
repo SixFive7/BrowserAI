@@ -36,7 +36,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task EveryGeneratedOpinionComesBackFromTheChild()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var resolved = ResolvedConfig(run);
@@ -48,7 +48,7 @@ internal sealed class ConfigRoundTripTests
         // own and not a string written into this file; with no browser provisioned
         // it is null on both sides.
         var hiddenUserAgent = File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)
-            ? await HeadedUserAgent.ForAsync(BrowserAiPaths.ExpectedChromiumExecutable, ScratchRoot.Path, NullLogger.Instance, CancellationToken.None)
+            ? await HeadedUserAgent.ForAsync(BrowserAiPaths.ExpectedChromiumExecutable, await ScratchRoot.PathAsync(), NullLogger.Instance, CancellationToken.None)
             : null;
 
         foreach (var opinion in Expected(run, hiddenUserAgent).Opinions)
@@ -92,7 +92,7 @@ internal sealed class ConfigRoundTripTests
         foreach (var browser in ProvisionedBrowsers.Families)
         {
             var config = BrowserConfiguration.ForSession(
-                SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-shape")),
+                SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), "generator-shape")),
                 headed: false,
                 browser,
                 transcript: true,
@@ -145,7 +145,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task EverySessionLaunchCarriesTheBrowsersOwnRestoreAndAHeadedOneNoIdleTimeout()
     {
-        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-restore"));
+        var session = SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), "generator-restore"));
 
         var chromium = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Chromium, transcript: false, RunOptions.Default).Json)!;
         var firefox = JsonNode.Parse(BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, transcript: false, RunOptions.Default).Json)!;
@@ -186,7 +186,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task TheChildResolvesOurChannelAndOurProfileRatherThanADefault()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var resolved = ResolvedConfig(run);
@@ -258,7 +258,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task TheChildHonoursFilePathsAndHandsBackAbsoluteWhereUpstreamDefaultsToRelative()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var resolved = ResolvedConfig(run);
@@ -315,7 +315,7 @@ internal sealed class ConfigRoundTripTests
             foreach (var headed in new[] { false, true })
             {
                 var config = BrowserConfiguration.ForSession(
-                    SessionPath.For(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
+                    SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), "unrestricted-file-access")),
                     headed,
                     browser,
                     transcript: false,

@@ -57,7 +57,7 @@ internal sealed partial class PayloadTests
     [Test]
     public async Task ThePayloadDeclaresOneDependencyAndItIsADistTag()
     {
-        using var manifest = ReadJson("package.json");
+        using var manifest = await ReadJsonAsync("package.json");
 
         var dependencies = manifest.RootElement.GetProperty("dependencies")
             .EnumerateObject()
@@ -82,7 +82,7 @@ internal sealed partial class PayloadTests
     [Test]
     public async Task TheLockRecordsUpstreamsOwnExactPinOfPlaywrightCore()
     {
-        var declared = DeclaredPlaywrightCore();
+        var declared = await DeclaredPlaywrightCoreAsync();
 
         // An exact version, byte for byte, not a range that happens to match.
         // If upstream ever loosened this pin the payload would start floating
@@ -103,7 +103,7 @@ internal sealed partial class PayloadTests
         await Assert.That(declared).DoesNotContain("*");
         await Assert.That(declared).DoesNotContain(" ");
 
-        var resolved = ReadJson("package-lock.json").RootElement
+        var resolved = (await ReadJsonAsync("package-lock.json")).RootElement
             .GetProperty("packages")
             .GetProperty("node_modules/playwright-core")
             .GetProperty("version")
@@ -169,13 +169,13 @@ internal sealed partial class PayloadTests
     [Test]
     public async Task TheWorkedExampleStatesTheChainTheCommittedRecordsState()
     {
-        var example = WorkedExample();
+        var example = await WorkedExampleAsync();
         var disagreements = new List<string>();
 
         string wrapper;
         string resolved;
 
-        using (var lockFile = ReadJson("package-lock.json"))
+        using (var lockFile = await ReadJsonAsync("package-lock.json"))
         {
             var packages = lockFile.RootElement.GetProperty("packages");
 
@@ -212,19 +212,19 @@ internal sealed partial class PayloadTests
         // built from; the committed lock is what the exit above reads. A payload
         // assembled from something else would leave the exit reading a record of
         // a tree nobody is running.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(
             RepositoryPayload.Layout.Root, "mcp", "node_modules", "@playwright", "mcp", "package.json")));
 
         await Assert.That(manifest.RootElement.GetProperty("dependencies").GetProperty("playwright-core").GetString())
-            .IsEqualTo(DeclaredPlaywrightCore());
+            .IsEqualTo(await DeclaredPlaywrightCoreAsync());
 
         using var installed = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(
             RepositoryPayload.Layout.Root, "mcp", "node_modules", "playwright-core", "package.json")));
 
         await Assert.That(installed.RootElement.GetProperty("version").GetString())
-            .IsEqualTo(DeclaredPlaywrightCore());
+            .IsEqualTo(await DeclaredPlaywrightCoreAsync());
     }
 
     [Test]
@@ -240,7 +240,7 @@ internal sealed partial class PayloadTests
         //
         // `node\` is deliberately outside the scan. `node.exe` is the native
         // binary the payload exists to ship.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var mcp = new DirectoryInfo(Path.Combine(RepositoryPayload.Layout.Root, "mcp"));
 
@@ -263,7 +263,7 @@ internal sealed partial class PayloadTests
         // Named, not allowed by extension, because the interesting event
         // is a *second* one arriving: upstream adding a WASM codec is how a
         // "portable JS tree" acquires a component nobody reviewed.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var mcp = new DirectoryInfo(Path.Combine(RepositoryPayload.Layout.Root, "mcp"));
 
@@ -284,7 +284,7 @@ internal sealed partial class PayloadTests
         // wrongly on any later day is caught by nothing. They cost milliseconds
         // apiece against a tree that is already on disk, which is why "the
         // script asserts it" was never a good enough answer.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var layout = RepositoryPayload.Layout;
         using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(layout.Root, "payload.json")));
@@ -330,7 +330,7 @@ internal sealed partial class PayloadTests
         // The path also pins the asymmetry §A names: the outer directory uses
         // underscores and the inner one dashes, so a path built on the wrong
         // guess fails here and not at a browser launch.
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         await Assert.That(File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)).IsTrue();
         await Assert.That(BrowserAiPaths.ExpectedChromiumExecutable).Contains("chrome-win64");
@@ -365,7 +365,7 @@ internal sealed partial class PayloadTests
         // differently. Source order and not execution order is what an
         // assertion over text can establish, and for this straight-line
         // function they are the same thing.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var bundle = await File.ReadAllTextAsync(Path.Combine(
             RepositoryPayload.Layout.Root,
@@ -496,9 +496,9 @@ internal sealed partial class PayloadTests
 
     /// <summary><c>@playwright/mcp</c>'s own declared <c>playwright-core</c> dependency.</summary>
     /// <returns>The exact version upstream pins, as the committed lock records it.</returns>
-    private static string? DeclaredPlaywrightCore()
+    private static async Task<string?> DeclaredPlaywrightCoreAsync()
     {
-        using var lockFile = ReadJson("package-lock.json");
+        using var lockFile = await ReadJsonAsync("package-lock.json");
 
         return lockFile.RootElement
             .GetProperty("packages")
@@ -527,8 +527,8 @@ internal sealed partial class PayloadTests
     // recorded string, so a version is an opaque string and its shape is
     // upstream's business.
 
-    private static JsonDocument ReadJson(string name) =>
-        JsonDocument.Parse(File.ReadAllText(
+    private static async Task<JsonDocument> ReadJsonAsync(string name) =>
+        JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", name)));
 
     /// <summary>
@@ -536,9 +536,9 @@ internal sealed partial class PayloadTests
     /// </summary>
     /// <returns>The contents of the block, without its fences.</returns>
     /// <exception cref="InvalidOperationException">The anchor or the block is gone.</exception>
-    private static string WorkedExample()
+    private static async Task<string> WorkedExampleAsync()
     {
-        var decisions = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "DECISIONS.md"));
+        var decisions = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "DECISIONS.md"));
         var anchor = decisions.IndexOf(WorkedExampleAnchor, StringComparison.Ordinal);
 
         if (anchor < 0)

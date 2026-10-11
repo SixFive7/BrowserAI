@@ -50,18 +50,18 @@ internal sealed class BackgroundProcessTests
     [Test]
     public async Task ASessionOutlivesARelayThatIsKilledAndTheNextRelayFindsItsPageAsItWasLeft()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("background-relay-killed");
-        await using var background = BackgroundRun.Start(scratch.Path);
+        using var scratch = await ScratchDirectory.CreateAsync("background-relay-killed");
+        await using var background = await BackgroundRun.StartAsync(scratch.Path);
 
         var marker = $"KEPT-{Guid.NewGuid():N}";
         var session = Path.Combine(scratch.Path, "kept-across-a-relay");
 
         // ---- The first relay: open the session and leave a page in it.
-        var first = background.StartRelay(scratch.Path);
+        var first = await background.StartRelayAsync(scratch.Path);
 
         try
         {
@@ -92,7 +92,7 @@ internal sealed class BackgroundProcessTests
         }
 
         // ---- The next relay: the page is still there.
-        await using var second = background.StartRelay(scratch.Path);
+        await using var second = await background.StartRelayAsync(scratch.Path);
 
         _ = await second.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -122,17 +122,17 @@ internal sealed class BackgroundProcessTests
     [Test]
     public async Task ASessionOutlivesARelayWhoseClientClosedItsInputAndTheNextRelayTakesItOver()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("background-relay-eof");
-        await using var background = BackgroundRun.Start(scratch.Path);
+        using var scratch = await ScratchDirectory.CreateAsync("background-relay-eof");
+        await using var background = await BackgroundRun.StartAsync(scratch.Path);
 
         var marker = $"KEPT-{Guid.NewGuid():N}";
         var session = Path.Combine(scratch.Path, "kept-across-an-eof");
 
-        await using (var first = background.StartRelay(scratch.Path))
+        await using (var first = await background.StartRelayAsync(scratch.Path))
         {
             _ = await first.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -157,7 +157,7 @@ internal sealed class BackgroundProcessTests
             await Assert.That(await first.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
         }
 
-        await using var second = background.StartRelay(scratch.Path);
+        await using var second = await background.StartRelayAsync(scratch.Path);
 
         _ = await second.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -188,16 +188,16 @@ internal sealed class BackgroundProcessTests
     [Test]
     public async Task KillingTheBackgroundTakesEveryChildWithItAndEveryRelayAnswersWithTheCrashAtOnce()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("background-death");
-        await using var background = BackgroundRun.Start(scratch.Path);
+        using var scratch = await ScratchDirectory.CreateAsync("background-death");
+        await using var background = await BackgroundRun.StartAsync(scratch.Path);
 
         var session = Path.Combine(scratch.Path, "dies-with-its-background");
 
-        await using var relay = background.StartRelay(scratch.Path);
+        await using var relay = await background.StartRelayAsync(scratch.Path);
 
         _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -290,17 +290,17 @@ internal sealed class BackgroundProcessTests
     [Test]
     public async Task ABackgroundStoppedThroughItsPipeRecordsTheStopForEverySessionItHeld()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("background-stopped");
-        await using var background = BackgroundRun.Start(scratch.Path);
+        using var scratch = await ScratchDirectory.CreateAsync("background-stopped");
+        await using var background = await BackgroundRun.StartAsync(scratch.Path);
 
         var browsing = Path.Combine(scratch.Path, "stopped-with-a-browser");
         var waiting = Path.Combine(scratch.Path, "stopped-with-no-browser");
 
-        await using var relay = background.StartRelay(scratch.Path);
+        await using var relay = await background.StartRelayAsync(scratch.Path);
 
         _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -325,13 +325,13 @@ internal sealed class BackgroundProcessTests
         });
 
         // The uninstall hook's own stop, with its own bound.
-        var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(background.Pipe, background.Record, BackgroundStop.Bound));
+        var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(background.Pipe, background.Record, BackgroundStop.Bound);
 
         await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
 
         foreach (var session in new[] { browsing, waiting })
         {
-            var close = SessionLock.ReadRecord(SessionPath.For(session))!.LastClose!;
+            var close = (await SessionLock.ReadRecordAsync(SessionPath.For(session)))!.LastClose!;
 
             await Assert.That(close.Value.Cause).IsEqualTo(SessionCloseCause.Stopped).Because($"{session}: {CloseReasons.Of(close)}");
         }
@@ -398,7 +398,7 @@ internal sealed class BackgroundProcessTests
         /// <summary>Starts one and waits for its pipe.</summary>
         /// <param name="workingDirectory">Its working directory.</param>
         /// <returns>The run.</returns>
-        public static BackgroundRun Start(string workingDirectory)
+        public static async Task<BackgroundRun> StartAsync(string workingDirectory)
         {
             var job = JobObject.CreateKillOnClose();
 
@@ -406,7 +406,7 @@ internal sealed class BackgroundProcessTests
             {
                 var environment = PublishedSlice.InheritedEnvironment();
                 var pipe = PublishedBackground.NewPipeName();
-                var process = PublishedBackground.Start(job, workingDirectory, environment, pipe, []);
+                var process = await PublishedBackground.StartAsync(job, workingDirectory, environment, pipe, []);
 
                 return new BackgroundRun(job, process, pipe, PublishedBackground.RecordFor(environment, [], pipe));
             }
@@ -420,8 +420,8 @@ internal sealed class BackgroundProcessTests
         /// <summary>Starts a relay to this background, in a job of its own.</summary>
         /// <param name="workingDirectory">Its working directory.</param>
         /// <returns>The relay.</returns>
-        public RawStdioClient StartRelay(string workingDirectory) =>
-            RawStdioClient.Start(
+        public async Task<RawStdioClient> StartRelayAsync(string workingDirectory) =>
+            await RawStdioClient.StartAsync(
                 PublishedSlice.Executable,
                 [Program.McpArgument, BackgroundPipe.PipeArgument, Pipe],
                 workingDirectory,

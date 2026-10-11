@@ -455,8 +455,8 @@ internal sealed class FakeChildHarnessTests
     [Test]
     public async Task NoRigOpensABrowserWindow()
     {
-        await using var real = RigSessionEnvironment.Create(realSessionChildren: true, opensDefaultSession: false);
-        await using var doubles = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var real = await RigSessionEnvironment.CreateAsync(realSessionChildren: true, opensDefaultSession: false);
+        await using var doubles = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
 
         // THE POINT. A real node child means a real Chromium, and a headed one
         // lands on the developer's screen and takes their foreground.
@@ -471,7 +471,7 @@ internal sealed class FakeChildHarnessTests
         // `headless`. Asserted through the product's own generator and not
         // by reading the flag back out of itself.
         var generated = BrowserConfiguration.ForSession(
-            SessionPath.For(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),
+            SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"rig-headedness-{Guid.NewGuid():N}")),
             real.DefaultSessionHeaded,
             SessionManager.DefaultBrowser,
             transcript: false,

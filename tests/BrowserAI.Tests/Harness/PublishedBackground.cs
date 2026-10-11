@@ -59,13 +59,13 @@ internal static class PublishedBackground
     /// <param name="relayArguments">The relay's arguments, whose data root, if any, the background takes too.</param>
     /// <returns>The background.</returns>
     /// <exception cref="InvalidOperationException">It ended, or opened no pipe within <see cref="StartBound"/>.</exception>
-    public static LaunchedProcess Start(
+    public static async Task<LaunchedProcess> StartAsync(
         JobObject job,
         string workingDirectory,
         IReadOnlyDictionary<string, string> environment,
         string pipe,
         IReadOnlyList<string> relayArguments) =>
-        Start(job, workingDirectory, environment, pipe, relayArguments, standardError: null, out _);
+        (await StartAsync(job, workingDirectory, environment, pipe, relayArguments, standardError: null)).Process;
 
     /// <summary>
     /// Starts a background in a job, drains both its streams, keeps what it writes to
@@ -84,17 +84,19 @@ internal static class PublishedBackground
     /// <param name="pipe">The pipe it serves.</param>
     /// <param name="relayArguments">The relay's arguments, whose data root, if any, the background takes too.</param>
     /// <param name="standardError">Where its stderr goes, line by line, or <see langword="null"/> to drop it.</param>
-    /// <param name="standardErrorPump">The read of its stderr, which ends when every holder of the write end has gone.</param>
-    /// <returns>The background.</returns>
+    /// <returns>
+    /// The background, and the read of its stderr, which ends when every holder of the
+    /// write end has gone. <i>Returned beside it since 2026-10-11, when the start became
+    /// awaited (previously an out parameter, which an asynchronous method cannot have).</i>
+    /// </returns>
     /// <exception cref="InvalidOperationException">It ended, or opened no pipe within <see cref="StartBound"/>.</exception>
-    public static LaunchedProcess Start(
+    public static async Task<(LaunchedProcess Process, Task StandardErrorPump)> StartAsync(
         JobObject job,
         string workingDirectory,
         IReadOnlyDictionary<string, string> environment,
         string pipe,
         IReadOnlyList<string> relayArguments,
-        StringBuilder? standardError,
-        out Task standardErrorPump)
+        StringBuilder? standardError)
     {
         List<string> arguments = [Program.BackgroundArgument, BackgroundPipe.PipeArgument, pipe];
 
@@ -106,11 +108,11 @@ internal static class PublishedBackground
         var background = JobLauncher.Start(job, PublishedSlice.Executable, arguments, workingDirectory, environment);
 
         _ = PumpAsync(background.StandardOutput, into: null);
-        standardErrorPump = PumpAsync(background.StandardError, standardError);
+        var standardErrorPump = PumpAsync(background.StandardError, standardError);
 
         var waited = Stopwatch.StartNew();
 
-        while (!NamedPipes.WaitForFreeInstance(pipe, 1))
+        while (!NamedPipes.HasFreeInstanceNow(pipe))
         {
             if (background.HasExited)
             {
@@ -123,10 +125,10 @@ internal static class PublishedBackground
                 throw new InvalidOperationException($"The published background (pid {background.Id}) opened no pipe {pipe} within {StartBound}.");
             }
 
-            Thread.Sleep(25);
+            await Task.Delay(25);
         }
 
-        return background;
+        return (background, standardErrorPump);
     }
 
     /// <summary>Reads a stream line by line to its end, keeping the lines when asked to.</summary>

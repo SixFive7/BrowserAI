@@ -102,7 +102,7 @@ internal sealed partial class PrivateDesktop : IDisposable
     /// <param name="workingDirectory">Its working directory.</param>
     /// <param name="environment">Its whole environment block.</param>
     /// <returns>The running child.</returns>
-    public LaunchedProcess Launch(
+    public async Task<LaunchedProcess> LaunchAsync(
         JobObject job,
         string command,
         IReadOnlyList<string> arguments,
@@ -114,7 +114,7 @@ internal sealed partial class PrivateDesktop : IDisposable
         // Written where the NEXT run can read it, as every other launch in the
         // suite does: the job contains the child while this run is alive, and the
         // record names it if this run is killed with the job.
-        SpawnRecord.Add(launched.Id);
+        await SpawnRecord.AddAsync(launched.Id);
 
         return launched;
     }
@@ -152,13 +152,26 @@ internal sealed partial class PrivateDesktop : IDisposable
     /// </remarks>
     /// <param name="window">The window.</param>
     /// <returns>Whether the thread joined the desktop and the message was posted.</returns>
-    public bool Close(nint window)
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, the maintainer's decision 54: the thread hands its
+    /// answer back through a task. <i>Previously the caller joined the thread.</i>
+    /// </remarks>
+    public Task<bool> CloseAsync(nint window)
     {
-        var posted = false;
+        var posted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var thread = new Thread(() =>
         {
-            posted = SetThreadDesktop(_handle) && PostMessageW(window, WmClose, nint.Zero, nint.Zero);
+            try
+            {
+                _ = posted.TrySetResult(SetThreadDesktop(_handle) && PostMessageW(window, WmClose, nint.Zero, nint.Zero));
+            }
+#pragma warning disable CA1031 // The thread's boundary: the failure goes to the caller, who awaits it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = posted.TrySetException(failure);
+            }
         })
         {
             IsBackground = true,
@@ -166,9 +179,8 @@ internal sealed partial class PrivateDesktop : IDisposable
         };
 
         thread.Start();
-        thread.Join();
 
-        return posted;
+        return posted.Task;
     }
 
     /// <inheritdoc />

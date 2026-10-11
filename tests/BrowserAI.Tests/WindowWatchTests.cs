@@ -272,7 +272,7 @@ internal sealed class WindowWatchTests
 
         await Assert.That(File.Exists(host)).IsTrue().Because(host);
 
-        using var scratch = ScratchDirectory.Create("window-watch-child");
+        using var scratch = await ScratchDirectory.CreateAsync("window-watch-child");
 
         var className = $"BrowserAI_SuiteShownWindow_{Guid.NewGuid():N}";
         const string Filter = "/*/*/WindowWatchTests/" + nameof(APlantedArmShowsOneWindowOnlyInAChildThatAsksForIt);
@@ -287,7 +287,7 @@ internal sealed class WindowWatchTests
 
         using var desktop = PrivateDesktop.Create("window-watch");
         using var job = JobObject.CreateKillOnClose();
-        using var child = desktop.Launch(job, host, ["--disable-logo", "--treenode-filter", Filter], AppContext.BaseDirectory, environment);
+        using var child = await desktop.LaunchAsync(job, host, ["--disable-logo", "--treenode-filter", Filter], AppContext.BaseDirectory, environment);
 
         var standardOutput = ReadToEndAsync(child.StandardOutput);
         var standardError = ReadToEndAsync(child.StandardError);
@@ -350,7 +350,7 @@ internal sealed class WindowWatchTests
 
         using var scope = new JobObjectScope();
 
-        _ = scope.Launch(
+        _ = await scope.LaunchAsync(
             Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"),
             directory,
             "window-show",

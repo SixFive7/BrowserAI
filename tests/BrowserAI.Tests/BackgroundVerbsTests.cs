@@ -55,13 +55,13 @@ internal sealed class BackgroundVerbsTests
 
         await Assert.That(verbs.State).IsEqualTo(BackgroundState.Serving);
 
-        var (address, refusal) = verbs.Show(page: null);
+        var (address, refusal) = await verbs.ShowAsync(page: null);
 
         await Assert.That(address).IsNull();
         await Assert.That(refusal).Contains("still starting");
 
         verbs.State = BackgroundState.Updating;
-        (address, refusal) = verbs.Show("sessions");
+        (address, refusal) = await verbs.ShowAsync("sessions");
 
         await Assert.That(address).IsNull();
         await Assert.That(refusal).Contains("installing an update");
@@ -80,7 +80,7 @@ internal sealed class BackgroundVerbsTests
         await Assert.That(stops).IsEqualTo(2);
         await Assert.That(serving.State).IsEqualTo(BackgroundState.Stopping);
 
-        (address, refusal) = serving.Show(page: null);
+        (address, refusal) = await serving.ShowAsync(page: null);
 
         await Assert.That(address).IsNull();
         await Assert.That(refusal).Contains("stopping");
@@ -108,7 +108,7 @@ internal sealed class BackgroundVerbsTests
     public async Task TheToastsReadNothingHeldUntilTheUpdateCoreExistsAndThenTheCoresHolds()
     {
         var deferred = new DeferredUpdateHolds();
-        var before = deferred.Read();
+        var before = await deferred.ReadAsync();
 
         await Assert.That(before.State).IsEqualTo(UpdateHoldState.None);
         await Assert.That(before.Version).IsNull();
@@ -118,7 +118,7 @@ internal sealed class BackgroundVerbsTests
 
         deferred.Target = core;
 
-        await Assert.That(deferred.Read()).IsSameReferenceAs(core.Snapshot);
+        await Assert.That(await deferred.ReadAsync()).IsSameReferenceAs(core.Snapshot);
 
         // Corrected 2026-10-10 (previously the deferred holds answered an install-now with
         // "still starting" and then passed it on): #101 of the texts review. The toasts
@@ -134,6 +134,9 @@ internal sealed class BackgroundVerbsTests
             UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch) with { State = UpdateHoldState.Held, Version = "9.9.10-verbs-tests" };
 
         /// <inheritdoc />
-        public UpdateHoldSnapshot Read() => Snapshot;
+        public Task<UpdateHoldSnapshot> ReadAsync() => Task.FromResult(Snapshot);
+
+        /// <inheritdoc />
+        public UpdateHoldSnapshot ReadCountdown() => Snapshot;
     }
 }

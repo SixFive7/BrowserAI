@@ -60,20 +60,20 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task APurposeChangeIsARowAndNeverAConcatenationOfEveryPurposeBeforeIt()
     {
-        using var scratch = ScratchDirectory.Create("record-purpose-rows");
+        using var scratch = await ScratchDirectory.CreateAsync("record-purpose-rows");
         var path = NewSession(scratch, "purpose-rows");
 
-        var first = SessionLock.TryAcquire(path, Request("reproducing the checkout 500 on staging"), NullLogger.Instance);
+        var first = await SessionLock.TryAcquireAsync(path, Request("reproducing the checkout 500 on staging"), NullLogger.Instance);
         first.Acquired!.Dispose();
 
-        var second = SessionLock.TryAcquire(path, Request("and the same 500 on the mobile checkout"), NullLogger.Instance);
+        var second = await SessionLock.TryAcquireAsync(path, Request("and the same 500 on the mobile checkout"), NullLogger.Instance);
         second.Acquired!.Dispose();
 
-        var third = SessionLock.TryAcquire(path, Request("tracking the checkout redirect loop"), NullLogger.Instance);
+        var third = await SessionLock.TryAcquireAsync(path, Request("tracking the checkout redirect loop"), NullLogger.Instance);
         third.Acquired!.AppendPurpose("the redirect loop is a trailing-slash rule");
         third.Acquired.Dispose();
 
-        var record = SessionLock.ReadRecord(path)!;
+        var record = (await SessionLock.ReadRecordAsync(path))!;
 
         // Four statements, each one exactly what its caller said.
         await Assert.That(record.PurposeHistory.Select(statement => statement.Value).ToArray())
@@ -122,12 +122,12 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task AFieldGainsARowOnlyOnChangeAndNothingIsEverEvicted()
     {
-        using var scratch = ScratchDirectory.Create("record-dedup");
+        using var scratch = await ScratchDirectory.CreateAsync("record-dedup");
         var path = NewSession(scratch, "dedup");
 
         const int Rounds = 40;
 
-        var opened = SessionLock.TryAcquire(path, Request("the one purpose"), NullLogger.Instance);
+        var opened = await SessionLock.TryAcquireAsync(path, Request("the one purpose"), NullLogger.Instance);
         var held = opened.Acquired!;
 
         try
@@ -147,11 +147,11 @@ internal sealed class SessionRecordTests
         // row.
         for (var i = 0; i < 3; i++)
         {
-            SessionLock.TryAcquire(path, Request($"purpose {(Rounds - 1).ToString(CultureInfo.InvariantCulture)}"), NullLogger.Instance)
+            (await SessionLock.TryAcquireAsync(path, Request($"purpose {(Rounds - 1).ToString(CultureInfo.InvariantCulture)}"), NullLogger.Instance))
                 .Acquired!.Dispose();
         }
 
-        var record = SessionLock.ReadRecord(path)!;
+        var record = (await SessionLock.ReadRecordAsync(path))!;
 
         await Assert.That(record.DirectoryHistory.Count).IsEqualTo(1);
         await Assert.That(record.BrowserHistory.Count).IsEqualTo(1);
@@ -181,13 +181,13 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task CreatedAndLastUsedAreDerivedAndTheLogIsWhatMovesLastUsed()
     {
-        using var scratch = ScratchDirectory.Create("record-dates");
+        using var scratch = await ScratchDirectory.CreateAsync("record-dates");
         var path = NewSession(scratch, "dates");
 
-        var opened = SessionLock.TryAcquire(path, Request("a session with dates"), NullLogger.Instance);
+        var opened = await SessionLock.TryAcquireAsync(path, Request("a session with dates"), NullLogger.Instance);
         var held = opened.Acquired!;
 
-        var atOpen = SessionLock.ReadRecord(path)!;
+        var atOpen = (await SessionLock.ReadRecordAsync(path))!;
         await Assert.That(atOpen.Created).IsLessThanOrEqualTo(atOpen.LastUsed);
 
         // The store keeps `at` as text, so a stamp written one way and parsed
@@ -206,7 +206,7 @@ internal sealed class SessionRecordTests
             held.Dispose();
         }
 
-        var afterCall = SessionLock.ReadRecord(path)!;
+        var afterCall = (await SessionLock.ReadRecordAsync(path))!;
 
         await Assert.That(afterCall.Created).IsEqualTo(atOpen.Created);
         await Assert.That(afterCall.LastUsed).IsGreaterThanOrEqualTo(atOpen.LastUsed);
@@ -232,10 +232,10 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task AFailureCarriesItsPayloadAndASuccessCarriesNone()
     {
-        using var scratch = ScratchDirectory.Create("record-payloads");
+        using var scratch = await ScratchDirectory.CreateAsync("record-payloads");
         var path = NewSession(scratch, "payloads");
 
-        var opened = SessionLock.TryAcquire(path, Request("a session with two outcomes"), NullLogger.Instance);
+        var opened = await SessionLock.TryAcquireAsync(path, Request("a session with two outcomes"), NullLogger.Instance);
         var held = opened.Acquired!;
 
         const string Detail = "TimeoutError: page.goto: Timeout 30000ms exceeded.\n   at Page.goto (page.ts:1)";
@@ -283,10 +283,10 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task ARowIsInFlightUntilSomethingSettlesIt()
     {
-        using var scratch = ScratchDirectory.Create("record-in-flight");
+        using var scratch = await ScratchDirectory.CreateAsync("record-in-flight");
         var path = NewSession(scratch, "in-flight");
 
-        var opened = SessionLock.TryAcquire(path, Request("a session with a call that never answers"), NullLogger.Instance);
+        var opened = await SessionLock.TryAcquireAsync(path, Request("a session with a call that never answers"), NullLogger.Instance);
         var held = opened.Acquired!;
 
         long row;
@@ -434,12 +434,12 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task AToolIsRecordedVerbatimAndAMultiLineWhySurvivesTheRoundTrip()
     {
-        using var scratch = ScratchDirectory.Create("record-verbatim");
+        using var scratch = await ScratchDirectory.CreateAsync("record-verbatim");
         var path = NewSession(scratch, "verbatim");
 
         const string Why = "first line\nsecond line\nthird line";
 
-        var opened = SessionLock.TryAcquire(path, Request("a session recording an unknown tool"), NullLogger.Instance);
+        var opened = await SessionLock.TryAcquireAsync(path, Request("a session recording an unknown tool"), NullLogger.Instance);
         var held = opened.Acquired!;
 
         try
@@ -500,10 +500,22 @@ internal sealed class SessionRecordTests
         // ar-SA carries the Umm al-Qura calendar, so a date formatted or parsed
         // against the current culture comes out with a different year entirely --
         // the failure this rule exists to close, and not a cosmetic one.
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         var thread = new Thread(() =>
         {
-            stamp = SessionRecordReader.Stamp(moment);
-            parsed = SessionRecordReader.Moment(stamp);
+            try
+            {
+                stamp = SessionRecordReader.Stamp(moment);
+                parsed = SessionRecordReader.Moment(stamp);
+                _ = done.TrySetResult();
+            }
+#pragma warning disable CA1031 // Handed back to the arm, which fails on it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = done.TrySetException(failure);
+            }
         })
         {
             CurrentCulture = new CultureInfo("ar-SA"),
@@ -513,7 +525,7 @@ internal sealed class SessionRecordTests
 
         thread.Start();
 
-        await Assert.That(thread.Join(TestDefaults.InProcessHang)).IsTrue();
+        await done.Task.WaitAsync(TestDefaults.InProcessHang);
 
         // 2026 and not 2569, and the offset spelled out, not escaped.
         await Assert.That(stamp).StartsWith("2026-08-26T11:45:30");
@@ -547,14 +559,14 @@ internal sealed class SessionRecordTests
     [Test]
     public async Task ADirectoryHoldingTheOldRecordIsRefusedAsAFormatAndNothingIsWritten()
     {
-        using var scratch = ScratchDirectory.Create("record-old-format");
+        using var scratch = await ScratchDirectory.CreateAsync("record-old-format");
         var path = NewSession(scratch, "old-format");
 
         await File.WriteAllTextAsync(
             Path.Combine(path.FullPath, SessionLayout.LegacyRecordFileName),
             """{"schemaVersion": 4, "purpose": []}""");
 
-        var refused = SessionLock.TryAcquire(path, Request("about to meet the old format"), NullLogger.Instance);
+        var refused = await SessionLock.TryAcquireAsync(path, Request("about to meet the old format"), NullLogger.Instance);
         refused.Acquired?.Dispose();
 
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.NotThisFormat);
@@ -571,7 +583,7 @@ internal sealed class SessionRecordTests
         await Assert.That(File.Exists(path.DataFile)).IsFalse();
 
         // And a read is refused the same way instead of answering "no session".
-        var thrown = Assert.Throws<SessionRecordException>(() => SessionLock.ReadRecord(path));
+        var thrown = await Assert.ThrowsAsync<SessionRecordException>(() => SessionLock.ReadRecordAsync(path));
 
         await Assert.That(thrown!.Message).Contains(SessionLayout.LegacyRecordFileName);
     }

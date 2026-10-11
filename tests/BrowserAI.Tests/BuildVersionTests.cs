@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using BrowserAI.Hosting;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -111,11 +110,11 @@ internal sealed partial class BuildVersionTests
     {
         // browserai.data's build stamp is the first thing a support question reads,
         // and until step 18 it would have said 0.0.0.0 for the entire 0.x line.
-        using var scratch = ScratchDirectory.Create("version-stamp");
+        using var scratch = await ScratchDirectory.CreateAsync("version-stamp");
         var path = SessionPath.For(Path.Combine(scratch.Path, "stamped"));
         SessionLayout.Create(path);
 
-        var acquired = SessionLock.TryAcquire(
+        var acquired = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "chromium", Purpose = "record the build stamp" },
             NullLogger.Instance);
@@ -124,7 +123,7 @@ internal sealed partial class BuildVersionTests
         {
             await Assert.That(acquired.Taken).IsTrue();
 
-            var record = SessionLock.ReadRecord(path);
+            var record = await SessionLock.ReadRecordAsync(path);
 
             await Assert.That(record).IsNotNull();
             await Assert.That(record!.BrowserAiVersion).IsEqualTo(BuildVersion.Current);
@@ -144,7 +143,7 @@ internal sealed partial class BuildVersionTests
         // and the message is in kb. What is guarded here is that the mechanism
         // is still in the project file, because a target quietly deleted leaves
         // every other signal green.
-        var project = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"));
+        var project = await TestFiles.LoadXmlAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"));
 
         var target = project.Descendants()
             .FirstOrDefault(element => element.Name.LocalName is "Target"
@@ -181,7 +180,7 @@ internal sealed partial class BuildVersionTests
         // feature switched on and a SourceRevisionId supplied, this property
         // set to false leaves the version undecorated, and setting it to true
         // produces `0.1.0+<40-char sha>`. It is the property that decides.
-        var props = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Build.props"));
+        var props = await TestFiles.LoadXmlAsync(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Build.props"));
 
         var setting = props.Descendants()
             .Where(element => element.Name.LocalName is "IncludeSourceRevisionInInformationalVersion")
@@ -200,7 +199,7 @@ internal sealed partial class BuildVersionTests
         foreach (var file in RepositoryLayout.ProjectFiles)
         {
             var name = Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName).Replace('\\', '/');
-            var project = XDocument.Load(file.FullName);
+            var project = await TestFiles.LoadXmlAsync(file.FullName);
 
             foreach (var reference in project.Descendants()
                 .Where(element => element.Name.LocalName is "PackageReference" && element.Attribute("Include")?.Value is "MinVer"))
@@ -258,7 +257,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task ThePublishedBinaryReportsADerivedVersionOverTheWire()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
         var reported = (string?)run.InitializeResult["serverInfo"]?["version"];

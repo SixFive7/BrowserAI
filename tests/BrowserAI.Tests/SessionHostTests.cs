@@ -44,7 +44,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task ASessionOutlivesTheConnectionThatOpenedItAndTheNextConnectionDrivesItsBrowserAsItWas()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var first = await rig.ConnectAsync("the client before its restart");
@@ -95,7 +95,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task AClientThatRedialsTheHostWithoutListingIsRefusedOnceAndItsNextCallGoesThrough()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         const string ClientName = "claude-code";
@@ -139,7 +139,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task ASessionAnotherOpenConnectionDrivesIsRefusedAndNothingReachesItsChild()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var driving = await rig.ConnectAsync("the client that opened it");
@@ -178,7 +178,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task ASessionWhoseClientWentWithNoBrowserUpIsLetGoAtOnce()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync();
@@ -200,7 +200,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task ASessionTheCallerClosedIsLetGoWhenItsClientGoes()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
 
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
@@ -233,7 +233,7 @@ internal sealed class SessionHostTests
     {
         var clock = new ManualClock();
 
-        await using var sessions = NewSessions(browserIdlePeriod: ShortPeriod, clock: clock);
+        await using var sessions = await NewSessionsAsync(browserIdlePeriod: ShortPeriod, clock: clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync();
@@ -289,7 +289,7 @@ internal sealed class SessionHostTests
     {
         var clock = new ManualClock();
 
-        await using var sessions = NewSessions(browserIdlePeriod: ShortPeriod, clock: clock);
+        await using var sessions = await NewSessionsAsync(browserIdlePeriod: ShortPeriod, clock: clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync("claude-code");
@@ -353,7 +353,7 @@ internal sealed class SessionHostTests
     {
         var clock = new ManualClock();
 
-        await using var sessions = NewSessions(clock: clock);
+        await using var sessions = await NewSessionsAsync(clock: clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var client = await rig.ConnectAsync();
@@ -396,7 +396,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task AResumeFromTheNextConnectionTakesOverAKeptSessionAndSaysItsBrowserWasKept()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var first = await rig.ConnectAsync();
@@ -445,7 +445,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task AResumeOfAKeptSessionIsHeldBackOnAChangedSettingAndAlreadyLiveWithout()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var first = await rig.ConnectAsync();
@@ -502,7 +502,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task ADestroyFromAnotherOpenConnectionIsRefusedAndTheSessionGoesOn()
     {
-        await using var sessions = NewSessions();
+        await using var sessions = await NewSessionsAsync();
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var driving = await rig.ConnectAsync("the client that opened it");
@@ -530,7 +530,7 @@ internal sealed class SessionHostTests
     [Test]
     public async Task AChildsProgressReachesTheConnectionThatDrivesItsSessionNow()
     {
-        await using var sessions = NewSessions(
+        await using var sessions = await NewSessionsAsync(
             child => child.Tools["browser_snapshot"] = new FakeToolBehaviour { ProgressUpdates = 2 });
 
         await using var rig = await SessionHostRig.StartAsync(sessions);
@@ -582,11 +582,11 @@ internal sealed class SessionHostTests
     /// <param name="browserIdlePeriod">The idle period, when an arm drives it.</param>
     /// <param name="clock">The clock, when an arm drives it.</param>
     /// <returns>The environment, which the arm disposes.</returns>
-    private static RigSessionEnvironment NewSessions(
+    private static async Task<RigSessionEnvironment> NewSessionsAsync(
         Action<FakePlaywrightChild>? also = null,
         TimeSpan? browserIdlePeriod = null,
         ManualClock? clock = null) =>
-        RigSessionEnvironment.Create(
+        await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();

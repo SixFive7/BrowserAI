@@ -68,7 +68,7 @@ internal sealed class StaleToolListTests
     [Test]
     public async Task ACallBeforeAnyToolsListIsRefusedOnceWithTheNotificationAndThenForwarded()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             sessions: sessions,
             listsBeforeCalling: false);
@@ -134,7 +134,7 @@ internal sealed class StaleToolListTests
     [Test]
     public async Task AConnectionThatListsFirstIsNeverRefusedAndIsSentNoNotification()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"navigated"}]}""",
@@ -181,7 +181,7 @@ internal sealed class StaleToolListTests
     [Test]
     public async Task ResumeSaysWhenTheRecordWasWrittenByAnotherBuildAndSaysNothingWhenItWasNot()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var older = PlantASessionWrittenBy(sessions, "q261-resume-older", AnOlderBuild);
@@ -235,7 +235,7 @@ internal sealed class StaleToolListTests
     [Test]
     public async Task CatchUpCarriesTheSameLineOnPageOneAndStampsNothing()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var older = PlantASessionWrittenBy(sessions, "q261-catchup-older", AnOlderBuild);
@@ -247,7 +247,7 @@ internal sealed class StaleToolListTests
         await Assert.That(TextOf(read)).Contains(SessionManager.ServedByADifferentVersion(AnOlderBuild));
 
         // Read, not written: the record still names only the build that planted it.
-        var after = SessionLock.ReadRecord(SessionPath.For(older))!;
+        var after = (await SessionLock.ReadRecordAsync(SessionPath.For(older)))!;
 
         await Assert.That(after.BrowserAiVersion).IsEqualTo(AnOlderBuild);
         await Assert.That(after.BrowserAiVersionHistory.Count).IsEqualTo(1);

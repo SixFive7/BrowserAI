@@ -49,6 +49,16 @@
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The repository files a static initialiser of the harness reads, compiled
+         in since 2026-10-11 with the maintainer's decision 63, so that reading one
+         is a copy of memory and never a file read. Harness/RepositoryCopy.cs says
+         why each is a build input, and names the constant each is read by. -->
+    <EmbeddedResource Include="..\..\upstream-snapshots\browsers.json" LogicalName="upstream-snapshots/browsers.json" />
+    <EmbeddedResource Include="..\..\build\New-Release.ps1" LogicalName="build/New-Release.ps1" />
+    <EmbeddedResource Include="..\..\tool-verdicts.json" LogicalName="tool-verdicts.json" />
+  </ItemGroup>
+
   <!-- The upstream-review gate: four snapshots regenerated from the resolved
        payload and diffed on every build, with the diff in the failure message.
        Imported here and not in Directory.Build.props because the gate is

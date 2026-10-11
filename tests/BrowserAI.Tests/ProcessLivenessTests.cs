@@ -71,7 +71,7 @@ internal sealed partial class ProcessLivenessTests
         using var logs = new CapturingLoggerProvider();
         using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(logs));
 
-        var client = scope.Launch(
+        var client = await scope.LaunchAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
             Path.GetTempPath());
 
@@ -108,7 +108,7 @@ internal sealed partial class ProcessLivenessTests
         using var logs = new CapturingLoggerProvider();
         using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(logs));
 
-        var stranger = scope.Launch(
+        var stranger = await scope.LaunchAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
             Path.GetTempPath());
 
@@ -179,7 +179,7 @@ internal sealed partial class ProcessLivenessTests
         using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(logs));
 
         var cmd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
-        var corpse = scope.Launch(cmd, Path.GetTempPath(), "/c", "exit");
+        var corpse = await scope.LaunchAsync(cmd, Path.GetTempPath(), "/c", "exit");
         var created = ProcessIdentity.CreationTimeOf(corpse.Id);
 
         await Assert.That(await corpse.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
@@ -232,7 +232,7 @@ internal sealed partial class ProcessLivenessTests
         // The positive control, on the same route and the same call: a process
         // that is actually there is still watched. Without it a build that
         // refused every watch would pass this arm.
-        var live = scope.Launch(cmd, Path.GetTempPath());
+        var live = await scope.LaunchAsync(cmd, Path.GetTempPath());
 
         using var watched = ClientLivenessWatcher.ForProcess(
             live.Id,
@@ -265,7 +265,7 @@ internal sealed partial class ProcessLivenessTests
     [Test]
     public async Task ARelayReadsItsParentAndItsParentsParentEachWithItsCreationTime()
     {
-        using var scratch = ScratchDirectory.Create("parent-chain");
+        using var scratch = await ScratchDirectory.CreateAsync("parent-chain");
         var report = Path.Combine(scratch.Path, "leaf.json");
 
         var run = await ProbeProcess.RunAsync("parent-chain-middle", report);

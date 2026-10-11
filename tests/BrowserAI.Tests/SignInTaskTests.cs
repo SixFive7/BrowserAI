@@ -186,7 +186,7 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task TheTaskIsNamedForThePackIdAndTheInstallRootsKey()
     {
-        using var root = ScratchDirectory.Create("sign-in-name");
+        using var root = await ScratchDirectory.CreateAsync("sign-in-name");
 
         var key = RootKey.For(root.Path);
 
@@ -219,16 +219,16 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task TheInstallAndUpdateHooksRegisterTheTaskAndTheUninstallHookRemovesIt()
     {
-        using var install = ScratchDirectory.Create("sign-in-hooks");
-        using var data = ScratchDirectory.Create("sign-in-hooks-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-hooks");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-hooks-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var tasks = new ScratchLogonTasks();
         var name = SignInTask.NameFor(ScratchLogonTasks.AppId, install.Path);
 
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNull();
+        await Assert.That(await SignInTask.SavedDefinitionAsync(install.Path)).IsNull();
 
-        var installed = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+        var installed = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks);
 
         await Assert.That(installed.SignInTask!.Change).IsEqualTo(TaskChange.Registered);
         await Assert.That(installed.SignInTask.Name).IsEqualTo(name);
@@ -237,24 +237,24 @@ internal sealed class SignInTaskTests
 
         await Assert.That(definition.Descendants().Single(element => element.Name.LocalName == "Command").Value)
             .IsEqualTo(Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsEqualTo(tasks.Registered[name])
+        await Assert.That(await SignInTask.SavedDefinitionAsync(install.Path)).IsEqualTo(tasks.Registered[name])
             .Because("the definition a person's start registers again is not the one the hook registered");
 
-        var updated = Hook(RegistrationIntent.Update, image, data.Path, tasks);
+        var updated = await HookAsync(RegistrationIntent.Update, image, data.Path, tasks);
 
         await Assert.That(updated.SignInTask!.Change).IsEqualTo(TaskChange.Registered);
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsEqualTo(tasks.Registered[name]);
+        await Assert.That(await SignInTask.SavedDefinitionAsync(install.Path)).IsEqualTo(tasks.Registered[name]);
 
-        var removed = Hook(RegistrationIntent.Uninstall, image, data.Path, tasks);
+        var removed = await HookAsync(RegistrationIntent.Uninstall, image, data.Path, tasks);
 
         await Assert.That(removed.SignInTask!.Change).IsEqualTo(TaskChange.Removed);
         await Assert.That(tasks.Registered.IsEmpty).IsTrue();
         await Assert.That(string.Join(", ", tasks.Calls)).IsEqualTo($"register {name}, register {name}, remove {name}");
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNull();
+        await Assert.That(await SignInTask.SavedDefinitionAsync(install.Path)).IsNull();
         await Assert.That(File.Exists(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName))).IsFalse();
         // The sentence alone since 2026-10-10, round 2 of the texts review, #168
         // (previously "Background stop: NoneRunning. ...").
-        await Assert.That(HookLog(data.Path)).Contains("Background stop: No BrowserAI background was running, so none was stopped.");
+        await Assert.That(await HookLogAsync(data.Path)).Contains("Background stop: No BrowserAI background was running, so none was stopped.");
     }
 
     /// <summary>
@@ -279,18 +279,18 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task ATaskTheSchedulerRefusesNeverFailsTheHookAndTheInstallersLogSaysSo()
     {
-        using var install = ScratchDirectory.Create("sign-in-refused");
-        using var data = ScratchDirectory.Create("sign-in-refused-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-refused");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-refused-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var tasks = new ScratchLogonTasks { FailWith = "The task scheduler could not register it: 0x80070005, Access is denied." };
 
-        var outcome = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+        var outcome = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks);
 
         await Assert.That(outcome.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
         await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
         await Assert.That(outcome.PathEntry).IsNotNull();
-        await Assert.That(SignInTask.SavedDefinition(install.Path)).IsNotNull()
+        await Assert.That(await SignInTask.SavedDefinitionAsync(install.Path)).IsNotNull()
             .Because("a person's start registers the missing task from the saved definition, and none was saved for a task the scheduler refused");
 
         var lines = new List<(VelopackLogLevel Level, string Message)>();
@@ -303,7 +303,7 @@ internal sealed class SignInTaskTests
         await Assert.That(message).Contains("Access is denied");
 
         // And a registration that worked is information, not a warning.
-        var fine = Hook(RegistrationIntent.Install, image, data.Path, new ScratchLogonTasks());
+        var fine = await HookAsync(RegistrationIntent.Install, image, data.Path, new ScratchLogonTasks());
 
         lines.Clear();
         VelopackStartup.Mirror(fine, RegistrationIntent.Install, "9.9.9", (level, message, _) => lines.Add((level, message)));
@@ -333,19 +333,19 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task TheHooksCarryTheInstallersSettingsIntoTheRelaysRegistrationAndTheTasksAction()
     {
-        using var install = ScratchDirectory.Create("sign-in-settings");
-        using var data = ScratchDirectory.Create("sign-in-settings-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-settings");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-settings-data");
 
         const string Root = @"C:\Users\someone\BrowserAI data";
         const string Source = @"D:\feeds\BrowserAI";
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var name = SignInTask.NameFor(ScratchLogonTasks.AppId, install.Path);
 
         var tool = new FakeRegisterAi();
         var tasks = new ScratchLogonTasks();
 
-        _ = Hook(RegistrationIntent.Install, image, data.Path, tasks, tool, RegistrationClient.All, new InstallerSettings(Root, Source));
+        _ = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks, tool, RegistrationClient.All, new InstallerSettings(Root, Source));
 
         await Assert.That(RegisteredCommand(tool)).IsEqualTo($"{image} | {Program.McpArgument} | {Program.DataRootArgument} | {Root}");
         await Assert.That(ActionOf(tasks.Registered[name])).IsEqualTo(SignInTask.ArgumentsFor(Root, Source));
@@ -354,7 +354,7 @@ internal sealed class SignInTaskTests
         var plainTool = new FakeRegisterAi();
         var plainTasks = new ScratchLogonTasks();
 
-        _ = Hook(RegistrationIntent.Update, image, data.Path, plainTasks, plainTool, RegistrationClient.All, settings: null);
+        _ = await HookAsync(RegistrationIntent.Update, image, data.Path, plainTasks, plainTool, RegistrationClient.All, settings: null);
 
         await Assert.That(RegisteredCommand(plainTool)).IsEqualTo($"{image} | {Program.McpArgument}");
         await Assert.That(ActionOf(plainTasks.Registered[name])).IsEqualTo(SignInTask.Arguments);
@@ -381,11 +381,11 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task TheToastActivatorFollowsTheInstallAndIsLeftAloneWithoutTheSeam()
     {
-        using var install = ScratchDirectory.Create("sign-in-activator");
-        using var data = ScratchDirectory.Create("sign-in-activator-data");
-        using var quiet = ScratchDirectory.Create("sign-in-activator-quiet");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-activator");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-activator-data");
+        using var quiet = await ScratchDirectory.CreateAsync("sign-in-activator-quiet");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var asked = new List<string>();
 
         string activator(RegistrationIntent intent, string root)
@@ -396,21 +396,21 @@ internal sealed class SignInTaskTests
 
         foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall })
         {
-            _ = Hook(intent, image, data.Path, new ScratchLogonTasks(), toastActivator: activator);
+            _ = await HookAsync(intent, image, data.Path, new ScratchLogonTasks(), toastActivator: activator);
         }
 
         await Assert.That(string.Join(" | ", asked))
             .IsEqualTo($"{RegistrationIntent.Install} {install.Path} | {RegistrationIntent.Update} {install.Path} | {RegistrationIntent.Uninstall} {install.Path}");
 
-        var log = HookLog(data.Path);
+        var log = await HookLogAsync(data.Path);
 
         await Assert.That(log).Contains($"Toast activator: the suite's activator, at the {RegistrationIntent.Install} hook");
         await Assert.That(log).Contains($"Toast activator: the suite's activator, at the {RegistrationIntent.Uninstall} hook");
 
         // No seam, no question and no line.
-        _ = Hook(RegistrationIntent.Install, image, quiet.Path, new ScratchLogonTasks(), toastActivator: null);
+        _ = await HookAsync(RegistrationIntent.Install, image, quiet.Path, new ScratchLogonTasks(), toastActivator: null);
 
-        await Assert.That(HookLog(quiet.Path)).DoesNotContain("Toast activator:");
+        await Assert.That(await HookLogAsync(quiet.Path)).DoesNotContain("Toast activator:");
         await Assert.That(asked.Count).IsEqualTo(3);
     }
 
@@ -441,27 +441,27 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task AnUninstallAsksTheBackgroundToStopThroughItsPipeBeforeTheTaskGoes()
     {
-        using var install = ScratchDirectory.Create("sign-in-stop");
-        using var data = ScratchDirectory.Create("sign-in-stop-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-stop");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-stop-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var name = SignInTask.NameFor(ScratchLogonTasks.AppId, install.Path);
         var tasks = new ScriptedLogonTasks();
 
-        await using var background = BackgroundServerRig.Start(BackgroundPipe.NameFor(install.Path, data.Path), data.Path);
+        await using var background = await BackgroundServerRig.StartAsync(BackgroundPipe.NameFor(install.Path, data.Path), data.Path);
 
-        _ = Hook(RegistrationIntent.Install, image, data.Path, tasks);
-        _ = Hook(RegistrationIntent.Update, image, data.Path, tasks);
+        _ = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks);
+        _ = await HookAsync(RegistrationIntent.Update, image, data.Path, tasks);
 
         await Assert.That(background.Verbs.Stops).IsEqualTo(0).Because("an install or an update stopped the background");
 
-        var removed = Hook(RegistrationIntent.Uninstall, image, data.Path, tasks);
+        var removed = await HookAsync(RegistrationIntent.Uninstall, image, data.Path, tasks);
 
         await Assert.That(removed.SignInTask!.Change).IsEqualTo(TaskChange.Removed);
 
         await Assert.That(string.Join(" | ", tasks.Events)).IsEqualTo($"register {name} | register {name} | remove {name}");
 
-        var log = HookLog(data.Path);
+        var log = await HookLogAsync(data.Path);
         // NotWaitedFor since 2026-10-10, the texts review's #141 (previously Ended): this
         // background's record names no process, so nothing waited for it to end.
         var stopped = log.IndexOf("Background stop: BrowserAI's background was asked to stop; its record named no process to wait for.", StringComparison.Ordinal);
@@ -493,17 +493,17 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task ATaskTheSchedulerRefusedStillLeavesItsDefinitionForAPersonsStart()
     {
-        using var install = ScratchDirectory.Create("sign-in-refused-saved");
-        using var data = ScratchDirectory.Create("sign-in-refused-saved-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-refused-saved");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-refused-saved-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var tasks = new ScratchLogonTasks { FailWith = "The task scheduler could not register it: 0x80070005, Access is denied." };
 
-        var outcome = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+        var outcome = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks);
 
         await Assert.That(outcome.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
 
-        var saved = SignInTask.SavedDefinition(install.Path);
+        var saved = await SignInTask.SavedDefinitionAsync(install.Path);
 
         await Assert.That(saved).IsNotNull().Because("the definition is what a person's start registers the missing task from");
 
@@ -545,10 +545,10 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task ACopyThatCannotBeSavedIsThePartThatFailedAndTheTaskIsSaidToBeChanged()
     {
-        using var install = ScratchDirectory.Create("sign-in-copy");
-        using var data = ScratchDirectory.Create("sign-in-copy-data");
+        using var install = await ScratchDirectory.CreateAsync("sign-in-copy");
+        using var data = await ScratchDirectory.CreateAsync("sign-in-copy-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var name = SignInTask.NameFor(ScratchLogonTasks.AppId, install.Path);
 
         // The scheduler's own sentences, which the copy's failure is said after.
@@ -556,14 +556,14 @@ internal sealed class SignInTaskTests
 
         _ = Directory.CreateDirectory(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName));
 
-        var installed = Hook(RegistrationIntent.Install, image, data.Path, tasks);
+        var installed = await HookAsync(RegistrationIntent.Install, image, data.Path, tasks);
 
         await Assert.That(tasks.Registered.ContainsKey(name)).IsTrue().Because("the scheduler was not asked to register the task");
         await Assert.That(installed.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
         await Assert.That(installed.SignInTask.Detail)
             .StartsWith($"The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
 
-        var removed = Hook(RegistrationIntent.Uninstall, image, data.Path, tasks);
+        var removed = await HookAsync(RegistrationIntent.Uninstall, image, data.Path, tasks);
 
         await Assert.That(tasks.Registered.IsEmpty).IsTrue().Because("the scheduler was not asked to remove the task");
         await Assert.That(removed.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
@@ -571,7 +571,7 @@ internal sealed class SignInTaskTests
             .StartsWith($"The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
 
         // The hooks' own log carries the same sentences.
-        var log = HookLog(data.Path);
+        var log = await HookLogAsync(data.Path);
 
         await Assert.That(log).Contains($"Sign-in task: The task '{name}' is registered. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be written: ");
         await Assert.That(log).Contains($"Sign-in task: The task '{name}' is removed. Its saved copy, {SignInTask.SavedDefinitionFileName}, could not be deleted: ");
@@ -579,7 +579,7 @@ internal sealed class SignInTaskTests
         // A failure before the scheduler is asked leaves the task as it was, and says so.
         Directory.Delete(Path.Combine(install.Path, SignInTask.SavedDefinitionFileName));
 
-        var thrown = Hook(RegistrationIntent.Install, image, data.Path, new ThrowingScheduler());
+        var thrown = await HookAsync(RegistrationIntent.Install, image, data.Path, new ThrowingScheduler());
 
         await Assert.That(thrown.SignInTask!.Change).IsEqualTo(TaskChange.Failed);
         await Assert.That(thrown.SignInTask.Detail).IsEqualTo($"The task '{name}' was not changed: {ThrowingScheduler.Message}");
@@ -639,18 +639,18 @@ internal sealed class SignInTaskTests
     [Test]
     public async Task TheRealSchedulerKeepsTheTaskAndRemovesItAgain()
     {
-        using var root = ScratchDirectory.Create("sign-in-real");
+        using var root = await ScratchDirectory.CreateAsync("sign-in-real");
 
         var name = SignInTask.NameFor(ReleaseLayout.TestPackId, root.Path);
         var image = Path.Combine(root.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
 
         try
         {
-            var registered = ScheduledTasks.Instance.Register(name, SignInTask.DefinitionFor(image, NamedPipes.CurrentUserSid(), root.Path));
+            var registered = await ScheduledTasks.Instance.RegisterAsync(name, SignInTask.DefinitionFor(image, NamedPipes.CurrentUserSid(), root.Path));
 
             await Assert.That(registered.Change).IsEqualTo(TaskChange.Registered).Because(registered.Detail);
 
-            var kept = XDocument.Parse(ScheduledTasks.DefinitionOf(name)!);
+            var kept = XDocument.Parse((await ScheduledTasks.DefinitionOfAsync(name))!);
 
             await Assert.That(kept.Descendants().Count(element => element.Name.LocalName == "LogonTrigger")).IsEqualTo(1);
             await Assert.That(kept.Descendants().Single(element => element.Name.LocalName == "LogonTrigger").Elements().Single(element => element.Name.LocalName == "UserId").Value)
@@ -660,19 +660,19 @@ internal sealed class SignInTaskTests
             await Assert.That(kept.Descendants().Single(element => element.Name.LocalName == "Arguments").Value).IsEqualTo(SignInTask.Arguments);
 
             // Registering again replaces it, which is what the update hook does.
-            await Assert.That(ScheduledTasks.Instance.Register(name, SignInTask.DefinitionFor(image, NamedPipes.CurrentUserSid(), root.Path)).Change)
+            await Assert.That((await ScheduledTasks.Instance.RegisterAsync(name, SignInTask.DefinitionFor(image, NamedPipes.CurrentUserSid(), root.Path))).Change)
                 .IsEqualTo(TaskChange.Registered);
         }
         finally
         {
-            var removed = ScheduledTasks.Instance.Remove(name);
+            var removed = await ScheduledTasks.Instance.RemoveAsync(name);
 
             await Assert.That(removed.Change).IsEqualTo(TaskChange.Removed).Because(removed.Detail);
         }
 
-        await Assert.That(ScheduledTasks.DefinitionOf(name)).IsNull();
-        await Assert.That(ScheduledTasks.Instance.Remove(name).Change).IsEqualTo(TaskChange.Absent);
-        await Assert.That(ScheduledTasks.Instance.Run(name, App.PersonStart.StartedByPerson).Change).IsEqualTo(TaskChange.NotRegistered);
+        await Assert.That(await ScheduledTasks.DefinitionOfAsync(name)).IsNull();
+        await Assert.That((await ScheduledTasks.Instance.RemoveAsync(name)).Change).IsEqualTo(TaskChange.Absent);
+        await Assert.That((await ScheduledTasks.Instance.RunAsync(name, App.PersonStart.StartedByPerson)).Change).IsEqualTo(TaskChange.NotRegistered);
     }
 
     /// <summary>
@@ -685,13 +685,13 @@ internal sealed class SignInTaskTests
         public const string Message = "The suite's scheduler throws before it is asked anything.";
 
         /// <inheritdoc />
-        public TaskReport Register(string name, string definition) => throw new InvalidOperationException(Message);
+        public Task<TaskReport> RegisterAsync(string name, string definition) => throw new InvalidOperationException(Message);
 
         /// <inheritdoc />
-        public TaskReport Remove(string name) => throw new InvalidOperationException(Message);
+        public Task<TaskReport> RemoveAsync(string name) => throw new InvalidOperationException(Message);
 
         /// <inheritdoc />
-        public TaskReport Run(string name, string argument) => throw new InvalidOperationException(Message);
+        public Task<TaskReport> RunAsync(string name, string argument) => throw new InvalidOperationException(Message);
     }
 
     /// <summary>Runs one hook against a scratch install, a scratch data root and a scratch PATH.</summary>
@@ -704,7 +704,7 @@ internal sealed class SignInTaskTests
     /// <param name="settings">What the installer named, or <see langword="null"/> for nothing.</param>
     /// <param name="toastActivator">The toasts' activator step, or <see langword="null"/> to leave it alone.</param>
     /// <returns>What the hook did.</returns>
-    private static HookOutcome Hook(
+    private static async Task<HookOutcome> HookAsync(
         RegistrationIntent intent,
         string image,
         string data,
@@ -713,7 +713,7 @@ internal sealed class SignInTaskTests
         IReadOnlyList<RegistrationClient>? clients = null,
         InstallerSettings? settings = null,
         Func<RegistrationIntent, string, string>? toastActivator = null) =>
-        HookRegistration.Run(
+        await HookRegistration.RunAsync(
             intent,
             "9.9.9",
             image,
@@ -723,7 +723,7 @@ internal sealed class SignInTaskTests
             tasks,
             ScratchLogonTasks.AppId,
             silent: true,
-            ask: _ => false,
+            ask: _ => Task.FromResult(false),
             clients: clients ?? [],
             settings: settings,
             toastActivator: toastActivator);
@@ -747,16 +747,18 @@ internal sealed class SignInTaskTests
     /// <summary>Everything the hooks logged under a data root, in the order the files were written.</summary>
     /// <param name="data">The data root.</param>
     /// <returns>The text.</returns>
-    private static string HookLog(string data) =>
-        string.Join(
-            "\n",
-            Directory.EnumerateFiles(Path.Combine(data, "logs"), "*.log")
-                .Order(StringComparer.Ordinal)
-                .Select(static path =>
-                {
-                    // Shared, as the log itself opens it.
-                    using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                    using var reader = new StreamReader(stream);
-                    return reader.ReadToEnd();
-                }));
+    private static async Task<string> HookLogAsync(string data)
+    {
+        var logs = new List<string>();
+
+        foreach (var path in Directory.EnumerateFiles(Path.Combine(data, "logs"), "*.log").Order(StringComparer.Ordinal))
+        {
+            // Shared, as the log itself opens it.
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
+            using var reader = new StreamReader(stream);
+            logs.Add(await reader.ReadToEndAsync());
+        }
+
+        return string.Join("\n", logs);
+    }
 }

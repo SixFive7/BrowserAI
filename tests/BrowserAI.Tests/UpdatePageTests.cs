@@ -403,9 +403,9 @@ internal sealed class UpdatePageTests
     {
         var holds = new ScriptedHolds(Held()) { Answer = "An agent's call is still running, so nothing was installed." };
 
-        using var rig = new PageRig(holds: holds);
+        await using var rig = await PageRig.CreateAsync(holds: holds);
 
-        var address = rig.HandOut(PageKind.Update);
+        var address = await rig.HandOutAsync(PageKind.Update);
 
         await Assert.That(address).Contains("update?tab=1");
 
@@ -476,9 +476,9 @@ internal sealed class UpdatePageTests
     {
         var holds = new ScriptedHolds(Held());
 
-        using var rig = new PageRig(holds: holds);
+        await using var rig = await PageRig.CreateAsync(holds: holds);
 
-        _ = rig.HandOut(PageKind.Update);
+        _ = await rig.HandOutAsync(PageKind.Update);
 
         using var stream = await rig.StreamAsync(rig.Gate.Root, 1, "update");
 
@@ -554,9 +554,9 @@ internal sealed class UpdatePageTests
     {
         var holds = new ScriptedHolds(UpdateHoldSnapshot.Nothing(Now));
 
-        using var rig = new PageRig(holds: holds);
+        await using var rig = await PageRig.CreateAsync(holds: holds);
 
-        _ = rig.HandOut(PageKind.Status);
+        _ = await rig.HandOutAsync(PageKind.Status);
 
         using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
 
@@ -649,7 +649,9 @@ internal sealed class UpdatePageTests
 
         public ConcurrentQueue<string> Asked { get; } = new();
 
-        public UpdateHoldSnapshot Read() => Snapshot;
+        public Task<UpdateHoldSnapshot> ReadAsync() => Task.FromResult(Snapshot);
+
+        public UpdateHoldSnapshot ReadCountdown() => Snapshot;
 
         public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken)
         {

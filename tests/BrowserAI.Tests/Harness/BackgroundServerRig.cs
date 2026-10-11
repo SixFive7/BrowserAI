@@ -55,7 +55,9 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     private int _changes;
     private int _disposed;
 
-    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs, Action? accepted, bool boundOnTheClock)
+    private BackgroundServer? _server;
+
+    private BackgroundServerRig(RigSessionEnvironment sessions, bool ownsSessions, string pipeName, string? dataRoot, FakeBackgroundVerbs verbs)
     {
         Sessions = sessions;
         _ownsSessions = ownsSessions;
@@ -74,23 +76,6 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
         Identity = new BackgroundIdentity(pipeName, Build, dataRoot ?? sessions.Environment.Paths.RootAppDir);
         Roster = new RelayRoster(Clock, ConversationReader.Files, _loggerFactory.CreateLogger<RelayRoster>());
         Roster.TellUpdatesThrough(() => _ = Interlocked.Increment(ref _changes), _withdrawn.Enqueue);
-
-        try
-        {
-            Server = new BackgroundServer(Host, Identity, Roster, Verbs, _loggerFactory)
-            {
-                Accepted = accepted,
-                Clock = boundOnTheClock ? Clock : TimeProvider.System,
-            };
-        }
-        catch
-        {
-            Host.DisposeAsync().AsTask().GetAwaiter().GetResult();
-            _loggerFactory.Dispose();
-            throw;
-        }
-
-        Server.Start();
     }
 
     /// <summary>
@@ -115,7 +100,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     public FakeBackgroundVerbs Verbs { get; }
 
     /// <summary>The server under test.</summary>
-    public BackgroundServer Server { get; }
+    public BackgroundServer Server => _server ?? throw new InvalidOperationException("The rig's background was never made.");
 
     /// <summary>Everything the product logged.</summary>
     public CapturingLoggerProvider Logs { get; } = new();
@@ -132,9 +117,9 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// <param name="sessions">The sessions, which the caller then owns; or <see langword="null"/> for a rig of doubles this rig owns.</param>
     /// <param name="verbs">The verbs, or <see langword="null"/> for ones that hand out <see cref="FakeBackgroundVerbs.DefaultAddress"/>.</param>
     /// <param name="accepted">
-    /// What the listener does once it has accepted a connection and before it serves it,
-    /// on its own thread: <see cref="BackgroundServer.Accepted"/>, the seam that holds it
-    /// there; or <see langword="null"/>.
+    /// What the listener awaits once it has accepted a connection and before it serves it:
+    /// <see cref="BackgroundServer.Accepted"/>, the seam that holds it there; or
+    /// <see langword="null"/>.
     /// </param>
     /// <param name="boundOnTheClock">
     /// Whether the bound on a connection's first message runs on <see cref="Clock"/>, which
@@ -142,41 +127,66 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// on the machine's clock, as the product's does.
     /// </param>
     /// <returns>The background, accepting.</returns>
-    public static BackgroundServerRig Start(
+    /// <remarks>
+    /// <b>The server is made once the rig is</b>, since 2026-10-11, so that a server that
+    /// cannot be made is cleaned up by the rig's own awaited disposal. <i>Previously the
+    /// constructor made it and disposed the host by blocking on its disposal.</i>
+    /// </remarks>
+    public static async Task<BackgroundServerRig> StartAsync(
         string? pipeName = null,
         string? dataRoot = null,
         RigSessionEnvironment? sessions = null,
         FakeBackgroundVerbs? verbs = null,
-        Action? accepted = null,
+        Func<Task>? accepted = null,
         bool boundOnTheClock = false)
     {
         var pipe = pipeName ?? PublishedBackground.NewPipeName();
+        var owns = sessions is null;
 
-        if (sessions is not null)
-        {
-            return new BackgroundServerRig(sessions, ownsSessions: false, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted, boundOnTheClock);
-        }
-
-        // The rig owns these and disposes them with itself, or below when it could
-        // not be made; the rule's dataflow does not follow the move into the rig.
+        // The rig owns these when it made them and disposes them with itself, or below
+        // when it could not be made; the rule's dataflow does not follow the move into
+        // the rig.
 #pragma warning disable CA2000
-        var owned = RigSessionEnvironment.Create(opensDefaultSession: false);
+        var used = sessions ?? await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
 #pragma warning restore CA2000
+
+        BackgroundServerRig rig;
 
         try
         {
-            return new BackgroundServerRig(owned, ownsSessions: true, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs(), accepted, boundOnTheClock);
+            rig = new BackgroundServerRig(used, owns, pipe, dataRoot, verbs ?? new FakeBackgroundVerbs());
         }
         catch
         {
-            owned.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            if (owns)
+            {
+                await used.DisposeAsync();
+            }
+
+            throw;
+        }
+
+        try
+        {
+            rig._server = new BackgroundServer(rig.Host, rig.Identity, rig.Roster, rig.Verbs, rig._loggerFactory)
+            {
+                Accepted = accepted,
+                Clock = boundOnTheClock ? rig.Clock : TimeProvider.System,
+            };
+
+            rig._server.Start();
+            return rig;
+        }
+        catch
+        {
+            await rig.DisposeAsync();
             throw;
         }
     }
 
     /// <summary>Opens a connection to this background's pipe, as a relay or a start does.</summary>
     /// <returns>The connection.</returns>
-    public BackgroundPipeClient Connect() => BackgroundPipeClient.Connect(Identity.PipeName);
+    public Task<BackgroundPipeClient> ConnectAsync() => BackgroundPipeClient.ConnectAsync(Identity.PipeName);
 
     /// <summary>A relay's greeting, as the relay engine writes it, to this background.</summary>
     /// <param name="build">The relay's build, or <see langword="null"/> for this background's.</param>
@@ -194,7 +204,7 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
     /// <returns>The relay's connection.</returns>
     public async Task<BackgroundPipeClient> ConnectARelayAsync(DateTimeOffset? idleAt = null)
     {
-        var relay = Connect();
+        var relay = await ConnectAsync();
 
         try
         {
@@ -252,7 +262,11 @@ internal sealed class BackgroundServerRig : IAsyncDisposable
         // A connection held inside a verb would hold the server's disposal with it.
         Verbs.Release();
 
-        await Server.DisposeAsync();
+        if (_server is { } server)
+        {
+            await server.DisposeAsync();
+        }
+
         await Host.DisposeAsync();
 
         if (_ownsSessions)
@@ -314,13 +328,13 @@ internal sealed class FakeBackgroundVerbs(ConcurrentQueue<string>? events = null
         set => Volatile.Write(ref _state, (int)value);
     }
 
-    /// <summary>The address <see cref="Show"/> hands out, or <see langword="null"/> to refuse.</summary>
+    /// <summary>The address <see cref="ShowAsync"/> hands out, or <see langword="null"/> to refuse.</summary>
     public string? Address { get; set; } = DefaultAddress;
 
-    /// <summary>The refusal <see cref="Show"/> gives when it hands out no address.</summary>
+    /// <summary>The refusal <see cref="ShowAsync"/> gives when it hands out no address.</summary>
     public string Refusal { get; set; } = "The suite's background refuses to open a page.";
 
-    /// <summary>Whether <see cref="Show"/> waits for <see cref="Release"/> before it answers, as a hung background does.</summary>
+    /// <summary>Whether <see cref="ShowAsync"/> waits for <see cref="Release"/> before it answers, as a hung background does.</summary>
     public bool HoldsShow
     {
         get => Volatile.Read(ref _holding) is not 0;
@@ -334,14 +348,21 @@ internal sealed class FakeBackgroundVerbs(ConcurrentQueue<string>? events = null
     public int Stops => Volatile.Read(ref _stops);
 
     /// <inheritdoc />
-    public (string? Address, string? Refusal) Show(string? page)
+    public async Task<(string? Address, string? Refusal)> ShowAsync(string? page)
     {
         _pages.Enqueue(page);
         Events.Enqueue($"show {page ?? "status"}");
 
-        if (HoldsShow && !_released.Task.Wait(TestDefaults.InProcessHang))
+        if (HoldsShow)
         {
-            throw new TimeoutException("Nothing released the suite's held show.");
+            try
+            {
+                await _released.Task.WaitAsync(TestDefaults.InProcessHang);
+            }
+            catch (TimeoutException failure)
+            {
+                throw new TimeoutException("Nothing released the suite's held show.", failure);
+            }
         }
 
         return Address is { } address ? (address, null) : (null, Refusal);
@@ -354,7 +375,7 @@ internal sealed class FakeBackgroundVerbs(ConcurrentQueue<string>? events = null
         Events.Enqueue("stop");
     }
 
-    /// <summary>Lets a held <see cref="Show"/> answer.</summary>
+    /// <summary>Lets a held <see cref="ShowAsync"/> answer.</summary>
     public void Release() => _ = _released.TrySetResult();
 }
 
@@ -377,32 +398,32 @@ internal sealed class ScriptedLogonTasks(ConcurrentQueue<string>? events = null)
     /// </summary>
     public Func<string, string, TaskReport>? RunAnswer { get; set; }
 
-    /// <summary>What a run that started does, as the task's action would: called before the run returns.</summary>
-    public Action<string, string>? Started { get; set; }
+    /// <summary>What a run that started does, as the task's action would: awaited before the run returns.</summary>
+    public Func<string, string, Task>? Started { get; set; }
 
     /// <summary>What happens at the moment a run is asked, before it is answered.</summary>
     public Action<string, string>? Asked { get; set; }
 
     /// <inheritdoc />
-    public TaskReport Register(string name, string definition)
+    public Task<TaskReport> RegisterAsync(string name, string definition)
     {
         Events.Enqueue($"register {name}");
         Registered[name] = definition;
-        return new TaskReport(TaskChange.Registered, $"The task '{name}' is registered.");
+        return Task.FromResult(new TaskReport(TaskChange.Registered, $"The task '{name}' is registered."));
     }
 
     /// <inheritdoc />
-    public TaskReport Remove(string name)
+    public Task<TaskReport> RemoveAsync(string name)
     {
         Events.Enqueue($"remove {name}");
 
-        return Registered.TryRemove(name, out _)
+        return Task.FromResult(Registered.TryRemove(name, out _)
             ? new TaskReport(TaskChange.Removed, $"The task '{name}' is removed.")
-            : new TaskReport(TaskChange.Absent, $"There was no task '{name}' to remove.");
+            : new TaskReport(TaskChange.Absent, $"There was no task '{name}' to remove."));
     }
 
     /// <inheritdoc />
-    public TaskReport Run(string name, string argument)
+    public async Task<TaskReport> RunAsync(string name, string argument)
     {
         Events.Enqueue($"run {name} {argument}");
         Asked?.Invoke(name, argument);
@@ -412,9 +433,9 @@ internal sealed class ScriptedLogonTasks(ConcurrentQueue<string>? events = null)
                 ? new TaskReport(TaskChange.Started, $"The task '{name}' was started with '{argument}'.")
                 : new TaskReport(TaskChange.NotRegistered, $"There is no task '{name}' to start."));
 
-        if (report.Change is TaskChange.Started)
+        if (report.Change is TaskChange.Started && Started is { } started)
         {
-            Started?.Invoke(name, argument);
+            await started(name, argument);
         }
 
         return report;
@@ -455,10 +476,15 @@ internal sealed class BackgroundPipeClient : IDisposable
     }
 
     /// <summary>Opens the client end of a background's pipe, waiting while every instance is busy.</summary>
+    /// <remarks>
+    /// <b>A busy name is asked again after <see cref="ProcessBounds.PipeBusyRetry"/></b>, as
+    /// the product's own client asks, since 2026-10-11. <i>Previously
+    /// <c>WaitNamedPipeW</c> parked the caller until an instance was free.</i>
+    /// </remarks>
     /// <param name="pipeName">The full pipe name.</param>
     /// <returns>The connection.</returns>
     /// <exception cref="IOException">No background serves the name.</exception>
-    public static BackgroundPipeClient Connect(string pipeName)
+    public static async Task<BackgroundPipeClient> ConnectAsync(string pipeName)
     {
         var waited = Stopwatch.StartNew();
 
@@ -490,7 +516,7 @@ internal sealed class BackgroundPipeClient : IDisposable
                 throw new IOException($"No background serves '{pipeName}': Win32 error {error.ToString(CultureInfo.InvariantCulture)}.");
             }
 
-            _ = NamedPipes.WaitForFreeInstance(pipeName, (uint)TestDefaults.InProcessHang.TotalMilliseconds);
+            await Task.Delay(ProcessBounds.PipeBusyRetry);
         }
     }
 
@@ -669,7 +695,7 @@ internal static class HandWrittenRecord
     /// <param name="exitCode">The exit code a relay saw, or <see langword="null"/>.</param>
     /// <param name="exitedAt">When a relay saw it go, or <see langword="null"/>.</param>
     /// <param name="build">The version that wrote it, or <see langword="null"/> for the rig's own.</param>
-    public static void Write(string path, int processId, long createdFileTime, string? ended = null, int? exitCode = null, DateTimeOffset? exitedAt = null, string? build = null)
+    public static async Task WriteAsync(string path, int processId, long createdFileTime, string? ended = null, int? exitCode = null, DateTimeOffset? exitedAt = null, string? build = null)
     {
         var record = new JsonObject
         {
@@ -697,13 +723,13 @@ internal static class HandWrittenRecord
         }
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, record.ToJsonString(), new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        await File.WriteAllTextAsync(path, record.ToJsonString(), new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     /// <summary>Writes the record of a background that is gone and recorded no clean end: a crash.</summary>
     /// <param name="path">The record's path.</param>
     /// <param name="exitCode">The exit code a relay saw, or <see langword="null"/>.</param>
     /// <param name="exitedAt">When a relay saw it go, or <see langword="null"/>.</param>
-    public static void Gone(string path, int? exitCode = null, DateTimeOffset? exitedAt = null) =>
-        Write(path, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: null, exitCode, exitedAt);
+    public static async Task GoneAsync(string path, int? exitCode = null, DateTimeOffset? exitedAt = null) =>
+        await WriteAsync(path, Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess() - 1, ended: null, exitCode, exitedAt);
 }

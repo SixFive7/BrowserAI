@@ -31,7 +31,7 @@ internal sealed class InstanceDirectoryTests
     [Test]
     public async Task AFreshDirectoryIsCreatedAndAbandonedOnesAreReclaimed()
     {
-        using var scratch = ScratchDirectory.Create("instance-sweep");
+        using var scratch = await ScratchDirectory.CreateAsync("instance-sweep");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         var abandoned = Path.Combine(paths.InstanceRoot, "1234-abandoned");
@@ -121,7 +121,7 @@ internal sealed class InstanceDirectoryTests
     [Test]
     public async Task ADirectoryThatMayStillBeStartingIsLeftAlone()
     {
-        using var scratch = ScratchDirectory.Create("instance-sweep-young");
+        using var scratch = await ScratchDirectory.CreateAsync("instance-sweep-young");
         var paths = new LocalAppDataPaths(scratch.Path);
 
         // The one gap the working-directory lock does not cover: the instants
@@ -174,7 +174,7 @@ internal sealed class InstanceDirectoryTests
     [Test]
     public async Task ARunKeepsItsInstanceDirectoryWithNoChildHoldingItAsAWorkingDirectory()
     {
-        using var scratch = ScratchDirectory.Create("instance-marker");
+        using var scratch = await ScratchDirectory.CreateAsync("instance-marker");
         using var provider = new CapturingLoggerProvider();
 
         var paths = new LocalAppDataPaths(scratch.Path);
@@ -246,7 +246,7 @@ internal sealed class InstanceDirectoryTests
     [Test]
     public async Task ADirectoryWithAFileSomethingHoldsIsEmptiedAroundItAndTheSurvivorIsNamed()
     {
-        using var scratch = ScratchDirectory.Create("instance-held");
+        using var scratch = await ScratchDirectory.CreateAsync("instance-held");
         using var provider = new CapturingLoggerProvider();
 
         var instance = Path.Combine(scratch.Path, "instance");
@@ -263,7 +263,7 @@ internal sealed class InstanceDirectoryTests
 
         // FileShare.None, in this process: what a mapped Chromium file looks
         // like to a delete, without needing a browser to produce one.
-        using (var holder = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        await using (var holder = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
             InstanceDirectory.Delete(instance, provider.CreateLogger("BrowserAI.Tests"));
         }
@@ -310,7 +310,7 @@ internal sealed class InstanceDirectoryTests
     [Test]
     public async Task ARunThatIsStillGoingKeepsItsInstanceDirectoryAndEverythingInIt()
     {
-        using var scratch = ScratchDirectory.Create("instance-live");
+        using var scratch = await ScratchDirectory.CreateAsync("instance-live");
         using var scope = new JobObjectScope();
         using var provider = new CapturingLoggerProvider();
 
@@ -333,7 +333,7 @@ internal sealed class InstanceDirectoryTests
         var ready = Path.Combine(scratch.Path, "ready.json");
         var elsewhere = Path.Combine(scratch.Path, "held-outside.bin");
 
-        _ = scope.Launch(ProbePath, live, "hold-file", elsewhere, ready);
+        _ = await scope.LaunchAsync(ProbePath, live, "hold-file", elsewhere, ready);
         await WaitForFileAsync(ready);
 
         using var mine = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));

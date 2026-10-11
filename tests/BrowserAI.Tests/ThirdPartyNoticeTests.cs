@@ -170,7 +170,7 @@ internal sealed class ThirdPartyNoticeTests
 
         foreach (var (package, needles) in StampedPackages)
         {
-            var resolved = ResolvedVersions.FromNuGetLocks(package);
+            var resolved = await ResolvedVersions.FromNuGetLocksAsync(package);
             await Assert.That(resolved).IsNotNull();
 
             foreach (var needle in needles)
@@ -255,7 +255,7 @@ internal sealed class ThirdPartyNoticeTests
     public async Task EveryMicrosoftExtensionsPackageLinkedIntoTheProductIsNamedInTheNotices()
     {
         var notices = await File.ReadAllTextAsync(NoticesFile);
-        var packages = ProductPackagesStartingWith("Microsoft.Extensions.");
+        var packages = await ProductPackagesStartingWithAsync("Microsoft.Extensions.");
 
         // A guard on the derivation itself: an empty set would make the loop
         // below vacuously green, which is the failure mode a data-driven
@@ -264,7 +264,7 @@ internal sealed class ThirdPartyNoticeTests
         // the Microsoft.Extensions libraries from the ASP.NET Core shared
         // framework, so the lock file carries one such package, and the guard is
         // now a positive control the same derivation must find, the MCP SDK.
-        await Assert.That(ProductPackagesStartingWith("ModelContextProtocol")).IsNotEmpty();
+        await Assert.That(await ProductPackagesStartingWithAsync("ModelContextProtocol")).IsNotEmpty();
         await Assert.That(packages).IsNotEmpty();
 
         var unnamed = packages.Where(package => !notices.Contains(package, StringComparison.Ordinal)).ToList();
@@ -276,7 +276,7 @@ internal sealed class ThirdPartyNoticeTests
 
         // Every shared framework a product project references is named too: since
         // 2026-10-08 that is where most of the Microsoft.Extensions code comes from.
-        var frameworks = ProductFrameworkReferences();
+        var frameworks = await ProductFrameworkReferencesAsync();
 
         await Assert.That(frameworks).Contains("Microsoft.AspNetCore.App");
 
@@ -329,7 +329,7 @@ internal sealed class ThirdPartyNoticeTests
     public async Task TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned()
     {
         var notices = await File.ReadAllTextAsync(NoticesFile);
-        var packages = PayloadLockPackages();
+        var packages = await PayloadLockPackagesAsync();
         var offences = new List<string>();
 
         // ⚠️ Read against a whitespace-flattened copy where a needle spans two
@@ -374,7 +374,7 @@ internal sealed class ThirdPartyNoticeTests
         // NuGet half.
         foreach (var package in StampedPayloadPackages)
         {
-            var resolved = ResolvedVersions.FromPayloadLock(package);
+            var resolved = await ResolvedVersions.FromPayloadLockAsync(package);
 
             await Assert.That(resolved).IsNotNull();
 
@@ -395,7 +395,7 @@ internal sealed class ThirdPartyNoticeTests
 
         offences.AddRange(provisioned);
 
-        if (!SuiteEnvironment.HasRepositoryPayload())
+        if (!await SuiteEnvironment.HasRepositoryPayloadAsync())
         {
             await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
             return;
@@ -483,9 +483,9 @@ internal sealed class ThirdPartyNoticeTests
     [Test]
     public async Task TheReadmeTablesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned()
     {
-        var section = ReadmeThirdPartySection();
+        var section = await ReadmeThirdPartySectionAsync();
         var rows = DownloadsTableRows(section);
-        var packages = PayloadLockPackages();
+        var packages = await PayloadLockPackagesAsync();
         var offences = new List<string>();
 
         // Neither derivation may come back empty: a lock that parsed to nothing
@@ -557,9 +557,9 @@ internal sealed class ThirdPartyNoticeTests
     /// </remarks>
     /// <returns>The section body, from the heading to the next one.</returns>
     /// <exception cref="InvalidOperationException">The heading is gone.</exception>
-    private static string ReadmeThirdPartySection()
+    private static async Task<string> ReadmeThirdPartySectionAsync()
     {
-        var readme = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "README.md"));
+        var readme = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "README.md"));
         var at = readme.IndexOf(ThirdPartyHeading, StringComparison.Ordinal);
 
         if (at < 0)
@@ -701,11 +701,11 @@ internal sealed class ThirdPartyNoticeTests
     /// assembled one.
     /// </remarks>
     /// <returns>The package ids, in order.</returns>
-    private static IReadOnlyList<string> PayloadLockPackages()
+    private static async Task<IReadOnlyList<string>> PayloadLockPackagesAsync()
     {
         var path = Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "package-lock.json");
 
-        using var lockFile = JsonDocument.Parse(File.ReadAllText(path));
+        using var lockFile = JsonDocument.Parse(await File.ReadAllTextAsync(path));
 
         return
         [
@@ -722,7 +722,7 @@ internal sealed class ThirdPartyNoticeTests
     /// their project files.
     /// </summary>
     /// <returns>The frameworks, each once, in order.</returns>
-    private static IReadOnlyList<string> ProductFrameworkReferences()
+    private static async Task<IReadOnlyList<string>> ProductFrameworkReferencesAsync()
     {
         string[] projects =
         [
@@ -731,10 +731,17 @@ internal sealed class ThirdPartyNoticeTests
             Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.Core", "BrowserAI.Core.csproj"),
         ];
 
+        var documents = new List<System.Xml.Linq.XDocument>();
+
+        foreach (var project in projects)
+        {
+            documents.Add(await TestFiles.LoadXmlAsync(project));
+        }
+
         return
         [
-            .. projects
-                .SelectMany(project => System.Xml.Linq.XDocument.Load(project).Descendants("FrameworkReference"))
+            .. documents
+                .SelectMany(document => document.Descendants("FrameworkReference"))
                 .Select(reference => (string?)reference.Attribute("Include"))
                 .OfType<string>()
                 .Distinct(StringComparer.Ordinal)
@@ -753,11 +760,11 @@ internal sealed class ThirdPartyNoticeTests
     /// </remarks>
     /// <param name="prefix">The package-id prefix to match.</param>
     /// <returns>The matching package ids, in order.</returns>
-    private static IReadOnlyList<string> ProductPackagesStartingWith(string prefix)
+    private static async Task<IReadOnlyList<string>> ProductPackagesStartingWithAsync(string prefix)
     {
         var path = Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "packages.lock.json");
 
-        using var lockFile = JsonDocument.Parse(File.ReadAllText(path));
+        using var lockFile = JsonDocument.Parse(await File.ReadAllTextAsync(path));
 
         return
         [
@@ -778,7 +785,7 @@ internal sealed class ThirdPartyNoticeTests
     [Test]
     public async Task EveryNoticeIsInThePublishOutput()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
         RefuseAnArtifactOlderThanTheNotices(PublishedSlice.Executable, PublishedSlice.PublishCommand);
 
         var missing = Obligations
@@ -812,7 +819,7 @@ internal sealed class ThirdPartyNoticeTests
     [Test]
     public async Task EveryNoticeIsInsideThePackedRelease()
     {
-        var package = SuiteEnvironment.RequirePackagedRelease();
+        var package = await SuiteEnvironment.RequirePackagedReleaseAsync();
         RefuseAnArtifactOlderThanTheNotices(package, "pwsh -File build/New-Release.ps1");
 
         using var archive = await ZipFile.OpenReadAsync(package);

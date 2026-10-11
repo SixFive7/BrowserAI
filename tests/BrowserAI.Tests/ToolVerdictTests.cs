@@ -58,15 +58,15 @@ internal sealed class ToolVerdictTests
     [Test]
     public async Task EveryToolInTheSnapshotHasAVerdictAndEveryVerdictNamesAToolInTheSnapshot()
     {
-        var disagreements = Coverage(RepositoryVerdicts.Committed, Snapshot());
+        var disagreements = Coverage(RepositoryVerdicts.Committed, await SnapshotAsync());
 
         await Assert.That(string.Join(Environment.NewLine, disagreements)).IsEmpty();
 
         // Not vacuous. A snapshot read that came back empty would agree with
         // everything, and a verdicts file that failed to parse would never have
         // reached this line -- so the denominator is stated, not trusted.
-        await Assert.That(Snapshot().Count).IsEqualTo(RepositoryVerdicts.Committed.Upstream.Count);
-        await Assert.That(Snapshot().Count).IsGreaterThan(40);
+        await Assert.That((await SnapshotAsync()).Count).IsEqualTo(RepositoryVerdicts.Committed.Upstream.Count);
+        await Assert.That((await SnapshotAsync()).Count).IsGreaterThan(40);
     }
 
     /// <summary>
@@ -86,12 +86,12 @@ internal sealed class ToolVerdictTests
     [Test]
     public async Task TheCoverageComparisonFailsInBothDirectionsAgainstADoctoredFile()
     {
-        var snapshot = Snapshot();
+        var snapshot = await SnapshotAsync();
         var judged = snapshot[0];
 
         // Direction one: an upstream tool nobody judged. This is the Playwright
         // bump that adds a tool, in miniature.
-        var unjudged = Coverage(RepositoryVerdicts.Without(judged), snapshot);
+        var unjudged = Coverage(await RepositoryVerdicts.WithoutAsync(judged), snapshot);
 
         await Assert.That(unjudged.Count).IsEqualTo(1);
         await Assert.That(unjudged[0]).Contains(judged);
@@ -100,7 +100,7 @@ internal sealed class ToolVerdictTests
         // Direction two: a verdict about a tool that is not there. This is the
         // Playwright bump that REMOVES one, and it is the direction a
         // one-directional check would miss for ever.
-        var document = RepositoryVerdicts.Document();
+        var document = await RepositoryVerdicts.DocumentAsync();
         document["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow" };
 
         var stale = Coverage(RepositoryVerdicts.Parse(document), snapshot);
@@ -432,7 +432,9 @@ internal sealed class ToolVerdictTests
         var noted = RepositoryVerdicts.Committed.Upstream.Where(row => row.Note is not null).ToList();
 
         await Assert.That(noted.Where(row => row.Kind is not ToolVerdictKind.Allow).Select(row => row.Name)).IsEmpty();
-        await Assert.That(noted.Where(row => !Snapshot().Contains(row.Name, StringComparer.Ordinal)).Select(row => row.Name)).IsEmpty();
+        var snapshot = await SnapshotAsync();
+
+        await Assert.That(noted.Where(row => !snapshot.Contains(row.Name, StringComparer.Ordinal)).Select(row => row.Name)).IsEmpty();
 
         await Assert.That(noted.Select(row => row.Name).Order(StringComparer.Ordinal))
             .IsEquivalentTo((string[])
@@ -449,7 +451,7 @@ internal sealed class ToolVerdictTests
         // loads at all; this is the positive control that the field loads where
         // it is allowed.
         var loaded = ToolVerdicts.Parse(
-            Encoding.UTF8.GetBytes(RepositoryVerdicts.Document().ToJsonString()),
+            Encoding.UTF8.GetBytes((await RepositoryVerdicts.DocumentAsync()).ToJsonString()),
             "the-committed-file.json");
 
         await Assert.That(loaded.Find("browser_take_screenshot")!.Note).IsNotNull();
@@ -463,7 +465,7 @@ internal sealed class ToolVerdictTests
 
         foreach (var package in judged)
         {
-            var resolved = ResolvedVersions.FromPayloadLock(package.Key);
+            var resolved = await ResolvedVersions.FromPayloadLockAsync(package.Key);
 
             if (!string.Equals(resolved, package.Value, StringComparison.Ordinal))
             {
@@ -510,7 +512,7 @@ internal sealed class ToolVerdictTests
 
         foreach (var (what, doctor) in Malformed())
         {
-            var document = RepositoryVerdicts.Document();
+            var document = await RepositoryVerdicts.DocumentAsync();
             doctor(document);
 
             try
@@ -546,7 +548,7 @@ internal sealed class ToolVerdictTests
 
         // ⚠️ THE POSITIVE CONTROL. The undoctored file loads, so a loader that
         // refused everything would pass every assertion above.
-        await Assert.That(RepositoryVerdicts.Parse(RepositoryVerdicts.Document()).Upstream.Count).IsGreaterThan(40);
+        await Assert.That(RepositoryVerdicts.Parse(await RepositoryVerdicts.DocumentAsync()).Upstream.Count).IsGreaterThan(40);
     }
 
     /// <summary>
@@ -669,6 +671,6 @@ internal sealed class ToolVerdictTests
             file => file["upstream"]![NeverATool] = new JsonObject { ["verdict"] = "allow", ["note"] = string.Empty }),
     ];
 
-    private static IReadOnlyList<string> Snapshot() =>
-        [.. UpstreamSurface.SnapshotDescriptions().Select(entry => entry.Name)];
+    private static async Task<IReadOnlyList<string>> SnapshotAsync() =>
+        [.. (await UpstreamSurface.SnapshotDescriptionsAsync()).Select(entry => entry.Name)];
 }

@@ -195,11 +195,11 @@ internal sealed class InstallerHandoffTests
     [Test]
     public async Task ThePublishedBinaryServesTheClientThatStartedItWithTheInstallersVariableSet()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var root = ScratchDirectory.CreateUnderProfile("installer-variable-serves");
+        using var root = await ScratchDirectory.CreateUnderProfileAsync("installer-variable-serves");
 
         var environment = PublishedSlice.InheritedEnvironment();
         environment[VelopackStartup.FirstRunVariable] = "true";
@@ -207,7 +207,7 @@ internal sealed class InstallerHandoffTests
         // Inside a kill-on-close job, the suite's standing rule for a real
         // BrowserAI, with the background the harness starts beside every published
         // relay, so an assertion that fails below leaves nothing running.
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, [.. PublishedSlice.Mcp, BrowserAiPaths.DataRootArgument, root.Path], root.Path, environment);
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, [.. PublishedSlice.Mcp, BrowserAiPaths.DataRootArgument, root.Path], root.Path, environment);
 
         var relay = client.ProcessId;
         var relayCreated = ProcessIdentity.CreationTimeOf(relay);
@@ -218,16 +218,16 @@ internal sealed class InstallerHandoffTests
 
         // Until it says it reached the background, or goes: a hang detector, not a budget.
         var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
-        var said = ProcessLogRecords.In(logs, relay, relayCreated);
+        var said = await ProcessLogRecords.InAsync(logs, relay, relayCreated);
 
         while (DateTime.UtcNow < deadline && client.ExitCode is null && !said.Contains(ConnectedSentence, StringComparison.Ordinal))
         {
             await Task.Delay(50);
-            said = ProcessLogRecords.In(logs, relay, relayCreated);
+            said = await ProcessLogRecords.InAsync(logs, relay, relayCreated);
         }
 
         // Read once more, so that a relay that went says what it said.
-        said = ProcessLogRecords.In(logs, relay, relayCreated);
+        said = await ProcessLogRecords.InAsync(logs, relay, relayCreated);
 
         await Assert.That(client.ExitCode).IsNull().Because(said);
         await Assert.That(said).Contains(ConnectedSentence);
@@ -437,10 +437,10 @@ internal sealed class InstallerHandoffTests
     [Arguments(true)]
     public async Task ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole(bool startedByTheInstaller)
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
-        using var root = ScratchDirectory.CreateUnderProfile("orphan-console");
-        using var run = OrphanedConsoleStart.Begin(root.Path, startedByTheInstaller, TestDefaults.ProcessHang);
+        using var root = await ScratchDirectory.CreateUnderProfileAsync("orphan-console");
+        await using var run = await OrphanedConsoleStart.BeginAsync(root.Path, startedByTheInstaller, TestDefaults.ProcessHang);
 
         await Assert.That(run.Started).IsTrue();
 
@@ -454,12 +454,12 @@ internal sealed class InstallerHandoffTests
         // and a console is not a pipe.
         const string Decision = "standard input is not a pipe, so there is no client to serve";
 
-        await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, Decision, RetiredInstallerExitSentence, "Watching the MCP client"))
+        await Assert.That(await run.WaitUntilItSaysOneOfAsync(TestDefaults.ProcessHang, Decision, RetiredInstallerExitSentence, "Watching the MCP client"))
             .IsEqualTo(Decision)
-            .Because(run.Records());
+            .Because(await run.RecordsAsync());
 
         // And then the exit, which is the thing v1.0.0 did not do.
-        await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(await run.WaitUntilItExitsAsync(TestDefaults.ProcessHang)).IsTrue();
     }
 
     // ⚠️ RETIRED 2026-10-09: `ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe`,
@@ -488,7 +488,7 @@ internal sealed class InstallerHandoffTests
     /// </para>
     /// <para>
     /// <b>The rig hands the relay three pipes from a launcher that is gone</b>
-    /// (<see cref="OrphanedConsoleStart.BeginHandingOnPipes"/>), holds the write end
+    /// (<see cref="OrphanedConsoleStart.BeginHandingOnPipesAsync"/>), holds the write end
     /// of its standard input, and keeps the launcher's handle, so its pid opens onto a
     /// corpse. A background on the relay's pipe and a handshake show that the relay
     /// which watched nothing is serving; closing the write end is its end.
@@ -498,15 +498,15 @@ internal sealed class InstallerHandoffTests
     [Test]
     public async Task ARelayWhoseLauncherExitedButStillOpensWatchesNothingAndServesItsInputToTheEnd()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var root = ScratchDirectory.CreateUnderProfile("orphan-corpse");
+        using var root = await ScratchDirectory.CreateUnderProfileAsync("orphan-corpse");
 
         var pipe = PublishedBackground.NewPipeName();
 
-        using var run = OrphanedConsoleStart.BeginHandingOnPipes(
+        await using var run = await OrphanedConsoleStart.BeginHandingOnPipesAsync(
             root.Path,
             TestDefaults.ProcessHang,
             [Program.McpArgument, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe]);
@@ -520,7 +520,7 @@ internal sealed class InstallerHandoffTests
         // plant that removed the corpse branch sent an exited launcher down the wait's
         // other branch, "could not be read", which neither awaited sentence names, and
         // the arm sat out its whole hang detector.
-        var seen = run.WaitUntilItSaysOneOf(
+        var seen = await run.WaitUntilItSaysOneOfAsync(
             TestDefaults.ProcessHang,
             "has already exited",
             "Watching the MCP client",
@@ -529,7 +529,7 @@ internal sealed class InstallerHandoffTests
             "could not identify the process that started it",
             "is a different process from the one that number named");
 
-        await Assert.That(seen).IsEqualTo("has already exited").Because(run.Records());
+        await Assert.That(seen).IsEqualTo("has already exited").Because(await run.RecordsAsync());
 
         // A relay that watched nothing still serves: a background on its pipe, in a
         // job of the arm's own, and the handshake that sends the relay to it.
@@ -537,7 +537,7 @@ internal sealed class InstallerHandoffTests
 
         var environment = PublishedSlice.InheritedEnvironment();
 
-        using var background = PublishedBackground.Start(backgroundJob, root.Path, environment, pipe, [BrowserAiPaths.DataRootArgument, root.Path]);
+        using var background = await PublishedBackground.StartAsync(backgroundJob, root.Path, environment, pipe, [BrowserAiPaths.DataRootArgument, root.Path]);
 
         // The writer owns the write end of the relay's standard input: disposing it is
         // the relay's end of input, and the finally disposes it again when an
@@ -554,7 +554,7 @@ internal sealed class InstallerHandoffTests
             await toRelay.DisposeAsync();
         }
 
-        await Assert.That(run.Records()).DoesNotContain("Watching the MCP client");
+        await Assert.That(await run.RecordsAsync()).DoesNotContain("Watching the MCP client");
     }
 
     /// <summary>UTF-8 with no byte-order mark, which is what the relay reads and writes.</summary>
@@ -592,14 +592,14 @@ internal sealed class InstallerHandoffTests
 
         await toRelay.WriteLineAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = "notifications/initialized" }.ToJsonString());
 
-        await Assert.That(run.WaitUntilItSays(ConnectedSentence, TestDefaults.ProcessHang)).IsTrue().Because(run.Records());
-        await Assert.That(run.IsAlive()).IsTrue().Because(run.Records());
+        await Assert.That(await run.WaitUntilItSaysAsync(ConnectedSentence, TestDefaults.ProcessHang)).IsTrue().Because(await run.RecordsAsync());
+        await Assert.That(run.IsAlive()).IsTrue().Because(await run.RecordsAsync());
 
         // And its input's end is what ends it.
         await toRelay.DisposeAsync();
 
-        await Assert.That(run.WaitUntilItSays("Relay: the client closed its input, so the relay ends.", TestDefaults.ProcessHang)).IsTrue().Because(run.Records());
-        await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(await run.WaitUntilItSaysAsync("Relay: the client closed its input, so the relay ends.", TestDefaults.ProcessHang)).IsTrue().Because(await run.RecordsAsync());
+        await Assert.That(await run.WaitUntilItExitsAsync(TestDefaults.ProcessHang)).IsTrue();
     }
 
     /// <summary>Reads lines until the answer to one request arrives.</summary>
@@ -645,9 +645,9 @@ internal sealed class InstallerHandoffTests
     [Test]
     public async Task ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
-        using var root = ScratchDirectory.CreateUnderProfile("orphan-costs");
+        using var root = await ScratchDirectory.CreateUnderProfileAsync("orphan-costs");
 
         // ⚠️ THE OPENABLE CORPSE, deliberately -- 2026-09-15. This arm used to
         // take whichever shape the machine happened to produce, and on the one
@@ -655,7 +655,7 @@ internal sealed class InstallerHandoffTests
         // sat at the full TestDefaults.ProcessHang waiting for a record the
         // product had decided not to write. Both shapes are nobody to serve;
         // this one is the shape the rig can guarantee.
-        using var run = OrphanedConsoleStart.Begin(
+        await using var run = await OrphanedConsoleStart.BeginAsync(
             root.Path,
             startedByTheInstaller: false,
             TestDefaults.ProcessHang,
@@ -663,13 +663,13 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.Started).IsTrue();
 
-        await Assert.That(run.WaitUntilItSaysOneOf(
+        await Assert.That(await run.WaitUntilItSaysOneOfAsync(
             TestDefaults.ProcessHang,
             "standard input is not a pipe, so there is no client to serve",
             "Watching the MCP client"))
             .IsEqualTo("standard input is not a pipe, so there is no client to serve");
 
-        var said = run.Records();
+        var said = await run.RecordsAsync();
 
         await Assert.That(said).DoesNotContain("playwright-mcp[surface]: started");
         await Assert.That(said).DoesNotContain("Stray sweep:");
@@ -689,11 +689,11 @@ internal sealed class InstallerHandoffTests
     /// <summary>Reads a log file the writer may still hold open.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its text.</returns>
-    private static string ReadShared(string path)
+    private static async Task<string> ReadSharedAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 }

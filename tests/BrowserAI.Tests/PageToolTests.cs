@@ -43,7 +43,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task APageToolAnswersWithThePagesOwnWordsAndSeesOnlyTheArgumentsTheCallerSent()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -74,7 +74,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task TheSnapshotBlockIsWhereTheNamesComeFromAndItCarriesThePagesOwnText()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -89,7 +89,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task NamingThePageItWasReadOnIsAcceptedWhenTheTabIsStillThere()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -102,7 +102,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task ANameThePageDoesNotOfferIsRefusedAndTheRefusalNamesWhatItDoesOffer()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -115,7 +115,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task ATabThatHasNavigatedAwayRefusesTheOldPagesToolAndListsTheNewPages()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -131,7 +131,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task TheSameNameOnAnotherPageIsRefusedWhenTheCallerSaidWhichPageItReadItOn()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -157,7 +157,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task TwoToolsWithOneNameOnOnePageAreRefusedAsAmbiguousRatherThanGuessedAt()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -174,7 +174,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task ADisplayTitleIsNotTheNameAndTheRefusalSaysWhichOneToPass()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -199,7 +199,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task APageToolThatNeverAnswersIsAbandonedOnBrowserAiSOwnClockAndTheSessionSurvivesIt()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -231,7 +231,7 @@ internal sealed class PageToolTests
     [Test]
     public async Task APageSuppliedNameStillHasNoWayThroughTheDoorOfItsOwn()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await PageToolRun.SharedAsync();
 
@@ -317,7 +317,7 @@ internal sealed record PageToolRun
     {
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("page-tools");
+        using var scratch = await ScratchDirectory.CreateAsync("page-tools");
 
         var alpha = Page(
             """[{name:"Do The Thing!",description:"ALPHA-DESC-A",inputSchema:{type:"object",properties:{who:{type:"string"}}}},{name:"plain_tool",description:"ALPHA-DESC-B",inputSchema:{type:"object",properties:{}}}]""",
@@ -344,7 +344,7 @@ internal sealed record PageToolRun
         var answers = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
         var session = Path.Combine(scratch.Path, "page-tool-session");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,

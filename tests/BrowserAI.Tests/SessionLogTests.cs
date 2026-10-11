@@ -40,7 +40,7 @@ internal sealed class SessionLogTests
     [Test]
     public async Task ThePurposeChangeLandsBetweenTheCallsItExplains()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
             opensDefaultSession: false);
 
@@ -125,7 +125,7 @@ internal sealed class SessionLogTests
             await Assert.That(entry.Failure).IsNull();
         }
 
-        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
+        var record = (await SessionLock.ReadRecordAsync(SessionPath.For(directory)))!;
 
         // The record's standing purpose moved, and the previous one is kept --
         // which is the half `why` is NOT: one is durable and one is disposable.
@@ -144,7 +144,7 @@ internal sealed class SessionLogTests
     [Test]
     public async Task AResumeWritesItsOwnArrivalIntoTheSameStream()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "arrival");
@@ -207,7 +207,7 @@ internal sealed class SessionLogTests
     [Test]
     public async Task ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -252,7 +252,7 @@ internal sealed class SessionLogTests
     [Test]
     public async Task AChildErrorIsAFailedRowAndItsPayloadIsWhatTheChildSaid()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
                 // The bytes the child sends, verbatim: an ordinary JSON-RPC
@@ -337,7 +337,7 @@ internal sealed class SessionLogTests
     {
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour { HoldUntil = release.Task },
             opensDefaultSession: false);
 

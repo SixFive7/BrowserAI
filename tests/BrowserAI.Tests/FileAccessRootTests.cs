@@ -52,17 +52,17 @@ internal sealed partial class FileAccessRootTests
     [Test]
     public async Task AWriteOutsideTheSessionIsRefusedAndOneInsideItLands()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("file-access-roots");
+        using var scratch = await ScratchDirectory.CreateAsync("file-access-roots");
 
         // The job this client owns is the containment net for the PROCESS tree:
         // an assertion that throws below closes it, and KILL_ON_JOB_CLOSE takes
         // the browser with it. Nothing in this file terminates anything by name.
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -198,14 +198,14 @@ internal sealed partial class FileAccessRootTests
     [Test]
     public async Task EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("artifact-pointers");
+        using var scratch = await ScratchDirectory.CreateAsync("artifact-pointers");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,

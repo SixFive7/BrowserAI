@@ -50,9 +50,9 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheHomeSaysWhatIsInstalledTheInstallPageWhereThingsAreAndNeitherCarriesAnythingInline()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
-        var page = await PageRig.GetAsync(rig.HandOut());
+        var page = await PageRig.GetAsync(await rig.HandOutAsync());
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
         await Assert.That(page.Header("Content-Type")).IsEqualTo("text/html; charset=utf-8");
@@ -96,9 +96,9 @@ internal sealed class PageServiceTests
         await Assert.That(script.Body).Contains("say(unanswered)");
         await Assert.That(script.Body).DoesNotContain("Start Menu");
 
-        using (var notInstalled = new PageRig(installed: false))
+        await using (var notInstalled = await PageRig.CreateAsync(installed: false))
         {
-            var bare = await PageRig.GetAsync(notInstalled.HandOut());
+            var bare = await PageRig.GetAsync(await notInstalled.HandOutAsync());
 
             await Assert.That(bare.Body).Contains("data-unanswered=\"" + PageContent.Text("BrowserAI is not answering this page.") + "\"");
         }
@@ -135,9 +135,9 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheOldUpdateActionsAreActionsThePageDoesNotHave()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         foreach (var body in new[]
         {
@@ -184,7 +184,7 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheConversationsPageListsEachSessionOnceUnderItsConversationAndOffersNoClose()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         var host = Description(
             900,
@@ -205,7 +205,7 @@ internal sealed class PageServiceTests
             ],
             []);
 
-        var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
+        var page = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions));
         var body = page.Body;
         var list = body[body.IndexOf("<div class=\"list-view\">", StringComparison.Ordinal)..];
 
@@ -269,7 +269,7 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheConversationsPageNamesEachConversationAndListsAWindowsTabsUnderIt()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         var window = new ClientWindow("1200-134360600000000000", @"C:\Source\BrowserAI");
         var composed = CensusPageSessions.Compose(
@@ -298,7 +298,7 @@ internal sealed class PageServiceTests
             ],
         };
 
-        var page = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
+        var page = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions));
         var list = page.Body[page.Body.IndexOf("<div class=\"list-view\">", StringComparison.Ordinal)..];
 
         await Assert.That(page.Status).IsEqualTo(200).Because(page.Raw);
@@ -340,13 +340,13 @@ internal sealed class PageServiceTests
     [Test]
     public async Task AnActionNamesWhatItOpensByANameThePageWasGivenAndNeverByAPath()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
         var server = Server(301, "claude-code", null);
 
         rig.Sessions.Snapshot = new SessionsSnapshot(Now, [server], []);
 
-        _ = await PageRig.GetAsync(rig.HandOut(PageKind.Sessions));
+        _ = await PageRig.GetAsync(await rig.HandOutAsync(PageKind.Sessions));
 
         await Assert.That((await rig.ActAsync("""{"action":"open-folder","folder":"install"}""")).Status).IsEqualTo(204);
         await Assert.That((await rig.ActAsync("""{"action":"open-folder","folder":"data"}""")).Status).IsEqualTo(204);
@@ -392,16 +392,16 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheNewestTabWinsAndAnOlderTabIsToldItWasReplaced()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         using var first = await rig.StreamAsync(rig.Gate.Root, 1);
 
         await Assert.That(await first.NextNamedAsync(PageEvents.State)).IsNotNull();
 
         // A second Start Menu click: a new address, the same listener.
-        var second = rig.HandOut();
+        var second = await rig.HandOutAsync();
 
         await Assert.That(second).IsEqualTo(rig.Gate.Root + "?tab=2");
 
@@ -442,7 +442,7 @@ internal sealed class PageServiceTests
     /// the last tab leaves", driven through the coordinator's own loop, whose process
     /// then exited)</i>: the one resident background holds the page now and never
     /// ends on its own (S a), so what stops after the minute is the listener, asked
-    /// through <see cref="PageService.TryStop"/> on every wake the way the background's
+    /// through <see cref="PageService.TryStopAsync"/> on every wake the way the background's
     /// loop asks it, and the next hand-out starts a listener again.
     /// </para>
     /// <para>
@@ -455,15 +455,15 @@ internal sealed class PageServiceTests
     [Test]
     public async Task TheListenerStopsAMinuteAfterTheLastTabLeavesAndTheNextStartOpensANewOne()
     {
-        using var rig = new PageRig();
+        await using var rig = await PageRig.CreateAsync();
 
-        _ = rig.HandOut();
+        _ = await rig.HandOutAsync();
 
         // A tab connected, and five minutes pass.
         var tab = await rig.StreamAsync(rig.Gate.Root, 1);
 
         rig.Clock.Advance(TimeSpan.FromMinutes(5));
-        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
+        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
 
         // It leaves, and 59 seconds pass.
         tab.Dispose();
@@ -471,7 +471,7 @@ internal sealed class PageServiceTests
         await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
 
         rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
+        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
 
         // It reloads inside the minute and leaves again: the minute starts over.
         using (var reload = await rig.StreamAsync(rig.Gate.Root, 1))
@@ -482,16 +482,16 @@ internal sealed class PageServiceTests
         await Assert.That(await WaitForAsync(() => rig.Page.Tabs?.Connected is 0)).IsTrue();
 
         rig.Clock.Advance(TimeSpan.FromSeconds(59));
-        await Assert.That(rig.Page.TryStop(final: false)).IsFalse();
+        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsFalse();
 
         // The minute runs out, and the listener stops.
         rig.Clock.Advance(TimeSpan.FromSeconds(1));
 
-        await Assert.That(rig.Page.TryStop(final: false)).IsTrue();
+        await Assert.That(await rig.Page.TryStopAsync(final: false)).IsTrue();
         await Assert.That(rig.Page.IsServing).IsFalse();
 
         // A person's start after that is handed a tab on a new listener.
-        await Assert.That(rig.Page.HandOut(PageKind.Status)).IsNotNull();
+        await Assert.That(await rig.Page.HandOutAsync(PageKind.Status)).IsNotNull();
         await Assert.That(rig.Page.IsServing).IsTrue();
     }
 
@@ -552,7 +552,7 @@ internal sealed class PageServiceTests
     [Test]
     public async Task AStartOpensItsAddressOrWritesItAndNeverLogsTheToken()
     {
-        using var scratch = ScratchDirectory.Create("page-opener");
+        using var scratch = await ScratchDirectory.CreateAsync("page-opener");
         using var logs = new CapturingLoggerProvider();
 
         var logger = logs.CreateLogger("opener");
@@ -560,22 +560,22 @@ internal sealed class PageServiceTests
         var address = $"http://127.0.0.1:49152/{token}/?tab=1";
         var opened = new List<string>();
 
-        bool open(string url)
+        Task<bool> open(string url)
         {
             opened.Add(url);
-            return true;
+            return Task.FromResult(true);
         }
 
-        await Assert.That(PageOpener.Deliver(address, null, open, logger)).IsTrue();
+        await Assert.That(await PageOpener.DeliverAsync(address, null, open, logger)).IsTrue();
         await Assert.That(opened).IsEquivalentTo([address]);
 
         var file = Path.Combine(scratch.Path, "address.txt");
 
-        await Assert.That(PageOpener.Deliver(address, file, open, logger)).IsTrue();
+        await Assert.That(await PageOpener.DeliverAsync(address, file, open, logger)).IsTrue();
         await Assert.That(await File.ReadAllTextAsync(file)).IsEqualTo(address);
         await Assert.That(opened.Count).IsEqualTo(1);
 
-        await Assert.That(PageOpener.Deliver(null, null, open, logger)).IsFalse();
+        await Assert.That(await PageOpener.DeliverAsync(null, null, open, logger)).IsFalse();
         await Assert.That(opened.Count).IsEqualTo(1);
 
         await Assert.That(PageOpener.WriteAddressFrom(["--write-address", file])).IsEqualTo(file);

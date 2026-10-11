@@ -29,9 +29,9 @@ namespace BrowserAI.Tests;
 internal static class ResolvedVersions
 {
     /// <summary>The npm half: what the last payload build resolved.</summary>
-    public static string? FromPayloadLock(string package)
+    public static async Task<string?> FromPayloadLockAsync(string package)
     {
-        using var lockFile = JsonDocument.Parse(File.ReadAllText(
+        using var lockFile = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "package-lock.json")));
 
         return lockFile.RootElement.GetProperty("packages").TryGetProperty($"node_modules/{package}", out var entry)
@@ -45,7 +45,7 @@ internal static class ResolvedVersions
     /// the marker test names which upstreams are in that state, so that adding
     /// one to the build without wiring it here turns the suite red.
     /// </summary>
-    public static string? FromNuGetLocks(string package)
+    public static async Task<string?> FromNuGetLocksAsync(string package)
     {
         foreach (var project in RepositoryLayout.ProjectFiles)
         {
@@ -55,7 +55,7 @@ internal static class ResolvedVersions
                 continue;
             }
 
-            using var lockFile = JsonDocument.Parse(File.ReadAllText(path));
+            using var lockFile = JsonDocument.Parse(await File.ReadAllTextAsync(path));
             foreach (var framework in lockFile.RootElement.GetProperty("dependencies").EnumerateObject())
             {
                 foreach (var dependency in framework.Value.EnumerateObject())
@@ -77,9 +77,9 @@ internal static class ResolvedVersions
     /// stamp <c>build/Get-RegisterAi.ps1</c> writes beside the npm lock. Null
     /// when the stamp names no version.
     /// </summary>
-    public static string? FromRegisterAiStamp()
+    public static async Task<string?> FromRegisterAiStampAsync()
     {
-        using var stamp = JsonDocument.Parse(File.ReadAllText(
+        using var stamp = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "registerai.json")));
 
         return stamp.RootElement.TryGetProperty("version", out var version) ? version.GetString() : null;
@@ -89,9 +89,9 @@ internal static class ResolvedVersions
     /// The runtime half: the node the snapshots were generated under, which
     /// the generator refuses to run without being the payload's own.
     /// </summary>
-    public static string? FromSnapshotProvenance(string key)
+    public static async Task<string?> FromSnapshotProvenanceAsync(string key)
     {
-        using var snapshot = JsonDocument.Parse(File.ReadAllText(
+        using var snapshot = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));
 
         return snapshot.RootElement.GetProperty("resolvedFrom").TryGetProperty(key, out var value)

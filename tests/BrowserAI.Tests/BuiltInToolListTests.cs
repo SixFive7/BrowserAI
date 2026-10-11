@@ -56,13 +56,13 @@ internal sealed class BuiltInToolListTests
     [Test]
     public async Task ThePublishedServerAnswersTheToolListWithNoPlaywrightServerRunning()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("built-in-list");
+        using var scratch = await ScratchDirectory.CreateAsync("built-in-list");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -125,22 +125,22 @@ internal sealed class BuiltInToolListTests
     [Arguments("firefox")]
     public async Task ASessionOpensInEachFamilyBecauseItsChildListsTheCompiledToolsByteForByte(string browser)
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         if (browser is "firefox")
         {
-            SuiteEnvironment.RequireProvisionedFirefox();
+            await SuiteEnvironment.RequireProvisionedFirefoxAsync();
         }
         else
         {
-            SuiteEnvironment.RequireProvisionedChromium();
+            await SuiteEnvironment.RequireProvisionedChromiumAsync();
         }
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create($"built-in-list-{browser}");
+        using var scratch = await ScratchDirectory.CreateAsync($"built-in-list-{browser}");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -220,7 +220,7 @@ internal sealed class BuiltInToolListTests
     {
         var snapshot = await File.ReadAllBytesAsync(SnapshotPath);
 
-        var carried = Resource(typeof(UpstreamToolList).Assembly, UpstreamToolList.ResourceName).AsSpan().SequenceEqual(snapshot);
+        var carried = (await ResourceAsync(typeof(UpstreamToolList).Assembly, UpstreamToolList.ResourceName)).AsSpan().SequenceEqual(snapshot);
 
         await Assert.That(carried).IsTrue();
     }
@@ -281,12 +281,12 @@ internal sealed class BuiltInToolListTests
 
     private static string SnapshotPath { get; } = Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json");
 
-    private static byte[] Resource(System.Reflection.Assembly assembly, string name)
+    private static async Task<byte[]> ResourceAsync(System.Reflection.Assembly assembly, string name)
     {
         using var stream = assembly.GetManifestResourceStream(name)
             ?? throw new InvalidOperationException($"The build embedded no resource named '{name}'.");
         using var copy = new MemoryStream();
-        stream.CopyTo(copy);
+        await stream.CopyToAsync(copy);
         return copy.ToArray();
     }
 

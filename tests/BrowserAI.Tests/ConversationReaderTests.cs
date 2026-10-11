@@ -71,18 +71,18 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task TheClientsOwnFileComesFirstThenTheEnvironmentThenTheCommandLineThenTheFolder()
     {
-        using var scratch = ScratchDirectory.Create("conversation-claude");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-claude");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Apples");
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
-        WriteRecord(config, folder, Live, padding: 3 * ClaudeCodeTitle.Window, Ai("Apples tab"));
-        WriteRecord(config, folder, Stale, padding: 0, Prompt("the conversation before the clear"), Ai("Before the clear"));
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
+        await WriteRecordAsync(config, folder, Live, padding: 3 * ClaudeCodeTitle.Window, Ai("Apples tab"));
+        await WriteRecordAsync(config, folder, Stale, padding: 0, Prompt("the conversation before the clear"), Ai("Before the clear"));
 
         var reader = ConversationReader.Files;
         var memo = new ConversationMemo();
 
-        var live = reader.Read(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, memo);
+        var live = await reader.ReadAsync(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, memo);
 
         await Assert.That(live.Conversation).IsEqualTo(Live);
         await Assert.That(live.Name).IsEqualTo(new ConversationName("Apples tab", IsTitle: true));
@@ -90,16 +90,16 @@ internal sealed class ConversationReaderTests
         await Assert.That(live.NameSource).IsEqualTo(NameSource.AiTitle);
 
         // Another process's file, by its procStart: the environment answers.
-        WriteProcessFile(config, ClientPid, ClientStarted + 1, Live, folder);
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted + 1, Live, folder);
 
-        var environment = reader.Read(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, new ConversationMemo());
+        var environment = await reader.ReadAsync(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, new ConversationMemo());
 
         await Assert.That(environment.Conversation).IsEqualTo(Stale);
         await Assert.That(environment.Name).IsEqualTo(new ConversationName("Before the clear", IsTitle: true));
         await Assert.That(environment.Source).IsEqualTo(ConversationSource.Environment);
 
         // No variable: the command line; and a session with no record is new.
-        var commandLine = reader.Read(KnownClaudeCode, Facts(config, commandLineSessionId: Resumed), ClientPid, threadId: null, folder, new ConversationMemo());
+        var commandLine = await reader.ReadAsync(KnownClaudeCode, Facts(config, commandLineSessionId: Resumed), ClientPid, threadId: null, folder, new ConversationMemo());
 
         await Assert.That(commandLine.Conversation).IsEqualTo(Resumed);
         await Assert.That(commandLine.Name).IsEqualTo(new ConversationName("unnamed conversation in Apples", IsTitle: false));
@@ -107,14 +107,14 @@ internal sealed class ConversationReaderTests
         await Assert.That(commandLine.NameSource).IsEqualTo(NameSource.NoRecordYet);
 
         // Nothing names a session: the client and its folder.
-        var nothing = reader.Read(KnownClaudeCode, Facts(config), ClientPid, threadId: null, folder, new ConversationMemo());
+        var nothing = await reader.ReadAsync(KnownClaudeCode, Facts(config), ClientPid, threadId: null, folder, new ConversationMemo());
 
         await Assert.That(nothing.Conversation).IsNull();
         await Assert.That(nothing.Name).IsEqualTo(new ConversationName("Claude Code in Apples", IsTitle: false));
         await Assert.That(nothing.Source).IsEqualTo(ConversationSource.None);
 
         // A client whose records BrowserAI does not read is named nothing at all.
-        await Assert.That(reader.Read("some-other-client", Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, new ConversationMemo()))
+        await Assert.That(await reader.ReadAsync("some-other-client", Facts(config, sessionId: Stale), ClientPid, threadId: null, folder, new ConversationMemo()))
             .IsEqualTo(ConversationReading.Unread);
     }
 
@@ -140,23 +140,23 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task ARenameAndAClearAreSeenAtTheNextRead()
     {
-        using var scratch = ScratchDirectory.Create("conversation-again");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-again");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Pears");
         var memo = new ConversationMemo();
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
-        var record = WriteRecord(config, folder, Live, padding: 0, Prompt("sort the pears"), Ai("Sorting pears"));
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
+        var record = await WriteRecordAsync(config, folder, Live, padding: 0, Prompt("sort the pears"), Ai("Sorting pears"));
 
-        await Assert.That(ConversationReader.Files.Read(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo).Name?.Text).IsEqualTo("Sorting pears");
+        await Assert.That((await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo)).Name?.Text).IsEqualTo("Sorting pears");
 
         await File.AppendAllTextAsync(record, Custom("Pears, renamed") + "\n");
 
-        await Assert.That(ConversationReader.Files.Read(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo).Name?.Text).IsEqualTo("Pears, renamed");
+        await Assert.That((await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo)).Name?.Text).IsEqualTo("Pears, renamed");
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Resumed, folder);
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Resumed, folder);
 
-        var cleared = ConversationReader.Files.Read(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo);
+        var cleared = await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config, sessionId: Live), ClientPid, null, folder, memo);
 
         await Assert.That(cleared.Conversation).IsEqualTo(Resumed);
         await Assert.That(cleared.Name).IsEqualTo(new ConversationName("unnamed conversation in Pears", IsTitle: false));
@@ -192,16 +192,16 @@ internal sealed class ConversationReaderTests
         await Assert.That(slug[..ClaudeCodeRecords.SlugWidth]).IsEqualTo(deep.Replace(':', '-').Replace('\\', '-')[..ClaudeCodeRecords.SlugWidth]);
         await Assert.That(slug[ClaudeCodeRecords.SlugWidth]).IsEqualTo('-');
 
-        using var scratch = ScratchDirectory.Create("conversation-scan");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-scan");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Plums");
         var elsewhere = Path.Combine(config, "projects", "a-folder-the-slug-does-not-name");
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
         _ = Directory.CreateDirectory(elsewhere);
         await File.WriteAllTextAsync(Path.Combine(elsewhere, Live + ".jsonl"), Lines(Prompt("pick the plums"), Ai("Plum picking")));
 
-        var found = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+        var found = await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
 
         await Assert.That(found.Name).IsEqualTo(new ConversationName("Plum picking", IsTitle: true));
     }
@@ -225,23 +225,23 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task AHalfWrittenFileIsReadOnceMoreAndThenPassedOver()
     {
-        using var scratch = ScratchDirectory.Create("conversation-torn");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-torn");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Figs");
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
-        _ = WriteRecord(config, folder, Live, padding: 0, Ai("Fig tab"));
-        _ = WriteRecord(config, folder, Stale, padding: 0, Ai("Stale fig tab"));
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
+        _ = await WriteRecordAsync(config, folder, Live, padding: 0, Ai("Fig tab"));
+        _ = await WriteRecordAsync(config, folder, Stale, padding: 0, Ai("Stale fig tab"));
 
         var tornOnce = new TornReads(tears: 1);
-        var once = new ConversationReader(tornOnce.Access).Read(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, null, folder, new ConversationMemo());
+        var once = await new ConversationReader(tornOnce.Access).ReadAsync(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, null, folder, new ConversationMemo());
 
         await Assert.That(once.Source).IsEqualTo(ConversationSource.ProcessFile);
         await Assert.That(once.Name?.Text).IsEqualTo("Fig tab");
         await Assert.That(tornOnce.ProcessFileReads).IsEqualTo(2);
 
         var tornTwice = new TornReads(tears: 2);
-        var twice = new ConversationReader(tornTwice.Access).Read(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, null, folder, new ConversationMemo());
+        var twice = await new ConversationReader(tornTwice.Access).ReadAsync(KnownClaudeCode, Facts(config, sessionId: Stale), ClientPid, null, folder, new ConversationMemo());
 
         await Assert.That(twice.Source).IsEqualTo(ConversationSource.Environment);
         await Assert.That(twice.Name?.Text).IsEqualTo("Stale fig tab");
@@ -269,19 +269,19 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task AFileTheClientHoldsToWriteAndToDeleteIsStillReadAndLeftAlone()
     {
-        using var scratch = ScratchDirectory.Create("conversation-held");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-held");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Kiwis");
 
-        var processFile = WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
-        var record = WriteRecord(config, folder, Live, padding: 0, Prompt("weigh the kiwis"), Ai("Kiwi scales"));
+        var processFile = await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
+        var record = await WriteRecordAsync(config, folder, Live, padding: 0, Prompt("weigh the kiwis"), Ai("Kiwi scales"));
 
         ConversationReading read;
 
         using (HeldLikeTheClient(processFile))
         using (HeldLikeTheClient(record))
         {
-            read = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+            read = await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
         }
 
         await Assert.That(read.Source).IsEqualTo(ConversationSource.ProcessFile);
@@ -313,7 +313,7 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task ACodexThreadIsNamedFromCodexsIndexByTheLastNameItWasGiven()
     {
-        using var scratch = ScratchDirectory.Create("conversation-codex");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-codex");
         var home = Path.Combine(scratch.Path, "codex-home");
         var folder = Path.Combine(scratch.Path, "projects", "Lemons");
         var index = Path.Combine(home, "session_index.jsonl");
@@ -325,7 +325,7 @@ internal sealed class ConversationReaderTests
             Indexed(Thread, "Lemon list"),
             Indexed(Thread, "Lemon list, renamed")));
 
-        var named = ConversationReader.Files.Read(KnownCodex, facts, clientPid: null, Thread, folder, new ConversationMemo());
+        var named = await ConversationReader.Files.ReadAsync(KnownCodex, facts, clientPid: null, Thread, folder, new ConversationMemo());
 
         await Assert.That(named.Conversation).IsEqualTo(Thread);
         await Assert.That(named.Name).IsEqualTo(new ConversationName("Lemon list, renamed", IsTitle: true));
@@ -333,13 +333,13 @@ internal sealed class ConversationReaderTests
         await Assert.That(named.NameSource).IsEqualTo(NameSource.CodexIndex);
 
         // A thread the index does not name.
-        var unnamed = ConversationReader.Files.Read(KnownCodex, facts, null, "99999999-9999-7999-8999-999999999999", folder, new ConversationMemo());
+        var unnamed = await ConversationReader.Files.ReadAsync(KnownCodex, facts, null, "99999999-9999-7999-8999-999999999999", folder, new ConversationMemo());
 
         await Assert.That(unnamed.Name).IsEqualTo(new ConversationName("Codex in Lemons", IsTitle: false));
         await Assert.That(unnamed.Source).IsEqualTo(ConversationSource.CodexCall);
 
         // Before its first call there is no thread.
-        var before = ConversationReader.Files.Read(KnownCodex, facts, null, threadId: null, folder, new ConversationMemo());
+        var before = await ConversationReader.Files.ReadAsync(KnownCodex, facts, null, threadId: null, folder, new ConversationMemo());
 
         await Assert.That(before.Conversation).IsNull();
         await Assert.That(before.Name).IsEqualTo(new ConversationName("Codex in Lemons", IsTitle: false));
@@ -349,16 +349,16 @@ internal sealed class ConversationReaderTests
         var halfAppended = whole + Indexed(Thread, "Lemon list, renamed again")[..30];
         var reads = 0;
         var access = new ClientRecordAccess(
-            path => path == index && reads++ is 0 ? halfAppended : ClientRecordFile.ReadAll(path),
-            ClientRecordFile.ReadEnds,
+            async path => path == index && reads++ is 0 ? halfAppended : await ClientRecordFile.ReadAllAsync(path),
+            ClientRecordFile.ReadEndsAsync,
             ClientRecordFile.FoldersIn,
-            ClientRecordFile.ReadHead,
+            ClientRecordFile.ReadHeadAsync,
             ClientRecordFile.FilesUnder,
             CodexState.TitleOf);
 
         await File.AppendAllTextAsync(index, Indexed(Thread, "Lemon list, renamed again") + "\n");
 
-        var again = new ConversationReader(access).Read(KnownCodex, facts, null, Thread, folder, new ConversationMemo());
+        var again = await new ConversationReader(access).ReadAsync(KnownCodex, facts, null, Thread, folder, new ConversationMemo());
 
         await Assert.That(again.Name?.Text).IsEqualTo("Lemon list, renamed again");
         await Assert.That(reads).IsEqualTo(2);
@@ -396,7 +396,7 @@ internal sealed class ConversationReaderTests
         const string Rolled = "eeeeeeee-5555-7555-8555-555555555555";
         const string Neither = "99999999-9999-7999-8999-999999999999";
 
-        using var scratch = ScratchDirectory.Create("conversation-codex-first");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-codex-first");
         var home = Path.Combine(scratch.Path, "codex-home");
         var folder = Path.Combine(scratch.Path, "projects", "Lemons");
         var index = Path.Combine(home, "session_index.jsonl");
@@ -408,11 +408,11 @@ internal sealed class ConversationReaderTests
         var picks = string.Join(" ", Enumerable.Repeat("pick", 60));
 
         WriteState(home, (Stated, "Plan the lemon\r\n\tharvest,   then " + picks + " "));
-        _ = WriteRollout(home, Stated, "what the rollout says first");
-        var rollout = WriteRollout(home, Rolled, "Weigh the lemons\nand sort them");
+        _ = await WriteRolloutAsync(home, Stated, "what the rollout says first");
+        var rollout = await WriteRolloutAsync(home, Rolled, "Weigh the lemons\nand sort them");
 
         // In the state database: on one line, then cut past 200 characters.
-        var stated = ConversationReader.Files.Read(KnownCodex, facts, clientPid: null, Stated, folder, new ConversationMemo());
+        var stated = await ConversationReader.Files.ReadAsync(KnownCodex, facts, clientPid: null, Stated, folder, new ConversationMemo());
         var oneLine = "Plan the lemon harvest, then " + picks;
 
         await Assert.That(stated.Conversation).IsEqualTo(Stated);
@@ -424,7 +424,7 @@ internal sealed class ConversationReaderTests
 
         using (HeldLikeTheClient(rollout))
         {
-            rolled = ConversationReader.Files.Read(KnownCodex, facts, null, Rolled, folder, new ConversationMemo());
+            rolled = await ConversationReader.Files.ReadAsync(KnownCodex, facts, null, Rolled, folder, new ConversationMemo());
         }
 
         await Assert.That(rolled.Name).IsEqualTo(new ConversationName("Weigh the lemons and sort them", IsTitle: true));
@@ -435,7 +435,7 @@ internal sealed class ConversationReaderTests
         await File.WriteAllTextAsync(rollout, "{}");
 
         // Neither: the client and its folder.
-        var neither = ConversationReader.Files.Read(KnownCodex, facts, null, Neither, folder, new ConversationMemo());
+        var neither = await ConversationReader.Files.ReadAsync(KnownCodex, facts, null, Neither, folder, new ConversationMemo());
 
         await Assert.That(neither.Name).IsEqualTo(new ConversationName("Codex in Lemons", IsTitle: false));
         await Assert.That(neither.NameSource).IsEqualTo(NameSource.ClientAndFolder);
@@ -443,7 +443,7 @@ internal sealed class ConversationReaderTests
         // A name the index gives comes before the first message.
         await File.AppendAllTextAsync(index, Indexed(Stated, "Lemon harvest") + "\n");
 
-        var named = ConversationReader.Files.Read(KnownCodex, facts, null, Stated, folder, new ConversationMemo());
+        var named = await ConversationReader.Files.ReadAsync(KnownCodex, facts, null, Stated, folder, new ConversationMemo());
 
         await Assert.That(named.Name).IsEqualTo(new ConversationName("Lemon harvest", IsTitle: true));
         await Assert.That(named.NameSource).IsEqualTo(NameSource.CodexIndex);
@@ -469,20 +469,20 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task ARolloutHalfWrittenAtItsFirstMessageIsReadOnceMoreAndIsLookedForOnce()
     {
-        using var scratch = ScratchDirectory.Create("conversation-codex-torn");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-codex-torn");
         var home = Path.Combine(scratch.Path, "codex-home");
         var folder = Path.Combine(scratch.Path, "projects", "Limes");
         var facts = new ConversationFacts(null, null, null, null, home);
-        var rollout = WriteRollout(home, Thread, "Squeeze the limes");
+        var rollout = await WriteRolloutAsync(home, Thread, "Squeeze the limes");
         var whole = await File.ReadAllTextAsync(rollout);
         var cut = whole.IndexOf("\"UserMessage\"", StringComparison.Ordinal) + 20;
         var heads = 0;
         var walks = 0;
         var access = new ClientRecordAccess(
-            ClientRecordFile.ReadAll,
-            ClientRecordFile.ReadEnds,
+            ClientRecordFile.ReadAllAsync,
+            ClientRecordFile.ReadEndsAsync,
             ClientRecordFile.FoldersIn,
-            (path, bytes) => heads++ is 0 ? whole[..cut] : ClientRecordFile.ReadHead(path, bytes),
+            async (path, bytes) => heads++ is 0 ? whole[..cut] : await ClientRecordFile.ReadHeadAsync(path, bytes),
             (path, pattern) =>
             {
                 walks++;
@@ -492,12 +492,12 @@ internal sealed class ConversationReaderTests
         var reader = new ConversationReader(access);
         var memo = new ConversationMemo();
 
-        var first = reader.Read(KnownCodex, facts, null, Thread, folder, memo);
+        var first = await reader.ReadAsync(KnownCodex, facts, null, Thread, folder, memo);
 
         await Assert.That(first.Name?.Text).IsEqualTo("Squeeze the limes");
         await Assert.That(heads).IsEqualTo(2);
 
-        var second = reader.Read(KnownCodex, facts, null, Thread, folder, memo);
+        var second = await reader.ReadAsync(KnownCodex, facts, null, Thread, folder, memo);
 
         await Assert.That(second.Name?.Text).IsEqualTo("Squeeze the limes");
         await Assert.That(heads).IsEqualTo(3);
@@ -521,23 +521,23 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task ATitleIsShownOnOneLine()
     {
-        using var scratch = ScratchDirectory.Create("conversation-line");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-line");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Limes");
 
-        WriteProcessFile(config, ClientPid, ClientStarted, Live, folder);
-        _ = WriteRecord(config, folder, Live, padding: 0, Line(new JsonObject { ["type"] = "last-prompt", ["lastPrompt"] = "check the\nlogin\t\tpage  " }));
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Live, folder);
+        _ = await WriteRecordAsync(config, folder, Live, padding: 0, Line(new JsonObject { ["type"] = "last-prompt", ["lastPrompt"] = "check the\nlogin\t\tpage  " }));
 
-        var read = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+        var read = await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
 
         await Assert.That(read.Name).IsEqualTo(new ConversationName("check the login page", IsTitle: true));
         await Assert.That(read.NameSource).IsEqualTo(NameSource.LastPrompt);
 
         // A custom title of white space alone names nothing.
-        WriteProcessFile(config, ClientPid, ClientStarted, Stale, folder);
-        _ = WriteRecord(config, folder, Stale, padding: 0, Custom(" \t "));
+        await WriteProcessFileAsync(config, ClientPid, ClientStarted, Stale, folder);
+        _ = await WriteRecordAsync(config, folder, Stale, padding: 0, Custom(" \t "));
 
-        var blank = ConversationReader.Files.Read(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
+        var blank = await ConversationReader.Files.ReadAsync(KnownClaudeCode, Facts(config), ClientPid, null, folder, new ConversationMemo());
 
         await Assert.That(blank.Name).IsEqualTo(new ConversationName("unnamed conversation in Limes", IsTitle: false));
     }
@@ -551,14 +551,14 @@ internal sealed class ConversationReaderTests
     [Test]
     public async Task AValueThatIsNotASessionIdIsNeverTakenForOne()
     {
-        using var scratch = ScratchDirectory.Create("conversation-shape");
+        using var scratch = await ScratchDirectory.CreateAsync("conversation-shape");
         var config = Path.Combine(scratch.Path, "config");
         var folder = Path.Combine(scratch.Path, "projects", "Dates");
 
         // A record where a path climbing out of the projects folder would land.
         await File.WriteAllTextAsync(Path.Combine(scratch.Path, "outside.jsonl"), Lines(Ai("Read from outside the projects folder")));
 
-        var read = ConversationReader.Files.Read(
+        var read = await ConversationReader.Files.ReadAsync(
             KnownClaudeCode,
             new ConversationFacts(config, ClientStarted, @"..\..\outside", "not-a-session-id", null),
             ClientPid,
@@ -582,14 +582,14 @@ internal sealed class ConversationReaderTests
         new(config, ClientStarted, sessionId, commandLineSessionId, null);
 
     /// <summary>Writes Claude Code's file for one process, in the shape 2.1.296 writes it.</summary>
-    private static string WriteProcessFile(string config, int pid, long procStart, string sessionId, string folder)
+    private static async Task<string> WriteProcessFileAsync(string config, int pid, long procStart, string sessionId, string folder)
     {
         var sessions = Path.Combine(config, "sessions");
         _ = Directory.CreateDirectory(sessions);
 
         var path = Path.Combine(sessions, pid.ToString(CultureInfo.InvariantCulture) + ".json");
 
-        File.WriteAllText(path, new JsonObject
+        await File.WriteAllTextAsync(path, new JsonObject
         {
             ["pid"] = pid,
             ["sessionId"] = sessionId,
@@ -608,7 +608,7 @@ internal sealed class ConversationReaderTests
     }
 
     /// <summary>Writes a session's record where the slug of its folder puts it, padded in the middle.</summary>
-    private static string WriteRecord(string config, string folder, string sessionId, int padding, params string[] lines)
+    private static async Task<string> WriteRecordAsync(string config, string folder, string sessionId, int padding, params string[] lines)
     {
         var project = Path.Combine(config, "projects", ClaudeCodeRecords.Slug(folder));
         _ = Directory.CreateDirectory(project);
@@ -625,7 +625,7 @@ internal sealed class ConversationReaderTests
         }
 
         _ = text.Append(Lines(lines));
-        File.WriteAllText(path, text.ToString());
+        await File.WriteAllTextAsync(path, text.ToString());
 
         return path;
     }
@@ -669,14 +669,14 @@ internal sealed class ConversationReaderTests
     /// project's instructions, the world state, the person's message, its
     /// <c>UserMessage</c> record, and a later turn's.
     /// </summary>
-    private static string WriteRollout(string home, string thread, string firstMessage)
+    private static async Task<string> WriteRolloutAsync(string home, string thread, string firstMessage)
     {
         var day = Path.Combine(home, "sessions", "2026", "10", "09");
         _ = Directory.CreateDirectory(day);
 
         var path = Path.Combine(day, $"rollout-2026-10-09T00-50-42-{thread}.jsonl");
 
-        File.WriteAllText(path, Lines(
+        await File.WriteAllTextAsync(path, Lines(
             Line(new JsonObject { ["type"] = "session_meta", ["payload"] = new JsonObject { ["id"] = thread, ["cli_version"] = "0.162.0", ["base_instructions"] = new string('i', 22_000) } }),
             message("user", "# AGENTS.md instructions for the project\n\n" + new string('a', 34_000)),
             Line(new JsonObject { ["type"] = "world_state", ["payload"] = new JsonObject { ["state"] = new string('w', 36_000) } }),
@@ -722,9 +722,9 @@ internal sealed class ConversationReaderTests
         public int ProcessFileReads { get; private set; }
 
         public ClientRecordAccess Access => new(
-            path =>
+            async path =>
             {
-                var whole = ClientRecordFile.ReadAll(path);
+                var whole = await ClientRecordFile.ReadAllAsync(path);
 
                 if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase) || whole is null)
                 {
@@ -733,9 +733,9 @@ internal sealed class ConversationReaderTests
 
                 return ++ProcessFileReads <= tears ? whole[..(whole.Length / 2)] : whole;
             },
-            ClientRecordFile.ReadEnds,
+            ClientRecordFile.ReadEndsAsync,
             ClientRecordFile.FoldersIn,
-            ClientRecordFile.ReadHead,
+            ClientRecordFile.ReadHeadAsync,
             ClientRecordFile.FilesUnder,
             CodexState.TitleOf);
     }

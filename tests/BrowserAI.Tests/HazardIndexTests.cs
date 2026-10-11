@@ -91,7 +91,7 @@ internal sealed partial class HazardIndexTests
     {
         var offenders = new List<string>();
 
-        foreach (var row in HazardIndex.Rows())
+        foreach (var row in await HazardIndex.RowsAsync())
         {
             offenders.AddRange(Named(row.Evidence)
                 .Where(Missing)
@@ -109,7 +109,7 @@ internal sealed partial class HazardIndexTests
         // columns: `closed` is a claim, and this column is what makes it
         // checkable." It was true of every row on 2026-08-17 and had never been
         // asserted, so the next row closed in a hurry was free to break it.
-        var offenders = HazardIndex.Rows()
+        var offenders = (await HazardIndex.RowsAsync())
             .Where(row => row.State is HazardIndex.Closed)
             .Where(row => row.Evidence.Length == 0 || row.Evidence is "--" or "-")
             .Select(row => $"HAZARDS.md:{row.Line}: closed with no evidence -- {Excerpt(row.Hazard)}");
@@ -134,7 +134,7 @@ internal sealed partial class HazardIndexTests
         // HazardIndex.StateOf now matches the LEADING word exactly; what may
         // follow it is a date, emphasis or a qualifying clause, none of which
         // changes the state.
-        var offenders = HazardIndex.Rows()
+        var offenders = (await HazardIndex.RowsAsync())
             .Where(row => row.State is null)
             .Select(row => $"HAZARDS.md:{row.Line}: status '{row.Status}' declares neither '{HazardIndex.Open}' nor '{HazardIndex.Closed}' as its leading word, so it is in neither tally and no count will ever include it again");
 
@@ -149,7 +149,7 @@ internal sealed partial class HazardIndexTests
         // moved to another file. That is the failure mode of every test that
         // reads a document, and it is silent, so the corpus is asserted, not
         // assumed.
-        var rows = HazardIndex.Rows();
+        var rows = await HazardIndex.RowsAsync();
 
         await Assert.That(rows.Count).IsGreaterThan(130);
         await Assert.That(rows.Count(row => row.State is HazardIndex.Closed)).IsGreaterThan(50);
@@ -190,7 +190,7 @@ internal sealed partial class HazardIndexTests
         //
         // So this arm is not about pipes. It is the assertion that the parser's
         // silence is only ever spent on lines that are not rows.
-        var table = HazardIndex.TableLines();
+        var table = await HazardIndex.TableLinesAsync();
 
         var offenders = table
             .Select(line => (line.Line, Cells: HazardIndex.SplitRow(line.Text)))
@@ -212,8 +212,8 @@ internal sealed partial class HazardIndexTests
         // cell is empty or all dashes splits into eight and is dropped anyway,
         // and a row written with a leading space ends the region early and takes
         // every row below it out of the guard.
-        await Assert.That(table.Count - 2).IsEqualTo(HazardIndex.Rows().Count)
-            .Because($"the table region is {table.Count} lines, which is {table.Count - 2} after its header and separator, and HazardIndex.Rows() returns {HazardIndex.Rows().Count} -- the difference is lines the parser dropped without saying which");
+        await Assert.That(table.Count - 2).IsEqualTo((await HazardIndex.RowsAsync()).Count)
+            .Because($"the table region is {table.Count} lines, which is {table.Count - 2} after its header and separator, and HazardIndex.Rows() returns {(await HazardIndex.RowsAsync()).Count} -- the difference is lines the parser dropped without saying which");
 
         // The positive control, because every real line in this file splits into
         // eight and a check that can only ever come back empty is

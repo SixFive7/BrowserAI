@@ -59,7 +59,7 @@ internal sealed class GateDriverTests
 
         if (bash)
         {
-            SuiteEnvironment.RequireGit();
+            await SuiteEnvironment.RequireGitAsync();
         }
 
         var shell = bash ? Shells.GitBash : Shells.PowerShell;
@@ -69,7 +69,7 @@ internal sealed class GateDriverTests
                 ? "git is on the search path and no bin\\bash.exe was found beside it, so Git Bash's half of the gate cannot be run here"
                 : "no pwsh.exe is on the search path, and every PowerShell driver runs under it");
 
-        using var sandbox = ScratchDirectory.Create("gate-driver");
+        using var sandbox = await ScratchDirectory.CreateAsync("gate-driver");
 
         var build = Directory.CreateDirectory(Path.Combine(sandbox.Path, "build")).FullName;
         var standIn = Directory.CreateDirectory(Path.Combine(sandbox.Path, bash ? "bin-bash" : "bin")).FullName;
@@ -116,11 +116,11 @@ internal sealed class GateDriverTests
         ]);
 
         using var scope = new JobObjectScope();
-        var running = scope.LaunchWith(shell!, sandbox.Path, environment, arguments);
+        var running = await scope.LaunchWithAsync(shell!, sandbox.Path, environment, arguments);
 
         var finished = await running.WaitForExitAsync(TestDefaults.ProcessHang);
         var holder = File.Exists(holderReport) ? await File.ReadAllTextAsync(holderReport) : null;
-        var said = scope.SaidBy(running.Id);
+        var said = await scope.SaidByAsync(running.Id);
 
         await Assert.That(holder).IsNotNull()
             .Because($"the stand-in dotnet never wrote '{holderReport}', so the run this arm is about did not happen. The driver said: {said}");

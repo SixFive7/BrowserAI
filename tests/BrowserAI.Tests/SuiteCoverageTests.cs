@@ -91,7 +91,7 @@ internal static class SuiteCoverage
     /// <see cref="WindowWatch"/>.
     /// </remarks>
     [Before(TestSession)]
-    public static void WatchForWindows() => WindowWatch.Start();
+    public static Task WatchForWindowsAsync() => WindowWatch.StartAsync();
 
     /// <summary>
     /// Starts the scan for a Firefox of the suite's in safe mode before the first
@@ -116,22 +116,22 @@ internal static class SuiteCoverage
     /// run that could not take it runs no installer arm. See <see cref="InstallerLock"/>.
     /// </remarks>
     [Before(TestSession)]
-    public static void TakeTheInstallerLock() => InstallerLock.Take();
+    public static async Task TakeTheInstallerLock() => await InstallerLock.TakeAsync();
 
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
-    public static void ReportWhatThisRunExercised()
+    public static async Task ReportWhatThisRunExercised()
     {
         // FIRST, so the windows row below is the whole run's: the hook thread is
         // stopped after the events queued ahead of the stop are delivered, and the
         // closing sweep counts anything of the suite's still open.
-        WindowWatch.Stop();
+        await WindowWatch.StopAsync();
 
         // And the safe-mode scan, for the same reason: its closing scan reads any
         // process that started after the last tick.
-        SafeModeWatch.Stop();
+        await SafeModeWatch.StopAsync();
 
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         // ⚠️ Console.WriteLine DOES NOT REACH THE RUN'S OUTPUT FROM A SESSION
         // HOOK, and a block nobody sees is not a mechanism. Measured 2026-08-16
@@ -153,15 +153,15 @@ internal static class SuiteCoverage
         using (var standardOutput = Console.OpenStandardOutput())
         using (var writer = new StreamWriter(standardOutput, new UTF8Encoding(false), 4096, leaveOpen: true) { AutoFlush = true })
         {
-            writer.WriteLine(summary);
+            await writer.WriteLineAsync(summary);
         }
 
-        TestSessionContext.Current?.OutputWriter.WriteLine(summary);
+        await (TestSessionContext.Current?.OutputWriter.WriteLineAsync(summary) ?? Task.CompletedTask);
 
         try
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(ReportPath)!);
-            File.WriteAllText(ReportPath, summary + Environment.NewLine);
+            await File.WriteAllTextAsync(ReportPath, summary + Environment.NewLine);
         }
         catch (IOException)
         {
@@ -180,13 +180,13 @@ internal static class SuiteCoverage
         if (ProbeReportFile is { Length: > 0 } probe)
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(probe)!);
-            File.WriteAllText(probe, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+            await File.WriteAllTextAsync(probe, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
         }
 
         // The lock goes before the refusal below throws, so a refused run still
         // lets the next one in, and after the block is written, so the block says
         // what this run held.
-        InstallerLock.Release();
+        await InstallerLock.ReleaseAsync();
 
         RefuseWhatThisRunsOwnReadingsForbid();
     }
@@ -333,7 +333,7 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task TheCoverageBlockStatesWhatWasExercised()
     {
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         // ⚠️ THE READING THE BLOCK PRINTED, taken off this thread before anything
         // is awaited -- see CommitCharge.CoverageRow for the gate half this cost.
@@ -409,7 +409,7 @@ internal sealed partial class SuiteCoverageTests
 
         foreach (var capability in SuiteEnvironment.All)
         {
-            var state = SuiteEnvironment.StateOf(capability);
+            var state = await SuiteEnvironment.StateOfAsync(capability);
 
             await Assert.That(summary).Contains(state switch
             {
@@ -788,7 +788,7 @@ internal sealed partial class SuiteCoverageTests
         // ⚠️ THE LIVE ARM: the row reaches the block. This is the assertion that
         // goes red when the row is taken out of Summary(), which is the state
         // every gate log this project has ever produced was in.
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         await Assert.That(summary).Contains(PublishedSlice.FreshnessTitle);
         await Assert.That(summary).Contains(PublishedSlice.StateWord(PublishedSlice.Verdict).Trim());
@@ -1043,7 +1043,7 @@ internal sealed partial class SuiteCoverageTests
         // assertion below unreachable and not false.
         await Assert.That(File.Exists(host)).IsTrue().Because(host);
 
-        using var scratch = ScratchDirectory.Create("filter-probe");
+        using var scratch = await ScratchDirectory.CreateAsync("filter-probe");
         var report = Path.Combine(scratch.Path, "filter.txt");
         const string Filter = "/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips);
 
@@ -1069,7 +1069,7 @@ internal sealed partial class SuiteCoverageTests
 
         // Started outside a job object, so the spawn record is the only thing
         // that can name it if this run is killed while it is running.
-        SpawnRecord.Add(child.Id);
+        await SpawnRecord.AddAsync(child.Id);
 
         var stdout = child.StandardOutput.ReadToEndAsync();
         var stderr = child.StandardError.ReadToEndAsync();
@@ -1138,10 +1138,10 @@ internal sealed partial class SuiteCoverageTests
     /// <para>
     /// ⚠️ <b>Added 2026-10-03, with the first ordinary gate on step 7 of RegisterAI's
     /// plan.</b> Finding the clients became a run of the payload's RegisterAI with
-    /// scratch homes, taken through <see cref="ScratchDirectory.Create"/>, and the
+    /// scratch homes, taken through <see cref="ScratchDirectory.CreateAsync"/>, and the
     /// session-end hook of every test process reads every capability. In the child
     /// <see cref="AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/> starts,
-    /// that was the child's first touch of <see cref="ScratchRoot.Path"/>, so the
+    /// that was the child's first touch of <see cref="ScratchRoot.PathAsync"/>, so the
     /// child ran the reclaim over the parent's live scratch.
     /// <see cref="ScratchRoot.PathAsComposed"/> says why a child must not take it.
     /// </para>
@@ -1166,12 +1166,12 @@ internal sealed partial class SuiteCoverageTests
 
         await Assert.That(File.Exists(host)).IsTrue().Because(host);
 
-        using var sentinel = ScratchDirectory.Create("parent-sentinel");
+        using var sentinel = await ScratchDirectory.CreateAsync("parent-sentinel");
         var marker = Path.Combine(sentinel.Path, "still-here.txt");
 
         await File.WriteAllTextAsync(marker, "the parent's own scratch, which no child may reclaim");
 
-        using var probe = ScratchDirectory.Create("child-probe");
+        using var probe = await ScratchDirectory.CreateAsync("child-probe");
 
         var startInfo = new ProcessStartInfo(host)
         {
@@ -1193,7 +1193,7 @@ internal sealed partial class SuiteCoverageTests
         using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
 
         // Started outside a job object, as the arm above's child is.
-        SpawnRecord.Add(child.Id);
+        await SpawnRecord.AddAsync(child.Id);
 
         var stdout = child.StandardOutput.ReadToEndAsync();
         var stderr = child.StandardError.ReadToEndAsync();
@@ -1224,10 +1224,15 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task NothingThisRunLacksIsHalfInstalled()
     {
-        var partial = SuiteEnvironment.All
-            .Where(capability => SuiteEnvironment.StateOf(capability) is CapabilityState.Partial)
-            .Select(capability => capability.ToString())
-            .ToList();
+        var partial = new List<string>();
+
+        foreach (var capability in SuiteEnvironment.All)
+        {
+            if (await SuiteEnvironment.StateOfAsync(capability) is CapabilityState.Partial)
+            {
+                partial.Add(capability.ToString());
+            }
+        }
 
         await Assert.That(string.Join(", ", partial)).IsEmpty();
     }
@@ -1258,32 +1263,32 @@ internal sealed partial class SuiteCoverageTests
         // Nothing declared: a developer machine, and no opinion about anything.
         // This is the arm that keeps a clean clone runnable, so it is asserted
         // against a run that lacks half of everything and not against none.
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(null, [])).IsEmpty();
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(
+        await Assert.That(await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(null, [])).IsEmpty();
+        await Assert.That(await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             null,
             [SuiteCapability.PackagedRelease, SuiteCapability.ClientCommandLine, SuiteCapability.ProvisionedFirefox]))
             .IsEmpty();
 
         // Declared exactly, in CI's own spelling.
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(
+        await Assert.That(await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             "PackagedRelease,ClientCommandLine",
             [SuiteCapability.PackagedRelease, SuiteCapability.ClientCommandLine]))
             .IsEmpty();
 
         // Order, spacing and casing are not the subject.
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(
+        await Assert.That(await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             " clientcommandline , packagedrelease ",
             [SuiteCapability.PackagedRelease, SuiteCapability.ClientCommandLine]))
             .IsEmpty();
 
         // `none`, which is what a fully provisioned controlled environment
         // declares -- and is not the same thing as declaring nothing.
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(SuiteEnvironment.NothingExpectedAbsent, [])).IsEmpty();
+        await Assert.That(await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(SuiteEnvironment.NothingExpectedAbsent, [])).IsEmpty();
 
         // ⚠️ THE FAULT: a fifth capability goes absent in an environment that
         // declared four. This is the whole reason the mechanism exists, and it
         // is the state that used to read as normal.
-        var undeclared = SuiteEnvironment.ReconcileDeclaredAbsence(
+        var undeclared = await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             "PackagedRelease,ClientCommandLine",
             [SuiteCapability.PackagedRelease, SuiteCapability.ClientCommandLine, SuiteCapability.ProvisionedFirefox]);
 
@@ -1293,15 +1298,15 @@ internal sealed partial class SuiteCoverageTests
 
         // The same fault against `none`, which is the arm the end-to-end fault
         // injection uses: nothing was expected absent and something is.
-        await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(
+        await Assert.That((await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             SuiteEnvironment.NothingExpectedAbsent,
-            [SuiteCapability.PublishedSlice]).Count)
+            [SuiteCapability.PublishedSlice])).Count)
             .IsEqualTo(1);
 
         // ⚠️ AND THE OTHER DIRECTION, which is the one that keeps the pin from
         // rotting: a declaration wider than the truth is standing permission for
         // that capability to disappear later with nothing to say so.
-        var overBroad = SuiteEnvironment.ReconcileDeclaredAbsence(
+        var overBroad = await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             "PackagedRelease,ClientCommandLine",
             [SuiteCapability.PackagedRelease]);
 
@@ -1312,7 +1317,7 @@ internal sealed partial class SuiteCoverageTests
         // A name that is not a capability, which would otherwise shrink the
         // declared set in silence. The message names the legal values, because
         // whoever hits this is editing a YAML file with no completion.
-        var typo = SuiteEnvironment.ReconcileDeclaredAbsence("PackedRelease", []);
+        var typo = await SuiteEnvironment.ReconcileDeclaredAbsenceAsync("PackedRelease", []);
 
         await Assert.That(typo.Count).IsEqualTo(1);
         await Assert.That(typo[0]).Contains("PackedRelease");
@@ -1322,7 +1327,7 @@ internal sealed partial class SuiteCoverageTests
         // equivalent to `none`: a variable that evaluated to empty is an
         // accident, and an accident that lands on the strictest reading would
         // read as a real failure of something else.
-        var empty = SuiteEnvironment.ReconcileDeclaredAbsence("  ", []);
+        var empty = await SuiteEnvironment.ReconcileDeclaredAbsenceAsync("  ", []);
 
         await Assert.That(empty.Count).IsEqualTo(1);
         await Assert.That(empty[0]).Contains(SuiteEnvironment.NothingExpectedAbsent);
@@ -1392,13 +1397,13 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared()
     {
-        var disagreements = SuiteEnvironment.ReconcileDeclaredAbsence(
+        var disagreements = await SuiteEnvironment.ReconcileDeclaredAbsenceAsync(
             SuiteEnvironment.ExpectedAbsentDeclaration,
-            SuiteEnvironment.All.Where(capability => !SuiteEnvironment.IsPresent(capability)));
+            await SuiteEnvironment.AbsentAsync());
 
         await Assert.That(string.Join(Environment.NewLine, disagreements))
             .IsEmpty()
-            .Because(SuiteEnvironment.Summary());
+            .Because(await SuiteEnvironment.SummaryAsync());
     }
 
     /// <summary>
@@ -1416,8 +1421,7 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task AReleaseRunExercisedEveryLayer()
     {
-        var absent = SuiteEnvironment.All
-            .Where(capability => !SuiteEnvironment.IsPresent(capability))
+        var absent = (await SuiteEnvironment.AbsentAsync())
             .Select(capability => capability.ToString())
             .ToList();
 
@@ -1431,7 +1435,7 @@ internal sealed partial class SuiteCoverageTests
         // block this run prints must say ABSENT for each one and must name the
         // variable that would have made it a failure, or a reader assembling
         // release evidence has nothing to read.
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         if (absent.Count is not 0)
         {
@@ -1811,7 +1815,7 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task TheClearanceComparesOnlyEachClientsBrowserAiEntry()
     {
-        using var profile = ScratchDirectory.Create("clearance-q292");
+        using var profile = await ScratchDirectory.CreateAsync("clearance-q292");
 
         var claude = Path.Combine(profile.Path, ".claude.json");
         var codex = Path.Combine(Directory.CreateDirectory(Path.Combine(profile.Path, ".codex")).FullName, "config.toml");
@@ -1884,7 +1888,7 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task TheClearanceReadsTheUserPathByteForByte()
     {
-        using var profile = ScratchDirectory.Create("clearance-path");
+        using var profile = await ScratchDirectory.CreateAsync("clearance-path");
 
         var tag = $"suite-path-{Guid.NewGuid():N}";
         var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
@@ -1962,7 +1966,7 @@ internal sealed partial class SuiteCoverageTests
     [Test]
     public async Task TheClearanceNamesATestPackTaskLeftBehind()
     {
-        using var root = ScratchDirectory.Create("clearance-task");
+        using var root = await ScratchDirectory.CreateAsync("clearance-task");
 
         var name = BrowserAI.Registration.SignInTask.NameFor(ReleaseLayout.TestPackId, root.Path);
         var definition = BrowserAI.Registration.SignInTask.DefinitionFor(
@@ -1974,7 +1978,7 @@ internal sealed partial class SuiteCoverageTests
 
         try
         {
-            var registered = BrowserAI.Registration.ScheduledTasks.Instance.Register(name, definition);
+            var registered = await BrowserAI.Registration.ScheduledTasks.Instance.RegisterAsync(name, definition);
 
             await Assert.That(registered.Change).IsEqualTo(BrowserAI.Registration.TaskChange.Registered).Because(registered.Detail);
 
@@ -1982,7 +1986,7 @@ internal sealed partial class SuiteCoverageTests
         }
         finally
         {
-            _ = BrowserAI.Registration.ScheduledTasks.Instance.Remove(name);
+            _ = await BrowserAI.Registration.ScheduledTasks.Instance.RemoveAsync(name);
         }
 
         await Assert.That(left).Contains(name);

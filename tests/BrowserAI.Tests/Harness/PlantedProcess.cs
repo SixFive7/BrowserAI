@@ -65,9 +65,9 @@ internal static class PlantedProcess
         var planted = Path.Combine(directory, "planted-process.exe");
 
         _ = Directory.CreateDirectory(directory);
-        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), planted, overwrite: true);
+        await TestFiles.CopyAsync(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), planted, overwrite: true);
 
-        var process = scope.Launch(planted, directory);
+        var process = await scope.LaunchAsync(planted, directory);
         var waited = Stopwatch.StartNew();
 
         while (BrowserProcesses.RunningFrom(root).All(entry => entry.ProcessId != process.Id))

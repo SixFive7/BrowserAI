@@ -60,14 +60,14 @@ internal sealed class LockFileTests
     [Test]
     public async Task TheProbeTellsFreeFromHeldFromReleased()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-states");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-states");
 
         var path = Path.Combine(scratch.Path, LockFile.FileName);
 
         await Assert.That(LockFile.Probe(path).State).IsEqualTo(LockFileState.Free);
         await Assert.That(LockFile.Probe(path).Why).IsNull();
 
-        var hold = LockFile.TakeAndWrite(path, LockFileHolder.ForThisProcess());
+        var hold = await LockFile.TakeAndWriteAsync(path, LockFileHolder.ForThisProcess());
 
         try
         {
@@ -82,12 +82,12 @@ internal sealed class LockFileTests
         // Released: the file is still there and names who had it, and nobody
         // has it now. This is what a killed session leaves behind.
         await Assert.That(LockFile.Probe(path).State).IsEqualTo(LockFileState.Released);
-        await Assert.That(LockFile.Read(path)).IsNotNull();
+        await Assert.That(await LockFile.ReadAsync(path)).IsNotNull();
 
         File.Delete(path);
 
         await Assert.That(LockFile.Probe(path).State).IsEqualTo(LockFileState.Free);
-        await Assert.That(LockFile.Read(path)).IsNull();
+        await Assert.That(await LockFile.ReadAsync(path)).IsNull();
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ internal sealed class LockFileTests
     [Test]
     public async Task AProbeThatCannotAnswerSaysSoRatherThanSayingFree()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-undetermined");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-undetermined");
 
         // A directory sitting where the lock file should be: the open fails
         // with an access denial and not with a sharing violation or an
@@ -145,11 +145,11 @@ internal sealed class LockFileTests
     [Test]
     public async Task AHolderRefusesASecondWriterAndAdmitsEveryReader()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-sharing");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-sharing");
 
         var path = Path.Combine(scratch.Path, LockFile.FileName);
 
-        using var hold = LockFile.TakeAndWrite(path, LockFileHolder.ForThisProcess());
+        using var hold = await LockFile.TakeAndWriteAsync(path, LockFileHolder.ForThisProcess());
 
         // A second holder is refused, and refused with a sharing violation
         // and not with anything else.
@@ -161,9 +161,9 @@ internal sealed class LockFileTests
         // Readers are admitted, both through the layer and through a bare
         // FileStream, because a caller that has only a path is the case this
         // property exists for.
-        await Assert.That(LockFile.Read(path)).IsNotNull();
+        await Assert.That(await LockFile.ReadAsync(path)).IsNotNull();
 
-        using (var bystander = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        await using (var bystander = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous))
         {
             await Assert.That(bystander.Length).IsGreaterThan(0);
         }
@@ -186,14 +186,14 @@ internal sealed class LockFileTests
     [Test]
     public async Task TheLockFileNamesAProcessAndItsCreationTimeAndNotAPidAlone()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-holder");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-holder");
 
         var path = Path.Combine(scratch.Path, LockFile.FileName);
         var mine = LockFileHolder.ForThisProcess();
 
-        using (var hold = LockFile.TakeAndWrite(path, mine))
+        using (var hold = await LockFile.TakeAndWriteAsync(path, mine))
         {
-            var throughTheHold = hold.ReadHolder();
+            var throughTheHold = await hold.ReadHolderAsync();
 
             await Assert.That(throughTheHold).IsNotNull();
             await Assert.That(throughTheHold!.ProcessId).IsEqualTo(Environment.ProcessId);
@@ -202,13 +202,13 @@ internal sealed class LockFileTests
             await Assert.That(throughTheHold.IsAlive()).IsTrue();
         }
 
-        var fromOutside = LockFile.Read(path);
+        var fromOutside = await LockFile.ReadAsync(path);
 
         await Assert.That(fromOutside).IsEqualTo(mine);
 
         // The file is text a person can read, in the encoding this repository
         // writes everything in.
-        var bytes = ReadWhileHeld(path);
+        var bytes = await ReadWhileHeldAsync(path);
         var text = Encoding.UTF8.GetString(bytes);
 
         await Assert.That(bytes[0]).IsNotEqualTo((byte)0xEF);
@@ -248,14 +248,14 @@ internal sealed class LockFileTests
     [Test]
     public async Task TheLockFileIsWrittenOnceAndNeverRewrittenMidSession()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-once");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-once");
 
         var path = Path.Combine(scratch.Path, LockFile.FileName);
 
-        using var hold = LockFile.TakeAndWrite(path, LockFileHolder.ForThisProcess());
+        using var hold = await LockFile.TakeAndWriteAsync(path, LockFileHolder.ForThisProcess());
         using var store = SessionStore.OpenForWriting(Path.Combine(scratch.Path, SessionStore.DataFileName));
 
-        var written = ReadWhileHeld(path);
+        var written = await ReadWhileHeldAsync(path);
         var stamped = File.GetLastWriteTimeUtc(path);
         var states = new HashSet<LockFileState>();
 
@@ -276,7 +276,7 @@ internal sealed class LockFileTests
 
         // The same bytes and the same timestamp: nothing rewrote it, and no
         // temporary file was left beside it either.
-        await Assert.That(ReadWhileHeld(path)).IsEquivalentTo(written);
+        await Assert.That(await ReadWhileHeldAsync(path)).IsEquivalentTo(written);
         await Assert.That(File.GetLastWriteTimeUtc(path)).IsEqualTo(stamped);
         await Assert.That(Directory.GetFiles(scratch.Path, LockFile.TemporaryFilePattern).Length).IsEqualTo(0);
 
@@ -297,7 +297,7 @@ internal sealed class LockFileTests
     [Test]
     public async Task ALockFileThatIsNotOursIsRefusedRatherThanGuessedAt()
     {
-        using var scratch = ScratchDirectory.Create("lockfile-strangers");
+        using var scratch = await ScratchDirectory.CreateAsync("lockfile-strangers");
 
         var strangers = new[]
         {
@@ -314,7 +314,7 @@ internal sealed class LockFileTests
 
             await File.WriteAllTextAsync(path, content);
 
-            var failure = Assert.Throws<InvalidDataException>(() => LockFile.Read(path));
+            var failure = await Assert.ThrowsAsync<InvalidDataException>(() => LockFile.ReadAsync(path));
 
             await Assert.That(failure).IsNotNull();
             await Assert.That(failure!.Message).Contains(path);
@@ -327,7 +327,7 @@ internal sealed class LockFileTests
 
         await File.WriteAllTextAsync(pidOnly, "{\"processId\":1,\"clientProcessName\":null}");
 
-        await Assert.That(Assert.Throws<InvalidDataException>(() => LockFile.Read(pidOnly))!.Message)
+        await Assert.That((await Assert.ThrowsAsync<InvalidDataException>(() => LockFile.ReadAsync(pidOnly)))!.Message)
             .Contains("a pid on its own is not an identity");
 
         // The positive control: a file this build did write reads back fine
@@ -335,9 +335,9 @@ internal sealed class LockFileTests
         // not everything.
         var ours = Path.Combine(scratch.Path, "ours.lock");
 
-        using (LockFile.TakeAndWrite(ours, LockFileHolder.ForThisProcess()))
+        using (await LockFile.TakeAndWriteAsync(ours, LockFileHolder.ForThisProcess()))
         {
-            await Assert.That(LockFile.Read(ours)).IsNotNull();
+            await Assert.That(await LockFile.ReadAsync(ours)).IsNotNull();
         }
     }
 
@@ -356,12 +356,12 @@ internal sealed class LockFileTests
     /// </remarks>
     /// <param name="path">The lock file.</param>
     /// <returns>Its bytes.</returns>
-    private static byte[] ReadWhileHeld(string path)
+    private static async Task<byte[]> ReadWhileHeldAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var buffer = new MemoryStream();
 
-        stream.CopyTo(buffer);
+        await stream.CopyToAsync(buffer);
 
         return buffer.ToArray();
     }

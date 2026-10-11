@@ -37,13 +37,21 @@ internal sealed class AfterUpdateTests
         var asked = 0;
         const string VelopackLog = @"C:\Users\someone\AppData\Local\velopack\velopack_BrowserAI.app.log";
 
-        var installed = AfterUpdate.Report("1.2.0", "1.2.0", VelopackLog, toasts, () => asked++, logger);
+        var installed = await AfterUpdate.ReportAsync("1.2.0", "1.2.0", VelopackLog, toasts, () =>
+        {
+            asked++;
+            return Task.CompletedTask;
+        }, logger);
 
         await Assert.That(installed).IsEqualTo(AfterUpdateOutcome.Installed);
         await Assert.That(string.Join('|', events)).IsEqualTo("toast installed 1.2.0");
         await Assert.That(asked).IsEqualTo(1);
 
-        var failed = AfterUpdate.Report("1.2.0", "1.1.0", VelopackLog, toasts, () => asked++, logger);
+        var failed = await AfterUpdate.ReportAsync("1.2.0", "1.1.0", VelopackLog, toasts, () =>
+        {
+            asked++;
+            return Task.CompletedTask;
+        }, logger);
 
         await Assert.That(failed).IsEqualTo(AfterUpdateOutcome.Failed);
         await Assert.That(string.Join('|', events)).IsEqualTo("toast installed 1.2.0|toast failed 1.2.0");
@@ -52,7 +60,11 @@ internal sealed class AfterUpdateTests
             .IsTrue()
             .Because("the failure's log line names Velopack's own log");
 
-        var garbled = AfterUpdate.Report("not a version", "1.2.0", VelopackLog, toasts, () => asked++, logger);
+        var garbled = await AfterUpdate.ReportAsync("not a version", "1.2.0", VelopackLog, toasts, () =>
+        {
+            asked++;
+            return Task.CompletedTask;
+        }, logger);
 
         await Assert.That(garbled).IsEqualTo(AfterUpdateOutcome.NotAVersion);
         await Assert.That(events.Count).IsEqualTo(2).Because("nothing true can be said in a toast");

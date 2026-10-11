@@ -62,16 +62,11 @@ internal static class GitOracle
     /// </remarks>
     private static readonly TimeSpan Patience = TestDefaults.ProcessHang;
 
-    private static readonly Lazy<bool> Available = new(
-        // ⚠️ Blocking on the async probe, deliberately, and it is safe for one
-        // reason: SuiteEnvironment.StateOf is synchronous and
-        // is called from the coverage block as well as from a guard, so the
-        // probe cannot be awaited by its caller. A test host is a console
-        // application with no SynchronizationContext, so there is nothing for
-        // the continuation to be posted back to and nothing to deadlock against;
-        // and the wait underneath is bounded by Patience and not open-ended.
-        () => ProbeAsync().GetAwaiter().GetResult(),
-        LazyThreadSafetyMode.ExecutionAndPublication);
+    // Awaited by every caller since 2026-10-11, the maintainer's decision 54.
+    // Corrected that day (previously "Blocking on the async probe, deliberately,
+    // and it is safe for one reason: SuiteEnvironment.StateOf is synchronous"):
+    // StateOf is asynchronous since that day, so nothing has to wait on the probe.
+    private static readonly Lazy<Task<bool>> Available = new(ProbeAsync, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
     /// Whether git can answer questions about the tree the suite is running in.
@@ -84,7 +79,8 @@ internal static class GitOracle
     /// nobody thinks of -- a git that starts and then refuses -- which a
     /// <c>File.Exists</c> probe would call present.
     /// </remarks>
-    public static bool IsAvailable => Available.Value;
+    /// <returns>Whether it can.</returns>
+    public static Task<bool> IsAvailableAsync() => Available.Value;
 
     /// <summary>
     /// Every path git considers part of this repository: tracked, plus untracked
@@ -136,7 +132,7 @@ internal static class GitOracle
     /// <returns>The tag name as git spells it, or <see langword="null"/>.</returns>
     public static async Task<string?> TagExactlyAtHeadAsync()
     {
-        if (!IsAvailable)
+        if (!await IsAvailableAsync())
         {
             return null;
         }
@@ -176,7 +172,7 @@ internal static class GitOracle
     {
         ArgumentNullException.ThrowIfNull(within);
 
-        if (!IsAvailable)
+        if (!await IsAvailableAsync())
         {
             return null;
         }

@@ -186,23 +186,23 @@ internal sealed class ToastActivationTests
         var opened = new List<string>();
         var memory = new Remembered();
 
-        int open(string page)
+        Task<int> open(string page)
         {
             opened.Add(page);
-            return 7;
+            return Task.FromResult(7);
         }
 
-        await Assert.That(ToastActivation.Act(new ToastClick(ToastAction.UpdatePage, "1.2.0"), memory, open)).IsEqualTo(7);
-        await Assert.That(ToastActivation.Act(new ToastClick(ToastAction.Changelog, "1.2.0"), memory, open)).IsEqualTo(7);
+        await Assert.That(await ToastActivation.ActAsync(new ToastClick(ToastAction.UpdatePage, "1.2.0"), memory, open)).IsEqualTo(7);
+        await Assert.That(await ToastActivation.ActAsync(new ToastClick(ToastAction.Changelog, "1.2.0"), memory, open)).IsEqualTo(7);
         await Assert.That(string.Join(",", opened)).IsEqualTo("update,changelog");
         await Assert.That(memory.Version).IsNull();
 
-        await Assert.That(ToastActivation.Act(new ToastClick(ToastAction.Wait, "1.2.0"), memory, open)).IsEqualTo(0);
+        await Assert.That(await ToastActivation.ActAsync(new ToastClick(ToastAction.Wait, "1.2.0"), memory, open)).IsEqualTo(0);
         await Assert.That(memory.Version).IsEqualTo("1.2.0");
 
-        await Assert.That(ToastActivation.Act(new ToastClick(ToastAction.Dismiss, null), memory, open)).IsEqualTo(0);
-        await Assert.That(ToastActivation.Act(new ToastClick(ToastAction.None, null), memory, open)).IsEqualTo(0);
-        await Assert.That(ToastActivation.Act(null, memory, open)).IsEqualTo(0);
+        await Assert.That(await ToastActivation.ActAsync(new ToastClick(ToastAction.Dismiss, null), memory, open)).IsEqualTo(0);
+        await Assert.That(await ToastActivation.ActAsync(new ToastClick(ToastAction.None, null), memory, open)).IsEqualTo(0);
+        await Assert.That(await ToastActivation.ActAsync(null, memory, open)).IsEqualTo(0);
         await Assert.That(string.Join(",", opened)).IsEqualTo("update,changelog");
     }
 
@@ -286,15 +286,17 @@ internal sealed class ToastActivationTests
     {
         public string? Version { get; private set; }
 
-        public string? WaitedFor() => Version;
+        public Task<string?> WaitedForAsync() => Task.FromResult(Version);
 
-        public void Waited(string version) => Version = version;
-
-        public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
+        public Task WaitedAsync(string version)
         {
+            Version = version;
+            return Task.CompletedTask;
         }
 
-        public IReadOnlyList<RelayReconnect>? EndedFor(string version) => null;
+        public Task EndedAsync(string version, IReadOnlyList<RelayReconnect> needs) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) => Task.FromResult<IReadOnlyList<RelayReconnect>?>(null);
 
         public void Forget() => Version = null;
     }

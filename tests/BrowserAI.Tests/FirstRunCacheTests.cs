@@ -91,17 +91,17 @@ internal sealed class FirstRunCacheTests
     [Test]
     public async Task AnEntryIsPublishedByARenameAndIsFoundBackWholeOrNotAtAll()
     {
-        using var scratch = ScratchDirectory.Create("first-run-cache-round-trip");
+        using var scratch = await ScratchDirectory.CreateAsync("first-run-cache-round-trip");
 
         var root = Path.Combine(scratch.Path, "cache");
         var downloaded = DateTimeOffset.UtcNow;
 
         // Asserted, not discarded, for the reason given in RefusalFor: a
         // publish that failed is reported by this sentence and by nothing else.
-        await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers")), downloaded, root))
+        await Assert.That(await FirstRunCache.PublishAsync(await PlantAsync(Path.Combine(scratch.Path, "browsers")), downloaded, root))
             .StartsWith("Cached ");
 
-        var (entry, refusal) = FirstRunCache.Newest(root);
+        var (entry, refusal) = await FirstRunCache.NewestAsync(root);
 
         await Assert.That(refusal).IsEmpty();
         await Assert.That(entry).IsNotNull();
@@ -116,7 +116,7 @@ internal sealed class FirstRunCacheTests
         // A second publish supersedes the first instead of accumulating beside
         // it. Each entry is ~430 MiB in a real run, so a cache that kept them
         // all would cost more disk than the browsers root it exists to spare.
-        await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers-again")), downloaded.AddSeconds(1), root))
+        await Assert.That(await FirstRunCache.PublishAsync(await PlantAsync(Path.Combine(scratch.Path, "browsers-again")), downloaded.AddSeconds(1), root))
             .StartsWith("Cached ");
 
         await Assert.That(Directory.EnumerateDirectories(root).Count()).IsEqualTo(1);
@@ -125,50 +125,59 @@ internal sealed class FirstRunCacheTests
     [Test]
     public async Task EveryWayATreeCanBeIncompleteIsRefusedWithTheReason()
     {
-        using var scratch = ScratchDirectory.Create("first-run-cache-refusals");
+        using var scratch = await ScratchDirectory.CreateAsync("first-run-cache-refusals");
 
         // The census, which is the check the rename cannot make: an entry that
         // was whole when it was published and has since lost a file reads as
         // complete by every marker and is not. The file removed here is one
         // nothing else looks at, precisely so that the census is what fires.
-        await Assert.That(RefusalFor(scratch, "truncated", entry =>
-            File.Delete(Path.Combine(entry, "browsers", $"chromium-{BrowserAiPaths.ChromiumRevision}", "chrome-win64", "resources.pak"))))
+        await Assert.That(await RefusalForAsync(scratch, "truncated", entry =>
+        {
+            File.Delete(Path.Combine(entry, "browsers", $"chromium-{BrowserAiPaths.ChromiumRevision}", "chrome-win64", "resources.pak"));
+            return Task.CompletedTask;
+        }))
             .Contains("where its stamp records");
 
         // The marker BrowserAI actually reads. Without it the product would have
         // re-downloaded anyway, so seeding from such a tree would silently turn
         // a cached run back into a CDN run and report the opposite.
-        await Assert.That(RefusalFor(scratch, "unmarked", entry =>
-            File.Delete(Path.Combine(entry, "browsers", $"chromium-{BrowserAiPaths.ChromiumRevision}", BrowsersManifest.InstallationCompleteMarker))))
+        await Assert.That(await RefusalForAsync(scratch, "unmarked", entry =>
+        {
+            File.Delete(Path.Combine(entry, "browsers", $"chromium-{BrowserAiPaths.ChromiumRevision}", BrowsersManifest.InstallationCompleteMarker));
+            return Task.CompletedTask;
+        }))
             .Contains(BrowsersManifest.InstallationCompleteMarker);
 
         // ffmpeg is the LAST component a real install fetches, which is what
         // makes the no-headless-shell assertion sound. A cache missing it would
         // hang the test on a marker nothing was ever going to write.
-        await Assert.That(RefusalFor(scratch, "no-ffmpeg", entry =>
-            _ = ScratchDirectory.RemoveTree(Path.Combine(entry, "browsers", PlantedFfmpeg))))
+        await Assert.That(await RefusalForAsync(scratch, "no-ffmpeg", entry =>
+        {
+            _ = ScratchDirectory.RemoveTree(Path.Combine(entry, "browsers", PlantedFfmpeg));
+            return Task.CompletedTask;
+        }))
             .Contains("ffmpeg");
 
         // ⚠️ A headless shell in the cache would make the test's negative
         // assertion pass because the cache never had one, and not because
         // --no-shell works -- and it would keep passing after --no-shell broke.
-        await Assert.That(RefusalFor(scratch, "with-shell", entry =>
-            InstallationMarker.Write(Path.Combine(entry, "browsers", $"chromium_headless_shell-{BrowserAiPaths.ChromiumRevision}"))))
+        await Assert.That(await RefusalForAsync(scratch, "with-shell", async entry =>
+            await InstallationMarker.WriteAsync(Path.Combine(entry, "browsers", $"chromium_headless_shell-{BrowserAiPaths.ChromiumRevision}"))))
             .Contains("chromium_headless_shell");
 
         // A revision bump. The tree is intact and belongs to a build that no
         // longer exists, which is a cache to replace and not to use.
-        await Assert.That(RefusalFor(scratch, "old-revision", entry =>
-            File.WriteAllText(
+        await Assert.That(await RefusalForAsync(scratch, "old-revision", async entry =>
+            await File.WriteAllTextAsync(
                 Path.Combine(entry, FirstRunCache.StampFile),
-                File.ReadAllText(Path.Combine(entry, FirstRunCache.StampFile))
+                (await File.ReadAllTextAsync(Path.Combine(entry, FirstRunCache.StampFile)))
                     .Replace($"\"{BrowserAiPaths.ChromiumRevision}\"", "\"1\"", StringComparison.Ordinal))))
             .Contains("this build wants");
 
         // And a stamp that cannot be read at all, which covers a torn write, a
         // truncation, and a file somebody edited by hand.
-        await Assert.That(RefusalFor(scratch, "no-stamp", entry =>
-            File.WriteAllText(Path.Combine(entry, FirstRunCache.StampFile), "{ not json")))
+        await Assert.That(await RefusalForAsync(scratch, "no-stamp", async entry =>
+            await File.WriteAllTextAsync(Path.Combine(entry, FirstRunCache.StampFile), "{ not json")))
             .Contains(FirstRunCache.StampFile);
     }
 
@@ -180,7 +189,7 @@ internal sealed class FirstRunCacheTests
         // Its VALUE depends on whether the first-run test has run yet, so what
         // is asserted is that the row is there and says one of the three things
         // it may say.
-        var summary = SuiteEnvironment.Summary();
+        var summary = await SuiteEnvironment.SummaryAsync();
 
         await Assert.That(summary).Contains("first-run bytes");
         await Assert.That(summary.Contains("CDN", StringComparison.Ordinal)
@@ -245,7 +254,7 @@ internal sealed class FirstRunCacheTests
     /// <param name="label">What is being broken, which names both directories.</param>
     /// <param name="damage">How to break the published entry.</param>
     /// <returns>The reason the entry was refused.</returns>
-    private static string RefusalFor(ScratchDirectory scratch, string label, Action<string> damage)
+    private static async Task<string> RefusalForAsync(ScratchDirectory scratch, string label, Func<string, Task> damage)
     {
         var root = Path.Combine(scratch.Path, label);
 
@@ -256,15 +265,15 @@ internal sealed class FirstRunCacheTests
         // neither the operation nor the reason. Measured 2026-08-17 under
         // unbounded parallelism: three of sixteen full-suite runs failed here,
         // and the swallowed exception was the whole diagnosis.
-        var published = FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, $"{label}-browsers")), DateTimeOffset.UtcNow, root);
+        var published = await FirstRunCache.PublishAsync(await PlantAsync(Path.Combine(scratch.Path, $"{label}-browsers")), DateTimeOffset.UtcNow, root);
 
         var entry = Directory.EnumerateDirectories(root).SingleOrDefault()
             ?? throw new InvalidOperationException(
                 $"Nothing was published under '{root}'. Publish said: {published}");
 
-        damage(entry);
+        await damage(entry);
 
-        return FirstRunCache.Newest(root).Reason;
+        return (await FirstRunCache.NewestAsync(root)).Reason;
     }
 
     /// <summary>
@@ -279,20 +288,20 @@ internal sealed class FirstRunCacheTests
     /// </remarks>
     /// <param name="browsers">Where to plant it.</param>
     /// <returns>The same path, for chaining.</returns>
-    private static string Plant(string browsers)
+    private static async Task<string> PlantAsync(string browsers)
     {
         var chromium = Path.Combine(browsers, $"chromium-{BrowserAiPaths.ChromiumRevision}");
 
         _ = Directory.CreateDirectory(Path.Combine(chromium, "chrome-win64"));
 
-        File.WriteAllText(Path.Combine(chromium, "chrome-win64", "chrome.exe"), "not a browser");
+        await File.WriteAllTextAsync(Path.Combine(chromium, "chrome-win64", "chrome.exe"), "not a browser");
 
         // A file nothing inspects by name, so that the census has something of
         // its own to be wrong about.
-        File.WriteAllText(Path.Combine(chromium, "chrome-win64", "resources.pak"), "not resources");
+        await File.WriteAllTextAsync(Path.Combine(chromium, "chrome-win64", "resources.pak"), "not resources");
 
-        InstallationMarker.Write(chromium);
-        InstallationMarker.Write(Path.Combine(browsers, PlantedFfmpeg));
+        await InstallationMarker.WriteAsync(chromium);
+        await InstallationMarker.WriteAsync(Path.Combine(browsers, PlantedFfmpeg));
 
         return browsers;
     }

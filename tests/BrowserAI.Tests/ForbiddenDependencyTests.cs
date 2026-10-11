@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -40,7 +41,7 @@ internal sealed class ForbiddenDependencyTests
         // first tool composed out of it is a charter change nobody voted on.
         //
         // Until 2026-08-17 nothing enforced this at all.
-        await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.Playwright"))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, await MentioningAsync("Microsoft.Playwright"))).IsEmpty();
     }
 
     [Test]
@@ -57,14 +58,14 @@ internal sealed class ForbiddenDependencyTests
         // Microsoft.NET.Test.Sdk conflicts with TUnit, which is MTP-only. It is
         // also the single most likely package for someone to add on reflex,
         // because every other .NET test project in the world has it.
-        await Assert.That(string.Join(Environment.NewLine, Mentioning("FluentAssertions"))).IsEmpty();
-        await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.NET.Test.Sdk"))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, await MentioningAsync("FluentAssertions"))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, await MentioningAsync("Microsoft.NET.Test.Sdk"))).IsEmpty();
 
         // And the scan is looking at the file that matters, so neither
         // assertion can pass by reading nothing.
         await Assert.That(RepositoryLayout.BuildFiles.Any(file =>
             string.Equals(file.Name, "Directory.Packages.props", StringComparison.OrdinalIgnoreCase))).IsTrue();
-        await Assert.That(Mentioning("TUnit").Any()).IsTrue();
+        await Assert.That((await MentioningAsync("TUnit")).Count).IsGreaterThan(0);
     }
 
     /// <summary>
@@ -104,14 +105,14 @@ internal sealed class ForbiddenDependencyTests
     [Test]
     public async Task TheSqliteMetaPackageIsNeverReferenced()
     {
-        await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.Data.Sqlite"))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, await MentioningAsync("Microsoft.Data.Sqlite"))).IsEmpty();
 
         // The control: the scan can see a SQLite package reference, so the
         // assertion above is an absence and not a matcher that stopped
         // matching. This is also the reference that must never move into the
         // product, because the publish output is a single file by construction
         // of there being no native package in its graph.
-        var native = Mentioning("SourceGear.sqlite3").ToList();
+        var native = (await MentioningAsync("SourceGear.sqlite3")).ToList();
 
         // ⚠️ THREE SINCE 2026-08-26 (previously two). The test PROBE opens
         // sessions too, and since the cutover a session is a database -- so a
@@ -179,8 +180,8 @@ internal sealed class ForbiddenDependencyTests
     [Test]
     public async Task AProjectUnderSrcThatReferencesTheCodeGeneratorShipsTheMetadatasNotice()
     {
-        var references = Mentioning(CodeGenerator).ToList();
-        var metadata = MetadataTheGeneratorReads();
+        var references = (await MentioningAsync(CodeGenerator)).ToList();
+        var metadata = await MetadataTheGeneratorReadsAsync();
         var notices = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, NoticesFile));
 
         // THE RULE, stated before its controls so that a violation fails on the
@@ -222,11 +223,11 @@ internal sealed class ForbiddenDependencyTests
     /// resolves them.
     /// </summary>
     /// <returns>Their ids, in order.</returns>
-    private static List<string> MetadataTheGeneratorReads()
+    private static async Task<List<string>> MetadataTheGeneratorReadsAsync()
     {
         var lockFile = Path.Combine(RepositoryLayout.Root.FullName, "tests", "BrowserAI.Tests", "packages.lock.json");
 
-        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(lockFile));
+        using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(lockFile));
 
         var found = new SortedSet<string>(StringComparer.Ordinal);
 
@@ -246,7 +247,7 @@ internal sealed class ForbiddenDependencyTests
     }
 
     /// <summary>One complaint per shipping reference per metadata notice it lacks.</summary>
-    /// <param name="references">What <see cref="Mentioning"/> found for the generator.</param>
+    /// <param name="references">What <see cref="MentioningAsync"/> found for the generator.</param>
     /// <param name="metadata">The packages the generator reads.</param>
     /// <param name="notices">The notices file's text.</param>
     /// <returns>The complaints.</returns>
@@ -277,9 +278,16 @@ internal sealed class ForbiddenDependencyTests
     /// </remarks>
     /// <param name="package">The package identifier.</param>
     /// <returns>One line per offending file, naming the line it was found on.</returns>
-    private static IEnumerable<string> Mentioning(string package) =>
-        from file in RepositoryLayout.BuildFiles
-        from line in File.ReadAllLines(file.FullName).Index()
-        where line.Item.Contains($"Include=\"{package}\"", StringComparison.OrdinalIgnoreCase)
-        select $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{line.Index + 1}: {line.Item.Trim()}";
+    private static async Task<List<string>> MentioningAsync(string package)
+    {
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.BuildFiles);
+
+        return
+        [
+            .. from file in RepositoryLayout.BuildFiles
+               from line in texts[file.FullName].Split('\n').Select(static line => line.TrimEnd('\r')).Index()
+               where line.Item.Contains($"Include=\"{package}\"", StringComparison.OrdinalIgnoreCase)
+               select $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{line.Index + 1}: {line.Item.Trim()}",
+        ];
+    }
 }

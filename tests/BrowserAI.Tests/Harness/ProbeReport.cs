@@ -47,7 +47,7 @@ internal static class ProbeReport
         {
             try
             {
-                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
                 using var reader = new StreamReader(stream);
 
                 if (JsonNode.Parse(await reader.ReadToEndAsync()) is { } parsed)

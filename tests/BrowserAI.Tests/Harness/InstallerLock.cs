@@ -97,7 +97,17 @@ internal static partial class InstallerLock
     private static InstallerLockHolder? _mine;
 
     /// <summary>The lock file.</summary>
-    public static string FilePath { get; } = Path.Combine(WorkDirectory(), "installer.lock");
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, because finding the work directory reads the
+    /// checkout's <c>.git</c> file with an asynchronous read (decision 63). <i>Previously
+    /// the property <c>FilePath</c>, read once by a static initialiser.</i>
+    /// </remarks>
+    /// <returns>The path.</returns>
+    public static Task<string> FilePathAsync() => LazyFilePath.Value;
+
+    private static readonly Lazy<Task<string>> LazyFilePath = new(
+        async () => Path.Combine(await WorkDirectoryAsync(), "installer.lock"),
+        LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>What became of the lock for this run.</summary>
     public static InstallerLockState State
@@ -218,7 +228,7 @@ internal static partial class InstallerLock
     /// Takes the lock for this session, waits for a live holder, or finds that it
     /// is covered. Called once, from the session hook.
     /// </summary>
-    public static void Take()
+    public static async Task TakeAsync()
     {
         lock (Gate)
         {
@@ -235,12 +245,12 @@ internal static partial class InstallerLock
 
         while (true)
         {
-            var (text, busy, age) = TryRead();
+            var (text, busy, age) = await TryReadAsync();
 
             if (busy)
             {
                 // Open for writing by its holder this instant: read it again.
-                Thread.Sleep(TimeSpan.FromMilliseconds(200));
+                await Task.Delay(TimeSpan.FromMilliseconds(200));
                 continue;
             }
 
@@ -251,7 +261,7 @@ internal static partial class InstallerLock
                     return;
 
                 case InstallerLockStep.Create:
-                    if (TryCreate(me))
+                    if (await TryCreateAsync(me))
                     {
                         // Declared for the child test hosts some arms start, which
                         // inherit this block and would otherwise wait for their parent.
@@ -259,14 +269,14 @@ internal static partial class InstallerLock
                         Settle(
                             InstallerLockState.Taken,
                             me,
-                            $"taken by this run ({TokenOf(me)}){(waited ? " after waiting for another holder" : string.Empty)}, and let go when the session ends: {FilePath}");
+                            $"taken by this run ({TokenOf(me)}){(waited ? " after waiting for another holder" : string.Empty)}, and let go when the session ends: {await FilePathAsync()}");
                         return;
                     }
 
                     continue;
 
                 case InstallerLockStep.Stale:
-                    TryRemoveIfStill(text!);
+                    await TryRemoveIfStillAsync(text!);
                     continue;
 
                 default:
@@ -275,19 +285,19 @@ internal static partial class InstallerLock
                         Settle(
                             InstallerLockState.NotTaken,
                             null,
-                            $"'{text!.Trim()}' held {FilePath} for the whole of the suite's wait, so the installer arms do not run in this session");
+                            $"'{text!.Trim()}' held {await FilePathAsync()} for the whole of the suite's wait, so the installer arms do not run in this session");
                         return;
                     }
 
                     waited = true;
-                    Thread.Sleep(TimeSpan.FromSeconds(2));
+                    await Task.Delay(TimeSpan.FromSeconds(2));
                     continue;
             }
         }
     }
 
     /// <summary>Lets the lock go if this process took it. Called once, from the session hook.</summary>
-    public static void Release()
+    public static async Task ReleaseAsync()
     {
         InstallerLockHolder? mine;
 
@@ -303,9 +313,9 @@ internal static partial class InstallerLock
 
         // Only a file that still names this process: a holder that took over a lock
         // this one had somehow lost must not have it deleted from under it.
-        if (TryRead() is ({ } text, false, _) && Parse(text) == mine)
+        if (await TryReadAsync() is ({ } text, false, _) && Parse(text) == mine)
         {
-            TryRemoveIfStill(text);
+            await TryRemoveIfStillAsync(text);
         }
     }
 
@@ -332,7 +342,7 @@ internal static partial class InstallerLock
 
     /// <summary>The <c>.work</c> directory of the main checkout, whichever checkout this is.</summary>
     /// <returns>The directory.</returns>
-    private static string WorkDirectory()
+    private static async Task<string> WorkDirectoryAsync()
     {
         var root = RepositoryLayout.Root.FullName;
         var dotGit = Path.Combine(root, ".git");
@@ -342,7 +352,7 @@ internal static partial class InstallerLock
             // A linked worktree's .git is a FILE naming its own git directory, and
             // that directory's `commondir` names the main one.
             if (File.Exists(dotGit)
-                && File.ReadAllText(dotGit).Trim() is { } pointer
+                && (await File.ReadAllTextAsync(dotGit)).Trim() is { } pointer
                 && pointer.StartsWith("gitdir:", StringComparison.OrdinalIgnoreCase))
             {
                 var gitDirectory = Path.GetFullPath(pointer["gitdir:".Length..].Trim(), root);
@@ -350,7 +360,7 @@ internal static partial class InstallerLock
 
                 if (File.Exists(commonFile)
                     && Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(
-                        Path.GetFullPath(File.ReadAllText(commonFile).Trim(), gitDirectory))) is { Length: > 0 } main)
+                        Path.GetFullPath((await File.ReadAllTextAsync(commonFile)).Trim(), gitDirectory))) is { Length: > 0 } main)
                 {
                     root = main;
                 }
@@ -380,16 +390,16 @@ internal static partial class InstallerLock
     /// The lock file's text and age, or no text when there is no file, or busy when
     /// it could not be opened this instant.
     /// </summary>
-    private static (string? Text, bool Busy, TimeSpan Age) TryRead()
+    private static async Task<(string? Text, bool Busy, TimeSpan Age)> TryReadAsync()
     {
         try
         {
-            using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(await FilePathAsync(), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream, Encoding.UTF8);
 
-            var text = reader.ReadToEnd();
+            var text = await reader.ReadToEndAsync();
 
-            return (text, false, DateTime.UtcNow - File.GetLastWriteTimeUtc(FilePath));
+            return (text, false, DateTime.UtcNow - File.GetLastWriteTimeUtc(await FilePathAsync()));
         }
         catch (FileNotFoundException)
         {
@@ -405,18 +415,18 @@ internal static partial class InstallerLock
         }
     }
 
-    private static bool TryCreate(InstallerLockHolder me)
+    private static async Task<bool> TryCreateAsync(InstallerLockHolder me)
     {
         try
         {
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(await FilePathAsync())!);
 
-            using var stream = new FileStream(FilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete);
+            await using var stream = new FileStream(await FilePathAsync(), FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             var line = string.Create(
                 CultureInfo.InvariantCulture,
                 $"holder=suite {TokenOf(me)} at={DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}\n");
 
-            stream.Write(Encoding.UTF8.GetBytes(line));
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(line));
             return true;
         }
         catch (IOException)
@@ -426,13 +436,13 @@ internal static partial class InstallerLock
         }
     }
 
-    private static void TryRemoveIfStill(string text)
+    private static async Task TryRemoveIfStillAsync(string text)
     {
         try
         {
-            if (TryRead() is ({ } now, false, _) && now == text)
+            if (await TryReadAsync() is ({ } now, false, _) && now == text)
             {
-                File.Delete(FilePath);
+                File.Delete(await FilePathAsync());
             }
         }
         catch (IOException)

@@ -32,7 +32,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>The shared root's folders have owners since 2026-10-10, 5 a, the
-/// maintainer's words verbatim: "5 a".</b> <see cref="ProfileScratch"/> is one
+/// maintainer's words verbatim: "5 a".</b> <see cref="ProfileScratchAsync"/> is one
 /// folder for every checkout of this repository, and until that day the pass
 /// deleted every folder in it with no check at all, so a run in one worktree
 /// deleted the live app roots of a gate in another: proven on 2026-10-08, when an
@@ -47,7 +47,7 @@ namespace BrowserAI.Tests.Harness;
 internal static class ScratchRoot
 {
     /// <summary>
-    /// What the file beside a folder of <see cref="ProfileScratch"/> that names its
+    /// What the file beside a folder of <see cref="ProfileScratchAsync"/> that names its
     /// owner is called after the folder's own name.
     /// </summary>
     public const string OwnerSuffix = ".owner";
@@ -61,8 +61,12 @@ internal static class ScratchRoot
     /// <summary>The category the reclaim's own records carry in the process log.</summary>
     private const string AnnouncementCategory = "BrowserAI.Tests.ScratchReclaim";
 
-    private static readonly Lock Gate = new();
-    private static bool _reclaimed;
+    /// <summary>
+    /// Holds the once-per-run pass, awaited: the pass reads and writes with asynchronous
+    /// I/O since 2026-10-11 (decision 63), and a lock cannot be held across an await.
+    /// </summary>
+    private static readonly SemaphoreSlim Gate = new(1, 1);
+    private static volatile bool _reclaimed;
 
     /// <summary>
     /// How old a folder of the shared root with no owner record has to be before the
@@ -131,27 +135,21 @@ internal static class ScratchRoot
     public static List<string> LastPassReport { get; } = [];
 
     /// <summary>Whether the reclaim pass has run in this process.</summary>
-    public static bool HasReclaimed
-    {
-        get
-        {
-            lock (Gate)
-            {
-                return _reclaimed;
-            }
-        }
-    }
+    public static bool HasReclaimed => _reclaimed;
 
     /// <summary>
     /// <c>&lt;repo&gt;\.work\test-scratch</c>, created and swept on first use.
     /// </summary>
-    public static string Path
+    /// <remarks>
+    /// <b>Awaited since 2026-10-11</b>, because the sweep it runs on first use reads and
+    /// writes with asynchronous I/O (decision 63). <i>Previously the property
+    /// <c>Path</c>.</i>
+    /// </remarks>
+    /// <returns>The root.</returns>
+    public static async Task<string> PathAsync()
     {
-        get
-        {
-            EnsureReclaimed();
-            return RepositoryScratch;
-        }
+        await EnsureReclaimedAsync();
+        return RepositoryScratch;
     }
 
     /// <summary>
@@ -190,30 +188,28 @@ internal static class ScratchRoot
     /// back, so what moved is that the <i>harness</i> writes there too.
     /// </para>
     /// </remarks>
-    public static string ProfileScratch
+    /// <returns>The root.</returns>
+    public static async Task<string> ProfileScratchAsync()
     {
-        get
-        {
-            EnsureReclaimed();
-            return ProfileAnchoredScratch;
-        }
+        await EnsureReclaimedAsync();
+        return ProfileAnchoredScratch;
     }
 
     /// <summary>
-    /// <see cref="Path"/> as it is composed, <b>without</b> the reclaim pass.
+    /// <see cref="PathAsync"/> as it is composed, <b>without</b> the reclaim pass.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>For a reader that has to know where the scratch root is and must not
     /// sweep it -- 2026-09-24.</b> <see cref="WindowWatch"/> needs the root at
     /// session start in every process, and a child test host started by an arm is
-    /// such a process: taking <see cref="Path"/> there would run the reclaim in
+    /// such a process: taking <see cref="PathAsync"/> there would run the reclaim in
     /// the child and delete the parent's live scratch directories out from under
     /// the parent's own arms.
     /// </remarks>
     public static string PathAsComposed => RepositoryScratch;
 
     /// <summary>
-    /// <see cref="ProfileScratch"/> as it is composed, <b>without</b> the reclaim
+    /// <see cref="ProfileScratchAsync"/> as it is composed, <b>without</b> the reclaim
     /// pass, for <see cref="PathAsComposed"/>'s reason.
     /// </summary>
     public static string ProfileScratchAsComposed => ProfileAnchoredScratch;
@@ -261,9 +257,16 @@ internal static class ScratchRoot
     private static string Canonical(string path) =>
         BrowserAI.Interop.VolumeIdentity.DosSpellingOf(path, CanonicalPath.AncestorWalkLimit).Spelling ?? path;
 
-    private static void EnsureReclaimed()
+    private static async Task EnsureReclaimedAsync()
     {
-        lock (Gate)
+        if (_reclaimed)
+        {
+            return;
+        }
+
+        await Gate.WaitAsync();
+
+        try
         {
             if (_reclaimed)
             {
@@ -285,7 +288,7 @@ internal static class ScratchRoot
             // leftover this pass ended is the pass working, and putting
             // it in a list something asserts is empty would fail the run
             // that cleaned up and not the run that leaked.
-            LastPassReport.AddRange(SpawnRecord.Reclaim(SpawnRecord.Path));
+            LastPassReport.AddRange(await SpawnRecord.ReclaimAsync(SpawnRecord.Path));
             LastPassSurvivors.AddRange(LastPassReport
                 .Where(line => line.StartsWith("could not terminate ", StringComparison.Ordinal)));
 
@@ -299,12 +302,16 @@ internal static class ScratchRoot
             // ⚠️ NOT THE IDENTICAL PASS SINCE 2026-10-10, 5 a: every checkout's
             // runs share this root, so it takes only the folders whose owner is
             // gone and names each one it deletes. See ReclaimOwned.
-            LastPassReport.AddRange(ReclaimOwned(profile));
+            LastPassReport.AddRange(await ReclaimOwnedAsync(profile));
 
-            ReclaimStrayIndexEntries(path);
-            ReclaimStrayIndexEntries(profile);
-            ReclaimTheSweepMutex();
+            await ReclaimStrayIndexEntriesAsync(path);
+            await ReclaimStrayIndexEntriesAsync(profile);
+            await ReclaimTheSweepMutexAsync();
             _reclaimed = true;
+        }
+        finally
+        {
+            _ = Gate.Release();
         }
     }
 
@@ -328,7 +335,7 @@ internal static class ScratchRoot
     /// leak from any earlier run and not only from this one.
     /// </para>
     /// </remarks>
-    private static void ReclaimStrayIndexEntries(string scratchRoot)
+    private static async Task ReclaimStrayIndexEntriesAsync(string scratchRoot)
     {
         var index = BrowserAiPaths.Real.IndexDirectory;
 
@@ -341,7 +348,7 @@ internal static class ScratchRoot
         {
             try
             {
-                if (File.ReadAllText(entry).Trim().StartsWith(scratchRoot, StringComparison.OrdinalIgnoreCase))
+                if ((await File.ReadAllTextAsync(entry)).Trim().StartsWith(scratchRoot, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(entry);
                 }
@@ -377,16 +384,15 @@ internal static class ScratchRoot
     /// returns immediately.
     /// </para>
     /// </remarks>
-    private static void ReclaimTheSweepMutex()
+    private static async Task ReclaimTheSweepMutexAsync()
     {
         try
         {
             using var mutex = MachineMutex.Create(LockScopes.Sweep);
 
-            if (mutex.Acquire(LockScopes.NeverWaits) is not MutexAcquisition.NotAcquired)
-            {
-                mutex.Release();
-            }
+            // Taken and let go by the hold's own thread: a wait that ends acquired,
+            // abandoned or not, then the release.
+            await (await mutex.HoldAsync(LockScopes.NeverWaits)).DisposeAsync();
         }
 #pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
         catch (Exception)
@@ -409,15 +415,15 @@ internal static class ScratchRoot
     /// </summary>
     /// <remarks>
     /// For the second test host of <c>ScratchReclaimTests</c>, which has to run the
-    /// pass every other run's first use of <see cref="ProfileScratch"/> runs, over the
+    /// pass every other run's first use of <see cref="ProfileScratchAsync"/> runs, over the
     /// shared root and nothing else: the full pass would also sweep the repository
     /// scratch its parent is using.
     /// </remarks>
     /// <returns>One line per folder it acted on.</returns>
-    public static List<string> ReclaimProfileScratchNow() => ReclaimOwned(ProfileAnchoredScratch);
+    public static async Task<List<string>> ReclaimProfileScratchNowAsync() => await ReclaimOwnedAsync(ProfileAnchoredScratch);
 
     /// <summary>
-    /// Creates a folder under <see cref="ProfileScratch"/>, its owner record first.
+    /// Creates a folder under <see cref="ProfileScratchAsync"/>, its owner record first.
     /// </summary>
     /// <remarks>
     /// <b>The record is written before the folder exists</b>, so no pass anywhere can
@@ -426,13 +432,13 @@ internal static class ScratchRoot
     /// </remarks>
     /// <param name="name">The folder's name, unique to the caller.</param>
     /// <returns>The folder's absolute path.</returns>
-    public static string CreateUnderProfile(string name)
+    public static async Task<string> CreateUnderProfileAsync(string name)
     {
-        var folder = System.IO.Path.Combine(ProfileScratch, name);
+        var folder = System.IO.Path.Combine(await ProfileScratchAsync(), name);
 
-        using (var record = new FileStream(folder + OwnerSuffix, FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete))
+        await using (var record = new FileStream(folder + OwnerSuffix, FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            record.Write(Encoding.UTF8.GetBytes(OwnerRecord(Self.Value)));
+            await record.WriteAsync(Encoding.UTF8.GetBytes(OwnerRecord(Self.Value)));
         }
 
         _ = Directory.CreateDirectory(folder);
@@ -441,7 +447,7 @@ internal static class ScratchRoot
     }
 
     /// <summary>
-    /// Removes a folder of <see cref="ProfileScratch"/> that its owner is done with,
+    /// Removes a folder of <see cref="ProfileScratchAsync"/> that its owner is done with,
     /// and its record once nothing of the folder is left.
     /// </summary>
     /// <param name="folder">The folder.</param>
@@ -469,7 +475,7 @@ internal static class ScratchRoot
     /// </summary>
     /// <param name="root">The shared root.</param>
     /// <returns>One line per folder it deleted, or could delete only part of.</returns>
-    private static List<string> ReclaimOwned(string root)
+    private static async Task<List<string>> ReclaimOwnedAsync(string root)
     {
         var acted = new List<string>();
 
@@ -482,7 +488,7 @@ internal static class ScratchRoot
 
         foreach (var folder in Directory.EnumerateDirectories(root))
         {
-            var (ownership, owner) = OwnershipOf(folder + OwnerSuffix);
+            var (ownership, owner) = await OwnershipOfAsync(folder + OwnerSuffix);
             string reason;
 
             switch (ownership)
@@ -534,7 +540,7 @@ internal static class ScratchRoot
         // was ended before it removed the record, goes with its owner.
         foreach (var record in Directory.EnumerateFiles(root, "*" + OwnerSuffix))
         {
-            if (!Directory.Exists(record[..^OwnerSuffix.Length]) && OwnershipOf(record).Ownership is Ownership.Gone or Ownership.None)
+            if (!Directory.Exists(record[..^OwnerSuffix.Length]) && (await OwnershipOfAsync(record)).Ownership is Ownership.Gone or Ownership.None)
             {
                 TryDelete(record);
             }
@@ -548,17 +554,17 @@ internal static class ScratchRoot
     /// <summary>What the record at a path says about its folder, and the owner it names.</summary>
     /// <param name="record">The owner record's path.</param>
     /// <returns>The answer, and the owner's token when the record names one.</returns>
-    private static (Ownership Ownership, string? Owner) OwnershipOf(string record)
+    private static async Task<(Ownership Ownership, string? Owner)> OwnershipOfAsync(string record)
     {
         string text;
         DateTime written;
 
         try
         {
-            using var stream = new FileStream(record, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(record, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream, Encoding.UTF8);
 
-            text = reader.ReadToEnd();
+            text = await reader.ReadToEndAsync();
             written = File.GetLastWriteTimeUtc(record);
         }
         catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)

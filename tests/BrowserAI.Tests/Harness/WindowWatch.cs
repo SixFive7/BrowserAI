@@ -167,7 +167,7 @@ internal sealed record WindowWatchReading(
 /// <b>Whose a window is, in three cases and no fourth</b>: the host's own; a process
 /// descending from the host by a live parent chain, each parent created before its
 /// child; or an image under a root only the suite runs from -- the repository,
-/// <see cref="ScratchRoot.Path"/> and <see cref="ScratchRoot.ProfileScratch"/>.
+/// <see cref="ScratchRoot.PathAsync"/> and <see cref="ScratchRoot.ProfileScratchAsync"/>.
 /// <b>The machine's own browsers root is never one of them</b>, because the
 /// maintainer's own sessions run Chromium from it; a suite-started browser still
 /// counts through its parent chain. The rule is <see cref="Classify"/>, a pure
@@ -227,12 +227,14 @@ internal static partial class WindowWatch
     private static readonly HashSet<string> SeenClasses = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Set by the hook thread once its hooks are in or have failed. Static and
-    /// never disposed: a thread that reports after the start gave up waiting would
-    /// otherwise set a disposed event, and an exception on that thread ends the
-    /// process.
+    /// Completed by the hook thread once its hooks are in or have failed, and awaited
+    /// by the start. <i>A task since 2026-10-11 (previously an event the start waited
+    /// on, static and never disposed for the same reason this is never replaced).</i>
     /// </summary>
-    private static readonly ManualResetEventSlim Ready = new(initialState: false);
+    private static readonly TaskCompletionSource Ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>Completed by the hook thread once its message loop has ended, and awaited by the stop.</summary>
+    private static readonly TaskCompletionSource Ended = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private static Thread? _thread;
     private static uint _threadId;
@@ -287,7 +289,8 @@ internal static partial class WindowWatch
     /// Takes the baseline and starts the hook thread. Called once, from the
     /// session hook.
     /// </summary>
-    public static void Start()
+    /// <returns>The start, once the hook thread has reported.</returns>
+    public static async Task StartAsync()
     {
         lock (Gate)
         {
@@ -326,7 +329,11 @@ internal static partial class WindowWatch
 
         // A hang detector: the thread installs two hooks and signals, whether they
         // went in or not, so a wait that runs out means it never got that far.
-        if (!Ready.Wait(TestDefaults.ProcessHang))
+        try
+        {
+            await Ready.Task.WaitAsync(TestDefaults.ProcessHang);
+        }
+        catch (TimeoutException)
         {
             lock (Gate)
             {
@@ -339,7 +346,8 @@ internal static partial class WindowWatch
     /// Stops the hook thread and sweeps for any window of the suite's still open.
     /// Called once, from the session hook, before the block is written.
     /// </summary>
-    public static void Stop()
+    /// <returns>The stop, once the sweep is done.</returns>
+    public static async Task StopAsync()
     {
         Thread? thread;
         uint threadId;
@@ -367,7 +375,15 @@ internal static partial class WindowWatch
                 _ = PostThreadMessageW(threadId, WmQuit, nint.Zero, nint.Zero);
             }
 
-            _ = thread.Join(TestDefaults.ProcessHang);
+            try
+            {
+                await Ended.Task.WaitAsync(TestDefaults.ProcessHang);
+            }
+            catch (TimeoutException)
+            {
+                // A loop that did not end within the hang detector: the sweep below
+                // still runs, and the reading says what it has.
+            }
         }
 
         if (_context is not { } context)
@@ -698,7 +714,7 @@ internal static partial class WindowWatch
             }
         }
 
-        Ready.Set();
+        _ = Ready.TrySetResult();
 
         try
         {
@@ -723,6 +739,8 @@ internal static partial class WindowWatch
             {
                 _ = UnhookWinEvent(foreground);
             }
+
+            _ = Ended.TrySetResult();
         }
     }
 

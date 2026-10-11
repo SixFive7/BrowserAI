@@ -60,7 +60,7 @@ internal sealed partial class ReVerificationIndexTests
     [Test]
     public async Task EveryRowIsEitherManualOrNamesSomethingThatExists()
     {
-        await Assert.That(string.Join(Environment.NewLine, Offenders(Rows()))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, Offenders(await RowsAsync()))).IsEmpty();
 
         // ⚠️ BOTH DIRECTIONS over the clause, off synthetic rows and not by
         // doctoring the index: a name inside a `previously "..."` clause is a
@@ -129,14 +129,14 @@ internal sealed partial class ReVerificationIndexTests
     [Test]
     public async Task TheIndexReportsItsOwnSizeCorrectly()
     {
-        var recorded = RecordedCounts();
+        var recorded = await RecordedCountsAsync();
 
         // The sentence this reads is the anchor. If it has been reworded, the
         // counts it carries are no longer checked by anything, which is the
         // exact drift the note in that file exists to complain about.
         await Assert.That(recorded.Success).IsTrue();
 
-        var rows = Rows();
+        var rows = await RowsAsync();
         await Assert.That(int.Parse(recorded.Groups["lines"].Value, CultureInfo.InvariantCulture)).IsEqualTo(rows.Count);
         await Assert.That(int.Parse(recorded.Groups["rows"].Value, CultureInfo.InvariantCulture))
             .IsEqualTo(rows.Select(row => Digits().Match(row.Number).Value).Distinct(StringComparer.Ordinal).Count());
@@ -150,8 +150,8 @@ internal sealed partial class ReVerificationIndexTests
         // with it. Recorded here and not left as a habit because the note in
         // that file has already been wrong twice, both times by arithmetic
         // and not by counting.
-        var acrossTheArticles = MarkersAcrossTheArticles();
-        var recorded = RecordedCounts();
+        var acrossTheArticles = await MarkersAcrossTheArticlesAsync();
+        var recorded = await RecordedCountsAsync();
 
         await Assert.That(recorded.Success).IsTrue();
         await Assert.That(acrossTheArticles).IsEqualTo(int.Parse(recorded.Groups["markers"].Value, CultureInfo.InvariantCulture));
@@ -180,7 +180,7 @@ internal sealed partial class ReVerificationIndexTests
 
     private static string IndexPath { get; } = Path.Combine(RepositoryLayout.Root.FullName, "kb", "re-verification.md");
 
-    private static Match RecordedCounts() => RecordedCountsPattern().Match(File.ReadAllText(IndexPath));
+    private static async Task<Match> RecordedCountsAsync() => RecordedCountsPattern().Match(await File.ReadAllTextAsync(IndexPath));
 
     /// <summary>
     /// Every <c>[FLOATS]</c> marker in the corpus, which is what the anchor
@@ -193,8 +193,8 @@ internal sealed partial class ReVerificationIndexTests
     /// numbers while the total beside it stayed asserted and correct.
     /// </remarks>
     /// <returns>The count across every article.</returns>
-    internal static int MarkersAcrossTheArticles() =>
-        ArticleFiles().Sum(MarkersIn);
+    internal static async Task<int> MarkersAcrossTheArticlesAsync() =>
+        (await Task.WhenAll(ArticleFiles().Select(MarkersInAsync))).Sum();
 
     /// <summary>One article's <c>[FLOATS]</c> markers.</summary>
     /// <remarks>
@@ -205,7 +205,7 @@ internal sealed partial class ReVerificationIndexTests
     /// </remarks>
     /// <param name="file">The article, absolute.</param>
     /// <returns>How many markers it carries.</returns>
-    internal static int MarkersIn(string file) => Floats().Count(File.ReadAllText(file));
+    internal static async Task<int> MarkersInAsync(string file) => Floats().Count(await File.ReadAllTextAsync(file));
 
     /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
     /// <remarks>
@@ -253,11 +253,11 @@ internal sealed partial class ReVerificationIndexTests
     /// <c>Fact</c>.
     /// </remarks>
     /// <returns>The rows, in file order.</returns>
-    internal static List<(string Number, string AutomatedBy, string Content)> Rows()
+    internal static async Task<List<(string Number, string AutomatedBy, string Content)>> RowsAsync()
     {
         var rows = new List<(string, string, string)>();
 
-        foreach (var line in File.ReadAllLines(IndexPath))
+        foreach (var line in await File.ReadAllLinesAsync(IndexPath))
         {
             if (!line.StartsWith('|'))
             {

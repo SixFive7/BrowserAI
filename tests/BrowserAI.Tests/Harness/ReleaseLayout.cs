@@ -281,12 +281,13 @@ internal static partial class ReleaseLayout
     /// tree. Read once per run.
     /// </para>
     /// </remarks>
-    public static string? TestPackMismatch => LazyTestPackMismatch.Value;
+    /// <returns>The difference, or <see langword="null"/>.</returns>
+    public static Task<string?> TestPackMismatchAsync() => LazyTestPackMismatch.Value;
 
-    private static readonly Lazy<string?> LazyTestPackMismatch = new(() =>
+    private static readonly Lazy<Task<string?>> LazyTestPackMismatch = new(() =>
         FullPackage(test: true) is { } package
-            ? MismatchBetween(package.FullName, PackedBinaries)
-            : $"there is no {TestPackId} package under {TestDirectory}");
+            ? MismatchBetweenAsync(package.FullName, PackedBinaries)
+            : Task.FromResult<string?>($"there is no {TestPackId} package under {TestDirectory}"));
 
     /// <summary>
     /// Why a package does not carry these published binaries byte for byte, or
@@ -300,7 +301,7 @@ internal static partial class ReleaseLayout
     /// <param name="package">The <c>.nupkg</c>.</param>
     /// <param name="binaries">Each entry name inside it and the file it must equal.</param>
     /// <returns>The first difference, or <see langword="null"/>.</returns>
-    public static string? MismatchBetween(string package, IReadOnlyList<(string Entry, string Published)> binaries)
+    public static async Task<string?> MismatchBetweenAsync(string package, IReadOnlyList<(string Entry, string Published)> binaries)
     {
         ArgumentNullException.ThrowIfNull(binaries);
 
@@ -308,7 +309,7 @@ internal static partial class ReleaseLayout
 
         try
         {
-            using var archive = System.IO.Compression.ZipFile.OpenRead(package);
+            await using var archive = await System.IO.Compression.ZipFile.OpenReadAsync(package, CancellationToken.None);
 
             foreach (var (entry, published) in binaries)
             {
@@ -324,12 +325,12 @@ internal static partial class ReleaseLayout
 
                 string inside;
 
-                using (var stream = packed.Open())
+                await using (var stream = await packed.OpenAsync(CancellationToken.None))
                 {
-                    inside = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream));
+                    inside = Convert.ToHexString(await System.Security.Cryptography.SHA256.HashDataAsync(stream));
                 }
 
-                var outside = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(published)));
+                var outside = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(published)));
 
                 if (!string.Equals(inside, outside, StringComparison.Ordinal))
                 {
@@ -466,7 +467,7 @@ internal static partial class ReleaseLayout
     /// from before the rename are the same absence to every caller, and both
     /// are answered by running the script.
     /// </remarks>
-    public static bool HasCurrentInstaller()
+    public static async Task<bool> HasCurrentInstallerAsync()
     {
         if (!File.Exists(TestSetupExecutable) || !File.Exists(TestFeedManifest) || LeftoverTestInstallLocation() is not null)
         {
@@ -475,7 +476,7 @@ internal static partial class ReleaseLayout
 
         try
         {
-            using var manifest = JsonDocument.Parse(File.ReadAllText(TestFeedManifest));
+            using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(TestFeedManifest));
 
             if (!manifest.RootElement.TryGetProperty("Assets", out var assets))
             {
@@ -501,14 +502,14 @@ internal static partial class ReleaseLayout
 
     /// <summary>What is wrong, or what is there, in one clause for the coverage block.</summary>
     /// <returns>The witness.</returns>
-    public static string Witness() =>
+    public static async Task<string> WitnessAsync() =>
         !File.Exists(TestSetupExecutable)
             ? $"{TestSetupExecutable} (nothing has packed one)"
             : LeftoverTestInstallLocation() is { } leftover
                 ? $"HKCU\\{TestUninstallKey} survived a previous run, pointing at '{(leftover.Length is 0 ? "<no InstallLocation>" : leftover)}'. "
                     + "Every key under the TEST id is one this suite wrote, so one that outlived a run is a run that did not clean up -- and Settings is showing an uninstall entry for something that is not there. "
                     + $"Clear it with: {ClearTheLeftoverKey}"
-                : HasCurrentInstaller()
+                : await HasCurrentInstallerAsync()
                     ? TestSetupExecutable
                     : $"{TestSetupExecutable} exists but {Path.GetFileName(TestFeedManifest)} names no package with the id '{TestPackId}', so it was packed under a different layout";
 
@@ -535,7 +536,7 @@ internal static partial class ReleaseLayout
     /// </para>
     /// </remarks>
     public static IReadOnlyList<string> UploadSet { get; } =
-        ReadUploadSet(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1")));
+        ReadUploadSet(RepositoryCopy.Text(RepositoryCopy.ReleaseScript));
 
     /// <summary>
     /// The quoted names inside the script's <c>$uploadSet</c> declaration.
@@ -569,9 +570,17 @@ internal static partial class ReleaseLayout
     [GeneratedRegex("\"(?<name>[^\"]+)\"")]
     private static partial Regex QuotedName();
 
+    /// <summary>One variable the release script assigns, read from the copy the build compiled in.</summary>
+    /// <remarks>
+    /// <b>The compiled copy since 2026-10-11</b>, through <see cref="RepositoryCopy"/>: every
+    /// reader is a static initialiser, and a file read is asynchronous since that day
+    /// (decision 63). <i>Previously the working tree's file, read at each first use.</i>
+    /// </remarks>
+    /// <param name="name">The variable, without its dollar sign.</param>
+    /// <returns>Its single-quoted value.</returns>
     private static string ReadVariable(string name)
     {
-        var script = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1"));
+        var script = RepositoryCopy.Text(RepositoryCopy.ReleaseScript);
         var match = Regex.Match(script, $@"(?m)^\${name}\s*=\s*'(?<value>[^']+)'");
 
         return match.Success

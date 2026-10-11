@@ -61,12 +61,12 @@ internal sealed class AppBinaryTests
     [Test]
     public async Task TheOneExecutableIsAWindowsSubsystemBinary()
     {
-        await Assert.That(PeSubsystem.Of(Built("BrowserAI", "BrowserAI.exe")))
+        await Assert.That(await PeSubsystem.OfAsync(Built("BrowserAI", "BrowserAI.exe")))
             .IsEqualTo(PeSubsystem.WindowsGui);
 
         if (File.Exists(PublishedSlice.Executable))
         {
-            await Assert.That(PeSubsystem.Of(PublishedSlice.Executable)).IsEqualTo(PeSubsystem.WindowsGui);
+            await Assert.That(await PeSubsystem.OfAsync(PublishedSlice.Executable)).IsEqualTo(PeSubsystem.WindowsGui);
         }
 
         // The configuration app is a library now, so its project builds no
@@ -78,19 +78,19 @@ internal sealed class AppBinaryTests
         // later build removes, and went red over a file the current build did not
         // write, which cost four separate gates a red each. Planted red with that stale file
         // under the old assertion, and green with the same file under this one.
-        await Assert.That(EntryPointOf(typeof(BrowserAI.App.StartModes).Assembly.Location)).IsEqualTo(0)
+        await Assert.That(await EntryPointOfAsync(typeof(BrowserAI.App.StartModes).Assembly.Location)).IsEqualTo(0)
             .Because("the configuration app's assembly has an entry point, so its project builds an executable");
 
         // The positive control: the suite's probe is an executable, and its assembly has one.
-        await Assert.That(EntryPointOf(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.dll"))).IsNotEqualTo(0);
+        await Assert.That(await EntryPointOfAsync(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.dll"))).IsNotEqualTo(0);
     }
 
     /// <summary>The entry point a managed assembly's CLI header names, or zero for a library.</summary>
     /// <param name="assembly">The assembly's path.</param>
     /// <returns>The entry point's token or address.</returns>
-    private static int EntryPointOf(string assembly)
+    private static async Task<int> EntryPointOfAsync(string assembly)
     {
-        using var stream = File.OpenRead(assembly);
+        await using var stream = new FileStream(assembly, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
         using var image = new System.Reflection.PortableExecutable.PEReader(stream);
 
         return image.PEHeaders.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0;
@@ -320,7 +320,7 @@ internal sealed class AppBinaryTests
                 PublishedSlice.AppExecutable);
         }
 
-        using var output = ScratchDirectory.Create("app-apartment");
+        using var output = await ScratchDirectory.CreateAsync("app-apartment");
 
         var report = Path.Combine(output.Path, "report.json");
 
@@ -344,7 +344,7 @@ internal sealed class AppBinaryTests
         // whatever Main does next. The working directory is this host's, as it was.
         using var desktop = PrivateDesktop.Create("app-report");
         using var job = JobObject.CreateKillOnClose();
-        using var process = desktop.Launch(
+        using var process = await desktop.LaunchAsync(
             job,
             PublishedSlice.AppExecutable,
             ["--report", report],

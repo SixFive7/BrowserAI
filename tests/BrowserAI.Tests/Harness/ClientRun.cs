@@ -78,7 +78,7 @@ internal sealed class ClientRun : IDisposable
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The run. Disposing it ends the process and everything it started.</returns>
-    public static ClientRun Start(
+    public static async Task<ClientRun> StartAsync(
         string executable,
         string workingDirectory,
         IReadOnlyDictionary<string, string> environment,
@@ -112,7 +112,7 @@ internal sealed class ClientRun : IDisposable
             // Written where the NEXT run can read it, as JobObjectScope does: the job is
             // what contains this process while this run is alive, and the record is what
             // names it if this run is killed and the job dies with it.
-            SpawnRecord.Add(process.Id);
+            await SpawnRecord.AddAsync(process.Id);
 
             // Drained INTO FILES, not into nowhere. A child whose redirected pipe fills
             // stops writing and then stops working, so the drain is mandatory, and a real
@@ -122,7 +122,7 @@ internal sealed class ClientRun : IDisposable
 
             _ = Drain(process.StandardOutput, $"{stem}.stdout.txt");
             _ = Drain(process.StandardError, $"{stem}.stderr.txt");
-            process.StandardInput.Dispose();
+            await process.StandardInput.DisposeAsync();
 
             return new ClientRun(job, process);
         }

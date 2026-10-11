@@ -67,7 +67,7 @@ internal static class ProbeProcess
         // This one is started OUTSIDE a job object -- it is awaited to exit
         // and not contained -- so the spawn record is the only thing that
         // can name it if this run is killed while it is running.
-        SpawnRecord.Add(process.Id);
+        await SpawnRecord.AddAsync(process.Id);
 
         var stdout = process.StandardOutput.ReadToEndAsync();
         var stderr = process.StandardError.ReadToEndAsync();
@@ -83,7 +83,7 @@ internal static class ProbeProcess
     }
 
     /// <summary>Reads every process-log record written under a scratch root.</summary>
-    public static string ReadProcessLog(string root)
+    public static async Task<string> ReadProcessLogAsync(string root)
     {
         var directory = Path.Combine(root, "logs");
 
@@ -98,9 +98,9 @@ internal static class ProbeProcess
         {
             // FileShare.ReadWrite because a writer may still hold the file, and
             // a reader must never be locked out of the log it came to read.
-            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
             using var reader = new StreamReader(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            _ = builder.Append(reader.ReadToEnd());
+            _ = builder.Append(await reader.ReadToEndAsync());
         }
 
         return builder.ToString();

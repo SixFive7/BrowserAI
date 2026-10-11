@@ -44,8 +44,8 @@ internal sealed class StandardLocationTests
     [Test]
     public async Task AShippingCopyOutsideTheStandardFolderIsRefusedAndNothingElseIs()
     {
-        using var standard = ScratchDirectory.Create("standard-location");
-        using var elsewhere = ScratchDirectory.Create("standard-location-elsewhere");
+        using var standard = await ScratchDirectory.CreateAsync("standard-location");
+        using var elsewhere = await ScratchDirectory.CreateAsync("standard-location-elsewhere");
 
         await Assert.That(StandardLocation.ShippingPackId).IsEqualTo(ReleaseLayout.PackId);
 
@@ -93,11 +93,11 @@ internal sealed class StandardLocationTests
     [Test]
     public async Task ARefusedCopysHooksSetNothingUpAndItsUninstallTouchesNeitherTheDataRootNorTheClients()
     {
-        using var install = ScratchDirectory.Create("refused-copy");
-        using var standard = ScratchDirectory.Create("refused-copy-standard");
-        using var data = ScratchDirectory.Create("refused-copy-data");
+        using var install = await ScratchDirectory.CreateAsync("refused-copy");
+        using var standard = await ScratchDirectory.CreateAsync("refused-copy-standard");
+        using var data = await ScratchDirectory.CreateAsync("refused-copy-data");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var kept = Path.Combine(data.Path, "the-standard-installs.txt");
         await File.WriteAllTextAsync(kept, "browsers, sessions and a log");
 
@@ -107,8 +107,8 @@ internal sealed class StandardLocationTests
         var activated = new List<RegistrationIntent>();
         var asked = 0;
 
-        HookOutcome hook(RegistrationIntent intent, string standardRoot) =>
-            HookRegistration.Run(
+        async Task<HookOutcome> hookAsync(RegistrationIntent intent, string standardRoot) =>
+            await HookRegistration.RunAsync(
                 intent,
                 "9.9.9",
                 image,
@@ -121,7 +121,7 @@ internal sealed class StandardLocationTests
                 ask: _ =>
                 {
                     asked++;
-                    return true;
+                    return Task.FromResult(true);
                 },
                 toastActivator: (asking, _) =>
                 {
@@ -132,7 +132,7 @@ internal sealed class StandardLocationTests
 
         foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall })
         {
-            var outcome = hook(intent, standard.Path);
+            var outcome = await hookAsync(intent, standard.Path);
 
             await Assert.That(outcome.NotSetUp).IsNotNull().Because($"{intent}");
             await Assert.That(outcome.Registrations).IsEmpty().Because($"{intent}");
@@ -149,9 +149,9 @@ internal sealed class StandardLocationTests
         // What an older build of the same copy set up of its own is taken off.
         var folder = Path.GetDirectoryName(image)!;
         store.Value = new UserPathValue(folder, RegistryValueKind.ExpandString);
-        _ = tasks.Register(SignInTask.NameFor(ReleaseLayout.PackId, install.Path), "<Task/>");
+        _ = await tasks.RegisterAsync(SignInTask.NameFor(ReleaseLayout.PackId, install.Path), "<Task/>");
 
-        _ = hook(RegistrationIntent.Uninstall, standard.Path);
+        _ = await hookAsync(RegistrationIntent.Uninstall, standard.Path);
 
         await Assert.That(store.Value?.Text ?? string.Empty).DoesNotContain(folder);
         await Assert.That(tasks.Registered).IsEmpty();
@@ -159,7 +159,7 @@ internal sealed class StandardLocationTests
 
         // The positive control: the same copy, judged against its own folder as the standard
         // one, is set up as any install is.
-        var setUp = hook(RegistrationIntent.Install, install.Path);
+        var setUp = await hookAsync(RegistrationIntent.Install, install.Path);
 
         await Assert.That(setUp.NotSetUp).IsNull();
         await Assert.That(tool.Calls).IsNotEmpty();
@@ -231,7 +231,7 @@ internal sealed class StandardLocationTests
     [Test]
     public async Task ARelayInARefusedCopyAnswersEveryCallAtOnceWithWhyAndTheRemedy()
     {
-        using var data = ScratchDirectory.Create("refused-copy-relay");
+        using var data = await ScratchDirectory.CreateAsync("refused-copy-relay");
 
         var refused = new StandardLocationRefusal(@"D:\Tools\BrowserAI.app", @"C:\Users\someone\AppData\Local\BrowserAI.app");
         var log = Path.Combine(data.Path, "logs", "browserai.log");
@@ -253,7 +253,7 @@ internal sealed class StandardLocationTests
             },
             Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
-        var absence = finder.Explain(null);
+        var absence = await finder.ExplainAsync(null);
 
         await Assert.That(absence).IsTypeOf<BackgroundAbsence.RootRefused>();
 
@@ -278,8 +278,8 @@ internal sealed class StandardLocationTests
     public async Task TheRootJudgementRefusesARefusedCopyBeforeItAsksTheProfile()
     {
         // Both under the profile, so that only the standard folder can refuse them.
-        using var install = ScratchDirectory.CreateUnderProfile("refused-copy-scope");
-        using var data = ScratchDirectory.CreateUnderProfile("refused-copy-scope-data");
+        using var install = await ScratchDirectory.CreateUnderProfileAsync("refused-copy-scope");
+        using var data = await ScratchDirectory.CreateUnderProfileAsync("refused-copy-scope-data");
 
         var refused = InstallRootScope.Judge(data.Path, install.Path, ReleaseLayout.PackId);
 

@@ -104,7 +104,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho()
     {
-        using var scratch = ScratchDirectory.Create("session-race");
+        using var scratch = await ScratchDirectory.CreateAsync("session-race");
         var (directory, path) = NewSession(scratch, "race");
 
         var release = Path.Combine(scratch.Path, "release.flag");
@@ -126,7 +126,7 @@ internal sealed class SessionLockTests
         {
             foreach (var report in reports)
             {
-                _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-race", directory, startName, report, release);
+                _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-race", directory, startName, report, release);
             }
 
             await WaitForAllAsync(reports.Select(report => $"{report}.ready"));
@@ -150,7 +150,7 @@ internal sealed class SessionLockTests
             // further runs to not reproduce. The dossier is the whole set, and it
             // is read before the release flag is written, so the winner is still
             // holding while it is taken.
-            var dossier = Dossier(outcomes, path);
+            var dossier = await DossierAsync(outcomes, path);
 
             await Assert.That(taken.Count).IsEqualTo(1).Because(dossier);
             await Assert.That(refused.Count).IsEqualTo(Contenders - 1).Because(dossier);
@@ -192,7 +192,7 @@ internal sealed class SessionLockTests
 
         // One record, written once, by the winner -- and no temp file left over
         // from the durable write.
-        var record = SessionLock.ReadRecord(path);
+        var record = await SessionLock.ReadRecordAsync(path);
 
         await Assert.That(record).IsNotNull();
         await Assert.That(record!.Holder!.ProcessId).IsEqualTo(winner);
@@ -200,7 +200,7 @@ internal sealed class SessionLockTests
         // The guard says the same thing the record's newest holder statement
         // does, which is what makes a probe and a history two views of one
         // acquisition and not two answers.
-        await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(winner);
+        await Assert.That((await LockFile.ReadAsync(path.LockFile))!.ProcessId).IsEqualTo(winner);
     }
 
     /// <summary>
@@ -231,7 +231,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AContenderThatCanNameTheHolderIsRefusedInFrontOfTheGate()
     {
-        using var scratch = ScratchDirectory.Create("session-probe-held");
+        using var scratch = await ScratchDirectory.CreateAsync("session-probe-held");
         var (directory, path) = NewSession(scratch, "probe-held");
 
         var heldReady = Path.Combine(scratch.Path, "held.json");
@@ -242,20 +242,20 @@ internal sealed class SessionLockTests
         // Ordered, and the order is load-bearing: the holder needs the gate to
         // take the directory, so it has to be finished with it before the gate
         // is taken away from everybody.
-        _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold", directory, heldReady, "reading the customer portal");
+        _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold", directory, heldReady, "reading the customer portal");
 
         var holder = await ProbeReport.ReadAsync(heldReady, Patience);
         await Assert.That((bool)holder["taken"]!).IsTrue();
 
         var holderPid = (int)holder["pid"]!;
 
-        _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
+        _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
 
         var gate = await ProbeReport.ReadAsync(gateReady, Patience);
         await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
         await Assert.That((string?)gate["mutexName"]).IsEqualTo(path.MutexName);
 
-        var refused = SessionLock.TryAcquire(path, Request("a peer that only wants a name"), NullLogger.Instance);
+        var refused = await SessionLock.TryAcquireAsync(path, Request("a peer that only wants a name"), NullLogger.Instance);
 
         try
         {
@@ -312,7 +312,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate()
     {
-        using var scratch = ScratchDirectory.Create("session-probe-free");
+        using var scratch = await ScratchDirectory.CreateAsync("session-probe-free");
         var (directory, path) = NewSession(scratch, "probe-free");
 
         // No browserai.lock at all, so the probe's open fails with "not found" and
@@ -325,17 +325,17 @@ internal sealed class SessionLockTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
+            _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
 
             var gate = await ProbeReport.ReadAsync(gateReady, Patience);
             await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
 
             var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            call = Task.Run(() =>
+            call = Task.Run(async () =>
             {
                 entered.SetResult();
-                return SessionLock.TryAcquire(path, Request("a peer that found nothing"), NullLogger.Instance);
+                return await SessionLock.TryAcquireAsync(path, Request("a peer that found nothing"), NullLogger.Instance);
             });
 
             await entered.Task;
@@ -366,7 +366,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AKilledHolderIsReclaimedAndTheReasonNamesThePidAndWhen()
     {
-        using var scratch = ScratchDirectory.Create("session-reclaim");
+        using var scratch = await ScratchDirectory.CreateAsync("session-reclaim");
         var (directory, path) = NewSession(scratch, "reclaim");
 
         var ready = Path.Combine(scratch.Path, "ready.json");
@@ -375,7 +375,7 @@ internal sealed class SessionLockTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold", directory, ready, "reading the customer portal");
+            _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold", directory, ready, "reading the customer portal");
 
             var report = await ProbeReport.ReadAsync(ready, Patience);
             await Assert.That((bool)report["taken"]!).IsTrue();
@@ -388,7 +388,7 @@ internal sealed class SessionLockTests
 
             // The reclaim below is worth nothing unless the lock was real while
             // the holder lived, so that is asserted first.
-            var whileAlive = SessionLock.TryAcquire(path, Request("second opinion"), NullLogger.Instance);
+            var whileAlive = await SessionLock.TryAcquireAsync(path, Request("second opinion"), NullLogger.Instance);
 
             try
             {
@@ -407,7 +407,7 @@ internal sealed class SessionLockTests
 
         await WaitUntilGoneAsync(holderPid, holderCreated);
 
-        var reclaimed = SessionLock.TryAcquire(path, Request("taking over"), NullLogger.Instance);
+        var reclaimed = await SessionLock.TryAcquireAsync(path, Request("taking over"), NullLogger.Instance);
 
         try
         {
@@ -445,7 +445,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AnAbandonedMutexIsAcquiredAndTheAcquisitionSaysSo()
     {
-        using var scratch = ScratchDirectory.Create("session-abandoned");
+        using var scratch = await ScratchDirectory.CreateAsync("session-abandoned");
         var (directory, path) = NewSession(scratch, "abandoned");
         var ready = Path.Combine(scratch.Path, "gate.json");
 
@@ -463,24 +463,25 @@ internal sealed class SessionLockTests
         // R3. The wait SUCCEEDS -- what the exception reports is that the
         // previous holder died without releasing. Unhandled it disables locking
         // permanently after the first crash, and nothing reports it.
-        var first = mutex.Acquire(LockScopes.PerDirectoryGate);
-        await Assert.That(first).IsEqualTo(MutexAcquisition.AcquiredAbandoned);
+        var first = await mutex.HoldAsync(LockScopes.PerDirectoryGate);
+        await Assert.That(first.Acquisition).IsEqualTo(MutexAcquisition.AcquiredAbandoned);
 
-        // Releasing is the proof that it really was acquired: releasing a mutex
-        // this thread does not own throws.
-        mutex.Release();
+        // Releasing is the proof that it really was acquired: the hold's own
+        // thread releases it, and releasing a mutex that thread does not own
+        // throws. Held by that thread since 2026-10-11 (decision 54).
+        await first.DisposeAsync();
 
         // And the abandonment is consumed and not sticky, so the next
         // acquire is ordinary.
-        var second = mutex.Acquire(LockScopes.PerDirectoryGate);
-        await Assert.That(second).IsEqualTo(MutexAcquisition.Acquired);
-        mutex.Release();
+        var second = await mutex.HoldAsync(LockScopes.PerDirectoryGate);
+        await Assert.That(second.Acquisition).IsEqualTo(MutexAcquisition.Acquired);
+        await second.DisposeAsync();
     }
 
     [Test]
     public async Task AnAbandonedGateDoesNotStopASessionBeingTaken()
     {
-        using var scratch = ScratchDirectory.Create("session-abandoned-take");
+        using var scratch = await ScratchDirectory.CreateAsync("session-abandoned-take");
         var (directory, path) = NewSession(scratch, "abandoned-take");
         var ready = Path.Combine(scratch.Path, "gate.json");
 
@@ -490,7 +491,7 @@ internal sealed class SessionLockTests
 
         await KillAGateHolderAsync(directory, ready);
 
-        var result = SessionLock.TryAcquire(path, Request("after a crash"), NullLogger.Instance);
+        var result = await SessionLock.TryAcquireAsync(path, Request("after a crash"), NullLogger.Instance);
 
         try
         {
@@ -506,7 +507,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task TheSweepScopeIsTryAcquireAndSkipAtZeroTimeout()
     {
-        using var scratch = ScratchDirectory.Create("session-sweep");
+        using var scratch = await ScratchDirectory.CreateAsync("session-sweep");
 
         // The product's own sweep name is asserted separately, below. The
         // cross-process arm uses a per-run name deliberately: a suite that
@@ -528,7 +529,7 @@ internal sealed class SessionLockTests
 
         foreach (var report in reports)
         {
-            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-sweep", mutexName, startName, report, release);
+            _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-sweep", mutexName, startName, report, release);
         }
 
         await WaitForAllAsync(reports.Select(report => $"{report}.ready"));
@@ -671,18 +672,20 @@ internal sealed class SessionLockTests
         // "it was asked for zero".
         await Assert.That(gate.LastAcquireTimeout).IsNull();
 
-        await Assert.That(gate.Acquire(LockScopes.NeverWaits)).IsEqualTo(MutexAcquisition.Acquired);
+        var hold = await gate.HoldAsync(LockScopes.NeverWaits);
+        await Assert.That(hold.Acquisition).IsEqualTo(MutexAcquisition.Acquired);
         await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.NeverWaits);
-        gate.Release();
+        await hold.DisposeAsync();
 
         // ⚠️ THE CONTROL. A different value, on the same object: the record moved
         // with the argument, so it is not a constant wearing a property's name.
         // Corrected 2026-10-10 (previously "LockScopes.LiveInstanceGate", five
         // seconds, deleted that day with the live-instance census): the other value
         // is the per-directory gate's, the one bounded wait LockScopes has left.
-        await Assert.That(gate.Acquire(LockScopes.PerDirectoryGate)).IsEqualTo(MutexAcquisition.Acquired);
+        var again = await gate.HoldAsync(LockScopes.PerDirectoryGate);
+        await Assert.That(again.Acquisition).IsEqualTo(MutexAcquisition.Acquired);
         await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.PerDirectoryGate);
-        gate.Release();
+        await again.DisposeAsync();
 
         await Assert.That(LockScopes.NeverWaits).IsNotEqualTo(LockScopes.PerDirectoryGate);
     }
@@ -815,10 +818,10 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AHeldLockRefusesASecondWriterAndStillAnswersAReader()
     {
-        using var scratch = ScratchDirectory.Create("session-share");
+        using var scratch = await ScratchDirectory.CreateAsync("session-share");
         var (_, path) = NewSession(scratch, "share");
 
-        var first = SessionLock.TryAcquire(path, Request("the first"), NullLogger.Instance);
+        var first = await SessionLock.TryAcquireAsync(path, Request("the first"), NullLogger.Instance);
 
         try
         {
@@ -827,7 +830,7 @@ internal sealed class SessionLockTests
             // That is the lock: write access is refused.
             _ = Assert.Throws<IOException>(() =>
             {
-                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
             });
 
             // And this is why the refusal can name the holder: a reader still
@@ -838,14 +841,14 @@ internal sealed class SessionLockTests
             // be read", which is the wrong answer in the dangerous direction.
             _ = Assert.Throws<IOException>(() =>
             {
-                using var narrow = new FileStream(path.LockFile, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var narrow = new FileStream(path.LockFile, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
             });
 
             // The guard names the holder; the store says what the session is
             // for. Two files, two questions, and a reader gets both while the
             // holder still has the directory.
-            await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(Environment.ProcessId);
-            await Assert.That(SessionLock.ReadRecord(path)!.Purpose).IsEqualTo("the first");
+            await Assert.That((await LockFile.ReadAsync(path.LockFile))!.ProcessId).IsEqualTo(Environment.ProcessId);
+            await Assert.That((await SessionLock.ReadRecordAsync(path))!.Purpose).IsEqualTo("the first");
         }
         finally
         {
@@ -856,7 +859,7 @@ internal sealed class SessionLockTests
         // sentence instead of a refusal.
         await Assert.That(File.Exists(path.LockFile)).IsTrue();
 
-        var second = SessionLock.TryAcquire(path, Request("the second"), NullLogger.Instance);
+        var second = await SessionLock.TryAcquireAsync(path, Request("the second"), NullLogger.Instance);
 
         try
         {
@@ -911,7 +914,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AProcessReTakingItsOwnGuardSaysSoRatherThanReportingAReclaim()
     {
-        using var scratch = ScratchDirectory.Create("session-self-retake");
+        using var scratch = await ScratchDirectory.CreateAsync("session-self-retake");
         var (_, path) = NewSession(scratch, "self-retake");
 
         using var logs = new CapturingLoggerProvider();
@@ -919,7 +922,7 @@ internal sealed class SessionLockTests
 
         // A directory nobody has ever taken: this acquisition is Fresh, and it
         // is the positive control for the capture itself.
-        var first = SessionLock.TryAcquire(path, Request("the first"), logger);
+        var first = await SessionLock.TryAcquireAsync(path, Request("the first"), logger);
 
         try
         {
@@ -936,9 +939,9 @@ internal sealed class SessionLockTests
         // is the whole shape: the pid and the creation FILETIME in that file are
         // this process's own.
         await Assert.That(File.Exists(path.LockFile)).IsTrue();
-        await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(Environment.ProcessId);
+        await Assert.That((await LockFile.ReadAsync(path.LockFile))!.ProcessId).IsEqualTo(Environment.ProcessId);
 
-        var second = SessionLock.TryAcquire(path, Request("the second"), logger);
+        var second = await SessionLock.TryAcquireAsync(path, Request("the second"), logger);
 
         try
         {
@@ -979,7 +982,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen()
     {
-        using var scratch = ScratchDirectory.Create("session-rename");
+        using var scratch = await ScratchDirectory.CreateAsync("session-rename");
         var (directory, path) = NewSession(scratch, "rename");
 
         var temp = Path.Combine(directory, "candidate.json");
@@ -1003,7 +1006,7 @@ internal sealed class SessionLockTests
         {
             await File.WriteAllTextAsync(temp, "{}");
 
-            using var held = new FileStream(path.LockFile, FileMode.Create, FileAccess.ReadWrite, share);
+            await using var held = new FileStream(path.LockFile, FileMode.Create, FileAccess.ReadWrite, share, bufferSize: 4096, FileOptions.Asynchronous);
             var blocked = Assert.Throws<UnauthorizedAccessException>(() => File.Move(temp, path.LockFile, overwrite: true));
 
             await Assert.That(blocked!.HResult).IsEqualTo(ErrorAccessDenied);
@@ -1031,7 +1034,7 @@ internal sealed class SessionLockTests
         // is open, on a single attempt, under every share mode.
         await File.WriteAllTextAsync(temp, "{}");
 
-        using (var held = new FileStream(path.LockFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+        await using (var held = new FileStream(path.LockFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous))
         {
             await Assert.That(held.CanWrite).IsTrue();
         }
@@ -1041,7 +1044,7 @@ internal sealed class SessionLockTests
 
         // The `{}` that landed there is now a lock file this build refuses,
         // which is the strictness rule catching the experiment's own litter.
-        var refused = SessionLock.TryAcquire(path, Request("after the experiment"), NullLogger.Instance);
+        var refused = await SessionLock.TryAcquireAsync(path, Request("after the experiment"), NullLogger.Instance);
         refused.Acquired?.Dispose();
         await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
 
@@ -1049,7 +1052,7 @@ internal sealed class SessionLockTests
 
         // Which is why acquisition closes, renames and re-opens inside the
         // per-directory gate, and why that gate exists at all.
-        var result = SessionLock.TryAcquire(path, Request("after the experiment"), NullLogger.Instance);
+        var result = await SessionLock.TryAcquireAsync(path, Request("after the experiment"), NullLogger.Instance);
 
         try
         {
@@ -1057,7 +1060,7 @@ internal sealed class SessionLockTests
 
             _ = Assert.Throws<IOException>(() =>
             {
-                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 4096, FileOptions.Asynchronous);
             });
         }
         finally
@@ -1103,7 +1106,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AnAppendIsNeverObservedTornAndNeverAsAbsent()
     {
-        using var scratch = ScratchDirectory.Create("session-append");
+        using var scratch = await ScratchDirectory.CreateAsync("session-append");
         var (directory, path) = NewSession(scratch, "append");
 
         var ready = Path.Combine(scratch.Path, "ready.json");
@@ -1120,7 +1123,7 @@ internal sealed class SessionLockTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(
+            _ = await scope.LaunchAsync(
                 ProbePath,
                 AppContext.BaseDirectory,
                 "session-rewrite",
@@ -1145,7 +1148,7 @@ internal sealed class SessionLockTests
             {
                 try
                 {
-                    var record = SessionLock.ReadRecord(path);
+                    var record = await SessionLock.ReadRecordAsync(path);
                     reads++;
 
                     if (record is null)
@@ -1165,7 +1168,7 @@ internal sealed class SessionLockTests
                     if (!released)
                     {
 #pragma warning disable CA1849 // Synchronous on purpose: awaiting here yields, and a yield at this exact point is the defect being fixed -- the reader must not leave the loop between reading and saying go.
-                        File.WriteAllText($"{ready}.go", "go");
+                        await File.WriteAllTextAsync($"{ready}.go", "go");
 #pragma warning restore CA1849
                         released = true;
                     }
@@ -1192,7 +1195,7 @@ internal sealed class SessionLockTests
         // And it is still there afterwards, readable, with the writer finished --
         // so a run that somehow passed the line above while having actually lost
         // the record still fails here.
-        await Assert.That(SessionLock.ReadRecord(path)).IsNotNull();
+        await Assert.That(await SessionLock.ReadRecordAsync(path)).IsNotNull();
 
         // The reader has to have been looking, and looking WHILE the writer
         // wrote, or "never torn" is a claim about an empty observation.
@@ -1206,10 +1209,10 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ADirectoryThatDoesNotExistIsRefusedRatherThanCreated()
     {
-        using var scratch = ScratchDirectory.Create("session-missing");
+        using var scratch = await ScratchDirectory.CreateAsync("session-missing");
         var path = SessionPath.For(Path.Combine(scratch.Path, "never-created"));
 
-        var result = SessionLock.TryAcquire(path, Request("nowhere"), NullLogger.Instance);
+        var result = await SessionLock.TryAcquireAsync(path, Request("nowhere"), NullLogger.Instance);
 
         await Assert.That(result.Outcome).IsEqualTo(SessionLockOutcome.DirectoryMissing);
         await Assert.That(result.Taken).IsFalse();
@@ -1219,10 +1222,10 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ALockFileWithAnUnknownKeyIsRefusedAndTheDirectoryIsLeftAlone()
     {
-        using var scratch = ScratchDirectory.Create("session-strict");
+        using var scratch = await ScratchDirectory.CreateAsync("session-strict");
         var (_, path) = NewSession(scratch, "strict");
 
-        var first = SessionLock.TryAcquire(path, Request("the original"), NullLogger.Instance);
+        var first = await SessionLock.TryAcquireAsync(path, Request("the original"), NullLogger.Instance);
         first.Acquired!.Dispose();
 
         var original = await File.ReadAllTextAsync(path.LockFile);
@@ -1230,7 +1233,7 @@ internal sealed class SessionLockTests
 
         await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""processId""", @"""processld""", StringComparison.Ordinal));
 
-        var refused = SessionLock.TryAcquire(path, Request("after the edit"), NullLogger.Instance);
+        var refused = await SessionLock.TryAcquireAsync(path, Request("after the edit"), NullLogger.Instance);
 
         try
         {
@@ -1297,7 +1300,7 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AWriteThatLandedSaysSoAndOnlyAWriteThatDidNotSaysNothingChanged()
     {
-        using var scratch = ScratchDirectory.Create("session-write-landed");
+        using var scratch = await ScratchDirectory.CreateAsync("session-write-landed");
         var (_, landed) = NewSession(scratch, "reopen-refused");
 
         SessionLockResult refused;
@@ -1306,7 +1309,7 @@ internal sealed class SessionLockTests
         // teardown has to delete a tree it cannot enumerate.
         using (DirectoryDenial.Apply(landed.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
         {
-            refused = SessionLock.TryAcquire(landed, Request("the record lands and the re-open is refused"), NullLogger.Instance);
+            refused = await SessionLock.TryAcquireAsync(landed, Request("the record lands and the re-open is refused"), NullLogger.Instance);
         }
 
         refused.Acquired?.Dispose();
@@ -1323,7 +1326,7 @@ internal sealed class SessionLockTests
         // holder, so the file is read back and asked both questions. An answer
         // that merely stopped saying "nothing was changed" would pass every
         // assertion above and prove nothing about the disk.
-        var written = LockFile.Read(landed.LockFile);
+        var written = await LockFile.ReadAsync(landed.LockFile);
 
         await Assert.That(written).IsNotNull();
         await Assert.That(written!.ProcessId).IsEqualTo(Environment.ProcessId);
@@ -1336,7 +1339,7 @@ internal sealed class SessionLockTests
 
         using (DirectoryDenial.Apply(never.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
         {
-            unwritten = SessionLock.TryAcquire(never, Request("the write never lands"), NullLogger.Instance);
+            unwritten = await SessionLock.TryAcquireAsync(never, Request("the write never lands"), NullLogger.Instance);
         }
 
         unwritten.Acquired?.Dispose();
@@ -1385,20 +1388,20 @@ internal sealed class SessionLockTests
     [Test]
     public async Task TheOwnershipHandleIsHeldAcrossEveryWriteIncludingOneThatFails()
     {
-        using var scratch = ScratchDirectory.Create("session-write-continuity");
+        using var scratch = await ScratchDirectory.CreateAsync("session-write-continuity");
         var (_, path) = NewSession(scratch, "write-continuity");
 
-        var taken = SessionLock.TryAcquire(path, Request("about to write"), NullLogger.Instance);
+        var taken = await SessionLock.TryAcquireAsync(path, Request("about to write"), NullLogger.Instance);
         var held = taken.Acquired!;
 
         try
         {
-            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse();
+            await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse();
 
             held.AppendPurpose("a purpose written while the directory is held");
 
             // THE PROPERTY, mid-session: the guard was never let go.
-            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse();
+            await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse();
             await Assert.That(held.Record.Purpose).IsEqualTo("a purpose written while the directory is held");
 
             // A write that throws. `ReleaseAndDelete` and `Dispose` are the only
@@ -1424,7 +1427,7 @@ internal sealed class SessionLockTests
             }
 
             // ⚠️ THE CLAIM. However that ended, the directory is still ours.
-            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse()
+            await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsFalse()
                 .Because("a write that failed must not also release the directory: the ownership handle is opened once at acquisition and closed once at disposal, and nothing in between may touch it");
         }
         finally
@@ -1434,7 +1437,7 @@ internal sealed class SessionLockTests
 
         // And disposal really does release it, so the assertion above is not
         // vacuously true of a handle nothing could ever take.
-        await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsTrue();
+        await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsTrue();
     }
 
     /// <summary>
@@ -1489,22 +1492,31 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle()
     {
-        using var scratch = ScratchDirectory.Create("session-destroy-races-disposal");
+        using var scratch = await ScratchDirectory.CreateAsync("session-destroy-races-disposal");
         var (_, path) = NewSession(scratch, "destroy-races-disposal");
 
-        var taken = SessionLock.TryAcquire(path, Request("about to be destroyed twice at once"), NullLogger.Instance);
+        var taken = await SessionLock.TryAcquireAsync(path, Request("about to be destroyed twice at once"), NullLogger.Instance);
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
 
         using var disposalReached = new ManualResetEventSlim(false);
+        var disposalEnded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var disposal = new Thread(() =>
         {
             // Set BEFORE the call, so "the thread never ran" is a different
             // observation from "the disposal returned", and the join below
             // cannot be satisfied by a scheduler that ignored this thread.
             disposalReached.Set();
-            held.Dispose();
+
+            try
+            {
+                held.Dispose();
+            }
+            finally
+            {
+                _ = disposalEnded.TrySetResult();
+            }
         })
         {
             IsBackground = true,
@@ -1513,7 +1525,7 @@ internal sealed class SessionLockTests
 
         var disposalReturnedMidDelete = false;
 
-        held.ReleaseAndDelete(() =>
+        await held.ReleaseAndDeleteAsync(() =>
         {
             disposal.Start();
             _ = disposalReached.Wait(TestDefaults.InProcessHang);
@@ -1527,8 +1539,9 @@ internal sealed class SessionLockTests
         });
 
         // Unbounded would be a hang; this is the suite's in-process hang
-        // detector and nothing asserts on it beyond "it finished".
-        await Assert.That(disposal.Join(TestDefaults.InProcessHang)).IsTrue();
+        // detector and nothing asserts on it beyond "it finished". Awaited since
+        // 2026-10-11 (previously a join of the thread).
+        await disposalEnded.Task.WaitAsync(TestDefaults.InProcessHang);
 
         await Assert.That(disposalReturnedMidDelete).IsFalse()
             .Because(
@@ -1540,7 +1553,7 @@ internal sealed class SessionLockTests
         // THE LEAK ITSELF. Both threads are done and the session is released, so
         // nothing may still be holding the guard -- and a stranger's exclusive
         // open is the same question a competing BrowserAI's TryAcquire asks.
-        await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsTrue()
+        await Assert.That(await NothingHoldsTheLockFileAsync(path.LockFile)).IsTrue()
             .Because($"'{path.LockFile}' is still held after the session that owned it was disposed, which is the end state finding B4 describes");
     }
 
@@ -1575,15 +1588,16 @@ internal sealed class SessionLockTests
     [Test]
     public async Task AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting()
     {
-        using var scratch = ScratchDirectory.Create("session-rewrite-races-destroy");
+        using var scratch = await ScratchDirectory.CreateAsync("session-rewrite-races-destroy");
         var (_, path) = NewSession(scratch, "rewrite-races-destroy");
 
-        var taken = SessionLock.TryAcquire(path, Request("about to be released and deleted"), NullLogger.Instance);
+        var taken = await SessionLock.TryAcquireAsync(path, Request("about to be released and deleted"), NullLogger.Instance);
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
 
         using var rewriteReached = new ManualResetEventSlim(false);
+        var rewriteEnded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? rewriteFailure = null;
 
         var rewrite = new Thread(() =>
@@ -1600,6 +1614,10 @@ internal sealed class SessionLockTests
             {
                 rewriteFailure = failure;
             }
+            finally
+            {
+                _ = rewriteEnded.TrySetResult();
+            }
         })
         {
             IsBackground = true,
@@ -1608,7 +1626,7 @@ internal sealed class SessionLockTests
 
         var rewriteReturnedMidDelete = false;
 
-        held.ReleaseAndDelete(() =>
+        await held.ReleaseAndDeleteAsync(() =>
         {
             rewrite.Start();
             _ = rewriteReached.Wait(TestDefaults.InProcessHang);
@@ -1621,7 +1639,7 @@ internal sealed class SessionLockTests
             TreeDelete.Remove(path.FullPath, []);
         });
 
-        await Assert.That(rewrite.Join(TestDefaults.InProcessHang)).IsTrue();
+        await rewriteEnded.Task.WaitAsync(TestDefaults.InProcessHang);
 
         await Assert.That(rewriteReturnedMidDelete).IsFalse()
             .Because(
@@ -1668,12 +1686,12 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ATransientHandleIsWaitedOutByTheHoldAndAPermanentOneIsStillReported()
     {
-        using var scratch = ScratchDirectory.Create("session-transient");
+        using var scratch = await ScratchDirectory.CreateAsync("session-transient");
         var (_, path) = NewSession(scratch, "transient");
 
         // A real guard, written by the product, then released -- so the file on
         // disk is exactly what a hold meets.
-        SessionLock.TryAcquire(path, Request("the guard the hold is for"), NullLogger.Instance).Acquired!.Dispose();
+        (await SessionLock.TryAcquireAsync(path, Request("the guard the hold is for"), NullLogger.Instance)).Acquired!.Dispose();
 
         var holder = LockFileHolder.ForThisProcess();
 
@@ -1684,13 +1702,13 @@ internal sealed class SessionLockTests
         // a probe that lands in the instant after this process's own rename and
         // before its own hold -- so the guard is written first, and the handle
         // is taken on the file that is now on disk.
-        LockFile.Write(path.LockFile, holder);
+        await LockFile.WriteAsync(path.LockFile, holder);
 
         // The liveness probe's open, mode for mode: ReadWrite access so a holder
         // refuses it, ReadWrite | Delete sharing so it does not refuse a
         // concurrent rename. The granted ReadWrite is what refuses a holder's
         // FileShare.Read open, and no share mode can take that away.
-        var transient = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+        var transient = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1, FileOptions.Asynchronous);
 
         try
         {
@@ -1698,15 +1716,15 @@ internal sealed class SessionLockTests
             // that handle lives, a holder's own open really is refused.
             _ = Assert.Throws<IOException>(() =>
             {
-                using var refused = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+                using var refused = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
             });
 
             var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            var take = Task.Run(() =>
+            var take = Task.Run(async () =>
             {
                 entered.SetResult();
-                return RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(path.LockFile));
+                return await RenameWindow.WaitOutWhereNoOwnerIsPossibleAsync(() => LockFile.Hold(path.LockFile));
             });
 
             await entered.Task;
@@ -1733,10 +1751,10 @@ internal sealed class SessionLockTests
 
         // The other arm. A handle nothing releases is not a peer passing over the
         // file, and the wait is bounded so that it is still reported.
-        using var permanent = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+        await using var permanent = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1, FileOptions.Asynchronous);
 
-        var reported = Assert.Throws<IOException>(() =>
-            RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(path.LockFile)).Dispose());
+        var reported = await Assert.ThrowsAsync<IOException>(async () =>
+            (await RenameWindow.WaitOutWhereNoOwnerIsPossibleAsync(() => LockFile.Hold(path.LockFile))).Dispose());
 
         await Assert.That(RenameWindow.IsSharingViolation(reported!)).IsTrue().Because(reported!.Message);
     }
@@ -1774,10 +1792,10 @@ internal sealed class SessionLockTests
     [Test]
     public async Task ARequestThatRefusesAnExistingRecordIsAnsweredUnderTheGateAndChangesNothing()
     {
-        using var scratch = ScratchDirectory.Create("session-already");
+        using var scratch = await ScratchDirectory.CreateAsync("session-already");
         var (_, path) = NewSession(scratch, "already");
 
-        var first = SessionLock.TryAcquire(
+        var first = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "firefox", Purpose = "the session that is already here" },
             NullLogger.Instance);
@@ -1786,7 +1804,7 @@ internal sealed class SessionLockTests
 
         var before = await File.ReadAllTextAsync(path.LockFile);
 
-        var refused = SessionLock.TryAcquire(
+        var refused = await SessionLock.TryAcquireAsync(
             path,
             new SessionLockRequest { Browser = "chromium", Purpose = "an init that should have been a resume", RefuseAnExistingRecord = true },
             NullLogger.Instance);
@@ -1810,7 +1828,7 @@ internal sealed class SessionLockTests
 
         // The other arm: without the flag the same directory is reclaimed, which
         // is what `resume`, `destroy` and `change_purpose` all depend on.
-        var reclaimed = SessionLock.TryAcquire(path, Request("a resume"), NullLogger.Instance);
+        var reclaimed = await SessionLock.TryAcquireAsync(path, Request("a resume"), NullLogger.Instance);
 
         try
         {
@@ -1834,8 +1852,9 @@ internal sealed class SessionLockTests
     /// else can hold is <i>which</i> opens use it, because reaching a post-write
     /// hold with a peer's handle really open needs a photo finish this suite will
     /// not reliably win. So this reads the files as text, which is what
-    /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c> does for
-    /// the same class of pairing.
+    /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c> did for
+    /// the same class of pairing until 2026-10-11, when every <c>WaitForExit</c>
+    /// overload was banned and that scan was deleted.
     /// </para>
     /// <para>
     /// <b>Getting it backwards in either direction is a defect.</b> An ownership
@@ -1911,20 +1930,20 @@ internal sealed class SessionLockTests
     [Test]
     public async Task EveryLogRecordWrittenWhileTheLockIsHeldCarriesTheSession()
     {
-        using var logs = ScratchDirectory.Create("session-log-scope");
-        using var scratch = ScratchDirectory.Create("session-log-scope-dir");
+        using var logs = await ScratchDirectory.CreateAsync("session-log-scope");
+        using var scratch = await ScratchDirectory.CreateAsync("session-log-scope-dir");
         var (_, path) = NewSession(scratch, "logged");
 
         using (var log = ProcessLog.Create(new LocalAppDataPaths(logs.Path), LogLevel.Trace))
         {
             var logger = log.Factory.CreateLogger("BrowserAI.Tests");
-            var result = SessionLock.TryAcquire(path, Request("watched"), NullLogger.Instance);
+            var result = await SessionLock.TryAcquireAsync(path, Request("watched"), NullLogger.Instance);
             result.Acquired?.Dispose();
 
             // Taken again with the real logger, so that both the acquire record
             // and a record written by unrelated code inside the scope are
             // covered.
-            var watched = SessionLock.TryAcquire(path, Request("watched"), logger);
+            var watched = await SessionLock.TryAcquireAsync(path, Request("watched"), logger);
 
             try
             {
@@ -1943,7 +1962,7 @@ internal sealed class SessionLockTests
             }
         }
 
-        var text = ProbeProcess.ReadProcessLog(logs.Path);
+        var text = await ProbeProcess.ReadProcessLogAsync(logs.Path);
         var scope = $"{{session={path.FullPath}}}";
 
         foreach (var line in text.Split('\n').Where(line => line.Contains("something a session did", StringComparison.Ordinal)
@@ -1977,7 +1996,7 @@ internal sealed class SessionLockTests
     /// <param name="outcomes">What each contender wrote.</param>
     /// <param name="path">The session every one of them was racing for.</param>
     /// <returns>The dossier, for a failure message.</returns>
-    private static string Dossier(IReadOnlyList<JsonNode> outcomes, SessionPath path)
+    private static async Task<string> DossierAsync(IReadOnlyList<JsonNode> outcomes, SessionPath path)
     {
         var lines = new StringBuilder();
 
@@ -2002,7 +2021,7 @@ internal sealed class SessionLockTests
         // The host's own look, taken while the winner still holds: a contender
         // describing the file it could not read is one witness, and this is the
         // second.
-        _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"The host, with the winner still holding, reads: {StateOfTheLockFile(path.LockFile).Description}");
+        _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"The host, with the winner still holding, reads: {(await StateOfTheLockFileAsync(path.LockFile)).Description}");
 
         return lines.ToString();
     }
@@ -2067,7 +2086,7 @@ internal sealed class SessionLockTests
     /// </remarks>
     /// <param name="lockFile">The session's <c>browserai.lock</c>.</param>
     /// <returns>Whether it could be opened with no sharing at all.</returns>
-    private static bool NothingHoldsTheLockFile(string lockFile)
+    private static async Task<bool> NothingHoldsTheLockFileAsync(string lockFile)
     {
         if (!File.Exists(lockFile))
         {
@@ -2076,7 +2095,7 @@ internal sealed class SessionLockTests
 
         try
         {
-            using var exclusive = new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None, bufferSize: 1);
+            await using var exclusive = new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None, bufferSize: 1, FileOptions.Asynchronous);
 
             return true;
         }
@@ -2092,12 +2111,12 @@ internal sealed class SessionLockTests
     /// </summary>
     /// <param name="lockFile">The lock file.</param>
     /// <returns>Its bytes, as text.</returns>
-    private static string ReadBesideTheHolder(string lockFile)
+    private static async Task<string> ReadBesideTheHolderAsync(string lockFile)
     {
-        using var stream = new FileStream(lockFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+        await using var stream = new FileStream(lockFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     private static SessionLockRequest Request(string purpose) =>
@@ -2119,7 +2138,7 @@ internal sealed class SessionLockTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, ready);
+            _ = await scope.LaunchAsync(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, ready);
 
             var report = await ProbeReport.ReadAsync(ready, Patience);
 
@@ -2174,7 +2193,7 @@ internal sealed class SessionLockTests
     /// </remarks>
     /// <param name="lockFile">The lock file that read as no record.</param>
     /// <returns>What the machine says, for the decision and for the message.</returns>
-    private static LockFileState StateOfTheLockFile(string lockFile)
+    private static async Task<LockFileState> StateOfTheLockFileAsync(string lockFile)
     {
         var exists = File.Exists(lockFile);
         var length = -1L;
@@ -2203,7 +2222,7 @@ internal sealed class SessionLockTests
             temps = -1;
         }
 
-        var reread = SessionLock.ReadRecord(SessionPath.For(directory)) is not null;
+        var reread = await SessionLock.ReadRecordAsync(SessionPath.For(directory)) is not null;
 
         return new LockFileState(
             temps > 0,

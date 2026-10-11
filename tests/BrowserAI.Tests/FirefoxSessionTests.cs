@@ -114,15 +114,15 @@ internal sealed class FirefoxSessionTests
     [Test]
     public async Task AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedFirefox();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedFirefoxAsync();
 
-        using var scratch = ScratchDirectory.Create("firefox-front-door");
+        using var scratch = await ScratchDirectory.CreateAsync("firefox-front-door");
 
         // The job this client owns is the containment net: an assertion that
         // throws below closes it, and KILL_ON_JOB_CLOSE takes the browser with
         // it. Nothing in this file terminates anything by name.
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -150,7 +150,7 @@ internal sealed class FirefoxSessionTests
         // the family back out of this file, and an answer that says firefox over
         // a record that says chromium is the failure this whole feature is
         // arranged around.
-        var record = SessionLock.ReadRecord(SessionPath.For(session));
+        var record = await SessionLock.ReadRecordAsync(SessionPath.For(session));
 
         await Assert.That(record).IsNotNull();
         await Assert.That(record!.Browser).IsEqualTo(ProvisionedBrowsers.Firefox);
@@ -340,7 +340,7 @@ internal sealed class FirefoxSessionTests
     [Test]
     public async Task InitRefusesAFamilyThisBuildDoesNotProvisionAndNamesTheOnesItDoes()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var refused = await CallAsync(rig.Client, SessionToolSurface.Init, new JsonObject
@@ -380,7 +380,7 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That((bool?)created["isError"]).IsFalse();
 
-        var record = SessionLock.ReadRecord(SessionPath.For(Path.Combine(sessions.Root, "shouty")));
+        var record = await SessionLock.ReadRecordAsync(SessionPath.For(Path.Combine(sessions.Root, "shouty")));
 
         await Assert.That(record!.Browser).IsEqualTo(ProvisionedBrowsers.Chromium);
     }
@@ -399,7 +399,7 @@ internal sealed class FirefoxSessionTests
     [Test]
     public async Task ReinstallRefusesACallThatNamesNoFamily()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var refused = await CallAsync(rig.Client, SessionToolSurface.ReinstallBrowser, []);
@@ -424,7 +424,7 @@ internal sealed class FirefoxSessionTests
     [Test]
     public async Task ReinstallRefusesAFamilyThisBuildDoesNotProvision()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var refused = await CallAsync(rig.Client, SessionToolSurface.ReinstallBrowser, new JsonObject

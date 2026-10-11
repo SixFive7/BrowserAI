@@ -230,7 +230,7 @@ internal sealed class DirectStdioServerTransportTests
 
         // On the event and not on a clock: the loop has to be genuinely
         // inside the read before disposal means anything at all.
-        await Assert.That(caller.WaitUntilParked(Patience)).IsTrue();
+        await Assert.That(await caller.WaitUntilParkedAsync(Patience)).IsTrue();
 
         var released = true;
 
@@ -245,25 +245,32 @@ internal sealed class DirectStdioServerTransportTests
 
         await Assert.That(released).IsTrue();
 
-        // Let the abandoned read go, so the pool thread is not held for the rest
-        // of the run.
+        // Let the abandoned read go, so it does not outlive the arm.
         caller.Release();
     }
 
     /// <summary>
-    /// A stream whose <c>Read</c> parks until it is released, the way a console
+    /// A stream whose read parks until it is released, the way a console
     /// standard input parks until somebody types.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Disposing it does not release the read</b>, deliberately: that is the
     /// property <c>Console.OpenStandardInput()</c> has and the one the defect
     /// rested on. A double that unblocked on <c>Dispose</c> would make the
     /// broken transport pass.
+    /// </para>
+    /// <para>
+    /// <b>The read is awaited since 2026-10-11</b>, the maintainer's decision 54, and holds
+    /// no thread while it is parked; a cancellation does not release it either, for the
+    /// same reason. <i>Previously a synchronous <c>Read</c> that parked a pool thread on an
+    /// event.</i>
+    /// </para>
     /// </remarks>
     private sealed class ParkedStream : Stream
     {
-        private readonly ManualResetEventSlim _parked = new(initialState: false);
-        private readonly ManualResetEventSlim _released = new(initialState: false);
+        private readonly TaskCompletionSource _parked = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _released = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public override bool CanRead => true;
 
@@ -282,18 +289,34 @@ internal sealed class DirectStdioServerTransportTests
         /// <summary>Waits until a read is actually parked inside this stream.</summary>
         /// <param name="patience">A hang detector, never a budget.</param>
         /// <returns>Whether one is.</returns>
-        public bool WaitUntilParked(TimeSpan patience) => _parked.Wait(patience);
+        public async Task<bool> WaitUntilParkedAsync(TimeSpan patience)
+        {
+            try
+            {
+                await _parked.Task.WaitAsync(patience);
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                return false;
+            }
+        }
 
         /// <summary>Lets the parked read return end-of-stream.</summary>
-        public void Release() => _released.Set();
+        public void Release() => _ = _released.TrySetResult();
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            _parked.Set();
-            _released.Wait();
+            _ = _parked.TrySetResult();
+            await _released.Task;
 
             return 0;
         }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException("The suite's parked stream is read with ReadAsync.");
 
         public override void Flush()
         {
@@ -307,12 +330,6 @@ internal sealed class DirectStdioServerTransportTests
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                _parked.Dispose();
-                _released.Dispose();
-            }
-
             base.Dispose(disposing);
         }
     }

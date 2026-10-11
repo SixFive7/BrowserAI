@@ -252,7 +252,7 @@ internal sealed class DirectStdioClientTransportTests
         // Downward as well as upward. The SDK's own client session transport
         // would have sent \u0060 and \u00e9 here; the bytes the child actually
         // received say which happened.
-        var received = child.ReceivedFrameBytes();
+        var received = await child.ReceivedFrameBytesAsync();
         await Assert.That(Contains(received, Encoding.UTF8.GetBytes(AwkwardText))).IsTrue();
         await Assert.That(Contains(received, "\\u0060"u8)).IsFalse();
     }

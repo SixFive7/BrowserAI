@@ -69,8 +69,8 @@ internal static class ProcessLogRecords
     /// The creation-time half, as <c>ProcessIdentity.CreationTimeOf</c> reads it.
     /// </param>
     /// <returns>Its records, joined, or an empty string if it wrote none.</returns>
-    public static string For(int processId, long createdFileTime) =>
-        In(BrowserAiPaths.Real.LogDirectory, processId, createdFileTime);
+    public static async Task<string> ForAsync(int processId, long createdFileTime) =>
+        await InAsync(BrowserAiPaths.Real.LogDirectory, processId, createdFileTime);
 
     /// <summary>
     /// The same read, against a nominated log directory.
@@ -87,7 +87,7 @@ internal static class ProcessLogRecords
     /// <param name="processId">The pid half of the writer's identity.</param>
     /// <param name="createdFileTime">The creation-time half.</param>
     /// <returns>Its records, joined, or an empty string if it wrote none.</returns>
-    public static string In(string directory, int processId, long createdFileTime)
+    public static async Task<string> InAsync(string directory, int processId, long createdFileTime)
     {
         if (!Directory.Exists(directory))
         {
@@ -112,9 +112,9 @@ internal static class ProcessLogRecords
                 // FileShare.ReadWrite | Delete because a hundred other BrowserAIs
                 // may be appending to this file right now, and a reader must
                 // never be locked out of the log it came to read.
-                using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
                 using var reader = new StreamReader(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-                text = reader.ReadToEnd();
+                text = await reader.ReadToEndAsync();
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {

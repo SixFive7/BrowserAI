@@ -41,7 +41,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task EveryAuthoredToolIsAdvertisedAndAnswers()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
 
@@ -121,7 +121,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task InitRefusesADirectoryThatIsAlreadyASessionAndNamesWhatItFound()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("initAgain");
@@ -160,7 +160,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task AMovedSessionResumesWithARepairedRecordAndACopiedOneIsToldWhatItIs()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
 
@@ -174,7 +174,7 @@ internal sealed class SessionToolTests
 
         // The record really was repaired, instead of the note merely being
         // printed: the file now names where the directory is.
-        var record = SessionLock.ReadRecord(SessionPath.For(moved));
+        var record = await SessionLock.ReadRecordAsync(SessionPath.For(moved));
         await Assert.That(record?.Directory).IsEqualTo(moved);
 
         // And the repair is a STATEMENT in the record and not only a note in
@@ -213,7 +213,7 @@ internal sealed class SessionToolTests
         // The history is in the record too, ordered, and it is the WHOLE lineage:
         // this directory was created as gamma, moved to gamma-moved and copied to
         // gamma-copy, and every one of those is a dated statement.
-        var copiedRecord = SessionLock.ReadRecord(SessionPath.For(copy));
+        var copiedRecord = await SessionLock.ReadRecordAsync(SessionPath.For(copy));
 
         await Assert.That(copiedRecord!.DirectoryHistory.Select(statement => statement.Value).ToArray())
             .IsEquivalentTo([gamma, moved, copy]);
@@ -227,7 +227,7 @@ internal sealed class SessionToolTests
 
         // The original is untouched by the copy having been resumed -- two
         // separate sessions now, which is the sentence the answer prints.
-        var original = SessionLock.ReadRecord(SessionPath.For(moved));
+        var original = await SessionLock.ReadRecordAsync(SessionPath.For(moved));
 
         await Assert.That(original!.Directory).IsEqualTo(moved);
     }
@@ -235,7 +235,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task AnAbsentEmptyRelativeOrMalformedDirectoryIsRejectedByBothInitAndResume()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var offenders = new List<string>();
@@ -303,7 +303,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ResumeRefusesABrowserArgumentAndADirectoryThatIsNotASession()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
 
@@ -322,7 +322,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task DestroyRefusesDocumentsAndSurvivesAFileItCannotRemove()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
@@ -354,7 +354,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ListReportsWhatIsUnderAPathAndNothingElse()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("list");
@@ -378,7 +378,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task SetPurposeReplacesThePurposeAndReturnsThePreviousOne()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("setPurpose");
@@ -387,7 +387,7 @@ internal sealed class SessionToolTests
         await Assert.That(text).Contains("the first session's purpose");
 
         // The history keeps both, so nothing a previous agent wrote is lost.
-        var record = SessionLock.ReadRecord(SessionPath.For(Path.Combine(run.Root, "alpha")));
+        var record = await SessionLock.ReadRecordAsync(SessionPath.For(Path.Combine(run.Root, "alpha")));
 
         await Assert.That(record?.Purpose).IsEqualTo("a purpose set after the fact");
         await Assert.That(record!.PurposeHistory.Any(statement => statement.Value == "the first session's purpose")).IsTrue();
@@ -401,7 +401,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ACallNamingASessionThisProcessIsNotDrivingIsToldHowToOpenIt()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
 
@@ -438,7 +438,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ASessionsRecordsCarryItsDirectoryAndItsCallsAreInItsOwnRecord()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SessionRun.SharedAsync();
         var alpha = Path.Combine(run.Root, "alpha");

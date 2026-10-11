@@ -42,7 +42,7 @@ namespace BrowserAI.Tests;
 /// scratch directory with a <c>config.toml</c> this file writes; the model is a
 /// local HTTP stub, so <b>no credential is used and no inference happens
 /// anywhere</b>; and <see cref="BrowserAiPaths.DataRootArgument"/> points the
-/// server BrowserAI's own data root at <see cref="ScratchRoot.ProfileScratch"/>
+/// server BrowserAI's own data root at <see cref="ScratchRoot.ProfileScratchAsync"/>
 /// (<i>the argument since 2026-10-08, step 5 of the one-binary build; previously
 /// <c>BROWSERAI_ROOT</c> in each client's configuration</i>).
 /// </para>
@@ -110,25 +110,25 @@ internal sealed class ClientReconnectTests
     [Test]
     public async Task ARealClaudeCodeMeetsTheRefusalOnceAndItsRetryGoesThrough()
     {
-        var client = SuiteEnvironment.RequireClientCommandLine();
+        var client = await SuiteEnvironment.RequireClientCommandLineAsync();
 
         PublishedSlice.EnsureFresh();
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var run = $"suite-cc-{Guid.NewGuid():N}"[..20];
-        var work = Directory.CreateDirectory(Path.Combine(ScratchRoot.Path, run));
+        var work = Directory.CreateDirectory(Path.Combine(await ScratchRoot.PathAsync(), run));
         var port = FreePort();
 
-        var configuration = OnboardedClientConfig.Seed(Path.Combine(work.FullName, "cfg"));
+        var configuration = await OnboardedClientConfig.SeedAsync(Path.Combine(work.FullName, "cfg"));
         var project = Directory.CreateDirectory(Path.Combine(work.FullName, "proj")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
-        var appRoot = ScratchRoot.CreateUnderProfile(run);
+        var appRoot = await ScratchRoot.CreateUnderProfileAsync(run);
 
         var arguments = new JsonObject { ["directory"] = sessions }.ToJsonString();
         var call = $"tool:mcp__browserai__{SessionToolSurface.List}:{arguments}";
 
         // The background both relays reach, the first and the one re-dialled.
-        await using var background = BackgroundOver(appRoot, work);
+        await using var background = await BackgroundOverAsync(appRoot, work);
 
         var mcp = Path.Combine(work.FullName, "mcp.json");
 
@@ -154,7 +154,7 @@ internal sealed class ClientReconnectTests
             },
         }.ToJsonString());
 
-        using var stub = StartNode(
+        using var stub = await StartNodeAsync(
             Path.Combine(Rig, "apistub.js"),
             work,
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -169,7 +169,7 @@ internal sealed class ClientReconnectTests
                 ["STUB_SCRIPT"] = $"{call}||{call}||{call}||{call}||text:done",
             });
 
-        using var claude = StartProcess(client, project, new Dictionary<string, string>(StringComparer.Ordinal)
+        using var claude = await StartProcessAsync(client, project, new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["CLAUDE_CONFIG_DIR"] = configuration,
             ["ANTHROPIC_BASE_URL"] = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}",
@@ -191,14 +191,14 @@ internal sealed class ClientReconnectTests
 
         await WaitFor(claude, "the real client's headless run");
 
-        var wire = Wire(Path.Combine(work.FullName, $"{run}.wire.jsonl"));
+        var wire = await WireAsync(Path.Combine(work.FullName, $"{run}.wire.jsonl"));
         var connections = wire.Select(frame => frame.Shim).Distinct().ToList();
 
         // ⚠️ THE PREMISE, ASSERTED BEFORE ANYTHING ELSE. Every claim below is
         // about a SECOND server, and a client that did not re-dial produces one --
         // at which point the arm would pass by asserting nothing.
         await Assert.That(connections.Count).IsEqualTo(2)
-            .Because($"the client had to re-dial BrowserAI for this arm to be about anything. What it said: {WhatItSaid(work, client)}");
+            .Because($"the client had to re-dial BrowserAI for this arm to be about anything. What it said: {await WhatItSaidAsync(work, client)}");
 
         var second = wire.Where(frame => frame.Shim == connections[^1]).ToList();
 
@@ -230,7 +230,7 @@ internal sealed class ClientReconnectTests
             served!,
             KnownClients.ClaudeCode);
 
-        var received = ToolResults(Path.Combine(work.FullName, $"{run}.requests.jsonl"));
+        var received = await ToolResultsAsync(Path.Combine(work.FullName, $"{run}.requests.jsonl"));
 
         // Its sentences and, since 2026-10-04 (2 b), the server's tool list after
         // them, which ToolListInRefusalsTests holds tool by tool.
@@ -260,18 +260,18 @@ internal sealed class ClientReconnectTests
     [Test]
     public async Task ARealCodexThreadListsAtFirstConnectAndIsNeverRefused()
     {
-        var codex = SuiteEnvironment.RequireCodexCommandLine();
+        var codex = await SuiteEnvironment.RequireCodexCommandLineAsync();
 
         PublishedSlice.EnsureFresh();
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var run = $"suite-cx-{Guid.NewGuid():N}"[..20];
-        var work = Directory.CreateDirectory(Path.Combine(ScratchRoot.Path, run));
+        var work = Directory.CreateDirectory(Path.Combine(await ScratchRoot.PathAsync(), run));
         var home = Directory.CreateDirectory(Path.Combine(work.FullName, "codexhome")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
-        var appRoot = ScratchRoot.CreateUnderProfile(run);
+        var appRoot = await ScratchRoot.CreateUnderProfileAsync(run);
 
-        await using var background = BackgroundOver(appRoot, work);
+        await using var background = await BackgroundOverAsync(appRoot, work);
 
         // TOML, and the quoting is why it is written here and not composed by a
         // helper: every path goes in as a JSON string so a backslash cannot end a
@@ -314,7 +314,7 @@ internal sealed class ClientReconnectTests
                 },
             }).ToJsonString();
 
-        using var driver = StartNode(
+        using var driver = await StartNodeAsync(
             Path.Combine(Rig, "appserver.js"),
             work,
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -327,7 +327,7 @@ internal sealed class ClientReconnectTests
 
         await WaitFor(driver, "the real Codex app-server run");
 
-        var wire = Wire(Path.Combine(work.FullName, $"{run}.wire.jsonl"));
+        var wire = await WireAsync(Path.Combine(work.FullName, $"{run}.wire.jsonl"));
 
         // The premise: it connected at all. Without this the two assertions below
         // are both true of an empty file.
@@ -428,19 +428,19 @@ internal sealed class ClientReconnectTests
     [Test]
     public async Task ABrowserAiRegisteredInCodexServesACallAndLeavesNothingThatHoldsAnUpdate()
     {
-        var codex = SuiteEnvironment.RequireCodexCommandLine();
+        var codex = await SuiteEnvironment.RequireCodexCommandLineAsync();
 
         PublishedSlice.EnsureFresh();
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var run = $"suite-cu-{Guid.NewGuid():N}"[..20];
-        var work = Directory.CreateDirectory(Path.Combine(ScratchRoot.Path, run));
+        var work = Directory.CreateDirectory(Path.Combine(await ScratchRoot.PathAsync(), run));
         var home = Directory.CreateDirectory(Path.Combine(work.FullName, "codexhome")).FullName;
         var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
         var install = Directory.CreateDirectory(Path.Combine(work.FullName, "install")).FullName;
-        var appRoot = ScratchRoot.CreateUnderProfile(run);
+        var appRoot = await ScratchRoot.CreateUnderProfileAsync(run);
 
-        await using var background = BackgroundOver(appRoot, work);
+        await using var background = await BackgroundOverAsync(appRoot, work);
 
         var current = Path.Combine(install, RegistrationTarget.CurrentDirectoryName);
 
@@ -462,16 +462,16 @@ internal sealed class ClientReconnectTests
         // ⚠️ THE HOME IS PROVEN BEFORE ANYTHING IS WRITTEN: RegisterAI names the
         // configuration it reads, and a variable that did not reach it would name
         // the person's own.
-        var before = RegistrationReader.Read(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!)[0];
+        var before = (await RegistrationReader.ReadAsync(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!))[0];
 
         await Assert.That(before.UserScope.File).IsEqualTo(Path.Combine(home, "config.toml"));
 
-        var registered = McpRegistrar.Apply(
+        var registered = await McpRegistrar.ApplyAsync(
             RegistrationClient.Codex, RegistrationIntent.Install, image, tool, NullLogger.Instance);
 
         await Assert.That(registered.Status).IsEqualTo(RegistrationStatus.Registered).Because(registered.Detail);
 
-        var listed = RegistrationReader.Read(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!)[0];
+        var listed = (await RegistrationReader.ReadAsync(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!))[0];
 
         await Assert.That(listed.UserScope.Command).IsEqualTo(server);
         await Assert.That(listed.UserScope.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
@@ -482,7 +482,7 @@ internal sealed class ClientReconnectTests
         // drop, BROWSERAI_ROOT, which no running BrowserAI reads any more), and since
         // 2026-10-09 the pipe of the background the arm started, which a build that is
         // not installed is given (D11 a).
-        var sandboxed = tool.Run(
+        var sandboxed = await tool.RunAsync(
             [
                 "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
                 "--owned-root", install, "--replace", "--", server, RegistrationTarget.McpArgument, BrowserAiPaths.DataRootArgument, appRoot,
@@ -512,7 +512,7 @@ internal sealed class ClientReconnectTests
 
         var driverLog = Path.Combine(work.FullName, $"{run}.driver.log");
 
-        using var driver = StartNode(
+        using var driver = await StartNodeAsync(
             Path.Combine(Rig, "appserver.js"),
             work,
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -530,7 +530,7 @@ internal sealed class ClientReconnectTests
         // ---- While it serves: the background holds its relay ----------------------
         await UntilTheLogSays(driverLog, "RESP id=3", driver);
 
-        var (pid, created) = RelayOf(appRoot, background);
+        var (pid, created) = await RelayOfAsync(appRoot, background);
 
         await Assert.That(ProcessLiveness.IsAlive(pid, created)).IsTrue()
             .Because("the positive control: while Codex serves, the relay the background recorded is alive, or the check below proves nothing");
@@ -578,9 +578,9 @@ internal sealed class ClientReconnectTests
     /// <param name="appRoot">The app root both were given.</param>
     /// <param name="background">The background.</param>
     /// <returns>The relay's pid and creation time.</returns>
-    private static (int Pid, long Created) RelayOf(string appRoot, ArmBackground background)
+    private static async Task<(int Pid, long Created)> RelayOfAsync(string appRoot, ArmBackground background)
     {
-        var said = ProcessLogRecords.In(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created);
+        var said = await ProcessLogRecords.InAsync(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created);
         var connected = System.Text.RegularExpressions.Regex.Match(said, @"Relay (?<pid>\d+)-\d+ connected");
 
         if (!connected.Success)
@@ -590,7 +590,7 @@ internal sealed class ClientReconnectTests
 
         var relay = int.Parse(connected.Groups["pid"].Value, CultureInfo.InvariantCulture);
 
-        return StartOf(appRoot, relay);
+        return await StartOfAsync(appRoot, relay);
     }
 
     /// <summary>The background's record of one relay going, once it is written.</summary>
@@ -606,7 +606,7 @@ internal sealed class ClientReconnectTests
 
         while (true)
         {
-            var line = ProcessLogRecords.In(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created)
+            var line = (await ProcessLogRecords.InAsync(Path.Combine(appRoot, "logs"), background.Process.Id, background.Created))
                 .Split('\n')
                 .FirstOrDefault(record => record.Contains(needle, StringComparison.Ordinal) && record.Contains(" disconnected; ", StringComparison.Ordinal));
 
@@ -628,7 +628,7 @@ internal sealed class ClientReconnectTests
     /// <param name="appRoot">The app root it was given.</param>
     /// <param name="processId">The pid.</param>
     /// <returns>The pid and its creation time.</returns>
-    private static (int Pid, long Created) StartOf(string appRoot, int processId)
+    private static async Task<(int Pid, long Created)> StartOfAsync(string appRoot, int processId)
     {
         var header = string.Create(CultureInfo.InvariantCulture, $" pid={processId}@");
 
@@ -637,7 +637,7 @@ internal sealed class ClientReconnectTests
         // ran once the one server it looked for had gone).
         foreach (var file in Directory.EnumerateFiles(Path.Combine(appRoot, "logs"), "*.log"))
         {
-            foreach (var line in ReadShared(file).Split('\n'))
+            foreach (var line in (await ReadSharedAsync(file)).Split('\n'))
             {
                 if (!line.Contains(" started. pid=", StringComparison.Ordinal) || !line.Contains(header, StringComparison.Ordinal))
                 {
@@ -674,14 +674,14 @@ internal sealed class ClientReconnectTests
 
         while (!deadline.IsCancellationRequested)
         {
-            if (File.Exists(path) && ReadShared(path).Contains(needle, StringComparison.Ordinal))
+            if (File.Exists(path) && (await ReadSharedAsync(path)).Contains(needle, StringComparison.Ordinal))
             {
                 return;
             }
 
             if (writer.HasExited)
             {
-                throw new InvalidOperationException($"The driver exited before its log said '{needle}'. Its log: {(File.Exists(path) ? ReadShared(path) : "<none>")}");
+                throw new InvalidOperationException($"The driver exited before its log said '{needle}'. Its log: {(File.Exists(path) ? await ReadSharedAsync(path) : "<none>")}");
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(100), deadline.Token).ConfigureAwait(false);
@@ -693,12 +693,12 @@ internal sealed class ClientReconnectTests
     /// <summary>A file another process is still appending to, read without taking it.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its text.</returns>
-    private static string ReadShared(string path)
+    private static async Task<string> ReadSharedAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     /// <summary>One frame the shim saw, reduced to what these arms read.</summary>
@@ -713,7 +713,7 @@ internal sealed class ClientReconnectTests
     /// <summary>The shim's wire log, in order.</summary>
     /// <param name="path">The log the shim wrote.</param>
     /// <returns>Every frame it recorded.</returns>
-    private static List<WireFrame> Wire(string path)
+    private static async Task<List<WireFrame>> WireAsync(string path)
     {
         if (!File.Exists(path))
         {
@@ -722,7 +722,7 @@ internal sealed class ClientReconnectTests
 
         var frames = new List<WireFrame>();
 
-        foreach (var line in File.ReadAllLines(path))
+        foreach (var line in await File.ReadAllLinesAsync(path))
         {
             if (line.Length is 0 || JsonNode.Parse(line) is not JsonObject row)
             {
@@ -753,14 +753,14 @@ internal sealed class ClientReconnectTests
     /// </remarks>
     /// <param name="path">The stub's request capture.</param>
     /// <returns>The results, oldest first.</returns>
-    private static List<string> ToolResults(string path)
+    private static async Task<List<string>> ToolResultsAsync(string path)
     {
         if (!File.Exists(path))
         {
             return [];
         }
 
-        var lines = File.ReadAllLines(path).Where(line => line.Length is not 0).ToList();
+        var lines = (await File.ReadAllLinesAsync(path)).Where(line => line.Length is not 0).ToList();
 
         if (lines.Count is 0 || JsonNode.Parse(lines[^1]) is not JsonObject last)
         {
@@ -814,7 +814,7 @@ internal sealed class ClientReconnectTests
     /// <param name="appRoot">The scratch data root, under the user's profile.</param>
     /// <param name="work">Its working directory.</param>
     /// <returns>The background.</returns>
-    private static ArmBackground BackgroundOver(string appRoot, DirectoryInfo work) => ArmBackground.Start(appRoot, work);
+    private static async Task<ArmBackground> BackgroundOverAsync(string appRoot, DirectoryInfo work) => await ArmBackground.StartAsync(appRoot, work);
 
     /// <summary>A background an arm started, and what a relay needs to reach it.</summary>
     private sealed class ArmBackground : IAsyncDisposable
@@ -853,7 +853,7 @@ internal sealed class ClientReconnectTests
         /// <param name="appRoot">The scratch data root.</param>
         /// <param name="work">Its working directory.</param>
         /// <returns>The background.</returns>
-        public static ArmBackground Start(string appRoot, DirectoryInfo work)
+        public static async Task<ArmBackground> StartAsync(string appRoot, DirectoryInfo work)
         {
             var job = JobObject.CreateKillOnClose();
 
@@ -867,7 +867,7 @@ internal sealed class ClientReconnectTests
                 }
 
                 var pipe = PublishedBackground.NewPipeName();
-                var process = PublishedBackground.Start(job, work.FullName, environment, pipe, [BrowserAiPaths.DataRootArgument, appRoot]);
+                var process = await PublishedBackground.StartAsync(job, work.FullName, environment, pipe, [BrowserAiPaths.DataRootArgument, appRoot]);
 
                 return new ArmBackground(job, process, pipe, appRoot);
             }
@@ -910,8 +910,8 @@ internal sealed class ClientReconnectTests
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="argument">One argument, for the driver that takes its steps that way.</param>
     /// <returns>The run.</returns>
-    private static ClientRun StartNode(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
-        StartProcess(
+    private static async Task<ClientRun> StartNodeAsync(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
+        await StartProcessAsync(
             RepositoryPayload.Layout.NodeExecutable,
             work.FullName,
             environment,
@@ -923,25 +923,25 @@ internal sealed class ClientReconnectTests
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The run.</returns>
-    private static ClientRun StartProcess(
+    private static async Task<ClientRun> StartProcessAsync(
         string executable,
         string workingDirectory,
         Dictionary<string, string> environment,
         IReadOnlyList<string> arguments) =>
-        ClientRun.Start(executable, workingDirectory, environment, arguments);
+        await ClientRun.StartAsync(executable, workingDirectory, environment, arguments);
 
     /// <summary>What a child said, for a failure message.</summary>
     /// <param name="work">The run's working directory.</param>
     /// <param name="executable">The child whose streams to read.</param>
     /// <returns>Its stderr and the tail of its stdout.</returns>
-    private static string WhatItSaid(DirectoryInfo work, string executable)
+    private static async Task<string> WhatItSaidAsync(DirectoryInfo work, string executable)
     {
         var stem = ClientRun.StemOf(work.FullName, executable);
         var parts = new List<string>();
 
         foreach (var (what, file) in new[] { ("stderr", $"{stem}.stderr.txt"), ("stdout", $"{stem}.stdout.txt") })
         {
-            var text = File.Exists(file) ? ReadShared(file) : "<no file>";
+            var text = File.Exists(file) ? await ReadSharedAsync(file) : "<no file>";
 
             parts.Add($"{what}: {(text.Length > 1200 ? text[^1200..] : text)}");
         }

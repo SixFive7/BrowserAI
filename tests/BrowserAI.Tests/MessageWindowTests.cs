@@ -39,7 +39,7 @@ internal sealed class MessageWindowTests
     [Test]
     public async Task ACrossProcessReadGetsTheRealNameFromAWindowThatSuppressesWmGetText()
     {
-        using var scratch = ScratchDirectory.Create("window-bypass");
+        using var scratch = await ScratchDirectory.CreateAsync("window-bypass");
         using var scope = new JobObjectScope();
 
         // A GUID, so the string this test reads back cannot have come from
@@ -128,7 +128,7 @@ internal sealed class MessageWindowTests
     [Test]
     public async Task TheTwoTitleApisAgreeOnEveryMessageWindowOnThisMachine()
     {
-        using var scratch = ScratchDirectory.Create("window-agreement");
+        using var scratch = await ScratchDirectory.CreateAsync("window-agreement");
         using var scope = new JobObjectScope();
 
         // One window of our own, so the comparison can never be vacuous on a
@@ -206,7 +206,7 @@ internal sealed class MessageWindowTests
     [Test]
     public async Task EnumWindowsFindsNoMessageWindowsAtAllWhileTheWalkFindsThem()
     {
-        using var scratch = ScratchDirectory.Create("window-enumwindows");
+        using var scratch = await ScratchDirectory.CreateAsync("window-enumwindows");
         using var scope = new JobObjectScope();
 
         var name = $@"C:\BrowserAI-enumwindows-{Guid.NewGuid():N}";
@@ -267,7 +267,7 @@ internal sealed class MessageWindowTests
     [Test]
     public async Task TheExactTitleProbeMatchesOnlyTheSpellingWindowsItselfMatches()
     {
-        using var scratch = ScratchDirectory.Create("window-exact-title");
+        using var scratch = await ScratchDirectory.CreateAsync("window-exact-title");
         using var scope = new JobObjectScope();
 
         // A path-shaped title, because that is what a browser publishes and the
@@ -296,7 +296,7 @@ internal sealed class MessageWindowTests
     [Test]
     public async Task TheWalkKeepsFindingAStableWindowWhileOtherWindowsAreDestroyedUnderIt()
     {
-        using var scratch = ScratchDirectory.Create("window-churn");
+        using var scratch = await ScratchDirectory.CreateAsync("window-churn");
         using var stable = new JobObjectScope();
 
         var name = $@"C:\BrowserAI-stable-{Guid.NewGuid():N}";

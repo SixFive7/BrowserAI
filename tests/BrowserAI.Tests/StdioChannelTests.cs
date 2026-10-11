@@ -31,7 +31,7 @@ internal sealed class StdioChannelTests
 
         using (var channel = StdioChannel.Over(Stream.Null, output))
         {
-            channel.WriteFrame(Payload);
+            await channel.WriteFrameAsync(Payload);
         }
 
         byte[] expected =
@@ -53,7 +53,7 @@ internal sealed class StdioChannelTests
 
         using (var channel = StdioChannel.Over(Stream.Null, output))
         {
-            channel.WriteFrame("{}");
+            await channel.WriteFrameAsync("{}");
         }
 
         // A hand-rolled StreamWriter over Encoding.UTF8 emits EF BB BF here,
@@ -68,8 +68,8 @@ internal sealed class StdioChannelTests
 
         using (var channel = StdioChannel.Over(Stream.Null, output))
         {
-            channel.WriteFrame("one");
-            channel.WriteFrame("two");
+            await channel.WriteFrameAsync("one");
+            await channel.WriteFrameAsync("two");
         }
 
         await Assert.That(output.ToArray()).DoesNotContain((byte)'\r');
@@ -81,7 +81,7 @@ internal sealed class StdioChannelTests
         using var output = new MemoryStream();
         using var channel = StdioChannel.Over(Stream.Null, output);
 
-        channel.WriteFrame("first");
+        await channel.WriteFrameAsync("first");
 
         // Without an explicit flush the StreamWriter's buffer holds this until
         // dispose, and a caller that has returned would believe it had sent a

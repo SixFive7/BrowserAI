@@ -46,7 +46,7 @@ internal sealed class ReinstallBrowserTests
     {
         var installs = 0;
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             // ⚠️ No default session since 2026-08-19, and that is the tool's own
             // new gate and not a test convenience: a reinstall now refuses
             // while ANY session of that family is open, whether or not a browser
@@ -80,14 +80,14 @@ internal sealed class ReinstallBrowserTests
         // WaitUntilNoInstallIsInFlight. Since 2026-08-18 a reinstall refuses
         // while an install holds it, so without this the call below measures
         // the refusal and not the delete.
-        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
+        await WaitUntilNoInstallIsInFlightAsync(sessions.Environment.Paths.BrowsersDirectory);
 
         // A complete tree with a file in it that must not survive, so "the
         // directory exists afterwards" cannot pass for "it was replaced".
         var stale = Path.Combine(sessions.ChromiumDirectory, "stale-from-the-old-install.bin");
         _ = Directory.CreateDirectory(sessions.ChromiumDirectory);
         await File.WriteAllTextAsync(stale, new string('x', 4096));
-        InstallationMarker.Write(sessions.ChromiumDirectory);
+        await InstallationMarker.WriteAsync(sessions.ChromiumDirectory);
 
         var before = Volatile.Read(ref installs);
         var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
@@ -110,7 +110,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task ItRefusesWhileSomethingIsRunningFromTheTreeAndNamesTheSessionThatIsOpen()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var session = Path.Combine(sessions.Root, "holds-a-browser");
@@ -157,7 +157,7 @@ internal sealed class ReinstallBrowserTests
     {
         var installs = 0;
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             // No default session, for the reason in
             // `ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning`: an open
             // session of this family now refuses the call outright, and this arm
@@ -182,9 +182,9 @@ internal sealed class ReinstallBrowserTests
         _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         // And for the mutex, for the reason in WaitUntilNoInstallIsInFlight.
-        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
+        await WaitUntilNoInstallIsInFlightAsync(sessions.Environment.Paths.BrowsersDirectory);
 
-        InstallationMarker.Write(sessions.ChromiumDirectory);
+        await InstallationMarker.WriteAsync(sessions.ChromiumDirectory);
 
         var held = Path.Combine(sessions.ChromiumDirectory, "held-open.bin");
 
@@ -196,7 +196,7 @@ internal sealed class ReinstallBrowserTests
         // FileShare.None, so the delete meets a file it genuinely cannot remove
         // -- and no process is running from the tree, so the check above passes
         // and the delete is what fails.
-        using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
+        await using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
             var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
             var text = TextOf(answer);
@@ -243,7 +243,7 @@ internal sealed class ReinstallBrowserTests
     public async Task ItDeletesNothingWhileAnotherProcessIsInstallingIntoTheTree()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("reinstall-while-installing");
+        using var scratch = await ScratchDirectory.CreateAsync("reinstall-while-installing");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -252,7 +252,7 @@ internal sealed class ReinstallBrowserTests
         _ = Directory.CreateDirectory(directory);
         await File.WriteAllTextAsync(beingExtracted, "the other process's half-written tree");
 
-        using var claim = ProvisioningClaim.Take(root, ProvisionedBrowsers.Chromium);
+        await using var claim = await ProvisioningClaim.TakeAsync(root, ProvisionedBrowsers.Chromium);
 
         await Assert.That(claim.Held).IsTrue();
 
@@ -269,7 +269,7 @@ internal sealed class ReinstallBrowserTests
                 Interlocked.Increment(ref installs);
                 return FakeInstaller.Succeeding(Path.Combine(installRoot, RigSessionEnvironment.ChromiumDirectoryName), TimeSpan.Zero);
             },
-            PruneRevisions = _ => { },
+            PruneRevisions = _ => Task.CompletedTask,
         };
 
         var outcome = await provisioner.ReinstallAsync(SessionManager.DefaultBrowser);
@@ -317,7 +317,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task ItRefusesWhileASessionIsOpenEvenWithNothingRunningFromTheTree()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var session = Path.Combine(sessions.Root, "open-but-not-launched");
@@ -374,10 +374,10 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task ASecondReinstallIsRefusedWhileOneHoldsTheBrowsersRoot()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium, out _, out _);
+        using var claim = (await MaintenanceLock.TryTakeExclusiveAsync(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium)).Lock;
 
         await Assert.That(claim).IsNotNull();
 
@@ -419,7 +419,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task InitAndResumeAreBothRefusedWhileAReinstallHoldsTheBrowsersRoot()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var built = Path.Combine(sessions.Root, "created-before-the-reinstall");
@@ -447,13 +447,13 @@ internal sealed class ReinstallBrowserTests
         // The copy is exactly the shape `browserai_resume` needs: a directory
         // holding a record that no live process owns.
         _ = Directory.CreateDirectory(session);
-        File.Copy(
+        await TestFiles.CopyAsync(
             Path.Combine(built, SessionLayout.LockFileName),
             Path.Combine(session, SessionLayout.LockFileName));
 
         _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = built, ["why"] = "the suite exercising this call" });
 
-        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium, out _, out _);
+        using var claim = (await MaintenanceLock.TryTakeExclusiveAsync(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium)).Lock;
 
         // The control: it really was taken, which is only possible because
         // nothing holds the root shared any more.
@@ -506,26 +506,28 @@ internal sealed class ReinstallBrowserTests
     /// waits for, which is why this is not a sleep.
     /// </para>
     /// <para>
-    /// <b>Acquire and release with no <c>await</c> between them</b>: a named
-    /// mutex is owned by the thread that waited on it, and a continuation
-    /// resuming elsewhere would make the release throw about "an unsynchronized
-    /// block of code".
+    /// <b>Taken and let go by the hold's own thread</b>, since 2026-10-11, the
+    /// maintainer's decision 54: a named mutex is owned by the thread that waited on
+    /// it, and <see cref="MutexHold"/> is that thread. <i>Corrected that day
+    /// (previously "Acquire and release with no <c>await</c> between them", on the
+    /// caller's thread).</i>
     /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root whose install to wait out.</param>
-    private static void WaitUntilNoInstallIsInFlight(string browsersDirectory)
+    /// <returns>The wait.</returns>
+    private static async Task WaitUntilNoInstallIsInFlightAsync(string browsersDirectory)
     {
         using var mutex = MachineMutex.Create(
             BrowserProvisioner.MutexNameFor(browsersDirectory, ProvisionedBrowsers.Chromium));
 
-        if (mutex.Acquire(TestDefaults.ProcessHang) is MutexAcquisition.NotAcquired)
+        await using var hold = await mutex.HoldAsync(TestDefaults.ProcessHang);
+
+        if (hold.Acquisition is MutexAcquisition.NotAcquired)
         {
             throw new InvalidOperationException(
                 $"An install has held the provisioning mutex for '{browsersDirectory}' for longer than this suite's hang detector, "
                 + "so whatever this test goes on to assert about a reinstall would be about a refusal rather than about a delete.");
         }
-
-        mutex.Release();
     }
 
     /// <summary>
@@ -546,7 +548,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task ItTakesTheFamilyAndNothingElseAndSaysWhyInItsDescription()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var tools = await rig.Client.RoundTripAsync("tools/list");
@@ -607,7 +609,7 @@ internal sealed class ReinstallBrowserTests
     {
         var asked = new List<string>();
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             opensDefaultSession: false,
             installer: (browser, root) =>
             {
@@ -630,9 +632,9 @@ internal sealed class ReinstallBrowserTests
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
+        await WaitUntilNoInstallIsInFlightAsync(sessions.Environment.Paths.BrowsersDirectory);
 
-        var shared = SharedDirectoriesIn(sessions);
+        var shared = await SharedDirectoriesInAsync(sessions);
         var stale = new List<string>();
 
         foreach (var directory in shared)
@@ -640,7 +642,7 @@ internal sealed class ReinstallBrowserTests
             var file = Path.Combine(directory, "corrupt-and-marked-complete.bin");
             _ = Directory.CreateDirectory(directory);
             await File.WriteAllTextAsync(file, new string('x', 4096));
-            InstallationMarker.Write(directory);
+            await InstallationMarker.WriteAsync(directory);
             stale.Add(file);
         }
 
@@ -648,7 +650,7 @@ internal sealed class ReinstallBrowserTests
         _ = Directory.CreateDirectory(sessions.ChromiumDirectory);
         var family = Path.Combine(sessions.ChromiumDirectory, "the-browser-that-was-fine.bin");
         await File.WriteAllTextAsync(family, "untouched");
-        InstallationMarker.Write(sessions.ChromiumDirectory);
+        await InstallationMarker.WriteAsync(sessions.ChromiumDirectory);
 
         var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, new JsonObject { ["browser"] = ProvisionedBrowsers.Shared });
         var text = TextOf(answer);
@@ -712,12 +714,12 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task ASessionOfEitherFamilyBlocksEveryReinstallTarget()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // Seeded complete so opening a firefox session does not start a download
         // this rig has no installer for.
-        InstallationMarker.Write(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
+        await InstallationMarker.WriteAsync(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
 
         var session = Path.Combine(sessions.Root, "a-firefox-session-that-could-record");
 
@@ -748,7 +750,7 @@ internal sealed class ReinstallBrowserTests
 
         // The shared trees are untouched, which is what "nothing was changed"
         // has to mean.
-        foreach (var directory in SharedDirectoriesIn(sessions))
+        foreach (var directory in await SharedDirectoriesInAsync(sessions))
         {
             await Assert.That(Directory.Exists(directory)).IsFalse().Because(text);
         }
@@ -786,7 +788,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task SharedIsAReinstallTargetAndIsNotABrowserASessionCanBeOpenedAgainst()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var tools = (await rig.Client.RoundTripAsync("tools/list"))["tools"]!.AsArray();
@@ -832,13 +834,13 @@ internal sealed class ReinstallBrowserTests
     /// <summary>Where this rig's shared component trees are, or would be.</summary>
     /// <param name="sessions">The rig.</param>
     /// <returns>The absolute directories, in the product's own order.</returns>
-    private static IReadOnlyList<string> SharedDirectoriesIn(RigSessionEnvironment sessions) =>
-        sessions.Environment.Provisioner.SharedComponentDirectories();
+    private static async Task<IReadOnlyList<string>> SharedDirectoriesInAsync(RigSessionEnvironment sessions) =>
+        await sessions.Environment.Provisioner.SharedComponentDirectoriesAsync();
 
     [Test]
     public async Task EveryAuthoredToolIsAnsweredAndAnUnknownOneIsRefused()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var advertised = (await rig.Client.RoundTripAsync("tools/list"))["tools"]!.AsArray()
@@ -901,7 +903,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task TwoSessionsBothHoldTheRootAndOneClosingIsNotEnough()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
@@ -937,14 +939,14 @@ internal sealed class ReinstallBrowserTests
         // ⚠️ THE ARM THAT MATTERS. One is gone and the other still holds it, so
         // the claim must still be refused. A design that kept one claim per
         // process, or a count released on the first close, is red here.
-        using (var stillHeld = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _))
+        using (var stillHeld = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock)
         {
             await Assert.That(stillHeld).IsNull();
         }
 
         _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = second, ["why"] = "the suite exercising this call" });
 
-        using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
+        using var free = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock;
 
         // And the control: with both gone it really is available, so the arm
         // above is about the second session and not about something that
@@ -980,7 +982,7 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task AReaderThatDiesReleasesTheRootWithNothingRunningToCleanUp()
     {
-        using var scratch = ScratchDirectory.Create("claim-holder-dies");
+        using var scratch = await ScratchDirectory.CreateAsync("claim-holder-dies");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var ready = Path.Combine(scratch.Path, "ready.json");
@@ -989,13 +991,13 @@ internal sealed class ReinstallBrowserTests
 
         using (var scope = new JobObjectScope())
         {
-            _ = scope.Launch(ProbePath, scratch.Path, "browsers-claim", root, ready);
+            _ = await scope.LaunchAsync(ProbePath, scratch.Path, "browsers-claim", root, ready);
 
             await WaitForFileAsync(ready);
 
             // Held by a process this one has no handle on and shares no memory
             // with, which is the only arrangement that proves anything here.
-            using var blocked = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
+            using var blocked = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock;
 
             await Assert.That(blocked).IsNull();
         }
@@ -1015,7 +1017,7 @@ internal sealed class ReinstallBrowserTests
 
         while (true)
         {
-            using var afterwards = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
+            using var afterwards = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock;
 
             if (afterwards is not null)
             {
@@ -1052,12 +1054,12 @@ internal sealed class ReinstallBrowserTests
     [Test]
     public async Task TheRefusalDuringAReinstallSaysHowFarInItIs()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
 
-        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
+        using var claim = (await MaintenanceLock.TryTakeExclusiveAsync(root, ProvisionedBrowsers.Chromium)).Lock;
 
         await Assert.That(claim).IsNotNull();
 

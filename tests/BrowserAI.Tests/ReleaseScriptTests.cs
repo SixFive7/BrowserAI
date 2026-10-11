@@ -81,7 +81,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task TheDriftCheckRefusesAStaleStampAndEveryDriftedRowAndPassesACurrentOne()
     {
-        using var scratch = ScratchDirectory.Create("release-drift-check");
+        using var scratch = await ScratchDirectory.CreateAsync("release-drift-check");
         const string Today = "2026-10-10";
 
         var current = await WriteDriftCheckAsync(scratch.Path, "current", Today, _ => { });
@@ -179,7 +179,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AReleaseIsRefusedFirstWhenTheDriftCheckIsNotCurrentAndATestPackDoesNotReadIt()
     {
-        using var scratch = ScratchDirectory.Create("release-drift-refusal");
+        using var scratch = await ScratchDirectory.CreateAsync("release-drift-refusal");
 
         var stale = await WriteDriftCheckAsync(scratch.Path, "stale", "2000-01-01", _ => { });
         var (exit, _, said) = await RunAsync(ReleaseScript, "-DriftCheckFile", stale, "-OutputDir", Path.Combine(scratch.Path, "Releases"));
@@ -263,10 +263,10 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task TheVersionIsDerivedInACheckoutThatWasNeverRestored()
     {
-        SuiteEnvironment.RequireGit();
-        _ = SuiteEnvironment.RequirePackagedRelease();
+        await SuiteEnvironment.RequireGitAsync();
+        _ = await SuiteEnvironment.RequirePackagedReleaseAsync();
 
-        using var scratch = ScratchDirectory.Create("release-fresh-checkout");
+        using var scratch = await ScratchDirectory.CreateAsync("release-fresh-checkout");
 
         var checkout = Path.Combine(scratch.Path, "checkout");
         // Long paths, because the evidence directories carry names that pass 260
@@ -278,7 +278,7 @@ internal sealed class ReleaseScriptTests
 
         foreach (var script in Directory.EnumerateFiles(Path.Combine(RepositoryLayout.Root.FullName, "build"), "*.ps1"))
         {
-            File.Copy(script, Path.Combine(checkout, "build", Path.GetFileName(script)), overwrite: true);
+            await TestFiles.CopyAsync(script, Path.Combine(checkout, "build", Path.GetFileName(script)), overwrite: true);
         }
 
         await Assert.That(Directory.Exists(Path.Combine(checkout, "src", "BrowserAI", "obj"))).IsFalse().Because("the checkout must be one no restore has touched");
@@ -327,13 +327,13 @@ internal sealed class ReleaseScriptTests
 
         foreach (var (driver, aborted) in drivers)
         {
-            using var scratch = ScratchDirectory.Create("gate-test-pack-error");
+            using var scratch = await ScratchDirectory.CreateAsync("gate-test-pack-error");
 
             var build = Directory.CreateDirectory(Path.Combine(scratch.Path, "build")).FullName;
 
             foreach (var name in new[] { driver, "InstallerLock.ps1" })
             {
-                File.Copy(Path.Combine(RepositoryLayout.Root.FullName, "build", name), Path.Combine(build, name));
+                await TestFiles.CopyAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", name), Path.Combine(build, name));
             }
 
             await File.WriteAllTextAsync(
@@ -432,7 +432,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AnEmptyChannelAcceptsTheFirstRelease()
     {
-        using var scratch = ScratchDirectory.Create("release-first");
+        using var scratch = await ScratchDirectory.CreateAsync("release-first");
         var (exit, verdict, _) = await RunAsync(ValidationScript, "-Manifest", Path.Combine(scratch.Path, "releases.win.json"), "-Version", "0.1.0");
 
         await Assert.That(exit).IsEqualTo(0);
@@ -443,7 +443,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AHigherVersionIsMonotonicAndPasses()
     {
-        using var scratch = ScratchDirectory.Create("release-monotonic");
+        using var scratch = await ScratchDirectory.CreateAsync("release-monotonic");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.0");
 
         var (exit, verdict, _) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1");
@@ -467,7 +467,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task ALowerVersionIsRefusedWithoutRollbackRepublishAndAcceptedWithIt()
     {
-        using var scratch = ScratchDirectory.Create("release-rollback");
+        using var scratch = await ScratchDirectory.CreateAsync("release-rollback");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.0", "0.9.1");
 
         var (refusedExit, _, refusedOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.0");
@@ -511,7 +511,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear()
     {
-        using var scratch = ScratchDirectory.Create("release-stale-feed");
+        using var scratch = await ScratchDirectory.CreateAsync("release-stale-feed");
         var manifest = await WriteFeedAsync(scratch.Path, "1.0.0", "1.0.1-alpha.0.2", "1.0.1-alpha.0.19");
 
         var (exit, _, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "1.0.0");
@@ -565,7 +565,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task RepublishingTheNewestVersionOverItselfIsRefused()
     {
-        using var scratch = ScratchDirectory.Create("release-same");
+        using var scratch = await ScratchDirectory.CreateAsync("release-same");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.1");
 
         var (exit, _, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1", "-RollbackRepublish");
@@ -584,7 +584,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AFourPartVersionAndAZeroVersionAreBothRefused()
     {
-        using var scratch = ScratchDirectory.Create("release-shape");
+        using var scratch = await ScratchDirectory.CreateAsync("release-shape");
         var manifest = Path.Combine(scratch.Path, "releases.win.json");
 
         var (fourPartExit, _, fourPartOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1.0");
@@ -946,7 +946,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task TheResolvedSetManifestIsEmittedWithAllEightFilesAndWhatEachStates()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest");
         var root = await SyntheticRootAsync(scratch.Path);
         var destination = Path.Combine(scratch.Path, "manifest");
 
@@ -1084,7 +1084,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task APayloadWithNoOverrideInForceSaysSoRatherThanSayingNothing()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest-no-override");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest-no-override");
         var root = await SyntheticRootAsync(scratch.Path, withOverride: false);
         var destination = Path.Combine(scratch.Path, "manifest");
 
@@ -1140,7 +1140,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task APublishLogWithNoIlcPassIsRefusedAndOneWithAPassIsAccepted()
     {
-        using var scratch = ScratchDirectory.Create("release-ilc");
+        using var scratch = await ScratchDirectory.CreateAsync("release-ilc");
 
         var full = Path.Combine(scratch.Path, "full.log");
         var incremental = Path.Combine(scratch.Path, "incremental.log");
@@ -1358,7 +1358,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task TheSecondFeedIsClearedBeforeItIsPackedIntoAndNothingElseIs()
     {
-        using var scratch = ScratchDirectory.Create("release-clear-test-feed");
+        using var scratch = await ScratchDirectory.CreateAsync("release-clear-test-feed");
 
         var shipping = Path.Combine(scratch.Path, "Releases");
         var archive = Path.Combine(shipping, "archive");
@@ -1497,11 +1497,11 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse()
     {
-        _ = SuiteEnvironment.RequirePackagedRelease();
-        SuiteEnvironment.RequirePublishedSlice();
+        _ = await SuiteEnvironment.RequirePackagedReleaseAsync();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("release-test-pack-only");
+        using var scratch = await ScratchDirectory.CreateAsync("release-test-pack-only");
 
         var releases = Path.Combine(scratch.Path, "Releases");
         var archive = Directory.CreateDirectory(Path.Combine(releases, "archive")).FullName;
@@ -1548,7 +1548,7 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(File.Exists(Path.Combine(testPack, $"{ReleaseLayout.TestDownloadId}-installer.exe"))).IsTrue();
         await Assert.That(File.Exists(package)).IsTrue();
-        await Assert.That(ReleaseLayout.MismatchBetween(package, ReleaseLayout.PackedBinariesFor(fromReleasePublish: false))).IsNull();
+        await Assert.That(await ReleaseLayout.MismatchBetweenAsync(package, ReleaseLayout.PackedBinariesFor(fromReleasePublish: false))).IsNull();
 
         // And its twin, under the shipping id, with nothing an installer could run.
         var twin = Path.Combine(testPack, "twin");
@@ -1587,8 +1587,8 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task ARealInstallIsNeverDanglingAndTheSuitesOwnLeftoversAlwaysAre()
     {
-        using var scratch = ScratchDirectory.Create("release-arp");
-        var elsewhere = ScratchDirectory.Create("release-arp-real");
+        using var scratch = await ScratchDirectory.CreateAsync("release-arp");
+        var elsewhere = await ScratchDirectory.CreateAsync("release-arp-real");
 
         using (elsewhere)
         {
@@ -1648,7 +1648,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AMissingFileRefusesTheManifestRatherThanWritingAPartialOne()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest-partial");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest-partial");
         var root = await SyntheticRootAsync(scratch.Path);
         File.Delete(Path.Combine(root, "payload", "payload.json"));
 
@@ -1676,7 +1676,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task APayloadWithoutRegisterAiRefusesTheManifestAndWritesNothing()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest-registerai");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest-registerai");
         var root = await SyntheticRootAsync(scratch.Path);
 
         await File.WriteAllTextAsync(Path.Combine(root, "payload", "payload.json"), """
@@ -1723,7 +1723,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task TheManifestStatesWhetherTheReleaseWasACrunchOverride()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest-override");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest-override");
         var root = await SyntheticRootAsync(scratch.Path);
 
         var ordinary = Path.Combine(scratch.Path, "ordinary");
@@ -1780,7 +1780,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task AnOverrideStatedInPartRefusesTheManifestRatherThanWritingHalfAClaim()
     {
-        using var scratch = ScratchDirectory.Create("release-manifest-half-override");
+        using var scratch = await ScratchDirectory.CreateAsync("release-manifest-half-override");
         var root = await SyntheticRootAsync(scratch.Path);
         var destination = Path.Combine(scratch.Path, "manifest");
 
@@ -1968,7 +1968,7 @@ internal sealed class ReleaseScriptTests
     /// <b>The pack is real and it is small.</b> 162 KB of a real PE and not
     /// the 143 MB publish, because what is under test is <c>vpk</c>'s delta
     /// behaviour and not this product's bytes. Both arms run in about a second.
-    /// It is gated on <see cref="SuiteEnvironment.RequirePackagedRelease"/>: a
+    /// It is gated on <see cref="SuiteEnvironment.RequirePackagedReleaseAsync"/>: a
     /// machine with no packed release has never run the release script and so
     /// has no <c>vpk</c> either, and under <c>BROWSERAI_RELEASE_RUN=1</c> that is
     /// a failure and not a skip.
@@ -1978,7 +1978,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow()
     {
-        _ = SuiteEnvironment.RequirePackagedRelease();
+        _ = await SuiteEnvironment.RequirePackagedReleaseAsync();
 
         // ---- Half one: the script passes it, read out of the argument array
         // and not the whole file, for the reason the sibling arm gives.
@@ -1999,7 +1999,7 @@ internal sealed class ReleaseScriptTests
 
         // ---- Half two: the option means what the script assumes. A real pack,
         // twice, into a feed that already holds the previous full package.
-        using var scratch = ScratchDirectory.Create("release-full-only");
+        using var scratch = await ScratchDirectory.CreateAsync("release-full-only");
 
         var packDir = Path.Combine(scratch.Path, "packdir");
         var withOption = Path.Combine(scratch.Path, "with-option");
@@ -2010,7 +2010,7 @@ internal sealed class ReleaseScriptTests
             _ = Directory.CreateDirectory(directory);
         }
 
-        File.Copy(SmallRealExecutable(), Path.Combine(packDir, "App.exe"));
+        await TestFiles.CopyAsync(SmallRealExecutable(), Path.Combine(packDir, "App.exe"));
 
         string[] common =
         [
@@ -2028,7 +2028,7 @@ internal sealed class ReleaseScriptTests
         // is the option.
         foreach (var file in new DirectoryInfo(withOption).EnumerateFiles())
         {
-            file.CopyTo(Path.Combine(without, file.Name));
+            await TestFiles.CopyAsync(file.FullName, Path.Combine(without, file.Name));
         }
 
         await Assert.That(await VpkAsync([.. common, "--packVersion", "1.1.0", "--outputDir", withOption, "--delta", "None"])).IsEqualTo(0);
@@ -2565,7 +2565,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task ThePackersOwnAssetListIsRewrittenToTheDeclaredUploadSet()
     {
-        using var scratch = ScratchDirectory.Create("release-upload-assets");
+        using var scratch = await ScratchDirectory.CreateAsync("release-upload-assets");
 
         const string Version = "9.9.9";
         var installer = $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.exe";
@@ -2692,7 +2692,7 @@ internal sealed class ReleaseScriptTests
     [Test]
     public async Task NothingElseInTheReleaseDirectoryIsPublished()
     {
-        _ = SuiteEnvironment.RequireShippingRelease();
+        _ = await SuiteEnvironment.RequireShippingReleaseAsync();
 
         var directory = new DirectoryInfo(ReleaseLayout.Directory);
         var present = directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(file => file.Name).ToArray();

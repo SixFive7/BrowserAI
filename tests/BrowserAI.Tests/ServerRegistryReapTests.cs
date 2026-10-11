@@ -97,12 +97,12 @@ internal sealed class ServerRegistryReapTests
     [Test]
     public async Task ADestroyReapsTheDeadDescriptorsSparesALiveOneAndDoesNotWaitForEither()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("t7-reap");
+        using var scratch = await ScratchDirectory.CreateAsync("t7-reap");
 
         var registry = Path.Combine(scratch.Path, "registry");
         _ = Directory.CreateDirectory(registry);
@@ -110,7 +110,7 @@ internal sealed class ServerRegistryReapTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[ServerRegistryReap.RegistryDirectoryVariable] = registry;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -126,10 +126,10 @@ internal sealed class ServerRegistryReapTests
         // ⚠️ The forwarding, asserted before anything is planted. Each child wrote
         // its own descriptor here, which it can only have done by being handed the
         // variable this process gave the slice.
-        await Assert.That(DescriptorFor(registry, keeper)).IsNotNull();
-        await Assert.That(DescriptorFor(registry, closing)).IsNotNull();
+        await Assert.That(await DescriptorForAsync(registry, keeper)).IsNotNull();
+        await Assert.That(await DescriptorForAsync(registry, closing)).IsNotNull();
 
-        var planted = PlantDeadDescriptors(registry, StaleDescriptorsPlanted);
+        var planted = await PlantDeadDescriptorsAsync(registry, StaleDescriptorsPlanted);
 
         await Assert.That(planted.Count(File.Exists)).IsEqualTo(StaleDescriptorsPlanted);
 
@@ -161,7 +161,7 @@ internal sealed class ServerRegistryReapTests
         // background holds the sessions and writes their records (S a).
         var background = client.BackgroundProcessId
             ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
-        var records = ProcessLogRecords.For(background, ProcessIdentity.CreationTimeOf(background));
+        var records = await ProcessLogRecords.ForAsync(background, ProcessIdentity.CreationTimeOf(background));
         var reaper = ReaperIdentity.Match(records);
 
         await Assert.That(reaper.Success)
@@ -195,7 +195,7 @@ internal sealed class ServerRegistryReapTests
         // handle, and `JobLauncher.StartDetached` closes the process handle before
         // it returns.
 
-        await Assert.That(ProcessIdentity.WaitUntilGone(reaperPid, reaperCreated, TestDefaults.ProcessHang))
+        await Assert.That(await ProcessIdentity.WaitUntilGoneAsync(reaperPid, reaperCreated, TestDefaults.ProcessHang))
             .IsTrue()
             .Because("the reaper is one call to upstream's list() and then an exit; a reaper that never exits is the hang this bound is for");
 
@@ -207,13 +207,13 @@ internal sealed class ServerRegistryReapTests
             .IsEqualTo(0)
             .Because($"the reap should have unlinked every dead descriptor, and {survivors.Count} of {StaleDescriptorsPlanted} are still there");
 
-        await Assert.That(DescriptorFor(registry, closing))
+        await Assert.That(await DescriptorForAsync(registry, closing))
             .IsNull()
             .Because("the closed session's browser is gone, so its descriptor is one of the dead ones");
 
         // And what it spared, which is the accepted risk turned into an
         // assertion: a live browser's descriptor is not collateral.
-        await Assert.That(DescriptorFor(registry, keeper))
+        await Assert.That(await DescriptorForAsync(registry, keeper))
             .IsNotNull()
             .Because("the keeper's browser was up throughout, so unlinking its descriptor would be a browser lost from every list");
 
@@ -265,12 +265,12 @@ internal sealed class ServerRegistryReapTests
     [Test]
     public async Task AShutdownThatClosesItsBrowsersFirstStillReapsThem()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("t7-reap-shutdown");
+        using var scratch = await ScratchDirectory.CreateAsync("t7-reap-shutdown");
 
         var registry = Path.Combine(scratch.Path, "registry");
         _ = Directory.CreateDirectory(registry);
@@ -278,7 +278,7 @@ internal sealed class ServerRegistryReapTests
         var environment = PublishedSlice.InheritedEnvironment();
         environment[ServerRegistryReap.RegistryDirectoryVariable] = registry;
 
-        await using var client = RawStdioClient.Start(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
+        await using var client = await RawStdioClient.StartAsync(PublishedSlice.Executable, PublishedSlice.Mcp, scratch.Path, environment);
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -290,11 +290,11 @@ internal sealed class ServerRegistryReapTests
             ?? throw new InvalidOperationException("The published relay was started with no background beside it.");
         var created = ProcessIdentity.CreationTimeOf(pid);
 
-        var (outcome, detail) = BackgroundStop.AskAndWait(client.BackgroundPipe!, client.BackgroundRecordPath!, BackgroundStop.Bound);
+        var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(client.BackgroundPipe!, client.BackgroundRecordPath!, BackgroundStop.Bound);
 
         await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
 
-        var records = ProcessLogRecords.For(pid, created);
+        var records = await ProcessLogRecords.ForAsync(pid, created);
 
         await Assert.That(records)
             .Contains($"server-registry reap after {ServerRegistryReap.AfterTeardown}")
@@ -380,7 +380,7 @@ internal sealed class ServerRegistryReapTests
     /// <param name="registry">The scratch registry directory.</param>
     /// <param name="session">The session directory.</param>
     /// <returns>The descriptor's path, or <see langword="null"/>.</returns>
-    private static string? DescriptorFor(string registry, string session)
+    private static async Task<string?> DescriptorForAsync(string registry, string session)
     {
         foreach (var file in Directory.EnumerateFiles(registry))
         {
@@ -388,7 +388,7 @@ internal sealed class ServerRegistryReapTests
 
             try
             {
-                descriptor = JsonNode.Parse(File.ReadAllText(file));
+                descriptor = JsonNode.Parse(await File.ReadAllTextAsync(file));
             }
             catch (Exception failure) when (failure is IOException or System.Text.Json.JsonException)
             {
@@ -423,7 +423,7 @@ internal sealed class ServerRegistryReapTests
     /// <param name="registry">The scratch registry directory.</param>
     /// <param name="count">How many to plant.</param>
     /// <returns>The paths planted.</returns>
-    private static List<string> PlantDeadDescriptors(string registry, int count)
+    private static async Task<List<string>> PlantDeadDescriptorsAsync(string registry, int count)
     {
         var planted = new List<string>(count);
 
@@ -449,7 +449,7 @@ internal sealed class ServerRegistryReapTests
                 ["endpoint"] = $@"\\.\pipe\pw-planted-{guid}",
             };
 
-            File.WriteAllText(file, descriptor.ToJsonString());
+            await File.WriteAllTextAsync(file, descriptor.ToJsonString());
             planted.Add(file);
         }
 

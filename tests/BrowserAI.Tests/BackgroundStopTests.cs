@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The bound is a person's start's on the same pipe</b>,
 /// <see cref="CoordinatorProtocol.HandOutBound"/>, which a start hands to the same
-/// <see cref="BackgroundClient.Ask"/>: an in-process background answers a stop well
+/// <see cref="BackgroundClient.AskAsync"/>: an in-process background answers a stop well
 /// inside it, and two arms wait it out once each, for a process that never ends and for
 /// a question nothing answers. <i>Corrected 2026-10-11, with 34 d (previously "The bound
 /// is the background's own on a first message, BackgroundServer.FirstFrameBound")</i>:
@@ -75,27 +75,27 @@ internal sealed class BackgroundStopTests
     [Test]
     public async Task AnAnsweredStopWhoseBackgroundRunsOnIsStillRunningAndNoPipeIsNoneRunning()
     {
-        using var data = ScratchDirectory.Create("background-stop-still-running");
+        using var data = await ScratchDirectory.CreateAsync("background-stop-still-running");
 
         var pipe = PublishedBackground.NewPipeName();
         var record = BackgroundRecord.PathFor(data.Path, pipe);
 
-        var (none, noneSaid) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
+        var (none, noneSaid) = await BackgroundStop.AskAndWaitAsync(pipe, record, Bound);
 
         await Assert.That(none).IsEqualTo(BackgroundStopOutcome.NoneRunning).Because(noneSaid);
         await Assert.That(noneSaid).IsEqualTo("No BrowserAI background was running, so none was stopped.");
 
-        await using var background = BackgroundServerRig.Start(pipe);
+        await using var background = await BackgroundServerRig.StartAsync(pipe);
 
         // Answered, with no record to name the process: asked, and waited for by nobody.
-        var (unwaited, unwaitedSaid) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
+        var (unwaited, unwaitedSaid) = await BackgroundStop.AskAndWaitAsync(pipe, record, Bound);
 
         await Assert.That(unwaited).IsEqualTo(BackgroundStopOutcome.NotWaitedFor).Because(unwaitedSaid);
         await Assert.That(unwaitedSaid).IsEqualTo("BrowserAI's background was asked to stop; its record named no process to wait for.");
 
-        _ = BackgroundRecord.Started(record, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
+        _ = await BackgroundRecord.StartedAsync(record, BackgroundServerRig.Build, "image", HandWrittenRecord.StartedAt);
 
-        var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(pipe, record, Bound));
+        var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(pipe, record, Bound);
 
         await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.StillRunning).Because(detail);
         await Assert.That(detail).IsEqualTo(string.Create(
@@ -124,14 +124,14 @@ internal sealed class BackgroundStopTests
     [Test]
     public async Task AStopNobodyAnswersAndOneThatIsRefusedAreNotAsked()
     {
-        using var data = ScratchDirectory.Create("background-stop-not-asked");
+        using var data = await ScratchDirectory.CreateAsync("background-stop-not-asked");
 
         // Takes the connection, and never reads or answers.
         var silentPipe = PublishedBackground.NewPipeName();
 
         using (var silent = NamedPipes.CreateStreamServer(silentPipe))
         {
-            var (outcome, detail) = await Task.Run(() => BackgroundStop.AskAndWait(silentPipe, BackgroundRecord.PathFor(data.Path, silentPipe), Bound));
+            var (outcome, detail) = await BackgroundStop.AskAndWaitAsync(silentPipe, BackgroundRecord.PathFor(data.Path, silentPipe), Bound);
 
             await Assert.That(outcome).IsEqualTo(BackgroundStopOutcome.NotAsked).Because(detail);
             await Assert.That(detail).StartsWith("BrowserAI's background could not be asked to stop: No answer came within ");
@@ -147,7 +147,7 @@ internal sealed class BackgroundStopTests
         {
             using var hang = new CancellationTokenSource(TestDefaults.InProcessHang);
 
-            if (!NamedPipes.WaitForClient(refusing))
+            if (!await NamedPipes.WaitForClientAsync(refusing, hang.Token))
             {
                 return;
             }
@@ -166,7 +166,7 @@ internal sealed class BackgroundStopTests
         });
 
         // The stop's own bound, which a refusal returns long before (53, 2026-10-11).
-        var (refusedOutcome, refusedDetail) = await Task.Run(() => BackgroundStop.AskAndWait(refusingPipe, BackgroundRecord.PathFor(data.Path, refusingPipe), BackgroundStop.Bound));
+        var (refusedOutcome, refusedDetail) = await BackgroundStop.AskAndWaitAsync(refusingPipe, BackgroundRecord.PathFor(data.Path, refusingPipe), BackgroundStop.Bound);
 
         await answering.WaitAsync(TestDefaults.InProcessHang);
 

@@ -227,7 +227,7 @@ internal sealed class JobContainmentTests
         // now a loud skip, and a failure under BROWSERAI_RELEASE_RUN=1; the
         // "built but incomplete" case the fallback used to catch is
         // `CapabilityState.Partial`, which fails in either mode.
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         var node = RepositoryPayload.Layout.NodeExecutable;
 
@@ -248,7 +248,7 @@ internal sealed class JobContainmentTests
         string[] arguments,
         int expectedMinimumProcesses)
     {
-        using var scratch = ScratchDirectory.Create(label);
+        using var scratch = await ScratchDirectory.CreateAsync(label);
 
         var readyFile = Path.Combine(scratch.Path, "ready.json");
         var donePath = Path.Combine(scratch.Path, "done");
@@ -257,7 +257,7 @@ internal sealed class JobContainmentTests
         // the launcher -- or anything under it -- running.
         using var scope = new JobObjectScope();
 
-        var launcher = scope.Launch(
+        var launcher = await scope.LaunchAsync(
             ProbePath,
             scratch.Path,
             [
@@ -397,7 +397,7 @@ internal sealed class JobContainmentTests
 
         // cmd.exe with no arguments reads its stdin forever, and the scope holds
         // the write end, so it stays alive without a timer or a script.
-        var child = scope.Launch(
+        var child = await scope.LaunchAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
             Path.GetTempPath());
 
@@ -407,9 +407,45 @@ internal sealed class JobContainmentTests
         // child has one.
         sibling.DisposeLocalCopyOfClientHandle();
 
-        var read = await Task.Run(sibling.ReadByte).WaitAsync(TestDefaults.ProcessHang);
+        var read = await ReadOneByteOnAThreadOfItsOwnAsync(sibling).WaitAsync(TestDefaults.ProcessHang);
 
         await Assert.That(read).IsEqualTo(-1);
+    }
+
+    /// <summary>Reads one byte of an anonymous pipe on a thread of its own.</summary>
+    /// <remarks>
+    /// <b>KEPT, for the maintainer's review</b> (2026-10-11, decision 54): an anonymous pipe
+    /// has no overlapped read, and this arm's subject is one, so the read is synchronous
+    /// and is made on a thread of its own and not on a worker of the pool. <i>Previously
+    /// <c>Task.Run(sibling.ReadByte)</c>, the same read on a pool thread.</i>
+    /// </remarks>
+    /// <param name="pipe">The pipe.</param>
+    /// <returns>The byte, or -1 at the end of the pipe.</returns>
+    private static Task<int> ReadOneByteOnAThreadOfItsOwnAsync(Stream pipe)
+    {
+        var read = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                _ = read.TrySetResult(pipe.ReadByte());
+            }
+#pragma warning disable CA1031 // The thread's boundary: the failure goes to the caller, who awaits it.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                _ = read.TrySetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "BrowserAI suite anonymous pipe read",
+        };
+
+        thread.Start();
+
+        return read.Task;
     }
 
     private static async Task<List<int>> WaitForNoneAliveAsync(List<(int ProcessId, long CreatedFileTime)> recorded, TimeSpan patience)

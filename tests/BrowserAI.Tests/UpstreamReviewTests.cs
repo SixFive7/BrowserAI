@@ -63,11 +63,15 @@ internal sealed class UpstreamReviewTests
     [Test]
     public async Task EveryReviewedVersionEqualsTheVersionTheBuildResolved()
     {
-        var mismatches = Upstreams()
-            .Select(upstream => (upstream.Name, upstream.Reviewed, Resolved: Resolve(upstream.Name)))
-            .Where(upstream => upstream.Resolved is not null && upstream.Resolved != upstream.Reviewed)
-            .Select(upstream => $"{upstream.Name}: reviewed {upstream.Reviewed}, resolved {upstream.Resolved}")
-            .ToList();
+        var mismatches = new List<string>();
+
+        foreach (var (name, reviewed, _, _) in await UpstreamsAsync())
+        {
+            if (await ResolveAsync(name) is { } resolved && resolved != reviewed)
+            {
+                mismatches.Add($"{name}: reviewed {reviewed}, resolved {resolved}");
+            }
+        }
 
         await Assert.That(string.Join(Environment.NewLine, mismatches)).IsEmpty();
     }
@@ -75,10 +79,15 @@ internal sealed class UpstreamReviewTests
     [Test]
     public async Task TheUpstreamsWithNothingResolvedAreExactlyTheOnesNotInTheBuildYet()
     {
-        var unresolved = Upstreams()
-            .Where(upstream => Resolve(upstream.Name) is null)
-            .Select(upstream => upstream.Name)
-            .ToList();
+        var unresolved = new List<string>();
+
+        foreach (var (name, _, _, _) in await UpstreamsAsync())
+        {
+            if (await ResolveAsync(name) is null)
+            {
+                unresolved.Add(name);
+            }
+        }
 
         await Assert.That(string.Join(", ", unresolved.Except(NotReferencedByAnyProjectYet, StringComparer.Ordinal))).IsEmpty();
         await Assert.That(string.Join(", ", NotReferencedByAnyProjectYet.Except(unresolved, StringComparer.Ordinal))).IsEmpty();
@@ -92,7 +101,7 @@ internal sealed class UpstreamReviewTests
         // own, so it is also a failing test.
         var defective = new List<string>();
 
-        foreach (var (name, _, date, notes) in Upstreams())
+        foreach (var (name, _, date, notes) in await UpstreamsAsync())
         {
             if (string.IsNullOrWhiteSpace(notes))
             {
@@ -119,8 +128,8 @@ internal sealed class UpstreamReviewTests
         // records what a lookup last saw. A name in one and not the other is
         // an upstream that either drifts unwatched or is watched and never
         // reviewed.
-        var watched = DriftCheckedUpstreams();
-        var reviewed = Upstreams().Select(upstream => upstream.Name).ToList();
+        var watched = await DriftCheckedUpstreamsAsync();
+        var reviewed = (await UpstreamsAsync()).Select(upstream => upstream.Name).ToList();
 
         await Assert.That(string.Join(", ", watched.Except(reviewed, StringComparer.Ordinal))).IsEmpty();
         await Assert.That(string.Join(", ", reviewed.Except(watched, StringComparer.Ordinal))).IsEmpty();
@@ -179,7 +188,7 @@ internal sealed class UpstreamReviewTests
 
         var defective = new List<string>();
 
-        foreach (var (name, adjudications) in SnapshotBlocks())
+        foreach (var (name, adjudications) in await SnapshotBlocksAsync())
         {
             foreach (var missing in golden.Except(adjudications.Keys, StringComparer.Ordinal))
             {
@@ -212,9 +221,9 @@ internal sealed class UpstreamReviewTests
 
     /// <summary>Each entry's per-snapshot adjudications.</summary>
     /// <returns>One pair per upstream, naming the snapshot and its verdict.</returns>
-    private static List<(string Name, Dictionary<string, string> Adjudications)> SnapshotBlocks()
+    private static async Task<List<(string Name, Dictionary<string, string> Adjudications)>> SnapshotBlocksAsync()
     {
-        using var review = JsonDocument.Parse(File.ReadAllText(
+        using var review = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-review.json")));
 
         return
@@ -231,25 +240,25 @@ internal sealed class UpstreamReviewTests
         ];
     }
 
-    private static string? Resolve(string upstream) => upstream switch
+    private static async Task<string?> ResolveAsync(string upstream) => upstream switch
     {
-        "@playwright/mcp" or "playwright-core" => ResolvedVersions.FromPayloadLock(upstream),
-        "node" => ResolvedVersions.FromSnapshotProvenance("node"),
-        "RegisterAI" => ResolvedVersions.FromRegisterAiStamp(),
-        _ => ResolvedVersions.FromNuGetLocks(upstream),
+        "@playwright/mcp" or "playwright-core" => await ResolvedVersions.FromPayloadLockAsync(upstream),
+        "node" => await ResolvedVersions.FromSnapshotProvenanceAsync("node"),
+        "RegisterAI" => await ResolvedVersions.FromRegisterAiStampAsync(),
+        _ => await ResolvedVersions.FromNuGetLocksAsync(upstream),
     };
 
-    private static List<string> DriftCheckedUpstreams()
+    private static async Task<List<string>> DriftCheckedUpstreamsAsync()
     {
-        using var drift = JsonDocument.Parse(File.ReadAllText(
+        using var drift = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "drift-check.json")));
 
         return [.. drift.RootElement.GetProperty("resolved").EnumerateObject().Select(property => property.Name)];
     }
 
-    private static List<(string Name, string? Reviewed, string? Date, string? Notes)> Upstreams()
+    private static async Task<List<(string Name, string? Reviewed, string? Date, string? Notes)>> UpstreamsAsync()
     {
-        using var review = JsonDocument.Parse(File.ReadAllText(
+        using var review = JsonDocument.Parse(await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-review.json")));
 
         return

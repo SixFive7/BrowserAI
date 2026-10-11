@@ -38,7 +38,7 @@ internal sealed class UpdateToastsTests
     {
         using var rig = new Rig();
 
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
 
         await Assert.That(rig.Surface.Lines()).IsEqualTo(Lines(
             "remove installing",
@@ -49,7 +49,7 @@ internal sealed class UpdateToastsTests
         await Assert.That(rig.Toasts.Counting).IsTrue();
 
         // Once per version: the background calling again changes nothing.
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
         rig.Surface.Clear();
 
         rig.Clock.Advance(UpdateToasts.Tick);
@@ -83,7 +83,7 @@ internal sealed class UpdateToastsTests
     {
         using var rig = new Rig();
 
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
 
         await Assert.That(rig.Holds.NamedReads).IsEqualTo(1);
         await Assert.That(rig.Holds.CountdownReads).IsEqualTo(0);
@@ -108,7 +108,7 @@ internal sealed class UpdateToastsTests
         using var rig = new Rig();
 
         rig.Surface.Answer = sequence => sequence >= 3 ? ToastUpdateResult.NotificationNotFound : ToastUpdateResult.Succeeded;
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
         rig.Surface.Clear();
 
         for (var second = 0; second < 5; second++)
@@ -137,9 +137,9 @@ internal sealed class UpdateToastsTests
     {
         using var rig = new Rig();
 
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
         rig.Surface.Clear();
-        rig.Toasts.Installing("1.2.0");
+        await rig.Toasts.InstallingAsync("1.2.0");
 
         await Assert.That(rig.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installed", "remove failed", "show installing seq=0 banner=no reboot=yes"));
         await Assert.That(rig.Surface.Shown[^1].Xml).Contains("Installing BrowserAI 1.2.0 now");
@@ -153,23 +153,23 @@ internal sealed class UpdateToastsTests
         // The after-update start is another process with no countdown of its own.
         using var after = new Rig(holds: false);
 
-        after.Memory.Waited("1.2.0");
-        after.Toasts.Installed("1.2.0");
+        await after.Memory.WaitedAsync("1.2.0");
+        await after.Toasts.InstalledAsync("1.2.0");
 
         await Assert.That(after.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installing", "remove failed", "show installed seq=0 banner=yes reboot=no"));
-        await Assert.That(after.Memory.WaitedFor()).IsNull();
+        await Assert.That(await after.Memory.WaitedForAsync()).IsNull();
 
         after.Surface.Clear();
-        after.Memory.Waited("1.2.0");
-        after.Toasts.Failed("1.2.0");
+        await after.Memory.WaitedAsync("1.2.0");
+        await after.Toasts.FailedAsync("1.2.0");
 
         await Assert.That(after.Surface.Lines()).IsEqualTo(Lines("remove ready", "remove installing", "remove installed", "show failed seq=0 banner=yes reboot=no"));
         await Assert.That(after.Surface.Shown[^1].Xml).Contains("BrowserAI 1.1.0 is still installed.");
         await Assert.That(after.Surface.Shown[^1].Xml).Contains(@"%LocalAppData%\velopack, and BrowserAI&apos;s in C:\data\logs.");
-        await Assert.That(after.Memory.WaitedFor()).IsNull();
+        await Assert.That(await after.Memory.WaitedForAsync()).IsNull();
 
         // And a process that holds no update raises no ready toast.
-        after.Toasts.Held("1.3.0");
+        await after.Toasts.HeldAsync("1.3.0");
 
         await Assert.That(after.Surface.Shown.Count(toast => toast.Xml.Contains("ready to install", StringComparison.Ordinal))).IsEqualTo(0);
     }
@@ -215,7 +215,7 @@ internal sealed class UpdateToastsTests
             }
 
             background.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-            shown.Start();
+            await shown.StartAsync();
 
             await Assert.That(background.IndexOf("apply 1.2.0 with [--after-update 1.2.0]")).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", background.Events));
             await Assert.That(shown.Surface.Lines()).IsEmpty().Because(withRelay
@@ -231,7 +231,7 @@ internal sealed class UpdateToastsTests
         waits.Relays.Connect(RelayIdleAt(idleAt));
         waits.Relays.Answer = _ => Agrees(waits);
         waits.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-        raised.Start();
+        await raised.StartAsync();
 
         await Assert.That(waits.EventsStartingWith("apply")).IsEmpty().Because("the relay's countdown runs");
         await Assert.That(raised.Surface.Lines().Split('\n')[^1]).StartsWith("show ready seq=1 banner=yes reboot=yes");
@@ -307,15 +307,15 @@ internal sealed class UpdateToastsTests
     {
         using var waited = new Rig();
 
-        waited.Memory.Waited("1.2.0");
-        waited.Toasts.Held("1.2.0");
+        await waited.Memory.WaitedAsync("1.2.0");
+        await waited.Toasts.HeldAsync("1.2.0");
 
         await Assert.That(waited.Surface.Lines().Split('\n')[^1]).StartsWith("show ready seq=1 banner=no reboot=yes");
 
         using var other = new Rig();
 
-        other.Memory.Waited("1.1.9");
-        other.Toasts.Held("1.2.0");
+        await other.Memory.WaitedAsync("1.1.9");
+        await other.Toasts.HeldAsync("1.2.0");
 
         await Assert.That(other.Surface.Lines().Split('\n')[^1]).StartsWith("show ready seq=1 banner=yes reboot=yes");
     }
@@ -331,7 +331,7 @@ internal sealed class UpdateToastsTests
     {
         using var rig = new Rig();
 
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
         rig.Surface.Clear();
         rig.Holds.Snapshot = UpdateHoldSnapshot.Nothing(rig.Clock.GetUtcNow());
         rig.Clock.Advance(UpdateToasts.Tick);
@@ -341,7 +341,7 @@ internal sealed class UpdateToastsTests
 
         using var installing = new Rig();
 
-        installing.Toasts.Held("1.2.0");
+        await installing.Toasts.HeldAsync("1.2.0");
         installing.Surface.Clear();
         installing.Holds.Snapshot = installing.Holds.Snapshot with { State = UpdateHoldState.Installing };
         installing.Clock.Advance(UpdateToasts.Tick);
@@ -358,14 +358,14 @@ internal sealed class UpdateToastsTests
         using var rig = new Rig();
 
         rig.Surface.ShowThrows = true;
-        rig.Toasts.Held("1.2.0");
+        await rig.Toasts.HeldAsync("1.2.0");
 
         await Assert.That(rig.Toasts.Counting).IsFalse();
         await Assert.That(rig.Logs.Logged("Windows did not show the update toast 'ready'.")).IsTrue();
 
         using var updates = new Rig();
 
-        updates.Toasts.Held("1.2.0");
+        await updates.Toasts.HeldAsync("1.2.0");
         updates.Surface.UpdateThrows = true;
         updates.Clock.Advance(UpdateToasts.Tick);
         updates.Surface.UpdateThrows = false;
@@ -381,32 +381,32 @@ internal sealed class UpdateToastsTests
     [Test]
     public async Task ThePersonsWaitIsOneFileReadBackAndForgotten()
     {
-        using var scratch = ScratchDirectory.Create("toast-memory");
+        using var scratch = await ScratchDirectory.CreateAsync("toast-memory");
 
         var memory = UpdateToastMemoryFile.In(Path.Combine(scratch.Path, "data"));
 
-        await Assert.That(memory.WaitedFor()).IsNull();
+        await Assert.That(await memory.WaitedForAsync()).IsNull();
 
-        memory.Waited("1.2.0");
+        await memory.WaitedAsync("1.2.0");
 
-        await Assert.That(memory.WaitedFor()).IsEqualTo("1.2.0");
+        await Assert.That(await memory.WaitedForAsync()).IsEqualTo("1.2.0");
         await Assert.That(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.FileName))).IsEqualTo("1.2.0");
 
         memory.Forget();
         memory.Forget();
 
-        await Assert.That(memory.WaitedFor()).IsNull();
+        await Assert.That(await memory.WaitedForAsync()).IsNull();
 
         // 52 b: what the relays an update ended needed, one word each, for that version alone.
-        memory.Ended("1.2.0", [RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]);
+        await memory.EndedAsync("1.2.0", [RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]);
 
         await Assert.That(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.EndedFileName))).IsEqualTo("1.2.0\nmcp,new-conversation,none,unknown");
-        await Assert.That(Joined(memory.EndedFor("1.2.0") ?? [])).IsEqualTo(Joined([RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]));
-        await Assert.That(memory.EndedFor("1.3.0")).IsNull();
+        await Assert.That(Joined(await memory.EndedForAsync("1.2.0") ?? [])).IsEqualTo(Joined([RelayReconnect.McpReconnect, RelayReconnect.NewConversation, RelayReconnect.None, RelayReconnect.Unknown]));
+        await Assert.That(await memory.EndedForAsync("1.3.0")).IsNull();
 
         memory.Forget();
 
-        await Assert.That(memory.EndedFor("1.2.0")).IsNull();
+        await Assert.That(await memory.EndedForAsync("1.2.0")).IsNull();
         await Assert.That(File.Exists(Path.Combine(scratch.Path, "data", UpdateToastMemoryFile.EndedFileName))).IsFalse();
     }
 
@@ -453,18 +453,18 @@ internal sealed class UpdateToastsTests
 
             background.Relays.Answer = _ => Agrees(background);
             background.Client.Offer = BackgroundUpdateRig.Candidate("1.2.0");
-            shown.Start();
+            await shown.StartAsync();
 
             await Assert.That(background.IndexOf("apply 1.2.0 with [--after-update 1.2.0]")).IsGreaterThanOrEqualTo(0).Because(string.Join(" | ", background.Events));
         }
 
         using var after = new Rig(holds: false, memory: memory);
 
-        after.Toasts.Installed("1.2.0");
+        await after.Toasts.InstalledAsync("1.2.0");
 
         var toast = XDocument.Parse(after.Surface.Shown.Single().Xml);
 
-        return ([.. toast.Descendants("text").Select(text => text.Value)], memory.EndedFor("1.2.0"));
+        return ([.. toast.Descendants("text").Select(text => text.Value)], await memory.EndedForAsync("1.2.0"));
     }
 
     /// <summary>A relay of the update core's rig with no call in flight, whose countdown runs out at a moment.</summary>
@@ -501,12 +501,12 @@ internal sealed class UpdateToastsTests
         public CapturingLoggerProvider Logs { get; } = new();
 
         /// <summary>Builds the core with these toasts, hands the toasts its holds, and starts it.</summary>
-        public void Start()
+        public async Task StartAsync()
         {
             var updates = _rig.Build(_toasts);
 
             _holds.Target = updates;
-            updates.Start();
+            await updates.StartAsync();
             _rig.Settle();
         }
 
@@ -577,7 +577,7 @@ internal sealed class UpdateToastsTests
 
         public void Clear() => _lines.Clear();
 
-        public void Show(string tag, string group, ToastRequest toast, uint sequence)
+        public Task ShowAsync(string tag, string group, ToastRequest toast, uint sequence)
         {
             if (ShowThrows)
             {
@@ -587,9 +587,10 @@ internal sealed class UpdateToastsTests
             Shown.Add(toast);
             _lines.Add($"show {tag} seq={sequence} banner={(toast.SuppressPopup ? "no" : "yes")} reboot={(toast.ExpiresOnReboot ? "yes" : "no")}"
                 + (toast.Data is { } data ? $" status='{data[UpdateToastContent.StatusField]}' title='{data[UpdateToastContent.HoldersField]}'" : string.Empty));
+            return Task.CompletedTask;
         }
 
-        public ToastUpdateResult Update(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
+        public Task<ToastUpdateResult> UpdateAsync(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
         {
             if (UpdateThrows)
             {
@@ -597,10 +598,14 @@ internal sealed class UpdateToastsTests
             }
 
             _lines.Add($"update {tag} seq={sequence} status='{values[UpdateToastContent.StatusField]}' title='{values[UpdateToastContent.HoldersField]}'");
-            return Answer(sequence);
+            return Task.FromResult(Answer(sequence));
         }
 
-        public void Remove(string tag, string group) => _lines.Add($"remove {tag}");
+        public Task RemoveAsync(string tag, string group)
+        {
+            _lines.Add($"remove {tag}");
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary>What holds the update, as the arm sets it, counting the reads that name each conversation and the ones that do not.</summary>
@@ -617,10 +622,10 @@ internal sealed class UpdateToastsTests
         /// <summary>How many reads were a second of the countdown.</summary>
         public int CountdownReads => Volatile.Read(ref _countdown);
 
-        public UpdateHoldSnapshot Read()
+        public Task<UpdateHoldSnapshot> ReadAsync()
         {
             _ = Interlocked.Increment(ref _named);
-            return Snapshot;
+            return Task.FromResult(Snapshot);
         }
 
         public UpdateHoldSnapshot ReadCountdown()
@@ -638,14 +643,22 @@ internal sealed class UpdateToastsTests
         private string? _version;
         private (string Version, IReadOnlyList<RelayReconnect> Needs)? _ended;
 
-        public string? WaitedFor() => _version;
+        public Task<string?> WaitedForAsync() => Task.FromResult(_version);
 
-        public void Waited(string version) => _version = version;
+        public Task WaitedAsync(string version)
+        {
+            _version = version;
+            return Task.CompletedTask;
+        }
 
-        public void Ended(string version, IReadOnlyList<RelayReconnect> needs) => _ended = (version, [.. needs]);
+        public Task EndedAsync(string version, IReadOnlyList<RelayReconnect> needs)
+        {
+            _ended = (version, [.. needs]);
+            return Task.CompletedTask;
+        }
 
-        public IReadOnlyList<RelayReconnect>? EndedFor(string version) =>
-            _ended is { } ended && string.Equals(ended.Version, version, StringComparison.OrdinalIgnoreCase) ? ended.Needs : null;
+        public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) =>
+            Task.FromResult(_ended is { } ended && string.Equals(ended.Version, version, StringComparison.OrdinalIgnoreCase) ? ended.Needs : null);
 
         public void Forget()
         {

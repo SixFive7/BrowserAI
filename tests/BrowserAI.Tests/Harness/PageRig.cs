@@ -13,11 +13,41 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>A page, its stand-ins and its clock, with the listener it hands out.</summary>
-internal sealed class PageRig : IDisposable
+/// <remarks>
+/// <b>Made with <see cref="CreateAsync"/> and disposed with <see cref="DisposeAsync"/>
+/// since 2026-10-11</b>, the maintainer's decisions 54 and 63: its scratch directory is
+/// made with an asynchronous write, and the page's disposal is awaited. <i>Previously a
+/// constructor and a <c>Dispose</c> that blocked on the page's disposal.</i>
+/// </remarks>
+internal sealed class PageRig : IAsyncDisposable
 {
-    private readonly ScratchDirectory _scratch = ScratchDirectory.Create("page-rig");
+    private readonly ScratchDirectory _scratch;
 
-    public PageRig(
+    /// <summary>Makes the rig over a scratch directory of its own.</summary>
+    /// <param name="logs">Where the page logs, or <see langword="null"/>.</param>
+    /// <param name="wake">What the page's wake does, or <see langword="null"/>.</param>
+    /// <param name="registration">The registration the page reads, or <see langword="null"/> for a fake.</param>
+    /// <param name="occasion">Why the page is open.</param>
+    /// <param name="holds">What holds an update, or <see langword="null"/> for nothing.</param>
+    /// <param name="changelog">The changelog section, or <see langword="null"/>.</param>
+    /// <param name="install">The broken-install notice, or <see langword="null"/>.</param>
+    /// <param name="installed">Whether the facts name an install root.</param>
+    /// <param name="facts">A change to the facts, or <see langword="null"/>.</param>
+    /// <returns>The rig.</returns>
+    public static async Task<PageRig> CreateAsync(
+        CapturingLoggerProvider? logs = null,
+        Action? wake = null,
+        IPageRegistration? registration = null,
+        Occasion occasion = Occasion.Ordinary,
+        IUpdateHolds? holds = null,
+        ChangelogSection? changelog = null,
+        BrokenInstallNotice? install = null,
+        bool installed = true,
+        Func<PageFacts, PageFacts>? facts = null) =>
+        new(await ScratchDirectory.CreateAsync("page-rig"), logs, wake, registration, occasion, holds, changelog, install, installed, facts);
+
+    private PageRig(
+        ScratchDirectory scratch,
         CapturingLoggerProvider? logs = null,
         Action? wake = null,
         IPageRegistration? registration = null,
@@ -28,6 +58,7 @@ internal sealed class PageRig : IDisposable
         bool installed = true,
         Func<PageFacts, PageFacts>? facts = null)
     {
+        _scratch = scratch;
         Registration = registration ?? new FakeRegistration();
 
         var made = new PageFacts
@@ -84,8 +115,8 @@ internal sealed class PageRig : IDisposable
 
     public string Root => Gate.Root;
 
-    public string HandOut(PageKind kind = PageKind.Status) =>
-        Page.HandOut(kind) ?? throw new InvalidOperationException("The page handed out nothing.");
+    public async Task<string> HandOutAsync(PageKind kind = PageKind.Status) =>
+        await Page.HandOutAsync(kind) ?? throw new InvalidOperationException("The page handed out nothing.");
 
     public static Task<RawHttpAnswer> GetAsync(string address)
     {
@@ -112,9 +143,10 @@ internal sealed class PageRig : IDisposable
         return stream;
     }
 
-    public void Dispose()
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
     {
-        Page.Dispose();
+        await Page.DisposeAsync();
         _scratch.Dispose();
     }
 }
@@ -131,7 +163,9 @@ internal sealed class NothingHolds : IUpdateHolds
     /// <summary>What a read of <see cref="Watch"/> throws, or <see langword="null"/> for <see cref="Watching"/>.</summary>
     public Exception? WatchFailure { get; set; }
 
-    public UpdateHoldSnapshot Read() => UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
+    public Task<UpdateHoldSnapshot> ReadAsync() => Task.FromResult(UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch));
+
+    public UpdateHoldSnapshot ReadCountdown() => UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
 
     public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
         Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
@@ -184,10 +218,14 @@ internal sealed class FakeFolders : IPageFolders
 
     private int _measured;
 
-    public FolderMeasure Measure()
+    public async Task<FolderMeasure> MeasureAsync()
     {
         _ = Interlocked.Increment(ref _measured);
-        Hold?.Task.GetAwaiter().GetResult();
+
+        if (Hold is { } hold)
+        {
+            await hold.Task;
+        }
 
         return new FolderMeasure(At, [.. Folders.OrderByDescending(static folder => folder.Bytes ?? -1)]);
     }
@@ -220,9 +258,6 @@ internal sealed class RecordingHost : IPageHost
         return Open is { } open ? open.Task : Task.FromResult(Pick);
     }
 
-    public void RunQueuedWork()
-    {
-    }
 }
 
 /// <summary>Every client's registration, scripted, and every action recorded.</summary>

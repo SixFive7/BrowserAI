@@ -258,8 +258,10 @@ internal sealed class NeverByImageNameTests
 
         // No project may drop out of it. `Remove` on an AdditionalFiles item is
         // the quiet way to do exactly that.
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.ProjectFiles);
+
         var opted = RepositoryLayout.ProjectFiles
-            .Where(file => File.ReadAllText(file.FullName).Contains("AdditionalFiles Remove", StringComparison.OrdinalIgnoreCase))
+            .Where(file => texts[file.FullName].Contains("AdditionalFiles Remove", StringComparison.OrdinalIgnoreCase))
             .Select(file => file.Name);
 
         await Assert.That(string.Join(", ", opted)).IsEmpty();

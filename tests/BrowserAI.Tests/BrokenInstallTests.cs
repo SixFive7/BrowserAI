@@ -54,8 +54,8 @@ internal sealed class BrokenInstallTests
 
         await Assert.That(notice.Difference).IsNull();
 
-        notice.Broken(Difference);
-        notice.Broken("'browser_click', which this BrowserAI does not have");
+        await notice.BrokenAsync(Difference);
+        await notice.BrokenAsync("'browser_click', which this BrowserAI does not have");
 
         await Assert.That(surface.Lines()).IsEqualTo($"show {InstallToastContent.Tag} {InstallToastContent.Group}");
 
@@ -78,14 +78,14 @@ internal sealed class BrokenInstallTests
         await Assert.That(changes).IsEqualTo(2);
 
         // Matched again: the notice goes, and so does the toast; nothing is raised again.
-        notice.Intact();
-        notice.Intact();
+        await notice.IntactAsync();
+        await notice.IntactAsync();
 
         await Assert.That(notice.Difference).IsNull();
         await Assert.That(surface.Lines()).IsEqualTo($"show {InstallToastContent.Tag} {InstallToastContent.Group}\nremove {InstallToastContent.Tag} {InstallToastContent.Group}");
         await Assert.That(changes).IsEqualTo(3);
 
-        notice.Broken(Difference);
+        await notice.BrokenAsync(Difference);
 
         await Assert.That(surface.Shown.Count).IsEqualTo(1).Because("a toast was raised twice in one background run");
         await Assert.That(notice.Difference).IsEqualTo(Difference);
@@ -117,7 +117,7 @@ internal sealed class BrokenInstallTests
 
         using var notice = new BrokenInstallNotice(surface, NullLogger.Instance);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.ToolsListResult = child.ToolsListResult.Replace("Capture an accessibility snapshot", "Capture an accessibility snapshot, changed", StringComparison.Ordinal),
             opensDefaultSession: false,
             installHealth: notice);
@@ -149,7 +149,7 @@ internal sealed class BrokenInstallTests
         await Assert.That(surface.Lines()).IsEqualTo($"show {InstallToastContent.Tag} {InstallToastContent.Group}").Because("one background run raised the toast more than once, or not at all");
         await Assert.That(notice.Difference).IsEqualTo(Difference);
 
-        using var page = new PageRig(install: notice);
+        await using var page = await PageRig.CreateAsync(install: notice);
 
         var status = PageContent.Fragment(page.Page.View(PageKind.Status), PageKind.Status, 1, Occasion.Ordinary, page.Clock.GetUtcNow());
 
@@ -173,9 +173,9 @@ internal sealed class BrokenInstallTests
     public async Task EveryPageSaysHowToReinstallWhileTheInstallIsBroken()
     {
         using var notice = new BrokenInstallNotice(new RecordingSurface(), NullLogger.Instance);
-        using var rig = new PageRig(install: notice);
+        await using var rig = await PageRig.CreateAsync(install: notice);
 
-        notice.Broken(Difference);
+        await notice.BrokenAsync(Difference);
 
         foreach (var kind in Enum.GetValues<PageKind>())
         {
@@ -193,7 +193,7 @@ internal sealed class BrokenInstallTests
             await Assert.That(html).Contains(PageContent.ReleasesUrl);
         }
 
-        notice.Intact();
+        await notice.IntactAsync();
 
         await Assert.That(PageContent.Fragment(rig.Page.View(PageKind.Status), PageKind.Status, 1, Occasion.Ordinary, rig.Clock.GetUtcNow()))
             .DoesNotContain("BrowserAI needs reinstalling.");
@@ -228,11 +228,11 @@ internal sealed class BrokenInstallTests
 
         var holds = new BarrierHolds();
 
-        using var rig = new PageRig(holds: holds, install: notice);
+        await using var rig = await PageRig.CreateAsync(holds: holds, install: notice);
 
         notice.Changed = rig.Page.InstallHealthChanged;
 
-        _ = rig.HandOut(PageKind.Status);
+        _ = await rig.HandOutAsync(PageKind.Status);
 
         using var stream = await rig.StreamAsync(rig.Gate.Root, 1);
 
@@ -242,7 +242,7 @@ internal sealed class BrokenInstallTests
         await Assert.That(opened).IsNotNull();
         await Assert.That(opened!.Member("html")).DoesNotContain("BrowserAI needs reinstalling.");
 
-        notice.Broken(Difference);
+        await notice.BrokenAsync(Difference);
         holds.Snapshot = new UpdateHoldSnapshot(rig.Clock.GetUtcNow(), UpdateHoldState.Held, Barrier, [], [], []);
         rig.Clock.Advance(PageService.HoldsWatchPeriod);
 
@@ -266,10 +266,10 @@ internal sealed class BrokenInstallTests
         await Assert.That(click).IsEqualTo(new ToastClick(ToastAction.StatusPage, null));
 
         var opened = new List<string>();
-        var exit = ToastActivation.Act(click, new NoMemory(), page =>
+        var exit = await ToastActivation.ActAsync(click, new NoMemory(), page =>
         {
             opened.Add(page);
-            return 0;
+            return Task.FromResult(0);
         });
 
         await Assert.That(exit).IsEqualTo(0);
@@ -289,19 +289,24 @@ internal sealed class BrokenInstallTests
 
         public string Lines() => string.Join('\n', _lines);
 
-        public void Show(string tag, string group, ToastRequest toast, uint sequence)
+        public Task ShowAsync(string tag, string group, ToastRequest toast, uint sequence)
         {
             Shown.Add(toast);
             _lines.Add($"show {tag} {group}");
+            return Task.CompletedTask;
         }
 
-        public ToastUpdateResult Update(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
+        public Task<ToastUpdateResult> UpdateAsync(string tag, string group, IReadOnlyDictionary<string, string> values, uint sequence)
         {
             _lines.Add($"update {tag} {group}");
-            return ToastUpdateResult.Succeeded;
+            return Task.FromResult(ToastUpdateResult.Succeeded);
         }
 
-        public void Remove(string tag, string group) => _lines.Add($"remove {tag} {group}");
+        public Task RemoveAsync(string tag, string group)
+        {
+            _lines.Add($"remove {tag} {group}");
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary>What holds an update, as the arm sets it.</summary>
@@ -309,7 +314,9 @@ internal sealed class BrokenInstallTests
     {
         public UpdateHoldSnapshot Snapshot { get; set; } = UpdateHoldSnapshot.Nothing(DateTimeOffset.UnixEpoch);
 
-        public UpdateHoldSnapshot Read() => Snapshot;
+        public Task<UpdateHoldSnapshot> ReadAsync() => Task.FromResult(Snapshot);
+
+        public UpdateHoldSnapshot ReadCountdown() => Snapshot;
 
         public Task<string?> InstallNowAsync(string version, CancellationToken cancellationToken) =>
             Task.FromResult<string?>("No update is downloaded and waiting, so there is nothing to install.");
@@ -318,17 +325,13 @@ internal sealed class BrokenInstallTests
     /// <summary>A memory of a person's wait that keeps nothing.</summary>
     private sealed class NoMemory : IUpdateToastMemory
     {
-        public string? WaitedFor() => null;
+        public Task<string?> WaitedForAsync() => Task.FromResult<string?>(null);
 
-        public void Waited(string version)
-        {
-        }
+        public Task WaitedAsync(string version) => Task.CompletedTask;
 
-        public void Ended(string version, IReadOnlyList<RelayReconnect> needs)
-        {
-        }
+        public Task EndedAsync(string version, IReadOnlyList<RelayReconnect> needs) => Task.CompletedTask;
 
-        public IReadOnlyList<RelayReconnect>? EndedFor(string version) => null;
+        public Task<IReadOnlyList<RelayReconnect>?> EndedForAsync(string version) => Task.FromResult<IReadOnlyList<RelayReconnect>?>(null);
 
         public void Forget()
         {

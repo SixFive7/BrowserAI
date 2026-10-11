@@ -78,7 +78,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -160,7 +160,7 @@ internal sealed class CloseOrderingTests
     {
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -251,7 +251,7 @@ internal sealed class CloseOrderingTests
     {
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -326,7 +326,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -387,7 +387,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -433,7 +433,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = HostSessions(answer.Task, clock);
+        await using var sessions = await HostSessionsAsync(answer.Task, clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var gone = await rig.ConnectAsync("the client before its restart");
@@ -512,7 +512,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = HostSessions(answer.Task, clock);
+        await using var sessions = await HostSessionsAsync(answer.Task, clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var gone = await rig.ConnectAsync("the client before its restart");
@@ -574,7 +574,7 @@ internal sealed class CloseOrderingTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = HostSessions(answer.Task, clock);
+        await using var sessions = await HostSessionsAsync(answer.Task, clock);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var going = await rig.ConnectAsync("the client that goes during the close");
@@ -646,15 +646,15 @@ internal sealed class CloseOrderingTests
     [Test]
     public async Task AgainstARealBrowserAResumeDuringASlowCloseWaitsAndTheWriteBeforeItSurvives()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         using var site = LoopbackSite.Start();
 
         var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
-        var release = Path.Combine(ScratchRoot.Path, $"close-release-{Guid.NewGuid():N}");
+        var release = Path.Combine(await ScratchRoot.PathAsync(), $"close-release-{Guid.NewGuid():N}");
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             opensDefaultSession: false,
             browserIdlePeriod: period,
             clock: clock,
@@ -789,15 +789,15 @@ internal sealed class CloseOrderingTests
     [Test]
     public async Task AgainstARealBrowserInTheHostAKeptSessionsSlowCloseIsWaitedForByTheNextClient()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         using var site = LoopbackSite.Start();
 
         var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
-        var release = Path.Combine(ScratchRoot.Path, $"close-release-{Guid.NewGuid():N}");
+        var release = Path.Combine(await ScratchRoot.PathAsync(), $"close-release-{Guid.NewGuid():N}");
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             opensDefaultSession: false,
             browserIdlePeriod: period,
             clock: clock,
@@ -919,8 +919,8 @@ internal sealed class CloseOrderingTests
     /// <param name="answer">Completed when the close may answer.</param>
     /// <param name="clock">The clock the idle timer reads.</param>
     /// <returns>The environment, which the arm disposes.</returns>
-    private static RigSessionEnvironment HostSessions(Task answer, ManualClock clock) =>
-        RigSessionEnvironment.Create(
+    private static async Task<RigSessionEnvironment> HostSessionsAsync(Task answer, ManualClock clock) =>
+        await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();

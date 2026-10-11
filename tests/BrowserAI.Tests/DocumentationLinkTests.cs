@@ -468,7 +468,7 @@ internal sealed partial class DocumentationLinkTests
         const char Bang = '!';
         const char Quote = '"';
 
-        using var scratch = ScratchDirectory.Create("asset-references");
+        using var scratch = await ScratchDirectory.CreateAsync("asset-references");
 
         var present = Path.Combine(scratch.Path, "there.png");
         await File.WriteAllBytesAsync(present, [0x89, 0x50, 0x4E, 0x47]);
@@ -485,7 +485,7 @@ internal sealed partial class DocumentationLinkTests
             + $"<img src={Quote}https://example.invalid/remote.png{Quote}>\n"
             + $"[prose](RepositoryLayout.cs) and `{Bang}[quoted](quoted.png)` stay out of it\n");
 
-        var control = AssetReferences(new FileInfo(document));
+        var control = await AssetReferencesAsync(new FileInfo(document));
 
         // Four resolve, one does not, the absolute URL is somebody else's, the
         // ordinary prose link belongs to the other scan, and the quoted one is
@@ -523,7 +523,7 @@ internal sealed partial class DocumentationLinkTests
 
         foreach (var file in RepositoryLayout.LinkBearingFiles.Where(IsMarkdown))
         {
-            found.AddRange(AssetReferences(file));
+            found.AddRange(await AssetReferencesAsync(file));
         }
 
         await Assert.That(string.Join(Environment.NewLine, Unresolved(found))).IsEmpty();
@@ -541,10 +541,10 @@ internal sealed partial class DocumentationLinkTests
     /// </summary>
     /// <param name="file">The Markdown file to read.</param>
     /// <returns>The file, the line, its 1-based number, and the target.</returns>
-    private static List<(FileInfo File, string Line, int Number, string Target)> AssetReferences(FileInfo file)
+    private static async Task<List<(FileInfo File, string Line, int Number, string Target)>> AssetReferencesAsync(FileInfo file)
     {
         var found = new List<(FileInfo, string, int, string)>();
-        var lines = File.ReadAllLines(file.FullName);
+        var lines = await File.ReadAllLinesAsync(file.FullName);
 
         for (var index = 0; index < lines.Length; index++)
         {

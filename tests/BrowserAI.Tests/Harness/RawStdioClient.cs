@@ -207,7 +207,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// The command is the published <c>BrowserAI.exe</c> and the arguments name no
     /// mode that serves stdio (<see cref="RefusalFor"/>). Nothing is started.
     /// </exception>
-    public static RawStdioClient Start(
+    public static async Task<RawStdioClient> StartAsync(
         string command,
         IReadOnlyList<string> arguments,
         string workingDirectory,
@@ -237,7 +237,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
             {
                 pipe = PublishedBackground.NewPipeName();
 
-                background = PublishedBackground.Start(job, workingDirectory, environment, pipe, arguments, backgroundError, out backgroundPump);
+                (background, backgroundPump) = await PublishedBackground.StartAsync(job, workingDirectory, environment, pipe, arguments, backgroundError);
                 record = PublishedBackground.RecordFor(environment, arguments, pipe);
                 relayArguments = [.. arguments, BrowserAI.Coordination.BackgroundPipe.PipeArgument, pipe];
             }

@@ -80,8 +80,10 @@ internal sealed partial class BrowserIdleTimerTests
         // reads the seam on every open and must, and the property's own
         // declaration initialises it from the constant above. What must not
         // exist is a second value for it in shipped code.
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.ProductSourceFiles);
+
         var offenders = RepositoryLayout.ProductSourceFiles
-            .Where(file => IdlePeriodAssignment().IsMatch(File.ReadAllText(file.FullName)))
+            .Where(file => IdlePeriodAssignment().IsMatch(texts[file.FullName]))
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
             .Order(StringComparer.Ordinal);
 
@@ -139,8 +141,10 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(ClockAssignment().IsMatch("    public TimeProvider Clock { get; init; } = TimeProvider.System;")).IsFalse();
         await Assert.That(ClockAssignment().IsMatch("        var manualClock = new ManualClock();")).IsFalse();
 
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.ProductSourceFiles);
+
         var offenders = RepositoryLayout.ProductSourceFiles
-            .Where(file => ClockAssignment().IsMatch(File.ReadAllText(file.FullName)))
+            .Where(file => ClockAssignment().IsMatch(texts[file.FullName]))
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
             .Order(StringComparer.Ordinal);
 
@@ -173,7 +177,7 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task TheCloseToolIsUpstreamsOwnAndOnlyBrowserAiCallsIt()
     {
-        await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
+        await Assert.That(await UpstreamSurface.DefaultSurfaceAsync()).Contains(LiveSession.BrowserCloseTool);
 
         // Callable at all: the timer bypasses the decision anyway -- it is
         // BrowserAI calling its own child, not a caller calling a tool --
@@ -268,7 +272,7 @@ internal sealed partial class BrowserIdleTimerTests
     {
         var clock = new ManualClock();
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -403,7 +407,7 @@ internal sealed partial class BrowserIdleTimerTests
     {
         var clock = new ManualClock();
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -527,7 +531,7 @@ internal sealed partial class BrowserIdleTimerTests
         var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var clock = new ManualClock();
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { HoldUntil = held.Task };
@@ -613,7 +617,7 @@ internal sealed partial class BrowserIdleTimerTests
         var clock = new ManualClock();
         var answer = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -709,7 +713,7 @@ internal sealed partial class BrowserIdleTimerTests
         var clock = new ManualClock();
         var never = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -854,7 +858,7 @@ internal sealed partial class BrowserIdleTimerTests
         // reports as SKIPPED and not as a pass -- and as a failure under
         // BROWSERAI_RELEASE_RUN, because a release run that never started a
         // browser is the batteries-included premise being silently dead code.
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         // ⚠️ A clock this test moves by hand, so the close happens exactly when
         // this test asks for it and at no other moment. See the history of the
@@ -862,7 +866,7 @@ internal sealed partial class BrowserIdleTimerTests
         var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             browserIdlePeriod: period,
             clock: clock,
             realSessionChildren: true);
@@ -988,7 +992,7 @@ internal sealed partial class BrowserIdleTimerTests
     {
         var clock = new ManualClock();
 
-        await using var rig = RigSessionEnvironment.Create(
+        await using var rig = await RigSessionEnvironment.CreateAsync(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
@@ -1062,11 +1066,11 @@ internal sealed partial class BrowserIdleTimerTests
     /// <summary>The generated config a launch was given, read back off disk.</summary>
     /// <param name="launch">The launch, as the rig recorded it.</param>
     /// <returns>The config.</returns>
-    private static JsonObject ConfigOf(BrowserAI.Protocol.ChildProcessOptions launch)
+    private static async Task<JsonObject> ConfigOfAsync(BrowserAI.Protocol.ChildProcessOptions launch)
     {
         var file = launch.Arguments[launch.Arguments.ToList().IndexOf("--config") + 1];
 
-        return JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+        return JsonNode.Parse(await File.ReadAllTextAsync(file))!.AsObject();
     }
 
     // ⚠️ RETIRED 2026-10-09: `StdinEofTearsDownTheNodeChildTheBrowserAndTheJob`, which
@@ -1109,14 +1113,14 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task StdinEofEndsTheRelayAndLeavesItsSessionToTheBackground()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("idle-eof");
+        using var scratch = await ScratchDirectory.CreateAsync("idle-eof");
 
-        await using var client = RawStdioClient.Start(
+        await using var client = await RawStdioClient.StartAsync(
             PublishedSlice.Executable,
             PublishedSlice.Mcp,
             scratch.Path,
@@ -1157,7 +1161,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
         await Assert.That(client.ExitCode).IsEqualTo(0);
 
-        await Assert.That(ProcessLogRecords.For(relay, relayCreated)).Contains(RelayEndedOnEndOfInput);
+        await Assert.That(await ProcessLogRecords.ForAsync(relay, relayCreated)).Contains(RelayEndedOnEndOfInput);
 
         var went = await WaitForRecordAsync(background, backgroundCreated, RelayWent(relay), TeardownPatience);
 
@@ -1212,19 +1216,19 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task KillingTheClientEndsTheRelayWithoutWaitingForEofAndLeavesTheSessionToTheBackground()
     {
-        SuiteEnvironment.RequirePublishedSlice();
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         PublishedSlice.EnsureFresh();
 
-        using var scratch = ScratchDirectory.Create("client-liveness");
+        using var scratch = await ScratchDirectory.CreateAsync("client-liveness");
         using var backgroundJob = JobObject.CreateKillOnClose();
 
         var environment = PublishedSlice.InheritedEnvironment();
         var pipe = PublishedBackground.NewPipeName();
         var record = PublishedBackground.RecordFor(environment, [], pipe);
 
-        using var background = PublishedBackground.Start(backgroundJob, scratch.Path, environment, pipe, []);
+        using var background = await PublishedBackground.StartAsync(backgroundJob, scratch.Path, environment, pipe, []);
 
         var backgroundCreated = ProcessIdentity.CreationTimeOf(background.Id);
 
@@ -1234,7 +1238,7 @@ internal sealed partial class BrowserIdleTimerTests
 
             var reportPath = Path.Combine(scratch.Path, "report.json");
 
-            var wrapper = scope.Launch(
+            var wrapper = await scope.LaunchAsync(
                 ProbePath,
                 scratch.Path,
                 [
@@ -1298,7 +1302,7 @@ internal sealed partial class BrowserIdleTimerTests
                 // handle this process still holds is a write end that never closed.
                 await Assert.That(HandleIsOurs(standardInput)).IsTrue();
 
-                var relaySaid = ProcessLogRecords.For(relay, relayCreated);
+                var relaySaid = await ProcessLogRecords.ForAsync(relay, relayCreated);
 
                 await Assert.That(relaySaid).Contains($"The MCP client, pid {wrapper.Id}, has exited");
                 await Assert.That(relaySaid).DoesNotContain(RelayEndedOnEndOfInput);
@@ -1390,7 +1394,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         while (true)
         {
-            var line = ProcessLogRecords.For(processId, created)
+            var line = (await ProcessLogRecords.ForAsync(processId, created))
                 .Split('\n')
                 .FirstOrDefault(record => record.Contains(text, StringComparison.Ordinal) && record.Contains(" disconnected; ", StringComparison.Ordinal));
 
@@ -1478,8 +1482,10 @@ internal sealed partial class BrowserIdleTimerTests
             Path.Combine("src", "BrowserAI", "Relay", "RelayEngine.Client.cs"),
         ];
 
+        var texts = await TestFiles.ReadAllTextAsync(RepositoryLayout.ProductSourceFiles);
+
         var pinging = RepositoryLayout.ProductSourceFiles
-            .Where(file => File.ReadAllText(file.FullName) is var text
+            .Where(file => texts[file.FullName] is var text
                 && (text.Contains("\"ping\"", StringComparison.OrdinalIgnoreCase)
                     || text.Contains("RequestMethods.Ping", StringComparison.Ordinal)
                     || text.Contains("PingAsync", StringComparison.Ordinal)))
@@ -1496,7 +1502,7 @@ internal sealed partial class BrowserIdleTimerTests
         // cmd.exe with no arguments reads its stdin forever, and the scope holds
         // the write end -- so it stays alive without a timer or a script, exactly
         // as PlantedProcess relies on.
-        var client = scope.Launch(
+        var client = await scope.LaunchAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
             Path.GetTempPath());
 

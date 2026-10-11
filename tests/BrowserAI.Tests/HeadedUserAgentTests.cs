@@ -71,7 +71,7 @@ internal sealed class HeadedUserAgentTests
     [Test]
     public async Task OnlyAHiddenChromiumConfigCarriesTheSwitch()
     {
-        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, $"ua-config-{Guid.NewGuid():N}"));
+        var session = SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), $"ua-config-{Guid.NewGuid():N}"));
         var headed = HeadedUserAgent.Headed(Hidden)!;
 
         // Joined, so the order is part of what is compared: the switch comes after
@@ -109,7 +109,7 @@ internal sealed class HeadedUserAgentTests
     [Test]
     public async Task AKeptAnswerIsUsedForTheBuildItWasAskedOfAndNoOther()
     {
-        var revision = Path.Combine(ScratchRoot.Path, $"chromium-ua-{Guid.NewGuid():N}");
+        var revision = Path.Combine(await ScratchRoot.PathAsync(), $"chromium-ua-{Guid.NewGuid():N}");
         var executable = Path.Combine(revision, "chrome-win64", "chrome.exe");
 
         _ = Directory.CreateDirectory(Path.GetDirectoryName(executable)!);
@@ -144,11 +144,11 @@ internal sealed class HeadedUserAgentTests
     [Test]
     public async Task AgainstARealChromiumAHiddenSessionSendsTheHeadedUserAgent()
     {
-        SuiteEnvironment.RequireProvisionedChromium();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         using var site = LoopbackSite.Start();
 
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false, realSessionChildren: true);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false, realSessionChildren: true);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "hidden-user-agent");

@@ -254,7 +254,7 @@ internal sealed class LosslessPassthroughTests
         const string Escaped =
             @"{""content"":[{""type"":""text"",""text"":""- [Screenshot](café.png) -- done""}],""x-browserai-unknown-member"":true}";
 
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
             {
                 RawResult = Escaped,

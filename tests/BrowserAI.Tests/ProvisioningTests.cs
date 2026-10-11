@@ -70,7 +70,7 @@ internal sealed partial class ProvisioningTests
         // against a clock.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             installer: (browser, root) => FakeInstaller.SucceedingWhenReleased(
                 Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
                 stillDownloading.Task));
@@ -105,7 +105,7 @@ internal sealed partial class ProvisioningTests
         // product defect.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             Answering,
             installer: (browser, root) => FakeInstaller.SucceedingWhenReleased(
                 Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
@@ -172,7 +172,7 @@ internal sealed partial class ProvisioningTests
         // not on the recovery it is about. Observed 2026-08-16.
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             Answering,
             installer: (browser, root) => FakeInstaller.SucceedingWhenReleased(Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName), release.Task),
             timers: new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20) });
@@ -209,7 +209,7 @@ internal sealed partial class ProvisioningTests
     public async Task AnInstallerThatExitsCleanWithoutTheMarkerIsAFailureAndLeavesNothingBehind()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-no-marker");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-no-marker");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -260,7 +260,7 @@ internal sealed partial class ProvisioningTests
     {
         using var records = new CapturingLoggerProvider();
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(records));
-        using var scratch = ScratchDirectory.Create("provision-error-line");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-error-line");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -338,7 +338,7 @@ internal sealed partial class ProvisioningTests
         const string Said = "the suite's installer would not start";
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-throws");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-throws");
 
         var root = Path.Combine(scratch.Path, "browsers");
 
@@ -357,7 +357,7 @@ internal sealed partial class ProvisioningTests
     public async Task TheStallCapStopsADownloadThatNeverProgresses()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-stall-cap");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-stall-cap");
 
         var root = Path.Combine(scratch.Path, "browsers");
         FakeInstaller? started = null;
@@ -450,7 +450,7 @@ internal sealed partial class ProvisioningTests
     public async Task ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-slow-but-working");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-slow-but-working");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -544,7 +544,7 @@ internal sealed partial class ProvisioningTests
     public async Task TheStallCapFiresOnTheFirstPollAfterTheBudgetPassesWithNoBytes()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-stall-instant");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-stall-instant");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var clock = new ManualClock();
@@ -617,7 +617,7 @@ internal sealed partial class ProvisioningTests
     {
         var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             installer: (browser, root) => FakeInstaller.WritingThenWaiting(
                 Path.Combine(root, BrowserProvisioner.DownloadDirectoryName, browser, "chrome-win64.zip"),
                 bytes: 4_096,
@@ -663,7 +663,7 @@ internal sealed partial class ProvisioningTests
     public async Task TheExtractionCapStartsWhenTheBrowserDirectoryAppears()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-extraction-cap");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-extraction-cap");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -698,7 +698,7 @@ internal sealed partial class ProvisioningTests
     public async Task TwoProvisionersOverOneRootProduceOneInstall()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-one-install");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-one-install");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -781,7 +781,7 @@ internal sealed partial class ProvisioningTests
     public async Task AHolderThatLetsGoWithoutInstallingIsOvertakenRatherThanWaitedOnForever()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-holder-let-go");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-holder-let-go");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -798,7 +798,7 @@ internal sealed partial class ProvisioningTests
 
         // Taken before anything asks for it, and released while the tree is
         // still incomplete. Nothing is ever going to write a marker here.
-        var claim = ProvisioningClaim.Take(root, SessionManager.DefaultBrowser);
+        var claim = await ProvisioningClaim.TakeAsync(root, SessionManager.DefaultBrowser);
 
         try
         {
@@ -813,7 +813,7 @@ internal sealed partial class ProvisioningTests
             // downloader the mutex exists to prevent.
             await Assert.That(Volatile.Read(ref starts)).IsEqualTo(0);
 
-            claim.Dispose();
+            await claim.DisposeAsync();
 
             // ⚠️ The bound is the provisioner's OWN outer deadline, not a
             // budget written here, and that is what makes this test bearable in
@@ -836,7 +836,7 @@ internal sealed partial class ProvisioningTests
         }
         finally
         {
-            claim.Dispose();
+            await claim.DisposeAsync();
         }
     }
 
@@ -878,7 +878,7 @@ internal sealed partial class ProvisioningTests
     public async Task AProcessWaitingOnAnotherOneDoesNotSayItIsDownloading()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-waiting-detail");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-waiting-detail");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -888,7 +888,7 @@ internal sealed partial class ProvisioningTests
             StartInstaller = (_, _) => FakeInstaller.Succeeding(directory, TimeSpan.Zero),
         };
 
-        var claim = ProvisioningClaim.Take(root, SessionManager.DefaultBrowser);
+        var claim = await ProvisioningClaim.TakeAsync(root, SessionManager.DefaultBrowser);
 
         try
         {
@@ -898,7 +898,7 @@ internal sealed partial class ProvisioningTests
             // answers immediately by design, so the phase it reports is whatever
             // the background thread has reached -- which is why this reads Peek in
             // a loop instead of asserting on the first answer.
-            var started = provisioner.Ensure(SessionManager.DefaultBrowser);
+            var started = await provisioner.EnsureAsync(SessionManager.DefaultBrowser);
 
             await Assert.That(started.State).IsEqualTo(ProvisioningState.Provisioning);
 
@@ -907,7 +907,7 @@ internal sealed partial class ProvisioningTests
 
             while (true)
             {
-                waiting = provisioner.Peek(SessionManager.DefaultBrowser);
+                waiting = await provisioner.PeekAsync(SessionManager.DefaultBrowser);
 
                 if (waiting.Detail.Contains("holds the provisioning lock", StringComparison.Ordinal))
                 {
@@ -939,7 +939,7 @@ internal sealed partial class ProvisioningTests
         }
         finally
         {
-            claim.Dispose();
+            await claim.DisposeAsync();
         }
     }
 
@@ -1076,7 +1076,7 @@ internal sealed partial class ProvisioningTests
     [Test]
     public async Task AnAbandonedMutexIsOnlyAReasonToDeleteAnUnmarkedTree()
     {
-        using var scratch = ScratchDirectory.Create("provision-abandoned-predicate");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-abandoned-predicate");
 
         var complete = Path.Combine(scratch.Path, "complete");
         var unmarked = Path.Combine(scratch.Path, "unmarked");
@@ -1103,7 +1103,7 @@ internal sealed partial class ProvisioningTests
     public async Task AnAbandonedMutexOverAnUnmarkedTreeStillDeletesItAndInstallsAgain()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-abandoned-unmarked");
+        using var scratch = await ScratchDirectory.CreateAsync("provision-abandoned-unmarked");
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
@@ -1119,12 +1119,12 @@ internal sealed partial class ProvisioningTests
         // records having fallen into.
         using var keepAlive = MachineMutex.Create(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
 
-        AbandonOnAThread(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
+        await AbandonInAProbeAsync(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium), scratch.Path);
 
         using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log, Quick())
         {
             StartInstaller = (_, _) => FakeInstaller.Succeeding(directory, TimeSpan.Zero),
-            PruneRevisions = _ => { },
+            PruneRevisions = _ => Task.CompletedTask,
         };
 
         var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
@@ -1138,31 +1138,54 @@ internal sealed partial class ProvisioningTests
     }
 
     /// <summary>
-    /// Abandons a named mutex: a thread that ends while owning one is the whole
+    /// Abandons a named mutex: a holder that ends while owning one is the whole
     /// of what <c>AbandonedMutexException</c> reports.
     /// </summary>
+    /// <remarks>
+    /// <b>A probe that holds it is killed since 2026-10-11</b>, as
+    /// <c>SessionLockTests</c> abandons a gate, the maintainer's decision 54: a mutex is
+    /// taken only by a wait, and this suite waits on no thread of its own. <i>Previously
+    /// a thread of this process took the mutex and ended, and the caller joined it.</i>
+    /// </remarks>
     /// <param name="name">The <c>Global\</c> name to abandon.</param>
-    private static void AbandonOnAThread(string name)
+    /// <param name="scratch">Where the probe writes what it took.</param>
+    /// <returns>The abandonment, once the holder is gone.</returns>
+    private static async Task AbandonInAProbeAsync(string name, string scratch)
     {
-        var thread = new Thread(() =>
-        {
-#pragma warning disable CA2000 // Deliberately neither released nor disposed: releasing is the opposite of abandoning, and the caller holds a second handle so the kernel object outlives this thread.
-            var mutex = MachineMutex.Create(name);
-#pragma warning restore CA2000
+        var ready = Path.Combine(scratch, "abandoning-holder.json");
+        int pid;
+        long created;
 
-            _ = mutex.Acquire(TestDefaults.ProcessHang);
-        })
+        using (var scope = new JobObjectScope())
         {
-            IsBackground = true,
-            Name = "browserai-abandoning-holder",
-        };
+            _ = await scope.LaunchAsync(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"), scratch, "session-hold-named", name, ready);
 
-        thread.Start();
+            var report = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
-        if (!thread.Join(TestDefaults.ProcessHang))
+            if ((string?)report["acquisition"] is not nameof(MutexAcquisition.Acquired))
+            {
+                throw new InvalidOperationException(
+                    $"The probe that was to abandon '{name}' reported '{report["acquisition"]}', so the mutex is not held by it and this test would measure the wrong branch.");
+            }
+
+            pid = (int)report["pid"]!;
+            created = ProcessIdentity.CreationTimeOf(pid);
+
+            // A mutex is abandoned when the thread owning it dies without
+            // releasing. Nothing short of a real process death produces that.
+            ProcessIdentity.Terminate(pid, created);
+        }
+
+        var clock = Stopwatch.StartNew();
+
+        while (ProcessIdentity.IsAlive(pid, created))
         {
-            throw new InvalidOperationException(
-                $"The thread that was to abandon '{name}' never ended, so the mutex is held rather than abandoned and this test would measure the wrong branch.");
+            if (clock.Elapsed > TestDefaults.ProcessHang)
+            {
+                throw new TimeoutException($"The probe that was to abandon '{name}' was still running {TestDefaults.ProcessHang} after being terminated.");
+            }
+
+            await Task.Delay(20);
         }
     }
 

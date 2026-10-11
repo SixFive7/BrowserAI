@@ -46,7 +46,7 @@ namespace BrowserAI.Tests;
 /// <c>--write-address</c> and runs on a desktop of the suite's own; the background the
 /// scheduler starts runs on the person's desktop with one hidden window, which the
 /// first arm reads; every session is headless. A background is stopped through its pipe
-/// (<see cref="BackgroundStop.AskAndWait"/>) and never through the task's End, and no
+/// (<see cref="BackgroundStop.AskAndWaitAsync"/>) and never through the task's End, and no
 /// arm ends a process it did not start.
 /// </para>
 /// <para>
@@ -109,23 +109,23 @@ internal sealed partial class RealInstallerTests
     [NotInParallel]
     public async Task APersonsStartRunsTheTaskAndTheBackgroundServesThePageAndKeepsASessionAcrossItsRelays()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
-        SuiteEnvironment.RequireProvisionedChromium();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
+        await SuiteEnvironment.RequireProvisionedChromiumAsync();
 
         await using var install = await SuiteInstall.InstallAsync(setup, "real-scheduler");
 
-        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(install.Evidence());
+        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(await install.EvidenceAsync());
 
         // The data root's browsers, copied from the suite's own provisioned Chromium, so
         // that the session below downloads nothing.
-        SeedTheProvisionedChromium(install.DataRoot);
+        await SeedTheProvisionedChromiumAsync(install.DataRoot);
 
         // ---- A person's start: no background runs, so it asks the scheduler for one.
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
 
         var start = await PersonStartAsync(install, "first");
 
-        await Assert.That(start.ExitCode).IsEqualTo(0).Because(start.Evidence + install.Evidence());
+        await Assert.That(start.ExitCode).IsEqualTo(0).Because(start.Evidence + await install.EvidenceAsync());
         await Assert.That(start.Address).IsNotNull().Because(start.Evidence);
 
         var background = await TheSchedulersBackgroundAsync(install, PersonStart.StartedByPerson);
@@ -171,11 +171,11 @@ internal sealed partial class RealInstallerTests
         // ---- A relay, started the way a registration starts it: the handshake and the
         // tool list come from the binary, and a session opened through it is the
         // background's.
-        using var sessions = ScratchDirectory.Create("real-scheduler-session");
+        using var sessions = await ScratchDirectory.CreateAsync("real-scheduler-session");
         var session = Path.Combine(sessions.Path, "kept-across-a-relay");
         var marker = $"KEPT-{Guid.NewGuid():N}";
 
-        var first = install.StartRelay();
+        var first = await install.StartRelayAsync();
 
         try
         {
@@ -215,7 +215,7 @@ internal sealed partial class RealInstallerTests
         }
 
         // ---- The next relay takes the session over, page and all.
-        await using (var second = install.StartRelay())
+        await using (var second = await install.StartRelayAsync())
         {
             _ = await second.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -242,13 +242,13 @@ internal sealed partial class RealInstallerTests
             .Because($"the listener should stop {PageTabs.ProductLinger} after its last tab, and a hang detector of {TestDefaults.ProcessHang} ran out first");
         await Assert.That(ProcessIdentity.IsAlive(background.ProcessId, background.CreatedFileTime)).IsTrue()
             .Because("the background is resident (S a): the tab's listener ends, the background does not");
-        await Assert.That(NamedPipes.WaitForFreeInstance(install.Pipe, 1)).IsTrue();
+        await Assert.That(NamedPipes.HasFreeInstanceNow(install.Pipe)).IsTrue();
 
         // ---- Stopped through its pipe, never through the task's End.
-        var (stopped, detail) = BackgroundStop.AskAndWait(install.Pipe, install.Record, BackgroundStop.Bound);
+        var (stopped, detail) = await BackgroundStop.AskAndWaitAsync(install.Pipe, install.Record, BackgroundStop.Bound);
 
         await Assert.That(stopped).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
-        await Assert.That(BackgroundRecord.Read(install.Record)?.Ended).IsEqualTo(BackgroundEnd.Stopped);
+        await Assert.That((await BackgroundRecord.ReadAsync(install.Record))?.Ended).IsEqualTo(BackgroundEnd.Stopped);
     }
 
     /// <summary>
@@ -283,21 +283,21 @@ internal sealed partial class RealInstallerTests
     [NotInParallel]
     public async Task ARelayAnswersAnUpdateAtOnceAndAMissingTaskAfterItsHoldAndAPersonsStartRegistersTheTaskAgain()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
         await using var install = await SuiteInstall.InstallAsync(setup, "real-scheduler-missing");
 
-        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(install.Evidence());
+        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(await install.EvidenceAsync());
 
-        using var listedDirectory = ScratchDirectory.Create("real-scheduler-list");
+        using var listedDirectory = await ScratchDirectory.CreateAsync("real-scheduler-list");
         var list = new JsonObject { ["directory"] = listedDirectory.Path };
 
         // Nothing has asked the scheduler for a start since the install: no background runs.
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
 
         // ---- The install's Update.exe runs, and a relay starts.
-        await using var updater = StandInUpdater.Start(install);
-        await using var relay = install.StartRelay();
+        await using var updater = await StandInUpdater.StartAsync(install);
+        await using var relay = await install.StartRelayAsync();
 
         _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -306,21 +306,21 @@ internal sealed partial class RealInstallerTests
         await Assert.That((bool?)update["isError"]).IsTrue();
         await Assert.That(TextOf(update))
             .IsEqualTo(RelayErrors.UpdateInstalling(SessionToolSurface.List, version: null, RawStdioClient.DefaultClientName))
-            .Because(install.Evidence());
+            .Because(await install.EvidenceAsync());
         await Assert.That(updateTook).IsLessThan(RelayConstants.HoldBound)
             .Because("waiting cannot change an update that is installing, so the relay answers at once (U2)");
 
         // It started nothing: its job holds the relay alone, and no background runs.
         await Assert.That(relay.JobProcessIds()).IsEquivalentTo([relay.ProcessId]);
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
 
         // ---- The updater goes, and the install's own Update.exe is back at its path.
         await updater.DisposeAsync();
 
-        await Assert.That(Hash(install.UpdateExe)).IsEqualTo(install.UpdaterDigest);
+        await Assert.That(await HashAsync(install.UpdateExe)).IsEqualTo(install.UpdaterDigest);
 
         // ---- The task deleted, as a person deletes it.
-        await Assert.That(ScheduledTasks.Instance.Remove(install.TaskName).Change).IsEqualTo(TaskChange.Removed);
+        await Assert.That((await ScheduledTasks.Instance.RemoveAsync(install.TaskName)).Change).IsEqualTo(TaskChange.Removed);
 
         // The same relay, with no updater running: its next call is held for the hold
         // bound and then answered with the missing task, which it read and did not
@@ -329,21 +329,21 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(TextOf(missing))
             .IsEqualTo(RelayErrors.NotRunning(SessionToolSurface.List, TaskState.Missing, install.TaskName, detail: null))
-            .Because(install.Evidence());
+            .Because(await install.EvidenceAsync());
         await Assert.That(held).IsGreaterThanOrEqualTo(RelayConstants.HoldBound)
             .Because("a missing task is said when the hold runs out, since a background appears by itself at sign-in and after an update");
-        await Assert.That(ScheduledTasks.DefinitionOf(install.TaskName)).IsNull();
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await ScheduledTasks.DefinitionOfAsync(install.TaskName)).IsNull();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
         await Assert.That(relay.JobProcessIds()).IsEquivalentTo([relay.ProcessId]);
 
         // ---- A person's start registers the task again from background-task.xml, and
         // starts the background through it.
         var start = await PersonStartAsync(install, "registers-again");
 
-        await Assert.That(start.ExitCode).IsEqualTo(0).Because(start.Evidence + install.Evidence());
+        await Assert.That(start.ExitCode).IsEqualTo(0).Because(start.Evidence + await install.EvidenceAsync());
         await Assert.That(start.Address).IsNotNull().Because(start.Evidence);
 
-        var registered = StoredTaskOf(install.TaskName);
+        var registered = await StoredTaskOfAsync(install.TaskName);
 
         await Assert.That(registered).IsNotNull().Because(start.Evidence);
         await Assert.That(Normalised(registered!.Command)).IsEqualTo(Normalised(install.App));
@@ -361,10 +361,10 @@ internal sealed partial class RealInstallerTests
         var (served, servedTook) = await CallAsync(relay, SessionToolSurface.List, list);
 
         await Assert.That((bool?)served["isError"]).IsNotEqualTo(true)
-            .Because($"{TextOf(served)}{Environment.NewLine}--- answered after {servedTook}; an instance of {install.Pipe} free now: {NamedPipes.WaitForFreeInstance(install.Pipe, 1)} ---{install.Evidence(lines: 400)}{Environment.NewLine}--- the relay's standard error ---{Environment.NewLine}{relay.StandardErrorSoFar()}");
+            .Because($"{TextOf(served)}{Environment.NewLine}--- answered after {servedTook}; an instance of {install.Pipe} free now: {NamedPipes.HasFreeInstanceNow(install.Pipe)} ---{await install.EvidenceAsync(lines: 400)}{Environment.NewLine}--- the relay's standard error ---{Environment.NewLine}{relay.StandardErrorSoFar()}");
 
         // ---- Stopped through its pipe.
-        var (stopped, detail) = BackgroundStop.AskAndWait(install.Pipe, install.Record, BackgroundStop.Bound);
+        var (stopped, detail) = await BackgroundStop.AskAndWaitAsync(install.Pipe, install.Record, BackgroundStop.Bound);
 
         await Assert.That(stopped).IsEqualTo(BackgroundStopOutcome.Ended).Because(detail);
     }
@@ -392,17 +392,17 @@ internal sealed partial class RealInstallerTests
     [NotInParallel]
     public async Task ADisabledTaskRefusesAPersonsStartAndARelayNamesItWithHowToEnableItAfterItsHold()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
         await using var install = await SuiteInstall.InstallAsync(setup, "real-scheduler-disabled");
 
-        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(install.Evidence());
+        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(await install.EvidenceAsync());
 
         // ---- The task disabled, the way a person disables it.
         var (disabled, said) = await SchedulerToolAsync("/Change", "/TN", install.TaskName, "/DISABLE");
 
         await Assert.That(disabled).IsEqualTo(0).Because(said);
-        await Assert.That(ScheduledTasks.StateOf(install.TaskName).State).IsEqualTo(ScheduledTaskState.Disabled);
+        await Assert.That((await ScheduledTasks.StateOfAsync(install.TaskName)).State).IsEqualTo(ScheduledTaskState.Disabled);
 
         // ---- A person's start is refused, and starts nothing.
         var start = await PersonStartAsync(install, "refused");
@@ -410,13 +410,13 @@ internal sealed partial class RealInstallerTests
         await Assert.That(start.ExitCode).IsEqualTo(1).Because(start.Evidence);
         await Assert.That(start.Address).IsNull().Because(start.Evidence);
         await Assert.That(start.Records).Contains(DisabledByTheScheduler).Because(start.Evidence);
-        await Assert.That(install.BackgroundRuns()).IsFalse();
-        await Assert.That(ScheduledTasks.StateOf(install.TaskName).State).IsEqualTo(ScheduledTaskState.Disabled);
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
+        await Assert.That((await ScheduledTasks.StateOfAsync(install.TaskName)).State).IsEqualTo(ScheduledTaskState.Disabled);
 
         // ---- A relay's call: held for the hold bound, and then answered with the disabled
         // task and how to enable it.
-        using var listedDirectory = ScratchDirectory.Create("real-scheduler-disabled-list");
-        await using var relay = install.StartRelay();
+        using var listedDirectory = await ScratchDirectory.CreateAsync("real-scheduler-disabled-list");
+        await using var relay = await install.StartRelayAsync();
 
         _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -424,14 +424,14 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(TextOf(answer))
             .IsEqualTo(RelayErrors.NotRunning(SessionToolSurface.List, TaskState.Disabled, install.TaskName, detail: null))
-            .Because(install.Evidence());
+            .Because(await install.EvidenceAsync());
         await Assert.That(TextOf(answer)).Contains($"schtasks /Change /TN \"{install.TaskName}\" /ENABLE");
         await Assert.That(held).IsGreaterThanOrEqualTo(RelayConstants.HoldBound)
             .Because("a disabled task is said when the hold runs out, as every reason a background may still appear for is");
 
         // And left the task as the person left it, and started nothing.
-        await Assert.That(ScheduledTasks.StateOf(install.TaskName).State).IsEqualTo(ScheduledTaskState.Disabled);
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That((await ScheduledTasks.StateOfAsync(install.TaskName)).State).IsEqualTo(ScheduledTaskState.Disabled);
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
         await Assert.That(relay.JobProcessIds()).IsEquivalentTo([relay.ProcessId]);
     }
 
@@ -474,45 +474,47 @@ internal sealed partial class RealInstallerTests
     [NotInParallel]
     public async Task ABackgroundWhoseDataRootIsRefusedIsARecordedRefusalThatEveryCallIsToldAtOnce()
     {
-        var setup = SuiteEnvironment.RequireReleaseInstaller();
+        var setup = await SuiteEnvironment.RequireReleaseInstallerAsync();
 
-        using var refused = ScratchDirectory.Create("real-scheduler-refused-data");
+        using var refused = await ScratchDirectory.CreateAsync("real-scheduler-refused-data");
 
         await using var install = await SuiteInstall.InstallAsync(setup, "real-scheduler-refused", refused.Path);
 
-        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(install.Evidence());
-        await Assert.That(StoredTaskOf(install.TaskName)?.Arguments).IsEqualTo(install.TaskAction);
+        await Assert.That(install.SetupExitCode).IsEqualTo(0).Because(await install.EvidenceAsync());
+        await Assert.That((await StoredTaskOfAsync(install.TaskName))?.Arguments).IsEqualTo(install.TaskAction);
 
         // ---- The task runs, as its sign-in trigger runs it.
-        var run = ScheduledTasks.Instance.Run(install.TaskName, StartedByTheSuite);
+        var run = await ScheduledTasks.Instance.RunAsync(install.TaskName, StartedByTheSuite);
 
         await Assert.That(run.Change).IsEqualTo(TaskChange.Started).Because(run.Detail);
 
         // The background refuses its data root, writes its record as the refusal and
         // exits: read off the scheduler's own last result, and off the record.
-        await Assert.That(await WaitForAsync(() => ScheduledTasks.LastRunOf(install.TaskName) is { Result: RefusedExitCode }))
+        await Assert.That(await WaitForAsync(async () => await ScheduledTasks.LastRunOfAsync(install.TaskName) is { Result: RefusedExitCode }))
             .IsTrue()
-            .Because($"the task's last result should become {RefusedExitCode}. {install.Evidence()}");
+            .Because($"the task's last result should become {RefusedExitCode}. {await install.EvidenceAsync()}");
 
-        var refusal = BackgroundRecord.Read(install.Record);
+        var refusal = await BackgroundRecord.ReadAsync(install.Record);
 
-        await Assert.That(refusal).IsNotNull().Because(install.Evidence());
+        await Assert.That(refusal).IsNotNull().Because(await install.EvidenceAsync());
         await Assert.That(refusal!.Ended).IsEqualTo(BackgroundEnd.Refused);
         await Assert.That(refusal.Refusal).IsNotNull();
         await Assert.That(refusal.Refusal!.Which).IsEqualTo(JudgedRoot.Data);
         await Assert.That(ProcessIdentity.IsAlive(refusal.ProcessId, refusal.CreatedFileTime)).IsFalse();
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
 
         // ---- Every call, from every relay, is told the refusal at once, and nothing starts.
         // The sentence names the root, why and the remedy, and the relay's own log.
         var logs = new LocalAppDataPaths(install.DataRoot).LogDirectory;
 
-        using var listedDirectory = ScratchDirectory.Create("real-scheduler-refused-list");
+        using var listedDirectory = await ScratchDirectory.CreateAsync("real-scheduler-refused-list");
         var list = new JsonObject { ["directory"] = listedDirectory.Path };
 
         for (var relays = 0; relays < 2; relays++)
         {
-            await using var relay = install.StartRelay();
+#pragma warning disable CA2000 // Disposed on every path by the await using; the rule does not follow an awaited factory inside a loop.
+            await using var relay = await install.StartRelayAsync();
+#pragma warning restore CA2000
 
             _ = await relay.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
@@ -522,7 +524,7 @@ internal sealed partial class RealInstallerTests
                 var text = TextOf(answer);
 
                 await Assert.That((bool?)answer["isError"]).IsTrue();
-                await Assert.That(text).IsEqualTo(RelayErrors.RootRefused(SessionToolSurface.List, refusal.Refusal, logs)).Because(install.Evidence());
+                await Assert.That(text).IsEqualTo(RelayErrors.RootRefused(SessionToolSurface.List, refusal.Refusal, logs)).Because(await install.EvidenceAsync());
                 await Assert.That(text).Contains(refusal.Refusal.Root);
                 await Assert.That(text).DoesNotContain(RelayErrors.IssuesUrl);
                 await Assert.That(took).IsLessThan(RelayConstants.HoldBound)
@@ -533,11 +535,11 @@ internal sealed partial class RealInstallerTests
         }
 
         // Nothing started it again: the record still names the same refusal.
-        var after = BackgroundRecord.Read(install.Record);
+        var after = await BackgroundRecord.ReadAsync(install.Record);
 
         await Assert.That(after?.ProcessId).IsEqualTo(refusal.ProcessId);
         await Assert.That(after?.Ended).IsEqualTo(BackgroundEnd.Refused);
-        await Assert.That(install.BackgroundRuns()).IsFalse();
+        await Assert.That(await install.BackgroundRunsAsync()).IsFalse();
     }
 
     /// <summary>
@@ -549,11 +551,11 @@ internal sealed partial class RealInstallerTests
     /// <returns>Its record.</returns>
     private static async Task<BackgroundRecordState> TheSchedulersBackgroundAsync(SuiteInstall install, string startedBy)
     {
-        var record = BackgroundRecord.Read(install.Record);
+        var record = await BackgroundRecord.ReadAsync(install.Record);
 
-        await Assert.That(record).IsNotNull().Because(install.Evidence());
-        await Assert.That(record!.Ended).IsNull().Because(install.Evidence());
-        await Assert.That(ProcessIdentity.IsAlive(record.ProcessId, record.CreatedFileTime)).IsTrue().Because(install.Evidence());
+        await Assert.That(record).IsNotNull().Because(await install.EvidenceAsync());
+        await Assert.That(record!.Ended).IsNull().Because(await install.EvidenceAsync());
+        await Assert.That(ProcessIdentity.IsAlive(record.ProcessId, record.CreatedFileTime)).IsTrue().Because(await install.EvidenceAsync());
 
         // Its parent is the process hosting the Task Scheduler's service, and it sits in
         // a job, which is the scheduler's: nothing of this suite started it.
@@ -597,7 +599,7 @@ internal sealed partial class RealInstallerTests
 
         using var desktop = PrivateDesktop.Create($"real-scheduler-{label}");
         using var job = JobObject.CreateKillOnClose();
-        using var start = desktop.Launch(
+        using var start = await desktop.LaunchAsync(
             job,
             install.App,
             [PageOpener.WriteAddressArgument, addressFile, Program.DataRootArgument, install.DataRoot],
@@ -620,7 +622,7 @@ internal sealed partial class RealInstallerTests
         return new PersonStartRun(
             exited ? start.TryReadExitCode() : null,
             address is { Length: > 0 } ? address : null,
-            ProcessLogRecords.In(new LocalAppDataPaths(install.DataRoot).LogDirectory, start.Id, created));
+            await ProcessLogRecords.InAsync(new LocalAppDataPaths(install.DataRoot).LogDirectory, start.Id, created));
     }
 
     /// <summary>
@@ -690,7 +692,7 @@ internal sealed partial class RealInstallerTests
     /// <c>FirstRunCache.SeedInto</c> keeps the same order.
     /// </remarks>
     /// <param name="dataRoot">The data root.</param>
-    private static void SeedTheProvisionedChromium(string dataRoot)
+    private static async Task SeedTheProvisionedChromiumAsync(string dataRoot)
     {
         var source = BrowserAiPaths.ChromiumDirectory;
         var target = Path.Combine(new LocalAppDataPaths(dataRoot).BrowsersDirectory, Path.GetFileName(source));
@@ -709,12 +711,12 @@ internal sealed partial class RealInstallerTests
                 continue;
             }
 
-            File.Copy(file, to);
+            await TestFiles.CopyAsync(file, to);
         }
 
         foreach (var (from, to) in markers)
         {
-            File.Copy(from, to);
+            await TestFiles.CopyAsync(from, to);
         }
     }
 
@@ -784,12 +786,12 @@ internal sealed partial class RealInstallerTests
     /// <summary>Reads a file another process may be writing, sharing with it.</summary>
     /// <param name="path">The file.</param>
     /// <returns>Its text.</returns>
-    private static string ReadShared(string path)
+    private static async Task<string> ReadSharedAsync(string path)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
-        return reader.ReadToEnd();
+        return await reader.ReadToEndAsync();
     }
 
     /// <summary>Where an arm sets an install's own <c>Update.exe</c> aside while a stand-in runs at its path.</summary>
@@ -805,7 +807,7 @@ internal sealed partial class RealInstallerTests
     /// <remarks>Never throws: it runs on the failure path too.</remarks>
     /// <param name="installRoot">The install root.</param>
     /// <returns>Whether the path holds the install's own <c>Update.exe</c>, or never held anything else.</returns>
-    private static bool PutTheUpdaterBack(string installRoot)
+    private static async Task<bool> PutTheUpdaterBackAsync(string installRoot)
     {
         var aside = SetAsideUpdaterOf(installRoot);
 
@@ -830,7 +832,7 @@ internal sealed partial class RealInstallerTests
                     return false;
                 }
 
-                Thread.Sleep(TimeSpan.FromMilliseconds(100));
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
         }
     }
@@ -865,29 +867,45 @@ internal sealed partial class RealInstallerTests
         private readonly ScratchDirectory _clientConfig;
         private readonly ScratchDirectory _logs;
         private readonly ScratchDirectory _feed;
-        private readonly EnvironmentScope _sandbox;
+        private EnvironmentScope? _sandbox;
         private int _disposed;
 
-        private SuiteInstall(string label, string? dataRoot)
+        private SuiteInstall(
+            string? dataRoot,
+            ScratchDirectory installRoot,
+            ScratchDirectory? ownDataRoot,
+            ScratchDirectory clientConfig,
+            ScratchDirectory logs,
+            ScratchDirectory feed)
         {
-            _installRoot = ScratchDirectory.CreateUnderProfile(label);
-            _dataRoot = dataRoot is null ? ScratchDirectory.CreateUnderProfile($"{label}-data") : null;
-            _clientConfig = ScratchDirectory.Create($"{label}-client");
-            _logs = ScratchDirectory.Create($"{label}-logs");
-            _feed = ScratchDirectory.Create($"{label}-feed");
+            _installRoot = installRoot;
+            _dataRoot = ownDataRoot;
+            _clientConfig = clientConfig;
+            _logs = logs;
+            _feed = feed;
 
             DataRoot = dataRoot ?? _dataRoot!.Path;
             ClaudeConfig = _clientConfig.Path;
             CodexHome = Directory.CreateDirectory(Path.Combine(_clientConfig.Path, "codex")).FullName;
+        }
 
+        /// <summary>
+        /// Points the installer's environment at this install's scratch directories, the
+        /// client's configuration seeded as onboarded first.
+        /// </summary>
+        /// <remarks>
+        /// <b>Out of the constructor since 2026-10-11</b>, because the seed is written with
+        /// asynchronous writes (decision 63) and a constructor cannot await.
+        /// </remarks>
+        /// <returns>The task.</returns>
+        private async Task SandboxAsync() =>
             _sandbox = new EnvironmentScope(new Dictionary<string, string?>
             {
-                [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(ClaudeConfig),
+                [RegistrationTests.ConfigDirectoryVariable] = await OnboardedClientConfig.SeedAsync(ClaudeConfig),
                 [BrowserAiPaths.AppRootOverride] = DataRoot,
                 [RegistrationTests.CodexHomeVariable] = CodexHome,
                 [UpdateConfiguration.FeedVariable] = Feed,
             });
-        }
 
         /// <summary>The install root.</summary>
         public string InstallRoot => _installRoot.Path;
@@ -938,15 +956,25 @@ internal sealed partial class RealInstallerTests
         /// <returns>The install, whatever <c>Setup.exe</c> said: the arm asserts it.</returns>
         public static async Task<SuiteInstall> InstallAsync(string setup, string label, string? dataRoot = null)
         {
-            var install = new SuiteInstall(label, dataRoot);
+            // Made here and handed in since 2026-10-11, because each is made with an
+            // asynchronous write and a constructor cannot await.
+            var install = new SuiteInstall(
+                dataRoot,
+                await ScratchDirectory.CreateUnderProfileAsync(label),
+                dataRoot is null ? await ScratchDirectory.CreateUnderProfileAsync($"{label}-data") : null,
+                await ScratchDirectory.CreateAsync($"{label}-client"),
+                await ScratchDirectory.CreateAsync($"{label}-logs"),
+                await ScratchDirectory.CreateAsync($"{label}-feed"));
 
             try
             {
+                await install.SandboxAsync();
+
                 install.SetupExitCode = await RunAsync(setup, ["--silent", "--log", Path.Combine(install.Logs, "setup.log"), "--installto", install.InstallRoot]);
 
                 if (File.Exists(install.UpdateExe))
                 {
-                    install.UpdaterDigest = Hash(install.UpdateExe);
+                    install.UpdaterDigest = await HashAsync(install.UpdateExe);
                 }
 
                 return install;
@@ -960,33 +988,33 @@ internal sealed partial class RealInstallerTests
 
         /// <summary>A relay of this install, started the way its registration starts it.</summary>
         /// <returns>The relay, in a job of its own.</returns>
-        public RawStdioClient StartRelay() =>
-            RawStdioClient.Start(App, [Program.McpArgument, Program.DataRootArgument, DataRoot], Logs, ClientEnvironment());
+        public async Task<RawStdioClient> StartRelayAsync() =>
+            await RawStdioClient.StartAsync(App, [Program.McpArgument, Program.DataRootArgument, DataRoot], Logs, ClientEnvironment());
 
         /// <summary>Whether a background of this install runs: its record names a live process, or its pipe is there.</summary>
         /// <returns>Whether one runs.</returns>
-        public bool BackgroundRuns() =>
-            (BackgroundRecord.Read(Record) is { Ended: null } record && ProcessIdentity.IsAlive(record.ProcessId, record.CreatedFileTime))
-            || NamedPipes.WaitForFreeInstance(Pipe, 1);
+        public async Task<bool> BackgroundRunsAsync() =>
+            (await BackgroundRecord.ReadAsync(Record) is { Ended: null } record && ProcessIdentity.IsAlive(record.ProcessId, record.CreatedFileTime))
+            || NamedPipes.HasFreeInstanceNow(Pipe);
 
         /// <summary>What the background's record, the task and the newest process log say, for a failure message.</summary>
         /// <param name="lines">How many of the log's last lines.</param>
         /// <returns>The text.</returns>
-        public string Evidence(int lines = 80)
+        public async Task<string> EvidenceAsync(int lines = 80)
         {
             var text = new StringBuilder();
 
             _ = text.Append(CultureInfo.InvariantCulture, $"{Environment.NewLine}--- the background's record, {Record} ---{Environment.NewLine}")
-                .Append(File.Exists(Record) ? ReadShared(Record) : "<none>")
+                .Append(File.Exists(Record) ? await ReadSharedAsync(Record) : "<none>")
                 .Append(CultureInfo.InvariantCulture, $"{Environment.NewLine}--- the task, '{TaskName}' ---{Environment.NewLine}")
-                .Append(ScheduledTasks.StateOf(TaskName).State.ToString());
+                .Append((await ScheduledTasks.StateOfAsync(TaskName)).State.ToString());
 
             var logs = new LocalAppDataPaths(DataRoot).LogDirectory;
 
             if (Directory.Exists(logs)
                 && Directory.EnumerateFiles(logs, "browserai-*.log").Order(StringComparer.Ordinal).LastOrDefault() is { } newest)
             {
-                var all = ReadShared(newest).Split('\n');
+                var all = (await ReadSharedAsync(newest)).Split('\n');
 
                 _ = text.Append(CultureInfo.InvariantCulture, $"{Environment.NewLine}--- the last lines of {newest} ---{Environment.NewLine}")
                     .AppendJoin(Environment.NewLine, all.TakeLast(lines).Select(line => line.TrimEnd('\r')));
@@ -1007,7 +1035,7 @@ internal sealed partial class RealInstallerTests
             {
                 // Any background of this install, through its pipe and never through the
                 // task's End. A background that is not there answers at once.
-                _ = BackgroundStop.AskAndWait(Pipe, Record, BackgroundStop.Bound);
+                _ = await BackgroundStop.AskAndWaitAsync(Pipe, Record, BackgroundStop.Bound);
             }
 #pragma warning disable CA1031 // A cleanup on the failure path reports nothing and must replace no finding.
             catch (Exception)
@@ -1019,7 +1047,7 @@ internal sealed partial class RealInstallerTests
             // and unregisters the scratch clients.
             await ReclaimAsync(InstallRoot);
 
-            _sandbox.Dispose();
+            _sandbox?.Dispose();
             _feed.Dispose();
             _logs.Dispose();
             _clientConfig.Dispose();
@@ -1049,13 +1077,13 @@ internal sealed partial class RealInstallerTests
         /// <summary>Sets the install's own updater aside and starts a stand-in at its path.</summary>
         /// <param name="install">The install.</param>
         /// <returns>The running stand-in.</returns>
-        public static StandInUpdater Start(SuiteInstall install)
+        public static async Task<StandInUpdater> StartAsync(SuiteInstall install)
         {
             File.Move(install.UpdateExe, SetAsideUpdaterOf(install.InstallRoot));
 
             try
             {
-                File.Copy(StandInSource, install.UpdateExe);
+                await TestFiles.CopyAsync(StandInSource, install.UpdateExe);
 
                 var job = JobObject.CreateKillOnClose();
 
@@ -1075,7 +1103,7 @@ internal sealed partial class RealInstallerTests
             }
             catch
             {
-                _ = PutTheUpdaterBack(install.InstallRoot);
+                _ = await PutTheUpdaterBackAsync(install.InstallRoot);
                 throw;
             }
         }
@@ -1093,7 +1121,7 @@ internal sealed partial class RealInstallerTests
             _ = await _process.WaitForExitAsync(TestDefaults.ProcessHang);
             _process.Dispose();
 
-            _ = PutTheUpdaterBack(_installRoot);
+            _ = await PutTheUpdaterBackAsync(_installRoot);
         }
     }
 }

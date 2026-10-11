@@ -40,19 +40,19 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task ASupersededRevisionIsDeletedAndTheOneTheManifestNamesIsKept()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-superseded");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-superseded");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
 
-        var current = Plant(root, manifest.For(ProvisionedBrowsers.Chromium).DirectoryName, bytes: 4096);
-        var oldChromium = Plant(root, SupersededChromium, bytes: 8192);
-        var oldFirefox = Plant(root, SupersededFirefox, bytes: 2048);
+        var current = await PlantAsync(root, manifest.For(ProvisionedBrowsers.Chromium).DirectoryName, bytes: 4096);
+        var oldChromium = await PlantAsync(root, SupersededChromium, bytes: 8192);
+        var oldFirefox = await PlantAsync(root, SupersededFirefox, bytes: 2048);
 
-        var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>());
+        var report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>());
 
         // The revision this build wants is the one thing a prune may never touch.
         await Assert.That(Directory.Exists(current)).IsTrue();
@@ -70,32 +70,32 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task ADirectoryThatIsNotAKnownBrowserRevisionIsNeverTouched()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-unknown");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-unknown");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
 
         // `.links` is playwright-core's own registry index and deleting it is what
         // makes upstream's GC prune a live tree -- the exact hazard
         // PLAYWRIGHT_SKIP_BROWSER_GC=1 exists to stop, which this must not
         // reintroduce from the other side.
-        var links = Plant(root, ".links", bytes: 32);
+        var links = await PlantAsync(root, ".links", bytes: 32);
 
         // Velopack creates this beside things it owns, and a person may put
         // anything at all in a directory under their own LocalAppData.
-        var velopack = Plant(root, "VelopackTemp", bytes: 64);
-        var strange = Plant(root, "notabrowser-9999", bytes: 64);
+        var velopack = await PlantAsync(root, "VelopackTemp", bytes: 64);
+        var strange = await PlantAsync(root, "notabrowser-9999", bytes: 64);
 
         // The near miss that matters: a name that starts like a browser but is not
         // one. `chromiumish-1` does not begin with `chromium-`, and upstream's own
         // comment says why the check is written this way -- `webkit` is a prefix of
         // `webkit-technology-preview`.
-        var nearMiss = Plant(root, "chromiumish-1", bytes: 64);
+        var nearMiss = await PlantAsync(root, "chromiumish-1", bytes: 64);
 
-        var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>());
+        var report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>());
 
         foreach (var kept in new[] { links, velopack, strange, nearMiss })
         {
@@ -109,22 +109,22 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task ARevisionSomethingIsRunningOutOfIsKeptAndTheProcessIsNamed()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-in-use");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-in-use");
         using var scope = new JobObjectScope();
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
-        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
+        var superseded = await PlantAsync(root, SupersededChromium, bytes: 1024);
 
         // A REAL process with a real image path inside the tree, because the guard
         // is a real enumeration of the machine's process list. A double here would
         // assert that the test's own stub says no.
         var (planted, imagePath) = await PlantedProcess.StartInAsync(scope, Path.Combine(superseded, "chrome-win64"), root);
 
-        var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>());
+        var report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>());
 
         // The whole hazard in one assertion: superseded, and still there.
         await Assert.That(Directory.Exists(superseded)).IsTrue();
@@ -140,66 +140,46 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task NothingIsPrunedWhileAnotherProcessIsProvisioning()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-install-in-flight");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-install-in-flight");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
-        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
+        var superseded = await PlantAsync(root, SupersededChromium, bytes: 1024);
 
         // Held on ANOTHER THREAD, because a named mutex is owned by the thread
         // that waited on it -- taking it here would be re-entrant and would prove
-        // nothing.
-        using var taken = new ManualResetEventSlim();
-        using var release = new ManualResetEventSlim();
+        // nothing. The hold's own thread since 2026-10-11, decision 54 (previously
+        // a thread of this arm's own, started and joined around the pass).
+        using var mutex = MachineMutex.Create(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
+        await using var hold = await mutex.HoldAsync(TestDefaults.ProcessHang);
 
-        var holder = new Thread(() =>
-        {
-            using var mutex = MachineMutex.Create(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
-            _ = mutex.Acquire(TestDefaults.ProcessHang);
-            taken.Set();
-            _ = release.Wait(TestDefaults.ProcessHang);
-            mutex.Release();
-        })
-        {
-            IsBackground = true,
-        };
+        await Assert.That(hold.Held).IsTrue().Because("the arm's own hold of the provisioning mutex is the install in flight");
 
-        holder.Start();
-        _ = taken.Wait(TestDefaults.ProcessHang);
+        var report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>());
 
-        try
-        {
-            var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>());
-
-            // An install in flight means a directory may be being written into
-            // right now, so the pass declines as a whole instead of reasoning
-            // about which directory is safe.
-            await Assert.That(Directory.Exists(superseded)).IsTrue();
-            await Assert.That(report.Removed).IsEmpty();
-            await Assert.That(string.Join(Environment.NewLine, report.Retained)).Contains("provisioning");
-        }
-        finally
-        {
-            release.Set();
-            _ = holder.Join(TestDefaults.ProcessHang);
-        }
+        // An install in flight means a directory may be being written into
+        // right now, so the pass declines as a whole instead of reasoning
+        // about which directory is safe.
+        await Assert.That(Directory.Exists(superseded)).IsTrue();
+        await Assert.That(report.Removed).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, report.Retained)).Contains("provisioning");
     }
 
     [Test]
     public async Task ASuccessfulProvisionPrunesWhatItSuperseded()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-on-provision");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-on-provision");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
         var current = Path.Combine(root, manifest.For(ProvisionedBrowsers.Chromium).DirectoryName);
-        var superseded = Plant(root, SupersededChromium, bytes: 4096);
+        var superseded = await PlantAsync(root, SupersededChromium, bytes: 4096);
 
         using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log)
         {
@@ -220,7 +200,7 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task APruneThatThrowsLeavesTheProvisionItFollowedSuccessful()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var captured = new CapturingLoggerProvider();
         using var log = LoggerFactory.Create(builder =>
@@ -229,10 +209,10 @@ internal sealed class RevisionPruneTests
             _ = builder.AddProvider(captured);
         });
 
-        using var scratch = ScratchDirectory.Create("prune-throws");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-throws");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
         var current = Path.Combine(root, manifest.For(ProvisionedBrowsers.Chromium).DirectoryName);
 
         using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log)
@@ -269,9 +249,9 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task TheDirectoryNameIsSpelledTheWayUpstreamSpellsIt()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
 
         // ⚠️ Corrected 2026-08-17. `$"{Name}-{Revision}"` is right for both
         // families BrowserAI provisions and wrong for the headless shell, which
@@ -302,16 +282,16 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task TheCensusIsAskedAgainForEveryCandidateRatherThanOncePerPass()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-census-per-candidate");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-census-per-candidate");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
 
-        var first = Plant(root, "chromium-1000", bytes: 1024);
-        var second = Plant(root, "chromium-1001", bytes: 1024);
+        var first = await PlantAsync(root, "chromium-1000", bytes: 1024);
+        var second = await PlantAsync(root, "chromium-1001", bytes: 1024);
 
         // A browser that starts DURING the pass. It cannot be staged with a real
         // process -- the pass would have to be paused at an instant nothing can
@@ -332,7 +312,7 @@ internal sealed class RevisionPruneTests
             }
         }
 
-        var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
+        var report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
 
         // The first candidate was idle when it was asked about, so it went.
         await Assert.That(Directory.Exists(first)).IsFalse();
@@ -359,14 +339,14 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task ARevisionThatWouldNotDeleteSaysWhetherABrowserIsRunningOutOfIt()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-would-not-go");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-would-not-go");
 
         var root = Path.Combine(scratch.Path, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
-        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
+        var superseded = await PlantAsync(root, SupersededChromium, bytes: 1024);
         var held = Path.Combine(superseded, "chrome-win64", "payload.bin");
 
         // Idle when the decision was taken, in use by the time the delete had
@@ -381,9 +361,9 @@ internal sealed class RevisionPruneTests
 
         PruneReport report;
 
-        using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        await using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
-            report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
+            report = await RevisionPrune.RunAsync(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
         }
 
         await Assert.That(Directory.Exists(superseded)).IsTrue();
@@ -431,10 +411,10 @@ internal sealed class RevisionPruneTests
     [Test]
     public async Task ARevisionInUseIsKeptWhenAJunctionSitsAboveTheBrowsersRoot()
     {
-        SuiteEnvironment.RequireRepositoryPayload();
+        await SuiteEnvironment.RequireRepositoryPayloadAsync();
 
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("prune-junctioned-root");
+        using var scratch = await ScratchDirectory.CreateAsync("prune-junctioned-root");
         using var scope = new JobObjectScope();
 
         // A real junction standing in for a relocated profile: `real` holds the
@@ -446,8 +426,8 @@ internal sealed class RevisionPruneTests
         await PathAliases.JunctionAsync(link, real);
 
         var root = Path.Combine(real, "browsers");
-        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
-        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+        var manifest = await BrowsersManifest.ReadAsync(RepositoryPayload.Layout);
+        var superseded = await PlantAsync(root, SupersededChromium, bytes: 1024);
 
         // What a resource load would need, and what a blind pass takes: the
         // browser has not mapped it, so nothing refuses its deletion.
@@ -460,7 +440,7 @@ internal sealed class RevisionPruneTests
         // LocalAppDataPaths would have composed on a machine with a relocated
         // profile. Everything it enumerates below it carries that spelling; the
         // kernel reports every one of these processes under the target.
-        var report = RevisionPrune.Run(Path.Combine(link, "browsers"), manifest, log.CreateLogger<RevisionPruneTests>());
+        var report = await RevisionPrune.RunAsync(Path.Combine(link, "browsers"), manifest, log.CreateLogger<RevisionPruneTests>());
 
         // THE CLAIM. The tree is intact, not merely present.
         await Assert.That(Directory.Exists(superseded)).IsTrue();
@@ -484,13 +464,13 @@ internal sealed class RevisionPruneTests
     /// <param name="name">The revision directory's leaf name.</param>
     /// <param name="bytes">How much to put in it, so reclaimed disk is measurable.</param>
     /// <returns>The directory's absolute path.</returns>
-    private static string Plant(string root, string name, int bytes)
+    private static async Task<string> PlantAsync(string root, string name, int bytes)
     {
         var directory = Path.Combine(root, name);
 
         _ = Directory.CreateDirectory(Path.Combine(directory, "chrome-win64"));
-        File.WriteAllBytes(Path.Combine(directory, "chrome-win64", "payload.bin"), new byte[bytes]);
-        File.WriteAllText(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+        await File.WriteAllBytesAsync(Path.Combine(directory, "chrome-win64", "payload.bin"), new byte[bytes]);
+        await File.WriteAllTextAsync(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker), string.Empty);
 
         return directory;
     }

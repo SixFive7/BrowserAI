@@ -71,17 +71,17 @@ internal sealed class InheritedEnvironmentTests
     {
         var token = NewToken();
 
-        using var output = ScratchDirectory.Create("environment-report");
+        using var output = await ScratchDirectory.CreateAsync("environment-report");
         using var planted = Plant(token);
 
-        var state = AppState.Read(new FakeRegisterAi(), output.Path, output.Path);
-        var text = await File.ReadAllTextAsync(StatusReport.Write(state, Path.Combine(output.Path, "report.json")));
+        var state = await AppState.ReadAsync(new FakeRegisterAi(), output.Path, output.Path);
+        var text = await File.ReadAllTextAsync(await StatusReport.WriteAsync(state, Path.Combine(output.Path, "report.json")));
 
         await Assert.That(text).Contains("\"schemaVersion\"").Because("the report was not written at all");
         await AssertCarriesNoneOfItAsync(text, token, "the status report");
 
         // The positive control.
-        var control = await File.ReadAllTextAsync(StatusReport.Write(state with { DataRoot = Path.Combine(output.Path, token) }, Path.Combine(output.Path, "control.json")));
+        var control = await File.ReadAllTextAsync(await StatusReport.WriteAsync(state with { DataRoot = Path.Combine(output.Path, token) }, Path.Combine(output.Path, "control.json")));
 
         await Assert.That(control).Contains(token);
     }
@@ -111,8 +111,8 @@ internal sealed class InheritedEnvironmentTests
     {
         var token = NewToken();
 
-        using var data = ScratchDirectory.Create("environment-log");
-        using var controlData = ScratchDirectory.Create("environment-log-control");
+        using var data = await ScratchDirectory.CreateAsync("environment-log");
+        using var controlData = await ScratchDirectory.CreateAsync("environment-log-control");
         using var planted = Plant(token);
 
         string? written;
@@ -199,7 +199,7 @@ internal sealed class InheritedEnvironmentTests
         }
 
         // The session the host opens hands its child the same block.
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await SessionHostRig.StartAsync(sessions);
 
         var connection = await rig.ConnectAsync("claude-code");
@@ -348,7 +348,7 @@ internal sealed class InheritedEnvironmentTests
     /// <returns>Its text.</returns>
     private static async Task<string> ReadSharedAsync(string path)
     {
-        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 4096, FileOptions.Asynchronous);
         using var reader = new StreamReader(stream);
 
         return await reader.ReadToEndAsync();

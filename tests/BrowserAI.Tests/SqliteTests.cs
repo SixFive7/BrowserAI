@@ -70,7 +70,7 @@ internal sealed partial class SqliteTests
     [Test]
     public async Task ThePinnedVersionIsTheVersionOfTheVendoredSource()
     {
-        var pin = PinnedRow();
+        var pin = await PinnedRowAsync();
         var pinned = pin.GetProperty("pinned").GetString();
 
         // The positive control comes first: a parse that stopped matching would
@@ -78,8 +78,8 @@ internal sealed partial class SqliteTests
         await Assert.That(pinned).IsNotNull();
         await Assert.That(pinned!).Matches(ThreePartVersion());
 
-        var inTheCompiledFile = VersionDefinedIn("sqlite3.c");
-        var inTheHeader = VersionDefinedIn("sqlite3.h");
+        var inTheCompiledFile = await VersionDefinedInAsync("sqlite3.c");
+        var inTheHeader = await VersionDefinedInAsync("sqlite3.h");
 
         await Assert.That(inTheCompiledFile)
             .IsEqualTo(pinned)
@@ -160,9 +160,9 @@ internal sealed partial class SqliteTests
     [Test]
     public async Task ThePublishedBinaryReportsTheStaticallyLinkedSqliteVersion()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
-        var expected = VersionDefinedIn("sqlite3.c");
+        var expected = await VersionDefinedInAsync("sqlite3.c");
         var run = await SliceRun.SharedAsync();
 
         await Assert.That(run.ProcessLog)
@@ -313,7 +313,7 @@ internal sealed partial class SqliteTests
     [Test]
     public async Task TheStaticallyLinkedLibraryReportsTheIntendedBuild()
     {
-        SuiteEnvironment.RequirePublishedSlice();
+        await SuiteEnvironment.RequirePublishedSliceAsync();
 
         var run = await SliceRun.SharedAsync();
 
@@ -324,10 +324,10 @@ internal sealed partial class SqliteTests
 
     /// <summary>The <c>vendored.sqlite-amalgamation</c> row of the drift check.</summary>
     /// <returns>The row.</returns>
-    private static JsonElement PinnedRow()
+    private static async Task<JsonElement> PinnedRowAsync()
     {
         using var drift = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "drift-check.json")));
+            await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "drift-check.json")));
 
         return drift.RootElement.GetProperty("vendored").GetProperty("sqlite-amalgamation").Clone();
     }
@@ -335,9 +335,9 @@ internal sealed partial class SqliteTests
     /// <summary>The version one vendored file defines.</summary>
     /// <param name="name">The file, under <c>third-party/sqlite</c>.</param>
     /// <returns>The <c>SQLITE_VERSION</c> string literal.</returns>
-    private static string? VersionDefinedIn(string name)
+    private static async Task<string?> VersionDefinedInAsync(string name)
     {
-        var text = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "third-party", "sqlite", name));
+        var text = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "third-party", "sqlite", name));
         var matches = SqliteVersionDefine().Matches(text);
 
         // Exactly one, or the answer is a guess. The amalgamation inlines its own

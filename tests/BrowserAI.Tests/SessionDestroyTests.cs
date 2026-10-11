@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// an empty parent, or the same list of survivors. The difference is only
 /// visible <i>while it runs</i>, so the assertion is made by a peer that tries to
 /// take the directory throughout, using the same call the sweep uses
-/// (<see cref="SessionLock.TryHoldUnowned"/>) and therefore getting the same
+/// (<see cref="SessionLock.TryHoldUnownedAsync"/>) and therefore getting the same
 /// kernel answer a second BrowserAI process would.
 /// </para>
 /// <para>
@@ -65,7 +65,7 @@ namespace BrowserAI.Tests;
 /// <b>The green direction is a property, not a coincidence.</b> Nothing under the
 /// session is removed except while <c>browserai.lock</c> is held, and the last two
 /// nodes go inside the per-directory gate that
-/// <see cref="SessionLock.TryHoldUnowned"/> has to take itself. So the peer
+/// <see cref="SessionLock.TryHoldUnownedAsync"/> has to take itself. So the peer
 /// cannot succeed at any point after the first file goes, at any planted size,
 /// on any machine.
 /// </para>
@@ -104,7 +104,7 @@ internal sealed class SessionDestroyTests
     [Test]
     public async Task DestroyKeepsTheDirectoryOwnedForAsLongAsAnyOfItIsStillOnDisk()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "destroyed-while-a-peer-watches");
@@ -132,7 +132,7 @@ internal sealed class SessionDestroyTests
         using var stop = new CancellationTokenSource();
         var takenWhileTheTreeWasComingDown = 0;
 
-        var peer = Task.Run(() =>
+        var peer = Task.Run(async () =>
         {
             while (!stop.IsCancellationRequested && File.Exists(firstToGo))
             {
@@ -140,14 +140,16 @@ internal sealed class SessionDestroyTests
                 // before the destroy re-takes the directory is legitimately
                 // unowned, and probing it would contend with the acquisition
                 // this test needs to succeed.
-                Thread.Sleep(ProbeInterval);
+                await Task.Delay(ProbeInterval);
             }
 
             while (!stop.IsCancellationRequested)
             {
-                Thread.Sleep(ProbeInterval);
+                await Task.Delay(ProbeInterval);
 
-                if (SessionLock.TryHoldUnowned(location, out var hold) is not null)
+                var (refused, hold) = await SessionLock.TryHoldUnownedAsync(location);
+
+                if (refused is not null)
                 {
                     continue;
                 }
@@ -181,7 +183,7 @@ internal sealed class SessionDestroyTests
         _ = Directory.CreateDirectory(released);
 
         var control = SessionPath.For(released);
-        var taken = SessionLock.TryAcquire(
+        var taken = await SessionLock.TryAcquireAsync(
             control,
             new SessionLockRequest
             {
@@ -193,7 +195,7 @@ internal sealed class SessionDestroyTests
         await Assert.That(taken.Acquired).IsNotNull();
         taken.Acquired?.Dispose();
 
-        var refusal = SessionLock.TryHoldUnowned(control, out var held);
+        var (refusal, held) = await SessionLock.TryHoldUnownedAsync(control);
 
         held?.Dispose();
         await Assert.That(refusal).IsNull();
@@ -234,7 +236,7 @@ internal sealed class SessionDestroyTests
     [Test]
     public async Task ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "destroyed-while-something-holds-a-file");
@@ -252,7 +254,7 @@ internal sealed class SessionDestroyTests
         var held = Path.Combine(directory, "something-still-has-this-open.bin");
         JsonObject destroyed;
 
-        await using (var handle = new FileStream(held, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        await using (var handle = new FileStream(held, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous))
         {
             await handle.WriteAsync("held open for the whole of the destroy"u8.ToArray());
             await handle.FlushAsync();
@@ -347,7 +349,7 @@ internal sealed class SessionDestroyTests
     [Test]
     public async Task ADestroyThatNamesFewerSurvivorsThanItCountsSaysTheListWasCut()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "destroyed-with-more-survivors-than-it-names");
@@ -369,7 +371,7 @@ internal sealed class SessionDestroyTests
             for (var index = 0; index <= SessionManager.SurvivorsNamed; index++)
             {
                 var path = Path.Combine(directory, $"held-{index.ToString("D3", CultureInfo.InvariantCulture)}.bin");
-                var handle = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                var handle = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.Asynchronous);
 
                 held.Add(handle);
                 await handle.WriteAsync("held open for the whole of the destroy"u8.ToArray());
@@ -486,7 +488,7 @@ internal sealed class SessionDestroyTests
     [Test]
     public async Task ADirectoryHoldingTheOldRecordIsRefusedAndDestroySaysToRemoveItYourself()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "an-old-format-session");

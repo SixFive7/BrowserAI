@@ -47,7 +47,7 @@ internal sealed class UnrecognisedArgumentTests
     [Test]
     public async Task AnArgumentAnAuthoredToolDoesNotTakeIsRefusedAndNothingRuns()
     {
-        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var sessions = await RigSessionEnvironment.CreateAsync(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "never-created");
@@ -134,14 +134,14 @@ internal sealed class UnrecognisedArgumentTests
     [Test]
     public async Task AnArgumentAForwardedToolDoesNotTakeIsRefusedRecordedAndNeverForwarded()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
                 child.Tools["browser_take_screenshot"] = new FakeToolBehaviour();
             },
             opensDefaultSession: false,
-            toolsList: UpstreamSurface.SnapshotToolsListResult());
+            toolsList: await UpstreamSurface.SnapshotToolsListResultAsync());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             sessions: sessions);
@@ -228,7 +228,7 @@ internal sealed class UnrecognisedArgumentTests
     [Test]
     public async Task TheListTheCallerWasGivenDecidesAndNotAHandWrittenOne()
     {
-        await using var sessions = RigSessionEnvironment.Create(
+        await using var sessions = await RigSessionEnvironment.CreateAsync(
             child => child.Tools["browser_navigate"] = new FakeToolBehaviour(),
             opensDefaultSession: false,
             toolsList: """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"},"waitUntil":{"type":"string"}},"required":["url"],"additionalProperties":false}}]}""");
@@ -320,7 +320,7 @@ internal sealed class UnrecognisedArgumentTests
     public async Task EveryDefinitionCarryingRefusalFitsWhatAClientHandsAModelWhole()
     {
         var rewritten = SessionToolSurface.Rewrite(
-            JsonNode.Parse(UpstreamSurface.SnapshotToolsListResult())!.AsObject(),
+            JsonNode.Parse(await UpstreamSurface.SnapshotToolsListResultAsync())!.AsObject(),
             RepositoryVerdicts.Committed);
 
         var signatures = ToolSignatures.From(rewritten);

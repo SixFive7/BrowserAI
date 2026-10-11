@@ -62,6 +62,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private string? _refuseTheNextChild;
     private int _disposed;
 
+    /// <summary>The browser directory <see cref="SeedAsync"/> marks complete, or <see langword="null"/> for none.</summary>
+    private readonly string? _seededChromium;
+
     private RigSessionEnvironment(
         string root,
         Action<FakePlaywrightChild>? configure,
@@ -161,17 +164,15 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                     $"A rig with no installer of its own tried to provision '{browser}' into '{browsersRoot}'. Its browsers root is pre-seeded as complete, so reaching this line means something asked for a download that no assertion in this test is about.")),
         };
 
-        if (installer is null && !realSessionChildren)
-        {
-            // The state a developer's machine is in, and the state every step
-            // before this one assumed: the browser is there. Written the way
-            // upstream writes it -- the directory, then the marker last -- so a
-            // product check that looked at the wrong one would still fail here.
-            // Skipped for the real-browser arm, whose root is the developer's
-            // own and is already complete: writing into it would be this rig
-            // touching a tree it does not own.
-            InstallationMarker.Write(Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName));
-        }
+        // The state a developer's machine is in, and the state every step
+        // before this one assumed: the browser is there. Written by SeedAsync,
+        // once the rig is made, since 2026-10-11 (the write is asynchronous and a
+        // constructor cannot await). Skipped for the real-browser arm, whose root
+        // is the developer's own and is already complete: writing into it would
+        // be this rig touching a tree it does not own.
+        _seededChromium = installer is null && !realSessionChildren
+            ? Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName)
+            : null;
 
         Environment = new SessionEnvironment
         {
@@ -375,7 +376,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// Whether a session can be opened in this environment at all.
     /// </summary>
     /// <remarks>
-    /// False for <see cref="Failing"/>, whose whole purpose is that it cannot --
+    /// False for <see cref="FailingAsync"/>, whose whole purpose is that it cannot --
     /// so the rig does not open its default session there and turn one test's
     /// deliberate failure into every test's setup failure.
     /// </remarks>
@@ -505,7 +506,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// What a live session's browser call is told about its family's install, or
     /// <see langword="null"/> for the rig's own provisioner.
     /// </param>
-    public static RigSessionEnvironment Create(
+    public static async Task<RigSessionEnvironment> CreateAsync(
         Action<FakePlaywrightChild>? configure = null,
         Func<string, string, IInstallerRun>? installer = null,
         ProvisioningTimers? timers = null,
@@ -518,10 +519,40 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         string? toolsList = null,
         BrowserAI.Updates.IInstallHealth? installHealth = null,
         Func<string, ProvisioningStatus>? provisioningProbe = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth, provisioningProbe)
+        await SeededAsync(new(Path.Combine(await ScratchRoot.PathAsync(), $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts, holdBrowserCloseUntil, toolsList, installHealth, provisioningProbe)
         {
             OpensDefaultSession = opensDefaultSession,
-        };
+        });
+
+    /// <summary>Writes the rig's seeded browser marker, disposing the rig if the write fails.</summary>
+    /// <param name="rig">The rig, just made.</param>
+    /// <returns>The rig.</returns>
+    private static async Task<RigSessionEnvironment> SeededAsync(RigSessionEnvironment rig)
+    {
+        try
+        {
+            await rig.SeedAsync();
+            return rig;
+        }
+        catch
+        {
+            await rig.DisposeAsync();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Marks the rig's browser complete the way upstream does, the directory and then
+    /// the marker last, so a product check that looked at the wrong one would still fail.
+    /// </summary>
+    /// <returns>The write.</returns>
+    private async Task SeedAsync()
+    {
+        if (_seededChromium is { } chromium)
+        {
+            await InstallationMarker.WriteAsync(chromium);
+        }
+    }
 
     /// <summary>
     /// The suite's probe, which stands between BrowserAI and a real child when an arm
@@ -540,8 +571,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </remarks>
     /// <param name="reason">What the failure says, so the refusal can be matched to it.</param>
     /// <returns>The environment.</returns>
-    public static RigSessionEnvironment Failing(string reason) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
+    public static async Task<RigSessionEnvironment> FailingAsync(string reason) =>
+        await SeededAsync(new(Path.Combine(await ScratchRoot.PathAsync(), $"rig-{Guid.NewGuid():N}"), reason));
 
     private RigSessionEnvironment(string root, string reason)
         : this(root, configure: null, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false, verdicts: null)
@@ -619,7 +650,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// way a missing payload or a broken <c>node</c> does.
     /// </summary>
     /// <remarks>
-    /// <b>The next one, not every one.</b> <see cref="Failing"/> refuses them
+    /// <b>The next one, not every one.</b> <see cref="FailingAsync"/> refuses them
     /// all, which cannot reach a session that is already open -- and the failure
     /// worth provoking is a <i>relaunch</i> that will not start, which needs a
     /// live session first and a refusal second.

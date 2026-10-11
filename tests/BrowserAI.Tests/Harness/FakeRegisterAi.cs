@@ -108,7 +108,12 @@ internal sealed class FakeRegisterAi : IRegisterAi
     }
 
     /// <inheritdoc/>
-    public ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget)
+    public Task<ToolRun> RunAsync(IReadOnlyList<string> arguments, TimeSpan budget) => AnsweredAsync(arguments);
+
+    /// <summary>What a run answers, decided the way RegisterAI decides.</summary>
+    /// <param name="arguments">The command line.</param>
+    /// <returns>The run.</returns>
+    private async Task<ToolRun> AnsweredAsync(IReadOnlyList<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
@@ -147,7 +152,7 @@ internal sealed class FakeRegisterAi : IRegisterAi
         var document = new JsonObject
         {
             ["tool"] = "registerai",
-            ["version"] = ResolvedVersions.FromRegisterAiStamp(),
+            ["version"] = await ResolvedVersions.FromRegisterAiStampAsync(),
             ["schema"] = ToolDocuments.Schema,
             ["verb"] = verb,
             ["dryRun"] = false,

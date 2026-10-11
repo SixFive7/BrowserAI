@@ -49,9 +49,9 @@ internal sealed class ConfigurationAppTests
     [Test]
     public async Task TheStatusSentenceAndTheOfferedActionsFollowTheStatePerClient()
     {
-        using var install = ScratchDirectory.Create("app-state");
+        using var install = await ScratchDirectory.CreateAsync("app-state");
 
-        var app = InstalledLayout.Create(install.Path);
+        var app = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
 
         var absent = Claude(StateFor(install.Path, server, null, RegistrationOwnership.Absent));
@@ -143,9 +143,9 @@ internal sealed class ConfigurationAppTests
     [Test]
     public async Task RemovingAProjectRegistrationIsOfferedOnlyWhereThereIsOneOfOurs()
     {
-        using var install = ScratchDirectory.Create("app-project-unregister");
+        using var install = await ScratchDirectory.CreateAsync("app-project-unregister");
 
-        _ = InstalledLayout.Create(install.Path);
+        _ = await InstalledLayout.CreateAsync(install.Path);
 
         var server = InstalledLayout.ServerIn(install.Path);
         var folder = install.Path;
@@ -196,14 +196,14 @@ internal sealed class ConfigurationAppTests
     [Test]
     public async Task TheReportCarriesEveryAnswerThePageShows()
     {
-        using var install = ScratchDirectory.Create("app-report");
-        using var output = ScratchDirectory.Create("app-report-out");
+        using var install = await ScratchDirectory.CreateAsync("app-report");
+        using var output = await ScratchDirectory.CreateAsync("app-report-out");
 
-        _ = InstalledLayout.Create(install.Path);
+        _ = await InstalledLayout.CreateAsync(install.Path);
 
         var server = InstalledLayout.ServerIn(install.Path);
         var state = StateFor(install.Path, server, server, RegistrationOwnership.OursAndPresent);
-        var path = StatusReport.Write(state, Path.Combine(output.Path, "nested", "report.json"));
+        var path = await StatusReport.WriteAsync(state, Path.Combine(output.Path, "nested", "report.json"));
 
         await Assert.That(File.Exists(path)).IsTrue();
 
@@ -276,7 +276,7 @@ internal sealed class ConfigurationAppTests
     [Test]
     public async Task TheNearestProjectFileIsFoundByWalkingUpwards()
     {
-        using var scratch = ScratchDirectory.Create("app-project-walk");
+        using var scratch = await ScratchDirectory.CreateAsync("app-project-walk");
 
         var deep = Directory.CreateDirectory(Path.Combine(scratch.Path, "a", "b", "c"));
 

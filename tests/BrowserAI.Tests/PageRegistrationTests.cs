@@ -63,10 +63,10 @@ internal sealed class PageRegistrationTests
     [Test]
     public async Task EachClientSaysWhatItHasAndEveryButtonNamesItsClient()
     {
-        using var install = ScratchDirectory.Create("page-registration-state");
-        using var project = ScratchDirectory.Create("page-registration-project");
+        using var install = await ScratchDirectory.CreateAsync("page-registration-state");
+        using var project = await ScratchDirectory.CreateAsync("page-registration-project");
 
-        _ = InstalledLayout.Create(install.Path);
+        _ = await InstalledLayout.CreateAsync(install.Path);
 
         var server = InstalledLayout.ServerIn(install.Path);
         var claude = ClientFor(
@@ -82,9 +82,9 @@ internal sealed class PageRegistrationTests
                 null));
         var registration = new FakeRegistration { State = StateFor(install.Path, server, [claude, ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent)]) };
 
-        using var rig = new PageRig(registration: registration, occasion: Occasion.FirstRun);
+        await using var rig = await PageRig.CreateAsync(registration: registration, occasion: Occasion.FirstRun);
 
-        var address = rig.HandOut();
+        var address = await rig.HandOutAsync();
 
         // The tab the installer opens is the home, which says the apps were set up and
         // leads to the page that says how.
@@ -181,9 +181,9 @@ internal sealed class PageRegistrationTests
     [Test]
     public async Task AButtonRunsTheRegistrarForItsClientAndAFailureIsOneSentenceWithDetails()
     {
-        using var install = ScratchDirectory.Create("page-registration-click");
+        using var install = await ScratchDirectory.CreateAsync("page-registration-click");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var tool = new FakeRegisterAi();
 
@@ -197,9 +197,9 @@ internal sealed class PageRegistrationTests
                 ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
             ]);
 
-        using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
+        await using var rig = await PageRig.CreateAsync(registration: new RegisterAiPageRegistration(tool, image, () => Task.FromResult(state), NullLogger.Instance));
 
-        var address = rig.HandOut(PageKind.Setup);
+        var address = await rig.HandOutAsync(PageKind.Setup);
 
         using var stream = await rig.StreamAsync(address, 1, "setup");
 
@@ -298,14 +298,14 @@ internal sealed class PageRegistrationTests
     [Test]
     public async Task AProjectFolderComesFromWindowsPickerAndOnlyOurEntryIsRemovedFromIt()
     {
-        using var install = ScratchDirectory.Create("page-registration-pick");
-        using var project = ScratchDirectory.Create("page-registration-pick-repo");
-        using var elsewhere = ScratchDirectory.Create("page-registration-pick-other");
+        using var install = await ScratchDirectory.CreateAsync("page-registration-pick");
+        using var project = await ScratchDirectory.CreateAsync("page-registration-pick-repo");
+        using var elsewhere = await ScratchDirectory.CreateAsync("page-registration-pick-other");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
 
-        _ = InstalledLayout.Create(elsewhere.Path);
+        _ = await InstalledLayout.CreateAsync(elsewhere.Path);
 
         var theirs = InstalledLayout.ServerIn(elsewhere.Path);
         var tool = new FakeRegisterAi();
@@ -321,9 +321,9 @@ internal sealed class PageRegistrationTests
                 ClientFor(RegistrationClient.Codex, server, RegistrationOwnership.OursAndPresent),
             ]);
 
-        using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
+        await using var rig = await PageRig.CreateAsync(registration: new RegisterAiPageRegistration(tool, image, () => Task.FromResult(state), NullLogger.Instance));
 
-        var address = rig.HandOut(PageKind.Setup);
+        var address = await rig.HandOutAsync(PageKind.Setup);
 
         using var stream = await rig.StreamAsync(address, 1, "setup");
 
@@ -414,10 +414,10 @@ internal sealed class PageRegistrationTests
     [Test]
     public async Task WhileThePickerIsOpenThePageSaysSoAndRunsNoOtherRegistration()
     {
-        using var install = ScratchDirectory.Create("page-registration-open");
-        using var project = ScratchDirectory.Create("page-registration-open-repo");
+        using var install = await ScratchDirectory.CreateAsync("page-registration-open");
+        using var project = await ScratchDirectory.CreateAsync("page-registration-open-repo");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var tool = new FakeRegisterAi();
 
@@ -429,9 +429,9 @@ internal sealed class PageRegistrationTests
                 ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
             ]);
 
-        using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
+        await using var rig = await PageRig.CreateAsync(registration: new RegisterAiPageRegistration(tool, image, () => Task.FromResult(state), NullLogger.Instance));
 
-        var address = rig.HandOut(PageKind.Setup);
+        var address = await rig.HandOutAsync(PageKind.Setup);
 
         using var stream = await rig.StreamAsync(address, 1, "setup");
 
@@ -498,9 +498,9 @@ internal sealed class PageRegistrationTests
     [Test]
     public async Task RegisterAndRepairKeepTheDataRootTheInstallRegistersWith()
     {
-        using var install = ScratchDirectory.Create("page-registration-root");
+        using var install = await ScratchDirectory.CreateAsync("page-registration-root");
 
-        var image = InstalledLayout.Create(install.Path);
+        var image = await InstalledLayout.CreateAsync(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
         var root = Path.Combine(install.Path, "a data root");
         var tool = new FakeRegisterAi();
@@ -515,9 +515,9 @@ internal sealed class PageRegistrationTests
                 ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
             ]);
 
-        using var rig = new PageRig(registration: new RegisterAiPageRegistration(tool, image, () => state, NullLogger.Instance));
+        await using var rig = await PageRig.CreateAsync(registration: new RegisterAiPageRegistration(tool, image, () => Task.FromResult(state), NullLogger.Instance));
 
-        var address = rig.HandOut(PageKind.Setup);
+        var address = await rig.HandOutAsync(PageKind.Setup);
 
         using var stream = await rig.StreamAsync(address, 1, "setup");
 

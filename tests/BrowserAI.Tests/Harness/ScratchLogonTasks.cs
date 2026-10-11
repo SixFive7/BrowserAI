@@ -31,46 +31,46 @@ internal sealed class ScratchLogonTasks : ILogonTasks
     public string? FailWith { get; set; }
 
     /// <inheritdoc />
-    public TaskReport Register(string name, string definition)
+    public Task<TaskReport> RegisterAsync(string name, string definition)
     {
         Calls.Enqueue($"register {name}");
 
         if (FailWith is { } why)
         {
-            return new TaskReport(TaskChange.Failed, why);
+            return Task.FromResult(new TaskReport(TaskChange.Failed, why));
         }
 
         Registered[name] = definition;
-        return new TaskReport(TaskChange.Registered, $"registered {name}");
+        return Task.FromResult(new TaskReport(TaskChange.Registered, $"registered {name}"));
     }
 
     /// <inheritdoc />
-    public TaskReport Remove(string name)
+    public Task<TaskReport> RemoveAsync(string name)
     {
         Calls.Enqueue($"remove {name}");
 
         if (FailWith is { } why)
         {
-            return new TaskReport(TaskChange.Failed, why);
+            return Task.FromResult(new TaskReport(TaskChange.Failed, why));
         }
 
-        return Registered.TryRemove(name, out _)
+        return Task.FromResult(Registered.TryRemove(name, out _)
             ? new TaskReport(TaskChange.Removed, $"removed {name}")
-            : new TaskReport(TaskChange.Absent, $"no {name}");
+            : new TaskReport(TaskChange.Absent, $"no {name}"));
     }
 
     /// <inheritdoc />
-    public TaskReport Run(string name, string argument)
+    public Task<TaskReport> RunAsync(string name, string argument)
     {
         Calls.Enqueue($"run {name} {argument}");
 
         if (FailWith is { } why)
         {
-            return new TaskReport(TaskChange.Failed, why);
+            return Task.FromResult(new TaskReport(TaskChange.Failed, why));
         }
 
-        return Registered.ContainsKey(name)
+        return Task.FromResult(Registered.ContainsKey(name)
             ? new TaskReport(TaskChange.Started, $"started {name} {argument}")
-            : new TaskReport(TaskChange.NotRegistered, $"no {name}");
+            : new TaskReport(TaskChange.NotRegistered, $"no {name}"));
     }
 }

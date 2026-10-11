@@ -39,7 +39,7 @@ internal sealed class ClientRunTests
     [Test]
     public async Task AClientAnArmStartedLeavesNoProcessBehindOnceTheArmEnds()
     {
-        using var work = ScratchDirectory.Create("client-run");
+        using var work = await ScratchDirectory.CreateAsync("client-run");
 
         var document = Path.Combine(work.Path, "document.txt");
         var report = Path.Combine(work.Path, "holder.txt");
@@ -47,7 +47,7 @@ internal sealed class ClientRunTests
 
         await File.WriteAllTextAsync(document, "the client's output\n");
 
-        using (var client = ClientRun.Start(ProbePath, work.Path, new Dictionary<string, string>(StringComparer.Ordinal), ["output-holder", document, hold, report]))
+        using (var client = await ClientRun.StartAsync(ProbePath, work.Path, new Dictionary<string, string>(StringComparer.Ordinal), ["output-holder", document, hold, report]))
         {
             await Assert.That(await client.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue()
                 .Because("the stand-in client writes one line, starts its child and exits at once");

@@ -73,7 +73,7 @@ internal sealed class FlatOutputTests
     [Test]
     public async Task NoTypedFolderEverAppearsAndTheOutputRootStaysFlat()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactBytes = 8 });
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -147,7 +147,7 @@ internal sealed class FlatOutputTests
     [Test]
     public async Task ASecondFileWithTheSameNameOverwritesTheFirstAndNothingSuffixesIt()
     {
-        await using var sessions = RigSessionEnvironment.Create(child =>
+        await using var sessions = await RigSessionEnvironment.CreateAsync(child =>
             child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
             {
                 WritesArtifactContent = Encoding.UTF8.GetBytes("the first screenshot"),
@@ -195,7 +195,7 @@ internal sealed class FlatOutputTests
         // lives in the output tree permanently instead of being sorted out of
         // it, and it is the first thing an evictor would unlink.
         var config = BrowserConfiguration.ForSession(
-            SessionPath.For(Path.Combine(ScratchRoot.Path, "eviction-check")),
+            SessionPath.For(Path.Combine(await ScratchRoot.PathAsync(), "eviction-check")),
             headed: false,
             SessionManager.DefaultBrowser,
             transcript: false,
@@ -208,7 +208,7 @@ internal sealed class FlatOutputTests
     [Test]
     public async Task TheChildsWorkingDirectoryIsTheOutputRoot()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         // ⚠️ THE WHOLE CONTAINMENT NOW RESTS ON THIS LINE AND ON
@@ -254,7 +254,7 @@ internal sealed class FlatOutputTests
     [Test]
     public async Task TheSiblingSessionsLineCoversOnlyTheRootInPlay()
     {
-        await using var sessions = RigSessionEnvironment.Create();
+        await using var sessions = await RigSessionEnvironment.CreateAsync();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var left = Path.Combine(sessions.Root, "project-left");

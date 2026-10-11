@@ -93,7 +93,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <item>
 /// <description>
 /// <b>Every run says which path it took</b>, in the coverage block
-/// <see cref="SuiteEnvironment.Summary"/> prints unconditionally -- the same
+/// <see cref="SuiteEnvironment.SummaryAsync"/> prints unconditionally -- the same
 /// block, and for the same reason, that makes a degraded run distinguishable
 /// from a real one.
 /// </description>
@@ -124,7 +124,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// </para>
 /// <para>
 /// <b>Completeness is not assumed from the rename.</b>
-/// <see cref="Plan"/> re-establishes it before every use: the stamp must name
+/// <see cref="PlanAsync"/> re-establishes it before every use: the stamp must name
 /// this build's revision, <c>chromium-&lt;rev&gt;\INSTALLATION_COMPLETE</c> and
 /// an <c>ffmpeg-*</c> marker must both be present, <c>chrome.exe</c> must be
 /// where the payload says, no <c>chromium_headless_shell-*</c> may exist -- a
@@ -147,7 +147,7 @@ internal static class FirstRunCache
     private const string StagingPrefix = ".staging-";
 
     /// <summary>
-    /// How long <see cref="Commit"/> waits out a scanner's handle before giving
+    /// How long <see cref="CommitAsync"/> waits out a scanner's handle before giving
     /// up and reporting the refusal as itself.
     /// </summary>
     /// <remarks>
@@ -233,9 +233,9 @@ internal static class FirstRunCache
     /// Chooses this run's source, and says why in a sentence the run prints.
     /// </summary>
     /// <returns>The plan.</returns>
-    public static FirstRunPlan Plan()
+    public static async Task<FirstRunPlan> PlanAsync()
     {
-        var (entry, refusal) = Newest(Root);
+        var (entry, refusal) = await NewestAsync(Root);
         var age = entry is null ? default(TimeSpan?) : DateTimeOffset.UtcNow - entry.DownloadedUtc;
         var source = Decide(age, SuiteEnvironment.IsReleaseRun, IsDisabled);
 
@@ -314,18 +314,18 @@ internal static class FirstRunCache
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root to fill. Created if absent.</param>
     /// <param name="entry">The entry to copy from.</param>
-    public static void SeedInto(string browsersDirectory, FirstRunCacheEntry entry)
+    public static async Task SeedIntoAsync(string browsersDirectory, FirstRunCacheEntry entry)
     {
         ArgumentNullException.ThrowIfNull(browsersDirectory);
         ArgumentNullException.ThrowIfNull(entry);
 
         var markers = new List<string>();
 
-        CopyTree(entry.BrowsersDirectory, browsersDirectory, markers);
+        await CopyTreeAsync(entry.BrowsersDirectory, browsersDirectory, markers);
 
         foreach (var marker in markers)
         {
-            InstallationMarker.Write(Path.GetDirectoryName(marker)!);
+            await InstallationMarker.WriteAsync(Path.GetDirectoryName(marker)!);
         }
     }
 
@@ -348,7 +348,7 @@ internal static class FirstRunCache
     /// never prune the real cache out from under a run in flight.
     /// </param>
     /// <returns>One sentence saying where it went, or why it did not go anywhere.</returns>
-    public static string Publish(string browsersDirectory, DateTimeOffset downloadedUtc, string root)
+    public static async Task<string> PublishAsync(string browsersDirectory, DateTimeOffset downloadedUtc, string root)
     {
         ArgumentNullException.ThrowIfNull(browsersDirectory);
         ArgumentNullException.ThrowIfNull(root);
@@ -361,11 +361,11 @@ internal static class FirstRunCache
 
             var browsers = Path.Combine(staging, "browsers");
 
-            CopyTree(browsersDirectory, browsers, markers: null);
+            await CopyTreeAsync(browsersDirectory, browsers, markers: null);
 
             var (files, bytes) = Census(browsers);
 
-            File.WriteAllText(
+            await File.WriteAllTextAsync(
                 Path.Combine(staging, StampFile),
                 new JsonObject
                 {
@@ -383,7 +383,7 @@ internal static class FirstRunCache
                 root,
                 $"{EntryPrefix}{downloadedUtc.UtcDateTime.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture)}-{Guid.NewGuid():N}");
 
-            Commit(staging, published);
+            await CommitAsync(staging, published);
             Prune(root, published);
 
             return $"Cached {files} files / {bytes} B for the next {Minutes(Ttl)}.";
@@ -407,7 +407,7 @@ internal static class FirstRunCache
     /// </remarks>
     /// <param name="root">The cache root to look in.</param>
     /// <returns>The entry and an empty reason, or no entry and the reason.</returns>
-    public static (FirstRunCacheEntry? Entry, string Reason) Newest(string root)
+    public static async Task<(FirstRunCacheEntry? Entry, string Reason)> NewestAsync(string root)
     {
         ArgumentNullException.ThrowIfNull(root);
 
@@ -421,7 +421,7 @@ internal static class FirstRunCache
         foreach (var candidate in Directory.EnumerateDirectories(root, EntryPrefix + "*")
             .OrderByDescending(directory => directory, StringComparer.Ordinal))
         {
-            var (entry, refusal) = Inspect(candidate);
+            var (entry, refusal) = await InspectAsync(candidate);
 
             if (entry is not null)
             {
@@ -451,7 +451,7 @@ internal static class FirstRunCache
     /// </remarks>
     /// <param name="candidate">The entry directory.</param>
     /// <returns>The entry and an empty reason, or no entry and the reason.</returns>
-    public static (FirstRunCacheEntry? Entry, string Reason) Inspect(string candidate)
+    public static async Task<(FirstRunCacheEntry? Entry, string Reason)> InspectAsync(string candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
 
@@ -466,7 +466,7 @@ internal static class FirstRunCache
 
         try
         {
-            using var document = JsonDocument.Parse(File.ReadAllBytes(stamp));
+            using var document = JsonDocument.Parse(await File.ReadAllBytesAsync(stamp));
 
             downloaded = DateTimeOffset.Parse(
                 document.RootElement.GetProperty("downloadedUtc").GetString()!,
@@ -559,7 +559,7 @@ internal static class FirstRunCache
     /// </remarks>
     /// <param name="staging">The staging directory.</param>
     /// <param name="published">The name that makes it visible.</param>
-    private static void Commit(string staging, string published)
+    private static async Task CommitAsync(string staging, string published)
     {
         var clock = Stopwatch.StartNew();
 
@@ -577,7 +577,7 @@ internal static class FirstRunCache
                     throw;
                 }
 
-                Thread.Sleep(5);
+                await Task.Delay(5);
             }
         }
     }
@@ -620,7 +620,7 @@ internal static class FirstRunCache
     /// destination path appended here instead, for the caller to write last.
     /// When <see langword="null"/>, markers are copied like anything else.
     /// </param>
-    private static void CopyTree(string source, string destination, List<string>? markers)
+    private static async Task CopyTreeAsync(string source, string destination, List<string>? markers)
     {
         _ = Directory.CreateDirectory(destination);
 
@@ -649,12 +649,12 @@ internal static class FirstRunCache
                 continue;
             }
 
-            File.Copy(file, target, overwrite: true);
+            await TestFiles.CopyAsync(file, target, overwrite: true);
         }
 
         foreach (var child in Directory.EnumerateDirectories(source))
         {
-            CopyTree(child, Path.Combine(destination, Path.GetFileName(child)), markers);
+            await CopyTreeAsync(child, Path.Combine(destination, Path.GetFileName(child)), markers);
         }
     }
 
