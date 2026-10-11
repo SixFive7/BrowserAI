@@ -130,7 +130,7 @@ internal static class HeadedUserAgent
             return null;
         }
 
-        if (ReadCache(cache, stamp) is { } kept)
+        if (await ReadCacheAsync(cache, stamp).ConfigureAwait(false) is { } kept)
         {
             return kept;
         }
@@ -142,7 +142,7 @@ internal static class HeadedUserAgent
         try
         {
             // Another call in this process may have asked while this one waited.
-            if (ReadCache(cache, stamp) is { } meanwhile)
+            if (await ReadCacheAsync(cache, stamp).ConfigureAwait(false) is { } meanwhile)
             {
                 return meanwhile;
             }
@@ -156,7 +156,7 @@ internal static class HeadedUserAgent
                 return null;
             }
 
-            WriteCache(cache, stamp, headed, logger);
+            await WriteCacheAsync(cache, stamp, headed, logger).ConfigureAwait(false);
             UserAgentLog.Derived(logger, executable, headed);
 
             return headed;
@@ -230,11 +230,11 @@ internal static class HeadedUserAgent
         return $"{file.Length.ToString(CultureInfo.InvariantCulture)} {file.LastWriteTimeUtc.Ticks.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    private static string? ReadCache(string cache, string stamp)
+    private static async Task<string?> ReadCacheAsync(string cache, string stamp)
     {
         try
         {
-            var lines = File.ReadAllLines(cache);
+            var lines = await File.ReadAllLinesAsync(cache).ConfigureAwait(false);
 
             return lines is [var kept, var value] && string.Equals(kept, stamp, StringComparison.Ordinal) && IsPlausible(value)
                 && !value.Contains(HeadlessProduct, StringComparison.Ordinal)
@@ -247,13 +247,13 @@ internal static class HeadedUserAgent
         }
     }
 
-    private static void WriteCache(string cache, string stamp, string headed, ILogger logger)
+    private static async Task WriteCacheAsync(string cache, string stamp, string headed, ILogger logger)
     {
         var partial = $"{cache}.{Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}.partial";
 
         try
         {
-            File.WriteAllText(partial, $"{stamp}\n{headed}\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            await File.WriteAllTextAsync(partial, $"{stamp}\n{headed}\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)).ConfigureAwait(false);
             File.Move(partial, cache, overwrite: true);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)

@@ -266,7 +266,7 @@ internal sealed record ProvisioningTimers
 /// <b><c>init</c> must not block, and that constraint shapes the whole type.</b>
 /// A caller that waits three minutes inside one tool call has had whatever
 /// timing it was managing corrupted, with nothing to read and no way to decide
-/// whether waiting is worth it. So <see cref="Ensure"/> returns immediately with
+/// whether waiting is worth it. So <see cref="EnsureAsync"/> returns immediately with
 /// <see cref="ProvisioningState.Provisioning"/> and every upstream call is
 /// refused with <see cref="Sessions.SessionErrors.ProvisioningInProgress"/>,
 /// which names the download size and says the same call will work shortly. The
@@ -324,11 +324,20 @@ internal sealed record ProvisioningTimers
 /// <c>INSTALLATION_COMPLETE</c>.
 /// </para>
 /// <para>
-/// <b>The install runs on its own thread, and that is a correctness requirement
-/// and not a performance one.</b> A named mutex is owned by the
+/// <b>The install's mutex is held by a thread of its own, and that is a correctness
+/// requirement and not a performance one.</b> A named mutex is owned by the
 /// <i>thread</i> that waited on it, so a continuation resuming on a different
 /// pool thread makes the release throw about "an unsynchronized block of code" --
 /// naming nothing relevant and pointing nowhere near the cause.
+/// </para>
+/// <para>
+/// ⚠️ <b>The install itself is asynchronous since 2026-10-11</b>, the maintainer's
+/// decision 54, in his words verbatim: <i>"Never block a worker anywhere."</i>
+/// <i>Corrected that day (previously "The install runs on its own thread", a
+/// <c>LongRunning</c> task that took the mutex and waited out every poll on it)</i>: the
+/// mutex is taken and released by <see cref="MachineMutex.HoldAsync"/>'s own thread, and
+/// the install awaits its polls (<see cref="PollTicker.WaitForNextPollAsync"/>), so no
+/// thread waits for a poll and none of the pool's waits for the mutex.
 /// </para>
 /// </remarks>
 internal sealed partial class BrowserProvisioner : IDisposable
@@ -644,7 +653,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
         // the payload. An object initialiser still replaces it, which is what
         // makes it a seam.
         StartInstaller = (browser, root) => new NodeInstallerRun(_payload, browser, root);
-        PruneRevisions = browser => _ = RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger, familyAlreadyHeld: browser);
+        PruneRevisions = async browser => _ = await RevisionPrune.RunAsync(BrowsersDirectory, await ManifestAsync().ConfigureAwait(false), _logger, familyAlreadyHeld: browser).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -674,14 +683,15 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <remarks>
     /// <b>The seam exists for exactly one property, and that property is
     /// otherwise unassertable.</b> Nothing on
-    /// <see cref="RevisionPrune.Run"/>'s
+    /// <see cref="RevisionPrune.RunAsync"/>'s
     /// own path throws by design -- the process census, the enumeration and the
     /// sizing all catch -- so the <c>catch</c> at the call site is a guard against
     /// a future edit and not against a reachable case today, and a guard
     /// nothing exercises is the shape this project's audit keeps finding. The
-    /// argument is the family whose mutex the calling thread already holds.
+    /// argument is the family whose mutex the calling install already holds.
+    /// <i>Asynchronous since 2026-10-11 (previously an <c>Action</c>), with the prune.</i>
     /// </remarks>
-    public Action<string> PruneRevisions { get; init; }
+    public Func<string, Task> PruneRevisions { get; init; }
 
     /// <summary>
     /// What the browsers root weighs, which is the one number both the stall
@@ -719,8 +729,8 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <summary>Where a family's tree is, or would be.</summary>
     /// <param name="browser">The family, as upstream names it.</param>
     /// <returns>The absolute directory.</returns>
-    public string DirectoryFor(string browser) =>
-        Path.Combine(BrowsersDirectory, Manifest().For(browser).DirectoryName);
+    public async Task<string> DirectoryForAsync(string browser) =>
+        Path.Combine(BrowsersDirectory, (await ManifestAsync().ConfigureAwait(false)).For(browser).DirectoryName);
 
     /// <summary>
     /// Reports a family's state without starting anything.
@@ -731,11 +741,19 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
     /// <returns>Where it stands.</returns>
-    public ProvisioningStatus Peek(string browser)
+    public async Task<ProvisioningStatus> PeekAsync(string browser)
     {
         ArgumentNullException.ThrowIfNull(browser);
 
-        var revision = Manifest().For(browser);
+        return StatusOf(browser, (await ManifestAsync().ConfigureAwait(false)).For(browser));
+    }
+
+    /// <summary>Where a family stands, its revision already read.</summary>
+    /// <param name="browser">The family.</param>
+    /// <param name="revision">Its revision, from the manifest.</param>
+    /// <returns>Where it stands.</returns>
+    private ProvisioningStatus StatusOf(string browser, BrowserRevision revision)
+    {
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
 
         if (IsComplete(directory))
@@ -748,7 +766,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
             return Provisioning(browser, directory, revision, attempt);
         }
 
-        if (attempt is { Task.IsCompleted: true } finished && finished.Task.Result is { } result && !result.Succeeded)
+        if (attempt is { Task.IsCompleted: true } finished && Result(finished) is { Succeeded: false } result)
         {
             return new ProvisioningStatus(browser, ProvisioningState.Failed, directory, result.Detail);
         }
@@ -770,11 +788,11 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
     /// <returns>Where it stands, as of this instant.</returns>
-    public ProvisioningStatus Ensure(string browser)
+    public async Task<ProvisioningStatus> EnsureAsync(string browser)
     {
         ArgumentNullException.ThrowIfNull(browser);
 
-        var revision = Manifest().For(browser);
+        var revision = (await ManifestAsync().ConfigureAwait(false)).For(browser);
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
 
         // The hot path, and it has to stay one syscall: this runs on every
@@ -793,7 +811,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
             (Provisioner: this, Revision: revision));
 
         return attempt.Task.IsCompleted
-            ? Peek(browser)
+            ? StatusOf(browser, revision)
             : Provisioning(browser, directory, revision, attempt);
     }
 
@@ -804,7 +822,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <remarks>
     /// <b>No tool a model calls goes through here except the reinstall</b>, which
     /// is explicitly an operation the caller asked to have happen. Everything on
-    /// the <c>init</c> path uses <see cref="Ensure"/> and is answered
+    /// the <c>init</c> path uses <see cref="EnsureAsync"/> and is answered
     /// immediately.
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
@@ -812,7 +830,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <returns>Where it ended up.</returns>
     public async Task<ProvisioningStatus> WaitAsync(string browser, CancellationToken cancellationToken = default)
     {
-        var status = Ensure(browser);
+        var status = await EnsureAsync(browser).ConfigureAwait(false);
 
         if (status.State is not ProvisioningState.Provisioning || !_attempts.TryGetValue(browser, out var attempt))
         {
@@ -820,7 +838,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
         }
 
         _ = await attempt.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
-        return Peek(browser);
+        return await PeekAsync(browser).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -861,11 +879,13 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// taking a mutex is a wait, not a deadlock. The real obstacle is that this
     /// method is <c>async</c> and a named mutex is owned by the <b>thread</b>
     /// that waited on it, so a continuation resuming on another pool thread would
-    /// make the release throw. That is a shape problem with a known answer, and
-    /// it is the one <see cref="Start"/> already uses: the locked section runs on
-    /// its own <c>LongRunning</c> thread and is finished before anything is
-    /// awaited. The mutex is <b>released before</b> <see cref="WaitAsync"/>, or
-    /// the install this method exists to trigger would queue behind it. Found by
+    /// make the release throw. That is a shape problem with a known answer: the
+    /// mutex is held by a thread of its own (<see cref="MachineMutex.HoldAsync"/>),
+    /// since 2026-10-11, so the locked section may await. <i>Corrected that day
+    /// (previously "it is the one Start already uses: the locked section runs on its
+    /// own <c>LongRunning</c> thread and is finished before anything is awaited").</i>
+    /// The mutex is <b>released before</b> <see cref="WaitAsync"/>, or the install
+    /// this method exists to trigger would queue behind it. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// A3.
     /// </para>
@@ -877,17 +897,12 @@ internal sealed partial class BrowserProvisioner : IDisposable
     {
         ArgumentNullException.ThrowIfNull(browser);
 
-        var revision = Manifest().For(browser);
+        var revision = (await ManifestAsync().ConfigureAwait(false)).For(browser);
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
 
-        // On a thread of its own, for the reason in the remarks: everything
-        // inside the named mutex has to happen on the thread that took it, and
-        // nothing may be awaited while it is held.
-        var (removed, removedBytes, failures) = await Task.Factory.StartNew(
-            () => RemoveForReinstall(browser, directory),
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default).ConfigureAwait(false);
+        // Inside the named mutex, which a thread of its own holds, for the reason in
+        // the remarks.
+        var (removed, removedBytes, failures) = await RemoveForReinstallAsync(browser, directory).ConfigureAwait(false);
 
         if (!removed)
         {
@@ -944,16 +959,22 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// listing what it does name instead of composing a path to nowhere.
     /// </remarks>
     /// <returns>The absolute directories.</returns>
-    public IReadOnlyList<string> SharedComponentDirectories() =>
-        [.. ProvisionedBrowsers.SharedComponents.Select(component => Path.Combine(BrowsersDirectory, Manifest().For(component).DirectoryName))];
+    public async Task<IReadOnlyList<string>> SharedComponentDirectoriesAsync()
+    {
+        var manifest = await ManifestAsync().ConfigureAwait(false);
+
+        return [.. ProvisionedBrowsers.SharedComponents.Select(component => Path.Combine(BrowsersDirectory, manifest.For(component).DirectoryName))];
+    }
 
     /// <summary>
     /// Deletes every shared component's tree and downloads them again.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The whole operation is on one thread and holds three mutexes, which is
-    /// the difference from <see cref="ReinstallAsync"/>.</b> That method releases
+    /// <b>The whole operation holds three mutexes, which is the difference from
+    /// <see cref="ReinstallAsync"/>.</b> <i>Corrected 2026-10-11 (previously "The whole
+    /// operation is on one thread and holds three mutexes"): each mutex is held by a
+    /// thread of its own since that day, and the operation awaits.</i> That method releases
     /// the family's mutex before the install, because the install it triggers
     /// would otherwise queue behind it. This one cannot: the installer it runs
     /// writes into the same two directories that <b>both</b> families' installers
@@ -961,8 +982,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// this process's extraction and a family install's extraction into one tree
     /// -- which is exactly the "neither install, and upstream marks it complete"
     /// corruption the provisioning mutex exists to prevent. The delete and the
-    /// install therefore happen inside one hold, and nothing is awaited while it
-    /// is held.
+    /// install therefore happen inside one hold. <i>Corrected 2026-10-11 (previously
+    /// "and nothing is awaited while it is held"): the install is awaited inside it,
+    /// and the hold is the holding threads'.</i>
     /// </para>
     /// <para>
     /// <b>Three mutexes, in a fixed order, none of them waiting.</b> Both
@@ -1022,15 +1044,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <returns>What was removed, what would not go, and where the components stand.</returns>
     public async Task<ReinstallOutcome> ReinstallSharedAsync(CancellationToken cancellationToken = default)
     {
-        var directories = SharedComponentDirectories();
+        var directories = await SharedComponentDirectoriesAsync().ConfigureAwait(false);
 
-        return await Task.Factory.StartNew(
-            () => ReinstallShared(directories),
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default)
-            .WaitAsync(cancellationToken)
-            .ConfigureAwait(false);
+        return await ReinstallSharedHeldAsync(directories).WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -1063,23 +1079,25 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// flight is not something to queue behind -- the caller is a model waiting on
     /// a tool call, and a 203.8 MB download is minutes -- it is a reason to refuse
     /// and say which. <b>An abandoned mutex is an acquisition</b> (race R3): the
-    /// previous holder died, this thread owns it, and refusing here would make one
-    /// crashed installer disable reinstalls until the machine is rebooted.
+    /// previous holder died, the holding thread owns it, and refusing here would make
+    /// one crashed installer disable reinstalls until the machine is rebooted.
     /// </remarks>
     /// <param name="browser">The family.</param>
     /// <param name="directory">Its revision directory.</param>
     /// <returns>What was there, what would not go, and whether the delete happened at all.</returns>
-    private (bool Removed, long RemovedBytes, List<string> Failures) RemoveForReinstall(string browser, string directory)
+    private async Task<(bool Removed, long RemovedBytes, List<string> Failures)> RemoveForReinstallAsync(string browser, string directory)
     {
         using var mutex = MachineMutex.Create(MutexNameFor(BrowsersDirectory, browser));
 
-        if (mutex.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
-        {
-            return (false, 0, []);
-        }
+        var held = await mutex.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
 
         try
         {
+            if (!held.Held)
+            {
+                return (false, 0, []);
+            }
+
             var removedBytes = SizeOf(directory);
             var failures = new List<string>();
 
@@ -1097,27 +1115,26 @@ internal sealed partial class BrowserProvisioner : IDisposable
         }
         finally
         {
-            mutex.Release();
+            await held.DisposeAsync().ConfigureAwait(false);
         }
     }
 
     /// <summary>
-    /// The whole of <see cref="ReinstallSharedAsync"/>, on the thread that took
-    /// the mutexes.
+    /// The whole of <see cref="ReinstallSharedAsync"/>, inside the three mutexes.
     /// </summary>
     /// <param name="directories">Every shared component's tree, absolute.</param>
     /// <returns>The outcome.</returns>
-    private ReinstallOutcome ReinstallShared(IReadOnlyList<string> directories)
+    private async Task<ReinstallOutcome> ReinstallSharedHeldAsync(IReadOnlyList<string> directories)
     {
         // Two lists deliberately. `created` is what has to be disposed and
         // `acquired` is what has to be RELEASED first, and they differ by exactly
         // one object on the refusal path -- the mutex that was opened and not
-        // taken. Releasing one this thread does not own throws, and dropping a
-        // handle on one it does own leaves ownership to be resolved by the next
+        // taken. Releasing one this install does not hold throws, and dropping a
+        // handle on one it does hold leaves ownership to be resolved by the next
         // waiter as an abandonment, which is a warning somebody then has to
         // explain.
         var created = new List<MachineMutex>();
-        var acquired = new List<MachineMutex>();
+        var acquired = new List<MutexHold>();
 
         try
         {
@@ -1129,7 +1146,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 // An abandoned acquisition IS an acquisition, exactly as the
                 // family path reads it: refusing here would let one crashed
                 // installer disable shared repairs until the machine is rebooted.
-                if (mutex.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
+                var held = await mutex.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
+
+                if (!held.Held)
                 {
                     ProvisioningLog.ReinstallDeferred(_logger, name, string.Join(", ", directories));
 
@@ -1139,16 +1158,16 @@ internal sealed partial class BrowserProvisioner : IDisposable
                         + "Deleting a tree an installer is extracting into produces a directory that is neither the old install nor the new one, and upstream then marks it complete. Wait for that download to finish and call this again.");
                 }
 
-                acquired.Add(mutex);
+                acquired.Add(held);
             }
 
-            return RebuildShared(directories);
+            return await RebuildSharedAsync(directories).ConfigureAwait(false);
         }
         finally
         {
             for (var index = acquired.Count - 1; index >= 0; index--)
             {
-                acquired[index].Release();
+                await acquired[index].DisposeAsync().ConfigureAwait(false);
             }
 
             for (var index = created.Count - 1; index >= 0; index--)
@@ -1159,8 +1178,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     }
 
     /// <summary>
-    /// The destructive half and the install, with every mutex held by this
-    /// thread.
+    /// The destructive half and the install, with every mutex held.
     /// </summary>
     /// <remarks>
     /// <b>One installer invocation for both components, and the completeness
@@ -1173,7 +1191,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// </remarks>
     /// <param name="directories">Every shared component's tree, absolute.</param>
     /// <returns>The outcome.</returns>
-    private ReinstallOutcome RebuildShared(IReadOnlyList<string> directories)
+    private async Task<ReinstallOutcome> RebuildSharedAsync(IReadOnlyList<string> directories)
     {
         var sizes = directories.Select(SizeOf).ToList();
         var removedBytes = sizes.Contains(-1) ? -1 : sizes.Sum();
@@ -1203,9 +1221,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
             };
         }
 
-        var revision = Manifest().For(ProvisionedBrowsers.SharedInstallTarget);
+        var revision = (await ManifestAsync().ConfigureAwait(false)).For(ProvisionedBrowsers.SharedInstallTarget);
         var target = Path.Combine(BrowsersDirectory, revision.DirectoryName);
-        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, AttemptClock.Start(_timers.Clock), new AttemptPhase());
+        var result = await RunInstallerAsync(ProvisionedBrowsers.SharedInstallTarget, revision, target, AttemptClock.Start(_timers.Clock), new AttemptPhase()).ConfigureAwait(false);
 
         // Every component's own marker, not the installer's exit code and not the
         // one directory RunInstaller was pointed at. A second component that
@@ -1266,7 +1284,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// wiped a tree ~100 processes may have been running out of and re-downloaded
     /// 203.8 MB, on the strength of an inference that is simply false: <i>the
     /// holder died, therefore what is in the directory is unusable</i>. The holder
-    /// keeps this mutex through <see cref="Prune"/>, which walks every process on
+    /// keeps this mutex through <see cref="PruneAsync"/>, which walks every process on
     /// the machine and is slow exactly when the machine is busy, so <i>died after
     /// writing the marker</i> is the reachable case and not the exotic one --
     /// it is the same interval the 2026-08-17 fix was made in, and the mirror of
@@ -1277,7 +1295,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// and cannot be staged</b>, which is why the test is of this predicate and
     /// not of an interleaving: all four combinations, so removing the second half
     /// is red. What an abandoned mutex over a marked tree means is that the holder
-    /// died during <see cref="Prune"/>, and the recovery for that is to re-run the
+    /// died during <see cref="PruneAsync"/>, and the recovery for that is to re-run the
     /// prune -- which the success path below already does.
     /// </para>
     /// </remarks>
@@ -1287,9 +1305,17 @@ internal sealed partial class BrowserProvisioner : IDisposable
     internal static bool AbandonedTreeIsUnusable(MutexAcquisition acquisition, string directory) =>
         acquisition is MutexAcquisition.AcquiredAbandoned && !IsComplete(directory);
 
+    /// <summary>How a finished attempt ended, as the attempt recorded it when it finished.</summary>
+    /// <remarks>
+    /// <b>Read off the attempt and not off its task</b>, since 2026-10-11: the decision 54
+    /// ban refuses a task's <c>Result</c>, and an attempt records its outcome as its last
+    /// step. <i>Previously <c>attempt.Task.Result</c> once the task had completed.</i>
+    /// </remarks>
+    /// <param name="attempt">A finished attempt.</param>
+    /// <returns>Its outcome.</returns>
     private static ProvisioningResult Result(Attempt attempt) =>
-        attempt.Task.IsCompletedSuccessfully
-            ? attempt.Task.Result
+        attempt.Task.IsCompletedSuccessfully && attempt.Phase.Outcome is { } outcome
+            ? outcome
             : new ProvisioningResult(false, "The provisioning task itself failed.");
 
     private static long SizeOf(string directory)
@@ -1423,7 +1449,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
         return FirstRunDownloadBytes.TryGetValue(browser, out var bytes) ? bytes : 0;
     }
 
-    private BrowsersManifest Manifest() => _manifest ??= BrowsersManifest.Read(_payload);
+    /// <summary>The manifest, read once it is first asked for, and again only while it could not be read.</summary>
+    /// <returns>The manifest.</returns>
+    private async Task<BrowsersManifest> ManifestAsync() => _manifest ??= await BrowsersManifest.ReadAsync(_payload).ConfigureAwait(false);
 
     /// <summary>
     /// Removes browser revisions the resolved manifest no longer names.
@@ -1444,14 +1472,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <para>
     /// <b>The <c>catch</c> is the whole reason this is a method and not a
     /// line</b>, and what it prevents was measured, not assumed. It runs
-    /// inside <see cref="Install"/>'s catch-all, so without it a prune that threw
+    /// inside <see cref="InstallAsync"/>'s catch-all, so without it a prune that threw
     /// would be logged as
     /// <see cref="ProvisioningLog.Failed"/> -- <i>"Provisioning chromium failed"</i>
     /// at <see cref="LogLevel.Error"/>, carrying the pruner's exception -- over a
     /// 203.8 MB download that had just succeeded, and nothing anywhere would say
     /// the disk went unreclaimed. Planted 2026-08-17: the status the caller sees
     /// stays <see cref="ProvisioningState.Installed"/>, because
-    /// <see cref="Peek"/> reads the completion marker before it reads the cached
+    /// <see cref="PeekAsync"/> reads the completion marker before it reads the cached
     /// result -- so the damage is a confident wrong answer in the log and not
     /// a wrong answer to the model, which is exactly the kind that survives.
     /// <see cref="PruneLog.PassFailed"/> was written for this and was called from
@@ -1466,11 +1494,12 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// </para>
     /// </remarks>
     /// <param name="browser">The family whose mutex the caller already holds.</param>
-    private void Prune(string browser)
+    /// <returns>The prune, which never faults.</returns>
+    private async Task PruneAsync(string browser)
     {
         try
         {
-            PruneRevisions(browser);
+            await PruneRevisions(browser).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // Reclaiming disk is never urgent and never worth failing an install that succeeded; every failure shape means the same thing here.
         catch (Exception failure)
@@ -1485,19 +1514,24 @@ internal sealed partial class BrowserProvisioner : IDisposable
         var started = DateTimeOffset.Now;
         var phase = new AttemptPhase();
 
-        // LongRunning, so this gets a thread of its own and not a pool
-        // thread: the body takes a named mutex, and a named mutex is owned by
-        // the thread that waited on it.
-        var task = Task.Factory.StartNew(
-            () => Install(browser, revision, phase),
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
+        // Queued, so the caller returns at once: the install awaits from its first
+        // step, and the named mutex it takes is held by a thread of its own. The
+        // outcome is recorded on the attempt as its last step (Result reads it).
+        // Corrected 2026-10-11 (previously a LongRunning task, which gave the body a
+        // thread of its own because a named mutex is owned by the thread that waited
+        // on it).
+        var task = Task.Run(async () =>
+        {
+            var result = await InstallAsync(browser, revision, phase).ConfigureAwait(false);
+
+            phase.Finish(result);
+            return result;
+        });
 
         return new Attempt(task, started, phase);
     }
 
-    private ProvisioningResult Install(string browser, BrowserRevision revision, AttemptPhase phase)
+    private async Task<ProvisioningResult> InstallAsync(string browser, BrowserRevision revision, AttemptPhase phase)
     {
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
         var deadline = AttemptClock.Start(_timers.Clock);
@@ -1509,9 +1543,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
             // Zero, deliberately: a process that does not get the mutex must not
             // queue a SECOND download of the same 203.8 MB, it must watch for the
             // marker the winner is about to write.
-            var acquisition = mutex.Acquire(LockScopes.NeverWaits);
+            var held = await mutex.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
 
-            if (acquisition is MutexAcquisition.NotAcquired)
+            if (!held.Held)
             {
                 ProvisioningLog.AnotherProcessIsInstalling(_logger, browser);
 
@@ -1523,20 +1557,22 @@ internal sealed partial class BrowserProvisioner : IDisposable
 
                 try
                 {
-                    var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline, phase);
+                    var (finished, taken) = await WaitForAnotherProcessAsync(browser, directory, mutex, deadline, phase).ConfigureAwait(false);
 
                     if (finished is not null)
                     {
                         return finished;
                     }
 
-                    acquisition = taken;
+                    held = taken!;
                 }
                 finally
                 {
                     phase.LeaveWait();
                 }
             }
+
+            var acquisition = held.Acquisition;
 
             try
             {
@@ -1573,7 +1609,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 // 203.8 MB on top of a complete tree is the cost of not looking.
                 var result = IsComplete(directory)
                     ? new ProvisioningResult(true, $"{revision.Description} was already installed at '{directory}'.")
-                    : RunInstaller(browser, revision, directory, deadline, phase);
+                    : await RunInstallerAsync(browser, revision, directory, deadline, phase).ConfigureAwait(false);
 
                 if (result.Succeeded)
                 {
@@ -1581,14 +1617,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
                     // revisions is BrowserAI's job. Here and not at startup
                     // because this is the one moment the answer can have changed --
                     // a revision becomes superseded when a new one lands.
-                    Prune(browser);
+                    await PruneAsync(browser).ConfigureAwait(false);
                 }
 
                 return result;
             }
             finally
             {
-                mutex.Release();
+                await held.DisposeAsync().ConfigureAwait(false);
             }
         }
 #pragma warning disable CA1031 // A provisioning failure is reported to the caller as a state with a reason; there is no path on which it may take the process down.
@@ -1618,7 +1654,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// marker).</b> Losing the mutex was taken to mean <i>somebody is
     /// downloading, and a marker is coming</i>. That inference is false whenever
     /// the holder is past its download - and it is reachably false, because the
-    /// holder keeps the mutex through <see cref="Prune"/>, which walks every
+    /// holder keeps the mutex through <see cref="PruneAsync"/>, which walks every
     /// process on the machine and is slow exactly when the machine is busy. A
     /// caller that had just <b>deleted</b> the tree then waited for a marker
     /// nobody was going to write, for the full outer deadline of <b>sixty
@@ -1668,14 +1704,14 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// </remarks>
     /// <param name="browser">The family.</param>
     /// <param name="directory">The revision directory a complete install marks.</param>
-    /// <param name="mutex">The provisioning mutex, not held by this thread.</param>
+    /// <param name="mutex">The provisioning mutex, not held by this install.</param>
     /// <param name="deadline">The clock this attempt has been running against.</param>
     /// <param name="phase">Where the sample is published for a caller to read.</param>
     /// <returns>
     /// Either a finished result - the other process installed it, or the stall
-    /// cap fired - or no result and the acquisition this thread now holds.
+    /// cap fired - or no result and the hold this install now has.
     /// </returns>
-    private (ProvisioningResult? Finished, MutexAcquisition Acquisition) WaitForAnotherProcess(
+    private async Task<(ProvisioningResult? Finished, MutexHold? Held)> WaitForAnotherProcessAsync(
         string browser,
         string directory,
         MachineMutex mutex,
@@ -1695,18 +1731,18 @@ internal sealed partial class BrowserProvisioner : IDisposable
             {
                 return (
                     new ProvisioningResult(true, $"{browser} was provisioned by another BrowserAI process into '{directory}'."),
-                    MutexAcquisition.NotAcquired);
+                    null);
             }
 
             // The holder let go and left no complete tree, so there is nothing to
-            // wait for: this thread installs. Zero timeout, so a holder that is
+            // wait for: this install goes on. Zero timeout, so a holder that is
             // genuinely mid-download keeps it and this loop keeps watching.
-            var acquisition = mutex.Acquire(LockScopes.NeverWaits);
+            var held = await mutex.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
 
-            if (acquisition is not MutexAcquisition.NotAcquired)
+            if (held.Held)
             {
                 ProvisioningLog.TheOtherProcessLetGoWithoutInstalling(_logger, browser, directory);
-                return (null, acquisition);
+                return (null, held);
             }
 
             var sample = WeighBrowsersRoot(BrowsersDirectory, bytes);
@@ -1731,21 +1767,21 @@ internal sealed partial class BrowserProvisioner : IDisposable
                     new ProvisioningResult(
                         false,
                         $"Another BrowserAI process still holds the provisioning lock for {browser} and has written nothing at all under '{BrowsersDirectory}' for {Minutes(_timers.StallCap)} minutes; the root has weighed {Bytes(bytes)} since {Seconds(lastChange)} s in, out of {Seconds(deadline.Elapsed)} s of waiting. Nothing was downloaded here, and nothing was stopped -- that install belongs to another process. Close it, or wait for it, and call the same tool again."),
-                    MutexAcquisition.NotAcquired);
+                    null);
             }
 
             if (_stopping.IsCancellationRequested)
             {
                 return (
                     new ProvisioningResult(false, $"BrowserAI is shutting down; the wait for another process to finish provisioning {browser} was abandoned."),
-                    MutexAcquisition.NotAcquired);
+                    null);
             }
 
-            ticker.WaitForNextPoll(_stopping.Token);
+            await ticker.WaitForNextPollAsync(_stopping.Token).ConfigureAwait(false);
         }
     }
 
-    private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, AttemptClock deadline, AttemptPhase phase)
+    private async Task<ProvisioningResult> RunInstallerAsync(string browser, BrowserRevision revision, string directory, AttemptClock deadline, AttemptPhase phase)
     {
         _ = Directory.CreateDirectory(BrowsersDirectory);
 
@@ -1753,7 +1789,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
 
         using var run = StartInstaller(browser, BrowsersDirectory);
 
-        var failure = Watch(run, browser, directory, deadline, phase);
+        var failure = await WatchAsync(run, browser, directory, deadline, phase).ConfigureAwait(false);
 
         if (failure is not null)
         {
@@ -1822,7 +1858,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// <param name="deadline">The clock this attempt has been running against.</param>
     /// <param name="phase">Where the sample is published for a caller to read.</param>
     /// <returns><see langword="null"/> when the installer exited on its own.</returns>
-    private string? Watch(IInstallerRun run, string browser, string directory, AttemptClock deadline, AttemptPhase phase)
+    private async Task<string?> WatchAsync(IInstallerRun run, string browser, string directory, AttemptClock deadline, AttemptPhase phase)
     {
         var extraction = default(TimeSpan?);
         var bytes = WeighBrowsersRoot(BrowsersDirectory, 0);
@@ -1876,7 +1912,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
                 return $"Extracting {browser} passed the {Minutes(_timers.ExtractionCap)}-minute cap and was stopped. Nothing usable was left on disk.";
             }
 
-            ticker.WaitForNextPoll(_stopping.Token);
+            await ticker.WaitForNextPollAsync(_stopping.Token).ConfigureAwait(false);
         }
 
         return null;
@@ -1997,13 +2033,16 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// deterministic.
     /// </para>
     /// <para>
-    /// <b>A latching event and not a wait on the timer itself</b>, because
+    /// <b>A latching signal and not a wait on the timer itself</b>, because
     /// the tick can arrive while the loop is between the sample and the wait --
     /// with <see cref="TimeProvider.System"/> that is ordinary scheduling, and
     /// with a manual clock it is the normal case, since a test advances the
-    /// clock from inside the sampler the loop calls. An
-    /// <see cref="AutoResetEvent"/> keeps that signal, so the wait returns at
-    /// once instead of missing a tick and stopping for ever.
+    /// clock from inside the sampler the loop calls. A semaphore of one keeps that
+    /// signal, so the wait returns at once instead of missing a tick and stopping
+    /// for ever. <i>Corrected 2026-10-11 (previously an <see cref="AutoResetEvent"/>
+    /// that the loop's thread waited on, with the shutdown's handle beside it)</i>: the
+    /// loop awaits the semaphore since the maintainer's decision 54, and the shutdown
+    /// is its token.
     /// </para>
     /// <para>
     /// <b>It also wakes on shutdown</b>, so the two waits this replaced keep the
@@ -2026,7 +2065,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     internal sealed class PollTicker : IDisposable
     {
         private readonly Lock _gate = new();
-        private readonly AutoResetEvent _tick = new(initialState: false);
+        private readonly SemaphoreSlim _tick = new(0, 1);
         private readonly ITimer _timer;
         private bool _disposed;
 
@@ -2042,8 +2081,18 @@ internal sealed partial class BrowserProvisioner : IDisposable
 
         /// <summary>Waits for the next poll, or for shutdown.</summary>
         /// <param name="stopping">Cancelled when the process is going down.</param>
-        public void WaitForNextPoll(CancellationToken stopping) =>
-            _ = WaitHandle.WaitAny([_tick, stopping.WaitHandle]);
+        /// <returns>The wait, which completes on the next poll or on shutdown and never faults on shutdown.</returns>
+        public async Task WaitForNextPollAsync(CancellationToken stopping)
+        {
+            try
+            {
+                await _tick.WaitAsync(stopping).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stopping.IsCancellationRequested)
+            {
+                // Shutdown: the loop reads it next, as it read the handle's wake.
+            }
+        }
 
         /// <inheritdoc />
         /// <remarks>
@@ -2071,9 +2120,9 @@ internal sealed partial class BrowserProvisioner : IDisposable
         {
             lock (_gate)
             {
-                if (!_disposed)
+                if (!_disposed && _tick.CurrentCount is 0)
                 {
-                    _ = _tick.Set();
+                    _ = _tick.Release();
                 }
             }
         }
@@ -2097,7 +2146,7 @@ internal sealed partial class BrowserProvisioner : IDisposable
     /// process is <b>not</b> downloading anything: it lost the machine-wide
     /// provisioning mutex and is watching for the holder's marker. The holder may
     /// be downloading, or extracting, or walking every process on the machine
-    /// inside <see cref="BrowserProvisioner.Prune"/> -- and the loser cannot tell
+    /// inside <see cref="BrowserProvisioner.PruneAsync"/> -- and the loser cannot tell
     /// which, so it must not claim one.
     /// </para>
     /// <para>
@@ -2182,8 +2231,17 @@ internal sealed partial class BrowserProvisioner : IDisposable
         /// <summary>Records that the machine-wide mutex went to somebody else.</summary>
         public void EnterWait() => Volatile.Write(ref _waitingForAnotherProcess, 1);
 
-        /// <summary>Records that this thread now holds the mutex and is installing.</summary>
+        /// <summary>Records that this install now holds the mutex and is installing.</summary>
         public void LeaveWait() => Volatile.Write(ref _waitingForAnotherProcess, 0);
+
+        /// <summary>How the attempt ended, once it has; <see langword="null"/> before.</summary>
+        public ProvisioningResult? Outcome => Volatile.Read(ref _outcome);
+
+        /// <summary>Records how the attempt ended, as its last step.</summary>
+        /// <param name="outcome">How it ended.</param>
+        public void Finish(ProvisioningResult outcome) => Volatile.Write(ref _outcome, outcome);
+
+        private ProvisioningResult? _outcome;
     }
 
     /// <summary>How one attempt ended.</summary>

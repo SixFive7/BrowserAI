@@ -70,7 +70,7 @@ internal sealed class BrowsersManifest
     /// <returns>The manifest.</returns>
     /// <exception cref="FileNotFoundException">The payload carries no <c>browsers.json</c>.</exception>
     /// <exception cref="InvalidOperationException">It carries one this build cannot read.</exception>
-    public static BrowsersManifest Read(PayloadLayout payload)
+    public static async Task<BrowsersManifest> ReadAsync(PayloadLayout payload)
     {
         ArgumentNullException.ThrowIfNull(payload);
 
@@ -85,7 +85,7 @@ internal sealed class BrowsersManifest
 
         var browsers = new Dictionary<string, BrowserRevision>(StringComparer.OrdinalIgnoreCase);
 
-        using var document = JsonDocument.Parse(File.ReadAllBytes(path));
+        using var document = JsonDocument.Parse(await File.ReadAllBytesAsync(path).ConfigureAwait(false));
 
         if (!document.RootElement.TryGetProperty("browsers", out var entries) || entries.ValueKind is not JsonValueKind.Array)
         {

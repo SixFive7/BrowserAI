@@ -122,7 +122,7 @@ internal static class ChildLaunch
     /// <returns>Everything <see cref="DirectStdioClientTransport"/> needs.</returns>
     /// <exception cref="ArgumentException"><paramref name="browsersDirectory"/> is not absolute.</exception>
     /// <exception cref="FileNotFoundException">The payload is incomplete.</exception>
-    public static ChildProcessOptions Create(
+    public static async Task<ChildProcessOptions> CreateAsync(
         PayloadLayout payload,
         string browsersDirectory,
         string workingDirectory,
@@ -160,7 +160,7 @@ internal static class ChildLaunch
             throw collision;
         }
 
-        BrowserConfiguration.WriteTo(configFile, config);
+        await BrowserConfiguration.WriteToAsync(configFile, config).ConfigureAwait(false);
 
         List<KeyValuePair<string, string>> variables = [new(BrowsersPathVariable, browsersDirectory)];
 

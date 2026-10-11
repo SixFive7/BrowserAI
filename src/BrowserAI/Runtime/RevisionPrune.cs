@@ -95,7 +95,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// <para>
 /// <b>What is left is a real window and it is named, not papered over.</b>
 /// Nothing on the launch path takes the provisioning mutex --
-/// <c>ChildLaunch.Create</c> and <c>JobLauncher.Start</c> take no mutex at all --
+/// <c>ChildLaunch.CreateAsync</c> and <c>JobLauncher.Start</c> take no mutex at all --
 /// so a launch out of a superseded revision between this census and this delete
 /// is unguarded, and no census can see a process that does not exist yet. The
 /// second-best thing is available and is done: when a delete leaves survivors,
@@ -112,7 +112,7 @@ internal static class RevisionPrune
     /// <param name="manifest">The resolved payload's manifest -- what <i>current</i> means.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="familyAlreadyHeld">
-    /// The family whose provisioning mutex the calling thread already owns, so the
+    /// The family whose provisioning mutex the calling install already holds, so the
     /// pass does not wait on itself. <see langword="null"/> when the caller holds
     /// none, which is how the suite and any future maintenance caller drive it.
     /// </param>
@@ -126,13 +126,19 @@ internal static class RevisionPrune
     /// once per candidate, immediately before that candidate is deleted, and
     /// not once for the whole pass -- and a test can only tell those two apart by
     /// answering differently on the second question. This is not a seam on a hot
-    /// path: <see cref="Run"/> runs once per successful provision, and the only
+    /// path: <see cref="RunAsync"/> runs once per successful provision, and the only
     /// other injectable in this area, <c>BrowserProvisioner.PruneRevisions</c>,
     /// exists for the same reason.
     /// </para>
     /// </param>
     /// <returns>What it did.</returns>
-    public static PruneReport Run(
+    /// <remarks>
+    /// <b>Asynchronous since 2026-10-11</b>, the maintainer's decision 54: each family's
+    /// mutex is held by a thread of its own (<see cref="MachineMutex.HoldAsync"/>), so the
+    /// pass awaits it. <i>Previously <c>Run</c>, which took and released them on its own
+    /// thread.</i>
+    /// </remarks>
+    public static async Task<PruneReport> RunAsync(
         string browsersDirectory,
         BrowsersManifest manifest,
         ILogger logger,
@@ -148,7 +154,8 @@ internal static class RevisionPrune
             return new PruneReport([], 0, []);
         }
 
-        var held = new List<MachineMutex>();
+        var created = new List<MachineMutex>();
+        var held = new List<MutexHold>();
 
         try
         {
@@ -160,13 +167,15 @@ internal static class RevisionPrune
                 }
 
                 var mutex = MachineMutex.Create(BrowserProvisioner.MutexNameFor(browsersDirectory, family));
+                created.Add(mutex);
 
                 // Zero timeout, exactly as the install path uses it. A pass that
-                // waited would hold a thread for the length of somebody else's
-                // 203.8 MB download to do work that is never urgent.
-                if (mutex.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
+                // waited would wait for the length of somebody else's 203.8 MB
+                // download to do work that is never urgent.
+                var hold = await mutex.HoldAsync(LockScopes.NeverWaits).ConfigureAwait(false);
+
+                if (!hold.Held)
                 {
-                    mutex.Dispose();
                     PruneLog.AnInstallIsInFlight(logger, family);
 
                     return new PruneReport(
@@ -175,16 +184,20 @@ internal static class RevisionPrune
                         [$"Nothing was pruned: another BrowserAI process is provisioning {family} into '{browsersDirectory}', so no directory there can be proven idle."]);
                 }
 
-                held.Add(mutex);
+                held.Add(hold);
             }
 
             return Sweep(browsersDirectory, manifest, logger, census ?? BrowserProcesses.RunningFrom);
         }
         finally
         {
-            foreach (var mutex in held)
+            foreach (var hold in held)
             {
-                mutex.Release();
+                await hold.DisposeAsync().ConfigureAwait(false);
+            }
+
+            foreach (var mutex in created)
+            {
                 mutex.Dispose();
             }
         }

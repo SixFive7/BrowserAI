@@ -866,7 +866,8 @@ internal static class BrowserConfiguration
     /// <summary>Writes a generated config, creating the directories it names.</summary>
     /// <param name="path">Where the config file goes. Overwritten if present.</param>
     /// <param name="config">What to write.</param>
-    public static void WriteTo(string path, GeneratedConfig config)
+    /// <returns>The write.</returns>
+    public static async Task WriteToAsync(string path, GeneratedConfig config)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(config);
@@ -876,7 +877,7 @@ internal static class BrowserConfiguration
             _ = Directory.CreateDirectory(directory);
         }
 
-        File.WriteAllBytes(path, config.Json);
+        await File.WriteAllBytesAsync(path, config.Json).ConfigureAwait(false);
     }
 
     /// <summary>Builds the config bytes and the list of opinions they carry.</summary>
