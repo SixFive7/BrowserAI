@@ -193,6 +193,26 @@ internal sealed class ScriptedBackgroundClient(ConcurrentQueue<string> events) :
     /// <summary>How many checks ran.</summary>
     public int Checks => events.Count(entry => entry is "check");
 
+    /// <summary>Waits until at least this many checks have run, within the suite's hang detector.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11</b> for the arms whose record of the last check is the real
+    /// file. A pass writes that record before it checks, and since the maintainer's
+    /// decision 63, in his words verbatim, <i>"convert disk writes as well. Some users
+    /// have slow spinning rust."</i>, the write is asynchronous: the check runs once the
+    /// write has landed, which is after the clock's advance has returned.
+    /// </remarks>
+    /// <param name="count">How many.</param>
+    /// <returns>The wait.</returns>
+    public async Task ChecksReachAsync(int count)
+    {
+        using var deadline = new CancellationTokenSource(TestDefaults.InProcessHang);
+
+        while (Checks < count)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), deadline.Token);
+        }
+    }
+
     /// <summary>How many downloads ran.</summary>
     public int Downloads => events.Count(entry => entry.StartsWith("download ", StringComparison.Ordinal));
 
@@ -360,7 +380,7 @@ internal sealed class ScriptedRelays(ConcurrentQueue<string> events) : IUpdateRe
     }
 
     /// <summary>
-    /// What <see cref="ConnectedWithNames"/> gives a relay, by its id, as a background
+    /// What <see cref="ConnectedWithNamesAsync"/> gives a relay, by its id, as a background
     /// that read its client's records would: its conversation, its name and its window.
     /// </summary>
     public ConcurrentDictionary<string, (string? Conversation, ConversationName? Label, ClientWindow? Window)> Names { get; } = new(StringComparer.Ordinal);
@@ -369,18 +389,27 @@ internal sealed class ScriptedRelays(ConcurrentQueue<string> events) : IUpdateRe
     public int NamedReads => Volatile.Read(ref _namedReads);
 
     /// <inheritdoc />
-    public IReadOnlyList<RelayState> ConnectedWithNames()
+    /// <remarks>
+    /// <i>Corrected 2026-10-11 (previously <c>ConnectedWithNames</c>, synchronous)</i>, when
+    /// the maintainer's decision 54 made the seam's member asynchronous: under its old name
+    /// this implemented nothing, the interface's default answered the core unnamed, and
+    /// <see cref="BackgroundUpdatesTests.TheSnapshotADrawReadsNamesEachConversationAndThePassesReadNoName"/>
+    /// went red on the first gate of that day.
+    /// </remarks>
+    public Task<IReadOnlyList<RelayState>> ConnectedWithNamesAsync()
     {
         _ = Interlocked.Increment(ref _namedReads);
 
         lock (_gate)
         {
-            return
+            IReadOnlyList<RelayState> named =
             [
                 .. _listed.Select(relay => Names.TryGetValue(relay.Id, out var name)
                     ? relay with { Conversation = name.Conversation, Label = name.Label, Window = name.Window }
                     : relay),
             ];
+
+            return Task.FromResult(named);
         }
     }
 

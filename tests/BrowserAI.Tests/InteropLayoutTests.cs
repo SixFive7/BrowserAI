@@ -179,7 +179,9 @@ internal sealed class InteropLayoutTests
         // LASTINPUTINFO.
         // Corrected 2026-10-08 to 15 (previously 13): the background's hidden
         // window brought WNDCLASSEXW and MSG.
-        await Assert.That(Structs.Length).IsEqualTo(15);
+        // Corrected 2026-10-11 to 14 (previously 15): JobLauncher's
+        // SECURITY_ATTRIBUTES went with CreatePipe, the maintainer's decision 54.
+        await Assert.That(Structs.Length).IsEqualTo(14);
 
         foreach (var (owner, nested, _) in Structs)
         {

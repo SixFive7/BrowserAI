@@ -193,8 +193,10 @@ internal sealed class AppBinaryTests
 
         // And Start asks before it starts anything. Read as text and never run:
         // run, a Start that had stopped asking would start a real person's start.
+        // Re-pointed 2026-10-11 (previously "public static RawStdioClient Start("),
+        // when the maintainer's decision 54 made the start asynchronous.
         var source = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "tests", "BrowserAI.Tests", "Harness", "RawStdioClient.cs"));
-        var start = source.IndexOf("public static RawStdioClient Start(", StringComparison.Ordinal);
+        var start = source.IndexOf("public static async Task<RawStdioClient> StartAsync(", StringComparison.Ordinal);
         var asks = source.IndexOf("RefusalFor(command, arguments)", start, StringComparison.Ordinal);
         var launches = source.IndexOf("JobLauncher.Start(", start, StringComparison.Ordinal);
 

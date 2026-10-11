@@ -55,6 +55,7 @@ internal sealed class ProvisioningClaim : IAsyncDisposable
     private readonly MutexHold _hold;
     private readonly CancellationTokenSource _disposing = new();
     private readonly Task _ceiling;
+    private int _disposed;
 
     private ProvisioningClaim(string name, MachineMutex mutex, MutexHold hold)
     {
@@ -94,8 +95,20 @@ internal sealed class ProvisioningClaim : IAsyncDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>Once, however often it is called</b>: an arm lets the claim go part-way through
+    /// and its <c>await using</c> disposes it again on the way out. <i>Corrected
+    /// 2026-10-11 (previously a second call cancelled a disposed source and threw)</i>,
+    /// found by <c>ProvisioningTests.AHolderThatLetsGoWithoutInstallingIsOvertakenRatherThanWaitedOnForever</c>
+    /// in the first gate after the conversion.
+    /// </remarks>
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) is 1)
+        {
+            return;
+        }
+
         await _disposing.CancelAsync();
         await _ceiling;
         await _hold.DisposeAsync();

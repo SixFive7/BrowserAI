@@ -51,9 +51,11 @@ internal sealed class BackgroundUpdatesTests
         using var scratch = await ScratchDirectory.CreateAsync("update-stamp-restart");
         using var rig = new BackgroundUpdateRig { Stamp = UpdateCheckStampFile.In(scratch.Path) };
 
-        // No record yet: the first run checks at once, and says why.
+        // No record yet: the first run checks at once, and says why. The check follows
+        // the record's write, which lands after the start has returned (decision 63).
         var first = await rig.StartAsync();
 
+        await rig.Client.ChecksReachAsync(1);
         await Assert.That(rig.Client.Checks).IsEqualTo(1);
         await Assert.That(rig.Logged(34)).IsTrue().Because("event 34 says no earlier check is recorded");
         await Assert.That(File.Exists(Path.Combine(scratch.Path, UpdateCheckStampFile.FileName))).IsTrue();
@@ -76,6 +78,7 @@ internal sealed class BackgroundUpdatesTests
         // And at it, exactly one more.
         rig.Clock.Advance(OneTick);
 
+        await rig.Client.ChecksReachAsync(2);
         await Assert.That(rig.Client.Checks).IsEqualTo(2);
     }
 
@@ -97,6 +100,7 @@ internal sealed class BackgroundUpdatesTests
         {
             _ = await rig.StartAsync();
 
+            await rig.Client.ChecksReachAsync(1);
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(35)).IsTrue().Because("event 35 says the record could not be read");
             await Assert.That(rig.Log.Logged("not a time")).IsTrue().Because("the line quotes what the record held");
@@ -110,6 +114,7 @@ internal sealed class BackgroundUpdatesTests
 
             _ = await rig.StartAsync();
 
+            await rig.Client.ChecksReachAsync(1);
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(37)).IsTrue().Because("event 37 says the last check is older than the interval");
         }
@@ -122,6 +127,7 @@ internal sealed class BackgroundUpdatesTests
 
             _ = await rig.StartAsync();
 
+            await rig.Client.ChecksReachAsync(1);
             await Assert.That(rig.Client.Checks).IsEqualTo(1);
             await Assert.That(rig.Logged(36)).IsTrue().Because("event 36 says the record names a time later than now");
         }

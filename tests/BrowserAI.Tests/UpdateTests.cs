@@ -853,7 +853,10 @@ internal sealed class UpdateTests
         // the arguments decide anything (previously this arm required
         // `RunWithoutLifecycleHooks` here and `RunAndServeLifecycleHooks` in the
         // configuration app's Program.cs).
-        var velopack = program.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
+        //
+        // ⚠️ RE-POINTED 2026-10-11 (previously "VelopackStartup.RunAndServeLifecycleHooks("),
+        // the maintainer's decision 54: Main is asynchronous and awaits the hooks' call.
+        var velopack = program.IndexOf("VelopackStartup.RunAndServeLifecycleHooksAsync(", StringComparison.Ordinal);
 
         await Assert.That(velopack).IsGreaterThan(-1);
         await Assert.That(program).DoesNotContain("VelopackStartup.RunWithoutLifecycleHooks(");
@@ -864,7 +867,7 @@ internal sealed class UpdateTests
         var app = await RepositoryLayout.ReadCodeAsync(
             new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Program.cs")));
 
-        await Assert.That(app).DoesNotContain("VelopackStartup.RunAndServeLifecycleHooks(");
+        await Assert.That(app).DoesNotContain("VelopackStartup.RunAndServeLifecycleHooks");
 
         var late = new List<string>();
 

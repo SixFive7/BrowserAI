@@ -106,7 +106,9 @@ internal sealed class InstallerHandoffTests
         var source = await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs"));
 
-        var run = source.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
+        // Re-pointed 2026-10-11 (previously "VelopackStartup.RunAndServeLifecycleHooks("),
+        // when the maintainer's decision 54 made the hooks' call asynchronous.
+        var run = source.IndexOf("VelopackStartup.RunAndServeLifecycleHooksAsync(", StringComparison.Ordinal);
         var clear = source.IndexOf("        App.Program.ClearTheInstallersOwnVariables();", StringComparison.Ordinal);
         var launch = source.IndexOf("return ServesStdio(args)", StringComparison.Ordinal);
 

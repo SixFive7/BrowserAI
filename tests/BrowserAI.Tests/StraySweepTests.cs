@@ -507,8 +507,10 @@ internal sealed class StraySweepTests
             await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs")),
             await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.Background.cs")));
 
+        // Re-pointed 2026-10-11 (previously "CreateSweep\(paths, "), when the maintainer's
+        // decision 54 made the sweep's construction asynchronous.
         await Assert.That(program).DoesNotContain("BrowserAI-Sweep");
-        await Assert.That(Regex.Count(program, @"CreateSweep\(paths, ", RegexOptions.None, TimeSpan.FromSeconds(5))).IsEqualTo(2);
+        await Assert.That(Regex.Count(program, @"CreateSweepAsync\(paths, ", RegexOptions.None, TimeSpan.FromSeconds(5))).IsEqualTo(2);
     }
 
     /// <summary>
@@ -575,16 +577,21 @@ internal sealed class StraySweepTests
         static string arguments(string line, string file) =>
             string.Join(" · ", SweepPassArguments(line, file).Select(argument => $"[{argument}]"));
 
-        await Assert.That(arguments("            _ = CreateSweep(paths, factory).Run();", "Program.cs")).IsEqualTo("[]");
-        await Assert.That(arguments("                _ = create().Run();", "StraySweep.cs")).IsEqualTo("[]");
-        await Assert.That(arguments("            _ = CreateSweep(paths, factory).Run(LockScopes.PerDirectoryGate);", "Program.cs"))
+        await Assert.That(arguments("            _ = await (await CreateSweepAsync(paths, installRoot, factory).ConfigureAwait(false)).RunAsync().ConfigureAwait(false);", "Program.cs")).IsEqualTo("[]");
+        await Assert.That(arguments("                _ = await (await create().ConfigureAwait(false)).RunAsync().ConfigureAwait(false);", "StraySweep.cs")).IsEqualTo("[]");
+        await Assert.That(arguments("            _ = await (await CreateSweepAsync(paths, installRoot, factory).ConfigureAwait(false)).RunAsync(LockScopes.PerDirectoryGate).ConfigureAwait(false);", "Program.cs"))
             .IsEqualTo("[LockScopes.PerDirectoryGate]");
 
         // The declaration is not a call, so the parameter is not an argument --
         // and the one deliberate argument on the same line still is.
-        await Assert.That(arguments("    public StraySweepResult Run(TimeSpan gatePatience)", "StraySweep.cs")).IsEmpty();
-        await Assert.That(arguments("    public StraySweepResult Run() => Run(LockScopes.NeverWaits);", "StraySweep.cs"))
+        await Assert.That(arguments("    public async Task<StraySweepResult> RunAsync(TimeSpan gatePatience)", "StraySweep.cs")).IsEmpty();
+        await Assert.That(arguments("    public Task<StraySweepResult> RunAsync() => RunAsync(LockScopes.NeverWaits);", "StraySweep.cs"))
             .IsEqualTo("[LockScopes.NeverWaits]");
+
+        // And the task that starts the background's pass is not a pass: the shape
+        // this scan read as one on 2026-10-11, the day it was re-pointed (previously it
+        // read Run( and not RunAsync(), and the real passes went unread).
+        await Assert.That(arguments("        _ = Task.Run(async () =>", "StraySweep.cs")).IsEmpty();
 
         // And a line with no sweep on it is none of this rule's business, which
         // is what keeps VelopackApp.Build().Run(args) out of it.
@@ -613,14 +620,16 @@ internal sealed class StraySweepTests
         // A declaration is not a call and its parameter is not an argument.
         // Removed first, so the delegation `Run() => Run(LockScopes.NeverWaits)`
         // still reports the one argument it really passes.
+        //
+        // RunAsync since 2026-10-11, the maintainer's decision 54 (previously Run).
         var calls = Regex.Replace(
             line,
-            @"\b(?:public|private|internal|protected)[^;{=]*\bRun\([^)]*\)",
+            @"\b(?:public|private|internal|protected)[^;{=]*\bRunAsync\([^)]*\)",
             string.Empty,
             RegexOptions.None,
             TimeSpan.FromSeconds(5));
 
-        return [.. Regex.Matches(calls, @"\bRun\((?<argument>[^)]*)\)", RegexOptions.None, TimeSpan.FromSeconds(5))
+        return [.. Regex.Matches(calls, @"\bRunAsync\((?<argument>[^)]*)\)", RegexOptions.None, TimeSpan.FromSeconds(5))
             .Select(match => match.Groups["argument"].Value.Trim())];
     }
 
