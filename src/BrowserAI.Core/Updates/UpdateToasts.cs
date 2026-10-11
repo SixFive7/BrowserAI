@@ -104,6 +104,8 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     /// <summary>The name of the file that holds what the ended relays needed, beside the wait's.</summary>
     public const string EndedFileName = "update-toast-reconnects.txt";
 
+    private string EndedPath => Path.Combine(Path.GetDirectoryName(path)!, EndedFileName);
+
     /// <summary>The memory of one data root.</summary>
     /// <param name="dataRoot">The data root.</param>
     /// <returns>The memory.</returns>
@@ -127,6 +129,9 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(needs);
+
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(EndedPath, version + "\n" + string.Join(',', needs.Select(WordOf)));
     }
 
     /// <inheritdoc />
@@ -134,11 +139,50 @@ internal sealed class UpdateToastMemoryFile(string path) : IUpdateToastMemory
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        return null;
+        if (!File.Exists(EndedPath))
+        {
+            return null;
+        }
+
+        var lines = File.ReadAllText(EndedPath).Split('\n');
+
+        if (!string.Equals(lines[0].Trim(), version, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return
+        [
+            .. (lines.Length > 1 ? lines[1] : string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(NeedOf)
+                .OfType<RelayReconnect>(),
+        ];
     }
 
     /// <inheritdoc />
-    public void Forget() => File.Delete(path);
+    public void Forget()
+    {
+        File.Delete(path);
+        File.Delete(EndedPath);
+    }
+
+    private static string WordOf(RelayReconnect need) => need switch
+    {
+        RelayReconnect.McpReconnect => "mcp",
+        RelayReconnect.NewConversation => "new-conversation",
+        RelayReconnect.Unknown => "unknown",
+        _ => "none",
+    };
+
+    private static RelayReconnect? NeedOf(string word) => word switch
+    {
+        "mcp" => RelayReconnect.McpReconnect,
+        "new-conversation" => RelayReconnect.NewConversation,
+        "unknown" => RelayReconnect.Unknown,
+        "none" => RelayReconnect.None,
+        _ => null,
+    };
 }
 
 /// <summary>No toasts: a process that runs under no application id raises none.</summary>
@@ -361,8 +405,9 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
         lock (_gate)
         {
             StopCounting();
+            var ended = EndedFor(version);
             Forget();
-            _ = Raise(UpdateToastContent.InstalledTag, new ToastRequest(UpdateToastContent.Installed(version), null, SuppressPopup: false, ExpiresOnReboot: false), 0);
+            _ = Raise(UpdateToastContent.InstalledTag, new ToastRequest(UpdateToastContent.Installed(version, ended), null, SuppressPopup: false, ExpiresOnReboot: false), 0);
         }
     }
 
@@ -387,6 +432,17 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
         ArgumentNullException.ThrowIfNull(needs);
+
+        try
+        {
+            _memory.Ended(version, needs);
+        }
+#pragma warning disable CA1031 // A record that cannot be written costs the installed toast its reconnect line, never an update.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            UpdateToastsLog.MemoryFailed(_logger, failure);
+        }
     }
 
     /// <summary>
@@ -606,6 +662,21 @@ internal sealed partial class UpdateToasts : IUpdateToasts, IDisposable
             return _memory.WaitedFor();
         }
 #pragma warning disable CA1031 // A memory that cannot be read means the banner shows.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            UpdateToastsLog.MemoryFailed(_logger, failure);
+            return null;
+        }
+    }
+
+    private IReadOnlyList<RelayReconnect>? EndedFor(string version)
+    {
+        try
+        {
+            return _memory.EndedFor(version);
+        }
+#pragma warning disable CA1031 // A record that cannot be read costs the installed toast its reconnect line.
         catch (Exception failure)
 #pragma warning restore CA1031
         {

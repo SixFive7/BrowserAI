@@ -215,8 +215,12 @@ internal static class UpdateToastContent
     {
         ArgumentNullException.ThrowIfNull(version);
 
-        _ = ended;
         var texts = new List<string> { $"BrowserAI {version} is installed" };
+
+        if (ended is { Count: > 0 } && Reconnects(EndedRelays(ended), InstalledReconnectLines) is { } reconnects)
+        {
+            texts.Add(reconnects);
+        }
 
         return Toast(
             Arguments(ToastAction.Changelog, version),
@@ -233,6 +237,11 @@ internal static class UpdateToastContent
     /// </remarks>
     public const int InstalledReconnectLines = 4;
 
+    /// <summary>What the ended relays needed, as the relays of a snapshot the reconnect line reads.</summary>
+    /// <param name="ended">One need per relay.</param>
+    /// <returns>The snapshot, with no session and no name in it.</returns>
+    private static UpdateHoldSnapshot EndedRelays(IReadOnlyList<RelayReconnect> ended) =>
+        new(DateTimeOffset.MinValue, UpdateHoldState.None, null, [], [], [.. ended.Select(need => new HoldingRelay(string.Empty, null, DateTimeOffset.MinValue, CallInFlight: false, need))]);
 
     /// <summary>The failed toast.</summary>
     /// <remarks>

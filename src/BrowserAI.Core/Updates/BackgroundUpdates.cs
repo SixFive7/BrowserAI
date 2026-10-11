@@ -952,6 +952,35 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
     }
 
     /// <summary>
+    /// Hands the toasts what each connected relay's client needs once the update ends it,
+    /// for the installed toast the after-update start raises (52 b).
+    /// </summary>
+    /// <remarks>
+    /// <b>What a relay needs is read as <see cref="Read()"/> reads it</b>: its own answer, or
+    /// what its client's name tells when it gave none. Relays that could not be read hand
+    /// over nothing, and the installed toast then carries no line.
+    /// </remarks>
+    /// <param name="version">The version that installs.</param>
+    private void KeepWhatTheRelaysNeed(string version)
+    {
+        IReadOnlyList<RelayReconnect> needs;
+
+        try
+        {
+            needs = [.. _relays.Connected().Select(relay => relay.Reconnect is RelayReconnect.Unknown ? ReconnectOf(relay.ClientName) : relay.Reconnect)];
+        }
+#pragma warning disable CA1031 // Relays that cannot be read cost the installed toast its line, never the update.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            BackgroundUpdateLog.SeamFailed(_logger, "Reading what the relays need for the installed toast", failure);
+            needs = [];
+        }
+
+        Raise((toasts, installing) => toasts.Ending(installing, needs), version, "installed");
+    }
+
+    /// <summary>
     /// Raises the installing toast for an update whose ready toast this run raised, and
     /// nothing for one that installs at once (49 b).
     /// </summary>
@@ -1572,9 +1601,11 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
         try
         {
             // The installing toast only for an update that waited (49 b): one that
-            // installs at once shows the installed toast alone.
+            // installs at once shows the installed toast alone, and that one says what
+            // the relays ended here need (52 b), kept before they end.
             if (route is InstallRoute.Person)
             {
+                KeepWhatTheRelaysNeed(version);
                 await EndRelaysAsync(version, now: true).ConfigureAwait(false);
                 await CloseSessionsAsync().ConfigureAwait(false);
                 RaiseInstallingIfItWaited(version);
@@ -1582,6 +1613,7 @@ internal sealed class BackgroundUpdates : IUpdateHolds, IDisposable
             else
             {
                 RaiseInstallingIfItWaited(version);
+                KeepWhatTheRelaysNeed(version);
                 await EndRelaysAsync(version, now: false).ConfigureAwait(false);
             }
 

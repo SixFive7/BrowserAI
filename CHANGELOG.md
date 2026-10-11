@@ -62,8 +62,9 @@ release body; nothing else depends on it.
   reconnect afterwards, and offers **Install now** and **Wait for inactivity**. Install now opens
   the update page, which lists what holds the update, each with its countdown, and installs at
   once when asked. Once an update is installed a toast says so, with a button that opens the
-  release's changelog, and an update nothing holds raises no other. A toast also says when an
-  update failed.
+  release's changelog, and says what any Claude Code terminal or Codex conversation that was
+  connected has to do to get BrowserAI back. An update nothing holds raises no other toast. A
+  toast also says when an update failed.
 
 - ✨ **`browserai_close` closes a session's browser and keeps the session.**
   The browser gets up to a minute to write what it holds to disk, and the profile with its logins
