@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -131,18 +132,39 @@ internal static class CommitCharge
         {
             var end = CommitChargeReading.Take();
 
-            PrintedOnThisThread = end;
+            if (Capture.Value is { } box)
+            {
+                box.Value = end;
+            }
 
             return RowFor(AtStart, end);
         }
     }
 
     /// <summary>
-    /// The end reading the last <see cref="CoverageRow"/> on this thread printed,
-    /// or <see langword="null"/> when this thread has printed none.
+    /// Asks the next <see cref="CoverageRow"/> of this flow, and of everything it awaits, to
+    /// leave the end reading it printed in the box this returns.
     /// </summary>
-    [field: ThreadStatic]
-    public static CommitChargeReading? PrintedOnThisThread { get; private set; }
+    /// <remarks>
+    /// ⚠️ <b>A box handed down the flow, and not a value kept for a thread -- 2026-10-11.</b>
+    /// <i>Corrected that day (previously <c>PrintedOnThisThread</c>, a thread-static
+    /// property)</i>: the maintainer's decision 54 made the summary asynchronous, so the
+    /// row is printed on whatever thread the summary's last await resumed on, and an arm
+    /// that read the thread-static after awaiting it read nothing.
+    /// <c>SuiteCoverageTests.TheCoverageBlockStatesWhatWasExercised</c> went red so at
+    /// async-ps-2. A value set in the caller's flow reaches what the caller awaits, and the
+    /// box it holds is the caller's own, so the reading comes back.
+    /// </remarks>
+    /// <returns>The box, empty until a row is printed.</returns>
+    public static StrongBox<CommitChargeReading?> CapturePrinted()
+    {
+        var box = new StrongBox<CommitChargeReading?>();
+        Capture.Value = box;
+        return box;
+    }
+
+    /// <summary>Where a row printed in this flow leaves its reading, or <see langword="null"/>.</summary>
+    private static readonly AsyncLocal<StrongBox<CommitChargeReading?>?> Capture = new();
 
     /// <summary>
     /// What a pair of readings amounts to, as a pure function of them.
