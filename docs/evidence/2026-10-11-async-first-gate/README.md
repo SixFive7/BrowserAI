@@ -1,14 +1,15 @@
 <!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
 <!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
 
-# 2026-10-11 -- the first gate after decisions 54 and 63, and what it found
+# 2026-10-11 -- the first gates after decisions 54 and 63, and what they found
 
 **The first full run of the suite over the tree the maintainer's decisions 54 and 63
 converted, its sixteen reds, the run in which they were green, and the measurement and
-the two runs behind one of them.** Cited by the hazard index's rows of 2026-10-11 for a
+the two runs behind one of them; and the second gate's PowerShell half, its one red and
+the run in which it was green.** Cited by the hazard index's rows of 2026-10-11 for a
 session's log scope across an asynchronous acquire, for a rename the compiler does not
-check, for an exited process's restart registration and for the real Codex arm's
-RegisterAI run. Taken on this machine, Windows 11 Pro 10.0.26300, .NET 10.0.12, TUnit
+check, for an exited process's restart registration, for the real Codex arm's RegisterAI
+run and for a value kept for a thread and read after an await. Taken on this machine, Windows 11 Pro 10.0.26300, .NET 10.0.12, TUnit
 1.73.19.
 
 `async-ps-1.log` is the PowerShell half of the ordinary gate at `7e2f8516`, with the
@@ -31,6 +32,12 @@ that runs. `red-restart-registration.log` is the arm of `d8b2e708` against the r
 it was, red on the exited probe, and `green-restart-registration.log` is that arm and both
 of the reader's callers' classes with the fix of `3c69e627`, 7 of 7.
 
+`async-ps-2.log` is the PowerShell half of the second ordinary gate, at `784173f3`, from
+21:30:08Z: 1346 cases, 1 failed, in 13m 06.5s, the coverage arm reading a thread-static
+value on a thread the asynchronous summary had not printed on. `green-coverage-block.log`
+is that arm and the three other classes that read the summary, with the fix of
+`cab4d514`, 36 of 36.
+
 ## Files
 
 | Path | What it is |
@@ -40,7 +47,9 @@ of the reader's callers' classes with the fix of `3c69e627`, 7 of 7.
 | `restart-probe.txt` | The three answers of the restart registration measurement |
 | `red-restart-registration.log` | `RestartRegistrationTests` before the reader's fix |
 | `green-restart-registration.log` | `RestartRegistrationTests`, `BrowserContainmentTests` and `FirefoxTests` after it |
-| `originals.sha256` | The SHA-256 of the five files as they were taken, before this repository's line endings |
+| `async-ps-2.log` | The second gate's PowerShell half, 102 lines |
+| `green-coverage-block.log` | `SuiteCoverageTests`, `FirstRunCacheTests`, `ForegroundLockTests` and `SafeModeWatchTests` after the fix |
+| `originals.sha256` | The SHA-256 of the seven files as they were taken, before this repository's line endings |
 
-Line endings are this repository's, LF. The four logs were taken with CRLF and some LF
+Line endings are this repository's, LF. The six logs were taken with CRLF and some LF
 among them, and `restart-probe.txt` with CRLF.
