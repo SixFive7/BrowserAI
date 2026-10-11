@@ -1,0 +1,3 @@
+exited cmd pid 4084, handle held: 0x8007012B
+running cmd pid 38260: 0x80070490
+running cmd after its exit, handle held: 0x8007012B

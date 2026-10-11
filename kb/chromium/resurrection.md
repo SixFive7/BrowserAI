@@ -154,6 +154,65 @@ characters (1722 as-launched vs 1710 rewritten). Against a 699-character overflo
 it cannot bridge the gap, and direct measurement agrees: the poisoned Playwright
 browser was **not** registered. `[FLOATS]`
 
+## An exited process answers `ERROR_PARTIAL_COPY`, not a registration -- measured 2026-10-11
+
+**`GetApplicationRestartSettings` asked of a process that has exited answers
+`0x8007012B`**, `HRESULT_FROM_WIN32(ERROR_PARTIAL_COPY)`, when another handle to the
+process is still open, so its pid still opens: the registration is read out of the
+process's address space, and an exited process has none. Measured 2026-10-11 on
+Windows 11 Pro 10.0.26300 with the program below: a `cmd.exe /d /c exit 0`, waited for
+with its handle held, answered `0x8007012B`; a `cmd.exe` that was running answered
+`0x80070490`, and the same `cmd.exe` asked again after its exit answered `0x8007012B`.
+`[FLOATS]`
+
+**Why it matters here.** An arm that walks a browser's tree and asks every process
+can meet one that exits in between, and on 2026-10-11 the Chromium arm of
+`BrowserContainmentTests` did, in the first gate after the maintainer's decision 54:
+*"pid 79676 answered 0x8007012B rather than ERROR_NOT_FOUND"*. Since that day the
+suite's reader asks the exit code of the same handle when the call answers this, and
+reads an exited process as `Gone`, no answer either way, and both arms that walk a
+browser leave it out.
+
+**To re-establish it**, run this from PowerShell 7; the three lines read `0x8007012B`,
+`0x80070490` and `0x8007012B` while it holds:
+
+```powershell
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class Restart {
+    [DllImport("kernel32.dll", SetLastError = true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+    [DllImport("kernel32.dll")] public static extern int GetApplicationRestartSettings(IntPtr process, IntPtr commandLine, ref uint size, out uint flags);
+    [DllImport("kernel32.dll")] public static extern bool CloseHandle(IntPtr handle);
+    public static int Of(int pid) {
+        var h = OpenProcess(0x400 | 0x10, false, (uint)pid);
+        if (h == IntPtr.Zero) return Marshal.GetLastWin32Error() | 0x70000000;
+        uint size = 0; uint flags;
+        var r = GetApplicationRestartSettings(h, IntPtr.Zero, ref size, out flags);
+        CloseHandle(h);
+        return r;
+    }
+}
+"@
+$info = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $env:SystemRoot 'System32\cmd.exe'), '/d /c exit 0')
+$info.UseShellExecute = $false
+$info.CreateNoWindow = $true
+$exited = [System.Diagnostics.Process]::Start($info)
+$exited.WaitForExit()
+"exited: 0x{0:X8}" -f [Restart]::Of($exited.Id)
+$info2 = [System.Diagnostics.ProcessStartInfo]::new((Join-Path $env:SystemRoot 'System32\cmd.exe'), '/d /c ping -n 3 127.0.0.1 >nul')
+$info2.UseShellExecute = $false
+$info2.CreateNoWindow = $true
+$running = [System.Diagnostics.Process]::Start($info2)
+Start-Sleep -Milliseconds 300
+"running: 0x{0:X8}" -f [Restart]::Of($running.Id)
+$running.WaitForExit()
+"after its exit: 0x{0:X8}" -f [Restart]::Of($running.Id)
+```
+
+`RestartRegistrationTests.AProcessThatHasExitedReadsAsGoneAndOneThatRunsReadsAsNotRegistered`
+holds the reader's half of it on every run.
+
 ## Machine state
 
 `HKCU\...\Winlogon\RestartApps = 1` -- Settings › Accounts › Sign-in options ›
