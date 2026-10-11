@@ -57,9 +57,23 @@ internal sealed class JobObjectScope : IDisposable
     /// <param name="workingDirectory">The working directory it is given.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The started process. The scope owns it.</returns>
-    public LaunchedProcess Launch(string command, string workingDirectory, params string[] arguments)
+    public LaunchedProcess Launch(string command, string workingDirectory, params string[] arguments) =>
+        LaunchWith(command, workingDirectory, ChildEnvironment.Build(), arguments);
+
+    /// <summary>Starts a process inside this scope's job, with an environment the caller composed.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for the gate drivers' arm</b>, whose driver must find a stand-in
+    /// <c>dotnet</c> first on its search path: <see cref="ChildEnvironment.Build"/> takes what it is
+    /// given beside what it inherits, so the caller passes its result with the search path changed.
+    /// </remarks>
+    /// <param name="command">The executable's absolute path.</param>
+    /// <param name="workingDirectory">The working directory it is given.</param>
+    /// <param name="environment">The child's complete environment block.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>The started process. The scope owns it.</returns>
+    public LaunchedProcess LaunchWith(string command, string workingDirectory, IReadOnlyDictionary<string, string> environment, params string[] arguments)
     {
-        var process = JobLauncher.Start(_job, command, arguments, workingDirectory, ChildEnvironment.Build());
+        var process = JobLauncher.Start(_job, command, arguments, workingDirectory, environment);
         _started.Add(process);
 
         // Written where the NEXT run can read it. The job object above is what

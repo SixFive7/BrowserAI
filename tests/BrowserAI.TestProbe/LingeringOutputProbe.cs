@@ -41,6 +41,39 @@ internal static class LingeringOutputProbe
         return 0;
     }
 
+    /// <summary>Writes the document, starts the holder, says which process it is, and exits.</summary>
+    /// <remarks>
+    /// <b>Added 2026-10-11 for 64 c</b>, the gate drivers' arm and the real-client arms'
+    /// harness arm: each asserts something about the process left behind, alive while a
+    /// driver finishes or gone once an arm has ended, so the holder's identity is written
+    /// where the arm can read it, its pid and its creation time on one line, before this
+    /// process exits.
+    /// </remarks>
+    /// <param name="documentPath">The file whose text is the document.</param>
+    /// <param name="holdSeconds">How long the process left behind holds the pipe.</param>
+    /// <param name="reportPath">Where the holder's pid and creation time go.</param>
+    /// <returns>Zero.</returns>
+    public static int WriteAndReport(string documentPath, string holdSeconds, string reportPath)
+    {
+        var document = File.ReadAllText(documentPath);
+
+        Console.Out.Write(document);
+        Console.Out.Flush();
+
+        using var holder = Process.Start(new ProcessStartInfo(Environment.ProcessPath!)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            ArgumentList = { "registerai-holder", holdSeconds },
+        }) ?? throw new InvalidOperationException("The holder did not start.");
+
+        File.WriteAllText(
+            reportPath,
+            string.Create(CultureInfo.InvariantCulture, $"{holder.Id} {holder.StartTime.ToUniversalTime().ToFileTimeUtc()}"));
+
+        return 0;
+    }
+
     /// <summary>Holds what it inherited for a while, and exits.</summary>
     /// <param name="holdSeconds">How long.</param>
     /// <returns>Zero.</returns>

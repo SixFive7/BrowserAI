@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
@@ -669,7 +668,7 @@ internal sealed class ClientReconnectTests
     /// <param name="needle">What to wait for.</param>
     /// <param name="writer">The process that writes it.</param>
     /// <returns>The wait.</returns>
-    private static async Task UntilTheLogSays(string path, string needle, Started writer)
+    private static async Task UntilTheLogSays(string path, string needle, ClientRun writer)
     {
         using var deadline = new CancellationTokenSource(TestDefaults.RealClientHang);
 
@@ -680,7 +679,7 @@ internal sealed class ClientReconnectTests
                 return;
             }
 
-            if (writer.Process.HasExited)
+            if (writer.HasExited)
             {
                 throw new InvalidOperationException($"The driver exited before its log said '{needle}'. Its log: {(File.Exists(path) ? ReadShared(path) : "<none>")}");
             }
@@ -700,50 +699,6 @@ internal sealed class ClientReconnectTests
         using var reader = new StreamReader(stream);
 
         return reader.ReadToEnd();
-    }
-
-    /// <summary>
-    /// A process this file started, ended on dispose.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Because <c>Process.Dispose</c> releases a handle and does not end a
-    /// process, and an API stub never exits on its own.</b> Measured: four leaked
-    /// <c>node.exe</c> stubs from four runs of these arms held four scratch
-    /// directories open, which the next run's reclaim pass could not delete -- so
-    /// the defect surfaced as <c>TheReclaimPassIsItselfATestAndReportsWhatItCouldNotTake</c>
-    /// naming somebody else's directory, which is the hardest shape of this to
-    /// read. The client and the app-server driver do exit on their own; this ends
-    /// them anyway, because "it usually exits" is not a teardown.
-    /// </remarks>
-    /// <param name="Process">The process.</param>
-    private readonly record struct Started(Process Process) : IDisposable
-    {
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            try
-            {
-                if (!Process.HasExited)
-                {
-                    // ⚠️ THIS ONE AND NOT THE TREE. `Process.Kill(entireProcessTree:
-                    // true)` is banned repository-wide -- it walks re-parentable,
-                    // pid-reusable links and loses the race against anything that
-                    // respawns while it walks -- and nothing here needs it: what
-                    // leaks is the API stub, which has no children at all. The
-                    // client and the app-server driver exit on their own; what they
-                    // started is ended by its own stdin reaching EOF when their
-                    // pipes close, and every BrowserAI server behind them is held by
-                    // BrowserAI's own job object.
-                    Process.Kill();
-                }
-            }
-            catch (Exception failure) when (failure is InvalidOperationException or System.ComponentModel.Win32Exception or AggregateException)
-            {
-                // It has already gone, which is the ordinary case.
-            }
-
-            Process.Dispose();
-        }
     }
 
     /// <summary>One frame the shim saw, reduced to what these arms read.</summary>
@@ -906,7 +861,7 @@ internal sealed class ClientReconnectTests
             {
                 var environment = PublishedSlice.InheritedEnvironment();
 
-                foreach (var inherited in ParentClientVariables)
+                foreach (var inherited in ClientRun.ParentClientVariables)
                 {
                     _ = environment.Remove(inherited);
                 }
@@ -954,108 +909,26 @@ internal sealed class ClientReconnectTests
     /// <param name="work">Its working directory.</param>
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="argument">One argument, for the driver that takes its steps that way.</param>
-    /// <returns>The process.</returns>
-    private static Started StartNode(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
+    /// <returns>The run.</returns>
+    private static ClientRun StartNode(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
         StartProcess(
             RepositoryPayload.Layout.NodeExecutable,
             work.FullName,
             environment,
             argument is null ? [script] : [script, argument]);
 
-    /// <summary>Starts a process with its streams redirected and no console.</summary>
-    /// <remarks>
-    /// <c>CreateNoWindow</c> is set here as it is at every launch site in this
-    /// tree: redirecting the streams does not suppress the console, and from a
-    /// windowless parent each omission puts a terminal on the user's screen.
-    /// </remarks>
+    /// <summary>Starts a process through the harness, with no console.</summary>
     /// <param name="executable">What to start.</param>
     /// <param name="workingDirectory">Where.</param>
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="arguments">Its arguments.</param>
-    /// <returns>The process.</returns>
-    private static Started StartProcess(
+    /// <returns>The run.</returns>
+    private static ClientRun StartProcess(
         string executable,
         string workingDirectory,
         Dictionary<string, string> environment,
-        IReadOnlyList<string> arguments)
-    {
-        var start = new ProcessStartInfo(executable)
-        {
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        foreach (var argument in arguments)
-        {
-            start.ArgumentList.Add(argument);
-        }
-
-        // ⚠️ REMOVED BEFORE ANYTHING IS ADDED, AND THIS IS WHY THE ARM EXISTED FOR
-        // AN HOUR WITHOUT WORKING. The suite may itself be running underneath one
-        // of these clients -- which is the ordinary case on this machine -- and the
-        // variables that say so are inherited by every child. A nested client that
-        // reads them takes a different path entirely: measured 2026-09-24, the
-        // client connected to BrowserAI, asked the stub nothing but
-        // `HEAD /api/hello`, and exited, so the arm saw one server process and
-        // failed on its own premise with nothing to say about why. The rig's shell
-        // drivers unset the same four for the same reason.
-        foreach (var inherited in ParentClientVariables)
-        {
-            _ = start.Environment.Remove(inherited);
-        }
-
-        foreach (var (name, value) in environment)
-        {
-            start.Environment[name] = value;
-        }
-
-        var process = Process.Start(start)
-            ?? throw new InvalidOperationException($"'{executable}' did not start.");
-
-        // Drained INTO FILES, not into nowhere. A child whose redirected pipe fills
-        // stops writing and then stops working, so the drain is mandatory -- and a
-        // real client's own complaint is the only thing that explains a run that
-        // did nothing, so it is kept where a failure can quote it.
-        var stem = Path.Combine(workingDirectory, Path.GetFileNameWithoutExtension(executable));
-
-        _ = Drain(process.StandardOutput, $"{stem}.stdout.txt");
-        _ = Drain(process.StandardError, $"{stem}.stderr.txt");
-        process.StandardInput.Close();
-
-        return new Started(process);
-    }
-
-    /// <summary>
-    /// The variables that say the suite is running underneath a real client, which
-    /// a child of that suite must not inherit.
-    /// </summary>
-    private static readonly string[] ParentClientVariables =
-    [
-        "CLAUDECODE",
-        "CLAUDE_CODE_ENTRYPOINT",
-        "CLAUDE_CODE_SESSION_ID",
-        "CLAUDE_CODE_CHILD_SESSION",
-        "CLAUDE_CONFIG_DIR",
-        "ANTHROPIC_BASE_URL",
-        "ANTHROPIC_API_KEY",
-        "ANTHROPIC_AUTH_TOKEN",
-        "CODEX_HOME",
-    ];
-
-    /// <summary>Copies a redirected stream into a file as it arrives.</summary>
-    /// <param name="stream">The reader.</param>
-    /// <param name="path">Where to put it.</param>
-    /// <returns>The copy.</returns>
-    private static async Task Drain(StreamReader stream, string path)
-    {
-        var text = await stream.ReadToEndAsync();
-
-        await File.WriteAllTextAsync(path, text);
-    }
+        IReadOnlyList<string> arguments) =>
+        ClientRun.Start(executable, workingDirectory, environment, arguments);
 
     /// <summary>What a child said, for a failure message.</summary>
     /// <param name="work">The run's working directory.</param>
@@ -1063,12 +936,12 @@ internal sealed class ClientReconnectTests
     /// <returns>Its stderr and the tail of its stdout.</returns>
     private static string WhatItSaid(DirectoryInfo work, string executable)
     {
-        var stem = Path.Combine(work.FullName, Path.GetFileNameWithoutExtension(executable));
+        var stem = ClientRun.StemOf(work.FullName, executable);
         var parts = new List<string>();
 
         foreach (var (what, file) in new[] { ("stderr", $"{stem}.stderr.txt"), ("stdout", $"{stem}.stdout.txt") })
         {
-            var text = File.Exists(file) ? File.ReadAllText(file) : "<no file>";
+            var text = File.Exists(file) ? ReadShared(file) : "<no file>";
 
             parts.Add($"{what}: {(text.Length > 1200 ? text[^1200..] : text)}");
         }
@@ -1084,19 +957,12 @@ internal sealed class ClientReconnectTests
     /// <see cref="TestDefaults.RealClientHang"/>, which is derived and not written
     /// here; what these runs actually take is seconds.
     /// </remarks>
-    /// <param name="started">The process.</param>
+    /// <param name="started">The run.</param>
     /// <param name="what">What it was, for the failure.</param>
     /// <returns>The wait.</returns>
-    private static async Task WaitFor(Started started, string what)
+    private static async Task WaitFor(ClientRun started, string what)
     {
-        var process = started.Process;
-        using var deadline = new CancellationTokenSource(TestDefaults.RealClientHang);
-
-        try
-        {
-            await process.WaitForExitAsync(deadline.Token);
-        }
-        catch (OperationCanceledException)
+        if (!await started.WaitForExitAsync(TestDefaults.RealClientHang))
         {
             throw new TimeoutException(
                 $"{what} had not exited after {TestDefaults.RealClientHang.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes. "

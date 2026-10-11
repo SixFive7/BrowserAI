@@ -94,6 +94,9 @@ internal static class Program
             // process holding its output; see LingeringOutputProbe (2026-10-10).
             "registerai-lingering" when args.Length is 3 => LingeringOutputProbe.Write(args[1], args[2]),
             "registerai-holder" when args.Length is 2 => LingeringOutputProbe.Hold(args[1]),
+            // <documentPath> <holdSeconds> <reportPath>. The same, writing the holder's
+            // pid and creation time for the arm to read (64 c, 2026-10-11).
+            "output-holder" when args.Length is 4 => LingeringOutputProbe.WriteAndReport(args[1], args[2], args[3]),
             _ => Usage(),
         };
     }
